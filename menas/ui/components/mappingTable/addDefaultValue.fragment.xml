@@ -1,0 +1,42 @@
+<!--
+  ~ Copyright 2018 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:l="sap.ui.layout"
+	xmlns:table="sap.ui.table" xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+	<Dialog id="addDefaultValueDialog" title="{/newDefaultValue/title} Default Value" resizable="true" draggable="true" class="minW40rem">
+		<content>
+			<form:SimpleForm adjustLabelSpan="true" editable="true">
+				<form:content>
+					<Label text="Target Column"></Label>
+					<ScrollContainer id="defValFieldSelectScroll" height="300px" vertical="true" horizontal="true" width="100%">
+						<Tree id="newDefaultValueFieldSelector" height="300px" mode="SingleSelect" enableBusyIndicator="true" setBusyIndicatorDelay="0"
+							selectionChange="schemaFieldSelect"
+							items="{path: '/currentMappingTable/schema/fields', parameters:{arrayNames:['children']}}" >
+							<StandardTreeItem title="{name}" type="active" cust:path="{path}"></StandardTreeItem>
+						</Tree>
+					</ScrollContainer>
+					<Label text="Selected Target Column"></Label>
+					<Text text="{/newDefaultValue/columnName}"></Text>
+					<Label text="Default Value"></Label>
+					<Input id="newDefaultValueExpr" type="text" placeholder="Enter Spark SQL Expression" width="100%" value="{/newDefaultValue/value}"></Input>
+				</form:content>
+			</form:SimpleForm>
+		</content>
+		<buttons>
+			<Button id="newDefaultValueAddButton" text="Save" icon="sap-icon://save"></Button>
+			<Button id="newDefaultValueCancelButton" text="Cancel" icon="sap-icon://cancel"></Button>
+		</buttons>
+	</Dialog>
+</core:FragmentDefinition>

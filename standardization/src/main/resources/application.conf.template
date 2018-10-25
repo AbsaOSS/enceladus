@@ -1,0 +1,3 @@
+enceladus.version=${project.version}
+
+standardized.hdfs.path = "/tmp/conformance-output/standardized-{0}-{1}-{2}-{3}"

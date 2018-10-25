@@ -1,0 +1,93 @@
+{
+  "type" : "struct",
+  "fields" : [ {
+    "name" : "id",
+    "type" : "long",
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "dateSampleOk1",
+    "type" : "date",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "dd-MM-yyyy"
+    }
+  }, {
+    "name" : "dateSampleOk2",
+    "type" : "date",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "yyyy-MM-dd"
+    }
+  }, {
+    "name" : "dateSampleOk3",
+    "type" : "date",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "MM/dd/yyyy"
+    }
+  }, {
+    "name" : "dateSampleWrong1",
+    "type" : "date",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "DD-MM-yyyy"
+    }
+  }, {
+    "name" : "dateSampleWrong2",
+    "type" : "date",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "Dy"
+    }
+  }, {
+    "name" : "dateSampleWrong3",
+    "type" : "date",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "rrr"
+    }
+  }, {
+    "name" : "timestampSampleOk1",
+    "type" : "timestamp",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "yyyy-MM-dd'T'HH:mm:ss"
+    }
+  }, {
+    "name" : "timestampSampleOk2",
+    "type" : "timestamp",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "yyyy-MM-dd_HH:mm:ss"
+    }
+  }, {
+    "name" : "timestampSampleOk3",
+    "type" : "timestamp",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "yyyyMMddHHmmss"
+    }
+  }, {
+    "name" : "timestampSampleWrong1",
+    "type" : "timestamp",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "yyyyMMddTHHmmss"
+    }
+  }, {
+    "name" : "timestampSampleWrong2",
+    "type" : "timestamp",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "yyyy-MM-dd't'HH:mm:ss"
+    }
+  }, {
+    "name" : "timestampSampleWrong3",
+    "type" : "timestamp",
+    "nullable" : true,
+    "metadata" : {
+      "pattern" : "yyyy-MM-dd"
+    }
+  } ]
+}
