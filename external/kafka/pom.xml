@@ -42,7 +42,7 @@
 		<!-- For dispatching data to Kafka as Avro records -->
 		<dependency>
 			<groupId>za.co.absa</groupId>
-			<artifactId>abris</artifactId>
+			<artifactId>abris_${scala.compat.version}</artifactId>
 			<version>${abris.version}</version>
 			<scope>compile</scope>
 		</dependency>
