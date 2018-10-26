@@ -18,6 +18,9 @@ syntax: glob
 .idea
 *.iml
 
+# vs code
+.vscode
+
 # building
 target
 build
