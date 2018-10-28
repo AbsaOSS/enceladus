@@ -24,6 +24,7 @@ import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.{EnableWebSecurity, WebSecurityConfigurerAdapter}
+import org.springframework.security.crypto.password.NoOpPasswordEncoder
 import org.springframework.security.kerberos.authentication.KerberosServiceAuthenticationProvider
 import org.springframework.security.kerberos.authentication.sun.SunJaasKerberosTicketValidator
 import org.springframework.security.kerberos.client.config.SunJaasKrb5LoginConfig
@@ -49,65 +50,71 @@ class WebSecurityConfig {
   @Value("${za.co.absa.enceladus.menas.auth.ldap.search.filter}")
   val ldapSearchFilter: String = ""
 
-  @Bean
-  def activeDirectoryLdapAuthenticationProvider() = {
-    new ActiveDirectoryLdapAuthenticationProvider(adDomain, adServer)
-  }
+  // Test-only in-memory auth
+  @Value("${za.co.absa.enceladus.menas.auth.inmemory.user}")
+  val username: String = ""
+  @Value("${za.co.absa.enceladus.menas.auth.inmemory.password}")
+  val password: String = ""
 
-  @Bean
-  def spnegoEntryPoint() = {
-    new SpnegoEntryPoint("/login")
-  }
-
-  @Bean
-  def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager) = {
-    val filter = new SpnegoAuthenticationProcessingFilter()
-    filter.setAuthenticationManager(authenticationManager)
-    filter
-  }
-
-  @Bean
-  def kerberosServiceAuthenticationProvider() = {
-    val provider = new KerberosServiceAuthenticationProvider()
-    provider.setTicketValidator(sunJaasKerberosTicketValidator())
-    provider.setUserDetailsService(ldapUserDetailsService())
-    provider
-  }
-
-  @Bean
-  def sunJaasKerberosTicketValidator() = {
-    val ticketValidator = new SunJaasKerberosTicketValidator()
-    ticketValidator.setServicePrincipal(servicePrincipal)
-    ticketValidator.setKeyTabLocation(new FileSystemResource(keytabLocation))
-    ticketValidator.setDebug(true)
-    ticketValidator
-  }
-
-  @Bean
-  def kerberosLdapContextSource() = {
-    val contextSource = new KerberosLdapContextSource(adServer)
-    contextSource.setLoginConfig(loginConfig())
-    contextSource
-  }
-
-  @Bean
-  def loginConfig() = {
-    val loginConfig = new SunJaasKrb5LoginConfig()
-    loginConfig.setKeyTabLocation(new FileSystemResource(keytabLocation))
-    loginConfig.setServicePrincipal(servicePrincipal)
-    loginConfig.setDebug(true)
-    loginConfig.setIsInitiator(true)
-    loginConfig.afterPropertiesSet()
-    loginConfig
-  }
-
-  @Bean
-  def ldapUserDetailsService() = {
-    val userSearch = new FilterBasedLdapUserSearch(ldapSearchBase, ldapSearchFilter, kerberosLdapContextSource());
-    val service = new LdapUserDetailsService(userSearch, new ActiveDirectoryLdapAuthoritiesPopulator());
-    service.setUserDetailsMapper(new LdapUserDetailsMapper())
-    service
-  }
+//  @Bean
+//  def activeDirectoryLdapAuthenticationProvider() = {
+//    new ActiveDirectoryLdapAuthenticationProvider(adDomain, adServer)
+//  }
+//
+//  @Bean
+//  def spnegoEntryPoint() = {
+//    new SpnegoEntryPoint("/login")
+//  }
+//
+//  @Bean
+//  def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager) = {
+//    val filter = new SpnegoAuthenticationProcessingFilter()
+//    filter.setAuthenticationManager(authenticationManager)
+//    filter
+//  }
+//
+//  @Bean
+//  def kerberosServiceAuthenticationProvider() = {
+//    val provider = new KerberosServiceAuthenticationProvider()
+//    provider.setTicketValidator(sunJaasKerberosTicketValidator())
+//    provider.setUserDetailsService(ldapUserDetailsService())
+//    provider
+//  }
+//
+//  @Bean
+//  def sunJaasKerberosTicketValidator() = {
+//    val ticketValidator = new SunJaasKerberosTicketValidator()
+//    ticketValidator.setServicePrincipal(servicePrincipal)
+//    ticketValidator.setKeyTabLocation(new FileSystemResource(keytabLocation))
+//    ticketValidator.setDebug(true)
+//    ticketValidator
+//  }
+//
+//  @Bean
+//  def kerberosLdapContextSource() = {
+//    val contextSource = new KerberosLdapContextSource(adServer)
+//    contextSource.setLoginConfig(loginConfig())
+//    contextSource
+//  }
+//
+//  @Bean
+//  def loginConfig() = {
+//    val loginConfig = new SunJaasKrb5LoginConfig()
+//    loginConfig.setKeyTabLocation(new FileSystemResource(keytabLocation))
+//    loginConfig.setServicePrincipal(servicePrincipal)
+//    loginConfig.setDebug(true)
+//    loginConfig.setIsInitiator(true)
+//    loginConfig.afterPropertiesSet()
+//    loginConfig
+//  }
+//
+//  @Bean
+//  def ldapUserDetailsService() = {
+//    val userSearch = new FilterBasedLdapUserSearch(ldapSearchBase, ldapSearchFilter, kerberosLdapContextSource());
+//    val service = new LdapUserDetailsService(userSearch, new ActiveDirectoryLdapAuthoritiesPopulator());
+//    service.setUserDetailsMapper(new LdapUserDetailsMapper())
+//    service
+//  }
 
   @Configuration
   @Order(1)
@@ -124,8 +131,6 @@ class WebSecurityConfig {
         .successForwardUrl("/index.jsp")
         .defaultSuccessUrl("/index.jsp")
         .permitAll()
-        //        .and
-        //        .httpBasic()
         .and()
         .logout()
         .logoutUrl("/logout")
@@ -136,16 +141,23 @@ class WebSecurityConfig {
     }
 
     override def configure(auth: AuthenticationManagerBuilder) {
-      val conf = ConfigFactory.load()
-
-      auth.authenticationProvider(activeDirectoryLdapAuthenticationProvider())
-        .authenticationProvider(kerberosServiceAuthenticationProvider())
+      auth
+        .inMemoryAuthentication()
+          .passwordEncoder(NoOpPasswordEncoder.getInstance())
+          .withUser(username)
+            .password(password)
+            .authorities("ROLE_USER")
     }
 
-    @Bean
-    override def authenticationManagerBean() = {
-      super.authenticationManagerBean()
-    }
+//    override def configure(auth: AuthenticationManagerBuilder) {
+//      auth.authenticationProvider(activeDirectoryLdapAuthenticationProvider())
+//        .authenticationProvider(kerberosServiceAuthenticationProvider())
+//    }
+//
+//    @Bean
+//    override def authenticationManagerBean() = {
+//      super.authenticationManagerBean()
+//    }
   }
 
 }
