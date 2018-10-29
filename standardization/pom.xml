@@ -87,8 +87,8 @@
 		</dependency>
 		<dependency>
 			<groupId>za.co.absa</groupId>
-			<artifactId>spark-fixed-width</artifactId>
-			<version>${fixed.version}</version>
+			<artifactId>enceladus-fixedWidth</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
 
