@@ -203,6 +203,7 @@ object StandardizationJob {
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     if (cmd.csvDelimiter.isDefined) cmd.csvDelimiter.foreach(deLimiter => Atum.setAdditionalInfo("csv_delimiter" -> deLimiter))
     addPerformanceMetadata(spark, rawDirSize, stdDirSize, stdPath)
+    stdRenameSourceColumns.writeInfoFile(stdPath)
     cmd.performanceMetricsFile.foreach(fileName => {
       try {
         performance.writeMetricsToFile(fileName)
