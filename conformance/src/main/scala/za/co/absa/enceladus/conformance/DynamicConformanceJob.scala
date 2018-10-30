@@ -172,6 +172,7 @@ object DynamicConformanceJob {
     val publishDirSize = FileSystemVersionUtils.getDirectorySize(publishPath)
     performance.finishMeasurement(publishDirSize, recordCount)
     addPerformanceMetadata(spark, publishDirSize, publishPath)
+    withPartCols.writeInfoFile(publishPath)
     cmd.performanceMetricsFile.foreach(fileName => {
       try {
         performance.writeMetricsToFile(fileName)
