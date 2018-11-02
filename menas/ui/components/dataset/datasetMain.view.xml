@@ -61,7 +61,7 @@
 						<content>
 							<IconTabBar id="datasetIconTabBar" select="tabSelect">
 								<items>
-									<IconTabFilter icon="sap-icon://hint" key="info" text="Basic Info">
+									<IconTabFilter id="BasicInfo" icon="sap-icon://hint" key="info" text="Basic Info">
 										<form:SimpleForm>
 											<form:content>
 												<Label text="Dataset"/>
@@ -88,7 +88,7 @@
 											</form:content>
 										</form:SimpleForm>
 									</IconTabFilter>
-									<IconTabFilter icon="sap-icon://tree" key="schema" text="Schema">
+									<IconTabFilter id="Schema" icon="sap-icon://tree" key="schema" text="Schema">
 										<table:TreeTable id="datasetSchemaTreeTable"
 														 rows="{path:'/currentDataset/schema/fields', parameters: {arrayNames:['children']}}"
 														 visibleRowCountMode="Interactive"
