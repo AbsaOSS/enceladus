@@ -21,7 +21,7 @@
 				<customHeader>
 					<Bar>
 						<contentLeft>
-							<Button icon="sap-icon://menu" press="handleMenuPress"></Button>
+							<Button id="Navigation" icon="sap-icon://menu" press="handleMenuPress"></Button>
 						</contentLeft>
 						<contentMiddle>
 							<Title text="Navigation" level="H3"></Title>
@@ -30,9 +30,9 @@
 				</customHeader>
 				<List>
 					<items>
-						<ActionListItem text="Schemas" type="Active" press="onSchemaPress"></ActionListItem>
-						<ActionListItem text="Datasets" type="Active" press="onDatasetPress"></ActionListItem>
-						<ActionListItem text="Mapping Tables" type="Active" press="onMappingPress"></ActionListItem>
+						<ActionListItem id="Schemas" text="Schemas" type="Active" press="onSchemaPress"></ActionListItem>
+						<ActionListItem id="Datasets" text="Datasets" type="Active" press="onDatasetPress"></ActionListItem>
+						<ActionListItem id="MappingTables" text="Mapping Tables" type="Active" press="onMappingPress"></ActionListItem>
 					</items>
 				</List>
 				<footer>

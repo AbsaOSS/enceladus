@@ -60,7 +60,7 @@
 						<content>
 							<IconTabBar id="schemaIconTabBar" height="auto" select="tabSelect">
 								<items>
-									<IconTabFilter icon="sap-icon://hint" key="info" text="Basic Info">
+									<IconTabFilter id="BasicInfo" icon="sap-icon://hint" key="info" text="Basic Info">
 										<form:SimpleForm>
 											<form:content>
 												<Label text="Mapping Table"></Label>
@@ -85,7 +85,7 @@
 											</form:content>
 										</form:SimpleForm>
 									</IconTabFilter>
-									<IconTabFilter icon="sap-icon://tree" key="schema" text="Schema">
+									<IconTabFilter id="Schema" icon="sap-icon://tree" key="schema" text="Schema">
 										<table:TreeTable id="mappingSchemaTreeTable"
 											rows="{path:'/currentMappingTable/schema/fields', parameters: {arrayNames:['children']}}" visibleRowCountMode="Interactive"
 											minAutoRowCount="10" rowHeight="49px" selectionMode="None">
@@ -117,14 +117,14 @@
 											</table:columns>
 										</table:TreeTable>
 									</IconTabFilter>
-									<IconTabFilter icon="sap-icon://detail-view" text="Used In">
+									<IconTabFilter id="UsedIn" icon="sap-icon://detail-view" text="Used In">
 										<Panel headerText="Datasets" height="50%">
 											<List items="{/currentMappingTable/usedIn/datasets}" noDataText="Currently not used in any Datasets">
 												<StandardListItem title="name" description="v.{version}" type="Active"></StandardListItem>
 											</List>
 										</Panel>
 									</IconTabFilter>
-									<IconTabFilter icon="sap-icon://cancel-maintenance" text="Defaults">
+									<IconTabFilter id="Defaults" icon="sap-icon://cancel-maintenance" text="Defaults">
 										<Table items="{/currentMappingTable/defaultMappingValue}">
 											<columns>
 												<Column width="45%">
