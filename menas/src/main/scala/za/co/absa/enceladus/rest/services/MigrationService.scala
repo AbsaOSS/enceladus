@@ -26,9 +26,10 @@ import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Component
 import za.co.absa.enceladus.migrations.MongoMigrator
 import za.co.absa.enceladus.migrations.models.{BackupConfiguration, Evolution, MigratorConfiguration}
+import org.apache.hadoop.conf.Configuration
 
 @Component
-class MigrationService @Autowired()(mongoDb: MongoDatabase, hdfsService: HdfsService) {
+class MigrationService @Autowired()(mongoDb: MongoDatabase, hadoopConf: Configuration) {
 
   @Value("${za.co.absa.enceladus.migrations.dump.filepath}")
   private val dumpFilepath: String = ""
@@ -40,7 +41,7 @@ class MigrationService @Autowired()(mongoDb: MongoDatabase, hdfsService: HdfsSer
   @PostConstruct
   def init() = {
     val fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("YYYY-MM-dd-HH-mm-ss"))
-    val backupConf = BackupConfiguration(s"$dumpFilepath${File.separator}$fileName.archive", connectionString, database, Some(hdfsService.hadoopConf))
+    val backupConf = BackupConfiguration(s"$dumpFilepath${File.separator}$fileName.archive", connectionString, database, Some(hadoopConf))
     val migratorConf = MigratorConfiguration(backupConf, mongoDb, 10)
     val migrator = new MongoMigrator(migratorConf)
 
@@ -49,7 +50,6 @@ class MigrationService @Autowired()(mongoDb: MongoDatabase, hdfsService: HdfsSer
     })
 
     // Register all evolutions here as above
-
     migrator.runEvolutions()
   }
 
