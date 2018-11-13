@@ -13,21 +13,21 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.controllers
+package za.co.absa.enceladus.rest
 
-import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.context.annotation.{ Configuration, Bean }
 import org.apache.spark.sql.SparkSession
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 
-case class Test(a:Int,b:String)
+@Configuration
+class SparkConfig {
 
-@RestController
-@RequestMapping(Array("/api/spark"))
-class SparkController @Autowired() (spark: SparkSession) {
+  @Value("${za.co.absa.enceladus.menas.spark.master}")
+  val master: String = ""
 
-	@GetMapping(path = Array("/version"))
-  def sparkVersion(): String = spark.sparkContext.version
+  @Bean
+  def spark: SparkSession = {
+    SparkSession.builder().master(master).appName("Menas Spark controller").getOrCreate()
+  }
 
 }

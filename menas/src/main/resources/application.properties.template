@@ -27,6 +27,17 @@ za.co.absa.enceladus.menas.auth.sysuser.keytab.location = /path/to/sysuser.keyta
 za.co.absa.enceladus.menas.auth.ldap.search.base = DC=AD,DC=DOMAIN,DC=com
 za.co.absa.enceladus.menas.auth.ldap.search.filter = (&(samAccountName={0}))
 
+# Define how menas authenticates to Hadoop. Supported options are:
+#	"default" -> will use the default authentication or kerberos ticket from the system
+#	"krb5" -> menas will use specified kerberos configurations to authenticate via kerberos using specified username & keytab
+za.co.absa.enceladus.menas.hadoop.auth.method = krb5
+za.co.absa.enceladus.menas.hadoop.auth.krb5.debug = true
+za.co.absa.enceladus.menas.hadoop.auth.krb5.realm = EXAMPLE.COM
+za.co.absa.enceladus.menas.hadoop.auth.krb5.kdc = localhost
+za.co.absa.enceladus.menas.hadoop.auth.krb5.jaasConfig = /jaas.conf
+za.co.absa.enceladus.menas.hadoop.auth.krb5.username = hdfs@EXAMPLE.COM
+za.co.absa.enceladus.menas.hadoop.auth.krb5.keytab = hdfs.keytab
+
 za.co.absa.enceladus.menas.auth.inmemory.user = user
 za.co.absa.enceladus.menas.auth.inmemory.password = changeme
 
@@ -36,3 +47,5 @@ za.co.absa.enceladus.menas.mongo.connection.database = menas
 za.co.absa.enceladus.menas.version=@project.version@
 
 za.co.absa.enceladus.migrations.dump.filepath = /path/to/backups/menas
+
+za.co.absa.enceladus.menas.spark.master = local[1]
