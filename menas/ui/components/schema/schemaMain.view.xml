@@ -25,7 +25,7 @@
 				<contentRight>
 					<Text text="Logged in as:"></Text>
 					<Text text="{/userInfo/username}"></Text>
-					<Button icon="sap-icon://log" press="onPressLogout"></Button>
+					<Button id="logout" icon="sap-icon://log" press="onPressLogout"></Button>
 				</contentRight>
 			</Bar>
 		</customHeader>
@@ -43,7 +43,7 @@
 						<footer>
 							<Bar>
 								<contentRight>
-									<Button text="New Schema" icon="sap-icon://add" press="onAddPress"></Button>
+									<Button id="NewSchema" text="New Schema" icon="sap-icon://add" press="onAddPress"></Button>
 								</contentRight>
 							</Bar>
 						</footer>
@@ -66,19 +66,19 @@
 										<form:SimpleForm>
 											<form:content>
 												<Label text="Schema"></Label>
-												<Text text="{/currentSchema/name}"></Text>
+												<Text id="currentShemaName" text="{/currentSchema/name}"></Text>
 												<Label text="Description"></Label>
-												<Text text="{/currentSchema/description}"></Text>
+												<Text id="currentShemaDescription" text="{/currentSchema/description}"></Text>
 												<Label text="Version"></Label>
-												<Text text="{/currentSchema/version}"></Text>
+												<Text id="currentShemaVersion" text="{/currentSchema/version}"></Text>
 												<Label text="Last Update"></Label>
-												<Text text="{path: '/currentSchema/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"></Text>
+												<Text id="currentShemaLastUpdated" text="{path: '/currentSchema/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"></Text>
 												<Label text="Last Update By"></Label>
-												<Text text="{/currentSchema/userUpdated}"></Text>
+												<Text id="currentShemaUserUpdated" text="{/currentSchema/userUpdated}"></Text>
 												<Label text="Created"></Label>
-												<Text text="{path: '/currentSchema/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"></Text>
+												<Text id="currentShemaDateCreated" text="{path: '/currentSchema/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"></Text>
 												<Label text="Created By"></Label>
-												<Text text="{/currentSchema/userCreated}"></Text>
+												<Text id="currentShemaUserCreated" text="{/currentSchema/userCreated}"></Text>
 											</form:content>
 										</form:SimpleForm>
 									</IconTabFilter>
@@ -144,8 +144,8 @@
 						<footer>
 							<Bar>
 								<contentRight>
-									<Button text="Delete" icon="sap-icon://delete" press="onRemovePress"></Button>
-									<Button text="Edit" icon="sap-icon://edit" press="onEditPress"></Button>
+									<Button id="Delete" text="Delete" icon="sap-icon://delete" press="onRemovePress"></Button>
+									<Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress"></Button>
 								</contentRight>
 							</Bar>
 						</footer>
