@@ -58,11 +58,13 @@ sap.ui.define( ["sap/ui/core/UIComponent"], function (UIComponent) {
 					},
 					dataset: {
 						viewName: "components.dataset.datasetMain",
-						viewLevel: 0
+						viewLevel: 0,
+						viewId: "datasetMainView"
 					},
 					mappingTable: {
 						viewName: "components.mappingTable.mappingTableMain",
-						viewLevel: 0
+						viewLevel: 0,
+						viewId: "mappingTableMainView"
 					}
 				}
 			}

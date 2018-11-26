@@ -60,7 +60,7 @@
 							</Bar>
 						</customHeader>
 						<content>
-							<IconTabBar id="schemaIconTabBar" height="auto">
+							<IconTabBar id="schemaIconTabBar">
 								<items>
 									<IconTabFilter id="BasicInfo" icon="sap-icon://hint" key="info" text="Basic Info">
 										<form:SimpleForm>

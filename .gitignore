@@ -54,3 +54,4 @@ kafka.properties
 *.conf
 *.config
 *.keytab
+.DS_Store
