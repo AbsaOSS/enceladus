@@ -15,13 +15,13 @@
  *   -->
  */
 
-package za.co.absa;
+package za.co.absa.enceladus.selenium;
 
 import org.testng.annotations.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import za.co.absa.models.ModelFactory;
-import za.co.absa.models.Schema;
+import za.co.absa.enceladus.selenium.models.ModelFactory;
+import za.co.absa.enceladus.selenium.models.Schema;
 
 import static org.testng.AssertJUnit.*;
 
@@ -65,7 +65,7 @@ public class SchemaTest extends BaseTest {
   }
 
   @Test
-  public void removeSchema() {
+  public void removeSchema() throws InterruptedException {
     By itemToDeleteSelector = By.xpath("//div[contains(text(), 'Omega')]/ancestor::li");
     By deleteButtonSelector = By.id(schemaNavigation + "Delete");
     By okButtonSelector = By.xpath("//bdi[text()='Yes']/ancestor::button");
@@ -78,7 +78,10 @@ public class SchemaTest extends BaseTest {
 
     hoverClick(deleteButtonSelector);
     hoverClick(okButtonSelector);
-    assertFalse(isPresent(deletedSchema));
+
+    TimeUnit.SECONDS.sleep(1);
+    boolean present = isPresent(deletedSchema);
+    assertFalse(present);
   }
 
   @Test
