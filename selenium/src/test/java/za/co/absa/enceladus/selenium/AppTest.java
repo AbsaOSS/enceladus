@@ -15,7 +15,7 @@
  *   -->
  */
 
-package za.co.absa;
+package za.co.absa.enceladus.selenium;
 
 import org.testng.annotations.Test;
 import org.openqa.selenium.By;

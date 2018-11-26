@@ -15,7 +15,7 @@
  *   -->
  */
 
-package za.co.absa.models;
+package za.co.absa.enceladus.selenium.models;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

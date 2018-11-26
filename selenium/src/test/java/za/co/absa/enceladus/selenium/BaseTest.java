@@ -15,7 +15,7 @@
  *   -->
  */
 
-package za.co.absa;
+package za.co.absa.enceladus.selenium;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -65,6 +65,7 @@ public class BaseTest {
 
   @AfterMethod
   public void tearDownMethod() throws InterruptedException {
+    TimeUnit.SECONDS.sleep(1);
     hoverClick(By.xpath("//button[contains(@id, '--logout')  and " +
                         "not(ancestor::div[contains(@class,'sapMNavItemHidden')])]"));
     TimeUnit.SECONDS.sleep(1);
