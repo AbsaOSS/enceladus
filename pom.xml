@@ -42,6 +42,7 @@
 		<module>migrations</module>
 		<module>external/kafka</module>
 		<module>external/fixedWidth</module>
+		<module>selenium-tests</module>
 	</modules>
 
 	<properties>
