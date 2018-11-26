@@ -1,8 +1,26 @@
+/*
+ * <!--
+ *   ~ Copyright 2018 ABSA Group Limited
+ *   ~
+ *   ~ Licensed under the Apache License, Version 2.0 (the "License");
+ *   ~ you may not use this file except in compliance with the License.
+ *   ~ You may obtain a copy of the License at
+ *   ~     http://www.apache.org/licenses/LICENSE-2.0
+ *   ~
+ *   ~ Unless required by applicable law or agreed to in writing, software
+ *   ~ distributed under the License is distributed on an "AS IS" BASIS,
+ *   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   ~ See the License for the specific language governing permissions and
+ *   ~ limitations under the License.
+ *   -->
+ */
+
 package za.co.absa;
 
 import org.testng.annotations.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import za.co.absa.models.ModelFactory;
 import za.co.absa.models.Schema;
 
 import static org.testng.AssertJUnit.*;
@@ -27,17 +45,17 @@ public class SchemaTest extends BaseTest {
     chooseTab(schemasTab);
     hoverClick(addSchemaButton);
     TimeUnit.SECONDS.sleep(1);
-    WebElement eName = driver.findElement(newSchemaName);
-    WebElement eDescription = driver.findElement(newSchemaDescription);
+    WebElement elementName = driver.findElement(newSchemaName);
+    WebElement elementDescription = driver.findElement(newSchemaDescription);
 
     assertTrue(isPresent(newSchemaAddButton));
     assertTrue(isPresent(newSchemaCancelButton));
 
-    eName.sendKeys(name);
-    eDescription.sendKeys(description);
+    elementName.sendKeys(name);
+    elementDescription.sendKeys(description);
     driver.findElement(newSchemaAddButton).click();
 
-    Schema currentSchema = new Schema(driver);
+    Schema currentSchema = ModelFactory.getSchema(driver);
 
     assertEquals(name, currentSchema.getName());
     assertEquals(description, currentSchema.getDescription());
@@ -55,7 +73,7 @@ public class SchemaTest extends BaseTest {
     WebElement element = driver.findElements(itemToDeleteSelector).get(0);
     hoverClick(element);
 
-    Schema toBeDeleted = new Schema(driver);
+    Schema toBeDeleted = ModelFactory.getSchema(driver);
     By deletedSchema = By.xpath("//li//div[text()='"+ toBeDeleted.getName() +"']");
 
     hoverClick(deleteButtonSelector);
@@ -71,8 +89,7 @@ public class SchemaTest extends BaseTest {
     By saveButton = By.id("editSchemaSaveButton-inner");
     hoverClick(schemaToUpdate);
 
-//    TimeUnit.SECONDS.sleep(1);
-    Schema currentSchema = new Schema(driver);
+    Schema currentSchema = ModelFactory.getSchema(driver);
 
     String changeInDescription = "To Be Updated - " + postfix;
     hoverClick(editButton);
@@ -81,8 +98,7 @@ public class SchemaTest extends BaseTest {
     descField.sendKeys(changeInDescription);
     hoverClick(saveButton);
 
-    // TimeUnit.SECONDS.sleep(1);
-    Schema newSchema = new Schema(driver);
+    Schema newSchema = ModelFactory.getSchema(driver);
 
     assertEquals(currentSchema.getName(), newSchema.getName());
     assertEquals(changeInDescription, newSchema.getDescription());
