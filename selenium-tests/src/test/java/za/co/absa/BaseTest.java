@@ -1,6 +1,22 @@
+/*
+ * <!--
+ *   ~ Copyright 2018 ABSA Group Limited
+ *   ~
+ *   ~ Licensed under the Apache License, Version 2.0 (the "License");
+ *   ~ you may not use this file except in compliance with the License.
+ *   ~ You may obtain a copy of the License at
+ *   ~     http://www.apache.org/licenses/LICENSE-2.0
+ *   ~
+ *   ~ Unless required by applicable law or agreed to in writing, software
+ *   ~ distributed under the License is distributed on an "AS IS" BASIS,
+ *   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   ~ See the License for the specific language governing permissions and
+ *   ~ limitations under the License.
+ *   -->
+ */
+
 package za.co.absa;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
@@ -18,15 +34,15 @@ import org.testng.annotations.BeforeMethod;
 
 public class BaseTest {
   WebDriver driver;
-  private DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy_MM_dd-HH_mm_ss");
+  private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy_MM_dd-HH_mm_ss");
   String postfix = dtf.format(LocalDateTime.now());
 
   By schemasView = By.id("__navigation0---schemaMainView");
   By datasetsView = By.id("__navigation0---datasetMainView");
   By mappingTablesView = By.id("__navigation0---mappingTableMainView");
+  String username = "user";
   private By nameField = By.name("username");
   private By passwordField = By.name("password");
-  String username = "user";
   private String password = "changeme";
 
   @BeforeClass
@@ -42,23 +58,20 @@ public class BaseTest {
   }
 
   @BeforeMethod
-  public void setUpMethod() throws InterruptedException, IOException {
+  public void setUpMethod() throws InterruptedException {
     login(username, password);
-//    waitForPageToLoad();
     TimeUnit.SECONDS.sleep(1);
   }
 
   @AfterMethod
   public void tearDownMethod() throws InterruptedException {
-    hoverClick(By.xpath("//button[contains(@id, '--logout')  and "+
+    hoverClick(By.xpath("//button[contains(@id, '--logout')  and " +
                         "not(ancestor::div[contains(@class,'sapMNavItemHidden')])]"));
     TimeUnit.SECONDS.sleep(1);
-//    waitForPageToLoad();
   }
 
   @AfterClass
   public void tearDownSuite() throws InterruptedException {
-//    waitForPageToLoad();
     TimeUnit.SECONDS.sleep(5);
     driver.close();
     driver.quit();
@@ -73,11 +86,9 @@ public class BaseTest {
    */
   void chooseTab(By by)  throws InterruptedException {
     hoverClick(By.id("__xmlview0--menasApp-MasterBtn"));
-//    waitForPageToLoad();
     TimeUnit.SECONDS.sleep(1);
     hoverClick(by);
     hoverClick(By.id("__xmlview0--Navigation"));
-//    waitForPageToLoad();
     TimeUnit.SECONDS.sleep(1);
   }
 
@@ -93,8 +104,8 @@ public class BaseTest {
     WebElement passwordElement = driver.findElement(passwordField);
     WebElement submitElement = driver.findElement(By.name("submit"));
 
-    usernameElement.sendKeys("user");
-    passwordElement.sendKeys("changeme");
+    usernameElement.sendKeys(username);
+    passwordElement.sendKeys(password);
     submitElement.click();
   }
 
@@ -185,8 +196,8 @@ public class BaseTest {
 
   void waitForPageToLoad() {
     new WebDriverWait(driver, 30).until((ExpectedCondition<Boolean>) wd ->
-      ((JavascriptExecutor) wd).executeScript("document.body.addEventListener('DOMSubtreeModified', function () {\n" +
-                                              "  return true;\n" +
-                                              "}, false);").equals(true));
+      ((JavascriptExecutor) wd).executeScript("document.body.addEventListener('DOMSubtreeModified', function () {\n"
+                                              + "  return true;\n"
+                                              + "}, false);").equals(true));
   }
 }

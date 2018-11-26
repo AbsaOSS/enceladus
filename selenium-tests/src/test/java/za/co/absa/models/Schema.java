@@ -1,27 +1,27 @@
-package za.co.absa.models;
+/*
+ * <!--
+ *   ~ Copyright 2018 ABSA Group Limited
+ *   ~
+ *   ~ Licensed under the Apache License, Version 2.0 (the "License");
+ *   ~ you may not use this file except in compliance with the License.
+ *   ~ You may obtain a copy of the License at
+ *   ~     http://www.apache.org/licenses/LICENSE-2.0
+ *   ~
+ *   ~ Unless required by applicable law or agreed to in writing, software
+ *   ~ distributed under the License is distributed on an "AS IS" BASIS,
+ *   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   ~ See the License for the specific language governing permissions and
+ *   ~ limitations under the License.
+ *   -->
+ */
 
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.WebDriverWait;
+package za.co.absa.models;
 
 import java.time.LocalDateTime;
 
-public class Schema extends Base{
-
-  public Schema(WebDriver webdriver) {
-    super(webdriver);
-    WebDriverWait wait = new WebDriverWait(driver, 10);
-    String schemaNavigation = "__navigation0---schemaMainView--";
-    By nameSelector = By.id(schemaNavigation + "currentShemaName");
-    wait.until(ExpectedConditions.visibilityOfElementLocated(nameSelector));
-    this.name = getText(nameSelector);
-    this.description = getText(By.id(schemaNavigation + "currentShemaDescription"));
-    this.version = Integer.parseInt(getText(By.id(schemaNavigation + "currentShemaVersion")));
-    this.createdBy = getText(By.id(schemaNavigation + "currentShemaUserUpdated"));
-    this.updatedBy = getText(By.id(schemaNavigation + "currentShemaUserCreated"));
-    this.creationDate = LocalDateTime.parse(getText(By.id(schemaNavigation + "currentShemaDateCreated")), timeStampFormatter);
-    this.updateDate = LocalDateTime.parse(getText(By.id(schemaNavigation + "currentShemaLastUpdated")), timeStampFormatter);
+public class Schema extends BaseModel {
+  public Schema(String name, String description, int version, String createdBy, String updatedBy,
+                LocalDateTime creationDate, LocalDateTime updateDate) {
+    super(name, description, version, createdBy, updatedBy, creationDate, updateDate);
   }
-
 }

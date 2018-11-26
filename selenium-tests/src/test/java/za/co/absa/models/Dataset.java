@@ -1,33 +1,36 @@
-package za.co.absa.models;
+/*
+ * <!--
+ *   ~ Copyright 2018 ABSA Group Limited
+ *   ~
+ *   ~ Licensed under the Apache License, Version 2.0 (the "License");
+ *   ~ you may not use this file except in compliance with the License.
+ *   ~ You may obtain a copy of the License at
+ *   ~     http://www.apache.org/licenses/LICENSE-2.0
+ *   ~
+ *   ~ Unless required by applicable law or agreed to in writing, software
+ *   ~ distributed under the License is distributed on an "AS IS" BASIS,
+ *   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   ~ See the License for the specific language governing permissions and
+ *   ~ limitations under the License.
+ *   -->
+ */
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+package za.co.absa.models;
 
 import java.time.LocalDateTime;
 
-public class Dataset extends Base {
+public class Dataset extends BaseModel {
   private String rawPath;
   private String publishPath;
   private String schema;
 
-  public Dataset(WebDriver webDriver) {
-    super(webDriver);
-    WebDriverWait wait = new WebDriverWait(driver, 10);
-    String datasetNavigation = "__navigation0---datasetMainView--";
-    By nameSelector = By.id(datasetNavigation + "currentDatasetName");
-    wait.until(ExpectedConditions.visibilityOfElementLocated(nameSelector));
-    this.name = getText(nameSelector);
-    this.description = getText(By.id(datasetNavigation + "currentDatasetDescription"));
-    this.version = Integer.parseInt(getText(By.id(datasetNavigation + "currentDatasetVersion")));
-    this.rawPath = getText(By.id(datasetNavigation + "currentDatasetRawPath"));
-    this.publishPath = getText(By.id(datasetNavigation + "currentDatasetPublishedPath"));
-    this.schema = getText(By.id(datasetNavigation + "currentDatasetSchmea"));
-    this.createdBy = getText(By.id(datasetNavigation + "currentShemaUserUpdated"));
-    this.updatedBy = getText(By.id(datasetNavigation + "currentShemaUserCreated"));
-    this.creationDate = LocalDateTime.parse(getText(By.id(datasetNavigation + "currentShemaDateCreated")), timeStampFormatter);
-    this.updateDate = LocalDateTime.parse(getText(By.id(datasetNavigation + "currentShemaLastUpdated")), timeStampFormatter);
+  public Dataset(String name, String description, int version, String createdBy,
+                 String updatedBy, LocalDateTime creationDate, LocalDateTime updateDate,
+                 String rawPath, String publishPath, String schema) {
+    super(name, description, version, createdBy, updatedBy, creationDate, updateDate);
+    this.rawPath = rawPath;
+    this.publishPath = publishPath;
+    this.schema = schema;
   }
 
   public String getRawPath() {
