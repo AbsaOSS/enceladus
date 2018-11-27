@@ -66,7 +66,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   defaultCancel : function() {
-    // This is a workaround for a bug in the Tree component of 1.56.5
+    // This is a workaround for a bug in the Tree component of 1.56.x and 1.58.x
     // TODO: verify whether this was fixed in the subsequent versions
     var tree = sap.ui.getCore().byId("newDefaultValueFieldSelector")
     var items = tree.getItems()
@@ -381,8 +381,6 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   onAddPress : function() {
-    GenericService.hdfsList("/", "/newMappingTable/HDFS", this._addDialog)
-
     this._loadAllVersionsOfFirstSchema();
 
     this._addDialog.open();

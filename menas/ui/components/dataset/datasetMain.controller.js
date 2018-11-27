@@ -37,10 +37,6 @@ sap.ui.controller("components.dataset.datasetMain", {
         sap.ui.getCore().byId("newDatasetCancelButton").attachPress(this.datasetAddCancel, this);
         sap.ui.getCore().byId("newDatasetName").attachChange(this.datasetNameChange, this);
         sap.ui.getCore().byId("newDatasetSchemaNameSelect").attachChange(this.schemaSelect, this);
-        sap.ui.getCore().byId("newDatasetHdfsRawSelector").attachToggleOpenState(this.hdfsPathOpen, this);
-        sap.ui.getCore().byId("newDatasetHdfsRawSelector").attachSelectionChange(this.hdfsPathSelect, this);
-        sap.ui.getCore().byId("newDatasetHdfsPublishSelector").attachToggleOpenState(this.hdfsPathOpen, this);
-        sap.ui.getCore().byId("newDatasetHdfsPublishSelector").attachSelectionChange(this.hdfsPublishPathSelect, this);
         this._addDialog.setBusyIndicatorDelay(0)
     },
 
@@ -60,19 +56,13 @@ sap.ui.controller("components.dataset.datasetMain", {
     },
 
     datasetAddCancel : function() {
-        // This is a workaround for a bug in the Tree component of 1.56.5
-        // TODO: verify whether this was fixed in the subsequent versions
-        var tree = sap.ui.getCore().byId("newDatasetHdfsRawSelector");
-        var items = tree.getItems();
-        for ( var i in items) {
-            items[i].setSelected(false)
-        }
+        var tree = sap.ui.getCore().byId("newDatasetRawHDFSBrowser");
+        tree.unselectAll();
+        tree.collapseAll();
 
-        var treePbulish = sap.ui.getCore().byId("newDatasetHdfsPublishSelector");
-        var itemsPublish = treePbulish.getItems();
-        for ( var i in itemsPublish) {
-            itemsPublish[i].setSelected(false)
-        }
+        var treePublish = sap.ui.getCore().byId("newDatasetPublishDFSBrowser");
+        treePublish.unselectAll();
+        treePublish.collapseAll();
 
         this.resetNewDatasetValueState();
         this._addDialog.close();
@@ -97,12 +87,6 @@ sap.ui.controller("components.dataset.datasetMain", {
         }
     },
 
-    resetItems : function(items) {
-        for ( var ind in items) {
-            items[ind].setHighlight(sap.ui.core.MessageType.None)
-        }
-    },
-
     resetNewDatasetValueState : function() {
         sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.None);
         sap.ui.getCore().byId("newDatasetName").setValueStateText("");
@@ -113,34 +97,13 @@ sap.ui.controller("components.dataset.datasetMain", {
         sap.ui.getCore().byId("newDatasetSchemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
         sap.ui.getCore().byId("newDatasetSchemaVersionSelect").setValueStateText("");
 
-        this.resetItems(sap.ui.getCore().byId("newDatasetHdfsRawSelector").getItems());
-        this.resetItems(sap.ui.getCore().byId("newDatasetHdfsPublishSelector").getItems());
+        sap.ui.getCore().byId("newDatasetRawHDFSBrowser").setValueState(sap.ui.core.ValueState.None);
+        sap.ui.getCore().byId("newDatasetPublishDFSBrowser").setValueState(sap.ui.core.ValueState.None);
     },
 
     schemaSelect : function(oEv) {
         var sSchemaId = oEv.getParameter("selectedItem").getKey();
         SchemaService.getAllSchemaVersions(sSchemaId, sap.ui.getCore().byId("newDatasetSchemaVersionSelect"))
-    },
-
-    hdfsPathOpen : function(oEv) {
-        if (oEv.getParameter("expanded")) {
-            var context = oEv.getParameter("itemContext").getPath();
-            var path = this._model.getProperty(context).path;
-            if (path !== "/")
-                GenericService.hdfsList(path, context, this._addDialog)
-        }
-    },
-
-    hdfsPathSelect : function(oEv) {
-        var sBindingPath = oEv.getParameter("listItem").getBindingContext().getPath();
-        var sHdfsPath = this._model.getProperty(sBindingPath).path;
-        this._model.setProperty("/newDataset/hdfsPath", sHdfsPath)
-    },
-
-    hdfsPublishPathSelect : function(oEv) {
-        var sBindingPath = oEv.getParameter("listItem").getBindingContext().getPath();
-        var sHdfsPath = this._model.getProperty(sBindingPath).path;
-        this._model.setProperty("/newDataset/hdfsPublishPath", sHdfsPath)
     },
 
     tabSelect : function(oEv) {
@@ -193,18 +156,12 @@ sap.ui.controller("components.dataset.datasetMain", {
             isOk = false;
         }
         if (!oDataset.hdfsPath || oDataset.hdfsPath === "") {
-            var items = sap.ui.getCore().byId("newDatasetHdfsRawSelector").getItems();
-            for ( var ind in items) {
-                items[ind].setHighlight(sap.ui.core.MessageType.Error)
-            }
+            sap.ui.getCore().byId("newDatasetRawHDFSBrowser").setValueState(sap.ui.core.ValueState.Error);
             sap.m.MessageToast.show("Please choose the raw HDFS path of the dataset");
             isOk = false;
         }
         if (!oDataset.hdfsPublishPath || oDataset.hdfsPublishPath === "") {
-            var items = sap.ui.getCore().byId("newDatasetHdfsPublishSelector").getItems();
-            for ( var ind in items) {
-                items[ind].setHighlight(sap.ui.core.MessageType.Error)
-            }
+            sap.ui.getCore().byId("newDatasetRawHDFSBrowser").setValueState(sap.ui.core.ValueState.Error);
             sap.m.MessageToast.show("Please choose the publish HDFS path of the dataset");
             isOk = false;
         }
@@ -213,14 +170,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     },
 
     onAddPress : function() {
-        GenericService.hdfsList("/", "/newDataset/HDFSRaw", this._addDialog);
-        GenericService.hdfsList("/", "/newDataset/HDFSPublish", this._addDialog);
-
         this._loadAllVersionsOfFirstSchema();
-
-        sap.ui.getCore().byId("newDatasetHdfsRawSelector").expandToLevel(1);
-        sap.ui.getCore().byId("newDatasetHdfsPublishSelector").expandToLevel(1);
-
         this._addDialog.open();
     },
 
@@ -239,12 +189,6 @@ sap.ui.controller("components.dataset.datasetMain", {
         SchemaService.getAllSchemaVersions(current.schemaName, sap.ui.getCore().byId("newDatasetSchemaVersionSelect"));
 
         this._addDialog.open();
-
-        sap.ui.getCore().byId("newDatasetHdfsRawSelector").collapseAll();
-        sap.ui.getCore().byId("newDatasetHdfsPublishSelector").collapseAll();
-
-        GenericService.treeNavigateTo(current.hdfsPath, "/newDataset/HDFSRaw", "newDatasetHdfsRawSelector", this);
-        GenericService.treeNavigateTo(current.hdfsPath, "/newDataset/HDFSPublish", "newDatasetHdfsPublishSelector", this);
     },
 
     onRemovePress : function(oEv) {
