@@ -37,15 +37,15 @@ class HDFSConfig @Autowired()(spark: SparkSession) {
 
   @Value("${za.co.absa.enceladus.menas.hadoop.auth.method}") 
   val authMethod: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.debug}") 
+  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.debug:}") 
   val krb5debug: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.realm}")
+  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.realm:}")
   val krb5realm: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.kdc}")
+  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.kdc:}")
   val krb5kdc: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.username}")
+  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.username:}")
   val krb5username: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.keytab}")
+  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.keytab:}")
   val krb5keytab: String = ""  
 
   private val hadoopConfDir = sys.env.getOrElse("HADOOP_CONF_DIR", throw new IllegalStateException("Missing HADOOP_CONF_DIR environment variable."))
