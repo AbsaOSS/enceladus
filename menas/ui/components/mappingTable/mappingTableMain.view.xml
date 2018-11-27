@@ -13,7 +13,7 @@
   ~ limitations under the License.
   -->
 
-<core:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:form="sap.ui.layout.form" xmlns:table="sap.ui.table"
+<core:View id="mappingTableMainView" xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:form="sap.ui.layout.form" xmlns:table="sap.ui.table"
 	xmlns:u="sap.ui.unified" xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
 	controllerName="components.mappingTable.mappingTableMain" xmlns:html="http://www.w3.org/1999/xhtml">
 	<Page enableScrolling="false">
@@ -25,7 +25,7 @@
 				<contentRight>
 					<Text text="Logged in as:"></Text>
 					<Text text="{/userInfo/username}"></Text>
-					<Button icon="sap-icon://log" press="GenericService.logout"></Button>
+					<Button id="logout" icon="sap-icon://log" press="GenericService.logout"></Button>
 				</contentRight>
 			</Bar>
 		</customHeader>
@@ -41,7 +41,7 @@
 						<footer>
 							<Bar>
 								<contentRight>
-									<Button text="New Mapping Table" icon="sap-icon://add" press="onAddPress"></Button>
+									<Button id="NewMappingTable" text="New Mapping Table" icon="sap-icon://add" press="onAddPress"></Button>
 								</contentRight>
 							</Bar>
 						</footer>
@@ -163,9 +163,9 @@
 						<footer>
 							<Bar>
 								<contentRight>
-									<Button text="Delete" icon="sap-icon://delete" press="onRemovePress"></Button>
-									<Button text="Add Default Value" icon="sap-icon://add-equipment" press="onAddDefaultPress"></Button>
-									<Button text="Edit" icon="sap-icon://edit" press="onEditPress"></Button>
+									<Button id="Delete" text="Delete" icon="sap-icon://delete" press="onRemovePress"></Button>
+									<Button id="AddDefaultValue" text="Add Default Value" icon="sap-icon://add-equipment" press="onAddDefaultPress"></Button>
+									<Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress"></Button>
 								</contentRight>
 							</Bar>
 						</footer>

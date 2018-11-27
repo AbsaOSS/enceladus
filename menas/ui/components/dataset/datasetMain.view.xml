@@ -13,7 +13,7 @@
   ~ limitations under the License.
   -->
 
-<core:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:form="sap.ui.layout.form" xmlns:table="sap.ui.table"
+<core:View id="datasetMainView" xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:form="sap.ui.layout.form" xmlns:table="sap.ui.table"
 		   controllerName="components.dataset.datasetMain"
 		   xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
 		   xmlns:html="http://www.w3.org/1999/xhtml">
@@ -26,7 +26,7 @@
 				<contentRight>
 					<Text text="Logged in as:"/>
 					<Text text="{/userInfo/username}"/>
-					<Button icon="sap-icon://log" press="GenericService.logout"/>
+					<Button id="logout" icon="sap-icon://log" press="GenericService.logout"/>
 				</contentRight>
 			</Bar>
 		</customHeader>
@@ -43,7 +43,7 @@
 						<footer>
 							<Bar>
 								<contentRight>
-									<Button text="New Dataset" icon="sap-icon://add" press="onAddPress"/>
+									<Button id="NewDataset" text="New Dataset" icon="sap-icon://add" press="onAddPress"/>
 								</contentRight>
 							</Bar>
 						</footer>
@@ -65,26 +65,27 @@
 										<form:SimpleForm>
 											<form:content>
 												<Label text="Dataset"/>
-												<Text text="{/currentDataset/name}"/>
+												<Text id="currentDatasetName" text="{/currentDataset/name}"/>
 												<Label text="Description"/>
-												<Text text="{/currentDataset/description}"/>
+												<Text id="currentDatasetDescription" text="{/currentDataset/description}"/>
 												<Label text="Version"/>
-												<Text text="{/currentDataset/version}"/>
+												<Text id="currentDatasetVersion" text="{/currentDataset/version}"/>
 												<Label text="HDFS raw data folder path"/>
-												<Text text="{/currentDataset/hdfsPath}"/>
+												<Text id="currentDatasetRawPath" text="{/currentDataset/hdfsPath}"/>
 												<Label text="HDFS conformed data publish folder path"/>
-												<Text text="{/currentDataset/hdfsPublishPath}"/>
+												<Text id="currentDatasetPublishedPath" text="{/currentDataset/hdfsPublishPath}"/>
 												<Label text="Schema"/>
 												<Link text="{/currentDataset/schemaName} (v. {/currentDataset/schemaVersion})" press="toSchema"
-													  cust:name="{/currentDataset/schemaName}" cust:version="{/currentDataset/schemaVersion}"/>
+													  cust:name="{/currentDataset/schemaName}" cust:version="{/currentDataset/schemaVersion}"
+													  id="currentDatasetSchmea"/>
 												<Label text="Last Update"/>
-												<Text text="{path: '/currentDataset/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
+												<Text id="currentDatasetLastUpdate" text="{path: '/currentDataset/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
 												<Label text="Last Update By"/>
-												<Text text="{/currentDataset/userUpdated}"/>
+												<Text id="currentDatasetUserUpdated" text="{/currentDataset/userUpdated}"/>
 												<Label text="Created"/>
-												<Text text="{path: '/currentDataset/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"/>
+												<Text id="currentDatasetCreated" text="{path: '/currentDataset/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"/>
 												<Label text="Created By"/>
-												<Text text="{/currentDataset/userCreated}"/>
+												<Text id="currentDatasetUserCreated" text="{/currentDataset/userCreated}"/>
 											</form:content>
 										</form:SimpleForm>
 									</IconTabFilter>
@@ -127,8 +128,8 @@
 						<footer>
 							<Bar>
 								<contentRight>
-									<Button text="Delete" icon="sap-icon://delete" press="onRemovePress"/>
-									<Button text="Edit" icon="sap-icon://edit" press="onEditPress"/>
+									<Button id="Delete" text="Delete" icon="sap-icon://delete" press="onRemovePress"/>
+									<Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress"/>
 								</contentRight>
 							</Bar>
 						</footer>
