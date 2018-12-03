@@ -31,17 +31,17 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
 public class BaseTest {
-  WebDriver driver;
-  private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy_MM_dd-HH_mm_ss");
   String postfix = dtf.format(LocalDateTime.now());
-
+  String username = "user";
   By schemasView = By.id("__navigation0---schemaMainView");
   By datasetsView = By.id("__navigation0---datasetMainView");
   By mappingTablesView = By.id("__navigation0---mappingTableMainView");
-  String username = "user";
+  WebDriver driver;
+  WebDriverWait wait;
   private By nameField = By.name("username");
   private By passwordField = By.name("password");
   private String password = "changeme";
+  private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy_MM_dd-HH_mm_ss");
 
   @BeforeClass
   public void setUpSuite() {
@@ -53,6 +53,7 @@ public class BaseTest {
     driver = new ChromeDriver(driverOptions);
     driver.manage().window().setSize(dimensions);
     driver.navigate().to("http://127.0.0.1:8080/menas");
+    wait = new WebDriverWait(driver, 5);
   }
 
   @BeforeMethod
