@@ -17,9 +17,14 @@ package za.co.absa.enceladus.selenium.models;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
+import org.junit.rules.ExpectedException;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -29,32 +34,30 @@ public class ModelFactory {
   private static final String datasetNavigation = "__navigation0---datasetMainView--";
   private static final int defaultWaitTime = 10;
 
-  public static Dataset getDataset(WebDriver driver) {
+  public static Dataset getDataset(WebDriver driver, String nameCheck) {
     WebDriverWait wait = new WebDriverWait(driver, defaultWaitTime);
+    wait.until(d -> d.findElement(By.xpath("//span[@id='" + datasetNavigation + "currentDatasetName' and text()='" + nameCheck + "']")));
+
     By nameSelector = By.id(datasetNavigation + "currentDatasetName");
-
-    wait.until(ExpectedConditions.visibilityOfElementLocated(nameSelector));
-
     String name = getText(driver, nameSelector);
     String description = getText(driver, By.id(datasetNavigation + "currentDatasetDescription"));
     int version = Integer.parseInt(getText(driver, By.id(datasetNavigation + "currentDatasetVersion")));
     String rawPath = getText(driver, By.id(datasetNavigation + "currentDatasetRawPath"));
     String publishPath = getText(driver, By.id(datasetNavigation + "currentDatasetPublishedPath"));
     String schema = getText(driver, By.id(datasetNavigation + "currentDatasetSchmea"));
-    String createdBy = getText(driver, By.id(datasetNavigation + "currentShemaUserUpdated"));
-    String updatedBy = getText(driver, By.id(datasetNavigation + "currentShemaUserCreated"));
-    LocalDateTime creationDate = LocalDateTime.parse(getText(driver, By.id(datasetNavigation + "currentShemaDateCreated")), timeStampFormatter);
-    LocalDateTime updateDate = LocalDateTime.parse(getText(driver, By.id(datasetNavigation + "currentShemaLastUpdated")), timeStampFormatter);
+    String createdBy = getText(driver, By.id(datasetNavigation + "currentDatasetUserUpdated"));
+    String updatedBy = getText(driver, By.id(datasetNavigation + "currentDatasetUserCreated"));
+    LocalDateTime creationDate = LocalDateTime.parse(getText(driver, By.id(datasetNavigation + "currentDatasetCreated")), timeStampFormatter);
+    LocalDateTime updateDate = LocalDateTime.parse(getText(driver, By.id(datasetNavigation + "currentDatasetLastUpdate")), timeStampFormatter);
 
     return new Dataset(name, description, version, createdBy, updatedBy, creationDate, updateDate, rawPath, publishPath, schema);
   }
 
-  public static Schema getSchema(WebDriver driver) {
+  public static Schema getSchema(WebDriver driver, String nameCheck) {
     WebDriverWait wait = new WebDriverWait(driver, defaultWaitTime);
+    wait.until(d -> d.findElement(By.xpath("//span[@id='" + schemaNavigation + "currentShemaName' and text()='" + nameCheck + "']")));
+
     By nameSelector = By.id(schemaNavigation + "currentShemaName");
-
-    wait.until(ExpectedConditions.visibilityOfElementLocated(nameSelector));
-
     String name = getText(driver, nameSelector);
     String description = getText(driver, By.id(schemaNavigation + "currentShemaDescription"));
     int version = Integer.parseInt(getText(driver, By.id(schemaNavigation + "currentShemaVersion")));
@@ -67,7 +70,7 @@ public class ModelFactory {
   }
 
   /**
-   * Find an element and get its text
+   * Find an element and get its text.
    * @param by By locator to the element of choice
    * @return Returns inner text from an element
    */

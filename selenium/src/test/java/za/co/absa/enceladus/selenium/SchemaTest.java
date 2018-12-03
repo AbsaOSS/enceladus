@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.selenium;
 
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.testng.annotations.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -23,15 +25,13 @@ import za.co.absa.enceladus.selenium.models.Schema;
 
 import static org.testng.AssertJUnit.*;
 
-import java.util.concurrent.TimeUnit;
-
 public class SchemaTest extends BaseTest {
   private By schemasTab = By.id("__xmlview0--Schemas");
   private String schemaNavigation = "__navigation0---schemaMainView--";
 
   @Test
   public void addSchema() throws InterruptedException {
-    String name = "Omega " + postfix;
+    String name = "Schema " + postfix;
     String description = "Alfa, Beta, Gama, Delta";
 
     By addSchemaButton = By.id(schemaNavigation + "NewSchema");
@@ -42,7 +42,7 @@ public class SchemaTest extends BaseTest {
 
     chooseTab(schemasTab);
     hoverClick(addSchemaButton);
-    TimeUnit.SECONDS.sleep(1);
+    wait.until(d -> d.findElement(By.xpath("//span[@id='addSchemaDialog-title-inner' and text()='New Schema']")));
     WebElement elementName = driver.findElement(newSchemaName);
     WebElement elementDescription = driver.findElement(newSchemaDescription);
 
@@ -53,7 +53,7 @@ public class SchemaTest extends BaseTest {
     elementDescription.sendKeys(description);
     driver.findElement(newSchemaAddButton).click();
 
-    Schema currentSchema = ModelFactory.getSchema(driver);
+    Schema currentSchema = ModelFactory.getSchema(driver, name);
 
     assertEquals(name, currentSchema.getName());
     assertEquals(description, currentSchema.getDescription());
@@ -63,21 +63,22 @@ public class SchemaTest extends BaseTest {
   }
 
   @Test
-  public void removeSchema() throws InterruptedException {
-    By itemToDeleteSelector = By.xpath("//div[contains(text(), 'Omega')]/ancestor::li");
+  public void removeSchema() {
+    By itemToDeleteSelector = By.xpath("//div[contains(text(), 'Schema')]/ancestor::li");
     By deleteButtonSelector = By.id(schemaNavigation + "Delete");
     By okButtonSelector = By.xpath("//bdi[text()='Yes']/ancestor::button");
 
     WebElement element = driver.findElements(itemToDeleteSelector).get(0);
+    String name = element.findElement(By.xpath(".//div[contains(text(),'Schema')]")).getText();
     hoverClick(element);
 
-    Schema toBeDeleted = ModelFactory.getSchema(driver);
-    By deletedSchema = By.xpath("//li//div[text()='"+ toBeDeleted.getName() +"']");
+    Schema toBeDeleted = ModelFactory.getSchema(driver, name);
+    By deletedSchema = By.xpath("//li//div[text()='" + toBeDeleted.getName() + "']");
 
     hoverClick(deleteButtonSelector);
     hoverClick(okButtonSelector);
 
-    TimeUnit.SECONDS.sleep(1);
+    wait.until((ExpectedCondition<Boolean>) d -> !d.findElement(By.id("sap-ui-blocklayer-popup")).isDisplayed());
     boolean present = isPresent(deletedSchema);
     assertFalse(present);
   }
@@ -90,7 +91,7 @@ public class SchemaTest extends BaseTest {
     By saveButton = By.id("editSchemaSaveButton-inner");
     hoverClick(schemaToUpdate);
 
-    Schema currentSchema = ModelFactory.getSchema(driver);
+    Schema currentSchema = ModelFactory.getSchema(driver, "UpdateMe");
 
     String changeInDescription = "To Be Updated - " + postfix;
     hoverClick(editButton);
@@ -99,7 +100,7 @@ public class SchemaTest extends BaseTest {
     descField.sendKeys(changeInDescription);
     hoverClick(saveButton);
 
-    Schema newSchema = ModelFactory.getSchema(driver);
+    Schema newSchema = ModelFactory.getSchema(driver, "UpdateMe");
 
     assertEquals(currentSchema.getName(), newSchema.getName());
     assertEquals(changeInDescription, newSchema.getDescription());
