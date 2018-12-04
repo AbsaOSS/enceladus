@@ -32,31 +32,18 @@
 		</repository>
 	</repositories>
 
-	<profiles>
-		<profile>
-			<id>selenium</id>
-			<modules>
-				<module>selenium</module>
-			</modules>
-		</profile>
-		<profile>
-			<id>default</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
-			<modules>
-				<module>utils</module>
-				<module>conformance</module>
-				<module>standardization</module>
-				<module>dataModel</module>
-				<module>dao</module>
-				<module>menas</module>
-				<module>migrations</module>
-				<module>external/kafka</module>
-				<module>external/fixedWidth</module>
-			</modules>
-		</profile>
-	</profiles>
+	<modules>
+		<module>utils</module>
+		<module>conformance</module>
+		<module>standardization</module>
+		<module>dataModel</module>
+		<module>dao</module>
+		<module>menas</module>
+		<module>migrations</module>
+		<module>external/kafka</module>
+		<module>external/fixedWidth</module>
+		<module>selenium</module>
+	</modules>
 
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
