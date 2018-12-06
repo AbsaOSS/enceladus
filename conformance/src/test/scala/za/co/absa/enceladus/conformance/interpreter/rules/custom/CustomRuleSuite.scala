@@ -56,15 +56,15 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
 
   // we may WANT to enable control framework & spline here
 
-  implicit val progArgs = CmdConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here (if not working with menas)
-  implicit val enableCF = false
+  implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
+  implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val enableCF: Boolean = false
 
-  val inputData = spark.createDataFrame(Seq(Mine(1), Mine(4), Mine(9), Mine(16)))
+  val inputData: DataFrame = spark.createDataFrame(Seq(Mine(1), Mine(4), Mine(9), Mine(16)))
 
-  val conformanceDef = new ConfDataset(
-    name = "My dummy conformance workflow", // whatev here
-    version = 0, //whatev here
+  val conformanceDef = ConfDataset(
+    name = "My dummy conformance workflow", // whatever here
+    version = 0, //whatever here
     hdfsPath = "/a/b/c",
     hdfsPublishPath = "/publish/a/b/c",
 
@@ -72,14 +72,14 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
     schemaVersion = 9999, //also not used
 
     conformance = List(
-      new MyCustomRule(order = 0, outputColumn = "myOutputCol", controlCheckpoint = false, myCustomField = "id")
+      MyCustomRule(order = 0, outputColumn = "myOutputCol", controlCheckpoint = false, myCustomField = "id")
     )
   )
 
   val expected = Seq(MineConfd(1, 1d, Seq()), MineConfd(4, 2d, Seq()), MineConfd(9, 3d, Seq()), MineConfd(16, 4d, Seq()))
 
-  val actualDf = DynamicInterpreter.interpret(conformanceDef, inputData)
-  val actual = actualDf.as[MineConfd].collect().toSeq
+  val actualDf: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+  val actual: Seq[MineConfd] = actualDf.as[MineConfd].collect().toSeq
 
   test("Testing custom rule results") {
     assertResult(expected)(actual)
