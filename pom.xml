@@ -42,6 +42,7 @@
 		<module>migrations</module>
 		<module>external/kafka</module>
 		<module>external/fixedWidth</module>
+		<module>conformanceExamples</module>
 	</modules>
 
 	<properties>
@@ -164,7 +165,7 @@
 					<junitxml>.</junitxml>
 					<filereports>WDF TestSuite.txt</filereports>
 					<!-- Set heap memory to 4000 MB so array conformance test and conformance
-						end to end test could run. This can be removed later when dynamic conformance 
+						end to end test could run. This can be removed later when dynamic conformance
 						becomes more efficient -->
 					<argLine>-Xmx4000m</argLine>
 				</configuration>
