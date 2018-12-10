@@ -61,6 +61,8 @@ case class DateTimestampData(
   timestampSampleWrong1: String, timestampSampleWrong2: String, timestampSampleWrong3: String)
 
 object TestSamples {
+  TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+
   val john0 = Employee(name = "John0",surname = None, hoursWorked = List("8", "7", "8", "9", "12", null), employeeNumbers = List(EmployeeNumber("SAP", List("456", "123")), EmployeeNumber("WD", List("00005"))), startDate = "2015-08-01")
   val john1 = Employee(name = "John1", surname = Some("Doe1"), hoursWorked = List("99", "99", "76", "12", "12", "24"), startDate = "Two Thousand Something")
   val john2 = Employee(name = "John2", surname = None, hoursWorked = null, startDate = "2015-08-01", updated = Some(20150716.133224))
@@ -74,8 +76,8 @@ object TestSamples {
     new StdEmployee(name = "John0", surname = "Unknown Surname", hoursWorked = Some(List(8, 7, 8, 9, 12, 0)),
         employeeNumbers = List(EmployeeNumberStd("SAP", List(456, 123)), EmployeeNumberStd("WD", List(5))), startDate =  new java.sql.Date(startDate), errCol = List(ErrorMessage.stdNullErr("surname"), ErrorMessage.stdNullErr("hoursWorked[*]"))),
     new StdEmployee(name = "John1", surname = "Doe1", hoursWorked = Some(List(99, 99, 76, 12, 12, 24)), startDate = new java.sql.Date(0), errCol = List(ErrorMessage.stdCastErr("startDate", "Two Thousand Something"))),
-    new StdEmployee(name = "John2", surname = "Unknown Surname", hoursWorked = None, startDate = new java.sql.Date(startDate), updated = Some(new java.sql.Timestamp(1437053544l *1000l)), errCol = List(ErrorMessage.stdNullErr("surname"), ErrorMessage.stdNullErr("hoursWorked"))),
-    new StdEmployee(name = "John3", surname = "Unknown Surname", hoursWorked = Some(List()), startDate = new java.sql.Date(startDate), updated = Some(new java.sql.Timestamp(1437042744l * 1000l)), errCol = List(ErrorMessage.stdNullErr("surname"))))
+    new StdEmployee(name = "John2", surname = "Unknown Surname", hoursWorked = None, startDate = new java.sql.Date(startDate), updated = Some(new java.sql.Timestamp(1437053544000l)), errCol = List(ErrorMessage.stdNullErr("surname"), ErrorMessage.stdNullErr("hoursWorked"))),
+    new StdEmployee(name = "John3", surname = "Unknown Surname", hoursWorked = Some(List()), startDate = new java.sql.Date(startDate), updated = Some(new java.sql.Timestamp(1437042744000l)), errCol = List(ErrorMessage.stdNullErr("surname"))))
 
   val dateSamples = List(DateTimestampData(
     1,
