@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package src.main.scala.za.co.absa.enceladus.conformanceExamples.interpreter.rules.custom
+package src.main.scala.za.co.absa.enceladus.examples.interpreter.rules.custom
 
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row

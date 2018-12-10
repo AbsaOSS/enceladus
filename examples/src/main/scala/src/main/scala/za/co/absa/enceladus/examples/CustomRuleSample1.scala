@@ -1,7 +1,7 @@
-package src.main.scala.za.co.absa.enceladus.conformanceExamples
+package src.main.scala.za.co.absa.enceladus.examples
 
 import org.apache.spark.sql.SparkSession
-import src.main.scala.za.co.absa.enceladus.conformanceExamples.interpreter.rules.custom.UppercaseCustomConformanceRule
+import src.main.scala.za.co.absa.enceladus.examples.interpreter.rules.custom.UppercaseCustomConformanceRule
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
@@ -10,7 +10,7 @@ import za.co.absa.enceladus.model.Dataset
 object CustomRuleSample1 {
 
   case class ExampleRow(id: Int, makeUpper: String, leave: String)
-  case class OutputRow(id: Int, makeUpper: String, leave: String, doneUpper:String)
+  case class OutputRow(id: Int, makeUpper: String, leave: String, doneUpper: String)
 
   implicit val spark: SparkSession = SparkSession.builder().master("local[*]").appName("CustomRuleSample1")
     .config("spark.sql.codegen.wholeStage", value = false)
@@ -31,7 +31,7 @@ object CustomRuleSample1 {
       ))
 
     val conformanceDef =  Dataset(
-      name = "My dummy conformance workflow", // whatever here
+      name = "Custom rule sample 1", // whatever here
       version = 0, //whatever here
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",

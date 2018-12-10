@@ -42,7 +42,7 @@
 		<module>migrations</module>
 		<module>external/kafka</module>
 		<module>external/fixedWidth</module>
-		<module>conformanceExamples</module>
+		<module>examples</module>
 	</modules>
 
 	<properties>
