@@ -7,31 +7,30 @@ import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
-import ColumnFunctionCustomCConformanceRule.RuleFunc
+import ColumnFunctionCustomConformanceRule.RuleFunc
 import org.apache.avro.generic.GenericData.StringType
 
-trait ColumnFunctionCustomCConformanceRule extends CustomConformanceRule {
+trait ColumnFunctionCustomConformanceRule extends CustomConformanceRule {
   def inputColumn: String
   def func: RuleFunc
   override def getInterpreter(): RuleInterpreter = StringFuncInterpreter(this)
 }
 
-object ColumnFunctionCustomCConformanceRule {
+object ColumnFunctionCustomConformanceRule {
   type RuleFunc = Column => Column
 }
 
-case class StringFuncInterpreter(rule: ColumnFunctionCustomCConformanceRule) extends RuleInterpreter {
+case class StringFuncInterpreter(rule: ColumnFunctionCustomConformanceRule) extends RuleInterpreter {
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
     handleArrays(rule.outputColumn, df) { flattened =>
       import spark.implicits._
       // we have to do this if this rule is to support arrays
-      val s: String = ""
       ArrayTransformations.nestedWithColumn(flattened)(rule.outputColumn, rule.func(col(rule.inputColumn)))
     }
   }
 }
 
-trait PadCustomConformanceRule extends ColumnFunctionCustomCConformanceRule {
+trait PadCustomConformanceRule extends ColumnFunctionCustomConformanceRule {
   def len: Int
   def pad: String
   protected def fullString: String = (pad * len).substring(0, 0 max len)

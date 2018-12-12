@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package src.main.scala.za.co.absa.enceladus.examples.interpreter.rules.custom
 
 import org.apache.spark.sql
@@ -48,16 +49,16 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
     )
     val inputData: DataFrame = spark.createDataFrame(input)
     val conformanceDef: Dataset =  Dataset(
-      name = "Test string values", // whatever here
-      version = 0, //whatever here
+      name = "Test string values",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
-        LPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", 8, "~")
+        LPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", len = 8, pad = "~")
       )
     )
 
@@ -76,16 +77,16 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
     )
     val inputData: DataFrame = spark.createDataFrame(input)
     val conformanceDef: Dataset =  Dataset(
-      name = "Test integer value", // whatever here
-      version = 0, //whatever here
+      name = "Test integer value",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
-        LPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "intField", 3, "0")
+        LPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "intField", len = 3, pad = "0")
       )
     )
 
@@ -104,16 +105,16 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
     )
     val inputData: DataFrame = spark.createDataFrame(input)
     val conformanceDef: Dataset =  Dataset(
-      name = "Test multicharacter pad", // whatever here
-      version = 0, //whatever here
+      name = "Test multicharacter pad",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
-        LPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", 10, "123")
+        LPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", len = 10, pad = "123")
       )
     )
 
@@ -132,16 +133,16 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
     )
     val inputData: DataFrame = spark.createDataFrame(input)
     val conformanceDef: Dataset =  Dataset(
-      name = "Test negative length", // whatever here
-      version = 0, //whatever here
+      name = "Test negative length",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
-        LPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", -5, ".")
+        LPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", len = -5, pad = ".")
       )
     )
 
@@ -159,8 +160,8 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
 
   import spark.implicits._
 
-  implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val progArgs: CmdConfig = CmdConfig()
+  implicit val dao: EnceladusDAO = EnceladusRestDAO
   implicit val enableCF: Boolean = false
 
   test("String values") {
@@ -171,16 +172,16 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
     )
     val inputData: DataFrame = spark.createDataFrame(input)
     val conformanceDef: Dataset =  Dataset(
-      name = "Test string values", // whatever here
-      version = 0, //whatever here
+      name = "Test string values",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
-        RPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", 8, ".")
+        RPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", len = 8, ".")
       )
     )
 
@@ -199,16 +200,16 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
     )
     val inputData: DataFrame = spark.createDataFrame(input)
     val conformanceDef: Dataset =  Dataset(
-      name = "Test integer value", // whatever here
-      version = 0, //whatever here
+      name = "Test integer value",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
-        RPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "intField", 3, "0")
+        RPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "intField", len = 3, pad = "0")
       )
     )
 
@@ -227,16 +228,16 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
     )
     val inputData: DataFrame = spark.createDataFrame(input)
     val conformanceDef: Dataset =  Dataset(
-      name = "Test multicharacter pad", // whatever here
-      version = 0, //whatever here
+      name = "Test multicharacter pad",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
-        RPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", 10, "123")
+        RPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", len = 10, pad = "123")
       )
     )
 
@@ -255,16 +256,16 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
     )
     val inputData: DataFrame = spark.createDataFrame(input)
     val conformanceDef: Dataset =  Dataset(
-      name = "Test negative length", // whatever here
-      version = 0, //whatever here
+      name = "Test negative length",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
-        RPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", -5, "#")
+        RPadCustomConformanceRule(order = 0, outputColumn = "targetField", controlCheckpoint = false, inputColumn = "stringField", len = -5, pad = "#")
       )
     )
 

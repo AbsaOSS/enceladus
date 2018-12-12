@@ -13,5 +13,5 @@
 
 # Examples of Enceladus usage
 ## Custom Rules Implementations
-This is a simple example fo how to implement a custom rule for the conformance engine. 
+This is a simple example of how to implement a custom rule for the conformance engine. 
 More examples will be added and accordingly this text will grow.

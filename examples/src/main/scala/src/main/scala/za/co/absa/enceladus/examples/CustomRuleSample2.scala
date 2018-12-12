@@ -46,16 +46,16 @@ object CustomRuleSample2 {
       ))
 
     val conformanceDef =  Dataset(
-      name = "Custom rule sample 2", // whatever here
-      version = 0, //whatever here
+      name = "Custom rule sample 2",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
-        LPadCustomConformanceRule(order = 0, outputColumn = "doneUpper", controlCheckpoint = false, inputColumn = "makeUpper", 25, "~")
+        LPadCustomConformanceRule(order = 0, outputColumn = "doneUpper", controlCheckpoint = false, inputColumn = "makeUpper", len = 25, pad = "~")
       )
     )
 

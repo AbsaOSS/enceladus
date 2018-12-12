@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package src.main.scala.za.co.absa.enceladus.examples.interpreter.rules.custom
 
 import org.apache.spark.sql
@@ -48,13 +49,13 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
     )
     val inputData: DataFrame = spark.createDataFrame(input)
     val conformanceDef: Dataset =  Dataset(
-      name = "Test golden flow", // whatever here
-      version = 0, //whatever here
+      name = "Test golden flow",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
         UppercaseCustomConformanceRule(order = 0, outputColumn = "doneUpper", controlCheckpoint = false, inputColumn = "mandatoryString")
@@ -76,13 +77,13 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
     )
     val inputData: DataFrame = spark.createDataFrame(input)
     val conformanceDef: Dataset =  Dataset(
-      name = "Test integer value", // whatever here
-      version = 0, //whatever here
+      name = "Test integer value",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
         UppercaseCustomConformanceRule(order = 0, outputColumn = "doneUpper", controlCheckpoint = false, inputColumn = "id")
@@ -104,13 +105,13 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
     )
     val inputData: DataFrame = spark.createDataFrame(input)
     val conformanceDef: Dataset =  Dataset(
-      name = "Test Null value", // whatever here
-      version = 0, //whatever here
+      name = "Test Null value",
+      version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
-      schemaVersion = 9999, //also not used
+      schemaVersion = 9999,
 
       conformance = List(
         UppercaseCustomConformanceRule(order = 0, outputColumn = "doneUpper", controlCheckpoint = false, inputColumn = "nullableString")
