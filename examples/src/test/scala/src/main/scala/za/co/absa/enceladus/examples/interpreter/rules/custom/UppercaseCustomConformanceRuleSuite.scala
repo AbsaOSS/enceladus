@@ -17,7 +17,7 @@
 package src.main.scala.za.co.absa.enceladus.examples.interpreter.rules.custom
 
 import org.apache.spark.sql
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter

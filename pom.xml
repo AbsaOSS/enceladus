@@ -32,19 +32,6 @@
 		</repository>
 	</repositories>
 
-	<modules>
-		<module>utils</module>
-		<module>conformance</module>
-		<module>standardization</module>
-		<module>dataModel</module>
-		<module>dao</module>
-		<module>menas</module>
-		<module>migrations</module>
-		<module>external/kafka</module>
-		<module>external/fixedWidth</module>
-		<module>examples</module>
-	</modules>
-
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
@@ -210,4 +197,30 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>main</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<modules>
+				<module>utils</module>
+				<module>conformance</module>
+				<module>standardization</module>
+				<module>dataModel</module>
+				<module>dao</module>
+				<module>menas</module>
+				<module>migrations</module>
+				<module>external/kafka</module>
+				<module>external/fixedWidth</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>examples</id>
+			<modules>
+				<module>examples</module>
+			</modules>
+		</profile>
+	</profiles>
 </project>
