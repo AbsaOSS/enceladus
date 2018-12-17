@@ -36,6 +36,7 @@
 		<module>migrations</module>
 		<module>external/kafka</module>
 		<module>external/fixedWidth</module>
+		<module>testutils</module>
 	</modules>
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
