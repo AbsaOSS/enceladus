@@ -42,8 +42,11 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   override def create(newDataset: Dataset, username: String): Future[Dataset] = {
+    println("i m here")
     val dataset = Dataset(
-      name = newDataset.name,
+      name = { if (newDataset.name.indexOf(" ") == -1 ) newDataset.name
+      else throw new Exception(s"Dataset name must not contain whitespace : ${newDataset.name}")
+      },
       version = 0,
       description = newDataset.description,
       hdfsPath = newDataset.hdfsPath,
