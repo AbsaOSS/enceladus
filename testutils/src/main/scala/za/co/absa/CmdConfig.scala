@@ -17,18 +17,20 @@ package za.co.absa.enceladus.standardization
 
 import scopt.OptionParser
 
-import scala.util.matching.Regex
-
 /**
   * This is a class for configuration provided by the command line parameters
   *
   * Note: scope requires all fields to have default values.
   *       Even if a field is mandatory it needs a default value.
   */
-case class CmdConfig(datasetName: String = "",
-                     datasetVersion: Int = 1,
+case class CmdConfig(rawFormat: String = "xml",
+                     rowTag: Option[String] = None,
+                     csvDelimiter: Option[String] = None,
+                     csvHeader: Option[Boolean] = Some(false),
+                     fixedWidthTrimValues: Option[Boolean] = Some(false),
                      stdPath: String = "",
-                     refPath: String = "")
+                     refPath: String = "",
+                     outPath: String = "")
 
 object CmdConfig {
 
@@ -44,24 +46,60 @@ object CmdConfig {
   }
 
   private class CmdParser(programName: String) extends OptionParser[CmdConfig](programName) {
-    head("\nStandardization", "")
+    head("\nDatasets Comparison", "")
+    var rawFormat: Option[String] = None
 
-    opt[String]('D', "dataset-name").required().action((value, config) =>
-      config.copy(datasetName = value)).text("Dataset name")
+    opt[String]('f', "raw-format").required.action((value, config) => {
+      rawFormat = Some(value)
+      config.copy(rawFormat = value)
+    }).text("format of the raw data (csv, xml, parquet,fixed-width, etc.)")
 
-    opt[Int]('d', "dataset-version").required().action((value, config) =>
-      config.copy(datasetVersion = value)).text("Dataset version")
+
+    opt[String]("row-tag").optional.action((value, config) =>
+      config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")
       .validate(value =>
-        if (value > 0) success
-        else failure("Option --dataset-version must be > 0"))
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("xml"))
+          success
+        else
+          failure("The --row-tag option is supported only for XML raw data format")
+      )
 
-    opt[String]("std-path").action((value, config) =>
+    opt[String]("delimiter").optional.action((value, config) =>
+      config.copy(csvDelimiter = Some(value))).text("use the specific delimiter instead of ',' for CSV format")
+      .validate(value =>
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
+          success
+        else
+          failure("The --delimiter option is supported only for CSV raw data format")
+      )
+    // no need for validation for boolean since scopt itself will do
+    opt[Boolean]("header").optional.action((value, config) =>
+      config.copy(csvHeader = Some(value))).text("use the header option to consider CSV header")
+      .validate(value =>
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
+          success
+        else
+          failure("The --header option is supported only for CSV ")
+      )
+
+    opt[Boolean]("trimValues").optional.action((value, config) =>
+      config.copy(fixedWidthTrimValues = Some(value))).text("use --trimValues option to trim values in  fixed width file")
+      .validate(value =>
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("fixed-width"))
+          success
+        else
+          failure("The --trimValues option is supported only for fixed-width files ")
+      )
+
+    opt[String]("std-path").required.action((value, config) =>
       config.copy(stdPath = value)).text("Path to standardized files")
 
-    opt[String]("ref-path").action((value, config) =>
+    opt[String]("ref-path").required.action((value, config) =>
       config.copy(refPath = value)).text("Path to referential files")
+
+    opt[String]("out-path").required.action((value, config) =>
+      config.copy(outPath = value)).text("Path to diff output")
 
     help("help").text("prints this usage text")
   }
-
 }
