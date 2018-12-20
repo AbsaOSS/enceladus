@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.testutils
 
 import scopt.OptionParser
 
@@ -82,7 +82,7 @@ object CmdConfig {
           failure("The --header option is supported only for CSV ")
       )
 
-    opt[Boolean]("trimValues").optional.action((value, config) =>
+    opt[Boolean]("trim-values").optional.action((value, config) =>
       config.copy(fixedWidthTrimValues = Some(value))).text("use --trimValues option to trim values in  fixed width file")
       .validate(value =>
         if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("fixed-width"))
