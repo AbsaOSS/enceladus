@@ -73,12 +73,24 @@ package object conformanceRule {
                                      controlCheckpoint: Boolean,
                                      inputColumn: String) extends ConformanceRule
 
+  /**
+    * Used to create a conformed struct out of a single column
+    *
+    * inputColumn -> struct(inputColumn as inputColumnAlias) as outputColumn
+    */
   case class SingleColumnConformanceRule(order: Int,
                                          controlCheckpoint: Boolean,
                                          outputColumn: String,
                                          inputColumn: String,
                                          inputColumnAlias: String) extends ConformanceRule
 
+  /**
+    * Rule for getting values out of spark session conf.
+    *
+    * This is an easy way of introducing values from the info file into the dataset (such as version), where control framework will populate the conf.
+    *
+    * Gets value from spark.sessionState.conf
+    */
   case class SparkSessionConfConformanceRule(order: Int,
                                              outputColumn: String,
                                              controlCheckpoint: Boolean,
