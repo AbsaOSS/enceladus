@@ -13,20 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa
+package za.co.absa.testutils
 
-import java.io._
+import java.io.{BufferedWriter, File, FileWriter}
+
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-import scala.util.Random
-import Numeric.Implicits._
 
-/* Generate data for testing
- * Data contains a given number of columns and rows
- * Coulmns are of type: string, int, date, float, boolean
- * First 6 columns have predefined names and types, the rest are repeated using a pattern
- * Data are generated at random or using simple rules (eg x = row * 100000 + col})
- */
+import scala.util.Random
 
 object RandomDataGenerator {
 

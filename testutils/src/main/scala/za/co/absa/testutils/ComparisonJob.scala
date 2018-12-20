@@ -13,12 +13,11 @@
  * limitations under the License.
  */
 
-package za.co.absa
+package za.co.absa.testutils
 
-import org.apache.spark.sql._
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{StructField, StructType}
-import za.co.absa.enceladus.standardization.CmdConfig
+import org.apache.spark.sql.{DataFrameReader, Dataset, Row, SparkSession}
 
 object ComparisonJob {
   def getReader(cmd: CmdConfig)(implicit sparkSession: SparkSession): DataFrameReader = {
@@ -52,8 +51,6 @@ object ComparisonJob {
       .getOrCreate()
 
     implicit val sc: SparkContext = sparkSession.sparkContext
-
-    import sparkSession.implicits._
 
     val expectedDf = getReader(cmd).load(cmd.refPath)
     val actualDf = getReader(cmd).load(cmd.stdPath)
