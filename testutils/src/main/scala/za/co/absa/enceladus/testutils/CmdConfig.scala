@@ -48,6 +48,8 @@ object CmdConfig {
   private class CmdParser(programName: String) extends OptionParser[CmdConfig](programName) {
     head("\nDatasets Comparison", "")
     var rawFormat: Option[String] = None
+    var stdPath: Option[String] = None
+    var refPath: Option[String] = None
 
     opt[String]('f', "raw-format").required.action((value, config) => {
       rawFormat = Some(value)
@@ -91,11 +93,27 @@ object CmdConfig {
           failure("The --trimValues option is supported only for fixed-width files ")
       )
 
-    opt[String]("std-path").required.action((value, config) =>
-      config.copy(stdPath = value)).text("Path to standardized dataset")
+    opt[String]("std-path").required.action((value, config) => {
+      stdPath = Some(value)
+      config.copy(stdPath = value)
+    }).text("Path to standardized dataset")
+      .validate(value =>
+        if (refPath.isDefined && refPath.get.equalsIgnoreCase(value))
+            failure("std-path and ref-path can not be equal")
+        else
+            success
+        )
 
-    opt[String]("ref-path").required.action((value, config) =>
-      config.copy(refPath = value)).text("Path to referential dataset")
+    opt[String]("ref-path").required.action((value, config) => {
+      refPath = Some(value)
+      config.copy(refPath = value)
+    }).text("Path to referential dataset")
+      .validate(value =>
+        if (stdPath.isDefined && stdPath.get.equalsIgnoreCase(value))
+          failure("std-path and ref-path can not be equal")
+        else
+          success
+        )
 
     opt[String]("out-path").required.action((value, config) =>
       config.copy(outPath = value)).text("Path to diff output")

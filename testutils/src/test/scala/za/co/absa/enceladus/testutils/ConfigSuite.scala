@@ -16,13 +16,12 @@
 package za.co.absa.enceladus.testutils
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.testutils.CmdConfig
 
 class ConfigSuite extends FunSuite {
 
   private val stdPath = "/tmp/standardized_out"
   private val refPath = "/tmp/reference_data"
-  private val outPath = "/tmp/reference_data"
+  private val outPath = "/tmp/out_data"
   private val delimiter = ";"
   private val rowTag = "Alfa"
   private val csvFormat = "csv"
