@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.testutils
+package za.co.absa.enceladus.testutils
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.types.{StructField, StructType}

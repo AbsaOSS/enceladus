@@ -13,14 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.ConfigSuite.testutils
+package za.co.absa.enceladus.testutils
 
 import org.scalatest.FunSuite
-import za.co.absa.testutils.CmdConfig
+import za.co.absa.enceladus.testutils.CmdConfig
 
 class ConfigSuite extends FunSuite {
 
-  private val rawFormat = "parquet"
   private val stdPath = "/tmp/standardized_out"
   private val refPath = "/tmp/reference_data"
   private val outPath = "/tmp/reference_data"
@@ -30,7 +29,7 @@ class ConfigSuite extends FunSuite {
   test("Parquest file") {
     val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
-        "--raw-format", rawFormat,
+        "--raw-format", "parquet",
         "--std-path", stdPath,
         "--ref-path", refPath,
         "--out-path", outPath
