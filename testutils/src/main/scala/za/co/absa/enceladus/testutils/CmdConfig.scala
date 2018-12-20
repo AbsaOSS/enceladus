@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.testutils
+package za.co.absa.enceladus.testutils
 
 import scopt.OptionParser
 
