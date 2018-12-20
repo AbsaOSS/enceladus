@@ -20,7 +20,7 @@ import scopt.OptionParser
 /**
   * This is a class for configuration provided by the command line parameters
   *
-  * Note: scope requires all fields to have default values.
+  * Note: scopt requires all fields to have default values.
   *       Even if a field is mandatory it needs a default value.
   */
 case class CmdConfig(rawFormat: String = "xml",
@@ -92,10 +92,10 @@ object CmdConfig {
       )
 
     opt[String]("std-path").required.action((value, config) =>
-      config.copy(stdPath = value)).text("Path to standardized files")
+      config.copy(stdPath = value)).text("Path to standardized dataset")
 
     opt[String]("ref-path").required.action((value, config) =>
-      config.copy(refPath = value)).text("Path to referential files")
+      config.copy(refPath = value)).text("Path to referential dataset")
 
     opt[String]("out-path").required.action((value, config) =>
       config.copy(outPath = value)).text("Path to diff output")
