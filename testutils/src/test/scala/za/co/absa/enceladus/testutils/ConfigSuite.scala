@@ -25,18 +25,22 @@ class ConfigSuite extends FunSuite {
   private val outPath = "/tmp/reference_data"
   private val delimiter = ";"
   private val rowTag = "Alfa"
+  private val csvFormat = "csv"
+  private val parquetFormat = "parquet"
+  private val xmlFormat = "xml"
+  private val fixedWithdFormat = "fixed-width"
 
   test("Parquest file") {
     val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
-        "--raw-format", "parquet",
+        "--raw-format", parquetFormat,
         "--std-path", stdPath,
         "--ref-path", refPath,
         "--out-path", outPath
       )
     )
 
-    assert(cmdConfig.rawFormat == rawFormat)
+    assert(cmdConfig.rawFormat == parquetFormat)
     assert(cmdConfig.stdPath == stdPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
@@ -45,7 +49,7 @@ class ConfigSuite extends FunSuite {
   test("Csv with default header") {
     val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
-        "--raw-format", "csv",
+        "--raw-format", csvFormat,
         "--delimiter", delimiter,
         "--std-path", stdPath,
         "--ref-path", refPath,
@@ -53,7 +57,7 @@ class ConfigSuite extends FunSuite {
       )
     )
 
-    assert(cmdConfig.rawFormat == "csv")
+    assert(cmdConfig.rawFormat == csvFormat)
     assert(cmdConfig.csvDelimiter == Option(delimiter))
     assert(cmdConfig.csvHeader == Option(false))
     assert(cmdConfig.stdPath == stdPath)
@@ -64,7 +68,7 @@ class ConfigSuite extends FunSuite {
   test("Csv with header") {
     val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
-        "--raw-format", "csv",
+        "--raw-format", csvFormat,
         "--delimiter", ";",
         "--header", "true",
         "--std-path", stdPath,
@@ -73,7 +77,7 @@ class ConfigSuite extends FunSuite {
       )
     )
 
-    assert(cmdConfig.rawFormat == "csv")
+    assert(cmdConfig.rawFormat == csvFormat)
     assert(cmdConfig.csvDelimiter == Option(delimiter))
     assert(cmdConfig.csvHeader == Option(true))
     assert(cmdConfig.stdPath == stdPath)
@@ -85,7 +89,7 @@ class ConfigSuite extends FunSuite {
   test("XML file") {
     val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
-        "--raw-format", "xml",
+        "--raw-format", xmlFormat,
         "--row-tag", rowTag,
         "--std-path", stdPath,
         "--ref-path", refPath,
@@ -93,7 +97,7 @@ class ConfigSuite extends FunSuite {
       )
     )
 
-    assert(cmdConfig.rawFormat == "xml")
+    assert(cmdConfig.rawFormat == xmlFormat)
     assert(cmdConfig.rowTag == Option(rowTag))
     assert(cmdConfig.stdPath == stdPath)
     assert(cmdConfig.refPath == refPath)
@@ -103,14 +107,14 @@ class ConfigSuite extends FunSuite {
   test("Fixed-with file don't trim value") {
     val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
-        "--raw-format", "fixed-width",
+        "--raw-format", fixedWithdFormat,
         "--std-path", stdPath,
         "--ref-path", refPath,
         "--out-path", outPath
       )
     )
 
-    assert(cmdConfig.rawFormat == "fixed-width")
+    assert(cmdConfig.rawFormat == fixedWithdFormat)
     assert(cmdConfig.fixedWidthTrimValues == Option(false))
     assert(cmdConfig.stdPath == stdPath)
     assert(cmdConfig.refPath == refPath)
@@ -120,7 +124,7 @@ class ConfigSuite extends FunSuite {
   test("Fixed-with file trim values") {
     val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
-        "--raw-format", "fixed-width",
+        "--raw-format", fixedWithdFormat,
         "--trim-values", "true",
         "--std-path", stdPath,
         "--ref-path", refPath,
@@ -128,7 +132,7 @@ class ConfigSuite extends FunSuite {
       )
     )
 
-    assert(cmdConfig.rawFormat == "fixed-width")
+    assert(cmdConfig.rawFormat == fixedWithdFormat)
     assert(cmdConfig.fixedWidthTrimValues == Option(true))
     assert(cmdConfig.stdPath == stdPath)
     assert(cmdConfig.refPath == refPath)
