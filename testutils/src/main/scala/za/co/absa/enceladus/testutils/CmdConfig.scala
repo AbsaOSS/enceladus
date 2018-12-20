@@ -50,6 +50,7 @@ object CmdConfig {
     var rawFormat: Option[String] = None
     var stdPath: Option[String] = None
     var refPath: Option[String] = None
+    var outPath: Option[String] = None
 
     opt[String]('f', "raw-format").required.action((value, config) => {
       rawFormat = Some(value)
@@ -100,6 +101,8 @@ object CmdConfig {
       .validate(value =>
         if (refPath.isDefined && refPath.get.equalsIgnoreCase(value))
             failure("std-path and ref-path can not be equal")
+        else if (outPath.isDefined && outPath.get.equalsIgnoreCase(value))
+            failure("std-path and out-path can not be equal")
         else
             success
         )
@@ -110,13 +113,25 @@ object CmdConfig {
     }).text("Path to referential dataset")
       .validate(value =>
         if (stdPath.isDefined && stdPath.get.equalsIgnoreCase(value))
-          failure("std-path and ref-path can not be equal")
+          failure("ref-path and std-path can not be equal")
+        else if (outPath.isDefined && outPath.get.equalsIgnoreCase(value))
+          failure("ref-path and out-path can not be equal")
         else
           success
         )
 
-    opt[String]("out-path").required.action((value, config) =>
-      config.copy(outPath = value)).text("Path to diff output")
+    opt[String]("out-path").required.action((value, config) => {
+      outPath = Some(value)
+      config.copy(outPath = value)
+    }).text("Path to diff output")
+      .validate(value =>
+        if (stdPath.isDefined && stdPath.get.equalsIgnoreCase(value))
+          failure("out-path and std-path can not be equal")
+        else if (refPath.isDefined && refPath.get.equalsIgnoreCase(value))
+          failure("out-path and ref-path can not be equal")
+        else
+          success
+      )
 
     help("help").text("prints this usage text")
   }
