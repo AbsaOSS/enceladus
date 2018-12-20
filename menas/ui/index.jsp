@@ -33,6 +33,7 @@
 <script src="service/GenericService.js"></script>
 <script src="service/SchemaService.js"></script>
 <script src="service/DatasetService.js"></script>
+<script src="service/RuleService.js"></script>
 <script src="service/MappingTableService.js"></script>
 <script src="generic/functions.js"></script>
 <script src="generic/formatters.js"></script>

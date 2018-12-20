@@ -30,9 +30,12 @@ var DatasetService = new function() {
 		})
 	};
 
-    this.getLatestDatasetVersion = function(sId) {
+    this.getLatestDatasetVersion = function(sId, bGetSchema) {
         Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/latest", "GET", {}, function(oData) {
-            model.setProperty("/currentDataset", oData)
+          model.setProperty("/currentDataset", oData)
+          if (bGetSchema) {
+            SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema")
+          }
         }, function() {
             sap.m.MessageBox.error("Failed to get the detail of the dataset. Please wait a moment and try reloading the application");
             window.location.hash = "#/dataset"
@@ -77,10 +80,10 @@ var DatasetService = new function() {
         })
     };
 
-    this.isUniqueDatasetName = function(sName) {
-        model.setProperty("/newDataset/nameUsed", undefined);
+    this.isUniqueDatasetName = function(sName, model) {
+        model.setProperty("/nameUsed", undefined);
         Functions.ajax("api/dataset/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
-            model.setProperty("/newDataset/nameUnique", oData)
+            model.setProperty("/nameUnique", oData)
         }, function() {
             sap.m.MessageBox.error("Failed to retreive isUniqueName. Please try again later.")
         })

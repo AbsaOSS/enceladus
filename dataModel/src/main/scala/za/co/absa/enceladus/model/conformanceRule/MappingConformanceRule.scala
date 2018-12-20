@@ -14,19 +14,19 @@
  */
 
 package za.co.absa.enceladus.model.conformanceRule
-
-case class MappingConformanceRule(
-    order: Int,
-    controlCheckpoint: Boolean,
-    mappingTable: String,
-    mappingTableVersion: Int,
-    attributeMappings: Map[String, String], // key = mapping table column, value = input df column
-    targetAttribute: String,
-    outputColumn: String,
-    isNullSafe: Boolean = false) extends ConformanceRule 
-
-object MappingConformanceRule {
-  // attributeMappings property has key's with dot's that mongo doesn't accept; this symbol is used to replace the dots
-  val DOT_REPLACEMENT_SYMBOL: Char = '^'
-}
+//
+//case class MappingConformanceRule(
+//    order: Int,
+//    controlCheckpoint: Boolean,
+//    mappingTable: String,
+//    mappingTableVersion: Int,
+//    attributeMappings: Map[String, String], // key = mapping table column, value = input df column
+//    targetAttribute: String,
+//    outputColumn: String,
+//    isNullSafe: Boolean = false) extends ConformanceRule
+//
+//object MappingConformanceRule {
+//  // attributeMappings property has key's with dot's that mongo doesn't accept; this symbol is used to replace the dots
+//  val DOT_REPLACEMENT_SYMBOL: Char = '^'
+//}
 

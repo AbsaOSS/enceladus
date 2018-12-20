@@ -7,7 +7,7 @@ end_of_line = lf
 
 [*.xml]
 indent_size = 4
-indent_style = tab
+indent_style = space
 
 [*.{java,scala,js,json}]
 indent_size = 2

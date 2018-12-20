@@ -123,13 +123,42 @@ var SchemaService = new function() {
 		}, function() {
 			sap.m.MessageBox.error("Failed to create the schema, try reloading the application or try again later.")
 		})	
-	}
-	
+	};
+
 	this.isUniqueSchemaName = function(sName) {
 		Functions.ajax("api/schema/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
 			model.setProperty("/newSchema/nameUnique", oData)
 		}, function() {
 			sap.m.MessageBox.error("Failed to retreive isUniqueName. Please try again later.")
 		})	
-	}
+	};
+
+  this.fieldSelect = function(sBindingPath, sModelPathBase, oModel, sOutputProperty) {
+    console.log("sBindingPath: " + sBindingPath)
+    console.log("sModelPathBase: " + sModelPathBase)
+    console.log("oModel: " + oModel)
+    console.log("sOutputProperty: " + sOutputProperty)
+    model.setProperty(sOutputProperty, this._buildSchemaPath(sBindingPath, sModelPathBase, oModel));
+  };
+
+  this._buildSchemaPath = function(sBindingPath, sModelPathBase, oModel) {
+    let pathToks = sBindingPath.replace(sModelPathBase, "").split("/");
+
+    let helper = function(aToks, sModelPathAcc, aAcc) {
+      if (aToks.length === 0) {
+        return aAcc.join(".");
+      }
+
+      let rev = aToks.reverse();
+      let sCurrPath = sModelPathAcc + rev.pop() + "/";
+      let curr = oModel.getProperty(sCurrPath);
+      aAcc.push(curr.name);
+
+      let newPath = sCurrPath + rev.pop() + "/";
+
+      return helper(rev.reverse(), newPath, aAcc)
+    };
+
+    return helper(pathToks, sModelPathBase, [])
+  }
 }();

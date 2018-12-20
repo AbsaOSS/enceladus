@@ -22,8 +22,8 @@ package za.co.absa.enceladus.model.conformanceRule
  *
  * Gets value from spark.sessionState.conf
  */
-case class SparkSessionConfConformanceRule(
-    order: Int,
-    outputColumn: String,
-    controlCheckpoint: Boolean,
-    sparkConfKey: String) extends ConformanceRule
+//case class SparkSessionConfConformanceRule(
+//    order: Int,
+//    outputColumn: String,
+//    controlCheckpoint: Boolean,
+//    sparkConfKey: String) extends ConformanceRule

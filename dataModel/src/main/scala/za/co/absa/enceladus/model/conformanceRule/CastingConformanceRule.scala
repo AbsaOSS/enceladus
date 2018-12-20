@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.model.conformanceRule
 
-case class CastingConformanceRule(
-    order: Int,
-    outputColumn: String,
-    controlCheckpoint: Boolean,
-    inputColumn: String,
-    outputDataType: String) extends ConformanceRule
+//case class CastingConformanceRule(
+//    order: Int,
+//    outputColumn: String,
+//    controlCheckpoint: Boolean,
+//    inputColumn: String,
+//    outputDataType: String) extends ConformanceRule

@@ -16,17 +16,16 @@
 package za.co.absa.enceladus.rest.utils
 
 import java.util.Optional
+
 import scala.concurrent.Future
 import java.util.concurrent.CompletableFuture
-import scala.compat.java8.FutureConverters._
 
+import scala.compat.java8.FutureConverters._
 import org.mongodb.scala.bson.codecs.Macros._
-import org.bson.codecs.Codec
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
-import org.bson.codecs.configuration.CodecRegistries.{ fromRegistries, fromProviders }
+import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.configuration.CodecRegistries
 import io.github.cbartosiak.bson.codecs.jsr310.zoneddatetime.ZonedDateTimeAsDocumentCodec
-
 import za.co.absa.enceladus.model._
 import za.co.absa.enceladus.model.api._
 import za.co.absa.enceladus.model.api.versionedModelDetail._
@@ -39,10 +38,10 @@ package object implicits {
   implicit def optJavaScala[C](in: Optional[C]) = if (in.isPresent()) Some(in.get) else None
   implicit def scalaToJavaFuture[T](in: Future[T]): CompletableFuture[T] = in.toJava.toCompletableFuture()
 
-  val codecRegistry = fromRegistries(fromProviders(classOf[DatasetDetail], classOf[MappingTableDetail], classOf[SchemaDetail],
+  val codecRegistry = fromRegistries(fromProviders(
+    classOf[DatasetDetail], classOf[MappingTableDetail], classOf[SchemaDetail],
     classOf[HDFSFolder],
-    classOf[ConcatenationConformanceRule], classOf[DropConformanceRule], classOf[LiteralConformanceRule], classOf[MappingConformanceRule], classOf[SingleColumnConformanceRule],
-    classOf[SparkSessionConfConformanceRule], classOf[UppercaseConformanceRule],
+    classOf[ConformanceRule],
     classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
     classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference],
     classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference]), CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)

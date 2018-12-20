@@ -15,9 +15,12 @@
 
 package za.co.absa.enceladus.rest.repositories
 
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters.equal
-import org.mongodb.scala.{Completed, MongoDatabase, Observable}
+import org.mongodb.scala.{Completed, Document, MongoDatabase, Observable}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -30,13 +33,33 @@ abstract class MongoRepository[C](mongoDb: MongoDatabase)(implicit ct: ClassTag[
 
   private[repositories] def collectionName: String
 
+  private[repositories] val objectMapper = new ObjectMapper()
+    .registerModule(DefaultScalaModule)
+    .registerModule(new JavaTimeModule())
+    .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+
   def isUniqueName(name: String): Observable[Boolean] = {
     val res = collection.countDocuments(getNameFilter(name))
     res.map( _ <= 0 )
   }
 
   def create(item: C): Future[Completed] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+//    println(collectionName)
+//    println(collection)
+//    val i = objectMapper.writeValueAsString(item)
+//    println(i)
+//    val document = Document(i)
+//    println(document)
+//    val f = collection.withDocumentClass[Document]().insertOne(document).head()
+//    f.onFailure {
+//      case e => e.printStackTrace()
+//    }
+//    f
+
     collection.insertOne(item).head()
+
   }
 
   private[repositories] def getNameFilter(name: String): Bson = {

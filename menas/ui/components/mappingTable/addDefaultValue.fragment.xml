@@ -20,13 +20,7 @@
             <form:SimpleForm adjustLabelSpan="true" editable="true">
                 <form:content>
                     <Label text="Target Column"></Label>
-                    <ScrollContainer id="defValFieldSelectScroll" height="300px" vertical="true" horizontal="true" width="100%">
-                        <Tree id="newDefaultValueFieldSelector" mode="SingleSelect" enableBusyIndicator="true" busyIndicatorDelay="0"
-                            selectionChange="schemaFieldSelect"
-                            items="{path: '/currentMappingTable/schema/fields', parameters:{arrayNames:['children']}}">
-                            <StandardTreeItem title="{name}" type="active" cust:path="{path}"></StandardTreeItem>
-                        </Tree>
-                    </ScrollContainer>
+                    <core:Fragment fragmentName="components.schemaFieldSelector" type="XML" binding="{/currentMappingTable}"/>
                     <Label text="Selected Target Column"></Label>
                     <Text text="{/newDefaultValue/columnName}"></Text>
                     <Label text="Default Value"></Label>

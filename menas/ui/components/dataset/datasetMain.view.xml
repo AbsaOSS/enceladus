@@ -122,13 +122,20 @@
 											</table:columns>
 										</table:TreeTable>
 									</IconTabFilter>
-								</items>
+                                    <IconTabFilter id="ConformanceRules" icon="sap-icon://list" key="conformanceRules" text="Conformance Rules">
+                                        <List headerText="Conformance Rules" items="{
+                                            path: '/currentDataset/conformance',
+                                            factory: '.conformanceRuleFactory'
+                                        }"/>
+                                    </IconTabFilter>
+                                </items>
 							</IconTabBar>
 						</content>
 						<footer>
 							<Bar>
 								<contentRight>
 									<Button id="Delete" text="Delete" icon="sap-icon://delete" press="onRemovePress"/>
+									<Button id="AddRule" text="Add Conformance Rule" icon="sap-icon://add-equipment" press="onAddConformanceRulePress"></Button>
 									<Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress"/>
 								</contentRight>
 							</Bar>

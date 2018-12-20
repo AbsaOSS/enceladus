@@ -15,8 +15,8 @@
 
 package za.co.absa.enceladus.model.conformanceRule
 
-case class ConcatenationConformanceRule(
-    order: Int,
-    outputColumn: String,
-    controlCheckpoint: Boolean,
-    inputColumns: Seq[String]) extends ConformanceRule
+//case class ConcatenationConformanceRule(
+//    order: Int,
+//    outputColumn: String,
+//    controlCheckpoint: Boolean,
+//    inputColumns: Seq[String]) extends ConformanceRule

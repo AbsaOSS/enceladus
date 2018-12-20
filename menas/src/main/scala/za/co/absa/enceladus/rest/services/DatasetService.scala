@@ -17,6 +17,7 @@ package za.co.absa.enceladus.rest.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{Dataset, UsedIn}
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
 
@@ -53,4 +54,11 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       conformance = List())
     super.create(dataset, username)
   }
+
+  def addConformanceRule(username: String, datasetName: String, rule: ConformanceRule): Future[Dataset] = {
+    super.update(username, datasetName) { dataset =>
+      dataset.copy(conformance = dataset.conformance :+ rule)
+    }
+  }
+
 }

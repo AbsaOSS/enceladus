@@ -15,8 +15,8 @@
 
 package za.co.absa.enceladus.model.conformanceRule
 
-case class NegationConformanceRule(
-    order: Int,
-    outputColumn: String,
-    controlCheckpoint: Boolean,
-    inputColumn: String) extends ConformanceRule
+//case class NegationConformanceRule(
+//    order: Int,
+//    outputColumn: String,
+//    controlCheckpoint: Boolean,
+//    inputColumn: String) extends ConformanceRule

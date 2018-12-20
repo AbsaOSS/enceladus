@@ -15,16 +15,35 @@
 
 package za.co.absa.enceladus.rest.repositories
 
+import org.bson.codecs.configuration.CodecRegistries
+import org.bson.codecs.pojo.PojoCodecProvider
 import org.mongodb.scala.MongoDatabase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.conformanceRule._
 
 import scala.reflect.ClassTag
 
 @Repository
 class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends VersionedMongoRepository[Dataset](mongoDb)(ClassTag(classOf[Dataset])) {
+
+//  override val collection = mongoDb.getCollection[Dataset](collectionName).withCodecRegistry(
+//    CodecRegistries.fromProviders(
+//      PojoCodecProvider.builder().register(
+//        classOf[CastingConformanceRule],
+//        classOf[ConcatenationConformanceRule],
+//        classOf[DropConformanceRule],
+//        classOf[LiteralConformanceRule],
+//        classOf[MappingConformanceRule],
+//        classOf[NegationConformanceRule],
+//        classOf[SingleColumnConformanceRule],
+//        classOf[SparkSessionConfConformanceRule],
+//        classOf[UppercaseConformanceRule]
+//      ).build()
+//    )
+//  )
 
   override private[repositories] def collectionName = "dataset"
 

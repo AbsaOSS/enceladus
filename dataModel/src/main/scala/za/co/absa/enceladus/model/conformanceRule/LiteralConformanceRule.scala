@@ -15,8 +15,8 @@
 
 package za.co.absa.enceladus.model.conformanceRule
 
-case class LiteralConformanceRule(
-    order: Int,
-    outputColumn: String,
-    controlCheckpoint: Boolean,
-    value: String) extends ConformanceRule
+//case class LiteralConformanceRule(
+//    order: Int,
+//    outputColumn: String,
+//    controlCheckpoint: Boolean,
+//    value: String) extends ConformanceRule

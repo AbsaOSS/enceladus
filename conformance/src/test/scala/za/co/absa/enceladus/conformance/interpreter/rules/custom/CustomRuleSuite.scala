@@ -23,16 +23,15 @@ import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.dao.EnceladusDAO
-import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 case class MyCustomRule(
-  order:             Int,
-  outputColumn:      String,
-  controlCheckpoint: Boolean, // this requires manual instantiation of control framework
-  myCustomField:     String) extends CustomConformanceRule with ConformanceRule {
+  override val order:             Int,
+  override val outputColumn:      String,
+  override val controlCheckpoint: Boolean, // this requires manual instantiation of control framework
+  myCustomField:     String) extends CustomConformanceRule(order, outputColumn, controlCheckpoint) {
   def getInterpreter() = MyCustomRuleInterpreter(this)
 }
 

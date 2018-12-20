@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.model.conformanceRule
 
-case class DropConformanceRule(
-    order: Int,
-    controlCheckpoint: Boolean,
-    outputColumn: String) extends ConformanceRule
+//case class DropConformanceRule(
+//    order: Int,
+//    controlCheckpoint: Boolean,
+//    outputColumn: String) extends ConformanceRule

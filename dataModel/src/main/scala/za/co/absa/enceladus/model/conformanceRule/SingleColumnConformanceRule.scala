@@ -20,9 +20,9 @@ package za.co.absa.enceladus.model.conformanceRule
  *
  * inputColumn -> struct(inputColumn as inputColumnAlias) as outputColumn
  */
-case class SingleColumnConformanceRule(
-    order: Int,
-    controlCheckpoint: Boolean,
-    outputColumn: String,
-    inputColumn: String,
-    inputColumnAlias: String) extends ConformanceRule
+//case class SingleColumnConformanceRule(
+//    order: Int,
+//    controlCheckpoint: Boolean,
+//    outputColumn: String,
+//    inputColumn: String,
+//    inputColumnAlias: String) extends ConformanceRule
