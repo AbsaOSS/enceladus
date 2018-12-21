@@ -81,7 +81,6 @@ sap.ui.controller("components.dataset.datasetMain", {
     // if (this.validateNewRule) {
     let currentDatasetName = this._model.getProperty("/currentDataset/name");
     let currentRule = this._model.getProperty("/newRule");
-    console.log("dataset: " + currentDatasetName);
     console.log("submit: " + JSON.stringify(currentRule));
     RuleService.createRule(currentDatasetName, currentRule);
     // }
@@ -170,6 +169,35 @@ sap.ui.controller("components.dataset.datasetMain", {
     oHBox.addItem(new sap.m.Input({type: "Text", value:"{" + pathToNewJoinCondition + "/datasetField}", placeholder: "Dataset Column"}));
     oPage.addContent(new sap.m.Label({text: "Join Condition"}));
     oPage.addContent(oHBox);
+  },
+
+  onRuleMenuAction : function(oEv) {
+    let sAction = oEv.getParameter("item").data("action")
+    let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
+console.log("action: " + sAction);
+console.log("sBindPath: " + sBindPath);
+    if (sAction === "edit") {
+      let old = this._model.getProperty(sBindPath);
+      old.title = "Edit";
+      old.isEdit = true;
+      old.bindPath = sBindPath;
+      this._model.setProperty("/newRule", old);
+      this._addConformanceRuleDialog.open();
+      // this._schemaFieldSelectorSelectPath(old["columnName"])
+    } else if (sAction === "delete") {
+      sap.m.MessageBox.confirm("Are you sure you want to delete the conformance rule?", {
+        actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
+        onClose: function(oResponse) {
+          if(oResponse === sap.m.MessageBox.Action.YES) {
+            let toks = sBindPath.split("/");
+            let index = toks[toks.length-1];
+            let currDataset = this._model.getProperty("/currentDataset");
+            let conformance = currDataset["conformance"].filter((el, ind) => ind !== parseInt(index));
+            // RuleService.editConformanceRules(currDataset.name, currDataset.version, conformance);
+          }
+        }.bind(this)
+      });
+    }
   },
 
   toSchema: function (oEv) {
@@ -364,10 +392,6 @@ sap.ui.controller("components.dataset.datasetMain", {
 
   conformanceRuleFactory: function(sId, oContext) {
     let fragmentName = "components.dataset.conformanceRule." + oContext.getProperty("_t") + ".display";
-    console.log(oContext.oModel);
-    console.log(oContext.oModel.oData);
-    console.log(oContext.oModel.oData.currentDataset);
-    console.log(oContext.oModel.oData.currentDataset.conformance[0]["_t"]);
     return sap.ui.xmlfragment(sId, fragmentName, this);
   },
 

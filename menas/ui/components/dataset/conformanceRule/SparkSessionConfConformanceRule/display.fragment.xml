@@ -13,7 +13,8 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
+                         xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <CustomListItem>
         <form:SimpleForm adjustLabelSpan="true" editable="false">
             <form:content>
@@ -22,5 +23,15 @@
                 <Text text="{sparkConfKey}"/>
             </form:content>
         </form:SimpleForm>
+        <MenuButton icon="sap-icon://menu" class="sapUiSmallMargin">
+            <menu>
+                <Menu itemSelected="onRuleMenuAction">
+                    <items>
+                        <MenuItem text="Edit" icon="sap-icon://edit" cust:action="edit"/>
+                        <MenuItem text="Delete" icon="sap-icon://delete" cust:action="delete"/>
+                    </items>
+                </Menu>
+            </menu>
+        </MenuButton>
     </CustomListItem>
 </core:FragmentDefinition>

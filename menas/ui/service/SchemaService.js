@@ -134,10 +134,6 @@ var SchemaService = new function() {
 	};
 
   this.fieldSelect = function(sBindingPath, sModelPathBase, oModel, sOutputProperty) {
-    console.log("sBindingPath: " + sBindingPath)
-    console.log("sModelPathBase: " + sModelPathBase)
-    console.log("oModel: " + oModel)
-    console.log("sOutputProperty: " + sOutputProperty)
     model.setProperty(sOutputProperty, this._buildSchemaPath(sBindingPath, sModelPathBase, oModel));
   };
 
