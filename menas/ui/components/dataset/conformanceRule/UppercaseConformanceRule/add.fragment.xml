@@ -15,5 +15,5 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.commonRuleFields"/>
-    <!--<core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.inputColumn"/>-->
+    <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.inputColumn"/>
 </core:FragmentDefinition>

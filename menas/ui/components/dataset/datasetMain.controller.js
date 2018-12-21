@@ -165,10 +165,11 @@ sap.ui.controller("components.dataset.datasetMain", {
     this._model.setProperty(pathToNewJoinCondition, {mappingTableField : "", datasetField: ""});
 
     let oPage = sap.ui.getCore().byId("firm");
-    oPage.addContent(new sap.m.Label({text: "Mapping Table Column"}));
-    oPage.addContent(new sap.m.Input({type: "Text", value:"{" + pathToNewJoinCondition + "/mappingTableField}"}))
-    oPage.addContent(new sap.m.Label({text: "Dataset Column"}));
-    oPage.addContent(new sap.m.Input({type: "Text", value:"{" + pathToNewJoinCondition + "/datasetField}"}))
+    let oHBox = new sap.m.HBox({justifyContent: "SpaceAround"});
+    oHBox.addItem(new sap.m.Input({type: "Text", value:"{" + pathToNewJoinCondition + "/mappingTableField}", placeholder: "Mapping Table Column"}));
+    oHBox.addItem(new sap.m.Input({type: "Text", value:"{" + pathToNewJoinCondition + "/datasetField}", placeholder: "Dataset Column"}));
+    oPage.addContent(new sap.m.Label({text: "Join Condition"}));
+    oPage.addContent(oHBox);
   },
 
   toSchema: function (oEv) {

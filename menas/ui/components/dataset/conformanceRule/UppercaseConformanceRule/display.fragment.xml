@@ -13,6 +13,13 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
-    <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.commonRuleFields"/>
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+    <CustomListItem>
+        <form:SimpleForm adjustLabelSpan="true" editable="false">
+            <form:content>
+                <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.commonRuleFields"/>
+                <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.inputColumn"/>
+            </form:content>
+        </form:SimpleForm>
+    </CustomListItem>
 </core:FragmentDefinition>

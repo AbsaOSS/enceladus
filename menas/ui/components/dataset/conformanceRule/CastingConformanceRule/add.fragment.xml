@@ -15,9 +15,9 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.commonRuleFields"/>
-    <!--<core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.inputColumn"/>-->
+    <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.inputColumn"/>
     <Label text="Output Data Type"/>
-    <Select id="outputDataType" selectedKey="{/newRule/outputDatType}">
+    <Select id="outputDataType" selectedKey="{/newRule/outputDataType}">
         <core:ListItem key="boolean" text="boolean"/>
         <core:ListItem key="byte" text="byte"/>
         <core:ListItem key="short" text="short"/>

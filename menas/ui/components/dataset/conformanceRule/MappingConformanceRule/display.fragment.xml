@@ -14,5 +14,11 @@
   -->
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:l="sap.ui.layout" xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.commonRuleFields"/>
+    <CustomListItem>
+        <form:SimpleForm adjustLabelSpan="true" editable="false">
+            <form:content>
+                <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.commonRuleFields"/>
+            </form:content>
+        </form:SimpleForm>
+    </CustomListItem>
 </core:FragmentDefinition>

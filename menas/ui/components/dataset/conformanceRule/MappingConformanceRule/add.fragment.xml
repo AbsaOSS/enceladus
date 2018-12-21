@@ -18,5 +18,5 @@
     <Label text="Target column"/>
     <Input type="Text" value="{/newRule/targetAttribute}"/>
     <core:Fragment type="XML" fragmentName="components.mappingTableSelector"/>
-    <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.joinConditions"/>
+    <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.MappingConformanceRule.joinConditions"/>
 </core:FragmentDefinition>
