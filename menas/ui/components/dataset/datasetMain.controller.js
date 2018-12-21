@@ -81,7 +81,6 @@ sap.ui.controller("components.dataset.datasetMain", {
     // if (this.validateNewRule) {
     let currentDatasetName = this._model.getProperty("/currentDataset/name");
     let currentRule = this._model.getProperty("/newRule");
-    console.log("submit: " + JSON.stringify(currentRule));
     RuleService.createRule(currentDatasetName, currentRule);
     // }
     this.ruleAddCancel();
@@ -174,8 +173,7 @@ sap.ui.controller("components.dataset.datasetMain", {
   onRuleMenuAction : function(oEv) {
     let sAction = oEv.getParameter("item").data("action")
     let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
-console.log("action: " + sAction);
-console.log("sBindPath: " + sBindPath);
+
     if (sAction === "edit") {
       let old = this._model.getProperty(sBindPath);
       old.title = "Edit";
@@ -409,7 +407,7 @@ console.log("sBindPath: " + sBindPath);
         let datasetName = this._model.getProperty("/currentDataset/name");
         aJoinConditions.push({mappingTableField: mappingTableName + "." + key, datasetField: datasetName + "." + oAttributeMappings[key]});
       }
-      console.log(aJoinConditions);
+
       oContext.getObject().joinConditions = aJoinConditions;
     }
 

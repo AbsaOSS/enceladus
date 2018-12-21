@@ -416,8 +416,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   fetchSchema : function(oEv) {
-    console.log("fetch it!")
-    let mappingTable = sap.ui.getCore().getModel().getProperty("/currentMappingTable")
+    let mappingTable = sap.ui.getCore().getModel().getProperty("/currentMappingTable");
     if (typeof (mappingTable.schema) === "undefined") {
       SchemaService.getSchemaVersion(mappingTable.schemaName, mappingTable.schemaVersion, "/currentMappingTable/schema")
     }
