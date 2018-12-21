@@ -19,6 +19,12 @@
         <form:SimpleForm adjustLabelSpan="true" editable="false">
             <form:content>
                 <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.commonRuleFields"/>
+                <Label text="Concatenation columns"/>
+                <List items="{inputColumns}">
+                    <items>
+                        <StandardListItem title="{}"/>
+                    </items>
+                </List>
             </form:content>
         </form:SimpleForm>
         <MenuButton icon="sap-icon://menu" class="sapUiSmallMargin">
