@@ -13,20 +13,20 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-	<Label text="Mapping Table Name"/>
-	<Select id="mappingTableNameSelect" showSecondaryValues="true" items="{/mappingTables}"
-			selectedKey="{/newRule/mappingTable}">
-		<core:ListItem key="{_id}" text="{_id}" additionalText="Latest version: {latestVersion}"/>
-	</Select>
-	<Label text="Mapping Table Version"/>
-	<FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">
-		<Select id="mappingTableVersionSelect" class="menasAddMappingSelect" items="{/currentMappingTableVersions}"
-				showSecondaryValues="true" width="auto" selectedKey="{/newRule/mappingTableVersion}">
-			<core:ListItem key="{version}" text="{version}"
-						   additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
-		</Select>
-		<Button icon="sap-icon://action">
-		</Button>
-	</FlexBox>
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+    <Label text="Mapping Table Name"/>
+    <Select id="mappingTableNameSelect" showSecondaryValues="true" items="{/mappingTables}"
+            selectedKey="{/newRule/mappingTable}">
+        <core:ListItem key="{_id}" text="{_id}" additionalText="Latest version: {latestVersion}"/>
+    </Select>
+    <Label text="Mapping Table Version"/>
+    <FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">
+        <Select id="mappingTableVersionSelect" class="menasAddMappingSelect" items="{/currentMappingTableVersions}"
+                showSecondaryValues="true" width="auto" selectedKey="{/newRule/mappingTableVersion}">
+            <core:ListItem key="{version}" text="{version}"
+                           additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
+        </Select>
+        <Button icon="sap-icon://action">
+        </Button>
+    </FlexBox>
 </core:FragmentDefinition>

@@ -208,6 +208,14 @@ console.log("sBindPath: " + sBindPath);
     })
   },
 
+  toMappingTable: function (oEv) {
+    let src = oEv.getSource();
+    sap.ui.core.UIComponent.getRouterFor(this).navTo("mappingTables", {
+      id: src.data("name"),
+      version: src.data("version")
+    })
+  },
+
   fetchSchema: function (oEv) {
     let dataset = sap.ui.getCore().getModel().getProperty("/currentDataset");
     if (typeof (dataset.schema) === "undefined") {
@@ -391,8 +399,21 @@ console.log("sBindPath: " + sBindPath);
   },
 
   conformanceRuleFactory: function(sId, oContext) {
-    let fragmentName = "components.dataset.conformanceRule." + oContext.getProperty("_t") + ".display";
-    return sap.ui.xmlfragment(sId, fragmentName, this);
+    let sFragmentName = "components.dataset.conformanceRule." + oContext.getProperty("_t") + ".display";
+    if (oContext.getProperty("_t") === "MappingConformanceRule") {
+
+      let oAttributeMappings = oContext.getProperty("attributeMappings");
+      let aJoinConditions = [];
+      for (key in oAttributeMappings) {
+        let mappingTableName = oContext.getProperty("mappingTable");
+        let datasetName = this._model.getProperty("/currentDataset/name");
+        aJoinConditions.push({mappingTableField: mappingTableName + "." + key, datasetField: datasetName + "." + oAttributeMappings[key]});
+      }
+      console.log(aJoinConditions);
+      oContext.getObject().joinConditions = aJoinConditions;
+    }
+
+    return sap.ui.xmlfragment(sId, sFragmentName, this);
   },
 
   /**

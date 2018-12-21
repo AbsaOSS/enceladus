@@ -19,6 +19,19 @@
         <form:SimpleForm adjustLabelSpan="true" editable="false">
             <form:content>
                 <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.commonRuleFields"/>
+                <Label text="Target column"/>
+                <Text text="{targetAttribute}"/>
+                <Label text="Mapping Table"/>
+                <Link text="{mappingTable} (v. {mappingTableVersion})" press="toMappingTable"
+                      cust:name="{mappingTable}" cust:version="{mappingTableVersion}"/>
+                <Label text="Is Null Safe"/>
+                <CheckBox selected="{isNullSafe}" editable="false"/>
+                <Label text="Join Conditions"/>
+                <List items="{joinConditions}">
+                    <items>
+                        <StandardListItem title="{mappingTableField} - {datasetField}"/>
+                    </items>
+                </List>
             </form:content>
         </form:SimpleForm>
         <MenuButton icon="sap-icon://menu" class="sapUiSmallMargin">

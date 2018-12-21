@@ -15,6 +15,6 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:l="sap.ui.layout"
                          xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <Label text="Check control measures"/>
+    <Label text="Check Control Measures"/>
     <CheckBox selected="{controlCheckpoint}" editable="false"/>
 </core:FragmentDefinition>
