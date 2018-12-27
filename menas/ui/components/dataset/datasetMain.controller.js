@@ -91,6 +91,7 @@ sap.ui.controller("components.dataset.datasetMain", {
   },
 
   ruleAddCancel: function () {
+    this.resetRuleForm();
     this._addConformanceRuleDialog.close();
   },
 
@@ -103,7 +104,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     this.ruleAddCancel();
   },
 
-  schemaFieldSelect : function(oEv) {
+  schemaFieldSelect: function (oEv) {
     let bind = oEv.getParameter("listItem").getBindingContext().getPath();
     let modelPathBase = "/currentDataset/schema/fields/";
     let model = sap.ui.getCore().getModel();
@@ -114,7 +115,11 @@ sap.ui.controller("components.dataset.datasetMain", {
 
   ruleSelect: function (oEv) {
     let currentRule = this._model.getProperty("/newRule");
-    let newRule = (({_t, outputColumn, checkpoint: controlCheckpoint}) => ({_t, outputColumn, checkpoint: controlCheckpoint}))(currentRule);
+    let newRule = (({_t, outputColumn, checkpoint: controlCheckpoint}) => ({
+      _t,
+      outputColumn,
+      checkpoint: controlCheckpoint
+    }))(currentRule);
 
     if (currentRule._t === "ConcatenationConformanceRule") {
       newRule.inputColumns = ["", ""];
@@ -152,13 +157,33 @@ sap.ui.controller("components.dataset.datasetMain", {
     return this._formFragments[sFragmentName];
   },
 
-  showFormFragment: function (sFragmentName) {
-    let oPage = sap.ui.getCore().byId("ruleForm");
+  resetRuleForm: function () {
+    let oRuleForm = sap.ui.getCore().byId("ruleForm");
 
-    oPage.removeAllContent();
+    // workaround for "Cannot read property 'setSelectedIndex' of undefined" error
+    const content = oRuleForm.getContent();
+    content.filter(function (element) {
+      return element.sId.includes("FieldSelectScroll")
+    }).forEach(function (element) {
+      element.getContent().forEach(function (tree) {
+        let items = tree.getItems();
+        for (let i in items) {
+          items[i].setSelected(false);
+          items[i].setHighlight(sap.ui.core.MessageType.None)
+        }
+      })
+    });
+
+    oRuleForm.removeAllContent();
+  },
+
+  showFormFragment: function (sFragmentName) {
+    this.resetRuleForm();
+
+    let oRuleForm = sap.ui.getCore().byId("ruleForm");
     let aFragment = this.getFormFragment(sFragmentName);
     aFragment.forEach(function (oElement) {
-      oPage.addContent(oElement)
+      oRuleForm.addContent(oElement)
     });
   },
 
@@ -168,26 +193,34 @@ sap.ui.controller("components.dataset.datasetMain", {
     let pathToNewInputColumn = "/newRule/inputColumns/" + inputColumnSize;
     this._model.setProperty(pathToNewInputColumn, "");
 
-    let oPage = sap.ui.getCore().byId("ruleForm");
-    oPage.addContent(new sap.m.Label({text: "Concatenation Column"}));
-    oPage.addContent(new sap.m.Input({type: "Text", value:"{" + pathToNewInputColumn + "}"}))
+    let oRuleForm = sap.ui.getCore().byId("ruleForm");
+    oRuleForm.addContent(new sap.m.Label({text: "Concatenation Column"}));
+    oRuleForm.addContent(new sap.m.Input({type: "Text", value: "{" + pathToNewInputColumn + "}"}))
   },
 
-  addJoinCondition: function() {
+  addJoinCondition: function () {
     let currentRule = this._model.getProperty("/newRule");
     let joinConditionsSize = currentRule.joinConditions.length;
     let pathToNewJoinCondition = "/newRule/joinConditions/" + joinConditionsSize;
-    this._model.setProperty(pathToNewJoinCondition, {mappingTableField : "", datasetField: ""});
+    this._model.setProperty(pathToNewJoinCondition, {mappingTableField: "", datasetField: ""});
 
-    let oPage = sap.ui.getCore().byId("ruleForm");
+    let oRuleForm = sap.ui.getCore().byId("ruleForm");
     let oHBox = new sap.m.HBox({justifyContent: "SpaceAround"});
-    oHBox.addItem(new sap.m.Input({type: "Text", value:"{" + pathToNewJoinCondition + "/mappingTableField}", placeholder: "Mapping Table Column"}));
-    oHBox.addItem(new sap.m.Input({type: "Text", value:"{" + pathToNewJoinCondition + "/datasetField}", placeholder: "Dataset Column"}));
-    oPage.addContent(new sap.m.Label({text: "Join Condition"}));
-    oPage.addContent(oHBox);
+    oHBox.addItem(new sap.m.Input({
+      type: "Text",
+      value: "{" + pathToNewJoinCondition + "/mappingTableField}",
+      placeholder: "Mapping Table Column"
+    }));
+    oHBox.addItem(new sap.m.Input({
+      type: "Text",
+      value: "{" + pathToNewJoinCondition + "/datasetField}",
+      placeholder: "Dataset Column"
+    }));
+    oRuleForm.addContent(new sap.m.Label({text: "Join Condition"}));
+    oRuleForm.addContent(oHBox);
   },
 
-  onRuleMenuAction : function(oEv) {
+  onRuleMenuAction: function (oEv) {
     let sAction = oEv.getParameter("item").data("action")
     let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
 
@@ -202,10 +235,10 @@ sap.ui.controller("components.dataset.datasetMain", {
     } else if (sAction === "delete") {
       sap.m.MessageBox.confirm("Are you sure you want to delete the conformance rule?", {
         actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
-        onClose: function(oResponse) {
-          if(oResponse === sap.m.MessageBox.Action.YES) {
+        onClose: function (oResponse) {
+          if (oResponse === sap.m.MessageBox.Action.YES) {
             let toks = sBindPath.split("/");
-            let index = toks[toks.length-1];
+            let index = toks[toks.length - 1];
             let currDataset = this._model.getProperty("/currentDataset");
             let conformance = currDataset["conformance"].filter((el, ind) => ind !== parseInt(index));
             // RuleService.editConformanceRules(currDataset.name, currDataset.version, conformance);
@@ -413,7 +446,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     }
   },
 
-  conformanceRuleFactory: function(sId, oContext) {
+  conformanceRuleFactory: function (sId, oContext) {
     let sFragmentName = "components.dataset.conformanceRule." + oContext.getProperty("_t") + ".display";
     if (oContext.getProperty("_t") === "MappingConformanceRule") {
 
@@ -422,7 +455,10 @@ sap.ui.controller("components.dataset.datasetMain", {
       for (let key in oAttributeMappings) {
         let mappingTableName = oContext.getProperty("mappingTable");
         let datasetName = this._model.getProperty("/currentDataset/name");
-        aJoinConditions.push({mappingTableField: mappingTableName + "." + key, datasetField: datasetName + "." + oAttributeMappings[key]});
+        aJoinConditions.push({
+          mappingTableField: mappingTableName + "." + key,
+          datasetField: datasetName + "." + oAttributeMappings[key]
+        });
       }
 
       oContext.getObject().joinConditions = aJoinConditions;
