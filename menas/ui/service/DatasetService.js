@@ -30,12 +30,9 @@ var DatasetService = new function() {
 		})
 	};
 
-    this.getLatestDatasetVersion = function(sId, bGetSchema) {
+    this.getLatestDatasetVersion = function(sId) {
         Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/latest", "GET", {}, function(oData) {
-          model.setProperty("/currentDataset", oData)
-          if (bGetSchema) {
-            SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema")
-          }
+          model.setProperty("/currentDataset", oData);
         }, function() {
             sap.m.MessageBox.error("Failed to get the detail of the dataset. Please wait a moment and try reloading the application");
             window.location.hash = "#/dataset"

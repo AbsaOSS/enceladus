@@ -15,21 +15,20 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:l="sap.ui.layout"
 	xmlns:table="sap.ui.table" xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-	<Dialog id="addConformanceRuleDialog" title="{/newConformanceRule/title} Conformance Rule" resizable="true" draggable="true" class="minW40rem">
+	<Dialog id="addConformanceRuleDialog" title="{/newRule/title} Conformance Rule" resizable="true" draggable="true" class="minW40rem">
 		<content>
-			<Text text="{type}"/>
 			<form:SimpleForm id="addConformanceRuleForm" adjustLabelSpan="false" editable="true">
 				<form:content>
 					<Label text="Conformance Rule"/>
 					<Select id="newRuleSelect" showSecondaryValues="false" items="{/rules}"
-							selectedKey="{/newRule/type}">
+							selectedKey="{/newRule/_t}">
 						<items>
-							<core:Item key="{type}" text="{type}" />
+							<core:Item key="{_t}" text="{_t}" />
 						</items>
 					</Select>
 				</form:content>
 			</form:SimpleForm>
-			<form:SimpleForm id="firm" adjustLabelSpan="true" editable="true">
+			<form:SimpleForm id="ruleForm" adjustLabelSpan="true" editable="true">
 				<form:content>
 				</form:content>
 			</form:SimpleForm>

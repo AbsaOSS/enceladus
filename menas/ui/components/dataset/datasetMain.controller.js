@@ -17,15 +17,30 @@ jQuery.sap.require("sap.m.MessageBox");
 sap.ui.controller("components.dataset.datasetMain", {
 
   rules: [
-    {type: "CastingConformanceRule"},
-    {type: "ConcatenationConformanceRule"},
-    {type: "DropConformanceRule"},
-    {type: "LiteralConformanceRule"},
-    {type: "MappingConformanceRule"},
-    {type: "NegationConformanceRule"},
-    {type: "SingleColumnConformanceRule"},
-    {type: "SparkSessionConfConformanceRule"},
-    {type: "UppercaseConformanceRule"}
+    {_t: "CastingConformanceRule"},
+    {_t: "ConcatenationConformanceRule"},
+    {_t: "DropConformanceRule"},
+    {_t: "LiteralConformanceRule"},
+    {_t: "MappingConformanceRule"},
+    {_t: "NegationConformanceRule"},
+    {_t: "SingleColumnConformanceRule"},
+    {_t: "SparkSessionConfConformanceRule"},
+    {_t: "UppercaseConformanceRule"}
+  ],
+
+  dataTypes: [
+    {type: "boolean"},
+    {type: "byte"},
+    {type: "short"},
+    {type: "integer"},
+    {type: "long"},
+    {type: "float"},
+    {type: "double"},
+    {type: "decimal(38,18)"},
+    {type: "char"},
+    {type: "string"},
+    {type: "date"},
+    {type: "timestamp"}
   ],
 
   /**
@@ -61,15 +76,17 @@ sap.ui.controller("components.dataset.datasetMain", {
     sap.ui.getCore().byId("newRuleSelect").attachChange(this.ruleSelect, this);
 
     this._model.setProperty("/rules", this.rules);
+    this._model.setProperty("/dataTypes", this.dataTypes);
     this._model.setProperty("/newRule", {});
   },
 
   onAddConformanceRulePress: function (oEv) {
     this._model.setProperty("/newRule", {
-      title: "Add",
-      _t: this.rules[0].type
+      // title: "Add", // TODO: add title
+      _t: this.rules[0]._t
     });
-    this.showFormFragment(this.rules[0].type);
+    this.fetchSchema();
+    this.showFormFragment(this.rules[0]._t);
     this._addConformanceRuleDialog.open();
   },
 
@@ -97,20 +114,20 @@ sap.ui.controller("components.dataset.datasetMain", {
 
   ruleSelect: function (oEv) {
     let currentRule = this._model.getProperty("/newRule");
-    let newRule = (({type, outputColumn, checkpoint: controlCheckpoint}) => ({type, outputColumn, checkpoint: controlCheckpoint}))(currentRule);
+    let newRule = (({_t, outputColumn, checkpoint: controlCheckpoint}) => ({_t, outputColumn, checkpoint: controlCheckpoint}))(currentRule);
 
-    if (currentRule.type === "ConcatenationConformanceRule") {
+    if (currentRule._t === "ConcatenationConformanceRule") {
       newRule.inputColumns = ["", ""];
     }
 
-    if (currentRule.type === "MappingConformanceRule") {
+    if (currentRule._t === "MappingConformanceRule") {
       MappingTableService.getMappingTableList(true, true);
       newRule.joinConditions = [{mappingTableField: "", datasetField: ""}];
     }
 
     this._model.setProperty("/newRule", newRule);
 
-    this.showFormFragment(currentRule.type);
+    this.showFormFragment(currentRule._t);
   },
 
   getFormFragment: function (sFragmentName) {
@@ -136,7 +153,7 @@ sap.ui.controller("components.dataset.datasetMain", {
   },
 
   showFormFragment: function (sFragmentName) {
-    let oPage = sap.ui.getCore().byId("firm");
+    let oPage = sap.ui.getCore().byId("ruleForm");
 
     oPage.removeAllContent();
     let aFragment = this.getFormFragment(sFragmentName);
@@ -151,7 +168,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     let pathToNewInputColumn = "/newRule/inputColumns/" + inputColumnSize;
     this._model.setProperty(pathToNewInputColumn, "");
 
-    let oPage = sap.ui.getCore().byId("firm");
+    let oPage = sap.ui.getCore().byId("ruleForm");
     oPage.addContent(new sap.m.Label({text: "Concatenation Column"}));
     oPage.addContent(new sap.m.Input({type: "Text", value:"{" + pathToNewInputColumn + "}"}))
   },
@@ -162,7 +179,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     let pathToNewJoinCondition = "/newRule/joinConditions/" + joinConditionsSize;
     this._model.setProperty(pathToNewJoinCondition, {mappingTableField : "", datasetField: ""});
 
-    let oPage = sap.ui.getCore().byId("firm");
+    let oPage = sap.ui.getCore().byId("ruleForm");
     let oHBox = new sap.m.HBox({justifyContent: "SpaceAround"});
     oHBox.addItem(new sap.m.Input({type: "Text", value:"{" + pathToNewJoinCondition + "/mappingTableField}", placeholder: "Mapping Table Column"}));
     oHBox.addItem(new sap.m.Input({type: "Text", value:"{" + pathToNewJoinCondition + "/datasetField}", placeholder: "Dataset Column"}));
@@ -389,7 +406,7 @@ sap.ui.controller("components.dataset.datasetMain", {
       DatasetService.getDatasetList(true);
     } else if (Prop.get(oParams, "version") === undefined) {
       DatasetService.getDatasetList();
-      DatasetService.getLatestDatasetVersion(oParams.id, true)
+      DatasetService.getLatestDatasetVersion(oParams.id)
     } else {
       DatasetService.getDatasetList();
       DatasetService.getDatasetVersion(oParams.id, oParams.version)
@@ -402,7 +419,7 @@ sap.ui.controller("components.dataset.datasetMain", {
 
       let oAttributeMappings = oContext.getProperty("attributeMappings");
       let aJoinConditions = [];
-      for (key in oAttributeMappings) {
+      for (let key in oAttributeMappings) {
         let mappingTableName = oContext.getProperty("mappingTable");
         let datasetName = this._model.getProperty("/currentDataset/name");
         aJoinConditions.push({mappingTableField: mappingTableName + "." + key, datasetField: datasetName + "." + oAttributeMappings[key]});

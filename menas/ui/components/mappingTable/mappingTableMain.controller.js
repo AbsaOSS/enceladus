@@ -57,7 +57,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
 
   defaultDialogAfterOpen : function(oEv) {
     let scrollCont = sap.ui.getCore().byId("defValFieldSelectScroll");
-    let selected = sap.ui.getCore().byId("newDefaultValueFieldSelector").getSelectedItem()
+    let selected = sap.ui.getCore().byId("schemaFieldSelector").getSelectedItem();
 
     // this needs to be already rendered for it to work
     setTimeout(function() {
@@ -68,8 +68,8 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   defaultCancel : function() {
     // This is a workaround for a bug in the Tree component of 1.56.x and 1.58.x
     // TODO: verify whether this was fixed in the subsequent versions
-    let tree = sap.ui.getCore().byId("newDefaultValueFieldSelector")
-    let items = tree.getItems()
+    let tree = sap.ui.getCore().byId("schemaFieldSelector");
+    let items = tree.getItems();
     for ( let i in items) {
       items[i].setSelected(false)
     }
@@ -80,9 +80,9 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
 
   resetNewDefaultValueState : function(oEv) {
     sap.ui.getCore().byId("newDefaultValueExpr").setValueState(sap.ui.core.ValueState.None)
-    sap.ui.getCore().byId("newDefaultValueExpr").setValueStateText("")
+    sap.ui.getCore().byId("newDefaultValueExpr").setValueStateText("");
 
-    let items = sap.ui.getCore().byId("newDefaultValueFieldSelector").getItems();
+    let items = sap.ui.getCore().byId("schemaFieldSelector").getItems();
     for ( let ind in items) {
       items[ind].setHighlight(sap.ui.core.MessageType.None)
     }
@@ -100,7 +100,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
     }
 
     if (!oDef.columnName || oDef.columnName === "") {
-      let items = sap.ui.getCore().byId("newDefaultValueFieldSelector").getItems();
+      let items = sap.ui.getCore().byId("schemaFieldSelector").getItems();
       for ( let ind in items) {
         items[ind].setHighlight(sap.ui.core.MessageType.Error)
       }
@@ -144,7 +144,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   _schemaFieldSelectorSelectPath : function(sExpandTo) {
 
     let aTokens = sExpandTo.split(".");
-    let oCtl = sap.ui.getCore().byId("newDefaultValueFieldSelector")
+    let oCtl = sap.ui.getCore().byId("schemaFieldSelector")
 
     oCtl.collapseAll();
 

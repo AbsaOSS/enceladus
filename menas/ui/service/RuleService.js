@@ -88,8 +88,6 @@ var RuleService = new function () {
 
   this.createRule = function (sDatasetName, oRule) {
     oRule.order = -1; // dummy for completeness
-    oRule._t = oRule.type;
-    delete oRule.type;
 
     if (oRule._t === "MappingConformanceRule") {
       oRule.attributeMappings = {};
@@ -98,7 +96,7 @@ var RuleService = new function () {
       });
       delete oRule.joinConditions;
     }
-    console.log(JSON.stringify(oRule));
+    console.log(JSON.stringify(oRule)); // TODO: remove debug
 
     Functions.ajax("api/dataset/" + sDatasetName + "/rule/create", "POST", oRule,
       function (oData) {
@@ -112,7 +110,7 @@ var RuleService = new function () {
   };
 
   this.editRule = function (sName, iVersion, sDescription, sHdfsPath, sHdfsPublishPath, sSchemaName, iSchemaVersion) {
-    Functions.ajax("api/rule/edit", "POST", {
+    Functions.ajax("api/dataset/edit", "POST", { // TODO: make this work
       name: sName,
       version: iVersion,
       description: sDescription,
@@ -123,7 +121,7 @@ var RuleService = new function () {
     }, function (oData) {
       RuleService.getRuleList();
       model.setProperty("/currentRule", oData);
-      SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentRule/schema");
+      SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
       sap.m.MessageToast.show("Rule updated.");
     }, function () {
       sap.m.MessageBox.error("Failed to update the rule, try reloading the application or try again later.")

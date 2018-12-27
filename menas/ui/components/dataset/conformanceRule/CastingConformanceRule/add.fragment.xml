@@ -17,18 +17,7 @@
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.commonRuleFields"/>
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.inputColumn"/>
     <Label text="Output Data Type"/>
-    <Select id="outputDataType" selectedKey="{/newRule/outputDataType}">
-        <core:ListItem key="boolean" text="boolean"/>
-        <core:ListItem key="byte" text="byte"/>
-        <core:ListItem key="short" text="short"/>
-        <core:ListItem key="integer" text="integer"/>
-        <core:ListItem key="long" text="long"/>
-        <core:ListItem key="float" text="float"/>
-        <core:ListItem key="double" text="double"/>
-        <core:ListItem key="decmial(38,18)" text="decmial(38,18)"/>
-        <core:ListItem key="char" text="char"/>
-        <core:ListItem key="string" text="string"/>
-        <core:ListItem key="date" text="date"/>
-        <core:ListItem key="timestamp" text="timestamp"/>
+    <Select id="outputDataType" selectedKey="{/newRule/outputDataType}" items="{/dataTypes}" forceSelection="false">
+        <core:ListItem key="{type}" text="{type}"/>
     </Select>
 </core:FragmentDefinition>
