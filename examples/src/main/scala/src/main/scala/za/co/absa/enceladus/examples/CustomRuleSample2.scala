@@ -15,7 +15,7 @@
  */
 package src.main.scala.za.co.absa.enceladus.examples
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import src.main.scala.za.co.absa.enceladus.examples.interpreter.rules.custom.LPadCustomConformanceRule
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
@@ -27,7 +27,9 @@ object CustomRuleSample2 {
   case class ExampleRow(id: Int, makeUpper: String, leave: String)
   case class OutputRow(id: Int, makeUpper: String, leave: String, doneUpper: String)
 
-  implicit val spark: SparkSession = SparkSession.builder().master("local[*]").appName("CustomRuleSample1")
+  implicit val spark: SparkSession = SparkSession.builder()
+    .master("local[*]")
+    .appName("CustomRuleSample2")
     .config("spark.sql.codegen.wholeStage", value = false)
     .getOrCreate()
 
@@ -38,14 +40,14 @@ object CustomRuleSample2 {
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     implicit val enableCF: Boolean = false
 
-    val inputData = spark.createDataFrame(
+    val inputData: DataFrame = spark.createDataFrame(
       Seq(
         ExampleRow(1, "Hello world", "What a beautiful place"),
         ExampleRow(4, "One Ring to rule them all", "One Ring to find them"),
         ExampleRow(9, "ALREADY CAPS", "and this is lower-case")
       ))
 
-    val conformanceDef =  Dataset(
+    val conformanceDef: Dataset =  Dataset(
       name = "Custom rule sample 2",
       version = 0,
       hdfsPath = "/a/b/c",
@@ -59,7 +61,7 @@ object CustomRuleSample2 {
       )
     )
 
-    val outputData = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
     val output: Seq[OutputRow] = outputData.as[OutputRow].collect().toSeq
     print(output)
   }
