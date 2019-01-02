@@ -18,9 +18,9 @@ package za.co.absa.enceladus.rest.services
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
-import za.co.absa.enceladus.model.UsedIn
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
+import za.co.absa.enceladus.model.UsedIn
 
 import scala.concurrent.Future
 
@@ -84,6 +84,13 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     } else {
       versionedMongoRepository.disableVersion(name, version, principal.getUsername)
     }
+  }
+
+  def validateEntityName(name: String , entityType:String ):String  = {
+    if (name.matches("""\w+""")) {
+      name
+    }
+     else throw new Exception(s"${entityType} name must not contain whitespace : ${name}")
   }
 
 }

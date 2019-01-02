@@ -20,7 +20,9 @@ import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.{Dataset, UsedIn}
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
 
-import scala.concurrent.Future
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 @Service
 class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository)
@@ -42,11 +44,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   override def create(newDataset: Dataset, username: String): Future[Dataset] = {
-    println("i m here")
-    val dataset = Dataset(
-      name = { if (newDataset.name.indexOf(" ") == -1 ) newDataset.name
-      else throw new Exception(s"Dataset name must not contain whitespace : ${newDataset.name}")
-      },
+      val dataset = Dataset(
+      name = validateEntityName(newDataset.name,"Dataset"),
       version = 0,
       description = newDataset.description,
       hdfsPath = newDataset.hdfsPath,

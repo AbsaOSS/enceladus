@@ -145,7 +145,7 @@ sap.ui.controller("components.dataset.datasetMain", {
                 "Dataset name '" + oDataset.name + "' already exists. Choose a different name.");
             isOk = false;
         }
-        if ((oDataset.name).indexOf(" ") !== -1) {
+        if (/\W/.test(oDataset.name)) {
           sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
           sap.ui.getCore().byId("newDatasetName").setValueStateText(
             "Dataset name '" + oDataset.name + "' should not have spaces. Please remove spaces and retry");
