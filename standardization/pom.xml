@@ -86,6 +86,17 @@
 			</exclusions>
 		</dependency>
 		<dependency>
+			<groupId>za.co.absa.spline</groupId>
+			<artifactId>spline-persistence-hdfs</artifactId>
+			<version>${spline.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.spark</groupId>
+					<artifactId>spark-*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
 			<groupId>za.co.absa</groupId>
 			<artifactId>enceladus-fixedWidth</artifactId>
 			<version>${project.version}</version>
