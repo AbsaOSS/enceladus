@@ -35,7 +35,7 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     versionedMongoRepository.getLatestVersions()
   }
 
-  def getVersion(name: String, version: Int): Future[C] = {
+  def getVersion(name: String, version: Int): Future[Option[C]] = {
     versionedMongoRepository.getVersion(name, version)
   }
 
@@ -43,13 +43,13 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     versionedMongoRepository.getAllVersions(name)
   }
 
-  def getLatestVersion(name: String): Future[C] = {
+  def getLatestVersion(name: String): Future[Option[C]] = {
     versionedMongoRepository.getLatestVersionValue(name).flatMap(version => getVersion(name, version))
   }
 
   def getUsedIn(name: String, version: Option[Int]): Future[UsedIn]
 
-  def create(item: C, username: String): Future[C] = {
+  def create(item: C, username: String): Future[Option[C]] = {
     for {
       unique <- isUniqueName(item.name)
       _      <-
@@ -59,14 +59,16 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     } yield detail
   }
 
-  def update(username: String, item: C): Future[C]
+  def update(username: String, item: C): Future[Option[C]]
 
-  def update(username: String, itemName: String)(transform: C => C): Future[C] = {
-    for {
-      latest <- getLatestVersion(itemName)
-      update <- versionedMongoRepository.update(username, transform(latest))
-      detail <- getLatestVersion(itemName)
-    } yield detail
+  def update(username: String, itemName: String)(transform: C => C): Future[Option[C]] = {
+      getLatestVersion(itemName).flatMap {
+        case Some(latest) =>
+          versionedMongoRepository.update(username, transform(latest)).flatMap { _ =>
+            getLatestVersion(itemName)
+          }
+        case None         => Future.successful(None)
+      }
   }
 
   def disableVersion(name: String, version: Option[Int]): Future[Object] = {

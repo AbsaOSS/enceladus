@@ -92,25 +92,26 @@ var SchemaService = new function() {
 			uri += "/" + encodeURI(iVersion)
 		}
 		
-		Functions.ajax(uri , "GET", {}, function(oData) {
-			if(Array.isArray(oData)) {
-				var err = "Disabling schema failed. Clear the following dependencies first:\n";
-				for(var ind in oData) {
-					err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
-				}
-				sap.m.MessageBox.error(err)
-			} else if(typeof(oData) === "object") {
-				sap.m.MessageToast.show("Schema disabled.");
-				if(window.location.hash != "#/schema") {
-					window.location.hash = "#/schema"
-				} else {
-					SchemaService.getSchemaList(true, false)
-				}
-			}
-		}, function() {
-			sap.m.MessageBox.error("Failed to disable schema. Ensure no mapping tables or datasets use this schema(and/or version)")
-		})	
-	};
+    Functions.ajax(uri , "GET", {}, function(oData) {
+      sap.m.MessageToast.show("Schema disabled.");
+      if(window.location.hash != "#/schema") {
+        window.location.hash = "#/schema"
+      } else {
+        SchemaService.getSchemaList(true, false)
+      }
+    }, function(xhr) {
+      if (xhr.status === 400) {
+        var err = "Disabling schema failed. Clear the following dependencies first:\n";
+        var oData = JSON.parse(xhr.responseText);
+        for(var ind in oData) {
+          err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
+        }
+        sap.m.MessageBox.error(err)
+      } else {
+        sap.m.MessageBox.error("Failed to disable schema. Ensure no mapping tables or datasets use this schema(and/or version)")
+      }
+    })
+  };
 	
 	this.createSchema = function(sName, sDescription) {
 		Functions.ajax("api/schema/create", "POST", {

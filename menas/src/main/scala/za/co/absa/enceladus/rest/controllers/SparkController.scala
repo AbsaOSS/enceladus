@@ -27,7 +27,7 @@ case class Test(a:Int,b:String)
 @RequestMapping(Array("/api/spark"))
 class SparkController @Autowired() (spark: SparkSession) {
 
-	@GetMapping(path = Array("/version"))
+  @GetMapping(path = Array("/version"))
   def sparkVersion(): String = spark.sparkContext.version
 
 }

@@ -17,12 +17,14 @@ package za.co.absa.enceladus.rest.controllers
 
 import za.co.absa.enceladus.model.api.HDFSFolder
 import java.util.concurrent.CompletableFuture
-import org.apache.hadoop.fs.{Path,FileSystem}
+
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation._
 
 import scala.concurrent._
 import org.slf4j.LoggerFactory
+import org.springframework.http.ResponseEntity
 
 @RestController
 @RequestMapping(Array("/api/hdfs"))
@@ -34,28 +36,33 @@ class HDFSController @Autowired() (fs: FileSystem) {
   private val logger = LoggerFactory.getLogger(this.getClass)
   
   @PostMapping(path = Array("/list"))
-  def getHDFSFolder(@RequestBody path: String): CompletableFuture[HDFSFolder] = {
+  def getHDFSFolder(@RequestBody path: String): CompletableFuture[ResponseEntity[HDFSFolder]] = {
     
     val p = new Path(path)
-    val res = if (!fs.isDirectory(p)) Future { HDFSFolder(p.toUri().getPath, p.getName, None) }
-    else {
-      Future {
-        val status = fs.listStatus(p)
-        val children = if (status.isEmpty) None else {
-          Some(
-            status.map({ x =>
-              val child = x.getPath
+    if (fs.exists(p)) {
+      val res = if (!fs.isDirectory(p)) {
+        Future.successful(HDFSFolder(p.toUri().getPath, p.getName, None))
+      } else {
+        Future {
+          val status = fs.listStatus(p)
+          val children = if (status.isEmpty) None else {
+            Some(
+              status.map({ x =>
+                val child = x.getPath
 
-              HDFSFolder(child.toUri().getPath, child.getName,
-                if (fs.listStatus(child).isEmpty) None else Some(Seq(HDFSFolder("", "", None))))
+                HDFSFolder(child.toUri().getPath, child.getName,
+                  if (fs.listStatus(child).isEmpty) None else Some(Seq(HDFSFolder("", "", None))))
 
-            }).toSeq)
+              }).toSeq)
+          }
+          HDFSFolder(path, p.getName, children)
         }
-        HDFSFolder(path, p.getName, children)
       }
-    }
 
-    res
+      res.map(result => ResponseEntity.ok(result))
+    } else {
+      Future.successful(ResponseEntity.notFound().build[HDFSFolder]())
+    }
   }
 
 }

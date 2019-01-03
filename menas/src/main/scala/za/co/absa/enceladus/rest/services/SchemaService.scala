@@ -37,13 +37,13 @@ class SchemaService @Autowired()(schemaMongoRepository: SchemaMongoRepository,
     } yield UsedIn(Some(usedInD), Some(usedInM))
   }
 
-  override def update(username: String, schema: Schema): Future[Schema] = {
+  override def update(username: String, schema: Schema): Future[Option[Schema]] = {
     super.update(username, schema.name) { latest =>
       latest.setDescription(schema.description).asInstanceOf[Schema]
     }
   }
 
-  override def create(newSchema: Schema, username: String): Future[Schema] = {
+  override def create(newSchema: Schema, username: String): Future[Option[Schema]] = {
     val schema = Schema(name = newSchema.name, description = newSchema.description)
     super.create(schema, username)
   }

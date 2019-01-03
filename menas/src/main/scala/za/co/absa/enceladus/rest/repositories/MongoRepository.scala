@@ -30,9 +30,9 @@ abstract class MongoRepository[C](mongoDb: MongoDatabase)(implicit ct: ClassTag[
 
   private[repositories] def collectionName: String
 
-  def isUniqueName(name: String): Observable[Boolean] = {
+  def isUniqueName(name: String): Future[Boolean] = {
     val res = collection.countDocuments(getNameFilter(name))
-    res.map( _ <= 0 )
+    res.map( _ <= 0 ).head()
   }
 
   def create(item: C): Future[Completed] = {
