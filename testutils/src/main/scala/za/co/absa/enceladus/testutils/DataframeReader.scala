@@ -24,7 +24,7 @@ class DataframeReader(datasetPath: String, inputSchema: StructType = null)(impli
   lazy val dataFrame: DataFrame = getDataFrameReader.load(datasetPath)
   lazy val dataFrameSchema: StructType = dataFrame.schema
 
-  def removeMetadataFromSchema: StructType = {
+  def getSchemaWithoutMetadata: StructType = {
     StructType(dataFrameSchema.map{ f => StructField(f.name, f.dataType, f.nullable) })
   }
 
