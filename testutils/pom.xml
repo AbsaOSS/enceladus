@@ -34,6 +34,16 @@
 			<artifactId>scopt_${scala.compat.version}</artifactId>
 			<version>${scopt.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>za.co.absa</groupId>
+			<artifactId>enceladus-utils</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>za.co.absa</groupId>
+			<artifactId>enceladus-dao</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
