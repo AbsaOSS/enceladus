@@ -45,7 +45,7 @@ object CustomRuleSample3 {
       .csv("examples/data/input/example_data.csv")
 
     val conformanceDef =  Dataset(
-      name = "Custom rule sample 1",
+      name = "Custom rule sample 3",
       version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
