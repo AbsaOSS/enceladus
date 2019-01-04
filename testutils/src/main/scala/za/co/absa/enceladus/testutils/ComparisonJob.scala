@@ -15,32 +15,9 @@
 
 package za.co.absa.enceladus.testutils
 
+import za.co.absa.enceladus.testutils.exceptions.{CmpJobDatasetsDifferException, CmpJobSchemasDifferException}
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.types.{StructField, StructType}
-import org.apache.spark.sql.{DataFrameReader, Dataset, Row, SparkSession}
-
-import scala.annotation.switch
-
-final case class CmpJobDatasetsDiffer(private val refPath: String,
-                                      private val stdPath: String,
-                                      private val outPath: String,
-                                      private val expectedCount: Long,
-                                      private val actualCount: Long,
-                                      private val cause: Throwable = None.orNull)
-  extends Exception("Expected and actual datasets differ.\n" +
-                    s"Reference path: $refPath\n" +
-                    s"Actual dataset path: $stdPath\n" +
-                    s"Difference written to: $outPath\n" +
-                    s"Count Expected( $expectedCount ) vs Actual( $actualCount )", cause)
-
-final case class CmpJobSchemasDiffer(private val refPath: String,
-                                     private val stdPath: String,
-                                     private val diffSchema: Seq[StructField],
-                                     private val cause: Throwable = None.orNull)
-  extends Exception("Expected and actual datasets differ in schemas.\n"+
-                    s"Reference path: $refPath\n" +
-                    s"Actual dataset path: $stdPath\n" +
-                    s"Difference is $diffSchema", cause)
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
 
 object ComparisonJob {
   def main(args: Array[String]): Unit = {
@@ -58,12 +35,12 @@ object ComparisonJob {
     val actualDfReader = new DataframeReader(cmd.stdPath)
     val expectedDf = expectedDfReader.dataFrame
     val actualDf = actualDfReader.dataFrame
-    val expectedSchema = expectedDfReader.removeMetadataFromSchema
-    val actualSchema = actualDfReader.removeMetadataFromSchema
+    val expectedSchema = expectedDfReader.getSchemaWithoutMetadata
+    val actualSchema = actualDfReader.getSchemaWithoutMetadata
 
     if (expectedSchema != actualSchema) {
       val diffSchema = actualSchema.diff(expectedSchema) ++ expectedSchema.diff(actualSchema)
-      throw CmpJobSchemasDiffer(cmd.refPath, cmd.stdPath, diffSchema)
+      throw CmpJobSchemasDifferException(cmd.refPath, cmd.stdPath, diffSchema)
     }
 
     val expectedMinusActual: Dataset[Row] = expectedDf.except(actualDf)
@@ -72,7 +49,7 @@ object ComparisonJob {
     if (expectedMinusActual.count() != 0 || actualMinusExpected.count() != 0) {
       expectedMinusActual.write.format("parquet").save(s"${cmd.outPath}/expected_minus_actual")
       actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
-      throw CmpJobDatasetsDiffer(cmd.refPath, cmd.stdPath, cmd.outPath, expectedDf.count(), actualDf.count())
+      throw CmpJobDatasetsDifferException(cmd.refPath, cmd.stdPath, cmd.outPath, expectedDf.count(), actualDf.count())
     } else {
       System.out.println("Expected and actual datasets are the same. Carry On.")
     }
