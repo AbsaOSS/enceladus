@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import za.co.absa.enceladus.testutils.exceptions.{CmpJobDatasetsDifferException, CmpJobSchemasDifferException}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterAll {
@@ -31,7 +32,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
     timePrefix = format.format(Calendar.getInstance().getTime())
   }
 
-  test("Compare the same") {
+  test("Compare the same datasets") {
     val outPath = s"target/test_output/comparison_job/positive/$timePrefix"
     import spark.implicits._
 
@@ -47,7 +48,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
     assert(!Files.exists(Paths.get(outPath)))
   }
 
-  test("Compare the different") {
+  test("Compare different datasets") {
     val refPath = "src/test/resources/dataSample1.csv"
     val stdPath = "src/test/resources/dataSample3.csv"
     val outPath = s"target/test_output/comparison_job/negative/$timePrefix"
@@ -66,7 +67,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
       "--out-path", outPath
     )
 
-    val caught = intercept[CmpJobDatasetsDiffer] {
+    val caught = intercept[CmpJobDatasetsDifferException] {
       ComparisonJob.main(args)
     }
 
@@ -74,7 +75,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
     assert(Files.exists(Paths.get(outPath)))
   }
 
-  test("Compare with wrong schema") {
+  test("Compare datasets with wrong schemas") {
     val refPath = "src/test/resources/dataSample4.csv"
     val stdPath = "src/test/resources/dataSample1.csv"
     val outPath = s"target/test_output/comparison_job/negative/$timePrefix"
@@ -94,7 +95,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
       "--out-path", outPath
     )
 
-    val caught = intercept[CmpJobSchemasDiffer] {
+    val caught = intercept[CmpJobSchemasDifferException] {
       ComparisonJob.main(args)
     }
 
