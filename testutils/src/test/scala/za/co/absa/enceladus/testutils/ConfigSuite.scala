@@ -103,7 +103,7 @@ class ConfigSuite extends FunSuite {
     assert(cmdConfig.outPath == outPath)
   }
 
-  test("Fixed-with file don't trim value") {
+  test("Fixed-width file don't trim value") {
     val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
         "--raw-format", fixedWithdFormat,
@@ -120,7 +120,7 @@ class ConfigSuite extends FunSuite {
     assert(cmdConfig.outPath == outPath)
   }
 
-  test("Fixed-with file trim values") {
+  test("Fixed-width file trim values") {
     val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
         "--raw-format", fixedWithdFormat,
