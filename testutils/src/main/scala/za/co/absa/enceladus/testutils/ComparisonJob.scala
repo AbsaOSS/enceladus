@@ -31,8 +31,8 @@ object ComparisonJob {
 
     implicit val sc: SparkContext = sparkSession.sparkContext
 
-    val expectedDfReader = new DataframeReader(cmd.refPath)
-    val actualDfReader = new DataframeReader(cmd.stdPath)
+    val expectedDfReader = new DataframeReader(cmd.refPath, None)
+    val actualDfReader = new DataframeReader(cmd.stdPath, None)
     val expectedDf = expectedDfReader.dataFrame
     val actualDf = actualDfReader.dataFrame
     val expectedSchema = expectedDfReader.getSchemaWithoutMetadata
