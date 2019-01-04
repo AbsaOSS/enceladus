@@ -20,7 +20,7 @@ import org.apache.spark.sql.{DataFrame, DataFrameReader, SparkSession}
 
 import scala.annotation.switch
 
-class DataframeReader(datasetPath: String, inputSchema: StructType = null)(implicit cmd: CmdConfig, sparkSession: SparkSession) {
+class DataframeReader(datasetPath: String, inputSchema: Option[StructType] )(implicit cmd: CmdConfig, sparkSession: SparkSession) {
   lazy val dataFrame: DataFrame = getDataFrameReader.load(datasetPath)
   lazy val dataFrameSchema: StructType = dataFrame.schema
 
@@ -45,7 +45,7 @@ class DataframeReader(datasetPath: String, inputSchema: StructType = null)(impli
   private def getParquetReader()(implicit cmd: CmdConfig, sparkSession: SparkSession): DataFrameReader = {
     val dfReader = getStandardReader
 
-    if (inputSchema != null) dfReader.schema(inputSchema)
+    if (inputSchema.isDefined) dfReader.schema(inputSchema.get)
     else dfReader
   }
 
