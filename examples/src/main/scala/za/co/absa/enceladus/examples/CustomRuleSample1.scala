@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,38 +14,42 @@
  * limitations under the License.
  */
 
-package src.main.scala.za.co.absa.enceladus.examples
+package za.co.absa.enceladus.examples
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import src.main.scala.za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
+import za.co.absa.enceladus.examples.interpreter.rules.custom.UppercaseCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset
 
-object CustomRuleSample3 {
-  implicit val spark: SparkSession = SparkSession.builder
+object CustomRuleSample1 {
+
+  case class ExampleRow(id: Int, makeUpper: String, leave: String)
+  case class OutputRow(id: Int, makeUpper: String, leave: String, doneUpper: String)
+
+  implicit val spark: SparkSession = SparkSession.builder()
     .master("local[*]")
-    .appName("CustomRuleSample3")
+    .appName("CustomRuleSample1")
     .config("spark.sql.codegen.wholeStage", value = false)
     .getOrCreate()
 
-  spark.sparkContext.setLogLevel("WARN")
-
-  def main(args: Array[String]): Unit = {
-    // there is an example file at /src/test/resources/AvroReadingExample.properties
+  def main(args: Array[String]) {
     import spark.implicits._
 
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     implicit val enableCF: Boolean = false
 
-    val inputData = spark.read
-      .option("header", "true")
-      .csv("examples/data/input/example_data.csv")
+    val inputData = spark.createDataFrame(
+      Seq(
+        ExampleRow(1, "Hello world", "What a beautiful place"),
+        ExampleRow(4, "One Ring to rule them all", "One Ring to find them"),
+        ExampleRow(9, "ALREADY CAPS", "and this is lower-case")
+      ))
 
     val conformanceDef =  Dataset(
-      name = "Custom rule sample 3",
+      name = "Custom rule sample 1",
       version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
@@ -54,16 +58,11 @@ object CustomRuleSample3 {
       schemaVersion = 9999,
 
       conformance = List(
-        UppercaseCustomConformanceRule(order = 0, outputColumn = "upper", controlCheckpoint = false, inputColumn = "text_column"),
-        LPadCustomConformanceRule(order = 1, outputColumn = "final", controlCheckpoint = false, inputColumn = "upper", len = 25, pad = ".")
+        UppercaseCustomConformanceRule(order = 0, outputColumn = "doneUpper", controlCheckpoint = false, inputColumn = "makeUpper")
       )
     )
 
     val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
-
-    outputData.show()
-
-    spark.stop()
+    outputData.show(false)
   }
-
 }

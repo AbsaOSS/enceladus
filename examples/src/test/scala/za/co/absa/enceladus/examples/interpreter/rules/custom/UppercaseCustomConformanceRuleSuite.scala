@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package src.main.scala.za.co.absa.enceladus.examples.interpreter.rules.custom
+package za.co.absa.enceladus.examples.interpreter.rules.custom
 
 import org.apache.spark.sql
 import org.apache.spark.sql.DataFrame

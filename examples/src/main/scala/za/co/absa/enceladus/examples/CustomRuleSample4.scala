@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package src.main.scala.za.co.absa.enceladus.examples
+package za.co.absa.enceladus.examples
 
-import java.io.File
-
-import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.col
-import src.main.scala.za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.functions.{col, concat, concat_ws, lit}
+import org.apache.spark.sql.{DataFrame, DataFrameReader, SparkSession}
+import scopt.OptionParser
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
+import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.model.Dataset
-import org.apache.log4j.{Level, Logger}
-import scopt.OptionParser
 
 object CustomRuleSample4 {
   /**
@@ -37,11 +34,11 @@ object CustomRuleSample4 {
     *       Even if a field is mandatory it needs a default value.
     */
   private case class CmdConfigLocal(inputFormat: String = "csv",
-                            rowTag: Option[String] = None,
-                            csvDelimiter: Option[String] = Some(","),
-                            csvHeader: Option[Boolean] = Some(false),
-                            inputFile: String = "",
-                            outPath: String = "")
+                                    rowTag: Option[String] = None,
+                                    csvDelimiter: Option[String] = Some(","),
+                                    csvHeader: Option[Boolean] = Some(false),
+                                    inputFile: String = "",
+                                    outPath: String = "")
 
   private class CmdParser(programName: String) extends OptionParser[CmdConfigLocal](programName) {
     head("\nCustom Rule Sample", "")
@@ -90,6 +87,17 @@ object CustomRuleSample4 {
     help("help").text("prints this usage text")
   }
 
+  private def getCmdLineArguments(args: Array[String]): CmdConfigLocal = {
+    val parser = new CmdParser("spark-submit [spark options] CustomRuleSample4.jar")
+
+    val optionCmd = parser.parse(args, CmdConfigLocal())
+    if (optionCmd.isEmpty) {
+      // Wrong arguments provided, the message is already displayed
+      System.exit(1)
+    }
+    optionCmd.get
+  }
+
   private def stringifyArrays(dataFrame: DataFrame): DataFrame = {
     val colsToStringify = dataFrame.schema.filter(p => p.dataType.typeName == "array").map(p => p.name)
 
@@ -109,22 +117,8 @@ object CustomRuleSample4 {
       .save(path)
   }
 
-
-  private def getCmdLineArguments(args: Array[String]): CmdConfigLocal = {
-    val parser = new CmdParser("spark-submit [spark options] CustomRuleSample4.jar")
-
-    val optionCmd = parser.parse(args, CmdConfigLocal())
-    if (optionCmd.isEmpty) {
-      // Wrong arguments provided, the message is already displayed
-      System.exit(1)
-    }
-    optionCmd.get
-  }
-
-
   def main(args: Array[String]): Unit = {
     val cmdConfigLocal: CmdConfigLocal = getCmdLineArguments(args)
-    println(CmdConfigLocal)
 
     implicit val spark: SparkSession = SparkSession.builder
       .master("local[*]")
@@ -132,19 +126,12 @@ object CustomRuleSample4 {
       .config("spark.sql.codegen.wholeStage", value = false)
       .getOrCreate()
 
-    // Do not display INFO entries for tests
-    Logger.getLogger("org").setLevel(Level.WARN)
-    Logger.getLogger("akka").setLevel(Level.WARN)
-    spark.sparkContext.setLogLevel("WARN")
-
-    import spark.implicits._
-
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     implicit val enableCF: Boolean = false
 
 
-    var dfReader: DataFrameReader = {
+    val dfReader: DataFrameReader = {
       val dfReader0 = spark.read
       val dfReader1 = if (cmdConfigLocal.rowTag.isDefined) dfReader0.option("rowTag", cmdConfigLocal.rowTag.get) else dfReader0
       val dfReader2 = if (cmdConfigLocal.csvDelimiter.isDefined) dfReader1.option("delimiter", cmdConfigLocal.csvDelimiter.get) else dfReader1
@@ -179,8 +166,5 @@ object CustomRuleSample4 {
 
     outputData.show()
     saveToCsv(outputData, cmdConfigLocal.outPath)
-
-    spark.stop()
   }
-
 }

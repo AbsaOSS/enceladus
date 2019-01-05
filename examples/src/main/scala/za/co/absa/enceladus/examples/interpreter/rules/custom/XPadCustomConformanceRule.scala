@@ -1,4 +1,4 @@
-package src.main.scala.za.co.absa.enceladus.examples.interpreter.rules.custom
+package za.co.absa.enceladus.examples.interpreter.rules.custom
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}

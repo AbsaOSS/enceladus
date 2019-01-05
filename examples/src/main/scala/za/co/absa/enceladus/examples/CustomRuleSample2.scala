@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package src.main.scala.za.co.absa.enceladus.examples
+
+package za.co.absa.enceladus.examples
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import src.main.scala.za.co.absa.enceladus.examples.interpreter.rules.custom.UppercaseCustomConformanceRule
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
+import za.co.absa.enceladus.examples.interpreter.rules.custom.LPadCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset
 
-object CustomRuleSample1 {
+object CustomRuleSample2 {
 
-  case class ExampleRow(id: Int, makeUpper: String, leave: String)
-  case class OutputRow(id: Int, makeUpper: String, leave: String, doneUpper: String)
+  case class ExampleRow(id: Int, addPad: String, leave: String)
+  case class OutputRow(id: Int, addPad: String, leave: String, donePad: String)
 
   implicit val spark: SparkSession = SparkSession.builder()
     .master("local[*]")
-    .appName("CustomRuleSample1")
+    .appName("CustomRuleSample2")
     .config("spark.sql.codegen.wholeStage", value = false)
     .getOrCreate()
 
@@ -40,15 +41,15 @@ object CustomRuleSample1 {
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     implicit val enableCF: Boolean = false
 
-    val inputData = spark.createDataFrame(
+    val inputData: DataFrame = spark.createDataFrame(
       Seq(
         ExampleRow(1, "Hello world", "What a beautiful place"),
         ExampleRow(4, "One Ring to rule them all", "One Ring to find them"),
         ExampleRow(9, "ALREADY CAPS", "and this is lower-case")
       ))
 
-    val conformanceDef =  Dataset(
-      name = "Custom rule sample 1",
+    val conformanceDef: Dataset =  Dataset(
+      name = "Custom rule sample 2",
       version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
@@ -57,12 +58,11 @@ object CustomRuleSample1 {
       schemaVersion = 9999,
 
       conformance = List(
-        UppercaseCustomConformanceRule(order = 0, outputColumn = "doneUpper", controlCheckpoint = false, inputColumn = "makeUpper")
+        LPadCustomConformanceRule(order = 0, outputColumn = "donePad", controlCheckpoint = false, inputColumn = "addPad", len = 20, pad = "~")
       )
     )
 
     val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
-    val output: Seq[OutputRow] = outputData.as[OutputRow].collect().toSeq
-    print(output)
+    outputData.show(false)
   }
 }
