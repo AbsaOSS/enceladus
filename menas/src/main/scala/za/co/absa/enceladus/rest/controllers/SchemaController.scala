@@ -31,9 +31,9 @@ import za.co.absa.enceladus.rest.utils.converters.SparkMenasSchemaConvertor
 
 @RestController
 @RequestMapping(Array("/api/schema"))
-class SchemaController @Autowired() (
-                                      schemaService:     SchemaService,
-                                      attachmentService: AttachmentService, sparkMenasConvertor: SparkMenasSchemaConvertor)
+class SchemaController @Autowired() (schemaService:     SchemaService,
+                                     attachmentService: AttachmentService,
+                                     sparkMenasConvertor: SparkMenasSchemaConvertor)
   extends VersionedModelController(schemaService) {
 
   import za.co.absa.enceladus.rest.utils.implicits._
