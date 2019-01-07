@@ -14,7 +14,7 @@
 # Examples of Enceladus usage
 ## Custom Rules Implementations and usage
 ### Requirements
-* Spark 2.4+ (might work with earlier, not tested)
+* Spark 2.2.1+ (might work with earlier, not tested)
 * CSV Data Source for Apache Spark (https://github.com/databricks/spark-csv)  
 Install using: `spark-shell --packages com.databricks:spark-csv_2.11:1.5.0`
 ### Examples
