@@ -36,32 +36,36 @@ class HDFSController @Autowired() (fs: FileSystem) {
   private val logger = LoggerFactory.getLogger(this.getClass)
   
   @PostMapping(path = Array("/list"))
-  def getHDFSFolder(@RequestBody path: String): CompletableFuture[ResponseEntity[HDFSFolder]] = {
-    
-    val p = new Path(path)
-    if (fs.exists(p)) {
-      val res = if (!fs.isDirectory(p)) {
-        Future.successful(HDFSFolder(p.toUri().getPath, p.getName, None))
-      } else {
-        Future {
-          val status = fs.listStatus(p)
-          val children = if (status.isEmpty) None else {
-            Some(
-              status.map({ x =>
-                val child = x.getPath
+  def getHDFSFolder(@RequestBody pathStr: String): CompletableFuture[ResponseEntity[HDFSFolder]] = {
+    val path = new Path(pathStr)
 
-                HDFSFolder(child.toUri().getPath, child.getName,
-                  if (fs.listStatus(child).isEmpty) None else Some(Seq(HDFSFolder("", "", None))))
-
-              }).toSeq)
-          }
-          HDFSFolder(path, p.getName, children)
-        }
-      }
-
-      res.map(result => ResponseEntity.ok(result))
+    if (fs.exists(path)) {
+      getFolder(path).map(result => ResponseEntity.ok(result))
     } else {
       Future.successful(ResponseEntity.notFound().build[HDFSFolder]())
+    }
+  }
+
+  private def getFolder(path: Path) = {
+    if (!fs.isDirectory(path)) {
+      Future {
+        HDFSFolder(path.toUri().getPath, path.getName, None)
+      }
+    } else {
+      Future {
+        val status = fs.listStatus(path)
+        val children = if (status.isEmpty) None else {
+          Some(
+            status.map({ x =>
+              val child = x.getPath
+
+              HDFSFolder(child.toUri().getPath, child.getName,
+                if (fs.listStatus(child).isEmpty) None else Some(Seq(HDFSFolder("", "", None))))
+
+            }).toSeq)
+        }
+        HDFSFolder(path.toString, path.getName, children)
+      }
     }
   }
 
