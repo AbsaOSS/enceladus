@@ -39,10 +39,12 @@ class HDFSController @Autowired() (fs: FileSystem) {
   def getHDFSFolder(@RequestBody pathStr: String): CompletableFuture[ResponseEntity[HDFSFolder]] = {
     val path = new Path(pathStr)
 
-    if (fs.exists(path)) {
-      getFolder(path).map(result => ResponseEntity.ok(result))
-    } else {
-      Future.successful(ResponseEntity.notFound().build[HDFSFolder]())
+    Future { fs.exists(path) }.flatMap { exists =>
+      if (exists) {
+        getFolder(path).map(result => ResponseEntity.ok(result))
+      } else {
+        Future.successful(ResponseEntity.notFound().build[HDFSFolder]())
+      }
     }
   }
 
