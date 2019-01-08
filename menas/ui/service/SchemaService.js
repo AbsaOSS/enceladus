@@ -85,25 +85,25 @@ var SchemaService = new function() {
 			oControl.setBusy(false);
 		}, oControl)	
 	};
-	
-	this.disableSchema = function(sId, iVersion) {
-		var uri = "api/schema/disable/" + encodeURI(sId)
-		if(typeof(iVersion) !== "undefined") {
-			uri += "/" + encodeURI(iVersion)
-		}
-		
+
+  this.disableSchema = function(sId, iVersion) {
+    let uri = "api/schema/disable/" + encodeURI(sId);
+    if(typeof(iVersion) !== "undefined") {
+      uri += "/" + encodeURI(iVersion)
+    }
+
     Functions.ajax(uri , "GET", {}, function(oData) {
       sap.m.MessageToast.show("Schema disabled.");
-      if(window.location.hash != "#/schema") {
+      if(window.location.hash !== "#/schema") {
         window.location.hash = "#/schema"
       } else {
         SchemaService.getSchemaList(true, false)
       }
     }, function(xhr) {
       if (xhr.status === 400) {
-        var err = "Disabling schema failed. Clear the following dependencies first:\n";
-        var oData = JSON.parse(xhr.responseText);
-        for(var ind in oData) {
+        let err = "Disabling schema failed. Clear the following dependencies first:\n";
+        let oData = JSON.parse(xhr.responseText);
+        for(let ind in oData) {
           err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
         }
         sap.m.MessageBox.error(err)
