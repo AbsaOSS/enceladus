@@ -15,23 +15,25 @@
 
 package za.co.absa.enceladus.rest.controllers
 
-import za.co.absa.enceladus.model.api.HDFSFolder
 import java.util.concurrent.CompletableFuture
 
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation._
+import za.co.absa.enceladus.model.api.HDFSFolder
+import za.co.absa.enceladus.rest.services.HDFSService
 
 import scala.concurrent._
-import org.slf4j.LoggerFactory
-import org.springframework.http.ResponseEntity
 
 @RestController
 @RequestMapping(Array("/api/hdfs"))
-class HDFSController @Autowired() (fs: FileSystem) {
+class HDFSController @Autowired() (hdfsService: HDFSService) {
   
-  import scala.concurrent.ExecutionContext.Implicits.global
   import za.co.absa.enceladus.rest.utils.implicits._
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   private val logger = LoggerFactory.getLogger(this.getClass)
   
@@ -39,34 +41,11 @@ class HDFSController @Autowired() (fs: FileSystem) {
   def getHDFSFolder(@RequestBody pathStr: String): CompletableFuture[ResponseEntity[HDFSFolder]] = {
     val path = new Path(pathStr)
 
-    Future { fs.exists(path) }.flatMap { exists =>
+    hdfsService.exists(path).flatMap { exists =>
       if (exists) {
-        getFolder(path).map(result => ResponseEntity.ok(result))
+        hdfsService.getFolder(path).map(result => ResponseEntity.ok(result))
       } else {
         Future.successful(ResponseEntity.notFound().build[HDFSFolder]())
-      }
-    }
-  }
-
-  private def getFolder(path: Path) = {
-    if (!fs.isDirectory(path)) {
-      Future {
-        HDFSFolder(path.toUri().getPath, path.getName, None)
-      }
-    } else {
-      Future {
-        val status = fs.listStatus(path)
-        val children = if (status.isEmpty) None else {
-          Some(
-            status.map({ x =>
-              val child = x.getPath
-
-              HDFSFolder(child.toUri().getPath, child.getName,
-                if (fs.listStatus(child).isEmpty) None else Some(Seq(HDFSFolder("", "", None))))
-
-            }).toSeq)
-        }
-        HDFSFolder(path.toString, path.getName, children)
       }
     }
   }
