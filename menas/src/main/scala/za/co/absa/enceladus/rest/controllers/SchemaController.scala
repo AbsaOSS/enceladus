@@ -52,6 +52,6 @@ class SchemaController @Autowired() (schemaService:     SchemaService,
       update <- schemaService.update(principal.getUsername, name)(oldSchema => oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(struct.fields).toList))
     } yield update
 
-    updateFuture.map(schema => new ResponseEntity(schema, HttpStatus.CREATED))
+    updateFuture.map(schema => created(schema))
   }
 }

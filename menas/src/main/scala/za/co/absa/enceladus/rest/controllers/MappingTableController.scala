@@ -40,8 +40,8 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
     mappingTableService.update(user.getUsername, upd.id.name) { mt =>
       mt.setDefaultMappingValue(upd.value.toList)
     }.map {
-      case Some(entity) => ResponseEntity.ok().body(entity)
-      case None         => ResponseEntity.notFound().build[MappingTable]()
+      case Some(entity) => ok(entity)
+      case None         => notFound[MappingTable]
     }
   }
 
@@ -51,8 +51,8 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
     mappingTableService.update(user.getUsername, newDefault.id.name) { mt =>
       mt.setDefaultMappingValue(mt.defaultMappingValue :+ newDefault.value)
     }.map {
-      case Some(entity) => ResponseEntity.ok().body(entity)
-      case None         => ResponseEntity.notFound().build[MappingTable]()
+      case Some(entity) => ok(entity)
+      case None         => notFound[MappingTable]
     }
   }
 

@@ -29,7 +29,7 @@ import scala.concurrent._
 
 @RestController
 @RequestMapping(Array("/api/hdfs"))
-class HDFSController @Autowired() (hdfsService: HDFSService) {
+class HDFSController @Autowired() (hdfsService: HDFSService) extends BaseController {
   
   import za.co.absa.enceladus.rest.utils.implicits._
 
@@ -43,9 +43,9 @@ class HDFSController @Autowired() (hdfsService: HDFSService) {
 
     hdfsService.exists(path).flatMap { exists =>
       if (exists) {
-        hdfsService.getFolder(path).map(result => ResponseEntity.ok(result))
+        hdfsService.getFolder(path).map(result => ok(result))
       } else {
-        Future.successful(ResponseEntity.notFound().build[HDFSFolder]())
+        Future.successful(notFound[HDFSFolder])
       }
     }
   }

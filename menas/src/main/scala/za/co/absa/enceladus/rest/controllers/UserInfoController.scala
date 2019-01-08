@@ -24,7 +24,7 @@ import za.co.absa.enceladus.model.user.UserInfo
 
 @RestController 
 @RequestMapping(Array("/api/user"))
-class UserInfoController {
+class UserInfoController extends BaseController {
 
   import za.co.absa.enceladus.rest.utils.implicits._
 

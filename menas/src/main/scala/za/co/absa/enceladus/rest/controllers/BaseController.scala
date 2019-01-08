@@ -15,19 +15,24 @@
 
 package za.co.absa.enceladus.rest.controllers
 
-import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.bind.annotation.RequestMapping
-import org.apache.spark.sql.SparkSession
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.{HttpStatus, ResponseEntity}
 
-case class Test(a:Int,b:String)
+abstract class BaseController {
 
-@RestController
-@RequestMapping(Array("/api/spark"))
-class SparkController @Autowired() (spark: SparkSession) extends BaseController {
+  def ok[T](body: T): ResponseEntity[T] = {
+    ResponseEntity.ok(body)
+  }
 
-  @GetMapping(path = Array("/version"))
-  def sparkVersion(): String = spark.sparkContext.version
+  def badRequest[T](body: T): ResponseEntity[T] = {
+    ResponseEntity.badRequest().body(body)
+  }
+
+  def notFound[T]: ResponseEntity[T] = {
+    ResponseEntity.notFound().build[T]()
+  }
+
+  def created[T](body: T): ResponseEntity[T] = {
+    new ResponseEntity(body, HttpStatus.CREATED)
+  }
 
 }
