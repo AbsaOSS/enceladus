@@ -24,7 +24,7 @@ sap.ui.controller("components.schema.schemaMain", {
 	 * available) are already created. Can be used to modify the View before it
 	 * is displayed, to bind event handlers and do other one-time
 	 * initialization.
-	 * 
+	 *
 	 * @memberOf components.schema.schemaMain
 	 */
 	onInit : function() {
@@ -53,14 +53,14 @@ sap.ui.controller("components.schema.schemaMain", {
 		this._editDialog = sap.ui.xmlfragment("components.schema.editSchema", this);
 		sap.ui.getCore().byId("editSchemaSaveButton").attachPress(this.schemaEditSubmit, this)
 		sap.ui.getCore().byId("editSchemaCancelButton").attachPress(this.schemaEditCancel, this)
-		
+
 	},
 
 	onEditPress: function() {
 		this._model.setProperty("/newSchema", this._model.getProperty("/currentSchema"));
 		this._editDialog.open();
 	},
-	
+
 	schemaNameChange : function() {
 		SchemaService.isUniqueSchemaName(this._model.getProperty("/newSchema/name"))
 	},
@@ -90,19 +90,19 @@ sap.ui.controller("components.schema.schemaMain", {
 		this._model.setProperty("/newSchema", {});
 		this._addDialog.close();
 	},
-	
+
 	schemaEditCancel : function() {
 		this._model.setProperty("/newSchema", {});
 		this._editDialog.close();
 	},
-	
+
 	schemaEditSubmit : function() {
 		var newSchema = this._model.getProperty("/newSchema")
 		var currSchema = this._model.getProperty("/currentSchema")
 		SchemaService.updateSchema(currSchema.name, currSchema.version, newSchema.description)
 		this.schemaEditCancel();
 	},
-	
+
 	resetNewSchemaValueState : function() {
 		sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.None)
 		sap.ui.getCore().byId("newSchemaName").setValueStateText("")
@@ -111,18 +111,25 @@ sap.ui.controller("components.schema.schemaMain", {
 	validateNewSchema : function() {
 		this.resetNewSchemaValueState();
 		var schema = this._model.getProperty("/newSchema")
+    var isOk = true
 
 		if (!schema.name || schema.name === "") {
 			sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
 			sap.ui.getCore().byId("newSchemaName").setValueStateText("Schema name cannot be empty")
-			return false;
-		} else if (!schema.nameUnique) {
+      isOk = false;
+		} else  if (!schema.nameUnique) {
 			sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
 			sap.ui.getCore().byId("newSchemaName").setValueStateText(
 					"Schema name '" + schema.name + "' already exists. Choose a different name.")
-			return false;
-		} else
-			return true;
+      isOk = false;
+		}
+      else if (GenericService.validateEntityName(schema.name)) {
+      sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
+      sap.ui.getCore().byId("newSchemaName").setValueStateText(
+          "Schema name '" + schema.name  + "' should not have spaces. Please remove spaces and retry")
+      isOk = false;
+    }
+		return isOk;
 	},
 
 
@@ -140,14 +147,14 @@ sap.ui.controller("components.schema.schemaMain", {
 			id : selected
 		});
 	},
-	
+
 	metadataPress: function(oEv) {
 		var binding = oEv.getSource().getBindingContext().getPath() + "/metadata";
 		var bindingArr = binding + "Arr";
 		//hmm bindAggregation doesn't take formatter :-/
 		var arrMeta = Formatters.objToKVArray(this._model.getProperty(binding))
 		this._model.setProperty(bindingArr, arrMeta)
-		
+
 		var oMessageTemplate = new sap.m.MessageItem({
 			title: '{key}',
 			subtitle: '{value}',
@@ -160,7 +167,7 @@ sap.ui.controller("components.schema.schemaMain", {
 				template: oMessageTemplate
 			}
 		}).setModel(this._model);
-		
+
 		oMessagePopover.toggle(oEv.getSource());
 	},
 
@@ -222,7 +229,7 @@ sap.ui.controller("components.schema.schemaMain", {
  * Similar to onAfterRendering, but this hook is invoked before the controller's
  * View is re-rendered (NOT before the first rendering! onInit() is used for
  * that one!).
- * 
+ *
  * @memberOf components.schema.schemaMain
  */
 // onBeforeRendering: function() {
@@ -232,7 +239,7 @@ sap.ui.controller("components.schema.schemaMain", {
  * Called when the View has been rendered (so its HTML is part of the document).
  * Post-rendering manipulations of the HTML could be done here. This hook is the
  * same one that SAPUI5 controls get after being rendered.
- * 
+ *
  * @memberOf components.schema.schemaMain
  */
 // onAfterRendering: function() {
@@ -241,7 +248,7 @@ sap.ui.controller("components.schema.schemaMain", {
 /**
  * Called when the Controller is destroyed. Use this one to free resources and
  * finalize activities.
- * 
+ *
  * @memberOf components.schema.schemaMain
  */
 // onExit: function() {
