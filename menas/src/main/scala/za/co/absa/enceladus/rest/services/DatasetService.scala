@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.{Dataset, UsedIn}
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
-
-
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 @Service
 class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository)
@@ -44,8 +41,10 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   override def create(newDataset: Dataset, username: String): Future[Dataset] = {
-      val dataset = Dataset(
-      name = validateEntityName(newDataset.name,"Dataset"),
+    validateEntityName(newDataset.name,"Dataset")
+
+    val dataset = Dataset(
+      name = newDataset.name,
       version = 0,
       description = newDataset.description,
       hdfsPath = newDataset.hdfsPath,

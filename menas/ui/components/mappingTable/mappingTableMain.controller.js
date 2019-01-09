@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -321,7 +321,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
       sap.ui.getCore().byId("newMappingTableName").setValueStateText("Mapping Table name '" + oMT.name + "' already exists. Choose a different name.")
       isOk = false;
     }
-    if (/\W/.test(oMT.name)){
+    if (GenericService.isValidEntityName(oMT.name)) {
       sap.ui.getCore().byId("newMappingTableName").setValueState(sap.ui.core.ValueState.Error)
       sap.ui.getCore().byId("newMappingTableName").setValueStateText("Mapping Table name '" + oMT.name + "' should not have spaces. Please remove spaces and retry")
       isOk = false;

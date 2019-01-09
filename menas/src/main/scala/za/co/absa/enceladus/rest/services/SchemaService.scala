@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,10 @@ class SchemaService @Autowired()(schemaMongoRepository: SchemaMongoRepository,
   }
 
   override def create(newSchema: Schema, username: String): Future[Schema] = {
-    val schema = Schema(name = validateEntityName(newSchema.name, "Schema"), description = newSchema.description)
+    validateEntityName(newSchema.name, "Schema")
+
+    val schema = Schema(name = newSchema.name,
+      description = newSchema.description)
     super.create(schema, username)
   }
 

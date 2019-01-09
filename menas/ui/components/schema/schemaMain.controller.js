@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,25 +111,26 @@ sap.ui.controller("components.schema.schemaMain", {
 	validateNewSchema : function() {
 		this.resetNewSchemaValueState();
 		var schema = this._model.getProperty("/newSchema")
+    var isOk = true
 
 		if (!schema.name || schema.name === "") {
 			sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
 			sap.ui.getCore().byId("newSchemaName").setValueStateText("Schema name cannot be empty")
-			return false;
-		} else if (!schema.nameUnique) {
+      isOk = false;
+		} else { if (!schema.nameUnique) {
 			sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
 			sap.ui.getCore().byId("newSchemaName").setValueStateText(
 					"Schema name '" + schema.name + "' already exists. Choose a different name.")
-			return false;
+      isOk = false;
 		}
-		if (/\W/.test(schema.name)) {
+    if (GenericService.isValidEntityName(schema.name)) {
       sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
       sap.ui.getCore().byId("newSchemaName").setValueStateText(
-        "Schema name '" + schema.name  + "' should not have spaces. Please remove spaces and retry")
-      return false;
+          "Schema name '" + schema.name  + "' should not have spaces. Please remove spaces and retry")
+      isOk = false;
     }
-    else
-			return true;
+		}
+    return isOk;
 	},
 
 

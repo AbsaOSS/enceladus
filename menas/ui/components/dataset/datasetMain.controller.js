@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,11 +145,11 @@ sap.ui.controller("components.dataset.datasetMain", {
                 "Dataset name '" + oDataset.name + "' already exists. Choose a different name.");
             isOk = false;
         }
-        if (/\W/.test(oDataset.name)) {
-          sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
-          sap.ui.getCore().byId("newDatasetName").setValueStateText(
-            "Dataset name '" + oDataset.name + "' should not have spaces. Please remove spaces and retry");
-          isOk = false;
+        if (GenericService.isValidEntityName(oDataset.name)) {
+            sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
+            sap.ui.getCore().byId("newDatasetName").setValueStateText(
+                "Dataset name '" + oDataset.name + "' should not have spaces. Please remove spaces and retry");
+            isOk = false;
         }
         if (!oDataset.schemaName || oDataset.schemaName === "") {
             sap.ui.getCore().byId("newDatasetSchemaNameSelect").setValueState(sap.ui.core.ValueState.Error);

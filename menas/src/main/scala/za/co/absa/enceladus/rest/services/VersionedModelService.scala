@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,11 +86,9 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     }
   }
 
-  def validateEntityName(name: String , entityType:String ):String  = {
-    if (name.matches("""\w+""")) {
-      name
-    }
-     else throw new Exception(s"${entityType} name must not contain whitespace : ${name}")
+  def validateEntityName(name: String , entityType:String ): Unit  = {
+    if (name.matches("""\w+""")) name
+      else throw new Exception(s"${entityType} name must not contain whitespace : ${name}")
   }
 
 }
