@@ -12,12 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package za.co.absa.enceladus.service
+package za.co.absa.enceladus.rest.services
 
 import org.scalatest.FunSuite
 import org.scalatest.mock.MockitoSugar
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
-import za.co.absa.enceladus.rest.services.DatasetService
 import org.scalatest.Matchers._
 
 class DatasetServiceTest extends FunSuite with MockitoSugar {
