@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,4 +83,3 @@ case class ConformedEmployee(employee_id: Int, name: String, surname: String, de
     ConformedEmployeeId: String)
     
 case class ConformedRole(roleId: Int)
- 
