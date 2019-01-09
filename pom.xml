@@ -200,6 +200,28 @@
 					</filters>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.scalastyle</groupId>
+				<artifactId>scalastyle-maven-plugin</artifactId>
+				<version>1.0.0</version>
+				<configuration>
+					<verbose>false</verbose>
+					<failOnViolation>true</failOnViolation>
+					<failOnWarning>false</failOnWarning>
+					<includeTestSourceDirectory>false</includeTestSourceDirectory>
+					<sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
+					<testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
+					<configLocation>scalastyle-config.xml</configLocation>
+					<outputFile>${basedir}/target/scalastyle-output.xml</outputFile>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 	<profiles>
