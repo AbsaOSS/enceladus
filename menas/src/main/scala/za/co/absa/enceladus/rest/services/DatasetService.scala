@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.{Dataset, UsedIn}
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
-
 import scala.concurrent.Future
 
 @Service
@@ -42,6 +41,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   override def create(newDataset: Dataset, username: String): Future[Dataset] = {
+    validateEntityName(newDataset.name,"Dataset")
+
     val dataset = Dataset(
       name = newDataset.name,
       version = 0,

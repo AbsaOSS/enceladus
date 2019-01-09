@@ -44,7 +44,10 @@ class SchemaService @Autowired()(schemaMongoRepository: SchemaMongoRepository,
   }
 
   override def create(newSchema: Schema, username: String): Future[Schema] = {
-    val schema = Schema(name = newSchema.name, description = newSchema.description)
+    validateEntityName(newSchema.name, "Schema")
+
+    val schema = Schema(name = newSchema.name,
+      description = newSchema.description)
     super.create(schema, username)
   }
 
