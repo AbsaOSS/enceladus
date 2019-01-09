@@ -13,17 +13,12 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
 	<groupId>za.co.absa</groupId>
 	<artifactId>enceladus-parent</artifactId>
 	<version>0.99.0-SNAPSHOT</version>
-
 	<packaging>pom</packaging>
-
 	<repositories>
 		<repository>
 			<id>spark-absa</id>
@@ -36,7 +31,6 @@
             <url>https://dl.bintray.com/absa/mongo-absa</url>
         </repository>
 	</repositories>
-
 	<modules>
 		<module>utils</module>
 		<module>conformance</module>
@@ -48,7 +42,6 @@
 		<module>external/kafka</module>
 		<module>external/fixedWidth</module>
 	</modules>
-
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
@@ -86,7 +79,6 @@
 		<openui5.version>1.58.2</openui5.version>
 		<hadoop.version>2.7.7</hadoop.version>
 	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
@@ -148,7 +140,6 @@
 			<version>${atum.version}</version>
 		</dependency>
 	</dependencies>
-
 	<build>
 		<plugins>
 			<!-- disable surefire -->
@@ -168,9 +159,11 @@
 					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
 					<junitxml>.</junitxml>
 					<filereports>WDF TestSuite.txt</filereports>
-					<!-- Set heap memory to 4000 MB so array conformance test and conformance
-						end to end test could run. This can be removed later when dynamic conformance 
-						becomes more efficient -->
+					<!--
+ Set heap memory to 4000 MB so array conformance test and conformance
+						end to end test could run. This can be removed later when dynamic conformance
+						becomes more efficient
+					-->
 					<argLine>-Xmx4000m</argLine>
 				</configuration>
 				<executions>
@@ -214,12 +207,17 @@
 			</plugin>
 		</plugins>
 	</build>
-
 	<profiles>
 		<profile>
 			<id>selenium</id>
 			<modules>
 				<module>selenium</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>examples</id>
+			<modules>
+				<module>examples</module>
 			</modules>
 		</profile>
 	</profiles>
