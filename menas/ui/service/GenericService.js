@@ -105,9 +105,10 @@ var GenericService = new function() {
         fnHelper("", sModelAcc, paths)
     };
 
-    this.isValidEntityName = function(sName) {
+    this.validEntityName = function(sName) {
       if (/\W/.test(sName))
           return true;
       else return false;
     };
+
 }();

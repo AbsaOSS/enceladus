@@ -88,7 +88,7 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
 
   def validateEntityName(name: String , entityType:String ): Unit  = {
     if (name.matches("""\w+""")) name
-      else throw new Exception(s"${entityType} name must not contain whitespace : ${name}")
+      else throw new Exception(s"$entityType name must not contain whitespace : $name")
   }
 
 }

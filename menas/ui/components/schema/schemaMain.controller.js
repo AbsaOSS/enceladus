@@ -117,20 +117,19 @@ sap.ui.controller("components.schema.schemaMain", {
 			sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
 			sap.ui.getCore().byId("newSchemaName").setValueStateText("Schema name cannot be empty")
       isOk = false;
-		} else { if (!schema.nameUnique) {
+		} else  if (!schema.nameUnique) {
 			sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
 			sap.ui.getCore().byId("newSchemaName").setValueStateText(
 					"Schema name '" + schema.name + "' already exists. Choose a different name.")
       isOk = false;
 		}
-    if (GenericService.isValidEntityName(schema.name)) {
+      else if (GenericService.validEntityName(schema.name)) {
       sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
       sap.ui.getCore().byId("newSchemaName").setValueStateText(
           "Schema name '" + schema.name  + "' should not have spaces. Please remove spaces and retry")
       isOk = false;
     }
-		}
-    return isOk;
+		return isOk;
 	},
 
 

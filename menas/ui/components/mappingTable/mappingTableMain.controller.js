@@ -321,7 +321,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
       sap.ui.getCore().byId("newMappingTableName").setValueStateText("Mapping Table name '" + oMT.name + "' already exists. Choose a different name.")
       isOk = false;
     }
-    if (GenericService.isValidEntityName(oMT.name)) {
+    if (GenericService.validEntityName(oMT.name)) {
       sap.ui.getCore().byId("newMappingTableName").setValueState(sap.ui.core.ValueState.Error)
       sap.ui.getCore().byId("newMappingTableName").setValueStateText("Mapping Table name '" + oMT.name + "' should not have spaces. Please remove spaces and retry")
       isOk = false;
