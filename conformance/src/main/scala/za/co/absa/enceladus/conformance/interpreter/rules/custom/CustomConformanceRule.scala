@@ -18,8 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules.custom
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.model.conformanceRule.ExtensibleConformanceRule
 
-abstract class CustomConformanceRule(order: Int,
-                            outputColumn: String,
-                            controlCheckpoint: Boolean) extends ExtensibleConformanceRule {
+trait CustomConformanceRule extends ExtensibleConformanceRule {
+
   def getInterpreter(): RuleInterpreter
 }

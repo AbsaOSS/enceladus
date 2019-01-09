@@ -28,10 +28,10 @@ import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 case class MyCustomRule(
-  override val order:             Int,
-  override val outputColumn:      String,
-  override val controlCheckpoint: Boolean, // this requires manual instantiation of control framework
-  myCustomField:     String) extends CustomConformanceRule(order, outputColumn, controlCheckpoint) {
+  order:             Int,
+  outputColumn:      String,
+  controlCheckpoint: Boolean, // this requires manual instantiation of control framework
+  myCustomField:     String) extends CustomConformanceRule {
   def getInterpreter() = MyCustomRuleInterpreter(this)
 }
 
