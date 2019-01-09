@@ -1,4 +1,4 @@
-                    Copyright 2018 ABSA Group Limited
+                    Copyright 2018-2019 ABSA Group Limited
                   
       Licensed under the Apache License, Version 2.0 (the "License");
       you may not use this file except in compliance with the License.
@@ -12,16 +12,16 @@
                       limitations under the License.
 
 # Examples of Enceladus usage
-## Custom Rules Implementations and usage
+## Custom Rule Implementations and usage
 ### Requirements
 * Spark 2.2.1+ (might work with earlier, not tested)
 * CSV Data Source for Apache Spark (https://github.com/databricks/spark-csv)  
 Install using: `spark-shell --packages com.databricks:spark-csv_2.11:1.5.0`
 ### Examples
 #### CustomRuleSample1
-Very simple example how showing how a custom rule is declared, what are its very basic parts and how it transforms some data.
+Very simple example showing how a custom rule is declared, what are its very basic parts and how it transforms some data.
 #### CustomRuleSample2
-Somewhat advanced example showing two possible implementations of a LPAR/RPAD custom rule. The example includes hierarchy
+Somewhat advanced example showing two possible implementations of a LPAR/RPAD custom rule. The example includes a hierarchy
 of classes and usage of the new rules on hardcoded data. 
 #### CustomRuleSample3
 Using the previously implemented custom LPAD/RPAD rules an actual dataset is loaded from a CSV file 
