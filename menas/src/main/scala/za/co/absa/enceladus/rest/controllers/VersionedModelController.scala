@@ -34,7 +34,6 @@ abstract class VersionedModelController[C <: VersionedModel](versionedModelServi
   import za.co.absa.enceladus.rest.utils.implicits._
 
   import scala.concurrent.ExecutionContext.Implicits.global
-  private[controllers] val logger = LoggerFactory.getLogger(this.getClass)
 
   @GetMapping(path = Array("/list"))
   def getList(): CompletableFuture[ResponseEntity[Seq[VersionedSummary]]] = {

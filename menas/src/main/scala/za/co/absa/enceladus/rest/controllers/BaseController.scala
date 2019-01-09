@@ -15,9 +15,12 @@
 
 package za.co.absa.enceladus.rest.controllers
 
+import org.slf4j.LoggerFactory
 import org.springframework.http.{HttpStatus, ResponseEntity}
 
 abstract class BaseController {
+
+  private[controllers] val logger = LoggerFactory.getLogger(this.getClass)
 
   def ok[T](body: T): ResponseEntity[T] = {
     ResponseEntity.ok(body)

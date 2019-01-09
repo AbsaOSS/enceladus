@@ -35,8 +35,6 @@ class HDFSController @Autowired() (hdfsService: HDFSService) extends BaseControl
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
-  
   @PostMapping(path = Array("/list"))
   def getHDFSFolder(@RequestBody pathStr: String): CompletableFuture[ResponseEntity[HDFSFolder]] = {
     val path = new Path(pathStr)
