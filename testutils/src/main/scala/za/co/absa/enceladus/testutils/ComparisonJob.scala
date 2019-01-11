@@ -25,14 +25,14 @@ object ComparisonJob {
     val enableWholeStage = false //disable whole stage code gen - the plan is too long
 
     implicit val sparkSession: SparkSession = SparkSession.builder()
-      .appName(s"Dataset comparison - '${cmd.stdPath}' and '${cmd.refPath}'")
+      .appName(s"Dataset comparison - '${cmd.newPath}' and '${cmd.refPath}'")
       .config("spark.sql.codegen.wholeStage", enableWholeStage)
       .getOrCreate()
 
     implicit val sc: SparkContext = sparkSession.sparkContext
 
     val expectedDfReader = new DataframeReader(cmd.refPath, None)
-    val actualDfReader = new DataframeReader(cmd.stdPath, None)
+    val actualDfReader = new DataframeReader(cmd.newPath, None)
     val expectedDf = expectedDfReader.dataFrame
     val actualDf = actualDfReader.dataFrame
     val expectedSchema = expectedDfReader.getSchemaWithoutMetadata
@@ -40,7 +40,7 @@ object ComparisonJob {
 
     if (expectedSchema != actualSchema) {
       val diffSchema = actualSchema.diff(expectedSchema) ++ expectedSchema.diff(actualSchema)
-      throw CmpJobSchemasDifferException(cmd.refPath, cmd.stdPath, diffSchema)
+      throw CmpJobSchemasDifferException(cmd.refPath, cmd.newPath, diffSchema)
     }
 
     val expectedMinusActual: Dataset[Row] = expectedDf.except(actualDf)
@@ -49,7 +49,7 @@ object ComparisonJob {
     if (expectedMinusActual.count() != 0 || actualMinusExpected.count() != 0) {
       expectedMinusActual.write.format("parquet").save(s"${cmd.outPath}/expected_minus_actual")
       actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
-      throw CmpJobDatasetsDifferException(cmd.refPath, cmd.stdPath, cmd.outPath, expectedDf.count(), actualDf.count())
+      throw CmpJobDatasetsDifferException(cmd.refPath, cmd.newPath, cmd.outPath, expectedDf.count(), actualDf.count())
     } else {
       System.out.println("Expected and actual datasets are the same.")
     }

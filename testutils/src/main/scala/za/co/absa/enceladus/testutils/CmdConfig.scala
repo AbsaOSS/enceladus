@@ -28,7 +28,7 @@ case class CmdConfig(rawFormat: String = "xml",
                      csvDelimiter: Option[String] = None,
                      csvHeader: Option[Boolean] = Some(false),
                      fixedWidthTrimValues: Option[Boolean] = Some(false),
-                     stdPath: String = "",
+                     newPath: String = "",
                      refPath: String = "",
                      outPath: String = "")
 
@@ -48,7 +48,7 @@ object CmdConfig {
   private class CmdParser(programName: String) extends OptionParser[CmdConfig](programName) {
     head("\nDatasets Comparison", "")
     var rawFormat: Option[String] = None
-    var stdPath: Option[String] = None
+    var newPath: Option[String] = None
     var refPath: Option[String] = None
     var outPath: Option[String] = None
 
@@ -95,8 +95,8 @@ object CmdConfig {
       )
 
     opt[String]("std-path").required.action((value, config) => {
-      stdPath = Some(value)
-      config.copy(stdPath = value)
+      newPath = Some(value)
+      config.copy(newPath = value)
     }).text("Path to standardized dataset")
       .validate(value =>
         if (refPath.isDefined && refPath.get.equalsIgnoreCase(value))
@@ -112,7 +112,7 @@ object CmdConfig {
       config.copy(refPath = value)
     }).text("Path to referential dataset")
       .validate(value =>
-        if (stdPath.isDefined && stdPath.get.equalsIgnoreCase(value))
+        if (newPath.isDefined && newPath.get.equalsIgnoreCase(value))
           failure("ref-path and std-path can not be equal")
         else if (outPath.isDefined && outPath.get.equalsIgnoreCase(value))
           failure("ref-path and out-path can not be equal")
@@ -125,7 +125,7 @@ object CmdConfig {
       config.copy(outPath = value)
     }).text("Path to diff output")
       .validate(value =>
-        if (stdPath.isDefined && stdPath.get.equalsIgnoreCase(value))
+        if (newPath.isDefined && newPath.get.equalsIgnoreCase(value))
           failure("out-path and std-path can not be equal")
         else if (refPath.isDefined && refPath.get.equalsIgnoreCase(value))
           failure("out-path and ref-path can not be equal")
