@@ -51,7 +51,7 @@ object ComparisonJob {
       actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
       throw CmpJobDatasetsDifferException(cmd.refPath, cmd.stdPath, cmd.outPath, expectedDf.count(), actualDf.count())
     } else {
-      System.out.println("Expected and actual datasets are the same. Carry On.")
+      System.out.println("Expected and actual datasets are the same.")
     }
   }
 }
