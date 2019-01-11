@@ -40,7 +40,7 @@ class ConfigSuite extends FunSuite {
     )
 
     assert(cmdConfig.rawFormat == parquetFormat)
-    assert(cmdConfig.stdPath == stdPath)
+    assert(cmdConfig.newPath == stdPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }
@@ -59,7 +59,7 @@ class ConfigSuite extends FunSuite {
     assert(cmdConfig.rawFormat == csvFormat)
     assert(cmdConfig.csvDelimiter == Option(delimiter))
     assert(cmdConfig.csvHeader == Option(false))
-    assert(cmdConfig.stdPath == stdPath)
+    assert(cmdConfig.newPath == stdPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }
@@ -79,7 +79,7 @@ class ConfigSuite extends FunSuite {
     assert(cmdConfig.rawFormat == csvFormat)
     assert(cmdConfig.csvDelimiter == Option(delimiter))
     assert(cmdConfig.csvHeader == Option(true))
-    assert(cmdConfig.stdPath == stdPath)
+    assert(cmdConfig.newPath == stdPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }
@@ -98,7 +98,7 @@ class ConfigSuite extends FunSuite {
 
     assert(cmdConfig.rawFormat == xmlFormat)
     assert(cmdConfig.rowTag == Option(rowTag))
-    assert(cmdConfig.stdPath == stdPath)
+    assert(cmdConfig.newPath == stdPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }
@@ -115,7 +115,7 @@ class ConfigSuite extends FunSuite {
 
     assert(cmdConfig.rawFormat == fixedWithdFormat)
     assert(cmdConfig.fixedWidthTrimValues == Option(false))
-    assert(cmdConfig.stdPath == stdPath)
+    assert(cmdConfig.newPath == stdPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }
@@ -133,7 +133,7 @@ class ConfigSuite extends FunSuite {
 
     assert(cmdConfig.rawFormat == fixedWithdFormat)
     assert(cmdConfig.fixedWidthTrimValues == Option(true))
-    assert(cmdConfig.stdPath == stdPath)
+    assert(cmdConfig.newPath == stdPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }
