@@ -89,7 +89,7 @@
 	<check level="warning" class="org.scalastyle.scalariform.StructuralTypeChecker" enabled="true"/>
 	<check level="warning" class="org.scalastyle.file.RegexChecker" enabled="true">
 		<parameters>
-			<parameter name="regex">println</parameter>
+			<parameter name="regex">\bprint(|ln|f)\(</parameter>
 		</parameters>
 	</check>
 	<check level="warning" class="org.scalastyle.scalariform.NumberOfTypesChecker" enabled="true">
@@ -129,12 +129,12 @@
 	<check level="warning" class="org.scalastyle.file.NewLineAtEofChecker" enabled="true"/>
 	<check level="warning" class="org.scalastyle.file.NoNewLineAtEofChecker" enabled="false"/>
 	<check level="warning" class="org.scalastyle.scalariform.WhileChecker" enabled="false"/>
-	<check level="warning" class="org.scalastyle.scalariform.VarFieldChecker" enabled="true"/>
+	<check level="warning" class="org.scalastyle.scalariform.VarFieldChecker" enabled="false"/>
 	<check level="warning" class="org.scalastyle.scalariform.VarLocalChecker" enabled="false"/>
 	<check level="warning" class="org.scalastyle.scalariform.RedundantIfChecker" enabled="false"/>
 	<check level="warning" class="org.scalastyle.scalariform.TokenChecker" enabled="false">
 		<parameters>
-			<parameter name="regex">println</parameter>
+			<parameter name="regex">\bprint(|ln|f)\(</parameter>
 		</parameters>
 	</check>
 	<check level="warning" class="org.scalastyle.scalariform.DeprecatedJavaChecker" enabled="true"/>
