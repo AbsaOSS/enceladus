@@ -36,8 +36,6 @@ class MappingTableService @Autowired()(mappingTableMongoRepository: MappingTable
   }
 
   override def create(mt: MappingTable, username: String): Future[Option[MappingTable]] = {
-    validateEntityName(mt.name, "MappingTable")
-
     val mappingTable = MappingTable(
       name = mt.name,
       description = mt.description,

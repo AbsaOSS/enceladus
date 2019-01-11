@@ -19,13 +19,13 @@ import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
 import com.mongodb.client.result.UpdateResult
-import org.slf4j.LoggerFactory
-import org.springframework.http.ResponseEntity
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
-import org.springframework.web.bind.annotation.{GetMapping, PathVariable, PostMapping, RequestBody}
+import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model.UsedIn
 import za.co.absa.enceladus.model.versionedModel._
+import za.co.absa.enceladus.rest.exceptions.NotFoundException
 import za.co.absa.enceladus.rest.services.VersionedModelService
 
 
@@ -35,77 +35,71 @@ abstract class VersionedModelController[C <: VersionedModel](versionedModelServi
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  @GetMapping(path = Array("/list"))
-  def getList(): CompletableFuture[ResponseEntity[Seq[VersionedSummary]]] = {
-    versionedModelService.getLatestVersions().map { entity =>
-      ok(entity)
-    }
+  @GetMapping(Array("/list"))
+  @ResponseStatus(HttpStatus.OK)
+  def getList(): CompletableFuture[Seq[VersionedSummary]] = {
+    versionedModelService.getLatestVersions()
   }
 
-  @GetMapping(path = Array("/detail/{name}/{version}"))
-  def getVersionDetail(@PathVariable name: String, @PathVariable version: Int): CompletableFuture[ResponseEntity[C]] = {
+  @GetMapping(Array("/detail/{name}/{version}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getVersionDetail(@PathVariable name: String, @PathVariable version: Int): CompletableFuture[C] = {
     versionedModelService.getVersion(name, version).map {
-      case Some(entity) => ok(entity)
-      case None         => notFound[C]
+      case Some(entity) => entity
+      case None         => throw notFound()
     }
   }
 
-  @GetMapping(path = Array("/detail/{name}/latest"))
-  def getLatestDetail(@PathVariable name: String): CompletableFuture[ResponseEntity[C]] = {
+  @GetMapping(Array("/detail/{name}/latest"))
+  @ResponseStatus(HttpStatus.OK)
+  def getLatestDetail(@PathVariable name: String): CompletableFuture[C] = {
     versionedModelService.getLatestVersion(name).map {
-      case Some(entity) => ok(entity)
-      case None         => notFound[C]
+      case Some(entity) => entity
+      case None         => throw NotFoundException()
     }
   }
 
-  @GetMapping(path = Array("/isUniqueName/{name}"))
-  def isUniqueName(@PathVariable name: String): CompletableFuture[ResponseEntity[Boolean]] = {
-    versionedModelService.isUniqueName(name).map { entity =>
-      ok(entity)
-    }
+  @GetMapping(Array("/isUniqueName/{name}"))
+  @ResponseStatus(HttpStatus.OK)
+  def isUniqueName(@PathVariable name: String): CompletableFuture[Boolean] = {
+    versionedModelService.isUniqueName(name)
   }
 
-  @GetMapping(path = Array("/usedIn/{name}/{version}"))
-  def usedIn(@PathVariable name: String, @PathVariable version: Int): CompletableFuture[ResponseEntity[UsedIn]] = {
-    versionedModelService.getUsedIn(name, Some(version)).map { entity =>
-      ok(entity)
-    }
+  @GetMapping(Array("/usedIn/{name}/{version}"))
+  @ResponseStatus(HttpStatus.OK)
+  def usedIn(@PathVariable name: String, @PathVariable version: Int): CompletableFuture[UsedIn] = {
+    versionedModelService.getUsedIn(name, Some(version))
   }
 
-  @GetMapping(path = Array("/allVersions/{name}"))
-  def getAllVersions(@PathVariable name: String): CompletableFuture[ResponseEntity[Seq[C]]] = {
-    versionedModelService.getAllVersions(name).map { entity =>
-      ok(entity)
-    }
+  @GetMapping(Array("/allVersions/{name}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getAllVersions(@PathVariable name: String): CompletableFuture[Seq[C]] = {
+    versionedModelService.getAllVersions(name)
   }
 
-  @PostMapping(path = Array("/create"))
-  def create(@AuthenticationPrincipal principal: UserDetails, @RequestBody item: C): CompletableFuture[ResponseEntity[C]] = {
+  @PostMapping(Array("/create"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def create(@AuthenticationPrincipal principal: UserDetails, @RequestBody item: C): CompletableFuture[C] = {
     versionedModelService.create(item, principal.getUsername).map {
-      case Some(entity) => created(entity)
-      case None         => notFound[C]
+      case Some(entity) => entity
+      case None         => throw notFound()
     }
   }
 
-  @PostMapping(path = Array("/edit"))
-  def edit(@AuthenticationPrincipal user: UserDetails, @RequestBody item: C): CompletableFuture[ResponseEntity[C]] = {
+  @PostMapping(Array("/edit"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def edit(@AuthenticationPrincipal user: UserDetails, @RequestBody item: C): CompletableFuture[C] = {
     versionedModelService.update(user.getUsername, item).map {
-      case Some(entity) => created(entity)
-      case None         => notFound[C]
+      case Some(entity) => entity
+      case None         => throw notFound()
     }
   }
 
-  @GetMapping(path = Array("/disable/{name}", "/disable/{name}/{version}"))
-  def disable(@PathVariable name: String, @PathVariable version: Optional[Int]): CompletableFuture[ResponseEntity[Object]] = {
+  @GetMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
+  @ResponseStatus(HttpStatus.OK)
+  def disable(@PathVariable name: String, @PathVariable version: Optional[Int]): CompletableFuture[UpdateResult] = {
     val v = if (version.isPresent) Some(version.get) else None
-    val res = versionedModelService.disableVersion(name, v)
-
-    for {
-      r <- res
-    } yield r match {
-      case l: UsedIn       => badRequest[Object](l.toSeq)
-      case u: UpdateResult => ok[Object](u)
-    }
+    versionedModelService.disableVersion(name, v)
   }
 
 }

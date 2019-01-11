@@ -40,18 +40,18 @@ class SchemaController @Autowired() (schemaService:     SchemaService,
   import scala.concurrent.ExecutionContext.Implicits.global
 
   @PostMapping(path = Array("/upload"))
+  @ResponseStatus(code = HttpStatus.CREATED)
   def handleFileUpload(@AuthenticationPrincipal principal: UserDetails, @RequestParam("file") file: MultipartFile,
-                       @RequestParam("version") version: Int, @RequestParam("name") name: String): CompletableFuture[ResponseEntity[_]] = {
+                       @RequestParam("version") version: Int, @RequestParam("name") name: String): CompletableFuture[_] = {
     val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase, refName = name, refVersion = version + 1, attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = file.getOriginalFilename, fileContent = file.getBytes, fileMIMEType = file.getContentType)
 
     val struct = DataType.fromJson(new String(file.getBytes)).asInstanceOf[StructType]
 
-    val updateFuture = for {
+    for {
       upload <- attachmentService.uploadAttachment(origFile)
       update <- schemaService.update(principal.getUsername, name)(oldSchema => oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(struct.fields).toList))
     } yield update
-
-    updateFuture.map(schema => created(schema))
   }
+
 }

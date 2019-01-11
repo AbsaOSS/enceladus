@@ -41,8 +41,6 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   override def create(newDataset: Dataset, username: String): Future[Option[Dataset]] = {
-    validateEntityName(newDataset.name,"Dataset")
-
     val dataset = Dataset(
       name = newDataset.name,
       version = 0,

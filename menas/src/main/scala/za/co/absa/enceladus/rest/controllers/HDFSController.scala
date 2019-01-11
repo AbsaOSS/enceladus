@@ -18,14 +18,11 @@ package za.co.absa.enceladus.rest.controllers
 import java.util.concurrent.CompletableFuture
 
 import org.apache.hadoop.fs.Path
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.ResponseEntity
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model.api.HDFSFolder
 import za.co.absa.enceladus.rest.services.HDFSService
-
-import scala.concurrent._
 
 @RestController
 @RequestMapping(Array("/api/hdfs"))
@@ -36,14 +33,15 @@ class HDFSController @Autowired() (hdfsService: HDFSService) extends BaseControl
   import scala.concurrent.ExecutionContext.Implicits.global
 
   @PostMapping(path = Array("/list"))
-  def getHDFSFolder(@RequestBody pathStr: String): CompletableFuture[ResponseEntity[HDFSFolder]] = {
+  @ResponseStatus(HttpStatus.OK)
+  def getHDFSFolder(@RequestBody pathStr: String): CompletableFuture[HDFSFolder] = {
     val path = new Path(pathStr)
 
     hdfsService.exists(path).flatMap { exists =>
       if (exists) {
-        hdfsService.getFolder(path).map(result => ok(result))
+        hdfsService.getFolder(path)
       } else {
-        Future.successful(notFound[HDFSFolder])
+        throw notFound()
       }
     }
   }

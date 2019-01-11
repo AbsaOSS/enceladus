@@ -12,14 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package za.co.absa.enceladus.rest.services
 
-import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
+package za.co.absa.enceladus.rest.models
 
-class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
+case class Validation (errors: Map[String, List[String]] = Map()) {
 
-  override val modelRepository = mock[DatasetMongoRepository]
-  override val service = new DatasetService(modelRepository)
+  def isValid(): Boolean = errors.isEmpty
+
+  def withError(key: String, error: String): Validation = {
+    this.copy(errors = errors + (key -> (error :: errors.getOrElse(key, Nil))))
+  }
 
 }

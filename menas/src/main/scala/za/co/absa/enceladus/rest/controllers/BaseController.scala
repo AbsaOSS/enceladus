@@ -16,26 +16,12 @@
 package za.co.absa.enceladus.rest.controllers
 
 import org.slf4j.LoggerFactory
-import org.springframework.http.{HttpStatus, ResponseEntity}
+import za.co.absa.enceladus.rest.exceptions.NotFoundException
 
 abstract class BaseController {
 
   private[controllers] val logger = LoggerFactory.getLogger(this.getClass)
 
-  def ok[T](body: T): ResponseEntity[T] = {
-    ResponseEntity.ok(body)
-  }
-
-  def badRequest[T](body: T): ResponseEntity[T] = {
-    ResponseEntity.badRequest().body(body)
-  }
-
-  def notFound[T]: ResponseEntity[T] = {
-    ResponseEntity.notFound().build[T]()
-  }
-
-  def created[T](body: T): ResponseEntity[T] = {
-    new ResponseEntity(body, HttpStatus.CREATED)
-  }
+  def notFound(): NotFoundException = NotFoundException()
 
 }

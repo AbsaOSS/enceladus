@@ -15,12 +15,15 @@
 
 package za.co.absa.enceladus.rest.services
 
+import org.mongodb.scala.result.UpdateResult
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.UsedIn
+import za.co.absa.enceladus.rest.exceptions.{EntityInUseException, ValidationException}
+import za.co.absa.enceladus.rest.models.Validation
 
 import scala.concurrent.Future
 
@@ -51,10 +54,10 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
 
   def create(item: C, username: String): Future[Option[C]] = {
     for {
-      unique <- isUniqueName(item.name)
-      _      <-
-        if (unique) versionedMongoRepository.create(item, username)
-        else throw new Exception(s"Name already exists: ${item.name}")
+      validation <- validate(item)
+      _          <-
+        if (validation.isValid()) versionedMongoRepository.create(item, username)
+        else throw ValidationException(validation)
       detail <- getLatestVersion(item.name)
     } yield detail
   }
@@ -71,7 +74,7 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
       }
   }
 
-  def disableVersion(name: String, version: Option[Int]): Future[Object] = {
+  def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
     val auth = SecurityContextHolder.getContext.getAuthentication
     val principal = auth.getPrincipal.asInstanceOf[UserDetails]
 
@@ -80,17 +83,31 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     }
   }
 
-  private def disableVersion(name: String, version: Option[Int], usedIn: UsedIn, principal: UserDetails): Future[Object] = {
+  private def disableVersion(name: String, version: Option[Int], usedIn: UsedIn, principal: UserDetails): Future[UpdateResult] = {
     if (usedIn.nonEmpty) {
-      Future.successful(usedIn)
+      throw EntityInUseException(usedIn)
     } else {
       versionedMongoRepository.disableVersion(name, version, principal.getUsername)
     }
   }
 
-  protected[services] def validateEntityName(name: String , entityType:String ): Unit  = {
-    if (name.matches("""\w+""")) name
-      else throw new Exception(s"$entityType name must not contain whitespace : $name")
+  def validate(item: C): Future[Validation] = {
+    validateName(item.name)
   }
+
+  protected[services] def validateName(name: String): Future[Validation] = {
+    val validation = Validation()
+
+    if (hasWhitespace(name)) {
+      Future.successful(validation.withError("name", s"name contains whitespace: '$name'"))
+    } else {
+      isUniqueName(name).map { isUnique =>
+        if (isUnique) validation
+        else validation.withError("name", s"entity with name already exists: '$name'")
+      }
+    }
+  }
+
+  private def hasWhitespace(name: String): Boolean = !name.matches("""\w+""")
 
 }
