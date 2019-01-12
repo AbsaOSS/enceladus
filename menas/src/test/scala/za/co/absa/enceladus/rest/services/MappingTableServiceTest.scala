@@ -12,22 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package za.co.absa.enceladus.rest.services
 
-package za.co.absa.enceladus.rest.controllers
+import za.co.absa.enceladus.model.MappingTable
+import za.co.absa.enceladus.rest.repositories.{DatasetMongoRepository, MappingTableMongoRepository}
 
-import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.bind.annotation.RequestMapping
-import org.apache.spark.sql.SparkSession
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.beans.factory.annotation.Autowired
+class MappingTableServiceTest extends VersionedModelServiceTest[MappingTable] {
 
-case class Test(a:Int,b:String)
-
-@RestController
-@RequestMapping(Array("/api/spark"))
-class SparkController @Autowired() (spark: SparkSession) extends BaseController {
-
-  @GetMapping(path = Array("/version"))
-  def sparkVersion(): String = spark.sparkContext.version
+  val datasetMongoRepository = mock[DatasetMongoRepository]
+  override val modelRepository = mock[MappingTableMongoRepository]
+  override val service = new MappingTableService(modelRepository, datasetMongoRepository)
 
 }

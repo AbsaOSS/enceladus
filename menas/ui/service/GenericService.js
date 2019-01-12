@@ -106,9 +106,7 @@ var GenericService = new function() {
     };
 
     this.validateEntityName = function(sName) {
-      if (/\W/.test(sName))
-          return true;
-      else return false;
+      return /\W/.test(sName)
     };
 
 }();

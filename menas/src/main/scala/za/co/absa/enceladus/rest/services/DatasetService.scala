@@ -25,7 +25,7 @@ import scala.concurrent.Future
 class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository)
   extends VersionedModelService(datasetMongoRepository) {
 
-  override def update(username: String, dataset: Dataset): Future[Dataset] = {
+  override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
     super.update(username, dataset.name) { latest =>
       latest
         .setSchemaName(dataset.schemaName)
@@ -40,9 +40,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     Future.successful(UsedIn())
   }
 
-  override def create(newDataset: Dataset, username: String): Future[Dataset] = {
-    validateEntityName(newDataset.name,"Dataset")
-
+  override def create(newDataset: Dataset, username: String): Future[Option[Dataset]] = {
     val dataset = Dataset(
       name = newDataset.name,
       version = 0,

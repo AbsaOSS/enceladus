@@ -13,21 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.controllers
+package za.co.absa.enceladus.rest.models
 
-import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.bind.annotation.RequestMapping
-import org.apache.spark.sql.SparkSession
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.beans.factory.annotation.Autowired
+case class Validation (errors: Map[String, List[String]] = Map()) {
 
-case class Test(a:Int,b:String)
+  def isValid(): Boolean = errors.isEmpty
 
-@RestController
-@RequestMapping(Array("/api/spark"))
-class SparkController @Autowired() (spark: SparkSession) extends BaseController {
-
-  @GetMapping(path = Array("/version"))
-  def sparkVersion(): String = spark.sparkContext.version
+  def withError(key: String, error: String): Validation = {
+    this.copy(errors = errors + (key -> (error :: errors.getOrElse(key, Nil))))
+  }
 
 }

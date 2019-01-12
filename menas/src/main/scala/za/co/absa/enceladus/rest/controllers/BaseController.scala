@@ -15,19 +15,13 @@
 
 package za.co.absa.enceladus.rest.controllers
 
-import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.bind.annotation.RequestMapping
-import org.apache.spark.sql.SparkSession
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.beans.factory.annotation.Autowired
+import org.slf4j.LoggerFactory
+import za.co.absa.enceladus.rest.exceptions.NotFoundException
 
-case class Test(a:Int,b:String)
+abstract class BaseController {
 
-@RestController
-@RequestMapping(Array("/api/spark"))
-class SparkController @Autowired() (spark: SparkSession) extends BaseController {
+  private[controllers] val logger = LoggerFactory.getLogger(this.getClass)
 
-  @GetMapping(path = Array("/version"))
-  def sparkVersion(): String = spark.sparkContext.version
+  def notFound(): NotFoundException = NotFoundException()
 
 }

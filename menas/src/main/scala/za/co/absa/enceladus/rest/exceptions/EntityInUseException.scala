@@ -13,21 +13,8 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.controllers
+package za.co.absa.enceladus.rest.exceptions
 
-import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.bind.annotation.RequestMapping
-import org.apache.spark.sql.SparkSession
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.beans.factory.annotation.Autowired
+import za.co.absa.enceladus.model.UsedIn
 
-case class Test(a:Int,b:String)
-
-@RestController
-@RequestMapping(Array("/api/spark"))
-class SparkController @Autowired() (spark: SparkSession) extends BaseController {
-
-  @GetMapping(path = Array("/version"))
-  def sparkVersion(): String = spark.sparkContext.version
-
-}
+case class EntityInUseException(usedIn: UsedIn) extends Exception()
