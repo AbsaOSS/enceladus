@@ -13,15 +13,21 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.testutils
+package za.co.absa.enceladus.testutils.datasetComparison
 
-import za.co.absa.enceladus.testutils.exceptions.{CmpJobDatasetsDifferException, CmpJobSchemasDifferException}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import za.co.absa.enceladus.testutils.exceptions.{CmpJobDatasetsDifferException, CmpJobSchemasDifferException}
+import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions}
 
 object ComparisonJob {
   def main(args: Array[String]): Unit = {
-    implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+    implicit val dfReaderOptions: DataframeReaderOptions = DataframeReaderOptions(cmd.rawFormat,
+                                                                                  cmd.rowTag,
+                                                                                  cmd.csvDelimiter,
+                                                                                  cmd.csvHeader,
+                                                                                  cmd.fixedWidthTrimValues)
     val enableWholeStage = false //disable whole stage code gen - the plan is too long
 
     implicit val sparkSession: SparkSession = SparkSession.builder()

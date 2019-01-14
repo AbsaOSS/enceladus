@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.testutils
+package za.co.absa.enceladus.testutils.datasetComparison
 
 import scopt.OptionParser
 
@@ -100,12 +100,12 @@ object CmdConfig {
     }).text("Path to standardized dataset")
       .validate(value =>
         if (refPath.isDefined && refPath.get.equalsIgnoreCase(value))
-            failure("std-path and ref-path can not be equal")
+          failure("std-path and ref-path can not be equal")
         else if (outPath.isDefined && outPath.get.equalsIgnoreCase(value))
-            failure("std-path and out-path can not be equal")
+          failure("std-path and out-path can not be equal")
         else
-            success
-        )
+          success
+      )
 
     opt[String]("ref-path").required.action((value, config) => {
       refPath = Some(value)
@@ -118,7 +118,7 @@ object CmdConfig {
           failure("ref-path and out-path can not be equal")
         else
           success
-        )
+      )
 
     opt[String]("out-path").required.action((value, config) => {
       outPath = Some(value)

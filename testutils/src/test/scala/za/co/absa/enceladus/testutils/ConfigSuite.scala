@@ -30,7 +30,7 @@ class ConfigSuite extends FunSuite {
   private val fixedWithdFormat = "fixed-width"
 
   test("Parquest file") {
-    val cmdConfig = CmdConfig.getCmdLineArguments(
+    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
       Array(
         "--raw-format", parquetFormat,
         "--std-path", stdPath,
@@ -46,7 +46,7 @@ class ConfigSuite extends FunSuite {
   }
 
   test("Csv with default header") {
-    val cmdConfig = CmdConfig.getCmdLineArguments(
+    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
       Array(
         "--raw-format", csvFormat,
         "--delimiter", delimiter,
@@ -65,7 +65,7 @@ class ConfigSuite extends FunSuite {
   }
 
   test("Csv with header") {
-    val cmdConfig = CmdConfig.getCmdLineArguments(
+    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
       Array(
         "--raw-format", csvFormat,
         "--delimiter", ";",
@@ -86,7 +86,7 @@ class ConfigSuite extends FunSuite {
 
 
   test("XML file") {
-    val cmdConfig = CmdConfig.getCmdLineArguments(
+    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
       Array(
         "--raw-format", xmlFormat,
         "--row-tag", rowTag,
@@ -104,7 +104,7 @@ class ConfigSuite extends FunSuite {
   }
 
   test("Fixed-width file don't trim value") {
-    val cmdConfig = CmdConfig.getCmdLineArguments(
+    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
       Array(
         "--raw-format", fixedWithdFormat,
         "--std-path", stdPath,
@@ -121,7 +121,7 @@ class ConfigSuite extends FunSuite {
   }
 
   test("Fixed-width file trim values") {
-    val cmdConfig = CmdConfig.getCmdLineArguments(
+    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
       Array(
         "--raw-format", fixedWithdFormat,
         "--trim-values", "true",

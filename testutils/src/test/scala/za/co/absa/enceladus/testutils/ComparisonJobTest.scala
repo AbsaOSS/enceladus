@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import za.co.absa.enceladus.testutils.datasetComparison.ComparisonJob
 import za.co.absa.enceladus.testutils.exceptions.{CmpJobDatasetsDifferException, CmpJobSchemasDifferException}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
