@@ -37,8 +37,8 @@ import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAu
 import org.springframework.security.ldap.search.FilterBasedLdapUserSearch
 import org.springframework.security.ldap.userdetails.{LdapUserDetailsMapper, LdapUserDetailsService}
 import org.springframework.security.web.AuthenticationEntryPoint
-import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler
-import org.springframework.security.web.authentication.{SimpleUrlAuthenticationFailureHandler, SimpleUrlAuthenticationSuccessHandler}
+import org.springframework.security.web.authentication.logout.{HttpStatusReturningLogoutSuccessHandler, LogoutSuccessHandler}
+import org.springframework.security.web.authentication.{AuthenticationFailureHandler, SimpleUrlAuthenticationFailureHandler, SimpleUrlAuthenticationSuccessHandler}
 import org.springframework.security.web.csrf.CsrfToken
 import org.springframework.security.web.savedrequest.{HttpSessionRequestCache, RequestCache, SavedRequest}
 import org.springframework.stereotype.Component
@@ -127,8 +127,13 @@ class WebSecurityConfig {
 //  }
 
   @Bean
-  def authenticationFailureHandler(): SimpleUrlAuthenticationFailureHandler = {
+  def authenticationFailureHandler(): AuthenticationFailureHandler = {
     new SimpleUrlAuthenticationFailureHandler()
+  }
+
+  @Bean
+  def logoutSuccessHandler(): LogoutSuccessHandler = {
+    new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK)
   }
 
   @Configuration
@@ -139,10 +144,13 @@ class WebSecurityConfig {
     val restAuthenticationEntyPoint: RestAuthenticationEntryPoint = null
 
     @Autowired()
-    val mySuccessHandler: MySuccessHandler = null
+    val authenticationSuccessHandler: AuthSuccessHandler = null
 
     @Autowired()
-    val myFailureHandler: SimpleUrlAuthenticationFailureHandler = null
+    val authenticationFailureHandler: AuthenticationFailureHandler = null
+
+    @Autowired()
+    val logoutSuccessHandler: LogoutSuccessHandler = null
 
     override def configure(http: HttpSecurity) {
       http
@@ -158,13 +166,13 @@ class WebSecurityConfig {
         .and()
         .formLogin()
         .loginProcessingUrl("/api/login")
-        .successHandler(mySuccessHandler)
-        .failureHandler(myFailureHandler)
+        .successHandler(authenticationSuccessHandler)
+        .failureHandler(authenticationFailureHandler)
         .permitAll()
         .and()
         .logout()
         .logoutUrl("/api/logout")
-        .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK))
+        .logoutSuccessHandler(logoutSuccessHandler)
         .permitAll()
         .clearAuthentication(true)
         .deleteCookies("JSESSIONID")
@@ -201,7 +209,7 @@ class WebSecurityConfig {
   }
 
   @Component
-  class MySuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+  class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     override def onAuthenticationSuccess(request: HttpServletRequest,
                                          response: HttpServletResponse,
