@@ -13,34 +13,42 @@
  * limitations under the License.
  */
 
-var Functions = new function() {
-	this.urlBase = ""
+var Functions = new function () {
+  this.urlBase = "";
 
+  this.csrfHeader = "X-CSRF-TOKEN";
 
-	this.ajax = function(sPath, sMethod, oData, fnSuccess, fnError, oControl) {
-		if(oControl) oControl.setBusy(true);
-		
-		var oFormattedData = null;
-		if((sMethod.toLowerCase() === "post" || sMethod.toLowerCase() === "put") && typeof(oData) === "object") {
-			oFormattedData = JSON.stringify(oData)
-		} else oFormattedData = oData;
-		
-		$.ajax(this.urlBase + sPath, {
-			beforeSend : function(oJqXHR, oSettings) {
-				var token = $("meta[name='_csrf']").attr("content");
-				var header = $("meta[name='_csrf_header']").attr("content");
-				console.log("CRSF: " + header + " -> " + token)
-				oJqXHR.setRequestHeader(header, token);
-			},
-			complete: function() {
-				if(oControl) oControl.setBusy(false)
-			},
-			data: oFormattedData,
-			dataType : "json",
-			contentType: "application/json",
-			method : sMethod,
-			success : fnSuccess,
-			error : fnError
-		})
-	}
+  this.ajax = function (sPath, sMethod, oData, fnSuccess, fnError, oControl) {
+    if (oControl) oControl.setBusy(true);
+
+    let oFormattedData = null;
+    if ((sMethod.toLowerCase() === "post" || sMethod.toLowerCase() === "put") && typeof (oData) === "object") {
+      oFormattedData = JSON.stringify(oData)
+    } else oFormattedData = oData;
+
+    $.ajax(this.urlBase + sPath, {
+      beforeSend: (oJqXHR, oSettings) => {
+        if (sMethod.toLowerCase() !== "get") {
+          let csrfToken = localStorage.getItem("csrfToken");
+          console.log("CSRF: " + this.csrfHeader + " -> " + csrfToken);
+          oJqXHR.setRequestHeader(this.csrfHeader, csrfToken);
+        }
+      },
+      complete: function () {
+        if (oControl) oControl.setBusy(false)
+      },
+      data: oFormattedData,
+      dataType: "json",
+      contentType: "application/json",
+      method: sMethod,
+      success: fnSuccess,
+      error: (xhr) => {
+        if (xhr.status === 401) {
+          GenericService.clearSession("Session has expired")
+        } else {
+          fnError(xhr)
+        }
+      }
+    })
+  }
 }();
