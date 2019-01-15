@@ -19,6 +19,9 @@ sap.ui.define([
 ], function (Controller, MessageToast) {
   "use strict";
 
+  const usernameField = "username";
+  const passwordField = "password";
+
   return Controller.extend("components.login.loginMain", {
     loginForm: {},
 
@@ -55,8 +58,8 @@ sap.ui.define([
     },
 
     _resetLoginFormState: function () {
-      this._resetFieldState("username");
-      this._resetFieldState("password");
+      this._resetFieldState(usernameField);
+      this._resetFieldState(passwordField);
     },
 
     _validateField: function (oData, sField, sErrorMessage) {
@@ -72,8 +75,8 @@ sap.ui.define([
     },
 
     _validateLogin(oData) {
-      let isValidUsername = this._validateField(oData, "username", "Username cannot be empty.");
-      let isValidPassword = this._validateField(oData, "password", "Password cannot be empty.");
+      let isValidUsername = this._validateField(oData, usernameField, "Username cannot be empty.");
+      let isValidPassword = this._validateField(oData, passwordField, "Password cannot be empty.");
       return isValidUsername && isValidPassword;
     },
 
@@ -91,8 +94,8 @@ sap.ui.define([
 
       let fnError = () => {
         MessageToast.show("Username or password incorrect");
-        this.byId("username").setValueState(sap.ui.core.ValueState.Error);
-        this.byId("password").setValueState(sap.ui.core.ValueState.Error);
+        this.byId(usernameField).setValueState(sap.ui.core.ValueState.Error);
+        this.byId(passwordField).setValueState(sap.ui.core.ValueState.Error);
       };
       $.ajax("api/login", {
         complete: function () {
