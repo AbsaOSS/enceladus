@@ -13,14 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.testutils
+package za.co.absa.enceladus.testutils.datasetComparison
 
 import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
-import za.co.absa.enceladus.testutils.datasetComparison.ComparisonJob
 import za.co.absa.enceladus.testutils.exceptions.{CmpJobDatasetsDifferException, CmpJobSchemasDifferException}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
@@ -30,12 +29,11 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
   var timePrefix = ""
 
   override def beforeAll(): Unit = {
-    timePrefix = format.format(Calendar.getInstance().getTime())
+    timePrefix = format.format(Calendar.getInstance().getTime)
   }
 
   test("Compare the same datasets") {
     val outPath = s"target/test_output/comparison_job/positive/$timePrefix"
-    import spark.implicits._
 
     val args = Array(
       "--raw-format", "csv",
@@ -58,7 +56,6 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
                   s"Actual dataset path: $stdPath\n" +
                   s"Difference written to: $outPath\n" +
                   "Count Expected( 10 ) vs Actual( 11 )"
-    import spark.implicits._
 
     val args = Array(
       "--raw-format", "csv",
@@ -85,8 +82,6 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
                   s"Reference path: $refPath\n" +
                   s"Actual dataset path: $stdPath\n" +
                   s"Difference is $diff"
-
-    import spark.implicits._
 
     val args = Array(
       "--raw-format", "csv",
