@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.rest
 
-import com.typesafe.config.ConfigFactory
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}
@@ -154,7 +153,9 @@ class WebSecurityConfig {
 
     override def configure(http: HttpSecurity) {
       http
-        .csrf().ignoringAntMatchers("/api/login").and()
+        .csrf()
+        .ignoringAntMatchers("/api/login")
+        .and()
         .exceptionHandling()
         .authenticationEntryPoint(restAuthenticationEntyPoint)
         .and()
