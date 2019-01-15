@@ -20,11 +20,11 @@ import org.apache.spark.sql.{DataFrame, DataFrameReader, SparkSession}
 
 import scala.annotation.switch
 
-case class DataframeReaderOptions(rawFormat: String,
-                                  rowTag: Option[String],
-                                  csvDelimiter: Option[String],
-                                  csvHeader: Option[Boolean],
-                                  fixedWidthTrimValues: Option[Boolean])
+case class DataframeReaderOptions(rawFormat: String = "xml",
+                                  rowTag: Option[String] = None,
+                                  csvDelimiter: Option[String] = None,
+                                  csvHeader: Option[Boolean] = Some(false),
+                                  fixedWidthTrimValues: Option[Boolean] = Some(false))
 
 class DataframeReader(datasetPath: String, inputSchema: Option[StructType] )
                      (implicit dfReaderOptions: DataframeReaderOptions, sparkSession: SparkSession) {

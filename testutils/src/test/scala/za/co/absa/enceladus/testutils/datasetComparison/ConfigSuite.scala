@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.testutils
+package za.co.absa.enceladus.testutils.datasetComparison
 
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.testutils.DataframeReaderOptions
 
 class ConfigSuite extends FunSuite {
 
@@ -30,7 +31,7 @@ class ConfigSuite extends FunSuite {
   private val fixedWithdFormat = "fixed-width"
 
   test("Parquest file") {
-    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
+    val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
         "--raw-format", parquetFormat,
         "--std-path", stdPath,
@@ -46,7 +47,7 @@ class ConfigSuite extends FunSuite {
   }
 
   test("Csv with default header") {
-    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
+    val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
         "--raw-format", csvFormat,
         "--delimiter", delimiter,
@@ -65,7 +66,7 @@ class ConfigSuite extends FunSuite {
   }
 
   test("Csv with header") {
-    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
+    val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
         "--raw-format", csvFormat,
         "--delimiter", ";",
@@ -86,7 +87,7 @@ class ConfigSuite extends FunSuite {
 
 
   test("XML file") {
-    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
+    val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
         "--raw-format", xmlFormat,
         "--row-tag", rowTag,
@@ -104,7 +105,7 @@ class ConfigSuite extends FunSuite {
   }
 
   test("Fixed-width file don't trim value") {
-    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
+    val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
         "--raw-format", fixedWithdFormat,
         "--std-path", stdPath,
@@ -121,7 +122,7 @@ class ConfigSuite extends FunSuite {
   }
 
   test("Fixed-width file trim values") {
-    val cmdConfig = DataframeReaderOptions.getCmdLineArguments(
+    val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
         "--raw-format", fixedWithdFormat,
         "--trim-values", "true",
