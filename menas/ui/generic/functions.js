@@ -22,9 +22,12 @@ var Functions = new function () {
     if (oControl) oControl.setBusy(true);
 
     let oFormattedData = null;
-    if ((sMethod.toLowerCase() === "post" || sMethod.toLowerCase() === "put") && typeof (oData) === "object") {
+    if ((sMethod.toLowerCase() === "post" || sMethod.toLowerCase() === "put")
+      && (typeof oData === "object")) {
       oFormattedData = JSON.stringify(oData)
-    } else oFormattedData = oData;
+    } else {
+      oFormattedData = oData;
+    }
 
     $.ajax(this.urlBase + sPath, {
       beforeSend: (oJqXHR, oSettings) => {
