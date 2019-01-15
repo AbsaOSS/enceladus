@@ -127,7 +127,7 @@ class WebSecurityConfig {
 //  }
 
   @Bean
-  def aZuthenticationFailureHandler(): SimpleUrlAuthenticationFailureHandler = {
+  def authenticationFailureHandler(): SimpleUrlAuthenticationFailureHandler = {
     new SimpleUrlAuthenticationFailureHandler()
   }
 
