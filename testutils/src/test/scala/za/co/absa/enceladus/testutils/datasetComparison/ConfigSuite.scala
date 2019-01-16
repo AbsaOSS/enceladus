@@ -20,7 +20,7 @@ import za.co.absa.enceladus.testutils.DataframeReaderOptions
 
 class ConfigSuite extends FunSuite {
 
-  private val stdPath = "/tmp/standardized_out"
+  private val newPath = "/tmp/standardized_out"
   private val refPath = "/tmp/reference_data"
   private val outPath = "/tmp/out_data"
   private val delimiter = ";"
@@ -34,14 +34,14 @@ class ConfigSuite extends FunSuite {
     val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
         "--raw-format", parquetFormat,
-        "--std-path", stdPath,
+        "--new-path", newPath,
         "--ref-path", refPath,
         "--out-path", outPath
       )
     )
 
     assert(cmdConfig.rawFormat == parquetFormat)
-    assert(cmdConfig.newPath == stdPath)
+    assert(cmdConfig.newPath == newPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }
@@ -51,7 +51,7 @@ class ConfigSuite extends FunSuite {
       Array(
         "--raw-format", csvFormat,
         "--delimiter", delimiter,
-        "--std-path", stdPath,
+        "--new-path", newPath,
         "--ref-path", refPath,
         "--out-path", outPath
       )
@@ -60,7 +60,7 @@ class ConfigSuite extends FunSuite {
     assert(cmdConfig.rawFormat == csvFormat)
     assert(cmdConfig.csvDelimiter == Option(delimiter))
     assert(cmdConfig.csvHeader == Option(false))
-    assert(cmdConfig.newPath == stdPath)
+    assert(cmdConfig.newPath == newPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }
@@ -71,7 +71,7 @@ class ConfigSuite extends FunSuite {
         "--raw-format", csvFormat,
         "--delimiter", ";",
         "--header", "true",
-        "--std-path", stdPath,
+        "--new-path", newPath,
         "--ref-path", refPath,
         "--out-path", outPath
       )
@@ -80,7 +80,7 @@ class ConfigSuite extends FunSuite {
     assert(cmdConfig.rawFormat == csvFormat)
     assert(cmdConfig.csvDelimiter == Option(delimiter))
     assert(cmdConfig.csvHeader == Option(true))
-    assert(cmdConfig.newPath == stdPath)
+    assert(cmdConfig.newPath == newPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }
@@ -91,7 +91,7 @@ class ConfigSuite extends FunSuite {
       Array(
         "--raw-format", xmlFormat,
         "--row-tag", rowTag,
-        "--std-path", stdPath,
+        "--new-path", newPath,
         "--ref-path", refPath,
         "--out-path", outPath
       )
@@ -99,7 +99,7 @@ class ConfigSuite extends FunSuite {
 
     assert(cmdConfig.rawFormat == xmlFormat)
     assert(cmdConfig.rowTag == Option(rowTag))
-    assert(cmdConfig.newPath == stdPath)
+    assert(cmdConfig.newPath == newPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }
@@ -108,7 +108,7 @@ class ConfigSuite extends FunSuite {
     val cmdConfig = CmdConfig.getCmdLineArguments(
       Array(
         "--raw-format", fixedWithdFormat,
-        "--std-path", stdPath,
+        "--new-path", newPath,
         "--ref-path", refPath,
         "--out-path", outPath
       )
@@ -116,7 +116,7 @@ class ConfigSuite extends FunSuite {
 
     assert(cmdConfig.rawFormat == fixedWithdFormat)
     assert(cmdConfig.fixedWidthTrimValues == Option(false))
-    assert(cmdConfig.newPath == stdPath)
+    assert(cmdConfig.newPath == newPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }
@@ -126,7 +126,7 @@ class ConfigSuite extends FunSuite {
       Array(
         "--raw-format", fixedWithdFormat,
         "--trim-values", "true",
-        "--std-path", stdPath,
+        "--new-path", newPath,
         "--ref-path", refPath,
         "--out-path", outPath
       )
@@ -134,7 +134,7 @@ class ConfigSuite extends FunSuite {
 
     assert(cmdConfig.rawFormat == fixedWithdFormat)
     assert(cmdConfig.fixedWidthTrimValues == Option(true))
-    assert(cmdConfig.newPath == stdPath)
+    assert(cmdConfig.newPath == newPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
   }

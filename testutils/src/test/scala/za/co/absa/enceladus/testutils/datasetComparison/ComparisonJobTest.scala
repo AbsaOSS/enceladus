@@ -38,7 +38,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
     val args = Array(
       "--raw-format", "csv",
       "--delimiter", ",",
-      "--std-path", "src/test/resources/dataSample1.csv",
+      "--new-path", "src/test/resources/dataSample1.csv",
       "--ref-path", "src/test/resources/dataSample2.csv",
       "--out-path", outPath
     )
@@ -60,7 +60,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
     val args = Array(
       "--raw-format", "csv",
       "--delimiter", ",",
-      "--std-path", stdPath,
+      "--new-path", stdPath,
       "--ref-path", refPath,
       "--out-path", outPath
     )
@@ -86,7 +86,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
     val args = Array(
       "--raw-format", "csv",
       "--delimiter", ",",
-      "--std-path", stdPath,
+      "--new-path", stdPath,
       "--ref-path", refPath,
       "--out-path", outPath
     )

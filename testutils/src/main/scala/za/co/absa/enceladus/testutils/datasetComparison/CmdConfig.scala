@@ -94,10 +94,10 @@ object CmdConfig {
           failure("The --trimValues option is supported only for fixed-width files ")
       )
 
-    opt[String]("std-path").required.action((value, config) => {
+    opt[String]("new-path").required.action((value, config) => {
       newPath = Some(value)
       config.copy(newPath = value)
-    }).text("Path to standardized dataset")
+    }).text("Path to the new dataset, just generated and to be tested.")
       .validate(value =>
         if (refPath.isDefined && refPath.get.equalsIgnoreCase(value))
           failure("std-path and ref-path can not be equal")
@@ -110,7 +110,7 @@ object CmdConfig {
     opt[String]("ref-path").required.action((value, config) => {
       refPath = Some(value)
       config.copy(refPath = value)
-    }).text("Path to referential dataset")
+    }).text("Path to supposedly correct data set.")
       .validate(value =>
         if (newPath.isDefined && newPath.get.equalsIgnoreCase(value))
           failure("ref-path and std-path can not be equal")
@@ -123,7 +123,10 @@ object CmdConfig {
     opt[String]("out-path").required.action((value, config) => {
       outPath = Some(value)
       config.copy(outPath = value)
-    }).text("Path to diff output")
+    }).text("Path to where the `ComparisonJob` will save the " +
+            "differences. This will efectivly creat a folder in which you will find " +
+            "two other folders. expected_minus_actual and actual_minus_expected. " +
+            "Both hold parque data sets of differences. (minus as in is relative complement")
       .validate(value =>
         if (newPath.isDefined && newPath.get.equalsIgnoreCase(value))
           failure("out-path and std-path can not be equal")
