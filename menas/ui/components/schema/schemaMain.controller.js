@@ -104,14 +104,17 @@ sap.ui.controller("components.schema.schemaMain", {
 	},
 
 	resetNewSchemaValueState : function() {
-		sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.None)
-		sap.ui.getCore().byId("newSchemaName").setValueStateText("")
+		sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.None);
+		sap.ui.getCore().byId("newSchemaName").setValueStateText("");
+
+    this.byId("fileUploader").setValueState(sap.ui.core.ValueState.None);
+    this.byId("fileUploader").setValueStateText("");
 	},
 
 	validateNewSchema : function() {
 		this.resetNewSchemaValueState();
 		var schema = this._model.getProperty("/newSchema")
-    var isOk = true
+    var isOk = true;
 
 		if (!schema.name || schema.name === "") {
 			sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
@@ -197,8 +200,10 @@ sap.ui.controller("components.schema.schemaMain", {
 	},
 
 	handleUploadPress : function(oParams) {
-		sap.ui.core.BusyIndicator.show();
-		this.byId("fileUploader").upload();
+    if (this.validateSchemaFileUplaod()) {
+      sap.ui.core.BusyIndicator.show();
+      this.byId("fileUploader").upload();
+    }
 	},
 
 	handleUploadProgress : function(oParams) {
@@ -222,8 +227,19 @@ sap.ui.controller("components.schema.schemaMain", {
 			// nav back to info
 			this.byId("schemaIconTabBar").setSelectedKey("info");
 		}
+	} ,
 
-	}
+  validateSchemaFileUplaod : function () {
+    this.resetNewSchemaValueState();
+    var isOk = true;
+	  var oSchemaFileUpload = this.byId("fileUploader").getValue();
+    if (oSchemaFileUpload === "" ) {
+      this.byId("fileUploader").setValueState(sap.ui.core.ValueState.Error)
+      this.byId("fileUploader").setValueStateText("File Name cannot be empty, Please select a file")
+      isOk = false;
+    }
+    return isOk;
+  }
 
 /**
  * Similar to onAfterRendering, but this hook is invoked before the controller's
