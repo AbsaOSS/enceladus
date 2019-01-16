@@ -39,8 +39,6 @@ sap.ui.define([
 
       this.loginForm = this.byId("loginForm");
       this.loginForm.setModel(new sap.ui.model.json.JSONModel(model), "login");
-
-      this.byId("loginSubmit").attachPress(this.onLoginSubmit, this);
     },
 
     onLoginSubmit: function (oEvent) {
