@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.conformance
 
 import scopt.OptionParser
+import za.co.absa.enceladus.utils.menas.MenasCredentials
 
 import scala.util.matching.Regex
 
@@ -29,6 +30,7 @@ case class CmdConfig(datasetName: String = "",
                      datasetVersion: Int = 1,
                      reportDate: String = "",
                      reportVersion: Int = 1,
+                     menasCredentials: MenasCredentials = MenasCredentials("", ""),
                      performanceMetricsFile: Option[String] = None,
                      publishPathOverride: Option[String] = None,
                      folderPrefix: Option[String] = None)
@@ -73,6 +75,10 @@ object CmdConfig {
       .validate(value =>
         if (value > 0) success
         else failure("Option --report-version must be >0"))
+
+    opt[String]('m', "menas-credentials-path").required().action((path, config) =>
+      config.copy(menasCredentials = MenasCredentials.fromFile(path)))
+      .text("Path to Menas credentials config file")
 
     opt[String]("performance-file").optional().action((value, config) =>
       config.copy(performanceMetricsFile = Some(value))).text("Produce a performance metrics file at the given location (local filesystem)")

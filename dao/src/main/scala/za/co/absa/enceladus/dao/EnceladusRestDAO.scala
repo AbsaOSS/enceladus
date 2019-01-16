@@ -16,14 +16,12 @@
 package za.co.absa.enceladus.dao
 
 import com.typesafe.config.ConfigFactory
-
 import org.apache.commons.httpclient.HttpStatus
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.types.{DataType, StructType}
-
 import za.co.absa.enceladus.model._
 import za.co.absa.enceladus.model.api.versionedModelDetail.{DatasetDetail, MappingTableDetail, SchemaDetail}
 
@@ -33,53 +31,89 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.databind.SerializationFeature
+import za.co.absa.enceladus.dao.MenasRestDAO.log
 
 object EnceladusRestDAO extends EnceladusDAO {
   val conf = ConfigFactory.load()
   val restBase = conf.getString("menas.rest.uri")
   private val userName = LoggedInUserInfo.getUserName
 
+  var sessionCookie: String = ""
+  var csrfToken: String = ""
+
   private val log = LogManager.getLogger("enceladus.conformance.EnceladusRestDAO")
 
   val objectMapper = new ObjectMapper()
-      .registerModule(DefaultScalaModule)
-      .registerModule(new JavaTimeModule())
-      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-  
+    .registerModule(DefaultScalaModule)
+    .registerModule(new JavaTimeModule())
+    .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+
+  def postLogin(username: String, password: String) = {
+    try {
+      val httpClient = HttpClients.createDefault
+      val url = s"$restBase/login?username=$username&password=$password&submit=Login"
+      val httpPost = new HttpPost(url)
+
+      val response: CloseableHttpResponse = httpClient.execute(httpPost)
+      try {
+        val status = response.getStatusLine.getStatusCode
+        val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
+        val unAuthorized = status == HttpStatus.SC_UNAUTHORIZED
+        if (ok) {
+          val cookieHeader = response.getFirstHeader("set-cookie")
+          sessionCookie = cookieHeader.getValue
+
+          val csrfHeader = response.getFirstHeader("X-CSRF-TOKEN")
+          csrfToken = csrfHeader.getValue
+
+          log.info(response.toString)
+        } else if (unAuthorized) {
+          throw new UnauthorizedException
+        } else {
+          log.warn(response.toString)
+        }
+        ok
+      } finally {
+        response.close()
+      }
+    }
+    catch {
+      case unAuthException: UnauthorizedException => throw unAuthException
+      case NonFatal(e) =>
+        log.error(s"Unable to login to Menas with error: ${e.getMessage}")
+        false
+    }
+  }
+
   override def getDataset(name: String, version: Int): Dataset = {
-    val url = s"$restBase/dataset/${getEncodedName(name)}/$version?uname=$userName"
+    val url = s"$restBase/dataset/detail/${getEncodedName(name)}/$version"
     log.info(url)
     val json = authorizeGetRequest(url)
     log.info(json)
-    objectMapper.readValue(json, classOf[DatasetDetail]).model
+    objectMapper.readValue(json, classOf[Dataset])
   }
 
   override def getMappingTable(name: String, version: Int): MappingTable = {
-    val url = s"$restBase/mapping_table/${getEncodedName(name)}/$version?uname=$userName"
+    val url = s"$restBase/mappingTable/detail/${getEncodedName(name)}/$version"
     log.info(url)
     val json = authorizeGetRequest(url)
     log.info(json)
-    objectMapper.readValue(json, classOf[MappingTableDetail]).model
+    objectMapper.readValue(json, classOf[MappingTable])
   }
 
-  private def getSchemaByFormat(name: String, version: Int, format: String): SchemaDetail = {
-    val url = s"$restBase/schema/${getEncodedName(name)}/$version?format=$format"
-    val json = Source.fromURL (url).mkString
-    log.info (url)
-    log.info (json)
-    objectMapper.readValue(json, classOf[SchemaDetail])
- }
-
   override def getSchema(name: String, version: Int): StructType = {
-    val schema = getSchemaByFormat(name, version, "structtype")
-    DataType.fromJson(schema.schemaFormatted.get).asInstanceOf[StructType]
+    val url = s"$restBase/schema/json/${getEncodedName(name)}/$version"
+    log.info(url)
+    val json = authorizeGetRequest(url)
+    log.info(json)
+    DataType.fromJson(json).asInstanceOf[StructType]
   }
 
   /* The URLEncoder implements the HTML Specifications
    * so have to replace '+' with %20
    * https://stackoverflow.com/questions/4737841/urlencoder-not-able-to-translate-space-character
    */
-  private def getEncodedName(name: String): String ={
+  private def getEncodedName(name: String): String = {
     java.net.URLEncoder.encode(name, "UTF-8").replace("+", "%20")
   }
 
@@ -88,6 +122,8 @@ object EnceladusRestDAO extends EnceladusDAO {
       log.info(s"URL: $url GET")
       val httpClient = HttpClients.createDefault
       val httpGet = new HttpGet(url)
+      httpGet.addHeader("cookie", sessionCookie)
+
       val response: CloseableHttpResponse = httpClient.execute(httpGet)
 
       try {

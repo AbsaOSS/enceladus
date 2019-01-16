@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.standardization
 
 import scopt.OptionParser
+import za.co.absa.enceladus.utils.menas.MenasCredentials
 
 import scala.util.matching.Regex
 
@@ -23,13 +24,14 @@ import scala.util.matching.Regex
   * This is a class for configuration provided by the command line parameters
   *
   * Note: scopt requires all fields to have default values.
-  *       Even if a field is mandatory it needs a default value.
+  * Even if a field is mandatory it needs a default value.
   */
 case class CmdConfig(datasetName: String = "",
                      datasetVersion: Int = 1,
                      reportDate: String = "",
                      reportVersion: Int = 1,
                      rawFormat: String = "xml",
+                     menasCredentials: MenasCredentials = MenasCredentials("", ""),
                      rowTag: Option[String] = None,
                      csvDelimiter: Option[String] = None,
                      csvHeader: Option[Boolean] = Some(false),
@@ -73,6 +75,10 @@ object CmdConfig {
           case _ => success
         }
       )
+
+    opt[String]('m', "menas-credentials-path").required().action((path, config) =>
+      config.copy(menasCredentials = MenasCredentials.fromFile(path)))
+      .text("Path to Menas credentials config file")
 
     opt[Int]('r', "report-version").action((value, config) =>
       config.copy(reportVersion = value)).text("Report version")
