@@ -137,19 +137,11 @@ class WebSecurityConfig {
 
   @Configuration
   @Order(1)
-  class ApiWebSecurityConfigurationAdapter() extends WebSecurityConfigurerAdapter {
-
-    @Autowired()
-    val restAuthenticationEntyPoint: RestAuthenticationEntryPoint = null
-
-    @Autowired()
-    val authenticationSuccessHandler: AuthSuccessHandler = null
-
-    @Autowired()
-    val authenticationFailureHandler: AuthenticationFailureHandler = null
-
-    @Autowired()
-    val logoutSuccessHandler: LogoutSuccessHandler = null
+  class ApiWebSecurityConfigurationAdapter @Autowired()(restAuthenticationEntyPoint: RestAuthenticationEntryPoint,
+                                                        authenticationSuccessHandler: AuthSuccessHandler,
+                                                        authenticationFailureHandler: AuthenticationFailureHandler,
+                                                        logoutSuccessHandler: LogoutSuccessHandler)
+    extends WebSecurityConfigurerAdapter {
 
     override def configure(http: HttpSecurity) {
       http
