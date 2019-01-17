@@ -2,29 +2,29 @@
 ___
 
 <!-- toc -->
-- [What is Enceladus?](What is Enceladus?)
-    - [Menas](Menas)
-    - [Standardization](Standardization)
-    - [Conformance](Conformance)
-- [How to build](How to build)
-- [How to run](How to run)
-- [How to contribute](How to contribute)
+- [What is Enceladus?](#enceladus)
+    - [Menas](#menas)
+    - [Standardization](#standardization)
+    - [Conformance](#conformance)
+- [How to build](#build)
+- [How to run](#run)
+- [How to contribute](#contribute)
 <!-- tocstop -->
 
-## What is Enceladus?
+## <a name="enceladus"/>What is Enceladus?
 **Enceladus** is a **Dynamic Conformance Engine** which allows data from different formats to be standardized to parquet and conformed to group-accepted common reference (e.g. **DE** in one source system and **Deutschland** in another, can be conformed to **Germany**).
 
 The project is comprised of three main components:
-### Menas
+### <a name="menas"/>Menas
 This is the user-facing web client, used to **specify the standardization schema**, and **define the step required to conform** a dataset.  
 
-### Standardization
+### <a name="standardization"/>Standardization
 This is a Spark job which reads in a dataset in any supported format and **produces a parquet dataset with the Menas-specified schema**. 
 
-### Conformance
+### <a name="conformance"/>Conformance
 This is a Spark job which **applies the Menas-specified conformance rules to the standardized dataset**.
 
-## How to build
+## <a name="build"/>How to build
 #### Build requirements:
  - **Maven 3.5.4+**
  - **Java 8**
@@ -33,11 +33,11 @@ Each module provides configuration file templates with reasonable default values
 Make a copy of the `*.properties.template` and `*.conf.template` files in each module's `src/resources` directory removing the `.template` extension. 
 Ensure the properties there fit your environment.
 
-You can build Enceladus with the following command:
+#### Build command:
 
 `mvn -DskipTests clean package`
 
-## How to run
+## <a name="run"/>How to run
 #### Menas requirements:
 - **Tomcat 8.5/9.0** installation
 - **MongoDB 4.0** installation
@@ -70,7 +70,7 @@ Simply copy the **menas.war** file produced whn building the project into Tomcat
 --header <true/false(applicable for CSV)> \
 --delimiter <csv delimiter (applicable for CSV)>
 ```
-#### Running Conformance
+#### <a name="contribute"/>Running Conformance
 ```
 <spark home>/spark-submit \
 --num-executors <num> \
