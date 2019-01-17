@@ -23,15 +23,12 @@ import org.apache.http.util.EntityUtils
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.types.{DataType, StructType}
 import za.co.absa.enceladus.model._
-import za.co.absa.enceladus.model.api.versionedModelDetail.{DatasetDetail, MappingTableDetail, SchemaDetail}
 
 import scala.util.control.NonFatal
-import scala.io.Source
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.databind.SerializationFeature
-import za.co.absa.enceladus.dao.MenasRestDAO.log
 
 object EnceladusRestDAO extends EnceladusDAO {
   val conf = ConfigFactory.load()
@@ -51,7 +48,7 @@ object EnceladusRestDAO extends EnceladusDAO {
   def postLogin(username: String, password: String) = {
     try {
       val httpClient = HttpClients.createDefault
-      val url = s"$restBase/login?username=$username&password=$password&submit=Login"
+      val url = s"$restBase/login?username=${encode(username)}&password=${encode(password)}&submit=Login"
       val httpPost = new HttpPost(url)
 
       val response: CloseableHttpResponse = httpClient.execute(httpPost)
@@ -86,7 +83,7 @@ object EnceladusRestDAO extends EnceladusDAO {
   }
 
   override def getDataset(name: String, version: Int): Dataset = {
-    val url = s"$restBase/dataset/detail/${getEncodedName(name)}/$version"
+    val url = s"$restBase/dataset/detail/${encode(name)}/$version"
     log.info(url)
     val json = authorizeGetRequest(url)
     log.info(json)
@@ -94,7 +91,7 @@ object EnceladusRestDAO extends EnceladusDAO {
   }
 
   override def getMappingTable(name: String, version: Int): MappingTable = {
-    val url = s"$restBase/mappingTable/detail/${getEncodedName(name)}/$version"
+    val url = s"$restBase/mappingTable/detail/${encode(name)}/$version"
     log.info(url)
     val json = authorizeGetRequest(url)
     log.info(json)
@@ -102,7 +99,7 @@ object EnceladusRestDAO extends EnceladusDAO {
   }
 
   override def getSchema(name: String, version: Int): StructType = {
-    val url = s"$restBase/schema/json/${getEncodedName(name)}/$version"
+    val url = s"$restBase/schema/json/${encode(name)}/$version"
     log.info(url)
     val json = authorizeGetRequest(url)
     log.info(json)
@@ -113,8 +110,8 @@ object EnceladusRestDAO extends EnceladusDAO {
    * so have to replace '+' with %20
    * https://stackoverflow.com/questions/4737841/urlencoder-not-able-to-translate-space-character
    */
-  private def getEncodedName(name: String): String = {
-    java.net.URLEncoder.encode(name, "UTF-8").replace("+", "%20")
+  private def encode(string: String): String = {
+    java.net.URLEncoder.encode(string, "UTF-8").replace("+", "%20")
   }
 
   private def authorizeGetRequest(url: String): String = {
