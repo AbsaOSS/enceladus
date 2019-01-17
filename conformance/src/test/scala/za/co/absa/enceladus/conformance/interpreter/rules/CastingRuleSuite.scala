@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, RuleValidators}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.samples.CastingRuleSamples
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
@@ -66,38 +66,39 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
     val dsName = "dataset"
 
     // These fields should pass the validation
-    CastingRuleInterpreter.validateInputField(dsName, schema, "id")
-    CastingRuleInterpreter.validateInputField(dsName, schema, "date")
-    CastingRuleInterpreter.validateInputField(dsName, schema, "items.qty")
-    CastingRuleInterpreter.validateOutputField(dsName, schema, "conformedvalue")
-    CastingRuleInterpreter.validateOutputField(dsName, schema, "items.value")
+    val ruleName = "Casting rule"
+    RuleValidators.validateInputField(ruleName, dsName, schema, "id")
+    RuleValidators.validateInputField(ruleName, dsName, schema, "date")
+    RuleValidators.validateInputField(ruleName, dsName, schema, "items.qty")
+    RuleValidators.validateOutputField(ruleName, dsName, schema, "conformedvalue")
+    RuleValidators.validateOutputField(ruleName, dsName, schema, "items.value")
 
     assert(intercept[ValidationException] {
-      CastingRuleInterpreter.validateInputField(dsName, schema, "nosuchfield")
+      RuleValidators.validateInputField(ruleName, dsName, schema, "nosuchfield")
     }.getMessage contains "does not exist")
 
     assert(intercept[ValidationException] {
-      CastingRuleInterpreter.validateInputField(dsName, schema, "items")
+      RuleValidators.validateInputField(ruleName, dsName, schema, "items")
     }.getMessage contains "is not a primitive")
 
     assert(intercept[ValidationException] {
-      CastingRuleInterpreter.validateOutputField(dsName, schema, "id")
+      RuleValidators.validateOutputField(ruleName, dsName, schema, "id")
     }.getMessage contains "already exists so it cannot be used")
 
     assert(intercept[ValidationException] {
-      CastingRuleInterpreter.validateOutputField(dsName, schema, "items")
+      RuleValidators.validateOutputField(ruleName, dsName, schema, "items")
     }.getMessage contains "already exists so it cannot be used")
 
     assert(intercept[ValidationException] {
-      CastingRuleInterpreter.validateOutputField(dsName, schema, "items.qty")
+      RuleValidators.validateOutputField(ruleName, dsName, schema, "items.qty")
     }.getMessage contains "already exists so it cannot be used")
 
     assert(intercept[ValidationException] {
-      CastingRuleInterpreter.validateOutputField(dsName, schema, "id.conformed")
+      RuleValidators.validateOutputField(ruleName, dsName, schema, "id.conformed")
     }.getMessage contains "is a primitive type")
 
     assert(intercept[ValidationException] {
-      CastingRuleInterpreter.validateSameParent("id", "items.qty")
+      RuleValidators.validateSameParent(ruleName, "id", "items.qty")
     }.getMessage contains "have different parents")
 
   }

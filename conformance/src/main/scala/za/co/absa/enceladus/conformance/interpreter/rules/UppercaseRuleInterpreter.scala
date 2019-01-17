@@ -16,20 +16,39 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import za.co.absa.enceladus.model.conformanceRule.UppercaseConformanceRule
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql._
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import org.apache.spark.sql.functions._
+import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 
 case class UppercaseRuleInterpreter(rule: UppercaseConformanceRule) extends RuleInterpreter {
+  final val ruleName = "Uppercase rule"
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
-    handleArrays(rule.outputColumn, df) { flattened =>
-      ArrayTransformations.nestedWithColumn(flattened)(rule.outputColumn, upper(col(rule.inputColumn)))
+    // Validate the rule parameters
+    RuleValidators.validateInputField(ruleName, progArgs.datasetName, df.schema, rule.inputColumn)
+    RuleValidators.validateOutputField(ruleName, progArgs.datasetName, df.schema, rule.outputColumn)
+    RuleValidators.validateSameParent(ruleName, rule.inputColumn, rule.outputColumn)
+
+    if (rule.inputColumn.contains('.')) {
+      conformNestedField(df)
+    } else {
+      conformRootField(df)
     }
+  }
+
+  /** Handles uppercase conformance rule for nested fields. */
+  private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
+    ArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => upper(c))
+  }
+
+  /** Handles uppercase conformance rule for root (non-nested) fields. It has much better performance than the more generic `conformNestedField` implementation. */
+  private def conformRootField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
+    // Applying the rule
+    val uppered = df.withColumn(rule.outputColumn, upper(col(rule.inputColumn)))
+    uppered
   }
 
 }

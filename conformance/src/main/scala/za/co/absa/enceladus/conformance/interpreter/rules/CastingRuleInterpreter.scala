@@ -20,6 +20,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, StringType, StructType}
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.CastingConformanceRule
 import za.co.absa.enceladus.utils.error.ErrorMessage
@@ -28,12 +29,13 @@ import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.validation._
 
 case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInterpreter {
+  final val ruleName = "Casting rule"
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
     // Validate the rule parameters
-    CastingRuleInterpreter.validateInputField(progArgs.datasetName, df.schema, rule.inputColumn)
-    CastingRuleInterpreter.validateOutputField(progArgs.datasetName, df.schema, rule.outputColumn)
-    CastingRuleInterpreter.validateSameParent(rule.inputColumn, rule.outputColumn)
+    RuleValidators.validateInputField(ruleName, progArgs.datasetName, df.schema, rule.inputColumn)
+    RuleValidators.validateOutputField(ruleName, progArgs.datasetName, df.schema, rule.outputColumn)
+    RuleValidators.validateSameParent(ruleName, rule.inputColumn, rule.outputColumn)
 
     if (rule.inputColumn.contains('.')) {
       conformNestedField(df)
@@ -102,34 +104,4 @@ case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInte
     }
   }
 
-}
-
-object CastingRuleInterpreter {
-
-  @throws[ValidationException]
-  def validateInputField(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val existenceIssues = SchemaPathValidator.validateSchemaPath(datasetName, schema, fieldPath)
-    val primitivityIssues = SchemaPathValidator.validateSchemaPathPrimitive(schema, fieldPath)
-    checkAndThrowValidationErrors("Casting rule input field is incorrect.", existenceIssues ++ primitivityIssues)
-  }
-
-  @throws[ValidationException]
-  def validateOutputField(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val issues = SchemaPathValidator.validateSchemaPathOutput(datasetName, schema, fieldPath)
-    checkAndThrowValidationErrors("Casting rule output field is incorrect.", issues)
-  }
-
-  @throws[ValidationException]
-  def validateSameParent(fieldPath1: String, fieldPath2: String): Unit = {
-    val issues = SchemaPathValidator.validatePathSameParent(fieldPath1, fieldPath2)
-    checkAndThrowValidationErrors("Casting rule input and output columns don't have the same parent.", issues)
-  }
-
-  @throws[ValidationException]
-  private def checkAndThrowValidationErrors(message: String, validationIssues: Seq[ValidationIssue]): Unit = {
-    if (validationIssues.nonEmpty) {
-      val errorMeaasges = ValidationUtils.getValidationMsgs(validationIssues).mkString(";")
-      throw new ValidationException(s"$message $errorMeaasges" )
-    }
-  }
 }
