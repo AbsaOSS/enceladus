@@ -103,7 +103,7 @@ sap.ui.controller("components.schema.schemaMain", {
 		this.schemaEditCancel();
 	},
 
-	resetNewSchemaValueState : function() {
+  resetNewSchemaValueState : function() {
 		sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.None);
 		sap.ui.getCore().byId("newSchemaName").setValueStateText("");
 
@@ -113,23 +113,23 @@ sap.ui.controller("components.schema.schemaMain", {
 
 	validateNewSchema : function() {
 		this.resetNewSchemaValueState();
-		var schema = this._model.getProperty("/newSchema")
-    var isOk = true;
+		var schema = this._model.getProperty("/newSchema");
+		var isOk = true;
 
 		if (!schema.name || schema.name === "") {
-			sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
-			sap.ui.getCore().byId("newSchemaName").setValueStateText("Schema name cannot be empty")
+			sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error);
+			sap.ui.getCore().byId("newSchemaName").setValueStateText("Schema name cannot be empty");
       isOk = false;
 		} else  if (!schema.nameUnique) {
-			sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
+			sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error);
 			sap.ui.getCore().byId("newSchemaName").setValueStateText(
-					"Schema name '" + schema.name + "' already exists. Choose a different name.")
+					"Schema name '" + schema.name + "' already exists. Choose a different name.");
       isOk = false;
 		}
       else if (GenericService.validateEntityName(schema.name)) {
-      sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error)
+      sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error);
       sap.ui.getCore().byId("newSchemaName").setValueStateText(
-          "Schema name '" + schema.name  + "' should not have spaces. Please remove spaces and retry")
+          "Schema name '" + schema.name  + "' should not have spaces. Please remove spaces and retry");
       isOk = false;
     }
 		return isOk;
@@ -234,8 +234,8 @@ sap.ui.controller("components.schema.schemaMain", {
     let isOk = true;
     let oSchemaFileUpload = this.byId("fileUploader").getValue();
     if (oSchemaFileUpload === "" ) {
-      this.byId("fileUploader").setValueState(sap.ui.core.ValueState.Error)
-      this.byId("fileUploader").setValueStateText("File Name cannot be empty, Please select a file")
+      this.byId("fileUploader").setValueState(sap.ui.core.ValueState.Error);
+      this.byId("fileUploader").setValueStateText("File Name cannot be empty, Please select a file");
       isOk = false;
     }
     return isOk;
