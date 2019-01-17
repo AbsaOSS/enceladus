@@ -34,4 +34,11 @@ class MenasCredentialsSuite extends FunSuite {
     assert(credentials == MenasCredentials("user", "changeme"))
   }
 
+  test("MenasCredentials should replace tilde ('~') with home dir") {
+    val homeDir = System.getProperty("user.home")
+    val expected = s"$homeDir/dir/file"
+
+    val actual = MenasCredentials.replaceHome("~/dir/file")
+    assert(actual == expected)
+  }
 }

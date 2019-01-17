@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.standardization
 
+import java.io.File
+
 import scopt.OptionParser
 import za.co.absa.enceladus.utils.menas.MenasCredentials
 
@@ -76,9 +78,13 @@ object CmdConfig {
         }
       )
 
-    opt[String]('m', "menas-credentials-path").required().action((path, config) =>
+    opt[String]("menas-credentials-file").required().action((path, config) =>
       config.copy(menasCredentials = MenasCredentials.fromFile(path)))
-      .text("Path to Menas credentials config file")
+      .text("Path to Menas credentials config file. Suitable only for client mode")
+      .validate(path =>
+        if (new File(MenasCredentials.replaceHome(path)).exists()) success
+        else failure("Credentials file does not exist. Make sure you are running in client mode")
+      )
 
     opt[Int]('r', "report-version").action((value, config) =>
       config.copy(reportVersion = value)).text("Report version")
@@ -90,7 +96,6 @@ object CmdConfig {
       rawFormat = Some(value)
       config.copy(rawFormat = value)
     }).text("format of the raw data (csv, xml, parquet,fixed-width, etc.)")
-
 
     opt[String]("row-tag").optional().action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")

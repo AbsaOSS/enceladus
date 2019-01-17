@@ -26,7 +26,7 @@ object MenasCredentials {
     MenasCredentials(conf.getString("username"), conf.getString("password"))
   }
 
-  private def replaceHome(path: String): String = {
+  def replaceHome(path: String): String = {
     path.replaceFirst("^~", System.getProperty("user.home"))
   }
 

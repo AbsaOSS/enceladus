@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.conformance
 
+import java.io.File
+
 import scopt.OptionParser
 import za.co.absa.enceladus.utils.menas.MenasCredentials
 
@@ -76,9 +78,13 @@ object CmdConfig {
         if (value > 0) success
         else failure("Option --report-version must be >0"))
 
-    opt[String]('m', "menas-credentials-path").required().action((path, config) =>
+    opt[String]("menas-credentials-file").required().action((path, config) =>
       config.copy(menasCredentials = MenasCredentials.fromFile(path)))
-      .text("Path to Menas credentials config file")
+      .text("Path to Menas credentials config file. Suitable only for client mode")
+      .validate(path =>
+        if (new File(MenasCredentials.replaceHome(path)).exists()) success
+        else failure("Credentials file does not exist. Make sure you are running in client mode and the file is present on your local filesystem")
+      )
 
     opt[String]("performance-file").optional().action((value, config) =>
       config.copy(performanceMetricsFile = Some(value))).text("Produce a performance metrics file at the given location (local filesystem)")
