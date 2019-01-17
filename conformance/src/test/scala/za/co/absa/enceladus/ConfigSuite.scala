@@ -23,6 +23,8 @@ import za.co.absa.enceladus.conformance.{CmdConfig, DynamicConformanceJob}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.menas.MenasCredentials
 
+import scala.util.{Failure, Success, Try}
+
 class ConfigSuite extends FunSuite {
 
   private val year = "2018"
@@ -32,7 +34,7 @@ class ConfigSuite extends FunSuite {
   private val hdfsRawPath = "/bigdatahdfs/datalake/raw/system/feed"
   private val hdfsPublishPath = "/bigdatahdfs/datalake/publish/system/feed"
   private val hdfsPublishPathOverride = "/bigdatahdfs/datalake/publish/system/feed/override"
-  private val menasCredentialsPath = "src/test/resources/menas-credentials.conf"
+  private val menasCredentialsFile = "src/test/resources/menas-credentials.conf"
   private val menasCredentials = MenasCredentials(username = "user", password = "changeme")
   private val datasetName = "test-dataset-name"
   private val datasetVersion = 2
@@ -60,7 +62,7 @@ class ConfigSuite extends FunSuite {
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-path", menasCredentialsPath))
+        "--menas-credentials-file", menasCredentialsFile))
     assert(cmdConfigNoFolderPrefix.datasetName === datasetName)
     assert(cmdConfigNoFolderPrefix.datasetVersion === datasetVersion)
     assert(cmdConfigNoFolderPrefix.reportDate === reportDate)
@@ -68,13 +70,14 @@ class ConfigSuite extends FunSuite {
     assert(cmdConfigNoFolderPrefix.menasCredentials === menasCredentials)
     assert(cmdConfigNoFolderPrefix.folderPrefix.isEmpty)
     assert(cmdConfigNoFolderPrefix.publishPathOverride.isEmpty)
+
     val cmdConfigFolderPrefix = CmdConfig.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-path", menasCredentialsPath,
+        "--menas-credentials-file", menasCredentialsFile,
         "--folder-prefix", folderPrefix))
     assert(cmdConfigFolderPrefix.datasetName === datasetName)
     assert(cmdConfigFolderPrefix.datasetVersion === datasetVersion)
@@ -84,13 +87,14 @@ class ConfigSuite extends FunSuite {
     assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
     assert(cmdConfigFolderPrefix.folderPrefix.get === folderPrefix)
     assert(cmdConfigFolderPrefix.publishPathOverride.isEmpty)
+
     val cmdConfigPublishPathOverride = CmdConfig.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-path", menasCredentialsPath,
+        "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride))
     assert(cmdConfigPublishPathOverride.datasetName === datasetName)
     assert(cmdConfigPublishPathOverride.datasetVersion === datasetVersion)
@@ -100,13 +104,14 @@ class ConfigSuite extends FunSuite {
     assert(cmdConfigPublishPathOverride.folderPrefix.isEmpty)
     assert(cmdConfigPublishPathOverride.publishPathOverride.nonEmpty)
     assert(cmdConfigPublishPathOverride.publishPathOverride.get === hdfsPublishPathOverride)
+
     val cmdConfigPublishPathOverrideAndFolderPrefix = CmdConfig.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-path", menasCredentialsPath,
+        "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride,
         "--folder-prefix", folderPrefix))
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.datasetName === datasetName)
@@ -144,7 +149,7 @@ class ConfigSuite extends FunSuite {
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-path", menasCredentialsPath
+        "--menas-credentials-file", menasCredentialsFile
       ))
     val cmdConfigFolderPrefix = CmdConfig.getCmdLineArguments(
       Array(
@@ -152,7 +157,7 @@ class ConfigSuite extends FunSuite {
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-path", menasCredentialsPath,
+        "--menas-credentials-file", menasCredentialsFile,
         "--folder-prefix", folderPrefix))
     val cmdConfigPublishPathOverride = CmdConfig.getCmdLineArguments(
       Array(
@@ -160,7 +165,7 @@ class ConfigSuite extends FunSuite {
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-path", menasCredentialsPath,
+        "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride))
     val cmdConfigPublishPathOverrideAndFolderPrefix = CmdConfig.getCmdLineArguments(
       Array(
@@ -169,7 +174,7 @@ class ConfigSuite extends FunSuite {
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
         "--folder-prefix", folderPrefix,
-        "--menas-credentials-path", menasCredentialsPath,
+        "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride))
     val publishPathNoFolderPrefix = DynamicConformanceJob.buildPublishPath(infoDateColumn, infoVersionColumn, cmdConfigNoFolderPrefix, conformanceDataset)
     assert(publishPathNoFolderPrefix === s"$hdfsPublishPath/$infoDateColumn=$reportDate/$infoVersionColumn=$reportVersion")
