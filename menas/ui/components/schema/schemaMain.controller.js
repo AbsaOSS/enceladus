@@ -231,8 +231,8 @@ sap.ui.controller("components.schema.schemaMain", {
 
   validateSchemaFileUplaod : function () {
     this.resetNewSchemaValueState();
-    var isOk = true;
-	  var oSchemaFileUpload = this.byId("fileUploader").getValue();
+    let isOk = true;
+    let oSchemaFileUpload = this.byId("fileUploader").getValue();
     if (oSchemaFileUpload === "" ) {
       this.byId("fileUploader").setValueState(sap.ui.core.ValueState.Error)
       this.byId("fileUploader").setValueStateText("File Name cannot be empty, Please select a file")
@@ -241,7 +241,7 @@ sap.ui.controller("components.schema.schemaMain", {
     return isOk;
   }
 
-/**
+  /**
  * Similar to onAfterRendering, but this hook is invoked before the controller's
  * View is re-rendered (NOT before the first rendering! onInit() is used for
  * that one!).
