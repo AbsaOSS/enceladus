@@ -2,16 +2,16 @@
 ___
 <!-- toc -->
 
-- [Dataset Comparison](Dataset Comparison)
-- [Rest Runner](Rest Runner)
+- [Dataset Comparison](#dataset-comparison)
+- [Rest Runner](#rest-runner)
 - More to come...
 
 <!-- tocstop -->
 
-##Dataset Comparison
+## <a name="dataset-comparison" />Dataset Comparison
 A Spark job for comparing two data sets. 
 
-###Build
+### Build
 ```bash
 mvn clean package
 ```
@@ -27,7 +27,7 @@ Known to work with:
 - Scala 2.12.7
 - Hadoop 2.7.5 
 
-###Running
+### Running
 ```
 Basic running example
 ```bash
@@ -45,7 +45,7 @@ spark-submit \
 --out-path /path/to/diff/output
 ```
 
-###Where
+#### Where
 ```
 Datasets Comparison 
 Usage: spark-submit [spark options] TestUtils.jar [options]
@@ -68,5 +68,5 @@ Usage: spark-submit [spark options] TestUtils.jar [options]
 
 Other configurations are Spark dependant and are out of scope of this README.
 
-##Rest Runner
+##  <a name="rest-runner" />Rest Runner
 In progress. Framework for running REST API test.
