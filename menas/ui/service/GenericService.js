@@ -19,16 +19,38 @@ var GenericService = new function () {
   let model = sap.ui.getCore().getModel();
 
   this.getUserInfo = function () {
-    Functions.ajax("api/user/info", "GET", {}, function (oInfo) {
+    let fnSuccess = (oInfo) => {
       model.setProperty("/userInfo", oInfo)
+    };
+
+    $.ajax("api/user/info", {
+      method: "GET",
+      success: fnSuccess,
+      async: false
     })
   };
 
-  this.logout = function () {
-    Functions.ajax("logout", "POST", {}, function () {
-      // this is dummy, spring does a redirect
-    }, function () {
-      window.location.href = "./"
+  this.clearSession = function (sLogoutMessage) {
+    model.setProperty("/userInfo", {});
+    localStorage.clear();
+    window.location.href = "#/login";
+    if (sLogoutMessage) {
+      sap.m.MessageToast.show(sLogoutMessage)
+    }
+  };
+
+  this.logout = function (sLogoutMessage) {
+    Functions.ajax("api/logout", "POST", {}, function () {
+      // this is a dummy callback, returns 200 OK, but because ajax dataType is 'json' goes into error
+    }, (xhr) => {
+      if (xhr.status !== 403) {
+        this.clearSession(sLogoutMessage);
+      }
     })
   };
+
+  this.validateEntityName = function (sName) {
+    return /\W/.test(sName)
+  };
+
 }();

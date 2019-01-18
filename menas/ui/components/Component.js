@@ -13,69 +13,82 @@
  * limitations under the License.
  */
 
-sap.ui.define( ["sap/ui/core/UIComponent"], function (UIComponent) {
-	"use strict";
-	return UIComponent.extend("navigation", {
+sap.ui.define([
+    "sap/ui/core/UIComponent"
+  ],
+  function (UIComponent) {
+    "use strict";
 
-		metadata: {
-			rootView: "components.app",
-			routing: {
-				config: {
-					routerClass: "sap.m.routing.Router",
-					viewPath: "",
-					controlId: "menasApp",
-					controlAggregation: "detailPages",
-					viewType: "XML",
-				},
-				routes: [
-					{
-						name: "root",
-						// empty hash - normally the start page
-						pattern: "",
-						target: ""
-					},
-					{
-						name: "schemas",
-						pattern: "schema/:id:/:version:", //here id and version are optional
-						target: "schemas"
-					},
-					{
-						name: "datasets",
-						pattern: "dataset/:id:/:version:",
-						target: "dataset"
-					},
-					{
-						name: "mappingTables",
-						pattern: "mapping/:id:/:version:",
-						target: "mappingTable"
-					}
-				],
-				targets: {
-					schemas: {
-						viewName: "components.schema.schemaMain",
-						viewLevel: 0,
-						viewId: "schemaMainView"
-					},
-					dataset: {
-						viewName: "components.dataset.datasetMain",
-						viewLevel: 0,
-						viewId: "datasetMainView"
-					},
-					mappingTable: {
-						viewName: "components.mappingTable.mappingTableMain",
-						viewLevel: 0,
-						viewId: "mappingTableMainView"
-					}
-				}
-			}
-		},
+    return UIComponent.extend("navigation", {
+      metadata: {
+        rootView: "components.app",
+        routing: {
+          config: {
+            routerClass: "sap.m.routing.Router",
+            viewPath: "",
+            controlId: "menasApp",
+            controlAggregation: "detailPages",
+            viewType: "XML",
+          },
+          routes: [
+            {
+              name: "root",
+              // empty hash - normally the start page
+              pattern: "",
+              target: ""
+            },
+            {
+              name: "login",
+              pattern: "login",
+              target: "login"
+            },
+            {
+              name: "schemas",
+              pattern: "schema/:id:/:version:", //here id and version are optional
+              target: "schemas"
+            },
+            {
+              name: "datasets",
+              pattern: "dataset/:id:/:version:",
+              target: "dataset"
+            },
+            {
+              name: "mappingTables",
+              pattern: "mapping/:id:/:version:",
+              target: "mappingTable"
+            }
+          ],
+          targets: {
+            login: {
+              viewName: "components.login.loginMain",
+              viewLevel: 0,
+              viewId: "loginMainView"
+            },
+            schemas: {
+              viewName: "components.schema.schemaMain",
+              viewLevel: 1,
+              viewId: "schemaMainView"
+            },
+            dataset: {
+              viewName: "components.dataset.datasetMain",
+              viewLevel: 1,
+              viewId: "datasetMainView"
+            },
+            mappingTable: {
+              viewName: "components.mappingTable.mappingTableMain",
+              viewLevel: 1,
+              viewId: "mappingTableMainView"
+            }
+          }
+        }
+      },
 
-		init : function () {
-			UIComponent.prototype.init.apply(this, arguments);
+      init: function () {
+        UIComponent.prototype.init.apply(this, arguments);
 
-			// Parse the current url and display the targets of the route that matches the hash
-			this.getRouter().initialize();
-		},
-		busyIndicatorDelay: 0
-	});
-}, /* bExport= */ true);
+        // Parse the current url and display the targets of the route that matches the hash
+        this.getRouter().initialize();
+      },
+      busyIndicatorDelay: 0
+    });
+  }, /* bExport= */ true);

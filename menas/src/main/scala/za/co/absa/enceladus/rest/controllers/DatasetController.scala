@@ -18,6 +18,7 @@ package za.co.absa.enceladus.rest.controllers
 import java.util.concurrent.CompletableFuture
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
@@ -32,10 +33,16 @@ class DatasetController @Autowired()(datasetService: DatasetService)
 
   import za.co.absa.enceladus.rest.utils.implicits._
 
-  @PostMapping(path = Array("/{datasetName}/rule/create"))
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  @PostMapping(Array("/{datasetName}/rule/create"))
+  @ResponseStatus(HttpStatus.OK)
   def addConformanceRule(@AuthenticationPrincipal user: UserDetails, @PathVariable datasetName: String,
                          @RequestBody rule: ConformanceRule): CompletableFuture[Dataset] = {
-    datasetService.addConformanceRule(user.getUsername, datasetName, rule)
+    datasetService.addConformanceRule(user.getUsername, datasetName, rule).map {
+      case Some(dataset) => dataset
+      case None          => throw notFound()
+    }
   }
 
 }

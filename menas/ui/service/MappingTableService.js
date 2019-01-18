@@ -153,29 +153,30 @@ var MappingTableService = new function () {
     })
   };
 
-  this.disableMappingTable = function (sId, iVersion) {
-    var uri = "api/mappingTable/disable/" + encodeURI(sId)
+  this.disableMappingTable = function(sId, iVersion) {
+    let uri = "api/mappingTable/disable/" + encodeURI(sId)
     if (typeof (iVersion) !== "undefined") {
       uri += "/" + encodeURI(iVersion)
     }
 
-    Functions.ajax(uri, "GET", {}, function (oData) {
-      if (Array.isArray(oData)) {
-        var err = "Disabling mapping table failed. Clear the following dependencies first:\n";
-        for (var ind in oData) {
+    Functions.ajax(uri, "GET", {}, function(oData) {
+      sap.m.MessageToast.show("Mapping table disabled.");
+      if (window.location.hash !== "#/mapping") {
+        window.location.hash = "#/mapping"
+      } else {
+        MappingTableService.getMappingTableList(true, false)
+      }
+    }, function(xhr) {
+      if (xhr.status === 400) {
+        let err = "Disabling mapping table failed. Clear the following dependencies first:\n";
+        let oData = JSON.parse(xhr.responseText);
+        for(let ind in oData) {
           err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
         }
         sap.m.MessageBox.error(err)
-      } else if (typeof (oData) === "object") {
-        sap.m.MessageToast.show("Mapping table disabled.");
-        if (window.location.hash != "#/mapping") {
-          window.location.hash = "#/mapping"
-        } else {
-          MappingTableService.getMappingTableList(true, false)
-        }
+      } else {
+        sap.m.MessageBox.error("Failed to disable mapping table. Ensure no active datasets use this mapping table(and/or version)")
       }
-    }, function () {
-      sap.m.MessageBox.error("Failed to disable mapping table. Ensure no active datasets use this mapping table(and/or version)")
     })
   };
 

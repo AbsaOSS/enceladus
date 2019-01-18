@@ -18,6 +18,7 @@ package za.co.absa.enceladus.rest.controllers
 import java.util.concurrent.CompletableFuture
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
@@ -34,16 +35,26 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
   import scala.concurrent.ExecutionContext.Implicits.global
 
   @PostMapping(path = Array("/updateDefaults"))
-  def updateDefaults(@AuthenticationPrincipal user: UserDetails, @RequestBody upd: MenasObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
+  @ResponseStatus(HttpStatus.OK)
+  def updateDefaults(@AuthenticationPrincipal user: UserDetails,
+                     @RequestBody upd: MenasObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
     mappingTableService.update(user.getUsername, upd.id.name) { mt =>
       mt.setDefaultMappingValue(upd.value.toList)
+    }.map {
+      case Some(entity) => entity
+      case None         => throw notFound()
     }
   }
 
   @PostMapping(path = Array("/addDefault"))
-  def addDefault(@AuthenticationPrincipal user: UserDetails, @RequestBody newDefault: MenasObject[DefaultValue]): CompletableFuture[MappingTable] = {
+  @ResponseStatus(HttpStatus.OK)
+  def addDefault(@AuthenticationPrincipal user: UserDetails,
+                 @RequestBody newDefault: MenasObject[DefaultValue]): CompletableFuture[MappingTable] = {
     mappingTableService.update(user.getUsername, newDefault.id.name) { mt =>
       mt.setDefaultMappingValue(mt.defaultMappingValue :+ newDefault.value)
+    }.map {
+      case Some(entity) => entity
+      case None         => throw notFound()
     }
   }
 

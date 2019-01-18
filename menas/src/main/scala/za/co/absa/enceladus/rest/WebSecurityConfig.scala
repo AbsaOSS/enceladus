@@ -15,15 +15,17 @@
 
 package za.co.absa.enceladus.rest
 
-import com.typesafe.config.ConfigFactory
-import org.springframework.beans.factory.annotation.Value
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}
 import org.springframework.core.annotation.Order
 import org.springframework.core.io.FileSystemResource
+import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.{EnableWebSecurity, WebSecurityConfigurerAdapter}
+import org.springframework.security.core.{Authentication, AuthenticationException}
 import org.springframework.security.crypto.password.NoOpPasswordEncoder
 import org.springframework.security.kerberos.authentication.KerberosServiceAuthenticationProvider
 import org.springframework.security.kerberos.authentication.sun.SunJaasKerberosTicketValidator
@@ -33,6 +35,13 @@ import org.springframework.security.kerberos.web.authentication.{SpnegoAuthentic
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider
 import org.springframework.security.ldap.search.FilterBasedLdapUserSearch
 import org.springframework.security.ldap.userdetails.{LdapUserDetailsMapper, LdapUserDetailsService}
+import org.springframework.security.web.AuthenticationEntryPoint
+import org.springframework.security.web.authentication.logout.{HttpStatusReturningLogoutSuccessHandler, LogoutSuccessHandler}
+import org.springframework.security.web.authentication.{AuthenticationFailureHandler, SimpleUrlAuthenticationFailureHandler, SimpleUrlAuthenticationSuccessHandler}
+import org.springframework.security.web.csrf.CsrfToken
+import org.springframework.security.web.savedrequest.{HttpSessionRequestCache, RequestCache, SavedRequest}
+import org.springframework.stereotype.Component
+import org.springframework.util.StringUtils
 
 @EnableWebSecurity
 class WebSecurityConfig {
@@ -116,24 +125,47 @@ class WebSecurityConfig {
 //    service
 //  }
 
+  @Bean
+  def authenticationFailureHandler(): AuthenticationFailureHandler = {
+    new SimpleUrlAuthenticationFailureHandler()
+  }
+
+  @Bean
+  def logoutSuccessHandler(): LogoutSuccessHandler = {
+    new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK)
+  }
+
   @Configuration
   @Order(1)
-  class ApiWebSecurityConfigurationAdapter() extends WebSecurityConfigurerAdapter {
+  class ApiWebSecurityConfigurationAdapter @Autowired()(restAuthenticationEntyPoint: RestAuthenticationEntryPoint,
+                                                        authenticationSuccessHandler: AuthSuccessHandler,
+                                                        authenticationFailureHandler: AuthenticationFailureHandler,
+                                                        logoutSuccessHandler: LogoutSuccessHandler)
+    extends WebSecurityConfigurerAdapter {
 
     override def configure(http: HttpSecurity) {
       http
+        .csrf()
+        .ignoringAntMatchers("/api/login")
+        .and()
+        .exceptionHandling()
+        .authenticationEntryPoint(restAuthenticationEntyPoint)
+        .and()
         .authorizeRequests()
-        .antMatchers("/resources/**", "/generic/**", "/service/**")
+        .antMatchers("/index.html", "/resources/**", "/generic/**",
+          "/service/**", "/webjars/**", "/css/**", "/components/**")
         .permitAll()
         .anyRequest().authenticated()
-        .and
+        .and()
         .formLogin()
-        .successForwardUrl("/index.jsp")
-        .defaultSuccessUrl("/index.jsp")
+        .loginProcessingUrl("/api/login")
+        .successHandler(authenticationSuccessHandler)
+        .failureHandler(authenticationFailureHandler)
         .permitAll()
         .and()
         .logout()
-        .logoutUrl("/logout")
+        .logoutUrl("/api/logout")
+        .logoutSuccessHandler(logoutSuccessHandler)
         .permitAll()
         .clearAuthentication(true)
         .deleteCookies("JSESSIONID")
@@ -158,6 +190,29 @@ class WebSecurityConfig {
 //    override def authenticationManagerBean() = {
 //      super.authenticationManagerBean()
 //    }
+  }
+
+  @Component
+  class RestAuthenticationEntryPoint extends AuthenticationEntryPoint {
+    override def commence(request: HttpServletRequest,
+                          response: HttpServletResponse,
+                          authException: AuthenticationException): Unit = {
+      response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+    }
+  }
+
+  @Component
+  class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
+    override def onAuthenticationSuccess(request: HttpServletRequest,
+                                         response: HttpServletResponse,
+                                         authentication: Authentication): Unit = {
+      val csrfToken = request.getAttribute("_csrf").asInstanceOf[CsrfToken]
+      response.addHeader(csrfToken.getHeaderName, csrfToken.getToken)
+
+      clearAuthenticationAttributes(request)
+    }
+
   }
 
 }

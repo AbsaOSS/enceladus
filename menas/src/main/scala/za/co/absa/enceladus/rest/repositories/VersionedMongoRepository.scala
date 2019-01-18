@@ -44,8 +44,8 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.aggregate[VersionedSummary](pipeline).toFuture()
   }
 
-  def getVersion(name: String, version: Int): Future[C] = {
-    collection.find(getNameVersionFilterEnabled(name, Some(version))).first().toFuture()
+  def getVersion(name: String, version: Int): Future[Option[C]] = {
+    collection.find(getNameVersionFilterEnabled(name, Some(version))).headOption()
   }
 
   def getLatestVersionValue(name: String): Future[Int] = {

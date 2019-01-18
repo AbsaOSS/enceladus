@@ -14,8 +14,8 @@
   -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>enceladus-conformance</artifactId>
 	<packaging>jar</packaging>
@@ -83,8 +83,12 @@
 					<groupId>org.apache.spark</groupId>
 					<artifactId>spark-*</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.mongodb</groupId>
+					<artifactId>mongo-java-driver</artifactId>
+				</exclusion>
 			</exclusions>
-		</dependency> 
+		</dependency>
 		<dependency>
 			<groupId>za.co.absa.spline</groupId>
 			<artifactId>spline-persistence-hdfs</artifactId>
@@ -95,6 +99,11 @@
 					<artifactId>spark-*</artifactId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.mongodb</groupId>
+			<artifactId>mongo-java-driver</artifactId>
+			<version>${mongo.java.driver.version}</version>
 		</dependency>
 	</dependencies>
 

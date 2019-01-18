@@ -15,12 +15,9 @@
 
 package za.co.absa.enceladus.rest.repositories
 
-import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters.equal
-import org.mongodb.scala.{Completed, MongoDatabase, Observable}
+import org.mongodb.scala.{Completed, MongoDatabase}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -33,14 +30,9 @@ abstract class MongoRepository[C](mongoDb: MongoDatabase)(implicit ct: ClassTag[
 
   private[repositories] def collectionName: String
 
-  private[repositories] val objectMapper = new ObjectMapper()
-    .registerModule(DefaultScalaModule)
-    .registerModule(new JavaTimeModule())
-    .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-
-  def isUniqueName(name: String): Observable[Boolean] = {
+  def isUniqueName(name: String): Future[Boolean] = {
     val res = collection.countDocuments(getNameFilter(name))
-    res.map( _ <= 0 )
+    res.map( _ <= 0 ).head()
   }
 
   def create(item: C): Future[Completed] = {

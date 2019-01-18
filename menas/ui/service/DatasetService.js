@@ -52,29 +52,30 @@ var DatasetService = new function() {
     };
 
     this.disableDataset = function(sId, iVersion) {
-        var uri = "api/dataset/disable/" + encodeURI(sId);
-        if(typeof(iVersion) !== "undefined") {
-            uri += "/" + encodeURI(iVersion)
-        }
+      let uri = "api/dataset/disable/" + encodeURI(sId);
+      if(typeof(iVersion) !== "undefined") {
+          uri += "/" + encodeURI(iVersion)
+      }
 
-        Functions.ajax(uri , "GET", {}, function(oData) {
-            if(Array.isArray(oData)) {
-                var err = "Disabling dataset failed. Clear the following dependencies first:\n";
-                for(var ind in oData) {
-                    err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
-                }
-                sap.m.MessageBox.error(err)
-            } else if(typeof(oData) === "object") {
-                sap.m.MessageToast.show("Dataset disabled.");
-                if(window.location.hash !== "#/dataset") {
-                    window.location.hash = "#/dataset"
-                } else {
-                    DatasetService.getDatasetList(true, false)
-                }
-            }
-        }, function() {
-            sap.m.MessageBox.error("Failed to disable dataset.")
-        })
+      Functions.ajax(uri , "GET", {}, function(oData) {
+        sap.m.MessageToast.show("Dataset disabled.");
+        if(window.location.hash !== "#/dataset") {
+            window.location.hash = "#/dataset"
+        } else {
+            DatasetService.getDatasetList(true, false)
+        }
+      }, function(xhr) {
+        if (xhr.status === 400) {
+          let err = "Disabling dataset failed. Clear the following dependencies first:\n";
+          let oData = JSON.parse(xhr.responseText);
+          for(let ind in oData) {
+            err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
+          }
+          sap.m.MessageBox.error(err)
+        } else {
+          sap.m.MessageBox.error("Failed to disable dataset.")
+        }
+      })
     };
 
     this.isUniqueDatasetName = function(sName, model) {

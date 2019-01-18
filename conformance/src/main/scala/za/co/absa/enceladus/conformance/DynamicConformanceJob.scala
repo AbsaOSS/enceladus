@@ -112,6 +112,9 @@ object DynamicConformanceJob {
     implicit val dao = EnceladusRestDAO
     implicit val enableCF = true
 
+    val menasCredentials = cmd.menasCredentials
+    EnceladusRestDAO.postLogin(menasCredentials.username, menasCredentials.password)
+
     // get the dataset definition
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     

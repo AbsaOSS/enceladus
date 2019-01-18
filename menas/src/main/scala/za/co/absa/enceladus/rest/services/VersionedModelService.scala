@@ -15,11 +15,14 @@
 
 package za.co.absa.enceladus.rest.services
 
+import org.mongodb.scala.result.UpdateResult
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import za.co.absa.enceladus.model.UsedIn
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
+import za.co.absa.enceladus.rest.exceptions.{EntityInUseException, ValidationException}
+import za.co.absa.enceladus.rest.models.Validation
 import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
 
 import scala.concurrent.Future
@@ -35,7 +38,7 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     versionedMongoRepository.getLatestVersions()
   }
 
-  def getVersion(name: String, version: Int): Future[C] = {
+  def getVersion(name: String, version: Int): Future[Option[C]] = {
     versionedMongoRepository.getVersion(name, version)
   }
 
@@ -43,33 +46,35 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     versionedMongoRepository.getAllVersions(name)
   }
 
-  def getLatestVersion(name: String): Future[C] = {
+  def getLatestVersion(name: String): Future[Option[C]] = {
     versionedMongoRepository.getLatestVersionValue(name).flatMap(version => getVersion(name, version))
   }
 
   def getUsedIn(name: String, version: Option[Int]): Future[UsedIn]
 
-  def create(item: C, username: String): Future[C] = {
+  def create(item: C, username: String): Future[Option[C]] = {
     for {
-      unique <- isUniqueName(item.name)
-      _      <-
-        if (unique) versionedMongoRepository.create(item, username)
-        else throw new Exception(s"Name already exists: ${item.name}")
+      validation <- validate(item)
+      _ <-
+        if (validation.isValid()) versionedMongoRepository.create(item, username)
+        else throw ValidationException(validation)
       detail <- getLatestVersion(item.name)
     } yield detail
   }
 
-  def update(username: String, item: C): Future[C]
+  def update(username: String, item: C): Future[Option[C]]
 
-  def update(username: String, itemName: String)(transform: C => C): Future[C] = {
-    for {
-      latest <- getLatestVersion(itemName)
-      update <- versionedMongoRepository.update(username, transform(latest))
-      detail <- getLatestVersion(itemName)
-    } yield detail
+  def update(username: String, itemName: String)(transform: C => C): Future[Option[C]] = {
+    getLatestVersion(itemName).flatMap {
+      case Some(latest) =>
+        versionedMongoRepository.update(username, transform(latest)).flatMap { _ =>
+          getLatestVersion(itemName)
+        }
+      case None => Future.successful(None)
+    }
   }
 
-  def disableVersion(name: String, version: Option[Int]): Future[Object] = {
+  def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
     val auth = SecurityContextHolder.getContext.getAuthentication
     val principal = auth.getPrincipal.asInstanceOf[UserDetails]
 
@@ -78,12 +83,31 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     }
   }
 
-  private def disableVersion(name: String, version: Option[Int], usedIn: UsedIn, principal: UserDetails): Future[Object] = {
+  private def disableVersion(name: String, version: Option[Int], usedIn: UsedIn, principal: UserDetails): Future[UpdateResult] = {
     if (usedIn.nonEmpty) {
-      Future.successful(usedIn)
+      throw EntityInUseException(usedIn)
     } else {
       versionedMongoRepository.disableVersion(name, version, principal.getUsername)
     }
   }
+
+  def validate(item: C): Future[Validation] = {
+    validateName(item.name)
+  }
+
+  protected[services] def validateName(name: String): Future[Validation] = {
+    val validation = Validation()
+
+    if (hasWhitespace(name)) {
+      Future.successful(validation.withError("name", s"name contains whitespace: '$name'"))
+    } else {
+      isUniqueName(name).map { isUnique =>
+        if (isUnique) validation
+        else validation.withError("name", s"entity with name already exists: '$name'")
+      }
+    }
+  }
+
+  private def hasWhitespace(name: String): Boolean = !name.matches("""\w+""")
 
 }
