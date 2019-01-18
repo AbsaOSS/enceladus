@@ -49,6 +49,7 @@ Simply copy the **menas.war** file produced whn building the project into Tomcat
 #### Standardization and Conformance requirements:
 - [**Spark 2.2.1-ABSA**](https://github.com/AbsaOSS/spark/tree/branch-2.2.1-ABSA) installation (this custom version can be [built like any other Spark version](https://spark.apache.org/docs/latest/building-spark.html))
 - **Hadoop 2.7** installation
+- **Menas Credentials File** (a configuratino file containing a username and password for the Spark jobs to authenticate with Menas)
 
 #### Running Standardization
 ```
@@ -61,6 +62,7 @@ Simply copy the **menas.war** file produced whn building the project into Tomcat
 --conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas api uri:port> -Dstandardized.hdfs.path=<path for standardised output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo url for spline> -Dspline.mongodb.name=<spline database name> -Dhdp.version=<hadoop version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
 <standardization-<build-version>.jar> \
+--menas-credentials-file <Path to Menas Credentials>
 --dataset-name <Dataset Name> \
 --dataset-version <Dataset Version> \
 --report-date <Date> \
@@ -83,6 +85,7 @@ Simply copy the **menas.war** file produced whn building the project into Tomcat
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
 <standardization_<build-version>.jar> \
+--menas-credentials-file <Path to Menas Credentials>
 --dataset-name <Dataset Name> \
 --dataset-version <Dataset Version> \
 --report-date <Date> \
