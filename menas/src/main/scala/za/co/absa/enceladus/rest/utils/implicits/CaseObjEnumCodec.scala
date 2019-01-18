@@ -15,12 +15,8 @@
 
 package za.co.absa.enceladus.rest.utils.implicits
 
-import org.bson.codecs.Codec
-import org.bson.BsonReader
-import org.bson.codecs.DecoderContext
-import org.bson.BsonWriter
-import org.bson.codecs.EncoderContext
-import org.clapper.classutil.ClassFinder
+import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
+import org.bson.{BsonReader, BsonWriter}
 import org.slf4j.LoggerFactory
 import java.net.URLClassLoader
 import java.io.File
