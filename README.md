@@ -16,7 +16,7 @@ ___
 
 The project is comprised of three main components:
 ### <a name="menas"/>Menas
-This is the user-facing web client, used to **specify the standardization schema**, and **define the step required to conform** a dataset.  
+This is the user-facing web client, used to **specify the standardization schema**, and **define the steps required to conform** a dataset.  
 
 ### <a name="standardization"/>Standardization
 This is a Spark job which reads an input dataset in any of the supported formats and **produces a parquet dataset with the Menas-specified schema** as output. 
