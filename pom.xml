@@ -68,7 +68,6 @@
 		<scopt.version>3.7.0</scopt.version>
 		<kafka.spark.version>0-10</kafka.spark.version>
 		<abris.version>2.1.0</abris.version>
-		<classutil.version>1.2.0</classutil.version>
 		<spring.version>2.0.0.RELEASE</spring.version>
 		<spring.ldap.version>5.0.3.RELEASE</spring.ldap.version>
 		<spring.kerberos.version>1.0.1.RELEASE</spring.kerberos.version>

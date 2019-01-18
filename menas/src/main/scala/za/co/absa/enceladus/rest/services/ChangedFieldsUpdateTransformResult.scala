@@ -13,19 +13,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.repositories
+package za.co.absa.enceladus.rest.services
 
-import org.mongodb.scala.MongoDatabase
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Repository
-import za.co.absa.enceladus.model.MappingTable
+case class ChangedField[T](
+  fieldName: String,
+  value1: T,
+  value2: T
+)
 
-import scala.reflect.ClassTag
-
-@Repository
-class MappingTableMongoRepository @Autowired()(mongoDb: MongoDatabase)
-  extends VersionedMongoRepository[MappingTable](mongoDb)(ClassTag(classOf[MappingTable])) {
-
-  override private[rest] def collectionName = "mapping_table"
-
+case class ChangedFieldsUpdateTransformResult[C](
+  updatedEntity: C,
+  fields: Seq[ChangedField[Any]]
+) {
+    /** Generates list of fields, for which two values do not match - i.e have been changed
+   * @return A list of fields for which values do not match
+   */
+  def getUpdatedFields(): Seq[String] = {
+    fields.filter({case field => field.value1 != field.value2}).map(_.fieldName).toSeq
+  }
 }

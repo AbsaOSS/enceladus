@@ -69,8 +69,13 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     )
   }
 
-  def update(username: String, updated: C): Future[Completed] = {
-    collection.insertOne(updated.setUpdatedInfo(username).setVersion(updated.version + 1).asInstanceOf[C]).head()
+  def update(username: String, updated: C): Future[C] = {
+    for {
+      latestVersion <- getLatestVersionValue(updated.name)
+      newInfo <- Future.successful(updated.setUpdatedInfo(username).setVersion(latestVersion + 1).asInstanceOf[C])
+      res <- collection.insertOne(newInfo).head()
+    } yield newInfo
+    
   }
 
   def disableVersion(name: String, version: Option[Int], username: String): Future[UpdateResult] = {
@@ -80,7 +85,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       set("userDisabled", username))).toFuture()
   }
 
-  def getUsedIn(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = {
+  def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = {
     val filter = version match {
       case Some(ver) => Filters.and(getNotDisabledFilter, equal(refNameCol, name), equal(refVersionCol, ver))
       case None      => Filters.and(getNotDisabledFilter, equal(refNameCol, name))

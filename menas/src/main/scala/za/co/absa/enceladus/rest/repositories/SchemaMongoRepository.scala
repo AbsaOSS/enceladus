@@ -26,6 +26,6 @@ import scala.reflect.ClassTag
 class SchemaMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends VersionedMongoRepository[Schema](mongoDb)(ClassTag(classOf[Schema])) {
 
-  override private[repositories] def collectionName = "schema"
+  override private[rest] def collectionName = "schema"
 
 }

@@ -13,19 +13,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.repositories
+package za.co.absa.enceladus.model.menas
 
-import org.mongodb.scala.MongoDatabase
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Repository
-import za.co.absa.enceladus.model.MappingTable
+import java.time.ZonedDateTime
 
-import scala.reflect.ClassTag
+case class AuditEntry (
+  menasRef: Option[MenasReference],
+  entryType: AuditEntryType,
+  user: String,
+  timeCreated: ZonedDateTime = ZonedDateTime.now(),
+  message: String
+);
 
-@Repository
-class MappingTableMongoRepository @Autowired()(mongoDb: MongoDatabase)
-  extends VersionedMongoRepository[MappingTable](mongoDb)(ClassTag(classOf[MappingTable])) {
-
-  override private[rest] def collectionName = "mapping_table"
-
-}
+sealed trait AuditEntryType
+case object UpdateEntryType extends AuditEntryType
+case object CreateEntryType extends AuditEntryType

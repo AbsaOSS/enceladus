@@ -15,17 +15,14 @@
 
 package za.co.absa.enceladus.rest.repositories
 
-import org.mongodb.scala.MongoDatabase
 import org.springframework.beans.factory.annotation.Autowired
+import org.mongodb.scala.MongoDatabase
 import org.springframework.stereotype.Repository
-import za.co.absa.enceladus.model.MappingTable
-
+import za.co.absa.enceladus.model.menas.AuditEntry
 import scala.reflect.ClassTag
 
 @Repository
-class MappingTableMongoRepository @Autowired()(mongoDb: MongoDatabase)
-  extends VersionedMongoRepository[MappingTable](mongoDb)(ClassTag(classOf[MappingTable])) {
-
-  override private[rest] def collectionName = "mapping_table"
-
+class AuditTrailMongoRepository @Autowired()(mongoDb: MongoDatabase) extends MongoRepository[AuditEntry](mongoDb)(ClassTag(classOf[AuditEntry])){
+  
+  override private[rest] def collectionName = "audit_trail"
 }

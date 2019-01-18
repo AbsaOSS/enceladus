@@ -26,13 +26,12 @@ import org.springframework.web.multipart.MultipartFile
 import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.rest.repositories.RefCollection
 import za.co.absa.enceladus.rest.services.{ AttachmentService, SchemaService }
-import za.co.absa.enceladus.rest.utils.converters.SparkMenasSchemaConvertor
 
 @RestController
 @RequestMapping(Array("/api/schema"))
 class SchemaController @Autowired() (
   schemaService:     SchemaService,
-  attachmentService: AttachmentService, sparkMenasConvertor: SparkMenasSchemaConvertor)
+  attachmentService: AttachmentService)
   extends VersionedModelController(schemaService) {
 
   import za.co.absa.enceladus.rest.utils.implicits._
@@ -48,7 +47,7 @@ class SchemaController @Autowired() (
 
     for {
       upload <- attachmentService.uploadAttachment(origFile)
-      update <- schemaService.update(principal.getUsername, name)(oldSchema => oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(struct.fields).toList))
+      update <- schemaService.schemaUpload(principal.getUsername, name, version, struct)
     } yield update
   }
 }

@@ -35,16 +35,12 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
 
   @PostMapping(path = Array("/updateDefaults"))
   def updateDefaults(@AuthenticationPrincipal user: UserDetails, @RequestBody upd: MenasObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
-    mappingTableService.update(user.getUsername, upd.id.name) { mt =>
-      mt.setDefaultMappingValue(upd.value.toList)
-    }
+    mappingTableService.updateDefaults(user.getUsername, upd.id.name, upd.id.version, upd.value.toList) 
   }
 
   @PostMapping(path = Array("/addDefault"))
   def addDefault(@AuthenticationPrincipal user: UserDetails, @RequestBody newDefault: MenasObject[DefaultValue]): CompletableFuture[MappingTable] = {
-    mappingTableService.update(user.getUsername, newDefault.id.name) { mt =>
-      mt.setDefaultMappingValue(mt.defaultMappingValue :+ newDefault.value)
-    }
+    mappingTableService.addDefault(user.getUsername, newDefault.id.name, newDefault.id.version, newDefault.value)
   }
 
 }

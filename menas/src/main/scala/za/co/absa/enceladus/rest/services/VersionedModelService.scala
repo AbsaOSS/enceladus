@@ -19,12 +19,15 @@ import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import za.co.absa.enceladus.model.UsedIn
-import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
+import za.co.absa.enceladus.model.versionedModel.{ VersionedModel, VersionedSummary }
 import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
 
 import scala.concurrent.Future
+import java.time.ZonedDateTime
+import za.co.absa.enceladus.model.menas._
 
-abstract class VersionedModelService[C <: VersionedModel](versionedMongoRepository: VersionedMongoRepository[C])
+
+abstract class VersionedModelService[C <: VersionedModel](versionedMongoRepository: VersionedMongoRepository[C], auditTrailService: AuditTrailService)
   extends ModelService(versionedMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -49,25 +52,45 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
 
   def getUsedIn(name: String, version: Option[Int]): Future[UsedIn]
 
-  def create(item: C, username: String): Future[C] = {
+  private[rest] def getMenasRef(item: C): MenasReference = MenasReference(Some(versionedMongoRepository.collectionName), item.name, item.version)
+
+  private[services] def getAuditEntry(item: C, entryType: AuditEntryType, username: String, auditMessage: String): AuditEntry = {
+    AuditEntry(menasRef = Some(getMenasRef(item)), entryType = entryType, user = username, timeCreated = ZonedDateTime.now(), message = auditMessage)
+  }
+  
+  private[services] def getAuditEntry(itemName: String, itemVersion: Int, entryType: AuditEntryType, username: String, auditMessage: String): AuditEntry = {
+    AuditEntry(menasRef = Some(MenasReference(Some(versionedMongoRepository.collectionName), itemName, itemVersion)), 
+        entryType = entryType, user = username, timeCreated = ZonedDateTime.now(), message = auditMessage)
+  }
+
+  def create(item: C, username: String): Future[C]
+  
+  private[services] def create(item: C, username: String, auditMessage: String): Future[C] = {
     for {
       unique <- isUniqueName(item.name)
-      _      <-
-        if (unique) versionedMongoRepository.create(item, username)
-        else throw new Exception(s"Name already exists: ${item.name}")
+      _ <- if (unique) versionedMongoRepository.create(item, username)
+      else throw new Exception(s"Name already exists: ${item.name}")
+      audit <- auditTrailService.create(getAuditEntry(item, CreateEntryType, username, auditMessage))
       detail <- getLatestVersion(item.name)
     } yield detail
   }
-
+  
   def update(username: String, item: C): Future[C]
 
-  def update(username: String, itemName: String)(transform: C => C): Future[C] = {
+  private[services] def update(username: String, itemName: String, itemVersion: Int, auditMessage: String)(transform: C => ChangedFieldsUpdateTransformResult[C]): Future[C] = {
     for {
-      latest <- getLatestVersion(itemName)
-      update <- versionedMongoRepository.update(username, transform(latest))
-      detail <- getLatestVersion(itemName)
-    } yield detail
+      version <- getVersion(itemName, itemVersion)
+      transformResult <- Future.successful(transform(version))
+      update <- versionedMongoRepository.update(username, transformResult.updatedEntity)
+      audit <- {
+        val changedFields = transformResult.getUpdatedFields()
+        val changedMessage = if(changedFields.isEmpty) "" else s"Changed fields: ${changedFields.mkString(", ")}"
+        auditTrailService.create(getAuditEntry(itemName, version.version, UpdateEntryType, username, s"$auditMessage Updated version: ${version.version}. New Version: ${update.version}. $changedMessage"))
+      }
+    } yield update
   }
+
+  def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
 
   def disableVersion(name: String, version: Option[Int]): Future[Object] = {
     val auth = SecurityContextHolder.getContext.getAuthentication

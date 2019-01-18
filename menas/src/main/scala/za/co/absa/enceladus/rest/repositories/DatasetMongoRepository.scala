@@ -21,11 +21,31 @@ import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.model.Dataset
 
 import scala.reflect.ClassTag
+import za.co.absa.enceladus.model.menas.MenasReference
+import org.mongodb.scala.model.Filters
+import org.mongodb.scala.model.Projections._
+import scala.concurrent.Future
 
 @Repository
 class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends VersionedMongoRepository[Dataset](mongoDb)(ClassTag(classOf[Dataset])) {
 
-  override private[repositories] def collectionName = "dataset"
+  override private[rest] def collectionName = "dataset"
 
+  
+  /** This functions allows for searching Datasets, which have certain mapping rules.
+   *  
+   * @param refColVal a number of String, Any pairs, where String is column name, Any is a value. The given column will be compared with the specified value.
+   * @return List of Menas references to Datasets, which contain the relevant conformance rules
+   */
+  def containsMappingRuleRefEqual(refColVal: (String, Any)*): Future[Seq[MenasReference]] = {
+    
+    val equals = Filters.and(refColVal.map(col => Filters.eq(col._1, col._2)) :_*)
+    val filter = Filters.elemMatch("conformance", equals)
+    
+    collection
+      .find[MenasReference](filter)
+      .projection(fields(include("name", "version"), computed("collection", collectionName)))
+      .toFuture()
+  }
 }

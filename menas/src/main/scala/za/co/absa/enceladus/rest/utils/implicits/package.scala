@@ -39,12 +39,15 @@ package object implicits {
   implicit def optJavaScala[C](in: Optional[C]) = if (in.isPresent()) Some(in.get) else None
   implicit def scalaToJavaFuture[T](in: Future[T]): CompletableFuture[T] = in.toJava.toCompletableFuture()
 
-  val codecRegistry = fromRegistries(fromProviders(classOf[DatasetDetail], classOf[MappingTableDetail], classOf[SchemaDetail],
-    classOf[HDFSFolder],
-    classOf[ConcatenationConformanceRule], classOf[DropConformanceRule], classOf[LiteralConformanceRule], classOf[MappingConformanceRule], classOf[SingleColumnConformanceRule],
-    classOf[SparkSessionConfConformanceRule], classOf[UppercaseConformanceRule],
-    classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
-    classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference],
-    classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference]), CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
-
+  val codecRegistry = fromRegistries(
+    fromProviders(classOf[DatasetDetail], classOf[MappingTableDetail], classOf[SchemaDetail],
+      classOf[HDFSFolder],
+      classOf[ConcatenationConformanceRule], classOf[DropConformanceRule], classOf[LiteralConformanceRule], classOf[MappingConformanceRule], classOf[SingleColumnConformanceRule],
+      classOf[SparkSessionConfConformanceRule], classOf[UppercaseConformanceRule],
+      classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
+      classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference],
+      classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference], classOf[AuditEntry]),
+    CodecRegistries.fromCodecs(
+      new ZonedDateTimeAsDocumentCodec(),
+      CaseObjEnumCodec(CreateEntryType.getClass), CaseObjEnumCodec(UpdateEntryType.getClass)), DEFAULT_CODEC_REGISTRY)
 }

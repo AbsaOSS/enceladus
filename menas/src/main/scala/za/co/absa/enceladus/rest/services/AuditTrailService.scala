@@ -13,19 +13,20 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.repositories
+package za.co.absa.enceladus.rest.services
 
-import org.mongodb.scala.MongoDatabase
+import org.mongodb.scala.Completed
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Repository
-import za.co.absa.enceladus.model.MappingTable
+import org.springframework.stereotype.Service
+import za.co.absa.enceladus.rest.repositories._
 
-import scala.reflect.ClassTag
+import scala.concurrent.Future
 
-@Repository
-class MappingTableMongoRepository @Autowired()(mongoDb: MongoDatabase)
-  extends VersionedMongoRepository[MappingTable](mongoDb)(ClassTag(classOf[MappingTable])) {
+@Service
+class AuditTrailService @Autowired()(auditTrailMongoRepository: AuditTrailMongoRepository)
+  extends ModelService(auditTrailMongoRepository) {
 
-  override private[rest] def collectionName = "mapping_table"
+  import scala.concurrent.ExecutionContext.Implicits.global
+
 
 }
