@@ -44,12 +44,12 @@ Ensure the properties there fit your environment.
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration
 
 #### Deploying Menas
-Simply copy the **menas.war** file produced whn building the project into Tomcat's webapps directory. 
+Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
 
 #### Standardization and Conformance requirements:
 - [**Spark 2.2.1-ABSA**](https://github.com/AbsaOSS/spark/tree/branch-2.2.1-ABSA) installation (this custom version can be [built like any other Spark version](https://spark.apache.org/docs/latest/building-spark.html))
 - **Hadoop 2.7** installation
-- **Menas Credentials File** (a configuratino file containing a username and password for the Spark jobs to authenticate with Menas)
+- **Menas Credentials File** (a configuration file containing a username and password for the Spark jobs to authenticate with Menas)
 
 #### Running Standardization
 ```
