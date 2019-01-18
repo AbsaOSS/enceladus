@@ -19,7 +19,7 @@ The project is comprised of three main components:
 This is the user-facing web client, used to **specify the standardization schema**, and **define the step required to conform** a dataset.  
 
 ### <a name="standardization"/>Standardization
-This is a Spark job which reads in a dataset in any supported format and **produces a parquet dataset with the Menas-specified schema**. 
+This is a Spark job which reads an input dataset in any of the supported formats and **produces a parquet dataset with the Menas-specified schema** as output. 
 
 ### <a name="conformance"/>Conformance
 This is a Spark job which **applies the Menas-specified conformance rules to the standardized dataset**.
