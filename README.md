@@ -12,7 +12,7 @@ ___
 <!-- tocstop -->
 
 ## <a name="what-is-enceladus"/>What is Enceladus?
-**Enceladus** is a **Dynamic Conformance Engine** which allows data from different formats to be standardized to parquet and conformed to group-accepted common reference (e.g. **DE** in one source system and **Deutschland** in another, can be conformed to **Germany**).
+**Enceladus** is a **Dynamic Conformance Engine** which allows data from different formats to be standardized to parquet and conformed to group-accepted common reference (e.g. data for country designation which are **DE** in one source system and **Deutschland** in another, can be conformed to **Germany**).
 
 The project is comprised of three main components:
 ### <a name="menas"/>Menas
@@ -93,4 +93,4 @@ Simply copy the **menas.war** file produced when building the project into Tomca
 ```
 
 ## <a name="contribute"/>How to contribute
-Please see our [**Contribution Guidelines**](https://github.com/AbsaOSS/enceladus/blob/develop/CONTRIBUTING.md).
+Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
