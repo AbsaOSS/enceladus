@@ -59,37 +59,37 @@ Simply copy the **menas.war** file produced when building the project into Tomca
 --master yarn --deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas api uri:port> -Dstandardized.hdfs.path=<path for standardised output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo url for spline> -Dspline.mongodb.name=<spline database name> -Dhdp.version=<hadoop version>" \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
-<standardization-<build-version>.jar> \
---menas-credentials-file <Path to Menas Credentials>
---dataset-name <Dataset Name> \
---dataset-version <Dataset Version> \
---report-date <Date> \
---report-version <Data Run Version> \
---raw-format <data format> \
---row-tag <tag> \
---header <true/false(applicable for CSV)> \
---delimiter <csv delimiter (applicable for CSV)>
+<standardization_<build_version>.jar> \
+--menas-credentials-file <path_to_menas_credentials>
+--dataset-name <dataset_name> \
+--dataset-version <dataset_ersion> \
+--report-date <date> \
+--report-version <data_run-version> \
+--raw-format <data_format> \
+--row-tag <tag>
 ```
+* Here `row-tag` is a specific option for `raw-format` of type `XML`. For more options for different types please see our WIKI.
+
 #### <a name="contribute"/>Running Conformance
 ```
 <spark home>/spark-submit \
 --num-executors <num> \
 --executor-memory <num>G \
---master yarn --deploy-mode <client / cluster> \
+--master yarn --deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
 --conf 'spark.ui.port=29000' \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas api uri:port> -Dstandardized.hdfs.path=<outpath for standardised output>-{0}-{1}-{2}-{3} - Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.mongodb.url=<mongo url for spline> -Dspline.mongodb.name=<spline database name>" -Dhdp.version=<hadoop version> \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name>" -Dhdp.version=<hadoop_version> \
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
-<standardization_<build-version>.jar> \
---menas-credentials-file <Path to Menas Credentials>
---dataset-name <Dataset Name> \
---dataset-version <Dataset Version> \
---report-date <Date> \
---report-version <Data Run Version>
+<conformance_<build_version>.jar> \
+--menas-credentials-file <path_to_menas_credentials>
+--dataset-name <dataset_name> \
+--dataset-version <dataset_ersion> \
+--report-date <date> \
+--report-version <data_run-version>
 ```
 
 ## How to contribute
