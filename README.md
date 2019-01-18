@@ -72,7 +72,7 @@ Simply copy the **menas.war** file produced when building the project into Tomca
 ```
 * Here `row-tag` is a specific option for `raw-format` of type `XML`. For more options for different types please see our WIKI.
 
-#### <a name="contribute"/>Running Conformance
+#### Running Conformance
 ```
 <spark home>/spark-submit \
 --num-executors <num> \
@@ -92,5 +92,5 @@ Simply copy the **menas.war** file produced when building the project into Tomca
 --report-version <data_run-version>
 ```
 
-## How to contribute
+## <a name="contribute"/>How to contribute
 Please see our [**Contribution Guidelines**](https://github.com/AbsaOSS/enceladus/blob/develop/CONTRIBUTING.md).
