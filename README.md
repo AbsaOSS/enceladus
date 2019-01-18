@@ -49,7 +49,11 @@ Simply copy the **menas.war** file produced when building the project into Tomca
 #### Standardization and Conformance requirements:
 - [**Spark 2.2.1-ABSA**](https://github.com/AbsaOSS/spark/tree/branch-2.2.1-ABSA) installation (this custom version can be [built like any other Spark version](https://spark.apache.org/docs/latest/building-spark.html))
 - **Hadoop 2.7** installation
-- **Menas Credentials File** (a configuration file containing a username and password for the Spark jobs to authenticate with Menas)
+- **Menas Credentials File** in your home directory (a configuration file for authenticating the Spark jobs with Menas) e.g.:
+```
+username=user
+password=changeme
+```
 
 #### Running Standardization
 ```
