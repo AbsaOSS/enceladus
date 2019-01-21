@@ -41,7 +41,7 @@ Ensure the properties there fit your environment.
 #### Menas requirements:
 - **Tomcat 8.5/9.0** installation
 - **MongoDB 4.0** installation
-- **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration
+- **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
 #### Deploying Menas
 Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
@@ -49,7 +49,8 @@ Simply copy the **menas.war** file produced when building the project into Tomca
 #### Standardization and Conformance requirements:
 - [**Spark 2.2.1-ABSA**](https://github.com/AbsaOSS/spark/tree/branch-2.2.1-ABSA) installation (this custom version can be [built like any other Spark version](https://spark.apache.org/docs/latest/building-spark.html))
 - **Hadoop 2.7** installation
-- **Menas Credentials File** in your home directory (a configuration file for authenticating the Spark jobs with Menas) e.g.:
+- **Menas Credentials File** in your home directory (a configuration file for authenticating the Spark jobs with Menas) 
+e.g. `~/menas-credential.properties`:
 ```
 username=user
 password=changeme
