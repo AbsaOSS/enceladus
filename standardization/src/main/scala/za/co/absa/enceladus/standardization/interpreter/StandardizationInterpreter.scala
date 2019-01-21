@@ -46,19 +46,16 @@ object StandardizationInterpreter {
 
   
   // This helper fn defines the standardization logic used with arrays and normally
-  def stdApplyLogic(stdOutput: ParseOutput, field: StructField, df: Dataset[Row])(implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
-
+  def stdApplyLogic(stdOutput: ParseOutput, field: StructField)(implicit spark: SparkSession, udfLib: UDFLibrary): Seq[Column] = {
     val ParseOutput(stdCol, errs) = stdOutput
-    
+
     val errField = s"error_${unpath(field.name)}_${Random.nextInt().abs}"
     errorCols.append(errField)
-    
-    val inclErrs = df.withColumn(errField, errs)
 
-    // If the meta data value sourcecolumn is set override the field name
+    //If the meta data value sourcecolumn is set override the field name
     val fieldName = SchemaUtils.getFieldNameOverriddenByMetadata(field)
 
-    inclErrs.withColumn(fieldName, stdCol)
+    Seq(errs.as(errField),stdCol.as(fieldName))
   }
 
   /**
@@ -79,35 +76,24 @@ object StandardizationInterpreter {
     }
 
     // TODO: remove when spark-xml handles empty arrays
-    logger.info(s"Step 1.5: Spark-xml hack (handle empty arrays)")
     val df1 = if (inputType.toLowerCase() == "xml") {
-      expSchema.fields.foldLeft(df)({
-        case (accDf: Dataset[Row], field: StructField) => {
-          val newType = SparkXMLHack.hack(field, "", accDf)
-          accDf.withColumn(field.name, newType)
-        }
-
-      })
+      df.select(expSchema.fields.map{
+        field => SparkXMLHack.hack(field, "", df).as(field.name)
+      }: _*)
     } else df
 
     logger.info(s"Step 2: Standardization")
     // step 2 - standardize
-    val std = expSchema.fields.foldLeft(df1)({
-      case (accDf: Dataset[Row], field: StructField) => {
-
-        logger.info(s"Standardizing field: ${field.name}")
-
-        // Do not standardize existing error column
+    val std = df1.select(expSchema.fields.flatMap{
+      field => logger.info(s"Standardizing field: ${field.name}")
         if (field.name == ErrorMessage.errorColumnName) {
-          accDf
+          Some(df1.col(field.name))
         } else {
           val stdOutput = TypeParser.standardize(field, "", df.schema)
           logger.info(s"Applying standardization plan for ${field.name}")
-          val res = stdApplyLogic(stdOutput, field, accDf)
-          res
+          stdApplyLogic(stdOutput, field)
         }
-      }
-    })
+    }: _*)
 
     // step 3 drop intermediate error columns
     logger.info(s"Step 3.1: Preserve existing error column")
