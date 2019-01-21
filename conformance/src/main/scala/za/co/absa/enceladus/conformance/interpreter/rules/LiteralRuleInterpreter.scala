@@ -19,16 +19,35 @@ import za.co.absa.enceladus.model.conformanceRule.LiteralConformanceRule
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.{col, upper}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.utils.transformations.ArrayTransformations
-import org.apache.spark.sql.functions._
+import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
+import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 
 case class LiteralRuleInterpreter(rule: LiteralConformanceRule) extends RuleInterpreter {
+  final val ruleName = "Literal rule"
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
-    handleArrays(rule.outputColumn, df) { flattened =>
-      ArrayTransformations.nestedWithColumn(flattened)(rule.outputColumn, inferStrictestType(rule.value))
+    // Validate the rule parameters
+    RuleValidators.validateOutputField(ruleName, progArgs.datasetName, df.schema, rule.outputColumn)
+
+    if (rule.outputColumn.contains('.')) {
+      conformNestedField(df)
+    } else {
+      conformRootField(df)
     }
+  }
+
+  /** Handles literal conformance rule for nested fields. */
+  private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
+    DeepArrayTransformations.nestedAddColumn(df, rule.outputColumn, c => inferStrictestType(rule.value))
+  }
+
+  /** Handles literal conformance rule for root (non-nested) fields. */
+  private def conformRootField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
+    // Applying the rule
+    val uppered = df.withColumn(rule.outputColumn, inferStrictestType(rule.value))
+    uppered
   }
 }

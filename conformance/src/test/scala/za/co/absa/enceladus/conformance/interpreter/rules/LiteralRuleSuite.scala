@@ -23,11 +23,9 @@ import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.samples.DeepArraySamples
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class UppercaseRuleSuite extends FunSuite with SparkTestBase {
+class LiteralRuleSuite extends FunSuite with SparkTestBase {
 
-  test("Uppercase conformance rule test 1") {
-
-    import spark.implicits._
+  test("Literal conformance rule test 1") {
     val inputDf = spark.createDataFrame(DeepArraySamples.ordersData)
 
     spark.conf.set("spark.sql.session.timeZone", "GMT")
@@ -39,21 +37,21 @@ class UppercaseRuleSuite extends FunSuite with SparkTestBase {
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
     implicit val enableCF: Boolean = false
 
-    mockWhen (dao.getDataset("Orders Conformance", 1)) thenReturn DeepArraySamples.uppercaseOrdersDS1
+    mockWhen (dao.getDataset("Orders Conformance", 1)) thenReturn DeepArraySamples.literalOrdersDS1
 
     val mappingTablePattern = "{0}/{1}/{2}"
 
     import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(DeepArraySamples.uppercaseOrdersDS1, inputDf).cache
+    val conformed = DynamicInterpreter.interpret(DeepArraySamples.literalOrdersDS1, inputDf).cache
 
     conformed.printSchema()
     conformed.show
 
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 
-    if (conformedJSON != DeepArraySamples.conformedUppercaseOrdersJSON1) {
+    if (conformedJSON != DeepArraySamples.conformedLiteralOrdersJSON1) {
       println("EXPECTED:")
-      println(DeepArraySamples.conformedUppercaseOrdersJSON1)
+      println(DeepArraySamples.conformedLiteralOrdersJSON1)
       println("ACTUAL:")
       println(conformedJSON)
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
@@ -61,9 +59,7 @@ class UppercaseRuleSuite extends FunSuite with SparkTestBase {
 
   }
 
-  test("Uppercase conformance rule test 2") {
-
-    import spark.implicits._
+  test("Literal conformance rule test 2") {
     val inputDf = spark.createDataFrame(DeepArraySamples.ordersData)
 
     spark.conf.set("spark.sql.session.timeZone", "GMT")
@@ -75,21 +71,21 @@ class UppercaseRuleSuite extends FunSuite with SparkTestBase {
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
     implicit val enableCF: Boolean = false
 
-    mockWhen (dao.getDataset("Orders Conformance", 1)) thenReturn DeepArraySamples.uppercaseOrdersDS2
+    mockWhen (dao.getDataset("Orders Conformance", 1)) thenReturn DeepArraySamples.literalOrdersDS2
 
     val mappingTablePattern = "{0}/{1}/{2}"
 
     import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(DeepArraySamples.uppercaseOrdersDS2, inputDf).cache
+    val conformed = DynamicInterpreter.interpret(DeepArraySamples.literalOrdersDS2, inputDf).cache
 
     conformed.printSchema()
     conformed.show
 
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 
-    if (conformedJSON != DeepArraySamples.conformedUppercaseOrdersJSON2) {
+    if (conformedJSON != DeepArraySamples.conformedLiteralOrdersJSON2) {
       println("EXPECTED:")
-      println(DeepArraySamples.conformedUppercaseOrdersJSON2)
+      println(DeepArraySamples.conformedLiteralOrdersJSON2)
       println("ACTUAL:")
       println(conformedJSON)
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
@@ -97,9 +93,7 @@ class UppercaseRuleSuite extends FunSuite with SparkTestBase {
 
   }
 
-  test("Uppercase conformance rule test 3") {
-
-    import spark.implicits._
+  test("Literal conformance rule test 3") {
     val inputDf = spark.createDataFrame(DeepArraySamples.ordersData)
 
     spark.conf.set("spark.sql.session.timeZone", "GMT")
@@ -111,21 +105,21 @@ class UppercaseRuleSuite extends FunSuite with SparkTestBase {
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
     implicit val enableCF: Boolean = false
 
-    mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn DeepArraySamples.uppercaseOrdersDS3
+    mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn DeepArraySamples.literalOrdersDS3
 
     val mappingTablePattern = "{0}/{1}/{2}"
 
     import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(DeepArraySamples.uppercaseOrdersDS3, inputDf).cache
+    val conformed = DynamicInterpreter.interpret(DeepArraySamples.literalOrdersDS3, inputDf).cache
 
     conformed.printSchema()
     conformed.show
 
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 
-    if (conformedJSON != DeepArraySamples.conformedUppercaseOrdersJSON3) {
+    if (conformedJSON != DeepArraySamples.conformedLiteralOrdersJSON3) {
       println("EXPECTED:")
-      println(DeepArraySamples.conformedUppercaseOrdersJSON3)
+      println(DeepArraySamples.conformedLiteralOrdersJSON3)
       println("ACTUAL:")
       println(conformedJSON)
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
