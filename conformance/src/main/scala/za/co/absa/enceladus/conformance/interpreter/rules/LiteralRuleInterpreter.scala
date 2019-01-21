@@ -19,7 +19,6 @@ import za.co.absa.enceladus.model.conformanceRule.LiteralConformanceRule
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{col, upper}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}

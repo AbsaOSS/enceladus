@@ -29,6 +29,12 @@ object RuleValidators {
   }
 
   @throws[ValidationException]
+  def validateFieldExistence(ruleName: String, datasetName: String, schema: StructType, fieldPath: String): Unit = {
+    val existenceIssues = SchemaPathValidator.validateSchemaPath(datasetName, schema, fieldPath)
+    checkAndThrowValidationErrors(s"$ruleName validation error: input field does not exist.", existenceIssues)
+  }
+
+  @throws[ValidationException]
   def validateOutputField(ruleName: String, datasetName: String, schema: StructType, fieldPath: String): Unit = {
     val issues = SchemaPathValidator.validateSchemaPathOutput(datasetName, schema, fieldPath)
     checkAndThrowValidationErrors(s"$ruleName validation error: output field is incorrect.", issues)
