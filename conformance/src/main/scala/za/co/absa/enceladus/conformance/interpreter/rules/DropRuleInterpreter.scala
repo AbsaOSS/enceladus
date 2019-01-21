@@ -21,15 +21,26 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.utils.transformations.ArrayTransformations
-import org.apache.spark.sql.functions._
+import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
 
 case class DropRuleInterpreter(rule: DropConformanceRule) extends RuleInterpreter {
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
-    handleArrays(rule.outputColumn, df) { flattened => 
-      ArrayTransformations.nestedDrop(flattened, rule.outputColumn)
+    if (rule.outputColumn.contains('.')) {
+      conformNestedField(df)
+    } else {
+      conformRootField(df)
     }
   }
 
+  /** Handles drop conformance rule for nested fields. */
+  private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
+    DeepArrayTransformations.nestedDropColumn(df, rule.outputColumn)
+  }
+
+  /** Handles drop conformance rule for root (non-nested) fields. */
+  private def conformRootField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
+    // Applying the rule
+    df.drop(rule.outputColumn)
+  }
 }

@@ -47,7 +47,6 @@ case class LiteralRuleInterpreter(rule: LiteralConformanceRule) extends RuleInte
   /** Handles literal conformance rule for root (non-nested) fields. */
   private def conformRootField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
     // Applying the rule
-    val uppered = df.withColumn(rule.outputColumn, inferStrictestType(rule.value))
-    uppered
+    df.withColumn(rule.outputColumn, inferStrictestType(rule.value))
   }
 }

@@ -47,8 +47,7 @@ case class UppercaseRuleInterpreter(rule: UppercaseConformanceRule) extends Rule
   /** Handles uppercase conformance rule for root (non-nested) fields. */
   private def conformRootField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
     // Applying the rule
-    val uppered = df.withColumn(rule.outputColumn, upper(col(rule.inputColumn)))
-    uppered
+    df.withColumn(rule.outputColumn, upper(col(rule.inputColumn)))
   }
 
 }

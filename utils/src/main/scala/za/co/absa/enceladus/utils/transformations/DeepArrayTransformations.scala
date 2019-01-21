@@ -64,12 +64,21 @@ def nestedWithColumnMap(df: DataFrame,
           field.dataType match {
             case dt: ArrayType =>
               fieldFound = true
-              mapArray(dt, path, parentColumn)
+              if (expression != null) {
+                mapArray(dt, path, parentColumn)
+              } else {
+                Nil
+              }
             case _ =>
               fieldFound = true
-              mappedFields += expression(curColumn).as(outputFieldName)
-              // Retain the original column
-              Seq(curColumn)
+              if (expression != null) {
+                // Retain the original column
+                mappedFields += expression(curColumn).as(outputFieldName)
+                Seq(curColumn)
+              } else {
+                // Drops it otherwise
+                Nil
+              }
           }
         } else {
           field.dataType match {
@@ -133,21 +142,37 @@ def nestedWithColumnMap(df: DataFrame,
             transform(curColumn, lambdaName, innerArray.head).as(fieldName)
           case _ =>
             if (isTop) {
-              mappedFields += transform(curColumn, lambdaName, mapNestedArrayOfPrimitives(dt, _$(lambdaName))).as(outputFieldName)
-              curColumn
+              if (expression != null) {
+                // Retain the original column
+                mappedFields += transform(curColumn, lambdaName, mapNestedArrayOfPrimitives(dt, _$(lambdaName))).as(outputFieldName)
+                curColumn
+              } else {
+                // Drops it otherwise
+                null
+              }
             } else {
               throw new IllegalArgumentException(s"Field $fieldName is not a struct or an array of struct type.")
             }
         }
       case dt =>
         if (isTop) {
-          mappedFields += transform(curColumn, lambdaName, expression(_$(lambdaName))).as(outputFieldName)
-          curColumn
+          if (expression != null) {
+            // Retain the original column
+            mappedFields += transform(curColumn, lambdaName, expression(_$(lambdaName))).as(outputFieldName)
+            curColumn
+          } else {
+            // Drops it otherwise
+            null
+          }
         } else {
           throw new IllegalArgumentException(s"Field $fieldName is not a struct type or an array.")
         }
     }
-    Seq(newColumn) ++ mappedFields
+    if (newColumn == null) {
+      mappedFields
+    } else {
+      Seq(newColumn) ++ mappedFields
+    }
   }
 
   val schema = df.schema
@@ -156,7 +181,7 @@ def nestedWithColumnMap(df: DataFrame,
 }
 
   /**
-    * Map transformation for columns that can be inside nested structs, arrays and it's combinations
+    * Add a column that can be inside nested structs, arrays and it's combinations
     *
     *  @param df Dataframe to be transformed
     *  @param newColumnName A column name to be created
@@ -167,5 +192,17 @@ def nestedWithColumnMap(df: DataFrame,
                       newColumnName: String,
                       expression: Unit => Column): DataFrame = {
     nestedWithColumnMap(df, newColumnName, "", c => expression())
+  }
+
+  /**
+    * Drop a column from inside a nested structs, arrays and it's combinations
+    *
+    *  @param df Dataframe to be transformed
+    *  @param columnToDrop A column name to be dropped
+    *  @return Dataframe with a new field that contains transformed vvalues.
+    */
+  def nestedDropColumn(df: DataFrame,
+                       columnToDrop: String): DataFrame = {
+    nestedWithColumnMap(df, columnToDrop, "", null)
   }
 }

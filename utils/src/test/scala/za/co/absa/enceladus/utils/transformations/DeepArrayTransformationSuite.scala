@@ -28,6 +28,8 @@ case class Employee(name: String, address: Address)
 
 case class TestObj(id: Int, employee: Employee)
 
+case class TestObj2(id: Int, employee: Seq[Employee])
+
 // Arrays of primitives example
 case class FunWords(id: Int, words: Seq[String])
 
@@ -67,6 +69,13 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
       TestObj(1,Employee("Petr", Address("Ostrava", "Vlavska"))),
       TestObj(1,Employee("Vojta", Address("Plzen", "Kralova")))
     )
+
+  // Array of struct of struct
+  val arrayOfstructOfStructSample: Seq[TestObj2] = Seq(
+    TestObj2(1,Seq(Employee("Martin", Address("Olomuc", "Vodickova")), Employee("Stephan", Address("Olomuc", "Vodickova")))),
+    TestObj2(2,Seq(Employee("Petr", Address("Ostrava", "Vlavska")), Employee("Michal", Address("Ostrava", "Vlavska")))),
+    TestObj2(3,Seq(Employee("Vojta", Address("Plzen", "Kralova"))))
+  )
 
   // Arrays of primitives
   val arraysOfPrimitivesSample: Seq[FunWords] = Seq(
@@ -354,9 +363,6 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     // Struct of struct
     val df = spark.sparkContext.parallelize(structOfStructSample).toDF
 
-    //df.printSchema()
-    //df.toJSON.take(10).foreach(println)
-
     val dfOut = DeepArrayTransformations.nestedAddColumn(df, "employee.address.conformedType", c => {
       lit("City")
     })
@@ -484,6 +490,220 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
       "{\"legid\":105,\"conditions\":[{\"conif\":\"if bid<52\",\"conthen\":\"sell\",\"amount\":200.0,\"conformedSystem\":" +
       "\"Trading\"},{\"conif\":\"if sell>32\",\"conthen\":\"buy\",\"amount\":175.0,\"conformedSystem\":\"Trading\"},{\"" +
       "conif\":\"if sell>27\",\"conthen\":\"buy\",\"amount\":225.0,\"conformedSystem\":\"Trading\"}]}]}"
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  // Dropping columns
+
+  test("Test drop of a plain field") {
+    val df = spark.sparkContext.parallelize(plainSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedDropColumn(df, "street")
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- city: string (nullable = true)
+                           |""".stripMargin
+    val expectedResults = """{"city":"Olomuc"}
+                            |{"city":"Ostrava"}
+                            |{"city":"Plzen"}""".stripMargin
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test drop of two level of struct nestness") {
+    // Struct of struct
+    val df = spark.sparkContext.parallelize(structOfStructSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedDropColumn(df, "employee.address.city")
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           | |-- employee: struct (nullable = false)
+                           | |    |-- name: string (nullable = true)
+                           | |    |-- address: struct (nullable = false)
+                           | |    |    |-- street: string (nullable = true)
+                           |""".stripMargin
+    val expectedResults = """{"id":1,"employee":{"name":"Martin","address":{"street":"Vodickova"}}}
+                            |{"id":1,"employee":{"name":"Petr","address":{"street":"Vlavska"}}}
+                            |{"id":1,"employee":{"name":"Vojta","address":{"street":"Kralova"}}}"""
+      .stripMargin
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test ("Test drop of arrays of primitives") {
+    // Array of primitives
+    val df = spark.sparkContext.parallelize(arraysOfPrimitivesSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedDropColumn(df, "words")
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           |""".stripMargin
+    val expectedResults = """{"id":1}
+                            |{"id":1}"""
+      .stripMargin
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+
+  test ("Test drop of arrays of arrays of primitives") {
+    // Array of arrays of primitives
+    val df = spark.sparkContext.parallelize(arraysOfArraysOfPrimitivesSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedDropColumn(df, "matrix")
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           |""".stripMargin
+    val expectedResults = """{"id":1}
+                            |{"id":2}
+                            |{"id":3}"""
+      .stripMargin
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test ("Test drop of a field inside an array of structs") {
+    // Array of struct
+    val df = spark.sparkContext.parallelize(arraysOfStructsSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedDropColumn(df, "person.lastName")
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           | |-- person: array (nullable = true)
+                           | |    |-- element: struct (containsNull = false)
+                           | |    |    |-- firstName: string (nullable = true)
+                           |""".stripMargin
+    val expectedResults = """{"id":1,"person":[{"firstName":"John"},{"firstName":"Jack"}]}
+                            |{"id":1,"person":[{"firstName":"Merry"},{"firstName":"Jane"}]}"""
+      .stripMargin
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test drop of a field inside an array of arrays of struct") {
+    // Array of struct
+    val df = spark.sparkContext.parallelize(arraysOfArraysOfStructSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedDropColumn(df, "person.lastName")
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           | |-- person: array (nullable = true)
+                           | |    |-- element: array (containsNull = true)
+                           | |    |    |-- element: struct (containsNull = false)
+                           | |    |    |    |-- firstName: string (nullable = true)
+                           |""".stripMargin
+    val expectedResults = """{"id":1,"person":[[{"firstName":"Mona Lisa"}],[{"firstName":"Lenny"},{"firstName":"Dot"}]]}
+                            |{"id":1,"person":[[{"firstName":"Eddie"}],[{"firstName":"Scarlett"},{"firstName":"William"}]]}"""
+      .stripMargin
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test drop of a field inside an array of struct containing an array of struct") {
+    // Array of struct
+    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedDropColumn(df, "legs.conditions.conif")
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           | |-- legs: array (nullable = true)
+                           | |    |-- element: struct (containsNull = false)
+                           | |    |    |-- legid: integer (nullable = true)
+                           | |    |    |-- conditions: array (nullable = true)
+                           | |    |    |    |-- element: struct (containsNull = false)
+                           | |    |    |    |    |-- conthen: string (nullable = true)
+                           | |    |    |    |    |-- amount: double (nullable = true)
+                           |""".stripMargin
+    val expectedResults = "{\"id\":1,\"legs\":[{\"legid\":100,\"conditions\":[{\"conthen\":\"buy\",\"amount\":100.0}," +
+      "{\"conthen\":\"sell\",\"amount\":150.0},{\"conthen\":\"sell\",\"amount\":1000.0}]},{\"legid\":101,\"conditions\":" +
+      "[{\"conthen\":\"sell\",\"amount\":200.0},{\"conthen\":\"buy\",\"amount\":175.0},{\"conthen\":\"buy\",\"amount\":" +
+      "225.0}]}]}\n{\"id\":2,\"legs\":[{\"legid\":102,\"conditions\":[{\"conthen\":\"buy\",\"amount\":100.0},{\"conthen\":" +
+      "\"sell\",\"amount\":150.0},{\"conthen\":\"sell\",\"amount\":1000.0}]},{\"legid\":103,\"conditions\":[{\"conthen\":" +
+      "\"sell\",\"amount\":200.0},{\"conthen\":\"buy\",\"amount\":175.0},{\"conthen\":\"buy\",\"amount\":225.0}]}]}\n{" +
+      "\"id\":3,\"legs\":[{\"legid\":104,\"conditions\":[{\"conthen\":\"buy\",\"amount\":100.0},{\"conthen\":\"sell\"," +
+      "\"amount\":150.0},{\"conthen\":\"sell\",\"amount\":1000.0}]},{\"legid\":105,\"conditions\":[{\"conthen\":\"sell\"," +
+      "\"amount\":200.0},{\"conthen\":\"buy\",\"amount\":175.0},{\"conthen\":\"buy\",\"amount\":225.0}]}]}"
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test drop of a struct field inside an array of struct containing an array of struct") {
+    // Array of struct
+    val df = spark.sparkContext.parallelize(arrayOfstructOfStructSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedDropColumn(df, "employee.address")
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           | |-- employee: array (nullable = true)
+                           | |    |-- element: struct (containsNull = false)
+                           | |    |    |-- name: string (nullable = true)
+                           |""".stripMargin
+    val expectedResults = """{"id":1,"employee":[{"name":"Martin"},{"name":"Stephan"}]}
+                            |{"id":2,"employee":[{"name":"Petr"},{"name":"Michal"}]}
+                            |{"id":3,"employee":[{"name":"Vojta"}]}""".stripMargin
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test drop of an array field inside an array of struct containing an array of struct") {
+    // Array of struct
+    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedDropColumn(df, "legs.conditions")
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           | |-- legs: array (nullable = true)
+                           | |    |-- element: struct (containsNull = false)
+                           | |    |    |-- legid: integer (nullable = true)
+                           |""".stripMargin
+    val expectedResults = """{"id":1,"legs":[{"legid":100},{"legid":101}]}
+                            |{"id":2,"legs":[{"legid":102},{"legid":103}]}
+                            |{"id":3,"legs":[{"legid":104},{"legid":105}]}""".stripMargin
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
