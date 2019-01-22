@@ -24,7 +24,7 @@ import za.co.absa.enceladus.model.user.UserInfo
 
 @RestController 
 @RequestMapping(Array("/api/user"))
-class UserInfoController {
+class UserInfoController extends BaseController {
 
   import za.co.absa.enceladus.rest.utils.implicits._
 
@@ -32,12 +32,11 @@ class UserInfoController {
   val menasVersion: String = ""
 
   @GetMapping(path = Array("/info"))
-  def userInfo() = {
+  def userInfo(): UserInfo = {
     val auth = SecurityContextHolder.getContext().getAuthentication()
     val principal = auth.getPrincipal.asInstanceOf[UserDetails]
     val groups = auth.getAuthorities.toArray(Array[GrantedAuthority]()).map(auth => auth.getAuthority).filter(_.startsWith("f"))
     UserInfo(principal.getUsername, groups, menasVersion)
   }
-  
 
 }

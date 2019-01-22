@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.standardization
 
-import java.io.{PrintWriter, StringWriter}
+import java.io.{File, PrintWriter, StringWriter}
 
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.apache.spark.sql.types.{StructType, StructField}
+import org.apache.spark.sql.types.{StructField, StructType}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.validation.ValidationException
@@ -105,6 +105,9 @@ object StandardizationJob {
     import spark.implicits._
 
     implicit val udfLib = new UDFLibrary
+
+    val menasCredentials = cmd.menasCredentials
+    EnceladusRestDAO.postLogin(menasCredentials.username, menasCredentials.password)
 
     val dataset = EnceladusRestDAO.getDataset(cmd.datasetName, cmd.datasetVersion)
 

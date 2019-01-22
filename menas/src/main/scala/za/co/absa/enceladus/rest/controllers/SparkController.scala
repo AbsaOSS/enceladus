@@ -25,9 +25,9 @@ case class Test(a:Int,b:String)
 
 @RestController
 @RequestMapping(Array("/api/spark"))
-class SparkController @Autowired() (spark: SparkSession) {
+class SparkController @Autowired() (spark: SparkSession) extends BaseController {
 
-	@GetMapping(path = Array("/version"))
+  @GetMapping(path = Array("/version"))
   def sparkVersion(): String = spark.sparkContext.version
 
 }
