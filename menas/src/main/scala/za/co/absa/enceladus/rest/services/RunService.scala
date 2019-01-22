@@ -15,12 +15,16 @@
 
 package za.co.absa.enceladus.rest.services
 
+import org.joda.time.format.DateTimeFormat
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.Run
+import za.co.absa.enceladus.rest.exceptions.ValidationException
+import za.co.absa.enceladus.rest.models.Validation
 import za.co.absa.enceladus.rest.repositories.RunMongoRepository
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 @Service
 class RunService @Autowired()(runMongoRepository: RunMongoRepository)
@@ -30,5 +34,11 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
     runMongoRepository.getAllLatest()
   }
 
+  def getByStartDate(startDate: String): Future[Seq[Run]] = {
+    Try(DateTimeFormat.forPattern("dd-MM-yyyy").parseLocalDate(startDate)) match {
+      case Success(x) => runMongoRepository.getByStartDate(startDate)
+      case Failure(e) => throw ValidationException(Validation(Map("startDate" -> List(s"must have format dd-MM-yyyy: $startDate"))))
+    }
+  }
 
 }

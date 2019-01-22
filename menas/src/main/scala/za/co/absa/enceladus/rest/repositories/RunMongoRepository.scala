@@ -15,8 +15,9 @@
 
 package za.co.absa.enceladus.rest.repositories
 
-import org.mongodb.scala.MongoDatabase
+import org.mongodb.scala.{MapReduceObservable, MongoDatabase}
 import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.model.Filters
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.atum.utils.ControlUtils
@@ -34,22 +35,37 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
   override private[repositories] def collectionName = "run"
 
   def getAllLatest(): Future[Seq[Run]] = {
-    val mapFn    = """function() {
-                     |    emit(this.dataset, this)
-                     |}""".stripMargin
-    val reduceFn = """function(key, values) {
-                     |    var latestVersion = Math.max.apply(Math, values.map(x => {return x.datasetVersion;}))
-                     |    var latestVersionRuns = values.filter(x => x.datasetVersion == latestVersion)
-                     |    var latestRunId = Math.max.apply(Math, latestVersionRuns.map(x => {return x.runId;}))
-                     |    return latestVersionRuns.filter(x => x.runId == latestRunId)[0]
-                     |}""".stripMargin
-    val finalizeFn = """function(key, reducedValue) { return reducedValue }"""
-
-    collection.mapReduce[BsonDocument](mapFn, reduceFn)
-      .finalizeFunction(finalizeFn)
-      .jsMode(true)
+    getLatestOfEach()
       .toFuture()
       .map(_.map(bson => ControlUtils.fromJson[RunWrapper](bson.toJson).value))
   }
 
+  def getByStartDate(startDate: String): Future[Seq[Run]] = {
+    getLatestOfEach()
+      .filter(Filters.regex("startDateTime", s"^$startDate\\s+"))
+      .toFuture()
+      .map(_.map(bson => ControlUtils.fromJson[RunWrapper](bson.toJson).value))
+  }
+
+  private def getLatestOfEach(): MapReduceObservable[BsonDocument] = {
+    val mapFn =
+      """function() {
+        |  emit(this.dataset, this)
+        |}""".stripMargin
+    val reduceFn =
+      """function(key, values) {
+        |  var latestVersion = Math.max.apply(Math, values.map(x => {return x.datasetVersion;}))
+        |  var latestVersionRuns = values.filter(x => x.datasetVersion == latestVersion)
+        |  var latestRunId = Math.max.apply(Math, latestVersionRuns.map(x => {return x.runId;}))
+        |  return latestVersionRuns.filter(x => x.runId == latestRunId)[0]
+        |}""".stripMargin
+    val finalizeFn =
+      """function(key, reducedValue) {
+        |  return reducedValue
+        |}""".stripMargin
+
+    collection.mapReduce[BsonDocument](mapFn, reduceFn)
+      .finalizeFunction(finalizeFn)
+      .jsMode(true)
+  }
 }

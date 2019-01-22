@@ -43,7 +43,10 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   }
 
   @GetMapping(Array("/startDate/{startDate}"))
-  def findByStartDate(): CompletableFuture[List[Run]] = Future(List())
+  @ResponseStatus(HttpStatus.OK)
+  def getByStartDate(@PathVariable startDate: String): CompletableFuture[Seq[Run]] = {
+    runService.getByStartDate(startDate)
+  }
 
   @GetMapping(Array("/splineUrl/{datasetName}/{datsetVersion}/{runId}"))
   def getSplineUrl(): CompletableFuture[String] = Future("")
