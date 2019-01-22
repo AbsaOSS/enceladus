@@ -48,3 +48,5 @@ za.co.absa.enceladus.menas.version=@project.version@
 za.co.absa.enceladus.migrations.dump.filepath=/path/to/backups/menas
 
 za.co.absa.enceladus.menas.spark.master=local[1]
+
+za.co.absa.enceladus.spline.urlTemplate="http://localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s"
