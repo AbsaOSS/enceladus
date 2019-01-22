@@ -18,7 +18,8 @@ package za.co.absa.enceladus.rest.controllers
 import java.util.concurrent.CompletableFuture
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.{GetMapping, PostMapping, RequestMapping, RestController}
+import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation._
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.services.RunService
@@ -36,7 +37,10 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   // Dummy implementation for #86
   // TODO: Implementation in #85
   @GetMapping(Array("/list"))
-  def list(): CompletableFuture[List[Run]] = Future(List())
+  @ResponseStatus(HttpStatus.OK)
+  def list(): CompletableFuture[Seq[Run]] = {
+    runService.getAllLatest()
+  }
 
   @GetMapping(Array("/startDate/{startDate}"))
   def findByStartDate(): CompletableFuture[List[Run]] = Future(List())
