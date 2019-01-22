@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.standardization.interpreter.stages
 
 import java.security.InvalidParameterException
+import java.util.TimeZone
 import java.util.regex.Pattern
 
 import org.apache.spark.sql.types._
@@ -26,6 +27,8 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.types.Defaults
 
 class TypeParserSuite extends FunSuite with SparkTestBase {
+
+  TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
   private def substringCount(text: String, substr: String): Int = {
     Pattern.quote(substr).r.findAllMatchIn(text).length
@@ -104,7 +107,7 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
     val path: String = "path"
     val defaultFormat: String = Defaults.getGlobalFormat(TimestampType)
     val defaultValue: String = "1999-12-31 09:51:30"
-    val defaultValueParsed: Long = 946630290000000L //this is the above timestamp transformed within the expression
+    val defaultValueParsed: Long = 946633890000000L //this is the above timestamp transformed within the expression
     val structFieldNoDefault = StructField("field0", TimestampType)
     val structFieldWithDefaultMetadataColumn = StructField("field1", TimestampType, nullable = false, new MetadataBuilder().putString("default", defaultValue).build)
     val structFieldWithMetadataSource2Column = StructField("field2", TimestampType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field2_source").build)
@@ -168,7 +171,7 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
     val defaultValue1: String = "1999:31:12_09~51~30"
     val defaultValue2: String = "31121999.095130"
     val defaultValue3: String = "31121999095130"
-    val defaultValueParsed: Long = 946630290000000L //this is the above timestamp transformed within the expression
+    val defaultValueParsed: Long = 946633890000000L //this is the above timestamp transformed within the expression
     val structFieldNoDefault = StructField("field0", TimestampType, nullable = false, new MetadataBuilder().putString("pattern", "dd/MM/yyyy/hh/mm/ss").build)
     val structFieldWithDefaultMetadataColumn = StructField("field1", TimestampType, nullable = false, new MetadataBuilder().putString("default", defaultValue1).putString("pattern", "yyyy:dd:MM_hh~mm~ss").build)
     val structFieldWithMetadataSource2Column = StructField("field2", TimestampType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field2_source").putString("pattern", "ddMMyyyy.hhmmss").putString("default", defaultValue2).build)

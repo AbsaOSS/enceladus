@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
+import com.typesafe.config.ConfigFactory
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.atum.model.ControlMeasure
@@ -27,6 +28,8 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import scala.io.Source
 
 class InterpreterSuite extends FunSuite with SparkTestBase {
+
+  ConfigFactory.load("modules/test.module")
 
   test("End to end dynamic conformance test") {
 
