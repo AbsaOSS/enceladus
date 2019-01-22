@@ -28,6 +28,15 @@
 		<version>0.99.0-SNAPSHOT</version>
 	</parent>
 
+	<properties>
+		<requests.version>0.1.6</requests.version>
+		<ujson.version>0.7.1</ujson.version>
+		<requests.version>0.1.6</requests.version>
+		<diffson.version>2.0.2</diffson.version>
+		<spray.json.version>1.3.5</spray.json.version>
+		<hadoop.common.version>3.1.1</hadoop.common.version>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>com.github.scopt</groupId>
@@ -42,27 +51,27 @@
 		<dependency>
 			<groupId>com.lihaoyi</groupId>
 			<artifactId>requests_${scala.compat.version}</artifactId>
-			<version>0.1.6</version>
+			<version>${requests.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.lihaoyi</groupId>
 			<artifactId>ujson_${scala.compat.version}</artifactId>
-			<version>0.7.1</version>
+			<version>${ujson.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.gnieh</groupId>
 			<artifactId>diffson_${scala.compat.version}</artifactId>
-			<version>2.0.2</version>
+			<version>${diffson.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.spray</groupId>
 			<artifactId>spray-json_${scala.compat.version}</artifactId>
-			<version>1.3.5</version>
+			<version>${spray.json.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-common</artifactId>
-			<version>3.1.1</version>
+			<version>${hadoop.common.version}</version>
 		</dependency>
 	</dependencies>
 
