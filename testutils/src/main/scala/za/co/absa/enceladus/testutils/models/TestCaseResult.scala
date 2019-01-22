@@ -23,4 +23,4 @@ case class TestCaseResult(id: String,
                           output: String,
                           expected: String,
                           statusCode: String,
-                          elapsedTime: Long) {}
+                          elapsedTime: Long)

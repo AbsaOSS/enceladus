@@ -28,38 +28,38 @@ object RestCaller {
   def run(testCase: TestCase): TestCaseResult = {
     lazy val callOutput = call(testCase.method, testCase.url, testCase.payload, testCase.contentType)
     val time = calculateTime { callOutput }
-    val comparison = compareJsons(testCase.expectedOutput, callOutput.text)
+    val diff = compareJsons(testCase.expectedOutput, callOutput.text)
     val statusCodeOk = callOutput.statusCode.toString == testCase.expectedStatusCode
     val statusCodeMessage = s"Should be ${testCase.expectedStatusCode}, is ${callOutput.statusCode}"
-    val passed = comparison.isEmpty && statusCodeOk
+    val passed = diff.isEmpty && statusCodeOk
 
-    TestCaseResult(testCase.id, testCase.name, comparison, passed, testCase.payload,
+    TestCaseResult(testCase.id, testCase.name, diff, passed, testCase.payload,
       callOutput.text, testCase.expectedOutput, statusCodeMessage, time)
   }
 
   def call(method: RestMethod, url: String, payload: String, contentType: String): Response = {
     val headers: Map[String, String] = Map("content-type" -> contentType)
     (method: @switch) match {
-      case RestMethod.POST => call_post(url, payload, headers)
-      case RestMethod.GET => call_get(url, payload, headers)
-      case RestMethod.DELETE => call_delete(url, payload, headers)
-      case RestMethod.PUT => call_put(url, payload, headers)
+      case RestMethod.POST => callPost(url, payload, headers)
+      case RestMethod.GET => callGet(url, payload, headers)
+      case RestMethod.DELETE => callDelete(url, payload, headers)
+      case RestMethod.PUT => callPut(url, payload, headers)
     }
   }
 
-  private def call_post(url: String, payload: String, headers: Map[String, String]): Response = {
+  private def callPost(url: String, payload: String, headers: Map[String, String]): Response = {
     requests.post(url, data = payload, headers = headers)
   }
 
-  private def call_get(url: String, payload: String, headers: Map[String, String]): Response = {
+  private def callGet(url: String, payload: String, headers: Map[String, String]): Response = {
     requests.get(url, data = payload, headers = headers)
   }
 
-  private def call_delete(url: String, payload: String, headers: Map[String, String]): Response = {
+  private def callDelete(url: String, payload: String, headers: Map[String, String]): Response = {
     requests.delete(url, data = payload, headers = headers)
   }
 
-  private def call_put(url: String, payload: String, headers: Map[String, String]): Response = {
+  private def callPut(url: String, payload: String, headers: Map[String, String]): Response = {
     requests.put(url, data = payload, headers = headers)
   }
 

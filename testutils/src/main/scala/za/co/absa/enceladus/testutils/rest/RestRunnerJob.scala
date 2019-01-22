@@ -55,7 +55,7 @@ object RestRunnerJob {
 
     val finalInfo = testRun.getFinalInfo
     val today = Calendar.getInstance.getTime
-    val dateFormat = new SimpleDateFormat("YYYY_MM_dd/hh_MM")
+    val dateFormat = new SimpleDateFormat("yyyy_MM_dd/HH_mm")
     val date = dateFormat.format(today)
 
     val resultsPath: String = s"${cmd.testResultPath}/test_results/$date"
