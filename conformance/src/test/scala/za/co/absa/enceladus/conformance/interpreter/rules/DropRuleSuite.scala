@@ -15,116 +15,70 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import org.mockito.Mockito.{mock, when => mockWhen}
+import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.conformanceRule.DropConformanceRule
 import za.co.absa.enceladus.samples.DeepArraySamples
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class DropRuleSuite extends FunSuite with SparkTestBase {
+class DropRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+
+  val dropRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )
+  val dropArrayRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )
+  val dropDeepArrayRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )
+
+  val dropOrdersDS1 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
+    "testData/conformedOrders",
+    schemaName = "Orders", schemaVersion = 1,
+    conformance = List(dropRule))
+
+  val dropOrdersDS2 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
+    "testData/conformedOrders",
+    schemaName = "Orders", schemaVersion = 1,
+    conformance = List(dropArrayRule))
+
+  val dropOrdersDS3 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
+    "testData/conformedOrders",
+    schemaName = "Orders", schemaVersion = 1,
+    conformance = List(dropDeepArrayRule))
+
+
+  val conformedDropOrdersJSON1: String =
+    """{"id":1,"items":[{"itemid":"ar229","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":51.0}]},{"itemid":"2891k","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":100.0}]},{"itemid":"31239","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
+      |{"id":2,"items":[{"itemid":"AkuYdg","qty":100,"price":10.0,"payments":[{"payid":"d101","amount":10.0},{"payid":"d102","amount":20.0}]},{"itemid":"jUa1k0","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
+      |{"id":3,"items":[{"itemid":"Gshj1","qty":10,"price":10000.0,"payments":[{"payid":"pid10","amount":2000.0},{"payid":"pid10","amount":5000.0}]},{"itemid":"Jdha2","qty":100,"price":45.0,"payments":[{"payid":"zk20","amount":150.0},{"payid":"pid10","amount":2000.0}]}],"errCol":[]}
+      |{"id":4,"items":[{"itemid":"dLda1","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":10.0}]},{"itemid":"d2dhJ","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":15.0}]},{"itemid":"Mska0","qty":2,"price":55.2,"payments":[]},{"itemid":"Gdal1","qty":20,"price":5.2,"payments":[]},{"itemid":"dakl1","qty":99,"price":1.2,"payments":[]}],"errCol":[]}
+      |{"id":5,"items":[{"itemid":"hdUs1J","qty":50,"price":0.2,"payments":[{"payid":"pid10","amount":10.0},{"payid":"pid10","amount":11.0},{"payid":"pid10","amount":12.0}]}],"errCol":[]}"""
+      .stripMargin.replace("\r\n", "\n")
+
+  val conformedDropOrdersJSON2: String =
+    """{"id":1,"items":[{"itemid":"ar229","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":51.0}]},{"itemid":"2891k","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":100.0}]},{"itemid":"31239","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
+      |{"id":2,"items":[{"itemid":"AkuYdg","qty":100,"price":10.0,"payments":[{"payid":"d101","amount":10.0},{"payid":"d102","amount":20.0}]},{"itemid":"jUa1k0","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
+      |{"id":3,"items":[{"itemid":"Gshj1","qty":10,"price":10000.0,"payments":[{"payid":"pid10","amount":2000.0},{"payid":"pid10","amount":5000.0}]},{"itemid":"Jdha2","qty":100,"price":45.0,"payments":[{"payid":"zk20","amount":150.0},{"payid":"pid10","amount":2000.0}]}],"errCol":[]}
+      |{"id":4,"items":[{"itemid":"dLda1","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":10.0}]},{"itemid":"d2dhJ","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":15.0}]},{"itemid":"Mska0","qty":2,"price":55.2,"payments":[]},{"itemid":"Gdal1","qty":20,"price":5.2,"payments":[]},{"itemid":"dakl1","qty":99,"price":1.2,"payments":[]}],"errCol":[]}
+      |{"id":5,"items":[{"itemid":"hdUs1J","qty":50,"price":0.2,"payments":[{"payid":"pid10","amount":10.0},{"payid":"pid10","amount":11.0},{"payid":"pid10","amount":12.0}]}],"errCol":[]}"""
+      .stripMargin.replace("\r\n", "\n")
+
+  val conformedDropOrdersJSON3: String =
+    """{"id":1,"items":[{"itemid":"ar229","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":51.0}]},{"itemid":"2891k","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":100.0}]},{"itemid":"31239","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
+      |{"id":2,"items":[{"itemid":"AkuYdg","qty":100,"price":10.0,"payments":[{"payid":"d101","amount":10.0},{"payid":"d102","amount":20.0}]},{"itemid":"jUa1k0","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
+      |{"id":3,"items":[{"itemid":"Gshj1","qty":10,"price":10000.0,"payments":[{"payid":"pid10","amount":2000.0},{"payid":"pid10","amount":5000.0}]},{"itemid":"Jdha2","qty":100,"price":45.0,"payments":[{"payid":"zk20","amount":150.0},{"payid":"pid10","amount":2000.0}]}],"errCol":[]}
+      |{"id":4,"items":[{"itemid":"dLda1","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":10.0}]},{"itemid":"d2dhJ","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":15.0}]},{"itemid":"Mska0","qty":2,"price":55.2,"payments":[]},{"itemid":"Gdal1","qty":20,"price":5.2,"payments":[]},{"itemid":"dakl1","qty":99,"price":1.2,"payments":[]}],"errCol":[]}
+      |{"id":5,"items":[{"itemid":"hdUs1J","qty":50,"price":0.2,"payments":[{"payid":"pid10","amount":10.0},{"payid":"pid10","amount":11.0},{"payid":"pid10","amount":12.0}]}],"errCol":[]}"""
+      .stripMargin.replace("\r\n", "\n")
+
+  val inputDf: DataFrame = spark.createDataFrame(DeepArraySamples.ordersData)
 
   test("Drop conformance rule test 1") {
-    val inputDf = spark.createDataFrame(DeepArraySamples.ordersData)
-
-    spark.conf.set("spark.sql.session.timeZone", "GMT")
-
-    inputDf.printSchema()
-    inputDf.show
-
-    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
-    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
-    implicit val enableCF: Boolean = false
-
-    mockWhen (dao.getDataset("Orders Conformance", 1)) thenReturn DeepArraySamples.dropOrdersDS1
-
-    val mappingTablePattern = "{0}/{1}/{2}"
-
-    import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(DeepArraySamples.dropOrdersDS1, inputDf).cache
-
-    conformed.printSchema()
-    conformed.show
-
-    val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
-
-    if (conformedJSON != DeepArraySamples.conformedDropOrdersJSON1) {
-      println("EXPECTED:")
-      println(DeepArraySamples.conformedDropOrdersJSON1)
-      println("ACTUAL:")
-      println(conformedJSON)
-      fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
-    }
-
+    conformanceRuleShouldMatchExpected(inputDf, dropOrdersDS1, conformedDropOrdersJSON1)
   }
 
   test("Drop conformance rule test 2") {
-    val inputDf = spark.createDataFrame(DeepArraySamples.ordersData)
-
-    spark.conf.set("spark.sql.session.timeZone", "GMT")
-
-    inputDf.printSchema()
-    inputDf.show
-
-    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
-    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
-    implicit val enableCF: Boolean = false
-
-    mockWhen (dao.getDataset("Orders Conformance", 1)) thenReturn DeepArraySamples.dropOrdersDS2
-
-    val mappingTablePattern = "{0}/{1}/{2}"
-
-    import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(DeepArraySamples.dropOrdersDS2, inputDf).cache
-
-    conformed.printSchema()
-    conformed.show
-
-    val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
-
-    if (conformedJSON != DeepArraySamples.conformedDropOrdersJSON2) {
-      println("EXPECTED:")
-      println(DeepArraySamples.conformedDropOrdersJSON2)
-      println("ACTUAL:")
-      println(conformedJSON)
-      fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
-    }
-
+    conformanceRuleShouldMatchExpected(inputDf, dropOrdersDS2, conformedDropOrdersJSON2)
   }
 
   test("Drop conformance rule test 3") {
-    val inputDf = spark.createDataFrame(DeepArraySamples.ordersData)
-
-    spark.conf.set("spark.sql.session.timeZone", "GMT")
-
-    inputDf.printSchema()
-    inputDf.show
-
-    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
-    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
-    implicit val enableCF: Boolean = false
-
-    mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn DeepArraySamples.dropOrdersDS3
-
-    val mappingTablePattern = "{0}/{1}/{2}"
-
-    import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(DeepArraySamples.dropOrdersDS3, inputDf).cache
-
-    conformed.printSchema()
-    conformed.show
-
-    val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
-
-    if (conformedJSON != DeepArraySamples.conformedDropOrdersJSON3) {
-      println("EXPECTED:")
-      println(DeepArraySamples.conformedDropOrdersJSON3)
-      println("ACTUAL:")
-      println(conformedJSON)
-      fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
-    }
-
+    conformanceRuleShouldMatchExpected(inputDf, dropOrdersDS3, conformedDropOrdersJSON3)
   }
-
 }

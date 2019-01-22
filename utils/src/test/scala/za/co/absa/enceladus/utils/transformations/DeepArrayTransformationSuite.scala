@@ -138,10 +138,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |-- city: string (nullable = true)
                            | |-- street: string (nullable = true)
                            | |-- conformedCity: string (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"city":"Olomuc","street":"Vodickova","conformedCity":"OLOMUC"}
                             |{"city":"Ostrava","street":"Vlavska","conformedCity":"OSTRAVA"}
-                            |{"city":"Plzen","street":"Kralova","conformedCity":"PLZEN"}""".stripMargin
+                            |{"city":"Plzen","street":"Kralova","conformedCity":"PLZEN"}""".stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -166,11 +166,11 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |    |-- city: string (nullable = true)
                            | |    |    |-- street: string (nullable = true)
                            | |    |    |-- conformedCity: string (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"employee":{"name":"Martin","address":{"city":"Olomuc","street":"Vodickova","conformedCity":"OLOMUC"}}}
                             |{"id":1,"employee":{"name":"Petr","address":{"city":"Ostrava","street":"Vlavska","conformedCity":"OSTRAVA"}}}
                             |{"id":1,"employee":{"name":"Vojta","address":{"city":"Plzen","street":"Kralova","conformedCity":"PLZEN"}}}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -193,10 +193,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |-- element: string (containsNull = true)
                            | |-- conformedWords: array (nullable = true)
                            | |    |-- element: string (containsNull = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"words":["Gizmo","Blurp","Buzinga"],"conformedWords":["GIZMO","BLURP","BUZINGA"]}
                             |{"id":1,"words":["Quirk","Zap","Mmrnmhrm"],"conformedWords":["QUIRK","ZAP","MMRNMHRM"]}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -222,11 +222,11 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |-- conformedMatrix: array (nullable = true)
                            | |    |-- element: array (containsNull = true)
                            | |    |    |-- element: string (containsNull = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"matrix":[["Tree","Table"],["Map","Duck"]],"conformedMatrix":[["TREE","TABLE"],["MAP","DUCK"]]}
                             |{"id":2,"matrix":[["Apple","Machine"],["List","Duck"]],"conformedMatrix":[["APPLE","MACHINE"],["LIST","DUCK"]]}
                             |{"id":3,"matrix":[["Computer","Snake"],["Sun","Star"]],"conformedMatrix":[["COMPUTER","SNAKE"],["SUN","STAR"]]}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -250,10 +250,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |    |-- firstName: string (nullable = true)
                            | |    |    |-- lastName: string (nullable = true)
                            | |    |    |-- conformedName: string (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"person":[{"firstName":"John","lastName":"Smith","conformedName":"JOHN"},{"firstName":"Jack","lastName":"Brown","conformedName":"JACK"}]}
                             |{"id":1,"person":[{"firstName":"Merry","lastName":"Cook","conformedName":"MERRY"},{"firstName":"Jane","lastName":"Clark","conformedName":"JANE"}]}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -278,10 +278,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |    |    |-- firstName: string (nullable = true)
                            | |    |    |    |-- lastName: string (nullable = true)
                            | |    |    |    |-- conformedName: string (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"person":[[{"firstName":"Mona Lisa","lastName":"Harddrive","conformedName":"HARDDRIVE"}],[{"firstName":"Lenny","lastName":"Linux","conformedName":"LINUX"},{"firstName":"Dot","lastName":"Not","conformedName":"NOT"}]]}
                             |{"id":1,"person":[[{"firstName":"Eddie","lastName":"Larrison","conformedName":"LARRISON"}],[{"firstName":"Scarlett","lastName":"Johanson","conformedName":"JOHANSON"},{"firstName":"William","lastName":"Windows","conformedName":"WINDOWS"}]]}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -312,7 +312,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |    |    |    |-- conthen: string (nullable = true)
                            | |    |    |    |    |-- amount: double (nullable = true)
                            | |    |    |    |    |-- conformedField: string (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = "{\"id\":1,\"legs\":[{\"legid\":100,\"conditions\":[{\"conif\":\"if bid>10\",\"conthen\":\"buy\"," +
       "\"amount\":100.0,\"conformedField\":\"IF BID>10\"},{\"conif\":\"if sell<5\",\"conthen\":\"sell\",\"amount\":150.0," +
       "\"conformedField\":\"IF SELL<5\"},{\"conif\":\"if sell<1\",\"conthen\":\"sell\",\"amount\":1000.0,\"conformedField\"" +
@@ -350,10 +350,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |-- city: string (nullable = true)
                            | |-- street: string (nullable = true)
                            | |-- planet: string (nullable = false)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"city":"Olomuc","street":"Vodickova","planet":"Earth"}
                             |{"city":"Ostrava","street":"Vlavska","planet":"Earth"}
-                            |{"city":"Plzen","street":"Kralova","planet":"Earth"}""".stripMargin
+                            |{"city":"Plzen","street":"Kralova","planet":"Earth"}""".stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -378,11 +378,11 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |    |-- city: string (nullable = true)
                            | |    |    |-- street: string (nullable = true)
                            | |    |    |-- conformedType: string (nullable = false)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"employee":{"name":"Martin","address":{"city":"Olomuc","street":"Vodickova","conformedType":"City"}}}
                             |{"id":1,"employee":{"name":"Petr","address":{"city":"Ostrava","street":"Vlavska","conformedType":"City"}}}
                             |{"id":1,"employee":{"name":"Vojta","address":{"city":"Plzen","street":"Kralova","conformedType":"City"}}}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -409,10 +409,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |    |-- firstName: string (nullable = true)
                            | |    |    |-- lastName: string (nullable = true)
                            | |    |    |-- conformedType: string (nullable = false)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"person":[{"firstName":"John","lastName":"Smith","conformedType":"Person"},{"firstName":"Jack","lastName":"Brown","conformedType":"Person"}]}
                             |{"id":1,"person":[{"firstName":"Merry","lastName":"Cook","conformedType":"Person"},{"firstName":"Jane","lastName":"Clark","conformedType":"Person"}]}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -436,10 +436,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |    |-- firstName: string (nullable = true)
                            | |    |    |-- lastName: string (nullable = true)
                            | |    |    |-- department: string (nullable = false)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"person":[{"firstName":"John","lastName":"Smith","department":"IT"},{"firstName":"Jack","lastName":"Brown","department":"IT"}]}
                             |{"id":1,"person":[{"firstName":"Merry","lastName":"Cook","department":"IT"},{"firstName":"Jane","lastName":"Clark","department":"IT"}]}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -471,7 +471,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |    |    |    |-- conthen: string (nullable = true)
                            | |    |    |    |    |-- amount: double (nullable = true)
                            | |    |    |    |    |-- conformedSystem: string (nullable = false)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = "{\"id\":1,\"legs\":[{\"legid\":100,\"conditions\":[{\"conif\":\"if bid>10\",\"conthen\":\"buy\"," +
       "\"amount\":100.0,\"conformedSystem\":\"Trading\"},{\"conif\":\"if sell<5\",\"conthen\":\"sell\",\"amount\":150.0," +
       "\"conformedSystem\":\"Trading\"},{\"conif\":\"if sell<1\",\"conthen\":\"sell\",\"amount\":1000.0,\"conformedSystem\"" +
@@ -507,10 +507,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
     val expectedSchema = """root
                            | |-- city: string (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"city":"Olomuc"}
                             |{"city":"Ostrava"}
-                            |{"city":"Plzen"}""".stripMargin
+                            |{"city":"Plzen"}""".stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -531,11 +531,11 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |-- name: string (nullable = true)
                            | |    |-- address: struct (nullable = false)
                            | |    |    |-- street: string (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"employee":{"name":"Martin","address":{"street":"Vodickova"}}}
                             |{"id":1,"employee":{"name":"Petr","address":{"street":"Vlavska"}}}
                             |{"id":1,"employee":{"name":"Vojta","address":{"street":"Kralova"}}}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -552,10 +552,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
     val expectedSchema = """root
                            | |-- id: integer (nullable = false)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1}
                             |{"id":1}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -573,11 +573,11 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
     val expectedSchema = """root
                            | |-- id: integer (nullable = false)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1}
                             |{"id":2}
                             |{"id":3}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -597,10 +597,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |-- person: array (nullable = true)
                            | |    |-- element: struct (containsNull = false)
                            | |    |    |-- firstName: string (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"person":[{"firstName":"John"},{"firstName":"Jack"}]}
                             |{"id":1,"person":[{"firstName":"Merry"},{"firstName":"Jane"}]}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -621,10 +621,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |-- element: array (containsNull = true)
                            | |    |    |-- element: struct (containsNull = false)
                            | |    |    |    |-- firstName: string (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"person":[[{"firstName":"Mona Lisa"}],[{"firstName":"Lenny"},{"firstName":"Dot"}]]}
                             |{"id":1,"person":[[{"firstName":"Eddie"}],[{"firstName":"Scarlett"},{"firstName":"William"}]]}"""
-      .stripMargin
+      .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -648,7 +648,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |    |    |    |-- element: struct (containsNull = false)
                            | |    |    |    |    |-- conthen: string (nullable = true)
                            | |    |    |    |    |-- amount: double (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = "{\"id\":1,\"legs\":[{\"legid\":100,\"conditions\":[{\"conthen\":\"buy\",\"amount\":100.0}," +
       "{\"conthen\":\"sell\",\"amount\":150.0},{\"conthen\":\"sell\",\"amount\":1000.0}]},{\"legid\":101,\"conditions\":" +
       "[{\"conthen\":\"sell\",\"amount\":200.0},{\"conthen\":\"buy\",\"amount\":175.0},{\"conthen\":\"buy\",\"amount\":" +
@@ -677,10 +677,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |-- employee: array (nullable = true)
                            | |    |-- element: struct (containsNull = false)
                            | |    |    |-- name: string (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"employee":[{"name":"Martin"},{"name":"Stephan"}]}
                             |{"id":2,"employee":[{"name":"Petr"},{"name":"Michal"}]}
-                            |{"id":3,"employee":[{"name":"Vojta"}]}""".stripMargin
+                            |{"id":3,"employee":[{"name":"Vojta"}]}""".stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
@@ -700,10 +700,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
                            | |-- legs: array (nullable = true)
                            | |    |-- element: struct (containsNull = false)
                            | |    |    |-- legid: integer (nullable = true)
-                           |""".stripMargin
+                           |""".stripMargin.replace("\r\n", "\n")
     val expectedResults = """{"id":1,"legs":[{"legid":100},{"legid":101}]}
                             |{"id":2,"legs":[{"legid":102},{"legid":103}]}
-                            |{"id":3,"legs":[{"legid":104},{"legid":105}]}""".stripMargin
+                            |{"id":3,"legs":[{"legid":104},{"legid":105}]}""".stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
