@@ -77,22 +77,22 @@ object StandardizationInterpreter {
 
     // TODO: remove when spark-xml handles empty arrays
     val df1 = if (inputType.toLowerCase() == "xml") {
-      df.select(expSchema.fields.map{
-        field => SparkXMLHack.hack(field, "", df).as(field.name)
+      df.select(expSchema.fields.map { field =>
+        SparkXMLHack.hack(field, "", df).as(field.name)
       }: _*)
     } else df
 
     logger.info(s"Step 2: Standardization")
     // step 2 - standardize
-    val std = df1.select(expSchema.fields.flatMap{
-      field => logger.info(s"Standardizing field: ${field.name}")
-        if (field.name == ErrorMessage.errorColumnName) {
-          Some(df1.col(field.name))
-        } else {
-          val stdOutput = TypeParser.standardize(field, "", df.schema)
-          logger.info(s"Applying standardization plan for ${field.name}")
-          stdApplyLogic(stdOutput, field)
-        }
+    val std = df1.select(expSchema.fields.flatMap { field =>
+      logger.info(s"Standardizing field: ${field.name}")
+      if (field.name == ErrorMessage.errorColumnName) {
+        Seq(df1.col(field.name))
+      } else {
+        val stdOutput = TypeParser.standardize(field, "", df.schema)
+        logger.info(s"Applying standardization plan for ${field.name}")
+        stdApplyLogic(stdOutput, field)
+      }
     }: _*)
 
     // step 3 drop intermediate error columns
