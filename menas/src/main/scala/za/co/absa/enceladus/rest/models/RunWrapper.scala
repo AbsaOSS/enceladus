@@ -13,22 +13,8 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.services
+package za.co.absa.enceladus.rest.models
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.Run
-import za.co.absa.enceladus.rest.repositories.RunMongoRepository
 
-import scala.concurrent.Future
-
-@Service
-class RunService @Autowired()(runMongoRepository: RunMongoRepository)
-  extends ModelService(runMongoRepository) {
-
-  def getAllLatest(): Future[Seq[Run]] = {
-    runMongoRepository.getAllLatest()
-  }
-
-
-}
+case class RunWrapper(value: Run)
