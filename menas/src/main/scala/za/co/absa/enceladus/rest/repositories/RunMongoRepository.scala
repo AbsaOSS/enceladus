@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.rest.repositories
 
-import org.mongodb.scala.{MapReduceObservable, MongoDatabase}
 import org.mongodb.scala.bson.BsonDocument
-import org.mongodb.scala.model.Filters
+import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.{MapReduceObservable, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.atum.utils.ControlUtils
@@ -42,7 +42,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   def getByStartDate(startDate: String): Future[Seq[Run]] = {
     getLatestOfEach()
-      .filter(Filters.regex("startDateTime", s"^$startDate\\s+"))
+      .filter(regex("startDateTime", s"^$startDate\\s+"))
       .toFuture()
       .map(_.map(bson => ControlUtils.fromJson[RunWrapper](bson.toJson).value))
   }
@@ -64,8 +64,21 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
         |  return reducedValue
         |}""".stripMargin
 
-    collection.mapReduce[BsonDocument](mapFn, reduceFn)
+    collection
+      .mapReduce[BsonDocument](mapFn, reduceFn)
       .finalizeFunction(finalizeFn)
       .jsMode(true)
   }
+
+  def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Option[Run]] = {
+    val datasetNameEq = equal("dataset", datasetName)
+    val datasetVersionEq = equal("datasetVersion", datasetVersion)
+    val runIdEq = equal("runId", runId)
+
+    collection
+      .find[BsonDocument](and(datasetNameEq, datasetVersionEq, runIdEq))
+      .headOption()
+      .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+  }
+
 }

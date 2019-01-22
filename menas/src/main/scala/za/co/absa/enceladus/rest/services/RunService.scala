@@ -16,10 +16,10 @@
 package za.co.absa.enceladus.rest.services
 
 import org.joda.time.format.DateTimeFormat
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.Run
-import za.co.absa.enceladus.rest.exceptions.ValidationException
+import za.co.absa.enceladus.rest.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.rest.models.Validation
 import za.co.absa.enceladus.rest.repositories.RunMongoRepository
 
@@ -30,14 +30,28 @@ import scala.util.{Failure, Success, Try}
 class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   extends ModelService(runMongoRepository) {
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  @Value("${za.co.absa.enceladus.spline.urlTemplate}")
+  val splineUrlTemplate: String = null
+
   def getAllLatest(): Future[Seq[Run]] = {
     runMongoRepository.getAllLatest()
   }
 
   def getByStartDate(startDate: String): Future[Seq[Run]] = {
     Try(DateTimeFormat.forPattern("dd-MM-yyyy").parseLocalDate(startDate)) match {
-      case Success(x) => runMongoRepository.getByStartDate(startDate)
-      case Failure(e) => throw ValidationException(Validation(Map("startDate" -> List(s"must have format dd-MM-yyyy: $startDate"))))
+      case _: Success[_] => runMongoRepository.getByStartDate(startDate)
+      case _: Failure[_] => throw ValidationException(Validation().withError("startDate", s"must have format dd-MM-yyyy: $startDate"))
+    }
+  }
+
+  def getSplineUrl(datasetName: String, datasetVersion: Int, runId: Int): Future[String] = {
+    runMongoRepository.getRun(datasetName, datasetVersion, runId).map {
+      case Some(run) =>
+        val splineRef = run.splineRef
+        String.format(splineUrlTemplate, splineRef.outputPath, splineRef.sparkApplicationId)
+      case None      => throw NotFoundException()
     }
   }
 
