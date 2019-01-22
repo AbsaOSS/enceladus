@@ -18,6 +18,7 @@ package za.co.absa.enceladus.utils.transformations
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.StringType
 
 // Examples for constructing dataframes containing arrays of various levels of nestness
 
@@ -708,6 +709,155 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
   }
+
+  test("Test concat of a plain field") {
+    val df = spark.sparkContext.parallelize(plainSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedWithColumnMap(df, "", "combinedCity", c => {
+      if (c==null) {
+        concat(col("city"), col("street"))
+      } else {
+        concat(c.getField("city"), c.getField("street"))
+      }
+    })
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- city: string (nullable = true)
+                           | |-- street: string (nullable = true)
+                           | |-- combinedCity: string (nullable = true)
+                           |""".stripMargin.replace("\r\n", "\n")
+    val expectedResults = """{"city":"Olomuc","street":"Vodickova","combinedCity":"OlomucVodickova"}
+                            |{"city":"Ostrava","street":"Vlavska","combinedCity":"OstravaVlavska"}
+                            |{"city":"Plzen","street":"Kralova","combinedCity":"PlzenKralova"}"""
+      .stripMargin.replace("\r\n", "\n")
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test concat of two level of struct nestness") {
+    // Struct of struct
+    val df = spark.sparkContext.parallelize(structOfStructSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedStructMap(df, "employee.address", "combinedCity", c => {
+      if (c==null) {
+        concat(col("city"), col("street"))
+      } else {
+        concat(c.getField("city"), c.getField("street"))
+      }
+    })
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           | |-- employee: struct (nullable = false)
+                           | |    |-- name: string (nullable = true)
+                           | |    |-- address: struct (nullable = false)
+                           | |    |    |-- city: string (nullable = true)
+                           | |    |    |-- street: string (nullable = true)
+                           | |    |    |-- combinedCity: string (nullable = true)
+                           |""".stripMargin.replace("\r\n", "\n")
+    val expectedResults = """{"id":1,"employee":{"name":"Martin","address":{"city":"Olomuc","street":"Vodickova","combinedCity":"OlomucVodickova"}}}
+                            |{"id":1,"employee":{"name":"Petr","address":{"city":"Ostrava","street":"Vlavska","combinedCity":"OstravaVlavska"}}}
+                            |{"id":1,"employee":{"name":"Vojta","address":{"city":"Plzen","street":"Kralova","combinedCity":"PlzenKralova"}}}"""
+      .stripMargin.replace("\r\n", "\n")
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test ("Test concat of a field inside an array of structs") {
+    // Array of struct
+    val df = spark.sparkContext.parallelize(arraysOfStructsSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedStructMap(df, "person", "combinedName", c => {
+      concat(c.getField("firstName"), lit(" "), c.getField("lastName"))
+    })
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           | |-- person: array (nullable = true)
+                           | |    |-- element: struct (containsNull = false)
+                           | |    |    |-- firstName: string (nullable = true)
+                           | |    |    |-- lastName: string (nullable = true)
+                           | |    |    |-- combinedName: string (nullable = true)
+                           |""".stripMargin.replace("\r\n", "\n")
+    val expectedResults = """{"id":1,"person":[{"firstName":"John","lastName":"Smith","combinedName":"John Smith"},{"firstName":"Jack","lastName":"Brown","combinedName":"Jack Brown"}]}
+                            |{"id":1,"person":[{"firstName":"Merry","lastName":"Cook","combinedName":"Merry Cook"},{"firstName":"Jane","lastName":"Clark","combinedName":"Jane Clark"}]}"""
+      .stripMargin.replace("\r\n", "\n")
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test concat of a field inside an array of arrays of struct") {
+    // Array of struct
+    val df = spark.sparkContext.parallelize(arraysOfArraysOfStructSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedStructMap(df, "person", "combinedName", c => {
+      concat(c.getField("firstName"), lit(" "), c.getField("lastName"))
+    })
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           | |-- person: array (nullable = true)
+                           | |    |-- element: array (containsNull = true)
+                           | |    |    |-- element: struct (containsNull = false)
+                           | |    |    |    |-- firstName: string (nullable = true)
+                           | |    |    |    |-- lastName: string (nullable = true)
+                           | |    |    |    |-- combinedName: string (nullable = true)
+                           |""".stripMargin.replace("\r\n", "\n")
+    val expectedResults = """{"id":1,"person":[[{"firstName":"Mona Lisa","lastName":"Harddrive","combinedName":"Mona Lisa Harddrive"}],[{"firstName":"Lenny","lastName":"Linux","combinedName":"Lenny Linux"},{"firstName":"Dot","lastName":"Not","combinedName":"Dot Not"}]]}
+                            |{"id":1,"person":[[{"firstName":"Eddie","lastName":"Larrison","combinedName":"Eddie Larrison"}],[{"firstName":"Scarlett","lastName":"Johanson","combinedName":"Scarlett Johanson"},{"firstName":"William","lastName":"Windows","combinedName":"William Windows"}]]}"""
+      .stripMargin.replace("\r\n", "\n")
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test concat of a field inside an array of struct containing an array of struct") {
+    // Array of struct
+    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedStructMap(df, "legs.conditions", "combinedField", c => {
+      concat(c.getField("conif"), lit(" "), c.getField("conthen"), lit(" ("), c.getField("amount").cast(StringType), lit(")"))
+    })
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema = """root
+                           | |-- id: integer (nullable = false)
+                           | |-- legs: array (nullable = true)
+                           | |    |-- element: struct (containsNull = false)
+                           | |    |    |-- legid: integer (nullable = true)
+                           | |    |    |-- conditions: array (nullable = true)
+                           | |    |    |    |-- element: struct (containsNull = false)
+                           | |    |    |    |    |-- conif: string (nullable = true)
+                           | |    |    |    |    |-- conthen: string (nullable = true)
+                           | |    |    |    |    |-- amount: double (nullable = true)
+                           | |    |    |    |    |-- combinedField: string (nullable = true)
+                           |""".stripMargin.replace("\r\n", "\n")
+    val expectedResults = """{"id":1,"legs":[{"legid":100,"conditions":[{"conif":"if bid>10","conthen":"buy","amount":100.0,"combinedField":"if bid>10 buy (100.0)"},{"conif":"if sell<5","conthen":"sell","amount":150.0,"combinedField":"if sell<5 sell (150.0)"},{"conif":"if sell<1","conthen":"sell","amount":1000.0,"combinedField":"if sell<1 sell (1000.0)"}]},{"legid":101,"conditions":[{"conif":"if bid<50","conthen":"sell","amount":200.0,"combinedField":"if bid<50 sell (200.0)"},{"conif":"if sell>30","conthen":"buy","amount":175.0,"combinedField":"if sell>30 buy (175.0)"},{"conif":"if sell>25","conthen":"buy","amount":225.0,"combinedField":"if sell>25 buy (225.0)"}]}]}
+                            |{"id":2,"legs":[{"legid":102,"conditions":[{"conif":"if bid>11","conthen":"buy","amount":100.0,"combinedField":"if bid>11 buy (100.0)"},{"conif":"if sell<6","conthen":"sell","amount":150.0,"combinedField":"if sell<6 sell (150.0)"},{"conif":"if sell<2","conthen":"sell","amount":1000.0,"combinedField":"if sell<2 sell (1000.0)"}]},{"legid":103,"conditions":[{"conif":"if bid<51","conthen":"sell","amount":200.0,"combinedField":"if bid<51 sell (200.0)"},{"conif":"if sell>31","conthen":"buy","amount":175.0,"combinedField":"if sell>31 buy (175.0)"},{"conif":"if sell>26","conthen":"buy","amount":225.0,"combinedField":"if sell>26 buy (225.0)"}]}]}
+                            |{"id":3,"legs":[{"legid":104,"conditions":[{"conif":"if bid>12","conthen":"buy","amount":100.0,"combinedField":"if bid>12 buy (100.0)"},{"conif":"if sell<7","conthen":"sell","amount":150.0,"combinedField":"if sell<7 sell (150.0)"},{"conif":"if sell<3","conthen":"sell","amount":1000.0,"combinedField":"if sell<3 sell (1000.0)"}]},{"legid":105,"conditions":[{"conif":"if bid<52","conthen":"sell","amount":200.0,"combinedField":"if bid<52 sell (200.0)"},{"conif":"if sell>32","conthen":"buy","amount":175.0,"combinedField":"if sell>32 buy (175.0)"},{"conif":"if sell>27","conthen":"buy","amount":225.0,"combinedField":"if sell>27 buy (225.0)"}]}]}"""
+      .stripMargin.replace("\r\n", "\n")
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
     if (actualSchema != expectedSchema) {

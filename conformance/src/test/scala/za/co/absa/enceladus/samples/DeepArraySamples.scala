@@ -18,6 +18,8 @@ package za.co.absa.enceladus.samples
 import org.apache.spark.sql.types._
 
 object DeepArraySamples {
+
+  // Orders example
   case class Payment(payid: String, amount: Double)
 
   case class OrderItem(itemid: String, qty: Int, price: Double, payments: Seq[Payment])
@@ -64,5 +66,29 @@ object DeepArraySamples {
         )))) // payments
       )))) // items
     ))
+
+  // Library example
+  case class Book(author: String, name: String)
+
+  case class LibraryRoom(roomName: String, label: String, capacity: Int, books: Seq[Book])
+
+  case class Library(id: Long, name: String, city: String, address: String, rooms: Seq[LibraryRoom])
+
+  val libraryData: Seq[Library] = Seq(
+    Library(1, "National Library", "Washington", "10 Linkoln ave.", Seq(
+      LibraryRoom("History", "H1", 25000, Seq(Book("Christopher Browning", "Ordinary Men"), Book("Vasily Grossman", "Life and Fate"), Book("Homer", "Illiad"))),
+      LibraryRoom("Politics", "P2", 15000, Seq(Book("Michael Lewis", "The Fifths Risk"), Book("Aristotle", "Politics"))),
+      LibraryRoom("Sociology", "S3", 8000, Seq())
+    )),
+    Library(2, "Technical Library", "New York", "101/2 Park ave.", Seq(
+      LibraryRoom("Math", "M41", 10000, Seq(Book("C. C. Tisdell", "Introduction to Complex Numbers"), Book("Michael Batty", "Essential Engineering Mathematics"), Book("Gareth J. Janecek", "Mathematics for Computer Scientist"))),
+      LibraryRoom("Physics", "P5", 15000, Seq(Book("Ali R. Fazely", "Foundation of Physics for Scientists and Engineers"), Book("Tarik Al-Shemmeri", "Engineering Thermodynamics"), Book("Satindar Bhagat", "Elementary Physics I"))),
+      LibraryRoom("IT", "I6", 35000, Seq(Book("Garry Turkington", "Hadoop Beginner’s Guide"), Book("Thomas H. Davenport", "Big Data at Work"), Book("Martin Kleppmann", "Designing Data-Intensive Applications")))
+    )),
+    Library(3, "Prazska Knihovna", "Prague", "Vikova 1223/4", Seq(
+      LibraryRoom("Literature", "L7", 55000, Seq(Book("James Joyce", "Ulysses"), Book("Herman Melville", "Moby Dick"), Book("William Shakespeare", "Hamlet"))),
+      LibraryRoom("Poetry", "P8", 35000, Seq(Book("Simon Armitage", "The Unaccompanied"), Book("D. Nurkse", "Love in the Last Days"), Book("Federico García Lorca", "Poet in Spain")))
+    ))
+  )
 
 }

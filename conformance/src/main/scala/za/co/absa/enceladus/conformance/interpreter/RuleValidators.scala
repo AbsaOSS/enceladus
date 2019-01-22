@@ -29,8 +29,8 @@ object RuleValidators {
   }
 
   @throws[ValidationException]
-  def validateFieldExistence(ruleName: String, datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val existenceIssues = SchemaPathValidator.validateSchemaPath(datasetName, schema, fieldPath)
+  def validateFieldExistence(ruleName: String, datasetName: String, schema: StructType, fieldPaths: String*): Unit = {
+    val existenceIssues = fieldPaths.flatMap(field => SchemaPathValidator.validateSchemaPath(datasetName, schema, field))
     checkAndThrowValidationErrors(s"$ruleName validation error: input field does not exist.", existenceIssues)
   }
 
@@ -41,8 +41,10 @@ object RuleValidators {
   }
 
   @throws[ValidationException]
-  def validateSameParent(ruleName: String, fieldPath1: String, fieldPath2: String): Unit = {
-    val issues = SchemaPathValidator.validatePathSameParent(fieldPath1, fieldPath2)
+  def validateSameParent(ruleName: String, fieldPaths: String*): Unit = {
+    val firstField = fieldPaths.head
+    val issues =  fieldPaths.tail.flatMap(field => SchemaPathValidator.validatePathSameParent(firstField, field))
+
     checkAndThrowValidationErrors(s"$ruleName validation error: input and output columns don't have the same parent.", issues)
   }
 

@@ -34,6 +34,7 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase {
     implicit val enableCF: Boolean = false
 
     mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn inputDataset
+    mockWhen(dao.getDataset("Library Conformance", 1)) thenReturn inputDataset
 
     val mappingTablePattern = "{0}/{1}/{2}"
 

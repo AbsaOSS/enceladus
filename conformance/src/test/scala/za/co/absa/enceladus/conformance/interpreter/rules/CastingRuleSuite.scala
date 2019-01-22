@@ -70,11 +70,23 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
     RuleValidators.validateInputField(ruleName, dsName, schema, "id")
     RuleValidators.validateInputField(ruleName, dsName, schema, "date")
     RuleValidators.validateInputField(ruleName, dsName, schema, "items.qty")
+    RuleValidators.validateFieldExistence(ruleName, dsName, schema, "id")
+    RuleValidators.validateFieldExistence(ruleName, dsName, schema, "date")
+    RuleValidators.validateFieldExistence(ruleName, dsName, schema, "items.qty")
     RuleValidators.validateOutputField(ruleName, dsName, schema, "conformedvalue")
     RuleValidators.validateOutputField(ruleName, dsName, schema, "items.value")
+    RuleValidators.validateSameParent(ruleName, "order.item.id", "order.item.ty", "order.item.details")
 
     assert(intercept[ValidationException] {
       RuleValidators.validateInputField(ruleName, dsName, schema, "nosuchfield")
+    }.getMessage contains "does not exist")
+
+    assert(intercept[ValidationException] {
+      RuleValidators.validateFieldExistence(ruleName, dsName, schema, "nosuchfield")
+    }.getMessage contains "does not exist")
+
+    assert(intercept[ValidationException] {
+      RuleValidators.validateFieldExistence(ruleName, dsName, schema, "id", "nosuchfield")
     }.getMessage contains "does not exist")
 
     assert(intercept[ValidationException] {
@@ -99,6 +111,10 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
 
     assert(intercept[ValidationException] {
       RuleValidators.validateSameParent(ruleName, "id", "items.qty")
+    }.getMessage contains "have different parents")
+
+    assert(intercept[ValidationException] {
+      RuleValidators.validateSameParent(ruleName, "order.item.id", "order.item.ty", "order.item.details.payment")
     }.getMessage contains "have different parents")
 
   }
