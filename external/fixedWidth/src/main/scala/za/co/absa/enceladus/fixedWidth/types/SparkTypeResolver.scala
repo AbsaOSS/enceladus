@@ -16,13 +16,10 @@
 
 package za.co.absa.enceladus.fixedWidth.types
 
-import java.sql.{Date, Timestamp}
-import java.text.SimpleDateFormat
-
 import org.apache.spark.sql.types._
 import org.slf4j.LoggerFactory
-
 import scala.util.control.NonFatal
+import za.co.absa.enceladus.utils.types.EnceladusDateParser
 
 object SparkTypeResolver {
 
@@ -58,14 +55,11 @@ object SparkTypeResolver {
     }
 
   private def castToDateTimeType(field: StructField, dateString: String, pattern: String): Any = {
-
-    val dateFormat = new SimpleDateFormat(pattern)
-
     try {
-      val date = dateFormat.parse(dateString)
+      val parser: EnceladusDateParser = EnceladusDateParser(pattern)
       field.dataType match {
-        case _: TimestampType => new Timestamp(date.getTime)
-        case _: DataType => new Date(date.getTime)
+        case _: TimestampType => parser.parseTimestamp(dateString)
+        case _: DateType      => parser.parseDate(dateString)
       }
     }
     catch {

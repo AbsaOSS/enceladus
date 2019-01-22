@@ -28,22 +28,22 @@ object SchemaUtils {
    *  @return Some(the type of the field) or None if the field does not exist
    */
   def getFieldType(path: String, schema: StructType): Option[DataType] = {
-    val pathTokens = path.split("\\.").toList
-
     def typeHelper(pt: List[String], st: DataType): Option[DataType] = {
-      if (pt.isEmpty) Some(st)
-      else {
+      if (pt.isEmpty) {
+        Some(st)
+      } else {
         st match {
-          case str: StructType                    => Try { typeHelper(pt.tail, str.apply(pt.head).dataType) }.getOrElse(None)
-          case arr @ ArrayType(el: StructType, _) => Try { typeHelper(pt.tail, el(pt.head).dataType) }.getOrElse(None)
-          case _                                  => None
+          case str: StructType              => Try { typeHelper(pt.tail, str(pt.head).dataType) }.getOrElse(None)
+          case ArrayType(el: StructType, _) => Try { typeHelper(pt.tail, el(pt.head).dataType) }.getOrElse(None)
+          case _                            => None
         }
       }
     }
 
+    val pathTokens = path.split("\\.").toList
     typeHelper(pathTokens, schema)
   }
-  
+
    /**
    * Get nullability of a field from a text path and a given schema
    *
@@ -52,22 +52,21 @@ object SchemaUtils {
    *  @return Some(nullable) or None if the field does not exist
    */
   def getFieldNullability(path: String, schema: StructType): Option[Boolean] = {
-    val pathTokens = path.split("\\.").toList
-
     def typeHelper(pt: List[String], st: DataType, nl: Option[Boolean]): Option[Boolean] = {
       if (pt.isEmpty) nl
       else {
         st match {
-          case str: StructType                    => Try { typeHelper(pt.tail, str.apply(pt.head).dataType, Some(str.apply(pt.head).nullable)) }.getOrElse(None)
-          case arr @ ArrayType(el: StructType, _) => Try { typeHelper(pt.tail, el(pt.head).dataType, Some(el(pt.head).nullable)) }.getOrElse(None)
-          case _                                  => None
+          case str: StructType              => Try { typeHelper(pt.tail, str(pt.head).dataType, Some(str.apply(pt.head).nullable)) }.getOrElse(None)
+          case ArrayType(el: StructType, _) => Try { typeHelper(pt.tail, el(pt.head).dataType, Some(el(pt.head).nullable)) }.getOrElse(None)
+          case _                            => None
         }
       }
     }
 
+    val pathTokens = path.split("\\.").toList
     typeHelper(pathTokens, schema, None)
   }
-  
+
 
   /**
    * Get first array column's path out of complete path.
@@ -106,8 +105,8 @@ object SchemaUtils {
       case _                               => Seq()
     }
   }
-    
-   /** 
+
+   /**
    *  Get all array columns' paths out of complete path.
    *
    *  E.g. if the path argument is "a.b.c.d.e" where b and d are arrays, "a.b" and "a.b.c.d" will be returned.
@@ -123,7 +122,7 @@ object SchemaUtils {
         val currType = getFieldType(currPath, schema)
         currType match {
           case Some(_: ArrayType) =>
-            val strings = pathAcc :+ remPath.head 
+            val strings = pathAcc :+ remPath.head
             helper(remPath.tail, strings, arrayAcc :+ strings.mkString("."))
           case Some(_)            => helper(remPath.tail, pathAcc :+ remPath.head, arrayAcc)
           case None               => arrayAcc
