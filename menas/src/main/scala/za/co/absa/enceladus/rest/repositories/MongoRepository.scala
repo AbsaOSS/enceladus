@@ -17,7 +17,7 @@ package za.co.absa.enceladus.rest.repositories
 
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters.equal
-import org.mongodb.scala.{Completed, MongoDatabase, Observable}
+import org.mongodb.scala.{Completed, MongoDatabase}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future

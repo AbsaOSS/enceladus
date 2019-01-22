@@ -19,11 +19,11 @@ import org.mongodb.scala.result.UpdateResult
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
-import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
-import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.UsedIn
+import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.rest.exceptions.{EntityInUseException, ValidationException}
 import za.co.absa.enceladus.rest.models.Validation
+import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
 
 import scala.concurrent.Future
 
@@ -55,7 +55,7 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
   def create(item: C, username: String): Future[Option[C]] = {
     for {
       validation <- validate(item)
-      _          <-
+      _ <-
         if (validation.isValid()) versionedMongoRepository.create(item, username)
         else throw ValidationException(validation)
       detail <- getLatestVersion(item.name)
@@ -65,13 +65,13 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
   def update(username: String, item: C): Future[Option[C]]
 
   def update(username: String, itemName: String)(transform: C => C): Future[Option[C]] = {
-      getLatestVersion(itemName).flatMap {
-        case Some(latest) =>
-          versionedMongoRepository.update(username, transform(latest)).flatMap { _ =>
-            getLatestVersion(itemName)
-          }
-        case None         => Future.successful(None)
-      }
+    getLatestVersion(itemName).flatMap {
+      case Some(latest) =>
+        versionedMongoRepository.update(username, transform(latest)).flatMap { _ =>
+          getLatestVersion(itemName)
+        }
+      case None => Future.successful(None)
+    }
   }
 
   def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {

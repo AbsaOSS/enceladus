@@ -19,33 +19,21 @@
             <VBox class="sapUiSmallMargin">
                 <form:SimpleForm adjustLabelSpan="true" editable="true">
                     <form:content>
-                        <Label text="Dataset Name" />
-                        <Input id="newDatasetName" enabled="{path:'/newDataset/isEdit', formatter:'Formatters.not'}" type="text"
-                            placeholder="Dataset name*" width="100%" value="{/newDataset/name}" />
-                        <Label text="Dataset Description" />
-                        <Input id="newDatasetDescription" type="text" placeholder="Description" width="100%" value="{/newDataset/description}" />
-                        <Label text="Schema Name" />
-                        <Select id="newDatasetSchemaNameSelect" showSecondaryValues="true" items="{/schemas}" forceSelection="false" selectedKey="{/newDataset/schemaName}">
-                            <core:ListItem key="{_id}" text="{_id}" additionalText="Latest version: {latestVersion}" />
-                        </Select>
-                        <Label text="Schema Version" />
-                        <FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">
-                            <Select id="newDatasetSchemaVersionSelect" class="menasAddMappingSelect" items="{/currentSchemaVersions}"
-                                showSecondaryValues="true" width="auto" selectedKey="{/newDataset/schemaVersion}" forceSelection="false">
-                                <core:ListItem key="{version}" text="{version}"
-                                    additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}" />
-                            </Select>
-                            <Button icon="sap-icon://action">
-                            </Button>
-                        </FlexBox>
+                        <Label text="Dataset Name"/>
+                        <Input id="newDatasetName" enabled="{path:'entity>/isEdit', formatter:'Formatters.not'}"
+                               type="text" placeholder="Dataset name*" width="100%" value="{entity>/name}"/>
+                        <Label text="Dataset Description"/>
+                        <Input id="newDatasetDescription" type="text" placeholder="Description" width="100%"
+                               value="{entity>/description}"/>
+                        <core:Fragment type="XML" fragmentName="components.schemaSelector" />
                         <Label text="HDFS raw data folder path" />
                         <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%" busyControl="addDatasetDialog"
-                            pathLabel="selectedRawHDFSPathLabel" restURI="api/hdfs/list" HDFSPath="{/newDataset/hdfsPath}"></hdfs:HDFSBrowser>
+                            pathLabel="selectedRawHDFSPathLabel" restURI="api/hdfs/list" HDFSPath="{entity>/hdfsPath}"></hdfs:HDFSBrowser>
                         <Label text="RAW HDFS Path"></Label>
                         <Text id="selectedRawHDFSPathLabel"></Text>
                         <Label text="HDFS conformed data publish folder path" />
                         <hdfs:HDFSBrowser id="newDatasetPublishDFSBrowser" height="300px" width="100%" busyControl="addDatasetDialog"
-                            pathLabel="selectedPublishHDFSPathLabel" restURI="api/hdfs/list" HDFSPath="{/newDataset/hdfsPublishPath}"></hdfs:HDFSBrowser>
+                            pathLabel="selectedPublishHDFSPathLabel" restURI="api/hdfs/list" HDFSPath="{entity>/hdfsPublishPath}"></hdfs:HDFSBrowser>
                         <Label text="Publish HDFS Path"></Label>
                         <Text id="selectedPublishHDFSPathLabel"></Text>
                     </form:content>
