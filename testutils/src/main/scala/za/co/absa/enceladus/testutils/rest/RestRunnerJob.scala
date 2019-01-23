@@ -67,7 +67,7 @@ object RestRunnerJob {
     }
 
     val path: Path = new Path(s"$resultsPath/_TEST_SUMMARY")
-    val dataOutputStream: FSDataOutputStream = fs.createFile(path).build
+    val dataOutputStream: FSDataOutputStream = fs.create(path)
     val bw: BufferedWriter = new BufferedWriter(new OutputStreamWriter(dataOutputStream, "UTF-8"))
     try { bw.write(finalInfo) }
     finally { bw.close() }
