@@ -29,8 +29,6 @@ import scala.io.Source
 
 class InterpreterSuite extends FunSuite with SparkTestBase {
 
-  ConfigFactory.load("modules/test.module")
-
   test("End to end dynamic conformance test") {
 
     // Enable Conformance Framweork
