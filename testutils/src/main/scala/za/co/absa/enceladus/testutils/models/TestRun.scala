@@ -21,7 +21,7 @@ import scala.collection.mutable
 
 class TestRun(name: String) {
   val startTime: DateTime = DateTime.now(DateTimeZone.UTC)
-  lazy val endTime: DateTime = DateTime.now(DateTimeZone.UTC)
+  private[this] var endTime: Option[DateTime] = None: Option[DateTime]
   private[this] val testCaseResults: mutable.MutableList[TestCaseResult] = mutable.MutableList()
 
   def addTestCaseResult(testCaseResult: TestCaseResult): TestRun = {
@@ -34,9 +34,18 @@ class TestRun(name: String) {
     this
   }
 
+  def endTestRun(): Unit = {
+    if (endTime.isEmpty) { endTime = Some(DateTime.now(DateTimeZone.UTC)) }
+  }
+
+  def getEndTime: String = {
+    endTime.getOrElse(s"TestRun $name not yet ended. Call #endTestRun to end it.").toString()
+  }
+
   def getFinalInfo: String = {
+    endTestRun()
     val startTimeString = this.startTime.toString()
-    val endTimeString = this.endTime.toString()
+    val endTimeString = this.endTime.get.toString()
     val numOfPassedUseCases = testCaseResults.count(_.passed)
     val numOfFailedUseCases = testCaseResults.count(!_.passed)
     val numOfUseCases = numOfFailedUseCases + numOfPassedUseCases
