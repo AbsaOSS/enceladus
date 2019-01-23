@@ -55,6 +55,13 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
     }
   }
 
+  def getLatestRun(datasetName: String, datasetVersion: Int): Future[Run] = {
+    runMongoRepository.getLatestRun(datasetName, datasetVersion).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
   def getSplineUrl(datasetName: String, datasetVersion: Int, runId: Int): Future[String] = {
     getRun(datasetName, datasetVersion, runId).map { run =>
       val splineRef = run.splineRef

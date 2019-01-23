@@ -16,7 +16,9 @@
 package za.co.absa.enceladus.rest.repositories
 
 import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.model.Sorts.descending
 import org.mongodb.scala.{MapReduceObservable, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
@@ -71,14 +73,30 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
   }
 
   def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Option[Run]] = {
-    val datasetNameEq = equal("dataset", datasetName)
-    val datasetVersionEq = equal("datasetVersion", datasetVersion)
+    val datasetFilter = getDatasetFilter(datasetName, datasetVersion)
     val runIdEq = equal("runId", runId)
 
     collection
-      .find[BsonDocument](and(datasetNameEq, datasetVersionEq, runIdEq))
+      .find[BsonDocument](and(datasetFilter, runIdEq))
       .headOption()
       .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+  }
+
+  def getLatestRun(datasetName: String, datasetVersion: Int): Future[Option[Run]] = {
+    val datasetFilter = getDatasetFilter(datasetName, datasetVersion)
+
+    collection
+      .find[BsonDocument](datasetFilter)
+      .sort(descending("runId"))
+      .headOption()
+      .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+  }
+
+  private def getDatasetFilter(datasetName: String, datasetVersion: Int) = {
+    val datasetNameEq = equal("dataset", datasetName)
+    val datasetVersionEq = equal("datasetVersion", datasetVersion)
+
+    and(datasetNameEq, datasetVersionEq)
   }
 
 }
