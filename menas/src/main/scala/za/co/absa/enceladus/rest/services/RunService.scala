@@ -42,16 +42,23 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   def getByStartDate(startDate: String): Future[Seq[Run]] = {
     Try(DateTimeFormat.forPattern("dd-MM-yyyy").parseLocalDate(startDate)) match {
       case _: Success[_] => runMongoRepository.getByStartDate(startDate)
-      case _: Failure[_] => throw ValidationException(Validation().withError("startDate", s"must have format dd-MM-yyyy: $startDate"))
+      case _: Failure[_] =>
+        val validation = Validation().withError("startDate", s"must have format dd-MM-yyyy: $startDate")
+        throw ValidationException(validation)
+    }
+  }
+
+  def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Run] = {
+    runMongoRepository.getRun(datasetName, datasetVersion, runId).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
     }
   }
 
   def getSplineUrl(datasetName: String, datasetVersion: Int, runId: Int): Future[String] = {
-    runMongoRepository.getRun(datasetName, datasetVersion, runId).map {
-      case Some(run) =>
-        val splineRef = run.splineRef
-        String.format(splineUrlTemplate, splineRef.outputPath, splineRef.sparkApplicationId)
-      case None      => throw NotFoundException()
+    getRun(datasetName, datasetVersion, runId).map { run =>
+      val splineRef = run.splineRef
+      String.format(splineUrlTemplate, splineRef.outputPath, splineRef.sparkApplicationId)
     }
   }
 

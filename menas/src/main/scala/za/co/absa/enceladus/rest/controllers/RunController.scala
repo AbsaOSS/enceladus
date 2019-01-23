@@ -48,17 +48,20 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
     runService.getByStartDate(startDate)
   }
 
+  @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}"))
+  def getRun(@PathVariable datasetName: String, @PathVariable datasetVersion: Int,
+             @PathVariable runId: Int): CompletableFuture[Run] = {
+    runService.getRun(datasetName, datasetVersion, runId)
+  }
+
+  @GetMapping(Array("/{datasetName}/{datasetVersion}/latest"))
+  def getLatestRun(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Run] = Future(null)
+
   @GetMapping(Array("/splineUrl/{datasetName}/{datasetVersion}/{runId}"))
   def getSplineUrl(@PathVariable datasetName: String, @PathVariable datasetVersion: Int,
                    @PathVariable runId: Int): CompletableFuture[String] = {
     runService.getSplineUrl(datasetName, datasetVersion, runId)
   }
-
-  @GetMapping(Array("/{datasetName}/{datasetVersion}/latest"))
-  def getLatestRun(): CompletableFuture[Run] = Future(null)
-
-  @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}"))
-  def getRun(): CompletableFuture[Run] = Future(null)
 
   @PostMapping(Array("/create"))
   def create(): CompletableFuture[Run] = Future(null)
