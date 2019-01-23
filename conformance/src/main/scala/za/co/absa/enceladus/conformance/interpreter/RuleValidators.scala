@@ -44,15 +44,14 @@ object RuleValidators {
   def validateSameParent(datasetName: String, ruleName: String, fieldPaths: String*): Unit = {
     val firstField = fieldPaths.head
     val issues =  fieldPaths.tail.flatMap(field => SchemaPathValidator.validatePathSameParent(firstField, field))
-
     checkAndThrowValidationErrors(datasetName, s"$ruleName validation error: input and output columns don't have the same parent.", issues)
   }
 
   @throws[ValidationException]
-  private def checkAndThrowValidationErrors(datasetName: String, message: String, validationIssues: Seq[ValidationIssue]): Unit = {
+  def checkAndThrowValidationErrors(datasetName: String, message: String, validationIssues: Seq[ValidationIssue]): Unit = {
     if (validationIssues.nonEmpty) {
-      val errorMeaasges = ValidationUtils.getValidationMsgs(validationIssues).mkString(";")
-      throw new ValidationException(s"$datasetName - $message $errorMeaasges" )
+      val errorMessages = ValidationUtils.getValidationMsgs(validationIssues).mkString(";")
+      throw new ValidationException(s"$datasetName - $message $errorMessages" )
     }
   }
 }

@@ -60,7 +60,7 @@ case class ConcatenationRuleInterpreter(rule: ConcatenationConformanceRule) exte
 
 
   /*
-  // This is the original implementation. Left it here since it supports concat of fields that have different levels of nestness
+  // This is the original implementation. Left it here since it supports concat of fields that have different levels of nesting
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
     handleArrays(rule.outputColumn, df) { flattened =>
       ArrayTransformations.nestedWithColumn(flattened)(rule.outputColumn, concat(rule.inputColumns.map(col _): _*))

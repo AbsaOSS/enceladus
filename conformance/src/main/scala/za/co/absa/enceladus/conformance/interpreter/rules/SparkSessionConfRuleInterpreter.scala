@@ -41,15 +41,15 @@ case class SparkSessionConfRuleInterpreter(rule: SparkSessionConfConformanceRule
 
   /** Handles Spark session config conformance rule for nested fields. */
   private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
-    val v = spark.sessionState.conf.getConfString(rule.sparkConfKey)
-    DeepArrayTransformations.nestedAddColumn(df, rule.outputColumn, c => inferStrictestType(v))
+    val configValue = spark.sessionState.conf.getConfString(rule.sparkConfKey)
+    DeepArrayTransformations.nestedAddColumn(df, rule.outputColumn, c => inferStrictestType(configValue))
   }
 
   /** Handles Spark session config conformance rule for root (non-nested) fields. */
   private def conformRootField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
     // Applying the rule
-    val v = spark.sessionState.conf.getConfString(rule.sparkConfKey)
-    df.withColumn(rule.outputColumn, inferStrictestType(v))
+    val configValue = spark.sessionState.conf.getConfString(rule.sparkConfKey)
+    df.withColumn(rule.outputColumn, inferStrictestType(configValue))
   }
 
 }

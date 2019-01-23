@@ -20,7 +20,7 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
 
-// Examples for constructing dataframes containing arrays of various levels of nestness
+// Examples for constructing dataframes containing arrays of various levels of nesting
 
 // Structs of Structs example
 case class Address(city: String, street: String)
@@ -148,7 +148,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test uppercase of two level of struct nestness") {
+  test("Test uppercase of two level of struct nesting") {
     // Struct of struct
     val df = spark.sparkContext.parallelize(structOfStructSample).toDF
 
@@ -360,7 +360,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test lit() of two level of struct nestness") {
+  test("Test lit() of two level of struct nesting") {
     // Struct of struct
     val df = spark.sparkContext.parallelize(structOfStructSample).toDF
 
@@ -517,7 +517,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test drop of two level of struct nestness") {
+  test("Test drop of two level of struct nesting") {
     // Struct of struct
     val df = spark.sparkContext.parallelize(structOfStructSample).toDF
 
@@ -738,7 +738,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test concat of two level of struct nestness") {
+  test("Test concat of two level of struct nesting") {
     // Struct of struct
     val df = spark.sparkContext.parallelize(structOfStructSample).toDF
 

@@ -19,6 +19,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.NegationConformanceRule
 import za.co.absa.enceladus.utils.error.ErrorMessage
@@ -31,7 +32,7 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
 
   override def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
     handleArrays(rule.outputColumn, df) { flattened =>
-      NegationRuleInterpreter.validateInputField(df.schema, rule.inputColumn)
+      NegationRuleInterpreter.validateInputField(progArgs.datasetName, df.schema, rule.inputColumn)
       val inputColumn = col(rule.inputColumn)
       val fieldType = SchemaUtils.getFieldType(rule.inputColumn, df.schema).get
 
@@ -76,17 +77,8 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
 object NegationRuleInterpreter {
 
   @throws[ValidationException]
-  def validateInputField(schema: StructType, fieldPath: String): Unit = {
+  def validateInputField(datasetName: String, schema: StructType, fieldPath: String): Unit = {
     val issues = SchemaPathValidator.validateSchemaPathNumeric(schema, fieldPath)
-    checkAndThrowValidationErrors("Negation rule input field is incorrect.", issues)
+    RuleValidators.checkAndThrowValidationErrors(datasetName: String, "Negation rule input field is incorrect.", issues)
   }
-
-  @throws[ValidationException]
-  private def checkAndThrowValidationErrors(message: String, validationIssues: Seq[ValidationIssue]): Unit = {
-    if (validationIssues.nonEmpty) {
-      val errorMeaasges = ValidationUtils.getValidationMsgs(validationIssues).mkString(";")
-      throw new ValidationException(s"$message $errorMeaasges" )
-    }
-  }
-
 }
