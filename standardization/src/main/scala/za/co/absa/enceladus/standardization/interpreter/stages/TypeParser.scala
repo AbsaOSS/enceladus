@@ -100,7 +100,12 @@ object TypeParser {
   /** Remove dots from paths to be used as flat column names **/
   private def unpath(path: String): String = path.replace('.', '_')
 
-  private def standardizeArrayField(field: StructField, path: String, origSchema: StructType, attr: Column, fieldName: String, currentAttrPath: String, fieldType: ArrayType)(implicit spark: SparkSession, udfLib: UDFLibrary): ParseOutput = {
+  private def standardizeArrayField(field: StructField,
+                                    path: String, origSchema: StructType,
+                                    attr: Column, fieldName: String,
+                                    currentAttrPath: String,
+                                    fieldType: ArrayType)
+                                   (implicit spark: SparkSession, udfLib: UDFLibrary): ParseOutput = {
     logger.info(s"Creating standardization plan for Array $currentAttrPath")
 
     val newField = StructField(name = fieldName, dataType = fieldType.elementType, nullable = fieldType.containsNull)
@@ -113,7 +118,12 @@ object TypeParser {
     ParseOutput(stdCols as fieldName, finalErrs)
   }
 
-  private def standardizeStructField(field: StructField, origSchema: StructType, attr: Column,  currentAttrPath: String, fieldType: StructType)(implicit spark: SparkSession, udfLib: UDFLibrary): ParseOutput = {
+  private def standardizeStructField(field: StructField,
+                                     origSchema: StructType,
+                                     attr: Column,
+                                     currentAttrPath: String,
+                                     fieldType: StructType)
+                                    (implicit spark: SparkSession, udfLib: UDFLibrary): ParseOutput = {
     // conform all children.. this has to be foldleft - children could be arrays modifying the DF, therefore needs to be chained
     val stdOut =  fieldType.fields.map(standardize(_, currentAttrPath, origSchema, Some(attr)))
     val cols = stdOut.map(_.stdCol)
@@ -131,14 +141,18 @@ object TypeParser {
     ParseOutput(str, errs1)
   }
 
-  private def standardizeStandardField(field: StructField, origSchema: StructType, isArrayElement: Boolean, attr: Column, currentAttrPath: String)(implicit spark: SparkSession, udfLib: UDFLibrary): ParseOutput = {
+  private def standardizeStandardField(field: StructField,
+                                       origSchema: StructType,
+                                       isArrayElement: Boolean,
+                                       attr: Column, currentAttrPath: String)
+                                      (implicit spark: SparkSession, udfLib: UDFLibrary): ParseOutput = {
     val default = Defaults.getDefaultValue(field)
 
-    val err = when(
-      (attr isNull) and lit(!field.nullable), array(callUDF("stdNullErr", lit(s"$currentAttrPath${if (isArrayElement) "[*]" else ""}")))
+    val err = when((attr isNull) and lit(!field.nullable),
+      array(callUDF("stdNullErr", lit(s"$currentAttrPath${if (isArrayElement) "[*]" else ""}")))
     ).otherwise(
-      when(
-        (attr isNotNull) and primitiveCastErrorLogic(field, origSchema, currentAttrPath, attr), array(callUDF("stdCastErr", lit(s"$currentAttrPath${if (isArrayElement) "[*]" else ""}"), attr.cast(StringType)))
+      when((attr isNotNull) and primitiveCastErrorLogic(field, origSchema, currentAttrPath, attr),
+        array(callUDF("stdCastErr", lit(s"$currentAttrPath${if (isArrayElement) "[*]" else ""}"), attr.cast(StringType)))
       ).otherwise(
         typedLit(Seq[ErrorMessage]())
       )
@@ -154,7 +168,12 @@ object TypeParser {
     ParseOutput(std, err)
   }
 
-  def standardize(field: StructField, path: String, origSchema: StructType, parent: Option[Column] = None, isArrayElement: Boolean = false)(implicit spark: SparkSession, udfLib: UDFLibrary): ParseOutput = {
+  def standardize(field: StructField,
+                  path: String,
+                  origSchema: StructType,
+                  parent: Option[Column] = None,
+                  isArrayElement: Boolean = false)
+                 (implicit spark: SparkSession, udfLib: UDFLibrary): ParseOutput = {
     // If the meta data value sourcecolumn is set to override the field name
     val fieldName = SchemaUtils.getFieldNameOverriddenByMetadata(field)
 

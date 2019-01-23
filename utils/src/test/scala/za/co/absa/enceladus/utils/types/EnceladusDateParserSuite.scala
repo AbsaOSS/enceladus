@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-${today.year} ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.scalatest.FunSuite
 import java.sql.Date
 import java.sql.Timestamp
 import java.util.TimeZone
-
 
 case class TestInputRow(id: Int, stringField: String)
 
@@ -65,29 +64,4 @@ class EnceladusDateParserSuite extends FunSuite{
     val expectedTimestamp: Timestamp = new Timestamp(119, 0, 15, 11,52 , 33, 0 ) //2019-01-19 11:52:33
     assert(resultTimestamp.toString == expectedTimestamp.toString)
   }
-
-  /*---
-  test("") {
-
-    import spark.implicits._
-    val path: String = "path"
-
-    val idField: StructField = StructField("id", IntegerType, nullable = false)
-    val srcField: StructField = StructField("stringField", DateType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "override_c").build)
-    val input: Seq[TestInputRow] = Seq(
-      TestInputRow(1, "2001-12-24"),
-      TestInputRow(4, "1970-01-01"),
-      TestInputRow(9, "2019-01-15")
-    )
-    val inputData: DataFrame = spark.createDataFrame(input)
-    val fieldName: String = SchemaUtils.getFieldNameOverriddenByMetadata(srcField)
-    val currentAttrPath: String = appendPath(path, fieldName)
-
-    val origSchema: StructType = StructType(Array(srcField))
-    val column: Column = col(currentAttrPath)
-    inputData.show(false)
-    val result: Column = EnceladusDateParser.enceladus_to_date(column, srcField, origSchema, path)
-    println(result)
-  }
-  */
 }

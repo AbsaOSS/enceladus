@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-${today.year} ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ import org.apache.spark.sql.types.{DataType, StructField}
 import scala.util.Try
 
 /**
-  * Class to carry enhanced information about formatting patterns in ocnversion from/to string
+  * Class to carry enhanced information about formatting patterns in conversion from/to string
   * @param pattern  the actual pattern to format the type conversion; if none global default pattern for the type is used
   * @param forType  the type the format is intended for
   */
 class Format(val pattern: Option[String], val forType: Option[DataType] = None){
-  private val actualFormat:String = pattern.getOrElse(Defaults.getGlobalFormat(forType.get))
+  private val actualFormat: String = pattern.getOrElse(Defaults.getGlobalFormat(forType.get))
+
   def isDefault: Boolean = pattern.isEmpty
   def get: String = actualFormat
   def getOrElse(default: String): String =  pattern.getOrElse(default)
@@ -41,10 +42,10 @@ class Format(val pattern: Option[String], val forType: Option[DataType] = None){
 }
 
 object Format {
-  def apply(st: StructField ): Format = {
-    val s: Option[String] = Try(st.metadata.getString("pattern")).toOption
-    val ft: DataType = st.dataType
-    new Format(s, Some(ft))
+  def apply(structField: StructField ): Format = {
+    val formatString: Option[String] = Try(structField.metadata.getString("pattern")).toOption
+    val dataType: DataType = structField.dataType
+    new Format(formatString, Some(dataType))
   }
 
   def apply(pattern: String, forType: Option[DataType] = None): Format = {

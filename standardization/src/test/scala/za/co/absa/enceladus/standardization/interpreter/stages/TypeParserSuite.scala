@@ -18,7 +18,6 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 import java.security.InvalidParameterException
 import java.util.TimeZone
 import java.util.regex.Pattern
-
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
@@ -49,11 +48,11 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
     //Just Testing field name override
     import spark.implicits._
     implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
-    val parseOutputStructFieldNoDefault: ParseOutput = TypeParser.standardize(structFieldNoMetadata, "path", schema)
-    assertResult(true)(parseOutputStructFieldNoDefault.stdCol.expr.toString().contains("path.a"))
-    assertResult(false)(parseOutputStructFieldNoDefault.stdCol.expr.toString().replaceAll("path.a", "").contains("path"))
-    assertResult(true)(parseOutputStructFieldNoDefault.errors.expr.toString().contains("path.a"))
-    assertResult(false)(parseOutputStructFieldNoDefault.errors.expr.toString().replaceAll("path.a", "").contains("path"))
+    val parseOutputStructFieldNoMetadata = TypeParser.standardize(structFieldNoMetadata, "path", schema)
+    assertResult(true)(parseOutputStructFieldNoMetadata.stdCol.expr.toString().contains("path.a"))
+    assertResult(false)(parseOutputStructFieldNoMetadata.stdCol.expr.toString().replaceAll("path.a", "").contains("path"))
+    assertResult(true)(parseOutputStructFieldNoMetadata.errors.expr.toString().contains("path.a"))
+    assertResult(false)(parseOutputStructFieldNoMetadata.errors.expr.toString().replaceAll("path.a", "").contains("path"))
     val parseOutputStructFieldWithMetadataNotSourceColumn = TypeParser.standardize(structFieldWithMetadataNotSourceColumn, "path", schema)
     assertResult(true)(parseOutputStructFieldWithMetadataNotSourceColumn.stdCol.expr.toString().contains("path.b"))
     assertResult(false)(parseOutputStructFieldWithMetadataNotSourceColumn.stdCol.expr.toString().replaceAll("path.b", "").contains("path"))
@@ -89,18 +88,14 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
     assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_date('$path.field1, Some($defaultFormat))", 3, 1)
     assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
     val message = "Dates & times represented as numeric values need specified 'pattern' metadata"
-    try {
-      val parseOutputStructFieldWithMetadataSource2Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
-      assert(false, "Should never get here - DoubleType")
-    } catch {
-      case e: InvalidParameterException => assert(e.getMessage == message)
+    val caught1 = intercept[InvalidParameterException] {
+      TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
     }
-    try {
-      val parseOutputStructFieldWithMetadataSource3Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource3Column, path, schema)
-      assert(false, "Should never get here- DecimalType")
-    } catch {
-      case e: InvalidParameterException => assert(e.getMessage == message)
+    assert(caught1.getMessage == message)
+    val caught2 = intercept[InvalidParameterException] {
+      TypeParser.standardize(structFieldWithMetadataSource3Column, path, schema)
     }
+    assert(caught2.getMessage == message)
   }
 
   test("Timestamp fields without format") {
@@ -123,18 +118,14 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
     assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_timestamp('$path.field1, $defaultFormat)", 3, 1)
     assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
     val message = "Dates & times represented as numeric values need specified 'pattern' metadata"
-    try {
-      val parseOutputStructFieldWithMetadataSource2Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
-      assert(false, "Should never get here - DoubleType")
-    } catch {
-      case e: InvalidParameterException => assert(e.getMessage == message)
+    val caught1 = intercept[InvalidParameterException] {
+      TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
     }
-    try {
-      val parseOutputStructFieldWithMetadataSource3Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource3Column, path, schema)
-      assert(false, "Should never get here- DecimalType")
-    } catch {
-      case e: InvalidParameterException => assert(e.getMessage == message)
+    assert(caught1.getMessage == message)
+    val caught2 = intercept[InvalidParameterException] {
+      TypeParser.standardize(structFieldWithMetadataSource3Column, path, schema)
     }
+    assert(caught2.getMessage == message)
   }
 
   test("Date fields with format") {

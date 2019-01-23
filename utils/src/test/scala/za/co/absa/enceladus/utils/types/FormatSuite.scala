@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-${today.year} ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,10 @@ class FormatSuite extends FunSuite {
     assert(format.getOrElse("foo") == pattern)
     assert(!format.isEpoch)
     val expectedMessage = s"'${format.get}' is not an epoch format"
-    try{
+    val caught = intercept[InvalidParameterException] {
       Format.epochFactor(format)
-      assert(false, "Should not be reached");
-    } catch {
-      case e: InvalidParameterException => assert(e.getMessage == expectedMessage);
     }
+    assert(caught.getMessage == expectedMessage)
   }
 
 
@@ -47,12 +45,10 @@ class FormatSuite extends FunSuite {
     assert(format.getOrElse("fox") == pattern)
     assert(!format.isEpoch)
     val expectedMessage = s"'${format.get}' is not an epoch format"
-    try {
+    val caught = intercept[InvalidParameterException] {
       Format.epochFactor(format)
-      assert(false, "Should not be reached");
-    } catch {
-      case e: InvalidParameterException => assert(e.getMessage == expectedMessage);
     }
+    assert(caught.getMessage == expectedMessage)
   }
 
   test("Format class with default value - timestamp") {
@@ -62,12 +58,10 @@ class FormatSuite extends FunSuite {
     assert(format.getOrElse("foo") == "foo")
     assert(!format.isEpoch)
     val expectedMessage = s"'${format.get}' is not an epoch format"
-    try{
+    val caught = intercept[InvalidParameterException] {
       Format.epochFactor(format)
-      assert(false, "Should not be reached");
-    } catch {
-      case e: InvalidParameterException => assert(e.getMessage == expectedMessage);
     }
+    assert(caught.getMessage == expectedMessage)
   }
 
   test("Format class with default value - date") {
@@ -77,31 +71,24 @@ class FormatSuite extends FunSuite {
     assert(format.getOrElse("fox") == "fox")
     assert(!format.isEpoch)
     val expectedMessage = s"'${format.get}' is not an epoch format"
-    try {
+    val caught = intercept[InvalidParameterException] {
       Format.epochFactor(format)
-      assert(false, "Should not be reached");
-    } catch {
-      case e: InvalidParameterException => assert(e.getMessage == expectedMessage);
     }
+    assert(caught.getMessage == expectedMessage)
   }
 
   test("Format class with default value - double") {
     val dt: DoubleType = DoubleType
     val expectedMessage = s"No default format defined for data type ${dt.typeName}"
-    try {
-      val format: Format = new Format(None, Some(dt))
-      assert(false, "Should not be reached");
-    } catch {
-      case e: IllegalStateException => assert(e.getMessage == expectedMessage);
+    val caught = intercept[IllegalStateException] {
+      new Format(None, Some(dt))
     }
+    assert(caught.getMessage == expectedMessage)
   }
 
   test("Format class with Nones") {
-    try {
-      val format: Format = new Format(None, None)
-      assert(false, "Should not be reached");
-    } catch {
-      case e: NoSuchElementException => assert(true);
+    intercept[NoSuchElementException] {
+      new Format(None, None)
     }
   }
 
@@ -125,11 +112,9 @@ class FormatSuite extends FunSuite {
     assert(result1000 == 1000L)
     val formatString = "xxxx"
     val expectedMessage = s"'$formatString' is not an epoch format"
-    try{
+    val caught = intercept[InvalidParameterException] {
       Format.epochFactor(formatString)
-      assert(false, "Should not be reached");
-    } catch {
-      case e: InvalidParameterException => assert(e.getMessage == expectedMessage);
     }
+    assert(caught.getMessage == expectedMessage)
   }
 }
