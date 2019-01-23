@@ -1,4 +1,3 @@
-<!DOCTYPE HTML>
 <!--
   ~ Copyright 2018-2019 ABSA Group Limited
   ~
@@ -14,44 +13,46 @@
   ~ limitations under the License.
   -->
 
+<!DOCTYPE HTML>
+
 <html>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta http-equiv='Content-Type' content='text/html;charset=UTF-8' />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv='Content-Type' content='text/html;charset=UTF-8'/>
 
-<link type="text/css" href="css/style.css" rel="stylesheet" />
+    <link type="text/css" href="css/style.css" rel="stylesheet"/>
 
-<script src="webjars/openui5/sap-ui-core.js" id="sap-ui-bootstrap"
-	data-sap-ui-libs="sap.m" data-sap-ui-bindingSyntax="complex"
-	data-sap-ui-theme='sap_belize'>
-</script>
+    <script src="webjars/openui5/sap-ui-core.js" id="sap-ui-bootstrap"
+            data-sap-ui-libs="sap.m" data-sap-ui-bindingSyntax="complex"
+            data-sap-ui-theme='sap_belize'>
+    </script>
 
-<script src="generic/model.js"></script>
-<script src="generic/prop.js"></script>
-<script src="service/GenericService.js"></script>
-<script src="service/SchemaService.js"></script>
-<script src="service/DatasetService.js"></script>
-<script src="service/RuleService.js"></script>
-<script src="service/MappingTableService.js"></script>
-<script src="generic/functions.js"></script>
-<script src="generic/formatters.js"></script>
+    <script src="generic/model.js"></script>
+    <script src="generic/prop.js"></script>
+    <script src="service/GenericService.js"></script>
+    <script src="service/SchemaService.js"></script>
+    <script src="service/DatasetService.js"></script>
+    <script src="service/RuleService.js"></script>
+    <script src="service/MappingTableService.js"></script>
+    <script src="generic/functions.js"></script>
+    <script src="generic/formatters.js"></script>
 
-<!-- only load the mobile lib "sap.m" and the "sap_bluecrystal" theme -->
+    <!-- only load the mobile lib "sap.m" and the "sap_bluecrystal" theme -->
 
-<script>
-	sap.ui.localResources("components");
+    <script>
+        sap.ui.localResources("components");
 
-	var component = new sap.ui.core.ComponentContainer("MenasComponent", {
-		name : "components",
-	});
+        var component = new sap.ui.core.ComponentContainer("MenasComponent", {
+            name: "components",
+        });
 
-	component.placeAt("content");
-	
-	component.setBusy(true);
-</script>
+        component.placeAt("content");
+
+        component.setBusy(true);
+    </script>
 
 </head>
 <body class="sapUiBody" role="application">
-	<div id="content"></div>
+    <div id="content"></div>
 </body>
 </html>
