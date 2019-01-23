@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,6 +145,12 @@ sap.ui.controller("components.dataset.datasetMain", {
                 "Dataset name '" + oDataset.name + "' already exists. Choose a different name.");
             isOk = false;
         }
+        if (GenericService.validateEntityName(oDataset.name)) {
+            sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
+            sap.ui.getCore().byId("newDatasetName").setValueStateText(
+                "Dataset name '" + oDataset.name + "' should not have spaces. Please remove spaces and retry");
+            isOk = false;
+        }
         if (!oDataset.schemaName || oDataset.schemaName === "") {
             sap.ui.getCore().byId("newDatasetSchemaNameSelect").setValueState(sap.ui.core.ValueState.Error);
             sap.ui.getCore().byId("newDatasetSchemaNameSelect").setValueStateText("Please choose the schema of the dataset");
@@ -226,20 +232,10 @@ sap.ui.controller("components.dataset.datasetMain", {
 	},
 
 /**
- * Similar to onAfterRendering, but this hook is invoked before the controller's
- * View is re-rendered (NOT before the first rendering! onInit() is used for
- * that one!).
- * 
- * @memberOf components.dataset.datasetMain
- */
-// onBeforeRendering: function() {
-//
-// },
-/**
  * Called when the View has been rendered (so its HTML is part of the document).
  * Post-rendering manipulations of the HTML could be done here. This hook is the
  * same one that SAPUI5 controls get after being rendered.
- * 
+ *
  * @memberOf components.dataset.datasetMain
  */
     onAfterRendering : function() {
@@ -250,13 +246,5 @@ sap.ui.controller("components.dataset.datasetMain", {
             SchemaService.getSchemaList(false, true);
         }
     }
-/**
- * Called when the Controller is destroyed. Use this one to free resources and
- * finalize activities.
- * 
- * @memberOf components.dataset.datasetMain
- */
-// onExit: function() {
-//
-// }
+
 });

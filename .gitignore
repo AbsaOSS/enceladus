@@ -49,9 +49,11 @@ _testOutput
 myTestCheckpoints
 
 application.properties
+application.conf
+application.yaml
+application.yml
 spline.properties
 kafka.properties
-*.conf
 *.config
 *.keytab
 .DS_Store

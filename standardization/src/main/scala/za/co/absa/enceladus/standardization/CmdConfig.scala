@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
 
 package za.co.absa.enceladus.standardization
 
+import java.io.File
+
 import scopt.OptionParser
+import za.co.absa.enceladus.utils.menas.MenasCredentials
 
 import scala.util.matching.Regex
 
@@ -23,13 +26,14 @@ import scala.util.matching.Regex
   * This is a class for configuration provided by the command line parameters
   *
   * Note: scopt requires all fields to have default values.
-  *       Even if a field is mandatory it needs a default value.
+  * Even if a field is mandatory it needs a default value.
   */
 case class CmdConfig(datasetName: String = "",
                      datasetVersion: Int = 1,
                      reportDate: String = "",
                      reportVersion: Int = 1,
                      rawFormat: String = "xml",
+                     menasCredentials: MenasCredentials = MenasCredentials("", ""),
                      rowTag: Option[String] = None,
                      csvDelimiter: Option[String] = None,
                      csvHeader: Option[Boolean] = Some(false),
@@ -74,6 +78,14 @@ object CmdConfig {
         }
       )
 
+    opt[String]("menas-credentials-file").required().action((path, config) =>
+      config.copy(menasCredentials = MenasCredentials.fromFile(path)))
+      .text("Path to Menas credentials config file. Suitable only for client mode")
+      .validate(path =>
+        if (new File(MenasCredentials.replaceHome(path)).exists()) success
+        else failure("Credentials file does not exist. Make sure you are running in client mode")
+      )
+
     opt[Int]('r', "report-version").action((value, config) =>
       config.copy(reportVersion = value)).text("Report version")
       .validate(value =>
@@ -84,7 +96,6 @@ object CmdConfig {
       rawFormat = Some(value)
       config.copy(rawFormat = value)
     }).text("format of the raw data (csv, xml, parquet,fixed-width, etc.)")
-
 
     opt[String]("row-tag").optional().action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")

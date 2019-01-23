@@ -17,9 +17,8 @@ package za.co.absa.enceladus.rest.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.model.{ Dataset, UsedIn }
+import za.co.absa.enceladus.model.{Dataset, UsedIn}
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
-
 import scala.concurrent.Future
 import za.co.absa.enceladus.model.menas.MenasReference
 
@@ -29,7 +28,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override def update(username: String, dataset: Dataset): Future[Dataset] = {
+  override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
     super.update(username, dataset.name, dataset.version, "Dataset Updated.") { latest =>
       val updated = latest
         .setSchemaName(dataset.schemaName)
@@ -47,9 +46,11 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     }
   }
 
-  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = Future.successful(UsedIn())
+  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
+    Future.successful(UsedIn())
+  }
 
-  override def create(newDataset: Dataset, username: String): Future[Dataset] = {
+  override def create(newDataset: Dataset, username: String): Future[Option[Dataset]] = {
     val dataset = Dataset(
       name = newDataset.name,
       version = 0,

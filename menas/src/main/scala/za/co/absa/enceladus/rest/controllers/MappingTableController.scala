@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package za.co.absa.enceladus.rest.controllers
 import java.util.concurrent.CompletableFuture
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
@@ -34,13 +35,25 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
   import scala.concurrent.ExecutionContext.Implicits.global
 
   @PostMapping(path = Array("/updateDefaults"))
-  def updateDefaults(@AuthenticationPrincipal user: UserDetails, @RequestBody upd: MenasObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
-    mappingTableService.updateDefaults(user.getUsername, upd.id.name, upd.id.version, upd.value.toList) 
+  @ResponseStatus(HttpStatus.OK)
+  def updateDefaults(@AuthenticationPrincipal user: UserDetails,
+    @RequestBody upd: MenasObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
+    mappingTableService.updateDefaults(user.getUsername, upd.id.name,
+      upd.id.version, upd.value.toList).map {
+        case Some(entity) => entity
+        case None         => throw notFound()
+      }
   }
 
   @PostMapping(path = Array("/addDefault"))
-  def addDefault(@AuthenticationPrincipal user: UserDetails, @RequestBody newDefault: MenasObject[DefaultValue]): CompletableFuture[MappingTable] = {
-    mappingTableService.addDefault(user.getUsername, newDefault.id.name, newDefault.id.version, newDefault.value)
+  @ResponseStatus(HttpStatus.OK)
+  def addDefault(@AuthenticationPrincipal user: UserDetails,
+    @RequestBody newDefault: MenasObject[DefaultValue]): CompletableFuture[MappingTable] = {
+    mappingTableService.addDefault(user.getUsername, newDefault.id.name,
+      newDefault.id.version, newDefault.value).map {
+        case Some(entity) => entity
+        case None         => throw notFound()
+      }
   }
 
 }

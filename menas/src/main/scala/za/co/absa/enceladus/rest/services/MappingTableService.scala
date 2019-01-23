@@ -34,28 +34,32 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
     datasetService.findDatasetsUsingMappingTable(name, version).map(refs => UsedIn(Some(refs), None))
   }
 
-  override def create(mt: MappingTable, username: String): Future[MappingTable] = {
-    val mappingTable = MappingTable(name = mt.name, description = mt.description, schemaName = mt.schemaName,
-      schemaVersion = mt.schemaVersion, hdfsPath = mt.hdfsPath)
-
+  override def create(mt: MappingTable, username: String): Future[Option[MappingTable]] = {
+    val mappingTable = MappingTable(
+      name = mt.name,
+      description = mt.description,
+      schemaName = mt.schemaName,
+      schemaVersion = mt.schemaVersion,
+      hdfsPath = mt.hdfsPath
+    )
     super.create(mappingTable, username, s"Mapping Table ${mt.name} created.")
   }
   
-  def updateDefaults(username: String, mtName: String, mtVersion: Int, defaultValues: List[DefaultValue]): Future[MappingTable] = {
+  def updateDefaults(username: String, mtName: String, mtVersion: Int, defaultValues: List[DefaultValue]): Future[Option[MappingTable]] = {
     super.update(username, mtName, mtVersion, s"Default values updated.") { latest =>
        val updated = latest.setDefaultMappingValue(defaultValues)
        ChangedFieldsUpdateTransformResult(updatedEntity = updated, Seq())
     }
   }
   
-  def addDefault(username: String, mtName: String, mtVersion: Int, defaultValue: DefaultValue): Future[MappingTable] = {
+  def addDefault(username: String, mtName: String, mtVersion: Int, defaultValue: DefaultValue): Future[Option[MappingTable]] = {
     super.update(username, mtName, mtVersion, s"Default value for column ${defaultValue.columnName} added.") { latest =>
       val updated = latest.setDefaultMappingValue(latest.defaultMappingValue :+ defaultValue)
       ChangedFieldsUpdateTransformResult(updatedEntity = updated, Seq())
     }
   }
 
-  override def update(username: String, mt: MappingTable): Future[MappingTable] = {
+  override def update(username: String, mt: MappingTable): Future[Option[MappingTable]] = {
     super.update(username, mt.name, mt.version, s"Mapping Table Updated.") { latest =>
       val updated = latest
         .setHDFSPath(mt.hdfsPath)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.aggregate[VersionedSummary](pipeline).toFuture()
   }
 
-  def getVersion(name: String, version: Int): Future[C] = {
-    collection.find(getNameVersionFilterEnabled(name, Some(version))).first().toFuture()
+  def getVersion(name: String, version: Int): Future[Option[C]] = {
+    collection.find(getNameVersionFilterEnabled(name, Some(version))).headOption()
   }
 
   def getLatestVersionValue(name: String): Future[Int] = {

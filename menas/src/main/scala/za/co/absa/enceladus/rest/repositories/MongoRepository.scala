@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ abstract class MongoRepository[C](mongoDb: MongoDatabase)(implicit ct: ClassTag[
 
   private[rest] def collectionName: String
 
-  def isUniqueName(name: String): Observable[Boolean] = {
+  def isUniqueName(name: String): Future[Boolean] = {
     val res = collection.countDocuments(getNameFilter(name))
-    res.map( _ <= 0 )
+    res.map( _ <= 0 ).head()
   }
 
   def create(item: C): Future[Completed] = {

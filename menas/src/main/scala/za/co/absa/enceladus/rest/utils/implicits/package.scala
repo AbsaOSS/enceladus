@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,14 @@ package object implicits {
   implicit def optJavaScala[C](in: Optional[C]) = if (in.isPresent()) Some(in.get) else None
   implicit def scalaToJavaFuture[T](in: Future[T]): CompletableFuture[T] = in.toJava.toCompletableFuture()
 
-  val codecRegistry = fromRegistries(
-    fromProviders(classOf[DatasetDetail], classOf[MappingTableDetail], classOf[SchemaDetail],
-      classOf[HDFSFolder],
-      classOf[ConcatenationConformanceRule], classOf[DropConformanceRule], classOf[LiteralConformanceRule], classOf[MappingConformanceRule], classOf[SingleColumnConformanceRule],
-      classOf[SparkSessionConfConformanceRule], classOf[UppercaseConformanceRule],
-      classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
-      classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference],
-      classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference], classOf[AuditEntry]),
-    CodecRegistries.fromCodecs(
-      new ZonedDateTimeAsDocumentCodec(),
-      CaseObjEnumCodec(CreateEntryType.getClass), CaseObjEnumCodec(UpdateEntryType.getClass)), DEFAULT_CODEC_REGISTRY)
+  val codecRegistry = fromRegistries(fromProviders(classOf[DatasetDetail], classOf[MappingTableDetail], classOf[SchemaDetail],
+    classOf[HDFSFolder],
+    classOf[ConcatenationConformanceRule], classOf[DropConformanceRule], classOf[LiteralConformanceRule], classOf[MappingConformanceRule], classOf[SingleColumnConformanceRule],
+    classOf[SparkSessionConfConformanceRule], classOf[UppercaseConformanceRule],
+    classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
+    classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference],
+    classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference], classOf[AuditEntry]),
+    CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec(), CaseObjEnumCodec(CreateEntryType.getClass), CaseObjEnumCodec(UpdateEntryType.getClass)), 
+    DEFAULT_CODEC_REGISTRY)
+
 }

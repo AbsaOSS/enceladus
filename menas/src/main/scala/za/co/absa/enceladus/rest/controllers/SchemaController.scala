@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package za.co.absa.enceladus.rest.controllers
 
 import java.util.concurrent.CompletableFuture
 
-import org.apache.spark.sql.types.{ DataType, StructType }
+import org.apache.spark.sql.types.{DataType, StructType}
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
@@ -26,20 +27,23 @@ import org.springframework.web.multipart.MultipartFile
 import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.rest.repositories.RefCollection
 import za.co.absa.enceladus.rest.services.{ AttachmentService, SchemaService }
+import za.co.absa.enceladus.rest.utils.converters.SparkMenasSchemaConvertor
 
 @RestController
 @RequestMapping(Array("/api/schema"))
 class SchemaController @Autowired() (
   schemaService:     SchemaService,
-  attachmentService: AttachmentService)
+  attachmentService: AttachmentService,
+  sparkMenasConvertor: SparkMenasSchemaConvertor)
   extends VersionedModelController(schemaService) {
 
   import za.co.absa.enceladus.rest.utils.implicits._
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  @PostMapping(path = Array("/upload"))
-  def handleFileUpload(@AuthenticationPrincipal principal: UserDetails, @RequestParam("file") file: MultipartFile,
-                       @RequestParam("version") version: Int, @RequestParam("name") name: String): CompletableFuture[_] = {
+  @PostMapping(Array("/upload"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def handleFileUpload(@AuthenticationPrincipal principal: UserDetails, @RequestParam file: MultipartFile,
+                       @RequestParam version: Int, @RequestParam name: String): CompletableFuture[_] = {
     val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase, refName = name, refVersion = version + 1, attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = file.getOriginalFilename, fileContent = file.getBytes, fileMIMEType = file.getContentType)
 
@@ -50,4 +54,14 @@ class SchemaController @Autowired() (
       update <- schemaService.schemaUpload(principal.getUsername, name, version, struct)
     } yield update
   }
+
+  @GetMapping(Array("/json/{name}/{version}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getJson(@PathVariable name: String, @PathVariable version: Int): CompletableFuture[String] = {
+    schemaService.getVersion(name, version).map {
+      case Some(schema) => StructType(sparkMenasConvertor.convertMenasToSparkFields(schema.fields)).json
+      case None         => throw notFound()
+    }
+  }
+
 }

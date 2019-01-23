@@ -17,8 +17,8 @@ package za.co.absa.enceladus.rest.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.model.{ Schema, UsedIn }
-import za.co.absa.enceladus.rest.repositories.{ DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository }
+import za.co.absa.enceladus.model.{Schema, UsedIn}
+import za.co.absa.enceladus.rest.repositories.{DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository}
 
 import scala.concurrent.Future
 import org.apache.spark.sql.types.StructType
@@ -42,14 +42,14 @@ class SchemaService @Autowired() (
     } yield UsedIn(Some(usedInD), Some(usedInM))
   }
 
-  def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[Schema] = {
+  def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[Option[Schema]] = {
     super.update(username, schemaName, schemaVersion, "New schema uploaded.")({oldSchema => 
       val updated = oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(fields.fields).toList)
       ChangedFieldsUpdateTransformResult(updatedEntity = updated, fields = Seq())      
     })
   }
   
-  override def update(username: String, schema: Schema): Future[Schema] = {
+  override def update(username: String, schema: Schema): Future[Option[Schema]] = {
     super.update(username, schema.name, schema.version, "Schema updated.") { latest =>
       val updated = latest.setDescription(schema.description).asInstanceOf[Schema]
       ChangedFieldsUpdateTransformResult(updatedEntity = updated, fields = Seq(
@@ -58,8 +58,9 @@ class SchemaService @Autowired() (
     }
   }
 
-  override def create(newSchema: Schema, username: String): Future[Schema] = {
-    val schema = Schema(name = newSchema.name, description = newSchema.description)
+  override def create(newSchema: Schema, username: String): Future[Option[Schema]] = {
+    val schema = Schema(name = newSchema.name,
+      description = newSchema.description)
     super.create(schema, username, s"Schema ${schema.name} created.")
   }
 

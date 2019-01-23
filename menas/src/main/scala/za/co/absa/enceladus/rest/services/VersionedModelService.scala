@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,20 @@
 
 package za.co.absa.enceladus.rest.services
 
+import org.mongodb.scala.result.UpdateResult
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import za.co.absa.enceladus.model.UsedIn
 import za.co.absa.enceladus.model.versionedModel.{ VersionedModel, VersionedSummary }
 import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
-
+import za.co.absa.enceladus.model.UsedIn
+import za.co.absa.enceladus.rest.exceptions.{EntityInUseException, ValidationException}
+import za.co.absa.enceladus.rest.models.Validation
 import scala.concurrent.Future
 import java.time.ZonedDateTime
 import za.co.absa.enceladus.model.menas._
+import za.co.absa.enceladus.rest.exceptions.NotFoundException
 
 
 abstract class VersionedModelService[C <: VersionedModel](versionedMongoRepository: VersionedMongoRepository[C], auditTrailService: AuditTrailService)
@@ -38,7 +42,7 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     versionedMongoRepository.getLatestVersions()
   }
 
-  def getVersion(name: String, version: Int): Future[C] = {
+  def getVersion(name: String, version: Int): Future[Option[C]] = {
     versionedMongoRepository.getVersion(name, version)
   }
 
@@ -46,7 +50,7 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     versionedMongoRepository.getAllVersions(name)
   }
 
-  def getLatestVersion(name: String): Future[C] = {
+  def getLatestVersion(name: String): Future[Option[C]] = {
     versionedMongoRepository.getLatestVersionValue(name).flatMap(version => getVersion(name, version))
   }
 
@@ -63,36 +67,38 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
         entryType = entryType, user = username, timeCreated = ZonedDateTime.now(), message = auditMessage)
   }
 
-  def create(item: C, username: String): Future[C]
+  def create(item: C, username: String): Future[Option[C]]
   
-  private[services] def create(item: C, username: String, auditMessage: String): Future[C] = {
+  private[services] def create(item: C, username: String, auditMessage: String): Future[Option[C]] = {
     for {
-      unique <- isUniqueName(item.name)
-      _ <- if (unique) versionedMongoRepository.create(item, username)
-      else throw new Exception(s"Name already exists: ${item.name}")
+      validation <- validate(item)
+      _          <-
+        if (validation.isValid()) versionedMongoRepository.create(item, username)
+        else throw ValidationException(validation)
       audit <- auditTrailService.create(getAuditEntry(item, CreateEntryType, username, auditMessage))
       detail <- getLatestVersion(item.name)
     } yield detail
   }
   
-  def update(username: String, item: C): Future[C]
+  def update(username: String, item: C): Future[Option[C]]
 
-  private[services] def update(username: String, itemName: String, itemVersion: Int, auditMessage: String)(transform: C => ChangedFieldsUpdateTransformResult[C]): Future[C] = {
+  private[services] def update(username: String, itemName: String, itemVersion: Int, auditMessage: String)(transform: C => ChangedFieldsUpdateTransformResult[C]): Future[Option[C]] = {
     for {
       version <- getVersion(itemName, itemVersion)
-      transformResult <- Future.successful(transform(version))
-      update <- versionedMongoRepository.update(username, transformResult.updatedEntity)
+      transformed <- if(version.isEmpty) Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
+                      else Future.successful(transform(version.get))
+      update <- versionedMongoRepository.update(username, transformed.updatedEntity)
       audit <- {
-        val changedFields = transformResult.getUpdatedFields()
+        val changedFields = transformed.getUpdatedFields()
         val changedMessage = if(changedFields.isEmpty) "" else s"Changed fields: ${changedFields.mkString(", ")}"
-        auditTrailService.create(getAuditEntry(itemName, version.version, UpdateEntryType, username, s"$auditMessage Updated version: ${version.version}. New Version: ${update.version}. $changedMessage"))
+        auditTrailService.create(getAuditEntry(itemName, version.get.version, UpdateEntryType, username, s"$auditMessage Updated version: ${version.get.version}. New Version: ${update.version}. $changedMessage"))
       }
-    } yield update
+    } yield Some(update)
   }
 
   def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
 
-  def disableVersion(name: String, version: Option[Int]): Future[Object] = {
+  def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
     val auth = SecurityContextHolder.getContext.getAuthentication
     val principal = auth.getPrincipal.asInstanceOf[UserDetails]
 
@@ -101,12 +107,31 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
     }
   }
 
-  private def disableVersion(name: String, version: Option[Int], usedIn: UsedIn, principal: UserDetails): Future[Object] = {
+  private def disableVersion(name: String, version: Option[Int], usedIn: UsedIn, principal: UserDetails): Future[UpdateResult] = {
     if (usedIn.nonEmpty) {
-      Future.successful(usedIn)
+      throw EntityInUseException(usedIn)
     } else {
       versionedMongoRepository.disableVersion(name, version, principal.getUsername)
     }
   }
+
+  def validate(item: C): Future[Validation] = {
+    validateName(item.name)
+  }
+
+  protected[services] def validateName(name: String): Future[Validation] = {
+    val validation = Validation()
+
+    if (hasWhitespace(name)) {
+      Future.successful(validation.withError("name", s"name contains whitespace: '$name'"))
+    } else {
+      isUniqueName(name).map { isUnique =>
+        if (isUnique) validation
+        else validation.withError("name", s"entity with name already exists: '$name'")
+      }
+    }
+  }
+
+  private def hasWhitespace(name: String): Boolean = !name.matches("""\w+""")
 
 }

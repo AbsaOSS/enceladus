@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ case class Test(a:Int,b:String)
 
 @RestController
 @RequestMapping(Array("/api/spark"))
-class SparkController @Autowired() (spark: SparkSession) {
+class SparkController @Autowired() (spark: SparkSession) extends BaseController {
 
-	@GetMapping(path = Array("/version"))
+  @GetMapping(path = Array("/version"))
   def sparkVersion(): String = spark.sparkContext.version
 
 }

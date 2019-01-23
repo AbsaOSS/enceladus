@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
 
 package za.co.absa.enceladus.conformance
 
+import java.io.File
+
 import scopt.OptionParser
+import za.co.absa.enceladus.utils.menas.MenasCredentials
 
 import scala.util.matching.Regex
 
@@ -29,6 +32,7 @@ case class CmdConfig(datasetName: String = "",
                      datasetVersion: Int = 1,
                      reportDate: String = "",
                      reportVersion: Int = 1,
+                     menasCredentials: MenasCredentials = MenasCredentials("", ""),
                      performanceMetricsFile: Option[String] = None,
                      publishPathOverride: Option[String] = None,
                      folderPrefix: Option[String] = None)
@@ -73,6 +77,14 @@ object CmdConfig {
       .validate(value =>
         if (value > 0) success
         else failure("Option --report-version must be >0"))
+
+    opt[String]("menas-credentials-file").required().action((path, config) =>
+      config.copy(menasCredentials = MenasCredentials.fromFile(path)))
+      .text("Path to Menas credentials config file. Suitable only for client mode")
+      .validate(path =>
+        if (new File(MenasCredentials.replaceHome(path)).exists()) success
+        else failure("Credentials file does not exist. Make sure you are running in client mode and the file is present on your local filesystem")
+      )
 
     opt[String]("performance-file").optional().action((value, config) =>
       config.copy(performanceMetricsFile = Some(value))).text("Produce a performance metrics file at the given location (local filesystem)")

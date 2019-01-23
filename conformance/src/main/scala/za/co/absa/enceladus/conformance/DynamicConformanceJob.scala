@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,6 +111,9 @@ object DynamicConformanceJob {
     // use REST DAO
     implicit val dao = EnceladusRestDAO
     implicit val enableCF = true
+
+    val menasCredentials = cmd.menasCredentials
+    EnceladusRestDAO.postLogin(menasCredentials.username, menasCredentials.password)
 
     // get the dataset definition
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
