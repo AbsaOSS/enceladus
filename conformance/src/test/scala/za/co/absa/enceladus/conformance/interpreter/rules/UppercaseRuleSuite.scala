@@ -24,30 +24,30 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class UppercaseRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
 
-  val uppercaseRule = UppercaseConformanceRule(order = 1, outputColumn = "ConformedName", controlCheckpoint = false, inputColumn = "name")
-  val uppercaseArrayRule = UppercaseConformanceRule(order = 2, outputColumn = "items.ConformedItemId", controlCheckpoint = false, inputColumn = "items.itemid")
-  val uppercaseDeepArrayRule = UppercaseConformanceRule(order = 3, outputColumn = "items.payments.ConformedPayId", controlCheckpoint = false, inputColumn = "items.payments.payid")
+  private val uppercaseRule = UppercaseConformanceRule(order = 1, outputColumn = "ConformedName", controlCheckpoint = false, inputColumn = "name")
+  private val uppercaseArrayRule = UppercaseConformanceRule(order = 2, outputColumn = "items.ConformedItemId", controlCheckpoint = false, inputColumn = "items.itemid")
+  private val uppercaseDeepArrayRule = UppercaseConformanceRule(order = 3, outputColumn = "items.payments.ConformedPayId", controlCheckpoint = false, inputColumn = "items.payments.payid")
 
-  val uppercaseRulesList1 = List(uppercaseRule)
-  val uppercaseRulesList2 = List(uppercaseRule, uppercaseArrayRule)
-  val uppercaseRulesList3 = List(uppercaseRule, uppercaseArrayRule, uppercaseDeepArrayRule)
+  private val uppercaseRulesList1 = List(uppercaseRule)
+  private val uppercaseRulesList2 = List(uppercaseRule, uppercaseArrayRule)
+  private val uppercaseRulesList3 = List(uppercaseRule, uppercaseArrayRule, uppercaseDeepArrayRule)
 
-  val uppercaseOrdersDS1 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
+  private val uppercaseOrdersDS1 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
     "testData/conformedOrders",
     schemaName = "Orders", schemaVersion = 1,
     conformance = uppercaseRulesList1)
 
-  val uppercaseOrdersDS2 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
+  private val uppercaseOrdersDS2 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
     "testData/conformedOrders",
     schemaName = "Orders", schemaVersion = 1,
     conformance = uppercaseRulesList2)
 
-  val uppercaseOrdersDS3 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
+  private val uppercaseOrdersDS3 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
     "testData/conformedOrders",
     schemaName = "Orders", schemaVersion = 1,
     conformance = uppercaseRulesList3)
 
-  val conformedUppercaseOrdersJSON1: String =
+  private val conformedUppercaseOrdersJSON1: String =
     """{"id":1,"name":"First Order","items":[{"itemid":"ar229","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":51.0}]},{"itemid":"2891k","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":100.0}]},{"itemid":"31239","qty":2,"price":55.2,"payments":[]}],"errCol":[],"ConformedName":"FIRST ORDER"}
       |{"id":2,"name":"Second Order","items":[{"itemid":"AkuYdg","qty":100,"price":10.0,"payments":[{"payid":"d101","amount":10.0},{"payid":"d102","amount":20.0}]},{"itemid":"jUa1k0","qty":2,"price":55.2,"payments":[]}],"errCol":[],"ConformedName":"SECOND ORDER"}
       |{"id":3,"name":"Third Order","items":[{"itemid":"Gshj1","qty":10,"price":10000.0,"payments":[{"payid":"pid10","amount":2000.0},{"payid":"pid10","amount":5000.0}]},{"itemid":"Jdha2","qty":100,"price":45.0,"payments":[{"payid":"zk20","amount":150.0},{"payid":"pid10","amount":2000.0}]}],"errCol":[],"ConformedName":"THIRD ORDER"}
@@ -55,7 +55,7 @@ class UppercaseRuleSuite extends FunSuite with SparkTestBase with TestRuleBehavi
       |{"id":5,"name":"Fifths order","items":[{"itemid":"hdUs1J","qty":50,"price":0.2,"payments":[{"payid":"pid10","amount":10.0},{"payid":"pid10","amount":11.0},{"payid":"pid10","amount":12.0}]}],"errCol":[],"ConformedName":"FIFTHS ORDER"}"""
       .stripMargin.replace("\r\n", "\n")
 
-  val conformedUppercaseOrdersJSON2: String =
+  private val conformedUppercaseOrdersJSON2: String =
     """{"id":1,"name":"First Order","items":[{"itemid":"ar229","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":51.0}],"ConformedItemId":"AR229"},{"itemid":"2891k","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":100.0}],"ConformedItemId":"2891K"},{"itemid":"31239","qty":2,"price":55.2,"payments":[],"ConformedItemId":"31239"}],"errCol":[],"ConformedName":"FIRST ORDER"}
       |{"id":2,"name":"Second Order","items":[{"itemid":"AkuYdg","qty":100,"price":10.0,"payments":[{"payid":"d101","amount":10.0},{"payid":"d102","amount":20.0}],"ConformedItemId":"AKUYDG"},{"itemid":"jUa1k0","qty":2,"price":55.2,"payments":[],"ConformedItemId":"JUA1K0"}],"errCol":[],"ConformedName":"SECOND ORDER"}
       |{"id":3,"name":"Third Order","items":[{"itemid":"Gshj1","qty":10,"price":10000.0,"payments":[{"payid":"pid10","amount":2000.0},{"payid":"pid10","amount":5000.0}],"ConformedItemId":"GSHJ1"},{"itemid":"Jdha2","qty":100,"price":45.0,"payments":[{"payid":"zk20","amount":150.0},{"payid":"pid10","amount":2000.0}],"ConformedItemId":"JDHA2"}],"errCol":[],"ConformedName":"THIRD ORDER"}
@@ -63,7 +63,7 @@ class UppercaseRuleSuite extends FunSuite with SparkTestBase with TestRuleBehavi
       |{"id":5,"name":"Fifths order","items":[{"itemid":"hdUs1J","qty":50,"price":0.2,"payments":[{"payid":"pid10","amount":10.0},{"payid":"pid10","amount":11.0},{"payid":"pid10","amount":12.0}],"ConformedItemId":"HDUS1J"}],"errCol":[],"ConformedName":"FIFTHS ORDER"}"""
       .stripMargin.replace("\r\n", "\n")
 
-  val conformedUppercaseOrdersJSON3: String =
+  private val conformedUppercaseOrdersJSON3: String =
     """{"id":1,"name":"First Order","items":[{"itemid":"ar229","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":51.0,"ConformedPayId":"PID10"}],"ConformedItemId":"AR229"},{"itemid":"2891k","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":100.0,"ConformedPayId":"ZK20"}],"ConformedItemId":"2891K"},{"itemid":"31239","qty":2,"price":55.2,"payments":[],"ConformedItemId":"31239"}],"errCol":[],"ConformedName":"FIRST ORDER"}
       |{"id":2,"name":"Second Order","items":[{"itemid":"AkuYdg","qty":100,"price":10.0,"payments":[{"payid":"d101","amount":10.0,"ConformedPayId":"D101"},{"payid":"d102","amount":20.0,"ConformedPayId":"D102"}],"ConformedItemId":"AKUYDG"},{"itemid":"jUa1k0","qty":2,"price":55.2,"payments":[],"ConformedItemId":"JUA1K0"}],"errCol":[],"ConformedName":"SECOND ORDER"}
       |{"id":3,"name":"Third Order","items":[{"itemid":"Gshj1","qty":10,"price":10000.0,"payments":[{"payid":"pid10","amount":2000.0,"ConformedPayId":"PID10"},{"payid":"pid10","amount":5000.0,"ConformedPayId":"PID10"}],"ConformedItemId":"GSHJ1"},{"itemid":"Jdha2","qty":100,"price":45.0,"payments":[{"payid":"zk20","amount":150.0,"ConformedPayId":"ZK20"},{"payid":"pid10","amount":2000.0,"ConformedPayId":"PID10"}],"ConformedItemId":"JDHA2"}],"errCol":[],"ConformedName":"THIRD ORDER"}
@@ -71,7 +71,7 @@ class UppercaseRuleSuite extends FunSuite with SparkTestBase with TestRuleBehavi
       |{"id":5,"name":"Fifths order","items":[{"itemid":"hdUs1J","qty":50,"price":0.2,"payments":[{"payid":"pid10","amount":10.0,"ConformedPayId":"PID10"},{"payid":"pid10","amount":11.0,"ConformedPayId":"PID10"},{"payid":"pid10","amount":12.0,"ConformedPayId":"PID10"}],"ConformedItemId":"HDUS1J"}],"errCol":[],"ConformedName":"FIFTHS ORDER"}"""
       .stripMargin.replace("\r\n", "\n")
 
-  val inputDf: DataFrame = spark.createDataFrame(DeepArraySamples.ordersData)
+  private val inputDf: DataFrame = spark.createDataFrame(DeepArraySamples.ordersData)
 
   test("Uppercase conformance rule test 1") {
     conformanceRuleShouldMatchExpected(inputDf, uppercaseOrdersDS1, conformedUppercaseOrdersJSON1)

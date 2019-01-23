@@ -24,27 +24,27 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class DropRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
 
-  val dropRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )
-  val dropArrayRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )
-  val dropDeepArrayRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )
+  private val dropRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )
+  private val dropArrayRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )
+  private val dropDeepArrayRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )
 
-  val dropOrdersDS1 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
+  private val dropOrdersDS1 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
     "testData/conformedOrders",
     schemaName = "Orders", schemaVersion = 1,
     conformance = List(dropRule))
 
-  val dropOrdersDS2 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
+  private val dropOrdersDS2 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
     "testData/conformedOrders",
     schemaName = "Orders", schemaVersion = 1,
     conformance = List(dropArrayRule))
 
-  val dropOrdersDS3 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
+  private val dropOrdersDS3 = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
     "testData/conformedOrders",
     schemaName = "Orders", schemaVersion = 1,
     conformance = List(dropDeepArrayRule))
 
 
-  val conformedDropOrdersJSON1: String =
+  private val conformedDropOrdersJSON1: String =
     """{"id":1,"items":[{"itemid":"ar229","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":51.0}]},{"itemid":"2891k","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":100.0}]},{"itemid":"31239","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
       |{"id":2,"items":[{"itemid":"AkuYdg","qty":100,"price":10.0,"payments":[{"payid":"d101","amount":10.0},{"payid":"d102","amount":20.0}]},{"itemid":"jUa1k0","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
       |{"id":3,"items":[{"itemid":"Gshj1","qty":10,"price":10000.0,"payments":[{"payid":"pid10","amount":2000.0},{"payid":"pid10","amount":5000.0}]},{"itemid":"Jdha2","qty":100,"price":45.0,"payments":[{"payid":"zk20","amount":150.0},{"payid":"pid10","amount":2000.0}]}],"errCol":[]}
@@ -52,7 +52,7 @@ class DropRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
       |{"id":5,"items":[{"itemid":"hdUs1J","qty":50,"price":0.2,"payments":[{"payid":"pid10","amount":10.0},{"payid":"pid10","amount":11.0},{"payid":"pid10","amount":12.0}]}],"errCol":[]}"""
       .stripMargin.replace("\r\n", "\n")
 
-  val conformedDropOrdersJSON2: String =
+  private val conformedDropOrdersJSON2: String =
     """{"id":1,"items":[{"itemid":"ar229","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":51.0}]},{"itemid":"2891k","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":100.0}]},{"itemid":"31239","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
       |{"id":2,"items":[{"itemid":"AkuYdg","qty":100,"price":10.0,"payments":[{"payid":"d101","amount":10.0},{"payid":"d102","amount":20.0}]},{"itemid":"jUa1k0","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
       |{"id":3,"items":[{"itemid":"Gshj1","qty":10,"price":10000.0,"payments":[{"payid":"pid10","amount":2000.0},{"payid":"pid10","amount":5000.0}]},{"itemid":"Jdha2","qty":100,"price":45.0,"payments":[{"payid":"zk20","amount":150.0},{"payid":"pid10","amount":2000.0}]}],"errCol":[]}
@@ -60,7 +60,7 @@ class DropRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
       |{"id":5,"items":[{"itemid":"hdUs1J","qty":50,"price":0.2,"payments":[{"payid":"pid10","amount":10.0},{"payid":"pid10","amount":11.0},{"payid":"pid10","amount":12.0}]}],"errCol":[]}"""
       .stripMargin.replace("\r\n", "\n")
 
-  val conformedDropOrdersJSON3: String =
+  private val conformedDropOrdersJSON3: String =
     """{"id":1,"items":[{"itemid":"ar229","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":51.0}]},{"itemid":"2891k","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":100.0}]},{"itemid":"31239","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
       |{"id":2,"items":[{"itemid":"AkuYdg","qty":100,"price":10.0,"payments":[{"payid":"d101","amount":10.0},{"payid":"d102","amount":20.0}]},{"itemid":"jUa1k0","qty":2,"price":55.2,"payments":[]}],"errCol":[]}
       |{"id":3,"items":[{"itemid":"Gshj1","qty":10,"price":10000.0,"payments":[{"payid":"pid10","amount":2000.0},{"payid":"pid10","amount":5000.0}]},{"itemid":"Jdha2","qty":100,"price":45.0,"payments":[{"payid":"zk20","amount":150.0},{"payid":"pid10","amount":2000.0}]}],"errCol":[]}
@@ -68,7 +68,7 @@ class DropRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
       |{"id":5,"items":[{"itemid":"hdUs1J","qty":50,"price":0.2,"payments":[{"payid":"pid10","amount":10.0},{"payid":"pid10","amount":11.0},{"payid":"pid10","amount":12.0}]}],"errCol":[]}"""
       .stripMargin.replace("\r\n", "\n")
 
-  val inputDf: DataFrame = spark.createDataFrame(DeepArraySamples.ordersData)
+  private val inputDf: DataFrame = spark.createDataFrame(DeepArraySamples.ordersData)
 
   test("Drop conformance rule test 1") {
     conformanceRuleShouldMatchExpected(inputDf, dropOrdersDS1, conformedDropOrdersJSON1)

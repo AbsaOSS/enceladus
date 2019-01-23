@@ -67,54 +67,54 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
 
     // These fields should pass the validation
     val ruleName = "Casting rule"
-    RuleValidators.validateInputField(ruleName, dsName, schema, "id")
-    RuleValidators.validateInputField(ruleName, dsName, schema, "date")
-    RuleValidators.validateInputField(ruleName, dsName, schema, "items.qty")
-    RuleValidators.validateFieldExistence(ruleName, dsName, schema, "id")
-    RuleValidators.validateFieldExistence(ruleName, dsName, schema, "date")
-    RuleValidators.validateFieldExistence(ruleName, dsName, schema, "items.qty")
-    RuleValidators.validateOutputField(ruleName, dsName, schema, "conformedvalue")
-    RuleValidators.validateOutputField(ruleName, dsName, schema, "items.value")
-    RuleValidators.validateSameParent(ruleName, "order.item.id", "order.item.ty", "order.item.details")
+    RuleValidators.validateInputField(dsName, ruleName, schema, "id")
+    RuleValidators.validateInputField(dsName, ruleName, schema, "date")
+    RuleValidators.validateInputField(dsName, ruleName, schema, "items.qty")
+    RuleValidators.validateFieldExistence(dsName, ruleName, schema, "id")
+    RuleValidators.validateFieldExistence(dsName, ruleName, schema, "date")
+    RuleValidators.validateFieldExistence(dsName, ruleName, schema, "items.qty")
+    RuleValidators.validateOutputField(dsName, ruleName, schema, "conformedvalue")
+    RuleValidators.validateOutputField(dsName, ruleName, schema, "items.value")
+    RuleValidators.validateSameParent(dsName, ruleName, "order.item.id", "order.item.ty", "order.item.details")
 
     assert(intercept[ValidationException] {
-      RuleValidators.validateInputField(ruleName, dsName, schema, "nosuchfield")
+      RuleValidators.validateInputField(dsName, ruleName, schema, "nosuchfield")
     }.getMessage contains "does not exist")
 
     assert(intercept[ValidationException] {
-      RuleValidators.validateFieldExistence(ruleName, dsName, schema, "nosuchfield")
+      RuleValidators.validateFieldExistence(dsName, ruleName, schema, "nosuchfield")
     }.getMessage contains "does not exist")
 
     assert(intercept[ValidationException] {
-      RuleValidators.validateFieldExistence(ruleName, dsName, schema, "id", "nosuchfield")
+      RuleValidators.validateFieldExistence(dsName, ruleName, schema, "id", "nosuchfield")
     }.getMessage contains "does not exist")
 
     assert(intercept[ValidationException] {
-      RuleValidators.validateInputField(ruleName, dsName, schema, "items")
+      RuleValidators.validateInputField(dsName, ruleName, schema, "items")
     }.getMessage contains "is not a primitive")
 
     assert(intercept[ValidationException] {
-      RuleValidators.validateOutputField(ruleName, dsName, schema, "id")
+      RuleValidators.validateOutputField(dsName, ruleName, schema, "id")
     }.getMessage contains "already exists so it cannot be used")
 
     assert(intercept[ValidationException] {
-      RuleValidators.validateOutputField(ruleName, dsName, schema, "items")
+      RuleValidators.validateOutputField(dsName, ruleName, schema, "items")
     }.getMessage contains "already exists so it cannot be used")
 
     assert(intercept[ValidationException] {
-      RuleValidators.validateOutputField(ruleName, dsName, schema, "items.qty")
+      RuleValidators.validateOutputField(dsName, ruleName, schema, "items.qty")
     }.getMessage contains "already exists so it cannot be used")
 
     assert(intercept[ValidationException] {
-      RuleValidators.validateOutputField(ruleName, dsName, schema, "id.conformed")
+      RuleValidators.validateOutputField(dsName, ruleName, schema, "id.conformed")
     }.getMessage contains "is a primitive type")
 
     assert(intercept[ValidationException] {
-      RuleValidators.validateSameParent(ruleName, "id", "items.qty")
+      RuleValidators.validateSameParent(dsName, ruleName, "id", "items.qty")
     }.getMessage contains "have different parents")
 
     assert(intercept[ValidationException] {
-      RuleValidators.validateSameParent(ruleName, "order.item.id", "order.item.ty", "order.item.details.payment")
+      RuleValidators.validateSameParent(dsName, ruleName, "order.item.id", "order.item.ty", "order.item.details.payment")
     }.getMessage contains "have different parents")
 
   }

@@ -23,18 +23,18 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class SparkSessionRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
 
-  val sparkSessionRule = SparkSessionConfConformanceRule(order = 1, outputColumn = "TimeZone", controlCheckpoint = false, sparkConfKey = "spark.sql.session.timeZone")
-  val sparkSessionArrayRule = SparkSessionConfConformanceRule(order = 2, outputColumn = "items.SubSystem", controlCheckpoint = false, sparkConfKey = "spark.sql.session.mySubSystem")
-  val sparkSessionDeepArrayRule = SparkSessionConfConformanceRule(order = 3, outputColumn = "items.payments.SubSubSystem", controlCheckpoint = false, sparkConfKey = "spark.sql.session.mySubSubSystem")
+  private val sparkSessionRule = SparkSessionConfConformanceRule(order = 1, outputColumn = "TimeZone", controlCheckpoint = false, sparkConfKey = "spark.sql.session.timeZone")
+  private val sparkSessionArrayRule = SparkSessionConfConformanceRule(order = 2, outputColumn = "items.SubSystem", controlCheckpoint = false, sparkConfKey = "spark.sql.session.mySubSystem")
+  private val sparkSessionDeepArrayRule = SparkSessionConfConformanceRule(order = 3, outputColumn = "items.payments.SubSubSystem", controlCheckpoint = false, sparkConfKey = "spark.sql.session.mySubSubSystem")
 
-  val sparkSessionRulesList = List(sparkSessionRule, sparkSessionArrayRule, sparkSessionDeepArrayRule)
+  private val sparkSessionRulesList = List(sparkSessionRule, sparkSessionArrayRule, sparkSessionDeepArrayRule)
 
-  val sparkSessionOrdersDS = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
+  private val sparkSessionOrdersDS = Dataset(name = "Orders Conformance", version = 1, hdfsPath = "src/test/testData/orders", hdfsPublishPath =
     "testData/conformedOrders",
     schemaName = "Orders", schemaVersion = 1,
     conformance = sparkSessionRulesList)
 
-  val conformedSparkSessionOrdersJSON: String =
+  private val conformedSparkSessionOrdersJSON: String =
     """{"id":1,"name":"First Order","items":[{"itemid":"ar229","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":51.0,"SubSubSystem":"FA2"}],"SubSystem":"FA1"},{"itemid":"2891k","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":100.0,"SubSubSystem":"FA2"}],"SubSystem":"FA1"},{"itemid":"31239","qty":2,"price":55.2,"payments":[],"SubSystem":"FA1"}],"errCol":[],"TimeZone":"GMT"}
       |{"id":2,"name":"Second Order","items":[{"itemid":"AkuYdg","qty":100,"price":10.0,"payments":[{"payid":"d101","amount":10.0,"SubSubSystem":"FA2"},{"payid":"d102","amount":20.0,"SubSubSystem":"FA2"}],"SubSystem":"FA1"},{"itemid":"jUa1k0","qty":2,"price":55.2,"payments":[],"SubSystem":"FA1"}],"errCol":[],"TimeZone":"GMT"}
       |{"id":3,"name":"Third Order","items":[{"itemid":"Gshj1","qty":10,"price":10000.0,"payments":[{"payid":"pid10","amount":2000.0,"SubSubSystem":"FA2"},{"payid":"pid10","amount":5000.0,"SubSubSystem":"FA2"}],"SubSystem":"FA1"},{"itemid":"Jdha2","qty":100,"price":45.0,"payments":[{"payid":"zk20","amount":150.0,"SubSubSystem":"FA2"},{"payid":"pid10","amount":2000.0,"SubSubSystem":"FA2"}],"SubSystem":"FA1"}],"errCol":[],"TimeZone":"GMT"}

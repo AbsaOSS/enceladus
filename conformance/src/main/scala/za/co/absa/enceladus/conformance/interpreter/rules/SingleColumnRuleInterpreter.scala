@@ -31,9 +31,9 @@ case class SingleColumnRuleInterpreter(rule: SingleColumnConformanceRule) extend
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
     // Validate the rule parameters
-    RuleValidators.validateFieldExistence(ruleName, progArgs.datasetName, df.schema, rule.inputColumn)
-    RuleValidators.validateOutputField(ruleName, progArgs.datasetName, df.schema, rule.outputColumn)
-    RuleValidators.validateSameParent(ruleName, rule.inputColumn, rule.outputColumn)
+    RuleValidators.validateFieldExistence(progArgs.datasetName,ruleName, df.schema, rule.inputColumn)
+    RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)
+    RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumn, rule.outputColumn)
 
     if (rule.inputColumn.contains('.')) {
       conformNestedField(df)

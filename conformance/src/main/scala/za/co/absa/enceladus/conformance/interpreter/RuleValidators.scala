@@ -22,37 +22,37 @@ import za.co.absa.enceladus.utils.validation.{SchemaPathValidator, ValidationIss
 object RuleValidators {
 
   @throws[ValidationException]
-  def validateInputField(ruleName: String, datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val existenceIssues = SchemaPathValidator.validateSchemaPath(datasetName, schema, fieldPath)
+  def validateInputField(datasetName: String, ruleName: String, schema: StructType, fieldPath: String): Unit = {
+    val existenceIssues = SchemaPathValidator.validateSchemaPath(schema, fieldPath)
     val primitivityIssues = SchemaPathValidator.validateSchemaPathPrimitive(schema, fieldPath)
-    checkAndThrowValidationErrors(s"$ruleName validation error: input field is incorrect.", existenceIssues ++ primitivityIssues)
+    checkAndThrowValidationErrors(datasetName, s"$ruleName validation error: input field is incorrect.", existenceIssues ++ primitivityIssues)
   }
 
   @throws[ValidationException]
-  def validateFieldExistence(ruleName: String, datasetName: String, schema: StructType, fieldPaths: String*): Unit = {
-    val existenceIssues = fieldPaths.flatMap(field => SchemaPathValidator.validateSchemaPath(datasetName, schema, field))
-    checkAndThrowValidationErrors(s"$ruleName validation error: input field does not exist.", existenceIssues)
+  def validateFieldExistence(datasetName: String, ruleName: String, schema: StructType, fieldPaths: String*): Unit = {
+    val existenceIssues = fieldPaths.flatMap(field => SchemaPathValidator.validateSchemaPath(schema, field))
+    checkAndThrowValidationErrors(datasetName, s"$ruleName validation error: input field does not exist.", existenceIssues)
   }
 
   @throws[ValidationException]
-  def validateOutputField(ruleName: String, datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val issues = SchemaPathValidator.validateSchemaPathOutput(datasetName, schema, fieldPath)
-    checkAndThrowValidationErrors(s"$ruleName validation error: output field is incorrect.", issues)
+  def validateOutputField(datasetName: String, ruleName: String, schema: StructType, fieldPath: String): Unit = {
+    val issues = SchemaPathValidator.validateSchemaPathOutput(schema, fieldPath)
+    checkAndThrowValidationErrors(datasetName, s"$ruleName validation error: output field is incorrect.", issues)
   }
 
   @throws[ValidationException]
-  def validateSameParent(ruleName: String, fieldPaths: String*): Unit = {
+  def validateSameParent(datasetName: String, ruleName: String, fieldPaths: String*): Unit = {
     val firstField = fieldPaths.head
     val issues =  fieldPaths.tail.flatMap(field => SchemaPathValidator.validatePathSameParent(firstField, field))
 
-    checkAndThrowValidationErrors(s"$ruleName validation error: input and output columns don't have the same parent.", issues)
+    checkAndThrowValidationErrors(datasetName, s"$ruleName validation error: input and output columns don't have the same parent.", issues)
   }
 
   @throws[ValidationException]
-  private def checkAndThrowValidationErrors(message: String, validationIssues: Seq[ValidationIssue]): Unit = {
+  private def checkAndThrowValidationErrors(datasetName: String, message: String, validationIssues: Seq[ValidationIssue]): Unit = {
     if (validationIssues.nonEmpty) {
       val errorMeaasges = ValidationUtils.getValidationMsgs(validationIssues).mkString(";")
-      throw new ValidationException(s"$message $errorMeaasges" )
+      throw new ValidationException(s"$datasetName - $message $errorMeaasges" )
     }
   }
 }

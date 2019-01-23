@@ -31,7 +31,7 @@ case class ConcatenationRuleInterpreter(rule: ConcatenationConformanceRule) exte
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
     // Validate the rule parameters
-    RuleValidators.validateSameParent(ruleName, rule.inputColumns :+ rule.outputColumn: _*)
+    RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumns :+ rule.outputColumn: _*)
 
     if (rule.outputColumn.contains('.')) {
       conformNestedField(df)
@@ -43,8 +43,8 @@ case class ConcatenationRuleInterpreter(rule: ConcatenationConformanceRule) exte
   /** Handles uppercase conformance rule for nested fields. */
   private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
     val parent = rule.inputColumns.head.split('.').dropRight(1).mkString(".")
-    DeepArrayTransformations.nestedStructMap(df, parent, rule.outputColumn, c=>
-      if (c==null) {
+    DeepArrayTransformations.nestedStructMap(df, parent, rule.outputColumn, c =>
+      if (c == null) {
         concat(rule.inputColumns.map(col): _*)
       } else {
         concat(rule.inputColumns.map(a => c.getField(a.split('.').last).cast(StringType)): _*)
