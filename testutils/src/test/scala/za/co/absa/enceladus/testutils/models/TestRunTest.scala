@@ -38,7 +38,7 @@ class TestRunTest extends FunSuite with BeforeAndAfterEach {
     assert(addedResult.id == "003")
     assert(addedResult.name == "ThirdCall")
     assert(addedResult.comparison == "{}")
-    assert(addedResult.passed == true)
+    assert(addedResult.passed)
     assert(addedResult.input == "{}")
     assert(addedResult.output == "{}")
     assert(addedResult.expected == "{}")
@@ -48,7 +48,9 @@ class TestRunTest extends FunSuite with BeforeAndAfterEach {
 
   test("testGetFinalInfo") {
     val finalInfo = testRun.getFinalInfo
-    assert(finalInfo == s"""{"name":"UnitTests","startTime":"${testRun.startTime}","endTime":"${testRun.getEndTime}","numberOfUseCases":2,"numberOfPassedUseCases":1,"numberOfFailedUseCases":1}""")
+    assert(finalInfo ==
+      s"""{"name":"UnitTests","startTime":"${testRun.startTime}","endTime":"${testRun.getEndTime}",
+         |"numberOfUseCases":2,"numberOfPassedUseCases":1,"numberOfFailedUseCases":1}""".stripMargin)
   }
 
 }
