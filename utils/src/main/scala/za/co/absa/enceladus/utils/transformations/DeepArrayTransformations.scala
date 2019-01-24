@@ -16,14 +16,133 @@
 package za.co.absa.enceladus.utils.transformations
 
 import org.apache.spark.sql.{Column, DataFrame}
-import org.apache.spark.sql.functions.{_$, struct, transform}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, DataType, StructType}
+import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.collection.mutable.ListBuffer
 
 object DeepArrayTransformations {
   /**
     * Map transformation for columns that can be inside nested structs, arrays and its combinations.
+    *
+    * If the input column is a primitive field the method will add outputColumnName at the same level of nesting.
+    * By executing the `expression` passing the source column into it. If a struct column is expected you can
+    * use `.getField(...)` method to operate on it's children.
+    *
+    * The output column name can omit the full path as the field will be created at the same level of nesting as the input column.
+    *
+    * @param df               Dataframe to be transformed
+    * @param inputColumnName  A column name for which to apply the transformation, e.g. `company.employee.firstName`.
+    * @param outputColumnName The output column name. The path is optional, e.g. you can use `conformedName` instead of `company.employee.conformedName`.
+    * @param expression       A function that applies a transformation to a column as a Spark expression.
+    * @return A dataframe with a new field that contains transformed values.
+    */
+  def nestedWithColumnMap(df: DataFrame,
+                          inputColumnName: String,
+                          outputColumnName: String,
+                          expression: Column => Column): DataFrame = {
+    nestedWithColumnMapHelper(df, inputColumnName, outputColumnName, expression, null)._1
+  }
+
+  /**
+    * A nested map that also appends errors to the error column (see [[DeepArrayTransformations.nestedWithColumnMap]] above)
+    *
+    * @param df               Dataframe to be transformed
+    * @param inputColumnName  A column name for which to apply the transformation, e.g. `company.employee.firstName`.
+    * @param outputColumnName The output column name. The path is optional, e.g. you can use `conformedName` instead of `company.employee.conformedName`.
+    * @param expression       A function that applies a transformation to a column as a Spark expression.
+    * @param errorCondition   A function that takes an input column and returns an expression for an error column.
+    * @return A dataframe with a new field that contains transformed values.
+    */
+  def nestedWithColumnAndErrorMap(df: DataFrame,
+                                  inputColumnName: String,
+                                  outputColumnName: String,
+                                  errorColumnName: String,
+                                  expression: Column => Column,
+                                  errorCondition: Column => Column
+                                 ): DataFrame = {
+
+    if (errorColumnName.contains('.')) {
+      throw new IllegalArgumentException(s"Error columns should be at the root schema level. Value '$errorColumnName' is not valid.")
+    }
+
+    val (dfOut: DataFrame, deepErrorColumn: String) = nestedWithColumnMapHelper(df, inputColumnName, outputColumnName, expression, errorCondition)
+
+    gatherErrors(dfOut, deepErrorColumn, errorColumnName)
+  }
+
+  /**
+    * A nested struct map. Given a struct field the method will create a new child field of that struct as a
+    * transformation of struct fields. This is useful for transformations such as concatenation of fields.
+    *
+    * To use root of the schema as the input struct pass "" as the `inputStructField`.
+    * In this case `null` will be passed to the lambda function.
+    *
+    * Here is an example demonstrating how to handle both root and nested cases:
+    *
+    * {{{
+    * val dfOut = nestedWithColumnMap(df, columnPath, "combinedField", c => {
+    * if (c==null) {
+    *   // The columns are at the root level
+    *   concat(col("city"), col("street"))
+    * } else {
+    *   // The columns are inside nested structs/arrays
+    *   concat(c.getField("city"), c.getField("street"))
+    * }
+    * })
+    * }}}
+    *
+    * @param inputStructField A struct column name for which to apply the transformation
+    * @param outputChildField The output column name that will be added as a child of the source struct.
+    * @param expression       A function that applies a transformation to a column as a Spark expression
+    * @return A dataframe with a new field that contains transformed values.
+    */
+  def nestedStructMap(df: DataFrame,
+                      inputStructField: String,
+                      outputChildField: String,
+                      expression: Column => Column
+                     ): DataFrame = {
+    val updatedStructField = if (inputStructField.nonEmpty) inputStructField + ".*" else ""
+    nestedWithColumnMap(df, updatedStructField, outputChildField, expression)
+  }
+
+  /**
+    * Add a column that can be inside nested structs, arrays and its combinations
+    *
+    * @param df            Dataframe to be transformed
+    * @param newColumnName A column name to be created
+    * @param expression    A function that returns the value of the new column as a Spark expression
+    * @return A dataframe with a new field that contains transformed values.
+    */
+  def nestedAddColumn(df: DataFrame,
+                      newColumnName: String,
+                      expression: Unit => Column): DataFrame = {
+    nestedWithColumnMap(df, newColumnName, "", c => expression())
+  }
+
+  /**
+    * Drop a column from inside a nested structs, arrays and its combinations
+    *
+    * @param df           Dataframe to be transformed
+    * @param columnToDrop A column name to be dropped
+    * @return A dataframe with a new field that contains transformed values.
+    */
+  def nestedDropColumn(df: DataFrame,
+                       columnToDrop: String): DataFrame = {
+    nestedWithColumnMap(df, columnToDrop, "", null)
+  }
+
+  /**
+    * This is a helper function for all mapping transformations.
+    *
+    * It combines many operations inside one traversal. It is used to
+    * - Map a column
+    * - Map a column with an additional creation of an error column
+    * - Add/remove column
+    *
+    * It is probably too complicated to use by itself. Use facade functions instead.
     *
     * If the input column is a primitive field the method will add outputColumnName at the same level of nesting.
     * By executing the `expression` passing the source column into it. If a struct column is expected you can
@@ -44,14 +163,17 @@ object DeepArrayTransformations {
     * @param inputColumnName  A column name for which to apply the transformation, e.g. `company.employee.firstName`.
     * @param outputColumnName The output column name. The path is optional, e.g. you can use `conformedName` instead of `company.employee.conformedName`.
     * @param expression       A function that applies a transformation to a column as a Spark expression.
-    * @return A dataframe with a new field that contains transformed values.
+    * @return A pair consisting of a dataframe with a new field that contains transformed values and a string containing the error column name.
     */
-  def nestedWithColumnMap(df: DataFrame,
-                          inputColumnName: String,
-                          outputColumnName: String,
-                          expression: Column => Column): DataFrame = {
+  private def nestedWithColumnMapHelper(df: DataFrame,
+                                        inputColumnName: String,
+                                        outputColumnName: String,
+                                        expression: Column => Column,
+                                        errorCondition: Column => Column
+                                       ): (DataFrame, String) = {
     // The name of the field is the last token of outputColumnName
     val outputFieldName = outputColumnName.split('.').last
+    var errorColumnName = ""
 
     // Sequential lambda name generator
     var lambdaIndex = 1
@@ -60,6 +182,19 @@ object DeepArrayTransformations {
       val name = s"v$lambdaIndex"
       lambdaIndex += 1
       name
+    }
+
+    def addErrorColumn(schema: Option[StructType], column: Column): Option[Column] = {
+      if (errorCondition == null) {
+        None
+      } else {
+        errorColumnName = SchemaUtils.getUniqueName( "errorList", schema)
+        val errorColumn = array(errorCondition(column)).as(errorColumnName)
+        if (inputColumnName.contains('.')) {
+          errorColumnName = inputColumnName.split('.').dropRight(1).mkString(".") + errorColumnName
+        }
+        Some(errorColumn)
+      }
     }
 
     // Returns true if a path consists only of 1 element meaning it is the leaf element of the input column path requested by the caller
@@ -95,6 +230,7 @@ object DeepArrayTransformations {
                   mapArray(dt, path, parentColumn)
                 case _ =>
                   mappedFields += expression(curColumn).as(outputFieldName)
+                  addErrorColumn(Some(schema), curColumn).foreach(mappedFields += _)
                   Seq(curColumn)
               }
             }
@@ -115,6 +251,7 @@ object DeepArrayTransformations {
           // If a star is specified as the last field name => manipulation on a struct itself is requested
           val parentField = parentColumn.orNull
           mappedFields += expression(parentField).as(outputFieldName)
+          addErrorColumn(Some(schema), parentField).foreach(mappedFields += _)
         } else {
           // Field not found => an addition of a new field is requested
           val fieldToAdd = if (fieldName.isEmpty) outputFieldName else fieldName
@@ -122,14 +259,6 @@ object DeepArrayTransformations {
         }
       }
       newColumns ++ mappedFields
-    }
-
-    // For an array of arrays of arrays, ... get the final element type at the bottom of the array
-    def getDeepestArrayType(arrayType: ArrayType): DataType = {
-      arrayType.elementType match {
-        case a: ArrayType => getDeepestArrayType(a)
-        case b => b
-      }
     }
 
     // Handle arrays (including arrays of arrays) of primitives
@@ -167,6 +296,7 @@ object DeepArrayTransformations {
           if (expression != null) {
             // Retain the original column
             mappedFields += transform(curColumn, lambdaName, transformExpression).as(outputFieldName)
+            addErrorColumn(None, curColumn).foreach(mappedFields += _)
             curColumn
           } else {
             // Drops it otherwise
@@ -191,7 +321,7 @@ object DeepArrayTransformations {
         case dt: ArrayType =>
           // This is the case when the input field is a several nested arrays of arrays of...
           // Each level of array nesting needs to be dealt with using transform()
-          val deepestType = getDeepestArrayType(dt)
+          val deepestType = SchemaUtils.getDeepestArrayType(dt)
           deepestType match {
             case _: StructType =>
               // If at the bottom of the array nesting is a struct we need to add the output column
@@ -220,67 +350,26 @@ object DeepArrayTransformations {
 
     val schema = df.schema
     val path = inputColumnName.split('.')
-    df.select(mapStruct(schema, path): _*) // ;-]
+    (df.select(mapStruct(schema, path): _*), errorColumnName) // ;-]
   }
 
   /**
-    * Add a column that can be inside nested structs, arrays and its combinations
+    * Gathers errors from a nested error column into a global error column for the dataframe
     *
-    * @param df            Dataframe to be transformed
-    * @param newColumnName A column name to be created
-    * @param expression    A function that returns the value of the new column as a Spark expression
-    * @return A dataframe with a new field that contains transformed values.
+    * @param nestedErrorColumn A column name that can be nested deeply inside the dataframe.
+    * @param globalErrorColumn An error column name at the root shema level.
+    * @return A dataframe with a new field that contains the list of errors.
     */
-  def nestedAddColumn(df: DataFrame,
-                      newColumnName: String,
-                      expression: Unit => Column): DataFrame = {
-    nestedWithColumnMap(df, newColumnName, "", c => expression())
-  }
+  def gatherErrors(df: DataFrame,
+                   nestedErrorColumn: String,
+                   globalErrorColumn: String): DataFrame = {
 
-  /**
-    * Drop a column from inside a nested structs, arrays and its combinations
-    *
-    * @param df           Dataframe to be transformed
-    * @param columnToDrop A column name to be dropped
-    * @return A dataframe with a new field that contains transformed values.
-    */
-  def nestedDropColumn(df: DataFrame,
-                       columnToDrop: String): DataFrame = {
-    nestedWithColumnMap(df, columnToDrop, "", null)
-  }
+    // root level
+    val tmpCol = SchemaUtils.getUniqueName("tmp", Some(df.schema))
+    val df1 = df.withColumnRenamed(globalErrorColumn,tmpCol)
+      .withColumn(globalErrorColumn, callUDF( "arrayDistinctErrors", concat(col(tmpCol), col(nestedErrorColumn))))
+      .drop(col(tmpCol))
 
-  /**
-    * A nested struct map. Given a struct field the method will create a new child field of that struct as a
-    * transformation of struct fields. This is useful for transformations such as concatenation of fields.
-    *
-    * To use root of the schema as the input struct pass "" as the `inputStructField`.
-    * In this case `null` will be passed to the lambda function.
-    *
-    * Here is an example demonstrating how to handle both root and nested cases:
-    *
-    * {{{
-    * val dfOut = nestedWithColumnMap(df, columnPath, "combinedField", c => {
-    * if (c==null) {
-    *   // The columns are at the root level
-    *   concat(col("city"), col("street"))
-    * } else {
-    *   // The columns are inside nested structs/arrays
-    *   concat(c.getField("city"), c.getField("street"))
-    * }
-    * })
-    * }}}
-    *
-    * @param inputStructField A struct column name for which to apply the transformation
-    * @param outputChildField The output column name that will be added as a child of the source struct.
-    * @param expression       A function that applies a transformation to a column as a Spark expression
-    * @return A dataframe with a new field that contains transformed values.
-    */
-  def nestedStructMap(df: DataFrame,
-                      inputStructField: String,
-                      outputChildField: String,
-                      expression: Column => Column
-                     ): DataFrame = {
-    val updatedStructField = if (inputStructField.nonEmpty) inputStructField + ".*" else ""
-    nestedWithColumnMap(df, updatedStructField, outputChildField, expression)
+    nestedDropColumn(df1, nestedErrorColumn)
   }
 }

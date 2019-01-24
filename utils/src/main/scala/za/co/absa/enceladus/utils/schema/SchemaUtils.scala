@@ -16,7 +16,8 @@
 package za.co.absa.enceladus.utils.schema
 
 import org.apache.spark.sql.types._
-import scala.util.Try
+
+import scala.util.{Random, Try}
 
 object SchemaUtils {
 
@@ -40,7 +41,7 @@ object SchemaUtils {
       }
     }
 
-    val pathTokens = path.split("\\.").toList
+    val pathTokens = path.split('.').toList
     typeHelper(pathTokens, schema)
   }
 
@@ -63,7 +64,7 @@ object SchemaUtils {
       }
     }
 
-    val pathTokens = path.split("\\.").toList
+    val pathTokens = path.split('.').toList
     typeHelper(pathTokens, schema, None)
   }
 
@@ -90,7 +91,7 @@ object SchemaUtils {
       }
     }
 
-    val pathToks = path.split("\\.")
+    val pathToks = path.split('.')
     helper(pathToks, Seq()).mkString(".")
   }
 
@@ -177,5 +178,39 @@ object SchemaUtils {
       field.name
   }
 
+  /**
+    * For an array of arrays of arrays, ... get the final element type at the bottom of the array
+    *
+    * @param arrayType An array data type from a Spark dataframe schema
+    * @return A non-array data type at the bottom of array nesting
+    */
+  def getDeepestArrayType(arrayType: ArrayType): DataType = {
+    arrayType.elementType match {
+      case a: ArrayType => getDeepestArrayType(a)
+      case b => b
+    }
+  }
+
+  /**
+    * Generate a unique column name
+    *
+    * @param prefix A prefix to use for the column name
+    * @param schema An optional schema to validate if the column already exists (a very low probability)
+    * @return A name that can be used as a unique column name
+    */
+  def getUniqueName(prefix: String, schema: Option[StructType]): String = {
+    schema match {
+      case None =>
+        s"${prefix}_${Random.nextLong().abs}"
+      case Some(sch) =>
+        var exists = true
+        var columnName = ""
+        while (exists) {
+          columnName = s"${prefix}_${Random.nextLong().abs}"
+          exists = sch.fields.exists(_.name.compareToIgnoreCase(columnName) == 0)
+        }
+        columnName
+    }
+  }
 
 }
