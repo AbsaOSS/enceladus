@@ -30,7 +30,8 @@ case class CmdConfig(rawFormat: String = "xml",
                      fixedWidthTrimValues: Option[Boolean] = Some(false),
                      newPath: String = "",
                      refPath: String = "",
-                     outPath: String = "")
+                     outPath: String = "",
+                     keys: Option[Seq[String]] = None)
 
 object CmdConfig {
 
@@ -135,6 +136,11 @@ object CmdConfig {
         else
           success
       )
+
+    opt[String]("keys").action((value, config) => {
+      config.copy(keys = Some(value.split(",").toSeq))
+    }).text("If there are know unique keys, they can be specified for better output. Keys should " +
+      "be specified one by one, with , (comma) between them.")
 
     help("help").text("prints this usage text")
   }

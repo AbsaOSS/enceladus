@@ -16,11 +16,33 @@
 package za.co.absa.enceladus.testutils.datasetComparison
 
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import org.apache.spark.sql._
 import za.co.absa.enceladus.testutils.exceptions.{CmpJobDatasetsDifferException, CmpJobSchemasDifferException}
 import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions}
 
 object ComparisonJob {
+
+  def renameColumns(dataSet: Dataset[Row], keys: Seq[String], prefix: String): Array[Column] = {
+    dataSet.columns.map(c =>
+      if (keys.contains(c)) {
+        dataSet(c)
+      }
+      else {
+        dataSet(c).as(s"$prefix$c")
+      })
+  }
+
+  def getKeyBasedOutput(expectedMinusActual: Dataset[Row],
+                        actualMinusExpected: Dataset[Row],
+                        keys: Seq[String]): DataFrame = {
+    val renamedColumnsExpected = renameColumns(expectedMinusActual ,keys, "expected_")
+    val dfNewExpected = expectedMinusActual.select(renamedColumnsExpected: _*)
+    val renamedColumnsActual = renameColumns(actualMinusExpected ,keys, "actual_")
+    val dfNewColumnsActual = actualMinusExpected.select(renamedColumnsActual: _*)
+
+    dfNewExpected.join(dfNewColumnsActual, keys,"full")
+  }
+
   def main(args: Array[String]): Unit = {
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val dfReaderOptions: DataframeReaderOptions = DataframeReaderOptions(cmd.rawFormat,
@@ -53,8 +75,14 @@ object ComparisonJob {
     val actualMinusExpected: Dataset[Row] = actualDf.except(expectedDf)
 
     if (expectedMinusActual.count() != 0 || actualMinusExpected.count() != 0) {
-      expectedMinusActual.write.format("parquet").save(s"${cmd.outPath}/expected_minus_actual")
-      actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
+      if (cmd.keys.isDefined) {
+        val joinedData = getKeyBasedOutput(expectedMinusActual, actualMinusExpected, cmd.keys.get)
+        joinedData.write.format("parquet").save(s"${cmd.outPath}")
+      } else {
+        expectedMinusActual.write.format("parquet").save(s"${cmd.outPath}/expected_minus_actual")
+        actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
+      }
+
       throw CmpJobDatasetsDifferException(cmd.refPath, cmd.newPath, cmd.outPath, expectedDf.count(), actualDf.count())
     } else {
       System.out.println("Expected and actual datasets are the same.")
