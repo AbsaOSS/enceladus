@@ -20,6 +20,8 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.api.java._
 
+import scala.collection.mutable
+
 case class UDFLibrary()(implicit val spark: SparkSession) {
 
   import spark.implicits._
@@ -43,6 +45,8 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
   spark.udf.register("confNegErr", { (errCol: String, rawValue: String) =>
     ErrorMessage.confNegErr(errCol, rawValue)
   })
+
+  spark.udf.register("arrayDistinctErrors", (arr: mutable.WrappedArray[ErrorMessage]) => arr.distinct)
 
   val cleanErrCol = new UDF1[Seq[Row], Seq[Row]] {
     override def call(t1: Seq[Row]) = {

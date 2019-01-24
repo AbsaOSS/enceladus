@@ -22,37 +22,40 @@ import org.apache.spark.sql.types.StringType
 
 // Examples for constructing dataframes containing arrays of various levels of nesting
 
+// The case classes were declared at the package level so it can be used to create Spark DataSets
+// It is declared package private so the names won't pollute public/exported namespace
+
 // Structs of Structs example
-case class Address(city: String, street: String)
+private[transformations] case class Address(city: String, street: String)
 
-case class Employee(name: String, address: Address)
+private[transformations] case class Employee(name: String, address: Address)
 
-case class TestObj(id: Int, employee: Employee)
+private[transformations] case class TestObj(id: Int, employee: Employee)
 
-case class TestObj2(id: Int, employee: Seq[Employee])
+private[transformations] case class TestObj2(id: Int, employee: Seq[Employee])
 
 // Arrays of primitives example
-case class FunWords(id: Int, words: Seq[String])
+private[transformations] case class FunWords(id: Int, words: Seq[String])
 
 // Arrays of arrays of primitives example
-case class GeoData(id: Int, matrix: Seq[Seq[String]])
+private[transformations] case class GeoData(id: Int, matrix: Seq[Seq[String]])
 
 // Arrays of structs example
-case class Person(firstName: String, lastName: String)
+private[transformations] case class Person(firstName: String, lastName: String)
 
-case class Team(id: Int, person: Seq[Person])
+private[transformations] case class Team(id: Int, person: Seq[Person])
 
-case class Dept(name: String, team: Team)
+private[transformations] case class Dept(name: String, team: Team)
 
 // Arrays of Arrays of struct
-case class Tournament(id: Int, person: Seq[Seq[Person]])
+private[transformations] case class Tournament(id: Int, person: Seq[Seq[Person]])
 
 // Arrays of structs in arrays of structs
-case class Condition(conif: String, conthen: String, amount: Double)
+private[transformations] case class Condition(conif: String, conthen: String, amount: Double)
 
-case class Leg(legid: Int, conditions: Seq[Condition])
+private[transformations] case class Leg(legid: Int, conditions: Seq[Condition])
 
-case class Trade(id: Int, legs: Seq[Leg])
+private[transformations] case class Trade(id: Int, legs: Seq[Leg])
 
 class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
   import spark.implicits._
