@@ -38,8 +38,8 @@ object TypeParser {
   /** Defines the Spark SQL (DSL) logic for parsing different (primitive) types of columns  */
   private def primitiveCastLogic(field: StructField, origSchema: StructType, path: String, attr: Column): Column = {
     field.dataType match {
-      case _: TimestampType => enceladus_to_timestamp(field, origSchema, path, attr)
-      case _: DateType      => enceladus_to_date(field, origSchema, path, attr)
+      case _: TimestampType => toTimestamp(field, origSchema, path, attr)
+      case _: DateType      => toDate(field, origSchema, path, attr)
       case t: DataType      => attr.cast(t)
       case t                => throw new IllegalStateException(s"${t.typeName} type cannot be cast to a strong typed format in this version of Enceladus")
     }
@@ -79,11 +79,11 @@ object TypeParser {
     }
   }
 
-  private def enceladus_to_timestamp(field: StructField, origSchema: StructType, path: String, attr: Column): Column = {
+  private def toTimestamp(field: StructField, origSchema: StructType, path: String, attr: Column): Column = {
     dateTimePreProcess(field: StructField, origSchema: StructType, path: String, attr: Column, epochTimestampFormat, to_timestamp)
   }
 
-  private def enceladus_to_date(field: StructField, origSchema: StructType, path: String, attr: Column): Column = {
+  private def toDate(field: StructField, origSchema: StructType, path: String, attr: Column): Column = {
     dateTimePreProcess(field: StructField, origSchema: StructType, path: String, attr: Column, epochDateFormat, to_date)
   }
 
