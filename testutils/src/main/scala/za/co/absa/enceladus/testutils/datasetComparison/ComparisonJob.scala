@@ -85,7 +85,7 @@ object ComparisonJob {
 
       throw CmpJobDatasetsDifferException(cmd.refPath, cmd.newPath, cmd.outPath, expectedDf.count(), actualDf.count())
     } else {
-      System.out.println("Expected and actual datasets are the same.")
+      println("Expected and actual datasets are the same.")
     }
   }
 }
