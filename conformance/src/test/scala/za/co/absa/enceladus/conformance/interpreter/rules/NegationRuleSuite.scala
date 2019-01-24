@@ -32,11 +32,11 @@ class NegationRuleSuite extends FunSuite with SparkTestBase {
     val schema = NegationRuleSamples.schema
 
     assert(intercept[ValidationException] {
-      NegationRuleInterpreter.validateInputField(schema, "no.such.field")
+      NegationRuleInterpreter.validateInputField("dataset", schema, "no.such.field")
     }.getMessage contains "does not exist")
 
     assert(intercept[ValidationException] {
-      NegationRuleInterpreter.validateInputField(schema, "date")
+      NegationRuleInterpreter.validateInputField("dataset", schema, "date")
     }.getMessage contains "field is not a numeric type")
   }
 

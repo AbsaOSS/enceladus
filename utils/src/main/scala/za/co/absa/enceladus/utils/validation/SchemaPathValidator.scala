@@ -25,38 +25,35 @@ object SchemaPathValidator {
   /**
     * Validate path existence
     *
-    * @param datasetName A dataset name that will be mentioned in validation error messages
     * @param schema      A Spark schema
     * @param fieldPath   A path to a field (e.g. "data.employees.employee.name")
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
-  def validateSchemaPath(datasetName: String, schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
-    validateSchemaPathArray(datasetName, schema, fieldPath.split('.'))
+  def validateSchemaPath(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
+    validateSchemaPathArray(schema, fieldPath.split('.'))
   }
 
   /**
     * Validate path for an output field.
     * The parent path must exist and be a struct. The full path should not exist.
     *
-    * @param datasetName A dataset name that will be mentioned in validation error messages
     * @param schema      A Spark schema
     * @param fieldPath   A path to a field (e.g. "data.employees.employee.name")
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
-  def validateSchemaPathOutput(datasetName: String, schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
-    validateSchemaPathArray(datasetName, schema, fieldPath.split('.'), parentOnly = true, fullPathNew = true)
+  def validateSchemaPathOutput(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
+    validateSchemaPathArray(schema, fieldPath.split('.'), parentOnly = true, fullPathNew = true)
   }
 
   /**
     * Validate parent path existence (e.g. for data.field.value the path data.field must exist)
     *
-    * @param datasetName A dataset name that will be mentioned in validation error messages
     * @param schema      A Spark schema
     * @param fieldPath   A path to a field (e.g. "data.employees.employee.name")
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
-  def validateSchemaPathParent(datasetName: String, schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
-    validateSchemaPathArray(datasetName, schema, fieldPath.split('.'), parentOnly = true)
+  def validateSchemaPathParent(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
+    validateSchemaPathArray(schema, fieldPath.split('.'), parentOnly = true)
   }
 
 
@@ -122,8 +119,7 @@ object SchemaPathValidator {
     }
   }
 
-  private def validateSchemaPathArray(datasetName: String,
-                                      schema: StructType,
+  private def validateSchemaPathArray(schema: StructType,
                                       path: Array[String],
                                       parentOnly: Boolean = false,
                                       fullPathNew: Boolean = false,
@@ -139,11 +135,11 @@ object SchemaPathValidator {
       if (fullPathNew) {
         val exactMatch = schema.fields.find(field => field.name == currentField)
         if (exactMatch.nonEmpty) {
-          return Seq(ValidationError(s"Column '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath' in $datasetName"))
+          return Seq(ValidationError(s"Column '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
         }
         val caseInsensitiveMatch = schema.fields.find(field => field.name.compareToIgnoreCase(currentField) == 0)
         if (caseInsensitiveMatch.nonEmpty) {
-          return Seq(ValidationError(s"Case insensitive variant of a cloumn '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath' in $datasetName"))
+          return Seq(ValidationError(s"Case insensitive variant of a cloumn '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
         }
       }
       return Nil
@@ -155,10 +151,10 @@ object SchemaPathValidator {
         val dataType = getUnderlyingType(field.dataType)
         dataType match {
           case st: StructType =>
-            validateSchemaPathArray(datasetName, st, path.drop(1), parentOnly, fullPathNew, s"$parentPath${field.name}.")
+            validateSchemaPathArray(st, path.drop(1), parentOnly, fullPathNew, s"$parentPath${field.name}.")
           case _ =>
             if (path.length > 1) {
-              Seq(ValidationError(s"Column '$parentPath$currentField' is a primitive type and can't contain child fields '$fullPath' in $datasetName"))
+              Seq(ValidationError(s"Column '$parentPath$currentField' is a primitive type and can't contain child fields '$fullPath'."))
             } else {
               Nil
             }
@@ -167,9 +163,9 @@ object SchemaPathValidator {
         val caseInsensitiveMatch = schema.fields.find(field => field.name.compareToIgnoreCase(currentField) == 0)
         caseInsensitiveMatch match {
           case Some(field) =>
-            Seq(ValidationError(s"Column name '$parentPath$currentField' does not case-sensitively match '$parentPath${field.name}' in $datasetName"))
+            Seq(ValidationError(s"Column name '$parentPath$currentField' does not case-sensitively match '$parentPath${field.name}'."))
           case None =>
-            Seq(ValidationError(s"Column name '$parentPath$currentField' does not exist in $datasetName"))
+            Seq(ValidationError(s"Column name '$parentPath$currentField' does not exist."))
         }
 
     }

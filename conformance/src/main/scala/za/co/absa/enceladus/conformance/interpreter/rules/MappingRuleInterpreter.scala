@@ -30,10 +30,12 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import org.apache.spark.sql.api.java.UDF1
 import za.co.absa.enceladus.utils.error._
-import za.co.absa.enceladus.model.{ Dataset => ConfDataset }
+import za.co.absa.enceladus.model.{Dataset => ConfDataset}
+
 import scala.util.Try
 import scala.util.control.NonFatal
 import org.apache.spark.sql.Column
+import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 import za.co.absa.enceladus.utils.validation._
 
 case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: ConfDataset) extends RuleInterpreter {
@@ -197,7 +199,7 @@ object MappingRuleInterpreter {
    *
    */
   @throws[IllegalArgumentException]
-  def ensureExpressionMatchesType(sparkExpression: String, targetAttributeType: DataType)(implicit spark: SparkSession) = {
+  def ensureExpressionMatchesType(sparkExpression: String, targetAttributeType: DataType)(implicit spark: SparkSession): Unit = {
     import spark.implicits._
 
     // This generates a dataframe we can use to check cast()
@@ -246,28 +248,20 @@ object MappingRuleInterpreter {
 
   @throws[ValidationException]
   def validateJoinField(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val validationIssues = SchemaPathValidator.validateSchemaPath(datasetName, schema, fieldPath)
-    checkAndThrowValidationErrors("A join condition validation error occurred.", validationIssues)
+    val validationIssues = SchemaPathValidator.validateSchemaPath(schema, fieldPath)
+    RuleValidators.checkAndThrowValidationErrors(datasetName, "A join condition validation error occurred.", validationIssues)
   }
 
   @throws[ValidationException]
   def validateTargetAttribute(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val validationIssues = SchemaPathValidator.validateSchemaPath(datasetName, schema, fieldPath)
-    checkAndThrowValidationErrors("A tagret attribute validation error occurred.", validationIssues)
+    val validationIssues = SchemaPathValidator.validateSchemaPath(schema, fieldPath)
+    RuleValidators.checkAndThrowValidationErrors(datasetName, "A tagret attribute validation error occurred.", validationIssues)
   }
 
   @throws[ValidationException]
   def validateOutputField(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val validationIssues = SchemaPathValidator.validateSchemaPathParent(datasetName, schema, fieldPath)
-    checkAndThrowValidationErrors("An output column name validation error occurred.", validationIssues)
-  }
-
-  @throws[ValidationException]
-  private def checkAndThrowValidationErrors(message: String, validationIssues: Seq[ValidationIssue]): Unit = {
-    if (validationIssues.nonEmpty) {
-      val errorMeaasges = ValidationUtils.getValidationMsgs(validationIssues).mkString(";")
-      throw new ValidationException(s"$message $errorMeaasges")
-    }
+    val validationIssues = SchemaPathValidator.validateSchemaPathParent(schema, fieldPath)
+    RuleValidators.checkAndThrowValidationErrors(datasetName, "An output column name validation error occurred.", validationIssues)
   }
 
   private[rules] def getQualifiedField(schema: StructType, fieldName: String): Option[StructField] = {
