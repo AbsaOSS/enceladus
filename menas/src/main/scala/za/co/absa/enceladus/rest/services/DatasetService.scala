@@ -71,9 +71,11 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     }
   }
 
-  def addConformanceRule(username: String, datasetName: String, rule: ConformanceRule): Future[Option[Dataset]] = {
-    super.update(username, datasetName) { dataset =>
-      dataset.copy(conformance = dataset.conformance :+ rule)
+  def addConformanceRule(username: String, datasetName: String, datasetVersion: Int, rule: ConformanceRule): Future[Option[Dataset]] = {
+    super.update(username, datasetName, datasetVersion, s"Conformance rule (${rule.order}) '${rule.outputColumn}' added.") { dataset =>
+      val updated = dataset.copy(conformance = dataset.conformance :+ rule)
+      
+      ChangedFieldsUpdateTransformResult(updatedEntity = updated, fields = Seq())
     }
   }
 

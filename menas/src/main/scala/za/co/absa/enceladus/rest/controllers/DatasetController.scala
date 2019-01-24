@@ -39,7 +39,9 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   @ResponseStatus(HttpStatus.OK)
   def addConformanceRule(@AuthenticationPrincipal user: UserDetails, @PathVariable datasetName: String,
                          @RequestBody rule: ConformanceRule): CompletableFuture[Dataset] = {
-    datasetService.addConformanceRule(user.getUsername, datasetName, rule).map {
+    //TODO: we need to figure out how to deal with versioning properly from UX perspective
+    val version = datasetService.getLatestVersion(datasetName).get.get.version
+    datasetService.addConformanceRule(user.getUsername, datasetName, version, rule).map {
       case Some(dataset) => dataset
       case None          => throw notFound()
     }
