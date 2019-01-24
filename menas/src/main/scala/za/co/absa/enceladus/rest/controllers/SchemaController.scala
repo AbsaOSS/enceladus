@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
 import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.rest.repositories.RefCollection
-import za.co.absa.enceladus.rest.services.{ AttachmentService, SchemaService }
+import za.co.absa.enceladus.rest.services.{AttachmentService, SchemaService}
 import za.co.absa.enceladus.rest.utils.converters.SparkMenasSchemaConvertor
 
 @RestController

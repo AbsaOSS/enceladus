@@ -26,8 +26,10 @@ import za.co.absa.enceladus.rest.models.ChangedFieldsUpdateTransformResult
 import za.co.absa.enceladus.rest.models.ChangedField
 
 @Service
-class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTableMongoRepository, auditTrailService: AuditTrailService,
-                                        datasetService: DatasetService)
+class MappingTableService @Autowired() (
+  mappingTableMongoRepository: MappingTableMongoRepository,
+  auditTrailService:           AuditTrailService,
+  datasetService:              DatasetService)
   extends VersionedModelService(mappingTableMongoRepository, auditTrailService) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -42,18 +44,17 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
       description = mt.description,
       schemaName = mt.schemaName,
       schemaVersion = mt.schemaVersion,
-      hdfsPath = mt.hdfsPath
-    )
+      hdfsPath = mt.hdfsPath)
     super.create(mappingTable, username, s"Mapping Table ${mt.name} created.")
   }
-  
+
   def updateDefaults(username: String, mtName: String, mtVersion: Int, defaultValues: List[DefaultValue]): Future[Option[MappingTable]] = {
     super.update(username, mtName, mtVersion, s"Default values updated.") { latest =>
-       val updated = latest.setDefaultMappingValue(defaultValues)
-       ChangedFieldsUpdateTransformResult(updatedEntity = updated, Seq())
+      val updated = latest.setDefaultMappingValue(defaultValues)
+      ChangedFieldsUpdateTransformResult(updatedEntity = updated, Seq())
     }
   }
-  
+
   def addDefault(username: String, mtName: String, mtVersion: Int, defaultValue: DefaultValue): Future[Option[MappingTable]] = {
     super.update(username, mtName, mtVersion, s"Default value for column ${defaultValue.columnName} added.") { latest =>
       val updated = latest.setDefaultMappingValue(latest.defaultMappingValue :+ defaultValue)
@@ -68,13 +69,12 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
         .setSchemaName(mt.schemaName)
         .setSchemaVersion(mt.schemaVersion)
         .setDescription(mt.description).asInstanceOf[MappingTable]
-      
+
       ChangedFieldsUpdateTransformResult(updatedEntity = updated, Seq(
-          ChangedField("HDFS Path", mt.hdfsPath, latest.hdfsPath),
-          ChangedField("Schema Name", mt.schemaName, latest.schemaName),
-          ChangedField("Schema Version", mt.schemaVersion, latest.schemaVersion),
-          ChangedField("Description", mt.description, latest.description)
-      ))
+        ChangedField("HDFS Path", mt.hdfsPath, latest.hdfsPath),
+        ChangedField("Schema Name", mt.schemaName, latest.schemaName),
+        ChangedField("Schema Version", mt.schemaVersion, latest.schemaVersion),
+        ChangedField("Description", mt.description, latest.description)))
 
     }
   }

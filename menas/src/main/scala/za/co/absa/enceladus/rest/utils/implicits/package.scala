@@ -47,5 +47,4 @@ package object implicits {
     classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference], classOf[AuditEntry]),
     CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec(), CaseObjEnumCodec(CreateEntryType.getClass), CaseObjEnumCodec(UpdateEntryType.getClass)), 
     DEFAULT_CODEC_REGISTRY)
-
 }
