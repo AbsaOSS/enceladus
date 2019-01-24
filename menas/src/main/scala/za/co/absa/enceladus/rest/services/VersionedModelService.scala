@@ -28,6 +28,7 @@ import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
 
 import scala.concurrent.Future
 import java.time.ZonedDateTime
+import za.co.absa.enceladus.rest.models.ChangedFieldsUpdateTransformResult
 
 abstract class VersionedModelService[C <: VersionedModel](versionedMongoRepository: VersionedMongoRepository[C], auditTrailService: AuditTrailService)
   extends ModelService(versionedMongoRepository) {

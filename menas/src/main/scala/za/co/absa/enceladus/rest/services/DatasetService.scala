@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import za.co.absa.enceladus.model.{Dataset, UsedIn}
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
 import scala.concurrent.Future
 import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.rest.models.ChangedFieldsUpdateTransformResult
+import za.co.absa.enceladus.rest.models.ChangedField
 
 @Service
 class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepository, auditTrailService: AuditTrailService)
