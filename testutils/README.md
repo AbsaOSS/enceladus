@@ -43,6 +43,7 @@ spark-submit \
 --new-path /path/to/new/data/set \
 --ref-path /path/to/referential/data/set \
 --out-path /path/to/diff/output
+--keys key1,key2,key3
 ```
 
 #### Where
@@ -62,6 +63,9 @@ Usage: spark-submit [spark options] TestUtils.jar [options]
                                other folders. expected_minus_actual and actual_minus_expected.
                                Both hold parque data sets of differences. (minus as in is 
                                relative complement
+  --keys                   If there are know unique keys, they can be specified for better
+                               output. Keys should be specified one by one, with , (comma) 
+                               between them.
   --help                   prints this usage text
 
 ```
