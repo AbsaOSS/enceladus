@@ -16,9 +16,9 @@
 jQuery.sap.require("sap.m.MessageBox");
 var GenericService = new function () {
 
-  var model = sap.ui.getCore().getModel();
+  let model = sap.ui.getCore().getModel();
 
-  this.getUserInfo = function (oController) {
+  this.getUserInfo = function () {
     let fnSuccess = (oInfo) => {
       model.setProperty("/userInfo", oInfo)
     };

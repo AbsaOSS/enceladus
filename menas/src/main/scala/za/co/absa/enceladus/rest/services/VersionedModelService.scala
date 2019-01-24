@@ -20,15 +20,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import za.co.absa.enceladus.model.UsedIn
-import za.co.absa.enceladus.model.versionedModel.{ VersionedModel, VersionedSummary }
-import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
-import za.co.absa.enceladus.model.UsedIn
+import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.rest.exceptions.{EntityInUseException, ValidationException}
 import za.co.absa.enceladus.rest.models.Validation
-import scala.concurrent.Future
-import java.time.ZonedDateTime
-import za.co.absa.enceladus.model.menas._
-import za.co.absa.enceladus.rest.exceptions.NotFoundException
+import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
 
 
 abstract class VersionedModelService[C <: VersionedModel](versionedMongoRepository: VersionedMongoRepository[C], auditTrailService: AuditTrailService)
