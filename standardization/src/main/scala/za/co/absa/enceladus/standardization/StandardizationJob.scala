@@ -184,7 +184,7 @@ object StandardizationJob {
     }
 
     // If the meta data value sourcecolumn is set override source data column name with the field name
-    val stdRenameSourceColumns = std.select(schema.fields.map { field =>
+    val stdRenameSourceColumns: DataFrame = std.select(schema.fields.map { field: StructField =>
       renameSourceColumn(std, field, true)
     }: _*)
 
@@ -233,14 +233,14 @@ object StandardizationJob {
     log.warn(s"Converting to Parquet in temporary dir: $tempParquetDir")
 
     // Handle renaming of source columns in case there are columns that will break because of issues in column names like spaces
-    df.select(schema.fields.map { field =>
+    df.select(schema.fields.map { field: StructField =>
       renameSourceColumn(df, field, false)
     }: _*).write.parquet(tempParquetDir)
 
     FileSystemVersionUtils.deleteOnExit(tempParquetDir)
     // Reload from temp parquet and reverse column renaming above
     val dfTmp = spark.read.parquet(tempParquetDir)
-    dfTmp.select(schema.fields.map { field =>
+    dfTmp.select(schema.fields.map { field: StructField =>
       reverseRenameSourceColumn(dfTmp, field)
     }: _*)
   }
