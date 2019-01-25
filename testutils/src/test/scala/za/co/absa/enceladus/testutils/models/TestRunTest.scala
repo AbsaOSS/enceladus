@@ -49,8 +49,8 @@ class TestRunTest extends FunSuite with BeforeAndAfterEach {
   test("testGetFinalInfo") {
     val finalInfo = testRun.getFinalInfo
     assert(finalInfo ==
-      s"""{"name":"UnitTests","startTime":"${testRun.startTime}","endTime":"${testRun.getEndTime}",
-         |"numberOfUseCases":2,"numberOfPassedUseCases":1,"numberOfFailedUseCases":1}""".stripMargin)
+      s"""{"name":"UnitTests","startTime":"${testRun.startTime}","endTime":"${testRun.getEndTime}",""" +
+         """"numberOfUseCases":2,"numberOfPassedUseCases":1,"numberOfFailedUseCases":1}""")
   }
 
 }

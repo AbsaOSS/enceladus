@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.testutils.rest
 
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
-import za.co.absa.enceladus.testutils.models.{RestMethod, TestCase, TestCaseResult}
+import za.co.absa.enceladus.testutils.models.{POST, RestMethod, TestCase, TestCaseResult}
 
 class RestCallerTest extends FunSuite with BeforeAndAfterEach {
   test("testRun") {
@@ -60,7 +60,7 @@ class RestCallerTest extends FunSuite with BeforeAndAfterEach {
   }
 
   test("testCallPost") {
-    val response = RestCaller.call(RestMethod.POST, "https://httpbin.org/post", """{"form":{"foo":"baz","hello":"world"}}""", "application/json")
+    val response = RestCaller.call(POST, "https://httpbin.org/post", """{"form":{"foo":"baz","hello":"world"}}""", "application/json")
     assert(response.text.contains(""""data": "{\"form\":{\"foo\":\"baz\",\"hello\":\"world\"}}""""))
     assert(response.text.contains(""""Content-Type": "application/json","""))
   }

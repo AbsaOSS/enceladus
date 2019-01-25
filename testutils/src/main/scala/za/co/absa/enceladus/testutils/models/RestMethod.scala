@@ -15,12 +15,10 @@
 
 package za.co.absa.enceladus.testutils.models
 
-import za.co.absa.enceladus.testutils.models
+sealed abstract class RestMethod(val methods: String)
 
-object RestMethod extends Enumeration {
-  type RestMethod = Value
-  val POST: models.RestMethod.Value = Value("Post")
-  val GET: models.RestMethod.Value = Value("Get")
-  val PUT: models.RestMethod.Value = Value("Put")
-  val DELETE: models.RestMethod.Value = Value("Delete")
-}
+case object POST extends RestMethod("Post")
+case object GET extends RestMethod("Get")
+case object PUT extends RestMethod("Put")
+case object DELETE extends RestMethod("Delete")
+

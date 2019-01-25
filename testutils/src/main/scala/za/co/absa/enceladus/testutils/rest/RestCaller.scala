@@ -15,10 +15,9 @@
 
 package za.co.absa.enceladus.testutils.rest
 
-import za.co.absa.enceladus.testutils.models.RestMethod._
 import requests.Response
 import gnieh.diffson.sprayJson._
-import za.co.absa.enceladus.testutils.models.{RestMethod, TestCase, TestCaseResult}
+import za.co.absa.enceladus.testutils.models._
 
 import scala.annotation.switch
 
@@ -40,10 +39,10 @@ object RestCaller {
   def call(method: RestMethod, url: String, payload: String, contentType: String): Response = {
     val headers: Map[String, String] = Map("content-type" -> contentType)
     (method: @switch) match {
-      case RestMethod.POST => callPost(url, payload, headers)
-      case RestMethod.GET => callGet(url, payload, headers)
-      case RestMethod.DELETE => callDelete(url, payload, headers)
-      case RestMethod.PUT => callPut(url, payload, headers)
+      case POST => callPost(url, payload, headers)
+      case GET => callGet(url, payload, headers)
+      case DELETE => callDelete(url, payload, headers)
+      case PUT => callPut(url, payload, headers)
     }
   }
 

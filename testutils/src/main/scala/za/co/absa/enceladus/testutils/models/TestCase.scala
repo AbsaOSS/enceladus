@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.testutils.models
 
-import za.co.absa.enceladus.testutils.models.RestMethod.RestMethod
-
 case class TestCase(id: String,
                     name: String,
                     methodString: String,
@@ -25,5 +23,12 @@ case class TestCase(id: String,
                     payload: String,
                     expectedOutput: String,
                     expectedStatusCode: String) {
-  val method: RestMethod = RestMethod.withName(methodString)
+//  val method: RestMethod = RestMethod(methodString)
+  val method: RestMethod = methodString.toLowerCase match {
+    case "post" => POST
+    case "get" => GET
+    case "put" => PUT
+    case "delete" => DELETE
+  }
 }
+

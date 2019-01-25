@@ -20,7 +20,7 @@ import org.scalatest.FunSuite
 class TestCaseTest extends FunSuite {
 
   test("testMethod") {
-    val method = RestMethod.POST
+    val method = POST
 
     val instance = TestCase("001",
                             "GenericName",
