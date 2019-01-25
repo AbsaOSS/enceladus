@@ -33,7 +33,11 @@ final case class CmpJobSchemasDifferException(private val refPath: String,
                                               private val stdPath: String,
                                               private val diffSchema: Seq[StructField],
                                               private val cause: Throwable = None.orNull)
-  extends Exception("Expected and actual datasets differ in schemas.\n"+
+  extends Exception("Expected and actual datasets differ in schemas.\n" +
                     s"Reference path: $refPath\n" +
                     s"Actual dataset path: $stdPath\n" +
                     s"Difference is $diffSchema", cause)
+
+
+final case class DuplicateRowsInDF(private val path: String)
+  extends Exception(s"Provided dataset has duplicate rows. Specific rows written to $path")
