@@ -19,16 +19,16 @@ import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.{BeforeAndAfterEach, FunSuite}
 import za.co.absa.enceladus.testutils.exceptions.{CmpJobDatasetsDifferException, CmpJobSchemasDifferException}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterAll {
+class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterEach {
 
-  val format = new SimpleDateFormat("yyyy_MM_dd-HH_mm")
+  val format = new SimpleDateFormat("yyyy_MM_dd-HH_mm_ss")
   var timePrefix = ""
 
-  override def beforeAll(): Unit = {
+  override def beforeEach(): Unit = {
     timePrefix = format.format(Calendar.getInstance().getTime)
   }
 
@@ -71,6 +71,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
 
     assert(caught.getMessage == message)
     assert(Files.exists(Paths.get(outPath)))
+    assert(2 == Files.list(Paths.get(outPath)).count())
   }
 
   test("Compare datasets with wrong schemas") {
@@ -96,5 +97,33 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterA
     }
 
     assert(caught.getMessage == message)
+  }
+
+  test("Key based compare of different datasets") {
+    val refPath = "src/test/resources/dataSample1.csv"
+    val stdPath = "src/test/resources/dataSample3.csv"
+    val outPath = s"target/test_output/comparison_job/negative/$timePrefix"
+    val message = "Expected and actual datasets differ.\n" +
+      s"Reference path: $refPath\n" +
+      s"Actual dataset path: $stdPath\n" +
+      s"Difference written to: $outPath\n" +
+      "Count Expected( 9 ) vs Actual( 10 )"
+
+    val args = Array(
+      "--raw-format", "csv",
+      "--delimiter", ",",
+      "--header", "true",
+      "--new-path", stdPath,
+      "--ref-path", refPath,
+      "--out-path", outPath,
+      "--keys", "id"
+    )
+
+    val caught = intercept[CmpJobDatasetsDifferException] {
+      ComparisonJob.main(args)
+    }
+
+    assert(caught.getMessage == message)
+    assert(Files.exists(Paths.get(outPath)))
   }
 }
