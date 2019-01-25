@@ -27,7 +27,10 @@ class SparkConfig {
 
   @Bean
   def spark: SparkSession = {
-    SparkSession.builder().master(master).appName("Menas Spark controller").getOrCreate()
+    SparkSession.builder().master(master)
+      .config("spark.ui.enabled", "false")
+      .config("spark.driver.bindAddress","127.0.0.1")
+      .appName("Menas Spark controller").getOrCreate()
   }
 
 }

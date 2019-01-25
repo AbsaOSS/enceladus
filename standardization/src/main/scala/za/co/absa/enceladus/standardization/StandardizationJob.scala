@@ -17,7 +17,7 @@ package za.co.absa.enceladus.standardization
 
 import java.io.{File, PrintWriter, StringWriter}
 
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.sql.types.{StructField, StructType}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
@@ -184,7 +184,9 @@ object StandardizationJob {
     }
 
     // If the meta data value sourcecolumn is set override source data column name with the field name
-    val stdRenameSourceColumns = schema.foldLeft(std)((std, field) => renameSourceColumns(std, field, true))
+    val stdRenameSourceColumns: DataFrame = std.select(schema.fields.map { field: StructField =>
+      renameSourceColumn(std, field, true)
+    }: _*)
 
     stdRenameSourceColumns.setCheckpoint("Standardization Finish", persistInDatabase = false)
 
@@ -231,33 +233,35 @@ object StandardizationJob {
     log.warn(s"Converting to Parquet in temporary dir: $tempParquetDir")
 
     // Handle renaming of source columns in case there are columns that will break because of issues in column names like spaces
-    schema.foldLeft(df)((df, field) => renameSourceColumns(df, field, false)).write.parquet(tempParquetDir)
+    df.select(schema.fields.map { field: StructField =>
+      renameSourceColumn(df, field, false)
+    }: _*).write.parquet(tempParquetDir)
 
     FileSystemVersionUtils.deleteOnExit(tempParquetDir)
     // Reload from temp parquet and reverse column renaming above
-    schema.foldLeft(spark.read.parquet(tempParquetDir))(reverseRenameSourceColumns)
+    val dfTmp = spark.read.parquet(tempParquetDir)
+    dfTmp.select(schema.fields.map { field: StructField =>
+      reverseRenameSourceColumn(dfTmp, field)
+    }: _*)
   }
 
-  private def renameSourceColumns(df: DataFrame, field: StructField, registerWithATUM: Boolean): DataFrame = {
-    val renameDf = if (field.metadata.contains("sourcecolumn")) {
-      log.info(s"schema field : ${field.name} : rename : ${field.metadata.getString("sourcecolumn")}")
-      df.withColumnRenamed(field.metadata.getString("sourcecolumn"), field.name) //rename column in DF
-    } else df
-
-    if (registerWithATUM && field.metadata.contains("sourcecolumn"))
-      renameDf.registerColumnRename(field.metadata.getString("sourcecolumn"), field.name) // register rename with ATUM
-        // Re-add meta data
-        .withColumn(field.name, renameDf.col(field.name).as("", field.metadata))
-    else renameDf
-  }
-
-  private def reverseRenameSourceColumns(df: DataFrame, field: StructField): DataFrame = {
+  private def renameSourceColumn(df: DataFrame, field: StructField, registerWithATUM: Boolean): Column = {
     if (field.metadata.contains("sourcecolumn")) {
-      log.info(s"schema field : ${field.metadata.getString("sourcecolumn")} : reverse rename : ${field.name}")
-      df.withColumnRenamed(field.name, field.metadata.getString("sourcecolumn")) // reverse rename column in DF
-    } else {
-      df
-    }
+      val sourceColumnName = field.metadata.getString("sourcecolumn")
+      log.info(s"schema field : ${field.name} : rename : ${sourceColumnName}")
+      if (registerWithATUM) {
+        df.registerColumnRename(sourceColumnName, field.name) //register rename with ATUM
+      }
+      df.col(sourceColumnName).as(field.name, field.metadata)
+    } else df.col(field.name)
+  }
+
+  private def reverseRenameSourceColumn(df: DataFrame, field: StructField): Column = {
+    if (field.metadata.contains("sourcecolumn")) {
+      val sourceColumnName = field.metadata.getString("sourcecolumn")
+      log.info(s"schema field : ${sourceColumnName} : reverse rename : ${field.name}")
+      df.col(field.name).as(sourceColumnName)
+    } else df.col(field.name)
   }
 
   def buildRawPath(cmd: CmdConfig, dataset: Dataset, dateTokens: Array[String]): String = {
