@@ -18,7 +18,6 @@ package za.co.absa.enceladus.utils.transformations
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, DataType, StructType}
-import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.collection.mutable.ListBuffer
@@ -191,14 +190,12 @@ object DeepArrayTransformations {
         errorColumnName = SchemaUtils.getUniqueName( "errorList", schema)
         val errorColumn = array(errorCondition(column)).as(errorColumnName)
         if (inputColumnName.contains('.')) {
-          errorColumnName = inputColumnName.split('.').dropRight(1).mkString(".") + errorColumnName
+          val parent = inputColumnName.split('.').dropRight(1).mkString(".")
+          errorColumnName = s"$parent.$errorColumnName"
         }
         Some(errorColumn)
       }
     }
-
-    // Returns true if a path consists only of 1 element meaning it is the leaf element of the input column path requested by the caller
-    def isLeafElement(path: Seq[String]): Boolean = path.lengthCompare(2) < 0 // More efficient version of path.length == 1
 
     // Handle the case when the input column is inside a nested struct
     def mapStruct(schema: StructType, path: Seq[String], parentColumn: Option[Column] = None): Seq[Column] = {
@@ -275,6 +272,18 @@ object DeepArrayTransformations {
         case dt => transform(curColumn, lambdaName, expression(_$(lambdaName)))
       }
     }
+    def mapNestedArrayOfErrors(schema: ArrayType, curColumn: Column): Column = {
+      val lambdaName = getLambdaName
+      val elemType = schema.elementType
+
+      elemType match {
+        case _: StructType => throw new IllegalArgumentException(s"Unexpected usage of mapNestedArrayOfPrimitives() on structs.")
+        case dt: ArrayType =>
+          val innerArray = mapNestedArrayOfPrimitives(dt, _$(lambdaName))
+          transform(curColumn, lambdaName, innerArray)
+        case dt => transform(curColumn, lambdaName, expression(_$(lambdaName)))
+      }
+    }
 
     // Handle the case when the input column is inside a nested array
     def mapArray(schema: ArrayType, path: Seq[String], parentColumn: Option[Column] = None, isParentArray: Boolean = false): Seq[Column] = {
@@ -291,12 +300,22 @@ object DeepArrayTransformations {
       }
 
       // Handles primitive data types as well as nested arrays of primitives
-      def handlePrimitive(dt: DataType, transformExpression: Column) = {
+      def handlePrimitive(dt: DataType, transformExpression: Column, errorExpression: Column) = {
         if (isLeaf) {
           if (expression != null) {
             // Retain the original column
             mappedFields += transform(curColumn, lambdaName, transformExpression).as(outputFieldName)
-            addErrorColumn(None, curColumn).foreach(mappedFields += _)
+
+            // Handle error column for arrays of primitives
+            if (errorExpression != null) {
+              errorColumnName = SchemaUtils.getUniqueName( "errorList", None)
+              val errorColumn = transform(curColumn, lambdaName, errorExpression).as(errorColumnName)
+              if (inputColumnName.contains('.')) {
+                val parent = inputColumnName.split('.').dropRight(1).mkString(".")
+                errorColumnName = s"$parent.$errorColumnName"
+              }
+              mappedFields += errorColumn
+            }
             curColumn
           } else {
             // Drops it otherwise
@@ -335,11 +354,12 @@ object DeepArrayTransformations {
               // as an array of it's own
               // Example: if 'persons' is an array of array of string the output field,
               //          say, 'conformedPersons' needs also to be an array of array of string.
-              handlePrimitive(dt, mapNestedArrayOfPrimitives(dt, _$(lambdaName)))
+              handlePrimitive(dt, mapNestedArrayOfPrimitives(dt, _$(lambdaName)), null)
           }
         case dt =>
           // This handles an array of primitives, e.g. arrays of strings etc.
-          handlePrimitive(dt, expression(_$(lambdaName)))
+          val errorExpression = if (errorCondition == null) null else errorCondition(_$(lambdaName))
+          handlePrimitive(dt, expression(_$(lambdaName)), errorExpression)
       }
       if (newColumn == null) {
         mappedFields
@@ -364,12 +384,59 @@ object DeepArrayTransformations {
                    nestedErrorColumn: String,
                    globalErrorColumn: String): DataFrame = {
 
-    // root level
+    def flattenNestedArrays(schema: StructType, inputColumn: String): Column = {
+      def helperStruct(schema: StructType, columnPath: Seq[String], inputColumn: Column): Column = {
+        if (isLeafElement(columnPath)) {
+          inputColumn
+        } else {
+          schema.apply(columnPath.head).dataType match {
+            case st: StructType => helperStruct(st, columnPath.tail, inputColumn)
+            case ar: ArrayType => helperArray(ar, columnPath, inputColumn)
+            case _ => inputColumn
+          }
+        }
+      }
+
+      def helperArray(arr: ArrayType, columnPath: Seq[String], inputColumn: Column): Column = {
+        arr.elementType match {
+          case st: StructType =>
+            if (columnPath.isEmpty) {
+              flatten(inputColumn)
+            } else {
+              flatten(helperStruct(st, columnPath.tail, inputColumn))
+            }
+          case ar: ArrayType =>
+            flatten(helperArray(ar, columnPath, inputColumn))
+          case _ =>
+            flatten(inputColumn)
+        }
+      }
+
+      val path = nestedErrorColumn.split('.')
+      helperStruct(df.schema, path, col(inputColumn))
+    }
+
+    if (globalErrorColumn.contains('.')) {
+      throw new IllegalArgumentException(s"Global error columns should be at the root schema level. Value '$globalErrorColumn' is not valid.")
+    }
+
+    //df.printSchema()
+    //df.explain(true)
+
     val tmpCol = SchemaUtils.getUniqueName("tmp", Some(df.schema))
+    val flattenedColumn = flattenNestedArrays(df.schema, nestedErrorColumn)
+
     val df1 = df.withColumnRenamed(globalErrorColumn,tmpCol)
-      .withColumn(globalErrorColumn, callUDF( "arrayDistinctErrors", concat(col(tmpCol), col(nestedErrorColumn))))
+      .withColumn(globalErrorColumn, callUDF( "arrayDistinctErrors", concat(col(tmpCol), flattenedColumn)))
       .drop(col(tmpCol))
+
+    //df1.printSchema()
+    //df1.explain(true)
+
 
     nestedDropColumn(df1, nestedErrorColumn)
   }
+
+  // Returns true if a path consists only of 1 element meaning it is the leaf element of the input column path requested by the caller
+  private def isLeafElement(path: Seq[String]): Boolean = path.lengthCompare(2) < 0 // More efficient version of path.length == 1
 }
