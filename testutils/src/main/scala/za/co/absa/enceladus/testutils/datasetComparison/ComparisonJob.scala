@@ -15,12 +15,14 @@
 
 package za.co.absa.enceladus.testutils.datasetComparison
 
+import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql._
 import za.co.absa.enceladus.testutils.exceptions.{CmpJobDatasetsDifferException, CmpJobSchemasDifferException}
 import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions}
 
 object ComparisonJob {
+  val log: Logger = LogManager.getLogger("enceladus.testutils.ComparisonJob")
 
   private def renameColumns(dataSet: Dataset[Row], keys: Seq[String], prefix: String): Array[Column] = {
     dataSet.columns.map(c =>
@@ -84,7 +86,7 @@ object ComparisonJob {
 
       throw CmpJobDatasetsDifferException(cmd.refPath, cmd.newPath, cmd.outPath, expectedDf.count(), actualDf.count())
     } else {
-      println("Expected and actual datasets are the same.")
+      log.info("Expected and actual datasets are the same.")
     }
   }
 }
