@@ -60,36 +60,35 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
   private[services] def getAuditEntry(item: C, entryType: AuditEntryType, username: String, auditMessage: String): AuditEntry = {
     AuditEntry(menasRef = Some(getMenasRef(item)), entryType = entryType, user = username, timeCreated = ZonedDateTime.now(), message = auditMessage)
   }
-  
+
   private[services] def getAuditEntry(itemName: String, itemVersion: Int, entryType: AuditEntryType, username: String, auditMessage: String): AuditEntry = {
-    AuditEntry(menasRef = Some(MenasReference(Some(versionedMongoRepository.collectionName), itemName, itemVersion)), 
-        entryType = entryType, user = username, timeCreated = ZonedDateTime.now(), message = auditMessage)
+    AuditEntry(menasRef = Some(MenasReference(Some(versionedMongoRepository.collectionName), itemName, itemVersion)),
+      entryType = entryType, user = username, timeCreated = ZonedDateTime.now(), message = auditMessage)
   }
 
   def create(item: C, username: String): Future[Option[C]]
-  
+
   private[services] def create(item: C, username: String, auditMessage: String): Future[Option[C]] = {
     for {
       validation <- validate(item)
-      _          <-
-        if (validation.isValid()) versionedMongoRepository.create(item, username)
-        else throw ValidationException(validation)
+      _ <- if (validation.isValid()) versionedMongoRepository.create(item, username)
+      else throw ValidationException(validation)
       audit <- auditTrailService.create(getAuditEntry(item, CreateEntryType, username, auditMessage))
       detail <- getLatestVersion(item.name)
     } yield detail
   }
-  
+
   def update(username: String, item: C): Future[Option[C]]
 
   private[services] def update(username: String, itemName: String, itemVersion: Int, auditMessage: String)(transform: C => ChangedFieldsUpdateTransformResult[C]): Future[Option[C]] = {
     for {
       version <- getVersion(itemName, itemVersion)
-      transformed <- if(version.isEmpty) Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
-                      else Future.successful(transform(version.get))
+      transformed <- if (version.isEmpty) Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
+      else Future.successful(transform(version.get))
       update <- versionedMongoRepository.update(username, transformed.updatedEntity)
       audit <- {
         val changedFields = transformed.getUpdatedFields()
-        val changedMessage = if(changedFields.isEmpty) "" else s"Changed fields: ${changedFields.mkString(", ")}"
+        val changedMessage = if (changedFields.isEmpty) "" else s"Changed fields: ${changedFields.mkString(", ")}"
         auditTrailService.create(getAuditEntry(itemName, version.get.version, UpdateEntryType, username, s"$auditMessage Updated version: ${version.get.version}. New Version: ${update.version}. $changedMessage"))
       }
     } yield Some(update)

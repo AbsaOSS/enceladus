@@ -15,20 +15,18 @@
 
 package za.co.absa.enceladus.rest.models
 
-case class ChangedField[T](
-  fieldName: String,
-  value1: T,
-  value2: T
-)
+case class ChangedField[T](fieldName: String,
+    value1: T,
+    value2: T)
 
-case class ChangedFieldsUpdateTransformResult[C](
-  updatedEntity: C,
-  fields: Seq[ChangedField[Any]]
-) {
-    /** Generates list of fields, for which two values do not match - i.e have been changed
+case class ChangedFieldsUpdateTransformResult[C](updatedEntity: C,
+    fields: Seq[ChangedField[Any]]) {
+
+  /**
+   * Generates list of fields, for which two values do not match - i.e have been changed
    * @return A list of fields for which values do not match
    */
   def getUpdatedFields(): Seq[String] = {
-    fields.filter({case field => field.value1 != field.value2}).map(_.fieldName).toSeq
+    fields.filter({ case field => field.value1 != field.value2 }).map(_.fieldName).toSeq
   }
 }
