@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.testutils.models
 
-sealed abstract class RestMethod(val methods: String)
+sealed abstract class RestMethod(val method: String)
 
 case object POST extends RestMethod("Post")
 case object GET extends RestMethod("Get")

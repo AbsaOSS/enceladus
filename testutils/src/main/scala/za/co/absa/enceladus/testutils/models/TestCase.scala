@@ -23,7 +23,6 @@ case class TestCase(id: String,
                     payload: String,
                     expectedOutput: String,
                     expectedStatusCode: String) {
-//  val method: RestMethod = RestMethod(methodString)
   val method: RestMethod = methodString.toLowerCase match {
     case "post" => POST
     case "get" => GET
