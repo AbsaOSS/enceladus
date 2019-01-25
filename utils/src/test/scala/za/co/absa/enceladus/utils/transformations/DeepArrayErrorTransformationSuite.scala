@@ -43,8 +43,7 @@ private[transformations] case class TestObj2WithErrorColumn(id: Int, employee: S
 private[transformations] case class FunNumbersWithErrorColumn(id: Int, nums: Seq[String], errors: Seq[ErrorMessage])
 
 // Arrays of arrays of primitives example
-private[transformations] case class GeoDataWithErrorColumn(id: Int, matrix: Seq[Seq[String]])
-
+private[transformations] case class GeoDataWithErrorColumn(id: Int, matrix: Seq[Seq[String]], errors: Seq[ErrorMessage])
 
 class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
 
@@ -90,10 +89,11 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
   )
 
   // Arrays of arrays of primitives
-  val arraysOfArraysOfPrimitivesSample: Seq[GeoData] = Seq(
-    GeoData(1,Seq(Seq("10", "11b"), Seq("11b", "12"))),
-    GeoData(2,Seq(Seq("20f", "300"), Seq("1000", "10-10"))),
-    GeoData(3,Seq(Seq("775", "223"), Seq("100", "0")))
+  val arraysOfArraysOfPrimitivesSample: Seq[GeoDataWithErrorColumn] = Seq(
+    GeoDataWithErrorColumn(1,Seq(Seq("10", "11b"), Seq("11b", "12")),
+      Seq(ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
+    GeoDataWithErrorColumn(2,Seq(Seq("20f", "300"), Seq("1000", "10-10")), Nil),
+    GeoDataWithErrorColumn(3,Seq(Seq("775", "223"), Seq("100", "0")), Nil)
   )
 
   test("Test casting of a plain field with error column") {
@@ -503,6 +503,97 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |  "id" : 1,
         |  "nums" : [ "5", "-100", "9999999" ],
         |  "intNums" : [ 5, -100, 9999999 ],
+        |  "errors" : [ null ]
+        |} ]"""
+        .stripMargin.replace("\r\n", "\n")
+
+    dfOut.printSchema()
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test casting of an array of array of primitives") {
+    val df = spark.sparkContext.parallelize(arraysOfArraysOfPrimitivesSample).toDF
+
+    val dfOut = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, "matrix", "intMatrix", "errors",
+      c => {
+        c.cast(IntegerType)
+      }, c => {
+        when(c.isNotNull.and(c.cast(IntegerType).isNull),
+          callUDF("confCastErr", lit("matrix"), c.cast(StringType)))
+          .otherwise(null)
+      })
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults =  JsonUtils.prettySparkJSON(dfOut.toJSON.collect.mkString("\n"))
+
+    dfOut.explain(true)
+
+    val expectedSchema =
+      """root
+        | |-- id: integer (nullable = false)
+        | |-- matrix: array (nullable = true)
+        | |    |-- element: array (containsNull = true)
+        | |    |    |-- element: string (containsNull = true)
+        | |-- intMatrix: array (nullable = true)
+        | |    |-- element: array (containsNull = true)
+        | |    |    |-- element: integer (containsNull = true)
+        | |-- errors: array (nullable = true)
+        | |    |-- element: struct (containsNull = true)
+        | |    |    |-- errType: string (nullable = true)
+        | |    |    |-- errCode: string (nullable = true)
+        | |    |    |-- errMsg: string (nullable = true)
+        | |    |    |-- errCol: string (nullable = true)
+        | |    |    |-- rawValues: array (nullable = true)
+        | |    |    |    |-- element: string (containsNull = true)
+        | |    |    |-- mappings: array (nullable = true)
+        | |    |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |    |-- mappingTableColumn: string (nullable = true)
+        | |    |    |    |    |-- mappedDatasetColumn: string (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+    val expectedResults =
+      """[ {
+        |  "id" : 1,
+        |  "matrix" : [ [ "10", "11b" ], [ "11b", "12" ] ],
+        |  "intMatrix" : [ [ 10, null ], [ null, 12 ] ],
+        |  "errors" : [ {
+        |    "errType" : "myErrorType",
+        |    "errCode" : "E-1",
+        |    "errMsg" : "Testing This stuff",
+        |    "errCol" : "whatEvColumn",
+        |    "rawValues" : [ "some value" ],
+        |    "mappings" : [ ]
+        |  }, null, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "matrix",
+        |    "rawValues" : [ "11b" ],
+        |    "mappings" : [ ]
+        |  } ]
+        |}, {
+        |  "id" : 2,
+        |  "matrix" : [ [ "20f", "300" ], [ "1000", "10-10" ] ],
+        |  "intMatrix" : [ [ null, 300 ], [ 1000, null ] ],
+        |  "errors" : [ {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "matrix",
+        |    "rawValues" : [ "20f" ],
+        |    "mappings" : [ ]
+        |  }, null, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "matrix",
+        |    "rawValues" : [ "10-10" ],
+        |    "mappings" : [ ]
+        |  } ]
+        |}, {
+        |  "id" : 3,
+        |  "matrix" : [ [ "775", "223" ], [ "100", "0" ] ],
+        |  "intMatrix" : [ [ 775, 223 ], [ 100, 0 ] ],
         |  "errors" : [ null ]
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
