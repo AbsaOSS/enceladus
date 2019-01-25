@@ -22,7 +22,7 @@ import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions}
 
 object ComparisonJob {
 
-  def renameColumns(dataSet: Dataset[Row], keys: Seq[String], prefix: String): Array[Column] = {
+  private def renameColumns(dataSet: Dataset[Row], keys: Seq[String], prefix: String): Array[Column] = {
     dataSet.columns.map(c =>
       if (keys.contains(c)) {
         dataSet(c)
@@ -32,12 +32,12 @@ object ComparisonJob {
       })
   }
 
-  def getKeyBasedOutput(expectedMinusActual: Dataset[Row],
+  private def getKeyBasedOutput(expectedMinusActual: Dataset[Row],
                         actualMinusExpected: Dataset[Row],
                         keys: Seq[String]): DataFrame = {
-    val renamedColumnsExpected = renameColumns(expectedMinusActual ,keys, "expected_")
+    val renamedColumnsExpected = renameColumns(expectedMinusActual, keys, "expected_")
     val dfNewExpected = expectedMinusActual.select(renamedColumnsExpected: _*)
-    val renamedColumnsActual = renameColumns(actualMinusExpected ,keys, "actual_")
+    val renamedColumnsActual = renameColumns(actualMinusExpected, keys, "actual_")
     val dfNewColumnsActual = actualMinusExpected.select(renamedColumnsActual: _*)
 
     dfNewExpected.join(dfNewColumnsActual, keys,"full")
