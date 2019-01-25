@@ -260,28 +260,21 @@ object DeepArrayTransformations {
 
     // Handle arrays (including arrays of arrays) of primitives
     // The output column will also be an array, not an additional element of the existing array
-    def mapNestedArrayOfPrimitives(schema: ArrayType, curColumn: Column): Column = {
+    def mapNestedArrayOfPrimitives(schema: ArrayType, curColumn: Column, expr: Column => Column, doFlatten: Boolean = false): Column = {
       val lambdaName = getLambdaName
       val elemType = schema.elementType
 
       elemType match {
         case _: StructType => throw new IllegalArgumentException(s"Unexpected usage of mapNestedArrayOfPrimitives() on structs.")
         case dt: ArrayType =>
-          val innerArray = mapNestedArrayOfPrimitives(dt, _$(lambdaName))
-          transform(curColumn, lambdaName, innerArray)
-        case dt => transform(curColumn, lambdaName, expression(_$(lambdaName)))
-      }
-    }
-    def mapNestedArrayOfErrors(schema: ArrayType, curColumn: Column): Column = {
-      val lambdaName = getLambdaName
-      val elemType = schema.elementType
-
-      elemType match {
-        case _: StructType => throw new IllegalArgumentException(s"Unexpected usage of mapNestedArrayOfPrimitives() on structs.")
-        case dt: ArrayType =>
-          val innerArray = mapNestedArrayOfPrimitives(dt, _$(lambdaName))
-          transform(curColumn, lambdaName, innerArray)
-        case dt => transform(curColumn, lambdaName, expression(_$(lambdaName)))
+          val innerArray = mapNestedArrayOfPrimitives(dt, _$(lambdaName), expr, doFlatten)
+          if (doFlatten) {
+            flatten(transform(curColumn, lambdaName, innerArray))
+          } else {
+            transform(curColumn, lambdaName, innerArray)
+          }
+        case dt =>
+          transform(curColumn, lambdaName, expr(_$(lambdaName)))
       }
     }
 
@@ -300,7 +293,7 @@ object DeepArrayTransformations {
       }
 
       // Handles primitive data types as well as nested arrays of primitives
-      def handlePrimitive(dt: DataType, transformExpression: Column, errorExpression: Column) = {
+      def handlePrimitive(dt: DataType, transformExpression: Column, errorExpression: Column, doFlatten: Boolean = false): Column = {
         if (isLeaf) {
           if (expression != null) {
             // Retain the original column
@@ -309,7 +302,11 @@ object DeepArrayTransformations {
             // Handle error column for arrays of primitives
             if (errorExpression != null) {
               errorColumnName = SchemaUtils.getUniqueName( "errorList", None)
-              val errorColumn = transform(curColumn, lambdaName, errorExpression).as(errorColumnName)
+              val errorColumn = if (doFlatten) {
+                flatten(transform(curColumn, lambdaName, errorExpression)).as(errorColumnName)
+              } else {
+                transform(curColumn, lambdaName, errorExpression).as(errorColumnName)
+              }
               if (inputColumnName.contains('.')) {
                 val parent = inputColumnName.split('.').dropRight(1).mkString(".")
                 errorColumnName = s"$parent.$errorColumnName"
@@ -354,7 +351,15 @@ object DeepArrayTransformations {
               // as an array of it's own
               // Example: if 'persons' is an array of array of string the output field,
               //          say, 'conformedPersons' needs also to be an array of array of string.
-              handlePrimitive(dt, mapNestedArrayOfPrimitives(dt, _$(lambdaName)), null)
+              val errorExpression = if (errorCondition == null) null else errorCondition(_$(lambdaName))
+              if (errorCondition == null) {
+                handlePrimitive(dt, mapNestedArrayOfPrimitives(dt, _$(lambdaName), expression),
+                  errorExpression = null)
+              } else {
+                //var errorLambda = getLambdaName
+                handlePrimitive(dt, mapNestedArrayOfPrimitives(dt, _$(lambdaName), expression),
+                  mapNestedArrayOfPrimitives(dt, _$(lambdaName), errorCondition, doFlatten = true), doFlatten = true)
+              }
           }
         case dt =>
           // This handles an array of primitives, e.g. arrays of strings etc.
