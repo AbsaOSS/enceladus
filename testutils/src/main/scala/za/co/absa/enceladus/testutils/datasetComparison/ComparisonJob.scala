@@ -26,8 +26,7 @@ object ComparisonJob {
     dataSet.columns.map(c =>
       if (keys.contains(c)) {
         dataSet(c)
-      }
-      else {
+      } else {
         dataSet(c).as(s"$prefix$c")
       })
   }
