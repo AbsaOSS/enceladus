@@ -25,14 +25,14 @@ object ComparisonJob {
   val log: Logger = LogManager.getLogger("enceladus.testutils.ComparisonJob")
 
   private def renameColumns(dataSet: Dataset[Row], keys: Seq[String], prefix: String): DataFrame = {
-    val renamedColumnsExpected = dataSet.columns.map(c =>
+    val renamedColumns = dataSet.columns.map { c =>
       if (keys.contains(c)) {
         dataSet(c)
       } else {
         dataSet(c).as(s"$prefix$c")
-      })
+      }}
 
-    dataSet.select(renamedColumnsExpected: _*)
+    dataSet.select(renamedColumns: _*)
   }
 
   private def getKeyBasedOutput(expectedMinusActual: Dataset[Row],
