@@ -18,7 +18,8 @@ package za.co.absa.enceladus.testutils.datasetComparison
 import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql._
-import za.co.absa.enceladus.testutils.exceptions.{CmpJobDatasetsDifferException, CmpJobSchemasDifferException}
+import org.apache.spark.sql.functions.col
+import za.co.absa.enceladus.testutils.exceptions._
 import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions}
 
 object ComparisonJob {
@@ -44,6 +45,15 @@ object ComparisonJob {
     dfNewExpected.join(dfNewColumnsActual, keys,"full")
   }
 
+  private def checkForDuplicateRows(actualDf: DataFrame, keys: Seq[String], path: String): Unit = {
+    val duplicates = actualDf.groupBy(keys.head, keys.tail: _*).count().filter("`count` >= 2")
+    duplicates.show()
+    if (duplicates.count() > 0) {
+      duplicates.write.format("parquet").save(path)
+      throw DuplicateRowsInDF(path)
+    }
+  }
+
   def main(args: Array[String]): Unit = {
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val dfReaderOptions: DataframeReaderOptions = DataframeReaderOptions(cmd.rawFormat,
@@ -67,6 +77,8 @@ object ComparisonJob {
     val expectedSchema = expectedDfReader.getSchemaWithoutMetadata
     val actualSchema = actualDfReader.getSchemaWithoutMetadata
 
+    if (cmd.keys.isDefined) { checkForDuplicateRows(actualDf, cmd.keys.get, cmd.outPath) }
+
     if (expectedSchema != actualSchema) {
       val diffSchema = actualSchema.diff(expectedSchema) ++ expectedSchema.diff(actualSchema)
       throw CmpJobSchemasDifferException(cmd.refPath, cmd.newPath, diffSchema)
@@ -78,7 +90,7 @@ object ComparisonJob {
     if (expectedMinusActual.count() != 0 || actualMinusExpected.count() != 0) {
       if (cmd.keys.isDefined) {
         val joinedData = getKeyBasedOutput(expectedMinusActual, actualMinusExpected, cmd.keys.get)
-        joinedData.write.format("parquet").save(s"${cmd.outPath}")
+        joinedData.write.format("parquet").save(cmd.outPath)
       } else {
         expectedMinusActual.write.format("parquet").save(s"${cmd.outPath}/expected_minus_actual")
         actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
