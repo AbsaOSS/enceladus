@@ -85,32 +85,33 @@ var SchemaService = new function() {
 			oControl.setBusy(false);
 		}, oControl)	
 	};
-	
-	this.disableSchema = function(sId, iVersion) {
-		var uri = "api/schema/disable/" + encodeURI(sId)
-		if(typeof(iVersion) !== "undefined") {
-			uri += "/" + encodeURI(iVersion)
-		}
-		
-		Functions.ajax(uri , "GET", {}, function(oData) {
-			if(Array.isArray(oData)) {
-				var err = "Disabling schema failed. Clear the following dependencies first:\n";
-				for(var ind in oData) {
-					err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
-				}
-				sap.m.MessageBox.error(err)
-			} else if(typeof(oData) === "object") {
-				sap.m.MessageToast.show("Schema disabled.");
-				if(window.location.hash != "#/schema") {
-					window.location.hash = "#/schema"
-				} else {
-					SchemaService.getSchemaList(true, false)
-				}
-			}
-		}, function() {
-			sap.m.MessageBox.error("Failed to disable schema. Ensure no mapping tables or datasets use this schema(and/or version)")
-		})	
-	};
+
+  this.disableSchema = function(sId, iVersion) {
+    let uri = "api/schema/disable/" + encodeURI(sId);
+    if(typeof(iVersion) !== "undefined") {
+      uri += "/" + encodeURI(iVersion)
+    }
+
+    Functions.ajax(uri , "GET", {}, function(oData) {
+      sap.m.MessageToast.show("Schema disabled.");
+      if(window.location.hash !== "#/schema") {
+        window.location.hash = "#/schema"
+      } else {
+        SchemaService.getSchemaList(true, false)
+      }
+    }, function(xhr) {
+      if (xhr.status === 400) {
+        let err = "Disabling schema failed. Clear the following dependencies first:\n";
+        let oData = JSON.parse(xhr.responseText);
+        for(let ind in oData) {
+          err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
+        }
+        sap.m.MessageBox.error(err)
+      } else {
+        sap.m.MessageBox.error("Failed to disable schema. Ensure no mapping tables or datasets use this schema(and/or version)")
+      }
+    })
+  };
 	
 	this.createSchema = function(sName, sDescription) {
 		Functions.ajax("api/schema/create", "POST", {
@@ -123,13 +124,38 @@ var SchemaService = new function() {
 		}, function() {
 			sap.m.MessageBox.error("Failed to create the schema, try reloading the application or try again later.")
 		})	
-	}
-	
+	};
+
 	this.isUniqueSchemaName = function(sName) {
 		Functions.ajax("api/schema/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
 			model.setProperty("/newSchema/nameUnique", oData)
 		}, function() {
 			sap.m.MessageBox.error("Failed to retreive isUniqueName. Please try again later.")
 		})	
-	}
+	};
+
+  this.fieldSelect = function(sBindingPath, sModelPathBase, oModel, sOutputProperty) {
+    model.setProperty(sOutputProperty, this._buildSchemaPath(sBindingPath, sModelPathBase, oModel));
+  };
+
+  this._buildSchemaPath = function(sBindingPath, sModelPathBase, oModel) {
+    let pathToks = sBindingPath.replace(sModelPathBase, "").split("/");
+
+    let helper = function(aToks, sModelPathAcc, aAcc) {
+      if (aToks.length === 0) {
+        return aAcc.join(".");
+      }
+
+      let rev = aToks.reverse();
+      let sCurrPath = sModelPathAcc + rev.pop() + "/";
+      let curr = oModel.getProperty(sCurrPath);
+      aAcc.push(curr.name);
+
+      let newPath = sCurrPath + rev.pop() + "/";
+
+      return helper(rev.reverse(), newPath, aAcc)
+    };
+
+    return helper(pathToks, sModelPathBase, [])
+  }
 }();

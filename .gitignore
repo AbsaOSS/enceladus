@@ -48,10 +48,12 @@ dependency-reduced-pom.xml
 _testOutput
 myTestCheckpoints
 
-application.properties
-spline.properties
-kafka.properties
-*.conf
+**/main/resources/application.properties
+**/main/resources/application.conf
+**/main/resources/application.yaml
+**/main/resources/application.yml
+**/main/resources/spline.properties
+**/main/resources/kafka.properties
 *.config
 *.keytab
 .DS_Store

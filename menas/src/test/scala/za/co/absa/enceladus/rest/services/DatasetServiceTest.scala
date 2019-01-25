@@ -14,25 +14,12 @@
  */
 package za.co.absa.enceladus.rest.services
 
-import org.scalatest.FunSuite
-import org.scalatest.mock.MockitoSugar
+import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
-import org.scalatest.Matchers._
 
-class DatasetServiceTest extends FunSuite with MockitoSugar {
+class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
 
-  private val datasetMongoRepository = mock[DatasetMongoRepository]
-  private val datasetService = new DatasetService(datasetMongoRepository)
-  private val entityNameOk = "TestDataset"
-  private val entityNameNotOK = "Test Data Set "
+  override val modelRepository = mock[DatasetMongoRepository]
+  override val service = new DatasetService(modelRepository)
 
-   test ("Validate dataset with valid name") {
-      assert (datasetService.validateEntityName(entityNameOk, "Dataset") === ())
-   }
-
-    test ("Validate dataset with invalid name") {
-     the [Exception] thrownBy
-      datasetService.validateEntityName(entityNameNotOK,"Dataset") should  have
-      message(s"Dataset name must not contain whitespace :$entityNameNotOK")
-  }
 }

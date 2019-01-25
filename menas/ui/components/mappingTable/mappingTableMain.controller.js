@@ -29,7 +29,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
     this._model = sap.ui.getCore().getModel()
     this._router = sap.ui.core.UIComponent.getRouterFor(this)
     this._router.getRoute("mappingTables").attachMatched(function(oEvent) {
-      var arguments = oEvent.getParameter("arguments")
+      let arguments = oEvent.getParameter("arguments")
       this.routeMatched(arguments);
     }, this);
 
@@ -56,8 +56,8 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   defaultDialogAfterOpen : function(oEv) {
-    var scrollCont = sap.ui.getCore().byId("defValFieldSelectScroll");
-    var selected = sap.ui.getCore().byId("newDefaultValueFieldSelector").getSelectedItem()
+    let scrollCont = sap.ui.getCore().byId("defValFieldSelectScroll");
+    let selected = sap.ui.getCore().byId("schemaFieldSelector").getSelectedItem();
 
     // this needs to be already rendered for it to work
     setTimeout(function() {
@@ -68,9 +68,9 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   defaultCancel : function() {
     // This is a workaround for a bug in the Tree component of 1.56.x and 1.58.x
     // TODO: verify whether this was fixed in the subsequent versions
-    var tree = sap.ui.getCore().byId("newDefaultValueFieldSelector")
-    var items = tree.getItems()
-    for ( var i in items) {
+    let tree = sap.ui.getCore().byId("schemaFieldSelector");
+    let items = tree.getItems();
+    for ( let i in items) {
       items[i].setSelected(false)
     }
 
@@ -80,18 +80,18 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
 
   resetNewDefaultValueState : function(oEv) {
     sap.ui.getCore().byId("newDefaultValueExpr").setValueState(sap.ui.core.ValueState.None)
-    sap.ui.getCore().byId("newDefaultValueExpr").setValueStateText("")
+    sap.ui.getCore().byId("newDefaultValueExpr").setValueStateText("");
 
-    var items = sap.ui.getCore().byId("newDefaultValueFieldSelector").getItems();
-    for ( var ind in items) {
+    let items = sap.ui.getCore().byId("schemaFieldSelector").getItems();
+    for ( let ind in items) {
       items[ind].setHighlight(sap.ui.core.MessageType.None)
     }
   },
 
   validateNewDefaultValue : function() {
     this.resetNewDefaultValueState();
-    var oDef = this._model.getProperty("/newDefaultValue")
-    var isOk = true
+    let oDef = this._model.getProperty("/newDefaultValue")
+    let isOk = true
 
     if (!oDef.value || oDef.value === "") {
       sap.ui.getCore().byId("newDefaultValueExpr").setValueState(sap.ui.core.ValueState.Error)
@@ -100,8 +100,8 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
     }
 
     if (!oDef.columnName || oDef.columnName === "") {
-      var items = sap.ui.getCore().byId("newDefaultValueFieldSelector").getItems();
-      for ( var ind in items) {
+      let items = sap.ui.getCore().byId("schemaFieldSelector").getItems();
+      for ( let ind in items) {
         items[ind].setHighlight(sap.ui.core.MessageType.Error)
       }
       sap.m.MessageToast.show("Please choose the target column for this default value")
@@ -111,44 +111,22 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   schemaFieldSelect : function(oEv) {
-    var bind = oEv.getParameter("listItem").getBindingContext().getPath();
-    sap.ui.getCore().getModel().setProperty("/newDefaultValue/columnName", this._buildSchemaPath(bind));
-  },
-
-  _buildSchemaPath : function(sBindingPath) {
-    var modelPathBase = "/currentMappingTable/schema/fields/"
-
-      var pathToks = sBindingPath.replace(modelPathBase, "").split("/")
-      var model = sap.ui.getCore().getModel()
-
-      var helper = function(aToks, sModelPathAcc, aAcc) {
-      if (aToks.length === 0)
-        return aAcc.join(".")
-
-        var rev = aToks.reverse()
-        var sCurrPath = sModelPathAcc + rev.pop() + "/";
-
-      var curr = model.getProperty(sCurrPath)
-      aAcc.push(curr.name)
-
-      var newPath = sCurrPath + rev.pop() + "/";
-
-      return helper(rev.reverse(), newPath, aAcc)
-    }
-
-    return helper(pathToks, modelPathBase, [])
+    let bind = oEv.getParameter("listItem").getBindingContext().getPath();
+    let modelPathBase = "/currentMappingTable/schema/fields/";
+    let model = sap.ui.getCore().getModel();
+    SchemaService.fieldSelect(bind, modelPathBase, model, "/newDefaultValue/columnName");
   },
 
   defaultSubmit : function() {
-    var newDef = this._model.getProperty("/newDefaultValue")
-    var bindPath = newDef["bindPath"];
+    let newDef = this._model.getProperty("/newDefaultValue")
+    let bindPath = newDef["bindPath"];
 
-    var currMT = this._model.getProperty("/currentMappingTable")
+    let currMT = this._model.getProperty("/currentMappingTable")
 
     if (this.validateNewDefaultValue()) {
       // send and update UI
       if (newDef.isEdit) {
-        var defs = currMT["defaultMappingValue"].map(function(el) {
+        let defs = currMT["defaultMappingValue"].map(function(el) {
           return {
             columnName : el.columnName,
             value : el.value
@@ -165,23 +143,23 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
 
   _schemaFieldSelectorSelectPath : function(sExpandTo) {
 
-    var aTokens = sExpandTo.split(".");
-    var oCtl = sap.ui.getCore().byId("newDefaultValueFieldSelector")
+    let aTokens = sExpandTo.split(".");
+    let oCtl = sap.ui.getCore().byId("schemaFieldSelector")
 
     oCtl.collapseAll();
 
-    var sRealPath = "/currentMappingTable/schema/fields"
-      // var sNewPath = "/currentMappingTable/schema/children"
+    let sRealPath = "/currentMappingTable/schema/fields"
+      // let sNewPath = "/currentMappingTable/schema/children"
 
-      var model = sap.ui.getCore().getModel();
+      let model = sap.ui.getCore().getModel();
     // model.setProperty(sNewPath, model.getProperty(sRealPath))
 
-    var helper = function(aToks, sModelPathAcc) {
+    let helper = function(aToks, sModelPathAcc) {
       if (aToks.length === 0) {
-        var items = oCtl.getItems()
-        for ( var i in items) {
-          var p = items[i].getBindingContext().getPath()
-          var modelPath = sModelPathAcc.substring(0, sModelPathAcc.length - 9) // substring
+        let items = oCtl.getItems()
+        for ( let i in items) {
+          let p = items[i].getBindingContext().getPath()
+          let modelPath = sModelPathAcc.substring(0, sModelPathAcc.length - 9) // substring
           // to get rid of the children suffix
           if (p === modelPath) {
             oCtl.setSelectedItem(items[i]);
@@ -189,14 +167,14 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
           }
         }
       } else {
-        var curr = model.getProperty(sModelPathAcc);
-        for ( var i in curr) {
+        let curr = model.getProperty(sModelPathAcc);
+        for ( let i in curr) {
           if (curr[i]["name"] === aToks[0]) {
-            var newPath = sModelPathAcc + "/" + i + "/children"
-            var items = oCtl.getItems()
-            for ( var x in items) {
-              var itemPath = items[x].data("path") + "." + items[x].getTitle()
-              var modelPath = curr[i]["path"] + "." + curr[i]["name"]
+            let newPath = sModelPathAcc + "/" + i + "/children"
+            let items = oCtl.getItems()
+            for ( let x in items) {
+              let itemPath = items[x].data("path") + "." + items[x].getTitle()
+              let modelPath = curr[i]["path"] + "." + curr[i]["name"]
               if (itemPath === modelPath) {
                 oCtl.expand(parseInt(x));
                 break;
@@ -214,11 +192,11 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   onDefaultValueMenuAction : function(oEv) {
-    var sAction = oEv.getParameter("item").data("action")
-    var sBindPath = oEv.getParameter("item").getBindingContext().getPath();
+    let sAction = oEv.getParameter("item").data("action")
+    let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
 
     if (sAction === "edit") {
-      var old = this._model.getProperty(sBindPath);
+      let old = this._model.getProperty(sBindPath);
       old.title = "Edit";
       old.isEdit = true;
       old.bindPath = sBindPath;
@@ -230,10 +208,10 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
         actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
         onClose: function(oResponse) {
           if(oResponse == sap.m.MessageBox.Action.YES) {
-            var toks = sBindPath.split("/")
-            var index = toks[toks.length-1]
-            var currMT = this._model.getProperty("/currentMappingTable")
-            var defs = currMT["defaultMappingValue"].filter((el, ind) => ind !== parseInt(index))
+            let toks = sBindPath.split("/")
+            let index = toks[toks.length-1]
+            let currMT = this._model.getProperty("/currentMappingTable")
+            let defs = currMT["defaultMappingValue"].filter((el, ind) => ind !== parseInt(index))
             MappingTableService.editDefaultValues(currMT.name, currMT.version, defs);
           }
         }.bind(this)
@@ -242,19 +220,19 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   metadataPress : function(oEv) {
-    var binding = oEv.getSource().getBindingContext().getPath() + "/metadata";
-    var bindingArr = binding + "Arr";
+    let binding = oEv.getSource().getBindingContext().getPath() + "/metadata";
+    let bindingArr = binding + "Arr";
     // hmm bindAggregation doesn't take formatter :-/
-    var arrMeta = Formatters.objToKVArray(this._model.getProperty(binding))
+    let arrMeta = Formatters.objToKVArray(this._model.getProperty(binding))
     this._model.setProperty(bindingArr, arrMeta)
 
-    var oMessageTemplate = new sap.m.MessageItem({
+    let oMessageTemplate = new sap.m.MessageItem({
       title : '{key}',
       subtitle : '{value}',
       type : sap.ui.core.MessageType.None
     });
 
-    var oMessagePopover = new sap.m.MessagePopover({
+    let oMessagePopover = new sap.m.MessagePopover({
       items : {
         path : bindingArr,
         template : oMessageTemplate
@@ -267,7 +245,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   MTAddCancel : function() {
     // This is a workaround for a bug in the Tree component of 1.56.5
     // TODO: verify whether this was fixed in the subsequent versions
-    var tree = sap.ui.getCore().byId("addMtHDFSBrowser")
+    let tree = sap.ui.getCore().byId("addMtHDFSBrowser")
     tree.unselectAll();
 
     tree.collapseAll();
@@ -276,7 +254,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   MTAddSubmit : function() {
-    var newMT = this._model.getProperty("/newMappingTable")
+    let newMT = this._model.getProperty("/newMappingTable")
     // we may wanna wait for a call to determine whether this is unique
     if (!newMT.isEdit && newMT.name && typeof (newMT.nameUnique) === "undefined") {
       // need to wait for the service call
@@ -309,8 +287,8 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
 
   validateNewMappingTable : function() {
     this.resetNewMappingValueState();
-    var oMT = this._model.getProperty("/newMappingTable")
-    var isOk = true
+    let oMT = this._model.getProperty("/newMappingTable")
+    let isOk = true
 
     if (!oMT.name || oMT.name === "") {
       sap.ui.getCore().byId("newMappingTableName").setValueState(sap.ui.core.ValueState.Error)
@@ -348,14 +326,14 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   onAfterRendering : function() {
     // get schemas after rendering. This will be used for add/edit
     // functionality
-    var schemas = this._model.getProperty("/schemas")
+    let schemas = this._model.getProperty("/schemas")
     if (!schemas || schemas.length === 0) {
       SchemaService.getSchemaList(false, true);
     }
   },
 
   onEditPress : function() {
-    var current = this._model.getProperty("/currentMappingTable");
+    let current = this._model.getProperty("/currentMappingTable");
 
     current.isEdit = true;
     current.title = "Edit";
@@ -373,14 +351,14 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
       title : "Add"
     });
 
-    var schemas = this._model.getProperty("/schemas")
+    let schemas = this._model.getProperty("/schemas")
 
     if (schemas.length > 0) {
       this._model.setProperty("/newSchema", {
         schemaName : schemas[0]._id
       });
 
-      var sSchema = this._model.getProperty("/schemas/0/_id")
+      let sSchema = this._model.getProperty("/schemas/0/_id")
       SchemaService.getAllSchemaVersions(sSchema, sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"))
     }
   },
@@ -392,12 +370,12 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   schemaSelect : function(oEv) {
-    var sSchemaId = oEv.getParameter("selectedItem").getKey()
+    let sSchemaId = oEv.getParameter("selectedItem").getKey()
     SchemaService.getAllSchemaVersions(sSchemaId, sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"))
   },
 
   mappingTableSelected : function(oEv) {
-    var selected = oEv.getParameter("listItem").data("id")
+    let selected = oEv.getParameter("listItem").data("id")
     this._router.navTo("mappingTables", {
       id : selected
     });
@@ -408,7 +386,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   onRemovePress : function(oEv) {
-    var current = this._model.getProperty("/currentMappingTable")
+    let current = this._model.getProperty("/currentMappingTable")
 
     sap.m.MessageBox.show("This action will remove ALL versions of the mapping table definition. \nAre you sure?.", {
       icon : sap.m.MessageBox.Icon.WARNING,
@@ -435,7 +413,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   toSchema : function(oEv) {
-    var src = oEv.getSource();
+    let src = oEv.getSource();
     sap.ui.core.UIComponent.getRouterFor(this).navTo("schemas", {
       id : src.data("name"),
       version : src.data("version")
@@ -443,7 +421,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   fetchSchema : function(oEv) {
-    var mappingTable = sap.ui.getCore().getModel().getProperty("/currentMappingTable")
+    let mappingTable = sap.ui.getCore().getModel().getProperty("/currentMappingTable");
     if (typeof (mappingTable.schema) === "undefined") {
       SchemaService.getSchemaVersion(mappingTable.schemaName, mappingTable.schemaVersion, "/currentMappingTable/schema")
     }
@@ -454,28 +432,4 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
       this.fetchSchema();
   }
 
-  /**
-   * Similar to onAfterRendering, but this hook is invoked before the controller's View is re-rendered (NOT before the
-   * first rendering! onInit() is used for that one!).
-   *
-   * @memberOf components.mappingTable.mappingTableMain
-   */
-//onBeforeRendering: function() {
-
-//},
-  /**
-   * Called when the View has been rendered (so its HTML is part of the document). Post-rendering manipulations of the
-   * HTML could be done here. This hook is the same one that SAPUI5 controls get after being rendered.
-   *
-   * @memberOf components.mappingTable.mappingTableMain
-   */
-
-  /**
-   * Called when the Controller is destroyed. Use this one to free resources and finalize activities.
-   *
-   * @memberOf components.mappingTable.mappingTableMain
-   */
-//onExit: function() {
-
-//}
 });

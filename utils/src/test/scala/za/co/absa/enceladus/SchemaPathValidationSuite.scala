@@ -49,48 +49,48 @@ class SchemaPathValidationSuite extends FunSuite {
   test("Validator should be able to detect column names that does not exist") {
 
     // These should pass the validation
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "id").isEmpty)
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "person.firstName").isEmpty)
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "orders.orderdate").isEmpty)
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "orders.deliverdate").isEmpty)
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "orders.payment.due").isEmpty)
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "matrix.bar").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "id").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "person.firstName").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "orders.orderdate").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "orders.deliverdate").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "orders.payment.due").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "matrix.bar").isEmpty)
 
-    assert(SchemaPathValidator.validateSchemaPathParent("table", schema, "matrix.something").isEmpty)
-    assert(SchemaPathValidator.validateSchemaPathParent("table", schema, "person.P2").isEmpty)
-    assert(SchemaPathValidator.validateSchemaPathParent("table", schema, "orders.new_order").isEmpty)
-    assert(SchemaPathValidator.validateSchemaPathParent("table", schema, "orders.payment.NEWFIELD").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPathParent(schema, "matrix.something").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPathParent(schema, "person.P2").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPathParent(schema, "orders.new_order").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPathParent(schema, "orders.payment.NEWFIELD").isEmpty)
 
     // These should not pass the validation
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "ID").nonEmpty)
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "person.FN").nonEmpty)
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "orders.OrderDate").nonEmpty)
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "orders.deliver_date").nonEmpty)
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "orders.payment.DUE").nonEmpty)
-    assert(SchemaPathValidator.validateSchemaPath("table", schema, "matrix.bar12").nonEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "ID").nonEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "person.FN").nonEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "orders.OrderDate").nonEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "orders.deliver_date").nonEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "orders.payment.DUE").nonEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "matrix.bar12").nonEmpty)
 
     // tagret attribute should not exist
     //assert(SchemaPathValidator.validateSchemaPathParent("table", schema, "person.firstName").nonEmpty)
 
-    assert(SchemaPathValidator.validateSchemaPathParent("table", schema, "matrix.bar.something").nonEmpty)
-    assert(SchemaPathValidator.validateSchemaPathParent("table", schema, "person.firstName.val").nonEmpty)
-    assert(SchemaPathValidator.validateSchemaPathParent("table", schema, "orders.orderdate.extra").nonEmpty)
-    assert(SchemaPathValidator.validateSchemaPathParent("table", schema, "orders.payment.made.metadata").nonEmpty)
+    assert(SchemaPathValidator.validateSchemaPathParent(schema, "matrix.bar.something").nonEmpty)
+    assert(SchemaPathValidator.validateSchemaPathParent(schema, "person.firstName.val").nonEmpty)
+    assert(SchemaPathValidator.validateSchemaPathParent(schema, "orders.orderdate.extra").nonEmpty)
+    assert(SchemaPathValidator.validateSchemaPathParent(schema, "orders.payment.made.metadata").nonEmpty)
 
-    val issues1 = SchemaPathValidator.validateSchemaPath("table", schema, "person.firstname")
+    val issues1 = SchemaPathValidator.validateSchemaPath(schema, "person.firstname")
     assert(issues1.nonEmpty)
     val msg1 = extractMag(issues1.head)
     assert(msg1.contains("Column name 'person.firstname' does not case-sensitively match 'person.firstName"))
 
-    val issues2 = SchemaPathValidator.validateSchemaPath("table", schema, "orders.orderDate")
+    val issues2 = SchemaPathValidator.validateSchemaPath(schema, "orders.orderDate")
     assert(issues2.nonEmpty)
     val msg2 = extractMag(issues2.head)
     assert(msg2.contains("Column name 'orders.orderDate' does not case-sensitively match 'orders.orderdate"))
 
-    val issues3 = SchemaPathValidator.validateSchemaPath("table", schema, "orders.unknowncolumn")
+    val issues3 = SchemaPathValidator.validateSchemaPath(schema, "orders.unknowncolumn")
     assert(issues3.nonEmpty)
     val msg3 = extractMag(issues3.head)
-    assert(msg3.contains("Column name 'orders.unknowncolumn' does not exist in table"))
+    assert(msg3.contains("Column name 'orders.unknowncolumn' does not exist"))
   }
 
   test("Validator should be able to detect non-primitive types") {

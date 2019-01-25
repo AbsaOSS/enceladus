@@ -32,7 +32,7 @@ var DatasetService = new function() {
 
     this.getLatestDatasetVersion = function(sId) {
         Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/latest", "GET", {}, function(oData) {
-            model.setProperty("/currentDataset", oData)
+          model.setProperty("/currentDataset", oData);
         }, function() {
             sap.m.MessageBox.error("Failed to get the detail of the dataset. Please wait a moment and try reloading the application");
             window.location.hash = "#/dataset"
@@ -52,35 +52,36 @@ var DatasetService = new function() {
     };
 
     this.disableDataset = function(sId, iVersion) {
-        var uri = "api/dataset/disable/" + encodeURI(sId);
-        if(typeof(iVersion) !== "undefined") {
-            uri += "/" + encodeURI(iVersion)
-        }
+      let uri = "api/dataset/disable/" + encodeURI(sId);
+      if(typeof(iVersion) !== "undefined") {
+          uri += "/" + encodeURI(iVersion)
+      }
 
-        Functions.ajax(uri , "GET", {}, function(oData) {
-            if(Array.isArray(oData)) {
-                var err = "Disabling dataset failed. Clear the following dependencies first:\n";
-                for(var ind in oData) {
-                    err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
-                }
-                sap.m.MessageBox.error(err)
-            } else if(typeof(oData) === "object") {
-                sap.m.MessageToast.show("Dataset disabled.");
-                if(window.location.hash !== "#/dataset") {
-                    window.location.hash = "#/dataset"
-                } else {
-                    DatasetService.getDatasetList(true, false)
-                }
-            }
-        }, function() {
-            sap.m.MessageBox.error("Failed to disable dataset.")
-        })
+      Functions.ajax(uri , "GET", {}, function(oData) {
+        sap.m.MessageToast.show("Dataset disabled.");
+        if(window.location.hash !== "#/dataset") {
+            window.location.hash = "#/dataset"
+        } else {
+            DatasetService.getDatasetList(true, false)
+        }
+      }, function(xhr) {
+        if (xhr.status === 400) {
+          let err = "Disabling dataset failed. Clear the following dependencies first:\n";
+          let oData = JSON.parse(xhr.responseText);
+          for(let ind in oData) {
+            err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
+          }
+          sap.m.MessageBox.error(err)
+        } else {
+          sap.m.MessageBox.error("Failed to disable dataset.")
+        }
+      })
     };
 
-    this.isUniqueDatasetName = function(sName) {
-        model.setProperty("/newDataset/nameUsed", undefined);
+    this.isUniqueDatasetName = function(sName, model) {
+        model.setProperty("/nameUsed", undefined);
         Functions.ajax("api/dataset/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
-            model.setProperty("/newDataset/nameUnique", oData)
+            model.setProperty("/nameUnique", oData)
         }, function() {
             sap.m.MessageBox.error("Failed to retreive isUniqueName. Please try again later.")
         })

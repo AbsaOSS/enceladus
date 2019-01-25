@@ -17,6 +17,7 @@ package za.co.absa.enceladus.rest.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{Dataset, UsedIn}
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
 import scala.concurrent.Future
@@ -25,7 +26,7 @@ import scala.concurrent.Future
 class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository)
   extends VersionedModelService(datasetMongoRepository) {
 
-  override def update(username: String, dataset: Dataset): Future[Dataset] = {
+  override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
     super.update(username, dataset.name) { latest =>
       latest
         .setSchemaName(dataset.schemaName)
@@ -40,9 +41,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     Future.successful(UsedIn())
   }
 
-  override def create(newDataset: Dataset, username: String): Future[Dataset] = {
-    validateEntityName(newDataset.name,"Dataset")
-
+  override def create(newDataset: Dataset, username: String): Future[Option[Dataset]] = {
     val dataset = Dataset(
       name = newDataset.name,
       version = 0,
@@ -54,4 +53,11 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       conformance = List())
     super.create(dataset, username)
   }
+
+  def addConformanceRule(username: String, datasetName: String, rule: ConformanceRule): Future[Option[Dataset]] = {
+    super.update(username, datasetName) { dataset =>
+      dataset.copy(conformance = dataset.conformance :+ rule)
+    }
+  }
+
 }

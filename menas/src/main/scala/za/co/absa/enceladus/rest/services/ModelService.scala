@@ -23,7 +23,7 @@ import scala.concurrent.Future
 abstract class ModelService[C](mongoRepository: MongoRepository[C]) {
 
   def isUniqueName(name: String): Future[Boolean] = {
-    mongoRepository.isUniqueName(name).head()
+    mongoRepository.isUniqueName(name)
   }
 
   def create(item: C): Future[Completed] = {

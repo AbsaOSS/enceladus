@@ -18,15 +18,14 @@ package za.co.absa.enceladus.dao
 import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
-
 import org.apache.commons.httpclient.HttpStatus
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClients
 import org.apache.log4j.LogManager
-
-import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.atum.model._
+import za.co.absa.atum.utils.ControlUtils
+import za.co.absa.enceladus.dao.EnceladusRestDAO.{sessionCookie, csrfToken}
 import za.co.absa.enceladus.model._
 
 import scala.util.Try
@@ -49,7 +48,7 @@ object MenasRestDAO extends MenasDAO {
     Try({
       val runToSave = if (run.uniqueId.isEmpty) run.copy(uniqueId = Some(UUID.randomUUID().toString)) else run
       val json = ControlUtils.asJson(runToSave)
-      val url = s"$restBase/runs?uname=$userName"
+      val url = s"$restBase/runs"
 
       if (sendPostJson(url, json)) {
         runToSave.uniqueId.get
@@ -69,7 +68,7 @@ object MenasRestDAO extends MenasDAO {
     */
   def updateControlMeasure(uniqueId: String,
                            controlMeasure: ControlMeasure): Boolean = {
-    val url = s"$restBase/runs/updateControlMeasure/$uniqueId?uname=$userName"
+    val url = s"$restBase/runs/updateControlMeasure/$uniqueId"
     val json = ControlUtils.asJson(controlMeasure)
 
     sendPostJson(url, json)
@@ -77,7 +76,7 @@ object MenasRestDAO extends MenasDAO {
 
   def updateRunStatus(uniqueId: String,
                       runStatus: RunStatus): Boolean = {
-    val url = s"$restBase/runs/updateRunStatus/$uniqueId?uname=$userName"
+    val url = s"$restBase/runs/updateRunStatus/$uniqueId"
     val json = ControlUtils.asJson(runStatus)
 
     sendPostJson(url, json)
@@ -92,7 +91,7 @@ object MenasRestDAO extends MenasDAO {
     */
   def updateSplineReference(uniqueId: String,
                             splineRef: SplineReference): Boolean = {
-    val url = s"$restBase/runs/updateSplineReference/$uniqueId?uname=$userName"
+    val url = s"$restBase/runs/updateSplineReference/$uniqueId"
     val json = ControlUtils.asJson(splineRef)
 
     sendPostJson(url, json)
@@ -108,7 +107,7 @@ object MenasRestDAO extends MenasDAO {
     */
   def appendCheckpointMeasure(uniqueId: String,
                               checkpoint: Checkpoint): Boolean = {
-    val url = s"$restBase/runs/addCheckpoint/$uniqueId?uname=$userName"
+    val url = s"$restBase/runs/addCheckpoint/$uniqueId"
     val json = ControlUtils.asJson(checkpoint)
 
     sendPostJson(url, json)
@@ -119,6 +118,8 @@ object MenasRestDAO extends MenasDAO {
       log.info(s"URL: $url POST: $json")
       val httpClient = HttpClients.createDefault
       val httpPost = new HttpPost(url)
+      httpPost.addHeader("cookie", sessionCookie)
+      httpPost.addHeader("X-CSRF-TOKEN", csrfToken)
 
       httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON))
 

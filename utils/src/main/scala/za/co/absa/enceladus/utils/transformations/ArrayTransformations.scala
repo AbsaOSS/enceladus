@@ -15,17 +15,16 @@
 
 package za.co.absa.enceladus.utils.transformations
 
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.api.java.UDF1
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.api.java.UDF2
 import org.slf4j.LoggerFactory
-import org.apache.spark.sql.Column
 import org.apache.spark.storage.StorageLevel
+
+import scala.collection.mutable.ListBuffer
 
 object ArrayTransformations {
 
@@ -213,4 +212,5 @@ object ArrayTransformations {
       }
     }
   }
+
 }

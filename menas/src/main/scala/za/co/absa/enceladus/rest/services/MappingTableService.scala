@@ -35,9 +35,7 @@ class MappingTableService @Autowired()(mappingTableMongoRepository: MappingTable
     }
   }
 
-  override def create(mt: MappingTable, username: String): Future[MappingTable] = {
-    validateEntityName(mt.name, "MappingTable")
-
+  override def create(mt: MappingTable, username: String): Future[Option[MappingTable]] = {
     val mappingTable = MappingTable(
       name = mt.name,
       description = mt.description,
@@ -48,7 +46,7 @@ class MappingTableService @Autowired()(mappingTableMongoRepository: MappingTable
     super.create(mappingTable, username)
   }
 
-  override def update(username: String, mt: MappingTable): Future[MappingTable] = {
+  override def update(username: String, mt: MappingTable): Future[Option[MappingTable]] = {
     super.update(username, mt.name) { latest =>
       latest
         .setHDFSPath(mt.hdfsPath)
