@@ -21,9 +21,16 @@ import za.co.absa.enceladus.testutils.models._
 
 import scala.annotation.switch
 
-
+/**
+  * Object created for easier use and run of REST API tests. Providing many methods making testers life easier.
+  */
 object RestCaller {
 
+  /**
+    * Runs, evaluates and returns the result of a REST API call.
+    * @param testCase [[TestCase]] instance with information about the test to be ran and evaluated
+    * @return Returns a result in a form of [[TestCaseResult]]
+    */
   def run(testCase: TestCase): TestCaseResult = {
     lazy val callOutput = call(testCase.method, testCase.url, testCase.payload, testCase.contentType)
     val time = calculateTime { callOutput }
@@ -36,6 +43,14 @@ object RestCaller {
       callOutput.text, testCase.expectedOutput, statusCodeMessage, time)
   }
 
+  /**
+    * Calls a specified REST API method
+    * @param method Method type to be called. POST, GET, PUT, UPDATE
+    * @param url Url of the call
+    * @param payload Data to be sent with the call
+    * @param contentType Content type of the payload
+    * @return Returns a response from the REST API call, which can be later evaluated
+    */
   def call(method: RestMethod, url: String, payload: String, contentType: String): Response = {
     val headers: Map[String, String] = Map("content-type" -> contentType)
     (method: @switch) match {
@@ -46,18 +61,46 @@ object RestCaller {
     }
   }
 
+  /**
+    * Executes POST REST API call
+    * @param url Url of the call
+    * @param payload Data to be sent with the call
+    * @param headers Headers for the call
+    * @return Returns a response from the REST API call, which can be later evaluated
+    */
   private def callPost(url: String, payload: String, headers: Map[String, String]): Response = {
     requests.post(url, data = payload, headers = headers)
   }
 
+  /**
+    * Executes GET REST API call
+    * @param url Url of the call
+    * @param payload Data to be sent with the call
+    * @param headers Headers for the call
+    * @return Returns a response from the REST API call, which can be later evaluated
+    */
   private def callGet(url: String, payload: String, headers: Map[String, String]): Response = {
     requests.get(url, data = payload, headers = headers)
   }
 
+  /**
+    * Executes DELETE REST API call
+    * @param url Url of the call
+    * @param payload Data to be sent with the call
+    * @param headers Headers for the call
+    * @return Returns a response from the REST API call, which can be later evaluated
+    */
   private def callDelete(url: String, payload: String, headers: Map[String, String]): Response = {
     requests.delete(url, data = payload, headers = headers)
   }
 
+  /**
+    * Executes PUT REST API call
+    * @param url Url of the call
+    * @param payload Data to be sent with the call
+    * @param headers Headers for the call
+    * @return Returns a response from the REST API call, which can be later evaluated
+    */
   private def callPut(url: String, payload: String, headers: Map[String, String]): Response = {
     requests.put(url, data = payload, headers = headers)
   }

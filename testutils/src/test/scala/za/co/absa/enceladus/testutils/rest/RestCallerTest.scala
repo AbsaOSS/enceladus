@@ -55,7 +55,7 @@ class RestCallerTest extends FunSuite with BeforeAndAfterEach {
 
     val testCaseResult: TestCaseResult = RestCaller.run(testCase)
     assert(testCaseResult.statusCode == "Should be 200, is 200")
-    assert(testCaseResult.comparison.contains("\"op\": \"add\",\n  \"path\": \"/origin\","))
+    assert(testCaseResult.diff.contains("\"op\": \"add\",\n  \"path\": \"/origin\","))
     assert(testCaseResult.elapsedTime > 0)
   }
 

@@ -15,6 +15,19 @@
 
 package za.co.absa.enceladus.testutils.models
 
+/**
+  * Representation of one test case to be executed.
+  *
+  * @param id Unique identifier of the [[TestCase]] and corresponding [[TestCaseResult]]. Beware, uniqueness is not
+  *           enforced or checked, this is up to the tester/user.
+  * @param name Name of the test - only for readability purposes
+  * @param methodString REST call method as a string. Choices are post, get, put and update
+  * @param contentType Generally supported content types for rest call
+  * @param url REST call URL
+  * @param payload Data to be passed with the call to the server
+  * @param expectedOutput Expected output of this test case
+  * @param expectedStatusCode Expected status code of the REST call response
+  */
 case class TestCase(id: String,
                     name: String,
                     methodString: String,

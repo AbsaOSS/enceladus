@@ -37,7 +37,7 @@ class TestRunTest extends FunSuite with BeforeAndAfterEach {
 
     assert(addedResult.id == "003")
     assert(addedResult.name == "ThirdCall")
-    assert(addedResult.comparison == "{}")
+    assert(addedResult.diff == "{}")
     assert(addedResult.passed)
     assert(addedResult.input == "{}")
     assert(addedResult.output == "{}")
