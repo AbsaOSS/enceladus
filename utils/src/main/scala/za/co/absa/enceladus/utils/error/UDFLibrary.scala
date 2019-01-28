@@ -46,7 +46,7 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
     ErrorMessage.confNegErr(errCol, rawValue)
   })
 
-  spark.udf.register("arrayDistinctErrors", (arr: mutable.WrappedArray[ErrorMessage]) => arr.distinct)
+  spark.udf.register("arrayDistinctErrors", (arr: mutable.WrappedArray[ErrorMessage]) => arr.distinct.filter((a: AnyRef) => a != null))
 
   val cleanErrCol = new UDF1[Seq[Row], Seq[Row]] {
     override def call(t1: Seq[Row]) = {
