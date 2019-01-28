@@ -88,23 +88,16 @@ class NegationRuleSuite extends FunSuite with SparkTestBase {
     testRule(inputDataset, expectedDataset, expectedJSON)
   }
 
-  private def testRule(inputDataset: Dataset[String], enceladusDataset: ConfDataset, expectedJSON: String) = {
+  private def testRule(inputDataset: Dataset[String], enceladusDataset: ConfDataset, expectedJSON: String): Unit = {
     val inputDf = spark.read.schema(NegationRuleSamples.schema).json(inputDataset)
     spark.conf.set("spark.sql.session.timeZone", "GMT")
 
-    inputDf.printSchema()
-    inputDf.show
-
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
-
     implicit val enableCF: Boolean = false
     mockWhen(dao.getDataset("Test Name", 1)) thenReturn enceladusDataset
 
     val conformed = DynamicInterpreter.interpret(enceladusDataset, inputDf).cache
-
-    conformed.printSchema()
-    conformed.show
 
     val conformedJSON = conformed.toJSON.collect().mkString("\n")
 
@@ -113,6 +106,13 @@ class NegationRuleSuite extends FunSuite with SparkTestBase {
       println(expectedJSON)
       println("ACTUAL:")
       println(conformedJSON)
+      println("DETAILS (Input):")
+      inputDf.printSchema()
+      inputDf.show
+      println("DETAILS (Conformed):")
+      conformed.printSchema()
+      conformed.show
+
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
     }
   }

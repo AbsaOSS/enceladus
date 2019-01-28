@@ -33,12 +33,9 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
 
     spark.conf.set("spark.sql.session.timeZone", "GMT")
 
-    inputDf.printSchema()
-    inputDf.show
-
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
-    implicit val progArgs = CmdConfig(reportDate = "2017-11-01")
-    implicit val enableCF = false
+    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
+    implicit val enableCF: Boolean = false
 
     mockWhen (dao.getDataset("Orders Conformance", 1)) thenReturn CastingRuleSamples.ordersDS
 
@@ -47,14 +44,17 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
     import spark.implicits._
     val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS, inputDf).cache
 
-    val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
+    val conformedJSON = JsonUtils.prettySparkJSON(conformed.orderBy($"id").toJSON.collect().mkString("\n"))
 
     if (conformedJSON != CastingRuleSamples.conformedOrdersJSON) {
       println("EXPECTED:")
-      println(JsonUtils.prettySparkJSON(CastingRuleSamples.conformedOrdersJSON))
+      println(CastingRuleSamples.conformedOrdersJSON)
       println("ACTUAL:")
-      println(JsonUtils.prettySparkJSON(conformedJSON))
-      println("DETAILS:")
+      println(conformedJSON)
+      println("DETAILS (Input):")
+      inputDf.printSchema()
+      inputDf.show
+      println("DETAILS (Conformed):")
       conformed.printSchema()
       conformed.show
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")

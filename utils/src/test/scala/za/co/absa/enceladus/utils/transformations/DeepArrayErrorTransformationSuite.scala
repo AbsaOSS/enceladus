@@ -40,7 +40,6 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         | |-- street: string (nullable = true)
         | |-- buildingNum: integer (nullable = false)
         | |-- zip: string (nullable = true)
-        | |-- intZip: integer (nullable = true)
         | |-- errors: array (nullable = true)
         | |    |-- element: struct (containsNull = true)
         | |    |    |-- errType: string (nullable = true)
@@ -53,6 +52,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         | |    |    |    |-- element: struct (containsNull = true)
         | |    |    |    |    |-- mappingTableColumn: string (nullable = true)
         | |    |    |    |    |-- mappedDatasetColumn: string (nullable = true)
+        | |-- intZip: integer (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
     val expectedResults =
       """[ {
@@ -60,8 +60,8 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |  "street" : "Vodickova",
         |  "buildingNum" : 12,
         |  "zip" : "12000",
-        |  "intZip" : 12000,
-        |  "errors" : [ ]
+        |  "errors" : [ ],
+        |  "intZip" : 12000
         |}, {
         |  "city" : "Ostrava",
         |  "street" : "Vlavska",
