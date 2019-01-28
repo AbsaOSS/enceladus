@@ -21,6 +21,7 @@ import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, RuleValidators}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.samples.CastingRuleSamples
+import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class CastingRuleSuite extends FunSuite with SparkTestBase {
@@ -46,16 +47,16 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
     import spark.implicits._
     val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS, inputDf).cache
 
-    conformed.printSchema()
-    conformed.show
-
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 
     if (conformedJSON != CastingRuleSamples.conformedOrdersJSON) {
       println("EXPECTED:")
-      println(CastingRuleSamples.conformedOrdersJSON)
+      println(JsonUtils.prettySparkJSON(CastingRuleSamples.conformedOrdersJSON))
       println("ACTUAL:")
-      println(conformedJSON)
+      println(JsonUtils.prettySparkJSON(conformedJSON))
+      println("DETAILS:")
+      conformed.printSchema()
+      conformed.show
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
     }
 

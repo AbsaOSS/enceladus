@@ -61,7 +61,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |  "buildingNum" : 12,
         |  "zip" : "12000",
         |  "intZip" : 12000,
-        |  "errors" : [ null ]
+        |  "errors" : [ ]
         |}, {
         |  "city" : "Ostrava",
         |  "street" : "Vlavska",
@@ -71,7 +71,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "zip",
+        |    "errCol" : "intZip",
         |    "rawValues" : [ "1455a" ],
         |    "mappings" : [ ]
         |  } ]
@@ -91,7 +91,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "zip",
+        |    "errCol" : "intZip",
         |    "rawValues" : [ "b881" ],
         |    "mappings" : [ ]
         |  } ]
@@ -141,7 +141,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |      "intZip" : 12000
         |    }
         |  },
-        |  "errors" : [ null ]
+        |  "errors" : [ ]
         |}, {
         |  "id" : 1,
         |  "employee" : {
@@ -164,7 +164,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "employee.address.zip",
+        |    "errCol" : "employee.address.intZip",
         |    "rawValues" : [ "1455a" ],
         |    "mappings" : [ ]
         |  } ]
@@ -183,7 +183,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "employee.address.zip",
+        |    "errCol" : "employee.address.intZip",
         |    "rawValues" : [ "b881" ],
         |    "mappings" : [ ]
         |  } ]
@@ -242,11 +242,11 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |      "zip" : "77-333"
         |    }
         |  } ],
-        |  "errors" : [ null, {
+        |  "errors" : [ {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "employee.address.zip",
+        |    "errCol" : "employee.address.intZip",
         |    "rawValues" : [ "77-333" ],
         |    "mappings" : [ ]
         |  } ]
@@ -280,14 +280,14 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "employee.address.zip",
+        |    "errCol" : "employee.address.intZip",
         |    "rawValues" : [ "a9991" ],
         |    "mappings" : [ ]
         |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "employee.address.zip",
+        |    "errCol" : "employee.address.intZip",
         |    "rawValues" : [ "552-aa1" ],
         |    "mappings" : [ ]
         |  } ]
@@ -303,7 +303,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |      "intZip" : 993
         |    }
         |  } ],
-        |  "errors" : [ null ]
+        |  "errors" : [ ]
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
@@ -345,18 +345,18 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |    "errCol" : "whatEvColumn",
         |    "rawValues" : [ "some value" ],
         |    "mappings" : [ ]
-        |  }, null, {
+        |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "nums",
+        |    "errCol" : "intNums",
         |    "rawValues" : [ "a212" ],
         |    "mappings" : [ ]
         |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "nums",
+        |    "errCol" : "intNums",
         |    "rawValues" : [ "222-111" ],
         |    "mappings" : [ ]
         |  } ]
@@ -368,15 +368,15 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "nums",
+        |    "errCol" : "intNums",
         |    "rawValues" : [ "223a" ],
         |    "mappings" : [ ]
-        |  }, null ]
+        |  } ]
         |}, {
         |  "id" : 1,
         |  "nums" : [ "5", "-100", "9999999" ],
         |  "intNums" : [ 5, -100, 9999999 ],
-        |  "errors" : [ null ]
+        |  "errors" : [ ]
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
@@ -420,11 +420,11 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |    "errCol" : "whatEvColumn",
         |    "rawValues" : [ "some value" ],
         |    "mappings" : [ ]
-        |  }, null, {
+        |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "matrix",
+        |    "errCol" : "intMatrix",
         |    "rawValues" : [ "11b" ],
         |    "mappings" : [ ]
         |  } ]
@@ -436,14 +436,14 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "matrix",
+        |    "errCol" : "intMatrix",
         |    "rawValues" : [ "20f" ],
         |    "mappings" : [ ]
-        |  }, null, {
+        |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "matrix",
+        |    "errCol" : "intMatrix",
         |    "rawValues" : [ "10-10" ],
         |    "mappings" : [ ]
         |  } ]
@@ -451,7 +451,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |  "id" : 3,
         |  "matrix" : [ [ "775", "223" ], [ "100", "0" ] ],
         |  "intMatrix" : [ [ 775, 223 ], [ 100, 0 ] ],
-        |  "errors" : [ null ]
+        |  "errors" : [ ]
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
@@ -523,25 +523,25 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |      "amount" : 225.0
         |    } ]
         |  } ],
-        |  "errors" : [ null, {
+        |  "errors" : [ {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "legs.conditions.conthen",
+        |    "errCol" : "legs.conditions.intConditionVal",
         |    "rawValues" : [ "300a" ],
         |    "mappings" : [ ]
         |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "legs.conditions.conthen",
+        |    "errCol" : "legs.conditions.intConditionVal",
         |    "rawValues" : [ "175b" ],
         |    "mappings" : [ ]
         |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "legs.conditions.conthen",
+        |    "errCol" : "legs.conditions.intConditionVal",
         |    "rawValues" : [ "225-225" ],
         |    "mappings" : [ ]
         |  } ]
@@ -584,7 +584,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |      "intConditionVal" : 225
         |    } ]
         |  } ],
-        |  "errors" : [ null ]
+        |  "errors" : [ ]
         |}, {
         |  "id" : 3,
         |  "legs" : [ {
@@ -629,49 +629,49 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "legs.conditions.conthen",
+        |    "errCol" : "legs.conditions.intConditionVal",
         |    "rawValues" : [ "1OO" ],
         |    "mappings" : [ ]
         |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "legs.conditions.conthen",
+        |    "errCol" : "legs.conditions.intConditionVal",
         |    "rawValues" : [ "150x" ],
         |    "mappings" : [ ]
         |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "legs.conditions.conthen",
+        |    "errCol" : "legs.conditions.intConditionVal",
         |    "rawValues" : [ "-1000-" ],
         |    "mappings" : [ ]
         |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "legs.conditions.conthen",
+        |    "errCol" : "legs.conditions.intConditionVal",
         |    "rawValues" : [ "2OO" ],
         |    "mappings" : [ ]
         |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "legs.conditions.conthen",
+        |    "errCol" : "legs.conditions.intConditionVal",
         |    "rawValues" : [ "f175" ],
         |    "mappings" : [ ]
         |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "legs.conditions.conthen",
+        |    "errCol" : "legs.conditions.intConditionVal",
         |    "rawValues" : [ "225_" ],
         |    "mappings" : [ ]
         |  } ]
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
-    processCastExample(df, "legs.conditions.conthen", "lags.conditions.intConditionVal", expectedSchema, expectedResults)
+    processCastExample(df, "legs.conditions.conthen", "legs.conditions.intConditionVal", expectedSchema, expectedResults)
   }
 
   test("Test casting of an array of struct of struct WITHOUT error column") {
@@ -723,11 +723,11 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |      "zip" : "77-333"
         |    }
         |  } ],
-        |  "errors" : [ null, {
+        |  "errors" : [ {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "employee.address.zip",
+        |    "errCol" : "employee.address.intZip",
         |    "rawValues" : [ "77-333" ],
         |    "mappings" : [ ]
         |  } ]
@@ -754,14 +754,14 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "employee.address.zip",
+        |    "errCol" : "employee.address.intZip",
         |    "rawValues" : [ "a9991" ],
         |    "mappings" : [ ]
         |  }, {
         |    "errType" : "confCastError",
         |    "errCode" : "E00003",
         |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
-        |    "errCol" : "employee.address.zip",
+        |    "errCol" : "employee.address.intZip",
         |    "rawValues" : [ "552-aa1" ],
         |    "mappings" : [ ]
         |  } ]
@@ -777,13 +777,12 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |      "intZip" : 993
         |    }
         |  } ],
-        |  "errors" : [ null ]
+        |  "errors" : [ ]
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
     processCastExample(df, "employee.address.zip", "employee.address.intZip", expectedSchema, expectedResults)
   }
-
 
   private def processCastExample(df: DataFrame, inputColumn: String, outputColumn: String, expectedSchema: String, expectedResults: String): Unit = {
     val dfOut = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, inputColumn, outputColumn, "errors",
@@ -791,7 +790,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         c.cast(IntegerType)
       }, c => {
         when(c.isNotNull.and(c.cast(IntegerType).isNull),
-          callUDF("confCastErr", lit(inputColumn), c.cast(StringType)))
+          callUDF("confCastErr", lit(outputColumn), c.cast(StringType)))
           .otherwise(null)
       })
 
