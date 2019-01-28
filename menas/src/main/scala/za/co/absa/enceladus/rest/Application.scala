@@ -15,22 +15,19 @@
 
 package za.co.absa.enceladus.rest
 
-import org.springframework.boot.SpringApplication
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation._
 import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.security.core.context.SecurityContextHolder
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.DeserializationFeature
 
 @SpringBootApplication
 @EnableAsync
 @Configuration
-class RestService() {
+class Application() {
 
   @Bean def asyncExecutor(): ThreadPoolTaskExecutor = {
     val executor = new ThreadPoolTaskExecutor()
@@ -52,9 +49,8 @@ class RestService() {
   }
 }
 
-object RestService extends App {
+object Application extends App {
 
-  SpringApplication.run(classOf[RestService])
   SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL)
 
 }

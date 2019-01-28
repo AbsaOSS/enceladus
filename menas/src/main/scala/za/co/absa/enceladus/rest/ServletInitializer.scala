@@ -20,6 +20,6 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 
 class ServletInitializer extends SpringBootServletInitializer {
   
-  override def configure(application: SpringApplicationBuilder) = application.sources(classOf[RestService])
+  override def configure(application: SpringApplicationBuilder) = application.sources(classOf[Application])
   
 }
