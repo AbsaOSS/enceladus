@@ -50,6 +50,12 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase {
       println(expectedJSON)
       println("ACTUAL:")
       println(conformedJSON)
+      println("DETAILS (Input):")
+      inputDf.printSchema()
+      inputDf.show
+      println("DETAILS (Conformed):")
+      conformed.printSchema()
+      conformed.show
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
     }
 

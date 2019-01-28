@@ -187,7 +187,7 @@ object DeepArrayTransformations {
       if (errorCondition == null) {
         None
       } else {
-        errorColumnName = SchemaUtils.getUniqueName( "errorList", schema)
+        errorColumnName = SchemaUtils.getUniqueName("errorList", schema)
         val errorColumn = array(errorCondition(column)).as(errorColumnName)
         if (inputColumnName.contains('.')) {
           val parent = inputColumnName.split('.').dropRight(1).mkString(".")
@@ -301,7 +301,7 @@ object DeepArrayTransformations {
 
             // Handle error column for arrays of primitives
             if (errorExpression != null) {
-              errorColumnName = SchemaUtils.getUniqueName( "errorList", None)
+              errorColumnName = SchemaUtils.getUniqueName("errorList", None)
               val errorColumn = if (doFlatten) {
                 flatten(transform(curColumn, lambdaName, errorExpression)).as(errorColumnName)
               } else {
@@ -420,7 +420,7 @@ object DeepArrayTransformations {
               if (arrayLevel > 1) {
                 helperStruct(st, columnPath.tail, Some(flatten(parentPath)), inputColumn, arrayLevel)
               } else {
-                flatten(helperStruct(st, columnPath.tail, Some(parentPath), inputColumn, arrayLevel+1))
+                flatten(helperStruct(st, columnPath.tail, Some(parentPath), inputColumn, arrayLevel + 1))
               }
             }
           case ar: ArrayType =>
@@ -442,15 +442,41 @@ object DeepArrayTransformations {
     val flattenedColumn = flattenNestedArrays(df.schema, nestedErrorColumn)
 
     val dfOutput =
-      if (df.schema.fields.exists(_.name == globalErrorColumn) ) {
-        df.withColumnRenamed(globalErrorColumn,tmpCol)
-          .withColumn(globalErrorColumn, callUDF( "arrayDistinctErrors", concat(col(tmpCol), flattenedColumn)))
+      if (df.schema.fields.exists(_.name == globalErrorColumn)) {
+        // 1. Rename original error column to a temporary name
+        // 2. Add a new column with the original name by appending new errors to the existing ones
+
+        // This preserves the position of the error column ([arguably] less efficient)
+        addColumnAfter(df.withColumnRenamed(globalErrorColumn,tmpCol),
+          tmpCol, globalErrorColumn, callUDF( "arrayDistinctErrors", concat(col(tmpCol), flattenedColumn)))
           .drop(col(tmpCol))
+
+        // This moves the error column to the end ([arguably] more efficient than preserving the position of the error column)
+        //df.withColumnRenamed(globalErrorColumn, tmpCol)
+        //  .withColumn(globalErrorColumn, callUDF("arrayDistinctErrors", concat(col(tmpCol), flattenedColumn)))
+        //  .drop(col(tmpCol))
+
       } else {
-        df.withColumn(globalErrorColumn, callUDF( "arrayDistinctErrors", flattenedColumn))
+        df.withColumn(globalErrorColumn, callUDF("arrayDistinctErrors", flattenedColumn))
       }
 
     nestedDropColumn(dfOutput, nestedErrorColumn)
+  }
+
+  // Adds a column similar to df.withColumn(), but you can specify the position of the new column by specifying a column name
+  // after which to add the new column
+  def addColumnAfter(df: DataFrame, afterColumn: String, columnName: String, expr: Column): DataFrame = {
+    df.select(df.columns.flatMap(c => {
+      if (c == afterColumn) {
+        Seq(
+          col(c),
+          expr.as(columnName)
+        )
+      } else {
+        Seq(col(c))
+      }
+    }): _*)
+
   }
 
   // Returns true if a path consists only of 1 element meaning it is the leaf element of the input column path requested by the caller
