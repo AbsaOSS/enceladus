@@ -25,111 +25,14 @@ import org.apache.spark.sql.types.StringType
 // The case classes were declared at the package level so it can be used to create Spark DataSets
 // It is declared package private so the names won't pollute public/exported namespace
 
-// Structs of Structs example
-private[transformations] case class Address(city: String, street: String)
-
-private[transformations] case class Employee(name: String, address: Address)
-
-private[transformations] case class TestObj(id: Int, employee: Employee)
-
-private[transformations] case class TestObj2(id: Int, employee: Seq[Employee])
-
-// Arrays of primitives example
-private[transformations] case class FunWords(id: Int, words: Seq[String])
-
-// Arrays of arrays of primitives example
-private[transformations] case class GeoData(id: Int, matrix: Seq[Seq[String]])
-
-// Arrays of structs example
-private[transformations] case class Person(firstName: String, lastName: String)
-
-private[transformations] case class Team(id: Int, person: Seq[Person])
-
-private[transformations] case class Dept(name: String, team: Team)
-
-// Arrays of Arrays of struct
-private[transformations] case class Tournament(id: Int, person: Seq[Seq[Person]])
-
-// Arrays of structs in arrays of structs
-private[transformations] case class Condition(conif: String, conthen: String, amount: Double)
-
-private[transformations] case class Leg(legid: Int, conditions: Seq[Condition])
-
-private[transformations] case class Trade(id: Int, legs: Seq[Leg])
 
 class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
   import spark.implicits._
 
-  // Plain
-  val plainSample: Seq[Address] = Seq(
-    Address("Olomuc", "Vodickova"),
-    Address("Ostrava", "Vlavska"),
-    Address("Plzen", "Kralova")
-  )
-
-  // Struct of struct
-  val structOfStructSample: Seq[TestObj] = Seq(
-      TestObj(1,Employee("Martin", Address("Olomuc", "Vodickova"))),
-      TestObj(1,Employee("Petr", Address("Ostrava", "Vlavska"))),
-      TestObj(1,Employee("Vojta", Address("Plzen", "Kralova")))
-    )
-
-  // Array of struct of struct
-  val arrayOfstructOfStructSample: Seq[TestObj2] = Seq(
-    TestObj2(1,Seq(Employee("Martin", Address("Olomuc", "Vodickova")), Employee("Stephan", Address("Olomuc", "Vodickova")))),
-    TestObj2(2,Seq(Employee("Petr", Address("Ostrava", "Vlavska")), Employee("Michal", Address("Ostrava", "Vlavska")))),
-    TestObj2(3,Seq(Employee("Vojta", Address("Plzen", "Kralova"))))
-  )
-
-  // Arrays of primitives
-  val arraysOfPrimitivesSample: Seq[FunWords] = Seq(
-    FunWords(1,Seq("Gizmo", "Blurp", "Buzinga")),
-    FunWords(1,Seq("Quirk", "Zap", "Mmrnmhrm"))
-  )
-
-  // Arrays of arrays of primitives
-  val arraysOfArraysOfPrimitivesSample: Seq[GeoData] = Seq(
-    GeoData(1,Seq(Seq("Tree", "Table"), Seq("Map", "Duck"))),
-    GeoData(2,Seq(Seq("Apple", "Machine"), Seq("List", "Duck"))),
-    GeoData(3,Seq(Seq("Computer", "Snake"), Seq("Sun", "Star")))
-  )
-
-  // Arrays of structs
-  val arraysOfStructsSample: Seq[Team] = Seq(
-    Team(1,Seq(Person("John", "Smith"), Person("Jack", "Brown"))),
-    Team(1,Seq(Person("Merry", "Cook"), Person("Jane", "Clark")))
-  )
-
-  // Arrays of arrays of struct
-  val arraysOfArraysOfStructSample: Seq[Tournament] = Seq(
-    Tournament(1,Seq(Seq(Person("Mona Lisa", "Harddrive")), Seq(Person("Lenny", "Linux"), Person("Dot", "Not")) )),
-    Tournament(1,Seq(Seq(Person("Eddie", "Larrison")), Seq(Person("Scarlett", "Johanson"), Person("William", "Windows")) ))
-  )
-
-  // Arrays of struct with arrays of struct
-  val arraysOfStrtuctsDeepSample: Seq[Trade] = Seq(
-    Trade(1, Seq(
-      Leg(100, Seq(
-        Condition("if bid>10", "buy", 100), Condition("if sell<5", "sell", 150), Condition("if sell<1", "sell", 1000))),
-      Leg(101, Seq(
-        Condition("if bid<50", "sell", 200), Condition("if sell>30", "buy", 175), Condition("if sell>25", "buy", 225)))
-    )),
-    Trade(2, Seq(
-      Leg(102, Seq(
-        Condition("if bid>11", "buy", 100), Condition("if sell<6", "sell", 150), Condition("if sell<2", "sell", 1000))),
-      Leg(103, Seq(
-        Condition("if bid<51", "sell", 200), Condition("if sell>31", "buy", 175), Condition("if sell>26", "buy", 225)))
-    )),
-    Trade(3, Seq(
-      Leg(104, Seq(
-        Condition("if bid>12", "buy", 100), Condition("if sell<7", "sell", 150), Condition("if sell<3", "sell", 1000))),
-      Leg(105, Seq(
-        Condition("if bid<52", "sell", 200), Condition("if sell>32", "buy", 175), Condition("if sell>27", "buy", 225)))
-    ))
-  )
+  import DeepArraySamples._
 
   test("Test uppercase of a plain field") {
-    val df = spark.sparkContext.parallelize(plainSample).toDF
+    val df = spark.sparkContext.parallelize(plainSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedWithColumnMap(df, "city", "conformedCity", c => {
       upper(c)
@@ -153,7 +56,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test uppercase of two level of struct nesting") {
     // Struct of struct
-    val df = spark.sparkContext.parallelize(structOfStructSample).toDF
+    val df = spark.sparkContext.parallelize(structOfStructSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedWithColumnMap(df, "employee.address.city", "conformedCity", c => {
       upper(c)
@@ -182,7 +85,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test ("Test uppercase of arrays of primitives") {
     // Array of primitives
-    val df = spark.sparkContext.parallelize(arraysOfPrimitivesSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfPrimitivesSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedWithColumnMap(df, "words", "conformedWords", c => {
       upper(c)
@@ -209,7 +112,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test ("Test uppercase of arrays of arrays of primitives") {
     // Array of arrays of primitives
-    val df = spark.sparkContext.parallelize(arraysOfArraysOfPrimitivesSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfArraysOfPrimitivesSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedWithColumnMap(df, "matrix", "conformedMatrix", c => {
       upper(c)
@@ -238,7 +141,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test ("Test uppercase of a field inside an array of structs") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfStructsSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedWithColumnMap(df, "person.firstName", "conformedName", c => {
       upper(c)
@@ -265,7 +168,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test uppercase of a field inside an array of arrays of struct") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfArraysOfStructSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfArraysOfStructSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedWithColumnMap(df, "person.lastName", "conformedName", c => {
       upper(c)
@@ -293,7 +196,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test uppercase of a field inside an array of struct containing an array of struct") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleN).toDF
 
     //df.printSchema()
     //df.toJSON.take(10).foreach(println)
@@ -341,7 +244,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
   }
 
   test("Test lit() of a plain field") {
-    val df = spark.sparkContext.parallelize(plainSample).toDF
+    val df = spark.sparkContext.parallelize(plainSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedAddColumn(df, "planet", c => {
       lit("Earth")
@@ -365,7 +268,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test lit() of two level of struct nesting") {
     // Struct of struct
-    val df = spark.sparkContext.parallelize(structOfStructSample).toDF
+    val df = spark.sparkContext.parallelize(structOfStructSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedAddColumn(df, "employee.address.conformedType", c => {
       lit("City")
@@ -394,7 +297,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test ("Test lit() inside an array of structs") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfStructsSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
 
     //df.printSchema()
     //df.toJSON.take(10).foreach(println)
@@ -424,7 +327,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test ("Test lit() of a field inside an array of structs") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfStructsSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.department", c => {
       lit("IT")
@@ -452,7 +355,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test lit() inside an array of struct containing an array of struct") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleN).toDF
 
     //df.printSchema()
     //df.toJSON.take(10).foreach(println)
@@ -502,7 +405,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
   // Dropping columns
 
   test("Test drop of a plain field") {
-    val df = spark.sparkContext.parallelize(plainSample).toDF
+    val df = spark.sparkContext.parallelize(plainSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedDropColumn(df, "street")
 
@@ -522,7 +425,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test drop of two level of struct nesting") {
     // Struct of struct
-    val df = spark.sparkContext.parallelize(structOfStructSample).toDF
+    val df = spark.sparkContext.parallelize(structOfStructSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedDropColumn(df, "employee.address.city")
 
@@ -547,7 +450,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test ("Test drop of arrays of primitives") {
     // Array of primitives
-    val df = spark.sparkContext.parallelize(arraysOfPrimitivesSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfPrimitivesSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedDropColumn(df, "words")
 
@@ -568,7 +471,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test ("Test drop of arrays of arrays of primitives") {
     // Array of arrays of primitives
-    val df = spark.sparkContext.parallelize(arraysOfArraysOfPrimitivesSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfArraysOfPrimitivesSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedDropColumn(df, "matrix")
 
@@ -589,7 +492,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test ("Test drop of a field inside an array of structs") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfStructsSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedDropColumn(df, "person.lastName")
 
@@ -612,7 +515,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test drop of a field inside an array of arrays of struct") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfArraysOfStructSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfArraysOfStructSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedDropColumn(df, "person.lastName")
 
@@ -636,7 +539,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test drop of a field inside an array of struct containing an array of struct") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedDropColumn(df, "legs.conditions.conif")
 
@@ -669,7 +572,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test drop of a struct field inside an array of struct containing an array of struct") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arrayOfstructOfStructSample).toDF
+    val df = spark.sparkContext.parallelize(arrayOfstructOfStructSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedDropColumn(df, "employee.address")
 
@@ -692,7 +595,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test drop of an array field inside an array of struct containing an array of struct") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedDropColumn(df, "legs.conditions")
 
@@ -714,7 +617,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
   }
 
   test("Test concat of a plain field") {
-    val df = spark.sparkContext.parallelize(plainSample).toDF
+    val df = spark.sparkContext.parallelize(plainSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedWithColumnMap(df, "", "combinedCity", c => {
       if (c==null) {
@@ -743,7 +646,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test concat of two level of struct nesting") {
     // Struct of struct
-    val df = spark.sparkContext.parallelize(structOfStructSample).toDF
+    val df = spark.sparkContext.parallelize(structOfStructSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedStructMap(df, "employee.address", "combinedCity", c => {
       if (c==null) {
@@ -776,7 +679,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test ("Test concat of a field inside an array of structs") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfStructsSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedStructMap(df, "person", "combinedName", c => {
       concat(c.getField("firstName"), lit(" "), c.getField("lastName"))
@@ -803,7 +706,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test concat of a field inside an array of arrays of struct") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfArraysOfStructSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfArraysOfStructSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedStructMap(df, "person", "combinedName", c => {
       concat(c.getField("firstName"), lit(" "), c.getField("lastName"))
@@ -831,7 +734,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   test("Test concat of a field inside an array of struct containing an array of struct") {
     // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSample).toDF
+    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleN).toDF
 
     val dfOut = DeepArrayTransformations.nestedStructMap(df, "legs.conditions", "combinedField", c => {
       concat(c.getField("conif"), lit(" "), c.getField("conthen"), lit(" ("), c.getField("amount").cast(StringType), lit(")"))

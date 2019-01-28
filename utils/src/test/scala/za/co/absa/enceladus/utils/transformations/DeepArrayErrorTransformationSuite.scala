@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.utils.transformations
 
+import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import org.apache.spark.sql.functions._
@@ -22,96 +23,16 @@ import org.apache.spark.sql.types.{IntegerType, StringType}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.general.JsonUtils
 
-// Examples for constructing dataframes containing arrays of various levels of nesting
-// Also it includes error column to test transformations that can fail per field
-
-// The case classes were declared at the package level so it can be used to create Spark DataSets
-// It is declared package private so the names won't pollute public/exported namespace
-
-// Structs of Structs example
-private[transformations] case class AddressWithErrColumn(city: String, street: String, buildingNum: Int, zip: String, errors: Seq[ErrorMessage])
-
-private[transformations] case class AddressNoErrColumn(city: String, street: String, buildingNum: Int, zip: String)
-
-private[transformations] case class EmployeeNoErrorColumn(name: String, address: AddressNoErrColumn)
-
-private[transformations] case class TestObj1WithErrorColumn(id: Int, employee: EmployeeNoErrorColumn, errors: Seq[ErrorMessage])
-
-private[transformations] case class TestObj2WithErrorColumn(id: Int, employee: Seq[EmployeeNoErrorColumn], errors: Seq[ErrorMessage])
-
-// Arrays of primitives example
-private[transformations] case class FunNumbersWithErrorColumn(id: Int, nums: Seq[String], errors: Seq[ErrorMessage])
-
-// Arrays of arrays of primitives example
-private[transformations] case class GeoDataWithErrorColumn(id: Int, matrix: Seq[Seq[String]], errors: Seq[ErrorMessage])
-
 class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
 
   import spark.implicits._
 
   implicit val udfLib: UDFLibrary = new UDFLibrary
 
-  // Plain
-  val plainSample: Seq[AddressWithErrColumn] = Seq(
-    AddressWithErrColumn("Olomuc", "Vodickova", 12, "12000", Seq()),
-    AddressWithErrColumn("Ostrava", "Vlavska", 110, "1455a", Seq()),
-    AddressWithErrColumn("Plzen", "Kralova", 71, "b881",
-      Seq(ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value"))))
-  )
-
-  // Struct of struct
-  val structOfStructSample: Seq[TestObj1WithErrorColumn] = Seq(
-    TestObj1WithErrorColumn(1, EmployeeNoErrorColumn("Martin", AddressNoErrColumn("Olomuc", "Vodickova", 12, "12000")), Nil),
-    TestObj1WithErrorColumn(1, EmployeeNoErrorColumn("Petr", AddressNoErrColumn("Ostrava", "Vlavska", 110, "1455a")),
-      Seq(ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
-    TestObj1WithErrorColumn(1, EmployeeNoErrorColumn("Vojta", AddressNoErrColumn("Plzen", "Kralova", 71, "b881")), Nil)
-  )
-
-  // Array of struct of struct
-  val arrayOfstructOfStructSample: Seq[TestObj2WithErrorColumn] = Seq(
-    TestObj2WithErrorColumn(1, Seq(
-      EmployeeNoErrorColumn("Martin", AddressNoErrColumn("Olomuc", "Vodickova", 732, "73200")),
-      EmployeeNoErrorColumn("Stephan", AddressNoErrColumn("Olomuc", "Vodickova", 77, "77-333"))), Nil),
-    TestObj2WithErrorColumn(2, Seq(
-      EmployeeNoErrorColumn("Petr", AddressNoErrColumn("Ostrava", "Vlavska", 25, "a9991")),
-      EmployeeNoErrorColumn("Michal", AddressNoErrColumn("Ostrava", "Vlavska", 334, "552-aa1"))),
-      Seq(ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
-    TestObj2WithErrorColumn(3, Seq(
-      EmployeeNoErrorColumn("Vojta", AddressNoErrColumn("Plzen", "Kralova", 33, "993"))), Nil)
-  )
-
-  // Arrays of primitives
-  val arraysOfPrimitivesSample: Seq[FunNumbersWithErrorColumn] = Seq(
-    FunNumbersWithErrorColumn(1,Seq("7755", "a212", "222-111"),
-      Seq(ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
-    FunNumbersWithErrorColumn(1,Seq("223a", "223a", "775"), Nil),
-    FunNumbersWithErrorColumn(1,Seq("5", "-100", "9999999"), Nil)
-  )
-
-  // Arrays of arrays of primitives
-  val arraysOfArraysOfPrimitivesSample: Seq[GeoDataWithErrorColumn] = Seq(
-    GeoDataWithErrorColumn(1,Seq(Seq("10", "11b"), Seq("11b", "12")),
-      Seq(ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
-    GeoDataWithErrorColumn(2,Seq(Seq("20f", "300"), Seq("1000", "10-10")), Nil),
-    GeoDataWithErrorColumn(3,Seq(Seq("775", "223"), Seq("100", "0")), Nil)
-  )
+  import DeepArraySamples._
 
   test("Test casting of a plain field with error column") {
-    val df = spark.sparkContext.parallelize(plainSample).toDF
-
-    val dfOut = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, "zip", "intZip", "errors",
-      c => {
-        c.cast(IntegerType)
-      }, c => {
-        when(c.isNotNull.and(c.cast(IntegerType).isNull),
-          callUDF("confCastErr", lit("zip"), c.cast(StringType)))
-          .otherwise(null)
-      })
-
-    val actualSchema = dfOut.schema.treeString
-    val actualResults =  JsonUtils.prettySparkJSON(dfOut.toJSON.collect.mkString("\n"))
-
-    dfOut.explain(true)
+    val df = spark.sparkContext.parallelize(plainSampleE).toDF
 
     val expectedSchema =
       """root
@@ -177,27 +98,11 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
-    dfOut.printSchema()
-    assertSchema(actualSchema, expectedSchema)
-    assertResults(actualResults, expectedResults)
+    processCastExample(df, "zip", "intZip", expectedSchema, expectedResults)
   }
 
   test("Test casting of a struct of struct field with error column") {
-    val df = spark.sparkContext.parallelize(structOfStructSample).toDF
-
-    val dfOut = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, "employee.address.zip", "employee.address.intZip", "errors",
-      c => {
-        c.cast(IntegerType)
-      }, c => {
-        when(c.isNotNull.and(c.cast(IntegerType).isNull),
-          callUDF("confCastErr", lit("employee.address.zip"), c.cast(StringType)))
-          .otherwise(null)
-      })
-
-    val actualSchema = dfOut.schema.treeString
-    val actualResults =  JsonUtils.prettySparkJSON(dfOut.toJSON.collect.mkString("\n"))
-
-    dfOut.explain(true)
+    val df = spark.sparkContext.parallelize(structOfStructSampleE).toDF
 
     val expectedSchema =
       """root
@@ -285,27 +190,11 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
-    dfOut.printSchema()
-    assertSchema(actualSchema, expectedSchema)
-    assertResults(actualResults, expectedResults)
+    processCastExample(df, "employee.address.zip", "employee.address.intZip", expectedSchema, expectedResults)
   }
 
   test("Test casting of an array of struct of struct with error column") {
-    val df = spark.sparkContext.parallelize(arrayOfstructOfStructSample).toDF
-
-    val dfOut = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, "employee.address.zip", "employee.address.intZip", "errors",
-      c => {
-        c.cast(IntegerType)
-      }, c => {
-        when(c.isNotNull.and(c.cast(IntegerType).isNull),
-          callUDF("confCastErr", lit("employee.address.zip"), c.cast(StringType)))
-          .otherwise(null)
-      })
-
-    val actualSchema = dfOut.schema.treeString
-    val actualResults =  JsonUtils.prettySparkJSON(dfOut.toJSON.collect.mkString("\n"))
-
-    dfOut.explain(true)
+    val df = spark.sparkContext.parallelize(arrayOfStructOfStructErrSampleE).toDF
 
     val expectedSchema =
       """root
@@ -418,27 +307,11 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
-    dfOut.printSchema()
-    assertSchema(actualSchema, expectedSchema)
-    assertResults(actualResults, expectedResults)
+    processCastExample(df, "employee.address.zip", "employee.address.intZip", expectedSchema, expectedResults)
   }
 
   test("Test casting of an array of primitives") {
-    val df = spark.sparkContext.parallelize(arraysOfPrimitivesSample).toDF
-
-    val dfOut = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, "nums", "intNums", "errors",
-      c => {
-        c.cast(IntegerType)
-      }, c => {
-        when(c.isNotNull.and(c.cast(IntegerType).isNull),
-          callUDF("confCastErr", lit("nums"), c.cast(StringType)))
-          .otherwise(null)
-      })
-
-    val actualSchema = dfOut.schema.treeString
-    val actualResults =  JsonUtils.prettySparkJSON(dfOut.toJSON.collect.mkString("\n"))
-
-    dfOut.explain(true)
+    val df = spark.sparkContext.parallelize(arraysOfPrimitivesSampleE).toDF
 
     val expectedSchema =
       """root
@@ -507,27 +380,11 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
-    dfOut.printSchema()
-    assertSchema(actualSchema, expectedSchema)
-    assertResults(actualResults, expectedResults)
+    processCastExample(df, "nums", "intNums", expectedSchema, expectedResults)
   }
 
   test("Test casting of an array of array of primitives") {
-    val df = spark.sparkContext.parallelize(arraysOfArraysOfPrimitivesSample).toDF
-
-    val dfOut = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, "matrix", "intMatrix", "errors",
-      c => {
-        c.cast(IntegerType)
-      }, c => {
-        when(c.isNotNull.and(c.cast(IntegerType).isNull),
-          callUDF("confCastErr", lit("matrix"), c.cast(StringType)))
-          .otherwise(null)
-      })
-
-    val actualSchema = dfOut.schema.treeString
-    val actualResults =  JsonUtils.prettySparkJSON(dfOut.toJSON.collect.mkString("\n"))
-
-    dfOut.explain(true)
+    val df = spark.sparkContext.parallelize(arraysOfArraysOfPrimitivesSampleE).toDF
 
     val expectedSchema =
       """root
@@ -597,6 +454,349 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |  "errors" : [ null ]
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
+
+    processCastExample(df, "matrix", "intMatrix", expectedSchema, expectedResults)
+  }
+
+  test("Test casting of an array of struct of array os ftruct with error column") {
+    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleE).toDF
+
+    val expectedSchema =
+      """root
+        | |-- id: integer (nullable = false)
+        | |-- legs: array (nullable = true)
+        | |    |-- element: struct (containsNull = false)
+        | |    |    |-- legid: integer (nullable = true)
+        | |    |    |-- conditions: array (nullable = true)
+        | |    |    |    |-- element: struct (containsNull = false)
+        | |    |    |    |    |-- conif: string (nullable = true)
+        | |    |    |    |    |-- conthen: string (nullable = true)
+        | |    |    |    |    |-- amount: double (nullable = true)
+        | |    |    |    |    |-- intConditionVal: integer (nullable = true)
+        | |-- errors: array (nullable = true)
+        | |    |-- element: struct (containsNull = true)
+        | |    |    |-- errType: string (nullable = true)
+        | |    |    |-- errCode: string (nullable = true)
+        | |    |    |-- errMsg: string (nullable = true)
+        | |    |    |-- errCol: string (nullable = true)
+        | |    |    |-- rawValues: array (nullable = true)
+        | |    |    |    |-- element: string (containsNull = true)
+        | |    |    |-- mappings: array (nullable = true)
+        | |    |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |    |-- mappingTableColumn: string (nullable = true)
+        | |    |    |    |    |-- mappedDatasetColumn: string (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+    val expectedResults =
+      """[ {
+        |  "id" : 1,
+        |  "legs" : [ {
+        |    "legid" : 100,
+        |    "conditions" : [ {
+        |      "conif" : "if bid>10",
+        |      "conthen" : "100",
+        |      "amount" : 100.0,
+        |      "intConditionVal" : 100
+        |    }, {
+        |      "conif" : "if sell<5",
+        |      "conthen" : "300a",
+        |      "amount" : 150.0
+        |    }, {
+        |      "conif" : "if sell<1",
+        |      "conthen" : "1000",
+        |      "amount" : 1000.0,
+        |      "intConditionVal" : 1000
+        |    } ]
+        |  }, {
+        |    "legid" : 101,
+        |    "conditions" : [ {
+        |      "conif" : "if bid<50",
+        |      "conthen" : "200",
+        |      "amount" : 200.0,
+        |      "intConditionVal" : 200
+        |    }, {
+        |      "conif" : "if sell>30",
+        |      "conthen" : "175b",
+        |      "amount" : 175.0
+        |    }, {
+        |      "conif" : "if sell>25",
+        |      "conthen" : "225-225",
+        |      "amount" : 225.0
+        |    } ]
+        |  } ],
+        |  "errors" : [ null, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "legs.conditions.conthen",
+        |    "rawValues" : [ "300a" ],
+        |    "mappings" : [ ]
+        |  }, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "legs.conditions.conthen",
+        |    "rawValues" : [ "175b" ],
+        |    "mappings" : [ ]
+        |  }, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "legs.conditions.conthen",
+        |    "rawValues" : [ "225-225" ],
+        |    "mappings" : [ ]
+        |  } ]
+        |}, {
+        |  "id" : 2,
+        |  "legs" : [ {
+        |    "legid" : 102,
+        |    "conditions" : [ {
+        |      "conif" : "if bid>11",
+        |      "conthen" : "100",
+        |      "amount" : 100.0,
+        |      "intConditionVal" : 100
+        |    }, {
+        |      "conif" : "if sell<6",
+        |      "conthen" : "150",
+        |      "amount" : 150.0,
+        |      "intConditionVal" : 150
+        |    }, {
+        |      "conif" : "if sell<2",
+        |      "conthen" : "1000",
+        |      "amount" : 1000.0,
+        |      "intConditionVal" : 1000
+        |    } ]
+        |  }, {
+        |    "legid" : 103,
+        |    "conditions" : [ {
+        |      "conif" : "if bid<51",
+        |      "conthen" : "200",
+        |      "amount" : 200.0,
+        |      "intConditionVal" : 200
+        |    }, {
+        |      "conif" : "if sell>31",
+        |      "conthen" : "175",
+        |      "amount" : 175.0,
+        |      "intConditionVal" : 175
+        |    }, {
+        |      "conif" : "if sell>26",
+        |      "conthen" : "225",
+        |      "amount" : 225.0,
+        |      "intConditionVal" : 225
+        |    } ]
+        |  } ],
+        |  "errors" : [ null ]
+        |}, {
+        |  "id" : 3,
+        |  "legs" : [ {
+        |    "legid" : 104,
+        |    "conditions" : [ {
+        |      "conif" : "if bid>12",
+        |      "conthen" : "1OO",
+        |      "amount" : 100.0
+        |    }, {
+        |      "conif" : "if sell<7",
+        |      "conthen" : "150x",
+        |      "amount" : 150.0
+        |    }, {
+        |      "conif" : "if sell<3",
+        |      "conthen" : "-1000-",
+        |      "amount" : 1000.0
+        |    } ]
+        |  }, {
+        |    "legid" : 105,
+        |    "conditions" : [ {
+        |      "conif" : "if bid<52",
+        |      "conthen" : "2OO",
+        |      "amount" : 200.0
+        |    }, {
+        |      "conif" : "if sell>32",
+        |      "conthen" : "f175",
+        |      "amount" : 175.0
+        |    }, {
+        |      "conif" : "if sell>27",
+        |      "conthen" : "225_",
+        |      "amount" : 225.0
+        |    } ]
+        |  } ],
+        |  "errors" : [ {
+        |    "errType" : "myErrorType",
+        |    "errCode" : "E-1",
+        |    "errMsg" : "Testing This stuff",
+        |    "errCol" : "whatEvColumn",
+        |    "rawValues" : [ "some value" ],
+        |    "mappings" : [ ]
+        |  }, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "legs.conditions.conthen",
+        |    "rawValues" : [ "1OO" ],
+        |    "mappings" : [ ]
+        |  }, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "legs.conditions.conthen",
+        |    "rawValues" : [ "150x" ],
+        |    "mappings" : [ ]
+        |  }, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "legs.conditions.conthen",
+        |    "rawValues" : [ "-1000-" ],
+        |    "mappings" : [ ]
+        |  }, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "legs.conditions.conthen",
+        |    "rawValues" : [ "2OO" ],
+        |    "mappings" : [ ]
+        |  }, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "legs.conditions.conthen",
+        |    "rawValues" : [ "f175" ],
+        |    "mappings" : [ ]
+        |  }, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "legs.conditions.conthen",
+        |    "rawValues" : [ "225_" ],
+        |    "mappings" : [ ]
+        |  } ]
+        |} ]"""
+        .stripMargin.replace("\r\n", "\n")
+
+    processCastExample(df, "legs.conditions.conthen", "lags.conditions.intConditionVal", expectedSchema, expectedResults)
+  }
+
+  test("Test casting of an array of struct of struct WITHOUT error column") {
+    val df = spark.sparkContext.parallelize(arrayOfStructOfStruvtNoErrSampleE).toDF
+
+    val expectedSchema =
+      """root
+        | |-- id: integer (nullable = false)
+        | |-- employee: array (nullable = true)
+        | |    |-- element: struct (containsNull = false)
+        | |    |    |-- name: string (nullable = true)
+        | |    |    |-- address: struct (nullable = false)
+        | |    |    |    |-- city: string (nullable = true)
+        | |    |    |    |-- street: string (nullable = true)
+        | |    |    |    |-- buildingNum: integer (nullable = true)
+        | |    |    |    |-- zip: string (nullable = true)
+        | |    |    |    |-- intZip: integer (nullable = true)
+        | |-- errors: array (nullable = true)
+        | |    |-- element: struct (containsNull = true)
+        | |    |    |-- errType: string (nullable = true)
+        | |    |    |-- errCode: string (nullable = true)
+        | |    |    |-- errMsg: string (nullable = true)
+        | |    |    |-- errCol: string (nullable = true)
+        | |    |    |-- rawValues: array (nullable = true)
+        | |    |    |    |-- element: string (containsNull = true)
+        | |    |    |-- mappings: array (nullable = true)
+        | |    |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |    |-- mappingTableColumn: string (nullable = true)
+        | |    |    |    |    |-- mappedDatasetColumn: string (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+    val expectedResults =
+      """[ {
+        |  "id" : 1,
+        |  "employee" : [ {
+        |    "name" : "Martin",
+        |    "address" : {
+        |      "city" : "Olomuc",
+        |      "street" : "Vodickova",
+        |      "buildingNum" : 732,
+        |      "zip" : "73200",
+        |      "intZip" : 73200
+        |    }
+        |  }, {
+        |    "name" : "Stephan",
+        |    "address" : {
+        |      "city" : "Olomuc",
+        |      "street" : "Vodickova",
+        |      "buildingNum" : 77,
+        |      "zip" : "77-333"
+        |    }
+        |  } ],
+        |  "errors" : [ null, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "employee.address.zip",
+        |    "rawValues" : [ "77-333" ],
+        |    "mappings" : [ ]
+        |  } ]
+        |}, {
+        |  "id" : 2,
+        |  "employee" : [ {
+        |    "name" : "Petr",
+        |    "address" : {
+        |      "city" : "Ostrava",
+        |      "street" : "Vlavska",
+        |      "buildingNum" : 25,
+        |      "zip" : "a9991"
+        |    }
+        |  }, {
+        |    "name" : "Michal",
+        |    "address" : {
+        |      "city" : "Ostrava",
+        |      "street" : "Vlavska",
+        |      "buildingNum" : 334,
+        |      "zip" : "552-aa1"
+        |    }
+        |  } ],
+        |  "errors" : [ {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "employee.address.zip",
+        |    "rawValues" : [ "a9991" ],
+        |    "mappings" : [ ]
+        |  }, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "employee.address.zip",
+        |    "rawValues" : [ "552-aa1" ],
+        |    "mappings" : [ ]
+        |  } ]
+        |}, {
+        |  "id" : 3,
+        |  "employee" : [ {
+        |    "name" : "Vojta",
+        |    "address" : {
+        |      "city" : "Plzen",
+        |      "street" : "Kralova",
+        |      "buildingNum" : 33,
+        |      "zip" : "993",
+        |      "intZip" : 993
+        |    }
+        |  } ],
+        |  "errors" : [ null ]
+        |} ]"""
+        .stripMargin.replace("\r\n", "\n")
+
+    processCastExample(df, "employee.address.zip", "employee.address.intZip", expectedSchema, expectedResults)
+  }
+
+
+  private def processCastExample(df: DataFrame, inputColumn: String, outputColumn: String, expectedSchema: String, expectedResults: String): Unit = {
+    val dfOut = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, inputColumn, outputColumn, "errors",
+      c => {
+        c.cast(IntegerType)
+      }, c => {
+        when(c.isNotNull.and(c.cast(IntegerType).isNull),
+          callUDF("confCastErr", lit(inputColumn), c.cast(StringType)))
+          .otherwise(null)
+      })
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults =  JsonUtils.prettySparkJSON(dfOut.toJSON.collect.mkString("\n"))
 
     dfOut.printSchema()
     assertSchema(actualSchema, expectedSchema)

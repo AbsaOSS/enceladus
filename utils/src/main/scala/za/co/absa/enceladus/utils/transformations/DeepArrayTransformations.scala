@@ -389,57 +389,68 @@ object DeepArrayTransformations {
                    nestedErrorColumn: String,
                    globalErrorColumn: String): DataFrame = {
 
-    def flattenNestedArrays(schema: StructType, inputColumn: String): Column = {
-      def helperStruct(schema: StructType, columnPath: Seq[String], inputColumn: Column): Column = {
+    def flattenNestedArrays(schema: StructType, inputColumnName: String): Column = {
+      def helperStruct(schema: StructType, columnPath: Seq[String], parentPath: Option[Column], inputColumn: Column, arrayLevel: Int): Column = {
+
+        val curCol = parentPath match {
+          case None => col(columnPath.head)
+          case Some(parentCol) => parentCol.getField(columnPath.head)
+        }
+
         if (isLeafElement(columnPath)) {
-          inputColumn
+          curCol
         } else {
           schema.apply(columnPath.head).dataType match {
-            case st: StructType => helperStruct(st, columnPath.tail, inputColumn)
-            case ar: ArrayType => helperArray(ar, columnPath, inputColumn)
-            case _ => inputColumn
+            case st: StructType =>
+              helperStruct(st, columnPath.tail, Some(curCol), inputColumn, arrayLevel)
+            case ar: ArrayType =>
+              helperArray(ar, columnPath, curCol, inputColumn, arrayLevel + 1)
+            case _ =>
+              curCol
           }
         }
       }
 
-      def helperArray(arr: ArrayType, columnPath: Seq[String], inputColumn: Column): Column = {
+      def helperArray(arr: ArrayType, columnPath: Seq[String], parentPath: Column, inputColumn: Column, arrayLevel: Int): Column = {
         arr.elementType match {
           case st: StructType =>
             if (columnPath.isEmpty) {
-              flatten(inputColumn)
+              flatten(parentPath)
             } else {
-              flatten(helperStruct(st, columnPath.tail, inputColumn))
+              if (arrayLevel > 1) {
+                helperStruct(st, columnPath.tail, Some(flatten(parentPath)), inputColumn, arrayLevel)
+              } else {
+                flatten(helperStruct(st, columnPath.tail, Some(parentPath), inputColumn, arrayLevel+1))
+              }
             }
           case ar: ArrayType =>
-            flatten(helperArray(ar, columnPath, inputColumn))
+            flatten(helperArray(ar, columnPath, parentPath, inputColumn, arrayLevel + 1))
           case _ =>
-            flatten(inputColumn)
+            flatten(parentPath)
         }
       }
 
       val path = nestedErrorColumn.split('.')
-      helperStruct(df.schema, path, col(inputColumn))
+      helperStruct(df.schema, path, None, col(inputColumnName), 0)
     }
 
     if (globalErrorColumn.contains('.')) {
       throw new IllegalArgumentException(s"Global error columns should be at the root schema level. Value '$globalErrorColumn' is not valid.")
     }
 
-    //df.printSchema()
-    //df.explain(true)
-
     val tmpCol = SchemaUtils.getUniqueName("tmp", Some(df.schema))
     val flattenedColumn = flattenNestedArrays(df.schema, nestedErrorColumn)
 
-    val df1 = df.withColumnRenamed(globalErrorColumn,tmpCol)
-      .withColumn(globalErrorColumn, callUDF( "arrayDistinctErrors", concat(col(tmpCol), flattenedColumn)))
-      .drop(col(tmpCol))
+    val dfOutput =
+      if (df.schema.fields.exists(_.name == globalErrorColumn) ) {
+        df.withColumnRenamed(globalErrorColumn,tmpCol)
+          .withColumn(globalErrorColumn, callUDF( "arrayDistinctErrors", concat(col(tmpCol), flattenedColumn)))
+          .drop(col(tmpCol))
+      } else {
+        df.withColumn(globalErrorColumn, callUDF( "arrayDistinctErrors", flattenedColumn))
+      }
 
-    //df1.printSchema()
-    //df1.explain(true)
-
-
-    nestedDropColumn(df1, nestedErrorColumn)
+    nestedDropColumn(dfOutput, nestedErrorColumn)
   }
 
   // Returns true if a path consists only of 1 element meaning it is the leaf element of the input column path requested by the caller
