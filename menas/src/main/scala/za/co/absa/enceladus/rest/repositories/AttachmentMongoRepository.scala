@@ -26,6 +26,6 @@ import scala.reflect.ClassTag
 class AttachmentMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends MongoRepository[MenasAttachment](mongoDb)(ClassTag(classOf[MenasAttachment])) {
 
-  override private[repositories] def collectionName = "attachment"
+  override def collectionName = "attachment"
 
 }

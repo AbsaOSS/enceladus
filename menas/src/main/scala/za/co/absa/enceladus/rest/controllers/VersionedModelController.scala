@@ -29,7 +29,8 @@ import za.co.absa.enceladus.rest.exceptions.NotFoundException
 import za.co.absa.enceladus.rest.services.VersionedModelService
 
 
-abstract class VersionedModelController[C <: VersionedModel](versionedModelService: VersionedModelService[C]) extends BaseController {
+abstract class VersionedModelController[C <: VersionedModel](versionedModelService: VersionedModelService[C])
+  extends BaseController {
 
   import za.co.absa.enceladus.rest.utils.implicits._
 

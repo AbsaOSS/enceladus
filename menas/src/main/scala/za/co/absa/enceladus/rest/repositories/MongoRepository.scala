@@ -28,7 +28,7 @@ abstract class MongoRepository[C](mongoDb: MongoDatabase)(implicit ct: ClassTag[
 
   private[repositories] val collection = mongoDb.getCollection[C](collectionName)
 
-  private[repositories] def collectionName: String
+  def collectionName: String
 
   def isUniqueName(name: String): Future[Boolean] = {
     val res = collection.countDocuments(getNameFilter(name))

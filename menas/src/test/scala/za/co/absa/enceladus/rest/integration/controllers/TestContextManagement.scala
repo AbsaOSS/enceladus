@@ -13,19 +13,24 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.repositories
+package za.co.absa.enceladus.rest.integration.controllers
 
-import org.mongodb.scala.MongoDatabase
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Repository
-import za.co.absa.enceladus.model.MappingTable
+import org.scalatest.{BeforeAndAfterAll, Suite}
+import org.springframework.test.context.TestContextManager
 
-import scala.reflect.ClassTag
+trait TestContextManagement extends BeforeAndAfterAll {
+  this: Suite =>
 
-@Repository
-class MappingTableMongoRepository @Autowired()(mongoDb: MongoDatabase)
-  extends VersionedMongoRepository[MappingTable](mongoDb: MongoDatabase)(ClassTag(classOf[MappingTable])) {
+  private val testContextManager: TestContextManager = new TestContextManager(this.getClass)
 
-  override def collectionName = "mapping_table"
+  override def beforeAll(): Unit = {
+    super.beforeAll
+    testContextManager.beforeTestClass
+    testContextManager.prepareTestInstance(this)
+  }
 
+  override def afterAll(): Unit = {
+    testContextManager.afterTestClass
+    super.afterAll
+  }
 }
