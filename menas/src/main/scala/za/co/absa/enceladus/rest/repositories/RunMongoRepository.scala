@@ -16,10 +16,9 @@
 package za.co.absa.enceladus.rest.repositories
 
 import org.mongodb.scala.bson.BsonDocument
-import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts.descending
-import org.mongodb.scala.{MapReduceObservable, MongoDatabase}
+import org.mongodb.scala.{Completed, MapReduceObservable, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.atum.utils.ControlUtils
@@ -34,7 +33,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override private[repositories] def collectionName = "run"
+  override def collectionName = "run"
 
   def getAllLatest(): Future[Seq[Run]] = {
     getLatestOfEach()
@@ -99,4 +98,8 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     and(datasetNameEq, datasetVersionEq)
   }
 
+  override def create(item: Run): Future[Completed] = {
+    val bson = BsonDocument(ControlUtils.asJson(item))
+    collection.withDocumentClass[BsonDocument].insertOne(bson).head()
+  }
 }

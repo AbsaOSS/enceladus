@@ -26,6 +26,6 @@ import scala.reflect.ClassTag
 class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends VersionedMongoRepository[Dataset](mongoDb)(ClassTag(classOf[Dataset])) {
 
-  override private[repositories] def collectionName = "dataset"
+  override def collectionName = "dataset"
 
 }
