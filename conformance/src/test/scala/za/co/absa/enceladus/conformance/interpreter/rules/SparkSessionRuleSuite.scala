@@ -22,6 +22,7 @@ import za.co.absa.enceladus.samples.DeepArraySamples
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class SparkSessionRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+  // scalastyle:off line.size.limit
 
   private val sparkSessionRule = SparkSessionConfConformanceRule(order = 1, outputColumn = "TimeZone", controlCheckpoint = false, sparkConfKey = "spark.sql.session.timeZone")
   private val sparkSessionArrayRule = SparkSessionConfConformanceRule(order = 2, outputColumn = "items.SubSystem", controlCheckpoint = false, sparkConfKey = "spark.sql.session.mySubSystem")

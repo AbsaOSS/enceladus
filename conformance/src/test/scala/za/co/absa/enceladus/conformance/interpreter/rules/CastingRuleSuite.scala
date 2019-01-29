@@ -25,6 +25,9 @@ import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class CastingRuleSuite extends FunSuite with SparkTestBase {
+  // scalastyle:off import.grouping
+  // scalastyle:off magic.number
+  // scalastyle:off regex
 
   test("Casting conformance rule test") {
 
@@ -115,7 +118,8 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
     }.getMessage contains "have different parents")
 
     assert(intercept[ValidationException] {
-      RuleValidators.validateSameParent(dsName, ruleName, "order.item.id", "order.item.ty", "order.item.details.payment")
+      RuleValidators.validateSameParent(dsName, ruleName, "order.item.id", "order.item.ty",
+        "order.item.details.payment")
     }.getMessage contains "have different parents")
 
   }

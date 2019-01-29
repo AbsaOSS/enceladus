@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.utils.general
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object JsonUtils {
 
@@ -33,4 +34,10 @@ object JsonUtils {
 
   }
 
+  def getDataFrameFromJson(spark: SparkSession, json: String): DataFrame = {
+    // scalastyle:off import.grouping
+    import spark.implicits._
+    // scalastyle:on import.grouping
+    spark.read.json(Seq(json).toDS)
+  }
 }

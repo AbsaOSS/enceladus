@@ -23,6 +23,7 @@ import za.co.absa.enceladus.samples.DeepArraySamples
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class UppercaseRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+  // scalastyle:off line.size.limit
 
   private val uppercaseRule = UppercaseConformanceRule(order = 1, outputColumn = "ConformedName", controlCheckpoint = false, inputColumn = "name")
   private val uppercaseArrayRule = UppercaseConformanceRule(order = 2, outputColumn = "items.ConformedItemId", controlCheckpoint = false, inputColumn = "items.itemid")

@@ -26,6 +26,10 @@ import za.co.absa.enceladus.samples.NegationRuleSamples
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class NegationRuleSuite extends FunSuite with SparkTestBase {
+  // scalastyle:off import.grouping
+  // scalastyle:off magic.number
+  // scalastyle:off regex
+
   import spark.implicits._
 
   test("Negation rule field validation test") {
@@ -56,7 +60,8 @@ class NegationRuleSuite extends FunSuite with SparkTestBase {
     testRule(inputDataset, expectedDataset, expectedJSON)
   }
 
-  test("Negation conformance rule should not change zero numeric values (Keep in mind positive and negative floating-point zero)") {
+  test("Negation conformance rule should not change zero numeric values (Keep in mind positive " +
+    "and negative floating-point zero)") {
     val inputDataset = NegationRuleSamples.Zero.data.toDS
     val expectedDataset = NegationRuleSamples.dataset
     val expectedJSON = NegationRuleSamples.Zero.conformedJSON
@@ -72,7 +77,8 @@ class NegationRuleSuite extends FunSuite with SparkTestBase {
     testRule(inputDataset, expectedDataset, expectedJSON)
   }
 
-  test("Negation conformance rule should produce errors when negating min numeric values due to Silent Overflow and set to default value without promoting the data type") {
+  test("Negation conformance rule should produce errors when negating min numeric values due to Silent " +
+    "Overflow and set to default value without promoting the data type") {
     val inputDataset = NegationRuleSamples.Min.data.toDS
     val expectedDataset = NegationRuleSamples.dataset
     val expectedJSON = NegationRuleSamples.Min.conformedJSON
