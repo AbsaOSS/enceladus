@@ -56,15 +56,18 @@ private[transformations] case class Leg(legid: Int, conditions: Seq[Condition])
 private[transformations] case class Trade(id: Int, legs: Seq[Leg])
 
 // Structs of Structs example with errror column
-private[transformations] case class AddressWithErrColumn(city: String, street: String, buildingNum: Int, zip: String, errors: Seq[ErrorMessage])
+private[transformations] case class AddressWithErrColumn(city: String, street: String, buildingNum: Int, zip: String,
+                                                         errors: Seq[ErrorMessage])
 
 private[transformations] case class AddressNoErrColumn(city: String, street: String, buildingNum: Int, zip: String)
 
 private[transformations] case class EmployeeNoErrorColumn(name: String, address: AddressNoErrColumn)
 
-private[transformations] case class TestObj1WithErrorColumn(id: Int, employee: EmployeeNoErrorColumn, errors: Seq[ErrorMessage])
+private[transformations] case class TestObj1WithErrorColumn(id: Int, employee: EmployeeNoErrorColumn, errors:
+Seq[ErrorMessage])
 
-private[transformations] case class TestObj2WithErrorColumn(id: Int, employee: Seq[EmployeeNoErrorColumn], errors: Seq[ErrorMessage])
+private[transformations] case class TestObj2WithErrorColumn(id: Int, employee: Seq[EmployeeNoErrorColumn],
+                                                            errors: Seq[ErrorMessage])
 
 private[transformations] case class TestObj2NoErrColumn(id: Int, employee: Seq[EmployeeNoErrorColumn])
 
@@ -78,6 +81,9 @@ private[transformations] case class GeoDataWithErrorColumn(id: Int, matrix: Seq[
 private[transformations] case class TradeWithErrorColumn(id: Int, legs: Seq[Leg], errors: Seq[ErrorMessage])
 
 object DeepArraySamples {
+  // scalastyle:off magic.number
+  // scalastyle:off line.size.limit
+
   // WITHOUT error column
 
   // Plain
@@ -89,41 +95,41 @@ object DeepArraySamples {
 
   // Struct of struct
   val structOfStructSampleN: Seq[TestObj] = Seq(
-    TestObj(1,Employee("Martin", Address("Olomuc", "Vodickova"))),
-    TestObj(1,Employee("Petr", Address("Ostrava", "Vlavska"))),
-    TestObj(1,Employee("Vojta", Address("Plzen", "Kralova")))
+    TestObj(1, Employee("Martin", Address("Olomuc", "Vodickova"))),
+    TestObj(1, Employee("Petr", Address("Ostrava", "Vlavska"))),
+    TestObj(1, Employee("Vojta", Address("Plzen", "Kralova")))
   )
 
   // Array of struct of struct
   val arrayOfstructOfStructSampleN: Seq[TestObj2] = Seq(
-    TestObj2(1,Seq(Employee("Martin", Address("Olomuc", "Vodickova")), Employee("Stephan", Address("Olomuc", "Vodickova")))),
-    TestObj2(2,Seq(Employee("Petr", Address("Ostrava", "Vlavska")), Employee("Michal", Address("Ostrava", "Vlavska")))),
-    TestObj2(3,Seq(Employee("Vojta", Address("Plzen", "Kralova"))))
+    TestObj2(1, Seq(Employee("Martin", Address("Olomuc", "Vodickova")), Employee("Stephan", Address("Olomuc", "Vodickova")))),
+    TestObj2(2, Seq(Employee("Petr", Address("Ostrava", "Vlavska")), Employee("Michal", Address("Ostrava", "Vlavska")))),
+    TestObj2(3, Seq(Employee("Vojta", Address("Plzen", "Kralova"))))
   )
 
   // Arrays of primitives
   val arraysOfPrimitivesSampleN: Seq[FunWords] = Seq(
-    FunWords(1,Seq("Gizmo", "Blurp", "Buzinga")),
-    FunWords(1,Seq("Quirk", "Zap", "Mmrnmhrm"))
+    FunWords(1, Seq("Gizmo", "Blurp", "Buzinga")),
+    FunWords(1, Seq("Quirk", "Zap", "Mmrnmhrm"))
   )
 
   // Arrays of arrays of primitives
   val arraysOfArraysOfPrimitivesSampleN: Seq[GeoData] = Seq(
-    GeoData(1,Seq(Seq("Tree", "Table"), Seq("Map", "Duck"))),
-    GeoData(2,Seq(Seq("Apple", "Machine"), Seq("List", "Duck"))),
-    GeoData(3,Seq(Seq("Computer", "Snake"), Seq("Sun", "Star")))
+    GeoData(1, Seq(Seq("Tree", "Table"), Seq("Map", "Duck"))),
+    GeoData(2, Seq(Seq("Apple", "Machine"), Seq("List", "Duck"))),
+    GeoData(3, Seq(Seq("Computer", "Snake"), Seq("Sun", "Star")))
   )
 
   // Arrays of structs
   val arraysOfStructsSampleN: Seq[Team] = Seq(
-    Team(1,Seq(Person("John", "Smith"), Person("Jack", "Brown"))),
-    Team(1,Seq(Person("Merry", "Cook"), Person("Jane", "Clark")))
+    Team(1, Seq(Person("John", "Smith"), Person("Jack", "Brown"))),
+    Team(1, Seq(Person("Merry", "Cook"), Person("Jane", "Clark")))
   )
 
   // Arrays of arrays of struct
   val arraysOfArraysOfStructSampleN: Seq[Tournament] = Seq(
-    Tournament(1,Seq(Seq(Person("Mona Lisa", "Harddrive")), Seq(Person("Lenny", "Linux"), Person("Dot", "Not")) )),
-    Tournament(1,Seq(Seq(Person("Eddie", "Larrison")), Seq(Person("Scarlett", "Johanson"), Person("William", "Windows")) ))
+    Tournament(1, Seq(Seq(Person("Mona Lisa", "Harddrive")), Seq(Person("Lenny", "Linux"), Person("Dot", "Not")))),
+    Tournament(1, Seq(Seq(Person("Eddie", "Larrison")), Seq(Person("Scarlett", "Johanson"), Person("William", "Windows"))))
   )
 
   // Arrays of struct with arrays of struct
@@ -192,18 +198,18 @@ object DeepArraySamples {
 
   // Arrays of primitives
   val arraysOfPrimitivesSampleE: Seq[FunNumbersWithErrorColumn] = Seq(
-    FunNumbersWithErrorColumn(1,Seq("7755", "a212", "222-111"),
+    FunNumbersWithErrorColumn(1, Seq("7755", "a212", "222-111"),
       Seq(ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
-    FunNumbersWithErrorColumn(1,Seq("223a", "223a", "775"), Nil),
-    FunNumbersWithErrorColumn(1,Seq("5", "-100", "9999999"), Nil)
+    FunNumbersWithErrorColumn(1, Seq("223a", "223a", "775"), Nil),
+    FunNumbersWithErrorColumn(1, Seq("5", "-100", "9999999"), Nil)
   )
 
   // Arrays of arrays of primitives
   val arraysOfArraysOfPrimitivesSampleE: Seq[GeoDataWithErrorColumn] = Seq(
-    GeoDataWithErrorColumn(1,Seq(Seq("10", "11b"), Seq("11b", "12")),
+    GeoDataWithErrorColumn(1, Seq(Seq("10", "11b"), Seq("11b", "12")),
       Seq(ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
-    GeoDataWithErrorColumn(2,Seq(Seq("20f", "300"), Seq("1000", "10-10")), Nil),
-    GeoDataWithErrorColumn(3,Seq(Seq("775", "223"), Seq("100", "0")), Nil)
+    GeoDataWithErrorColumn(2, Seq(Seq("20f", "300"), Seq("1000", "10-10")), Nil),
+    GeoDataWithErrorColumn(3, Seq(Seq("775", "223"), Seq("100", "0")), Nil)
   )
 
   // Arrays of struct with arrays of struct
@@ -227,4 +233,7 @@ object DeepArraySamples {
         Condition("if bid<52", "2OO", 200), Condition("if sell>32", "f175", 175), Condition("if sell>27", "225_", 225)))
     ), Seq(ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value"))))
   )
+
+  // scalastyle:on magic.number
+  // scalastyle:on line.size.limit
 }

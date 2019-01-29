@@ -23,6 +23,7 @@ import za.co.absa.enceladus.samples.DeepArraySamples
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class DropRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+  // scalastyle:off line.size.limit
 
   private val dropRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )
   private val dropArrayRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )

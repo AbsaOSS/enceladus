@@ -23,6 +23,7 @@ import za.co.absa.enceladus.samples.DeepArraySamples
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class LiteralRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+  // scalastyle:off line.size.limit
 
   private val literalRule = LiteralConformanceRule(order = 1, outputColumn = "System", controlCheckpoint = false, value = "FA")
   private val literalArrayRule = LiteralConformanceRule(order = 2, outputColumn = "items.SubSystem", controlCheckpoint = false, value = "Orders")

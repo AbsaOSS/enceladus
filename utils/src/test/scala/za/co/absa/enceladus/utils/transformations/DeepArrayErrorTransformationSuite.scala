@@ -16,20 +16,23 @@
 package za.co.absa.enceladus.utils.transformations
 
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{IntegerType, StringType}
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import org.scalatest.FunSuite
+import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.general.JsonUtils
+import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import DeepArraySamples._
 
 class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
+  // scalastyle:off import.grouping
+  // scalastyle:off magic.number
+  // scalastyle:off line.size.limit
+  // scalastyle:off null
+  // scalastyle:off regex
 
   import spark.implicits._
-
   implicit val udfLib: UDFLibrary = new UDFLibrary
-
-  import DeepArraySamples._
 
   test("Test casting of a plain field with error column") {
     val df = spark.sparkContext.parallelize(plainSampleE).toDF
@@ -190,7 +193,8 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
-    processCastExample(df, "employee.address.zip", "employee.address.intZip", expectedSchema, expectedResults)
+    processCastExample(df, "employee.address.zip", "employee.address.intZip",
+      expectedSchema, expectedResults)
   }
 
   test("Test casting of an array of struct of struct with error column") {
@@ -307,7 +311,8 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
-    processCastExample(df, "employee.address.zip", "employee.address.intZip", expectedSchema, expectedResults)
+    processCastExample(df, "employee.address.zip", "employee.address.intZip",
+      expectedSchema, expectedResults)
   }
 
   test("Test casting of an array of primitives") {
@@ -458,7 +463,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
     processCastExample(df, "matrix", "intMatrix", expectedSchema, expectedResults)
   }
 
-  test("Test casting of an array of struct of array os ftruct with error column") {
+  test("Test casting of an array of struct of array of struct with error column") {
     val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleE).toDF
 
     val expectedSchema =
@@ -671,7 +676,8 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
-    processCastExample(df, "legs.conditions.conthen", "legs.conditions.intConditionVal", expectedSchema, expectedResults)
+    processCastExample(df, "legs.conditions.conthen", "legs.conditions.intConditionVal",
+      expectedSchema, expectedResults)
   }
 
   test("Test casting of an array of struct of struct WITHOUT error column") {
@@ -781,10 +787,102 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
         |} ]"""
         .stripMargin.replace("\r\n", "\n")
 
-    processCastExample(df, "employee.address.zip", "employee.address.intZip", expectedSchema, expectedResults)
+    processCastExample(df, "employee.address.zip", "employee.address.intZip",
+      expectedSchema, expectedResults)
   }
 
-  private def processCastExample(df: DataFrame, inputColumn: String, outputColumn: String, expectedSchema: String, expectedResults: String): Unit = {
+  test ("Test multiple levels of nesting") {
+
+    val sample = """[{"id":1,"legs":[{"legid":100,"conditions":[{"checks":[{"checkNums":["1","2","3b","4","5c","6"]}],"amount":100}]}]}]"""
+
+    val df = JsonUtils.getDataFrameFromJson(spark, sample)
+
+    val expectedSchema =
+      """root
+        | |-- id: long (nullable = true)
+        | |-- legs: array (nullable = true)
+        | |    |-- element: struct (containsNull = false)
+        | |    |    |-- conditions: array (nullable = true)
+        | |    |    |    |-- element: struct (containsNull = false)
+        | |    |    |    |    |-- amount: long (nullable = true)
+        | |    |    |    |    |-- checks: array (nullable = true)
+        | |    |    |    |    |    |-- element: struct (containsNull = false)
+        | |    |    |    |    |    |    |-- checkNums: array (nullable = true)
+        | |    |    |    |    |    |    |    |-- element: string (containsNull = true)
+        | |    |    |    |    |    |    |-- optimizedNums: array (nullable = true)
+        | |    |    |    |    |    |    |    |-- element: integer (containsNull = true)
+        | |    |    |-- legid: long (nullable = true)
+        | |-- errors: array (nullable = true)
+        | |    |-- element: struct (containsNull = true)
+        | |    |    |-- errType: string (nullable = true)
+        | |    |    |-- errCode: string (nullable = true)
+        | |    |    |-- errMsg: string (nullable = true)
+        | |    |    |-- errCol: string (nullable = true)
+        | |    |    |-- rawValues: array (nullable = true)
+        | |    |    |    |-- element: string (containsNull = true)
+        | |    |    |-- mappings: array (nullable = true)
+        | |    |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |    |-- mappingTableColumn: string (nullable = true)
+        | |    |    |    |    |-- mappedDatasetColumn: string (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+    val expectedResults =
+      """[ {
+        |  "id" : 1,
+        |  "legs" : [ {
+        |    "conditions" : [ {
+        |      "amount" : 100,
+        |      "checks" : [ {
+        |        "checkNums" : [ "1", "2", "3b", "4", "5c", "6" ],
+        |        "optimizedNums" : [ 1, 2, null, 4, null, 6 ]
+        |      } ]
+        |    } ],
+        |    "legid" : 100
+        |  } ],
+        |  "errors" : [ {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "legs.conditions.checks.optimizedNums",
+        |    "rawValues" : [ "3b" ],
+        |    "mappings" : [ ]
+        |  }, {
+        |    "errType" : "confCastError",
+        |    "errCode" : "E00003",
+        |    "errMsg" : "Conformance Error - Null returned by casting conformance rule",
+        |    "errCol" : "legs.conditions.checks.optimizedNums",
+        |    "rawValues" : [ "5c" ],
+        |    "mappings" : [ ]
+        |  } ]
+        |} ]"""
+        .stripMargin.replace("\r\n", "\n")
+
+    processCastExample(df, "legs.conditions.checks.checkNums", "legs.conditions.checks.optimizedNums",
+      expectedSchema, expectedResults)
+  }
+
+  test ("Test deep array transformations unhappy paths") {
+    val df = spark.sparkContext.parallelize(Seq(1,2,3,4,5)).toDF()
+
+    assert(intercept[IllegalArgumentException] {
+      DeepArrayTransformations.nestedWithColumnAndErrorMap(df, "value", "value2", "err.errors", c => c, e => e)
+    }.getMessage contains "Error columns should be at the root schema level")
+
+    assert(intercept[IllegalArgumentException] {
+      DeepArrayTransformations.nestedWithColumnMap(df, "value.foo", "value.foo2", c => c)
+    }.getMessage contains "Field 'value' is not a struct type or an array")
+
+    assert(intercept[IllegalArgumentException] {
+      DeepArrayTransformations.nestedWithColumnMap(df, "value", "", _ => lit("foo")).printSchema()
+    }.getMessage contains "Output field cannot be empty")
+
+    assert(intercept[IllegalArgumentException] {
+      DeepArrayTransformations.nestedAddColumn(df, "value", _ => lit("foo")).printSchema()
+    }.getMessage contains "The column 'value' already exists")
+
+  }
+
+  private def processCastExample(df: DataFrame, inputColumn: String, outputColumn: String, expectedSchema: String,
+                                 expectedResults: String): Unit = {
     val dfOut = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, inputColumn, outputColumn, "errors",
       c => {
         c.cast(IntegerType)
@@ -795,9 +893,8 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
       })
 
     val actualSchema = dfOut.schema.treeString
-    val actualResults =  JsonUtils.prettySparkJSON(dfOut.toJSON.collect.mkString("\n"))
+    val actualResults = JsonUtils.prettySparkJSON(dfOut.toJSON.collect.mkString("\n"))
 
-    dfOut.printSchema()
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
   }

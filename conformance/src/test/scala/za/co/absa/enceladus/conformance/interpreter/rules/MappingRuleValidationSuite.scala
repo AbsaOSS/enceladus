@@ -23,6 +23,7 @@ import za.co.absa.enceladus.samples.EmployeeConformance
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class MappingRuleValidationSuite extends FunSuite with SparkTestBase {
+  // scalastyle:off line.size.limit
 
   test("Mapping rule fields existence validation test") {
 

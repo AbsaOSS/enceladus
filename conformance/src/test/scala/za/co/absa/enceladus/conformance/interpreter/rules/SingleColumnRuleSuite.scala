@@ -23,6 +23,7 @@ import za.co.absa.enceladus.samples.DeepArraySamples
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class SingleColumnRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+  // scalastyle:off line.size.limit
 
   private val singleColumnRule = SingleColumnConformanceRule(order = 1, controlCheckpoint = false, "conformedId", "id", "id2")
   private val singleColumnArrayRule = SingleColumnConformanceRule(order = 1, controlCheckpoint = false, "items.ConformedItemId", "items.itemid", "itemid3")

@@ -25,6 +25,8 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 trait TestRuleBehaviors  extends FunSuite with SparkTestBase {
+  // scalastyle:off import.grouping
+  // scalastyle:off regex
 
   def conformanceRuleShouldMatchExpected(inputDf: DataFrame, inputDataset: Dataset, expectedJSON: String) {
     spark.conf.set("spark.sql.session.timeZone", "GMT")
@@ -35,8 +37,6 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase {
 
     mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn inputDataset
     mockWhen(dao.getDataset("Library Conformance", 1)) thenReturn inputDataset
-
-    val mappingTablePattern = "{0}/{1}/{2}"
 
     import spark.implicits._
     val conformed = DynamicInterpreter.interpret(inputDataset, inputDf).cache
