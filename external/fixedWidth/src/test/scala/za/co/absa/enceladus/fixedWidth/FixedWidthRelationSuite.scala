@@ -13,16 +13,10 @@
  * limitations under the License.
  */
 
-var model = new sap.ui.model.json.JSONModel({
-  userInfo : {},
-  schemas: [],
-  mappingTables: [],
-  currentSchema: {},
-  currentMappingTable: {},
-  newMappingTable: {},
-  newSchema: {},
-  menasVersion: "${project.version}"
-})
-model.setSizeLimit(5000)
+package za.co.absa.enceladus.fixedWidth
 
-sap.ui.getCore().setModel(model)
+import org.scalatest.FunSuite
+
+class FormatSuite extends FunSuite {
+
+}

@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
+import com.typesafe.config.ConfigFactory
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.atum.model.ControlMeasure

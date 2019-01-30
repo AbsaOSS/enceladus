@@ -143,7 +143,7 @@ sap.ui.define([], function() {
           // the update
           // :-/
         }.bind(this))
-    } 
+    }
   };
 
   /**
@@ -227,7 +227,7 @@ sap.ui.define([], function() {
 
   /**
    * This unselects all items.
-   * 
+   *
    * Having selected tree items caused certain issues in ui5
    */
   HDFSBrowser.prototype.unselectAll = function() {
@@ -239,12 +239,12 @@ sap.ui.define([], function() {
 
   /**
    * This collapses all items.
-   * 
+   *
    * Having selected tree items caused certain issues in ui5
    */
   HDFSBrowser.prototype.collapseAll = function() {
     this._tree.collapseAll();
-  };		
+  };
 
   /**
    * Service for retrieving the directory listings
