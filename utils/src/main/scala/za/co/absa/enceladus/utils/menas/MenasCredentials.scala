@@ -27,7 +27,12 @@ object MenasCredentials {
   }
 
   def replaceHome(path: String): String = {
-    path.replaceFirst("^~", System.getProperty("user.home"))
+    if (path.matches("^~.*")) {
+      //not using replaceFirst as it interprets the backslash in Windows path as escape character mangling the result
+      System.getProperty("user.home")+path.substring(1)
+    } else {
+      path
+    }
   }
 
 }
