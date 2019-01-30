@@ -113,7 +113,7 @@ object ArrayTransformations {
    *  @param ds Dataset to be transformed
    *  @param arrayCol The dot-separated path of the array column
    *  @param fn Function which takes a dataset and returns dataset. The array elements in the dataset have same path as the original array (one element per record).
-   *  		Fn has to preserve the element path.
+   *      Fn has to preserve the element path.
    *  @return Dataset with the array of transformed elements (at the original path) and preserving the original order of the elements.
    */
   def arrayTransform(ds: Dataset[Row], arrayCol: String)(fn: ((Dataset[Row]) => Dataset[Row]))(implicit spark: SparkSession) = {

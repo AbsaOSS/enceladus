@@ -17,18 +17,18 @@ jQuery.sap.require("sap.m.MessageBox");
 
 var DatasetService = new function() {
 
-	var model = sap.ui.getCore().getModel();
+  var model = sap.ui.getCore().getModel();
 
-	this.getDatasetList = function(bLoadFirst) {
-		Functions.ajax("api/dataset/list", "GET", {}, function(oData) {
-			model.setProperty("/datasets", oData)
-			if (oData.length > 0 && bLoadFirst)
-				DatasetService.getDatasetVersion(oData[0]._id, oData[0].latestVersion)
-		}, function() {
-			sap.m.MessageBox
-					.error("Failed to get the list of datasets. Please wait a moment and try reloading the application")
-		})
-	};
+  this.getDatasetList = function(bLoadFirst) {
+    Functions.ajax("api/dataset/list", "GET", {}, function(oData) {
+      model.setProperty("/datasets", oData)
+      if (oData.length > 0 && bLoadFirst)
+        DatasetService.getDatasetVersion(oData[0]._id, oData[0].latestVersion)
+    }, function() {
+      sap.m.MessageBox
+          .error("Failed to get the list of datasets. Please wait a moment and try reloading the application")
+    })
+  };
 
     this.getLatestDatasetVersion = function(sId) {
         Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/latest", "GET", {}, function(oData) {

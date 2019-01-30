@@ -111,9 +111,9 @@ object SchemaUtils {
    *
    *  E.g. if the path argument is "a.b.c.d.e" where b and d are arrays, "a.b" and "a.b.c.d" will be returned.
    *
-   * 	@param path The path to the attribute
+   *  @param path The path to the attribute
    *  @param schema The schema of the whole dataset
-   * 	@return Seq of dot-separated paths for all array fields in the provided path
+   *  @return Seq of dot-separated paths for all array fields in the provided path
    */
   def getAllArraysInPath(path: String, schema: StructType): Seq[String] = {
     def helper(remPath: Seq[String], pathAcc: Seq[String], arrayAcc: Seq[String]): Seq[String] = {

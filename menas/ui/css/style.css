@@ -14,20 +14,20 @@
  */
 
 html, body {
-	height: 100%;
-	overflow: hidden !important;
+  height: 100%;
+  overflow: hidden !important;
 }
 
 #__navigation0---schemaMainView--schemaIconTabBar-content {
-	height: calc(100% - 112px);
+  height: calc(100% - 112px);
 }
 
 .minW40rem {
-	min-width: 40rem !important;
+  min-width: 40rem !important;
 }
 
 .menasAddMappingFlex {
-	div {
-		width: calc(100% - 38px);
-	}	
+  div {
+    width: calc(100% - 38px);
+  }
 }
