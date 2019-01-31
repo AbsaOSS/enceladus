@@ -351,8 +351,8 @@ object DeepArrayTransformations {
         case Some(col) if isParentArray => col
       }
 
-      // For an error column created by transforming arrays of primitives the error colum will be created at
-      // the same level as the array. The error column will contain all errors from any array elements processed
+      // For an error column created by transforming arrays of primitives the error column will be created at
+      // the same level as the array. The error column will contain errors from all elements of the processed array 
       def handleErrorColumnOfArraysOfPrimitives(errorExpression: Option[Column], doFlatten: Boolean): Unit = {
         errorExpression.map(errorExpr => {
           errorColumnName = SchemaUtils.getUniqueName("errorList", None)
@@ -581,7 +581,7 @@ object DeepArrayTransformations {
 
   }
 
-  /** Checks if a path is a root element
+  /** Checks if a path is a leaf element
     * Basically it is just a slightly more efficient version of path.length == 1
     *
     * @param path A path to an element of a struct (e.g. company.employee.firstName)
