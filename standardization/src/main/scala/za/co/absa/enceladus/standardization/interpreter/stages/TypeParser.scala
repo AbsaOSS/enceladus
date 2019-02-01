@@ -23,6 +23,7 @@ import scala.util.Random
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.SchemaUtils.appendPath
 import za.co.absa.enceladus.utils.error.UDFLibrary
+import za.co.absa.spark.hofs._
 import scala.collection.Seq
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.schema.SchemaUtils
@@ -109,11 +110,15 @@ object TypeParser {
     logger.info(s"Creating standardization plan for Array $currentAttrPath")
 
     val newField = StructField(name = fieldName, dataType = fieldType.elementType, nullable = fieldType.containsNull)
-    val lambdaName = s"${unpath(currentAttrPath)}_${Random.nextInt().abs}"
-    val ParseOutput(stdCol, errCols) = standardize(newField, path, origSchema, Some(_$(lambdaName)), isArrayElement = true) // here pass lambda (current element)
+    val lambdaVariableName = s"${unpath(currentAttrPath)}_${Random.nextInt().abs}"
+    val lambda = (i: Column) => standardize(newField, path, origSchema, Some(i), isArrayElement = true) //here pass lambda (current element)
+    val lambdaErrCols = lambda.andThen(_.errors)
+    val lambdaStdCols = lambda.andThen(_.stdCol)
+
     val nullErrCond = attr.isNull and lit(!field.nullable)
-    val finalErrs = when(nullErrCond, array(typedLit(ErrorMessage.stdNullErr(currentAttrPath)))).otherwise(typedLit(flatten(transform(attr, lambdaName, errCols))))
-    val stdCols = transform(attr, lambdaName, stdCol)
+
+    val finalErrs = when(nullErrCond, array(typedLit(ErrorMessage.stdNullErr(currentAttrPath)))).otherwise(typedLit(flatten(transform(attr, lambdaErrCols, lambdaVariableName))))
+    val stdCols = transform(attr, lambdaStdCols, lambdaVariableName)
     logger.info(s"Finished standardization plan for Array $currentAttrPath")
     ParseOutput(stdCols as fieldName, finalErrs)
   }
