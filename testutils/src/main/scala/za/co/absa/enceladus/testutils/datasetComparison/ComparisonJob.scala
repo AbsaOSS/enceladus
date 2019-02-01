@@ -18,12 +18,14 @@ package za.co.absa.enceladus.testutils.datasetComparison
 import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql._
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.testutils.exceptions._
 import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions}
 
 object ComparisonJob {
-  val log: Logger = LogManager.getLogger("enceladus.testutils.ComparisonJob")
+  private val log: Logger = LogManager.getLogger("enceladus.testutils.ComparisonJob")
+  private val errorColumnName: String = "errCol"
+  private val tmpColumnName: String = "tmp"
 
   private def renameColumns(dataSet: Dataset[Row], keys: Seq[String], prefix: String): DataFrame = {
     val renamedColumns = dataSet.columns.map { c =>
@@ -47,7 +49,6 @@ object ComparisonJob {
 
   private def checkForDuplicateRows(actualDf: DataFrame, keys: Seq[String], path: String): Unit = {
     val duplicates = actualDf.groupBy(keys.head, keys.tail: _*).count().filter("`count` >= 2")
-    duplicates.show()
     if (duplicates.count() > 0) {
       duplicates.write.format("parquet").save(path)
       throw DuplicateRowsInDF(path)
@@ -87,10 +88,11 @@ object ComparisonJob {
     val expectedMinusActual: Dataset[Row] = expectedDf.except(actualDf)
     val actualMinusExpected: Dataset[Row] = actualDf.except(expectedDf)
 
-    if (expectedMinusActual.count() != 0 || actualMinusExpected.count() != 0) {
+    val errorsPresent: Boolean = expectedMinusActual.count() != 0 || actualMinusExpected.count() != 0
+
+    if (errorsPresent) {
       if (cmd.keys.isDefined) {
-        val joinedData = getKeyBasedOutput(expectedMinusActual, actualMinusExpected, cmd.keys.get)
-        joinedData.write.format("parquet").save(cmd.outPath)
+        handleKeyBasedDiff(cmd, expectedDf, expectedMinusActual, actualMinusExpected)
       } else {
         expectedMinusActual.write.format("parquet").save(s"${cmd.outPath}/expected_minus_actual")
         actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
@@ -100,5 +102,24 @@ object ComparisonJob {
     } else {
       log.info("Expected and actual datasets are the same.")
     }
+  }
+
+  private def handleKeyBasedDiff(cmd: CmdConfig,
+                                 expectedDf: DataFrame,
+                                 expectedMinusActual: Dataset[Row],
+                                 actualMinusExpected: Dataset[Row]): Unit = {
+    val columns: Array[String] = expectedDf.columns.filterNot(p => { cmd.keys.get.contains(p)})
+
+    val joinedData: DataFrame = getKeyBasedOutput(expectedMinusActual, actualMinusExpected, cmd.keys.get)
+    val joinedDataWithErrCol = joinedData.withColumn(errorColumnName, lit(Array[String]()))
+
+    val dataWithErrors: DataFrame = columns.foldLeft(joinedDataWithErrCol) { (data, column) =>
+      data.withColumnRenamed(errorColumnName, tmpColumnName)
+        .withColumn(errorColumnName, concat(when(col(s"actual_$column") === col(s"expected_$column"), lit(Array[String]()))
+          .otherwise(array(lit(column))), col(tmpColumnName)))
+        .drop(tmpColumnName)
+    }
+
+    dataWithErrors.write.format("parquet").save(cmd.outPath)
   }
 }
