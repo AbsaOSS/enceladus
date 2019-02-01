@@ -25,11 +25,8 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import DeepArraySamples._
 
 class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
-  // scalastyle:off import.grouping
-  // scalastyle:off magic.number
   // scalastyle:off line.size.limit
   // scalastyle:off null
-  // scalastyle:off regex
 
   import spark.implicits._
   implicit val udfLib: UDFLibrary = new UDFLibrary
@@ -893,7 +890,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
       })
 
     val actualSchema = dfOut.schema.treeString
-    val actualResults = JsonUtils.prettySparkJSON(dfOut.toJSON.collect.mkString("\n"))
+    val actualResults = JsonUtils.prettySparkJSON(dfOut.toJSON.collect)
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)

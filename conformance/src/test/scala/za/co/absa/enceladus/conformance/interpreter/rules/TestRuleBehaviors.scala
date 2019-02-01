@@ -25,8 +25,6 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 trait TestRuleBehaviors  extends FunSuite with SparkTestBase {
-  // scalastyle:off import.grouping
-  // scalastyle:off regex
 
   def conformanceRuleShouldMatchExpected(inputDf: DataFrame, inputDataset: Dataset, expectedJSON: String) {
     spark.conf.set("spark.sql.session.timeZone", "GMT")

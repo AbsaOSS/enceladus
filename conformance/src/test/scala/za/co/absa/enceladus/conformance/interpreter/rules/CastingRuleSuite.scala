@@ -25,9 +25,6 @@ import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class CastingRuleSuite extends FunSuite with SparkTestBase {
-  // scalastyle:off import.grouping
-  // scalastyle:off magic.number
-  // scalastyle:off regex
 
   test("Casting conformance rule test") {
 
@@ -47,7 +44,7 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
     import spark.implicits._
     val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS, inputDf).cache
 
-    val conformedJSON = JsonUtils.prettySparkJSON(conformed.orderBy($"id").toJSON.collect().mkString("\n"))
+    val conformedJSON = JsonUtils.prettySparkJSON(conformed.orderBy($"id").toJSON.collect)
 
     if (conformedJSON != CastingRuleSamples.conformedOrdersJSON) {
       println("EXPECTED:")

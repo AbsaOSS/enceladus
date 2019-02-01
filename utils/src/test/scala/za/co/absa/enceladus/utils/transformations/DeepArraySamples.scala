@@ -233,7 +233,4 @@ object DeepArraySamples {
         Condition("if bid<52", "2OO", 200), Condition("if sell>32", "f175", 175), Condition("if sell>27", "225_", 225)))
     ), Seq(ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value"))))
   )
-
-  // scalastyle:on magic.number
-  // scalastyle:on line.size.limit
 }
