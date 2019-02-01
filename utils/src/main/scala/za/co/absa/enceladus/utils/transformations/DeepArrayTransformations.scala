@@ -21,14 +21,15 @@ import org.apache.spark.sql.types.{ArrayType, DataType, StructField, StructType}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.collection.mutable.ListBuffer
+import scala.util.control.NonFatal
 
 object DeepArrayTransformations {
   /**
     * Map transformation for columns that can be inside nested structs, arrays and its combinations.
     *
-    * If the input column is a primitive field the method will add outputColumnName at the same level of nesting.
-    * By executing the `expression` passing the source column into it. If a struct column is expected you can
-    * use `.getField(...)` method to operate on it's children.
+    * If the input column is a primitive field the method will add outputColumnName at the same level of nesting
+    * by executing the `expression` passing the source column into it. If a struct column is expected you can
+    * use `.getField(...)` method to operate on its children.
     *
     * The output column name can omit the full path as the field will be created at the same level of nesting as the input column.
     *
@@ -120,7 +121,14 @@ object DeepArrayTransformations {
   def nestedAddColumn(df: DataFrame,
                       newColumnName: String,
                       expression: Unit => Column): DataFrame = {
-    nestedWithColumnMapHelper(df, newColumnName, "", Some(_ => expression()), None, isAddColumn = true)._1
+    try {
+      nestedWithColumnMapHelper(df, newColumnName, "", Some(_ => expression()), None)._1
+    } catch {
+      case e: IllegalArgumentException if e.getMessage.contains("Output field cannot be empty") =>
+        throw new IllegalArgumentException(s"The column '$newColumnName' already exists.", e)
+      case NonFatal(e) => throw e
+    }
+
   }
 
   /**
@@ -147,9 +155,9 @@ object DeepArrayTransformations {
     *
     * It is probably too complicated to use by itself. Use facade functions instead.
     *
-    * If the input column is a primitive field the method will add outputColumnName at the same level of nesting.
-    * By executing the `expression` passing the source column into it. If a struct column is expected you can
-    * use `.getField(...)` method to operate on it's children.
+    * If the input column is a primitive field the method will add outputColumnName at the same level of nesting
+    * by executing the `expression` passing the source column into it. If a struct column is expected you can
+    * use `.getField(...)` method to operate on its children.
     *
     * The output column name can omit the full path as the field will be created at the same level of nesting as the input column.
     *
@@ -167,15 +175,13 @@ object DeepArrayTransformations {
     * @param outputColumnName The output column name. The path is optional, e.g. you can use `conformedName` instead of `company.employee.conformedName`.
     * @param expression       A function that applies a transformation to a column as a Spark expression.
     * @param errorCondition   A function that should check error conditions and return an error column in case such conditions are met
-    * @param isAddColumn      If true the input column is not expected to exist, it should be added (this affects only exception thrown if the column already exists)
     * @return A pair consisting of a dataframe with a new field that contains transformed values and a string containing the error column name.
     */
   private def nestedWithColumnMapHelper(df: DataFrame,
                                         inputColumnName: String,
                                         outputColumnName: String,
                                         expression: Option[Column => Column] = None,
-                                        errorCondition: Option[Column => Column] = None,
-                                        isAddColumn: Boolean = false
+                                        errorCondition: Option[Column => Column] = None
                                        ): (DataFrame, String) = {
     // The name of the field is the last token of outputColumnName
     val outputFieldName = outputColumnName.split('.').last
@@ -190,15 +196,11 @@ object DeepArrayTransformations {
       name
     }
 
-    def ensureOutputColumnNameValid(columnName: String): Unit= {
-      if (columnName.isEmpty) {
-        if (isAddColumn) {
-          throw new IllegalArgumentException(s"The column '$inputColumnName' already exists.")
-
-        } else {
-          throw new IllegalArgumentException(s"Output field cannot be empty when transforming an " +
-            s"existing field '$inputColumnName'")
-        }
+    def ensureOutputColumnNonEmpty(): Unit = {
+      if (outputColumnName.isEmpty) {
+        throw new IllegalArgumentException(
+          s"Output field cannot be empty when transforming an existing field '$inputColumnName'"
+        )
       }
     }
 
@@ -225,7 +227,7 @@ object DeepArrayTransformations {
               s"input field name ($inputColumnName).")
           case Some(exp) =>
             val parentField = parentColumn.orNull
-            ensureOutputColumnNameValid(outputFieldName)
+            ensureOutputColumnNonEmpty()
             mappedFields += exp(parentField).as(outputFieldName)
             addErrorColumn(Some(schema), parentField).foreach(mappedFields += _)
         }
@@ -262,7 +264,7 @@ object DeepArrayTransformations {
               case dt: ArrayType =>
                 mapArray(dt, path, parentColumn)
               case _ =>
-                ensureOutputColumnNameValid(outputFieldName)
+                ensureOutputColumnNonEmpty()
                 mappedFields += exp(curColumn).as(outputFieldName)
                 addErrorColumn(Some(schema), curColumn).foreach(mappedFields += _)
                 Seq(curColumn)
@@ -379,7 +381,7 @@ object DeepArrayTransformations {
               null
             case Some(exp) =>
               // Retain the original column
-              ensureOutputColumnNameValid(outputFieldName)
+              ensureOutputColumnNonEmpty()
               mappedFields += transform(curColumn, lambdaName, exp).as(outputFieldName)
 
               // Handle error column for arrays of primitives
@@ -387,7 +389,7 @@ object DeepArrayTransformations {
               curColumn
           }
         } else {
-          // This is the case then the caller requested to map a field that is a child of a primitive.
+          // This is the case when the caller is requested to map a field that is a child of a primitive.
           // For instance, the caller is requested to map 'person.firstName.foo' when 'person.firstName'
           // is an instance of StringType.
           throw new IllegalArgumentException(s"Field $fieldName is not a struct or an array of struct type.")
@@ -408,7 +410,7 @@ object DeepArrayTransformations {
             transform(curColumn, lambdaName, innerArray.head).as(fieldName)
           case _ =>
             // If at the bottom of the array nesting is a primitive we need to add the new column
-            // as an array of it's own
+            // as an array of its own
             // Example: if 'persons' is an array of array of string the output field,
             //          say, 'conformedPersons' needs also to be an array of array of string.
             val errorExpression = errorCondition.map(errorCond => {

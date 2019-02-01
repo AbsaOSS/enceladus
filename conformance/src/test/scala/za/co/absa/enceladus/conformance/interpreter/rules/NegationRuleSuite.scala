@@ -26,9 +26,6 @@ import za.co.absa.enceladus.samples.NegationRuleSamples
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class NegationRuleSuite extends FunSuite with SparkTestBase {
-  // scalastyle:off import.grouping
-  // scalastyle:off magic.number
-  // scalastyle:off regex
 
   import spark.implicits._
 

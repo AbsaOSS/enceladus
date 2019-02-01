@@ -28,11 +28,8 @@ import DeepArraySamples._
 
 
 class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
-  // scalastyle:off import.grouping
-  // scalastyle:off magic.number
   // scalastyle:off line.size.limit
   // scalastyle:off null
-  // scalastyle:off regex
 
   import spark.implicits._
 
