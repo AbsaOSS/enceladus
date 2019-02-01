@@ -108,14 +108,15 @@ object ComparisonJob {
                                  expectedDf: DataFrame,
                                  expectedMinusActual: Dataset[Row],
                                  actualMinusExpected: Dataset[Row]): Unit = {
-    val columns: Array[String] = expectedDf.columns.filterNot(p => { cmd.keys.get.contains(p)})
+    val columns: Array[String] = expectedDf.columns.filterNot(cmd.keys.get.contains)
 
     val joinedData: DataFrame = getKeyBasedOutput(expectedMinusActual, actualMinusExpected, cmd.keys.get)
     val joinedDataWithErrCol = joinedData.withColumn(errorColumnName, lit(Array[String]()))
 
     val dataWithErrors: DataFrame = columns.foldLeft(joinedDataWithErrCol) { (data, column) =>
       data.withColumnRenamed(errorColumnName, tmpColumnName)
-        .withColumn(errorColumnName, concat(when(col(s"actual_$column") === col(s"expected_$column"), lit(Array[String]()))
+        .withColumn(errorColumnName, concat(
+          when(col(s"actual_$column") === col(s"expected_$column"), lit(Array[String]()))
           .otherwise(array(lit(column))), col(tmpColumnName)))
         .drop(tmpColumnName)
     }
