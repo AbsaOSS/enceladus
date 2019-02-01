@@ -25,7 +25,7 @@ import org.apache.spark.sql.util.SchemaUtils
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-import org.slf4s.LoggerFactory
+import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.utils.validation.ValidationException
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.error.ErrorMessage
