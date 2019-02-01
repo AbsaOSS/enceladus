@@ -18,13 +18,15 @@ package za.co.absa.enceladus.rest.integration.controllers
 import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.scalatest.{BeforeAndAfter, FunSpec, FunSuite, WordSpec}
+import org.scalatest.{BeforeAndAfter, WordSpec}
 import org.slf4j.{Logger, LoggerFactory}
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.springframework.boot.test.web.client.TestRestTemplate
+import org.springframework.boot.web.client.RestTemplateBuilder
 import org.springframework.boot.web.server.LocalServerPort
+import org.springframework.context.annotation.Bean
 import org.springframework.http._
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
-import org.springframework.web.client.RestTemplate
 
 import scala.reflect.ClassTag
 
@@ -47,12 +49,15 @@ class BaseRestApiTest extends WordSpec with TestContextManagement with BeforeAnd
     .registerModule(new JavaTimeModule())
     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 
-  private val restTemplate: RestTemplate = {
-    val template = new RestTemplate()
+  @Autowired
+  private val restTemplate: TestRestTemplate = null
+
+  @Bean
+  def restTemplateBuilder: RestTemplateBuilder = {
     val messageConverter = new MappingJackson2HttpMessageConverter(objectMapper)
-    template.getMessageConverters.clear()
-    template.getMessageConverters.add(messageConverter)
-    template
+    val templateBuilder = new RestTemplateBuilder()
+      .additionalMessageConverters(messageConverter)
+    templateBuilder
   }
 
   def getAuthHeaders(): HttpHeaders = {
@@ -103,6 +108,14 @@ class BaseRestApiTest extends WordSpec with TestContextManagement with BeforeAnd
 
   def assertOk(responseEntity: ResponseEntity[_]): Unit = {
     assert(responseEntity.getStatusCode == HttpStatus.OK)
+  }
+
+  def assertBadRequest(responseEntity: ResponseEntity[_]): Unit = {
+    assert(responseEntity.getStatusCode == HttpStatus.BAD_REQUEST)
+  }
+
+  def assertNotFound(responseEntity: ResponseEntity[_]): Unit = {
+    assert(responseEntity.getStatusCode == HttpStatus.NOT_FOUND)
   }
 
 }

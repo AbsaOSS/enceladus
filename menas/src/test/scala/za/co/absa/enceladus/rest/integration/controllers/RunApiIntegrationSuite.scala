@@ -22,13 +22,14 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest.Application
 import za.co.absa.enceladus.rest.integration.fixtures.RunFixtureService
+import za.co.absa.enceladus.rest.models.Validation
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = Array(classOf[Application]))
 class RunApiIntegrationSuite extends BaseRestApiTest {
 
   @Autowired
-  val runFixture: RunFixtureService = null
+  private val runFixture: RunFixtureService = null
 
   private val apiUrl = "/runs"
 
@@ -42,13 +43,13 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
   s"Calls to $apiUrl/list" can {
     "return 200" when {
-      "there are Run entities in the database" should {
+      "there are Runs" should {
         "return only the latest run of each stored Runs" in {
-          val dataset1run1: Run = runFixture.getDummyRun(dataset = "dataset1", runId = 1)
-          val dataset1run2: Run = runFixture.getDummyRun(dataset = "dataset1", runId = 2)
+          val dataset1run1 = runFixture.getDummyRun(dataset = "dataset1", runId = 1)
+          val dataset1run2 = runFixture.getDummyRun(dataset = "dataset1", runId = 2)
           runFixture.add(dataset1run1)
           runFixture.add(dataset1run2)
-          val dataset2run1: Run = runFixture.getDummyRun(dataset = "dataset2", runId = 1)
+          val dataset2run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1)
           runFixture.add(dataset2run1)
 
           val response = sendGet[Array[Run]](s"$apiUrl/list")
@@ -69,6 +70,64 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
           val body = response.getBody
           assert(body.isEmpty)
+        }
+      }
+    }
+  }
+
+  s"Calls to $apiUrl/startDate/{statDate}" can {
+    val startDate = "28-01-2019"
+
+    "return 200" when {
+      "there are Runs on the specified startDate" should {
+        "only the latest run for each dataset on that startDate" should {
+          "return only the latest run of each stored Runs" in {
+            val dataset1run1 = runFixture.getDummyRun(dataset = "dataset1", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
+            val dataset1run2 = runFixture.getDummyRun(dataset = "dataset1", runId = 2, startDateTime = s"$startDate 14:01:12 +0200")
+            runFixture.add(dataset1run1)
+            runFixture.add(dataset1run2)
+            val dataset2run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
+            runFixture.add(dataset2run1)
+
+            val response = sendGet[Array[Run]](s"$apiUrl/startDate/$startDate")
+
+            assertOk(response)
+
+            val body = response.getBody
+            assert(body.length == 2)
+            assert(body.sameElements(Array(dataset1run2, dataset2run1)))
+          }
+        }
+      }
+
+      "there are no Runs for the specified startDate" should {
+        "return an empty collection" in {
+          val run = runFixture.getDummyRun(startDateTime = "29-01-2019 13:01:12 +0200")
+          runFixture.add(run)
+
+          val response = sendGet[Array[Run]](s"$apiUrl/startDate/$startDate")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body.isEmpty)
+        }
+      }
+    }
+
+    "return 400" when {
+      "the startDate does not have the format dd-MM-yyyy" should {
+        "return a Validation error" in {
+          val run = runFixture.getDummyRun(startDateTime = s"$startDate 13:01:12 +0200")
+          runFixture.add(run)
+
+          val response = sendGet[Validation](s"$apiUrl/startDate/01-29-2019")
+
+          assertBadRequest(response)
+
+          val body = response.getBody
+          assert(!body.isValid)
+          assert(body == Validation().withError("startDate", "must have format dd-MM-yyyy: 01-29-2019"))
         }
       }
     }
