@@ -19,6 +19,7 @@ import org.scalatest.FunSuite
 import org.apache.spark.sql.types._
 
 class SchemaUtilsSuite extends FunSuite {
+  // scalastyle:off magic.number
 
   val schema = StructType(Seq(
     StructField("a", IntegerType, false),
@@ -93,4 +94,48 @@ class SchemaUtilsSuite extends FunSuite {
     assert(SchemaUtils.getFieldNullability("b.d", schema).get)
     assert(SchemaUtils.getFieldNullability("x.y.z", schema).isEmpty)
   }
+
+  test ("Test isCastAlwaysSucceeds()") {
+    assert(!SchemaUtils.isCastAlwaysSucceeds(StructType(Seq()), StringType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(ArrayType(StringType), StringType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(StringType, ByteType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(StringType, ShortType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(StringType, IntegerType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(StringType, LongType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(StringType, DecimalType(10,10)))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(StringType, DateType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(StringType, TimestampType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(StructType(Seq()), StructType(Seq())))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(ArrayType(StringType), ArrayType(StringType)))
+
+    assert(!SchemaUtils.isCastAlwaysSucceeds(ShortType, ByteType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(IntegerType, ByteType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(IntegerType, ShortType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(LongType, ByteType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(LongType, ShortType))
+    assert(!SchemaUtils.isCastAlwaysSucceeds(LongType, IntegerType))
+
+    assert(SchemaUtils.isCastAlwaysSucceeds(StringType, StringType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(ByteType, StringType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(ShortType, StringType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(IntegerType, StringType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(LongType, StringType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(DecimalType(10,10), StringType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(DateType, StringType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(TimestampType, StringType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(StringType, StringType))
+
+    assert(SchemaUtils.isCastAlwaysSucceeds(ByteType, ByteType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(ByteType, ShortType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(ByteType, IntegerType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(ByteType, LongType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(ShortType, ShortType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(ShortType, IntegerType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(ShortType, LongType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(IntegerType, IntegerType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(IntegerType, LongType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(LongType, LongType))
+    assert(SchemaUtils.isCastAlwaysSucceeds(DateType, TimestampType))
+  }
+
 }

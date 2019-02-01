@@ -15,13 +15,15 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
+import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.{ArrayType, DataType, StringType, StructType}
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.CastingConformanceRule
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInterpreter {
@@ -33,7 +35,10 @@ case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInte
     RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)
     RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumn, rule.outputColumn)
 
-    if (rule.outputDataType.compareToIgnoreCase("string") == 0) {
+    val sourceDataType = SchemaUtils.getFieldType(rule.inputColumn, df.schema).get
+    val targetDataType = CatalystSqlParser.parseDataType(rule.outputDataType)
+
+    if (SchemaUtils.isCastAlwaysSucceeds(sourceDataType, targetDataType)) {
       // Casting to string does not generate errors
       DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c =>
         c.cast(rule.outputDataType)
