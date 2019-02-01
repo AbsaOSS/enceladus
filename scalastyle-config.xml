@@ -152,5 +152,5 @@
       <parameter name="ignoreRegex">^""$</parameter>
     </parameters>
   </check>
-  <check level="warning" class="org.scalastyle.scalariform.ImportGroupingChecker" enabled="true"/>
+  <check level="warning" class="org.scalastyle.scalariform.ImportGroupingChecker" enabled="false"/>
 </scalastyle>
