@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.menas
+package za.co.absa.enceladus.menasplugin
 
 import org.apache.log4j.LogManager
-import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.atum.core.Atum
-import za.co.absa.atum.plugins.EventListener
 import za.co.absa.atum.model._
+import za.co.absa.atum.plugins.EventListener
+import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.dao.{MenasDAO, UnauthorizedException}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 

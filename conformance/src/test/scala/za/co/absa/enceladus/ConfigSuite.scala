@@ -20,8 +20,8 @@ import java.time.ZonedDateTime
 import com.typesafe.config.ConfigFactory
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.{CmdConfig, DynamicConformanceJob}
+import za.co.absa.enceladus.menasplugin.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.menas.MenasCredentials
 
 import scala.util.{Failure, Success, Try}
 

@@ -117,11 +117,6 @@
             <artifactId>spark-hofs</artifactId>
             <version>${spark.hofs.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
         <!-- Test -->
         <dependency>
             <groupId>org.specs2</groupId>

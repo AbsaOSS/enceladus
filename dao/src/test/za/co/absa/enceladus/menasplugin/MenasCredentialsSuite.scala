@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.menas
+package za.co.absa.enceladus.utils.menasplugin
 
 import org.scalatest.FunSuite
 
