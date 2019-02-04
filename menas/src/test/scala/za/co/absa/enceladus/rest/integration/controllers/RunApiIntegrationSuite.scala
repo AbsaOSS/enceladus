@@ -150,26 +150,37 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
     "return 404" when {
       "there is no Run with the specified datasetName" in {
-        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
-        runFixture.add(run)
+        setUpSimpleRun()
 
         val response = sendGet[Run](s"$apiUrl/DATASET/1/1")
 
         assertNotFound(response)
       }
       "there is no Run with the specified datasetVersion" in {
-        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
-        runFixture.add(run)
+        setUpSimpleRun()
 
         val response = sendGet[Run](s"$apiUrl/dataset/2/1")
 
         assertNotFound(response)
       }
       "there is no Run with the specified runId" in {
-        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
-        runFixture.add(run)
+        setUpSimpleRun()
 
         val response = sendGet[Run](s"$apiUrl/dataset/1/2")
+
+        assertNotFound(response)
+      }
+      "the datasetVersion is not a valid numeric type" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$apiUrl/dataset/datasetVersion/1")
+
+        assertNotFound(response)
+      }
+      "the runId is not a valid numeric type" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$apiUrl/dataset/1/runId")
 
         assertNotFound(response)
       }
@@ -197,30 +208,93 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
     "return 404" when {
       "there is no Run with the specified datasetName" in {
-        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
-        runFixture.add(run)
+        setUpSimpleRun()
 
         val response = sendGet[Run](s"$apiUrl/DATASET/1/latest")
 
         assertNotFound(response)
       }
       "there is no Run with the specified datasetVersion" in {
-        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
-        runFixture.add(run)
+        setUpSimpleRun()
 
         val response = sendGet[Run](s"$apiUrl/dataset/2/latest")
 
         assertNotFound(response)
       }
       "the datasetVersion is not a valid numeric type" in {
-        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
-        runFixture.add(run)
+        setUpSimpleRun()
 
         val response = sendGet[Run](s"$apiUrl/dataset/datasetVersion/latest")
 
         assertNotFound(response)
       }
     }
+  }
+
+  s"Calls to $apiUrl/splineUrl/{datasetName}/{datasetVersion}/{runId}" can {
+    val endpointBase = s"$apiUrl/splineUrl"
+
+    "return 200" when {
+      "there is a Run of the specified Dataset with the specified runId" should {
+        "return the Spline URL for the Run" in {
+          val dataset1run1 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+          val dataset1run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
+          val dataset2run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
+          runFixture.add(dataset1run1, dataset1run2, dataset2run2)
+
+          val response = sendGet[String](s"$endpointBase/dataset/1/2")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body == "http://localhost:8080/spline/dataset/lineage/_search?path=dummyOutputPath&application_id=dummySparkApplicationId")
+        }
+      }
+    }
+
+    "return 404" when {
+      "there is no Run with the specified datasetName" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$endpointBase/DATASET/1/1")
+
+        assertNotFound(response)
+      }
+      "there is no Run with the specified datasetVersion" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$endpointBase/dataset/2/1")
+
+        assertNotFound(response)
+      }
+      "there is no Run with the specified runId" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$endpointBase/dataset/1/2")
+
+        assertNotFound(response)
+      }
+      "the datasetVersion is not a valid numeric type" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$endpointBase/datasetVersion/1")
+
+        assertNotFound(response)
+      }
+      "the runId is not a valid numeric type" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$endpointBase/1/runId")
+
+        assertNotFound(response)
+      }
+    }
+  }
+
+  private def setUpSimpleRun(): Run = {
+    val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+    runFixture.add(run)
+    run
   }
 
 }
