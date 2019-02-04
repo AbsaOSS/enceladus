@@ -212,6 +212,14 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
         assertNotFound(response)
       }
+      "the datasetVersion is not a valid numeric type" in {
+        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+        runFixture.add(run)
+
+        val response = sendGet[Run](s"$apiUrl/dataset/datasetVersion/latest")
+
+        assertNotFound(response)
+      }
     }
   }
 
