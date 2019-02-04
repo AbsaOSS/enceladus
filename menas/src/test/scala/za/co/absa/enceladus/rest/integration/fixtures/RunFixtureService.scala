@@ -25,11 +25,13 @@ import za.co.absa.atum.model._
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.repositories.RunMongoRepository
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
 @Component
 class RunFixtureService @Autowired()(runMongoRepository: RunMongoRepository, mongoDb: MongoDatabase) {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   private val dummyDateString = "04-12-2017 16:19:17 +0200"
 
@@ -37,8 +39,8 @@ class RunFixtureService @Autowired()(runMongoRepository: RunMongoRepository, mon
     Await.ready(mongoDb.createCollection(runMongoRepository.collectionName).toFuture(), Duration.Inf)
   }
 
-  def add(run: Run): Unit = {
-    Await.ready(runMongoRepository.create(run), Duration.Inf)
+  def add(runs: Run*): Unit = {
+    Await.ready(Future.sequence(runs.map(run => runMongoRepository.create(run))), Duration.Inf)
   }
 
   def dropCollection(): Unit = {
