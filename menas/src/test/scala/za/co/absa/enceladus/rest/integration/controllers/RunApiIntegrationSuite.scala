@@ -176,4 +176,43 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
+  s"Calls to $apiUrl/{datasetName}/{datasetVersion}/latest" can {
+    "return 200" when {
+      "there are Runs with the specified datasetName and datasetVersion" should {
+        "return the Run with the latest RunId" in {
+          val dataset1run1 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+          val dataset1run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
+          val dataset2run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
+          runFixture.add(dataset1run1, dataset1run2, dataset2run2)
+
+          val response = sendGet[Run](s"$apiUrl/dataset/1/latest")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body == dataset1run2)
+        }
+      }
+    }
+
+    "return 404" when {
+      "there is no Run with the specified datasetName" in {
+        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+        runFixture.add(run)
+
+        val response = sendGet[Run](s"$apiUrl/DATASET/1/latest")
+
+        assertNotFound(response)
+      }
+      "there is no Run with the specified datasetVersion" in {
+        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+        runFixture.add(run)
+
+        val response = sendGet[Run](s"$apiUrl/dataset/2/latest")
+
+        assertNotFound(response)
+      }
+    }
+  }
+
 }
