@@ -36,7 +36,7 @@ import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 
 import scala.util.control.NonFatal
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
-import za.co.absa.enceladus.utils.menas.MenasPlugin
+import za.co.absa.enceladus.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 
 object DynamicConformanceJob {
@@ -105,8 +105,8 @@ object DynamicConformanceJob {
     MenasPlugin.enableMenas()
 
     // enable Spline
-    import za.co.absa.spline.core.SparkLineageInitializer._
-    spark.enableLineageTracking()
+    //import za.co.absa.spline.core.SparkLineageInitializer._
+    //spark.enableLineageTracking()
 
     // use REST DAO
     implicit val dao = EnceladusRestDAO

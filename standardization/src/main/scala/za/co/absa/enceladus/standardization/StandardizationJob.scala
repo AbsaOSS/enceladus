@@ -38,8 +38,8 @@ import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 import scala.util.control.NonFatal
 import org.apache.spark.sql.functions.{size, sum}
 import za.co.absa.atum.AtumImplicits
+import za.co.absa.enceladus.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.menas.MenasPlugin
 
 object StandardizationJob {
 

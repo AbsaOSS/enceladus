@@ -49,7 +49,7 @@ class JsonUtilsSuite extends FunSuite with SparkTestBase {
   }
 
   test("Test a dataframe created from a JSON") {
-    val inputJson = """{"value": 1}\n{"value": 2}"""
+    val inputJson = Seq("""{"value":1}""", """{"value":2}""")
 
     val df = JsonUtils.getDataFrameFromJson(spark, inputJson)
 

@@ -19,6 +19,7 @@ import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, DataType, StructField, StructType}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.spark.hofs._
 
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
@@ -319,8 +320,8 @@ object DeepArrayTransformations {
 
     // Handle arrays (including arrays of arrays) of primitives
     // The output column will also be an array, not an additional element of the existing array
-    def mapNestedArrayOfPrimitives(schema: ArrayType, curColumn: Column, expr: Column => Column,
-                                   doFlatten: Boolean = false): Column = {
+    def mapNestedArrayOfPrimitives(schema: ArrayType, expr: Column => Column,
+                                   doFlatten: Boolean = false): Column => Column = {
       val lambdaName = getLambdaName
       val elemType = schema.elementType
 
@@ -328,14 +329,15 @@ object DeepArrayTransformations {
         case _: StructType =>
           throw new IllegalArgumentException(s"Unexpected usage of mapNestedArrayOfPrimitives() on structs.")
         case dt: ArrayType =>
-          val innerArray = mapNestedArrayOfPrimitives(dt, _$(lambdaName), expr, doFlatten)
+          val innerArray = mapNestedArrayOfPrimitives(dt, expr, doFlatten)
           if (doFlatten) {
-            flatten(transform(curColumn, lambdaName, innerArray))
+            outerX => flatten(transform(outerX, innerArray, lambdaName))
           } else {
-            transform(curColumn, lambdaName, innerArray)
+            outerX => transform(outerX, innerArray, lambdaName)
           }
         case dt =>
-          transform(curColumn, lambdaName, expr(_$(lambdaName)))
+          //transform(curColumn, lambdaName, expr(_$(lambdaName)))
+          outerX => transform(outerX, InnerX => expr(InnerX), lambdaName)
       }
     }
 
@@ -355,13 +357,13 @@ object DeepArrayTransformations {
 
       // For an error column created by transforming arrays of primitives the error column will be created at
       // the same level as the array. The error column will contain errors from all elements of the processed array 
-      def handleErrorColumnOfArraysOfPrimitives(errorExpression: Option[Column], doFlatten: Boolean): Unit = {
+      def handleErrorColumnOfArraysOfPrimitives(errorExpression: Option[Column => Column], doFlatten: Boolean): Unit = {
         errorExpression.map(errorExpr => {
           errorColumnName = SchemaUtils.getUniqueName("errorList", None)
           val errorColumn = if (doFlatten) {
-            flatten(transform(curColumn, lambdaName, errorExpr)).as(errorColumnName)
+            flatten(transform(curColumn, x => errorExpr(x), lambdaName)).as(errorColumnName)
           } else {
-            transform(curColumn, lambdaName, errorExpr).as(errorColumnName)
+            transform(curColumn, x => errorExpr(x), lambdaName).as(errorColumnName)
           }
           if (inputColumnName.contains('.')) {
             val parent = inputColumnName.split('.').dropRight(1).mkString(".")
@@ -372,7 +374,8 @@ object DeepArrayTransformations {
       }
 
       // Handles primitive data types as well as nested arrays of primitives
-      def handlePrimitive(dt: DataType, transformExpression: Option[Column], errorExpression: Option[Column],
+      def handlePrimitive(dt: DataType, transformExpression: Option[Column => Column],
+                          errorExpression: Option[Column => Column],
                           doFlatten: Boolean = false): Column = {
         if (isLeaf) {
           transformExpression match {
@@ -382,7 +385,7 @@ object DeepArrayTransformations {
             case Some(exp) =>
               // Retain the original column
               ensureOutputColumnNonEmpty()
-              mappedFields += transform(curColumn, lambdaName, exp).as(outputFieldName)
+              mappedFields += transform(curColumn, x => exp(x), lambdaName).as(outputFieldName)
 
               // Handle error column for arrays of primitives
               handleErrorColumnOfArraysOfPrimitives(errorExpression, doFlatten)
@@ -406,19 +409,19 @@ object DeepArrayTransformations {
             // as a field of that struct
             // Example: if 'persons' is an array of array of structs having firstName and lastName,
             //          fields, then 'conformedFirstName' needs to be a new field inside the struct
-            val innerArray = mapArray(dt, path, Some(_$(lambdaName)), isParentArray = true)
-            transform(curColumn, lambdaName, innerArray.head).as(fieldName)
+            val innerArray = (x: Column) => mapArray(dt, path, Some(x), isParentArray = true)
+            transform(curColumn, c => innerArray(c).head, lambdaName).as(fieldName)
           case _ =>
             // If at the bottom of the array nesting is a primitive we need to add the new column
             // as an array of its own
             // Example: if 'persons' is an array of array of string the output field,
             //          say, 'conformedPersons' needs also to be an array of array of string.
             val errorExpression = errorCondition.map(errorCond => {
-              mapNestedArrayOfPrimitives(dt, _$(lambdaName), errorCond, doFlatten = true)
+              mapNestedArrayOfPrimitives(dt, errorCond, doFlatten = true)
             })
 
             val doFlatten = errorCondition.nonEmpty
-            handlePrimitive(dt, Some(mapNestedArrayOfPrimitives(dt, _$(lambdaName), expression.get)),
+            handlePrimitive(dt, Some(mapNestedArrayOfPrimitives(dt, expression.get)),
               errorExpression, doFlatten)
         }
       }
@@ -428,8 +431,8 @@ object DeepArrayTransformations {
         // This is done by specifying "*" as a leaf field.
         // If this struct is not a leaf element we just recursively call mapStruct() with child portion of the path.
         val innerPath = if (isLeaf) Seq("*") else path.tail
-        val innerStruct = struct(mapStruct(dt, innerPath, Some(_$(lambdaName))): _*)
-        transform(curColumn, lambdaName, innerStruct).as(fieldName)
+        val innerStruct = (x: Column) => struct(mapStruct(dt, innerPath, Some(x)): _*)
+        transform(curColumn, innerStruct, lambdaName).as(fieldName)
       }
 
       val elemType = schema.elementType
@@ -440,8 +443,8 @@ object DeepArrayTransformations {
           handleNestedArray(dt)
         case dt =>
           // This handles an array of primitives, e.g. arrays of strings etc.
-          val transformExpression = expression.map(expr => expr(_$(lambdaName)))
-          val errorExpression = errorCondition.map(cond => cond(_$(lambdaName)))
+          val transformExpression = expression.map(expr => (x: Column) => expr(x))
+          val errorExpression = errorCondition.map(cond => (x: Column) => cond(x))
           handlePrimitive(dt, transformExpression, errorExpression)
       }
       if (newColumn == null) {

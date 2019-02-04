@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance
 import java.io.File
 
 import scopt.OptionParser
-import za.co.absa.enceladus.utils.menas.MenasCredentials
+import za.co.absa.enceladus.menasplugin.MenasCredentials
 
 import scala.util.matching.Regex
 

@@ -792,7 +792,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
 
     val sample = """[{"id":1,"legs":[{"legid":100,"conditions":[{"checks":[{"checkNums":["1","2","3b","4","5c","6"]}],"amount":100}]}]}]"""
 
-    val df = JsonUtils.getDataFrameFromJson(spark, sample)
+    val df = JsonUtils.getDataFrameFromJson(spark, Seq(sample))
 
     val expectedSchema =
       """root

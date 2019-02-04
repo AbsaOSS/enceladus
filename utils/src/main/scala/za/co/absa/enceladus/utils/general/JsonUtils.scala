@@ -53,8 +53,8 @@ object JsonUtils {
     * @param json A json string to convert to a DataFrame
     * @return A data frame
     */
-  def getDataFrameFromJson(spark: SparkSession, json: String): DataFrame = {
+  def getDataFrameFromJson(spark: SparkSession, json: Seq[String]): DataFrame = {
     import spark.implicits._
-    spark.read.json(Seq(json).toDS)
+    spark.read.json(json.toDS)
   }
 }
