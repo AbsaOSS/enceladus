@@ -17,6 +17,7 @@ package za.co.absa.enceladus.rest.controllers
 
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import za.co.absa.enceladus.model.UsedIn
 import za.co.absa.enceladus.rest.exceptions.{EntityInUseException, NotFoundException, ValidationException}
 import za.co.absa.enceladus.rest.models.Validation
@@ -37,6 +38,11 @@ class RestExceptionHandler {
   @ExceptionHandler(value = Array(classOf[EntityInUseException]))
   def handleValidationException(exception: EntityInUseException): ResponseEntity[UsedIn] = {
     ResponseEntity.badRequest().body(exception.usedIn)
+  }
+
+  @ExceptionHandler(value = Array(classOf[MethodArgumentTypeMismatchException]))
+  def handleTypeMismatchException(exception: MethodArgumentTypeMismatchException): ResponseEntity[Any] = {
+    ResponseEntity.notFound().build[Any]()
   }
 
 }
