@@ -47,8 +47,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
         "return only the latest run of each stored Runs" in {
           val dataset1run1 = runFixture.getDummyRun(dataset = "dataset1", runId = 1)
           val dataset1run2 = runFixture.getDummyRun(dataset = "dataset1", runId = 2)
-          runFixture.add(dataset1run1)
-          runFixture.add(dataset1run2)
+          runFixture.add(dataset1run1, dataset1run2)
           val dataset2run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1)
           runFixture.add(dataset2run1)
 
@@ -80,23 +79,20 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
     "return 200" when {
       "there are Runs on the specified startDate" should {
-        "only the latest run for each dataset on that startDate" should {
-          "return only the latest run of each stored Runs" in {
-            val dataset1run1 = runFixture.getDummyRun(dataset = "dataset1", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
-            val dataset1run2 = runFixture.getDummyRun(dataset = "dataset1", runId = 2, startDateTime = s"$startDate 14:01:12 +0200")
-            runFixture.add(dataset1run1)
-            runFixture.add(dataset1run2)
-            val dataset2run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
-            runFixture.add(dataset2run1)
+        "return only the latest run for each dataset on that startDate" in {
+          val dataset1run1 = runFixture.getDummyRun(dataset = "dataset1", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
+          val dataset1run2 = runFixture.getDummyRun(dataset = "dataset1", runId = 2, startDateTime = s"$startDate 14:01:12 +0200")
+          runFixture.add(dataset1run1, dataset1run2)
+          val dataset2run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
+          runFixture.add(dataset2run1)
 
-            val response = sendGet[Array[Run]](s"$apiUrl/startDate/$startDate")
+          val response = sendGet[Array[Run]](s"$apiUrl/startDate/$startDate")
 
-            assertOk(response)
+          assertOk(response)
 
-            val body = response.getBody
-            assert(body.length == 2)
-            assert(body.sameElements(Array(dataset1run2, dataset2run1)))
-          }
+          val body = response.getBody
+          assert(body.length == 2)
+          assert(body.sameElements(Array(dataset1run2, dataset2run1)))
         }
       }
 
@@ -129,6 +125,53 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assert(!body.isValid)
           assert(body == Validation().withError("startDate", "must have format dd-MM-yyyy: 01-29-2019"))
         }
+      }
+    }
+  }
+
+  s"Calls to $apiUrl/{datasetName}/{datasetVersion}/{runId}" can {
+    "return 200" when {
+      "there is a Run of the specified Dataset with the specified runId" should {
+        "return the Run" in {
+          val dataset1run1 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+          val dataset1run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
+          val dataset2run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
+          runFixture.add(dataset1run1, dataset1run2, dataset2run2)
+
+          val response = sendGet[Run](s"$apiUrl/dataset/1/2")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body == dataset1run2)
+        }
+      }
+    }
+
+    "return 404" when {
+      "there is no Run with the specified datasetName" in {
+        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+        runFixture.add(run)
+
+        val response = sendGet[Run](s"$apiUrl/DATASET/1/1")
+
+        assertNotFound(response)
+      }
+      "there is no Run with the specified datasetVersion" in {
+        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+        runFixture.add(run)
+
+        val response = sendGet[Run](s"$apiUrl/dataset/2/1")
+
+        assertNotFound(response)
+      }
+      "there is no Run with the specified runId" in {
+        val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+        runFixture.add(run)
+
+        val response = sendGet[Run](s"$apiUrl/dataset/1/2")
+
+        assertNotFound(response)
       }
     }
   }
