@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.atum.model.{Checkpoint, ControlMeasure}
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.Application
 import za.co.absa.enceladus.rest.integration.fixtures.RunFixtureService
@@ -413,7 +413,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
     "return 200" when {
       "there is a Run with the specified uniqueId" should {
-        "update the Run's ControlMeasure and return the updated Run" in {
+        "update the Run's SplineReference and return the updated Run" in {
           val originalSplineRef = runFixture.getDummySplineReference(sparkApplicationId = null)
           val run = runFixture.getDummyRun(uniqueId = Option(uniqueId), splineRef = originalSplineRef)
           runFixture.add(run)
@@ -436,6 +436,41 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
         val splineReference = runFixture.getDummySplineReference()
 
         val response = sendPost[SplineReference, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(splineReference))
+
+        assertNotFound(response)
+      }
+    }
+  }
+
+  s"Calls to $apiUrl/updateRunStatus/{uniqueId}" can {
+    val endpointBase = s"$apiUrl/updateRunStatus"
+    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+
+    "return 200" when {
+      "there is a Run with the specified uniqueId" should {
+        "update the Run's RunStatus and return the updated Run" in {
+          val originalStatus = runFixture.getDummyRunStatus(runState = RunState.running)
+          val run = runFixture.getDummyRun(uniqueId = Option(uniqueId), runStatus = originalStatus)
+          runFixture.add(run)
+
+          val expectedStatus = runFixture.getDummyRunStatus(runState = RunState.allSucceeded)
+
+          val response = sendPost[RunStatus, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedStatus))
+
+          assertOk(response)
+
+          val expected = run.copy(runStatus = expectedStatus)
+          val body = response.getBody
+          assert(body == expected)
+        }
+      }
+    }
+
+    "return 404" when {
+      "there is no Run with the specified uniqueId" in {
+        val runStatus = runFixture.getDummyRunStatus()
+
+        val response = sendPost[RunStatus, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(runStatus))
 
         assertNotFound(response)
       }

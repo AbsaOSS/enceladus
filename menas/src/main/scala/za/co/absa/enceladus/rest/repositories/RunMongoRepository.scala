@@ -22,7 +22,7 @@ import org.mongodb.scala.model.{FindOneAndUpdateOptions, ReturnDocument, Updates
 import org.mongodb.scala.{Completed, MapReduceObservable, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
-import za.co.absa.atum.model.{Checkpoint, ControlMeasure}
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.models.RunWrapper
@@ -121,6 +121,15 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     collection.withDocumentClass[BsonDocument].findOneAndUpdate(
       equal("uniqueId", uniqueId),
       Updates.set("splineRef", bsonSplineRef),
+      FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
+    ).headOption().map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+  }
+
+  def updateRunStatus(uniqueId: String, runStatus: RunStatus): Future[Option[Run]] = {
+    val bsonRunStatus = BsonDocument(ControlUtils.asJson(runStatus))
+    collection.withDocumentClass[BsonDocument].findOneAndUpdate(
+      equal("uniqueId", uniqueId),
+      Updates.set("runStatus", bsonRunStatus),
       FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
     ).headOption().map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
   }
