@@ -83,7 +83,11 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   }
 
   @PostMapping(Array("/updateControlMeasure/{uniqueId}"))
-  def updateControlMeasure(): CompletableFuture[ControlMeasure] = Future(null)
+  @ResponseStatus(HttpStatus.OK)
+  def updateControlMeasure(@PathVariable uniqueId: String,
+                           @RequestBody controlMeasure: ControlMeasure): CompletableFuture[Run] = {
+    runService.updateControlMeasure(uniqueId, controlMeasure)
+  }
 
   @PostMapping(Array("/updateSplineReference/{uniqueId}"))
   def updateSplineReference(): CompletableFuture[SplineReference] = Future(null)
