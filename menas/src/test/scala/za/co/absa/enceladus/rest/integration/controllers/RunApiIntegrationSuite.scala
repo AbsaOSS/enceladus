@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.atum.model.Checkpoint
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure}
 import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest.Application
 import za.co.absa.enceladus.rest.integration.fixtures.RunFixtureService
@@ -363,6 +363,40 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
         val checkpoint = runFixture.getDummyCheckpoint()
 
         val response = sendPost[Checkpoint, Run](s"$apiUrl/addCheckpoint/$uniqueId", bodyOpt = Option(checkpoint))
+
+        assertNotFound(response)
+      }
+    }
+  }
+
+  s"Calls to $apiUrl/updateControlMeasure/{uniqueId}" can {
+    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+
+    "return 200" when {
+      "there is a Run with the specified uniqueId" should {
+        "update the Run's ControlMeasure and return the updated Run" in {
+          val originalMeasure = runFixture.getDummyControlMeasure(runUniqueId = Option("eeeeeeee-f9ac-46f8-9657-a09a4e3fb6e9"))
+          val run = runFixture.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = originalMeasure)
+          runFixture.add(run)
+
+          val expectedMeasure = runFixture.getDummyControlMeasure(runUniqueId = Option(uniqueId))
+
+          val response = sendPost[ControlMeasure, Run](s"$apiUrl/updateControlMeasure/$uniqueId", bodyOpt = Option(expectedMeasure))
+
+          assertOk(response)
+
+          val expected = run.copy(controlMeasure = expectedMeasure)
+          val body = response.getBody
+          assert(body == expected)
+        }
+      }
+    }
+
+    "return 404" when {
+      "there is no Run with the specified uniqueId" in {
+        val controlMeasure = runFixture.getDummyControlMeasure()
+
+        val response = sendPost[ControlMeasure, Run](s"$apiUrl/updateControlMeasure/$uniqueId", bodyOpt = Option(controlMeasure))
 
         assertNotFound(response)
       }

@@ -47,7 +47,7 @@ class RunFixtureService @Autowired()(runMongoRepository: RunMongoRepository, mon
     Await.ready(mongoDb.getCollection(runMongoRepository.collectionName).drop().toFuture(), Duration.Inf)
   }
 
-  def getDummyRun(uniqueId: Option[String] = Some(UUID.randomUUID().toString),
+  def getDummyRun(uniqueId: Option[String] = Option(UUID.randomUUID().toString),
                   runId: Int = 1,
                   dataset: String = "dummyDataset",
                   datasetVersion: Int = 1,
@@ -85,7 +85,7 @@ class RunFixtureService @Autowired()(runMongoRepository: RunMongoRepository, mon
   }
 
   def getDummyControlMeasure(metadata: ControlMeasureMetadata = getDummyMetadata(),
-                             runUniqueId: Option[String] = None,
+                             runUniqueId: Option[String] = Option(UUID.randomUUID().toString),
                              checkpoints: List[Checkpoint] = List()): ControlMeasure = {
     ControlMeasure(metadata, runUniqueId, checkpoints)
   }

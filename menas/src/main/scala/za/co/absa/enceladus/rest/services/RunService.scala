@@ -20,7 +20,7 @@ import java.util.UUID
 import org.joda.time.format.DateTimeFormat
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
-import za.co.absa.atum.model.Checkpoint
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure}
 import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.rest.models.Validation
@@ -83,6 +83,13 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
 
   def addCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Run] = {
     runMongoRepository.appendCheckpoint(uniqueId, checkpoint).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
+  def updateControlMeasure(uniqueId: String, controlMeasure: ControlMeasure): Future[Run] = {
+    runMongoRepository.updateControlMeasure(uniqueId, controlMeasure).map {
       case Some(run) => run
       case None      => throw NotFoundException()
     }

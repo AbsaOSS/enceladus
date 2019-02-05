@@ -22,7 +22,7 @@ import org.mongodb.scala.model.{FindOneAndUpdateOptions, ReturnDocument, Updates
 import org.mongodb.scala.{Completed, MapReduceObservable, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
-import za.co.absa.atum.model.Checkpoint
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure}
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest.models.RunWrapper
@@ -93,13 +93,6 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
   }
 
-  private def getDatasetFilter(datasetName: String, datasetVersion: Int) = {
-    val datasetNameEq = equal("dataset", datasetName)
-    val datasetVersionEq = equal("datasetVersion", datasetVersion)
-
-    and(datasetNameEq, datasetVersionEq)
-  }
-
   override def create(item: Run): Future[Completed] = {
     val bson = BsonDocument(ControlUtils.asJson(item))
     collection.withDocumentClass[BsonDocument].insertOne(bson).head()
@@ -112,6 +105,22 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       Updates.addToSet("controlMeasure.checkpoints", bsonCheckpoint),
       FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
     ).headOption().map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+  }
+
+  def updateControlMeasure(uniqueId: String, controlMeasure: ControlMeasure): Future[Option[Run]] = {
+    val bsonControlMeasure = BsonDocument(ControlUtils.asJson(controlMeasure))
+    collection.withDocumentClass[BsonDocument].findOneAndUpdate(
+      equal("uniqueId", uniqueId),
+      Updates.set("controlMeasure", bsonControlMeasure),
+      FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
+    ).headOption().map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+  }
+
+  private def getDatasetFilter(datasetName: String, datasetVersion: Int) = {
+    val datasetNameEq = equal("dataset", datasetName)
+    val datasetVersionEq = equal("datasetVersion", datasetVersion)
+
+    and(datasetNameEq, datasetVersionEq)
   }
 
 }
