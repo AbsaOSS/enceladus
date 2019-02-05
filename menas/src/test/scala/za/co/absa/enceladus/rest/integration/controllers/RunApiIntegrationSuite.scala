@@ -19,6 +19,7 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
+import za.co.absa.atum.model.Checkpoint
 import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest.Application
 import za.co.absa.enceladus.rest.integration.fixtures.RunFixtureService
@@ -328,6 +329,42 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           val body = response.getBody
           assert(body == expected)
         }
+      }
+    }
+  }
+
+  s"Calls to $apiUrl/addCheckpoint/{uniqueId}" can {
+    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+
+    "return 200" when {
+      "there is a Run with the specified uniqueId" should {
+        "add the supplied checkpoint to the end of the present checkpoints and return the updated Run" in {
+          val checkpoint0 = runFixture.getDummyCheckpoint(name = "checkpoint0")
+          val measure = runFixture.getDummyControlMeasure(checkpoints = List(checkpoint0))
+          val run = runFixture.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = measure)
+          runFixture.add(run)
+
+          val checkpoint1 = runFixture.getDummyCheckpoint(name = "checkpoint1")
+
+          val response = sendPost[Checkpoint, Run](s"$apiUrl/addCheckpoint/$uniqueId", bodyOpt = Option(checkpoint1))
+
+          assertOk(response)
+
+          val expectedControlMeasure = run.controlMeasure.copy(checkpoints = List(checkpoint0, checkpoint1))
+          val expected = run.copy(controlMeasure = expectedControlMeasure)
+          val body = response.getBody
+          assert(body == expected)
+        }
+      }
+    }
+
+    "return 404" when {
+      "there is no Run with the specified uniqueId" in {
+        val checkpoint = runFixture.getDummyCheckpoint()
+
+        val response = sendPost[Checkpoint, Run](s"$apiUrl/addCheckpoint/$uniqueId", bodyOpt = Option(checkpoint))
+
+        assertNotFound(response)
       }
     }
   }
