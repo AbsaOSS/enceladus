@@ -184,7 +184,7 @@ object StandardizationJob {
     }
 
     // If the meta data value sourcecolumn is set override source data column name with the field name
-    val stdRenameSourceColumns: DataFrame = std.select(schema.fields.map { field: StructField =>
+    val stdRenameSourceColumns: DataFrame = std.select(std.schema.fields.map { field: StructField =>
       renameSourceColumn(std, field, true)
     }: _*)
 
