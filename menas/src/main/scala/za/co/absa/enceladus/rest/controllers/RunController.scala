@@ -19,6 +19,8 @@ import java.util.concurrent.CompletableFuture
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.model.{Run, SplineReference}
@@ -49,24 +51,30 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   }
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}"))
+  @ResponseStatus(HttpStatus.OK)
   def getRun(@PathVariable datasetName: String, @PathVariable datasetVersion: Int,
              @PathVariable runId: Int): CompletableFuture[Run] = {
     runService.getRun(datasetName, datasetVersion, runId)
   }
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}/latest"))
+  @ResponseStatus(HttpStatus.OK)
   def getLatestRun(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Run] = {
     runService.getLatestRun(datasetName, datasetVersion)
   }
 
   @GetMapping(Array("/splineUrl/{datasetName}/{datasetVersion}/{runId}"))
+  @ResponseStatus(HttpStatus.OK)
   def getSplineUrl(@PathVariable datasetName: String, @PathVariable datasetVersion: Int,
                    @PathVariable runId: Int): CompletableFuture[String] = {
     runService.getSplineUrl(datasetName, datasetVersion, runId)
   }
 
   @PostMapping(Array("/create"))
-  def create(): CompletableFuture[Run] = Future(null)
+  @ResponseStatus(HttpStatus.CREATED)
+  def create(@RequestBody run: Run, @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
+    runService.create(run, principal.getUsername)
+  }
 
   @PostMapping(Array("/addCheckpoint/{uniqueId}"))
   def addCheckpoint(): CompletableFuture[Checkpoint] = Future(null)

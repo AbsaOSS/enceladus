@@ -291,6 +291,47 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
+  s"Calls to $apiUrl/create" can {
+    "return 201" when {
+      "a new Run is created" should {
+        "return the created Run with the authenticated user's username" in {
+          val run = runFixture.getDummyRun(username = null)
+
+          val response = sendPost[Run, Run](s"$apiUrl/create", bodyOpt = Option(run))
+
+          assertCreated(response)
+
+          val expected = run.copy(username = user)
+          val body = response.getBody
+          assert(body == expected)
+        }
+        "provide a uniqueId if none is specified" in {
+          val run = runFixture.getDummyRun(username = null, uniqueId = None)
+
+          val response = sendPost[Run, Run](s"$apiUrl/create", bodyOpt = Option(run))
+
+          assertCreated(response)
+
+          val body = response.getBody
+          assert(body.uniqueId.isDefined)
+          val expected = run.copy(username = user, uniqueId = body.uniqueId)
+          assert(body == expected)
+        }
+        "override any specified username in favor of the authenticated user's username" in {
+          val run = runFixture.getDummyRun(username = "fakeUsername")
+
+          val response = sendPost[Run, Run](s"$apiUrl/create", bodyOpt = Option(run))
+
+          assertCreated(response)
+
+          val expected = run.copy(username = user)
+          val body = response.getBody
+          assert(body == expected)
+        }
+      }
+    }
+  }
+
   private def setUpSimpleRun(): Run = {
     val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
     runFixture.add(run)
