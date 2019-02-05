@@ -105,8 +105,8 @@ object DynamicConformanceJob {
     MenasPlugin.enableMenas()
 
     // enable Spline
-    //import za.co.absa.spline.core.SparkLineageInitializer._
-    //spark.enableLineageTracking()
+    import za.co.absa.spline.core.SparkLineageInitializer._
+    spark.enableLineageTracking()
 
     // use REST DAO
     implicit val dao = EnceladusRestDAO
