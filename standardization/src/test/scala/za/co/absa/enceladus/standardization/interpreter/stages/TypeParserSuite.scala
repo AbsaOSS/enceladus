@@ -113,9 +113,9 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
 
     implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
     val parseOutputStructFieldNoDefault: ParseOutput = TypeParser.standardize(structFieldNoDefault, path, schema)
-    assertStringOccurances(parseOutputStructFieldNoDefault, s"to_timestamp('$path.field0, $defaultFormat)", 3, 1)
+    assertStringOccurances(parseOutputStructFieldNoDefault, s"to_timestamp('$path.field0, Some($defaultFormat))", 3, 1)
     val parseOutputStructFieldWithMetadataNotSourceColumn: ParseOutput = TypeParser.standardize(structFieldWithDefaultMetadataColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_timestamp('$path.field1, $defaultFormat)", 3, 1)
+    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_timestamp('$path.field1, Some($defaultFormat))", 3, 1)
     assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
     val message = "Dates & times represented as numeric values need specified 'pattern' metadata"
     val caught1 = intercept[InvalidParameterException] {
@@ -173,15 +173,15 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
 
     implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
     val parseOutputStructFieldNoDefault: ParseOutput = TypeParser.standardize(structFieldNoDefault, path, schema)
-    assertStringOccurances(parseOutputStructFieldNoDefault, s"to_timestamp('$path.field0, dd/MM/yyyy/hh/mm/ss)", 3, 1)
+    assertStringOccurances(parseOutputStructFieldNoDefault, s"to_timestamp('$path.field0, Some(dd/MM/yyyy/hh/mm/ss))", 3, 1)
     val parseOutputStructFieldWithMetadataNotSourceColumn: ParseOutput = TypeParser.standardize(structFieldWithDefaultMetadataColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_timestamp('$path.field1, yyyy:dd:MM_hh~mm~ss)", 3, 1)
+    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_timestamp('$path.field1, Some(yyyy:dd:MM_hh~mm~ss))", 3, 1)
     assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
     val parseOutputStructFieldWithMetadataSource2Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSource2Column, s"to_timestamp(cast(cast('$path.field2_source as decimal(14,6)) as string), ddMMyyyy.hhmmss)", 3, 1)
+    assertStringOccurances(parseOutputStructFieldWithMetadataSource2Column, s"to_timestamp(cast(cast('$path.field2_source as decimal(14,6)) as string), Some(ddMMyyyy.hhmmss))", 3, 1)
     assertStringOccurances(parseOutputStructFieldWithMetadataSource2Column, s"ELSE $defaultValueParsed END", 1)
     val parseOutputStructFieldWithMetadataSource3Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource3Column, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSource3Column, s"to_timestamp(cast('$path.field3_source as string), ddMMyyyyhhmmss)", 3, 1)
+    assertStringOccurances(parseOutputStructFieldWithMetadataSource3Column, s"to_timestamp(cast('$path.field3_source as string), Some(ddMMyyyyhhmmss))", 3, 1)
     assertStringOccurances(parseOutputStructFieldWithMetadataSource3Column, s"ELSE $defaultValueParsed END", 1)
   }
 
