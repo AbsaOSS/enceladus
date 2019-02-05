@@ -18,33 +18,41 @@ package za.co.absa.enceladus.rest.integration.fixtures
 import java.util.UUID
 
 import org.mongodb.scala.MongoDatabase
+import org.mongodb.scala.bson.BsonDocument
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import za.co.absa.atum.model.RunState.RunState
 import za.co.absa.atum.model._
+import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.repositories.RunMongoRepository
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 @Component
-class RunFixtureService @Autowired()(runMongoRepository: RunMongoRepository, mongoDb: MongoDatabase) {
+class RunFixtureService @Autowired()(mongoDb: MongoDatabase) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   private val dummyDateString = "04-12-2017 16:19:17 +0200"
 
+  private val collection = mongoDb.getCollection(RunMongoRepository.collectionName)
+
   def createCollection(): Unit = {
-    Await.ready(mongoDb.createCollection(runMongoRepository.collectionName).toFuture(), Duration.Inf)
+    Await.ready(mongoDb.createCollection(RunMongoRepository.collectionName).toFuture(), Duration.Inf)
   }
 
   def add(runs: Run*): Unit = {
-    Await.ready(Future.sequence(runs.map(run => runMongoRepository.create(run))), Duration.Inf)
+    val futureRuns = runs.map { run =>
+      val bson = BsonDocument(ControlUtils.asJson(run))
+      collection.withDocumentClass[BsonDocument].insertOne(bson).head()
+    }
+    Await.ready(Future.sequence(futureRuns), Duration.Inf)
   }
 
   def dropCollection(): Unit = {
-    Await.ready(mongoDb.getCollection(runMongoRepository.collectionName).drop().toFuture(), Duration.Inf)
+    Await.ready(mongoDb.getCollection(RunMongoRepository.collectionName).drop().toFuture(), Duration.Inf)
   }
 
   def getDummyRun(uniqueId: Option[String] = Option(UUID.randomUUID().toString),

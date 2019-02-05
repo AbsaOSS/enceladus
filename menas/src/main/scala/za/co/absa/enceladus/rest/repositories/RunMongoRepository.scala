@@ -29,13 +29,17 @@ import za.co.absa.enceladus.rest.models.RunWrapper
 
 import scala.concurrent.Future
 
+object RunMongoRepository {
+  val collectionName = "run"
+}
+
 @Repository
 class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends MongoRepository[Run](mongoDb) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override def collectionName = "run"
+  private[repositories] override def collectionName: String = RunMongoRepository.collectionName
 
   def getAllLatest(): Future[Seq[Run]] = {
     getLatestOfEach()
