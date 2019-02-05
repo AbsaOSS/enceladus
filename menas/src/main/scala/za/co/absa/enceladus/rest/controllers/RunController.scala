@@ -77,7 +77,10 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   }
 
   @PostMapping(Array("/addCheckpoint/{uniqueId}"))
-  def addCheckpoint(): CompletableFuture[Checkpoint] = Future(null)
+  @ResponseStatus(HttpStatus.OK)
+  def addCheckpoint(@PathVariable uniqueId: String, @RequestBody checkpoint: Checkpoint): CompletableFuture[Run] = {
+    runService.addCheckpoint(uniqueId, checkpoint)
+  }
 
   @PostMapping(Array("/updateControlMeasure/{uniqueId}"))
   def updateControlMeasure(): CompletableFuture[ControlMeasure] = Future(null)

@@ -79,22 +79,22 @@ class BaseRestApiTest extends WordSpec with TestContextManagement with BeforeAnd
     send(HttpMethod.GET, urlPath, headers)
   }
 
-  def sendPost[T, B](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
+  def sendPost[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
     send(HttpMethod.POST, urlPath, headers, bodyOpt)
   }
 
-  def sendPut[T, B](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
+  def sendPut[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
     send(HttpMethod.PUT, urlPath, headers, bodyOpt)
   }
 
-  def sendDelete[T, B](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
+  def sendDelete[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
     send(HttpMethod.DELETE, urlPath, headers)
   }
 
-  def send[T, B](method: HttpMethod, urlPath: String, headers: HttpHeaders = HttpHeaders.EMPTY,
+  def send[B, T](method: HttpMethod, urlPath: String, headers: HttpHeaders = HttpHeaders.EMPTY,
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
     val url = s"$baseUrl/$urlPath"
     headers.addAll(authHeaders)
