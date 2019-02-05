@@ -90,7 +90,10 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   }
 
   @PostMapping(Array("/updateSplineReference/{uniqueId}"))
-  def updateSplineReference(): CompletableFuture[SplineReference] = Future(null)
+  def updateSplineReference(@PathVariable uniqueId: String,
+                            @RequestBody splineReference: SplineReference): CompletableFuture[Run] = {
+    runService.updateSplineReference(uniqueId, splineReference)
+  }
 
   @PostMapping(Array("/updateRunStatus/{uniqueId}"))
   def updateRunStatus(): CompletableFuture[RunStatus] = Future(null)

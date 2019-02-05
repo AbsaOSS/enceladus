@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure}
 import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.model.Run
+import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.models.RunWrapper
 
 import scala.concurrent.Future
@@ -112,6 +112,15 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     collection.withDocumentClass[BsonDocument].findOneAndUpdate(
       equal("uniqueId", uniqueId),
       Updates.set("controlMeasure", bsonControlMeasure),
+      FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
+    ).headOption().map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+  }
+
+  def updateSplineReference(uniqueId: String, splineRef: SplineReference): Future[Option[Run]] = {
+    val bsonSplineRef = BsonDocument(ControlUtils.asJson(splineRef))
+    collection.withDocumentClass[BsonDocument].findOneAndUpdate(
+      equal("uniqueId", uniqueId),
+      Updates.set("splineRef", bsonSplineRef),
       FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
     ).headOption().map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
   }

@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure}
-import za.co.absa.enceladus.model.Run
+import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.Application
 import za.co.absa.enceladus.rest.integration.fixtures.RunFixtureService
 import za.co.absa.enceladus.rest.models.Validation
@@ -293,12 +293,14 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
   }
 
   s"Calls to $apiUrl/create" can {
+    val endpointBase = s"$apiUrl/create"
+
     "return 201" when {
       "a new Run is created" should {
         "return the created Run with the authenticated user's username" in {
           val run = runFixture.getDummyRun(username = null)
 
-          val response = sendPost[Run, Run](s"$apiUrl/create", bodyOpt = Option(run))
+          val response = sendPost[Run, Run](s"$endpointBase", bodyOpt = Option(run))
 
           assertCreated(response)
 
@@ -309,7 +311,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
         "provide a uniqueId if none is specified" in {
           val run = runFixture.getDummyRun(username = null, uniqueId = None)
 
-          val response = sendPost[Run, Run](s"$apiUrl/create", bodyOpt = Option(run))
+          val response = sendPost[Run, Run](s"$endpointBase", bodyOpt = Option(run))
 
           assertCreated(response)
 
@@ -321,7 +323,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
         "override any specified username in favor of the authenticated user's username" in {
           val run = runFixture.getDummyRun(username = "fakeUsername")
 
-          val response = sendPost[Run, Run](s"$apiUrl/create", bodyOpt = Option(run))
+          val response = sendPost[Run, Run](s"$endpointBase", bodyOpt = Option(run))
 
           assertCreated(response)
 
@@ -334,6 +336,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
   }
 
   s"Calls to $apiUrl/addCheckpoint/{uniqueId}" can {
+    val endpointBase = s"$apiUrl/addCheckpoint"
     val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
 
     "return 200" when {
@@ -346,7 +349,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
           val checkpoint1 = runFixture.getDummyCheckpoint(name = "checkpoint1")
 
-          val response = sendPost[Checkpoint, Run](s"$apiUrl/addCheckpoint/$uniqueId", bodyOpt = Option(checkpoint1))
+          val response = sendPost[Checkpoint, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(checkpoint1))
 
           assertOk(response)
 
@@ -362,7 +365,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
       "there is no Run with the specified uniqueId" in {
         val checkpoint = runFixture.getDummyCheckpoint()
 
-        val response = sendPost[Checkpoint, Run](s"$apiUrl/addCheckpoint/$uniqueId", bodyOpt = Option(checkpoint))
+        val response = sendPost[Checkpoint, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(checkpoint))
 
         assertNotFound(response)
       }
@@ -370,6 +373,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
   }
 
   s"Calls to $apiUrl/updateControlMeasure/{uniqueId}" can {
+    val endpointBase = s"$apiUrl/updateControlMeasure"
     val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
 
     "return 200" when {
@@ -381,7 +385,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
           val expectedMeasure = runFixture.getDummyControlMeasure(runUniqueId = Option(uniqueId))
 
-          val response = sendPost[ControlMeasure, Run](s"$apiUrl/updateControlMeasure/$uniqueId", bodyOpt = Option(expectedMeasure))
+          val response = sendPost[ControlMeasure, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedMeasure))
 
           assertOk(response)
 
@@ -396,7 +400,42 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
       "there is no Run with the specified uniqueId" in {
         val controlMeasure = runFixture.getDummyControlMeasure()
 
-        val response = sendPost[ControlMeasure, Run](s"$apiUrl/updateControlMeasure/$uniqueId", bodyOpt = Option(controlMeasure))
+        val response = sendPost[ControlMeasure, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(controlMeasure))
+
+        assertNotFound(response)
+      }
+    }
+  }
+
+  s"Calls to $apiUrl/updateSplineReference/{uniqueId}" can {
+    val endpointBase = s"$apiUrl/updateSplineReference"
+    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+
+    "return 200" when {
+      "there is a Run with the specified uniqueId" should {
+        "update the Run's ControlMeasure and return the updated Run" in {
+          val originalSplineRef = runFixture.getDummySplineReference(sparkApplicationId = null)
+          val run = runFixture.getDummyRun(uniqueId = Option(uniqueId), splineRef = originalSplineRef)
+          runFixture.add(run)
+
+          val expectedSplineRef = runFixture.getDummySplineReference(sparkApplicationId = "application_1512977199009_0007")
+
+          val response = sendPost[SplineReference, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedSplineRef))
+
+          assertOk(response)
+
+          val expected = run.copy(splineRef = expectedSplineRef)
+          val body = response.getBody
+          assert(body == expected)
+        }
+      }
+    }
+
+    "return 404" when {
+      "there is no Run with the specified uniqueId" in {
+        val splineReference = runFixture.getDummySplineReference()
+
+        val response = sendPost[SplineReference, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(splineReference))
 
         assertNotFound(response)
       }
