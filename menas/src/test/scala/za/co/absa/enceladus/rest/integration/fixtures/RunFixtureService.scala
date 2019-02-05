@@ -54,8 +54,9 @@ class RunFixtureService @Autowired()(runMongoRepository: RunMongoRepository, mon
                   splineRef: SplineReference = getDummySplineReference(),
                   startDateTime: String = dummyDateString,
                   runStatus: RunStatus = getDummyRunStatus(),
-                  controlMeasure: ControlMeasure = getDummyControlMeasure()): Run = {
-    Run(uniqueId, runId, dataset, datasetVersion, splineRef, startDateTime, runStatus, controlMeasure)
+                  controlMeasure: ControlMeasure = getDummyControlMeasure(),
+                  username: String = "dummyUsername"): Run = {
+    Run(uniqueId, runId, dataset, datasetVersion, splineRef, startDateTime, runStatus, controlMeasure, username)
   }
 
   def getDummySplineReference(sparkApplicationId: String = "dummySparkApplicationId",

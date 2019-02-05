@@ -34,12 +34,13 @@ class BaseRestApiTest extends WordSpec with TestContextManagement with BeforeAnd
 
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  @Value("${za.co.absa.enceladus.menas.auth.inmemory.user}")
-  private val user: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.inmemory.password}")
-  private val password: String = ""
   @LocalServerPort
   private val port = 0
+
+  @Value("${za.co.absa.enceladus.menas.auth.inmemory.user}")
+  val user: String = ""
+  @Value("${za.co.absa.enceladus.menas.auth.inmemory.password}")
+  val password: String = ""
 
   private lazy val baseUrl = s"http://localhost:$port/api"
   private lazy val authHeaders = getAuthHeaders()
@@ -116,6 +117,10 @@ class BaseRestApiTest extends WordSpec with TestContextManagement with BeforeAnd
 
   def assertNotFound(responseEntity: ResponseEntity[_]): Unit = {
     assert(responseEntity.getStatusCode == HttpStatus.NOT_FOUND)
+  }
+
+  def assertCreated(responseEntity: ResponseEntity[_]): Unit = {
+    assert(responseEntity.getStatusCode == HttpStatus.CREATED)
   }
 
 }

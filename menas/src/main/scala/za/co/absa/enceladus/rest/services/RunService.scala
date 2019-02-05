@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.rest.services
 
+import java.util.UUID
+
 import org.joda.time.format.DateTimeFormat
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
@@ -67,6 +69,15 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
       val splineRef = run.splineRef
       String.format(splineUrlTemplate, splineRef.outputPath, splineRef.sparkApplicationId)
     }
+  }
+
+  def create(newRun: Run, username: String): Future[Run] = {
+    val uniqueId = newRun.uniqueId match {
+      case Some(id) => id
+      case None     => UUID.randomUUID().toString
+    }
+    val run = newRun.copy(username = username, uniqueId = Some(uniqueId))
+    super.create(run).map(_ => run)
   }
 
 }
