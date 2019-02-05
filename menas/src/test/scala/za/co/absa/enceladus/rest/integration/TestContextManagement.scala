@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.integration.controllers
+package za.co.absa.enceladus.rest.integration
 
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import org.springframework.test.context.TestContextManager

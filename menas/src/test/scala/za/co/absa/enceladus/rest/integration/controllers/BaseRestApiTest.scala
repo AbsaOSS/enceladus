@@ -27,6 +27,7 @@ import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.context.annotation.Bean
 import org.springframework.http._
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
+import za.co.absa.enceladus.rest.integration.TestContextManagement
 
 import scala.reflect.ClassTag
 
