@@ -26,18 +26,12 @@ import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.services.RunService
 
-import scala.concurrent.Future
-
 @RestController
 @RequestMapping(path = Array("/api/runs"))
 class RunController @Autowired()(runService: RunService) extends BaseController {
 
   import za.co.absa.enceladus.rest.utils.implicits._
 
-  import scala.concurrent.ExecutionContext.Implicits.global
-
-  // Dummy implementation for #86
-  // TODO: Implementation in #85
   @GetMapping(Array("/list"))
   @ResponseStatus(HttpStatus.OK)
   def list(): CompletableFuture[Seq[Run]] = {
@@ -90,12 +84,16 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   }
 
   @PostMapping(Array("/updateSplineReference/{uniqueId}"))
+  @ResponseStatus(HttpStatus.OK)
   def updateSplineReference(@PathVariable uniqueId: String,
                             @RequestBody splineReference: SplineReference): CompletableFuture[Run] = {
     runService.updateSplineReference(uniqueId, splineReference)
   }
 
   @PostMapping(Array("/updateRunStatus/{uniqueId}"))
-  def updateRunStatus(): CompletableFuture[RunStatus] = Future(null)
+  @ResponseStatus(HttpStatus.OK)
+  def updateRunStatus(@PathVariable uniqueId: String, @RequestBody runStatus: RunStatus): CompletableFuture[Run] = {
+    runService.updateRunStatus(uniqueId, runStatus)
+  }
 
 }

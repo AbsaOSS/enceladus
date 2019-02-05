@@ -20,7 +20,7 @@ import java.util.UUID
 import org.joda.time.format.DateTimeFormat
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
-import za.co.absa.atum.model.{Checkpoint, ControlMeasure}
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.rest.models.Validation
@@ -97,6 +97,13 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
 
   def updateSplineReference(uniqueId: String, splineReference: SplineReference): Future[Run] = {
     runMongoRepository.updateSplineReference(uniqueId, splineReference).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
+  def updateRunStatus(uniqueId: String, runStatus: RunStatus): Future[Run] = {
+    runMongoRepository.updateRunStatus(uniqueId, runStatus).map {
       case Some(run) => run
       case None      => throw NotFoundException()
     }
