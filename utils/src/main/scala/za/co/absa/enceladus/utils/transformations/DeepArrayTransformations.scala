@@ -25,6 +25,9 @@ import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
 object DeepArrayTransformations {
+
+  type TransformFunction = Column => Column
+  
   /**
     * Map transformation for columns that can be inside nested structs, arrays and its combinations.
     *
@@ -43,7 +46,7 @@ object DeepArrayTransformations {
   def nestedWithColumnMap(df: DataFrame,
                           inputColumnName: String,
                           outputColumnName: String,
-                          expression: Column => Column): DataFrame = {
+                          expression: TransformFunction): DataFrame = {
     nestedWithColumnMapHelper(df, inputColumnName, outputColumnName, Some(expression))._1
   }
 
@@ -61,8 +64,8 @@ object DeepArrayTransformations {
                                   inputColumnName: String,
                                   outputColumnName: String,
                                   errorColumnName: String,
-                                  expression: Column => Column,
-                                  errorCondition: Column => Column
+                                  expression: TransformFunction,
+                                  errorCondition: TransformFunction
                                  ): DataFrame = {
 
     if (errorColumnName.contains('.')) {
@@ -105,7 +108,7 @@ object DeepArrayTransformations {
   def nestedStructMap(df: DataFrame,
                       inputStructField: String,
                       outputChildField: String,
-                      expression: Column => Column
+                      expression: TransformFunction
                      ): DataFrame = {
     val updatedStructField = if (inputStructField.nonEmpty) inputStructField + ".*" else ""
     nestedWithColumnMap(df, updatedStructField, outputChildField, expression)
@@ -181,8 +184,8 @@ object DeepArrayTransformations {
   private def nestedWithColumnMapHelper(df: DataFrame,
                                         inputColumnName: String,
                                         outputColumnName: String,
-                                        expression: Option[Column => Column] = None,
-                                        errorCondition: Option[Column => Column] = None
+                                        expression: Option[TransformFunction] = None,
+                                        errorCondition: Option[TransformFunction] = None
                                        ): (DataFrame, String) = {
     // The name of the field is the last token of outputColumnName
     val outputFieldName = outputColumnName.split('.').last
@@ -320,8 +323,8 @@ object DeepArrayTransformations {
 
     // Handle arrays (including arrays of arrays) of primitives
     // The output column will also be an array, not an additional element of the existing array
-    def mapNestedArrayOfPrimitives(schema: ArrayType, expr: Column => Column,
-                                   doFlatten: Boolean = false): Column => Column = {
+    def mapNestedArrayOfPrimitives(schema: ArrayType, expr: TransformFunction,
+                                   doFlatten: Boolean = false): TransformFunction = {
       val lambdaName = getLambdaName
       val elemType = schema.elementType
 
@@ -331,13 +334,12 @@ object DeepArrayTransformations {
         case dt: ArrayType =>
           val innerArray = mapNestedArrayOfPrimitives(dt, expr, doFlatten)
           if (doFlatten) {
-            outerX => flatten(transform(outerX, innerArray, lambdaName))
+            x => flatten(transform(x, innerArray, lambdaName))
           } else {
-            outerX => transform(outerX, innerArray, lambdaName)
+            x => transform(x, innerArray, lambdaName)
           }
         case dt =>
-          //transform(curColumn, lambdaName, expr(_$(lambdaName)))
-          outerX => transform(outerX, InnerX => expr(InnerX), lambdaName)
+          x => transform(x, InnerX => expr(InnerX), lambdaName)
       }
     }
 
@@ -356,8 +358,9 @@ object DeepArrayTransformations {
       }
 
       // For an error column created by transforming arrays of primitives the error column will be created at
-      // the same level as the array. The error column will contain errors from all elements of the processed array 
-      def handleErrorColumnOfArraysOfPrimitives(errorExpression: Option[Column => Column], doFlatten: Boolean): Unit = {
+      // the same level as the array. The error column will contain errors from all elements of the processed array
+      def handleErrorColumnOfArraysOfPrimitives(errorExpression: Option[TransformFunction],
+                                                doFlatten: Boolean): Unit = {
         errorExpression.map(errorExpr => {
           errorColumnName = SchemaUtils.getUniqueName("errorList", None)
           val errorColumn = if (doFlatten) {
@@ -374,8 +377,8 @@ object DeepArrayTransformations {
       }
 
       // Handles primitive data types as well as nested arrays of primitives
-      def handlePrimitive(dt: DataType, transformExpression: Option[Column => Column],
-                          errorExpression: Option[Column => Column],
+      def handlePrimitive(dt: DataType, transformExpression: Option[TransformFunction],
+                          errorExpression: Option[TransformFunction],
                           doFlatten: Boolean = false): Column = {
         if (isLeaf) {
           transformExpression match {
