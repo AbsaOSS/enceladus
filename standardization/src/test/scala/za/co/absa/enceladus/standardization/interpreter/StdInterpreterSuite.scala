@@ -44,6 +44,35 @@ import spark.implicits._
   case class subarrayCC(arrayFieldA: Integer, arrayFieldB: String, arrayStruct: subCC)
   case class rootCC(rootField: String, rootStruct: subCC, rootStruct2: sub1CC, rootArray: Array[subarrayCC])
 
+  val stdExpectedSchema = StructType(
+    Seq(
+      StructField("rootField", StringType, true),
+      StructField("rootStruct",
+        StructType(
+          Seq(
+            StructField("subFieldA", IntegerType, true),
+            StructField("subFieldB", StringType, true))), false),
+      StructField("rootStruct2",
+        StructType(
+          Seq(
+            StructField("subStruct2",
+              StructType(
+                Seq(
+                  StructField("subSub2FieldA", IntegerType, true),
+                  StructField("subSub2FieldB", StringType, true))), false))), false),
+      StructField("rootArray",
+        ArrayType(
+          StructType(
+            Seq(
+              StructField("arrayFieldA", IntegerType, true),
+              StructField("arrayFieldB", StringType, true),
+              StructField("arrayStruct",
+                StructType(
+                  Seq(
+                    StructField("subFieldA", IntegerType, true),
+                    StructField("subFieldB", StringType, true))), false))), false
+        ))))
+
   test("Non-null errors produced for non-nullable attribute in a struct") {
     import spark.implicits._
     implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
@@ -99,41 +128,29 @@ import spark.implicits._
           sub1CC(sub2CC(456, "subsubfieldval")),
           Array(subarrayCC(789, "arrayfieldval", subCC(321, "xyz"))))))
 
-    val desiredSchema = StructType(
-      Seq(
-        StructField("rootField", StringType, true),
-        StructField("rootStruct",
-          StructType(
-            Seq(
-              StructField("subFieldA", IntegerType, true),
-              StructField("subFieldB", StringType, true))), false),
-        StructField("rootStruct2",
-          StructType(
-            Seq(
-              StructField("subStruct2",
-                StructType(
-                  Seq(
-                    StructField("subSub2FieldA", IntegerType, true),
-                    StructField("subSub2FieldB", StringType, true))), false))), false),
-        StructField("rootArray",
-          ArrayType(
-            StructType(
-              Seq(
-                StructField("arrayFieldA", IntegerType, true),
-                StructField("arrayFieldB", StringType, true),
-                StructField("arrayStruct",
-                  StructType(
-                    Seq(
-                      StructField("subFieldA", IntegerType, true),
-                      StructField("subFieldB", StringType, true))), false))), false
-                      ))))
-
-    val expectedSchema = desiredSchema.add(
+    val expectedSchema = stdExpectedSchema.add(
       StructField("errCol",
         ArrayType(
           ErrorMessage.errorColSchema, false)))
 
-    val standardizedDF = StandardizationInterpreter.standardize(sourceDF, desiredSchema, "")
+    val standardizedDF = StandardizationInterpreter.standardize(sourceDF, stdExpectedSchema, "")
+
+    standardizedDF.printSchema()
+    expectedSchema.printTreeString()
+
+    assert(standardizedDF.schema.treeString === expectedSchema.treeString)
+  }
+
+  test("Standardize Test (JSON source)") {
+    implicit val udfLib = new za.co.absa.enceladus.utils.error.UDFLibrary
+    val sourceDF = spark.read.json("src/test/resources/standardizeJsonSrc.json")
+
+    val expectedSchema = stdExpectedSchema.add(
+      StructField("errCol",
+        ArrayType(
+          ErrorMessage.errorColSchema, false)))
+
+    val standardizedDF = StandardizationInterpreter.standardize(sourceDF, stdExpectedSchema, "")
 
     standardizedDF.printSchema()
     expectedSchema.printTreeString()
