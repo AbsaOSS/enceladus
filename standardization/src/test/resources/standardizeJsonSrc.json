@@ -1,0 +1,1 @@
+{"rootField":"rootfieldval","rootStruct":{"subFieldA":123,"subFieldB":"subfieldval"},"rootStruct2":{"subStruct2":{"subSub2FieldA":456,"subSub2FieldB":"subsubfieldval"}},"rootArray":[{"arrayFieldA":789,"arrayFieldB":"arrayfieldval","arrayStruct":{"subFieldA":321,"subFieldB":"xyz"}}]}
