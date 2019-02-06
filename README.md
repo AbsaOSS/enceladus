@@ -33,9 +33,11 @@ Each module provides configuration file templates with reasonable default values
 Make a copy of the `*.properties.template` and `*.conf.template` files in each module's `src/resources` directory removing the `.template` extension. 
 Ensure the properties there fit your environment.
 
-#### Build command:
+#### Build commands:
 
-`mvn -DskipTests clean package`
+- Without tests: `mvn clean package -DskipTests `
+- Without with unit tests: `mvn clean package`
+- Without with integration tests: `mvn clean package -Pintegration`
 
 ## <a name="run"/>How to run
 #### Menas requirements:
