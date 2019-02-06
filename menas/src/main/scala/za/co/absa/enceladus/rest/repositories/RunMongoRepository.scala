@@ -50,7 +50,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   def getByStartDate(startDate: String): Future[Seq[Run]] = {
     getLatestOfEach()
-      .filter(regex("startDateTime", s"^$startDate\\s+"))
+      .filter(regex("startDateTime", s"^$startDate"))
       .toFuture()
       .map(_.map(bson => ControlUtils.fromJson[RunWrapper](bson.toJson).value))
   }
