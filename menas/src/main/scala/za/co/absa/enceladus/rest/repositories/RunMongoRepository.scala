@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.rest.repositories
 
 import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Sorts.descending
 import org.mongodb.scala.model.{FindOneAndUpdateOptions, ReturnDocument, Updates}
@@ -25,7 +26,7 @@ import org.springframework.stereotype.Repository
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.model.{Run, SplineReference}
-import za.co.absa.enceladus.rest.models.RunWrapper
+import za.co.absa.enceladus.rest.models.{RunWrapper, Validation}
 
 import scala.concurrent.Future
 
@@ -138,7 +139,12 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     ).headOption().map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
   }
 
-  private def getDatasetFilter(datasetName: String, datasetVersion: Int) = {
+  def existsId(uniqueId: String): Future[Boolean] = {
+    collection.countDocuments(equal("uniqueId", uniqueId))
+      .map(_ > 0).head()
+  }
+
+  private def getDatasetFilter(datasetName: String, datasetVersion: Int): Bson = {
     val datasetNameEq = equal("dataset", datasetName)
     val datasetVersionEq = equal("datasetVersion", datasetVersion)
 

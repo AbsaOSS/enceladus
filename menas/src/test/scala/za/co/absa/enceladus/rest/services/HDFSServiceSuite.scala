@@ -20,14 +20,12 @@ import java.util.concurrent.TimeUnit
 
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
 import org.mockito.Mockito
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{BeforeAndAfter, FunSuite}
 import za.co.absa.enceladus.model.api.HDFSFolder
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class HDFSServiceSuite extends FunSuite with MockitoSugar with BeforeAndAfter {
+class HDFSServiceSuite extends BaseServiceTest {
 
   //mocks
   private val fs = mock[FileSystem]

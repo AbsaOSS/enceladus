@@ -78,7 +78,15 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
       case None     => UUID.randomUUID().toString
     }
     val run = newRun.copy(username = username, uniqueId = Some(uniqueId))
-    super.create(run).map(_ => run)
+    for {
+      validation <- validate(run)
+      createdRun <-
+        if (validation.isValid()) {
+          super.create(run).map(_ => run)
+        } else {
+          throw ValidationException(validation)
+        }
+    } yield createdRun
   }
 
   def addCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Run] = {
@@ -109,4 +117,23 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
     }
   }
 
+  def validate(run: Run): Future[Validation] = {
+    validateUniqueId(run)
+  }
+
+  private def validateUniqueId(run: Run) = {
+    val validation = Validation()
+
+    run.uniqueId match {
+      case Some(uniqueId) => validateUniqueness(validation, uniqueId)
+      case None           => Future.successful(validation.withError("uniqueId", "not specified"))
+    }
+  }
+
+  private def validateUniqueness(validation: Validation, uniqueId: String): Future[Validation] = {
+    runMongoRepository.existsId(uniqueId).map {
+      case true  => validation.withError("uniqueId", s"run with this id already exists: $uniqueId")
+      case false => validation
+    }
+  }
 }

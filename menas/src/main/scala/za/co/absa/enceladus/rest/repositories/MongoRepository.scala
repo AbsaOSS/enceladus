@@ -39,6 +39,10 @@ abstract class MongoRepository[C](mongoDb: MongoDatabase)(implicit ct: ClassTag[
     collection.insertOne(item).head()
   }
 
+  def count(): Future[Long] = {
+    collection.countDocuments().toFuture()
+  }
+
   private[repositories] def getNameFilter(name: String): Bson = {
     equal("name", name)
   }

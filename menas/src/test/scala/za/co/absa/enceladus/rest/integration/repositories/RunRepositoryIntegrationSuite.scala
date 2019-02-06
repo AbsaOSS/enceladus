@@ -196,6 +196,29 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
     }
   }
 
+  "RunMongoRepository::create" should {
+    "return the created Run" in {
+      val run = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+
+      await(runMongoRepository.create(run))
+      val actual = await(runMongoRepository.getRun("dataset", 1, 1))
+
+      assert(actual.isDefined)
+      assert(actual.contains(run))
+    }
+    "allow duplicate entries (this should be prohibited at the service layer)" in {
+      val run = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+
+      await(runMongoRepository.create(run))
+      await(runMongoRepository.create(run))
+      val actual = await(runMongoRepository.getRun("dataset", 1, 1))
+
+      assert(await(runMongoRepository.count()) == 2)
+      assert(actual.isDefined)
+      assert(actual.contains(run))
+    }
+  }
+
   private def setUpSimpleRun(): Run = {
     val run = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
     runFixture.add(run)

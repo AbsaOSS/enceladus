@@ -17,8 +17,6 @@ package za.co.absa.enceladus.rest.services
 import java.util.concurrent.TimeUnit
 
 import org.mockito.Mockito
-import org.scalatest.FunSuite
-import org.scalatest.mock.MockitoSugar
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.rest.models.Validation
 import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
@@ -26,7 +24,7 @@ import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-abstract class VersionedModelServiceTest[C <: VersionedModel] extends FunSuite with MockitoSugar {
+abstract class VersionedModelServiceTest[C <: VersionedModel] extends BaseServiceTest {
 
   val modelRepository: VersionedMongoRepository[C]
   val service: VersionedModelService[C]
