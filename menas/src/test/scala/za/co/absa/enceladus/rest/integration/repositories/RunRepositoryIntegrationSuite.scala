@@ -155,6 +155,46 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
     }
   }
 
+  "RunMongoRepository::getLatestRun" should {
+    "return an Option of the Run with the highest runId for a specified dataset asynchronously" when {
+      "there is a Run of the specified Dataset" in {
+        val dataset1run1 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+        val dataset1run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
+        val dataset2run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
+        runFixture.add(dataset1run1, dataset1run2, dataset2run2)
+
+        val actual = await(runMongoRepository.getLatestRun("dataset", 1))
+
+        assert(actual.isDefined)
+        assert(actual.contains(dataset1run2))
+      }
+    }
+
+    "return None asynchronously" when {
+      "there is no Run with the specified datasetName" in {
+        setUpSimpleRun()
+
+        val actual = await(runMongoRepository.getLatestRun("DATASET", 1))
+
+        assert(actual.isEmpty)
+      }
+      "there is no Run with the specified datasetVersion" in {
+        setUpSimpleRun()
+
+        val actual = await(runMongoRepository.getLatestRun("dataset", 2))
+
+        assert(actual.isEmpty)
+      }
+      "the datasetName is null" in {
+        setUpSimpleRun()
+
+        val actual = await(runMongoRepository.getLatestRun(null, 1))
+
+        assert(actual.isEmpty)
+      }
+    }
+  }
+
   private def setUpSimpleRun(): Run = {
     val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
     runFixture.add(run)
