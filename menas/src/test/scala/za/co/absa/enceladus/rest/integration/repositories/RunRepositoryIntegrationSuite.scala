@@ -234,11 +234,41 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
         assert(actual.contains(expected))
       }
     }
+
     "return None" when {
       "there is no Run with the specified uniqueId" in {
         val checkpoint = RunFactory.getDummyCheckpoint()
 
         val actual = await(runMongoRepository.appendCheckpoint(uniqueId, checkpoint))
+
+        assert(actual.isEmpty)
+      }
+    }
+  }
+
+  "RunMongoRepository::updateControlMeasure" should {
+    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+
+    "update the Run's ControlMeasure and return the updated Run" when {
+      "there is a Run with the specified uniqueId" in {
+        val originalMeasure = RunFactory.getDummyControlMeasure(runUniqueId = Option("eeeeeeee-f9ac-46f8-9657-a09a4e3fb6e9"))
+        val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = originalMeasure)
+        runFixture.add(run)
+
+        val expectedMeasure = RunFactory.getDummyControlMeasure(runUniqueId = Option(uniqueId))
+
+        val actual = await(runMongoRepository.updateControlMeasure(uniqueId, expectedMeasure))
+
+        val expected = run.copy(controlMeasure = expectedMeasure)
+        assert(actual.contains(expected))
+      }
+    }
+
+    "return None" when {
+      "there is no Run with the specified uniqueId" in {
+        val controlMeasure = RunFactory.getDummyControlMeasure()
+
+        val actual = await(runMongoRepository.updateControlMeasure(uniqueId, controlMeasure))
 
         assert(actual.isEmpty)
       }
