@@ -119,7 +119,6 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         val actual = await(runMongoRepository.getRun("dataset", 1, 2))
 
-        assert(actual.isDefined)
         assert(actual.contains(dataset1run2))
       }
     }
@@ -166,7 +165,6 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         val actual = await(runMongoRepository.getLatestRun("dataset", 1))
 
-        assert(actual.isDefined)
         assert(actual.contains(dataset1run2))
       }
     }
@@ -203,7 +201,6 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
       await(runMongoRepository.create(run))
       val actual = await(runMongoRepository.getRun("dataset", 1, 1))
 
-      assert(actual.isDefined)
       assert(actual.contains(run))
     }
     "allow duplicate entries (this should be prohibited at the service layer)" in {
@@ -214,8 +211,37 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
       val actual = await(runMongoRepository.getRun("dataset", 1, 1))
 
       assert(await(runMongoRepository.count()) == 2)
-      assert(actual.isDefined)
       assert(actual.contains(run))
+    }
+  }
+
+  "RunMongoRepository::appendCheckpoint" should {
+    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+
+    "add the supplied checkpoint to the end of the present checkpoints and return the updated Run" when {
+      "there is a Run with the specified uniqueId" in {
+        val checkpoint0 = RunFactory.getDummyCheckpoint(name = "checkpoint0")
+        val measure = RunFactory.getDummyControlMeasure(checkpoints = List(checkpoint0))
+        val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = measure)
+        runFixture.add(run)
+
+        val checkpoint1 = RunFactory.getDummyCheckpoint(name = "checkpoint1")
+
+        val actual = await(runMongoRepository.appendCheckpoint(uniqueId, checkpoint1))
+
+        val expectedControlMeasure = run.controlMeasure.copy(checkpoints = List(checkpoint0, checkpoint1))
+        val expected = run.copy(controlMeasure = expectedControlMeasure)
+        assert(actual.contains(expected))
+      }
+    }
+    "return None" when {
+      "there is no Run with the specified uniqueId" in {
+        val checkpoint = RunFactory.getDummyCheckpoint()
+
+        val actual = await(runMongoRepository.appendCheckpoint(uniqueId, checkpoint))
+
+        assert(actual.isEmpty)
+      }
     }
   }
 
