@@ -15,16 +15,12 @@
 
 package za.co.absa.enceladus.rest.integration.fixtures
 
-import java.util.UUID
-
 import org.mongodb.scala.MongoDatabase
 import org.mongodb.scala.bson.BsonDocument
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import za.co.absa.atum.model.RunState.RunState
-import za.co.absa.atum.model._
 import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest.repositories.RunMongoRepository
 
 import scala.concurrent.duration.Duration
@@ -34,8 +30,6 @@ import scala.concurrent.{Await, Future}
 class RunFixtureService @Autowired()(mongoDb: MongoDatabase) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
-
-  private val dummyDateString = "04-12-2017 16:19:17 +0200"
 
   private val collection = mongoDb.getCollection(RunMongoRepository.collectionName)
 
@@ -53,77 +47,6 @@ class RunFixtureService @Autowired()(mongoDb: MongoDatabase) {
 
   def dropCollection(): Unit = {
     Await.ready(mongoDb.getCollection(RunMongoRepository.collectionName).drop().toFuture(), Duration.Inf)
-  }
-
-  def getDummyRun(uniqueId: Option[String] = Option(UUID.randomUUID().toString),
-                  runId: Int = 1,
-                  dataset: String = "dummyDataset",
-                  datasetVersion: Int = 1,
-                  splineRef: SplineReference = getDummySplineReference(),
-                  startDateTime: String = dummyDateString,
-                  runStatus: RunStatus = getDummyRunStatus(),
-                  controlMeasure: ControlMeasure = getDummyControlMeasure(),
-                  username: String = "dummyUsername"): Run = {
-    Run(uniqueId, runId, dataset, datasetVersion, splineRef, startDateTime, runStatus, controlMeasure, username)
-  }
-
-  def getDummySplineReference(sparkApplicationId: String = "dummySparkApplicationId",
-                              outputPath: String = "dummyOutputPath"): SplineReference = {
-    SplineReference(sparkApplicationId, outputPath)
-  }
-
-  def getDummyRunStatus(runState: RunState = RunState.allSucceeded,
-                        error: Option[RunError] = None): RunStatus = {
-    RunStatus(runState, error)
-  }
-
-  def getDummyRunStatusSuccess(): RunStatus = {
-    RunStatus(RunState.allSucceeded, None)
-  }
-
-  def getDummyRunStatusError(): RunStatus = {
-    RunStatus(RunState.failed, Some(getDummyRunError()))
-  }
-
-  def getDummyRunError(job: String = "dummyJob",
-                       step: String = "dummyStep",
-                       description: String = "dummyDescription",
-                       technicalDetails: String = "dummyTechnicalDetails"): RunError = {
-    RunError(job, step, description, technicalDetails)
-  }
-
-  def getDummyControlMeasure(metadata: ControlMeasureMetadata = getDummyMetadata(),
-                             runUniqueId: Option[String] = Option(UUID.randomUUID().toString),
-                             checkpoints: List[Checkpoint] = List()): ControlMeasure = {
-    ControlMeasure(metadata, runUniqueId, checkpoints)
-  }
-
-  def getDummyMetadata(sourceApplication: String = "dummySourceApplication",
-                       country: String = "dummyCountry",
-                       historyType: String = "dummyHistoryType",
-                       dataFilename: String = "dummyDataFilename",
-                       sourceType: String = "dummySourceType",
-                       version: Int = 1,
-                       informationDate: String = dummyDateString,
-                       additionalInfo: Map[String, String] = Map()): ControlMeasureMetadata = {
-    ControlMeasureMetadata(sourceApplication, country, historyType, dataFilename,
-      sourceType, version, informationDate, additionalInfo)
-  }
-
-  def getDummyCheckpoint(name: String = "dummyName",
-                         processStartTime: String = dummyDateString,
-                         processEndTime: String = dummyDateString,
-                         workflowName: String = "dummyWorkFlowName",
-                         order: Int = 0,
-                         controls: List[Measurement] = List()): Checkpoint = {
-    Checkpoint(name, processStartTime, processEndTime, workflowName, order, controls)
-  }
-
-  def getDummyMeasurement(controlName: String = "dummyControlName",
-                          controlType: String = "dummyControlType",
-                          controlCol: String = "dummyControlCol",
-                          controlValue: Any = 0): Measurement = {
-    Measurement(controlName, controlType, controlCol, controlValue)
   }
 
 }
