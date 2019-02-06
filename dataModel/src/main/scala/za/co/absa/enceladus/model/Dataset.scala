@@ -49,10 +49,11 @@ case class Dataset(
   override def setDescription(desc: Option[String]): VersionedModel = this.copy(description = desc)
   override def setDateCreated(time: ZonedDateTime): VersionedModel = this.copy(dateCreated = time)
   override def setUserCreated(user: String): VersionedModel = this.copy(userCreated = user)
-  def setSchemaName(newName: String) = this.copy(schemaName = newName)
-  def setSchemaVersion(newVersion: Int) = this.copy(schemaVersion = newVersion)
-  def setHDFSPath(newPath: String) = this.copy(hdfsPath = newPath)
-  def setHDFSPublishPath(newPublishPath: String) = this.copy(hdfsPublishPath = newPublishPath)
+  def setSchemaName(newName: String): Dataset = this.copy(schemaName = newName)
+  def setSchemaVersion(newVersion: Int): Dataset = this.copy(schemaVersion = newVersion)
+  def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
+  def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
+  def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
 
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the dots are

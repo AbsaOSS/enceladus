@@ -51,30 +51,12 @@ var RuleService = new function () {
     })
   };
 
-  this.disableRule = function (sId, iVersion) {
-    var uri = "api/rule/disable/" + encodeURI(sId);
-    if (typeof (iVersion) !== "undefined") {
-      uri += "/" + encodeURI(iVersion)
-    }
+  this.removeRule = function (oCurrentDataset, iRuleIndex) {
+    let conformance = oCurrentDataset["conformance"].filter((_, index) => index !== iRuleIndex);
+    let newDataset = oCurrentDataset;
+    newDataset.conformance = conformance;
 
-    Functions.ajax(uri, "GET", {}, function (oData) {
-      if (Array.isArray(oData)) {
-        var err = "Disabling rule failed. Clear the following dependencies first:\n";
-        for (var ind in oData) {
-          err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
-        }
-        sap.m.MessageBox.error(err)
-      } else if (typeof (oData) === "object") {
-        sap.m.MessageToast.show("Rule disabled.");
-        if (window.location.hash !== "#/rule") {
-          window.location.hash = "#/rule"
-        } else {
-          RuleService.getRuleList(true, false)
-        }
-      }
-    }, function () {
-      sap.m.MessageBox.error("Failed to disable rule.")
-    })
+    return newDataset;
   };
 
   this.isUniqueRuleName = function (sName, model) {
