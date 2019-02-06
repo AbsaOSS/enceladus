@@ -86,6 +86,8 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           runFixture.add(dataset1run1, dataset1run2)
           val dataset2run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
           runFixture.add(dataset2run1)
+          val dataset3run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = "29-01-2019 13:01:12 +0200")
+          runFixture.add(dataset3run1)
 
           val response = sendGet[Array[Run]](s"$apiUrl/startDate/$startDate")
 
