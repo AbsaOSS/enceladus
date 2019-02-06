@@ -36,8 +36,8 @@ Ensure the properties there fit your environment.
 #### Build commands:
 
 - Without tests: `mvn clean package -DskipTests `
-- Without with unit tests: `mvn clean package`
-- Without with integration tests: `mvn clean package -Pintegration`
+- With unit tests: `mvn clean package`
+- With integration tests: `mvn clean package -Pintegration`
 
 ## <a name="run"/>How to run
 #### Menas requirements:
