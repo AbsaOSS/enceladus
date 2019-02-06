@@ -336,6 +336,23 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
         }
       }
     }
+
+    "return 400" when {
+      "a Run with the given uniqueId already exists" in {
+        val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+        val presentRun = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
+        runFixture.add(presentRun)
+        val run = RunFactory.getDummyRun(username = null, uniqueId = Option(uniqueId))
+
+        val response = sendPost[Run, Validation](endpointBase, bodyOpt = Option(run))
+
+        assertBadRequest(response)
+
+        val body = response.getBody
+        assert(!body.isValid)
+        assert(body == Validation().withError("uniqueId", s"run with this id already exists: $uniqueId"))
+      }
+    }
   }
 
   s"Calls to $apiUrl/addCheckpoint/{uniqueId}" can {
