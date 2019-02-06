@@ -242,7 +242,9 @@ sap.ui.controller("components.dataset.datasetMain", {
             let currentDataset = this._model.getProperty("/currentDataset");
             let newDataset = RuleService.removeRule(currentDataset, ruleIndex);
 
-            if(newDataset) DatasetService.editDataset(newDataset)
+            if (newDataset) {
+              DatasetService.editDataset(newDataset);
+            }
           }
         }.bind(this)
       });
