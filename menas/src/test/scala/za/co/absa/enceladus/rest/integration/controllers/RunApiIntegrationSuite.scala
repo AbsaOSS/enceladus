@@ -45,7 +45,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
   s"Calls to $apiUrl/list" can {
     "return 200" when {
       "there are Runs" should {
-        "return only the latest run of each stored Runs" in {
+        "return only the latest Run of each Dataset" in {
           val dataset1run1 = runFixture.getDummyRun(dataset = "dataset1", runId = 1)
           val dataset1run2 = runFixture.getDummyRun(dataset = "dataset1", runId = 2)
           runFixture.add(dataset1run1, dataset1run2)
