@@ -42,7 +42,8 @@ class SchemaController @Autowired() (schemaService:     SchemaService,
 
   @PostMapping(Array("/upload"))
   @ResponseStatus(HttpStatus.CREATED)
-  def handleFileUpload(@AuthenticationPrincipal principal: UserDetails, @RequestParam file: MultipartFile,
+  def handleFileUpload(@AuthenticationPrincipal principal: UserDetails,
+                       @RequestParam file: MultipartFile,
                        @RequestParam version: Int, @RequestParam name: String): CompletableFuture[_] = {
     val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase, refName = name, refVersion = version + 1, attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = file.getOriginalFilename, fileContent = file.getBytes, fileMIMEType = file.getContentType)
@@ -57,7 +58,8 @@ class SchemaController @Autowired() (schemaService:     SchemaService,
 
   @GetMapping(Array("/json/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
-  def getJson(@PathVariable name: String, @PathVariable version: Int): CompletableFuture[String] = {
+  def getJson(@PathVariable name: String,
+              @PathVariable version: Int): CompletableFuture[String] = {
     schemaService.getVersion(name, version).map {
       case Some(schema) => StructType(sparkMenasConvertor.convertMenasToSparkFields(schema.fields)).json
       case None         => throw notFound()

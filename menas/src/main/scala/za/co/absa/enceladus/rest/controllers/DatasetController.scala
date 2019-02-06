@@ -37,7 +37,8 @@ class DatasetController @Autowired()(datasetService: DatasetService)
 
   @PostMapping(Array("/{datasetName}/rule/create"))
   @ResponseStatus(HttpStatus.OK)
-  def addConformanceRule(@AuthenticationPrincipal user: UserDetails, @PathVariable datasetName: String,
+  def addConformanceRule(@AuthenticationPrincipal user: UserDetails,
+                         @PathVariable datasetName: String,
                          @RequestBody rule: ConformanceRule): CompletableFuture[Dataset] = {
     datasetService.addConformanceRule(user.getUsername, datasetName, rule).map {
       case Some(dataset) => dataset

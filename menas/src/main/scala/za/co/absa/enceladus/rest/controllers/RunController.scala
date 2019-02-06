@@ -46,33 +46,38 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}"))
   @ResponseStatus(HttpStatus.OK)
-  def getRun(@PathVariable datasetName: String, @PathVariable datasetVersion: Int,
+  def getRun(@PathVariable datasetName: String,
+             @PathVariable datasetVersion: Int,
              @PathVariable runId: Int): CompletableFuture[Run] = {
     runService.getRun(datasetName, datasetVersion, runId)
   }
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}/latest"))
   @ResponseStatus(HttpStatus.OK)
-  def getLatestRun(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Run] = {
+  def getLatestRun(@PathVariable datasetName: String,
+                   @PathVariable datasetVersion: Int): CompletableFuture[Run] = {
     runService.getLatestRun(datasetName, datasetVersion)
   }
 
   @GetMapping(Array("/splineUrl/{datasetName}/{datasetVersion}/{runId}"))
   @ResponseStatus(HttpStatus.OK)
-  def getSplineUrl(@PathVariable datasetName: String, @PathVariable datasetVersion: Int,
+  def getSplineUrl(@PathVariable datasetName: String,
+                   @PathVariable datasetVersion: Int,
                    @PathVariable runId: Int): CompletableFuture[String] = {
     runService.getSplineUrl(datasetName, datasetVersion, runId)
   }
 
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
-  def create(@RequestBody run: Run, @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
+  def create(@RequestBody run: Run,
+             @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
     runService.create(run, principal.getUsername)
   }
 
   @PostMapping(Array("/addCheckpoint/{uniqueId}"))
   @ResponseStatus(HttpStatus.OK)
-  def addCheckpoint(@PathVariable uniqueId: String, @RequestBody checkpoint: Checkpoint): CompletableFuture[Run] = {
+  def addCheckpoint(@PathVariable uniqueId: String,
+                    @RequestBody checkpoint: Checkpoint): CompletableFuture[Run] = {
     runService.addCheckpoint(uniqueId, checkpoint)
   }
 
@@ -92,7 +97,8 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
 
   @PostMapping(Array("/updateRunStatus/{uniqueId}"))
   @ResponseStatus(HttpStatus.OK)
-  def updateRunStatus(@PathVariable uniqueId: String, @RequestBody runStatus: RunStatus): CompletableFuture[Run] = {
+  def updateRunStatus(@PathVariable uniqueId: String,
+                      @RequestBody runStatus: RunStatus): CompletableFuture[Run] = {
     runService.updateRunStatus(uniqueId, runStatus)
   }
 

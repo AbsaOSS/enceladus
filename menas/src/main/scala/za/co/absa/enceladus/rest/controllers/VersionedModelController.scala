@@ -44,7 +44,8 @@ abstract class VersionedModelController[C <: VersionedModel](versionedModelServi
 
   @GetMapping(Array("/detail/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
-  def getVersionDetail(@PathVariable name: String, @PathVariable version: Int): CompletableFuture[C] = {
+  def getVersionDetail(@PathVariable name: String,
+                       @PathVariable version: Int): CompletableFuture[C] = {
     versionedModelService.getVersion(name, version).map {
       case Some(entity) => entity
       case None         => throw notFound()
@@ -68,7 +69,8 @@ abstract class VersionedModelController[C <: VersionedModel](versionedModelServi
 
   @GetMapping(Array("/usedIn/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
-  def usedIn(@PathVariable name: String, @PathVariable version: Int): CompletableFuture[UsedIn] = {
+  def usedIn(@PathVariable name: String,
+             @PathVariable version: Int): CompletableFuture[UsedIn] = {
     versionedModelService.getUsedIn(name, Some(version))
   }
 
@@ -80,7 +82,8 @@ abstract class VersionedModelController[C <: VersionedModel](versionedModelServi
 
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
-  def create(@AuthenticationPrincipal principal: UserDetails, @RequestBody item: C): CompletableFuture[C] = {
+  def create(@AuthenticationPrincipal principal: UserDetails,
+             @RequestBody item: C): CompletableFuture[C] = {
     versionedModelService.create(item, principal.getUsername).map {
       case Some(entity) => entity
       case None         => throw notFound()
@@ -89,7 +92,8 @@ abstract class VersionedModelController[C <: VersionedModel](versionedModelServi
 
   @PostMapping(Array("/edit"))
   @ResponseStatus(HttpStatus.CREATED)
-  def edit(@AuthenticationPrincipal user: UserDetails, @RequestBody item: C): CompletableFuture[C] = {
+  def edit(@AuthenticationPrincipal user: UserDetails,
+           @RequestBody item: C): CompletableFuture[C] = {
     versionedModelService.update(user.getUsername, item).map {
       case Some(entity) => entity
       case None         => throw notFound()
@@ -98,7 +102,8 @@ abstract class VersionedModelController[C <: VersionedModel](versionedModelServi
 
   @GetMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
-  def disable(@PathVariable name: String, @PathVariable version: Optional[Int]): CompletableFuture[UpdateResult] = {
+  def disable(@PathVariable name: String,
+              @PathVariable version: Optional[Int]): CompletableFuture[UpdateResult] = {
     val v = if (version.isPresent) Some(version.get) else None
     versionedModelService.disableVersion(name, v)
   }
