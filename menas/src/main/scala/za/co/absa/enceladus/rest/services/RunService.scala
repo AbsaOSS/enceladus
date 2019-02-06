@@ -121,7 +121,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
     validateUniqueId(run)
   }
 
-  private def validateUniqueId(run: Run) = {
+  private def validateUniqueId(run: Run): Future[Validation] = {
     val validation = Validation()
 
     run.uniqueId match {
