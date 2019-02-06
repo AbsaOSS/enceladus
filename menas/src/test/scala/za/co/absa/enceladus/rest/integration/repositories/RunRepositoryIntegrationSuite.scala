@@ -19,6 +19,7 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
+import za.co.absa.atum.model.RunState
 import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest.Application
 import za.co.absa.enceladus.rest.factories.RunFactory
@@ -275,9 +276,68 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
     }
   }
 
+  "RunMongoRepository::updateSplineReference" should {
+    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+
+    "update the Run's SplineReference and return the updated Run" when {
+      "there is a Run with the specified uniqueId" in {
+        val originalSplineRef = RunFactory.getDummySplineReference(sparkApplicationId = null)
+        val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), splineRef = originalSplineRef)
+        runFixture.add(run)
+
+        val expectedSplineRef = RunFactory.getDummySplineReference(sparkApplicationId = "application_1512977199009_0007")
+
+        val actual = await(runMongoRepository.updateSplineReference(uniqueId, expectedSplineRef))
+
+        val expected = run.copy(splineRef = expectedSplineRef)
+        assert(actual.contains(expected))
+      }
+    }
+
+    "return None" when {
+      "there is no Run with the specified uniqueId" in {
+        val splineReference = RunFactory.getDummySplineReference()
+
+        val actual = await(runMongoRepository.updateSplineReference(uniqueId, splineReference))
+
+        assert(actual.isEmpty)
+      }
+    }
+  }
+
+  "RunMongoRepository::updateRunStatus" should {
+    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+
+    "update the Run's RunStatus and return the updated Run" when {
+      "there is a Run with the specified uniqueId" in {
+        val originalStatus = RunFactory.getDummyRunStatus(runState = RunState.running)
+        val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), runStatus = originalStatus)
+        runFixture.add(run)
+
+        val expectedStatus = RunFactory.getDummyRunStatus(runState = RunState.allSucceeded)
+
+        val actual = await(runMongoRepository.updateRunStatus(uniqueId, expectedStatus))
+
+        val expected = run.copy(runStatus = expectedStatus)
+        assert(actual.contains(expected))
+      }
+    }
+
+    "return None" when {
+      "there is no Run with the specified uniqueId" in {
+        val runStatus = RunFactory.getDummyRunStatus()
+
+        val actual = await(runMongoRepository.updateRunStatus(uniqueId, runStatus))
+
+        assert(actual.isEmpty)
+      }
+    }
+  }
+
   private def setUpSimpleRun(): Run = {
     val run = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
     runFixture.add(run)
     run
   }
+
 }
