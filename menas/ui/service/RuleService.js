@@ -53,8 +53,7 @@ var RuleService = new function () {
 
   this.removeRule = function (oCurrentDataset, iRuleIndex) {
     let conformance = oCurrentDataset["conformance"].filter((_, index) => index !== iRuleIndex);
-    let newDataset = oCurrentDataset;
-    newDataset.conformance = conformance;
+    let newDataset = {...oCurrentDataset, conformance: conformance};
 
     return newDataset;
   };
