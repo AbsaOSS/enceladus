@@ -19,11 +19,10 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
+import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest.Application
 import za.co.absa.enceladus.rest.integration.fixtures.RunFixtureService
 import za.co.absa.enceladus.rest.repositories.RunMongoRepository
-
-import scala.concurrent.Await
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = Array(classOf[Application]))
@@ -43,36 +42,36 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
     runFixture.dropCollection()
   }
 
-  "RunMongoRepository::getAllLatest" when {
-    "there are Runs" should {
-      "asynchronously return only the latest Run for each Dataset" in {
+  "RunMongoRepository::getAllLatest" should {
+    "return only the latest Run for each Dataset asynchronously" when {
+      "there are Runs" in {
         val dataset1run1 = runFixture.getDummyRun(dataset = "dataset1", runId = 1)
         val dataset1run2 = runFixture.getDummyRun(dataset = "dataset1", runId = 2)
         runFixture.add(dataset1run1, dataset1run2)
         val dataset2run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1)
         runFixture.add(dataset2run1)
 
-        val actual = Await.result(runMongoRepository.getAllLatest(), awaitDuration)
+        val actual = await(runMongoRepository.getAllLatest())
 
         val expected = List(dataset1run2, dataset2run1)
         assert(actual == expected)
       }
     }
 
-    "there are no Runs" should {
-      "asynchronously return and empty List" in {
-        val actual = Await.result(runMongoRepository.getAllLatest(), awaitDuration)
+    "return and empty List asynchronously" when {
+      "there are no Runs" in {
+        val actual = await(runMongoRepository.getAllLatest())
 
         assert(actual.isEmpty)
       }
     }
   }
 
-  "RunMongoRepository::getByStartDate" when {
+  "RunMongoRepository::getByStartDate" should {
     val startDate = "28-01-2019"
 
-    "there are Runs on the specified startDate" should {
-      "return only the latest run for each dataset on that startDate" in {
+    "return only the latest run for each dataset on that startDate asynchronously" when {
+      "there are Runs on the specified startDate" in {
         val dataset1run1 = runFixture.getDummyRun(dataset = "dataset1", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
         val dataset1run2 = runFixture.getDummyRun(dataset = "dataset1", runId = 2, startDateTime = s"$startDate 14:01:12 +0200")
         runFixture.add(dataset1run1, dataset1run2)
@@ -81,34 +80,84 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset3run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = "29-01-2019 13:01:12 +0200")
         runFixture.add(dataset3run1)
 
-        val actual = Await.result(runMongoRepository.getByStartDate(startDate), awaitDuration)
+        val actual = await(runMongoRepository.getByStartDate(startDate))
 
         val expected = List(dataset1run2, dataset2run1)
         assert(actual == expected)
       }
     }
 
-    "there are no Runs for the specified startDate" should {
-      "return an empty collection" in {
+    "return an empty collection asynchronously" when {
+      "there are no Runs for the specified startDate" in {
         val run = runFixture.getDummyRun(startDateTime = "29-01-2019 13:01:12 +0200")
         runFixture.add(run)
 
-        val actual = Await.result(runMongoRepository.getByStartDate(startDate), awaitDuration)
+        val actual = await(runMongoRepository.getByStartDate(startDate))
 
         assert(actual.isEmpty)
       }
-    }
 
-    "the specified startDate is not a valid date" should {
-      "return an empty collection" in {
+      "the specified startDate is not a valid date" in {
         val run = runFixture.getDummyRun(startDateTime = "29-01-2019 13:01:12 +0200")
         runFixture.add(run)
 
-        val actual = Await.result(runMongoRepository.getByStartDate("startDate"), awaitDuration)
+        val actual = await(runMongoRepository.getByStartDate("startDate"))
 
         assert(actual.isEmpty)
       }
     }
   }
 
+  "RunMongoRepository::getRun" should {
+    "return an Option of the Run asynchronously" when {
+      "there is a Run of the specified Dataset with the specified runId" in {
+        val dataset1run1 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+        val dataset1run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
+        val dataset2run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
+        runFixture.add(dataset1run1, dataset1run2, dataset2run2)
+
+        val actual = await(runMongoRepository.getRun("dataset", 1, 2))
+
+        assert(actual.isDefined)
+        assert(actual.contains(dataset1run2))
+      }
+    }
+
+    "return None asynchronously" when {
+      "there is no Run with the specified datasetName" in {
+        setUpSimpleRun()
+
+        val actual = await(runMongoRepository.getRun("DATASET", 1, 1))
+
+        assert(actual.isEmpty)
+      }
+      "there is no Run with the specified datasetVersion" in {
+        setUpSimpleRun()
+
+        val actual = await(runMongoRepository.getRun("dataset", 2, 1))
+
+        assert(actual.isEmpty)
+      }
+      "there is no Run with the specified runId" in {
+        setUpSimpleRun()
+
+        val actual = await(runMongoRepository.getRun("dataset", 1, 2))
+
+        assert(actual.isEmpty)
+      }
+      "the datasetName is null" in {
+        setUpSimpleRun()
+
+        val actual = await(runMongoRepository.getRun(null, 1, 1))
+
+        assert(actual.isEmpty)
+      }
+    }
+  }
+
+  private def setUpSimpleRun(): Run = {
+    val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+    runFixture.add(run)
+    run
+  }
 }
