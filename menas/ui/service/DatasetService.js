@@ -105,16 +105,8 @@ var DatasetService = new function() {
         })
     };
 
-    this.editDataset = function(sName, iVersion, sDescription, sHdfsPath, sHdfsPublishPath, sSchemaName, iSchemaVersion) {
-        Functions.ajax("api/dataset/edit", "POST", {
-            name : sName,
-            version : iVersion,
-            description : sDescription,
-            hdfsPath : sHdfsPath,
-            hdfsPublishPath : sHdfsPublishPath,
-            schemaName : sSchemaName,
-            schemaVersion : iSchemaVersion
-        }, function(oData) {
+    this.editDataset = function(oDataset) {
+      Functions.ajax("api/dataset/edit", "POST", oDataset, function(oData) {
             DatasetService.getDatasetList();
             model.setProperty("/currentDataset", oData);
             SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
