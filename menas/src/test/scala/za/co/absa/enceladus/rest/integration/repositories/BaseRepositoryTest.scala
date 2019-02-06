@@ -15,9 +15,15 @@
 
 package za.co.absa.enceladus.rest.integration.repositories
 
+import java.util.concurrent.TimeUnit
+
 import org.scalatest.{BeforeAndAfter, WordSpec}
 import za.co.absa.enceladus.rest.integration.TestContextManagement
 
+import scala.concurrent.duration.Duration
+
 class BaseRepositoryTest extends WordSpec with TestContextManagement with BeforeAndAfter {
+
+  val awaitDuration: Duration = Duration(200, TimeUnit.MILLISECONDS)
 
 }
