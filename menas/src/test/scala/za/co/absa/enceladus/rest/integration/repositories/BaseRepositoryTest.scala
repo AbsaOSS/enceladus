@@ -20,10 +20,15 @@ import java.util.concurrent.TimeUnit
 import org.scalatest.{BeforeAndAfter, WordSpec}
 import za.co.absa.enceladus.rest.integration.TestContextManagement
 
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
 class BaseRepositoryTest extends WordSpec with TestContextManagement with BeforeAndAfter {
 
   val awaitDuration: Duration = Duration(200, TimeUnit.MILLISECONDS)
+
+  def await[T](future: Future[T]): T = {
+    Await.result(future, awaitDuration)
+  }
 
 }
