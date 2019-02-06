@@ -22,6 +22,7 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.Application
+import za.co.absa.enceladus.rest.factories.RunFactory
 import za.co.absa.enceladus.rest.integration.fixtures.RunFixtureService
 import za.co.absa.enceladus.rest.models.Validation
 
@@ -46,10 +47,10 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 200" when {
       "there are Runs" should {
         "return only the latest Run of each Dataset" in {
-          val dataset1run1 = runFixture.getDummyRun(dataset = "dataset1", runId = 1)
-          val dataset1run2 = runFixture.getDummyRun(dataset = "dataset1", runId = 2)
+          val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset1", runId = 1)
+          val dataset1run2 = RunFactory.getDummyRun(dataset = "dataset1", runId = 2)
           runFixture.add(dataset1run1, dataset1run2)
-          val dataset2run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1)
+          val dataset2run1 = RunFactory.getDummyRun(dataset = "dataset2", runId = 1)
           runFixture.add(dataset2run1)
 
           val response = sendGet[Array[Run]](s"$apiUrl/list")
@@ -81,12 +82,12 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 200" when {
       "there are Runs on the specified startDate" should {
         "return only the latest run for each dataset on that startDate" in {
-          val dataset1run1 = runFixture.getDummyRun(dataset = "dataset1", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
-          val dataset1run2 = runFixture.getDummyRun(dataset = "dataset1", runId = 2, startDateTime = s"$startDate 14:01:12 +0200")
+          val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset1", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
+          val dataset1run2 = RunFactory.getDummyRun(dataset = "dataset1", runId = 2, startDateTime = s"$startDate 14:01:12 +0200")
           runFixture.add(dataset1run1, dataset1run2)
-          val dataset2run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
+          val dataset2run1 = RunFactory.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
           runFixture.add(dataset2run1)
-          val dataset3run1 = runFixture.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = "29-01-2019 13:01:12 +0200")
+          val dataset3run1 = RunFactory.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = "29-01-2019 13:01:12 +0200")
           runFixture.add(dataset3run1)
 
           val response = sendGet[Array[Run]](s"$apiUrl/startDate/$startDate")
@@ -101,7 +102,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
       "there are no Runs for the specified startDate" should {
         "return an empty collection" in {
-          val run = runFixture.getDummyRun(startDateTime = "29-01-2019 13:01:12 +0200")
+          val run = RunFactory.getDummyRun(startDateTime = "29-01-2019 13:01:12 +0200")
           runFixture.add(run)
 
           val response = sendGet[Array[Run]](s"$apiUrl/startDate/$startDate")
@@ -117,7 +118,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 400" when {
       "the startDate does not have the format dd-MM-yyyy" should {
         "return a Validation error" in {
-          val run = runFixture.getDummyRun(startDateTime = s"$startDate 13:01:12 +0200")
+          val run = RunFactory.getDummyRun(startDateTime = s"$startDate 13:01:12 +0200")
           runFixture.add(run)
 
           val response = sendGet[Validation](s"$apiUrl/startDate/01-29-2019")
@@ -136,9 +137,9 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 200" when {
       "there is a Run of the specified Dataset with the specified runId" should {
         "return the Run" in {
-          val dataset1run1 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
-          val dataset1run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
-          val dataset2run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
+          val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+          val dataset1run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
+          val dataset2run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
           runFixture.add(dataset1run1, dataset1run2, dataset2run2)
 
           val response = sendGet[Run](s"$apiUrl/dataset/1/2")
@@ -194,9 +195,9 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 200" when {
       "there are Runs with the specified datasetName and datasetVersion" should {
         "return the Run with the latest RunId" in {
-          val dataset1run1 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
-          val dataset1run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
-          val dataset2run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
+          val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+          val dataset1run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
+          val dataset2run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
           runFixture.add(dataset1run1, dataset1run2, dataset2run2)
 
           val response = sendGet[Run](s"$apiUrl/dataset/1/latest")
@@ -240,9 +241,9 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 200" when {
       "there is a Run of the specified Dataset with the specified runId" should {
         "return the Spline URL for the Run" in {
-          val dataset1run1 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
-          val dataset1run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
-          val dataset2run2 = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
+          val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+          val dataset1run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
+          val dataset2run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
           runFixture.add(dataset1run1, dataset1run2, dataset2run2)
 
           val response = sendGet[String](s"$endpointBase/dataset/1/2")
@@ -300,9 +301,9 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 201" when {
       "a new Run is created" should {
         "return the created Run with the authenticated user's username" in {
-          val run = runFixture.getDummyRun(username = null)
+          val run = RunFactory.getDummyRun(username = null)
 
-          val response = sendPost[Run, Run](s"$endpointBase", bodyOpt = Option(run))
+          val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
 
           assertCreated(response)
 
@@ -311,9 +312,9 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assert(body == expected)
         }
         "provide a uniqueId if none is specified" in {
-          val run = runFixture.getDummyRun(username = null, uniqueId = None)
+          val run = RunFactory.getDummyRun(username = null, uniqueId = None)
 
-          val response = sendPost[Run, Run](s"$endpointBase", bodyOpt = Option(run))
+          val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
 
           assertCreated(response)
 
@@ -323,9 +324,9 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assert(body == expected)
         }
         "override any specified username in favor of the authenticated user's username" in {
-          val run = runFixture.getDummyRun(username = "fakeUsername")
+          val run = RunFactory.getDummyRun(username = "fakeUsername")
 
-          val response = sendPost[Run, Run](s"$endpointBase", bodyOpt = Option(run))
+          val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
 
           assertCreated(response)
 
@@ -344,12 +345,12 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 200" when {
       "there is a Run with the specified uniqueId" should {
         "add the supplied checkpoint to the end of the present checkpoints and return the updated Run" in {
-          val checkpoint0 = runFixture.getDummyCheckpoint(name = "checkpoint0")
-          val measure = runFixture.getDummyControlMeasure(checkpoints = List(checkpoint0))
-          val run = runFixture.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = measure)
+          val checkpoint0 = RunFactory.getDummyCheckpoint(name = "checkpoint0")
+          val measure = RunFactory.getDummyControlMeasure(checkpoints = List(checkpoint0))
+          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = measure)
           runFixture.add(run)
 
-          val checkpoint1 = runFixture.getDummyCheckpoint(name = "checkpoint1")
+          val checkpoint1 = RunFactory.getDummyCheckpoint(name = "checkpoint1")
 
           val response = sendPost[Checkpoint, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(checkpoint1))
 
@@ -365,7 +366,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
     "return 404" when {
       "there is no Run with the specified uniqueId" in {
-        val checkpoint = runFixture.getDummyCheckpoint()
+        val checkpoint = RunFactory.getDummyCheckpoint()
 
         val response = sendPost[Checkpoint, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(checkpoint))
 
@@ -381,11 +382,11 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 200" when {
       "there is a Run with the specified uniqueId" should {
         "update the Run's ControlMeasure and return the updated Run" in {
-          val originalMeasure = runFixture.getDummyControlMeasure(runUniqueId = Option("eeeeeeee-f9ac-46f8-9657-a09a4e3fb6e9"))
-          val run = runFixture.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = originalMeasure)
+          val originalMeasure = RunFactory.getDummyControlMeasure(runUniqueId = Option("eeeeeeee-f9ac-46f8-9657-a09a4e3fb6e9"))
+          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = originalMeasure)
           runFixture.add(run)
 
-          val expectedMeasure = runFixture.getDummyControlMeasure(runUniqueId = Option(uniqueId))
+          val expectedMeasure = RunFactory.getDummyControlMeasure(runUniqueId = Option(uniqueId))
 
           val response = sendPost[ControlMeasure, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedMeasure))
 
@@ -400,7 +401,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
     "return 404" when {
       "there is no Run with the specified uniqueId" in {
-        val controlMeasure = runFixture.getDummyControlMeasure()
+        val controlMeasure = RunFactory.getDummyControlMeasure()
 
         val response = sendPost[ControlMeasure, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(controlMeasure))
 
@@ -416,11 +417,11 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 200" when {
       "there is a Run with the specified uniqueId" should {
         "update the Run's SplineReference and return the updated Run" in {
-          val originalSplineRef = runFixture.getDummySplineReference(sparkApplicationId = null)
-          val run = runFixture.getDummyRun(uniqueId = Option(uniqueId), splineRef = originalSplineRef)
+          val originalSplineRef = RunFactory.getDummySplineReference(sparkApplicationId = null)
+          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), splineRef = originalSplineRef)
           runFixture.add(run)
 
-          val expectedSplineRef = runFixture.getDummySplineReference(sparkApplicationId = "application_1512977199009_0007")
+          val expectedSplineRef = RunFactory.getDummySplineReference(sparkApplicationId = "application_1512977199009_0007")
 
           val response = sendPost[SplineReference, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedSplineRef))
 
@@ -435,7 +436,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
     "return 404" when {
       "there is no Run with the specified uniqueId" in {
-        val splineReference = runFixture.getDummySplineReference()
+        val splineReference = RunFactory.getDummySplineReference()
 
         val response = sendPost[SplineReference, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(splineReference))
 
@@ -451,11 +452,11 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 200" when {
       "there is a Run with the specified uniqueId" should {
         "update the Run's RunStatus and return the updated Run" in {
-          val originalStatus = runFixture.getDummyRunStatus(runState = RunState.running)
-          val run = runFixture.getDummyRun(uniqueId = Option(uniqueId), runStatus = originalStatus)
+          val originalStatus = RunFactory.getDummyRunStatus(runState = RunState.running)
+          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), runStatus = originalStatus)
           runFixture.add(run)
 
-          val expectedStatus = runFixture.getDummyRunStatus(runState = RunState.allSucceeded)
+          val expectedStatus = RunFactory.getDummyRunStatus(runState = RunState.allSucceeded)
 
           val response = sendPost[RunStatus, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedStatus))
 
@@ -470,7 +471,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
     "return 404" when {
       "there is no Run with the specified uniqueId" in {
-        val runStatus = runFixture.getDummyRunStatus()
+        val runStatus = RunFactory.getDummyRunStatus()
 
         val response = sendPost[RunStatus, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(runStatus))
 
@@ -480,7 +481,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
   }
 
   private def setUpSimpleRun(): Run = {
-    val run = runFixture.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+    val run = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
     runFixture.add(run)
     run
   }
