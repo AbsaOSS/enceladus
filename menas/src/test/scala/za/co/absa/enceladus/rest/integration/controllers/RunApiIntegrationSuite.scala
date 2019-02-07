@@ -301,18 +301,18 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     "return 201" when {
       "a new Run is created" should {
         "return the created Run with the authenticated user's username" in {
-          val run = RunFactory.getDummyRun(username = null)
+          val run = RunFactory.getDummyRun(username = None)
 
           val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
 
           assertCreated(response)
 
-          val expected = run.copy(username = user)
+          val expected = run.copy(username = Option(user))
           val body = response.getBody
           assert(body == expected)
         }
         "provide a uniqueId if none is specified" in {
-          val run = RunFactory.getDummyRun(username = null, uniqueId = None)
+          val run = RunFactory.getDummyRun(username = None, uniqueId = None)
 
           val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
 
@@ -320,17 +320,17 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
           val body = response.getBody
           assert(body.uniqueId.isDefined)
-          val expected = run.copy(username = user, uniqueId = body.uniqueId)
+          val expected = run.copy(username = Option(user), uniqueId = body.uniqueId)
           assert(body == expected)
         }
         "override any specified username in favor of the authenticated user's username" in {
-          val run = RunFactory.getDummyRun(username = "fakeUsername")
+          val run = RunFactory.getDummyRun(username = Option("fakeUsername"))
 
           val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
 
           assertCreated(response)
 
-          val expected = run.copy(username = user)
+          val expected = run.copy(username = Option(user))
           val body = response.getBody
           assert(body == expected)
         }
@@ -342,7 +342,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
         val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
         val presentRun = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
         runFixture.add(presentRun)
-        val run = RunFactory.getDummyRun(username = null, uniqueId = Option(uniqueId))
+        val run = RunFactory.getDummyRun(username = None, uniqueId = Option(uniqueId))
 
         val response = sendPost[Run, Validation](endpointBase, bodyOpt = Option(run))
 

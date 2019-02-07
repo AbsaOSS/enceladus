@@ -33,7 +33,7 @@ object RunFactory {
                   startDateTime: String = dummyDateString,
                   runStatus: RunStatus = getDummyRunStatus(),
                   controlMeasure: ControlMeasure = getDummyControlMeasure(),
-                  username: String = "dummyUsername"): Run = {
+                  username: Option[String] = Option("dummyUsername")): Run = {
     Run(uniqueId, runId, dataset, datasetVersion, splineRef, startDateTime, runStatus, controlMeasure, username)
   }
 
