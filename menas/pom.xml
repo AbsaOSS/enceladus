@@ -223,6 +223,11 @@
                         META-INF/*.DSA,
                         META-INF/*.RSA
                     </packagingExcludes>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                    </archive>
                 </configuration>
             </plugin>
             <plugin>
