@@ -77,7 +77,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
       case Some(id) => id
       case None     => UUID.randomUUID().toString
     }
-    val run = newRun.copy(username = username, uniqueId = Some(uniqueId))
+    val run = newRun.copy(username = Option(username), uniqueId = Option(uniqueId))
     for {
       validation <- validate(run)
       createdRun <-

@@ -27,5 +27,5 @@ case class Run
   startDateTime: String,
   runStatus: RunStatus,
   controlMeasure: ControlMeasure,
-  username: String = ""
+  username: Option[String] = None
 )
