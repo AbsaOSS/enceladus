@@ -87,7 +87,7 @@ object SchemaUtils {
     * @param schema The schema of the whole dataset
     * @return The path of the first array field or "" if none were found
     */
-  def getFirstArrayPath(path: String, schema: StructType) = {
+  def getFirstArrayPath(path: String, schema: StructType): String = {
     def helper(remPath: Seq[String], pathAcc: Seq[String]): Seq[String] = {
       if (remPath.isEmpty) Seq() else {
         val currPath = (pathAcc :+ remPath.head).mkString(".")
@@ -142,6 +142,60 @@ object SchemaUtils {
 
     val pathToks = path.split("\\.")
     helper(pathToks, Seq(), Seq())
+  }
+
+  /**
+    * For a given list of field paths determines the deepest common array path.
+    *
+    * For instance, if given 'a.b', 'a.b.c', 'a.b.c.d' where b and c are arrays the common deepest array
+    * path is 'a.b.c'.
+    *
+    * If any of the arrays are one diverging path this function returns None.
+    *
+    * The purpose of the function is to determine the order of explosions to be made before the dataframe can be
+    * joined on a field inside an array.
+    *
+    * @param schema     A Spark schema
+    * @param fieldPaths A list of paths to analyze
+    * @return true if casting never fails
+    */
+  def getDeepestCommonArrayPath(schema: StructType, fieldPaths: Seq[String]): Option[String] = {
+    val arrayPaths = fieldPaths.flatMap(path => getAllArraysInPath(path, schema)).distinct
+
+    if (arrayPaths.isEmpty) {
+      None
+    } else {
+      if (isCommonSubPath(arrayPaths: _*)) {
+        Some(arrayPaths.maxBy(_.length))
+      } else {
+        None
+      }
+    }
+  }
+
+  /**
+    * For a given list of field paths determines if any path pair is a subset of one another.
+    *
+    * For instance,
+    *  - 'a.b', 'a.b.c', 'a.b.c.d' have this property.
+    *  - 'a.b', 'a.b.c', 'a.x.y' does NOT have is since 'a.b.c' and 'a.x.y' and not subpaths of each other.
+    *
+    * @param paths A list of paths to be analyzed
+    * @return true if for all pathe the above property holds
+    */
+  def isCommonSubPath(paths: String*): Boolean = {
+    def sliceRoot(paths: Seq[Seq[String]]): Seq[Seq[String]] = {
+      paths.map(path => path.drop(1)).filter(_.nonEmpty)
+    }
+
+    var isParentCommon = true // For Seq() the property holds by [my] convention
+    var restOfPaths = paths.map(_.split('.').toSeq).filter(_.nonEmpty)
+    while (isParentCommon && restOfPaths.nonEmpty) {
+      val parent = restOfPaths.head.head
+      isParentCommon = restOfPaths.forall(path => path.head == parent)
+      restOfPaths = sliceRoot(restOfPaths)
+    }
+    isParentCommon
   }
 
   /**
@@ -243,6 +297,5 @@ object SchemaUtils {
       case _ => false
     }
   }
-
 
 }
