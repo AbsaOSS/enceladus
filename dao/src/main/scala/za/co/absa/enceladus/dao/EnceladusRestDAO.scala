@@ -25,10 +25,9 @@ import org.apache.spark.sql.types.{DataType, StructType}
 import za.co.absa.enceladus.model._
 
 import scala.util.control.NonFatal
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.databind.SerializationFeature
 
 object EnceladusRestDAO extends EnceladusDAO {
   val conf = ConfigFactory.load()
@@ -44,6 +43,7 @@ object EnceladusRestDAO extends EnceladusDAO {
     .registerModule(DefaultScalaModule)
     .registerModule(new JavaTimeModule())
     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
   def postLogin(username: String, password: String) = {
     try {
