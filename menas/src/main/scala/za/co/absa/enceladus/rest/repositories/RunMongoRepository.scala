@@ -80,10 +80,10 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Option[Run]] = {
     val datasetFilter = getDatasetFilter(datasetName, datasetVersion)
-    val runIdEq = equal("runId", runId)
+    val runIdEqFilter = equal("runId", runId)
 
     collection
-      .find[BsonDocument](and(datasetFilter, runIdEq))
+      .find[BsonDocument](and(datasetFilter, runIdEqFilter))
       .headOption()
       .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
   }
