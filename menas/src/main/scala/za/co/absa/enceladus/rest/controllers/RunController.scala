@@ -67,7 +67,7 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
     runService.getSplineUrl(datasetName, datasetVersion, runId)
   }
 
-  @PostMapping(Array("/create"))
+  @PostMapping()
   @ResponseStatus(HttpStatus.CREATED)
   def create(@RequestBody run: Run,
              @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {

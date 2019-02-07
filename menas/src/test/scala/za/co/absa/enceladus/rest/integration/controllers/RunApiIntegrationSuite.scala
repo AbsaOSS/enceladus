@@ -43,7 +43,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     runFixture.dropCollection()
   }
 
-  s"Calls to $apiUrl/list" can {
+  s"GET $apiUrl/list" can {
     "return 200" when {
       "there are Runs" should {
         "return only the latest Run of each Dataset" in {
@@ -76,7 +76,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
-  s"Calls to $apiUrl/startDate/{statDate}" can {
+  s"GET $apiUrl/startDate/{statDate}" can {
     val startDate = "28-01-2019"
 
     "return 200" when {
@@ -133,7 +133,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
-  s"Calls to $apiUrl/{datasetName}/{datasetVersion}/{runId}" can {
+  s"GET $apiUrl/{datasetName}/{datasetVersion}/{runId}" can {
     "return 200" when {
       "there is a Run of the specified Dataset with the specified runId" should {
         "return the Run" in {
@@ -191,7 +191,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
-  s"Calls to $apiUrl/{datasetName}/{datasetVersion}/latest" can {
+  s"GET $apiUrl/{datasetName}/{datasetVersion}/latest" can {
     "return 200" when {
       "there are Runs with the specified datasetName and datasetVersion" should {
         "return the Run with the latest RunId" in {
@@ -235,7 +235,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
-  s"Calls to $apiUrl/splineUrl/{datasetName}/{datasetVersion}/{runId}" can {
+  s"GET $apiUrl/splineUrl/{datasetName}/{datasetVersion}/{runId}" can {
     val endpointBase = s"$apiUrl/splineUrl"
 
     "return 200" when {
@@ -295,8 +295,8 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
-  s"Calls to $apiUrl/create" can {
-    val endpointBase = s"$apiUrl/create"
+  s"POST $apiUrl" can {
+    val endpointBase = s"$apiUrl"
 
     "return 201" when {
       "a new Run is created" should {
@@ -355,7 +355,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
-  s"Calls to $apiUrl/addCheckpoint/{uniqueId}" can {
+  s"POST $apiUrl/addCheckpoint/{uniqueId}" can {
     val endpointBase = s"$apiUrl/addCheckpoint"
     val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
 
@@ -392,7 +392,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
-  s"Calls to $apiUrl/updateControlMeasure/{uniqueId}" can {
+  s"POST $apiUrl/updateControlMeasure/{uniqueId}" can {
     val endpointBase = s"$apiUrl/updateControlMeasure"
     val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
 
@@ -427,7 +427,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
-  s"Calls to $apiUrl/updateSplineReference/{uniqueId}" can {
+  s"POST $apiUrl/updateSplineReference/{uniqueId}" can {
     val endpointBase = s"$apiUrl/updateSplineReference"
     val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
 
@@ -462,7 +462,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
-  s"Calls to $apiUrl/updateRunStatus/{uniqueId}" can {
+  s"POST $apiUrl/updateRunStatus/{uniqueId}" can {
     val endpointBase = s"$apiUrl/updateRunStatus"
     val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
 

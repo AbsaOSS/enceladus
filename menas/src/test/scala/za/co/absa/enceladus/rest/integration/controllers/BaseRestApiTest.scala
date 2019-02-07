@@ -99,6 +99,7 @@ class BaseRestApiTest extends WordSpec with TestContextManagement with BeforeAnd
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
     val url = s"$baseUrl/$urlPath"
     headers.addAll(authHeaders)
+    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE)
     val httpEntity = bodyOpt match {
       case Some(body) => new HttpEntity[B](body, headers)
       case None       => new HttpEntity[B](headers)

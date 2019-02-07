@@ -40,12 +40,11 @@ class Application() {
 
   @Bean
   def objectMapper(): ObjectMapper = {
-    val objectMapper = new ObjectMapper()
+    new ObjectMapper()
       .registerModule(DefaultScalaModule)
       .registerModule(new JavaTimeModule())
       .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    objectMapper
   }
 }
 
