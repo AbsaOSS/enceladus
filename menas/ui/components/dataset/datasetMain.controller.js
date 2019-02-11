@@ -97,9 +97,9 @@ sap.ui.controller("components.dataset.datasetMain", {
 
   ruleAddSubmit: function () {
     // if (this.validateNewRule) {
-    let currentDatasetName = this._model.getProperty("/currentDataset/name");
-    let currentRule = this._model.getProperty("/newRule");
-    RuleService.createRule(currentDatasetName, currentRule);
+    let currentDataset = this._model.getProperty("/currentDataset");
+    let newRule = this._model.getProperty("/newRule");
+    RuleService.createRule(currentDataset, newRule);
     // }
     this.ruleAddCancel();
   },
