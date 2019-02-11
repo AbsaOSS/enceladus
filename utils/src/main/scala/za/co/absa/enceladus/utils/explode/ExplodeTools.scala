@@ -17,10 +17,10 @@ package za.co.absa.enceladus.utils.explode
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils._
 
 object ExplodeTools {
+  // scalastyle:off null
 
   /**
     * Explodes a specific array inside a dataframe in context. Returns a new dataframe and a new context.
@@ -44,8 +44,8 @@ object ExplodeTools {
 
     // Exploding...
     // The '-1' value as an array size indicates that the array field is null. This is to distinguish
-    val nullArrayIndicator = -1
     // between array field being empty or null
+    val nullArrayIndicator = -1
     val explodedDf = dfWithId
       .select(dfWithId.schema.map(a => col(a.name)) :+
         when(col(arrayFieldName).isNull,
@@ -81,7 +81,6 @@ object ExplodeTools {
     // Do not group by columns that are explosion artifacts
     val allOtherColumns = df.schema
       .filter(a => a.name != explosion.idFieldName
-        && a.name != explosion.sizeFieldName
         && a.name != explosion.indexFieldName
         && a.name != explosion.arrayFieldName
       )
@@ -91,12 +90,18 @@ object ExplodeTools {
 
     // Implode
     df.orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*).agg(collect_list(structCol). as(tmpColName))
+      // Drop original struct
+      .drop(explosion.arrayFieldName)
+      // restore null arrays
+      .withColumn(explosion.arrayFieldName, when(col(explosion.sizeFieldName)>=0, col(tmpColName)).otherwise(null))
+      // Drop the temporary column
+      .drop(col(tmpColName))
+      // Drop the array size column
+      .drop(col(explosion.sizeFieldName))
       // restore original record order
       .orderBy(groupedCol)
       // remove monotonic id created during explode
       .drop(groupedCol)
-      // replace the struct with the array
-      .withColumnRenamed(tmpColName, explosion.arrayFieldName)
   }
 
 }

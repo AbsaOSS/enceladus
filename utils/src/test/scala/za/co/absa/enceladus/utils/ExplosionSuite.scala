@@ -18,10 +18,14 @@ package za.co.absa.enceladus.utils
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.scalatest.FunSuite
+import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.utils.explode.ExplodeTools
+import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class ExplosionSuite extends FunSuite with SparkTestBase {
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   import spark.implicits._
 
@@ -245,6 +249,73 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     assertResults(actualRestoredResults, expectedRestoredResults)
   }
 
+  test("Test handling of empty and null arrays") {
+    val sample = Seq("""{"value":[1,2,3,4,5,6,7,8,9,10],"static":1}""",
+      """{"value":[2,3,4,5,6,7,8,9,10,11],"static":2}""",
+      """{"value":[],"static":3}""",
+      """{"static":4}""")
+    val df = JsonUtils.getDataFrameFromJson(spark, sample)
+
+    val expectedExplodedSchema =
+      """root
+        | |-- static: long (nullable = true)
+        | |-- value_id: long (nullable = false)
+        | |-- value_size: integer (nullable = false)
+        | |-- value_idx: integer (nullable = true)
+        | |-- value: long (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedExplodedResults =
+      """+------+----------+---------+-----+
+        ||static|value_size|value_idx|value|
+        |+------+----------+---------+-----+
+        ||4     |-1        |null     |null |
+        ||3     |0         |null     |null |
+        ||1     |10        |0        |1    |
+        ||2     |10        |0        |2    |
+        ||1     |10        |1        |2    |
+        |+------+----------+---------+-----+
+        |only showing top 5 rows
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedRestoredSchema =
+      """root
+        | |-- static: long (nullable = true)
+        | |-- value: array (nullable = true)
+        | |    |-- element: long (containsNull = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedRestoredResults =
+      """+------+--------------------------------+
+        ||static|value                           |
+        |+------+--------------------------------+
+        ||1     |[1, 2, 3, 4, 5, 6, 7, 8, 9, 10] |
+        ||2     |[2, 3, 4, 5, 6, 7, 8, 9, 10, 11]|
+        ||3     |[]                              |
+        ||4     |null                            |
+        |+------+--------------------------------+
+        |""".stripMargin.replace("\r\n", "\n")
+
+
+    val (expldedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
+
+    val restoredDf = ExplodeTools.revertAllExplosions(expldedDf, explodeContext)
+
+    val actualExplodedResults = showString(expldedDf
+      .select($"static", $"value_size", $"value_idx", $"value")
+      .orderBy($"value_size", $"value_idx", $"static"), 5)
+    val actualRestoredResults = showString(restoredDf)
+
+    // Checking if explosion has been done correctly
+    assert(explodeContext.explosions.nonEmpty)
+    assertSchema(expldedDf.schema.treeString, expectedExplodedSchema)
+    assertResults(actualExplodedResults, expectedExplodedResults)
+
+    // Checking if restoration has been done correctly
+    assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
+    assertResults(actualRestoredResults, expectedRestoredResults)
+  }
+
   // Call showString() by reflection since it is private
   // Thanks https://stackoverflow.com/a/51218800/1038282
   private def showString(df: DataFrame, numRows: Int = 20): String = {
@@ -257,20 +328,16 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
     if (actualSchema != expectedSchema) {
-      println("EXPECTED:")
-      println(expectedSchema)
-      println("ACTUAL:")
-      println(actualSchema)
+      logger.error(s"EXPECTED:\n$expectedSchema")
+      logger.error(s"ACTUAL:\n$actualSchema")
       fail("Actual conformed schema does not match the expected schema (see above).")
     }
   }
 
   private def assertResults(actualResults: String, expectedResults: String): Unit = {
     if (actualResults != expectedResults) {
-      println("EXPECTED:")
-      println(expectedResults)
-      println("ACTUAL:")
-      println(actualResults)
+      logger.error(s"EXPECTED:\n$expectedResults")
+      logger.error(s"ACTUAL:\n$actualResults")
       fail("Actual conformed dataset data does not match the expected data (see above).")
     }
   }
