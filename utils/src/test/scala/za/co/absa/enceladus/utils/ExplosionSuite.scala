@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.utils
 
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions._
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.explode.ExplodeTools
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
@@ -25,7 +26,6 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
   import spark.implicits._
 
   test("Test explosion of a simple array") {
-
     // An array of 5 elements each having 10 elements
     val sampleArray = Range(1, 6).map(a => Range(a, 10 + a).toList).toList
     val df = sampleArray.toDF()
@@ -69,13 +69,88 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     val (expldedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
     val actualResults = showString(expldedDf)
 
-    df.show(false)
-    expldedDf.show(false)
-
     assert(explodeContext.explosions.nonEmpty)
     assertSchema(expldedDf.schema.treeString, expectedSchema)
     assertResults(actualResults, expectedResults)
+  }
 
+  test("Test a simple array reconstruction") {
+    // An array of 5 elements each having 10 elements
+    val sampleArray = Range(1, 6).map(a => Range(a, 10 + a).toList).toList
+    val df = sampleArray.toDF().withColumn("static", lit(1))
+
+    val expectedExplodedSchema =
+      """root
+        | |-- static: integer (nullable = false)
+        | |-- value_id: long (nullable = false)
+        | |-- value_size: integer (nullable = false)
+        | |-- value_idx: integer (nullable = true)
+        | |-- value: integer (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedExplodedResults =
+      """+------+--------+----------+---------+-----+
+        ||static|value_id|value_size|value_idx|value|
+        |+------+--------+----------+---------+-----+
+        ||1     |0       |10        |0        |1    |
+        ||1     |0       |10        |1        |2    |
+        ||1     |0       |10        |2        |3    |
+        ||1     |0       |10        |3        |4    |
+        ||1     |0       |10        |4        |5    |
+        ||1     |0       |10        |5        |6    |
+        ||1     |0       |10        |6        |7    |
+        ||1     |0       |10        |7        |8    |
+        ||1     |0       |10        |8        |9    |
+        ||1     |0       |10        |9        |10   |
+        ||1     |1       |10        |0        |2    |
+        ||1     |1       |10        |1        |3    |
+        ||1     |1       |10        |2        |4    |
+        ||1     |1       |10        |3        |5    |
+        ||1     |1       |10        |4        |6    |
+        ||1     |1       |10        |5        |7    |
+        ||1     |1       |10        |6        |8    |
+        ||1     |1       |10        |7        |9    |
+        ||1     |1       |10        |8        |10   |
+        ||1     |1       |10        |9        |11   |
+        |+------+--------+----------+---------+-----+
+        |only showing top 20 rows
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedRestoredSchema =
+      """root
+        | |-- static: integer (nullable = false)
+        | |-- value: array (nullable = true)
+        | |    |-- element: integer (containsNull = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedRestoredResults =
+      """+------+-----------------------------------+
+        ||static|value                              |
+        |+------+-----------------------------------+
+        ||1     |[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]    |
+        ||1     |[2, 3, 4, 5, 6, 7, 8, 9, 10, 11]   |
+        ||1     |[3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  |
+        ||1     |[4, 5, 6, 7, 8, 9, 10, 11, 12, 13] |
+        ||1     |[5, 6, 7, 8, 9, 10, 11, 12, 13, 14]|
+        |+------+-----------------------------------+
+        |""".stripMargin.replace("\r\n", "\n")
+
+
+    val (expldedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
+
+    val restoredDf = ExplodeTools.revertAllExplosions(expldedDf, explodeContext)
+
+    val actualExplodedResults = showString(expldedDf)
+    val actualRestoredResults = showString(restoredDf)
+
+    // Checking if explosion has been done correctly
+    assert(explodeContext.explosions.nonEmpty)
+    assertSchema(expldedDf.schema.treeString, expectedExplodedSchema)
+    assertResults(actualExplodedResults, expectedExplodedResults)
+
+    // Checking if restoration has been done correctly
+    assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
+    assertResults(actualRestoredResults, expectedRestoredResults)
   }
 
   // Call showString() by reflection since it is private

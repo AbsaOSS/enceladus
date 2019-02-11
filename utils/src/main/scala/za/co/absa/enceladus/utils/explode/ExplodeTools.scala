@@ -59,8 +59,40 @@ object ExplodeTools {
     * Reverts all explosions done by explode array().
     * Context can be used to revert all explosions back
     */
-  def revertAllExplosions(explosionContext: ExplodeContext): DataFrame = {
-    ???
+  def revertAllExplosions(inputDf: DataFrame, explosionContext: ExplodeContext): DataFrame = {
+    explosionContext.explosions.foldLeft(inputDf) ( (df, explosion) => {
+      revertSingleExplosion(df, explosion)
+    })
+  }
+
+  /**
+    * Reverts aa particular explode made by explodeArray().
+    * If there were several explodes they should be reverted in FILO order
+    */
+  def revertSingleExplosion(df: DataFrame, explosion: Explosion): DataFrame = {
+    val orderByCol = col(explosion.indexFieldName)
+    val groupedCol = col(explosion.idFieldName)
+    val structCol = col(explosion.arrayFieldName)
+
+    // Do not group by columns that are explosion artifacts
+    val allOtherColumns = df.schema
+      .filter(a => a.name != explosion.idFieldName
+        && a.name != explosion.sizeFieldName
+        && a.name != explosion.indexFieldName
+        && a.name != explosion.arrayFieldName
+      )
+      .map(a => col(a.name))
+
+    val tmpColName = SchemaUtils.getUniqueName("tmp", Some(df.schema))
+
+    // Implode
+    df.orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*).agg(collect_list(structCol). as(tmpColName))
+      // restore original record order
+      .orderBy(groupedCol)
+      // remove monotonic id created during explode
+      .drop(groupedCol)
+      // replace the struct with the array
+      .withColumnRenamed(tmpColName, explosion.arrayFieldName)
   }
 
 }
