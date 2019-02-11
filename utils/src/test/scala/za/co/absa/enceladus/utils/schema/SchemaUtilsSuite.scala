@@ -198,6 +198,17 @@ class SchemaUtilsSuite extends FunSuite {
     assert (deepestPath.get == "a.b.c")
   }
 
+  test("Test getClosestUniqueName() is working properly") {
+    val schema = StructType(Seq[StructField](
+      StructField("value", StringType)))
 
+    // A column name that does not exist
+    val name1 = SchemaUtils.getClosestUniqueName("v", schema)
+    // A column that exists
+    val name2 = SchemaUtils.getClosestUniqueName("value", schema)
+
+    assert(name1 == "v")
+    assert(name2 == "value_1")
+  }
 
 }
