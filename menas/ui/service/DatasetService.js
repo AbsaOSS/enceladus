@@ -32,7 +32,7 @@ var DatasetService = new function() {
 
     this.getLatestDatasetVersion = function(sId) {
         Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/latest", "GET", {}, function(oData) {
-          model.setProperty("/currentDataset", oData);
+          DatasetService.setCurrentDataset(oData);
         }, function() {
             sap.m.MessageBox.error("Failed to get the detail of the dataset. Please wait a moment and try reloading the application");
             window.location.hash = "#/dataset"
@@ -98,7 +98,7 @@ var DatasetService = new function() {
         }, function(oData) {
             DatasetService.getDatasetList();
             SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
-            model.setProperty("/currentDataset", oData);
+            DatasetService.setCurrentDataset(oData);
             sap.m.MessageToast.show("Dataset created.");
         }, function() {
             sap.m.MessageBox.error("Failed to create the dataset, try reloading the application or try again later.")
@@ -108,11 +108,17 @@ var DatasetService = new function() {
     this.editDataset = function(oDataset) {
       Functions.ajax("api/dataset/edit", "POST", oDataset, function(oData) {
             DatasetService.getDatasetList();
-            model.setProperty("/currentDataset", oData);
+            DatasetService.setCurrentDataset(oData);
             SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
             sap.m.MessageToast.show("Dataset updated.");
         }, function() {
             sap.m.MessageBox.error("Failed to update the dataset, try reloading the application or try again later.")
         })
     };
+
+  this.setCurrentDataset = function(oDataset) {
+    oDataset.conformance = oDataset.conformance.sort((first, second) => first.order > second.order);
+    model.setProperty("/currentDataset", oDataset);
+  };
+
 }();
