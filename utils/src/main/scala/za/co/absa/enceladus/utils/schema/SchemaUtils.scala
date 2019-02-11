@@ -279,6 +279,25 @@ object SchemaUtils {
   }
 
   /**
+    * Get a closest unique column name
+    *
+    * @param desiredName A prefix to use for the column name
+    * @param schema      A schema to validate if the column already exists
+    * @return A name that can be used as a unique column name
+    */
+  def getClosestUniqueName(desiredName: String, schema: StructType): String = {
+    var exists = true
+    var columnName = ""
+    var i = 0
+    while (exists) {
+      columnName = if (i ==0) desiredName else s"${desiredName}_$i"
+      exists = schema.fields.exists(_.name.compareToIgnoreCase(columnName) == 0)
+      i += 1
+    }
+    columnName
+  }
+
+  /**
     * Checks if a casting between types always succeeds
     *
     * @param sourceType A type to be casted

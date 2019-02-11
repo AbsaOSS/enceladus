@@ -18,6 +18,7 @@ package za.co.absa.enceladus.utils.explode
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.enceladus.utils.schema.SchemaUtils._
 
 object ExplodeTools {
 
@@ -33,19 +34,22 @@ object ExplodeTools {
 
     // TODO: Handle the case when the input is field is an array inside an array
 
-    // TODO: Ensure temporary fields do not exist yet
-    val explodedColumnName = SchemaUtils.getUniqueName("tmp", Some(df.schema))
-    val explodedIdName = s"${arrayFieldName}_id"
-    val explodedIndexName = s"${arrayFieldName}_idx"
-    val explodedSizeName = s"${arrayFieldName}_size"
+    val explodedColumnName = getUniqueName("tmp", Some(df.schema))
+    val explodedIdName = getClosestUniqueName(s"${arrayFieldName}_id", df.schema)
+    val explodedIndexName = getClosestUniqueName(s"${arrayFieldName}_idx", df.schema)
+    val explodedSizeName = getClosestUniqueName(s"${arrayFieldName}_size", df.schema)
 
     // Adding an unique row id so we can reconstruct the array later by grouping by that id
     val dfWithId = df.withColumn(explodedIdName, monotonically_increasing_id())
 
     // Exploding...
+    // The '-1' value as an array size indicates that the array field is null. This is to distinguish
+    val nullArrayIndicator = -1
+    // between array field being empty or null
     val explodedDf = dfWithId
       .select(dfWithId.schema.map(a => col(a.name)) :+
-        when(col(arrayFieldName).isNull, -1).otherwise(size(col(arrayFieldName))).as(explodedSizeName) :+
+        when(col(arrayFieldName).isNull,
+          nullArrayIndicator).otherwise(size(col(arrayFieldName))).as(explodedSizeName) :+
         posexplode_outer(col(arrayFieldName)).as(Seq(explodedIndexName, explodedColumnName)): _*)
       .drop(arrayFieldName)
       .withColumnRenamed(explodedColumnName, arrayFieldName)
@@ -83,7 +87,7 @@ object ExplodeTools {
       )
       .map(a => col(a.name))
 
-    val tmpColName = SchemaUtils.getUniqueName("tmp", Some(df.schema))
+    val tmpColName = getUniqueName("tmp", Some(df.schema))
 
     // Implode
     df.orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*).agg(collect_list(structCol). as(tmpColName))
