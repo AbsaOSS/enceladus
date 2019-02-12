@@ -108,9 +108,13 @@ object ComparisonJob {
                                  expectedDf: DataFrame,
                                  expectedMinusActual: Dataset[Row],
                                  actualMinusExpected: Dataset[Row]): Unit = {
-    val columns: Array[String] = expectedDf.columns.filterNot(cmd.keys.get.contains)
+    val flatteningFormula = Flatten.flattenSchema(expectedDf)
+    val columns: Array[String] = expectedDf.select(flatteningFormula: _*).columns.filterNot(cmd.keys.get.contains)
 
-    val joinedData: DataFrame = getKeyBasedOutput(expectedMinusActual, actualMinusExpected, cmd.keys.get)
+    val flatExpectedMinusActual: DataFrame = expectedMinusActual
+    val flatActualMinusExpected: DataFrame = actualMinusExpected.select(flatteningFormula: _*)
+
+    val joinedData: DataFrame = getKeyBasedOutput(flatExpectedMinusActual, flatActualMinusExpected, cmd.keys.get)
     val joinedDataWithErrCol = joinedData.withColumn(errorColumnName, lit(Array[String]()))
 
     val dataWithErrors: DataFrame = columns.foldLeft(joinedDataWithErrCol) { (data, column) =>
