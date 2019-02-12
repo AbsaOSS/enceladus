@@ -35,37 +35,37 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     val df = sampleArray.toDF()
 
     val expectedSchema = """root
+                           | |-- value: integer (nullable = true)
                            | |-- value_id: long (nullable = false)
                            | |-- value_size: integer (nullable = false)
                            | |-- value_idx: integer (nullable = true)
-                           | |-- value: integer (nullable = true)
                            |""".stripMargin.replace("\r\n", "\n")
 
     val expectedResults =
-      """+--------+----------+---------+-----+
-        ||value_id|value_size|value_idx|value|
-        |+--------+----------+---------+-----+
-        ||0       |10        |0        |1    |
-        ||0       |10        |1        |2    |
-        ||0       |10        |2        |3    |
-        ||0       |10        |3        |4    |
-        ||0       |10        |4        |5    |
-        ||0       |10        |5        |6    |
-        ||0       |10        |6        |7    |
-        ||0       |10        |7        |8    |
-        ||0       |10        |8        |9    |
-        ||0       |10        |9        |10   |
-        ||1       |10        |0        |2    |
-        ||1       |10        |1        |3    |
-        ||1       |10        |2        |4    |
-        ||1       |10        |3        |5    |
-        ||1       |10        |4        |6    |
-        ||1       |10        |5        |7    |
-        ||1       |10        |6        |8    |
-        ||1       |10        |7        |9    |
-        ||1       |10        |8        |10   |
-        ||1       |10        |9        |11   |
-        |+--------+----------+---------+-----+
+      """+-----+--------+----------+---------+
+        ||value|value_id|value_size|value_idx|
+        |+-----+--------+----------+---------+
+        ||1    |0       |10        |0        |
+        ||2    |0       |10        |1        |
+        ||3    |0       |10        |2        |
+        ||4    |0       |10        |3        |
+        ||5    |0       |10        |4        |
+        ||6    |0       |10        |5        |
+        ||7    |0       |10        |6        |
+        ||8    |0       |10        |7        |
+        ||9    |0       |10        |8        |
+        ||10   |0       |10        |9        |
+        ||2    |1       |10        |0        |
+        ||3    |1       |10        |1        |
+        ||4    |1       |10        |2        |
+        ||5    |1       |10        |3        |
+        ||6    |1       |10        |4        |
+        ||7    |1       |10        |5        |
+        ||8    |1       |10        |6        |
+        ||9    |1       |10        |7        |
+        ||10   |1       |10        |8        |
+        ||11   |1       |10        |9        |
+        |+-----+--------+----------+---------+
         |only showing top 20 rows
         |""".stripMargin.replace("\r\n", "\n")
 
@@ -85,38 +85,38 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
     val expectedExplodedSchema =
       """root
+        | |-- value: integer (nullable = true)
         | |-- static: integer (nullable = false)
         | |-- value_id: long (nullable = false)
         | |-- value_size: integer (nullable = false)
         | |-- value_idx: integer (nullable = true)
-        | |-- value: integer (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
 
     val expectedExplodedResults =
-      """+------+--------+----------+---------+-----+
-        ||static|value_id|value_size|value_idx|value|
-        |+------+--------+----------+---------+-----+
-        ||1     |0       |10        |0        |1    |
-        ||1     |0       |10        |1        |2    |
-        ||1     |0       |10        |2        |3    |
-        ||1     |0       |10        |3        |4    |
-        ||1     |0       |10        |4        |5    |
-        ||1     |0       |10        |5        |6    |
-        ||1     |0       |10        |6        |7    |
-        ||1     |0       |10        |7        |8    |
-        ||1     |0       |10        |8        |9    |
-        ||1     |0       |10        |9        |10   |
-        ||1     |1       |10        |0        |2    |
-        ||1     |1       |10        |1        |3    |
-        ||1     |1       |10        |2        |4    |
-        ||1     |1       |10        |3        |5    |
-        ||1     |1       |10        |4        |6    |
-        ||1     |1       |10        |5        |7    |
-        ||1     |1       |10        |6        |8    |
-        ||1     |1       |10        |7        |9    |
-        ||1     |1       |10        |8        |10   |
-        ||1     |1       |10        |9        |11   |
-        |+------+--------+----------+---------+-----+
+      """+-----+------+--------+----------+---------+
+        ||value|static|value_id|value_size|value_idx|
+        |+-----+------+--------+----------+---------+
+        ||1    |1     |0       |10        |0        |
+        ||2    |1     |0       |10        |1        |
+        ||3    |1     |0       |10        |2        |
+        ||4    |1     |0       |10        |3        |
+        ||5    |1     |0       |10        |4        |
+        ||6    |1     |0       |10        |5        |
+        ||7    |1     |0       |10        |6        |
+        ||8    |1     |0       |10        |7        |
+        ||9    |1     |0       |10        |8        |
+        ||10   |1     |0       |10        |9        |
+        ||2    |1     |1       |10        |0        |
+        ||3    |1     |1       |10        |1        |
+        ||4    |1     |1       |10        |2        |
+        ||5    |1     |1       |10        |3        |
+        ||6    |1     |1       |10        |4        |
+        ||7    |1     |1       |10        |5        |
+        ||8    |1     |1       |10        |6        |
+        ||9    |1     |1       |10        |7        |
+        ||10   |1     |1       |10        |8        |
+        ||11   |1     |1       |10        |9        |
+        |+-----+------+--------+----------+---------+
         |only showing top 20 rows
         |""".stripMargin.replace("\r\n", "\n")
 
@@ -178,6 +178,7 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
     val expectedExplodedSchema =
       """root
+        | |-- value: integer (nullable = true)
         | |-- static: integer (nullable = false)
         | |-- value_id: long (nullable = false)
         | |-- value_size: integer (nullable = false)
@@ -185,24 +186,23 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         | |-- value_id_1: long (nullable = false)
         | |-- value_size_1: integer (nullable = false)
         | |-- value_idx_1: integer (nullable = true)
-        | |-- value: integer (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
 
     val expectedExplodedResults =
-      """+------+--------+----------+---------+----------+------------+-----------+-----+
-        ||static|value_id|value_size|value_idx|value_id_1|value_size_1|value_idx_1|value|
-        |+------+--------+----------+---------+----------+------------+-----------+-----+
-        ||1     |0       |2         |0        |0         |6           |0          |1    |
-        ||1     |0       |2         |0        |0         |6           |1          |2    |
-        ||1     |0       |2         |0        |0         |6           |2          |3    |
-        ||1     |0       |2         |0        |0         |6           |3          |4    |
-        ||1     |0       |2         |0        |0         |6           |4          |5    |
-        ||1     |0       |2         |0        |0         |6           |5          |6    |
-        ||1     |0       |2         |1        |1         |7           |0          |7    |
-        ||1     |0       |2         |1        |1         |7           |1          |8    |
-        ||1     |0       |2         |1        |1         |7           |2          |9    |
-        ||1     |0       |2         |1        |1         |7           |3          |10   |
-        |+------+--------+----------+---------+----------+------------+-----------+-----+
+      """+-----+------+--------+----------+---------+----------+------------+-----------+
+        ||value|static|value_id|value_size|value_idx|value_id_1|value_size_1|value_idx_1|
+        |+-----+------+--------+----------+---------+----------+------------+-----------+
+        ||1    |1     |0       |2         |0        |0         |6           |0          |
+        ||2    |1     |0       |2         |0        |0         |6           |1          |
+        ||3    |1     |0       |2         |0        |0         |6           |2          |
+        ||4    |1     |0       |2         |0        |0         |6           |3          |
+        ||5    |1     |0       |2         |0        |0         |6           |4          |
+        ||6    |1     |0       |2         |0        |0         |6           |5          |
+        ||7    |1     |0       |2         |1        |1         |7           |0          |
+        ||8    |1     |0       |2         |1        |1         |7           |1          |
+        ||9    |1     |0       |2         |1        |1         |7           |2          |
+        ||10   |1     |0       |2         |1        |1         |7           |3          |
+        |+-----+------+--------+----------+---------+----------+------------+-----------+
         |only showing top 10 rows
         |""".stripMargin.replace("\r\n", "\n")
 
@@ -225,19 +225,13 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         |+------+---------------------------------------------------------------------+
         |""".stripMargin.replace("\r\n", "\n")
 
-    df.show(false)
-
     val (expldedDf1, explodeContext1) = ExplodeTools.explodeArray("value", df)
     val (expldedDf2, explodeContext2) = ExplodeTools.explodeArray("value", expldedDf1, explodeContext1)
-
-    expldedDf2.show(false)
 
     val restoredDf = ExplodeTools.revertAllExplosions(expldedDf2, explodeContext2)
 
     val actualExplodedResults = showString(expldedDf2, 10)
     val actualRestoredResults = showString(restoredDf)
-
-    restoredDf.show(false)
 
     // Checking if explosion has been done correctly
     assert(explodeContext2.explosions.size == 2)
@@ -259,10 +253,10 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     val expectedExplodedSchema =
       """root
         | |-- static: long (nullable = true)
+        | |-- value: long (nullable = true)
         | |-- value_id: long (nullable = false)
         | |-- value_size: integer (nullable = false)
         | |-- value_idx: integer (nullable = true)
-        | |-- value: long (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
 
     val expectedExplodedResults =
@@ -314,6 +308,132 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     // Checking if restoration has been done correctly
     assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
     assertResults(actualRestoredResults, expectedRestoredResults)
+  }
+
+  test ("Test multiple nesting of arrays and structs") {
+    val sample = """{"id":1,"legs":[{"legid":100,"conditions":[{"checks":[{"checkNums":["1","2","3b","4","5c","6"]}],"amount":100}]}]}""" ::
+      """{"id":2,"legs":[{"legid":200,"conditions":[{"checks":[{"checkNums":["8","9","10b","11","12c","13"]}],"amount":200}]}]}""" ::
+      """{"id":3,"legs":[{"legid":300,"conditions":[{"checks":[],"amount": 300}]}]}""" ::
+      """{"id":4,"legs":[{"legid":400,"conditions":[{"checks":null,"amount": 400}]}]}""" ::
+      """{"id":5,"legs":[{"legid":500,"conditions":[]}]}""" ::
+      """{"id":6,"legs":[]}""" ::
+      """{"id":7}""" :: Nil
+
+    val df = JsonUtils.getDataFrameFromJson(spark, sample)
+
+    df.toJSON.collect().foreach(println)
+
+    val expectedOriginalSchema =
+      """root
+        | |-- id: long (nullable = true)
+        | |-- legs: array (nullable = true)
+        | |    |-- element: struct (containsNull = true)
+        | |    |    |-- conditions: array (nullable = true)
+        | |    |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |    |-- amount: long (nullable = true)
+        | |    |    |    |    |-- checks: array (nullable = true)
+        | |    |    |    |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |    |    |    |-- checkNums: array (nullable = true)
+        | |    |    |    |    |    |    |    |-- element: string (containsNull = true)
+        | |    |    |-- legid: long (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedOriginalResults =
+      """+---+----------------------------------------------+
+        ||id |legs                                          |
+        |+---+----------------------------------------------+
+        ||1  |[[[[100, [[[1, 2, 3b, 4, 5c, 6]]]]], 100]]    |
+        ||2  |[[[[200, [[[8, 9, 10b, 11, 12c, 13]]]]], 200]]|
+        ||3  |[[[[300, []]], 300]]                          |
+        ||4  |[[[[400,]], 400]]                             |
+        ||5  |[[[], 500]]                                   |
+        ||6  |[]                                            |
+        ||7  |null                                          |
+        |+---+----------------------------------------------+
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedExplodedSchema =
+      """root
+        | |-- static: long (nullable = true)
+        | |-- value: long (nullable = true)
+        | |-- value_id: long (nullable = false)
+        | |-- value_size: integer (nullable = false)
+        | |-- value_idx: integer (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedExplodedResults =
+      """+------+----------+---------+-----+
+        ||static|value_size|value_idx|value|
+        |+------+----------+---------+-----+
+        ||4     |-1        |null     |null |
+        ||3     |0         |null     |null |
+        ||1     |10        |0        |1    |
+        ||2     |10        |0        |2    |
+        ||1     |10        |1        |2    |
+        |+------+----------+---------+-----+
+        |only showing top 5 rows
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedRestoredSchema =
+      """root
+        | |-- id: long (nullable = true)
+        | |-- legs: array (nullable = true)
+        | |    |-- element: struct (containsNull = true)
+        | |    |    |-- conditions: array (nullable = true)
+        | |    |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |    |-- amount: long (nullable = true)
+        | |    |    |    |    |-- checks: array (nullable = true)
+        | |    |    |    |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |    |    |    |-- checkNums: array (nullable = true)
+        | |    |    |    |    |    |    |    |-- element: string (containsNull = true)
+        | |    |    |-- legid: long (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedRestoredResults =
+      """+------+--------------------------------+
+        ||static|value                           |
+        |+------+--------------------------------+
+        ||1     |[1, 2, 3, 4, 5, 6, 7, 8, 9, 10] |
+        ||2     |[2, 3, 4, 5, 6, 7, 8, 9, 10, 11]|
+        ||3     |[]                              |
+        ||4     |null                            |
+        |+------+--------------------------------+
+        |""".stripMargin.replace("\r\n", "\n")
+
+
+
+    val (expldedDf1, explodeContext1) = ExplodeTools.explodeArray("legs", df)
+    val (expldedDf2, explodeContext2) = ExplodeTools.explodeArray("legs.conditions", expldedDf1, explodeContext1)
+    //val (expldedDf3, explodeContext3) = ExplodeTools.explodeArray("legs.conditions.checks", expldedDf2, explodeContext2)
+    //val (expldedDf4, explodeContext4) = ExplodeTools.explodeArray("legs.conditions.checks.checkNums", expldedDf3, explodeContext3)
+
+//    val actualExplodedResults = showString(expldedDf
+//      .select($"static", $"value_size", $"value_idx", $"value")
+//      .orderBy($"value_size", $"value_idx", $"static"), 5)
+//    val actualRestoredResults = showString(restoredDf)
+
+
+    println("Exploded 1")
+    expldedDf1.toJSON.collect().foreach(println)
+
+    expldedDf1.printSchema()
+
+    expldedDf1.show(false)
+
+    println("Exploded 2")
+    expldedDf2.toJSON.collect().foreach(println)
+
+    expldedDf2.printSchema()
+
+    expldedDf2.show(false)
+
+    val restoredDf = ExplodeTools.revertAllExplosions(expldedDf2, explodeContext2)
+
+    restoredDf.printSchema()
+
+    restoredDf.show(false)
+
+    restoredDf.toJSON.collect().foreach(println)
   }
 
   // Call showString() by reflection since it is private

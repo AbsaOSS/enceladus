@@ -15,11 +15,13 @@
 
 package za.co.absa.enceladus.utils.explode
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.StructType
 import za.co.absa.enceladus.utils.schema.SchemaUtils._
 
 object ExplodeTools {
+  // scalastyle:off method.length
   // scalastyle:off null
 
   /**
@@ -35,9 +37,9 @@ object ExplodeTools {
     // TODO: Handle the case when the input is field is an array inside an array
 
     val explodedColumnName = getUniqueName("tmp", Some(df.schema))
-    val explodedIdName = getClosestUniqueName(s"${arrayFieldName}_id", df.schema)
-    val explodedIndexName = getClosestUniqueName(s"${arrayFieldName}_idx", df.schema)
-    val explodedSizeName = getClosestUniqueName(s"${arrayFieldName}_size", df.schema)
+    val explodedIdName = getRootLevelPrefix (arrayFieldName, "id", df.schema)
+    val explodedIndexName = getRootLevelPrefix(arrayFieldName, "idx", df.schema)
+    val explodedSizeName = getRootLevelPrefix(arrayFieldName, "size", df.schema)
 
     // Adding an unique row id so we can reconstruct the array later by grouping by that id
     val dfWithId = df.withColumn(explodedIdName, monotonically_increasing_id())
@@ -51,12 +53,12 @@ object ExplodeTools {
         when(col(arrayFieldName).isNull,
           nullArrayIndicator).otherwise(size(col(arrayFieldName))).as(explodedSizeName) :+
         posexplode_outer(col(arrayFieldName)).as(Seq(explodedIndexName, explodedColumnName)): _*)
-      .drop(arrayFieldName)
-      .withColumnRenamed(explodedColumnName, arrayFieldName)
+
+    val explodedColRenamed = nestedRenameReplace(explodedDf, explodedColumnName, arrayFieldName)
 
     val newExplosion = Explosion(arrayFieldName, explodedIdName, explodedIndexName, explodedSizeName)
     val newContext = explosionContext.copy(explosions = newExplosion +: explosionContext.explosions)
-    (explodedDf, newContext)
+    (explodedColRenamed, newContext)
   }
 
   /**
@@ -86,14 +88,29 @@ object ExplodeTools {
       )
       .map(a => col(a.name))
 
+    // Implode as a temporaty field
     val tmpColName = getUniqueName("tmp", Some(df.schema))
 
-    // Implode
-    df.orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*).agg(collect_list(structCol). as(tmpColName))
-      // Drop original struct
-      .drop(explosion.arrayFieldName)
-      // restore null arrays
-      .withColumn(explosion.arrayFieldName, when(col(explosion.sizeFieldName)>=0, col(tmpColName)).otherwise(null))
+    val (prepareDf, fieldToImplode) =
+      if (explosion.arrayFieldName.contains('.')) {
+        extructFieldFromStruct(df, explosion.arrayFieldName)
+      } else {
+        (df, structCol)
+      }
+
+    val dfImploded = prepareDf
+      .orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*)
+      .agg(collect_list(fieldToImplode). as(tmpColName))
+
+    // Restore null values to yet another temporary field
+    val tmpColName2 = getUniqueName("tmp2", Some(dfImploded.schema))
+    val nullsRestored = dfImploded
+      .withColumn(tmpColName2, when(col(explosion.sizeFieldName)>0, col(tmpColName))
+        .otherwise(when(col(explosion.sizeFieldName) === 0, col(tmpColName)).otherwise(null)))
+
+    val dfArraysRestored = nestedRenameReplace(nullsRestored, tmpColName2, explosion.arrayFieldName)
+
+    dfArraysRestored
       // Drop the temporary column
       .drop(col(tmpColName))
       // Drop the array size column
@@ -102,6 +119,76 @@ object ExplodeTools {
       .orderBy(groupedCol)
       // remove monotonic id created during explode
       .drop(groupedCol)
+  }
+
+  private def getRootLevelPrefix(fieldName: String, prefix: String, schema: StructType): String = {
+    getClosestUniqueName(s"${fieldName}_$prefix", schema)
+      .replaceAll("\\.", "_")
+  }
+
+  def extructFieldFromStruct(df: DataFrame, structFieldName: String): (DataFrame, Column) = {
+    val tmpColName = getUniqueName("tmp_ext", Some(df.schema))
+    (df.withColumn(tmpColName, col(structFieldName)), col(tmpColName))
+  }
+
+  /**
+    * Renames a column `columnFrom` to `columnTo` replacing the original column and putting the resulting column
+    * under the same struct level of nesting as `columnFrom`
+    *
+    * */
+  def nestedRenameReplace(df: DataFrame, columnFrom: String, columnTo: String): DataFrame = {
+    if (!columnTo.contains('.') && !columnFrom.contains('.')) {
+      var isColumnToFound = false
+      val newFields = df.schema.fields.flatMap(field =>
+        if (field.name == columnTo) {
+          isColumnToFound = true
+          Seq(col(columnFrom).as(columnTo))
+        } else if (field.name == columnFrom) {
+          Nil
+        } else {
+          Seq(col(field.name))
+        }
+      )
+      val newFields2 = if (isColumnToFound) newFields else newFields :+ col(columnFrom).as(columnTo)
+      df.select(newFields2: _*)
+    } else {
+      putFieldIntoNestedStruct(df, columnFrom, columnTo.split('.'))
+    }
+  }
+
+
+  private def putFieldIntoNestedStruct(df: DataFrame, columnFrom: String, pathTo: Seq[String]): DataFrame = {
+    def getFullFieldPath(parentCol: Option[Column], fieldName: String): Column = {
+      parentCol match {
+        case None => col(fieldName)
+        case Some(parent) => parent.getField(fieldName)
+      }
+    }
+
+    def processStruct(schema: StructType, path: Seq[String], parentCol: Option[Column]): Seq[Column] = {
+      val currentField = path.head
+
+      val newFields = schema.fields.flatMap(field => {
+        if (field.name == columnFrom) {
+          Nil
+        } else if (field.name == currentField) {
+          field.dataType match {
+            case _ if path.lengthCompare(1) == 0 =>
+              Seq(col(columnFrom).as(currentField))
+            case st: StructType =>
+              Seq(struct(processStruct(st, path.tail, Some(getFullFieldPath(parentCol, field.name))): _*)
+                .as(field.name))
+            case _ =>
+              throw new IllegalArgumentException(s"$currentField is not a struct in ${pathTo.mkString(".")}")
+          }
+        } else {
+          Seq(getFullFieldPath(parentCol, field.name).as(field.name))
+        }
+      })
+      newFields
+    }
+
+    df.select(processStruct(df.schema, pathTo, None): _*)
   }
 
 }
