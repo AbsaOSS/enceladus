@@ -55,7 +55,7 @@ var RuleService = new function () {
     let conformance = oCurrentDataset["conformance"]
       .filter((_, index) => index !== iRuleIndex)
       .sort((first, second) => first.order > second.order)
-      .map((currElement, index) =>  {return {...currElement, order: index}});
+      .map((currElement, index) => {return {...currElement, order: index}});
 
     return {...oCurrentDataset, conformance: conformance};
   };
@@ -80,7 +80,7 @@ var RuleService = new function () {
       delete oRule.joinConditions;
     }
 
-    Functions.ajax("api/dataset/" + oCurrentDataset.name + "/rule/create", "POST", oRule,
+    Functions.ajax("api/dataset/" + encodeURI(oCurrentDataset.name) + "/rule/create", "POST", oRule,
       function (oData) {
       DatasetService.getDatasetList();
       SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
