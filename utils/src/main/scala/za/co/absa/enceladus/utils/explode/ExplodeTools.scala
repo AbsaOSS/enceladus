@@ -124,7 +124,42 @@ object ExplodeTools {
   }
 
   def revertNestedFieldExplosion(df: DataFrame, explosion: Explosion): DataFrame = {
-    ???
+    val (decDf, decField) = deconstruct(df, explosion.arrayFieldName)
+
+    val orderByCol = col(explosion.indexFieldName)
+    val groupedCol = col(explosion.idFieldName)
+
+    // Do not group by columns that are explosion artifacts
+    val allOtherColumns = df.schema
+      .filter(a => a.name != explosion.idFieldName
+        && a.name != explosion.indexFieldName
+      )
+      .map(a => col(a.name))
+
+    // Implode as a temporaty field
+    val tmpColName = getUniqueName("tmp", Some(df.schema))
+
+    // Implode
+    val dfImploded = decDf
+      .orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*)
+      .agg(collect_list(decField). as(tmpColName))
+
+    // Restore null values to yet another temporary field
+    val tmpColName2 = getUniqueName("tmp2", Some(df.schema))
+    val nullsRestored = dfImploded
+      .withColumn(tmpColName2, when(col(explosion.sizeFieldName) >= 0, col(tmpColName)).otherwise(null))
+
+    val dfArraysRestored = nestedRenameReplace(nullsRestored, tmpColName2, explosion.arrayFieldName)
+
+    dfArraysRestored
+      // Drop the temporary column
+      .drop(col(tmpColName))
+      // Drop the array size column
+      .drop(col(explosion.sizeFieldName))
+      // restore original record order
+      .orderBy(groupedCol)
+      // remove monotonic id created during explode
+      .drop(groupedCol)
   }
 
   private def getRootLevelPrefix(fieldName: String, prefix: String, schema: StructType): String = {
@@ -162,17 +197,18 @@ object ExplodeTools {
     }
   }
 
+  private def getFullFieldPath(parentCol: Option[Column], fieldName: String): Column = {
+    parentCol match {
+      case None => col(fieldName)
+      case Some(parent) => parent.getField(fieldName)
+    }
+  }
 
   private def putFieldIntoNestedStruct(df: DataFrame, columnFrom: String, pathTo: Seq[String]): DataFrame = {
-    def getFullFieldPath(parentCol: Option[Column], fieldName: String): Column = {
-      parentCol match {
-        case None => col(fieldName)
-        case Some(parent) => parent.getField(fieldName)
-      }
-    }
-
     def processStruct(schema: StructType, path: Seq[String], parentCol: Option[Column]): Seq[Column] = {
       val currentField = path.head
+      val isLeaf = path.lengthCompare(1) <= 0
+      var isFound = false
 
       val newFields = schema.fields.flatMap(field => {
         if (field.name == columnFrom) {
@@ -180,6 +216,7 @@ object ExplodeTools {
         } else if (field.name == currentField) {
           field.dataType match {
             case _ if path.lengthCompare(1) == 0 =>
+              isFound = true
               Seq(col(columnFrom).as(currentField))
             case st: StructType =>
               Seq(struct(processStruct(st, path.tail, Some(getFullFieldPath(parentCol, field.name))): _*)
@@ -191,7 +228,11 @@ object ExplodeTools {
           Seq(getFullFieldPath(parentCol, field.name).as(field.name))
         }
       })
-      newFields
+      if (!isFound && isLeaf) {
+        newFields :+ col(columnFrom).as(currentField)
+      } else {
+        newFields
+      }
     }
 
     df.select(processStruct(df.schema, pathTo, None): _*)
@@ -199,7 +240,34 @@ object ExplodeTools {
 
   /** Takes a field name nested in a struct and moves it to the root level as a setmprry field */
   def deconstruct(df: DataFrame, fieldName: String): (DataFrame, String) = {
-    ???
+    def processStruct(schema: StructType, path: Seq[String], parentCol: Option[Column]): Seq[Column] = {
+      val currentField = path.head
+      val isLeaf = path.lengthCompare(1) <= 0
+      val newFields = schema.fields.flatMap(field => {
+        if (field.name != currentField) {
+          Seq(getFullFieldPath(parentCol, field.name).as(field.name))
+        } else {
+          if (isLeaf) {
+            // Removing the field from the struct
+            Nil
+          } else {
+            field.dataType match {
+              case st: StructType =>
+                Seq(struct(processStruct(st, path.tail, Some(getFullFieldPath(parentCol, field.name))): _*)
+                  .as(field.name))
+              case _ =>
+                throw new IllegalArgumentException(s"$currentField is not a struct in $fieldName")
+            }
+          }
+        }
+      })
+      newFields
+    }
+
+    val newFieldName = getClosestUniqueName(s"proton", df.schema)
+    val resultDf = df.select(processStruct(df.schema, fieldName.split('.'), None)
+      :+ col(fieldName).as(newFieldName): _*)
+    (resultDf, newFieldName)
   }
 
 }

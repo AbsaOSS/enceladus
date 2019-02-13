@@ -310,7 +310,46 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     assertResults(actualRestoredResults, expectedRestoredResults)
   }
 
-/*  test ("Test multiple nesting of arrays and structs") {
+  test("Test deconstruct()") {
+    val sample = """{"id":1,"leg":{"legid":100,"conditions":[{"check":"a","action":"b"},{"check":"c","action":"d"},{"check":"e","action":"f"}]}}""" ::
+      """{"id":2,"leg":{"legid":200,"conditions":[{"check":"g","action":"h"},{"check":"i","action":"j"},{"check":"k","action":"l"}]}}""" ::
+      """{"id":3,"leg":{"legid":300,"conditions":[]}}""" ::
+      """{"id":4,"leg":{"legid":400}}""" :: Nil
+
+    val df = JsonUtils.getDataFrameFromJson(spark, sample)
+
+    val expectedDeconstructedSchema =
+      """root
+        | |-- id: long (nullable = true)
+        | |-- leg: struct (nullable = false)
+        | |    |-- legid: long (nullable = true)
+        | |-- proton: array (nullable = true)
+        | |    |-- element: struct (containsNull = true)
+        | |    |    |-- action: string (nullable = true)
+        | |    |    |-- check: string (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedDeconstructedData =
+      """+---+-----+------------------------+
+        ||id |leg  |proton                  |
+        |+---+-----+------------------------+
+        ||1  |[100]|[[b, a], [d, c], [f, e]]|
+        ||2  |[200]|[[h, g], [j, i], [l, k]]|
+        ||3  |[300]|[]                      |
+        ||4  |[400]|null                    |
+        |+---+-----+------------------------+
+        |""".stripMargin.replace("\r\n", "\n")
+
+
+    val (df2, fld) = ExplodeTools.deconstruct(df, "leg.conditions")
+
+    val actualResults = showString(df2, 5)
+
+    assertSchema(df2.schema.treeString, expectedDeconstructedSchema)
+    assertResults(actualResults, actualResults)
+  }
+
+  test ("Test multiple nesting of arrays and structs") {
     val sample = """{"id":1,"legs":[{"legid":100,"conditions":[{"checks":[{"checkNums":["1","2","3b","4","5c","6"]}],"amount":100}]}]}""" ::
       """{"id":2,"legs":[{"legid":200,"conditions":[{"checks":[{"checkNums":["8","9","10b","11","12c","13"]}],"amount":200}]}]}""" ::
       """{"id":3,"legs":[{"legid":300,"conditions":[{"checks":[],"amount": 300}]}]}""" ::
@@ -321,7 +360,10 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
     val df = JsonUtils.getDataFrameFromJson(spark, sample)
 
+    println("Original")
     df.toJSON.collect().foreach(println)
+    df.printSchema()
+    df.show(false)
 
     val expectedOriginalSchema =
       """root
@@ -415,9 +457,7 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
     println("Exploded 1")
     expldedDf1.toJSON.collect().foreach(println)
-
     expldedDf1.printSchema()
-
     expldedDf1.show(false)
 
     println("Exploded 2")
@@ -444,45 +484,36 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
     val df = JsonUtils.getDataFrameFromJson(spark, sample)
 
-    println("ORIGINAL")
-    df.toJSON.collect().foreach(println)
-    df.printSchema()
-    df.show(false)
+    val (expldedDf, explodeContext) = ExplodeTools.explodeArray("leg.conditions", df)
+    val restoredDf = ExplodeTools.revertAllExplosions(expldedDf, explodeContext)
 
-    val (expldedDf1, explodeContext1) = ExplodeTools.explodeArray("leg.conditions", df)
-    //val (expldedDf2, explodeContext2) = ExplodeTools.explodeArray("legs.conditions", expldedDf1, explodeContext1)
-    //val (expldedDf3, explodeContext3) = ExplodeTools.explodeArray("legs.conditions.checks", expldedDf2, explodeContext2)
-    //val (expldedDf4, explodeContext4) = ExplodeTools.explodeArray("legs.conditions.checks.checkNums", expldedDf3, explodeContext3)
+    val expectedSchema =
+      """root
+        | |-- id: long (nullable = true)
+        | |-- leg: struct (nullable = false)
+        | |    |-- legid: long (nullable = true)
+        | |    |-- conditions: array (nullable = true)
+        | |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |-- action: string (nullable = true)
+        | |    |    |    |-- check: string (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
 
-    //    val actualExplodedResults = showString(expldedDf
-    //      .select($"static", $"value_size", $"value_idx", $"value")
-    //      .orderBy($"value_size", $"value_idx", $"static"), 5)
-    //    val actualRestoredResults = showString(restoredDf)
+    val expectedData =
+      """+---+-------------------------------+
+        ||id |leg                            |
+        |+---+-------------------------------+
+        ||1  |[[[b, a], [d, c], [f, e]], 100]|
+        ||2  |[[[h, g], [j, i], [l, k]], 200]|
+        ||3  |[[], 300]                      |
+        ||4  |[, 400]                        |
+        |+---+-------------------------------+
+        |""".stripMargin.replace("\r\n", "\n")
 
+    val actualResults = showString(restoredDf, 5)
 
-    println("EXPLODED")
-    expldedDf1.toJSON.collect().foreach(println)
-    expldedDf1.printSchema()
-    expldedDf1.show(false)
-
-    val restoredDf = ExplodeTools.revertAllExplosions(expldedDf1, explodeContext1)
-
-    println("RESTORED")
-    restoredDf.printSchema()
-    restoredDf.show(false)
-    restoredDf.toJSON.collect().foreach(println)
-
-
-    val sample2 = """{"id":1,"leg":{"conditions":{"action":"b","check":"a"},"legid":100},"leg_conditions_id":0,"leg_conditions_size":3,"leg_conditions_idx":0}""" ::
-                  """{"id":1,"leg":{"conditions":{"action":"d","check":"c"},"legid":100},"leg_conditions_id":0,"leg_conditions_size":3,"leg_conditions_idx":1}""" ::
-                  """{"id":1,"leg":{"conditions":{"action":"f","check":"e"},"legid":100},"leg_conditions_id":0,"leg_conditions_size":3,"leg_conditions_idx":2}""" ::
-                  """{"id":2,"leg":{"conditions":{"action":"h","check":"g"},"legid":200},"leg_conditions_id":8589934592,"leg_conditions_size":3,"leg_conditions_idx":0}""" ::
-                  """{"id":2,"leg":{"conditions":{"action":"j","check":"i"},"legid":200},"leg_conditions_id":8589934592,"leg_conditions_size":3,"leg_conditions_idx":1}""" ::
-                  """{"id":2,"leg":{"conditions":{"action":"l","check":"k"},"legid":200},"leg_conditions_id":8589934592,"leg_conditions_size":3,"leg_conditions_idx":2}""" ::
-                  """{"id":3,"leg":{"legid":300},"leg_conditions_id":17179869184,"leg_conditions_size":0}""" ::
-                  """{"id":4,"leg":{"legid":400},"leg_conditions_id":25769803776,"leg_conditions_size":-1}""" :: Nil
-
-  }*/
+    assertSchema(restoredDf.schema.treeString, expectedSchema)
+    assertResults(actualResults, actualResults)
+  }
 
   // Call showString() by reflection since it is private
   // Thanks https://stackoverflow.com/a/51218800/1038282
