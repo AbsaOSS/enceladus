@@ -15,13 +15,17 @@
 
 package za.co.absa.enceladus.testutils.datasetComparison
 
+import java.io.ByteArrayOutputStream
 import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
+import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 import za.co.absa.enceladus.testutils.exceptions._
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+
+import scala.io.Source
 
 class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterEach {
 
@@ -149,5 +153,32 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterE
 
     assert(caught.getMessage == message)
     assert(Files.exists(Paths.get(outPath)))
+  }
+
+  test("Compare nested structures with errors") {
+    val lines: List[String] = Source.fromFile("src/test/resources/json_output").getLines.toList
+    val outCapture = new ByteArrayOutputStream
+
+    val refPath = "src/test/resources/json_orig"
+    val newPath = "src/test/resources/json_changed"
+    val outPath = s"target/test_output/comparison_job/negative/$timePrefix"
+
+    val args = Array(
+      "--raw-format", "parquet",
+      "--new-path", newPath,
+      "--ref-path", refPath,
+      "--out-path", outPath,
+      "--keys", "id"
+    )
+
+    intercept[CmpJobDatasetsDifferException] {
+      ComparisonJob.main(args)
+    }
+    val df = spark.read.format("parquet").load(outPath)
+
+    Console.withOut(outCapture) { df.show(false) }
+    val result = new String(outCapture.toByteArray).split("\n").toList
+
+    assert(lines == result)
   }
 }
