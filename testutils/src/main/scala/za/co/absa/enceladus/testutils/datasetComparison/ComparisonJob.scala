@@ -112,7 +112,7 @@ object ComparisonJob {
     val expectedWithHashKey = expectedMinusActual.withColumn(idColName, md5(concat(keys.map(col): _*)))
     val actualWithHashKey = actualMinusExpected.withColumn(idColName, md5(concat(keys.map(col): _*)))
 
-    val flatteningFormula = Flatten.flattenSchema(expectedWithHashKey)
+    val flatteningFormula = HelperFunctions.flattenSchema(expectedWithHashKey)
 
     val flatExpectedMinusActual: DataFrame = expectedWithHashKey.select(flatteningFormula: _*)
     val flatActualMinusExpected: DataFrame = actualWithHashKey.select(flatteningFormula: _*)

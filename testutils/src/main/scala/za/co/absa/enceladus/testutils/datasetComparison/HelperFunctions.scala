@@ -22,7 +22,7 @@ import org.apache.spark.sql.types._
 
 import scala.collection.mutable
 
-object Flatten {
+object HelperFunctions {
   /**
     * Taken from AbsaOSS/Cobrix project spark-cobol utils
     * @see https://github.com/AbsaOSS/cobrix
