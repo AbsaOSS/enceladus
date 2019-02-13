@@ -421,6 +421,7 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         | |-- id: long (nullable = true)
         | |-- legs: array (nullable = true)
         | |    |-- element: struct (containsNull = true)
+        | |    |    |-- legid: long (nullable = true)
         | |    |    |-- conditions: array (nullable = true)
         | |    |    |    |-- element: struct (containsNull = true)
         | |    |    |    |    |-- amount: long (nullable = true)
@@ -428,18 +429,20 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         | |    |    |    |    |    |-- element: struct (containsNull = true)
         | |    |    |    |    |    |    |-- checkNums: array (nullable = true)
         | |    |    |    |    |    |    |    |-- element: string (containsNull = true)
-        | |    |    |-- legid: long (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
 
     val expectedRestoredResults =
-      """+------+--------------------------------+
-        ||static|value                           |
-        |+------+--------------------------------+
-        ||1     |[1, 2, 3, 4, 5, 6, 7, 8, 9, 10] |
-        ||2     |[2, 3, 4, 5, 6, 7, 8, 9, 10, 11]|
-        ||3     |[]                              |
-        ||4     |null                            |
-        |+------+--------------------------------+
+      """+---+----------------------------------------------+
+        ||id |legs                                          |
+        |+---+----------------------------------------------+
+        ||1  |[[100, [[100, [[[1, 2, 3b, 4, 5c, 6]]]]]]]    |
+        ||2  |[[200, [[200, [[[8, 9, 10b, 11, 12c, 13]]]]]]]|
+        ||3  |[[300, [[300, []]]]]                          |
+        ||4  |[[400, [[400,]]]]                             |
+        ||5  |[[500, []]]                                   |
+        ||6  |[]                                            |
+        ||7  |null                                          |
+        |+---+----------------------------------------------+
         |""".stripMargin.replace("\r\n", "\n")
 
 
@@ -449,31 +452,12 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     //val (expldedDf3, explodeContext3) = ExplodeTools.explodeArray("legs.conditions.checks", expldedDf2, explodeContext2)
     //val (expldedDf4, explodeContext4) = ExplodeTools.explodeArray("legs.conditions.checks.checkNums", expldedDf3, explodeContext3)
 
-//    val actualExplodedResults = showString(expldedDf
-//      .select($"static", $"value_size", $"value_idx", $"value")
-//      .orderBy($"value_size", $"value_idx", $"static"), 5)
-//    val actualRestoredResults = showString(restoredDf)
-
-
-    println("Exploded 1")
-    expldedDf1.toJSON.collect().foreach(println)
-    expldedDf1.printSchema()
-    expldedDf1.show(false)
-
-    println("Exploded 2")
-    expldedDf2.toJSON.collect().foreach(println)
-
-    expldedDf2.printSchema()
-
-    expldedDf2.show(false)
-
     val restoredDf = ExplodeTools.revertAllExplosions(expldedDf2, explodeContext2)
 
-    restoredDf.printSchema()
+    val actualRestoredResults = showString(restoredDf)
 
-    restoredDf.show(false)
-
-    restoredDf.toJSON.collect().foreach(println)
+    assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
+    assertResults(actualRestoredResults, expectedRestoredResults)
   }
 
   test ("Test explosion of an array field inside a struct") {

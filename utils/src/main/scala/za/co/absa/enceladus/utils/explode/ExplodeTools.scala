@@ -108,7 +108,9 @@ object ExplodeTools {
     // Restore null values to yet another temporary field
     val tmpColName2 = getUniqueName("tmp2", Some(df.schema))
     val nullsRestored = dfImploded
-      .withColumn(tmpColName2, when(col(explosion.sizeFieldName) >= 0, col(tmpColName)).otherwise(null))
+      .withColumn(tmpColName2, when(col(explosion.sizeFieldName) > 0, col(tmpColName))
+        otherwise when(col(explosion.sizeFieldName) === 0, typedLit(Array())).otherwise(null)
+      )
 
     val dfArraysRestored = nestedRenameReplace(nullsRestored, tmpColName2, explosion.arrayFieldName)
 
@@ -147,7 +149,9 @@ object ExplodeTools {
     // Restore null values to yet another temporary field
     val tmpColName2 = getUniqueName("tmp2", Some(df.schema))
     val nullsRestored = dfImploded
-      .withColumn(tmpColName2, when(col(explosion.sizeFieldName) >= 0, col(tmpColName)).otherwise(null))
+      .withColumn(tmpColName2, when(col(explosion.sizeFieldName) > 0, col(tmpColName))
+        otherwise when(col(explosion.sizeFieldName) === 0, typedLit(Array())).otherwise(null)
+        )
 
     val dfArraysRestored = nestedRenameReplace(nullsRestored, tmpColName2, explosion.arrayFieldName)
 
@@ -229,7 +233,8 @@ object ExplodeTools {
         }
       })
       if (!isFound && isLeaf) {
-        newFields :+ col(columnFrom).as(currentField)
+        val c = col(columnFrom)
+        newFields :+ when(c.isNotNull, c).otherwise(null).as(currentField)
       } else {
         newFields
       }
