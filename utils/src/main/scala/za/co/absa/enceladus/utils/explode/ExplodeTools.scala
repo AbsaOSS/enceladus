@@ -18,6 +18,7 @@ package za.co.absa.enceladus.utils.explode
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils._
 
 object ExplodeTools {
@@ -37,9 +38,7 @@ object ExplodeTools {
                    df: DataFrame,
                    explosionContext: ExplodeContext = ExplodeContext()): (DataFrame, ExplodeContext) = {
 
-    // TODO: Handle a case when the input fields is not an array
-
-    // TODO: Handle the case when the input is field is an array inside an array
+    validateArrayField(df.schema, arrayFieldName)
 
     val explodedColumnName = getUniqueName(explosionTmpColumnName, Some(df.schema))
     val explodedIdName = getRootLevelPrefix(arrayFieldName, "id", df.schema)
@@ -84,7 +83,7 @@ object ExplodeTools {
     val isNested = explosion.arrayFieldName.contains('.')
 
     val (decDf, decField) = if (isNested) {
-      deconstruct(df, explosion.arrayFieldName)
+      deconstructNestedColumn(df, explosion.arrayFieldName)
     } else {
       (df, explosion.arrayFieldName)
     }
@@ -214,7 +213,7 @@ object ExplodeTools {
   }
 
   /** Takes a field name nested in a struct and moves it to the root level as a setmprry field */
-  def deconstruct(df: DataFrame, fieldName: String): (DataFrame, String) = {
+  def deconstructNestedColumn(df: DataFrame, fieldName: String): (DataFrame, String) = {
     def processStruct(schema: StructType, path: Seq[String], parentCol: Option[Column]): Seq[Column] = {
       val currentField = path.head
       val isLeaf = path.lengthCompare(1) <= 0
@@ -252,4 +251,14 @@ object ExplodeTools {
     (resultDf, newFieldName)
   }
 
+  private def validateArrayField(schema: StructType, fieldName: String): Unit = {
+    if (!SchemaUtils.isArray(schema, fieldName)) {
+      throw new IllegalArgumentException(s"$fieldName is not an array.")
+    }
+
+    if (!SchemaUtils.isNonNestedArray(schema, fieldName)) {
+      throw new IllegalArgumentException(
+        s"$fieldName is an array that is nested in other arrays. Need to explode top level array first.")
+    }
+  }
 }

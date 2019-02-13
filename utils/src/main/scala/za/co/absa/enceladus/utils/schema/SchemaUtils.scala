@@ -317,4 +317,98 @@ object SchemaUtils {
     }
   }
 
+  /**
+    * Checks if a field is an array
+    *
+    * @param schema A schema
+    * @param fieldPathName A type to be casted to
+    * @return true if casting never fails
+    */
+  def isArray(schema: StructType, fieldPathName: String): Boolean = {
+    def arrayHelper(arrayField: ArrayType, path: Seq[String]): Boolean = {
+      val currentField = path.head
+      val isLeaf = path.lengthCompare(1) <= 0
+
+      arrayField.elementType match {
+        case st: StructType => structHelper(st, path.tail)
+        case ar: ArrayType => arrayHelper(ar, path)
+        case _ =>
+          if (!isLeaf) {
+            throw new IllegalArgumentException(
+              s"Primitive fields cannot have child fields $currentField is a primitive in $fieldPathName")
+          }
+          false
+      }
+    }
+
+    def structHelper(structField: StructType, path: Seq[String]): Boolean = {
+      val currentField = path.head
+      val isLeaf = path.lengthCompare(1) <= 0
+      var isArray = false
+      structField.fields.foreach(field =>
+        if (field.name == currentField) {
+          field.dataType match {
+            case st: StructType =>
+              if (!isLeaf) {
+                isArray = structHelper(st, path.tail)
+              }
+            case ar: ArrayType =>
+              if (isLeaf) {
+                isArray = true
+              } else {
+                isArray = arrayHelper(ar, path)
+              }
+            case _ =>
+              if (!isLeaf) {
+                throw new IllegalArgumentException(
+                  s"Primitive fields cannot have child fields $currentField is a primitive in $fieldPathName")
+              }
+          }
+        }
+      )
+      isArray
+    }
+
+    val path = fieldPathName.split('.')
+    structHelper(schema, path)
+  }
+
+  /**
+    * Checks if a field is an array that is not nested in another array
+    *
+    * @param schema A schema
+    * @param fieldPathName A type to be casted to
+    * @return true if casting never fails
+    */
+  def isNonNestedArray(schema: StructType, fieldPathName: String): Boolean = {
+    def structHelper(structField: StructType, path: Seq[String]): Boolean = {
+      val currentField = path.head
+      val isLeaf = path.lengthCompare(1) <= 0
+      var isArray = false
+      structField.fields.foreach(field =>
+        if (field.name == currentField) {
+          field.dataType match {
+            case st: StructType =>
+              if (!isLeaf) {
+                isArray = structHelper(st, path.tail)
+              }
+            case ar: ArrayType =>
+              if (isLeaf) {
+                isArray = true
+              }
+            case _ =>
+              if (!isLeaf) {
+                throw new IllegalArgumentException(
+                  s"Primitive fields cannot have child fields $currentField is a primitive in $fieldPathName")
+              }
+          }
+        }
+      )
+      isArray
+    }
+
+    val path = fieldPathName.split('.')
+    structHelper(schema, path)
+  }
+
 }

@@ -21,6 +21,7 @@ import org.scalatest.FunSuite
 import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.utils.explode.ExplodeTools
 import za.co.absa.enceladus.utils.general.JsonUtils
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class ExplosionSuite extends FunSuite with SparkTestBase {
@@ -341,7 +342,7 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         |""".stripMargin.replace("\r\n", "\n")
 
 
-    val (df2, fld) = ExplodeTools.deconstruct(df, "leg.conditions")
+    val (df2, fld) = ExplodeTools.deconstructNestedColumn(df, "leg.conditions")
 
     val actualResults = showString(df2, 5)
 
@@ -465,6 +466,13 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
     val actualOriginalResults = showString(df)
     val actualRestoredResults = showString(restoredDf)
+
+    assert(SchemaUtils.isNonNestedArray(df.schema, "legs"))
+    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.conditions"))
+    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.conditions.checks"))
+    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.conditions.checks.checkNums"))
+    assert(!SchemaUtils.isNonNestedArray(df.schema, "id"))
+    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.legid"))
 
     assertSchema(df.schema.treeString, expectedOriginalSchema)
     assertResults(actualOriginalResults, expectedOriginalResults)
