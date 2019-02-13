@@ -43,7 +43,6 @@ object ComparisonJob {
                         keys: Seq[String]): DataFrame = {
     val dfNewExpected = renameColumns(expectedMinusActual, keys, "expected_")
     val dfNewColumnsActual = renameColumns(actualMinusExpected, keys, "actual_")
-
     dfNewExpected.join(dfNewColumnsActual, keys,"full")
   }
 
@@ -92,7 +91,7 @@ object ComparisonJob {
 
     if (errorsPresent) {
       if (cmd.keys.isDefined) {
-        handleKeyBasedDiff(cmd, expectedDf, expectedMinusActual, actualMinusExpected)
+        handleKeyBasedDiff(cmd.keys.get, cmd.outPath, expectedMinusActual, actualMinusExpected)
       } else {
         expectedMinusActual.write.format("parquet").save(s"${cmd.outPath}/expected_minus_actual")
         actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
@@ -104,20 +103,28 @@ object ComparisonJob {
     }
   }
 
-  private def handleKeyBasedDiff(cmd: CmdConfig,
-                                 expectedDf: DataFrame,
+  private def handleKeyBasedDiff(keys: Seq[String],
+                                 path: String,
                                  expectedMinusActual: Dataset[Row],
                                  actualMinusExpected: Dataset[Row]): Unit = {
-    val flatteningFormula = Flatten.flattenSchema(expectedDf)
-    val columns: Array[String] = expectedDf.select(flatteningFormula: _*).columns.filterNot(cmd.keys.get.contains)
+    val idColName: String = "ComparisonUniqueId"
+    val expectedWithHashKey = expectedMinusActual.withColumn(idColName, md5(concat(keys.map(col): _*)))
+    val actualWithHashKey = actualMinusExpected.withColumn(idColName, md5(concat(keys.map(col): _*)))
 
-    val flatExpectedMinusActual: DataFrame = expectedMinusActual.select(flatteningFormula: _*)
-    val flatActualMinusExpected: DataFrame = actualMinusExpected.select(flatteningFormula: _*)
+    val flatteningFormula = Flatten.flattenSchema(expectedWithHashKey)
 
-    val joinedData: DataFrame = getKeyBasedOutput(flatExpectedMinusActual, flatActualMinusExpected, cmd.keys.get)
-    val joinedDataWithErrCol = joinedData.withColumn(errorColumnName, lit(Array[String]()))
+    val flatExpectedMinusActual: DataFrame = expectedWithHashKey.select(flatteningFormula: _*)
+    val flatActualMinusExpected: DataFrame = actualWithHashKey.select(flatteningFormula: _*)
 
-    val dataWithErrors: DataFrame = columns.foldLeft(joinedDataWithErrCol) { (data, column) =>
+    val columns: Array[String] = flatExpectedMinusActual.columns.filterNot(_ == idColName)
+
+    val joinedFlatData: DataFrame = getKeyBasedOutput(flatExpectedMinusActual,
+                                                      flatActualMinusExpected,
+                                                      Seq(idColName))
+
+    val joinedFlatDataWithErrCol = joinedFlatData.withColumn(errorColumnName, lit(Array[String]()))
+
+    val dataWithErrors: DataFrame = columns.foldLeft(joinedFlatDataWithErrCol) { (data, column) =>
       data.withColumnRenamed(errorColumnName, tmpColumnName)
         .withColumn(errorColumnName, concat(
           when(col(s"actual_$column") === col(s"expected_$column"), lit(Array[String]()))
@@ -125,6 +132,12 @@ object ComparisonJob {
         .drop(tmpColumnName)
     }
 
-    dataWithErrors.write.format("parquet").save(cmd.outPath)
+    val joinedData: DataFrame = getKeyBasedOutput(expectedWithHashKey, actualWithHashKey, Seq(idColName))
+    val outputData: DataFrame = joinedData.as("df1")
+                                          .join(dataWithErrors.as("df2"), Seq(idColName))
+                                          .select("df1.*", "df2.errCol")
+                                          .drop(idColName)
+
+    outputData.write.format("parquet").save(path)
   }
 }
