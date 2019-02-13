@@ -24,6 +24,11 @@ object ExplodeTools {
   // scalastyle:off method.length
   // scalastyle:off null
 
+  private val deconstructedColumnName = "electron"
+  private val explosionTmpColumnName = "proton"
+  private val nullRestoredTmpColumnName = "neutron"
+  private val transientColumnName = "higgs_boson"
+
   /**
     * Explodes a specific array inside a dataframe in context. Returns a new dataframe and a new context.
     * Context can be used to revert all explosions back
@@ -36,7 +41,7 @@ object ExplodeTools {
 
     // TODO: Handle the case when the input is field is an array inside an array
 
-    val explodedColumnName = getUniqueName("tmp", Some(df.schema))
+    val explodedColumnName = getUniqueName(explosionTmpColumnName, Some(df.schema))
     val explodedIdName = getRootLevelPrefix(arrayFieldName, "id", df.schema)
     val explodedIndexName = getRootLevelPrefix(arrayFieldName, "idx", df.schema)
     val explodedSizeName = getRootLevelPrefix(arrayFieldName, "size", df.schema)
@@ -98,7 +103,7 @@ object ExplodeTools {
       .map(a => col(a.name))
 
     // Implode as a temporaty field
-    val tmpColName = getUniqueName("tmp", Some(df.schema))
+    val tmpColName = getUniqueName(explosionTmpColumnName, Some(df.schema))
 
     // Implode
     val dfImploded = df
@@ -106,7 +111,7 @@ object ExplodeTools {
       .agg(collect_list(structCol). as(tmpColName))
 
     // Restore null values to yet another temporary field
-    val tmpColName2 = getUniqueName("tmp2", Some(df.schema))
+    val tmpColName2 = getUniqueName(nullRestoredTmpColumnName, Some(df.schema))
     val nullsRestored = dfImploded
       .withColumn(tmpColName2, when(col(explosion.sizeFieldName) > 0, col(tmpColName))
         otherwise when(col(explosion.sizeFieldName) === 0, typedLit(Array())).otherwise(null)
@@ -139,7 +144,7 @@ object ExplodeTools {
       .map(a => col(a.name))
 
     // Implode as a temporaty field
-    val tmpColName = getUniqueName("tmp", Some(df.schema))
+    val tmpColName = getUniqueName(explosionTmpColumnName, Some(df.schema))
 
     // Implode
     val dfImploded = decDf
@@ -147,7 +152,7 @@ object ExplodeTools {
       .agg(collect_list(decField). as(tmpColName))
 
     // Restore null values to yet another temporary field
-    val tmpColName2 = getUniqueName("tmp2", Some(df.schema))
+    val tmpColName2 = getUniqueName(nullRestoredTmpColumnName, Some(df.schema))
     val nullsRestored = dfImploded
       .withColumn(tmpColName2, when(col(explosion.sizeFieldName) > 0, col(tmpColName))
         otherwise when(col(explosion.sizeFieldName) === 0, typedLit(Array())).otherwise(null)
@@ -215,7 +220,8 @@ object ExplodeTools {
       var isFound = false
 
       val newFields = schema.fields.flatMap(field => {
-        if (field.name == columnFrom) {
+        if (field.name == columnFrom || field.name == transientColumnName) {
+          // This removes the original column name (if any) and the transient column
           Nil
         } else if (field.name == currentField) {
           field.dataType match {
@@ -223,8 +229,15 @@ object ExplodeTools {
               isFound = true
               Seq(col(columnFrom).as(currentField))
             case st: StructType =>
-              Seq(struct(processStruct(st, path.tail, Some(getFullFieldPath(parentCol, field.name))): _*)
-                .as(field.name))
+              val newFields = processStruct(st, path.tail, Some(getFullFieldPath(parentCol, field.name)))
+              if (newFields.lengthCompare(1)==0) {
+                // a struct that can be null
+                val fld = newFields.head
+                Seq(when(fld.isNotNull, struct(newFields: _*)).otherwise(null).as(field.name))
+              } else {
+                // Normat struct
+                Seq(struct(newFields: _*).as(field.name))
+              }
             case _ =>
               throw new IllegalArgumentException(s"$currentField is not a struct in ${pathTo.mkString(".")}")
           }
@@ -254,7 +267,14 @@ object ExplodeTools {
         } else {
           if (isLeaf) {
             // Removing the field from the struct
-            Nil
+            if (schema.size == 1) {
+              // If removing the last element of a struct makes it a struct with no fields empty.
+              // This is not allowed in Spark. We need to compensate the struct with a transient column.
+              // The transient column will be replaces by imploded column after implosion.
+              Seq(lit(0).as(transientColumnName))
+            } else {
+              Nil
+            }
           } else {
             field.dataType match {
               case st: StructType =>
@@ -269,7 +289,7 @@ object ExplodeTools {
       newFields
     }
 
-    val newFieldName = getClosestUniqueName(s"proton", df.schema)
+    val newFieldName = getClosestUniqueName(deconstructedColumnName, df.schema)
     val resultDf = df.select(processStruct(df.schema, fieldName.split('.'), None)
       :+ col(fieldName).as(newFieldName): _*)
     (resultDf, newFieldName)

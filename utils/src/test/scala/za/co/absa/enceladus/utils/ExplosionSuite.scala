@@ -323,7 +323,7 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         | |-- id: long (nullable = true)
         | |-- leg: struct (nullable = false)
         | |    |-- legid: long (nullable = true)
-        | |-- proton: array (nullable = true)
+        | |-- electron: array (nullable = true)
         | |    |-- element: struct (containsNull = true)
         | |    |    |-- action: string (nullable = true)
         | |    |    |-- check: string (nullable = true)
@@ -360,11 +360,6 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
     val df = JsonUtils.getDataFrameFromJson(spark, sample)
 
-    println("Original")
-    df.toJSON.collect().foreach(println)
-    df.printSchema()
-    df.show(false)
-
     val expectedOriginalSchema =
       """root
         | |-- id: long (nullable = true)
@@ -396,11 +391,25 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
     val expectedExplodedSchema =
       """root
-        | |-- static: long (nullable = true)
-        | |-- value: long (nullable = true)
-        | |-- value_id: long (nullable = false)
-        | |-- value_size: integer (nullable = false)
-        | |-- value_idx: integer (nullable = true)
+        | |-- id: long (nullable = true)
+        | |-- legs: struct (nullable = false)
+        | |    |-- conditions: struct (nullable = false)
+        | |    |    |-- amount: long (nullable = true)
+        | |    |    |-- checks: struct (nullable = true)
+        | |    |    |    |-- checkNums: string (nullable = true)
+        | |    |-- legid: long (nullable = true)
+        | |-- legs_id: long (nullable = false)
+        | |-- legs_size: integer (nullable = false)
+        | |-- legs_idx: integer (nullable = true)
+        | |-- legs_conditions_id: long (nullable = false)
+        | |-- legs_conditions_size: integer (nullable = false)
+        | |-- legs_conditions_idx: integer (nullable = true)
+        | |-- legs_conditions_checks_id: long (nullable = false)
+        | |-- legs_conditions_checks_size: integer (nullable = false)
+        | |-- legs_conditions_checks_idx: integer (nullable = true)
+        | |-- legs_conditions_checks_checkNums_id: long (nullable = false)
+        | |-- legs_conditions_checks_checkNums_size: integer (nullable = false)
+        | |-- legs_conditions_checks_checkNums_idx: integer (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
 
     val expectedExplodedResults =
@@ -447,14 +456,100 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
 
 
-    val (expldedDf1, explodeContext1) = ExplodeTools.explodeArray("legs", df)
-    val (expldedDf2, explodeContext2) = ExplodeTools.explodeArray("legs.conditions", expldedDf1, explodeContext1)
-    //val (expldedDf3, explodeContext3) = ExplodeTools.explodeArray("legs.conditions.checks", expldedDf2, explodeContext2)
-    //val (expldedDf4, explodeContext4) = ExplodeTools.explodeArray("legs.conditions.checks.checkNums", expldedDf3, explodeContext3)
+    val (explodedDf1, explodeContext1) = ExplodeTools.explodeArray("legs", df)
+    val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("legs.conditions", explodedDf1, explodeContext1)
+    val (explodedDf3, explodeContext3) = ExplodeTools.explodeArray("legs.conditions.checks", explodedDf2, explodeContext2)
+    val (explodedDf4, explodeContext4) = ExplodeTools.explodeArray("legs.conditions.checks.checkNums", explodedDf3, explodeContext3)
 
-    val restoredDf = ExplodeTools.revertAllExplosions(expldedDf2, explodeContext2)
+    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf4, explodeContext4)
 
+    val actualOriginalResults = showString(df)
     val actualRestoredResults = showString(restoredDf)
+
+    assertSchema(df.schema.treeString, expectedOriginalSchema)
+    assertResults(actualOriginalResults, expectedOriginalResults)
+
+    assertSchema(explodedDf4.schema.treeString, expectedExplodedSchema)
+    assert(explodedDf4.count() == 17)
+
+    assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
+    assertResults(actualRestoredResults, expectedRestoredResults)
+  }
+
+  test ("Test exploding a nested array that is the only element of a struct") {
+    val sample = """{"id":1,"leg":{"conditions":[{"check":"a","action":"b"},{"check":"c","action":"d"},{"check":"e","action":"f"}]}}""" ::
+      """{"id":2,"leg":{"conditions":[{"check":"g","action":"h"},{"check":"i","action":"j"},{"check":"k","action":"l"}]}}""" ::
+      """{"id":3,"leg":{"conditions":[]}}""" ::
+      """{"id":4}""" :: Nil
+
+    val df = JsonUtils.getDataFrameFromJson(spark, sample)
+
+    val expectedOriginalSchema =
+      """root
+        | |-- id: long (nullable = true)
+        | |-- leg: struct (nullable = true)
+        | |    |-- conditions: array (nullable = true)
+        | |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |-- action: string (nullable = true)
+        | |    |    |    |-- check: string (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedOriginalResults =
+      """+---+--------------------------+
+        ||id |leg                       |
+        |+---+--------------------------+
+        ||1  |[[[b, a], [d, c], [f, e]]]|
+        ||2  |[[[h, g], [j, i], [l, k]]]|
+        ||3  |[[]]                      |
+        ||4  |null                      |
+        |+---+--------------------------+
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedExplodedSchema =
+      """root
+        | |-- id: long (nullable = true)
+        | |-- leg: struct (nullable = true)
+        | |    |-- conditions: struct (nullable = true)
+        | |    |    |-- action: string (nullable = true)
+        | |    |    |-- check: string (nullable = true)
+        | |-- leg_conditions_id: long (nullable = false)
+        | |-- leg_conditions_size: integer (nullable = false)
+        | |-- leg_conditions_idx: integer (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedRestoredSchema =
+      """root
+        | |-- id: long (nullable = true)
+        | |-- leg: struct (nullable = true)
+        | |    |-- conditions: array (nullable = true)
+        | |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |-- action: string (nullable = true)
+        | |    |    |    |-- check: string (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedRestoredResults =
+      """+---+--------------------------+
+        ||id |leg                       |
+        |+---+--------------------------+
+        ||1  |[[[b, a], [d, c], [f, e]]]|
+        ||2  |[[[h, g], [j, i], [l, k]]]|
+        ||3  |[[]]                      |
+        ||4  |null                      |
+        |+---+--------------------------+
+        |""".stripMargin.replace("\r\n", "\n")
+
+
+    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("leg.conditions", df)
+    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
+
+    val actualOriginalResults = showString(df)
+    val actualRestoredResults = showString(restoredDf)
+
+    assertSchema(df.schema.treeString, expectedOriginalSchema)
+    assertResults(actualOriginalResults, expectedOriginalResults)
+
+    assertSchema(explodedDf.schema.treeString, expectedExplodedSchema)
+    assert(explodedDf.count() == 8)
 
     assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
     assertResults(actualRestoredResults, expectedRestoredResults)
