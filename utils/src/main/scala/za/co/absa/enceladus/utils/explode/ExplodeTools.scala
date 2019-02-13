@@ -37,7 +37,7 @@ object ExplodeTools {
     // TODO: Handle the case when the input is field is an array inside an array
 
     val explodedColumnName = getUniqueName("tmp", Some(df.schema))
-    val explodedIdName = getRootLevelPrefix (arrayFieldName, "id", df.schema)
+    val explodedIdName = getRootLevelPrefix(arrayFieldName, "id", df.schema)
     val explodedIndexName = getRootLevelPrefix(arrayFieldName, "idx", df.schema)
     val explodedSizeName = getRootLevelPrefix(arrayFieldName, "size", df.schema)
 
@@ -66,7 +66,7 @@ object ExplodeTools {
     * Context can be used to revert all explosions back
     */
   def revertAllExplosions(inputDf: DataFrame, explosionContext: ExplodeContext): DataFrame = {
-    explosionContext.explosions.foldLeft(inputDf) ( (df, explosion) => {
+    explosionContext.explosions.foldLeft(inputDf)((df, explosion) => {
       revertSingleExplosion(df, explosion)
     })
   }
@@ -76,37 +76,39 @@ object ExplodeTools {
     * If there were several explodes they should be reverted in FILO order
     */
   def revertSingleExplosion(df: DataFrame, explosion: Explosion): DataFrame = {
+    if (explosion.arrayFieldName.contains('.')) {
+      revertNestedFieldExplosion(df, explosion)
+    } else {
+      revertTopLevelFieldExplosion(df, explosion)
+    }
+  }
+
+  private def revertTopLevelFieldExplosion(df: DataFrame, explosion: Explosion): DataFrame = {
     val orderByCol = col(explosion.indexFieldName)
     val groupedCol = col(explosion.idFieldName)
     val structCol = col(explosion.arrayFieldName)
+    val rootOfArrayField = explosion.arrayFieldName.split('.').head
 
     // Do not group by columns that are explosion artifacts
     val allOtherColumns = df.schema
       .filter(a => a.name != explosion.idFieldName
         && a.name != explosion.indexFieldName
-        && a.name != explosion.arrayFieldName
+        && a.name != rootOfArrayField
       )
       .map(a => col(a.name))
 
     // Implode as a temporaty field
     val tmpColName = getUniqueName("tmp", Some(df.schema))
 
-    val (prepareDf, fieldToImplode) =
-      if (explosion.arrayFieldName.contains('.')) {
-        extructFieldFromStruct(df, explosion.arrayFieldName)
-      } else {
-        (df, structCol)
-      }
-
-    val dfImploded = prepareDf
+    // Implode
+    val dfImploded = df
       .orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*)
-      .agg(collect_list(fieldToImplode). as(tmpColName))
+      .agg(collect_list(structCol). as(tmpColName))
 
     // Restore null values to yet another temporary field
-    val tmpColName2 = getUniqueName("tmp2", Some(dfImploded.schema))
+    val tmpColName2 = getUniqueName("tmp2", Some(df.schema))
     val nullsRestored = dfImploded
-      .withColumn(tmpColName2, when(col(explosion.sizeFieldName)>0, col(tmpColName))
-        .otherwise(when(col(explosion.sizeFieldName) === 0, col(tmpColName)).otherwise(null)))
+      .withColumn(tmpColName2, when(col(explosion.sizeFieldName) >= 0, col(tmpColName)).otherwise(null))
 
     val dfArraysRestored = nestedRenameReplace(nullsRestored, tmpColName2, explosion.arrayFieldName)
 
@@ -119,6 +121,10 @@ object ExplodeTools {
       .orderBy(groupedCol)
       // remove monotonic id created during explode
       .drop(groupedCol)
+  }
+
+  def revertNestedFieldExplosion(df: DataFrame, explosion: Explosion): DataFrame = {
+    ???
   }
 
   private def getRootLevelPrefix(fieldName: String, prefix: String, schema: StructType): String = {
@@ -135,7 +141,7 @@ object ExplodeTools {
     * Renames a column `columnFrom` to `columnTo` replacing the original column and putting the resulting column
     * under the same struct level of nesting as `columnFrom`
     *
-    * */
+    **/
   def nestedRenameReplace(df: DataFrame, columnFrom: String, columnTo: String): DataFrame = {
     if (!columnTo.contains('.') && !columnFrom.contains('.')) {
       var isColumnToFound = false
@@ -189,6 +195,11 @@ object ExplodeTools {
     }
 
     df.select(processStruct(df.schema, pathTo, None): _*)
+  }
+
+  /** Takes a field name nested in a struct and moves it to the root level as a setmprry field */
+  def deconstruct(df: DataFrame, fieldName: String): (DataFrame, String) = {
+    ???
   }
 
 }
