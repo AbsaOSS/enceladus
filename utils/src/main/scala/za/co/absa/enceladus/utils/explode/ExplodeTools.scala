@@ -81,57 +81,13 @@ object ExplodeTools {
     * If there were several explodes they should be reverted in FILO order
     */
   def revertSingleExplosion(df: DataFrame, explosion: Explosion): DataFrame = {
-    if (explosion.arrayFieldName.contains('.')) {
-      revertNestedFieldExplosion(df, explosion)
+    val isNested = explosion.arrayFieldName.contains('.')
+
+    val (decDf, decField) = if (isNested) {
+      deconstruct(df, explosion.arrayFieldName)
     } else {
-      revertTopLevelFieldExplosion(df, explosion)
+      (df, explosion.arrayFieldName)
     }
-  }
-
-  private def revertTopLevelFieldExplosion(df: DataFrame, explosion: Explosion): DataFrame = {
-    val orderByCol = col(explosion.indexFieldName)
-    val groupedCol = col(explosion.idFieldName)
-    val structCol = col(explosion.arrayFieldName)
-    val rootOfArrayField = explosion.arrayFieldName.split('.').head
-
-    // Do not group by columns that are explosion artifacts
-    val allOtherColumns = df.schema
-      .filter(a => a.name != explosion.idFieldName
-        && a.name != explosion.indexFieldName
-        && a.name != rootOfArrayField
-      )
-      .map(a => col(a.name))
-
-    // Implode as a temporaty field
-    val tmpColName = getUniqueName(explosionTmpColumnName, Some(df.schema))
-
-    // Implode
-    val dfImploded = df
-      .orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*)
-      .agg(collect_list(structCol). as(tmpColName))
-
-    // Restore null values to yet another temporary field
-    val tmpColName2 = getUniqueName(nullRestoredTmpColumnName, Some(df.schema))
-    val nullsRestored = dfImploded
-      .withColumn(tmpColName2, when(col(explosion.sizeFieldName) > 0, col(tmpColName))
-        otherwise when(col(explosion.sizeFieldName) === 0, typedLit(Array())).otherwise(null)
-      )
-
-    val dfArraysRestored = nestedRenameReplace(nullsRestored, tmpColName2, explosion.arrayFieldName)
-
-    dfArraysRestored
-      // Drop the temporary column
-      .drop(col(tmpColName))
-      // Drop the array size column
-      .drop(col(explosion.sizeFieldName))
-      // restore original record order
-      .orderBy(groupedCol)
-      // remove monotonic id created during explode
-      .drop(groupedCol)
-  }
-
-  def revertNestedFieldExplosion(df: DataFrame, explosion: Explosion): DataFrame = {
-    val (decDf, decField) = deconstruct(df, explosion.arrayFieldName)
 
     val orderByCol = col(explosion.indexFieldName)
     val groupedCol = col(explosion.idFieldName)
@@ -140,23 +96,24 @@ object ExplodeTools {
     val allOtherColumns = df.schema
       .filter(a => a.name != explosion.idFieldName
         && a.name != explosion.indexFieldName
+        && (a.name != explosion.arrayFieldName || isNested)
       )
       .map(a => col(a.name))
 
-    // Implode as a temporaty field
+    // Implode as a temporary column
     val tmpColName = getUniqueName(explosionTmpColumnName, Some(df.schema))
 
     // Implode
     val dfImploded = decDf
       .orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*)
-      .agg(collect_list(decField). as(tmpColName))
+      .agg(collect_list(decField).as(tmpColName))
 
     // Restore null values to yet another temporary field
     val tmpColName2 = getUniqueName(nullRestoredTmpColumnName, Some(df.schema))
     val nullsRestored = dfImploded
       .withColumn(tmpColName2, when(col(explosion.sizeFieldName) > 0, col(tmpColName))
         otherwise when(col(explosion.sizeFieldName) === 0, typedLit(Array())).otherwise(null)
-        )
+      )
 
     val dfArraysRestored = nestedRenameReplace(nullsRestored, tmpColName2, explosion.arrayFieldName)
 
@@ -230,7 +187,7 @@ object ExplodeTools {
               Seq(col(columnFrom).as(currentField))
             case st: StructType =>
               val newFields = processStruct(st, path.tail, Some(getFullFieldPath(parentCol, field.name)))
-              if (newFields.lengthCompare(1)==0) {
+              if (newFields.lengthCompare(1) == 0) {
                 // a struct that can be null
                 val fld = newFields.head
                 Seq(when(fld.isNotNull, struct(newFields: _*)).otherwise(null).as(field.name))
