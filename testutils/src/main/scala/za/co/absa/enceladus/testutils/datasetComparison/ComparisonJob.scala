@@ -90,11 +90,12 @@ object ComparisonJob {
     val errorsPresent: Boolean = expectedMinusActual.count() != 0 || actualMinusExpected.count() != 0
 
     if (errorsPresent) {
-      if (cmd.keys.isDefined) {
-        handleKeyBasedDiff(cmd.keys.get, cmd.outPath, expectedMinusActual, actualMinusExpected)
-      } else {
-        expectedMinusActual.write.format("parquet").save(s"${cmd.outPath}/expected_minus_actual")
-        actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
+      cmd.keys match {
+        case Some(keys) =>
+          handleKeyBasedDiff(keys, cmd.outPath, expectedMinusActual, actualMinusExpected)
+        case None =>
+          expectedMinusActual.write.format("parquet").save(s"${cmd.outPath}/expected_minus_actual")
+          actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
       }
 
       throw CmpJobDatasetsDifferException(cmd.refPath, cmd.newPath, cmd.outPath, expectedDf.count(), actualDf.count())
