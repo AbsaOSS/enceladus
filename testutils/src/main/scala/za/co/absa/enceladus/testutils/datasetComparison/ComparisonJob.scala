@@ -20,7 +20,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.testutils.exceptions._
-import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions}
+import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions, HelperFunctions}
 
 object ComparisonJob {
   private val log: Logger = LogManager.getLogger("enceladus.testutils.ComparisonJob")
