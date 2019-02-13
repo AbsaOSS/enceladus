@@ -27,36 +27,32 @@ import za.co.absa.enceladus.rest.models.ChangedFieldsUpdateTransformResult
 import za.co.absa.enceladus.rest.models.ChangedField
 
 @Service
-class SchemaService @Autowired() (
-  schemaMongoRepository: SchemaMongoRepository,
-  auditTrailService:     AuditTrailService,
-  mappingTableService:   MappingTableService,
-  datasetService:        DatasetService,
-  sparkMenasConvertor: SparkMenasSchemaConvertor)
-  extends VersionedModelService(schemaMongoRepository, auditTrailService) {
+class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
+    mappingTableMongoRepository: MappingTableMongoRepository,
+    datasetMongoRepository: DatasetMongoRepository,
+    sparkMenasConvertor: SparkMenasSchemaConvertor) extends VersionedModelService(schemaMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
     for {
-      usedInD <- datasetService.findRefEqual("schemaName", "schemaVersion", name, version)
-      usedInM <- mappingTableService.findRefEqual("schemaName", "schemaVersion", name, version)
+      usedInD <- datasetMongoRepository.findRefEqual("schemaName", "schemaVersion", name, version)
+      usedInM <- mappingTableMongoRepository.findRefEqual("schemaName", "schemaVersion", name, version)
     } yield UsedIn(Some(usedInD), Some(usedInM))
   }
 
   def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[Option[Schema]] = {
-    super.update(username, schemaName, schemaVersion, "New schema uploaded.")({oldSchema => 
+    super.update(username, schemaName, schemaVersion, "New schema uploaded.")({ oldSchema =>
       val updated = oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(fields.fields).toList)
-      ChangedFieldsUpdateTransformResult(updatedEntity = updated, fields = Seq())      
+      ChangedFieldsUpdateTransformResult(updatedEntity = updated, fields = Seq())
     })
   }
-  
+
   override def update(username: String, schema: Schema): Future[Option[Schema]] = {
     super.update(username, schema.name, schema.version, "Schema updated.") { latest =>
       val updated = latest.setDescription(schema.description).asInstanceOf[Schema]
       ChangedFieldsUpdateTransformResult(updatedEntity = updated, fields = Seq(
-          ChangedField("Description", schema.description, latest.description)
-      ))
+        ChangedField("Description", schema.description, latest.description)))
     }
   }
 

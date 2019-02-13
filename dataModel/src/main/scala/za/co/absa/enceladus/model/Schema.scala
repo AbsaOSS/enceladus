@@ -17,24 +17,23 @@ package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
+import za.co.absa.enceladus.model.menas.{Auditable, AuditTrailChange, AuditFieldName}
 
-case class Schema(
-  name:    String,
-  version: Int = 0,
-  description: Option[String],
+case class Schema(name: String,
+    version: Int = 0,
+    description: Option[String],
 
-  dateCreated: ZonedDateTime = ZonedDateTime.now(),
-  userCreated: String        = null,
+    dateCreated: ZonedDateTime = ZonedDateTime.now(),
+    userCreated: String = null,
 
-  lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-  userUpdated: String        = null,
+    lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+    userUpdated: String = null,
 
-  disabled:     Boolean               = false,
-  dateDisabled: Option[ZonedDateTime] = None,
-  userDisabled: Option[String]        = None,
+    disabled: Boolean = false,
+    dateDisabled: Option[ZonedDateTime] = None,
+    userDisabled: Option[String] = None,
 
-  fields: List[SchemaField] = List()
-  ) extends VersionedModel {
+    fields: List[SchemaField] = List()) extends VersionedModel with Auditable[Schema] {
 
   override def setVersion(value: Int): Schema = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -43,4 +42,11 @@ case class Schema(
   override def setUserCreated(user: String): VersionedModel = this.copy(userCreated = user)
   override def setUpdatedUser(user: String): VersionedModel = this.copy(userUpdated = user)
   override def setDescription(desc: Option[String]): VersionedModel = this.copy(description = desc)
+
+  override def getAuditMessages(newRecord: Schema): Seq[AuditTrailChange] = {
+    super.getPrimitiveFieldsAudit(newRecord,
+      Seq(AuditFieldName("description", "Description"))) ++
+      super.getSeqFieldsAudit(newRecord, AuditFieldName("fields", "Schema field"))
+  }
+
 }

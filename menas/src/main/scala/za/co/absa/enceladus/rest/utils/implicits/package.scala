@@ -44,7 +44,7 @@ package object implicits {
     classOf[ConformanceRule],
     classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
     classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference],
-    classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference], classOf[AuditEntry]),
-    CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec(), CaseObjEnumCodec(CreateEntryType.getClass), CaseObjEnumCodec(UpdateEntryType.getClass)), 
+    classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference]),
+    CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), 
     DEFAULT_CODEC_REGISTRY)
 }

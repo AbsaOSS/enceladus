@@ -17,8 +17,8 @@ package za.co.absa.enceladus.rest.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.model.{ MappingTable, UsedIn }
-import za.co.absa.enceladus.rest.repositories.{ DatasetMongoRepository, MappingTableMongoRepository }
+import za.co.absa.enceladus.model.{MappingTable, UsedIn}
+import za.co.absa.enceladus.rest.repositories.{DatasetMongoRepository, MappingTableMongoRepository}
 
 import scala.concurrent.Future
 import za.co.absa.enceladus.model.DefaultValue
@@ -26,21 +26,22 @@ import za.co.absa.enceladus.rest.models.ChangedFieldsUpdateTransformResult
 import za.co.absa.enceladus.rest.models.ChangedField
 
 @Service
-class MappingTableService @Autowired() (
-  mappingTableMongoRepository: MappingTableMongoRepository,
-  auditTrailService:           AuditTrailService,
-  datasetService:              DatasetService)
-  extends VersionedModelService(mappingTableMongoRepository, auditTrailService) {
+class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTableMongoRepository,
+    datasetMongoRepository: DatasetMongoRepository) extends VersionedModelService(mappingTableMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
-    datasetService.findDatasetsUsingMappingTable(name, version).map(refs => UsedIn(Some(refs), None))
+  override def getUsedIn(mappingTableName: String, mappingTableVersion: Option[Int]): Future[UsedIn] = {
+    val used = mappingTableVersion match {
+      case Some(version) => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName), ("mappingTableVersion", version))
+      case None          => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName))
+    }
+    
+    used.map(refs => UsedIn(Some(refs), None))
   }
 
   override def create(mt: MappingTable, username: String): Future[Option[MappingTable]] = {
-    val mappingTable = MappingTable(
-      name = mt.name,
+    val mappingTable = MappingTable(name = mt.name,
       description = mt.description,
       schemaName = mt.schemaName,
       schemaVersion = mt.schemaVersion,
@@ -70,8 +71,7 @@ class MappingTableService @Autowired() (
         .setSchemaVersion(mt.schemaVersion)
         .setDescription(mt.description).asInstanceOf[MappingTable]
 
-      ChangedFieldsUpdateTransformResult(updatedEntity = updated, Seq(
-        ChangedField("HDFS Path", mt.hdfsPath, latest.hdfsPath),
+      ChangedFieldsUpdateTransformResult(updatedEntity = updated, Seq(ChangedField("HDFS Path", mt.hdfsPath, latest.hdfsPath),
         ChangedField("Schema Name", mt.schemaName, latest.schemaName),
         ChangedField("Schema Version", mt.schemaVersion, latest.schemaVersion),
         ChangedField("Description", mt.description, latest.description)))

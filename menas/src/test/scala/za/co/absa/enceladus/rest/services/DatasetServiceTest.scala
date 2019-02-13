@@ -20,7 +20,6 @@ import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
 class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
 
   override val modelRepository = mock[DatasetMongoRepository]
-  val auditTrailService = mock[AuditTrailService]
-  override val service = new DatasetService(modelRepository, auditTrailService)
+  override val service = new DatasetService(modelRepository)
 
 }

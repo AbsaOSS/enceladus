@@ -19,28 +19,30 @@ import java.time.ZonedDateTime
 
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
+import za.co.absa.enceladus.model.menas.Auditable
+import za.co.absa.enceladus.model.menas.AuditTrailChange
+import za.co.absa.enceladus.model.menas.AuditFieldName
 
-case class Dataset(
-  name:    String,
-  version: Int,
-  description: Option[String]= None,
-  
-  hdfsPath:        String,
-  hdfsPublishPath: String,
+case class Dataset(name: String,
+    version: Int,
+    description: Option[String] = None,
 
-  schemaName:    String,
-  schemaVersion: Int,
+    hdfsPath: String,
+    hdfsPublishPath: String,
 
-  dateCreated: ZonedDateTime = ZonedDateTime.now(),
-  userCreated: String        = null,
+    schemaName: String,
+    schemaVersion: Int,
 
-  lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-  userUpdated: String        = null,
+    dateCreated: ZonedDateTime = ZonedDateTime.now(),
+    userCreated: String = null,
 
-  disabled:     Boolean               = false,
-  dateDisabled: Option[ZonedDateTime] = None,
-  userDisabled: Option[String]        = None,
-  conformance:  List[ConformanceRule]) extends VersionedModel {
+    lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+    userUpdated: String = null,
+
+    disabled: Boolean = false,
+    dateDisabled: Option[ZonedDateTime] = None,
+    userDisabled: Option[String] = None,
+    conformance: List[ConformanceRule]) extends VersionedModel with Auditable[Dataset] {
 
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -77,5 +79,15 @@ case class Dataset(
     }
 
     dataset.copy(conformance = conformanceRules)
+  }
+
+  override def getAuditMessages(newRecord: Dataset): Seq[AuditTrailChange] = {
+    super.getPrimitiveFieldsAudit(newRecord,
+      Seq(AuditFieldName("description", "Description"),
+        AuditFieldName("hdfsPath", "HDFS Path"),
+        AuditFieldName("hdfsPublishPath", "HDFS Publish Path"),
+        AuditFieldName("schemaName", "Schema Name"),
+        AuditFieldName("schemaVersion", "Schema Version"))) ++
+      super.getSeqFieldsAudit(newRecord, AuditFieldName("conformance", "Conformance rule"))
   }
 }

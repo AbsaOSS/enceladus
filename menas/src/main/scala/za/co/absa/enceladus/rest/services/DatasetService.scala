@@ -26,8 +26,7 @@ import za.co.absa.enceladus.rest.models.ChangedFieldsUpdateTransformResult
 import za.co.absa.enceladus.rest.models.ChangedField
 
 @Service
-class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepository, auditTrailService: AuditTrailService)
-  extends VersionedModelService(datasetMongoRepository, auditTrailService) {
+class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepository) extends VersionedModelService(datasetMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -64,13 +63,6 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
       schemaVersion = newDataset.schemaVersion,
       conformance = List())
     super.create(dataset, username, s"Dataset ${newDataset.name} created.")
-  }
-
-  def findDatasetsUsingMappingTable(mappingTableName: String, mappingTableVersion: Option[Int]): Future[Seq[MenasReference]] = {
-    mappingTableVersion match {
-      case Some(version) => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName), ("mappingTableVersion", mappingTableVersion))
-      case None          => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName))
-    }
   }
 
   def addConformanceRule(username: String, datasetName: String, datasetVersion: Int, rule: ConformanceRule): Future[Option[Dataset]] = {

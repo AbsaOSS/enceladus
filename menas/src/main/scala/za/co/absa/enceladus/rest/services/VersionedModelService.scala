@@ -30,7 +30,7 @@ import scala.concurrent.Future
 import java.time.ZonedDateTime
 import za.co.absa.enceladus.rest.models.ChangedFieldsUpdateTransformResult
 
-abstract class VersionedModelService[C <: VersionedModel](versionedMongoRepository: VersionedMongoRepository[C], auditTrailService: AuditTrailService)
+abstract class VersionedModelService[C <: VersionedModel](versionedMongoRepository: VersionedMongoRepository[C])
   extends ModelService(versionedMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -57,15 +57,6 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
 
   private[rest] def getMenasRef(item: C): MenasReference = MenasReference(Some(versionedMongoRepository.collectionName), item.name, item.version)
 
-  private[services] def getAuditEntry(item: C, entryType: AuditEntryType, username: String, auditMessage: String): AuditEntry = {
-    AuditEntry(menasRef = Some(getMenasRef(item)), entryType = entryType, user = username, timeCreated = ZonedDateTime.now(), message = auditMessage)
-  }
-
-  private[services] def getAuditEntry(itemName: String, itemVersion: Int, entryType: AuditEntryType, username: String, auditMessage: String): AuditEntry = {
-    AuditEntry(menasRef = Some(MenasReference(Some(versionedMongoRepository.collectionName), itemName, itemVersion)),
-      entryType = entryType, user = username, timeCreated = ZonedDateTime.now(), message = auditMessage)
-  }
-
   def create(item: C, username: String): Future[Option[C]]
 
   private[services] def create(item: C, username: String, auditMessage: String): Future[Option[C]] = {
@@ -73,7 +64,6 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
       validation <- validate(item)
       _ <- if (validation.isValid()) versionedMongoRepository.create(item, username)
       else throw ValidationException(validation)
-      audit <- auditTrailService.create(getAuditEntry(item, CreateEntryType, username, auditMessage))
       detail <- getLatestVersion(item.name)
     } yield detail
   }
@@ -86,11 +76,6 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
       transformed <- if (version.isEmpty) Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
       else Future.successful(transform(version.get))
       update <- versionedMongoRepository.update(username, transformed.updatedEntity)
-      audit <- {
-        val changedFields = transformed.getUpdatedFields()
-        val changedMessage = if (changedFields.isEmpty) "" else s"Changed fields: ${changedFields.mkString(", ")}"
-        auditTrailService.create(getAuditEntry(itemName, version.get.version, UpdateEntryType, username, s"$auditMessage Updated version: ${version.get.version}. New Version: ${update.version}. $changedMessage"))
-      }
     } yield Some(update)
   }
 

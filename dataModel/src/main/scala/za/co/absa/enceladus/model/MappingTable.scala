@@ -17,28 +17,28 @@ package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
+import za.co.absa.enceladus.model.menas.{Auditable, AuditTrailChange, AuditFieldName}
 
-case class MappingTable(
-  name: String,
-  version:     Int            = 0,
-  description: Option[String] = None,
+case class MappingTable(name: String,
+    version: Int = 0,
+    description: Option[String] = None,
 
-  hdfsPath: String,
+    hdfsPath: String,
 
-  schemaName:    String,
-  schemaVersion: Int,
+    schemaName: String,
+    schemaVersion: Int,
 
-  defaultMappingValue: List[DefaultValue] = List(),
+    defaultMappingValue: List[DefaultValue] = List(),
 
-  dateCreated: ZonedDateTime = ZonedDateTime.now(),
-  userCreated: String        = null,
+    dateCreated: ZonedDateTime = ZonedDateTime.now(),
+    userCreated: String = null,
 
-  lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-  userUpdated: String        = null,
+    lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+    userUpdated: String = null,
 
-  disabled:     Boolean               = false,
-  dateDisabled: Option[ZonedDateTime] = None,
-  userDisabled: Option[String]        = None) extends VersionedModel {
+    disabled: Boolean = false,
+    dateDisabled: Option[ZonedDateTime] = None,
+    userDisabled: Option[String] = None) extends VersionedModel with Auditable[MappingTable] {
 
   override def setVersion(value: Int): MappingTable = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -54,5 +54,14 @@ case class MappingTable(
 
   def getDefaultMappingValues: Map[String, String] = {
     defaultMappingValue.map(_.toTouple()).toMap
+  }
+
+  override def getAuditMessages(newRecord: MappingTable): Seq[AuditTrailChange] = {
+    super.getPrimitiveFieldsAudit(newRecord,
+      Seq(AuditFieldName("description", "Description"),
+        AuditFieldName("hdfsPath", "HDFS Path"),
+        AuditFieldName("schemaName", "Schema Name"),
+        AuditFieldName("schemaVersion", "Schema Version"))) ++
+      super.getSeqFieldsAudit(newRecord, AuditFieldName("defaultMappingValue", "Default Mapping Value"))
   }
 }

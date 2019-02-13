@@ -20,11 +20,10 @@ import za.co.absa.enceladus.rest.utils.converters.SparkMenasSchemaConvertor
 
 class SchemaServiceTest extends VersionedModelServiceTest[Schema] {
 
-  val datasetService = mock[DatasetService]
-  val auditTrailService = mock[AuditTrailService]
-  val mappingTableService = mock[MappingTableService]
+  val datasetRepository = mock[DatasetMongoRepository]
+  val mappingTableRepository = mock[MappingTableMongoRepository]
   val sparkMenasConvertor = mock[SparkMenasSchemaConvertor]
   override val modelRepository = mock[SchemaMongoRepository]
-  override val service = new SchemaService(modelRepository, auditTrailService, mappingTableService, datasetService, sparkMenasConvertor)
+  override val service = new SchemaService(modelRepository, mappingTableRepository, datasetRepository, sparkMenasConvertor)
 
 }
