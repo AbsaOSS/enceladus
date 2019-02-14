@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.utils.explode
 
-case class ExplodeContext (
-                          explosions: Seq[Explosion] = Nil
-                          )
+/**
+  * Stores a context of several array explosions to they can be reverted in the proper order.
+  */
+case class ExplosionContext(explosions: Seq[Explosion] = Nil)
