@@ -15,9 +15,12 @@
 
 package za.co.absa.enceladus.utils.explode
 
-case class Explosion (
-                     arrayFieldName: String,
-                     idFieldName: String,
-                     indexFieldName: String,
-                     sizeFieldName: String
-                     )
+/**
+  * Stores all info needed to revert a single array explosion.
+  */
+case class Explosion(
+                      arrayFieldName: String,
+                      idFieldName: String,
+                      indexFieldName: String,
+                      sizeFieldName: String
+                    )

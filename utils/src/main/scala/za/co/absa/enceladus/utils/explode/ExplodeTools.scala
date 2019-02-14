@@ -32,21 +32,29 @@ object ExplodeTools {
 
   /**
     * Explodes a specific array inside a dataframe in context. Returns a new dataframe and a new context.
-    * Context can be used to revert all explosions back
+    * Context can be used to revert all explosions back.
+    *
+    * @param arrayFieldName   An array field name to be exploded. It can be inside a nested struct, but cannot be nested
+    *                         inside another array. If that is the case you need to explode the topmost array first.
+    * @param inputDf          A DataFrame that contains an array
+    * @param explosionContext A context returned by previous explosions. If you do several explosions on the top of
+    *                         each other it is very important to pass the previous context here so all explosions could
+    *                         be reverted
+    * @return A pair containing an exploded DataFrame and an explosion context.
     */
   def explodeArray(arrayFieldName: String,
-                   df: DataFrame,
-                   explosionContext: ExplodeContext = ExplodeContext()): (DataFrame, ExplodeContext) = {
+                   inputDf: DataFrame,
+                   explosionContext: ExplosionContext = ExplosionContext()): (DataFrame, ExplosionContext) = {
 
-    validateArrayField(df.schema, arrayFieldName)
+    validateArrayField(inputDf.schema, arrayFieldName)
 
-    val explodedColumnName = getUniqueName(explosionTmpColumnName, Some(df.schema))
-    val explodedIdName = getRootLevelPrefix(arrayFieldName, "id", df.schema)
-    val explodedIndexName = getRootLevelPrefix(arrayFieldName, "idx", df.schema)
-    val explodedSizeName = getRootLevelPrefix(arrayFieldName, "size", df.schema)
+    val explodedColumnName = getUniqueName(explosionTmpColumnName, Some(inputDf.schema))
+    val explodedIdName = getRootLevelPrefix(arrayFieldName, "id", inputDf.schema)
+    val explodedIndexName = getRootLevelPrefix(arrayFieldName, "idx", inputDf.schema)
+    val explodedSizeName = getRootLevelPrefix(arrayFieldName, "size", inputDf.schema)
 
     // Adding an unique row id so we can reconstruct the array later by grouping by that id
-    val dfWithId = df.withColumn(explodedIdName, monotonically_increasing_id())
+    val dfWithId = inputDf.withColumn(explodedIdName, monotonically_increasing_id())
 
     // Exploding...
     // The '-1' value as an array size indicates that the array field is null. This is to distinguish
@@ -66,11 +74,16 @@ object ExplodeTools {
   }
 
   /**
-    * Reverts all explosions done by explode array().
-    * Context can be used to revert all explosions back
+    * Reverts all explosions done by explodeArray().
+    * An explosion context should be a context returned by the latest explosion.
+    *
+    * @param inputDf          A DataFrame that contains an exploded array
+    * @param explosionContext A context returned by explodeArray()
+    * @param errorColumn      An optional error column to combine during implosion. It should be a top level array.
+    * @return A dataframe containing restored ('imploded') arrays.
     */
   def revertAllExplosions(inputDf: DataFrame,
-                          explosionContext: ExplodeContext,
+                          explosionContext: ExplosionContext,
                           errorColumn: Option[String] = None): DataFrame = {
     explosionContext.explosions.foldLeft(inputDf)((df, explosion) => {
       revertSingleExplosion(df, explosion, errorColumn)
@@ -80,26 +93,31 @@ object ExplodeTools {
   /**
     * Reverts aa particular explode made by explodeArray().
     * If there were several explodes they should be reverted in FILO order
+    *
+    * @param inputDf     A DataFrame that contains an exploded array
+    * @param explosion   An explosion object containing all data necessary to revert the explosion
+    * @param errorColumn An optional error column to combine during implosion. It should be a top level array.
+    * @return A dataframe containing restored ('imploded') arrays.
     */
-  def revertSingleExplosion(df: DataFrame,
+  def revertSingleExplosion(inputDf: DataFrame,
                             explosion: Explosion,
                             errorColumn: Option[String] = None): DataFrame = {
 
-    errorColumn.foreach(validateErrorColumnField(df.schema, _))
+    errorColumn.foreach(validateErrorColumnField(inputDf.schema, _))
 
     val isNested = explosion.arrayFieldName.contains('.')
 
     val (decDf, decField) = if (isNested) {
-      deconstructNestedColumn(df, explosion.arrayFieldName)
+      deconstructNestedColumn(inputDf, explosion.arrayFieldName)
     } else {
-      (df, explosion.arrayFieldName)
+      (inputDf, explosion.arrayFieldName)
     }
 
     val orderByCol = col(explosion.indexFieldName)
     val groupedCol = col(explosion.idFieldName)
 
     // Do not group by columns that are explosion artifacts
-    val allOtherColumns = df.schema
+    val allOtherColumns = inputDf.schema
       .filter(a => a.name != explosion.idFieldName
         && a.name != explosion.indexFieldName
         && (a.name != explosion.arrayFieldName || isNested)
@@ -108,7 +126,7 @@ object ExplodeTools {
       .map(a => col(a.name))
 
     // Implode as a temporary column
-    val tmpColName = getUniqueName(explosionTmpColumnName, Some(df.schema))
+    val tmpColName = getUniqueName(explosionTmpColumnName, Some(inputDf.schema))
 
     // Implode
     val dfImploded = errorColumn match {
@@ -126,7 +144,7 @@ object ExplodeTools {
     }
 
     // Restore null values to yet another temporary field
-    val tmpColName2 = getUniqueName(nullRestoredTmpColumnName, Some(df.schema))
+    val tmpColName2 = getUniqueName(nullRestoredTmpColumnName, Some(inputDf.schema))
     val nullsRestored = dfImploded
       .withColumn(tmpColName2, when(col(explosion.sizeFieldName) > 0, col(tmpColName))
         otherwise when(col(explosion.sizeFieldName) === 0, typedLit(Array())).otherwise(null)
@@ -145,25 +163,64 @@ object ExplodeTools {
       .drop(groupedCol)
   }
 
-  private def getRootLevelPrefix(fieldName: String, prefix: String, schema: StructType): String = {
-    getClosestUniqueName(s"${fieldName}_$prefix", schema)
-      .replaceAll("\\.", "_")
-  }
+  /**
+    * Takes a field name nested in a struct and moves it out to the root level as a top level column
+    *
+    * @param inputDf    A dataframe to process
+    * @param columnName A nested column to process
+    * @return A transformed dataframe
+    **/
+  def deconstructNestedColumn(inputDf: DataFrame, columnName: String): (DataFrame, String) = {
+    def processStruct(schema: StructType, path: Seq[String], parentCol: Option[Column]): Seq[Column] = {
+      val currentField = path.head
+      val isLeaf = path.lengthCompare(1) <= 0
+      val newFields = schema.fields.flatMap(field => {
+        if (field.name != currentField) {
+          Seq(getFullFieldPath(parentCol, field.name).as(field.name))
+        } else {
+          if (isLeaf) {
+            // Removing the field from the struct
+            if (schema.size == 1) {
+              // If removing the last element of a struct makes it a struct with no fields empty.
+              // This is not allowed in Spark. We need to compensate the struct with a transient column.
+              // The transient column will be replaces by imploded column after implosion.
+              Seq(lit(0).as(transientColumnName))
+            } else {
+              Nil
+            }
+          } else {
+            field.dataType match {
+              case st: StructType =>
+                Seq(struct(processStruct(st, path.tail, Some(getFullFieldPath(parentCol, field.name))): _*)
+                  .as(field.name))
+              case _ =>
+                throw new IllegalArgumentException(s"$currentField is not a struct in $columnName")
+            }
+          }
+        }
+      })
+      newFields
+    }
 
-  def extructFieldFromStruct(df: DataFrame, structFieldName: String): (DataFrame, Column) = {
-    val tmpColName = getUniqueName("tmp_ext", Some(df.schema))
-    (df.withColumn(tmpColName, col(structFieldName)), col(tmpColName))
+    val newFieldName = getClosestUniqueName(deconstructedColumnName, inputDf.schema)
+    val resultDf = inputDf.select(processStruct(inputDf.schema, columnName.split('.'), None)
+      :+ col(columnName).as(newFieldName): _*)
+    (resultDf, newFieldName)
   }
 
   /**
     * Renames a column `columnFrom` to `columnTo` replacing the original column and putting the resulting column
-    * under the same struct level of nesting as `columnFrom`
+    * under the same struct level of nesting as `columnFrom`.
     *
+    * @param inputDf    A dataframe to process
+    * @param columnFrom A column name that needs to be put into a nested struct
+    * @param columnTo   A column name that `columnFrom` should have after it is renamed
+    * @return A transformed dataframe
     **/
-  def nestedRenameReplace(df: DataFrame, columnFrom: String, columnTo: String): DataFrame = {
+  def nestedRenameReplace(inputDf: DataFrame, columnFrom: String, columnTo: String): DataFrame = {
     if (!columnTo.contains('.') && !columnFrom.contains('.')) {
       var isColumnToFound = false
-      val newFields = df.schema.fields.flatMap(field =>
+      val newFields = inputDf.schema.fields.flatMap(field =>
         if (field.name == columnTo) {
           isColumnToFound = true
           Seq(col(columnFrom).as(columnTo))
@@ -174,9 +231,9 @@ object ExplodeTools {
         }
       )
       val newFields2 = if (isColumnToFound) newFields else newFields :+ col(columnFrom).as(columnTo)
-      df.select(newFields2: _*)
+      inputDf.select(newFields2: _*)
     } else {
-      putFieldIntoNestedStruct(df, columnFrom, columnTo.split('.'))
+      putFieldIntoNestedStruct(inputDf, columnFrom, columnTo.split('.'))
     }
   }
 
@@ -185,6 +242,16 @@ object ExplodeTools {
       case None => col(fieldName)
       case Some(parent) => parent.getField(fieldName)
     }
+  }
+
+  private def getRootLevelPrefix(fieldName: String, prefix: String, schema: StructType): String = {
+    getClosestUniqueName(s"${fieldName}_$prefix", schema)
+      .replaceAll("\\.", "_")
+  }
+
+  private def extructFieldFromStruct(df: DataFrame, structFieldName: String): (DataFrame, Column) = {
+    val tmpColName = getUniqueName("tmp_ext", Some(df.schema))
+    (df.withColumn(tmpColName, col(structFieldName)), col(tmpColName))
   }
 
   private def putFieldIntoNestedStruct(df: DataFrame, columnFrom: String, pathTo: Seq[String]): DataFrame = {
@@ -228,45 +295,6 @@ object ExplodeTools {
     }
 
     df.select(processStruct(df.schema, pathTo, None): _*)
-  }
-
-  /** Takes a field name nested in a struct and moves it to the root level as a setmprry field */
-  def deconstructNestedColumn(df: DataFrame, fieldName: String): (DataFrame, String) = {
-    def processStruct(schema: StructType, path: Seq[String], parentCol: Option[Column]): Seq[Column] = {
-      val currentField = path.head
-      val isLeaf = path.lengthCompare(1) <= 0
-      val newFields = schema.fields.flatMap(field => {
-        if (field.name != currentField) {
-          Seq(getFullFieldPath(parentCol, field.name).as(field.name))
-        } else {
-          if (isLeaf) {
-            // Removing the field from the struct
-            if (schema.size == 1) {
-              // If removing the last element of a struct makes it a struct with no fields empty.
-              // This is not allowed in Spark. We need to compensate the struct with a transient column.
-              // The transient column will be replaces by imploded column after implosion.
-              Seq(lit(0).as(transientColumnName))
-            } else {
-              Nil
-            }
-          } else {
-            field.dataType match {
-              case st: StructType =>
-                Seq(struct(processStruct(st, path.tail, Some(getFullFieldPath(parentCol, field.name))): _*)
-                  .as(field.name))
-              case _ =>
-                throw new IllegalArgumentException(s"$currentField is not a struct in $fieldName")
-            }
-          }
-        }
-      })
-      newFields
-    }
-
-    val newFieldName = getClosestUniqueName(deconstructedColumnName, df.schema)
-    val resultDf = df.select(processStruct(df.schema, fieldName.split('.'), None)
-      :+ col(fieldName).as(newFieldName): _*)
-    (resultDf, newFieldName)
   }
 
   private def validateArrayField(schema: StructType, fieldName: String): Unit = {
