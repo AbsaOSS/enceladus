@@ -69,9 +69,11 @@ object ExplodeTools {
     * Reverts all explosions done by explode array().
     * Context can be used to revert all explosions back
     */
-  def revertAllExplosions(inputDf: DataFrame, explosionContext: ExplodeContext): DataFrame = {
+  def revertAllExplosions(inputDf: DataFrame,
+                          explosionContext: ExplodeContext,
+                          errorColumn: Option[String] = None): DataFrame = {
     explosionContext.explosions.foldLeft(inputDf)((df, explosion) => {
-      revertSingleExplosion(df, explosion)
+      revertSingleExplosion(df, explosion, errorColumn)
     })
   }
 
@@ -79,7 +81,12 @@ object ExplodeTools {
     * Reverts aa particular explode made by explodeArray().
     * If there were several explodes they should be reverted in FILO order
     */
-  def revertSingleExplosion(df: DataFrame, explosion: Explosion): DataFrame = {
+  def revertSingleExplosion(df: DataFrame,
+                            explosion: Explosion,
+                            errorColumn: Option[String] = None): DataFrame = {
+
+    errorColumn.foreach(validateErrorColumnField(df.schema, _))
+
     val isNested = explosion.arrayFieldName.contains('.')
 
     val (decDf, decField) = if (isNested) {
@@ -96,6 +103,7 @@ object ExplodeTools {
       .filter(a => a.name != explosion.idFieldName
         && a.name != explosion.indexFieldName
         && (a.name != explosion.arrayFieldName || isNested)
+        && (errorColumn.isEmpty || a.name != errorColumn.get)
       )
       .map(a => col(a.name))
 
@@ -103,9 +111,19 @@ object ExplodeTools {
     val tmpColName = getUniqueName(explosionTmpColumnName, Some(df.schema))
 
     // Implode
-    val dfImploded = decDf
-      .orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*)
-      .agg(collect_list(decField).as(tmpColName))
+    val dfImploded = errorColumn match {
+      case None =>
+        decDf
+          .orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*)
+          .agg(collect_list(decField).as(tmpColName))
+      case Some(errorCol) =>
+        // Implode taking into account the error column
+        // Errors should be collected, flattened and made distinct
+        decDf
+          .orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*)
+          .agg(collect_list(decField).as(tmpColName),
+            array_distinct(flatten(collect_list(col(errorCol)))).as(errorCol))
+    }
 
     // Restore null values to yet another temporary field
     val tmpColName2 = getUniqueName(nullRestoredTmpColumnName, Some(df.schema))
@@ -259,6 +277,15 @@ object ExplodeTools {
     if (!SchemaUtils.isNonNestedArray(schema, fieldName)) {
       throw new IllegalArgumentException(
         s"$fieldName is an array that is nested in other arrays. Need to explode top level array first.")
+    }
+  }
+
+  private def validateErrorColumnField(schema: StructType, fieldName: String): Unit = {
+    if (fieldName.contains('.')) {
+      throw new IllegalArgumentException(s"An error column $fieldName cannot be nested.")
+    }
+    if (!SchemaUtils.isArray(schema, fieldName)) {
+      throw new IllegalArgumentException(s"An error column $fieldName is not an array.")
     }
   }
 }

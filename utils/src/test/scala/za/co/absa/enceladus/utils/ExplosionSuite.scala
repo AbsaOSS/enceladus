@@ -71,11 +71,11 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         |""".stripMargin.replace("\r\n", "\n")
 
 
-    val (expldedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
-    val actualResults = showString(expldedDf)
+    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
+    val actualResults = showString(explodedDf)
 
     assert(explodeContext.explosions.nonEmpty)
-    assertSchema(expldedDf.schema.treeString, expectedSchema)
+    assertSchema(explodedDf.schema.treeString, expectedSchema)
     assertResults(actualResults, expectedResults)
   }
 
@@ -141,16 +141,16 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         |""".stripMargin.replace("\r\n", "\n")
 
 
-    val (expldedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
+    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
 
-    val restoredDf = ExplodeTools.revertAllExplosions(expldedDf, explodeContext)
+    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
 
-    val actualExplodedResults = showString(expldedDf)
+    val actualExplodedResults = showString(explodedDf)
     val actualRestoredResults = showString(restoredDf)
 
     // Checking if explosion has been done correctly
     assert(explodeContext.explosions.nonEmpty)
-    assertSchema(expldedDf.schema.treeString, expectedExplodedSchema)
+    assertSchema(explodedDf.schema.treeString, expectedExplodedSchema)
     assertResults(actualExplodedResults, expectedExplodedResults)
 
     // Checking if restoration has been done correctly
@@ -226,17 +226,17 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         |+------+---------------------------------------------------------------------+
         |""".stripMargin.replace("\r\n", "\n")
 
-    val (expldedDf1, explodeContext1) = ExplodeTools.explodeArray("value", df)
-    val (expldedDf2, explodeContext2) = ExplodeTools.explodeArray("value", expldedDf1, explodeContext1)
+    val (explodedDf1, explodeContext1) = ExplodeTools.explodeArray("value", df)
+    val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("value", explodedDf1, explodeContext1)
 
-    val restoredDf = ExplodeTools.revertAllExplosions(expldedDf2, explodeContext2)
+    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf2, explodeContext2)
 
-    val actualExplodedResults = showString(expldedDf2, 10)
+    val actualExplodedResults = showString(explodedDf2, 10)
     val actualRestoredResults = showString(restoredDf)
 
     // Checking if explosion has been done correctly
     assert(explodeContext2.explosions.size == 2)
-    assertSchema(expldedDf2.schema.treeString, expectedExplodedSchema)
+    assertSchema(explodedDf2.schema.treeString, expectedExplodedSchema)
     assertResults(actualExplodedResults, expectedExplodedResults)
 
     // Checking if restoration has been done correctly
@@ -292,18 +292,18 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         |""".stripMargin.replace("\r\n", "\n")
 
 
-    val (expldedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
+    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
 
-    val restoredDf = ExplodeTools.revertAllExplosions(expldedDf, explodeContext)
+    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
 
-    val actualExplodedResults = showString(expldedDf
+    val actualExplodedResults = showString(explodedDf
       .select($"static", $"value_size", $"value_idx", $"value")
       .orderBy($"value_size", $"value_idx", $"static"), 5)
     val actualRestoredResults = showString(restoredDf)
 
     // Checking if explosion has been done correctly
     assert(explodeContext.explosions.nonEmpty)
-    assertSchema(expldedDf.schema.treeString, expectedExplodedSchema)
+    assertSchema(explodedDf.schema.treeString, expectedExplodedSchema)
     assertResults(actualExplodedResults, expectedExplodedResults)
 
     // Checking if restoration has been done correctly
@@ -571,8 +571,8 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
     val df = JsonUtils.getDataFrameFromJson(spark, sample)
 
-    val (expldedDf, explodeContext) = ExplodeTools.explodeArray("leg.conditions", df)
-    val restoredDf = ExplodeTools.revertAllExplosions(expldedDf, explodeContext)
+    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("leg.conditions", df)
+    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
 
     val expectedSchema =
       """root
@@ -589,17 +589,61 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
       """+---+-------------------------------+
         ||id |leg                            |
         |+---+-------------------------------+
-        ||1  |[[[b, a], [d, c], [f, e]], 100]|
-        ||2  |[[[h, g], [j, i], [l, k]], 200]|
-        ||3  |[[], 300]                      |
-        ||4  |[, 400]                        |
+        ||1  |[100, [[b, a], [d, c], [f, e]]]|
+        ||2  |[200, [[h, g], [j, i], [l, k]]]|
+        ||3  |[300, []]                      |
+        ||4  |[400,]                         |
         |+---+-------------------------------+
         |""".stripMargin.replace("\r\n", "\n")
 
     val actualResults = showString(restoredDf, 5)
 
     assertSchema(restoredDf.schema.treeString, expectedSchema)
-    assertResults(actualResults, actualResults)
+    assertResults(actualResults, expectedData)
+  }
+
+  test ("Test explosion with an error column") {
+    val sample = """{"id":1,"errors":["Error 1","Error 2"],"leg":{"legid":100,"conditions":[{"check":"1","action":"b"},{"check":"2","action":"d"},{"check":"3","action":"f"}]}}""" ::
+      """{"id":2,"errors":[],"leg":{"legid":200,"conditions":[{"check":"0","action":"b"}]}}""" ::
+      """{"id":3,"errors":[],"leg":{"legid":300}}""" :: Nil
+
+    val df = JsonUtils.getDataFrameFromJson(spark, sample)
+
+    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("leg.conditions", df)
+
+    // Manupilate error column
+    val changedDf = explodedDf.select(concat($"errors", array($"leg.conditions.check")).as("errors"),
+      $"id", $"leg", $"leg_conditions_id", $"leg_conditions_size", $"leg_conditions_idx")
+
+    val restoredDf = ExplodeTools.revertAllExplosions(changedDf, explodeContext, Some("errors"))
+
+    val expectedSchema =
+      """root
+        | |-- id: long (nullable = true)
+        | |-- leg: struct (nullable = false)
+        | |    |-- legid: long (nullable = true)
+        | |    |-- conditions: array (nullable = true)
+        | |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |-- action: string (nullable = true)
+        | |    |    |    |-- check: string (nullable = true)
+        | |-- errors: array (nullable = true)
+        | |    |-- element: string (containsNull = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedData =
+      """+---+-------------------------------+---------------------------+
+        ||id |leg                            |errors                     |
+        |+---+-------------------------------+---------------------------+
+        ||1  |[100, [[b, 1], [d, 2], [f, 3]]]|[Error 1, Error 2, 1, 2, 3]|
+        ||2  |[200, [[b, 0]]]                |[0]                        |
+        ||3  |[300,]                         |[]                         |
+        |+---+-------------------------------+---------------------------+
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val actualResults = showString(restoredDf, 5)
+
+    assertSchema(restoredDf.schema.treeString, expectedSchema)
+    assertResults(actualResults, expectedData)
   }
 
   // Call showString() by reflection since it is private
