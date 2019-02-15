@@ -323,6 +323,7 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
       """root
         | |-- id: long (nullable = true)
         | |-- leg: struct (nullable = false)
+        | |    |-- quark: integer (nullable = false)
         | |    |-- legid: long (nullable = true)
         | |-- electron: array (nullable = true)
         | |    |-- element: struct (containsNull = true)
@@ -331,23 +332,51 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         |""".stripMargin.replace("\r\n", "\n")
 
     val expectedDeconstructedData =
-      """+---+-----+------------------------+
-        ||id |leg  |proton                  |
-        |+---+-----+------------------------+
-        ||1  |[100]|[[b, a], [d, c], [f, e]]|
-        ||2  |[200]|[[h, g], [j, i], [l, k]]|
-        ||3  |[300]|[]                      |
-        ||4  |[400]|null                    |
-        |+---+-----+------------------------+
+      """+---+--------+------------------------+
+        ||id |leg     |electron                |
+        |+---+--------+------------------------+
+        ||1  |[0, 100]|[[b, a], [d, c], [f, e]]|
+        ||2  |[0, 200]|[[h, g], [j, i], [l, k]]|
+        ||3  |[0, 300]|[]                      |
+        ||4  |[0, 400]|null                    |
+        |+---+--------+------------------------+
         |""".stripMargin.replace("\r\n", "\n")
 
+    val expectedRestoredSchema =
+      """root
+        | |-- id: long (nullable = true)
+        | |-- leg: struct (nullable = false)
+        | |    |-- conditions: array (nullable = true)
+        | |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |-- action: string (nullable = true)
+        | |    |    |    |-- check: string (nullable = true)
+        | |    |-- legid: long (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
 
-    val (df2, fld) = ExplodeTools.deconstructNestedColumn(df, "leg.conditions")
+    val expectedRestoredData =
+      """+---+-------------------------------+
+        ||id |leg                            |
+        |+---+-------------------------------+
+        ||1  |[[[b, a], [d, c], [f, e]], 100]|
+        ||2  |[[[h, g], [j, i], [l, k]], 200]|
+        ||3  |[[], 300]                      |
+        ||4  |[, 400]                        |
+        |+---+-------------------------------+
+        |""".stripMargin.replace("\r\n", "\n")
 
-    val actualResults = showString(df2, 5)
+    val d = ExplodeTools.deconstructNestedColumn(df, "leg.conditions")
+    val (df2, deconstructedCol, transientCol) = ExplodeTools.DeconstructedNestedField.unapply(d).get
+
+    val df3 = ExplodeTools.nestedRenameReplace(df2, deconstructedCol, "leg.conditions", transientCol)
+
+    val actualDeconstructedResults = showString(df2, 5)
+    val actualRestoredResults = showString(df3, 5)
 
     assertSchema(df2.schema.treeString, expectedDeconstructedSchema)
-    assertResults(actualResults, actualResults)
+    assertResults(actualDeconstructedResults, expectedDeconstructedData)
+
+    assertSchema(df3.schema.treeString, expectedRestoredSchema)
+    assertResults(actualRestoredResults, expectedRestoredData)
   }
 
   test ("Test multiple nesting of arrays and structs") {
@@ -431,7 +460,6 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         | |-- id: long (nullable = true)
         | |-- legs: array (nullable = true)
         | |    |-- element: struct (containsNull = true)
-        | |    |    |-- legid: long (nullable = true)
         | |    |    |-- conditions: array (nullable = true)
         | |    |    |    |-- element: struct (containsNull = true)
         | |    |    |    |    |-- amount: long (nullable = true)
@@ -439,17 +467,18 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         | |    |    |    |    |    |-- element: struct (containsNull = true)
         | |    |    |    |    |    |    |-- checkNums: array (nullable = true)
         | |    |    |    |    |    |    |    |-- element: string (containsNull = true)
+        | |    |    |-- legid: long (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
 
     val expectedRestoredResults =
       """+---+----------------------------------------------+
         ||id |legs                                          |
         |+---+----------------------------------------------+
-        ||1  |[[100, [[100, [[[1, 2, 3b, 4, 5c, 6]]]]]]]    |
-        ||2  |[[200, [[200, [[[8, 9, 10b, 11, 12c, 13]]]]]]]|
-        ||3  |[[300, [[300, []]]]]                          |
-        ||4  |[[400, [[400,]]]]                             |
-        ||5  |[[500, []]]                                   |
+        ||1  |[[[[100, [[[1, 2, 3b, 4, 5c, 6]]]]], 100]]    |
+        ||2  |[[[[200, [[[8, 9, 10b, 11, 12c, 13]]]]], 200]]|
+        ||3  |[[[[300, []]], 300]]                          |
+        ||4  |[[[[400,]], 400]]                             |
+        ||5  |[[[], 500]]                                   |
         ||6  |[]                                            |
         ||7  |null                                          |
         |+---+----------------------------------------------+
@@ -578,21 +607,21 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
       """root
         | |-- id: long (nullable = true)
         | |-- leg: struct (nullable = false)
-        | |    |-- legid: long (nullable = true)
         | |    |-- conditions: array (nullable = true)
         | |    |    |-- element: struct (containsNull = true)
         | |    |    |    |-- action: string (nullable = true)
         | |    |    |    |-- check: string (nullable = true)
+        | |    |-- legid: long (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
 
     val expectedData =
       """+---+-------------------------------+
         ||id |leg                            |
         |+---+-------------------------------+
-        ||1  |[100, [[b, a], [d, c], [f, e]]]|
-        ||2  |[200, [[h, g], [j, i], [l, k]]]|
-        ||3  |[300, []]                      |
-        ||4  |[400,]                         |
+        ||1  |[[[b, a], [d, c], [f, e]], 100]|
+        ||2  |[[[h, g], [j, i], [l, k]], 200]|
+        ||3  |[[], 300]                      |
+        ||4  |[, 400]                        |
         |+---+-------------------------------+
         |""".stripMargin.replace("\r\n", "\n")
 
@@ -621,11 +650,11 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
       """root
         | |-- id: long (nullable = true)
         | |-- leg: struct (nullable = false)
-        | |    |-- legid: long (nullable = true)
         | |    |-- conditions: array (nullable = true)
         | |    |    |-- element: struct (containsNull = true)
         | |    |    |    |-- action: string (nullable = true)
         | |    |    |    |-- check: string (nullable = true)
+        | |    |-- legid: long (nullable = true)
         | |-- errors: array (nullable = true)
         | |    |-- element: string (containsNull = true)
         |""".stripMargin.replace("\r\n", "\n")
@@ -634,9 +663,9 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
       """+---+-------------------------------+---------------------------+
         ||id |leg                            |errors                     |
         |+---+-------------------------------+---------------------------+
-        ||1  |[100, [[b, 1], [d, 2], [f, 3]]]|[Error 1, Error 2, 1, 2, 3]|
-        ||2  |[200, [[b, 0]]]                |[0]                        |
-        ||3  |[300,]                         |[]                         |
+        ||1  |[[[b, 1], [d, 2], [f, 3]], 100]|[Error 1, Error 2, 1, 2, 3]|
+        ||2  |[[[b, 0]], 200]                |[0]                        |
+        ||3  |[, 300]                        |[]                         |
         |+---+-------------------------------+---------------------------+
         |""".stripMargin.replace("\r\n", "\n")
 
