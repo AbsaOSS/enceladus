@@ -25,16 +25,35 @@ object ExplodeTools {
   // scalastyle:off method.length
   // scalastyle:off null
 
-  private val deconstructedColumnName = "electron"
-  private val explosionTmpColumnName = "proton"
-  private val nullRestoredTmpColumnName = "neutron"
-  private val transientColumnName = "higgs_boson"
+  /**
+    * Explodes all arrays within the path.
+    * Context can be used to revert all explosions back.
+    *
+    * @param columnPathName   An column to be exploded. It can be nested inside array or several levels of array nesting
+    * @param inputDf          A DataFrame that contains an array
+    * @param explosionContext A context returned by previous explosions. If you do several explosions on the top of
+    *                         each other it is very important to pass the previous context here so all explosions could
+    *                         be reverted
+    * @return A pair containing an exploded DataFrame and an explosion context.
+    */
+  def explodeAllArraysInPath(columnPathName: String,
+                             inputDf: DataFrame,
+                             explosionContext: ExplosionContext = ExplosionContext()): (DataFrame, ExplosionContext) = {
+    val arrays = SchemaUtils.getAllArraysInPath(columnPathName, inputDf.schema)
+    arrays.foldLeft(inputDf, explosionContext)(
+      (contextPair, arrayColName) => {
+        contextPair match {
+          case (df, context) =>
+            explodeArray(arrayColName, df, context)
+        }
+      })
+  }
 
   /**
     * Explodes a specific array inside a dataframe in context. Returns a new dataframe and a new context.
     * Context can be used to revert all explosions back.
     *
-    * @param arrayFieldName   An array field name to be exploded. It can be inside a nested struct, but cannot be nested
+    * @param arrayColPathName An array field name to be exploded. It can be inside a nested struct, but cannot be nested
     *                         inside another array. If that is the case you need to explode the topmost array first.
     * @param inputDf          A DataFrame that contains an array
     * @param explosionContext A context returned by previous explosions. If you do several explosions on the top of
@@ -42,16 +61,16 @@ object ExplodeTools {
     *                         be reverted
     * @return A pair containing an exploded DataFrame and an explosion context.
     */
-  def explodeArray(arrayFieldName: String,
+  def explodeArray(arrayColPathName: String,
                    inputDf: DataFrame,
                    explosionContext: ExplosionContext = ExplosionContext()): (DataFrame, ExplosionContext) = {
 
-    validateArrayField(inputDf.schema, arrayFieldName)
+    validateArrayField(inputDf.schema, arrayColPathName)
 
     val explodedColumnName = getUniqueName(explosionTmpColumnName, Some(inputDf.schema))
-    val explodedIdName = getRootLevelPrefix(arrayFieldName, "id", inputDf.schema)
-    val explodedIndexName = getRootLevelPrefix(arrayFieldName, "idx", inputDf.schema)
-    val explodedSizeName = getRootLevelPrefix(arrayFieldName, "size", inputDf.schema)
+    val explodedIdName = getRootLevelPrefix(arrayColPathName, "id", inputDf.schema)
+    val explodedIndexName = getRootLevelPrefix(arrayColPathName, "idx", inputDf.schema)
+    val explodedSizeName = getRootLevelPrefix(arrayColPathName, "size", inputDf.schema)
 
     // Adding an unique row id so we can reconstruct the array later by grouping by that id
     val dfWithId = inputDf.withColumn(explodedIdName, monotonically_increasing_id())
@@ -62,13 +81,13 @@ object ExplodeTools {
     val nullArrayIndicator = -1
     val explodedDf = dfWithId
       .select(dfWithId.schema.map(a => col(a.name)) :+
-        when(col(arrayFieldName).isNull,
-          nullArrayIndicator).otherwise(size(col(arrayFieldName))).as(explodedSizeName) :+
-        posexplode_outer(col(arrayFieldName)).as(Seq(explodedIndexName, explodedColumnName)): _*)
+        when(col(arrayColPathName).isNull,
+          nullArrayIndicator).otherwise(size(col(arrayColPathName))).as(explodedSizeName) :+
+        posexplode_outer(col(arrayColPathName)).as(Seq(explodedIndexName, explodedColumnName)): _*)
 
-    val explodedColRenamed = nestedRenameReplace(explodedDf, explodedColumnName, arrayFieldName)
+    val explodedColRenamed = nestedRenameReplace(explodedDf, explodedColumnName, arrayColPathName)
 
-    val newExplosion = Explosion(arrayFieldName, explodedIdName, explodedIndexName, explodedSizeName)
+    val newExplosion = Explosion(arrayColPathName, explodedIdName, explodedIndexName, explodedSizeName)
     val newContext = explosionContext.copy(explosions = newExplosion +: explosionContext.explosions)
     (explodedColRenamed, newContext)
   }
@@ -316,4 +335,9 @@ object ExplodeTools {
       throw new IllegalArgumentException(s"An error column $fieldName is not an array.")
     }
   }
+
+  private val deconstructedColumnName = "electron"
+  private val explosionTmpColumnName = "proton"
+  private val nullRestoredTmpColumnName = "neutron"
+  private val transientColumnName = "higgs_boson"
 }
