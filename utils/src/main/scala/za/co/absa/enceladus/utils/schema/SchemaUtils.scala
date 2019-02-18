@@ -290,7 +290,7 @@ object SchemaUtils {
     var columnName = ""
     var i = 0
     while (exists) {
-      columnName = if (i ==0) desiredName else s"${desiredName}_$i"
+      columnName = if (i == 0) desiredName else s"${desiredName}_$i"
       exists = schema.fields.exists(_.name.compareToIgnoreCase(columnName) == 0)
       i += 1
     }
@@ -320,7 +320,7 @@ object SchemaUtils {
   /**
     * Checks if a field is an array
     *
-    * @param schema A schema
+    * @param schema        A schema
     * @param fieldPathName A type to be casted to
     * @return true if casting never fails
     */
@@ -376,7 +376,7 @@ object SchemaUtils {
   /**
     * Checks if a field is an array that is not nested in another array
     *
-    * @param schema A schema
+    * @param schema        A schema
     * @param fieldPathName A type to be casted to
     * @return true if casting never fails
     */
@@ -408,6 +408,43 @@ object SchemaUtils {
     }
 
     val path = fieldPathName.split('.')
+    structHelper(schema, path)
+  }
+
+  /**
+    * Checks if a field is the only field in a struct
+    *
+    * @param schema A schema
+    * @param column A column to check
+    * @return true if the column is the only column in a struct
+    */
+  def isOnlyField(schema: StructType, column: String): Boolean = {
+    def structHelper(structField: StructType, path: Seq[String]): Boolean = {
+      val currentField = path.head
+      val isLeaf = path.lengthCompare(1) <= 0
+      var isOnlyField = false
+      structField.fields.foreach(field =>
+        if (field.name == currentField) {
+          if (isLeaf) {
+            isOnlyField = structField.fields.length == 1
+          } else {
+            field.dataType match {
+              case st: StructType =>
+                isOnlyField = structHelper(st, path.tail)
+              case _: ArrayType =>
+                throw new IllegalArgumentException(
+                  s"SchemaUtils.isOnlyField() does not support checking struct fields inside an array")
+              case _ =>
+                throw new IllegalArgumentException(
+                  s"Primitive fields cannot have child fields $currentField is a primitive in $column")
+            }
+          }
+
+        }
+      )
+      isOnlyField
+    }
+    val path = column.split('.')
     structHelper(schema, path)
   }
 

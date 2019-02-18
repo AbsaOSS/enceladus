@@ -211,4 +211,24 @@ class SchemaUtilsSuite extends FunSuite {
     assert(name2 == "value_1")
   }
 
+  test("Test isOnlyField()") {
+    val schema = StructType(Seq[StructField](
+      StructField("a", StringType),
+      StructField("b", StructType(Seq[StructField](
+        StructField("e", StringType),
+        StructField("f", StringType)
+      ))),
+      StructField("c", StructType(Seq[StructField](
+        StructField("d", StringType)
+      )))
+    ))
+
+    assert(!isOnlyField(schema, "a"))
+    assert(!isOnlyField(schema, "a"))
+    assert(!isOnlyField(schema, "a"))
+    assert(!isOnlyField(schema, "b.e"))
+    assert(!isOnlyField(schema, "b.f"))
+    assert(isOnlyField(schema, "c.d"))
+  }
+
 }
