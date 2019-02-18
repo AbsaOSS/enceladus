@@ -725,6 +725,50 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     assertResults(actualResults, expectedData)
   }
 
+  test ("Test empty struct inside an array with the only array field") {
+    val sample = """{"order":1,"a":[{"c":[{"d":1}]}],"myFlag":true}""" ::
+      """{"order":2,"a":[{"c":[]}],"myFlag":true}""" ::
+      """{"order":3,"a":[{}],"myFlag":true}""" ::
+      """{"order":4,"a":[],"myFlag":true}""" ::
+      """{"order":5,"myFlag":true}""" :: Nil
+
+    val df = JsonUtils.getDataFrameFromJson(spark, sample)
+
+    val (explodedDf1, explodeContext1) = ExplodeTools.explodeArray("a", df)
+
+    val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("a.c", explodedDf1, explodeContext1)
+
+    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf2, explodeContext2)
+
+    val expectedSchema =
+      """root
+        | |-- myFlag: boolean (nullable = true)
+        | |-- order: long (nullable = true)
+        | |-- a: array (nullable = true)
+        | |    |-- element: struct (containsNull = true)
+        | |    |    |-- c: array (nullable = true)
+        | |    |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |    |-- d: long (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedData =
+      """+------+-----+---------+
+        ||myFlag|order|a        |
+        |+------+-----+---------+
+        ||true  |1    |[[[[1]]]]|
+        ||true  |2    |[[[]]]   |
+        ||true  |3    |[[]]     |
+        ||true  |4    |[]       |
+        ||true  |5    |null     |
+        |+------+-----+---------+
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val actualResults = showString(restoredDf, 10)
+
+    assertSchema(restoredDf.schema.treeString, expectedSchema)
+    assertResults(actualResults, expectedData)
+  }
+
   // Call showString() by reflection since it is private
   // Thanks https://stackoverflow.com/a/51218800/1038282
   private def showString(df: DataFrame, numRows: Int = 20): String = {

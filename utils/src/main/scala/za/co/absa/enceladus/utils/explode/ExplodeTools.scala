@@ -20,6 +20,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils._
+import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 object ExplodeTools {
   // scalastyle:off method.length
@@ -73,15 +74,29 @@ object ExplodeTools {
     val explodedIdName = getRootLevelPrefix(arrayColPathName, "id", inputDf.schema)
     val explodedIndexName = getRootLevelPrefix(arrayColPathName, "idx", inputDf.schema)
     val explodedSizeName = getRootLevelPrefix(arrayColPathName, "size", inputDf.schema)
+    var superTransientFieldName: Option[String] = None
 
     // Adding an unique row id so we can reconstruct the array later by grouping by that id
     val dfWithId = inputDf.withColumn(explodedIdName, monotonically_increasing_id())
+
+    // Add a transient field if we are exploding an array that is an only column of a struct.
+    // The retionale for this is that otherwise a struct with all null fields will be treated as null
+    // And after reverting the explosion empty structs will become nulls.
+    // Spark works fine if the array is not the only field in the struct. So we add a transient field
+    // that will exist only between explosion and its restoration.
+    val dfWithTransientField = if (isOnlyField(inputDf.schema, arrayColPathName)) {
+      val (newDf, transientFldName) = addSuperTransientField(dfWithId, arrayColPathName)
+      superTransientFieldName = Some(transientFldName)
+      newDf
+    } else {
+      dfWithId
+    }
 
     // Exploding...
     // The '-1' value as an array size indicates that the array field is null. This is to distinguish
     // between array field being empty or null
     val nullArrayIndicator = -1
-    val explodedDf = dfWithId
+    val explodedDf = dfWithTransientField
       .select(dfWithId.schema.map(a => col(a.name)) :+
         when(col(arrayColPathName).isNull,
           nullArrayIndicator).otherwise(size(col(arrayColPathName))).as(explodedSizeName) :+
@@ -89,7 +104,8 @@ object ExplodeTools {
 
     val explodedColRenamed = nestedRenameReplace(explodedDf, explodedColumnName, arrayColPathName)
 
-    val newExplosion = Explosion(arrayColPathName, explodedIdName, explodedIndexName, explodedSizeName)
+    val newExplosion = Explosion(arrayColPathName, explodedIdName, explodedIndexName, explodedSizeName,
+      superTransientFieldName)
     val newContext = explosionContext.copy(explosions = newExplosion +: explosionContext.explosions)
     (explodedColRenamed, newContext)
   }
@@ -169,13 +185,19 @@ object ExplodeTools {
     val tmpColName2 = getUniqueName(nullRestoredTmpColumnName, Some(inputDf.schema))
     val nullsRestored = dfImploded
       .withColumn(tmpColName2, when(col(explosion.sizeFieldName) > 0, col(tmpColName))
-        otherwise when(col(explosion.sizeFieldName) === 0, typedLit(Array())).otherwise(null)
+          .otherwise(when(col(explosion.sizeFieldName) === 0, typedLit(Array())).otherwise(null))
       )
 
     val dfArraysRestored = nestedRenameReplace(nullsRestored, tmpColName2, explosion.arrayFieldName,
       transientColumn)
 
-    dfArraysRestored
+    val dfTransientRestored = explosion.superTransientFieldName match {
+      case None => dfArraysRestored
+      case Some(transientField) =>
+        DeepArrayTransformations.nestedDropColumn(dfArraysRestored, transientField)
+    }
+
+    dfTransientRestored
       // Drop the temporary column
       .drop(col(tmpColName))
       // Drop the array size column
@@ -310,6 +332,13 @@ object ExplodeTools {
     df.select(processStruct(df.schema, pathTo, None): _*)
   }
 
+  def addSuperTransientField(inputDf: DataFrame, arrayColPathName: String): (DataFrame, String) = {
+    val colName = SchemaUtils.getUniqueName(superTransientColumnName, Some(inputDf.schema))
+    val nestedColName = (arrayColPathName.split('.').dropRight(1) :+ colName).mkString(".")
+    val df = DeepArrayTransformations.nestedAddColumn(inputDf, nestedColName, _ => lit(null))
+    (df, nestedColName)
+  }
+
   private def getFullFieldPath(parentCol: Option[Column], fieldName: String): Column = {
     parentCol match {
       case None => col(fieldName)
@@ -351,4 +380,5 @@ object ExplodeTools {
   private val explosionTmpColumnName = "proton"
   private val nullRestoredTmpColumnName = "neutron"
   private val transientColumnName = "quark"
+  private val superTransientColumnName = "higgs"
 }
