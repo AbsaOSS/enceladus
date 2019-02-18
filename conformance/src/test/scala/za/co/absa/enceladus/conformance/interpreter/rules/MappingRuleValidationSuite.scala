@@ -34,54 +34,54 @@ class MappingRuleValidationSuite extends FunSuite with SparkTestBase {
     val rule1 = new MappingConformanceRule(order = 0, mappingTable = "country", controlCheckpoint = false,
       mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"), targetAttribute = "country_name", outputColumn =
         "conformed_country")
-    MappingRuleInterpreter.validateMappingFieldsExist("", df.schema, mapTable.schema, rule1)
+    MappingRuleInterpreterOld.validateMappingFieldsExist("", df.schema, mapTable.schema, rule1)
 
     val rule2 = new MappingConformanceRule(order = 0, mappingTable = "country", controlCheckpoint = false,
       mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"), targetAttribute = "Country_name", outputColumn = "conformed_country")
     val except2 = intercept[ValidationException] {
-      MappingRuleInterpreter.validateMappingFieldsExist("", df.schema, mapTable.schema, rule2)
+      MappingRuleInterpreterOld.validateMappingFieldsExist("", df.schema, mapTable.schema, rule2)
     }
     assert(except2.message.contains("Column name 'Country_name' does not case-sensitively match 'country_name'"))
 
     val rule3 = new MappingConformanceRule(order = 0, mappingTable = "country", controlCheckpoint = false,
       mappingTableVersion = 0, attributeMappings = Map("country_code" -> "Country"), targetAttribute = "country_name", outputColumn = "conformed_country")
     val except3 = intercept[ValidationException] {
-      MappingRuleInterpreter.validateMappingFieldsExist("", df.schema, mapTable.schema, rule3)
+      MappingRuleInterpreterOld.validateMappingFieldsExist("", df.schema, mapTable.schema, rule3)
     }
     assert(except3.message.contains("Column name 'Country' does not case-sensitively match 'country'"))
 
     val rule4 = new MappingConformanceRule(order = 0, mappingTable = "country", controlCheckpoint = false,
       mappingTableVersion = 0, attributeMappings = Map("country_Code" -> "country"), targetAttribute = "country_name", outputColumn = "conformed_country")
     val except4 = intercept[ValidationException] {
-      MappingRuleInterpreter.validateMappingFieldsExist("", df.schema, mapTable.schema, rule4)
+      MappingRuleInterpreterOld.validateMappingFieldsExist("", df.schema, mapTable.schema, rule4)
     }
     assert(except4.message.contains("Column name 'country_Code' does not case-sensitively match 'country_code'"))
 
     val rule5 = new MappingConformanceRule(order = 0, mappingTable = "country", controlCheckpoint = false,
       mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"), targetAttribute = "country_name", outputColumn = "country.conformed_country")
     val except5 = intercept[ValidationException] {
-      MappingRuleInterpreter.validateMappingFieldsExist("", df.schema, mapTable.schema, rule5)
+      MappingRuleInterpreterOld.validateMappingFieldsExist("", df.schema, mapTable.schema, rule5)
     }
     assert(except5.message.contains("Column 'country' is a primitive type and can't contain child fields 'country.conformed_country'"))
 
     val rule6 = new MappingConformanceRule(order = 0, mappingTable = "country", controlCheckpoint = false,
       mappingTableVersion = 0, attributeMappings = Map("country_zip" -> "country"), targetAttribute = "country_name", outputColumn = "conformed_country")
     val except6 = intercept[ValidationException] {
-      MappingRuleInterpreter.validateMappingFieldsExist("", df.schema, mapTable.schema, rule6)
+      MappingRuleInterpreterOld.validateMappingFieldsExist("", df.schema, mapTable.schema, rule6)
     }
     assert(except6.message.contains("Column name 'country_zip' does not exist"))
 
     val rule7 = new MappingConformanceRule(order = 0, mappingTable = "country", controlCheckpoint = false,
       mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country_id"), targetAttribute = "country_name", outputColumn = "conformed_country")
     val except7 = intercept[ValidationException] {
-      MappingRuleInterpreter.validateMappingFieldsExist("", df.schema, mapTable.schema, rule7)
+      MappingRuleInterpreterOld.validateMappingFieldsExist("", df.schema, mapTable.schema, rule7)
     }
     assert(except7.message.contains("Column name 'country_id' does not exist"))
 
     val rule8 = new MappingConformanceRule(order = 0, mappingTable = "country", controlCheckpoint = false,
       mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"), targetAttribute = "country_description", outputColumn = "conformed_country")
     val except8 = intercept[ValidationException] {
-      MappingRuleInterpreter.validateMappingFieldsExist("", df.schema, mapTable.schema, rule8)
+      MappingRuleInterpreterOld.validateMappingFieldsExist("", df.schema, mapTable.schema, rule8)
     }
     assert(except8.message.contains("olumn name 'country_description' does not exist"))
   }
