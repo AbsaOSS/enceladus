@@ -22,5 +22,6 @@ case class Explosion(
                       arrayFieldName: String,
                       idFieldName: String,
                       indexFieldName: String,
-                      sizeFieldName: String
+                      sizeFieldName: String,
+                      superTransientFieldName: Option[String]
                     )

@@ -48,11 +48,25 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   test("Testing Array Type conformance") {
 
     val df = spark.createDataFrame(ArraySamples.testData)
+
+    df.printSchema()
+    df.show(false)
+
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
     val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef, df)(spark, dao, progArgs, false).cache()
     val expected = ArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[ConformedOuter].collect().sortBy(_.order).toList
+
+    println("Expected")
+    val df2 = spark.createDataFrame(ArraySamples.conformedData)
+    df2.toJSON.collect().foreach(println)
+    println("Actual")
+    conformedDf.toJSON.collect().foreach(println)
+
+    println(expected)
+    println(conformed)
+
     assertResult(expected)(conformed)
 
     conformedDf.show(false)
@@ -61,14 +75,27 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     assert(numOfErrors == ArraySamples.totalNumberOfErrors)
   }
 
+
   test("Conformance should NOT generate errors when matching null ") {
 
     val df = spark.createDataFrame(NullArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
+    println("INPUT:")
+    df.toJSON.collect().foreach(println)
+    df.printSchema()
+    df.show(false)
+
+
     val conformedDf = DynamicInterpreter.interpret(NullArraySamples.mappingOnlyConformanceDef, df)(spark, dao, progArgs, false).cache()
     val expected = NullArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
+
+    println("OUTPUT:")
+    conformedDf.toJSON.collect().foreach(println)
+    conformedDf.printSchema()
+    conformedDf.show(false)
+
 
     assertResult(expected)(conformed)
 

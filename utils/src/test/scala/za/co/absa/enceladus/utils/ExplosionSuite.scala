@@ -426,8 +426,9 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         | |-- legs: struct (nullable = false)
         | |    |-- conditions: struct (nullable = false)
         | |    |    |-- amount: long (nullable = true)
-        | |    |    |-- checks: struct (nullable = true)
+        | |    |    |-- checks: struct (nullable = false)
         | |    |    |    |-- checkNums: string (nullable = true)
+        | |    |    |    |-- higgs: null (nullable = true)
         | |    |-- legid: long (nullable = true)
         | |-- legs_id: long (nullable = false)
         | |-- legs_size: integer (nullable = false)
@@ -507,7 +508,8 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     assertSchema(df.schema.treeString, expectedOriginalSchema)
     assertResults(actualOriginalResults, expectedOriginalResults)
 
-    assertSchema(explodedDf4.schema.treeString, expectedExplodedSchema)
+    val actualExplodedSchema = explodedDf4.schema.treeString.replaceAll("higgs_\\d+","higgs")
+    assertSchema(actualExplodedSchema, expectedExplodedSchema)
     assert(explodedDf4.count() == 17)
 
     assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
@@ -546,10 +548,11 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     val expectedExplodedSchema =
       """root
         | |-- id: long (nullable = true)
-        | |-- leg: struct (nullable = true)
+        | |-- leg: struct (nullable = false)
         | |    |-- conditions: struct (nullable = true)
         | |    |    |-- action: string (nullable = true)
         | |    |    |-- check: string (nullable = true)
+        | |    |-- higgs: null (nullable = true)
         | |-- leg_conditions_id: long (nullable = false)
         | |-- leg_conditions_size: integer (nullable = false)
         | |-- leg_conditions_idx: integer (nullable = true)
@@ -558,7 +561,7 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     val expectedRestoredSchema =
       """root
         | |-- id: long (nullable = true)
-        | |-- leg: struct (nullable = true)
+        | |-- leg: struct (nullable = false)
         | |    |-- conditions: array (nullable = true)
         | |    |    |-- element: struct (containsNull = true)
         | |    |    |    |-- action: string (nullable = true)
@@ -572,7 +575,7 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         ||1  |[[[b, a], [d, c], [f, e]]]|
         ||2  |[[[h, g], [j, i], [l, k]]]|
         ||3  |[[]]                      |
-        ||4  |null                      |
+        ||4  |[]                        |
         |+---+--------------------------+
         |""".stripMargin.replace("\r\n", "\n")
 
@@ -586,7 +589,8 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     assertSchema(df.schema.treeString, expectedOriginalSchema)
     assertResults(actualOriginalResults, expectedOriginalResults)
 
-    assertSchema(explodedDf.schema.treeString, expectedExplodedSchema)
+    val actualExplodedSchema = explodedDf.schema.treeString.replaceAll("higgs_\\d+","higgs")
+    assertSchema(actualExplodedSchema, expectedExplodedSchema)
     assert(explodedDf.count() == 8)
 
     assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
