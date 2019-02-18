@@ -23,6 +23,7 @@ import za.co.absa.enceladus.utils.explode.ExplodeTools
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 class ExplosionSuite extends FunSuite with SparkTestBase {
 
@@ -670,6 +671,55 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
         |""".stripMargin.replace("\r\n", "\n")
 
     val actualResults = showString(restoredDf, 5)
+
+    assertSchema(restoredDf.schema.treeString, expectedSchema)
+    assertResults(actualResults, expectedData)
+  }
+
+  test ("Test empty struct inside an array") {
+    val sample = """{"order":1,"a":[{"b":"H1","c":[{"d":1,"toDrop": "drop me"}]}],"myFlag":true}""" ::
+      """{"order":2,"a":[{"b":"H2","c":[]}],"myFlag":true}""" ::
+      """{"order":3,"a":[{"b":"H3"}],"myFlag":true}""" ::
+      """{"order":4,"a":[{}],"myFlag":true}""" ::
+      """{"order":5,"a":[],"myFlag":true}""" ::
+      """{"order":6,"myFlag":true}""" :: Nil
+
+    val df = JsonUtils.getDataFrameFromJson(spark, sample)
+
+    val (explodedDf1, explodeContext1) = ExplodeTools.explodeArray("a", df)
+    val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("a.c", explodedDf1, explodeContext1)
+
+    // Manipulate the exploded structs
+    val changedDf = DeepArrayTransformations.nestedDropColumn(explodedDf2, "a.c.toDrop")
+
+    val restoredDf = ExplodeTools.revertAllExplosions(changedDf, explodeContext2)
+
+    val expectedSchema =
+      """root
+        | |-- myFlag: boolean (nullable = true)
+        | |-- order: long (nullable = true)
+        | |-- a: array (nullable = true)
+        | |    |-- element: struct (containsNull = true)
+        | |    |    |-- b: string (nullable = true)
+        | |    |    |-- c: array (nullable = true)
+        | |    |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |    |-- d: long (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val expectedData =
+      """+------+-----+-------------+
+        ||myFlag|order|a            |
+        |+------+-----+-------------+
+        ||true  |1    |[[H1, [[1]]]]|
+        ||true  |2    |[[H2, []]]   |
+        ||true  |3    |[[H3,]]      |
+        ||true  |4    |[[,]]        |
+        ||true  |5    |[]           |
+        ||true  |6    |null         |
+        |+------+-----+-------------+
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val actualResults = showString(restoredDf, 10)
 
     assertSchema(restoredDf.schema.treeString, expectedSchema)
     assertResults(actualResults, expectedData)
