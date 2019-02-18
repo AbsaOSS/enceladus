@@ -190,6 +190,7 @@ object DeepArrayTransformations {
     // The name of the field is the last token of outputColumnName
     val outputFieldName = outputColumnName.split('.').last
     var errorColumnName = ""
+    val replaceExistingColumn = inputColumnName == outputColumnName
 
     // Sequential lambda name generator
     var lambdaIndex = 1
@@ -269,9 +270,14 @@ object DeepArrayTransformations {
                 mapArray(dt, path, parentColumn)
               case _ =>
                 ensureOutputColumnNonEmpty()
-                mappedFields += exp(curColumn).as(outputFieldName)
+                val newColumn = exp(curColumn).as(outputFieldName)
                 addErrorColumn(Some(schema), curColumn).foreach(mappedFields += _)
-                Seq(curColumn)
+                if (replaceExistingColumn) {
+                  Seq(newColumn)
+                } else {
+                  mappedFields += newColumn
+                  Seq(curColumn)
+                }
             }
         }
       }
