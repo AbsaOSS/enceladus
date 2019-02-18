@@ -815,6 +815,38 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     assertResults(actualResults, expectedResults)
   }
 
+  test("Test deep mapping a field into a field with the same name") {
+    // Array of struct
+    val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleN).toDF
+
+    val dfOut = DeepArrayTransformations.nestedWithColumnMap(df, "legs.legid", "legs.legid", _ => {
+      lit("1")
+    })
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema =
+      """root
+        | |-- id: integer (nullable = false)
+        | |-- legs: array (nullable = true)
+        | |    |-- element: struct (containsNull = false)
+        | |    |    |-- legid: string (nullable = false)
+        | |    |    |-- conditions: array (nullable = true)
+        | |    |    |    |-- element: struct (containsNull = true)
+        | |    |    |    |    |-- conif: string (nullable = true)
+        | |    |    |    |    |-- conthen: string (nullable = true)
+        | |    |    |    |    |-- amount: double (nullable = false)
+        |""".stripMargin.replace("\r\n", "\n")
+    val expectedResults =
+      """{"id":1,"legs":[{"legid":"1","conditions":[{"conif":"if bid>10","conthen":"buy","amount":100.0},{"conif":"if sell<5","conthen":"sell","amount":150.0},{"conif":"if sell<1","conthen":"sell","amount":1000.0}]},{"legid":"1","conditions":[{"conif":"if bid<50","conthen":"sell","amount":200.0},{"conif":"if sell>30","conthen":"buy","amount":175.0},{"conif":"if sell>25","conthen":"buy","amount":225.0}]}]}
+        |{"id":2,"legs":[{"legid":"1","conditions":[{"conif":"if bid>11","conthen":"buy","amount":100.0},{"conif":"if sell<6","conthen":"sell","amount":150.0},{"conif":"if sell<2","conthen":"sell","amount":1000.0}]},{"legid":"1","conditions":[{"conif":"if bid<51","conthen":"sell","amount":200.0},{"conif":"if sell>31","conthen":"buy","amount":175.0},{"conif":"if sell>26","conthen":"buy","amount":225.0}]}]}
+        |{"id":3,"legs":[{"legid":"1","conditions":[{"conif":"if bid>12","conthen":"buy","amount":100.0},{"conif":"if sell<7","conthen":"sell","amount":150.0},{"conif":"if sell<3","conthen":"sell","amount":1000.0}]},{"legid":"1","conditions":[{"conif":"if bid<52","conthen":"sell","amount":200.0},{"conif":"if sell>32","conthen":"buy","amount":175.0},{"conif":"if sell>27","conthen":"buy","amount":225.0}]}]}"""
+        .stripMargin.replace("\r\n", "\n")
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
     if (actualSchema != expectedSchema) {
