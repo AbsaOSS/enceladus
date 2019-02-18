@@ -276,12 +276,12 @@ object ExplodeTools {
           Nil
         } else if (!isFound && isLeaf && placementCol.isDefined && placementCol.get == field.name) {
           isFound = true
-          Seq(col(columnFrom).as(currentField))
+          Seq(col(s"`$columnFrom`").as(currentField))
         } else if (!isFound && field.name == currentField) {
           field.dataType match {
             case _ if isLeaf =>
               isFound = true
-              Seq(col(columnFrom).as(currentField))
+              Seq(col(s"`$columnFrom`").as(currentField))
             case st: StructType =>
               val newFields = processStruct(st, path.tail, Some(getFullFieldPath(parentCol, field.name)))
               if (newFields.lengthCompare(1) == 0) {
@@ -300,7 +300,7 @@ object ExplodeTools {
         }
       })
       if (!isFound && isLeaf) {
-        val c = col(columnFrom)
+        val c = col(s"`$columnFrom`")
         newFields :+ when(c.isNotNull, c).otherwise(null).as(currentField)
       } else {
         newFields
