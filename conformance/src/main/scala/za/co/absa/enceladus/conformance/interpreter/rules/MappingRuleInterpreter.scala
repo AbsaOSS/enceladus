@@ -15,29 +15,26 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
-import org.apache.spark.sql._
-import org.apache.spark.sql.types._
-import za.co.absa.enceladus.dao.EnceladusDAO
-import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
-import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
-import org.apache.spark.sql.functions._
 import com.typesafe.config.ConfigFactory
+import org.apache.spark.sql._
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
+import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.utils.schema.SchemaUtils
-import org.apache.spark.sql.api.java.UDF1
-import za.co.absa.enceladus.utils.error._
+import za.co.absa.enceladus.conformance.interpreter.RuleValidators
+import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreter.{ensureDefaultValueMatchSchema, getJoinCondition}
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
+import za.co.absa.enceladus.utils.error._
+import za.co.absa.enceladus.utils.explode.ExplodeTools
+import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
+import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
+import za.co.absa.enceladus.utils.validation._
 
 import scala.util.Try
 import scala.util.control.NonFatal
-import za.co.absa.enceladus.conformance.interpreter.RuleValidators
-import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreter.{ensureDefaultValueMatchSchema, getJoinCondition}
-import za.co.absa.enceladus.utils.validation._
-import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
-import za.co.absa.enceladus.utils.explode.ExplodeTools
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations.addColumnAfter
 
 case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: ConfDataset) extends RuleInterpreter {
   // scalastyle:off method.length
@@ -46,8 +43,6 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
   private val conf = ConfigFactory.load()
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
-    import spark.implicits._
-
     val datasetSchema = dao.getSchema(conformance.schemaName, conformance.schemaVersion)
     val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
@@ -62,142 +57,61 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
 
     val (explodedDf, explodeContext) = ExplodeTools.explodeAllArraysInPath(rule.outputColumn, df)
 
-    println("EXPLODED")
-    explodedDf.toJSON.collect().foreach(println)
-    explodedDf.printSchema()
-    explodedDf.show(false)
-
     val joined = explodedDf.as(MappingRuleInterpreter.inputDfAlias)
       .join(mapTable.as(MappingRuleInterpreter.mappingTableAlias),
         MappingRuleInterpreter.getJoinCondition(rule), "left_outer")
       .select(col(s"${MappingRuleInterpreter.inputDfAlias}.*"),
         col(s"${MappingRuleInterpreter.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn)
 
-    println("JOINED")
-    joined.toJSON.collect().foreach(println)
-    joined.printSchema()
-    joined.show(false)
-
     val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
     val mappingErrUdfCall = callUDF("confMappingErr", lit(rule.outputColumn),
       array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
       typedLit(mappings))
 
-    val appendErrUdfCall = callUDF("errorColumnAppend", col(ErrorMessage.errorColumnName), mappingErrUdfCall)
-
     val placedDf = ExplodeTools.nestedRenameReplace(joined, rule.outputColumn, rule.outputColumn)
 
+    val defaultMappingValue = if (defaultMappingValueMap.contains(rule.targetAttribute)) {
+      Some(defaultMappingValueMap(rule.targetAttribute))
+    } else {
+      None
+    }
+
     val errorsDf = addErrorsToErrCol(placedDf, rule.attributeMappings.values.toSeq, rule.outputColumn,
-      ErrorMessage.errorColumnName, appendErrUdfCall, (srcCols, outCol) => {
+      defaultMappingValue, mappingErrUdfCall, (srcCols, outCol) => {
+        // Note. The previous implementation of errors condition also checks if any of array sizes in the path is -1.
+        //       This means that if any array on the path is null no error will be generated.
+        //       Checking only if actual attributes are null passes all the tests. However, need to double check
+        //       if this is the correct behavior on actual data and add a regression test for this.
         srcCols.foldLeft(outCol.isNull)((cond: Column, col: Column) => {
-         cond.and(col.isNotNull)
+          cond.and(col.isNotNull)
         })
       })
 
-    // add error column
-    //
+    val implodeDf = ExplodeTools.revertAllExplosions(errorsDf, explodeContext, Some(ErrorMessage.errorColumnName))
 
-    //val err = addErrorsToErrCol(joined, rule. )
-
-    /*
-
-    val errorsDf = joined.withColumn(
-      ErrorMessage.errorColumnName,
-      when((col(s"`${rule.outputColumn}`") isNull) and inclErrorNullArr(mappings, datasetSchema),
-        appendErrUdfCall).otherwise(col(ErrorMessage.errorColumnName)))
-
-    // see if we need to apply default value
-    val resDf = if (defaultMappingValueMap.contains(rule.targetAttribute)) {
-      ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn,
-        when(col(s"`${rule.outputColumn}`") isNotNull, col(s"`${rule.outputColumn}`"))
-          .otherwise(expr(defaultMappingValueMap(rule.targetAttribute))))
-    } else {
-      ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, col(s"`${rule.outputColumn}`"))
-    }
-    */
-
-
-
-    val resDf = errorsDf
-
-    val implodeDf = ExplodeTools.revertAllExplosions(resDf, explodeContext, Some(ErrorMessage.errorColumnName))
-
-    implodeDf.show(false)
-
-    // JOIN
-
-    /*    var errorsDf = df
-
-        val res = handleArrays(rule.outputColumn, withUniqueId) { dfIn =>
-
-          val joined = dfIn.as(MappingRuleInterpreterOld.inputDfAlias).join(mapTable.as(MappingRuleInterpreterOld.mappingTableAlias), MappingRuleInterpreterOld.getJoinCondition(rule), "left_outer").
-            select(col(s"${MappingRuleInterpreterOld.inputDfAlias}.*"), col(s"${MappingRuleInterpreterOld.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn)
-
-          val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
-          val mappingErrUdfCall = callUDF("confMappingErr", lit(rule.outputColumn),
-            array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
-            typedLit(mappings))
-
-          val appendErrUdfCall = callUDF("errorColumnAppend", col(ErrorMessage.errorColumnName), mappingErrUdfCall)
-
-          errorsDf = joined.withColumn(
-            ErrorMessage.errorColumnName,
-            when((col(s"`${rule.outputColumn}`") isNull) and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).otherwise(col(ErrorMessage.errorColumnName)))
-
-          // see if we need to apply default value
-          val resDf = if (defaultMappingValueMap.contains(rule.targetAttribute)) {
-            ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, when(col(s"`${rule.outputColumn}`") isNotNull, col(s"`${rule.outputColumn}`")).
-              otherwise(expr(defaultMappingValueMap(rule.targetAttribute))))
-          } else ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, col(s"`${rule.outputColumn}`"))
-
-          resDf
-        }
-
-        val errNested = errorsDf.groupBy(idField).agg(collect_list(col(ErrorMessage.errorColumnName)) as ErrorMessage.errorColumnName)
-        val errNestedSchema = SchemaUtils.getFieldType(ErrorMessage.errorColumnName, errNested.schema).get.asInstanceOf[ArrayType]
-
-        // errNested will duplicate error values if the previous rule has any errCol
-        // and in the current rule the joining key is an array so the error values will duplicate as the size of array :
-        // applied deduplicate logic while flattening error column
-        spark.udf.register(s"${idField}_flattenErrDistinct", new UDF1[Seq[Seq[Row]], Seq[Row]] {
-          override def call(t1: Seq[Seq[Row]]) = {
-            t1.flatten.distinct
-          }
-
-        }, errNestedSchema.elementType)
-
-        val withErr = errNested.withColumn(ErrorMessage.errorColumnName, expr(s"${idField}_flattenErrDistinct(${ErrorMessage.errorColumnName})"))
-
-        // join on the errors
-        val res2 = res.drop(ErrorMessage.errorColumnName).as("conf")
-          .join(withErr.as("err"), col(s"conf.$idField") === col(s"err.$idField"), "left_outer").select($"conf.*", col(s"err.${ErrorMessage.errorColumnName}")).drop(idField)
-
-        res2
-        */
-    //???
     implodeDf
   }
 
   private def addErrorsToErrCol(df: DataFrame,
                                 sourceCols: Seq[String],
                                 outputCol: String,
-                                errCol: String,
-                                appendErrUdfCall: Column,
+                                defaultMappingValue: Option[String],
+                                mappingErrUdfCall: Column,
                                 errorCondition: (Seq[Column], Column) => Column): DataFrame = {
-    val tmpErrors = SchemaUtils.getUniqueName("errTmp", Some(df.schema))
-    val errorsDf = df.withColumn(
-      tmpErrors,
-      when(errorCondition(sourceCols.map(col), col(outputCol)),
-        appendErrUdfCall).otherwise(col(ErrorMessage.errorColumnName))
+
+    val errorsDf = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, outputCol, outputCol,
+      ErrorMessage.errorColumnName,
+      c => {
+        defaultMappingValue match {
+          case Some(defValue) => when(c.isNotNull, c).otherwise(expr(defValue))
+          case None => c
+        }
+      }, _ => {
+        when(errorCondition(sourceCols.map(col), col(outputCol)),
+          mappingErrUdfCall).otherwise(null)
+      }
     )
-
-    val tmpErrors2 = SchemaUtils.getUniqueName("errTmp2", Some(errorsDf.schema))
-
-    errorsDf.withColumnRenamed(errCol, tmpErrors2).printSchema
-    DeepArrayTransformations.addColumnAfter(errorsDf.withColumnRenamed(errCol, tmpErrors2),
-      tmpErrors2, errCol, callUDF("arrayDistinctErrors", concat(col(tmpErrors2), col(tmpErrors))))
-      .drop(col(tmpErrors))
-      .drop(tmpErrors2)
+    errorsDf
   }
 
   private def validateMappingRule(df: Dataset[Row],
