@@ -59,7 +59,7 @@ object TypeParser {
       val origType: Option[DataType] = SchemaUtils.getFieldType(path, origSchema) // sadly with parquet support, incoming might not be all `plain`
       // this case covers some IBM date format where it's represented as a double ddmmyyyy.hhmmss
       val sourceCol: Column = origType.get match {
-        case _: DoubleType =>
+        case _: DoubleType | _: FloatType =>
           logger.warn(s"$path is specified as timestamp or date, but original type is Double. Trying to interpret as string.")
           if (format.isDefault) {
             throw new InvalidParameterException("Dates & times represented as numeric values need specified 'pattern' metadata")
