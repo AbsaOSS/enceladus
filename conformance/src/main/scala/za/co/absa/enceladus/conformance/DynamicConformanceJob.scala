@@ -138,7 +138,7 @@ object DynamicConformanceJob {
 
     // perform the conformance
     val result = try {
-      DynamicInterpreter.interpret(conformance, inputData)
+      DynamicInterpreter.interpret(conformance, inputData, experimentalMappingRule = cmd.experimentalMappingRule)
     }
     catch {
       case e: ValidationException =>

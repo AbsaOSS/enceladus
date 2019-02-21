@@ -43,6 +43,7 @@ case class MappingRuleInterpreterOld(rule: MappingConformanceRule, conformance: 
   private val conf = ConfigFactory.load()
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
+    log.info(s"Processing mapping rule to conform ${rule.outputColumn}...")
     import spark.implicits._
 
     val datasetSchema = dao.getSchema(conformance.schemaName, conformance.schemaVersion)

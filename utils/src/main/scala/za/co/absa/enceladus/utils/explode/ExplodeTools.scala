@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.utils.explode
 
+import org.apache.log4j.LogManager
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
@@ -25,6 +26,8 @@ import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 object ExplodeTools {
   // scalastyle:off method.length
   // scalastyle:off null
+
+  private val log = LogManager.getLogger(this.getClass)
 
   case class DeconstructedNestedField (df: DataFrame, deconstructedField: String, transientField: Option[String])
 
@@ -47,6 +50,7 @@ object ExplodeTools {
       (contextPair, arrayColName) => {
         contextPair match {
           case (df, context) =>
+            log.warn(s"Exploding $arrayColName...")
             explodeArray(arrayColName, df, context)
         }
       })
@@ -139,6 +143,7 @@ object ExplodeTools {
   def revertSingleExplosion(inputDf: DataFrame,
                             explosion: Explosion,
                             errorColumn: Option[String] = None): DataFrame = {
+    log.info(s"Reverting explosion $explosion...")
 
     errorColumn.foreach(validateErrorColumnField(inputDf.schema, _))
 

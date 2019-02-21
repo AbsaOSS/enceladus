@@ -50,7 +50,8 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     val df = spark.createDataFrame(ArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
-    val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef, df)(spark, dao, progArgs, false).cache()
+    val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef,
+      df, experimentalMappingRule = false)(spark, dao, progArgs, enableCF = false).cache()
     val expected = ArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[ConformedOuter].collect().sortBy(_.order).toList
     assertResult(expected)(conformed)
