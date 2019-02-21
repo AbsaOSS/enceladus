@@ -43,6 +43,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
   private val conf = ConfigFactory.load()
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
+    log.info(s"Processing mapping rule (explode-optimized) to conform ${rule.outputColumn}...")
     val datasetSchema = dao.getSchema(conformance.schemaName, conformance.schemaVersion)
     val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
@@ -55,9 +56,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     logJoinCondition(mapTable.schema, joinContidionStr)
     validateMappingRule(df, dao, mappingTableDef, mapTable, joinContidionStr, defaultMappingValueMap)
 
-    val (explodedDf, explodeContext) = ExplodeTools.explodeAllArraysInPath(rule.outputColumn, df)
-
-    val joined = explodedDf.as(MappingRuleInterpreter.inputDfAlias)
+    val joined = df.as(MappingRuleInterpreter.inputDfAlias)
       .join(mapTable.as(MappingRuleInterpreter.mappingTableAlias),
         MappingRuleInterpreter.getJoinCondition(rule), "left_outer")
       .select(col(s"${MappingRuleInterpreter.inputDfAlias}.*"),
@@ -87,9 +86,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
         })
       })
 
-    val implodeDf = ExplodeTools.revertAllExplosions(errorsDf, explodeContext, Some(ErrorMessage.errorColumnName))
-
-    implodeDf
+    errorsDf
   }
 
   private def addErrorsToErrCol(df: DataFrame,
