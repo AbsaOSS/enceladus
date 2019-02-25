@@ -11,10 +11,10 @@ A clear and concise description of where the limitation lies.
 ## Feature
 A description of the requested feature.
 
-### *Example:*
+### *Example:* [Optional]
 A simple example if applicable.
 
-## Proposed Solution
+## Proposed Solution [Optional]
 Solution Ideas 
 1. 
 2. 
