@@ -54,7 +54,7 @@
         <maven.shade.version>2.3</maven.shade.version>
         <maven.war.version>2.2</maven.war.version>
         <!--dependency versions-->
-        <atum.version>0.1.0</atum.version>
+        <atum.version>0.1.2</atum.version>
         <junit.version>4.11</junit.version>
         <specs.version>2.4.16</specs.version>
         <scalatest.version>2.2.4</scalatest.version>

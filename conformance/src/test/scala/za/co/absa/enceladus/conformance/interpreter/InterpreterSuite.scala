@@ -15,15 +15,16 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import com.typesafe.config.ConfigFactory
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.EnceladusDAO
-import za.co.absa.enceladus.samples.{ConformedEmployee, EmployeeConformance}
+import za.co.absa.enceladus.samples.{ConformedEmployee, EmployeeConformance, TradeConformance}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import org.json4s._
+import org.json4s.native.JsonParser._
 
 import scala.io.Source
 
@@ -39,7 +40,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     spark.sessionState.conf.setConfString("co.za.absa.enceladus.confTest", "hello :)")
 
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
-    implicit val progArgs = CmdConfig(reportDate = "2017-11-01")
+    implicit val progArgs = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = true)
     implicit val enableCF = true
 
     import spark.implicits._
@@ -76,9 +77,6 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
 
     val infoFile = Source.fromFile("src/test/testData/_testOutput/_INFO").getLines().mkString("\n")
 
-    import org.json4s._
-    import org.json4s.native.JsonParser._
-
     implicit val formats: DefaultFormats.type = DefaultFormats
 
     val checkpoints = parse(infoFile).extract[ControlMeasure].checkpoints
@@ -90,7 +88,50 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
       assert(cp.controls(0).controlValue === 8)
       assert(cp.controls(1).controlValue === 6)
     })
+  }
 
+  test("End to end array dynamic conformance test") {
+
+    // Enable Conformance Framweork
+    import za.co.absa.atum.AtumImplicits._
+    spark.enableControlMeasuresTracking("src/test/testData/trade/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
+
+    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
+    implicit val progArgs = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = true)
+    implicit val enableCF = true
+
+    import spark.implicits._
+    val mappingTablePattern = "{0}/{1}/{2}"
+
+    val dfs = DataSource.getData(TradeConformance.tradeDS.hdfsPath, "2017", "11", "01", mappingTablePattern)
+
+    mockWhen(dao.getDataset("Trade Conformance", 1)) thenReturn TradeConformance.tradeDS
+    mockWhen(dao.getMappingTable("country", 0)) thenReturn TradeConformance.countryMT
+    mockWhen(dao.getSchema("Trade", 0)) thenReturn dfs.schema
+
+    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs).cache
+    val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
+    val expected = TradeConformance.expectedConformedJson.mkString("\n")
+
+    println(data)
+    assert(data == expected)
+
+    conformed.coalesce(1).orderBy($"id").write.mode("overwrite").parquet("src/test/testData/_tradeOutput")
+
+    val infoFile = Source.fromFile("src/test/testData/_tradeOutput/_INFO").getLines().mkString("\n")
+
+    implicit val formats: DefaultFormats.type = DefaultFormats
+
+    val checkpoints = parse(infoFile).extract[ControlMeasure].checkpoints
+
+    // check that all the expected checkpoints are there
+    assert(checkpoints.lengthCompare(9) == 0)
+
+    checkpoints.foreach({ cp =>
+      assert(cp.controls(0).controlValue === 7)
+      assert(cp.controls(1).controlValue === 7)
+      assert(cp.controls(2).controlValue === 28)
+    })
   }
 
 }
