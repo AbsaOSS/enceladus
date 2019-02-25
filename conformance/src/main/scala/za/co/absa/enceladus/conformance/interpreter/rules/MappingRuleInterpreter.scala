@@ -28,9 +28,8 @@ import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.explode.ExplodeTools
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
-import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
+import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 import za.co.absa.enceladus.utils.validation._
 
 import scala.util.Try
@@ -138,13 +137,6 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     log.info("Mapping table: \n" + mappingTableSchema.treeString)
     log.info("Rule: " + this.toString)
     log.info("Join Condition: " + joinContidionStr)
-  }
-
-  private def inclErrorNullArr(mappings: Seq[Mapping], schema: StructType) = {
-    val paths = mappings.flatMap { mapping =>
-      SchemaUtils.getAllArraysInPath(mapping.mappedDatasetColumn, schema)
-    }
-    MappingRuleInterpreter.includeErrorsCondition(paths, schema)
   }
 }
 
@@ -286,33 +278,6 @@ object MappingRuleInterpreter {
         joinCond(col(s"$inputDfAlias.${attrs._2}"), col(s"$mappingTableAlias.${attrs._1}"))
     })
     cond
-  }
-
-  /**
-    * includeErrorsCondition Function which builds a column object representing the where clause for error column population
-    *
-    * If there is an array on the path of either side of a join condition
-    * if the array is nullable & (null or empty) -> do not produce any errors
-    * otherwise produce errors as usual
-    * if the array is NOT nullable & null -> produce error (this should never happen though, will be more of a sanity check)
-    * if the array is NOT nullable & empty -> no error
-    *
-    */
-  private[rules] def includeErrorsCondition(paths: Seq[String], schema: StructType) = {
-    paths
-      .map(x => (x, ArrayTransformations.arraySizeCols(x)))
-      .foldLeft(lit(true)) {
-        case (acc: Column, (origPath, sizePath)) => {
-          val nullable = lit(SchemaUtils.getFieldNullability(origPath, schema).get)
-          val nll = col(sizePath) === lit(-1)
-          val empty = col(sizePath) === lit(0)
-
-          acc and (
-            (!empty and !nll) or
-              (!nullable and nll)
-            )
-        }
-      }
   }
 
 }
