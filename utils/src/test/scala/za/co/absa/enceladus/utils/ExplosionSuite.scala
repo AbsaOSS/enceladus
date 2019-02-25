@@ -493,6 +493,9 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     val (explodedDf3, explodeContext3) = ExplodeTools.explodeArray("legs.conditions.checks", explodedDf2, explodeContext2)
     val (explodedDf4, explodeContext4) = ExplodeTools.explodeArray("legs.conditions.checks.checkNums", explodedDf3, explodeContext3)
 
+    val explodeConditionFilter = explodeContext4.getControlFrameworkFilter
+    val expectedExplodeFilter = "((((true AND (coalesce(legs_conditions_checks_checkNums_idx, 0) = 0)) AND (coalesce(legs_conditions_checks_idx, 0) = 0)) AND (coalesce(legs_conditions_idx, 0) = 0)) AND (coalesce(legs_idx, 0) = 0))"
+
     val restoredDf = ExplodeTools.revertAllExplosions(explodedDf4, explodeContext4)
 
     val actualOriginalResults = showString(df)
@@ -514,6 +517,9 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
 
     assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
     assertResults(actualRestoredResults, expectedRestoredResults)
+
+    // Check the filter generator as well
+    assert(explodeConditionFilter.toString == expectedExplodeFilter)
   }
 
   test ("Test exploding a nested array that is the only element of a struct") {

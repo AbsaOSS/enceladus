@@ -88,6 +88,8 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
       assert(cp.controls(0).controlValue === 8)
       assert(cp.controls(1).controlValue === 6)
     })
+
+    spark.disableControlMeasuresTracking()
   }
 
   test("End to end array dynamic conformance test") {
@@ -113,7 +115,6 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
     val expected = TradeConformance.expectedConformedJson.mkString("\n")
 
-    println(data)
     assert(data == expected)
 
     conformed.coalesce(1).orderBy($"id").write.mode("overwrite").parquet("src/test/testData/_tradeOutput")
@@ -132,6 +133,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
       assert(cp.controls(1).controlValue === 7)
       assert(cp.controls(2).controlValue === 28)
     })
+    spark.disableControlMeasuresTracking()
   }
 
 }
