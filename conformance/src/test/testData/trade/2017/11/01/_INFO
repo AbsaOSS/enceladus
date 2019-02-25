@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "sourceApplication": "Test Data",
+    "country": "ZA",
+    "historyType": "Snapshot",
+    "dataFilename": "tradeData_20170721.dat",
+    "sourceType": "Golden",
+    "version": 1,
+    "informationDate": "01-01-2017",
+    "additionalInfo": {
+      "key1": "value1",
+      "key2": "value2"
+    }
+  },
+  "checkpoints": [
+    {
+      "name": "Source",
+      "processStartTime": "01-01-2017 08:00:00",
+      "processEndTime": "01-01-2017 08:00:00",
+      "workflowName": "Source",
+      "order": 1,
+      "controls": [
+        {
+          "controlName": "totalCount",
+          "controlType": "controlType.count",
+          "controlCol": "*",
+          "controlValue": 7
+        },
+        {
+          "controlName": "countId",
+          "controlType": "controlType.distinctCount",
+          "controlCol": "id",
+          "controlValue": 7
+        },
+        {
+          "controlName": "sumId",
+          "controlType": "controlType.aggregatedTotal",
+          "controlCol": "id",
+          "controlValue": 28
+        }
+      ]
+    },
+    {
+      "name": "Raw",
+      "processStartTime": "01-01-2017 08:00:00",
+      "processEndTime": "01-01-2017 08:00:00",
+      "workflowName": "Raw",
+      "order": 2,
+      "controls": [
+        {
+          "controlName": "totalCount",
+          "controlType": "controlType.count",
+          "controlCol": "*",
+          "controlValue": 7
+        },
+        {
+          "controlName": "countId",
+          "controlType": "controlType.distinctCount",
+          "controlCol": "id",
+          "controlValue": 7
+        },
+        {
+          "controlName": "sumId",
+          "controlType": "controlType.aggregatedTotal",
+          "controlCol": "id",
+          "controlValue": 28
+        }
+      ]
+    }
+  ]
+}
