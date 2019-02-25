@@ -15,7 +15,20 @@
 
 package za.co.absa.enceladus.utils.explode
 
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.functions._
+
 /**
   * Stores a context of several array explosions to they can be reverted in the proper order.
   */
-case class ExplosionContext(explosions: Seq[Explosion] = Nil)
+case class ExplosionContext(explosions: Seq[Explosion] = Nil) {
+
+  /** Generates a condition filter for the exploded dataset so control measurements can
+    * be used for non-array elements. */
+  def getControlFrameworkFilter: Column = {
+    explosions.foldLeft(lit(true)) ( (cond, explosion) => {
+      cond.and(coalesce(col(explosion.indexFieldName), lit(0)) === 0)
+    })
+  }
+
+}

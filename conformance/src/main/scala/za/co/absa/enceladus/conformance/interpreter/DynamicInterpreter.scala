@@ -92,7 +92,7 @@ object DynamicInterpreter {
           case r: CustomConformanceRule => r.getInterpreter.conform(df)
         }
 
-        applyCheckpoint(rule, confd, jobShortName)
+        applyCheckpoint(rule, confd, jobShortName, explodeContext)
     })
 
     // Imploding all arrays back
@@ -139,9 +139,15 @@ object DynamicInterpreter {
     */
   private[conformance] def applyCheckpoint(rule: ConformanceRule,
                                            df: Dataset[Row],
-                                           jobShortName: String = "Conformance"): Dataset[Row] = {
+                                           jobShortName: String,
+                                           explodeContext: ExplosionContext): Dataset[Row] = {
     if (enableControlFramework && rule.controlCheckpoint) {
-      df.setCheckpoint(s"$jobShortName (${rule.order}) - ${rule.outputColumn}")
+      val explodeFilter = explodeContext.getControlFrameworkFilter
+      // Cache the data first since Atum will execute an action for each control metric
+      val cachedDf = df.cache
+      cachedDf.filter(explodeFilter)
+        .setCheckpoint(s"$jobShortName (${rule.order}) - ${rule.outputColumn}")
+      cachedDf
     }
     else {
       df
