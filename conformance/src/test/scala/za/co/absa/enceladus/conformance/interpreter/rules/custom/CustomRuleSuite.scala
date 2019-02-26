@@ -77,7 +77,7 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
 
   val expected = Seq(MineConfd(1, 1d, Seq()), MineConfd(4, 2d, Seq()), MineConfd(9, 3d, Seq()), MineConfd(16, 4d, Seq()))
 
-  val actualDf: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+  val actualDf: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
   val actual: Seq[MineConfd] = actualDf.as[MineConfd].collect().toSeq
 
   test("Testing custom rule results") {

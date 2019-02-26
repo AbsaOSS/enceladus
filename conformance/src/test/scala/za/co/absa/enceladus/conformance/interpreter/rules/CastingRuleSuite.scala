@@ -42,7 +42,7 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
     val mappingTablePattern = "{0}/{1}/{2}"
 
     import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS, inputDf).cache
+    val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS, inputDf, experimentalMappingRule = true).cache
 
     val conformedJSON = JsonUtils.prettySparkJSON(conformed.orderBy($"id").toJSON.collect)
 

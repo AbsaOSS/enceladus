@@ -37,7 +37,7 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase {
     mockWhen(dao.getDataset("Library Conformance", 1)) thenReturn inputDataset
 
     import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(inputDataset, inputDf).cache
+    val conformed = DynamicInterpreter.interpret(inputDataset, inputDf, experimentalMappingRule = true).cache
 
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 

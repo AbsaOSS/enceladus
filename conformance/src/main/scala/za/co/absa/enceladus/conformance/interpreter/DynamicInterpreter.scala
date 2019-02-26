@@ -47,20 +47,21 @@ object DynamicInterpreter {
   def interpret(conformance: ConfDataset,
                 inputDf: Dataset[Row],
                 jobShortName: String = "Conformance",
-                experimentalMappingRule: Boolean = true)
+                experimentalMappingRule: Boolean)
                (implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig, enableCF: Boolean): DataFrame = {
-    import spark.implicits._
-
     implicit val udfLib = new UDFLibrary
 
     enableControlFramework = enableCF
     if (enableControlFramework) inputDf.setCheckpoint(s"$jobShortName - Start")
 
-    // conformance rules
     val steps = conformance.conformance.sortBy(_.order)
 
-    // add the error column if it's missing
-    val dfWithErrorColumn = if (inputDf.columns.contains(ErrorMessage.errorColumnName)) inputDf else inputDf.withColumn(ErrorMessage.errorColumnName, typedLit(List[ErrorMessage]()))
+    // Add the error column if it's missing
+    val dfWithErrorColumn = if (inputDf.columns.contains(ErrorMessage.errorColumnName)) {
+      inputDf
+    } else {
+      inputDf.withColumn(ErrorMessage.errorColumnName, typedLit(List[ErrorMessage]()))
+    }
 
     // Exploding all mapping rule arrays
     val (explodeDf, explodeContext) = if (experimentalMappingRule) {
@@ -70,26 +71,26 @@ object DynamicInterpreter {
       (dfWithErrorColumn, ExplosionContext())
     }
 
-    // fold left on rules
+    // Fold left on rules
     val ds = steps.foldLeft(explodeDf)({
       case (df, rule) =>
 
         val confd = rule match {
-          case r: DropConformanceRule => DropRuleInterpreter(r).conform(df)
-          case r: ConcatenationConformanceRule => ConcatenationRuleInterpreter(r).conform(df)
-          case r: MappingConformanceRule =>
+          case r: DropConformanceRule             => DropRuleInterpreter(r).conform(df)
+          case r: ConcatenationConformanceRule    => ConcatenationRuleInterpreter(r).conform(df)
+          case r: LiteralConformanceRule          => LiteralRuleInterpreter(r).conform(df)
+          case r: SingleColumnConformanceRule     => SingleColumnRuleInterpreter(r).conform(df)
+          case r: SparkSessionConfConformanceRule => SparkSessionConfRuleInterpreter(r).conform(df)
+          case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r).conform(df)
+          case r: CastingConformanceRule          => CastingRuleInterpreter(r).conform(df)
+          case r: NegationConformanceRule         => NegationRuleInterpreter(r).conform(df)
+          case r: CustomConformanceRule           => r.getInterpreter.conform(df)
+          case r: MappingConformanceRule          =>
             if (experimentalMappingRule) {
               MappingRuleInterpreter(r, conformance).conform(df)
             } else {
               MappingRuleInterpreterOld(r, conformance).conform(df)
             }
-          case r: LiteralConformanceRule => LiteralRuleInterpreter(r).conform(df)
-          case r: SingleColumnConformanceRule => SingleColumnRuleInterpreter(r).conform(df)
-          case r: SparkSessionConfConformanceRule => SparkSessionConfRuleInterpreter(r).conform(df)
-          case r: UppercaseConformanceRule => UppercaseRuleInterpreter(r).conform(df)
-          case r: CastingConformanceRule => CastingRuleInterpreter(r).conform(df)
-          case r: NegationConformanceRule => NegationRuleInterpreter(r).conform(df)
-          case r: CustomConformanceRule => r.getInterpreter.conform(df)
         }
 
         applyCheckpoint(rule, confd, jobShortName, explodeContext)
@@ -118,16 +119,16 @@ object DynamicInterpreter {
     */
   private def explodeAllMappingRuleArrays(inputDf: DataFrame,
                                           steps: List[ConformanceRule]): (DataFrame, ExplosionContext) = {
-    var explodeContext: ExplosionContext = ExplosionContext()
-    var explodedDf = inputDf
-    steps.foreach {
-      case r: MappingConformanceRule =>
-        val (df, context) = ExplodeTools.explodeAllArraysInPath(r.outputColumn, explodedDf, explodeContext)
-        explodeContext = context
-        explodedDf = df
-      case _ => // Nothing to do
+
+    steps.foldLeft((inputDf, ExplosionContext())) {
+      case ((df, context), rule) =>
+        rule match {
+          case r: MappingConformanceRule =>
+            ExplodeTools.explodeAllArraysInPath(r.outputColumn, df, context)
+          case _ =>
+            (df, context)
+        }
     }
-    (explodedDf, explodeContext)
   }
 
   /**

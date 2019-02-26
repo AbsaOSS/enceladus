@@ -24,7 +24,6 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils._
 import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 object ExplodeTools {
-  // scalastyle:off method.length
   // scalastyle:off null
 
   private val log = LogManager.getLogger(this.getClass)
@@ -140,6 +139,7 @@ object ExplodeTools {
     * @param errorColumn An optional error column to combine during implosion. It should be a top level array.
     * @return A dataframe containing restored ('imploded') arrays.
     */
+  // scalastyle:off method.length
   def revertSingleExplosion(inputDf: DataFrame,
                             explosion: Explosion,
                             errorColumn: Option[String] = None): DataFrame = {
@@ -212,6 +212,7 @@ object ExplodeTools {
       // remove monotonic id created during explode
       .drop(groupedCol)
   }
+  // scalastyle:on method.length
 
   /**
     * Takes a field name nested in a struct and moves it out to the root level as a top level column
