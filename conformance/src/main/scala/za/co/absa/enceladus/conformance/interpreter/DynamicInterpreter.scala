@@ -31,8 +31,6 @@ import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
 
 object DynamicInterpreter {
-  // scalastyle:off method.length
-
   private val log = LogManager.getLogger("enceladus.conformance.DynamicInterpreter")
   private var enableControlFramework = true
 
@@ -87,9 +85,9 @@ object DynamicInterpreter {
           case r: CustomConformanceRule           => r.getInterpreter.conform(df)
           case r: MappingConformanceRule          =>
             if (experimentalMappingRule) {
-              MappingRuleInterpreter(r, conformance).conform(df)
+              MappingRuleInterpreterNoExplode(r, conformance).conform(df)
             } else {
-              MappingRuleInterpreterOld(r, conformance).conform(df)
+              MappingRuleInterpreter(r, conformance).conform(df)
             }
         }
 
