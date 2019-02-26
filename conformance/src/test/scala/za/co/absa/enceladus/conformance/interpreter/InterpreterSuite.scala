@@ -54,7 +54,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     mockWhen(dao.getMappingTable("role", 0)) thenReturn EmployeeConformance.roleMT
     mockWhen(dao.getSchema("Employee", 0)) thenReturn dfs.schema
 
-    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs).cache
+    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs, experimentalMappingRule = true).cache
     val data = conformed.as[ConformedEmployee].collect.sortBy(_.employee_id).toList
     val expected = EmployeeConformance.conformedEmployees.sortBy(_.employee_id).toList
 
@@ -111,7 +111,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     mockWhen(dao.getMappingTable("country", 0)) thenReturn TradeConformance.countryMT
     mockWhen(dao.getSchema("Trade", 0)) thenReturn dfs.schema
 
-    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs).cache
+    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs, experimentalMappingRule = true).cache
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
     val expected = TradeConformance.expectedConformedJson.mkString("\n")
 

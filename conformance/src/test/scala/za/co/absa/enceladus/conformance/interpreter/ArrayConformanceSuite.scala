@@ -67,7 +67,8 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     val df = spark.createDataFrame(NullArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
-    val conformedDf = DynamicInterpreter.interpret(NullArraySamples.mappingOnlyConformanceDef, df)(spark, dao, progArgs, false).cache()
+    val conformedDf = DynamicInterpreter.interpret(NullArraySamples.mappingOnlyConformanceDef,
+      df, experimentalMappingRule = true)(spark, dao, progArgs, false).cache()
     val expected = NullArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
 
@@ -85,7 +86,8 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     val df = spark.createDataFrame(EmtpyArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
-    val conformedDf = DynamicInterpreter.interpret(EmtpyArraySamples.mappingOnlyConformanceDef, df)(spark, dao, progArgs, false).cache()
+    val conformedDf = DynamicInterpreter.interpret(EmtpyArraySamples.mappingOnlyConformanceDef,
+      df, experimentalMappingRule = true)(spark, dao, progArgs, false).cache()
     val expected = EmtpyArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
 

@@ -52,7 +52,7 @@ object TradeConformance {
   // The original sample used to create the parquet file
   // import spark.implicits._
   // val dfA = spark.read.json(sample.toDS)
-  // dfA.repartition(1).write.parquet("/Users/abri036/sources/enceladus/conformance/src/test/testData/trade/2017/11/01/")
+  // dfA.repartition(1).write.parquet("conformance/src/test/testData/trade/2017/11/01/")
   val sample: List[String] = """{"id":1,"legs":[{"legid":100,"conditions":[{"checks":[{"checkNums":["1","2","3b","4","5c","6"]}],"country":"CZE"}]}]}""" ::
     """{"id":2,"legs":[{"legid":200,"conditions":[{"checks":[{"checkNums":["8","9","10b","11","12c","13"]}],"country":"SA"}]}]}""" ::
     """{"id":3,"legs":[{"legid":300,"conditions":[{"checks":[],"country": "SWE"}]},{"legid":301,"conditions":[{"checks":[],"country": "SA"}]}]}""" ::

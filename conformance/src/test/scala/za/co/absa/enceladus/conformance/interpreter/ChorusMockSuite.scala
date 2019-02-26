@@ -65,7 +65,8 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
         MappingConformanceRule(order = 1, controlCheckpoint = false, mappingTable = "myMappingTable", mappingTableVersion = 0,
           attributeMappings = Map("id" -> "toJoin"), targetAttribute = "mappedAttr", outputColumn = "confMapping")))
 
-    val confd = DynamicInterpreter.interpret(conformanceDef, inputDf).repartition(2)
+    val confd = DynamicInterpreter.interpret(conformanceDef, inputDf,
+      experimentalMappingRule = true).repartition(2)
 
     confd.show(100, false)
     confd.printSchema()

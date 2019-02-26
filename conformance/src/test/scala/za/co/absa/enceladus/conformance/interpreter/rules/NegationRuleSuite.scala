@@ -100,7 +100,7 @@ class NegationRuleSuite extends FunSuite with SparkTestBase {
     implicit val enableCF: Boolean = false
     mockWhen(dao.getDataset("Test Name", 1)) thenReturn enceladusDataset
 
-    val conformed = DynamicInterpreter.interpret(enceladusDataset, inputDf).cache
+    val conformed = DynamicInterpreter.interpret(enceladusDataset, inputDf, experimentalMappingRule = true).cache
 
     val conformedJSON = conformed.toJSON.collect().mkString("\n")
 

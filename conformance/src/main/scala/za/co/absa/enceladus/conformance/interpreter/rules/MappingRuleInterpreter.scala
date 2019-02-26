@@ -22,7 +22,7 @@ import org.apache.spark.sql.types._
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.RuleValidators
-import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreter.{ensureDefaultValueMatchSchema, getJoinCondition}
+import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreter._
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
@@ -36,14 +36,12 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: ConfDataset) extends RuleInterpreter {
-  // scalastyle:off method.length
   // scalastyle:off null
 
   private val conf = ConfigFactory.load()
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule (explode-optimized) to conform ${rule.outputColumn}...")
-    val datasetSchema = dao.getSchema(conformance.schemaName, conformance.schemaVersion)
     val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
@@ -133,10 +131,10 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
       df.schema, mapTable.schema, rule)
   }
 
-  private def logJoinCondition(mappingTableSchema: StructType, joinContidionStr: String): Unit = {
-    log.info("Mapping table: \n" + mappingTableSchema.treeString)
-    log.info("Rule: " + this.toString)
-    log.info("Join Condition: " + joinContidionStr)
+  private def logJoinCondition(mappingTableSchema: StructType, joinConditionStr: String): Unit = {
+    log.info(s"Mapping table: \n${mappingTableSchema.treeString}")
+    log.info(s"Rule: ${this.toString}")
+    log.info(s"Join Condition: $joinConditionStr")
   }
 }
 
@@ -240,13 +238,7 @@ object MappingRuleInterpreter {
 
   private[rules] def getQualifiedField(schema: StructType, fieldName: String): Option[StructField] = {
     val flatSchema = flattenForJoin(schema)
-    val field = flatSchema.find(_.name == fieldName)
-    if (field.isDefined) {
-      Some(field.get)
-    }
-    else {
-      None
-    }
+    flatSchema.find(_.name == fieldName)
   }
 
   // Flattens a schema for join validation purposes.
