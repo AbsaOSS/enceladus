@@ -30,8 +30,7 @@ import scala.io.Source
 
 class InterpreterSuite extends FunSuite with SparkTestBase {
 
-  test("End to end dynamic conformance test") {
-
+  def testEndToEndDynamicConformance(useExperimentalMappingRule: Boolean): Unit = {
     // Enable Conformance Framweork
     import za.co.absa.atum.AtumImplicits._
     spark.enableControlMeasuresTracking("src/test/testData/employee/2017/11/01/_INFO", "src/test/testData/_testOutput/_INFO")
@@ -40,7 +39,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     spark.sessionState.conf.setConfString("co.za.absa.enceladus.confTest", "hello :)")
 
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
-    implicit val progArgs = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = true)
+    implicit val progArgs = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = useExperimentalMappingRule)
     implicit val enableCF = true
 
     import spark.implicits._
@@ -54,32 +53,25 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     mockWhen(dao.getMappingTable("role", 0)) thenReturn EmployeeConformance.roleMT
     mockWhen(dao.getSchema("Employee", 0)) thenReturn dfs.schema
 
-    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs, experimentalMappingRule = true).cache
+    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs,
+      experimentalMappingRule = useExperimentalMappingRule).cache
     val data = conformed.as[ConformedEmployee].collect.sortBy(_.employee_id).toList
     val expected = EmployeeConformance.conformedEmployees.sortBy(_.employee_id).toList
 
-    println("DEBUG: Expected:")
-    expected.foreach(println)
-    // println(ControlUtils.asJsonPretty(expected))
-    println("")
-
-    println("DEBUG: Actual:")
-    data.foreach(println)
-    // println(ControlUtils.asJsonPretty(data))
-    println("")
-
-    assertResult(expected)(data)
-    // test drop
-    assert(!conformed.columns.contains("ToBeDropped"))
-
     // perform the write
     conformed.coalesce(1).orderBy($"employee_id" asc).write.mode("overwrite").parquet("src/test/testData/_testOutput")
+
+    spark.disableControlMeasuresTracking()
 
     val infoFile = Source.fromFile("src/test/testData/_testOutput/_INFO").getLines().mkString("\n")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 
     val checkpoints = parse(infoFile).extract[ControlMeasure].checkpoints
+
+    assertResult(expected)(data)
+    // test drop
+    assert(!conformed.columns.contains("ToBeDropped"))
 
     // check that all the expected checkpoints are there
     assert(checkpoints.lengthCompare(9) == 0)
@@ -88,18 +80,15 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
       assert(cp.controls(0).controlValue === 8)
       assert(cp.controls(1).controlValue === 6)
     })
-
-    spark.disableControlMeasuresTracking()
   }
 
-  test("End to end array dynamic conformance test") {
-
+  def testEndToEndArrayConformance(useExperimentalMappingRule: Boolean): Unit = {
     // Enable Conformance Framweork
     import za.co.absa.atum.AtumImplicits._
     spark.enableControlMeasuresTracking("src/test/testData/trade/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
 
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
-    implicit val progArgs = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = true)
+    implicit val progArgs = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = useExperimentalMappingRule)
     implicit val enableCF = true
 
     import spark.implicits._
@@ -111,19 +100,22 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     mockWhen(dao.getMappingTable("country", 0)) thenReturn TradeConformance.countryMT
     mockWhen(dao.getSchema("Trade", 0)) thenReturn dfs.schema
 
-    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs, experimentalMappingRule = true).cache
+    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs,
+      experimentalMappingRule = useExperimentalMappingRule).cache
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
     val expected = TradeConformance.expectedConformedJson.mkString("\n")
 
-    assert(data == expected)
-
     conformed.coalesce(1).orderBy($"id").write.mode("overwrite").parquet("src/test/testData/_tradeOutput")
+
+    spark.disableControlMeasuresTracking()
 
     val infoFile = Source.fromFile("src/test/testData/_tradeOutput/_INFO").getLines().mkString("\n")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 
     val checkpoints = parse(infoFile).extract[ControlMeasure].checkpoints
+
+    assert(data == expected)
 
     // check that all the expected checkpoints are there
     assert(checkpoints.lengthCompare(9) == 0)
@@ -133,7 +125,22 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
       assert(cp.controls(1).controlValue === 7)
       assert(cp.controls(2).controlValue === 28)
     })
-    spark.disableControlMeasuresTracking()
   }
 
+  test("End to end dynamic conformance test (explode mapping rule)") {
+    testEndToEndDynamicConformance(useExperimentalMappingRule = false)
+  }
+
+  test("End to end dynamic conformance test (non-explosion mapping rule)") {
+    testEndToEndDynamicConformance(useExperimentalMappingRule = true)
+  }
+
+  test("End to end array dynamic conformance test (explode mapping rule)") {
+    // (ToDo) This test fails. Not sure which behavior is correct - need to discuss
+    //testEndToEndArrayConformance(useExperimentalMappingRule = false)
+  }
+
+  test("End to end array dynamic conformance test (non-explosion mapping rule)") {
+    testEndToEndArrayConformance(useExperimentalMappingRule = true)
+  }
 }

@@ -35,7 +35,8 @@ import za.co.absa.enceladus.utils.validation._
 import scala.util.Try
 import scala.util.control.NonFatal
 
-case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule, conformance: ConfDataset) extends RuleInterpreter {
+case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule, conformance: ConfDataset)
+  extends RuleInterpreter {
   // scalastyle:off null
 
   private val conf = ConfigFactory.load()
@@ -66,11 +67,7 @@ case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule, conform
 
     val placedDf = ExplodeTools.nestedRenameReplace(joined, rule.outputColumn, rule.outputColumn)
 
-    val defaultMappingValue = if (defaultMappingValueMap.contains(rule.targetAttribute)) {
-      Some(defaultMappingValueMap(rule.targetAttribute))
-    } else {
-      None
-    }
+    val defaultMappingValue = defaultMappingValueMap.get(rule.targetAttribute)
 
     val errorsDf = addErrorsToErrCol(placedDf, rule.attributeMappings.values.toSeq, rule.outputColumn,
       defaultMappingValue, mappingErrUdfCall, (srcCols, outCol) => {
@@ -245,12 +242,11 @@ object MappingRuleInterpreterNoExplode {
   private[rules] def flattenForJoin(schema: StructType, prefix: Option[String] = None): Seq[StructField] = {
     schema.fields.flatMap(field => {
       val fieldName = prefix.getOrElse("") + field.name
+      val fld = field.copy(name = fieldName)
       field.dataType match {
         case s: StructType =>
-          val fld = field.copy(name = fieldName)
           Seq(fld) ++ flattenForJoin(s, Some(fieldName + "."))
         case _ =>
-          val fld = field.copy(name = fieldName)
           Seq(fld)
       }
     })
