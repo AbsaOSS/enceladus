@@ -37,9 +37,12 @@ object DynamicInterpreter {
   /**
     * interpret The dynamic conformance interpreter function
     *
-    * @param conformance  The dataset object - this represents a data conformance workflow
-    * @param inputDf      The dataset to be conformed
-    * @param jobShortName A job name used for checkpoints
+    * @param conformance             The dataset object - this represents a data conformance workflow
+    * @param inputDf                 The dataset to be conformed
+    * @param jobShortName            A job name used for checkpoints
+    * @param experimentalMappingRule If true the new explode-optimized conformance mapping rule interpreter will be used
+    *
+    * @return The conformed dataframe
     *
     */
   def interpret(conformance: ConfDataset,
@@ -72,7 +75,6 @@ object DynamicInterpreter {
     // Fold left on rules
     val ds = steps.foldLeft(explodeDf)({
       case (df, rule) =>
-
         val confd = rule match {
           case r: DropConformanceRule             => DropRuleInterpreter(r).conform(df)
           case r: ConcatenationConformanceRule    => ConcatenationRuleInterpreter(r).conform(df)
@@ -90,7 +92,6 @@ object DynamicInterpreter {
               MappingRuleInterpreter(r, conformance).conform(df)
             }
         }
-
         applyCheckpoint(rule, confd, jobShortName, explodeContext)
     })
 

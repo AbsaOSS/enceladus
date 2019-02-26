@@ -32,7 +32,7 @@ case class MyDataConfd(id: Int, toJoin: Int, confMapping: MyMappingTableInner)
 
 class ChorusMockSuite extends FunSuite with SparkTestBase {
 
-  test("") {
+  def testChorusMockData(useExperimentalMappingRule: Boolean): Unit = {
     val d = Seq(
       MyData(0, 0),
       MyData(1, 1), MyData(2, 2))
@@ -66,7 +66,7 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
           attributeMappings = Map("id" -> "toJoin"), targetAttribute = "mappedAttr", outputColumn = "confMapping")))
 
     val confd = DynamicInterpreter.interpret(conformanceDef, inputDf,
-      experimentalMappingRule = true).repartition(2)
+      experimentalMappingRule = useExperimentalMappingRule).repartition(2)
 
     confd.show(100, false)
     confd.printSchema()
@@ -77,5 +77,13 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
 
     assert(readAgain.show.isInstanceOf[Unit])
     assert(readAgain.count === 3)
+  }
+
+  test("Test conformance of Chorus mock data (explode mapping rule)") {
+    testChorusMockData(useExperimentalMappingRule = false)
+  }
+
+  test("Test conformance of Chorus mock data (non-explosion mapping rule)") {
+    testChorusMockData(useExperimentalMappingRule = true)
   }
 }

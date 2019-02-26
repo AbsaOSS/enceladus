@@ -16,13 +16,14 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.apache.spark.sql.functions._
-import org.mockito.Mockito.{ mock, when => mockWhen }
-import org.scalatest.{ BeforeAndAfterAll, FunSuite }
+import org.mockito.Mockito.{mock, when => mockWhen}
+import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.samples._
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+
 class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll {
 
   import spark.implicits._
@@ -45,30 +46,26 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     DataSource.setData("mapping", mapDF)
   }
 
-  test("Testing Array Type conformance") {
-
+  def testArrayTypeConformance(useExperimentalMappingRule: Boolean): Unit = {
     val df = spark.createDataFrame(ArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
     val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef,
-      df, experimentalMappingRule = false)(spark, dao, progArgs, enableCF = false).cache()
+      df, experimentalMappingRule = useExperimentalMappingRule)(spark, dao, progArgs, enableCF = false).cache()
     val expected = ArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[ConformedOuter].collect().sortBy(_.order).toList
     assertResult(expected)(conformed)
-
-    conformedDf.show(false)
 
     val numOfErrors = conformedDf.select(size(col("errCol")).as("numErrors")).agg(sum(col("numErrors"))).collect()(0)(0).toString.toInt
     assert(numOfErrors == ArraySamples.totalNumberOfErrors)
   }
 
-  test("Conformance should NOT generate errors when matching null ") {
-
+  def testConformanceMatchingNull(useExperimentalMappingRule: Boolean): Unit = {
     val df = spark.createDataFrame(NullArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
     val conformedDf = DynamicInterpreter.interpret(NullArraySamples.mappingOnlyConformanceDef,
-      df, experimentalMappingRule = true)(spark, dao, progArgs, false).cache()
+      df, experimentalMappingRule = useExperimentalMappingRule)(spark, dao, progArgs, false).cache()
     val expected = NullArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
 
@@ -79,15 +76,14 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     assert(numOfErrors == NullArraySamples.totalNumberOfErrors)
   }
 
-  test("Conformance should NOT generate errors when matching empty arrays") {
-
+  def testConformanceMatchingEmptyArrays(useExperimentalMappingRule: Boolean): Unit = {
     import za.co.absa.enceladus.samples.EmtpyArraySamples
 
     val df = spark.createDataFrame(EmtpyArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
     val conformedDf = DynamicInterpreter.interpret(EmtpyArraySamples.mappingOnlyConformanceDef,
-      df, experimentalMappingRule = true)(spark, dao, progArgs, false).cache()
+      df, experimentalMappingRule = useExperimentalMappingRule)(spark, dao, progArgs, false).cache()
     val expected = EmtpyArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
 
@@ -98,4 +94,28 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     assert(numOfErrors == EmtpyArraySamples.totalNumberOfErrors)
   }
 
+  test("Testing Array Type conformance (explode mapping rule)") {
+    testArrayTypeConformance(useExperimentalMappingRule = false)
+  }
+
+  test("Testing Array Type conformance (non-explosion mapping rule)") {
+    // (ToDo) This fails on Catalyst optimizing the execution plan. Need a workaround for that
+    //testArrayTypeConformance(useExperimentalMappingRule = true)
+  }
+
+  test("Conformance should NOT generate errors when matching null (explode mapping rule)") {
+    testConformanceMatchingNull(useExperimentalMappingRule = false)
+  }
+
+  test("Conformance should NOT generate errors when matching null (non-explosion mapping rule)") {
+    testConformanceMatchingNull(useExperimentalMappingRule = true)
+  }
+
+  test("Conformance should NOT generate errors when matching empty arrays (explode mapping rule)") {
+    testConformanceMatchingEmptyArrays(useExperimentalMappingRule = false)
+  }
+
+  test("Conformance should NOT generate errors when matching empty arrays (non-explosion mapping rule)") {
+    testConformanceMatchingEmptyArrays(useExperimentalMappingRule = true)
+  }
 }

@@ -162,14 +162,10 @@ object SchemaUtils {
   def getDeepestCommonArrayPath(schema: StructType, fieldPaths: Seq[String]): Option[String] = {
     val arrayPaths = fieldPaths.flatMap(path => getAllArraysInPath(path, schema)).distinct
 
-    if (arrayPaths.isEmpty) {
-      None
+    if (!arrayPaths.isEmpty && isCommonSubPath(arrayPaths: _*)) {
+      Some(arrayPaths.maxBy(_.length))
     } else {
-      if (isCommonSubPath(arrayPaths: _*)) {
-        Some(arrayPaths.maxBy(_.length))
-      } else {
-        None
-      }
+      None
     }
   }
 
@@ -189,7 +185,7 @@ object SchemaUtils {
     }
 
     var isParentCommon = true // For Seq() the property holds by [my] convention
-    var restOfPaths = paths.map(_.split('.').toSeq).filter(_.nonEmpty)
+    var restOfPaths: Seq[Seq[String]] = paths.map(_.split('.').toSeq).filter(_.nonEmpty)
     while (isParentCommon && restOfPaths.nonEmpty) {
       val parent = restOfPaths.head.head
       isParentCommon = restOfPaths.forall(path => path.head == parent)
