@@ -87,7 +87,7 @@ object DynamicInterpreter {
           case r: CustomConformanceRule           => r.getInterpreter.conform(df)
           case r: MappingConformanceRule          =>
             if (experimentalMappingRule) {
-              MappingRuleInterpreterNoExplode(r, conformance).conform(df)
+              MappingRuleInterpreterNoExplode(r, conformance, explodeContext).conform(df)
             } else {
               MappingRuleInterpreter(r, conformance).conform(df)
             }
