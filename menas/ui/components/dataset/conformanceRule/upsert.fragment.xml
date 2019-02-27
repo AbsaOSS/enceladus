@@ -13,15 +13,15 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:l="sap.ui.layout"
-                         xmlns:table="sap.ui.table" xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <Dialog id="addConformanceRuleDialog" title="{/newRule/title} Conformance Rule" resizable="true" draggable="true" class="minW40rem">
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+    <Dialog id="upsertConformanceRuleDialog" title="{/newRule/title} Conformance Rule" resizable="true"
+            draggable="true" class="minW40rem" beforeOpen="onBeforeOpen" afterOpen="onAfterOpen">
         <content>
             <form:SimpleForm id="addConformanceRuleForm" adjustLabelSpan="false" editable="true">
                 <form:content>
                     <Label text="Conformance Rule"/>
                     <Select id="newRuleSelect" showSecondaryValues="false" items="{/rules}"
-                            selectedKey="{/newRule/_t}">
+                            selectedKey="{/newRule/_t}" change="onRuleSelect" enabled="{=!${/newRule/isEdit}}">
                         <items>
                             <core:Item key="{_t}" text="{_t}" />
                         </items>
@@ -34,8 +34,8 @@
             </form:SimpleForm>
         </content>
         <buttons>
-            <Button id="newRuleAddButton" text="Save" icon="sap-icon://save"></Button>
-            <Button id="newRuleCancelButton" text="Cancel" icon="sap-icon://cancel"></Button>
+            <Button id="newRuleAddButton" text="Save" icon="sap-icon://save" press="onRuleSubmit"></Button>
+            <Button id="newRuleCancelButton" text="Cancel" icon="sap-icon://cancel" press="onClosePress"></Button>
         </buttons>
     </Dialog>
 </core:FragmentDefinition>
