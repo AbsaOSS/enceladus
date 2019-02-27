@@ -16,33 +16,6 @@ jQuery.sap.require("sap.m.MessageBox");
 
 sap.ui.controller("components.dataset.datasetMain", {
 
-  rules: [
-    {_t: "CastingConformanceRule"},
-    {_t: "ConcatenationConformanceRule"},
-    {_t: "DropConformanceRule"},
-    {_t: "LiteralConformanceRule"},
-    {_t: "MappingConformanceRule"},
-    {_t: "NegationConformanceRule"},
-    {_t: "SingleColumnConformanceRule"},
-    {_t: "SparkSessionConfConformanceRule"},
-    {_t: "UppercaseConformanceRule"}
-  ],
-
-  dataTypes: [
-    {type: "boolean"},
-    {type: "byte"},
-    {type: "short"},
-    {type: "integer"},
-    {type: "long"},
-    {type: "float"},
-    {type: "double"},
-    {type: "decimal(38,18)"},
-    {type: "char"},
-    {type: "string"},
-    {type: "date"},
-    {type: "timestamp"}
-  ],
-
   /**
    * Called when a controller is instantiated and its View controls (if
    * available) are already created. Can be used to modify the View before it
@@ -70,154 +43,17 @@ sap.ui.controller("components.dataset.datasetMain", {
     }), "entity");
     this._addDialog.setBusyIndicatorDelay(0);
 
-    this._addConformanceRuleDialog = sap.ui.xmlfragment("components.dataset.conformanceRule.add", this);
-    sap.ui.getCore().byId("newRuleAddButton").attachPress(this.ruleAddSubmit, this);
-    sap.ui.getCore().byId("newRuleCancelButton").attachPress(this.ruleAddCancel, this);
-    sap.ui.getCore().byId("newRuleSelect").attachChange(this.ruleSelect, this);
-
-    this._model.setProperty("/rules", this.rules);
-    this._model.setProperty("/dataTypes", this.dataTypes);
-    this._model.setProperty("/newRule", {});
+    let cont = sap.ui.controller("components.dataset.conformanceRule.upsert", true);
+    this._upsertConformanceRuleDialog = sap.ui.xmlfragment("components.dataset.conformanceRule.upsert", cont);
   },
 
-  onAddConformanceRulePress: function (oEv) {
+  onAddConformanceRulePress: function () {
     this._model.setProperty("/newRule", {
-      // title: "Add", // TODO: add title
-      _t: this.rules[0]._t
+      title: "Add",
+      isEdit: false,
     });
     this.fetchSchema();
-    this.showFormFragment(this.rules[0]._t);
-    this._addConformanceRuleDialog.open();
-  },
-
-  ruleAddCancel: function () {
-    this.resetRuleForm();
-    this._addConformanceRuleDialog.close();
-  },
-
-  ruleAddSubmit: function () {
-    // if (this.validateNewRule) {
-    let currentDataset = this._model.getProperty("/currentDataset");
-    let newRule = this._model.getProperty("/newRule");
-    RuleService.createRule(currentDataset, newRule);
-    // }
-    this.ruleAddCancel();
-  },
-
-  schemaFieldSelect: function (oEv) {
-    let bind = oEv.getParameter("listItem").getBindingContext().getPath();
-    let modelPathBase = "/currentDataset/schema/fields/";
-    let model = sap.ui.getCore().getModel();
-    SchemaService.fieldSelect(bind, modelPathBase, model, "/newRule/inputColumn")
-  },
-
-  _formFragments: {},
-
-  ruleSelect: function (oEv) {
-    let currentRule = this._model.getProperty("/newRule");
-    let newRule = (({_t, outputColumn, checkpoint: controlCheckpoint}) => ({
-      _t,
-      outputColumn,
-      checkpoint: controlCheckpoint
-    }))(currentRule);
-
-    if (currentRule._t === "ConcatenationConformanceRule") {
-      newRule.inputColumns = ["", ""];
-    }
-
-    if (currentRule._t === "MappingConformanceRule") {
-      MappingTableService.getMappingTableList(true, true);
-      newRule.joinConditions = [{mappingTableField: "", datasetField: ""}];
-    }
-
-    this._model.setProperty("/newRule", newRule);
-
-    this.showFormFragment(currentRule._t);
-  },
-
-  getFormFragment: function (sFragmentName) {
-    let oFormFragment = this._formFragments[sFragmentName];
-
-    if (oFormFragment) {
-      return oFormFragment;
-    }
-    const sFragmentId = this.getView().getId() + "--" + sFragmentName;
-    oFormFragment = sap.ui.xmlfragment(sFragmentId, "components.dataset.conformanceRule." + sFragmentName + ".add", this);
-
-    if (sFragmentName === "ConcatenationConformanceRule") {
-      sap.ui.getCore().byId(sFragmentId + "--addInputColumn").attachPress(this.addInputColumn, this);
-    }
-
-    if (sFragmentName === "MappingConformanceRule") {
-      sap.ui.getCore().byId(sFragmentId + "--mappingTableNameSelect").attachChange(this.mappingTableSelect, this);
-      sap.ui.getCore().byId(sFragmentId + "--addJoinCondition").attachPress(this.addJoinCondition, this);
-    }
-
-    this._formFragments[sFragmentName] = oFormFragment;
-    return this._formFragments[sFragmentName];
-  },
-
-  resetRuleForm: function () {
-    let oRuleForm = sap.ui.getCore().byId("ruleForm");
-
-    // workaround for "Cannot read property 'setSelectedIndex' of undefined" error
-    const content = oRuleForm.getContent();
-    content.filter(function (element) {
-      return element.sId.includes("FieldSelectScroll")
-    }).forEach(function (element) {
-      element.getContent().forEach(function (tree) {
-        let items = tree.getItems();
-        for (let i in items) {
-          items[i].setSelected(false);
-          items[i].setHighlight(sap.ui.core.MessageType.None)
-        }
-      })
-    });
-
-    oRuleForm.removeAllContent();
-  },
-
-  showFormFragment: function (sFragmentName) {
-    this.resetRuleForm();
-
-    let oRuleForm = sap.ui.getCore().byId("ruleForm");
-    let aFragment = this.getFormFragment(sFragmentName);
-    aFragment.forEach(function (oElement) {
-      oRuleForm.addContent(oElement)
-    });
-  },
-
-  addInputColumn: function () {
-    let currentRule = this._model.getProperty("/newRule");
-    let inputColumnSize = currentRule.inputColumns.length;
-    let pathToNewInputColumn = "/newRule/inputColumns/" + inputColumnSize;
-    this._model.setProperty(pathToNewInputColumn, "");
-
-    let oRuleForm = sap.ui.getCore().byId("ruleForm");
-    oRuleForm.addContent(new sap.m.Label({text: "Concatenation Column"}));
-    oRuleForm.addContent(new sap.m.Input({type: "Text", value: "{" + pathToNewInputColumn + "}"}))
-  },
-
-  addJoinCondition: function () {
-    let currentRule = this._model.getProperty("/newRule");
-    let joinConditionsSize = currentRule.joinConditions.length;
-    let pathToNewJoinCondition = "/newRule/joinConditions/" + joinConditionsSize;
-    this._model.setProperty(pathToNewJoinCondition, {mappingTableField: "", datasetField: ""});
-
-    let oRuleForm = sap.ui.getCore().byId("ruleForm");
-    let oHBox = new sap.m.HBox({justifyContent: "SpaceAround"});
-    oHBox.addItem(new sap.m.Input({
-      type: "Text",
-      value: "{" + pathToNewJoinCondition + "/mappingTableField}",
-      placeholder: "Mapping Table Column"
-    }));
-    oHBox.addItem(new sap.m.Input({
-      type: "Text",
-      value: "{" + pathToNewJoinCondition + "/datasetField}",
-      placeholder: "Dataset Column"
-    }));
-    oRuleForm.addContent(new sap.m.Label({text: "Join Condition"}));
-    oRuleForm.addContent(oHBox);
+    this._upsertConformanceRuleDialog.open();
   },
 
   onRuleMenuAction: function (oEv) {
@@ -226,12 +62,13 @@ sap.ui.controller("components.dataset.datasetMain", {
 
     if (sAction === "edit") {
       let old = this._model.getProperty(sBindPath);
-      old.title = "Edit";
-      old.isEdit = true;
-      old.bindPath = sBindPath;
-      this._model.setProperty("/newRule", old);
-      this._addConformanceRuleDialog.open();
-      // this._schemaFieldSelectorSelectPath(old["columnName"])
+      this.fetchSchema();
+      this._model.setProperty("/newRule", {
+        ...JSON.parse(JSON.stringify(old)),
+        title: "Edit",
+        isEdit: true,
+      });
+      this._upsertConformanceRuleDialog.open();
     } else if (sAction === "delete") {
       sap.m.MessageBox.confirm("Are you sure you want to delete the conformance rule?", {
         actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],

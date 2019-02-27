@@ -70,16 +70,6 @@ var RuleService = new function () {
   };
 
   this.createRule = function (oCurrentDataset, oRule) {
-    oRule.order = oCurrentDataset.conformance.length;
-
-    if (oRule._t === "MappingConformanceRule") {
-      oRule.attributeMappings = {};
-      oRule.joinConditions.map(function(joinCondition) {
-        oRule.attributeMappings[joinCondition.mappingTableField] = joinCondition.datasetField
-      });
-      delete oRule.joinConditions;
-    }
-
     Functions.ajax("api/dataset/" + encodeURI(oCurrentDataset.name) + "/rule/create", "POST", oRule,
       function (oData) {
       DatasetService.getDatasetList();

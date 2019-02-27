@@ -20,7 +20,7 @@ var MappingTableService = new function () {
 
   this.getMappingTableList = function (bLoadFirst, bGetSchema) {
     Functions.ajax("api/mappingTable/list", "GET", {}, function (oData) {
-      model.setProperty("/mappingTables", oData)
+      model.setProperty("/mappingTables", oData);
       if (oData.length > 0 && bLoadFirst)
         MappingTableService.getMappingTableVersion(oData[0]._id, oData[0].latestVersion, bGetSchema)
     }, function () {

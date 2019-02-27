@@ -110,7 +110,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
     return isOk;
   },
 
-  schemaFieldSelect : function(oEv) {
+  onSchemaFieldSelect : function(oEv) {
     let bind = oEv.getParameter("listItem").getBindingContext().getPath();
     let modelPathBase = "/currentMappingTable/schema/fields/";
     let model = sap.ui.getCore().getModel();

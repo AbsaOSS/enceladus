@@ -13,14 +13,19 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:l="sap.ui.layout"
-                         xmlns:table="sap.ui.table" xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
     <Label text="Data can have Null values in join conditions"/>
     <CheckBox selected="{/newRule/isNullSafe}"/>
-    <Button id="addJoinCondition" icon="sap-icon://add"/>
-    <Label text="Join Condition"/>
-    <HBox justifyContent="SpaceAround">
-        <Input type="Text" value="{/newRule/joinConditions/0/mappingTableField}" placeholder="Mapping Table Column"/>
-        <Input type="Text" value="{/newRule/joinConditions/0/datasetField}" placeholder="Dataset Column"/>
-    </HBox>
+    <Button id="addJoinCondition" icon="sap-icon://add" press="onAddJoinCondition"/>
+    <Label text="Join Conditions"/>
+    <List mode="Delete" items="{/newRule/newJoinConditions}" delete="onDeleteJoinCondition">
+        <items>
+            <CustomListItem>
+                <HBox justifyContent="SpaceAround">
+                    <Input type="Text" value="{mappingTableField}" placeholder="Mapping Table Column"/>
+                    <Input type="Text" value="{datasetField}" placeholder="Dataset Column"/>
+                </HBox>
+            </CustomListItem>
+        </items>
+    </List>
 </core:FragmentDefinition>
