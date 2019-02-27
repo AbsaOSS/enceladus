@@ -23,10 +23,25 @@ import org.apache.spark.sql.functions._
   */
 case class ExplosionContext(explosions: Seq[Explosion] = Nil) {
 
+  /** Given a column name generates a condition that should hold if an error is to be generated
+    * when joining against any array in the column path */
+  def getArrayErrorCondition(columnName: String): Column = {
+    explosions.foldLeft(lit(true))((expr, explosion) => {
+      if (columnName.startsWith(explosion.arrayFieldName)) {
+        val arrayIsNull = col(explosion.sizeFieldName) === lit(-1)
+        val arrayIsEmpty = col(explosion.sizeFieldName) === lit(0)
+        expr and !arrayIsEmpty and !arrayIsNull
+      } else {
+        expr
+      }
+    })
+  }
+
+
   /** Generates a condition filter for the exploded dataset so control measurements can
     * be used for non-array elements. */
   def getControlFrameworkFilter: Column = {
-    explosions.foldLeft(lit(true)) ( (cond, explosion) => {
+    explosions.foldLeft(lit(true))((cond, explosion) => {
       cond.and(coalesce(col(explosion.indexFieldName), lit(0)) === 0)
     })
   }

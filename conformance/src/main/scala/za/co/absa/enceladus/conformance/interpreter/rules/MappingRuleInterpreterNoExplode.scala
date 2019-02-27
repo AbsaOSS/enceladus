@@ -27,7 +27,7 @@ import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
-import za.co.absa.enceladus.utils.explode.ExplodeTools
+import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
 import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 import za.co.absa.enceladus.utils.validation._
@@ -35,7 +35,9 @@ import za.co.absa.enceladus.utils.validation._
 import scala.util.Try
 import scala.util.control.NonFatal
 
-case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule, conformance: ConfDataset)
+case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule,
+                                           conformance: ConfDataset,
+                                           explodeContext: ExplosionContext)
   extends RuleInterpreter {
   // scalastyle:off null
 
@@ -69,15 +71,10 @@ case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule, conform
 
     val defaultMappingValue = defaultMappingValueMap.get(rule.targetAttribute)
 
+    val arrayErrorCondition = explodeContext.getArrayErrorCondition(rule.outputColumn)
     val errorsDf = addErrorsToErrCol(placedDf, rule.attributeMappings.values.toSeq, rule.outputColumn,
       defaultMappingValue, mappingErrUdfCall, (srcCols, outCol) => {
-        // Note. The previous implementation of errors condition also checks if any of array sizes in the path is -1.
-        //       This means that if any array on the path is null no error will be generated.
-        //       Checking only if actual attributes are null passes all the tests. However, need to double check
-        //       if this is the correct behavior on actual data and add a regression test for this.
-        srcCols.foldLeft(outCol.isNull)((cond: Column, col: Column) => {
-          cond.and(col.isNotNull)
-        })
+        outCol.isNull.and(arrayErrorCondition)
       })
 
     errorsDf
