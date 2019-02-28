@@ -24,6 +24,7 @@ import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object CustomRuleSample4 {
   /**
@@ -125,10 +126,11 @@ object CustomRuleSample4 {
       .config("spark.sql.codegen.wholeStage", value = false)
       .getOrCreate()
 
+    TimeZoneNormalizer.normalizeTimezone()
+
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     implicit val enableCF: Boolean = false
-
 
     val dfReader: DataFrameReader = {
       val dfReader0 = spark.read
@@ -137,7 +139,6 @@ object CustomRuleSample4 {
       val dfReader3 = if (cmdConfigLocal.csvHeader.isDefined) dfReader2.option("header", cmdConfigLocal.csvHeader.get) else dfReader2
       dfReader3
     }
-
     val inputData: DataFrame = cmdConfigLocal.inputFormat.toLowerCase match {
       case "csv" => dfReader.csv(cmdConfigLocal.inputFile)
       case "xml" => dfReader.format("com.databricks.spark.xml").load(cmdConfigLocal.inputFile)
@@ -145,7 +146,6 @@ object CustomRuleSample4 {
       case "json" => dfReader.json(cmdConfigLocal.inputFile)
       case _ => throw new Exception("Unsupported input format")
     }
-
     val conformanceDef =  Dataset(
       name = "Custom rule sample 4",
       version = 0,
@@ -160,7 +160,6 @@ object CustomRuleSample4 {
         LPadCustomConformanceRule(order = 1, outputColumn = "final", controlCheckpoint = false, inputColumn = "upper", len = 25, pad = ".")
       )
     )
-
     val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
 
     outputData.show()
