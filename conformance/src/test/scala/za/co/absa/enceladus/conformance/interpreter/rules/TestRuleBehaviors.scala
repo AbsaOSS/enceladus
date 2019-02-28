@@ -27,8 +27,6 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 trait TestRuleBehaviors  extends FunSuite with SparkTestBase {
 
   def conformanceRuleShouldMatchExpected(inputDf: DataFrame, inputDataset: Dataset, expectedJSON: String) {
-    spark.conf.set("spark.sql.session.timeZone", "GMT")
-
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
     implicit val enableCF: Boolean = false

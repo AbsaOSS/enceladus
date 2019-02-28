@@ -17,16 +17,18 @@ package za.co.absa.enceladus.utils.testUtils
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 trait SparkTestBase {
   System.setProperty("user.timezone", "UTC");
-  
+
   implicit val spark = SparkSession.builder().master("local[*]").appName("test")
   .config("spark.sql.codegen.wholeStage", false)
   .config("spark.ui.enabled", "false")
   .config("spark.driver.bindAddress","127.0.0.1")
   .config("spark.driver.host", "127.0.0.1")
   .getOrCreate()
+  TimeZoneNormalizer.normalizeTimezone()
 
   // Do not display INFO entries for tests
   Logger.getLogger("org").setLevel(Level.WARN)
