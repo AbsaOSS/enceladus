@@ -33,6 +33,10 @@ class FormatSuite extends FunSuite {
       Format.epochFactor(format)
     }
     assert(caught.getMessage == expectedMessage)
+    val caught2 = intercept[InvalidParameterException] {
+      Format.epochMilliFactor(format)
+    }
+    assert(caught2.getMessage == expectedMessage)
   }
 
 
@@ -48,6 +52,10 @@ class FormatSuite extends FunSuite {
       Format.epochFactor(format)
     }
     assert(caught.getMessage == expectedMessage)
+    val caught2 = intercept[InvalidParameterException] {
+      Format.epochMilliFactor(format)
+    }
+    assert(caught2.getMessage == expectedMessage)
   }
 
   test("Format class with default value - timestamp") {
@@ -61,6 +69,10 @@ class FormatSuite extends FunSuite {
       Format.epochFactor(format)
     }
     assert(caught.getMessage == expectedMessage)
+    val caught2 = intercept[InvalidParameterException] {
+      Format.epochMilliFactor(format)
+    }
+    assert(caught2.getMessage == expectedMessage)
   }
 
   test("Format class with default value - date") {
@@ -74,6 +86,10 @@ class FormatSuite extends FunSuite {
       Format.epochFactor(format)
     }
     assert(caught.getMessage == expectedMessage)
+    val caught2 = intercept[InvalidParameterException] {
+      Format.epochMilliFactor(format)
+    }
+    assert(caught2.getMessage == expectedMessage)
   }
 
   test("Format class with default value - double") {
@@ -107,13 +123,21 @@ class FormatSuite extends FunSuite {
   test("Format.epochFactor returns expected values.") {
     val result1 = Format.epochFactor("Epoch")
     assert(result1 == 1L)
-    val result1000 = Format.epochFactor("mIlLiEpOcH")
-    assert(result1000 == 1000L)
+    val result2 = Format.epochFactor("mIlLiEpOcH")
+    assert(result2 == 1000L)
+    val result3 = Format.epochMilliFactor("Epoch")
+    assert(result3 == 1000L)
+    val result4 = Format.epochMilliFactor("mIlLiEpOcH")
+    assert(result4 == 1L)
     val formatString = "xxxx"
     val expectedMessage = s"'$formatString' is not an epoch format"
     val caught = intercept[InvalidParameterException] {
       Format.epochFactor(formatString)
     }
     assert(caught.getMessage == expectedMessage)
+    val caught2 = intercept[InvalidParameterException] {
+      Format.epochMilliFactor(formatString)
+    }
+    assert(caught2.getMessage == expectedMessage)
   }
 }
