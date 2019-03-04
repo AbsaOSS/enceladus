@@ -28,7 +28,7 @@ class EnceladusDateParserSuite extends FunSuite{
   test("EnceladusDateParser class epoch") {
     val parser: EnceladusDateParser = EnceladusDateParser("epoch")
 
-    val value: String = "1547553153";
+    val value: String = "1547553153"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = new Date(119, 0, 15) //2019-01-19
     assert(resultDate.toString == expectedDate.toString)
@@ -41,7 +41,7 @@ class EnceladusDateParserSuite extends FunSuite{
   test("EnceladusDateParser class milliepoch") {
     val parser: EnceladusDateParser = EnceladusDateParser("milliepoch")
 
-    val value: String = "1547553153198";
+    val value: String = "1547553153198"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = new Date(119, 0, 15) //2019-01-19
     assert(resultDate.toString == expectedDate.toString)
@@ -51,10 +51,10 @@ class EnceladusDateParserSuite extends FunSuite{
     assert(resultTimestamp.toString == expectedTimestamp.toString)
   }
 
-  test("EnceladusDateParser class actual patter") {
+  test("EnceladusDateParser class actual pattern") {
     val parser: EnceladusDateParser = EnceladusDateParser("yyyy_MM_dd:HH.mm.ss")
 
-    val value: String = "2019_01_15:11.52.33";
+    val value: String = "2019_01_15:11.52.33"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = new Date(119, 0, 15) //2019-01-19
     assert(resultDate.toString == expectedDate.toString)
@@ -63,4 +63,15 @@ class EnceladusDateParserSuite extends FunSuite{
     val expectedTimestamp: Timestamp = new Timestamp(119, 0, 15, 11,52 , 33, 0 ) //2019-01-19 11:52:33
     assert(resultTimestamp.toString == expectedTimestamp.toString)
   }
+
+  test("format") {
+    val t = new Timestamp(70, 0, 2, 1, 0, 0, 0) //25 hours to epoch
+    val parser1 = EnceladusDateParser("yyyy-MM-dd HH:mm:ss")
+    assert(parser1.format(t) == "1970-01-02 01:00:00")
+    val parser2 = EnceladusDateParser("epoch")
+    assert(parser2.format(t) == "90000")
+    val parser3 = EnceladusDateParser("milliepoch")
+    assert(parser3.format(t) == "90000000")
+  }
+
 }
