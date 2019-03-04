@@ -162,7 +162,7 @@ object SchemaUtils {
   def getDeepestCommonArrayPath(schema: StructType, fieldPaths: Seq[String]): Option[String] = {
     val arrayPaths = fieldPaths.flatMap(path => getAllArraysInPath(path, schema)).distinct
 
-    if (!arrayPaths.isEmpty && isCommonSubPath(arrayPaths: _*)) {
+    if (arrayPaths.nonEmpty && isCommonSubPath(arrayPaths: _*)) {
       Some(arrayPaths.maxBy(_.length))
     } else {
       None
