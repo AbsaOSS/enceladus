@@ -176,7 +176,7 @@ object MappingRuleInterpreterNoExplode {
       // Otherwise use the original exception message and put it into techDetails field
       // of MappingValidationException.
       val typeText = targetAttributeType.prettyJson
-      val msg = s"The default value \n'$defaultValue'\n set for mapping table '$mappingTable'" +
+      val msg = s"The default value \n'$defaultValue'\n set for mapping table '$mappingTable' " +
         s"does not match the target attribute's data type\n'$typeText' \n"
 
       val recoverFunction: PartialFunction[Throwable, Any] = {
