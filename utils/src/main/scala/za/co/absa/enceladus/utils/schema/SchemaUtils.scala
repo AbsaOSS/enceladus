@@ -174,7 +174,7 @@ object SchemaUtils {
     *
     * For instance,
     *  - 'a.b', 'a.b.c', 'a.b.c.d' have this property.
-    *  - 'a.b', 'a.b.c', 'a.x.y' does NOT have is since 'a.b.c' and 'a.x.y' and not subpaths of each other.
+    *  - 'a.b', 'a.b.c', 'a.x.y' does NOT have it, since 'a.b.c' and 'a.x.y' have diverging subpaths.
     *
     * @param paths A list of paths to be analyzed
     * @return true if for all pathe the above property holds
