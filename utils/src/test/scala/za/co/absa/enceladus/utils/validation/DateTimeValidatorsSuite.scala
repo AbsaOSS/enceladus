@@ -58,6 +58,8 @@ class DateTimeValidatorsSuite extends FunSuite {
     assert(DateTimeValidators.isDateTimePatternValid("hh-mm-ss~~dd.MM.yyyy+zz", Some("23-10-11~~31.12.2004+CET")).isEmpty)
     //extra chars in default
     assert(DateTimeValidators.isDateTimePatternValid("yyMMdd_hhmmss_zz", Some("190301_194533_EST!!!!")).isEmpty)
+    //timestamp with offset time zone
+    assert(DateTimeValidators.isDateTimePatternValid("yyyy/MM/dd hh:mm:ssXXX", Some("2019/01/31 23:59:59-11:00")).isEmpty)
   }
 
   test("invalid pattern") {
