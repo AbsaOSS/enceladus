@@ -40,7 +40,7 @@ object ExpressionValidator {
     val df = spark.sparkContext.parallelize(List(1)).toDF("dummy")
 
     // Check if sparkExpression expression can be cast to the target attribute's type
-    // If types are completely incompatible Sparks thrown an exception
+    // If types are completely incompatible Spark throws an exception
     val dfExpr = df.select(expr(sparkExpression).as("field"))
     val res = dfExpr.select($"field".cast(targetAttributeType)).collect()(0)(0)
 

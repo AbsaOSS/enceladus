@@ -150,14 +150,14 @@ object SchemaUtils {
     * For instance, if given 'a.b', 'a.b.c', 'a.b.c.d' where b and c are arrays the common deepest array
     * path is 'a.b.c'.
     *
-    * If any of the arrays are one diverging path this function returns None.
+    * If any of the arrays are on diverging paths this function returns None.
     *
     * The purpose of the function is to determine the order of explosions to be made before the dataframe can be
     * joined on a field inside an array.
     *
     * @param schema     A Spark schema
     * @param fieldPaths A list of paths to analyze
-    * @return true if casting never fails
+    * @return Returns a common array path if there is one and None if any of the arrays are on diverging paths
     */
   def getDeepestCommonArrayPath(schema: StructType, fieldPaths: Seq[String]): Option[String] = {
     val arrayPaths = fieldPaths.flatMap(path => getAllArraysInPath(path, schema)).distinct
@@ -317,8 +317,8 @@ object SchemaUtils {
     * Checks if a field is an array
     *
     * @param schema        A schema
-    * @param fieldPathName A type to be casted to
-    * @return true if casting never fails
+    * @param fieldPathName A field to check
+    * @return true if the specified field is an array
     */
   def isArray(schema: StructType, fieldPathName: String): Boolean = {
     def arrayHelper(arrayField: ArrayType, path: Seq[String]): Boolean = {
@@ -373,8 +373,8 @@ object SchemaUtils {
     * Checks if a field is an array that is not nested in another array
     *
     * @param schema        A schema
-    * @param fieldPathName A type to be casted to
-    * @return true if casting never fails
+    * @param fieldPathName A field to check
+    * @return true if a field is an array that is not nested in another array
     */
   def isNonNestedArray(schema: StructType, fieldPathName: String): Boolean = {
     def structHelper(structField: StructType, path: Seq[String]): Boolean = {
