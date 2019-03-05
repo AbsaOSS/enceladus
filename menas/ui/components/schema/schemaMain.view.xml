@@ -14,41 +14,39 @@
   -->
 
 <core:View id="schemaMainView" xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:form="sap.ui.layout.form"
-    xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1" controllerName="components.schema.schemaMain"
-    xmlns:html="http://www.w3.org/1999/xhtml" xmlns:table="sap.ui.table" xmlns:u="sap.ui.unified">
-    <Page title="Schemas" enableScrolling="true">
-        <customHeader>
-            <Bar>
-                <contentMiddle>
-                    <Title text="Schemas"></Title>
-                </contentMiddle>
-                <contentRight>
-                    <Text text="Logged in as:"></Text>
-                    <Text text="{/userInfo/username}"></Text>
-                    <Button id="logout" icon="sap-icon://log" press="onPressLogout"></Button>
-                </contentRight>
-            </Bar>
-        </customHeader>
-        <content>
-            <SplitContainer>
-                <masterPages>
-                    <Page showHeader="false">
-                        <content>
-                            <List items="{/schemas}" mode="SingleSelectMaster" selectionChange="schemaSelected">
-                                <items>
-                                    <StandardListItem title="{_id}" description="latest version: {latestVersion}" cust:id="{_id}"
-                                        type="Active"></StandardListItem>
-                                </items>
-                            </List>
-                        </content>
-                        <footer>
-                            <Bar>
-                                <contentRight>
-                                    <Button id="NewSchema" text="New Schema" icon="sap-icon://add" press="onAddPress"></Button>
-                                </contentRight>
-                            </Bar>
-                        </footer>
-
+	xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1" controllerName="components.schema.schemaMain"
+	xmlns:html="http://www.w3.org/1999/xhtml" xmlns:table="sap.ui.table" xmlns:u="sap.ui.unified">
+	<Page title="Schemas" enableScrolling="true">
+		<customHeader>
+			<Bar>
+				<contentMiddle>
+					<Title text="Schemas"></Title>
+				</contentMiddle>
+				<contentRight>
+					<Text text="Logged in as:"></Text>
+					<Text text="{/userInfo/username}"></Text>
+					<Button id="logout" icon="sap-icon://log" press="onPressLogout"></Button>
+				</contentRight>
+			</Bar>
+		</customHeader>
+		<content>
+			<SplitContainer>
+				<masterPages>
+					<Page showHeader="false">
+						<content>
+							<List items="{/schemas}" mode="SingleSelectMaster" selectionChange="schemaSelected">
+								<items>
+									<StandardListItem title="{_id}" description="latest version: {latestVersion}" cust:id="{_id}" type="Active"></StandardListItem>
+								</items>
+							</List>
+						</content>
+						<footer>
+							<Bar>
+								<contentRight>
+									<Button id="NewSchema" text="New Schema" icon="sap-icon://add" press="onAddPress"></Button>
+								</contentRight>
+							</Bar>
+						</footer>
                     </Page>
                 </masterPages>
                 <detailPages>
@@ -133,14 +131,14 @@
                                         <Panel headerText="Datasets" height="50%">
                                             <List items="{/currentSchema/usedIn/datasets}" mode="None"
                                                 noDataText="Currently not used in any Datasets">
-                                                <StandardListItem title="name" description="v.{version}" type="Active"
+                                                <StandardListItem title="{name}" description="v.{version}" type="Active"
                                                     press="usedInNavTo" cust:collection="datasets" cust:name="{name}" cust:version="{version}"></StandardListItem>
                                             </List>
                                         </Panel>
                                         <Panel headerText="Mapping Tables" height="50%">
                                             <List items="{/currentSchema/usedIn/mappingTables}"
                                                 noDataText="Currently not used in any Mapping Tables" mode="None" selectionChange="usedInNavTo">
-                                                <StandardListItem title="{name} (v. {version})" type="Active" press="usedInNavTo"
+                                                <StandardListItem itle="{name}" description="v. {version}" type="Active" press="usedInNavTo"
                                                     cust:collection="mappingTables" cust:name="{name}" cust:version="{version}"></StandardListItem>
                                             </List>
                                         </Panel>
