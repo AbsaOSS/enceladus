@@ -13,19 +13,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.types
+package za.co.absa.enceladus.utils.time
 
+import java.sql.{Date, Timestamp}
 import java.text.SimpleDateFormat
-import java.sql.Date
-import java.sql.Timestamp
-import java.time.format.DateTimeFormatter
 
 /**
   * Enables to parse string to date and timestamp based on the provided format
-  * Unlike SimpleDateFormat it also supports an epoch ("epoch", "milliepoch"...) formatting strings
+  * Unlike SimpleDateFormat it also supports an epoch ("epoch", "epochmilli"...) formatting strings
   * @param pattern  the formatting string, in case it's an epoch format the values wil need to be convertible to Long
   */
-case class EnceladusDateParser(pattern: Format) {
+case class EnceladusDateTimeParser(pattern: DateTimePattern) {
   //TODO use Option.when with Scala 2.13
   private val formatter: Option[SimpleDateFormat] = if (pattern.isEpoch) {
     None
@@ -54,6 +52,6 @@ case class EnceladusDateParser(pattern: Format) {
   }
 }
 
-object EnceladusDateParser {
-  def apply(pattern: String): EnceladusDateParser = new EnceladusDateParser(Format(pattern))
+object EnceladusDateTimeParser {
+  def apply(pattern: String): EnceladusDateTimeParser = new EnceladusDateTimeParser(DateTimePattern(pattern))
 }

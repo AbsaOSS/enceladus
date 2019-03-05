@@ -19,14 +19,14 @@ import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneOffset, ZonedDateTime}
 import java.sql.Timestamp
 
-import za.co.absa.enceladus.utils.types.EnceladusDateParser
+import za.co.absa.enceladus.utils.time.EnceladusDateTimeParser
 
 import scala.util.control.NonFatal
 
 /**
   * This objects contains validators for date and time values and patterns
   */
-object DateTimeValidators {
+object DateTimeValidator {
 
   // This is an example date that can be used for checking pattern conversion
   private val exampleDate: Timestamp = new Timestamp(System.currentTimeMillis)
@@ -42,7 +42,7 @@ object DateTimeValidators {
   def isDateTimePatternValid(pattern: String, default: Option[String] = None): Option[ValidationIssue] ={
     try {
       // Checking pattern syntax
-      val parser = EnceladusDateParser(pattern)
+      val parser = EnceladusDateTimeParser(pattern)
       // Checking pattern's ability to be used in formatting date/time values
       parser.format(exampleDate)
       // Checking default value correctness

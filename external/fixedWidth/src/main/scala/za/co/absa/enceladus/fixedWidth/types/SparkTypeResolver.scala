@@ -18,8 +18,9 @@ package za.co.absa.enceladus.fixedWidth.types
 
 import org.apache.spark.sql.types._
 import org.slf4j.LoggerFactory
+import za.co.absa.enceladus.utils.time.EnceladusDateTimeParser
+
 import scala.util.control.NonFatal
-import za.co.absa.enceladus.utils.types.EnceladusDateParser
 
 object SparkTypeResolver {
 
@@ -56,7 +57,7 @@ object SparkTypeResolver {
 
   private def castToDateTimeType(field: StructField, dateString: String, pattern: String): Any = {
     try {
-      val parser: EnceladusDateParser = EnceladusDateParser(pattern)
+      val parser: EnceladusDateTimeParser = EnceladusDateTimeParser(pattern)
       field.dataType match {
         case _: TimestampType => parser.parseTimestamp(dateString)
         case _: DateType      => parser.parseDate(dateString)

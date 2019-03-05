@@ -26,7 +26,7 @@ class FieldValidatorDate extends FieldValidator {
     val default = if (field.metadata contains "default") Some(field.metadata.getString("default")) else None
     if (field.metadata contains "pattern") {
       val pattern = field.metadata.getString("pattern")
-      val patternError = DateTimeValidators.isDateTimePatternValid(pattern, default)
+      val patternError = DateTimeValidator.isDateTimePatternValid(pattern, default)
       if (patternError.nonEmpty) {
         issues += patternError.get
       }
