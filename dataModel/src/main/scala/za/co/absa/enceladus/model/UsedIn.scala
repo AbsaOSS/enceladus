@@ -26,8 +26,4 @@ case class UsedIn(
     datasets.exists(_.nonEmpty) || mappingTables.exists(_.nonEmpty)
   }
 
-  def toSeq: Seq[MenasReference] = {
-    (datasets ++ mappingTables).flatten.toSeq
-  }
-
 }

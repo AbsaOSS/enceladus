@@ -88,6 +88,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection
       .find[MenasReference](filter)
       .projection(fields(include("name", "version"), computed("collection", collectionName)))
+      .sort(Sorts.ascending("name", "version"))
       .toFuture()
   }
 
