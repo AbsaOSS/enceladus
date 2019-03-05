@@ -34,11 +34,6 @@
         </dependency>
         <dependency>
             <groupId>za.co.absa</groupId>
-            <artifactId>enceladus-dataModel</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa</groupId>
             <artifactId>enceladus-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
