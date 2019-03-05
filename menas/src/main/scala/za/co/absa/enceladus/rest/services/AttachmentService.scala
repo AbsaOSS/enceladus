@@ -22,27 +22,29 @@ import za.co.absa.enceladus.model.menas.MenasAttachment
 import za.co.absa.enceladus.rest.repositories._
 
 import scala.concurrent.Future
+import za.co.absa.enceladus.rest.exceptions.NotFoundException
 
 @Service
-class AttachmentService @Autowired()(attachmentMongoRepository: AttachmentMongoRepository,
-                                     schemaMongoRepository: SchemaMongoRepository,
-                                     datasetMongoRepository: DatasetMongoRepository,
-                                     mappingTableMongoRepository: MappingTableMongoRepository)
+class AttachmentService @Autowired() (attachmentMongoRepository: AttachmentMongoRepository,
+    schemaMongoRepository: SchemaMongoRepository,
+    datasetMongoRepository: DatasetMongoRepository,
+    mappingTableMongoRepository: MappingTableMongoRepository)
   extends ModelService(attachmentMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def uploadAttachment(attachment: MenasAttachment): Future[Completed] = {
-    chooseRepository(attachment.refCollection).getLatestVersionValue(attachment.refName).flatMap { version =>
-      val updated = attachment.copy(refVersion = version + 1)
-
-      attachmentMongoRepository.create(updated)
-    }
+    chooseRepository(attachment.refCollection).getLatestVersionValue(attachment.refName).flatMap({
+      case Some(version) => {
+        val updated = attachment.copy(refVersion = version + 1)
+        attachmentMongoRepository.create(updated)
+      }
+      case _ => throw new NotFoundException
+    })
   }
 
   private def chooseRepository(refCollection: String): VersionedMongoRepository[_] = {
-    RefCollection.byValueIgnoreCase(refCollection)
-    match {
+    RefCollection.byValueIgnoreCase(refCollection) match {
       case RefCollection.SCHEMA        => schemaMongoRepository
       case RefCollection.DATASET       => datasetMongoRepository
       case RefCollection.MAPPING_TABLE => mappingTableMongoRepository

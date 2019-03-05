@@ -40,11 +40,16 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   def addConformanceRule(@AuthenticationPrincipal user: UserDetails, @PathVariable datasetName: String,
                          @RequestBody rule: ConformanceRule): CompletableFuture[Dataset] = {
     //TODO: we need to figure out how to deal with versioning properly from UX perspective
-    val version = datasetService.getLatestVersion(datasetName).get.get.version
-    datasetService.addConformanceRule(user.getUsername, datasetName, version, rule).map {
-      case Some(dataset) => dataset
-      case None          => throw notFound()
-    }
+    for {
+      latestVersion <- datasetService.getLatestVersionValue(datasetName)
+      res <- latestVersion match {
+        case Some(version) => datasetService.addConformanceRule(user.getUsername, datasetName, version, rule).map {
+          case Some(ds) => ds
+          case _ => throw notFound()
+        }
+        case _ => throw notFound()
+      }
+    } yield res
   }
 
 }
