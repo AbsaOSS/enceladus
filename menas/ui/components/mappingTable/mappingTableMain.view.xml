@@ -120,7 +120,7 @@
 									<IconTabFilter id="UsedIn" icon="sap-icon://detail-view" text="Used In">
 										<Panel headerText="Datasets" height="50%">
 											<List items="{/currentMappingTable/usedIn/datasets}" noDataText="Currently not used in any Datasets">
-												<StandardListItem title="name" description="v.{version}" type="Active"></StandardListItem>
+												<StandardListItem title="{name}" description="v.{version}" type="Active"></StandardListItem>
 											</List>
 										</Panel>
 									</IconTabFilter>
