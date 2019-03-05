@@ -65,16 +65,7 @@ var DatasetService = new function() {
             DatasetService.getDatasetList(true, false)
         }
       }, function(xhr) {
-        if (xhr.status === 400) {
-          let err = "Disabling dataset failed. Clear the following dependencies first:\n";
-          let oData = JSON.parse(xhr.responseText);
-          for(let ind in oData) {
-            err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
-          }
-          sap.m.MessageBox.error(err)
-        } else {
-          sap.m.MessageBox.error("Failed to disable dataset.")
-        }
+        sap.m.MessageBox.error("Failed to disable dataset.")
       })
     };
 

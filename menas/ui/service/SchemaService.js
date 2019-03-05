@@ -103,8 +103,21 @@ var SchemaService = new function() {
       if (xhr.status === 400) {
         let err = "Disabling schema failed. Clear the following dependencies first:\n";
         let oData = JSON.parse(xhr.responseText);
-        for(let ind in oData) {
-          err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
+
+        let datasets = oData["datasets"];
+        if (datasets.length !== 0) {
+          err += "Datasets:\n";
+          for (let ind in datasets) {
+            err += "- " + datasets[ind].name + " (v. " + datasets[ind].version + ")";
+          }
+        }
+
+        let mappingTables = oData["mappingTables"];
+        if (mappingTables.length !== 0) {
+          err += "\nMapping Tables:\n";
+          for (let ind in mappingTables) {
+            err += "\t - " + mappingTables[ind].name + " (v. " + mappingTables[ind].version + ")";
+          }
         }
         sap.m.MessageBox.error(err)
       } else {

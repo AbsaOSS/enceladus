@@ -170,8 +170,11 @@ var MappingTableService = new function () {
       if (xhr.status === 400) {
         let err = "Disabling mapping table failed. Clear the following dependencies first:\n";
         let oData = JSON.parse(xhr.responseText);
-        for(let ind in oData) {
-          err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
+
+        err += "Datasets:\n";
+        let datasets = oData["datasets"];
+        for(let ind in datasets) {
+          err += "- " + datasets[ind].name + " (v. " + datasets[ind].version + ")";
         }
         sap.m.MessageBox.error(err)
       } else {
