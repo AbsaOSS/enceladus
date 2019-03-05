@@ -108,7 +108,7 @@ var SchemaService = new function() {
         if (datasets.length !== 0) {
           err += "Datasets:\n";
           for (let ind in datasets) {
-            err += "- " + datasets[ind].name + " (v. " + datasets[ind].version + ")";
+            err += "- " + datasets[ind].name + " (v. " + datasets[ind].version + ")\n";
           }
         }
 
@@ -116,7 +116,7 @@ var SchemaService = new function() {
         if (mappingTables.length !== 0) {
           err += "\nMapping Tables:\n";
           for (let ind in mappingTables) {
-            err += "\t - " + mappingTables[ind].name + " (v. " + mappingTables[ind].version + ")";
+            err += "\t - " + mappingTables[ind].name + " (v. " + mappingTables[ind].version + ")\n";
           }
         }
         sap.m.MessageBox.error(err)

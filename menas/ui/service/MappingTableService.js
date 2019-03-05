@@ -174,7 +174,7 @@ var MappingTableService = new function () {
         err += "Datasets:\n";
         let datasets = oData["datasets"];
         for(let ind in datasets) {
-          err += "- " + datasets[ind].name + " (v. " + datasets[ind].version + ")";
+          err += "- " + datasets[ind].name + " (v. " + datasets[ind].version + ")\n";
         }
         sap.m.MessageBox.error(err)
       } else {
