@@ -40,13 +40,13 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
   }
 
   def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[Option[Schema]] = {
-    super.update(username, schemaName, schemaVersion, "New schema uploaded.")({ oldSchema =>
+    super.update(username, schemaName, schemaVersion)({ oldSchema =>
       oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(fields.fields).toList)
     })
   }
 
   override def update(username: String, schema: Schema): Future[Option[Schema]] = {
-    super.update(username, schema.name, schema.version, "Schema updated.") { latest =>
+    super.update(username, schema.name, schema.version) { latest =>
       latest.setDescription(schema.description).asInstanceOf[Schema]
     }
   }
@@ -54,7 +54,7 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
   override def create(newSchema: Schema, username: String): Future[Option[Schema]] = {
     val schema = Schema(name = newSchema.name,
       description = newSchema.description)
-    super.create(schema, username, s"Schema ${schema.name} created.")
+    super.create(schema, username)
   }
 
 }

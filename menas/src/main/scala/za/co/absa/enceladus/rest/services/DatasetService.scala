@@ -29,7 +29,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
-    super.update(username, dataset.name, dataset.version, "Dataset Updated.") { latest =>
+    super.update(username, dataset.name, dataset.version) { latest =>
       latest
         .setSchemaName(dataset.schemaName)
         .setSchemaVersion(dataset.schemaVersion)
@@ -54,11 +54,11 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
       schemaName = newDataset.schemaName,
       schemaVersion = newDataset.schemaVersion,
       conformance = List())
-    super.create(dataset, username, s"Dataset ${newDataset.name} created.")
+    super.create(dataset, username)
   }
 
   def addConformanceRule(username: String, datasetName: String, datasetVersion: Int, rule: ConformanceRule): Future[Option[Dataset]] = {
-    super.update(username, datasetName, datasetVersion, s"Conformance rule (${rule.order}) '${rule.outputColumn}' added.") { dataset =>
+    super.update(username, datasetName, datasetVersion) { dataset =>
       dataset.copy(conformance = dataset.conformance :+ rule)
     }
   }

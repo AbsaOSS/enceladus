@@ -43,23 +43,23 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
       schemaName = mt.schemaName,
       schemaVersion = mt.schemaVersion,
       hdfsPath = mt.hdfsPath)
-    super.create(mappingTable, username, s"Mapping Table ${mt.name} created.")
+    super.create(mappingTable, username)
   }
 
   def updateDefaults(username: String, mtName: String, mtVersion: Int, defaultValues: List[DefaultValue]): Future[Option[MappingTable]] = {
-    super.update(username, mtName, mtVersion, s"Default values updated.") { latest =>
+    super.update(username, mtName, mtVersion) { latest =>
       latest.setDefaultMappingValue(defaultValues)
     }
   }
 
   def addDefault(username: String, mtName: String, mtVersion: Int, defaultValue: DefaultValue): Future[Option[MappingTable]] = {
-    super.update(username, mtName, mtVersion, s"Default value for column ${defaultValue.columnName} added.") { latest =>
+    super.update(username, mtName, mtVersion) { latest =>
       latest.setDefaultMappingValue(latest.defaultMappingValue :+ defaultValue)
     }
   }
 
   override def update(username: String, mt: MappingTable): Future[Option[MappingTable]] = {
-    super.update(username, mt.name, mt.version, s"Mapping Table Updated.") { latest =>
+    super.update(username, mt.name, mt.version) { latest =>
       latest
         .setHDFSPath(mt.hdfsPath)
         .setSchemaName(mt.schemaName)

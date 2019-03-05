@@ -94,9 +94,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private[rest] def getMenasRef(item: C): MenasReference = MenasReference(Some(versionedMongoRepository.collectionName), item.name, item.version)
 
-  def create(item: C, username: String): Future[Option[C]]
-
-  private[services] def create(item: C, username: String, auditMessage: String): Future[Option[C]] = {
+  private[rest] def create(item: C, username: String): Future[Option[C]] = {
     for {
       validation <- validate(item)
       _ <- if (validation.isValid()) versionedMongoRepository.create(item, username)
@@ -107,7 +105,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   def update(username: String, item: C): Future[Option[C]]
 
-  private[services] def update(username: String, itemName: String, itemVersion: Int, auditMessage: String)(transform: C => C): Future[Option[C]] = {
+  private[services] def update(username: String, itemName: String, itemVersion: Int)(transform: C => C): Future[Option[C]] = {
     for {
       version <- getVersion(itemName, itemVersion)
       transformed <- if (version.isEmpty) Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
