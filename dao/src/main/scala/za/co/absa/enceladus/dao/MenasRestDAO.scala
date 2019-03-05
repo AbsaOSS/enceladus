@@ -25,9 +25,10 @@ import org.apache.http.impl.client.HttpClients
 import org.apache.log4j.LogManager
 import za.co.absa.atum.model._
 import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.dao.EnceladusRestDAO.{sessionCookie, csrfToken}
+import za.co.absa.enceladus.dao.EnceladusRestDAO.{csrfToken, sessionCookie}
 import za.co.absa.enceladus.model._
 
+import scala.io.Source
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -47,7 +48,7 @@ object MenasRestDAO extends MenasDAO {
   def storeNewRunObject(run: Run): Try[String] = {
     Try({
       val runToSave = if (run.uniqueId.isEmpty) run.copy(uniqueId = Some(UUID.randomUUID().toString)) else run
-      val json = ControlUtils.asJson(runToSave)
+      val json = EnceladusRestDAO.objectMapper.writeValueAsString(runToSave)
       val url = s"$restBase/runs"
 
       if (sendPostJson(url, json)) {
@@ -69,7 +70,7 @@ object MenasRestDAO extends MenasDAO {
   def updateControlMeasure(uniqueId: String,
                            controlMeasure: ControlMeasure): Boolean = {
     val url = s"$restBase/runs/updateControlMeasure/$uniqueId"
-    val json = ControlUtils.asJson(controlMeasure)
+    val json = EnceladusRestDAO.objectMapper.writeValueAsString(controlMeasure)
 
     sendPostJson(url, json)
   }
@@ -77,7 +78,7 @@ object MenasRestDAO extends MenasDAO {
   def updateRunStatus(uniqueId: String,
                       runStatus: RunStatus): Boolean = {
     val url = s"$restBase/runs/updateRunStatus/$uniqueId"
-    val json = ControlUtils.asJson(runStatus)
+    val json = EnceladusRestDAO.objectMapper.writeValueAsString(runStatus)
 
     sendPostJson(url, json)
   }
@@ -92,7 +93,7 @@ object MenasRestDAO extends MenasDAO {
   def updateSplineReference(uniqueId: String,
                             splineRef: SplineReference): Boolean = {
     val url = s"$restBase/runs/updateSplineReference/$uniqueId"
-    val json = ControlUtils.asJson(splineRef)
+    val json = EnceladusRestDAO.objectMapper.writeValueAsString(splineRef)
 
     sendPostJson(url, json)
   }
@@ -108,7 +109,7 @@ object MenasRestDAO extends MenasDAO {
   def appendCheckpointMeasure(uniqueId: String,
                               checkpoint: Checkpoint): Boolean = {
     val url = s"$restBase/runs/addCheckpoint/$uniqueId"
-    val json = ControlUtils.asJson(checkpoint)
+    val json = EnceladusRestDAO.objectMapper.writeValueAsString(checkpoint)
 
     sendPostJson(url, json)
   }
@@ -120,6 +121,7 @@ object MenasRestDAO extends MenasDAO {
       val httpPost = new HttpPost(url)
       httpPost.addHeader("cookie", sessionCookie)
       httpPost.addHeader("X-CSRF-TOKEN", csrfToken)
+      httpPost.addHeader("content-type", "application/json")
 
       httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON))
 
@@ -135,7 +137,8 @@ object MenasRestDAO extends MenasDAO {
           throw new UnauthorizedException
         }
         else {
-          log.warn(response.toString)
+          val responseBody = getResponseBody(response)
+          log.error(s"RESPONSE: ${response.getStatusLine} - $responseBody")
         }
         ok
       }
@@ -150,6 +153,9 @@ object MenasRestDAO extends MenasDAO {
         false
     }
   }
+
+  private def getResponseBody(response: CloseableHttpResponse): String = {
+    Source.fromInputStream(response.getEntity.getContent).mkString
+  }
+
 }
-
-

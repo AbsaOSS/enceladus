@@ -15,17 +15,16 @@
 
 package za.co.absa.enceladus.utils.transformations
 
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.api.java.UDF1
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.api.java.UDF2
 import org.slf4j.LoggerFactory
-import org.apache.spark.sql.Column
 import org.apache.spark.storage.StorageLevel
+
+import scala.collection.mutable.ListBuffer
 
 object ArrayTransformations {
 
@@ -114,7 +113,7 @@ object ArrayTransformations {
    *  @param ds Dataset to be transformed
    *  @param arrayCol The dot-separated path of the array column
    *  @param fn Function which takes a dataset and returns dataset. The array elements in the dataset have same path as the original array (one element per record).
-   *  		Fn has to preserve the element path.
+   *      Fn has to preserve the element path.
    *  @return Dataset with the array of transformed elements (at the original path) and preserving the original order of the elements.
    */
   def arrayTransform(ds: Dataset[Row], arrayCol: String)(fn: ((Dataset[Row]) => Dataset[Row]))(implicit spark: SparkSession) = {
@@ -213,4 +212,5 @@ object ArrayTransformations {
       }
     }
   }
+
 }

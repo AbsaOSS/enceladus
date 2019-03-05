@@ -17,7 +17,6 @@ package za.co.absa.enceladus.utils.types
 
 import java.sql.Date
 import java.sql.Timestamp
-import java.text.SimpleDateFormat
 import scala.util.Try
 import org.apache.spark.sql.types._
 
@@ -60,16 +59,10 @@ object Defaults {
       case _: DoubleType    => value.toDouble
       case _: LongType      => value.toLong
       case _: StringType    => value
-      case _: DateType      => {
-        val format = new SimpleDateFormat(dtPattern.getOrElse(throw new IllegalArgumentException("No date format specified.")))
-        new Date(format.parse(value).getTime)
-      }
-      case _: TimestampType => {
-        val format = new SimpleDateFormat(dtPattern.getOrElse(throw new IllegalArgumentException("No date format specified.")))
-        new Timestamp(format.parse(value).getTime)
-      }
+      case _: DateType      => EnceladusDateParser(dtPattern.getOrElse(throw new IllegalArgumentException("No date format specified."))).parseDate(value)
+      case _: TimestampType => EnceladusDateParser(dtPattern.getOrElse(throw new IllegalArgumentException("No timestamp format specified."))).parseTimestamp(value)
       case _: BooleanType   => value.toBoolean
-      case t: DecimalType   => new java.math.BigDecimal(value)
+      case _: DecimalType   => new java.math.BigDecimal(value)
       case _                => throw new IllegalStateException(s"No default value defined for data type ${dt.typeName}")
     }
   }
@@ -77,26 +70,18 @@ object Defaults {
   /** Wrapper which returns the parsed default value for datetype and timestamptype returns ,default value for other primtive type
     * from metadata first (if any) and the global one otherwise */
   def getDefaultValue(st: StructField): Any = {
-    val format = st.dataType match {
-      case _: DateType | _: TimestampType => Some(getFormat(st))
-      case _                              => None
-    }
-
     getDefaultOpt(st) match {
-      case Some(default) => parseDefault(st.dataType, default, format)
+      case Some(default) =>
+        val format: Option[Format] = st.dataType match {
+          case _: DateType | _: TimestampType => Some(Format(st))
+          case _ => None
+        }
+        parseDefault(st.dataType, default, format.map(_.get))
       case None          => getGlobalDefault (st.dataType)
     }
   }
 
   /** Get option of a default */
   def getDefaultOpt(st: StructField): Option[String] = Try(st.metadata.getString("default")).toOption
-
-  /** Get option of a format ~ pattern */
-  def getFormatOpt(st: StructField): Option[String] = Try(st.metadata.getString("pattern")).toOption
-
-  /** Wrapper which returns the default format from metadata first (if any) and the global one otherwise */
-  def getFormat(st: StructField): String = {
-    getFormatOpt(st).getOrElse(getGlobalFormat(st.dataType))
-  }
-
 }
+

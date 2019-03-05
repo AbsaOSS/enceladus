@@ -15,8 +15,11 @@
 
 package za.co.absa.enceladus.rest.models
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 case class Validation (errors: Map[String, List[String]] = Map()) {
 
+  @JsonIgnore
   def isValid(): Boolean = errors.isEmpty
 
   def withError(key: String, error: String): Validation = {

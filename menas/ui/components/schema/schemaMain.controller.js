@@ -36,11 +36,9 @@ sap.ui.controller("components.schema.schemaMain", {
     }, this);
 
     // include CSRF to make spring security happy
-    var token = $("meta[name='_csrf']").attr("content");
-    var header = $("meta[name='_csrf_header']").attr("content");
     this.byId("fileUploader").addHeaderParameter(new sap.ui.unified.FileUploaderParameter({
-      name : header,
-      value : token
+      name : "X-CSRF-TOKEN",
+      value : localStorage.getItem("csrfToken")
     }));
 
     SchemaService.getSchemaList();

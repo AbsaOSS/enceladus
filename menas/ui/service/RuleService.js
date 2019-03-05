@@ -51,30 +51,13 @@ var RuleService = new function () {
     })
   };
 
-  this.disableRule = function (sId, iVersion) {
-    var uri = "api/rule/disable/" + encodeURI(sId);
-    if (typeof (iVersion) !== "undefined") {
-      uri += "/" + encodeURI(iVersion)
-    }
+  this.removeRule = function (oCurrentDataset, iRuleIndex) {
+    let conformance = oCurrentDataset["conformance"]
+      .filter((_, index) => index !== iRuleIndex)
+      .sort((first, second) => first.order > second.order)
+      .map((currElement, index) => {return {...currElement, order: index}});
 
-    Functions.ajax(uri, "GET", {}, function (oData) {
-      if (Array.isArray(oData)) {
-        var err = "Disabling rule failed. Clear the following dependencies first:\n";
-        for (var ind in oData) {
-          err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
-        }
-        sap.m.MessageBox.error(err)
-      } else if (typeof (oData) === "object") {
-        sap.m.MessageToast.show("Rule disabled.");
-        if (window.location.hash !== "#/rule") {
-          window.location.hash = "#/rule"
-        } else {
-          RuleService.getRuleList(true, false)
-        }
-      }
-    }, function () {
-      sap.m.MessageBox.error("Failed to disable rule.")
-    })
+    return {...oCurrentDataset, conformance: conformance};
   };
 
   this.isUniqueRuleName = function (sName, model) {
@@ -86,8 +69,8 @@ var RuleService = new function () {
     })
   };
 
-  this.createRule = function (sDatasetName, oRule) {
-    oRule.order = -1; // dummy for completeness
+  this.createRule = function (oCurrentDataset, oRule) {
+    oRule.order = oCurrentDataset.conformance.length;
 
     if (oRule._t === "MappingConformanceRule") {
       oRule.attributeMappings = {};
@@ -96,13 +79,12 @@ var RuleService = new function () {
       });
       delete oRule.joinConditions;
     }
-    console.log(JSON.stringify(oRule)); // TODO: remove debug
 
-    Functions.ajax("api/dataset/" + sDatasetName + "/rule/create", "POST", oRule,
+    Functions.ajax("api/dataset/" + encodeURI(oCurrentDataset.name) + "/rule/create", "POST", oRule,
       function (oData) {
       DatasetService.getDatasetList();
       SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
-      model.setProperty("/currentDataset", oData);
+      DatasetService.setCurrentDataset(oData);
       sap.m.MessageToast.show("Rule created.");
     }, function () {
       sap.m.MessageBox.error("Failed to create the rule, try reloading the application or try again later.")

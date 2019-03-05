@@ -35,7 +35,8 @@ class DataframeReader(datasetPath: String, inputSchema: Option[StructType] )
     StructType(dataFrameSchema.map{ f => StructField(f.name, f.dataType, f.nullable) })
   }
 
-  private def getDataFrameReader(implicit dfReaderOptions: DataframeReaderOptions, sparkSession: SparkSession): DataFrameReader = {
+  private def getDataFrameReader(implicit dfReaderOptions: DataframeReaderOptions,
+                                 sparkSession: SparkSession): DataFrameReader = {
     (dfReaderOptions.rawFormat: @switch) match {
       case "csv" => getCsvReader
       case "xml" => getXmlReader
@@ -45,32 +46,43 @@ class DataframeReader(datasetPath: String, inputSchema: Option[StructType] )
     }
   }
 
-  private def getStandardReader()(implicit dfReaderOptions: DataframeReaderOptions, sparkSession: SparkSession): DataFrameReader = {
+  private def getStandardReader()(implicit dfReaderOptions: DataframeReaderOptions,
+                                  sparkSession: SparkSession): DataFrameReader = {
     sparkSession.read.format(dfReaderOptions.rawFormat)
   }
 
-  private def getParquetReader()(implicit dfReaderOptions: DataframeReaderOptions, sparkSession: SparkSession): DataFrameReader = {
+  private def getParquetReader()(implicit dfReaderOptions: DataframeReaderOptions,
+                                 sparkSession: SparkSession): DataFrameReader = {
     val dfReader = getStandardReader
 
-    if (inputSchema.isDefined) dfReader.schema(inputSchema.get)
-    else dfReader
+    inputSchema match {
+      case Some(schema) => dfReader.schema(schema)
+      case None         => dfReader
+    }
   }
 
-  private def getFixedWidthReader()(implicit dfReaderOptions: DataframeReaderOptions, sparkSession: SparkSession): DataFrameReader = {
+  private def getFixedWidthReader()(implicit dfReaderOptions: DataframeReaderOptions,
+                                    sparkSession: SparkSession): DataFrameReader = {
     val dfReader = getStandardReader
 
-    if (dfReaderOptions.fixedWidthTrimValues.get) dfReader.option("trimValues", "true")
-    else dfReader
+    dfReaderOptions.fixedWidthTrimValues match {
+      case Some(trimValues) => dfReader.option("trimValues", trimValues)
+      case None             => dfReader
+    }
   }
 
-  private def getXmlReader()(implicit dfReaderOptions: DataframeReaderOptions, sparkSession: SparkSession): DataFrameReader = {
+  private def getXmlReader()(implicit dfReaderOptions: DataframeReaderOptions,
+                             sparkSession: SparkSession): DataFrameReader = {
     getStandardReader.option("rowTag", dfReaderOptions.rowTag.get)
   }
 
-  private def getCsvReader()(implicit dfReaderOptions: DataframeReaderOptions, sparkSession: SparkSession): DataFrameReader = {
+  private def getCsvReader()(implicit dfReaderOptions: DataframeReaderOptions,
+                             sparkSession: SparkSession): DataFrameReader = {
     val dfReader = getStandardReader.option("delimiter", dfReaderOptions.csvDelimiter.get)
 
-    if (dfReaderOptions.csvHeader.isDefined) dfReader.option("header", dfReaderOptions.csvHeader.get)
-    else dfReader
+    dfReaderOptions.csvHeader match {
+      case Some(hasHeader) => dfReader.option("header", hasHeader)
+      case None            => dfReader
+    }
   }
 }

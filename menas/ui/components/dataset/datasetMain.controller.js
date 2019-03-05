@@ -97,9 +97,9 @@ sap.ui.controller("components.dataset.datasetMain", {
 
   ruleAddSubmit: function () {
     // if (this.validateNewRule) {
-    let currentDatasetName = this._model.getProperty("/currentDataset/name");
-    let currentRule = this._model.getProperty("/newRule");
-    RuleService.createRule(currentDatasetName, currentRule);
+    let currentDataset = this._model.getProperty("/currentDataset");
+    let newRule = this._model.getProperty("/newRule");
+    RuleService.createRule(currentDataset, newRule);
     // }
     this.ruleAddCancel();
   },
@@ -221,7 +221,7 @@ sap.ui.controller("components.dataset.datasetMain", {
   },
 
   onRuleMenuAction: function (oEv) {
-    let sAction = oEv.getParameter("item").data("action")
+    let sAction = oEv.getParameter("item").data("action");
     let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
 
     if (sAction === "edit") {
@@ -238,10 +238,13 @@ sap.ui.controller("components.dataset.datasetMain", {
         onClose: function (oResponse) {
           if (oResponse === sap.m.MessageBox.Action.YES) {
             let toks = sBindPath.split("/");
-            let index = toks[toks.length - 1];
-            let currDataset = this._model.getProperty("/currentDataset");
-            let conformance = currDataset["conformance"].filter((el, ind) => ind !== parseInt(index));
-            // RuleService.editConformanceRules(currDataset.name, currDataset.version, conformance);
+            let ruleIndex = parseInt(toks[toks.length - 1]);
+            let currentDataset = this._model.getProperty("/currentDataset");
+            let newDataset = RuleService.removeRule(currentDataset, ruleIndex);
+
+            if (newDataset) {
+              DatasetService.editDataset(newDataset);
+            }
           }
         }.bind(this)
       });
@@ -305,7 +308,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     if (this.validateNewDataset()) {
       // send and update UI
       if (newDataset.isEdit) {
-        DatasetService.editDataset(newDataset.name, newDataset.version, newDataset.description, newDataset.hdfsPath, newDataset.hdfsPublishPath, newDataset.schemaName, newDataset.schemaVersion)
+        DatasetService.editDataset(newDataset)
       } else {
         DatasetService.createDataset(newDataset.name, newDataset.description, newDataset.hdfsPath, newDataset.hdfsPublishPath, newDataset.schemaName, newDataset.schemaVersion)
       }

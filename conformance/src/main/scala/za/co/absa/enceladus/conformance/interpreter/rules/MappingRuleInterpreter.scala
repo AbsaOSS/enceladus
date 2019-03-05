@@ -30,10 +30,12 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import org.apache.spark.sql.api.java.UDF1
 import za.co.absa.enceladus.utils.error._
-import za.co.absa.enceladus.model.{ Dataset => ConfDataset }
+import za.co.absa.enceladus.model.{Dataset => ConfDataset}
+
 import scala.util.Try
 import scala.util.control.NonFatal
 import org.apache.spark.sql.Column
+import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 import za.co.absa.enceladus.utils.validation._
 
 case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: ConfDataset) extends RuleInterpreter {
@@ -41,6 +43,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
   private val conf = ConfigFactory.load()
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
+    log.info(s"Processing mapping rule to conform ${rule.outputColumn}...")
     import spark.implicits._
 
     val datasetSchema = dao.getSchema(conformance.schemaName, conformance.schemaVersion)
@@ -164,7 +167,7 @@ object MappingRuleInterpreter {
       if (defaultValue.trim.toLowerCase == "null") {
         require(targetField.get.nullable, "The target field is not nullable, 'null' is not acceptable.")
       } else {
-        ensureExpressionMatchesType(defaultValue, targetAttributeType)
+        ExpressionValidator.ensureExpressionMatchesType(defaultValue, targetAttributeType)
       }
     }).recover({
       // Constructing a common form of exception messages based on the exception type
@@ -186,47 +189,6 @@ object MappingRuleInterpreter {
     validationResult.get
   }
 
-  /**
-   * Checks if a Spark expression returns an entity of a specific type.
-   * Throws an IllegalArgumentException exception otherwise.
-   * If the expression returns null it is considered an error as well.
-   *
-   * @param sparkExpression A Spark Expression
-   * @param targetAttributeType A data type
-   * @param spark (implicit) A Spark Session
-   *
-   */
-  @throws[IllegalArgumentException]
-  def ensureExpressionMatchesType(sparkExpression: String, targetAttributeType: DataType)(implicit spark: SparkSession) = {
-    import spark.implicits._
-
-    // This generates a dataframe we can use to check cast()
-    val df = spark.sparkContext.parallelize(List(1)).toDF("dummy")
-
-    // Check if sparkExpression expression can be cast to the target attribute's type
-    // If types are completely incompatible Sparks thrown an exception
-    val dfExpr = df.select(expr(sparkExpression).as("field"))
-    val res = dfExpr.select($"field".cast(targetAttributeType)).collect()(0)(0)
-
-    if (res == null) {
-      // Sometimes if Spark cannot perform cast() it returns null for that field.
-      // Such cases are checked here.
-      targetAttributeType match {
-        case _: DecimalType   => throw new IllegalArgumentException("Scale/precision don't match the value")
-        case _: DateType      => throw new IllegalArgumentException("Make sure the value matches 'yyyy-MM-dd'")
-        case _: TimestampType => throw new IllegalArgumentException("Make sure the value matches 'yyyy-MM-dd HH:mm:ss'")
-        case _                => throw new IllegalArgumentException("Type cast returned null")
-      }
-    } else {
-      // Perform an additional check when the target attribute's data type is StringType.
-      // If that is the case cast() always succeeds, so need to check the schema.
-      val exprType = dfExpr.schema("field").dataType
-      if (targetAttributeType.isInstanceOf[StringType] && !exprType.isInstanceOf[StringType]) {
-        throw new IllegalArgumentException(s"A string expected, got ${exprType.toString}")
-      }
-    }
-  }
-
   @throws[ValidationException]
   private[rules] def validateMappingFieldsExist(datasetName: String, datasetSchema: StructType, mappingTableSchema: StructType,
                                                 rule: MappingConformanceRule): Unit = {
@@ -246,28 +208,20 @@ object MappingRuleInterpreter {
 
   @throws[ValidationException]
   def validateJoinField(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val validationIssues = SchemaPathValidator.validateSchemaPath(datasetName, schema, fieldPath)
-    checkAndThrowValidationErrors("A join condition validation error occurred.", validationIssues)
+    val validationIssues = SchemaPathValidator.validateSchemaPath(schema, fieldPath)
+    RuleValidators.checkAndThrowValidationErrors(datasetName, "A join condition validation error occurred.", validationIssues)
   }
 
   @throws[ValidationException]
   def validateTargetAttribute(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val validationIssues = SchemaPathValidator.validateSchemaPath(datasetName, schema, fieldPath)
-    checkAndThrowValidationErrors("A tagret attribute validation error occurred.", validationIssues)
+    val validationIssues = SchemaPathValidator.validateSchemaPath(schema, fieldPath)
+    RuleValidators.checkAndThrowValidationErrors(datasetName, "A tagret attribute validation error occurred.", validationIssues)
   }
 
   @throws[ValidationException]
   def validateOutputField(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val validationIssues = SchemaPathValidator.validateSchemaPathParent(datasetName, schema, fieldPath)
-    checkAndThrowValidationErrors("An output column name validation error occurred.", validationIssues)
-  }
-
-  @throws[ValidationException]
-  private def checkAndThrowValidationErrors(message: String, validationIssues: Seq[ValidationIssue]): Unit = {
-    if (validationIssues.nonEmpty) {
-      val errorMeaasges = ValidationUtils.getValidationMsgs(validationIssues).mkString(";")
-      throw new ValidationException(s"$message $errorMeaasges")
-    }
+    val validationIssues = SchemaPathValidator.validateSchemaPathParent(schema, fieldPath)
+    RuleValidators.checkAndThrowValidationErrors(datasetName, "An output column name validation error occurred.", validationIssues)
   }
 
   private[rules] def getQualifiedField(schema: StructType, fieldName: String): Option[StructField] = {

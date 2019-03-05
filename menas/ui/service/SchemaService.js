@@ -17,7 +17,7 @@ jQuery.sap.require("sap.m.MessageBox");
 var SchemaService = new function() {
 	
 	var model = sap.ui.getCore().getModel();
-	
+
 	this.getSchemaList = function(bLoadFirst, bGetAllVersionsOfFirst) {
 		Functions.ajax("api/schema/list", "GET", {}, function(oData) {
 			model.setProperty("/schemas", oData)
@@ -63,7 +63,7 @@ var SchemaService = new function() {
 			window.location.hash = "#/schema"			
 		})		
 	};
-	
+
 	this.updateSchema = function(sId, iVersion, sDesc) {
 		Functions.ajax("api/schema/edit", "POST", {
 			name: sId,
@@ -139,13 +139,13 @@ var SchemaService = new function() {
 		})	
 	};
 
-	this.isUniqueSchemaName = function(sName) {
-		Functions.ajax("api/schema/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
-			model.setProperty("/newSchema/nameUnique", oData)
-		}, function() {
-			sap.m.MessageBox.error("Failed to retreive isUniqueName. Please try again later.")
-		})	
-	};
+  this.isUniqueSchemaName = function(sName) {
+    Functions.ajax("api/schema/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
+      model.setProperty("/newSchema/nameUnique", oData)
+    }, function() {
+      sap.m.MessageBox.error("Failed to retreive isUniqueName. Please try again later.")
+    })
+  };
 
   this.fieldSelect = function(sBindingPath, sModelPathBase, oModel, sOutputProperty) {
     model.setProperty(sOutputProperty, this._buildSchemaPath(sBindingPath, sModelPathBase, oModel));

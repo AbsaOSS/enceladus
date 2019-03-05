@@ -13,23 +13,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.menas
+package za.co.absa.enceladus.rest.integration.repositories
 
-import java.io.File
+import java.util.concurrent.TimeUnit
 
-import com.typesafe.config.ConfigFactory
+import org.scalatest.{BeforeAndAfter, WordSpec}
+import za.co.absa.enceladus.rest.integration.TestContextManagement
 
-object MenasCredentials {
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
-  def fromFile(path: String): MenasCredentials = {
-    val conf = ConfigFactory.parseFile(new File(replaceHome(path)))
-    MenasCredentials(conf.getString("username"), conf.getString("password"))
-  }
+class BaseRepositoryTest extends WordSpec with TestContextManagement with BeforeAndAfter {
 
-  def replaceHome(path: String): String = {
-    path.replaceFirst("^~", System.getProperty("user.home"))
+  val awaitDuration: Duration = Duration(200, TimeUnit.MILLISECONDS)
+
+  def await[T](future: Future[T]): T = {
+    Await.result(future, awaitDuration)
   }
 
 }
-
-case class MenasCredentials(username: String, password: String)

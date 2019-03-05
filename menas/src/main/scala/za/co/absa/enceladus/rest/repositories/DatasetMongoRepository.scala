@@ -32,7 +32,6 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   override private[rest] def collectionName = "dataset"
 
-  
   /** This functions allows for searching Datasets, which have certain mapping rules.
    *  
    * @param refColVal a number of String, Any pairs, where String is column name, Any is a value. The given column will be compared with the specified value.

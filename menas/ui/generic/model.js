@@ -14,14 +14,14 @@
  */
 
 var model = new sap.ui.model.json.JSONModel({
-	userInfo : {},
-	schemas: [],
-	mappingTables: [],
-	currentSchema: {},
-	currentMappingTable: {},
-	newMappingTable: {},
-	newSchema: {},
-	menasVersion: "${project.version}"
+  userInfo : {},
+  schemas: [],
+  mappingTables: [],
+  currentSchema: {},
+  currentMappingTable: {},
+  newMappingTable: {},
+  newSchema: {},
+  menasVersion: "${project.version}"
 })
 model.setSizeLimit(5000)
 

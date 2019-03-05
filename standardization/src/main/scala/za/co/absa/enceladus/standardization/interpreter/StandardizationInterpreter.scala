@@ -15,8 +15,9 @@
 
 package za.co.absa.enceladus.standardization.interpreter
 
-import org.apache.spark.sql.{ Dataset, Row, Column, SparkSession }
+import org.apache.spark.sql._
 import org.apache.spark.sql.types._
+
 import scala.collection.mutable.ListBuffer
 import za.co.absa.enceladus.standardization.interpreter.dataTypes._
 import org.apache.spark.sql.functions._
@@ -24,13 +25,14 @@ import org.apache.spark.sql.util.SchemaUtils
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-import org.slf4s.LoggerFactory
+import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.utils.validation.ValidationException
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.standardization.interpreter.stages.SchemaChecker
 import za.co.absa.enceladus.standardization.interpreter.stages.SparkXMLHack
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParser
+
 import scala.util.Random
 import scala.collection.mutable.Buffer
 
@@ -46,19 +48,16 @@ object StandardizationInterpreter {
 
   
   // This helper fn defines the standardization logic used with arrays and normally
-  def stdApplyLogic(stdOutput: ParseOutput, field: StructField, df: Dataset[Row])(implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
-
+  private def stdApplyLogic(stdOutput: ParseOutput, field: StructField)(implicit spark: SparkSession, udfLib: UDFLibrary): Seq[Column] = {
     val ParseOutput(stdCol, errs) = stdOutput
-    
+
     val errField = s"error_${unpath(field.name)}_${Random.nextInt().abs}"
     errorCols.append(errField)
-    
-    val inclErrs = df.withColumn(errField, errs)
 
     // If the meta data value sourcecolumn is set override the field name
     val fieldName = SchemaUtils.getFieldNameOverriddenByMetadata(field)
 
-    inclErrs.withColumn(fieldName, stdCol)
+    Seq(errs.as(errField),stdCol.as(fieldName))
   }
 
   /**
@@ -79,35 +78,24 @@ object StandardizationInterpreter {
     }
 
     // TODO: remove when spark-xml handles empty arrays
-    logger.info(s"Step 1.5: Spark-xml hack (handle empty arrays)")
-    val df1 = if (inputType.toLowerCase() == "xml") {
-      expSchema.fields.foldLeft(df)({
-        case (accDf: Dataset[Row], field: StructField) => {
-          val newType = SparkXMLHack.hack(field, "", accDf)
-          accDf.withColumn(field.name, newType)
-        }
-
-      })
+    val df1: Dataset[Row] = if (inputType.toLowerCase() == "xml") {
+      df.select(expSchema.fields.map { field: StructField =>
+        SparkXMLHack.hack(field, "", df).as(field.name)
+      }: _*)
     } else df
 
     logger.info(s"Step 2: Standardization")
     // step 2 - standardize
-    val std = expSchema.fields.foldLeft(df1)({
-      case (accDf: Dataset[Row], field: StructField) => {
-
-        logger.info(s"Standardizing field: ${field.name}")
-
-        // Do not standardize existing error column
-        if (field.name == ErrorMessage.errorColumnName) {
-          accDf
-        } else {
-          val stdOutput = TypeParser.standardize(field, "", df.schema)
-          logger.info(s"Applying standardization plan for ${field.name}")
-          val res = stdApplyLogic(stdOutput, field, accDf)
-          res
-        }
+    val std: DataFrame = df1.select(expSchema.fields.flatMap { field: StructField =>
+      logger.info(s"Standardizing field: ${field.name}")
+      if (field.name == ErrorMessage.errorColumnName) {
+        Seq(df1.col(field.name))
+      } else {
+        val stdOutput = TypeParser.standardize(field, "", df.schema)
+        logger.info(s"Applying standardization plan for ${field.name}")
+        stdApplyLogic(stdOutput, field)
       }
-    })
+    }: _*)
 
     // step 3 drop intermediate error columns
     logger.info(s"Step 3.1: Preserve existing error column")

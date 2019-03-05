@@ -15,25 +15,21 @@
 
 package za.co.absa.enceladus.rest
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation._
-import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.security.core.context.SecurityContextHolder
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.DeserializationFeature
 
 @SpringBootApplication
 @EnableAsync
 @Configuration
-class RestService() {
+class Application() {
 
-  @Bean def asyncExecutor() = {
+  @Bean def asyncExecutor(): ThreadPoolTaskExecutor = {
     val executor = new ThreadPoolTaskExecutor()
     executor.setCorePoolSize(12)
     executor.setMaxPoolSize(24)
@@ -44,18 +40,16 @@ class RestService() {
 
   @Bean
   def objectMapper(): ObjectMapper = {
-    val objectMapper = new ObjectMapper()
+    new ObjectMapper()
       .registerModule(DefaultScalaModule)
       .registerModule(new JavaTimeModule())
       .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-      
-    objectMapper
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   }
 }
 
-object RestService extends App {
+object Application extends App {
 
-  SpringApplication.run(classOf[RestService]);
-  SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+  SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL)
 
 }

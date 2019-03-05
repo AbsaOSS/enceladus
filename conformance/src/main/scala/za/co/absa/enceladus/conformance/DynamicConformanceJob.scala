@@ -36,7 +36,7 @@ import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 
 import scala.util.control.NonFatal
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
-import za.co.absa.enceladus.utils.menas.MenasPlugin
+import za.co.absa.enceladus.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 
 object DynamicConformanceJob {
@@ -138,7 +138,7 @@ object DynamicConformanceJob {
 
     // perform the conformance
     val result = try {
-      DynamicInterpreter.interpret(conformance, inputData)
+      DynamicInterpreter.interpret(conformance, inputData, experimentalMappingRule = cmd.experimentalMappingRule)
     }
     catch {
       case e: ValidationException =>

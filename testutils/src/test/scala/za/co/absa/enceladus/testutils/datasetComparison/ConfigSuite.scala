@@ -36,7 +36,8 @@ class ConfigSuite extends FunSuite {
         "--raw-format", parquetFormat,
         "--new-path", newPath,
         "--ref-path", refPath,
-        "--out-path", outPath
+        "--out-path", outPath,
+        "--keys", "id"
       )
     )
 
@@ -44,6 +45,7 @@ class ConfigSuite extends FunSuite {
     assert(cmdConfig.newPath == newPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
+    assert(cmdConfig.keys == Some(Seq("id")))
   }
 
   test("Csv with default header") {
@@ -53,7 +55,8 @@ class ConfigSuite extends FunSuite {
         "--delimiter", delimiter,
         "--new-path", newPath,
         "--ref-path", refPath,
-        "--out-path", outPath
+        "--out-path", outPath,
+        "--keys", "id,alfa"
       )
     )
 
@@ -63,6 +66,7 @@ class ConfigSuite extends FunSuite {
     assert(cmdConfig.newPath == newPath)
     assert(cmdConfig.refPath == refPath)
     assert(cmdConfig.outPath == outPath)
+    assert(cmdConfig.keys == Some(Seq("id","alfa")))
   }
 
   test("Csv with header") {

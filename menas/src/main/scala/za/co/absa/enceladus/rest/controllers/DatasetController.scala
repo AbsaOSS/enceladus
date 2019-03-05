@@ -37,7 +37,8 @@ class DatasetController @Autowired()(datasetService: DatasetService)
 
   @PostMapping(Array("/{datasetName}/rule/create"))
   @ResponseStatus(HttpStatus.OK)
-  def addConformanceRule(@AuthenticationPrincipal user: UserDetails, @PathVariable datasetName: String,
+  def addConformanceRule(@AuthenticationPrincipal user: UserDetails,
+                         @PathVariable datasetName: String,
                          @RequestBody rule: ConformanceRule): CompletableFuture[Dataset] = {
     //TODO: we need to figure out how to deal with versioning properly from UX perspective
     for {

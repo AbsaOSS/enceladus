@@ -18,12 +18,13 @@ package za.co.absa.enceladus.rest.controllers
 import java.util.concurrent.CompletableFuture
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.{GetMapping, PostMapping, RequestMapping, RestController}
+import org.springframework.http.HttpStatus
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.web.bind.annotation._
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.services.RunService
-
-import scala.concurrent.Future
 
 @RestController
 @RequestMapping(path = Array("/api/runs"))
@@ -31,38 +32,74 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
 
   import za.co.absa.enceladus.rest.utils.implicits._
 
-  import scala.concurrent.ExecutionContext.Implicits.global
-
-  // Dummy implementation for #86
-  // TODO: Implementation in #85
   @GetMapping(Array("/list"))
-  def list(): CompletableFuture[List[Run]] = Future(List())
+  @ResponseStatus(HttpStatus.OK)
+  def list(): CompletableFuture[Seq[Run]] = {
+    runService.getAllLatest()
+  }
 
   @GetMapping(Array("/startDate/{startDate}"))
-  def findByStartDate(): CompletableFuture[List[Run]] = Future(List())
-
-  @GetMapping(Array("/splineUrl/{datasetName}/{datsetVersion}/{runId}"))
-  def getSplineUrl(): CompletableFuture[String] = Future("")
-
-  @GetMapping(Array("/{datasetName}/{datasetVersion}/latest"))
-  def getLatestRun(): CompletableFuture[Run] = Future(null)
+  @ResponseStatus(HttpStatus.OK)
+  def getByStartDate(@PathVariable startDate: String): CompletableFuture[Seq[Run]] = {
+    runService.getByStartDate(startDate)
+  }
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}"))
-  def getRun(): CompletableFuture[Run] = Future(null)
+  @ResponseStatus(HttpStatus.OK)
+  def getRun(@PathVariable datasetName: String,
+             @PathVariable datasetVersion: Int,
+             @PathVariable runId: Int): CompletableFuture[Run] = {
+    runService.getRun(datasetName, datasetVersion, runId)
+  }
 
-  @PostMapping(Array("/create"))
-  def create(): CompletableFuture[Run] = Future(null)
+  @GetMapping(Array("/{datasetName}/{datasetVersion}/latest"))
+  @ResponseStatus(HttpStatus.OK)
+  def getLatestRun(@PathVariable datasetName: String,
+                   @PathVariable datasetVersion: Int): CompletableFuture[Run] = {
+    runService.getLatestRun(datasetName, datasetVersion)
+  }
+
+  @GetMapping(Array("/splineUrl/{datasetName}/{datasetVersion}/{runId}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getSplineUrl(@PathVariable datasetName: String,
+                   @PathVariable datasetVersion: Int,
+                   @PathVariable runId: Int): CompletableFuture[String] = {
+    runService.getSplineUrl(datasetName, datasetVersion, runId)
+  }
+
+  @PostMapping()
+  @ResponseStatus(HttpStatus.CREATED)
+  def create(@RequestBody run: Run,
+             @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
+    runService.create(run, principal.getUsername)
+  }
 
   @PostMapping(Array("/addCheckpoint/{uniqueId}"))
-  def addCheckpoint(): CompletableFuture[Checkpoint] = Future(null)
+  @ResponseStatus(HttpStatus.OK)
+  def addCheckpoint(@PathVariable uniqueId: String,
+                    @RequestBody checkpoint: Checkpoint): CompletableFuture[Run] = {
+    runService.addCheckpoint(uniqueId, checkpoint)
+  }
 
   @PostMapping(Array("/updateControlMeasure/{uniqueId}"))
-  def updateControlMeasure(): CompletableFuture[ControlMeasure] = Future(null)
+  @ResponseStatus(HttpStatus.OK)
+  def updateControlMeasure(@PathVariable uniqueId: String,
+                           @RequestBody controlMeasure: ControlMeasure): CompletableFuture[Run] = {
+    runService.updateControlMeasure(uniqueId, controlMeasure)
+  }
 
   @PostMapping(Array("/updateSplineReference/{uniqueId}"))
-  def updateSplineReference(): CompletableFuture[SplineReference] = Future(null)
+  @ResponseStatus(HttpStatus.OK)
+  def updateSplineReference(@PathVariable uniqueId: String,
+                            @RequestBody splineReference: SplineReference): CompletableFuture[Run] = {
+    runService.updateSplineReference(uniqueId, splineReference)
+  }
 
   @PostMapping(Array("/updateRunStatus/{uniqueId}"))
-  def updateRunStatus(): CompletableFuture[RunStatus] = Future(null)
+  @ResponseStatus(HttpStatus.OK)
+  def updateRunStatus(@PathVariable uniqueId: String,
+                      @RequestBody runStatus: RunStatus): CompletableFuture[Run] = {
+    runService.updateRunStatus(uniqueId, runStatus)
+  }
 
 }

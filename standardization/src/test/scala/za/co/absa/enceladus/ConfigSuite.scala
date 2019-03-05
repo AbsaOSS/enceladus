@@ -18,9 +18,9 @@ package za.co.absa.enceladus
 import java.time.ZonedDateTime
 
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.menasplugin.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.{CmdConfig, StandardizationJob}
-import za.co.absa.enceladus.utils.menas.MenasCredentials
 
 class ConfigSuite extends FunSuite {
 

@@ -15,12 +15,45 @@
 
 package za.co.absa.enceladus.testutils.datasetComparison
 
+import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{Dataset, Row, SparkSession}
-import za.co.absa.enceladus.testutils.exceptions.{CmpJobDatasetsDifferException, CmpJobSchemasDifferException}
-import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions}
+import org.apache.spark.sql._
+import org.apache.spark.sql.functions._
+import za.co.absa.enceladus.testutils.exceptions._
+import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions, HelperFunctions}
 
 object ComparisonJob {
+  private val log: Logger = LogManager.getLogger("enceladus.testutils.ComparisonJob")
+  private val errorColumnName: String = "errCol"
+  private val tmpColumnName: String = "tmp"
+
+  private def renameColumns(dataSet: Dataset[Row], keys: Seq[String], prefix: String): DataFrame = {
+    val renamedColumns = dataSet.columns.map { c =>
+      if (keys.contains(c)) {
+        dataSet(c)
+      } else {
+        dataSet(c).as(s"$prefix$c")
+      }}
+
+    dataSet.select(renamedColumns: _*)
+  }
+
+  private def getKeyBasedOutput(expectedMinusActual: Dataset[Row],
+                        actualMinusExpected: Dataset[Row],
+                        keys: Seq[String]): DataFrame = {
+    val dfNewExpected = renameColumns(expectedMinusActual, keys, "expected_")
+    val dfNewColumnsActual = renameColumns(actualMinusExpected, keys, "actual_")
+    dfNewExpected.join(dfNewColumnsActual, keys,"full")
+  }
+
+  private def checkForDuplicateRows(actualDf: DataFrame, keys: Seq[String], path: String): Unit = {
+    val duplicates = actualDf.groupBy(keys.head, keys.tail: _*).count().filter("`count` >= 2")
+    if (duplicates.count() > 0) {
+      duplicates.write.format("parquet").save(path)
+      throw DuplicateRowsInDF(path)
+    }
+  }
+
   def main(args: Array[String]): Unit = {
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val dfReaderOptions: DataframeReaderOptions = DataframeReaderOptions(cmd.rawFormat,
@@ -44,6 +77,8 @@ object ComparisonJob {
     val expectedSchema = expectedDfReader.getSchemaWithoutMetadata
     val actualSchema = actualDfReader.getSchemaWithoutMetadata
 
+    if (cmd.keys.isDefined) { checkForDuplicateRows(actualDf, cmd.keys.get, cmd.outPath) }
+
     if (expectedSchema != actualSchema) {
       val diffSchema = actualSchema.diff(expectedSchema) ++ expectedSchema.diff(actualSchema)
       throw CmpJobSchemasDifferException(cmd.refPath, cmd.newPath, diffSchema)
@@ -52,12 +87,58 @@ object ComparisonJob {
     val expectedMinusActual: Dataset[Row] = expectedDf.except(actualDf)
     val actualMinusExpected: Dataset[Row] = actualDf.except(expectedDf)
 
-    if (expectedMinusActual.count() != 0 || actualMinusExpected.count() != 0) {
-      expectedMinusActual.write.format("parquet").save(s"${cmd.outPath}/expected_minus_actual")
-      actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
+    val errorsPresent: Boolean = expectedMinusActual.count() != 0 || actualMinusExpected.count() != 0
+
+    if (errorsPresent) {
+      cmd.keys match {
+        case Some(keys) =>
+          handleKeyBasedDiff(keys, cmd.outPath, expectedMinusActual, actualMinusExpected)
+        case None =>
+          expectedMinusActual.write.format("parquet").save(s"${cmd.outPath}/expected_minus_actual")
+          actualMinusExpected.write.format("parquet").save(s"${cmd.outPath}/actual_minus_expected")
+      }
+
       throw CmpJobDatasetsDifferException(cmd.refPath, cmd.newPath, cmd.outPath, expectedDf.count(), actualDf.count())
     } else {
-      System.out.println("Expected and actual datasets are the same.")
+      log.info("Expected and actual datasets are the same.")
     }
+  }
+
+  private def handleKeyBasedDiff(keys: Seq[String],
+                                 path: String,
+                                 expectedMinusActual: Dataset[Row],
+                                 actualMinusExpected: Dataset[Row]): Unit = {
+    val idColName: String = "ComparisonUniqueId"
+    val expectedWithHashKey = expectedMinusActual.withColumn(idColName, md5(concat(keys.map(col): _*)))
+    val actualWithHashKey = actualMinusExpected.withColumn(idColName, md5(concat(keys.map(col): _*)))
+
+    val flatteningFormula = HelperFunctions.flattenSchema(expectedWithHashKey)
+
+    val flatExpectedMinusActual: DataFrame = expectedWithHashKey.select(flatteningFormula: _*)
+    val flatActualMinusExpected: DataFrame = actualWithHashKey.select(flatteningFormula: _*)
+
+    val columns: Array[String] = flatExpectedMinusActual.columns.filterNot(_ == idColName)
+
+    val joinedFlatData: DataFrame = getKeyBasedOutput(flatExpectedMinusActual,
+                                                      flatActualMinusExpected,
+                                                      Seq(idColName))
+
+    val joinedFlatDataWithErrCol = joinedFlatData.withColumn(errorColumnName, lit(Array[String]()))
+
+    val dataWithErrors: DataFrame = columns.foldLeft(joinedFlatDataWithErrCol) { (data, column) =>
+      data.withColumnRenamed(errorColumnName, tmpColumnName)
+        .withColumn(errorColumnName, concat(
+          when(col(s"actual_$column") === col(s"expected_$column"), lit(Array[String]()))
+          .otherwise(array(lit(column))), col(tmpColumnName)))
+        .drop(tmpColumnName)
+    }
+
+    val joinedData: DataFrame = getKeyBasedOutput(expectedWithHashKey, actualWithHashKey, Seq(idColName))
+    val outputData: DataFrame = joinedData.as("df1")
+                                          .join(dataWithErrors.as("df2"), Seq(idColName))
+                                          .select("df1.*", "df2.errCol")
+                                          .drop(idColName)
+
+    outputData.write.format("parquet").save(path)
   }
 }

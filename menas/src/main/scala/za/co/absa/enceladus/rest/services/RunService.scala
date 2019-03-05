@@ -15,14 +15,125 @@
 
 package za.co.absa.enceladus.rest.services
 
-import org.springframework.beans.factory.annotation.Autowired
+import java.util.UUID
+
+import org.joda.time.format.DateTimeFormat
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
+import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.rest.exceptions.{NotFoundException, ValidationException}
+import za.co.absa.enceladus.rest.models.Validation
 import za.co.absa.enceladus.rest.repositories.RunMongoRepository
+
+import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 @Service
 class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   extends ModelService(runMongoRepository) {
 
+  import scala.concurrent.ExecutionContext.Implicits.global
 
+  @Value("${za.co.absa.enceladus.spline.urlTemplate}")
+  val splineUrlTemplate: String = null
 
+  def getAllLatest(): Future[Seq[Run]] = {
+    runMongoRepository.getAllLatest()
+  }
+
+  def getByStartDate(startDate: String): Future[Seq[Run]] = {
+    Try(DateTimeFormat.forPattern("dd-MM-yyyy").parseLocalDate(startDate)) match {
+      case _: Success[_] => runMongoRepository.getByStartDate(startDate)
+      case _: Failure[_] =>
+        val validation = Validation().withError("startDate", s"must have format dd-MM-yyyy: $startDate")
+        throw ValidationException(validation)
+    }
+  }
+
+  def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Run] = {
+    runMongoRepository.getRun(datasetName, datasetVersion, runId).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
+  def getLatestRun(datasetName: String, datasetVersion: Int): Future[Run] = {
+    runMongoRepository.getLatestRun(datasetName, datasetVersion).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
+  def getSplineUrl(datasetName: String, datasetVersion: Int, runId: Int): Future[String] = {
+    getRun(datasetName, datasetVersion, runId).map { run =>
+      val splineRef = run.splineRef
+      String.format(splineUrlTemplate, splineRef.outputPath, splineRef.sparkApplicationId)
+    }
+  }
+
+  def create(newRun: Run, username: String): Future[Run] = {
+    val uniqueId = newRun.uniqueId match {
+      case Some(id) => id
+      case None     => UUID.randomUUID().toString
+    }
+    val run = newRun.copy(username = Option(username), uniqueId = Option(uniqueId))
+    for {
+      validation <- validate(run)
+      createdRun <-
+        if (validation.isValid()) {
+          super.create(run).map(_ => run)
+        } else {
+          throw ValidationException(validation)
+        }
+    } yield createdRun
+  }
+
+  def addCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Run] = {
+    runMongoRepository.appendCheckpoint(uniqueId, checkpoint).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
+  def updateControlMeasure(uniqueId: String, controlMeasure: ControlMeasure): Future[Run] = {
+    runMongoRepository.updateControlMeasure(uniqueId, controlMeasure).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
+  def updateSplineReference(uniqueId: String, splineReference: SplineReference): Future[Run] = {
+    runMongoRepository.updateSplineReference(uniqueId, splineReference).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
+  def updateRunStatus(uniqueId: String, runStatus: RunStatus): Future[Run] = {
+    runMongoRepository.updateRunStatus(uniqueId, runStatus).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
+  def validate(run: Run): Future[Validation] = {
+    validateUniqueId(run)
+  }
+
+  private def validateUniqueId(run: Run): Future[Validation] = {
+    val validation = Validation()
+
+    run.uniqueId match {
+      case Some(uniqueId) => validateUniqueness(validation, uniqueId)
+      case None           => Future.successful(validation.withError("uniqueId", "not specified"))
+    }
+  }
+
+  private def validateUniqueness(validation: Validation, uniqueId: String): Future[Validation] = {
+    runMongoRepository.existsId(uniqueId).map {
+      case true  => validation.withError("uniqueId", s"run with this id already exists: $uniqueId")
+      case false => validation
+    }
+  }
 }

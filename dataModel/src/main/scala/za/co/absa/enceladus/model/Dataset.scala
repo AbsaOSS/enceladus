@@ -22,27 +22,29 @@ import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
 
-case class Dataset(name: String,
-    version: Int,
-    description: Option[String] = None,
+case class Dataset(
+  name:    String,
+  version: Int,
+  description: Option[String]= None,
+  
+  hdfsPath:        String,
+  hdfsPublishPath: String,
 
-    hdfsPath: String,
-    hdfsPublishPath: String,
+  schemaName:    String,
+  schemaVersion: Int,
 
-    schemaName: String,
-    schemaVersion: Int,
+  dateCreated: ZonedDateTime = ZonedDateTime.now(),
+  userCreated: String        = null,
 
-    dateCreated: ZonedDateTime = ZonedDateTime.now(),
-    userCreated: String = null,
+  lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+  userUpdated: String        = null,
 
-    lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-    userUpdated: String = null,
-
-    disabled: Boolean = false,
-    dateDisabled: Option[ZonedDateTime] = None,
-    userDisabled: Option[String] = None,
-    conformance: List[ConformanceRule],
-    parent: Option[MenasReference] = None) extends VersionedModel with Auditable[Dataset] {
+  disabled:     Boolean               = false,
+  dateDisabled: Option[ZonedDateTime] = None,
+  userDisabled: Option[String]        = None,
+  conformance:  List[ConformanceRule],
+  parent:       Option[MenasReference] = None) extends VersionedModel with Auditable[Dataset] {
+    
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
   override def setLastUpdated(time: ZonedDateTime): VersionedModel = this.copy(lastUpdated = time)
@@ -50,10 +52,11 @@ case class Dataset(name: String,
   override def setDescription(desc: Option[String]): VersionedModel = this.copy(description = desc)
   override def setDateCreated(time: ZonedDateTime): VersionedModel = this.copy(dateCreated = time)
   override def setUserCreated(user: String): VersionedModel = this.copy(userCreated = user)
-  def setSchemaName(newName: String) = this.copy(schemaName = newName)
-  def setSchemaVersion(newVersion: Int) = this.copy(schemaVersion = newVersion)
-  def setHDFSPath(newPath: String) = this.copy(hdfsPath = newPath)
-  def setHDFSPublishPath(newPublishPath: String) = this.copy(hdfsPublishPath = newPublishPath)
+  def setSchemaName(newName: String): Dataset = this.copy(schemaName = newName)
+  def setSchemaVersion(newVersion: Int): Dataset = this.copy(schemaVersion = newVersion)
+  def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
+  def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
+  def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
   override def setParent(newParent: Option[MenasReference]) = this.copy(parent = newParent)
 
   /**

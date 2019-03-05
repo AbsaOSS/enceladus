@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance
 import java.io.File
 
 import scopt.OptionParser
-import za.co.absa.enceladus.utils.menas.MenasCredentials
+import za.co.absa.enceladus.menasplugin.MenasCredentials
 
 import scala.util.matching.Regex
 
@@ -35,7 +35,8 @@ case class CmdConfig(datasetName: String = "",
                      menasCredentials: MenasCredentials = MenasCredentials("", ""),
                      performanceMetricsFile: Option[String] = None,
                      publishPathOverride: Option[String] = None,
-                     folderPrefix: Option[String] = None)
+                     folderPrefix: Option[String] = None,
+                     experimentalMappingRule: Boolean = false)
 
 object CmdConfig {
 
@@ -94,6 +95,9 @@ object CmdConfig {
 
     opt[String]("folder-prefix").optional().action((value, config) =>
       config.copy(folderPrefix = Some(value))).text("Adds a folder prefix before the infoDateColumn")
+
+    opt[Unit]("experimental-mapping-rule").optional().action((value, config) =>
+      config.copy(experimentalMappingRule = true)).text("Use experimental optimized mapping conformance rule")
 
     help("help").text("prints this usage text")
   }
