@@ -24,7 +24,6 @@ import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-
 case class XPadTestInputRow(intField: Int, stringField: Option[String])
 case class XPadTestOutputRow(intField: Int, stringField: Option[String], targetField: String)
 object XPadTestOutputRow {
@@ -61,7 +60,7 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("~~~Short", "This is long", "~~~~~~~~")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -89,7 +88,7 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
     val output: Seq[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toSeq
     val expected: Seq[XPadTestOutputRow] = (input zip Seq("007", "042", "100000")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -117,7 +116,7 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("12abcdefgh", "1231231$$$", "1231231231")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -145,7 +144,7 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("A", "AAAAAAAAAAAAAAAAAAAA", "")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -184,7 +183,7 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("Short...", "This is long", "........")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -212,7 +211,7 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
     val output: Seq[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toSeq
     val expected: Seq[XPadTestOutputRow] = (input zip Seq("100", "420", "100000")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -240,7 +239,7 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("abcdefgh12", "$$$1231231", "1231231231")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -268,7 +267,7 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("A", "AAAAAAAAAAAAAAAAAAAA", "")).map(x => XPadTestOutputRow(x._1, x._2))
 
