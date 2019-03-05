@@ -25,8 +25,9 @@ import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import za.co.absa.enceladus.model.menas.audit.Auditable
 
-abstract class VersionedModelServiceTest[C <: VersionedModel] extends FunSuite with MockitoSugar {
+abstract class VersionedModelServiceTest[C <: VersionedModel with Product with Auditable[C]] extends FunSuite with MockitoSugar {
 
   val modelRepository: VersionedMongoRepository[C]
   val service: VersionedModelService[C]
@@ -34,7 +35,7 @@ abstract class VersionedModelServiceTest[C <: VersionedModel] extends FunSuite w
   val millis100 = Duration(100, TimeUnit.MILLISECONDS)
 
   private val validName = "validName"
-
+      
   test("Validate dataset with valid, unique name") {
     Mockito.when(modelRepository.isUniqueName(validName)).thenReturn(Future.successful(true))
 

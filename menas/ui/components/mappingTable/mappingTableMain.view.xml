@@ -58,7 +58,7 @@
 							</Bar>
 						</customHeader>
 						<content>
-							<IconTabBar id="schemaIconTabBar" select="tabSelect">
+							<IconTabBar id="mappingTableIconTabBar" select="tabSelect">
 								<items>
 									<IconTabFilter id="BasicInfo" icon="sap-icon://hint" key="info" text="Basic Info">
 										<form:SimpleForm>
@@ -157,6 +157,45 @@
 											</items>
 										</Table>
 									</IconTabFilter>
+                                    <IconTabFilter id="auditTrail" icon="sap-icon://history" text="Audit Trail">
+                                        <Table id="auditTrailTable" itemPress="auditVersionPress" items="{/currentMappingTable/auditTrail/entries}">
+                                            <columns>
+                                                <Column width="15%">
+                                                    <Text text="Change Time" />
+                                                </Column>   
+                                                <Column width="15%">
+                                                    <Text text="Author" />
+                                                </Column>                                                                                         
+                                                <Column width="15%">
+                                                    <Text text="Schema Name" />
+                                                </Column>
+                                                <Column width="15%">
+                                                    <Text text="Schema Version" />
+                                                </Column>
+                                                <Column width="40%">
+                                                    <Text text="Changes" />
+                                                </Column>
+                                            </columns>
+                                            <items>
+                                                <ColumnListItem id="auditTrailListItem" type="Active" cust:menasRef="{menasRef}">
+                                                    <cells>
+                                                        <Text text="{path: 'updated', formatter:'Formatters.stringDateShortFormatter'}"></Text>    
+                                                        <Text text="{updatedBy}"></Text>                                                                                                        
+                                                        <Text text="{menasRef/name}"></Text>
+                                                        <Text text="{menasRef/version}"></Text>
+                                                        <List id="auditChangesList" items="{path: 'changes', templateShareable: false}">
+                                                            <ObjectListItem id="auditChangesListItem" title="{message}">
+                                                                <attributes>
+                                                                    <ObjectAttribute visible="{path:'newValue', formatter:'Formatters.nonEmptyObject'}" title="New Value" text="{newValue}" />
+                                                                    <ObjectAttribute visible="{path:'oldValue', formatter:'Formatters.nonEmptyObject'}" title="Old Value" text="{oldValue}" />
+                                                                </attributes>
+                                                            </ObjectListItem>
+                                                        </List>
+                                                    </cells>
+                                                </ColumnListItem>
+                                            </items>
+                                        </Table>
+                                    </IconTabFilter>
 								</items>
 							</IconTabBar>
 						</content>

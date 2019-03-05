@@ -17,7 +17,8 @@ package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
-import za.co.absa.enceladus.model.menas.{Auditable, AuditTrailChange, AuditFieldName}
+import za.co.absa.enceladus.model.menas.audit._
+import za.co.absa.enceladus.model.menas.MenasReference
 
 case class Schema(name: String,
     version: Int = 0,
@@ -33,7 +34,8 @@ case class Schema(name: String,
     dateDisabled: Option[ZonedDateTime] = None,
     userDisabled: Option[String] = None,
 
-    fields: List[SchemaField] = List()) extends VersionedModel with Auditable[Schema] {
+    fields: List[SchemaField] = List(),
+    parent: Option[MenasReference] = None) extends VersionedModel with Auditable[Schema] {
 
   override def setVersion(value: Int): Schema = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -42,11 +44,19 @@ case class Schema(name: String,
   override def setUserCreated(user: String): VersionedModel = this.copy(userCreated = user)
   override def setUpdatedUser(user: String): VersionedModel = this.copy(userUpdated = user)
   override def setDescription(desc: Option[String]): VersionedModel = this.copy(description = desc)
+  override def setParent(newParent: Option[MenasReference]) = this.copy(parent = newParent)
 
-  override def getAuditMessages(newRecord: Schema): Seq[AuditTrailChange] = {
-    super.getPrimitiveFieldsAudit(newRecord,
-      Seq(AuditFieldName("description", "Description"))) ++
-      super.getSeqFieldsAudit(newRecord, AuditFieldName("fields", "Schema field"))
+  override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
+    updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
+    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Schema ${name} created.")))
+    
+  override def getAuditMessages(newRecord: Schema): AuditTrailEntry = {
+    AuditTrailEntry(menasRef = MenasReference(collection = None, name = newRecord.name, version = newRecord.version),
+      updated = newRecord.lastUpdated,
+      updatedBy = newRecord.userUpdated,
+      changes = super.getPrimitiveFieldsAudit(newRecord,
+        Seq(AuditFieldName("description", "Description"))) ++
+        super.getSeqFieldsAudit(newRecord, AuditFieldName("fields", "Schema field")))
   }
 
 }

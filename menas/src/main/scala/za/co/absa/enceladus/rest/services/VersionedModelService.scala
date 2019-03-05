@@ -25,12 +25,11 @@ import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSumma
 import za.co.absa.enceladus.rest.exceptions._
 import za.co.absa.enceladus.rest.models.Validation
 import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
-
+import za.co.absa.enceladus.model.menas.audit._
 import scala.concurrent.Future
 import java.time.ZonedDateTime
-import za.co.absa.enceladus.rest.models.ChangedFieldsUpdateTransformResult
 
-abstract class VersionedModelService[C <: VersionedModel](versionedMongoRepository: VersionedMongoRepository[C])
+abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]](versionedMongoRepository: VersionedMongoRepository[C])
   extends ModelService(versionedMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -52,6 +51,36 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
   def getLatestVersion(name: String): Future[Option[C]] = {
     versionedMongoRepository.getLatestVersionValue(name).flatMap(version => getVersion(name, version))
   }
+  
+  private[services] def getParents(name: String, fromVersion: Option[Int] = None): Future[Seq[C]] = {
+    for {
+      versions <- {
+        //store all in version ascending order
+        val all = versionedMongoRepository.getAllVersions(name, true).map(_.sortBy(_.version))
+        //get those relevant to us
+        if (fromVersion.isDefined) all.map(_.filter(_.version <= fromVersion.get)) else all
+      }
+      res <- {
+        //see if this was branched from a different entity
+        val topParent = if (versions.isEmpty) None
+          else if (versions.head.parent.isEmpty) None
+          else versions.head.parent
+        if(topParent.isDefined) getParents(topParent.get.name, Some(topParent.get.version)) else Future.successful(Seq())
+      }
+    } yield res ++ versions
+  }
+  
+  def getAuditTrail(name: String): Future[AuditTrail] = {
+    val allParents = getParents(name)
+    
+    allParents.map({ parents =>
+      val msgs = if(parents.size < 2) Seq() else {
+        val pairs = parents.sliding(2)
+        pairs.map(p => p.head.getAuditMessages(p(1))).toSeq
+      }
+      AuditTrail(msgs.reverse :+ parents.head.createdMessage)
+    })
+  }
 
   def getUsedIn(name: String, version: Option[Int]): Future[UsedIn]
 
@@ -70,12 +99,12 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
 
   def update(username: String, item: C): Future[Option[C]]
 
-  private[services] def update(username: String, itemName: String, itemVersion: Int, auditMessage: String)(transform: C => ChangedFieldsUpdateTransformResult[C]): Future[Option[C]] = {
+  private[services] def update(username: String, itemName: String, itemVersion: Int, auditMessage: String)(transform: C => C): Future[Option[C]] = {
     for {
       version <- getVersion(itemName, itemVersion)
       transformed <- if (version.isEmpty) Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
       else Future.successful(transform(version.get))
-      update <- versionedMongoRepository.update(username, transformed.updatedEntity)
+      update <- versionedMongoRepository.update(username, transformed)
     } yield Some(update)
   }
 

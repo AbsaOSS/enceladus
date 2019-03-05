@@ -30,12 +30,17 @@ import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSumma
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
+import za.co.absa.enceladus.rest.exceptions.EntityAlreadyExistsException
 
 abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatabase)(implicit ct: ClassTag[C])
   extends MongoRepository[C](mongoDb) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  private def getParent(oldEntity: C): MenasReference = {
+    MenasReference(collection = Some(collectionName), name = oldEntity.name, version = oldEntity.version) 
+  }
+  
   def getLatestVersions(): Future[Seq[VersionedSummary]] = {
     val pipeline = Seq(
       filter(getNotDisabledFilter),
@@ -57,8 +62,9 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.aggregate[VersionedSummary](pipeline).head().map(_.latestVersion)
   }
 
-  def getAllVersions(name: String): Future[Seq[C]] = {
-    collection.find(getNameFilterEnabled(name)).toFuture()
+  def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {
+    val filter = if(inclDisabled) getNameFilter(name) else getNameFilterEnabled(name)
+    collection.find(filter).toFuture()
   }
 
   def create(item: C, username: String): Future[Completed] = {
@@ -72,7 +78,8 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
   def update(username: String, updated: C): Future[C] = {
     for {
       latestVersion <- getLatestVersionValue(updated.name)
-      newInfo <- Future.successful(updated.setUpdatedInfo(username).setVersion(latestVersion + 1).asInstanceOf[C])
+      newVersion <- if(latestVersion != updated.version) throw new EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.") else Future.successful(latestVersion + 1)
+      newInfo <- Future.successful(updated.setUpdatedInfo(username).setVersion(newVersion).setParent(Some(getParent(updated))).asInstanceOf[C])
       res <- collection.insertOne(newInfo).head()
     } yield newInfo
     

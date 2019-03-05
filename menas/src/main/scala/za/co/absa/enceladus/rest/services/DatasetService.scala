@@ -22,8 +22,6 @@ import za.co.absa.enceladus.model.{Dataset, UsedIn}
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
 import scala.concurrent.Future
 import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.rest.models.ChangedFieldsUpdateTransformResult
-import za.co.absa.enceladus.rest.models.ChangedField
 
 @Service
 class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepository) extends VersionedModelService(datasetMongoRepository) {
@@ -32,19 +30,12 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
 
   override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
     super.update(username, dataset.name, dataset.version, "Dataset Updated.") { latest =>
-      val updated = latest
+      latest
         .setSchemaName(dataset.schemaName)
         .setSchemaVersion(dataset.schemaVersion)
         .setHDFSPath(dataset.hdfsPath)
         .setHDFSPublishPath(dataset.hdfsPublishPath)
         .setDescription(dataset.description).asInstanceOf[Dataset]
-
-      ChangedFieldsUpdateTransformResult(updatedEntity = updated, fields = Seq(
-        ChangedField("Schema Name", dataset.schemaName, latest.schemaName),
-        ChangedField("Schema Version", dataset.schemaVersion, latest.schemaVersion),
-        ChangedField("HDFS Path", dataset.hdfsPath, latest.hdfsPath),
-        ChangedField("HDFS Publish Path", dataset.hdfsPublishPath, latest.hdfsPublishPath),
-        ChangedField("Description", dataset.description, latest.description)))
     }
   }
 
@@ -67,9 +58,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
 
   def addConformanceRule(username: String, datasetName: String, datasetVersion: Int, rule: ConformanceRule): Future[Option[Dataset]] = {
     super.update(username, datasetName, datasetVersion, s"Conformance rule (${rule.order}) '${rule.outputColumn}' added.") { dataset =>
-      val updated = dataset.copy(conformance = dataset.conformance :+ rule)
-      
-      ChangedFieldsUpdateTransformResult(updatedEntity = updated, fields = Seq())
+      dataset.copy(conformance = dataset.conformance :+ rule)
     }
   }
 

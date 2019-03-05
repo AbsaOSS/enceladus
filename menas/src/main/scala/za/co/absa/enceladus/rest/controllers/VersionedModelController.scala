@@ -27,9 +27,10 @@ import za.co.absa.enceladus.model.UsedIn
 import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.rest.exceptions.NotFoundException
 import za.co.absa.enceladus.rest.services.VersionedModelService
+import za.co.absa.enceladus.model.menas.audit._
 
 
-abstract class VersionedModelController[C <: VersionedModel](versionedModelService: VersionedModelService[C]) extends BaseController {
+abstract class VersionedModelController[C <: VersionedModel with Product with Auditable[C]](versionedModelService: VersionedModelService[C]) extends BaseController {
 
   import za.co.absa.enceladus.rest.utils.implicits._
 
@@ -57,6 +58,12 @@ abstract class VersionedModelController[C <: VersionedModel](versionedModelServi
       case Some(entity) => entity
       case None         => throw NotFoundException()
     }
+  }
+  
+  @GetMapping(Array("/detail/{name}/audit"))
+  @ResponseStatus(HttpStatus.OK)
+  def getAuditTrail(@PathVariable name: String): CompletableFuture[AuditTrail] = {
+    versionedModelService.getAuditTrail(name)
   }
 
   @GetMapping(Array("/isUniqueName/{name}"))

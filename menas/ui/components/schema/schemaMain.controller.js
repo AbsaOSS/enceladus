@@ -72,6 +72,15 @@ sap.ui.controller("components.schema.schemaMain", {
       version : source.data("version")
     })
   },
+  
+  auditVersionPress: function(oEv) {
+    let oSrc = oEv.getParameter("listItem");
+    let oRef = oSrc.data("menasRef");
+    this._router.navTo("schemas", {
+      id: oRef.name,
+      version: oRef.version
+    });
+  },
 
   schemaAddSubmit : function() {
     var newSchema = this._model.getProperty("/newSchema")
@@ -197,6 +206,7 @@ sap.ui.controller("components.schema.schemaMain", {
     } else {
       SchemaService.getSchemaVersion(oParams.id, oParams.version)
     }
+    this.byId("schemaIconTabBar").setSelectedKey("info");
   },
 
   handleUploadPress : function(oParams) {

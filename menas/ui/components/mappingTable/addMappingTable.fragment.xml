@@ -21,10 +21,10 @@
                 <form:SimpleForm adjustLabelSpan="true" editable="true">
                     <form:content>
                         <Label text="Mapping Table Name"></Label>
-                        <Input id="newMappingTableName" enabled="{path:'/newMappingTable/isEdit', formatter:'Formatters.not'}" type="text"
+                        <Input id="newMappingTableName" enabled="{path:'/newMappingTable/isEdit', formatter:'Formatters.not'}" type="Text"
                             placeholder="Enter mapping table name" width="100%" value="{/newMappingTable/name}"></Input>
                         <Label text="Mapping Table Description"></Label>
-                        <Input id="newMappingTableDescription" type="text" placeholder="Enter mapping table description" width="100%"
+                        <Input id="newMappingTableDescription" type="Text" placeholder="Enter mapping table description" width="100%"
                             value="{/newMappingTable/description}"></Input>
                         <Label text="Schema Name"></Label>
                         <Select id="newMappingTableSchemaNameSelect" showSecondaryValues="true" items="{/schemas}" forceSelection="false"

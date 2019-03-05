@@ -47,6 +47,15 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
 
     this._addDefaultDialog.setBusyIndicatorDelay(0)
   },
+  
+  auditVersionPress: function(oEv) {
+    let oSrc = oEv.getParameter("listItem");
+    let oRef = oSrc.data("menasRef");
+    this._router.navTo("mappingTables", {
+      id: oRef.name,
+      version: oRef.version
+    });    
+  },
 
   onAddDefaultPress : function() {
     this._model.setProperty("/newDefaultValue", {
@@ -410,6 +419,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
       MappingTableService.getMappingTableList();
       MappingTableService.getMappingTableVersion(oParams.id, oParams.version, true)
     }
+    this.byId("mappingTableIconTabBar").setSelectedKey("info");
   },
 
   toSchema : function(oEv) {

@@ -19,11 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.{MappingTable, UsedIn}
 import za.co.absa.enceladus.rest.repositories.{DatasetMongoRepository, MappingTableMongoRepository}
-
 import scala.concurrent.Future
 import za.co.absa.enceladus.model.DefaultValue
-import za.co.absa.enceladus.rest.models.ChangedFieldsUpdateTransformResult
-import za.co.absa.enceladus.rest.models.ChangedField
 
 @Service
 class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTableMongoRepository,
@@ -51,31 +48,23 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
 
   def updateDefaults(username: String, mtName: String, mtVersion: Int, defaultValues: List[DefaultValue]): Future[Option[MappingTable]] = {
     super.update(username, mtName, mtVersion, s"Default values updated.") { latest =>
-      val updated = latest.setDefaultMappingValue(defaultValues)
-      ChangedFieldsUpdateTransformResult(updatedEntity = updated, Seq())
+      latest.setDefaultMappingValue(defaultValues)
     }
   }
 
   def addDefault(username: String, mtName: String, mtVersion: Int, defaultValue: DefaultValue): Future[Option[MappingTable]] = {
     super.update(username, mtName, mtVersion, s"Default value for column ${defaultValue.columnName} added.") { latest =>
-      val updated = latest.setDefaultMappingValue(latest.defaultMappingValue :+ defaultValue)
-      ChangedFieldsUpdateTransformResult(updatedEntity = updated, Seq())
+      latest.setDefaultMappingValue(latest.defaultMappingValue :+ defaultValue)
     }
   }
 
   override def update(username: String, mt: MappingTable): Future[Option[MappingTable]] = {
     super.update(username, mt.name, mt.version, s"Mapping Table Updated.") { latest =>
-      val updated = latest
+      latest
         .setHDFSPath(mt.hdfsPath)
         .setSchemaName(mt.schemaName)
         .setSchemaVersion(mt.schemaVersion)
         .setDescription(mt.description).asInstanceOf[MappingTable]
-
-      ChangedFieldsUpdateTransformResult(updatedEntity = updated, Seq(ChangedField("HDFS Path", mt.hdfsPath, latest.hdfsPath),
-        ChangedField("Schema Name", mt.schemaName, latest.schemaName),
-        ChangedField("Schema Version", mt.schemaVersion, latest.schemaVersion),
-        ChangedField("Description", mt.description, latest.description)))
-
     }
   }
 

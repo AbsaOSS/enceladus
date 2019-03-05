@@ -23,8 +23,6 @@ import za.co.absa.enceladus.rest.repositories.{DatasetMongoRepository, MappingTa
 import scala.concurrent.Future
 import org.apache.spark.sql.types.StructType
 import za.co.absa.enceladus.rest.utils.converters.SparkMenasSchemaConvertor
-import za.co.absa.enceladus.rest.models.ChangedFieldsUpdateTransformResult
-import za.co.absa.enceladus.rest.models.ChangedField
 
 @Service
 class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
@@ -43,16 +41,13 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
 
   def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[Option[Schema]] = {
     super.update(username, schemaName, schemaVersion, "New schema uploaded.")({ oldSchema =>
-      val updated = oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(fields.fields).toList)
-      ChangedFieldsUpdateTransformResult(updatedEntity = updated, fields = Seq())
+      oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(fields.fields).toList)
     })
   }
 
   override def update(username: String, schema: Schema): Future[Option[Schema]] = {
     super.update(username, schema.name, schema.version, "Schema updated.") { latest =>
-      val updated = latest.setDescription(schema.description).asInstanceOf[Schema]
-      ChangedFieldsUpdateTransformResult(updatedEntity = updated, fields = Seq(
-        ChangedField("Description", schema.description, latest.description)))
+      latest.setDescription(schema.description).asInstanceOf[Schema]
     }
   }
 

@@ -13,20 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.models
+package za.co.absa.enceladus.rest.exceptions
 
-case class ChangedField[T](fieldName: String,
-    value1: T,
-    value2: T)
-
-case class ChangedFieldsUpdateTransformResult[C](updatedEntity: C,
-    fields: Seq[ChangedField[Any]]) {
-
-  /**
-   * Generates list of fields, for which two values do not match - i.e have been changed
-   * @return A list of fields for which values do not match
-   */
-  def getUpdatedFields(): Seq[String] = {
-    fields.filter({ case field => field.value1 != field.value2 }).map(_.fieldName).toSeq
-  }
-}
+case class EntityAlreadyExistsException(message:String = "", cause: Throwable = None.orNull) extends Exception(message, cause)

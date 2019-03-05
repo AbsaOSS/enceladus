@@ -24,7 +24,7 @@
                     <Label text="Selected Target Column"></Label>
                     <Text text="{/newDefaultValue/columnName}"></Text>
                     <Label text="Default Value"></Label>
-                    <Input id="newDefaultValueExpr" type="text" placeholder="Enter Spark SQL Expression" width="100%"
+                    <Input id="newDefaultValueExpr" type="Text" placeholder="Enter Spark SQL Expression" width="100%"
                         value="{/newDefaultValue/value}"></Input>
                 </form:content>
             </form:SimpleForm>
