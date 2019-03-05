@@ -13,28 +13,29 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.types
+package za.co.absa.enceladus.utils.time
 
 import java.security.InvalidParameterException
+
 import org.apache.spark.sql.types.{DateType, DoubleType, TimestampType}
 import org.scalatest.FunSuite
 
-class FormatSuite extends FunSuite {
+class DateTimePatternSuite extends FunSuite {
 
   test("Format class for timestamp") {
     val pattern: String = "yyyy~mm~dd_HH.mm.ss"
-    val format: Format = new Format(Some(pattern), Some(TimestampType))
+    val format: DateTimePattern = new DateTimePattern(Some(pattern), Some(TimestampType))
     assert(!format.isDefault)
     assert(format.get == pattern)
     assert(format.getOrElse("foo") == pattern)
     assert(!format.isEpoch)
     val expectedMessage = s"'${format.get}' is not an epoch format"
     val caught = intercept[InvalidParameterException] {
-      Format.epochFactor(format)
+      DateTimePattern.epochFactor(format)
     }
     assert(caught.getMessage == expectedMessage)
     val caught2 = intercept[InvalidParameterException] {
-      Format.epochMilliFactor(format)
+      DateTimePattern.epochMilliFactor(format)
     }
     assert(caught2.getMessage == expectedMessage)
   }
@@ -42,52 +43,52 @@ class FormatSuite extends FunSuite {
 
   test("Format class for date") {
     val pattern: String = "yyyy~mm~dd_HH.mm.ss"
-    val format: Format = new Format(Some(pattern), Some(DateType))
+    val format: DateTimePattern = new DateTimePattern(Some(pattern), Some(DateType))
     assert(!format.isDefault)
     assert(format.get == pattern)
     assert(format.getOrElse("fox") == pattern)
     assert(!format.isEpoch)
     val expectedMessage = s"'${format.get}' is not an epoch format"
     val caught = intercept[InvalidParameterException] {
-      Format.epochFactor(format)
+      DateTimePattern.epochFactor(format)
     }
     assert(caught.getMessage == expectedMessage)
     val caught2 = intercept[InvalidParameterException] {
-      Format.epochMilliFactor(format)
+      DateTimePattern.epochMilliFactor(format)
     }
     assert(caught2.getMessage == expectedMessage)
   }
 
   test("Format class with default value - timestamp") {
-    val format: Format = new Format(None, Some(TimestampType))
+    val format: DateTimePattern = new DateTimePattern(None, Some(TimestampType))
     assert(format.isDefault)
     assert(format.get == "yyyy-MM-dd HH:mm:ss")
     assert(format.getOrElse("foo") == "foo")
     assert(!format.isEpoch)
     val expectedMessage = s"'${format.get}' is not an epoch format"
     val caught = intercept[InvalidParameterException] {
-      Format.epochFactor(format)
+      DateTimePattern.epochFactor(format)
     }
     assert(caught.getMessage == expectedMessage)
     val caught2 = intercept[InvalidParameterException] {
-      Format.epochMilliFactor(format)
+      DateTimePattern.epochMilliFactor(format)
     }
     assert(caught2.getMessage == expectedMessage)
   }
 
   test("Format class with default value - date") {
-    val format: Format = new Format(None, Some(DateType))
+    val format: DateTimePattern = new DateTimePattern(None, Some(DateType))
     assert(format.isDefault)
     assert(format.get == "yyyy-MM-dd")
     assert(format.getOrElse("fox") == "fox")
     assert(!format.isEpoch)
     val expectedMessage = s"'${format.get}' is not an epoch format"
     val caught = intercept[InvalidParameterException] {
-      Format.epochFactor(format)
+      DateTimePattern.epochFactor(format)
     }
     assert(caught.getMessage == expectedMessage)
     val caught2 = intercept[InvalidParameterException] {
-      Format.epochMilliFactor(format)
+      DateTimePattern.epochMilliFactor(format)
     }
     assert(caught2.getMessage == expectedMessage)
   }
@@ -96,47 +97,47 @@ class FormatSuite extends FunSuite {
     val dt: DoubleType = DoubleType
     val expectedMessage = s"No default format defined for data type ${dt.typeName}"
     val caught = intercept[IllegalStateException] {
-      new Format(None, Some(dt))
+      new DateTimePattern(None, Some(dt))
     }
     assert(caught.getMessage == expectedMessage)
   }
 
   test("Format class with Nones") {
     intercept[NoSuchElementException] {
-      new Format(None, None)
+      new DateTimePattern(None, None)
     }
   }
 
   test("Format.isEpoch returns expected values.") {
-    val result1 = Format.isEpoch("epoch")
+    val result1 = DateTimePattern.isEpoch("epoch")
     assert(result1 == true)
-    val result2 = Format.isEpoch("milliepoch")
+    val result2 = DateTimePattern.isEpoch("epochmilli")
     assert(result2 == true)
-    val result3 = Format.isEpoch(" epoch ")
+    val result3 = DateTimePattern.isEpoch(" epoch ")
     assert(result3 == false)
-    val result4 = Format.isEpoch("add 54")
+    val result4 = DateTimePattern.isEpoch("add 54")
     assert(result4 == false)
-    val result5 = Format.isEpoch("")
+    val result5 = DateTimePattern.isEpoch("")
     assert(result5 == false)
   }
 
   test("Format.epochFactor returns expected values.") {
-    val result1 = Format.epochFactor("Epoch")
+    val result1 = DateTimePattern.epochFactor("Epoch")
     assert(result1 == 1L)
-    val result2 = Format.epochFactor("mIlLiEpOcH")
+    val result2 = DateTimePattern.epochFactor("EpOcHmIlLi")
     assert(result2 == 1000L)
-    val result3 = Format.epochMilliFactor("Epoch")
+    val result3 = DateTimePattern.epochMilliFactor("Epoch")
     assert(result3 == 1000L)
-    val result4 = Format.epochMilliFactor("mIlLiEpOcH")
+    val result4 = DateTimePattern.epochMilliFactor("EpOcHmIlLi")
     assert(result4 == 1L)
     val formatString = "xxxx"
     val expectedMessage = s"'$formatString' is not an epoch format"
     val caught = intercept[InvalidParameterException] {
-      Format.epochFactor(formatString)
+      DateTimePattern.epochFactor(formatString)
     }
     assert(caught.getMessage == expectedMessage)
     val caught2 = intercept[InvalidParameterException] {
-      Format.epochMilliFactor(formatString)
+      DateTimePattern.epochMilliFactor(formatString)
     }
     assert(caught2.getMessage == expectedMessage)
   }

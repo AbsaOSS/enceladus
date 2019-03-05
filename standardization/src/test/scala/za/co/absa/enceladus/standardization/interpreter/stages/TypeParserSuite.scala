@@ -33,7 +33,7 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
     Pattern.quote(substr).r.findAllMatchIn(text).length
   }
 
-  def assertStringOccurances(resultToCheck: ParseOutput, substrToSearch: String, colCount: Integer, errCount: Integer = 0): Unit = {
+  private def assertStringOccurrences(resultToCheck: ParseOutput, substrToSearch: String, colCount: Integer, errCount: Integer = 0): Unit = {
     val resultCol = substringCount(resultToCheck.stdCol.expr.toString(), substrToSearch)
     assert(colCount == resultCol, s"Expected $colCount, got $resultCol\n  of: $substrToSearch\n  in: ${resultToCheck.stdCol.expr.toString()}")
     val resultErr = substringCount(resultToCheck.stdCol.expr.toString(), substrToSearch)
@@ -83,10 +83,10 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
 
     implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
     val parseOutputStructFieldNoDefault: ParseOutput = TypeParser.standardize(structFieldNoDefault, path, schema)
-    assertStringOccurances(parseOutputStructFieldNoDefault, s"to_date('$path.field0, Some($defaultFormat))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldNoDefault, s"to_date('$path.field0, Some($defaultFormat))", 3, 1)
     val parseOutputStructFieldWithMetadataNotSourceColumn: ParseOutput = TypeParser.standardize(structFieldWithDefaultMetadataColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_date('$path.field1, Some($defaultFormat))", 3, 1)
-    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_date('$path.field1, Some($defaultFormat))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
     val message = "Dates & times represented as numeric values need specified 'pattern' metadata"
     val caught1 = intercept[InvalidParameterException] {
       TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
@@ -113,10 +113,10 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
 
     implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
     val parseOutputStructFieldNoDefault: ParseOutput = TypeParser.standardize(structFieldNoDefault, path, schema)
-    assertStringOccurances(parseOutputStructFieldNoDefault, s"to_timestamp('$path.field0, Some($defaultFormat))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldNoDefault, s"to_timestamp('$path.field0, Some($defaultFormat))", 3, 1)
     val parseOutputStructFieldWithMetadataNotSourceColumn: ParseOutput = TypeParser.standardize(structFieldWithDefaultMetadataColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_timestamp('$path.field1, Some($defaultFormat))", 3, 1)
-    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_timestamp('$path.field1, Some($defaultFormat))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
     val message = "Dates & times represented as numeric values need specified 'pattern' metadata"
     val caught1 = intercept[InvalidParameterException] {
       TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
@@ -144,16 +144,16 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
 
     implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
     val parseOutputStructFieldNoDefault: ParseOutput = TypeParser.standardize(structFieldNoDefault, path, schema)
-    assertStringOccurances(parseOutputStructFieldNoDefault, s"to_date('$path.field0, Some(dd/MM/yyyy))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldNoDefault, s"to_date('$path.field0, Some(dd/MM/yyyy))", 3, 1)
     val parseOutputStructFieldWithMetadataNotSourceColumn: ParseOutput = TypeParser.standardize(structFieldWithDefaultMetadataColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_date('$path.field1, Some(yyyy:dd:MM))", 3, 1)
-    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_date('$path.field1, Some(yyyy:dd:MM))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
     val parseOutputStructFieldWithMetadataSource2Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSource2Column, s"to_date(cast(cast('$path.field2_source as decimal(8,2)) as string), Some(MMyyyy.dd))", 3, 1)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSource2Column, s"ELSE $defaultValueParsed END", 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSource2Column, s"to_date(cast(cast('$path.field2_source as decimal(8,2)) as string), Some(MMyyyy.dd))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSource2Column, s"ELSE $defaultValueParsed END", 1)
     val parseOutputStructFieldWithMetadataSource3Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource3Column, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSource3Column, s"to_date(cast('$path.field3_source as string), Some(ddMMyyyy))", 3, 1)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSource3Column, s"ELSE $defaultValueParsed END", 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSource3Column, s"to_date(cast('$path.field3_source as string), Some(ddMMyyyy))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSource3Column, s"ELSE $defaultValueParsed END", 1)
   }
 
   test("Timestamp fields with format") {
@@ -173,58 +173,58 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
 
     implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
     val parseOutputStructFieldNoDefault: ParseOutput = TypeParser.standardize(structFieldNoDefault, path, schema)
-    assertStringOccurances(parseOutputStructFieldNoDefault, s"to_timestamp('$path.field0, Some(dd/MM/yyyy/hh/mm/ss))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldNoDefault, s"to_timestamp('$path.field0, Some(dd/MM/yyyy/hh/mm/ss))", 3, 1)
     val parseOutputStructFieldWithMetadataNotSourceColumn: ParseOutput = TypeParser.standardize(structFieldWithDefaultMetadataColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_timestamp('$path.field1, Some(yyyy:dd:MM_hh~mm~ss))", 3, 1)
-    assertStringOccurances(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_timestamp('$path.field1, Some(yyyy:dd:MM_hh~mm~ss))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
     val parseOutputStructFieldWithMetadataSource2Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSource2Column, s"to_timestamp(cast(cast('$path.field2_source as decimal(14,6)) as string), Some(ddMMyyyy.hhmmss))", 3, 1)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSource2Column, s"ELSE $defaultValueParsed END", 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSource2Column, s"to_timestamp(cast(cast('$path.field2_source as decimal(14,6)) as string), Some(ddMMyyyy.hhmmss))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSource2Column, s"ELSE $defaultValueParsed END", 1)
     val parseOutputStructFieldWithMetadataSource3Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource3Column, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSource3Column, s"to_timestamp(cast('$path.field3_source as string), Some(ddMMyyyyhhmmss))", 3, 1)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSource3Column, s"ELSE $defaultValueParsed END", 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSource3Column, s"to_timestamp(cast('$path.field3_source as string), Some(ddMMyyyyhhmmss))", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSource3Column, s"ELSE $defaultValueParsed END", 1)
   }
 
   test("Date fields with epoch format") {
     val path: String = "path"
     val structFieldEpochColumn = StructField("field0", DateType, nullable = false, new MetadataBuilder().putString("pattern", "epoch").build)
-    val structFieldMilliEpochColumn = StructField("field1", DateType, nullable = false, new MetadataBuilder().putString("pattern", "milliepoch").build)
+    val structFieldEpochMilliColumn = StructField("field1", DateType, nullable = false, new MetadataBuilder().putString("pattern", "epochmilli").build)
     val structFieldWithMetadataSourceEpochColumn = StructField("field2", DateType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field2_source").putString("pattern", "epoch").build)
-    val structFieldWithMetadataSourceMilliEpochColumn = StructField("field3", DateType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field3_source").putString("pattern", "milliepoch").build)
+    val structFieldWithMetadataSourceEpochMilliColumn = StructField("field3", DateType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field3_source").putString("pattern", "epochmilli").build)
     val structFieldSource2Column = StructField("field2_source", IntegerType, nullable = false)
     val structFieldSource3Column = StructField("field3_source", DecimalType(16,0), nullable = false)
-    val schema: StructType = StructType(Array(StructField(path, StructType(Array(structFieldEpochColumn, structFieldMilliEpochColumn, structFieldWithMetadataSourceEpochColumn, structFieldWithMetadataSourceMilliEpochColumn, structFieldSource2Column, structFieldSource3Column)))))
+    val schema: StructType = StructType(Array(StructField(path, StructType(Array(structFieldEpochColumn, structFieldEpochMilliColumn, structFieldWithMetadataSourceEpochColumn, structFieldWithMetadataSourceEpochMilliColumn, structFieldSource2Column, structFieldSource3Column)))))
 
     implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
     val parseOutputStructFieldEpoch: ParseOutput = TypeParser.standardize(structFieldEpochColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldEpoch, s"from_unixtime((cast('$path.field0 as bigint) / 1), yyyy-MM-dd, None)", 3, 1)
-    val parseOutputStructFieldMilliEpoch: ParseOutput = TypeParser.standardize(structFieldMilliEpochColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldMilliEpoch, s"from_unixtime((cast('$path.field1 as bigint) / 1000), yyyy-MM-dd, None)", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldEpoch, s"from_unixtime((cast('$path.field0 as bigint) / 1), yyyy-MM-dd, None)", 3, 1)
+    val parseOutputStructFieldEpochMilli: ParseOutput = TypeParser.standardize(structFieldEpochMilliColumn, path, schema)
+    assertStringOccurrences(parseOutputStructFieldEpochMilli, s"from_unixtime((cast('$path.field1 as bigint) / 1000), yyyy-MM-dd, None)", 3, 1)
     val parseOutputStructFieldWithMetadataSourceEpoch: ParseOutput = TypeParser.standardize(structFieldWithMetadataSourceEpochColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSourceEpoch, s"from_unixtime((cast('$path.field2_source as bigint) / 1), yyyy-MM-dd, None)", 3, 1)
-    val parseOutputStructFieldWithMetadataSourceMilliEpoch: ParseOutput = TypeParser.standardize(structFieldWithMetadataSourceMilliEpochColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSourceMilliEpoch, s"from_unixtime((cast('$path.field3_source as bigint) / 1000), yyyy-MM-dd, None)", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSourceEpoch, s"from_unixtime((cast('$path.field2_source as bigint) / 1), yyyy-MM-dd, None)", 3, 1)
+    val parseOutputStructFieldWithMetadataSourceEpochMilli: ParseOutput = TypeParser.standardize(structFieldWithMetadataSourceEpochMilliColumn, path, schema)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSourceEpochMilli, s"from_unixtime((cast('$path.field3_source as bigint) / 1000), yyyy-MM-dd, None)", 3, 1)
   }
 
   test("Timestamp fields with epoch format") {
     val path: String = "path"
     val structFieldEpochColumn = StructField("field0", TimestampType, nullable = false, new MetadataBuilder().putString("pattern", "epoch").build)
-    val structFieldMilliEpochColumn = StructField("field1", TimestampType, nullable = false, new MetadataBuilder().putString("pattern", "milliepoch").build)
+    val structFieldEpochMilliColumn = StructField("field1", TimestampType, nullable = false, new MetadataBuilder().putString("pattern", "epochmilli").build)
     val structFieldWithMetadataSourceEpochColumn = StructField("field2", TimestampType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field2_source").putString("pattern", "epoch").build)
-    val structFieldWithMetadataSourceMilliEpochColumn = StructField("field3", TimestampType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field3_source").putString("pattern", "milliepoch").build)
+    val structFieldWithMetadataSourceEpochMilliColumn = StructField("field3", TimestampType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field3_source").putString("pattern", "epochmilli").build)
     val structFieldSource2Column = StructField("field2_source", IntegerType, nullable = false)
     val structFieldSource3Column = StructField("field3_source", DecimalType(16,0), nullable = false)
-    val schema: StructType = StructType(Array(StructField(path, StructType(Array(structFieldEpochColumn, structFieldMilliEpochColumn, structFieldWithMetadataSourceEpochColumn, structFieldWithMetadataSourceMilliEpochColumn, structFieldSource2Column, structFieldSource3Column)))))
+    val schema: StructType = StructType(Array(StructField(path, StructType(Array(structFieldEpochColumn, structFieldEpochMilliColumn, structFieldWithMetadataSourceEpochColumn, structFieldWithMetadataSourceEpochMilliColumn, structFieldSource2Column, structFieldSource3Column)))))
 
     implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
     val parseOutputStructFieldEpoch: ParseOutput = TypeParser.standardize(structFieldEpochColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldEpoch, s"from_unixtime((cast('$path.field0 as bigint) / 1), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
-    val parseOutputStructFieldMilliEpoch: ParseOutput = TypeParser.standardize(structFieldMilliEpochColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldMilliEpoch, s"from_unixtime((cast('$path.field1 as bigint) / 1000), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldEpoch, s"from_unixtime((cast('$path.field0 as bigint) / 1), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
+    val parseOutputStructFieldEpochMilli: ParseOutput = TypeParser.standardize(structFieldEpochMilliColumn, path, schema)
+    assertStringOccurrences(parseOutputStructFieldEpochMilli, s"from_unixtime((cast('$path.field1 as bigint) / 1000), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
     val parseOutputStructFieldWithMetadataSourceEpoch: ParseOutput = TypeParser.standardize(structFieldWithMetadataSourceEpochColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSourceEpoch, s"from_unixtime((cast('$path.field2_source as bigint) / 1), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
-    val parseOutputStructFieldWithMetadataSourceMilliEpoch: ParseOutput = TypeParser.standardize(structFieldWithMetadataSourceMilliEpochColumn, path, schema)
-    assertStringOccurances(parseOutputStructFieldWithMetadataSourceMilliEpoch, s"from_unixtime((cast('$path.field3_source as bigint) / 1000), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSourceEpoch, s"from_unixtime((cast('$path.field2_source as bigint) / 1), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
+    val parseOutputStructFieldWithMetadataSourceEpochMilli: ParseOutput = TypeParser.standardize(structFieldWithMetadataSourceEpochMilliColumn, path, schema)
+    assertStringOccurrences(parseOutputStructFieldWithMetadataSourceEpochMilli, s"from_unixtime((cast('$path.field3_source as bigint) / 1000), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
   }
 
 }

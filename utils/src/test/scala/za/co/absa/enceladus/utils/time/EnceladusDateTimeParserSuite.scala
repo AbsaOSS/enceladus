@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.types
+package za.co.absa.enceladus.utils.time
 
 import org.scalatest.FunSuite
 import java.sql.Date
@@ -22,11 +22,11 @@ import java.util.TimeZone
 
 case class TestInputRow(id: Int, stringField: String)
 
-class EnceladusDateParserSuite extends FunSuite{
-  TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+class EnceladusDateTimeParserSuite extends FunSuite{
+  TimeZoneNormalizer.normalizeJVMTimeZone()
 
   test("EnceladusDateParser class epoch") {
-    val parser: EnceladusDateParser = EnceladusDateParser("epoch")
+    val parser: EnceladusDateTimeParser = EnceladusDateTimeParser("epoch")
 
     val value: String = "1547553153"
     val resultDate: Date = parser.parseDate(value)
@@ -38,8 +38,8 @@ class EnceladusDateParserSuite extends FunSuite{
     assert(resultTimestamp.toString == expectedTimestamp.toString)
   }
 
-  test("EnceladusDateParser class milliepoch") {
-    val parser: EnceladusDateParser = EnceladusDateParser("milliepoch")
+  test("EnceladusDateParser class epochmilli") {
+    val parser: EnceladusDateTimeParser = EnceladusDateTimeParser("epochmilli")
 
     val value: String = "1547553153198"
     val resultDate: Date = parser.parseDate(value)
@@ -52,7 +52,7 @@ class EnceladusDateParserSuite extends FunSuite{
   }
 
   test("EnceladusDateParser class actual pattern without time zone") {
-    val parser: EnceladusDateParser = EnceladusDateParser("yyyy_MM_dd:HH.mm.ss")
+    val parser: EnceladusDateTimeParser = EnceladusDateTimeParser("yyyy_MM_dd:HH.mm.ss")
 
     val value: String = "2019_01_15:11.52.33"
     val resultDate: Date = parser.parseDate(value)
@@ -65,7 +65,7 @@ class EnceladusDateParserSuite extends FunSuite{
   }
 
   test("EnceladusDateParser class actual pattern with standard time zone") {
-    val parser: EnceladusDateParser = EnceladusDateParser("yyyy-MM-dd-HH-mm-ss-zz")
+    val parser: EnceladusDateTimeParser = EnceladusDateTimeParser("yyyy-MM-dd-HH-mm-ss-zz")
 
     val value: String = "2011-01-31-22-52-33-EST"
     val resultDate: Date = parser.parseDate(value)
@@ -78,7 +78,7 @@ class EnceladusDateParserSuite extends FunSuite{
   }
 
   test("EnceladusDateParser class actual pattern with offset time zone") {
-    val parser: EnceladusDateParser = EnceladusDateParser("yyyy/MM/dd HH:mm:ssXXX")
+    val parser: EnceladusDateTimeParser = EnceladusDateTimeParser("yyyy/MM/dd HH:mm:ssXXX")
 
     val value: String = "1990/01/31 22:52:33+01:00"
     val resultDate: Date = parser.parseDate(value)
@@ -92,11 +92,11 @@ class EnceladusDateParserSuite extends FunSuite{
 
   test("format") {
     val t = new Timestamp(70, 0, 2, 1, 0, 0, 0) //25 hours to epoch
-    val parser1 = EnceladusDateParser("yyyy-MM-dd HH:mm:ss")
+    val parser1 = EnceladusDateTimeParser("yyyy-MM-dd HH:mm:ss")
     assert(parser1.format(t) == "1970-01-02 01:00:00")
-    val parser2 = EnceladusDateParser("epoch")
+    val parser2 = EnceladusDateTimeParser("epoch")
     assert(parser2.format(t) == "90000")
-    val parser3 = EnceladusDateParser("milliepoch")
+    val parser3 = EnceladusDateTimeParser("epochmilli")
     assert(parser3.format(t) == "90000000")
   }
 

@@ -32,7 +32,6 @@ import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
 
 object DynamicInterpreter {
   private val log = LogManager.getLogger("enceladus.conformance.DynamicInterpreter")
-  private var enableControlFramework = true
 
   /**
     * interpret The dynamic conformance interpreter function
@@ -45,32 +44,16 @@ object DynamicInterpreter {
     * @return The conformed dataframe
     *
     */
-  def interpret(conformance: ConfDataset,
-                inputDf: Dataset[Row],
-                jobShortName: String = "Conformance",
+  def interpret(conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance",
                 experimentalMappingRule: Boolean)
                (implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig, enableCF: Boolean): DataFrame = {
-    implicit val udfLib = new UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary
 
-    enableControlFramework = enableCF
-    if (enableControlFramework) inputDf.setCheckpoint(s"$jobShortName - Start")
-
-    val steps = conformance.conformance.sortBy(_.order)
-
-    // Add the error column if it's missing
-    val dfWithErrorColumn = if (inputDf.columns.contains(ErrorMessage.errorColumnName)) {
-      inputDf
-    } else {
-      inputDf.withColumn(ErrorMessage.errorColumnName, typedLit(List[ErrorMessage]()))
+    if (enableCF) {
+      inputDf.setCheckpoint(s"$jobShortName - Start")
     }
 
-    // Exploding all mapping rule arrays
-    val (explodeDf, explodeContext) = if (experimentalMappingRule) {
-      log.info("Exploding all arrays in all mapping rules...")
-      explodeAllMappingRuleArrays(dfWithErrorColumn, steps)
-    } else {
-      (dfWithErrorColumn, ExplosionContext())
-    }
+    val (steps, explodeDf, explodeContext) = getStepsAndExplode(conformance, inputDf, experimentalMappingRule)
 
     // Fold left on rules
     val ds = steps.foldLeft(explodeDf)({
@@ -84,21 +67,22 @@ object DynamicInterpreter {
           case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r).conform(df)
           case r: CastingConformanceRule          => CastingRuleInterpreter(r).conform(df)
           case r: NegationConformanceRule         => NegationRuleInterpreter(r).conform(df)
-          case r: CustomConformanceRule           => r.getInterpreter.conform(df)
+          case r: CustomConformanceRule           => r.getInterpreter().conform(df)
           case r: MappingConformanceRule          =>
             if (experimentalMappingRule) {
               MappingRuleInterpreterNoExplode(r, conformance, explodeContext).conform(df)
             } else {
               MappingRuleInterpreter(r, conformance).conform(df)
             }
+          case _ => throw new IllegalStateException(s"Unrecognized rule class: ${rule.getClass.getName}")
         }
-        applyCheckpoint(rule, confd, jobShortName, explodeContext)
+        applyCheckpoint(rule, confd, jobShortName, explodeContext, enableCF)
     })
 
     // Imploding all arrays back
     val implodeDf = ExplodeTools.revertAllExplosions(ds, explodeContext, Some(ErrorMessage.errorColumnName))
 
-    if (enableControlFramework) {
+    if (enableCF) {
       implodeDf.setCheckpoint(s"$jobShortName - End", persistInDatabase = false)
     }
 
@@ -137,11 +121,12 @@ object DynamicInterpreter {
     * @param rule The conformance rule
     * @param df   Dataframe to apply the checkpoint on
     */
-  private[conformance] def applyCheckpoint(rule: ConformanceRule,
-                                           df: Dataset[Row],
-                                           jobShortName: String,
-                                           explodeContext: ExplosionContext): Dataset[Row] = {
-    if (enableControlFramework && rule.controlCheckpoint) {
+  private def applyCheckpoint(rule: ConformanceRule,
+                              df: Dataset[Row],
+                              jobShortName: String,
+                              explodeContext: ExplosionContext,
+                              enableCF: Boolean): Dataset[Row] = {
+    if (enableCF && rule.controlCheckpoint) {
       val explodeFilter = explodeContext.getControlFrameworkFilter
       // Cache the data first since Atum will execute an action for each control metric
       val cachedDf = df.cache
@@ -152,6 +137,35 @@ object DynamicInterpreter {
     else {
       df
     }
+  }
+
+  private def getStepsAndExplode(conformance: ConfDataset, inputDf: Dataset[Row], experimentalMappingRule: Boolean):
+                                (List[ConformanceRule], DataFrame, ExplosionContext) = {
+    val steps = conformance.conformance.sortBy(_.order)
+
+    // Add the error column if it's missing
+    val dfWithErrorColumn = if (inputDf.columns.contains(ErrorMessage.errorColumnName)) {
+      inputDf
+    } else {
+      inputDf.withColumn(ErrorMessage.errorColumnName, typedLit(List[ErrorMessage]()))
+    }
+
+    // Exploding all mapping rule arrays
+    val (explodeDf, explodeContext) = if (experimentalMappingRule) {
+      log.info("Exploding all arrays in all mapping rules...")
+      steps.foldLeft((dfWithErrorColumn, ExplosionContext())) {
+        case ((df, context), rule) =>
+          rule match {
+            case r: MappingConformanceRule =>
+              ExplodeTools.explodeAllArraysInPath(r.outputColumn, df, context)
+            case _ =>
+              (df, context)
+          }
+      }
+    } else {
+      (dfWithErrorColumn, ExplosionContext())
+    }
+    (steps, explodeDf, explodeContext)
   }
 
 }

@@ -35,7 +35,6 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 
 import scala.util.control.NonFatal
-import org.apache.spark.sql.functions.{size, sum}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.enceladus.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
