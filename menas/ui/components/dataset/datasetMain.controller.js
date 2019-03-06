@@ -125,20 +125,20 @@ sap.ui.controller("components.dataset.datasetMain", {
   },
 
   datasetAddSubmit: function () {
-    let newDataset = this._addDialog.getModel("entity").oData;
-
+    let oDataset = this._addDialog.getModel("entity").oData;
     // we may wanna wait for a call to determine whether this is unique
-    if (!newDataset.isEdit && newDataset.name && typeof (newDataset.nameUnique) === "undefined") {
+    if (!oDataset.isEdit && oDataset.name && typeof (oDataset.nameUnique) === "undefined") {
       // need to wait for the service call
       setTimeout(this.datasetAddSubmit.bind(this), 500);
       return;
     }
-    if (this.validateNewDataset()) {
+
+    if (this.isValidDataset(oDataset)) {
       // send and update UI
-      if (newDataset.isEdit) {
-        DatasetService.editDataset(newDataset)
+      if (oDataset.isEdit) {
+        DatasetService.editDataset(oDataset)
       } else {
-        DatasetService.createDataset(newDataset.name, newDataset.description, newDataset.hdfsPath, newDataset.hdfsPublishPath, newDataset.schemaName, newDataset.schemaVersion)
+        DatasetService.createDataset(oDataset)
       }
       this.datasetAddCancel(); // close & clean up
     }
@@ -191,9 +191,8 @@ sap.ui.controller("components.dataset.datasetMain", {
     }
   },
 
-  validateNewDataset: function () {
+  isValidDataset: function (oDataset) {
     this.resetNewDatasetValueState();
-    let oDataset = this._addDialog.getModel("entity").oData;
     let isOk = true;
 
     if (!oDataset.name || oDataset.name === "") {

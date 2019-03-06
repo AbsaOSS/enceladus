@@ -82,15 +82,8 @@ var DatasetService = new function() {
         GenericService.isNameUnique(sName, oModel, "dataset")
     };
 
-    this.createDataset = function(sName, sDescription, sHdfsPath, sHdfsPublishPath, sSchemaName, iSchemaVersion) {
-        Functions.ajax("api/dataset/create", "POST", {
-            name : sName,
-            description : sDescription,
-            hdfsPath : sHdfsPath,
-            hdfsPublishPath : sHdfsPublishPath,
-            schemaName : sSchemaName,
-            schemaVersion : iSchemaVersion
-        }, function(oData) {
+    this.createDataset = function(oDataset) {
+        Functions.ajax("api/dataset/create", "POST", oDataset, function(oData) {
             DatasetService.getDatasetList();
             SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
             DatasetService.setCurrentDataset(oData);
