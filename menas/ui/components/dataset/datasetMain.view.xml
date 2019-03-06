@@ -155,12 +155,17 @@
                                                         <Text text="{menasRef/name}"></Text>
                                                         <Text text="{menasRef/version}"></Text>
                                                         <List id="auditChangesList" items="{path: 'changes', templateShareable: false}">
-                                                            <ObjectListItem id="auditChangesListItem" title="{message}">
-                                                                <attributes>
-                                                                    <ObjectAttribute visible="{path:'newValue', formatter:'Formatters.nonEmptyObject'}" title="New Value" text="{newValue}" />
-                                                                    <ObjectAttribute visible="{path:'oldValue', formatter:'Formatters.nonEmptyObject'}" title="Old Value" text="{oldValue}" />
-                                                                </attributes>
-                                                            </ObjectListItem>
+                                                            <CustomListItem id="auditChangesListItem" class="auditTrailNestedListItem">
+                                                                <Title level="H4" text="{message}"></Title>
+                                                                <form:SimpleForm layout="GridLayout">
+                                                                    <form:content>
+                                                                        <Label visible="{path:'newValue', formatter:'Formatters.nonEmptyObject'}" text="New Value"></Label>
+                                                                        <Text visible="{path:'newValue', formatter:'Formatters.nonEmptyObject'}" text="{newValue}"></Text>
+                                                                        <Label visible="{path:'oldValue', formatter:'Formatters.nonEmptyObject'}" text="Old Value"></Label>
+                                                                        <Text visible="{path:'oldValue', formatter:'Formatters.nonEmptyObject'}" text="{oldValue}"></Text>
+                                                                    </form:content>
+                                                                </form:SimpleForm>
+                                                            </CustomListItem>
                                                         </List>
                                                     </cells>
                                                 </ColumnListItem>

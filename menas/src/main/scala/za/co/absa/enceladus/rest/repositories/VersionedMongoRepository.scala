@@ -80,7 +80,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     for {
       latestVersion <- getLatestVersionValue(updated.name)
       newVersion <- if(latestVersion.isEmpty) throw new NotFoundException()
-           else if(latestVersion != updated.version) throw new EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.") 
+           else if(latestVersion.get != updated.version) throw new EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.") 
            else Future.successful(latestVersion.get + 1)
       newInfo <- Future.successful(updated.setUpdatedInfo(username).setVersion(newVersion).setParent(Some(getParent(updated))).asInstanceOf[C])
       res <- collection.insertOne(newInfo).head()

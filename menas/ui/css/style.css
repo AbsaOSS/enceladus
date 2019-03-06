@@ -31,3 +31,8 @@ html, body {
     width: calc(100% - 38px);
   }
 }
+
+.auditTrailNestedListItem {
+	max-width: 100% !important;
+	background-color: inherit !important;
+}
