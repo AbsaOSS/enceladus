@@ -126,7 +126,7 @@ var SchemaService = new function() {
     })
   };
 
-  this.isUniqueSchemaName = function(sName) {
+  this.isNameUnique = function(sName) {
     Functions.ajax("api/schema/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
       model.setProperty("/newSchema/nameUnique", oData)
     }, function() {

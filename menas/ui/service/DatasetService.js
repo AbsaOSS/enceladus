@@ -78,13 +78,8 @@ var DatasetService = new function() {
       })
     };
 
-    this.isUniqueDatasetName = function(sName, model) {
-        model.setProperty("/nameUsed", undefined);
-        Functions.ajax("api/dataset/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
-            model.setProperty("/nameUnique", oData)
-        }, function() {
-            sap.m.MessageBox.error("Failed to retreive isUniqueName. Please try again later.")
-        })
+    this.isNameUnique = function(sName, oModel) {
+        GenericService.isNameUnique(sName, oModel, "dataset")
     };
 
     this.createDataset = function(sName, sDescription, sHdfsPath, sHdfsPublishPath, sSchemaName, iSchemaVersion) {

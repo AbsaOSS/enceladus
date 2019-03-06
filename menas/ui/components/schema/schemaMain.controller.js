@@ -62,7 +62,7 @@ sap.ui.controller("components.schema.schemaMain", {
   schemaNameChange : function() {
     let sName = this._model.getProperty("/newSchema/name");
     if (GenericService.isValidEntityName(sName)) {
-      SchemaService.isUniqueSchemaName(sName)
+      SchemaService.isNameUnique(sName)
     }
   },
 
@@ -137,7 +137,7 @@ sap.ui.controller("components.schema.schemaMain", {
 
 
   onAddPress : function() {
-    this._addDialog.open();
+    this._addDialog.open(); // TODO: replace root-model property "/newSchema" with generic dialog-bound model
   },
 
   onPressLogout : function() {
