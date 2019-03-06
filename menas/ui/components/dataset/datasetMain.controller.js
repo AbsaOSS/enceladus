@@ -194,6 +194,8 @@ sap.ui.controller("components.dataset.datasetMain", {
     let sName = this._addDialog.getModel("entity").getProperty("/name");
     if (GenericService.isValidEntityName(sName)) {
       DatasetService.isNameUnique(sName, this._addDialog.getModel("entity"))
+    } else {
+      this._addDialog.getModel("entity").setProperty("/nameUnique", true);
     }
   },
 
