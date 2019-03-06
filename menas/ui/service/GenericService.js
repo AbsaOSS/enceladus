@@ -49,8 +49,12 @@ var GenericService = new function () {
     })
   };
 
-  this.validateEntityName = function (sName) {
-    return /\W/.test(sName)
+  this.hasWhitespace = function (str) {
+    return /\W/.test(str);
+  };
+
+  this.isValidEntityName = function (sName) {
+    return sName && sName !== "" && !this.hasWhitespace(sName);
   };
 
 }();

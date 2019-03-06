@@ -60,7 +60,10 @@ sap.ui.controller("components.schema.schemaMain", {
   },
 
   schemaNameChange : function() {
-    SchemaService.isUniqueSchemaName(this._model.getProperty("/newSchema/name"))
+    let sName = this._model.getProperty("/newSchema/name");
+    if (GenericService.isValidEntityName(sName)) {
+      SchemaService.isUniqueSchemaName(sName)
+    }
   },
 
   usedInNavTo : function(oEv) {
@@ -123,8 +126,7 @@ sap.ui.controller("components.schema.schemaMain", {
       sap.ui.getCore().byId("newSchemaName").setValueStateText(
           "Schema name '" + schema.name + "' already exists. Choose a different name.");
       isOk = false;
-    }
-      else if (GenericService.validateEntityName(schema.name)) {
+    } else if (GenericService.hasWhitespace(schema.name)) {
       sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error);
       sap.ui.getCore().byId("newSchemaName").setValueStateText(
           "Schema name '" + schema.name  + "' should not have spaces. Please remove spaces and retry");
