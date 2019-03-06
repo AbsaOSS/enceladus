@@ -345,26 +345,18 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
     this._addDialog.open();
   },
 
-  _loadAllVersionsOfFirstSchema : function() {
+  onAddPress : function() {
+    let oFirstSchema = this._model.getProperty("/schemas")[0];
+
     this._model.setProperty("/newMappingTable", { // TODO: replace root-model property "/newMappingTable" with generic dialog-bound model
+      name: "",
+      description: "",
+      schemaName: oFirstSchema._id,
+      schemaVersion: oFirstSchema.latestVersion,
+      hdfsPath: "/",
       isEdit : false,
       title : "Add"
     });
-
-    let schemas = this._model.getProperty("/schemas")
-
-    if (schemas.length > 0) {
-      this._model.setProperty("/newSchema", {
-        schemaName : schemas[0]._id
-      });
-
-      let sSchema = this._model.getProperty("/schemas/0/_id")
-      SchemaService.getAllSchemaVersions(sSchema, sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"))
-    }
-  },
-
-  onAddPress : function() {
-    this._loadAllVersionsOfFirstSchema();
 
     this._addDialog.open();
   },
