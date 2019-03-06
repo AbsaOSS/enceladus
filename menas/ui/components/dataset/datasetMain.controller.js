@@ -173,52 +173,6 @@ sap.ui.controller("components.dataset.datasetMain", {
       this.fetchSchema();
   },
 
-  isValidDataset: function (oDataset) {
-    this.resetNewDatasetValueState();
-    let isOk = true;
-
-    if (!oDataset.name || oDataset.name === "") {
-      sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("newDatasetName").setValueStateText("Dataset name cannot be empty");
-      isOk = false;
-    } else {
-      if (GenericService.hasWhitespace(oDataset.name)) {
-        sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
-        sap.ui.getCore().byId("newDatasetName").setValueStateText(
-          "Dataset name '" + oDataset.name + "' should not have spaces. Please remove spaces and retry");
-        isOk = false;
-      }
-      if (!oDataset.isEdit && !oDataset.nameUnique) {
-        sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
-        sap.ui.getCore().byId("newDatasetName").setValueStateText(
-          "Dataset name '" + oDataset.name + "' already exists. Choose a different name.");
-        isOk = false;
-      }
-    }
-    if (!oDataset.schemaName || oDataset.schemaName === "") {
-      sap.ui.getCore().byId("schemaNameSelect").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("schemaNameSelect").setValueStateText("Please choose the schema of the dataset");
-      isOk = false;
-    }
-    if (oDataset.schemaVersion === undefined || oDataset.schemaVersion === "") {
-      sap.ui.getCore().byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("schemaVersionSelect").setValueStateText("Please choose the version of the schema for the dataset");
-      isOk = false;
-    }
-    if (!oDataset.hdfsPath || oDataset.hdfsPath === "") {
-      sap.ui.getCore().byId("newDatasetRawHDFSBrowser").setValueState(sap.ui.core.ValueState.Error);
-      sap.m.MessageToast.show("Please choose the raw HDFS path of the dataset");
-      isOk = false;
-    }
-    if (!oDataset.hdfsPublishPath || oDataset.hdfsPublishPath === "") {
-      sap.ui.getCore().byId("newDatasetPublishHDFSBrowser").setValueState(sap.ui.core.ValueState.Error);
-      sap.m.MessageToast.show("Please choose the publish HDFS path of the dataset");
-      isOk = false;
-    }
-
-    return isOk;
-  },
-
   onAddPress: function () {
     let oFirstSchema = this._model.getProperty("/schemas")[0];
 
@@ -324,6 +278,19 @@ sap.ui.controller("components.dataset.datasetMain", {
     if (!schemas || schemas.length === 0) {
       SchemaService.getSchemaList(false, true);
     }
-  }
+  },
+
+  isValidDataset: function (oDataset) {
+    this.resetNewDatasetValueState();
+
+    let hasValidName = EntityValidationService.hasValidName(oDataset, "Dataset",
+      sap.ui.getCore().byId("newDatasetName"));
+    let hasValidSchema = EntityValidationService.hasValidSchema(oDataset, "Dataset",
+      sap.ui.getCore().byId("schemaNameSelect"), sap.ui.getCore().byId("schemaVersionSelect"));
+    let hasValidHdfsPaths = EntityValidationService.hasValidHdfsPaths(oDataset, "Dataset",
+      sap.ui.getCore().byId("newDatasetRawHDFSBrowser"), sap.ui.getCore().byId("newDatasetPublishHDFSBrowser"));
+
+    return hasValidName && hasValidSchema && hasValidHdfsPaths;
+  },
 
 });
