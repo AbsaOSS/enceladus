@@ -299,7 +299,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
       sap.ui.getCore().byId("newMappingTableName").setValueStateText("Mapping Table name '" + oMT.name + "' already exists. Choose a different name.")
       isOk = false;
     }
-    if (GenericService.validateEntityName(oMT.name)) {
+    if (GenericService.hasWhitespace(oMT.name)) {
       sap.ui.getCore().byId("newMappingTableName").setValueState(sap.ui.core.ValueState.Error)
       sap.ui.getCore().byId("newMappingTableName").setValueStateText("Mapping Table name '" + oMT.name + "' should not have spaces. Please remove spaces and retry")
       isOk = false;
@@ -382,7 +382,10 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   mappingTableNameChange : function() {
-    MappingTableService.isUniqueMappingName(this._model.getProperty("/newMappingTable/name"))
+    let sName = this._model.getProperty("/newMappingTable/name");
+    if (GenericService.isValidEntityName(sName)) {
+      MappingTableService.isUniqueMappingName(sName)
+    }
   },
 
   onRemovePress : function(oEv) {

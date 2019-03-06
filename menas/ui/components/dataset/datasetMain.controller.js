@@ -116,7 +116,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     tree.unselectAll();
     tree.collapseAll();
 
-    let treePublish = sap.ui.getCore().byId("newDatasetPublishDFSBrowser");
+    let treePublish = sap.ui.getCore().byId("newDatasetPublishHDFSBrowser");
     treePublish.unselectAll();
     treePublish.collapseAll();
 
@@ -155,7 +155,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     sap.ui.getCore().byId("schemaVersionSelect").setValueStateText("");
 
     sap.ui.getCore().byId("newDatasetRawHDFSBrowser").setValueState(sap.ui.core.ValueState.None);
-    sap.ui.getCore().byId("newDatasetPublishDFSBrowser").setValueState(sap.ui.core.ValueState.None);
+    sap.ui.getCore().byId("newDatasetPublishHDFSBrowser").setValueState(sap.ui.core.ValueState.None);
   },
 
   schemaSelect: function (oEv) {
@@ -200,18 +200,19 @@ sap.ui.controller("components.dataset.datasetMain", {
       sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
       sap.ui.getCore().byId("newDatasetName").setValueStateText("Dataset name cannot be empty");
       isOk = false;
-    }
-    if (!oDataset.isEdit && !oDataset.nameUnique) {
-      sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("newDatasetName").setValueStateText(
-        "Dataset name '" + oDataset.name + "' already exists. Choose a different name.");
-      isOk = false;
-    }
-    if (GenericService.validateEntityName(oDataset.name)) {
-      sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("newDatasetName").setValueStateText(
-        "Dataset name '" + oDataset.name + "' should not have spaces. Please remove spaces and retry");
-      isOk = false;
+    } else {
+      if (GenericService.hasWhitespace(oDataset.name)) {
+        sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
+        sap.ui.getCore().byId("newDatasetName").setValueStateText(
+          "Dataset name '" + oDataset.name + "' should not have spaces. Please remove spaces and retry");
+        isOk = false;
+      }
+      if (!oDataset.isEdit && !oDataset.nameUnique) {
+        sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
+        sap.ui.getCore().byId("newDatasetName").setValueStateText(
+          "Dataset name '" + oDataset.name + "' already exists. Choose a different name.");
+        isOk = false;
+      }
     }
     if (!oDataset.schemaName || oDataset.schemaName === "") {
       sap.ui.getCore().byId("schemaNameSelect").setValueState(sap.ui.core.ValueState.Error);
@@ -229,7 +230,7 @@ sap.ui.controller("components.dataset.datasetMain", {
       isOk = false;
     }
     if (!oDataset.hdfsPublishPath || oDataset.hdfsPublishPath === "") {
-      sap.ui.getCore().byId("newDatasetRawHDFSBrowser").setValueState(sap.ui.core.ValueState.Error);
+      sap.ui.getCore().byId("newDatasetPublishHDFSBrowser").setValueState(sap.ui.core.ValueState.Error);
       sap.m.MessageToast.show("Please choose the publish HDFS path of the dataset");
       isOk = false;
     }
@@ -243,7 +244,10 @@ sap.ui.controller("components.dataset.datasetMain", {
   },
 
   datasetNameChange: function () {
-    DatasetService.isUniqueDatasetName(this._addDialog.getModel("entity").getProperty("/name"), this._addDialog.getModel("entity"))
+    let sName = this._addDialog.getModel("entity").getProperty("/name");
+    if (GenericService.isValidEntityName(sName)) {
+      DatasetService.isUniqueDatasetName(sName, this._addDialog.getModel("entity"))
+    }
   },
 
   onEditPress: function () {
