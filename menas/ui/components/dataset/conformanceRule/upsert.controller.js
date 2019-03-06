@@ -18,15 +18,43 @@ sap.ui.define([
   return Controller.extend("components.dataset.conformanceRule.upsert", {
 
     rules: [
-      {_t: "CastingConformanceRule"},
-      {_t: "ConcatenationConformanceRule"},
-      {_t: "DropConformanceRule"},
-      {_t: "LiteralConformanceRule"},
-      {_t: "MappingConformanceRule"},
-      {_t: "NegationConformanceRule"},
-      {_t: "SingleColumnConformanceRule"},
-      {_t: "SparkSessionConfConformanceRule"},
-      {_t: "UppercaseConformanceRule"}
+      {
+        _t: "CastingConformanceRule",
+        schemaFieldSelectorSupportedRule: true
+      },
+      {
+        _t: "ConcatenationConformanceRule",
+        schemaFieldSelectorSupportedRule: false
+      },
+      {
+        _t: "DropConformanceRule",
+        schemaFieldSelectorSupportedRule: false
+      },
+      {
+        _t: "LiteralConformanceRule",
+        schemaFieldSelectorSupportedRule: false
+      },
+      {
+        _t: "MappingConformanceRule",
+        schemaFieldSelectorSupportedRule: false
+      },
+      {
+        _t: "NegationConformanceRule",
+        schemaFieldSelectorSupportedRule: true
+
+      },
+      {
+        _t: "SingleColumnConformanceRule",
+        schemaFieldSelectorSupportedRule: true
+      },
+      {
+        _t: "SparkSessionConfConformanceRule",
+        schemaFieldSelectorSupportedRule: false
+      },
+      {
+        _t: "UppercaseConformanceRule",
+        schemaFieldSelectorSupportedRule: true
+      }
     ],
 
     dataTypes: [
@@ -66,7 +94,7 @@ sap.ui.define([
 
     onAfterOpen: function () {
       let schemaFieldSelectorSupportedRules =
-        ["CastingConformanceRule", "NegationConformanceRule", "SingleColumnConformanceRule", "UppercaseConformanceRule"];
+        this.rules.filter(rule => rule.schemaFieldSelectorSupportedRule).map(rule => rule._t);
       let newRule = this._model.getProperty("/newRule");
       if(newRule.isEdit && schemaFieldSelectorSupportedRules.includes(newRule._t))
         this.preselectSchemaFieldSelector(newRule._t);
@@ -166,8 +194,9 @@ sap.ui.define([
         MappingTableService.getAllMappingTableVersions(newRule.mappingTable, sap.ui.getCore().byId("schemaVersionSelect"));
       }
 
-      if(!currentRule.isEdit)
+      if(!currentRule.isEdit) {
         newRule.order = this._model.getProperty("/currentDataset").conformance.length;
+      }
 
       this._model.setProperty("/newRule", newRule);
     },
@@ -183,8 +212,7 @@ sap.ui.define([
     },
 
     addRule: function (currentDataset, newRule) {
-      currentDataset.conformance[newRule.order] = newRule;
-      DatasetService.editDataset(currentDataset);
+      this.updateRule(currentDataset, newRule)
     },
 
     updateRule: function (currentDataset, newRule) {
@@ -206,7 +234,7 @@ sap.ui.define([
         return oFormFragment;
       }
 
-      oFormFragment = sap.ui.xmlfragment( sFragmentName,"components.dataset.conformanceRule." + sFragmentName + ".add", this);
+      oFormFragment = sap.ui.xmlfragment(sFragmentName, "components.dataset.conformanceRule." + sFragmentName + ".add", this);
       this._formFragments[sFragmentName] = oFormFragment;
       return this._formFragments[sFragmentName];
     },
@@ -231,8 +259,8 @@ sap.ui.define([
     preselectSchemaFieldSelector: function(ruleType) {
       let sExpandTo= this._model.getProperty("/newRule/inputColumn");
       let aTokens = sExpandTo.split(".");
-      let oCtl = sap.ui.getCore().byId(ruleType+"--schemaFieldSelector");
-      let oScr = sap.ui.getCore().byId(ruleType+"--defValFieldSelectScroll");
+      let oCtl = sap.ui.getCore().byId(ruleType + "--schemaFieldSelector");
+      let oScr = sap.ui.getCore().byId(ruleType + "--defValFieldSelectScroll");
       oCtl.collapseAll();
 
       let _preselectRadioButton = function(aToks, oldSize, lastIndex) {
