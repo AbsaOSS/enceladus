@@ -73,14 +73,14 @@ var MappingTableService = new function () {
     })
   };
 
-  this.isUniqueMappingName = function (sName) {
+  this.isNameUnique = function (sName) {
     model.setProperty("/newMappingTable/nameUsed", undefined)
     Functions.ajax("api/mappingTable/isUniqueName/" + encodeURI(sName), "GET", {}, function (oData) {
       model.setProperty("/newMappingTable/nameUnique", oData)
     }, function () {
       sap.m.MessageBox.error("Failed to retreive isUniqueName. Please try again later.")
     })
-  }
+  };
 
   this.createMappingTable = function (sName, sDescription, sHdfsPath, sSchemaName, iSchemaVersion) {
     Functions.ajax("api/mappingTable/create", "POST", {

@@ -346,7 +346,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   _loadAllVersionsOfFirstSchema : function() {
-    this._model.setProperty("/newMappingTable", {
+    this._model.setProperty("/newMappingTable", { // TODO: replace root-model property "/newMappingTable" with generic dialog-bound model
       isEdit : false,
       title : "Add"
     });
@@ -384,7 +384,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   mappingTableNameChange : function() {
     let sName = this._model.getProperty("/newMappingTable/name");
     if (GenericService.isValidEntityName(sName)) {
-      MappingTableService.isUniqueMappingName(sName)
+      MappingTableService.isNameUnique(sName)
     }
   },
 
