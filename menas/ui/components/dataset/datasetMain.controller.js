@@ -173,24 +173,6 @@ sap.ui.controller("components.dataset.datasetMain", {
       this.fetchSchema();
   },
 
-  _loadAllVersionsOfFirstSchema: function () {
-    this._addDialog.setModel(new sap.ui.model.json.JSONModel({
-      isEdit: false,
-      title: "Add"
-    }), "entity");
-
-    let schemas = this._model.getProperty("/schemas");
-
-    if (schemas.length > 0) {
-      this._model.setProperty("/newSchema", {
-        schemaName: schemas[0]._id
-      });
-
-      let sSchema = this._model.getProperty("/schemas/0/_id");
-      SchemaService.getAllSchemaVersions(sSchema, sap.ui.getCore().byId("newDatsetSchemaVersionSelect"))
-    }
-  },
-
   isValidDataset: function (oDataset) {
     this.resetNewDatasetValueState();
     let isOk = true;
@@ -238,7 +220,19 @@ sap.ui.controller("components.dataset.datasetMain", {
   },
 
   onAddPress: function () {
-    this._loadAllVersionsOfFirstSchema();
+    let oFirstSchema = this._model.getProperty("/schemas")[0];
+
+    this._addDialog.setModel(new sap.ui.model.json.JSONModel({
+      name: "",
+      description: "",
+      schemaName: oFirstSchema._id,
+      schemaVersion: oFirstSchema.latestVersion,
+      hdfsPath: "/",
+      hdfsPublishPath: "/",
+      isEdit: false,
+      title: "Add"
+    }), "entity");
+
     this._addDialog.open();
   },
 
