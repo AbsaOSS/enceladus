@@ -70,16 +70,6 @@ var RuleService = new function () {
   };
 
   this.createRule = function (oCurrentDataset, oRule) {
-    oRule.order = oCurrentDataset.conformance.length;
-
-    if (oRule._t === "MappingConformanceRule") {
-      oRule.attributeMappings = {};
-      oRule.joinConditions.map(function(joinCondition) {
-        oRule.attributeMappings[joinCondition.mappingTableField] = joinCondition.datasetField
-      });
-      delete oRule.joinConditions;
-    }
-
     Functions.ajax("api/dataset/" + encodeURI(oCurrentDataset.name) + "/rule/create", "POST", oRule,
       function (oData) {
       DatasetService.getDatasetList();
@@ -91,13 +81,13 @@ var RuleService = new function () {
     })
   };
 
-  this.editRule = function (sName, iVersion, sDescription, sHdfsPath, sHdfsPublishPath, sSchemaName, iSchemaVersion) {
+  this.editRule = function (sName, iVersion, sDescription, sHDFSPath, sHDFSPublishPath, sSchemaName, iSchemaVersion) {
     Functions.ajax("api/dataset/edit", "POST", { // TODO: make this work
       name: sName,
       version: iVersion,
       description: sDescription,
-      hdfsPath: sHdfsPath,
-      hdfsPublishPath: sHdfsPublishPath,
+      hdfsPath: sHDFSPath,
+      hdfsPublishPath: sHDFSPublishPath,
       schemaName: sSchemaName,
       schemaVersion: iSchemaVersion
     }, function (oData) {

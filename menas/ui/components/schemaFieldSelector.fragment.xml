@@ -17,9 +17,9 @@
                          xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <ScrollContainer id="defValFieldSelectScroll" height="300px" vertical="true" horizontal="true" width="100%">
         <Tree id="schemaFieldSelector" mode="SingleSelect" enableBusyIndicator="true"
-              selectionChange="schemaFieldSelect"
+              selectionChange="onSchemaFieldSelect"
               items="{path: 'schema/fields', parameters:{arrayNames:['children']}}">
-            <StandardTreeItem title="{name}" type="active" cust:path="{path}"></StandardTreeItem>
+            <StandardTreeItem title="{name}" type="active" cust:path="{path}"/>
         </Tree>
     </ScrollContainer>
 </core:FragmentDefinition>

@@ -60,7 +60,12 @@ sap.ui.controller("components.schema.schemaMain", {
   },
 
   schemaNameChange : function() {
-    SchemaService.isUniqueSchemaName(this._model.getProperty("/newSchema/name"))
+    let sName = this._model.getProperty("/newSchema/name");
+    if (GenericService.isValidEntityName(sName)) {
+      SchemaService.hasUniqueName(sName)
+    } else {
+      this._model.setProperty("/newSchema/nameUnique", true)
+    }
   },
 
   usedInNavTo : function(oEv) {
@@ -76,7 +81,7 @@ sap.ui.controller("components.schema.schemaMain", {
     if (newSchema.name && typeof (newSchema.nameUnique) === "undefined") {
       // need to wait for the service call
       setTimeout(this.schemaAddSubmit.bind(this), 500);
-    } else if (this.validateNewSchema()) {
+    } else if (this.isValidSchema()) {
       // send and update UI
       SchemaService.createSchema(newSchema.name, newSchema.description)
       this.schemaAddCancel(); // close & clean up
@@ -109,28 +114,14 @@ sap.ui.controller("components.schema.schemaMain", {
     this.byId("fileUploader").setValueStateText("");
   },
 
-  validateNewSchema : function() {
+  isValidSchema : function() {
     this.resetNewSchemaValueState();
-    var schema = this._model.getProperty("/newSchema");
-    var isOk = true;
+    let schema = this._model.getProperty("/newSchema");
 
-    if (!schema.name || schema.name === "") {
-      sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("newSchemaName").setValueStateText("Schema name cannot be empty");
-      isOk = false;
-    } else  if (!schema.nameUnique) {
-      sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("newSchemaName").setValueStateText(
-          "Schema name '" + schema.name + "' already exists. Choose a different name.");
-      isOk = false;
-    }
-      else if (GenericService.validateEntityName(schema.name)) {
-      sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("newSchemaName").setValueStateText(
-          "Schema name '" + schema.name  + "' should not have spaces. Please remove spaces and retry");
-      isOk = false;
-    }
-    return isOk;
+    let hasValidName = EntityValidationService.hasValidName(schema, "Schema",
+      sap.ui.getCore().byId("newSchemaName"));
+
+    return hasValidName;
   },
 
 

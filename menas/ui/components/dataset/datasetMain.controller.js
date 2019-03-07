@@ -16,33 +16,6 @@ jQuery.sap.require("sap.m.MessageBox");
 
 sap.ui.controller("components.dataset.datasetMain", {
 
-  rules: [
-    {_t: "CastingConformanceRule"},
-    {_t: "ConcatenationConformanceRule"},
-    {_t: "DropConformanceRule"},
-    {_t: "LiteralConformanceRule"},
-    {_t: "MappingConformanceRule"},
-    {_t: "NegationConformanceRule"},
-    {_t: "SingleColumnConformanceRule"},
-    {_t: "SparkSessionConfConformanceRule"},
-    {_t: "UppercaseConformanceRule"}
-  ],
-
-  dataTypes: [
-    {type: "boolean"},
-    {type: "byte"},
-    {type: "short"},
-    {type: "integer"},
-    {type: "long"},
-    {type: "float"},
-    {type: "double"},
-    {type: "decimal(38,18)"},
-    {type: "char"},
-    {type: "string"},
-    {type: "date"},
-    {type: "timestamp"}
-  ],
-
   /**
    * Called when a controller is instantiated and its View controls (if
    * available) are already created. Can be used to modify the View before it
@@ -70,154 +43,17 @@ sap.ui.controller("components.dataset.datasetMain", {
     }), "entity");
     this._addDialog.setBusyIndicatorDelay(0);
 
-    this._addConformanceRuleDialog = sap.ui.xmlfragment("components.dataset.conformanceRule.add", this);
-    sap.ui.getCore().byId("newRuleAddButton").attachPress(this.ruleAddSubmit, this);
-    sap.ui.getCore().byId("newRuleCancelButton").attachPress(this.ruleAddCancel, this);
-    sap.ui.getCore().byId("newRuleSelect").attachChange(this.ruleSelect, this);
-
-    this._model.setProperty("/rules", this.rules);
-    this._model.setProperty("/dataTypes", this.dataTypes);
-    this._model.setProperty("/newRule", {});
+    let cont = sap.ui.controller("components.dataset.conformanceRule.upsert", true);
+    this._upsertConformanceRuleDialog = sap.ui.xmlfragment("components.dataset.conformanceRule.upsert", cont);
   },
 
-  onAddConformanceRulePress: function (oEv) {
+  onAddConformanceRulePress: function () {
     this._model.setProperty("/newRule", {
-      // title: "Add", // TODO: add title
-      _t: this.rules[0]._t
+      title: "Add",
+      isEdit: false,
     });
     this.fetchSchema();
-    this.showFormFragment(this.rules[0]._t);
-    this._addConformanceRuleDialog.open();
-  },
-
-  ruleAddCancel: function () {
-    this.resetRuleForm();
-    this._addConformanceRuleDialog.close();
-  },
-
-  ruleAddSubmit: function () {
-    // if (this.validateNewRule) {
-    let currentDataset = this._model.getProperty("/currentDataset");
-    let newRule = this._model.getProperty("/newRule");
-    RuleService.createRule(currentDataset, newRule);
-    // }
-    this.ruleAddCancel();
-  },
-
-  schemaFieldSelect: function (oEv) {
-    let bind = oEv.getParameter("listItem").getBindingContext().getPath();
-    let modelPathBase = "/currentDataset/schema/fields/";
-    let model = sap.ui.getCore().getModel();
-    SchemaService.fieldSelect(bind, modelPathBase, model, "/newRule/inputColumn")
-  },
-
-  _formFragments: {},
-
-  ruleSelect: function (oEv) {
-    let currentRule = this._model.getProperty("/newRule");
-    let newRule = (({_t, outputColumn, checkpoint: controlCheckpoint}) => ({
-      _t,
-      outputColumn,
-      checkpoint: controlCheckpoint
-    }))(currentRule);
-
-    if (currentRule._t === "ConcatenationConformanceRule") {
-      newRule.inputColumns = ["", ""];
-    }
-
-    if (currentRule._t === "MappingConformanceRule") {
-      MappingTableService.getMappingTableList(true, true);
-      newRule.joinConditions = [{mappingTableField: "", datasetField: ""}];
-    }
-
-    this._model.setProperty("/newRule", newRule);
-
-    this.showFormFragment(currentRule._t);
-  },
-
-  getFormFragment: function (sFragmentName) {
-    let oFormFragment = this._formFragments[sFragmentName];
-
-    if (oFormFragment) {
-      return oFormFragment;
-    }
-    const sFragmentId = this.getView().getId() + "--" + sFragmentName;
-    oFormFragment = sap.ui.xmlfragment(sFragmentId, "components.dataset.conformanceRule." + sFragmentName + ".add", this);
-
-    if (sFragmentName === "ConcatenationConformanceRule") {
-      sap.ui.getCore().byId(sFragmentId + "--addInputColumn").attachPress(this.addInputColumn, this);
-    }
-
-    if (sFragmentName === "MappingConformanceRule") {
-      sap.ui.getCore().byId(sFragmentId + "--mappingTableNameSelect").attachChange(this.mappingTableSelect, this);
-      sap.ui.getCore().byId(sFragmentId + "--addJoinCondition").attachPress(this.addJoinCondition, this);
-    }
-
-    this._formFragments[sFragmentName] = oFormFragment;
-    return this._formFragments[sFragmentName];
-  },
-
-  resetRuleForm: function () {
-    let oRuleForm = sap.ui.getCore().byId("ruleForm");
-
-    // workaround for "Cannot read property 'setSelectedIndex' of undefined" error
-    const content = oRuleForm.getContent();
-    content.filter(function (element) {
-      return element.sId.includes("FieldSelectScroll")
-    }).forEach(function (element) {
-      element.getContent().forEach(function (tree) {
-        let items = tree.getItems();
-        for (let i in items) {
-          items[i].setSelected(false);
-          items[i].setHighlight(sap.ui.core.MessageType.None)
-        }
-      })
-    });
-
-    oRuleForm.removeAllContent();
-  },
-
-  showFormFragment: function (sFragmentName) {
-    this.resetRuleForm();
-
-    let oRuleForm = sap.ui.getCore().byId("ruleForm");
-    let aFragment = this.getFormFragment(sFragmentName);
-    aFragment.forEach(function (oElement) {
-      oRuleForm.addContent(oElement)
-    });
-  },
-
-  addInputColumn: function () {
-    let currentRule = this._model.getProperty("/newRule");
-    let inputColumnSize = currentRule.inputColumns.length;
-    let pathToNewInputColumn = "/newRule/inputColumns/" + inputColumnSize;
-    this._model.setProperty(pathToNewInputColumn, "");
-
-    let oRuleForm = sap.ui.getCore().byId("ruleForm");
-    oRuleForm.addContent(new sap.m.Label({text: "Concatenation Column"}));
-    oRuleForm.addContent(new sap.m.Input({type: "Text", value: "{" + pathToNewInputColumn + "}"}))
-  },
-
-  addJoinCondition: function () {
-    let currentRule = this._model.getProperty("/newRule");
-    let joinConditionsSize = currentRule.joinConditions.length;
-    let pathToNewJoinCondition = "/newRule/joinConditions/" + joinConditionsSize;
-    this._model.setProperty(pathToNewJoinCondition, {mappingTableField: "", datasetField: ""});
-
-    let oRuleForm = sap.ui.getCore().byId("ruleForm");
-    let oHBox = new sap.m.HBox({justifyContent: "SpaceAround"});
-    oHBox.addItem(new sap.m.Input({
-      type: "Text",
-      value: "{" + pathToNewJoinCondition + "/mappingTableField}",
-      placeholder: "Mapping Table Column"
-    }));
-    oHBox.addItem(new sap.m.Input({
-      type: "Text",
-      value: "{" + pathToNewJoinCondition + "/datasetField}",
-      placeholder: "Dataset Column"
-    }));
-    oRuleForm.addContent(new sap.m.Label({text: "Join Condition"}));
-    oRuleForm.addContent(oHBox);
+    this._upsertConformanceRuleDialog.open();
   },
 
   onRuleMenuAction: function (oEv) {
@@ -226,12 +62,13 @@ sap.ui.controller("components.dataset.datasetMain", {
 
     if (sAction === "edit") {
       let old = this._model.getProperty(sBindPath);
-      old.title = "Edit";
-      old.isEdit = true;
-      old.bindPath = sBindPath;
-      this._model.setProperty("/newRule", old);
-      this._addConformanceRuleDialog.open();
-      // this._schemaFieldSelectorSelectPath(old["columnName"])
+      this.fetchSchema();
+      this._model.setProperty("/newRule", {
+        ...JSON.parse(JSON.stringify(old)),
+        title: "Edit",
+        isEdit: true,
+      });
+      this._upsertConformanceRuleDialog.open();
     } else if (sAction === "delete") {
       sap.m.MessageBox.confirm("Are you sure you want to delete the conformance rule?", {
         actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
@@ -279,7 +116,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     tree.unselectAll();
     tree.collapseAll();
 
-    let treePublish = sap.ui.getCore().byId("newDatasetPublishDFSBrowser");
+    let treePublish = sap.ui.getCore().byId("newDatasetPublishHDFSBrowser");
     treePublish.unselectAll();
     treePublish.collapseAll();
 
@@ -288,20 +125,20 @@ sap.ui.controller("components.dataset.datasetMain", {
   },
 
   datasetAddSubmit: function () {
-    let newDataset = this._addDialog.getModel("entity").oData;
-
+    let oDataset = this._addDialog.getModel("entity").oData;
     // we may wanna wait for a call to determine whether this is unique
-    if (!newDataset.isEdit && newDataset.name && typeof (newDataset.nameUnique) === "undefined") {
+    if (!oDataset.isEdit && oDataset.name && typeof (oDataset.nameUnique) === "undefined") {
       // need to wait for the service call
       setTimeout(this.datasetAddSubmit.bind(this), 500);
       return;
     }
-    if (this.validateNewDataset()) {
+
+    if (this.isValidDataset(oDataset)) {
       // send and update UI
-      if (newDataset.isEdit) {
-        DatasetService.editDataset(newDataset)
+      if (oDataset.isEdit) {
+        DatasetService.editDataset(oDataset)
       } else {
-        DatasetService.createDataset(newDataset.name, newDataset.description, newDataset.hdfsPath, newDataset.hdfsPublishPath, newDataset.schemaName, newDataset.schemaVersion)
+        DatasetService.createDataset(oDataset)
       }
       this.datasetAddCancel(); // close & clean up
     }
@@ -318,7 +155,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     sap.ui.getCore().byId("schemaVersionSelect").setValueStateText("");
 
     sap.ui.getCore().byId("newDatasetRawHDFSBrowser").setValueState(sap.ui.core.ValueState.None);
-    sap.ui.getCore().byId("newDatasetPublishDFSBrowser").setValueState(sap.ui.core.ValueState.None);
+    sap.ui.getCore().byId("newDatasetPublishHDFSBrowser").setValueState(sap.ui.core.ValueState.None);
   },
 
   schemaSelect: function (oEv) {
@@ -336,77 +173,30 @@ sap.ui.controller("components.dataset.datasetMain", {
       this.fetchSchema();
   },
 
-  _loadAllVersionsOfFirstSchema: function () {
+  onAddPress: function () {
+    let oFirstSchema = this._model.getProperty("/schemas")[0];
+
     this._addDialog.setModel(new sap.ui.model.json.JSONModel({
+      name: "",
+      description: "",
+      schemaName: oFirstSchema._id,
+      schemaVersion: oFirstSchema.latestVersion,
+      hdfsPath: "/",
+      hdfsPublishPath: "/",
       isEdit: false,
       title: "Add"
     }), "entity");
 
-    let schemas = this._model.getProperty("/schemas");
-
-    if (schemas.length > 0) {
-      this._model.setProperty("/newSchema", {
-        schemaName: schemas[0]._id
-      });
-
-      let sSchema = this._model.getProperty("/schemas/0/_id");
-      SchemaService.getAllSchemaVersions(sSchema, sap.ui.getCore().byId("newDatsetSchemaVersionSelect"))
-    }
-  },
-
-  validateNewDataset: function () {
-    this.resetNewDatasetValueState();
-    let oDataset = this._addDialog.getModel("entity").oData;
-    let isOk = true;
-
-    if (!oDataset.name || oDataset.name === "") {
-      sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("newDatasetName").setValueStateText("Dataset name cannot be empty");
-      isOk = false;
-    }
-    if (!oDataset.isEdit && !oDataset.nameUnique) {
-      sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("newDatasetName").setValueStateText(
-        "Dataset name '" + oDataset.name + "' already exists. Choose a different name.");
-      isOk = false;
-    }
-    if (GenericService.validateEntityName(oDataset.name)) {
-      sap.ui.getCore().byId("newDatasetName").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("newDatasetName").setValueStateText(
-        "Dataset name '" + oDataset.name + "' should not have spaces. Please remove spaces and retry");
-      isOk = false;
-    }
-    if (!oDataset.schemaName || oDataset.schemaName === "") {
-      sap.ui.getCore().byId("schemaNameSelect").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("schemaNameSelect").setValueStateText("Please choose the schema of the dataset");
-      isOk = false;
-    }
-    if (oDataset.schemaVersion === undefined || oDataset.schemaVersion === "") {
-      sap.ui.getCore().byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.Error);
-      sap.ui.getCore().byId("schemaVersionSelect").setValueStateText("Please choose the version of the schema for the dataset");
-      isOk = false;
-    }
-    if (!oDataset.hdfsPath || oDataset.hdfsPath === "") {
-      sap.ui.getCore().byId("newDatasetRawHDFSBrowser").setValueState(sap.ui.core.ValueState.Error);
-      sap.m.MessageToast.show("Please choose the raw HDFS path of the dataset");
-      isOk = false;
-    }
-    if (!oDataset.hdfsPublishPath || oDataset.hdfsPublishPath === "") {
-      sap.ui.getCore().byId("newDatasetRawHDFSBrowser").setValueState(sap.ui.core.ValueState.Error);
-      sap.m.MessageToast.show("Please choose the publish HDFS path of the dataset");
-      isOk = false;
-    }
-
-    return isOk;
-  },
-
-  onAddPress: function () {
-    this._loadAllVersionsOfFirstSchema();
     this._addDialog.open();
   },
 
   datasetNameChange: function () {
-    DatasetService.isUniqueDatasetName(this._addDialog.getModel("entity").getProperty("/name"), this._addDialog.getModel("entity"))
+    let sName = this._addDialog.getModel("entity").getProperty("/name");
+    if (GenericService.isValidEntityName(sName)) {
+      DatasetService.hasUniqueName(sName, this._addDialog.getModel("entity"))
+    } else {
+      this._addDialog.getModel("entity").setProperty("/nameUnique", true);
+    }
   },
 
   onEditPress: function () {
@@ -490,6 +280,19 @@ sap.ui.controller("components.dataset.datasetMain", {
     if (!schemas || schemas.length === 0) {
       SchemaService.getSchemaList(false, true);
     }
-  }
+  },
+
+  isValidDataset: function (oDataset) {
+    this.resetNewDatasetValueState();
+
+    let hasValidName = EntityValidationService.hasValidName(oDataset, "Dataset",
+      sap.ui.getCore().byId("newDatasetName"));
+    let hasValidSchema = EntityValidationService.hasValidSchema(oDataset, "Dataset",
+      sap.ui.getCore().byId("schemaNameSelect"), sap.ui.getCore().byId("schemaVersionSelect"));
+    let hasValidHDFSPaths = EntityValidationService.hasValidHDFSPaths(oDataset, "Dataset",
+      sap.ui.getCore().byId("newDatasetRawHDFSBrowser"), sap.ui.getCore().byId("newDatasetPublishHDFSBrowser"));
+
+    return hasValidName && hasValidSchema && hasValidHDFSPaths;
+  },
 
 });

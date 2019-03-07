@@ -16,7 +16,7 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
     <Label text="Mapping Table Name"/>
     <Select id="mappingTableNameSelect" showSecondaryValues="true" items="{/mappingTables}"
-            selectedKey="{/newRule/mappingTable}">
+            selectedKey="{/newRule/mappingTable}" change="onMappingTableSelect">
         <core:ListItem key="{_id}" text="{_id}" additionalText="Latest version: {latestVersion}"/>
     </Select>
     <Label text="Mapping Table Version"/>

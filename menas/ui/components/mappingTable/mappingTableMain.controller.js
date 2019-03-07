@@ -110,7 +110,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
     return isOk;
   },
 
-  schemaFieldSelect : function(oEv) {
+  onSchemaFieldSelect : function(oEv) {
     let bind = oEv.getParameter("listItem").getBindingContext().getPath();
     let modelPathBase = "/currentMappingTable/schema/fields/";
     let model = sap.ui.getCore().getModel();
@@ -261,7 +261,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
       setTimeout(this.MTAddSubmit.bind(this), 500);
       return;
     }
-    if (this.validateNewMappingTable()) {
+    if (this.isValidMappingTable()) {
       // send and update UI
       if (newMT.isEdit) {
         MappingTableService.editMappingTable(newMT.name, newMT.version, newMT.description, newMT.hdfsPath, newMT.schemaName, newMT.schemaVersion)
@@ -285,42 +285,18 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
     sap.ui.getCore().byId("addMtHDFSBrowser").setValueState(sap.ui.core.ValueState.None)
   },
 
-  validateNewMappingTable : function() {
+  isValidMappingTable : function() {
     this.resetNewMappingValueState();
-    let oMT = this._model.getProperty("/newMappingTable")
-    let isOk = true
+    let oMT = this._model.getProperty("/newMappingTable");
 
-    if (!oMT.name || oMT.name === "") {
-      sap.ui.getCore().byId("newMappingTableName").setValueState(sap.ui.core.ValueState.Error)
-      sap.ui.getCore().byId("newMappingTableName").setValueStateText("Mapping Table name cannot be empty")
-      isOk = false;
-    } else if (!oMT.isEdit && !oMT.nameUnique) {
-      sap.ui.getCore().byId("newMappingTableName").setValueState(sap.ui.core.ValueState.Error)
-      sap.ui.getCore().byId("newMappingTableName").setValueStateText("Mapping Table name '" + oMT.name + "' already exists. Choose a different name.")
-      isOk = false;
-    }
-    if (GenericService.validateEntityName(oMT.name)) {
-      sap.ui.getCore().byId("newMappingTableName").setValueState(sap.ui.core.ValueState.Error)
-      sap.ui.getCore().byId("newMappingTableName").setValueStateText("Mapping Table name '" + oMT.name + "' should not have spaces. Please remove spaces and retry")
-      isOk = false;
-    }
-    if (!oMT.schemaName || oMT.schemaName === "") {
-      sap.ui.getCore().byId("newMappingTableSchemaNameSelect").setValueState(sap.ui.core.ValueState.Error)
-      sap.ui.getCore().byId("newMappingTableSchemaNameSelect").setValueStateText("Please choose the schema of the mapping table")
-      isOk = false;
-    }
-    if (oMT.schemaVersion === undefined || oMT.schemaVersion === "") {
-      sap.ui.getCore().byId("newMappingTableSchemaVersionSelect").setValueState(sap.ui.core.ValueState.Error)
-      sap.ui.getCore().byId("newMappingTableSchemaVersionSelect").setValueStateText("Please choose the version of the schema for the mapping table")
-      isOk = false;
-    }
-    if (!oMT.hdfsPath || oMT.hdfsPath === "/") {
-      sap.ui.getCore().byId("addMtHDFSBrowser").setValueState(sap.ui.core.ValueState.Error)
+    let hasValidName = EntityValidationService.hasValidName(oMT, "Mapping Table",
+      sap.ui.getCore().byId("newMappingTableName"));
+    let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Dataset",
+      sap.ui.getCore().byId("newMappingTableSchemaNameSelect"), sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"));
+    let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT, "Mapping Table",
+      sap.ui.getCore().byId("addMtHDFSBrowser"));
 
-      sap.m.MessageToast.show("Please choose the HDFS path of the mapping table")
-      isOk = false;
-    }
-    return isOk;
+    return hasValidName && hasValidSchema && hasValidHDFSPath;
   },
 
   onAfterRendering : function() {
@@ -345,26 +321,18 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
     this._addDialog.open();
   },
 
-  _loadAllVersionsOfFirstSchema : function() {
+  onAddPress : function() {
+    let oFirstSchema = this._model.getProperty("/schemas")[0];
+
     this._model.setProperty("/newMappingTable", {
+      name: "",
+      description: "",
+      schemaName: oFirstSchema._id,
+      schemaVersion: oFirstSchema.latestVersion,
+      hdfsPath: "/",
       isEdit : false,
       title : "Add"
     });
-
-    let schemas = this._model.getProperty("/schemas")
-
-    if (schemas.length > 0) {
-      this._model.setProperty("/newSchema", {
-        schemaName : schemas[0]._id
-      });
-
-      let sSchema = this._model.getProperty("/schemas/0/_id")
-      SchemaService.getAllSchemaVersions(sSchema, sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"))
-    }
-  },
-
-  onAddPress : function() {
-    this._loadAllVersionsOfFirstSchema();
 
     this._addDialog.open();
   },
@@ -382,7 +350,12 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   mappingTableNameChange : function() {
-    MappingTableService.isUniqueMappingName(this._model.getProperty("/newMappingTable/name"))
+    let sName = this._model.getProperty("/newMappingTable/name");
+    if (GenericService.isValidEntityName(sName)) {
+      MappingTableService.hasUniqueName(sName)
+    } else {
+      this._model.setProperty("/newMappingTable/nameUnique", true)
+    }
   },
 
   onRemovePress : function(oEv) {
@@ -401,9 +374,9 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   },
 
   routeMatched : function(oParams) {
-    if (Prop.get(oParams, "id") == undefined) {
+    if (Prop.get(oParams, "id") === undefined) {
       MappingTableService.getMappingTableList(true, true);
-    } else if (Prop.get(oParams, "version") == undefined) {
+    } else if (Prop.get(oParams, "version") === undefined) {
       MappingTableService.getMappingTableList();
       MappingTableService.getLatestMappingTableVersion(oParams.id, true)
     } else {

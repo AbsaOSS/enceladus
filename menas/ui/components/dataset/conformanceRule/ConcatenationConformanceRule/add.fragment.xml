@@ -15,9 +15,13 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.commonRuleFields"/>
-    <Button id="addInputColumn" icon="sap-icon://add"/>
-    <Label text="Concatenation column"/>
-    <Input type="Text" value="{/newRule/inputColumns/0}"/>
-    <Label text="Concatenation column"/>
-    <Input type="Text" value="{/newRule/inputColumns/1}"/>
+    <Button id="addInputColumn" icon="sap-icon://add" press="onAddInputColumn"/>
+    <Label text="Concatenation columns"/>
+    <List mode="Delete" items="{/newRule/inputColumns}" delete="onDeleteInputColumn">
+        <items>
+            <CustomListItem>
+                    <Input type="Text" value="{}"/>
+            </CustomListItem>
+        </items>
+    </List>
 </core:FragmentDefinition>
