@@ -427,6 +427,14 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
     }
   },
 
+  usedInNavTo : function(oEv) {
+    let source = oEv.getSource();
+    sap.ui.core.UIComponent.getRouterFor(this).navTo(source.data("collection"), {
+      id : source.data("name"),
+      version : source.data("version")
+    })
+  },
+
   tabSelect : function(oEv) {
     if (oEv.getParameter("selectedKey") === "schema")
       this.fetchSchema();
