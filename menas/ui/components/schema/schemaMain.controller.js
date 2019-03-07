@@ -69,7 +69,7 @@ sap.ui.controller("components.schema.schemaMain", {
   },
 
   usedInNavTo : function(oEv) {
-    var source = oEv.getSource();
+    let source = oEv.getSource();
     sap.ui.core.UIComponent.getRouterFor(this).navTo(source.data("collection"), {
       id : source.data("name"),
       version : source.data("version")

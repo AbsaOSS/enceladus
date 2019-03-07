@@ -339,7 +339,8 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
 
   schemaSelect : function(oEv) {
     let sSchemaId = oEv.getParameter("selectedItem").getKey()
-    SchemaService.getAllSchemaVersions(sSchemaId, sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"))
+    SchemaService.getAllSchemaVersions(sSchemaId, sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"),
+      this._model, "/newMappingTable/schemaVersion")
   },
 
   mappingTableSelected : function(oEv) {
@@ -398,6 +399,14 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
     if (typeof (mappingTable.schema) === "undefined") {
       SchemaService.getSchemaVersion(mappingTable.schemaName, mappingTable.schemaVersion, "/currentMappingTable/schema")
     }
+  },
+
+  usedInNavTo : function(oEv) {
+    let source = oEv.getSource();
+    sap.ui.core.UIComponent.getRouterFor(this).navTo(source.data("collection"), {
+      id : source.data("name"),
+      version : source.data("version")
+    })
   },
 
   tabSelect : function(oEv) {
