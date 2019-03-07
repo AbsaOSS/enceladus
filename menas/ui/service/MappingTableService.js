@@ -73,7 +73,7 @@ var MappingTableService = new function () {
     })
   };
 
-  this.isNameUnique = function (sName) {
+  this.hasUniqueName = function (sName) {
     model.setProperty("/newMappingTable/nameUsed", undefined)
     Functions.ajax("api/mappingTable/isUniqueName/" + encodeURI(sName), "GET", {}, function (oData) {
       model.setProperty("/newMappingTable/nameUnique", oData)
