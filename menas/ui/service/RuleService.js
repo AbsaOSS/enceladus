@@ -81,13 +81,13 @@ var RuleService = new function () {
     })
   };
 
-  this.editRule = function (sName, iVersion, sDescription, sHdfsPath, sHdfsPublishPath, sSchemaName, iSchemaVersion) {
+  this.editRule = function (sName, iVersion, sDescription, sHDFSPath, sHDFSPublishPath, sSchemaName, iSchemaVersion) {
     Functions.ajax("api/dataset/edit", "POST", { // TODO: make this work
       name: sName,
       version: iVersion,
       description: sDescription,
-      hdfsPath: sHdfsPath,
-      hdfsPublishPath: sHdfsPublishPath,
+      hdfsPath: sHDFSPath,
+      hdfsPublishPath: sHDFSPublishPath,
       schemaName: sSchemaName,
       schemaVersion: iSchemaVersion
     }, function (oData) {

@@ -17,9 +17,9 @@ jQuery.sap.require("sap.m.MessageBox");
 
 var EntityValidationService = new function () {
 
-  this.hasValidHdfsPaths = function (oEntity, sEntityType, oRawInput, oPublishInput) {
-    let isRawPathOk = this._isValidHdfsPath(oEntity.hdfsPath, oRawInput);
-    let isPublishPathOk = this._isValidHdfsPath(oEntity.hdfsPublishPath, oPublishInput);
+  this.hasValidHDFSPaths = function (oEntity, sEntityType, oRawInput, oPublishInput) {
+    let isRawPathOk = this._isValidHDFSPath(oEntity.hdfsPath, oRawInput);
+    let isPublishPathOk = this._isValidHDFSPath(oEntity.hdfsPublishPath, oPublishInput);
 
     if (!isRawPathOk && !isPublishPathOk) {
       sap.m.MessageToast.show("Please choose the Raw and Publish HDFS paths of the " + sEntityType);
@@ -32,8 +32,8 @@ var EntityValidationService = new function () {
     return isRawPathOk && isPublishPathOk;
   };
 
-  this.hasValidHdfsPath = function (oEntity, sEntityType, oInput) {
-    let isOk = this._isValidHdfsPath(oEntity.hdfsPath, oInput);
+  this.hasValidHDFSPath = function (oEntity, sEntityType, oInput) {
+    let isOk = this._isValidHDFSPath(oEntity.hdfsPath, oInput);
 
     if (!isOk) {
       sap.m.MessageToast.show("Please choose the HDFS path of the " + sEntityType);
@@ -81,7 +81,7 @@ var EntityValidationService = new function () {
     return isOk;
   };
 
-  this._isValidHdfsPath = function(sPath, oInput) {
+  this._isValidHDFSPath = function(sPath, oInput) {
     let isOk = true;
     if (!sPath || sPath === "/") {
       oInput.setValueState(sap.ui.core.ValueState.Error);

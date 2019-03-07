@@ -289,10 +289,10 @@ sap.ui.controller("components.dataset.datasetMain", {
       sap.ui.getCore().byId("newDatasetName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oDataset, "Dataset",
       sap.ui.getCore().byId("schemaNameSelect"), sap.ui.getCore().byId("schemaVersionSelect"));
-    let hasValidHdfsPaths = EntityValidationService.hasValidHdfsPaths(oDataset, "Dataset",
+    let hasValidHDFSPaths = EntityValidationService.hasValidHDFSPaths(oDataset, "Dataset",
       sap.ui.getCore().byId("newDatasetRawHDFSBrowser"), sap.ui.getCore().byId("newDatasetPublishHDFSBrowser"));
 
-    return hasValidName && hasValidSchema && hasValidHdfsPaths;
+    return hasValidName && hasValidSchema && hasValidHDFSPaths;
   },
 
 });
