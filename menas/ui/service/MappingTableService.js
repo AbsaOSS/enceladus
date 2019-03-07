@@ -168,14 +168,10 @@ var MappingTableService = new function () {
       }
     }, function(xhr) {
       if (xhr.status === 400) {
-        let err = "Disabling mapping table failed. Clear the following dependencies first:\n";
         let oData = JSON.parse(xhr.responseText);
 
-        err += "Datasets:\n";
-        let datasets = oData["datasets"];
-        for(let ind in datasets) {
-          err += "- " + datasets[ind].name + " (v. " + datasets[ind].version + ")\n";
-        }
+        let err = EntityService.buildDisableFailureMsg(oData, "Schema");
+
         sap.m.MessageBox.error(err)
       } else {
         sap.m.MessageBox.error("Failed to disable mapping table. Ensure no active datasets use this mapping table(and/or version)")

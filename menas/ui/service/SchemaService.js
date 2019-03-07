@@ -101,24 +101,10 @@ var SchemaService = new function() {
       }
     }, function(xhr) {
       if (xhr.status === 400) {
-        let err = "Disabling schema failed. Clear the following dependencies first:\n";
         let oData = JSON.parse(xhr.responseText);
 
-        let datasets = oData["datasets"];
-        if (datasets.length !== 0) {
-          err += "Datasets:\n";
-          for (let ind in datasets) {
-            err += "- " + datasets[ind].name + " (v. " + datasets[ind].version + ")\n";
-          }
-        }
+        let err = EntityService.buildDisableFailureMsg(oData, "Dataset");
 
-        let mappingTables = oData["mappingTables"];
-        if (mappingTables.length !== 0) {
-          err += "\nMapping Tables:\n";
-          for (let ind in mappingTables) {
-            err += "\t - " + mappingTables[ind].name + " (v. " + mappingTables[ind].version + ")\n";
-          }
-        }
         sap.m.MessageBox.error(err)
       } else {
         sap.m.MessageBox.error("Failed to disable schema. Ensure no mapping tables or datasets use this schema(and/or version)")
