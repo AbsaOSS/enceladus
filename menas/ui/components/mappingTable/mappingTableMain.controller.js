@@ -352,7 +352,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   mappingTableNameChange : function() {
     let sName = this._model.getProperty("/newMappingTable/name");
     if (GenericService.isValidEntityName(sName)) {
-      MappingTableService.isNameUnique(sName)
+      MappingTableService.hasUniqueName(sName)
     } else {
       this._model.setProperty("/newMappingTable/nameUnique", true)
     }

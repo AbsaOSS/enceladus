@@ -62,7 +62,7 @@ sap.ui.controller("components.schema.schemaMain", {
   schemaNameChange : function() {
     let sName = this._model.getProperty("/newSchema/name");
     if (GenericService.isValidEntityName(sName)) {
-      SchemaService.isNameUnique(sName)
+      SchemaService.hasUniqueName(sName)
     } else {
       this._model.setProperty("/newSchema/nameUnique", true)
     }

@@ -78,7 +78,7 @@ var DatasetService = new function() {
       })
     };
 
-    this.isNameUnique = function(sName, oModel) {
+    this.hasUniqueName = function(sName, oModel) {
         GenericService.isNameUnique(sName, oModel, "dataset")
     };
 
