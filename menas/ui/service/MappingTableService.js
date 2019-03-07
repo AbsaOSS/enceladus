@@ -82,11 +82,11 @@ var MappingTableService = new function () {
     })
   };
 
-  this.createMappingTable = function (sName, sDescription, sHdfsPath, sSchemaName, iSchemaVersion) {
+  this.createMappingTable = function (sName, sDescription, sHDFSPath, sSchemaName, iSchemaVersion) {
     Functions.ajax("api/mappingTable/create", "POST", {
       name: sName,
       description: sDescription,
-      hdfsPath: sHdfsPath,
+      hdfsPath: sHDFSPath,
       schemaName: sSchemaName,
       schemaVersion: iSchemaVersion
     }, function (oData) {
@@ -99,12 +99,12 @@ var MappingTableService = new function () {
     })
   };
 
-  this.editMappingTable = function (sName, iVersion, sDescription, sHdfsPath, sSchemaName, iSchemaVersion) {
+  this.editMappingTable = function (sName, iVersion, sDescription, sHDFSPath, sSchemaName, iSchemaVersion) {
     Functions.ajax("api/mappingTable/edit", "POST", {
       name: sName,
       version: iVersion,
       description: sDescription,
-      hdfsPath: sHdfsPath,
+      hdfsPath: sHDFSPath,
       schemaName: sSchemaName,
       schemaVersion: iSchemaVersion
     }, function (oData) {

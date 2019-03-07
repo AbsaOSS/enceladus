@@ -293,10 +293,10 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
       sap.ui.getCore().byId("newMappingTableName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Dataset",
       sap.ui.getCore().byId("newMappingTableSchemaNameSelect"), sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"));
-    let hasValidHdfsPath = EntityValidationService.hasValidHdfsPath(oMT, "Mapping Table",
+    let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT, "Mapping Table",
       sap.ui.getCore().byId("addMtHDFSBrowser"));
 
-    return hasValidName && hasValidSchema && hasValidHdfsPath;
+    return hasValidName && hasValidSchema && hasValidHDFSPath;
   },
 
   onAfterRendering : function() {
