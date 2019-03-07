@@ -339,7 +339,8 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
 
   schemaSelect : function(oEv) {
     let sSchemaId = oEv.getParameter("selectedItem").getKey()
-    SchemaService.getAllSchemaVersions(sSchemaId, sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"))
+    SchemaService.getAllSchemaVersions(sSchemaId, sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"),
+      this._model, "/newMappingTable/schemaVersion")
   },
 
   mappingTableSelected : function(oEv) {

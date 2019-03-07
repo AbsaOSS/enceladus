@@ -75,11 +75,16 @@ var SchemaService = new function() {
     })
   };
 
-  this.getAllSchemaVersions = function(sName, oControl) {
+  this.getAllSchemaVersions = function(sName, oControl, oModel, sProperty) {
     if(oControl) oControl.setBusy(true);
     Functions.ajax("api/schema/allVersions/" + encodeURI(sName), "GET", {}, function(oData) {
-      model.setProperty("/currentSchemaVersions", oData)
-      if(oControl) oControl.setBusy(false);
+      model.setProperty("/currentSchemaVersions", oData);
+      if(oControl) {
+        oControl.setBusy(false);
+      }
+      if (oModel && sProperty) {
+        oModel.setProperty(sProperty, oData[oData.length - 1].version)
+      }
     }, function() {
       sap.m.MessageBox.error("Failed to retreive all versions of the schema, please try again later.")
       oControl.setBusy(false);

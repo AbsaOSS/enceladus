@@ -160,7 +160,8 @@ sap.ui.controller("components.dataset.datasetMain", {
 
   schemaSelect: function (oEv) {
     let sSchemaId = oEv.getParameter("selectedItem").getKey();
-    SchemaService.getAllSchemaVersions(sSchemaId, sap.ui.getCore().byId("schemaVersionSelect"))
+    SchemaService.getAllSchemaVersions(sSchemaId, sap.ui.getCore().byId("schemaVersionSelect"),
+      this._addDialog.getModel("entity"), "/schemaVersion")
   },
 
   mappingTableSelect: function (oEv) {
