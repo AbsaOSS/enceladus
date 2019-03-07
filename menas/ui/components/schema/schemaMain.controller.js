@@ -126,7 +126,7 @@ sap.ui.controller("components.schema.schemaMain", {
 
 
   onAddPress : function() {
-    this._addDialog.open(); // TODO: replace root-model property "/newSchema" with generic dialog-bound model
+    this._addDialog.open();
   },
 
   onPressLogout : function() {

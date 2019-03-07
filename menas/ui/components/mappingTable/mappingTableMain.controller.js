@@ -324,7 +324,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
   onAddPress : function() {
     let oFirstSchema = this._model.getProperty("/schemas")[0];
 
-    this._model.setProperty("/newMappingTable", { // TODO: replace root-model property "/newMappingTable" with generic dialog-bound model
+    this._model.setProperty("/newMappingTable", {
       name: "",
       description: "",
       schemaName: oFirstSchema._id,
