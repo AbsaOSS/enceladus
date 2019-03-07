@@ -28,9 +28,11 @@ var EntityService = new function () {
     let message = "";
     let entities = new Set(aCollection.map(entity => entity.name));
     if (entities.size !== 0) {
-      message += sHeader + ":\n- " + Array.from(entities).slice(0, 10).join("\n- ");
-      if (entities.size > 10) {
-        message += "\n+ " + (entities.size - 10) + " more..."
+      let limit = 10;
+
+      message += sHeader + ":\n- " + Array.from(entities).slice(0, limit).join("\n- ");
+      if (entities.size > limit) {
+        message += "\n+ " + (entities.size - limit) + " more..."
       }
     }
     return message;
