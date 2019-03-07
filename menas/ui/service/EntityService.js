@@ -27,10 +27,10 @@ var EntityService = new function () {
   let buildDependenciesErrorMsg = function(aCollection, sHeader) {
     let message = "";
     let entities = new Set(aCollection.map(entity => entity.name));
-    if (entities.length !== 0) {
+    if (entities.size !== 0) {
       message += sHeader + ":\n- " + Array.from(entities).slice(0, 10).join("\n- ");
-      if (entities.length > 10) {
-        message += "\n+ " + (entities.length - 10) + " more..."
+      if (entities.size > 10) {
+        message += "\n+ " + (entities.size - 10) + " more..."
       }
     }
     return message;
