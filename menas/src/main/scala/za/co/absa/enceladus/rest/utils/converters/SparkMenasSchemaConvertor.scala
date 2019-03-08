@@ -24,15 +24,32 @@ import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
 
 @Component
-class SparkMenasSchemaConvertor @Autowired() (val objMapper: ObjectMapper) {
+class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
 
   /**
-   * Converts a seq of menas schema fields onto the spark structfields
-   */
+    * Converts a seq of menas schema fields onto the spark structfields
+    */
   def convertMenasToSparkFields(menasFields: Seq[SchemaField]): Seq[StructField] = {
     menasFields.map({ menas =>
       menasToSparkField(menas)
     })
+  }
+
+  /**
+    * Converts a menas array to a spark array
+    */
+  def convertMenasToSparkArray(arrayField: SchemaField): ArrayType = {
+    if (arrayField.`type` != "array") {
+      throw new IllegalStateException(s"An array is expected.")
+    }
+    arrayField.elementType match {
+      case Some("struct") => ArrayType(StructType(convertMenasToSparkFields(arrayField.children)))
+      case Some("array") => ArrayType(convertMenasToSparkArray(arrayField.children.head))
+      case Some(primitive) => ArrayType(CatalystSqlParser.parseDataType(primitive))
+      case None =>
+        val fieldName = s"${arrayField.path} ${arrayField.name}"
+        throw new IllegalStateException(s"Element type is not specified for $fieldName.")
+    }
   }
 
   def convertSparkToMenasFields(sparkFields: Seq[StructField]): Seq[SchemaField] = {
@@ -62,11 +79,11 @@ class SparkMenasSchemaConvertor @Autowired() (val objMapper: ObjectMapper) {
   private def getChildren(spark: DataType, path: String): List[SchemaField] = {
     spark match {
       case s: StructType => convertSparkToMenasFields(s.fields, path).toList
-      case a @ ArrayType(el: ArrayType, _) if a.elementType.isInstanceOf[ArrayType] => List(SchemaField(name = "", `type` = el.typeName, path = path, elementType = Some(el.elementType.typeName),
+      case a@ArrayType(el: ArrayType, _) if a.elementType.isInstanceOf[ArrayType] => List(SchemaField(name = "", `type` = el.typeName, path = path, elementType = Some(el.elementType.typeName),
         containsNull = Some(el.containsNull), nullable = a.containsNull, metadata = Map(), children = getChildren(el, path)))
       case a: ArrayType => getChildren(a.elementType, path)
-      case m: MapType   => getChildren(m.valueType, path)
-      case _: DataType  => List()
+      case m: MapType => getChildren(m.valueType, path)
+      case _: DataType => List()
     }
   }
 
@@ -86,7 +103,7 @@ class SparkMenasSchemaConvertor @Autowired() (val objMapper: ObjectMapper) {
 
   private def getSparkDataType(menasField: SchemaField): DataType = {
     menasField.`type` match {
-      case "array"  => ArrayType.apply(getSparkDataType(menasField.children.head), menasField.containsNull.get)
+      case "array"  => convertMenasToSparkArray(menasField)
       case "struct" => StructType(convertMenasToSparkFields(menasField.children))
       case s        => CatalystSqlParser.parseDataType(s)
     }
