@@ -76,7 +76,8 @@ class SparkMenasSchemaConvertorSuite extends FunSuite with SparkTestBase {
     val res = sparkConvertor.convertSparkToMenasFields(sparkComplex)
 
     assertResult(menasComplex)(res)
-    assertResult(sparkConvertor.convertMenasToSparkFields(Seq[SchemaField]()))(Seq[StructField]())
+
+    assertResult(sparkConvertor.convertMenasToSparkFields(menasComplex))(sparkComplex)
   }
 
   test("convertMenasToSpark Simple Test") {
