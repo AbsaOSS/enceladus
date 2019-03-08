@@ -23,7 +23,7 @@ import za.co.absa.enceladus.model.versionedModel.VersionedModel
 case class Dataset(
   name:    String,
   version: Int,
-  description: Option[String]= None,
+  description: Option[String] = None,
   
   hdfsPath:        String,
   hdfsPublishPath: String,

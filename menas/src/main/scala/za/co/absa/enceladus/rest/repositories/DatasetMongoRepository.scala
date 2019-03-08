@@ -15,17 +15,68 @@
 
 package za.co.absa.enceladus.rest.repositories
 
-import org.mongodb.scala.MongoDatabase
+import org.mongodb.scala.{Completed, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 
+import scala.concurrent.Future
 import scala.reflect.ClassTag
+
+object DatasetMongoRepository {
+  val collectionName = "dataset"
+}
 
 @Repository
 class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends VersionedMongoRepository[Dataset](mongoDb)(ClassTag(classOf[Dataset])) {
 
-  private[repositories] override def collectionName = "dataset"
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  private[repositories] override def collectionName: String = DatasetMongoRepository.collectionName
+
+  override def getVersion(name: String, version: Int): Future[Option[Dataset]] = {
+    super.getVersion(name, version).map(_.map(handleMappingRuleRead))
+  }
+
+  override def getAllVersions(name: String): Future[Seq[Dataset]] = {
+    super.getAllVersions(name).map(_.map(handleMappingRuleRead))
+  }
+
+  override def create(item: Dataset, username: String): Future[Completed] = {
+    super.create(handleMappingRuleWrite(item), username)
+  }
+
+  override def update(username: String, updated: Dataset): Future[Completed] = {
+    super.update(username, handleMappingRuleWrite(updated))
+  }
+
+  private def handleMappingRuleWrite(dataset: Dataset): Dataset = {
+    handleMappingRule(dataset, replaceForWrite)
+  }
+
+  private def handleMappingRuleRead(dataset: Dataset): Dataset = {
+    handleMappingRule(dataset, replaceForRead)
+  }
+
+  private def handleMappingRule(dataset: Dataset, replace: String => String): Dataset = {
+    val conformance = dataset.conformance.map {
+      case mr: MappingConformanceRule =>
+        val map = mr.attributeMappings.map {
+          case (key, value) => (replace(key), value)
+        }
+        mr.copy(attributeMappings = map)
+      case any => any
+    }
+    dataset.setConformance(conformance)
+  }
+
+  private val ORIGINAL_DELIMETER = '.'
+  private val REPLACEMENT_DELIMETER = MappingConformanceRule.DOT_REPLACEMENT_SYMBOL
+
+  private def replaceForWrite(key: String): String = key.replace(ORIGINAL_DELIMETER, REPLACEMENT_DELIMETER)
+
+  private def replaceForRead(key: String): String = key.replace(REPLACEMENT_DELIMETER, ORIGINAL_DELIMETER)
 
 }

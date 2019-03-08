@@ -21,13 +21,12 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.RunState
 import za.co.absa.enceladus.model.Run
-import za.co.absa.enceladus.rest.Application
 import za.co.absa.enceladus.rest.factories.RunFactory
 import za.co.absa.enceladus.rest.integration.fixtures.RunFixtureService
 import za.co.absa.enceladus.rest.repositories.RunMongoRepository
 
 @RunWith(classOf[SpringRunner])
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = Array(classOf[Application]))
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
   @Autowired
@@ -196,7 +195,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
   }
 
   "RunMongoRepository::create" should {
-    "return the created Run" in {
+    "store the specified Run in the database" in {
       val run = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
 
       await(runMongoRepository.create(run))
