@@ -62,6 +62,7 @@ e.g. `~/menas-credential.properties`:
 username=user
 password=changeme
 ```
+ - **_INFO file** must be present in the **RAW** dataset directory (this is a file tracking control measures via [Atum](https://github.com/AbsaOSS/atum), example can be found [here](examples/data/input/_INFO))
 
 #### Running Standardization
 ```
