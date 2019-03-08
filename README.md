@@ -63,6 +63,7 @@ username=user
 password=changeme
 ```
  - **_INFO file** must be present in the **RAW** dataset directory (this is a file tracking control measures via [Atum](https://github.com/AbsaOSS/atum), example can be found [here](examples/data/input/_INFO))
+ - **Directory structure** for the **RAW** data should follow the convention of `<path_to_dataset_in_menas>/<year>/<month>/<day>/v<dataset_version>`
 
 #### Running Standardization
 ```
