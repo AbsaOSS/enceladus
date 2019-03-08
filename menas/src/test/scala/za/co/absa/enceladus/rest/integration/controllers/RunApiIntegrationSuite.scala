@@ -27,7 +27,7 @@ import za.co.absa.enceladus.rest.integration.fixtures.RunFixtureService
 import za.co.absa.enceladus.rest.models.Validation
 
 @RunWith(classOf[SpringRunner])
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = Array(classOf[Application]))
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class RunApiIntegrationSuite extends BaseRestApiTest {
 
   @Autowired
