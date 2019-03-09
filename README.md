@@ -62,8 +62,8 @@ e.g. `~/menas-credential.properties`:
 username=user
 password=changeme
 ```
- - **_INFO file** must be present in the **RAW** dataset directory (this is a file tracking control measures via [Atum](https://github.com/AbsaOSS/atum), example can be found [here](examples/data/input/_INFO))
- - **Directory structure** for the **RAW** data should follow the convention of `<path_to_dataset_in_menas>/<year>/<month>/<day>/v<dataset_version>`
+ - **Directory structure** for the **RAW** dataset should follow the convention of `<path_to_dataset_in_menas>/<year>/<month>/<day>/v<dataset_version>`. This date is specified with the `--report-date` option when running the **Standardization** and **Conformance** jobs.
+ - **_INFO file** must be present along with the **RAW** data on HDFS as per the above directory structure. Tthis is a file tracking control measures via [Atum](https://github.com/AbsaOSS/atum), an example can be found [here](examples/data/input/_INFO).
 
 #### Running Standardization
 ```
