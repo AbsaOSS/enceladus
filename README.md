@@ -20,7 +20,7 @@ This is the user-facing web client, used to **specify the standardization schema
 There are three models used to do this:
  - **Dataset**: Specifies where the dataset will be read from on HDFS (**RAW**), the conformance rules that will be applied to it, and where it will land on HDFS once it is conformed (**PUBLISH**)
  - **Schema**: Specifies the schema towards which the dataset will be standardized
- - **Mapping Table**: Specifies where master reference data can be found (parquet on HDFS) 
+ - **Mapping Table**: Specifies where tables with master reference data can be found (parquet on HDFS), which are used when applying Mapping conformance rules (e.g. the dataset uses **Germany**, which maps to the master reference **DE** in the mapping table)
 
 ### <a name="standardization"/>Standardization
 This is a Spark job which reads an input dataset in any of the supported formats and **produces a parquet dataset with the Menas-specified schema** as output. 
