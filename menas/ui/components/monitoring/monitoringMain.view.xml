@@ -17,7 +17,7 @@
 		   controllerName="components.monitoring.monitoringMain"
 		   xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
 		   xmlns:html="http://www.w3.org/1999/xhtml">
-	<Page title="Monitoring" enableScrolling="false">
+	<Page title="Monitoring" enableScrolling="true">
 		<customHeader>
 			<Bar>
 				<contentMiddle>
@@ -41,11 +41,7 @@
 							</List>
 						</content>
 						<footer>
-							<Bar>
-								<contentRight>
-									<Button id="NewDataset" text="New Dataset" icon="sap-icon://add" press="onAddPress"/>
-								</contentRight>
-							</Bar>
+
 						</footer>
 					</Page>
 				</masterPages>

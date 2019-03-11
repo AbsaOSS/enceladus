@@ -14,7 +14,7 @@
  */
 jQuery.sap.require("sap.m.MessageBox");
 
-sap.ui.controller("components.dataset.datasetMain", {
+sap.ui.controller("components.monitoring.monitoringMain", {
 
   rules: [
     {_t: "CastingConformanceRule"},
@@ -49,7 +49,7 @@ sap.ui.controller("components.dataset.datasetMain", {
    * is displayed, to bind event handlers and do other one-time
    * initialization.
    *
-   * @memberOf components.dataset.datasetMain
+   * @memberOf components.monitoring.monitoringMain
    */
   onInit: function () {
     this._model = sap.ui.getCore().getModel();
