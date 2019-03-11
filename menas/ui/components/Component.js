@@ -23,8 +23,8 @@ sap.ui.define([
       metadata: {
         rootView : {
           viewName: "components.app",
-          id: "rootView", 
-          type: "XML" 
+          id: "rootView",
+          type: "XML"
         },
         routing: {
           config: {
@@ -65,6 +65,11 @@ sap.ui.define([
               name: "mappingTables",
               pattern: "mapping/:id:/:version:",
               target: "mappingTable"
+            },
+            {
+              name: "monitoring",
+              pattern: "monitoring/:id:/:version:",
+              target: "monitoring"
             }
           ],
           targets: {
@@ -92,6 +97,11 @@ sap.ui.define([
               viewName: "components.mappingTable.mappingTableDetail",
               viewLevel: 1,
               viewId: "mappingTableDetailView"
+            },
+            monitoring: {
+              viewName: "components.monitoring.monitoringMain",
+              viewLevel: 1,
+              viewId: "monitoringMainView"
             }
           }
         }
