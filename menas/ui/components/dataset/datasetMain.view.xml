@@ -134,16 +134,13 @@
                                                 <Column width="15%">
                                                     <Text text="Change Time" />
                                                 </Column>   
-                                                <Column width="15%">
+                                                <Column width="10%">
                                                     <Text text="Author" />
                                                 </Column>                                                                                         
-                                                <Column width="15%">
-                                                    <Text text="Dataset Name" />
-                                                </Column>
-                                                <Column width="15%">
+                                                <Column width="10%">
                                                     <Text text="Dataset Version" />
                                                 </Column>
-                                                <Column width="40%">
+                                                <Column width="65%">
                                                     <Text text="Changes" />
                                                 </Column>
                                             </columns>
@@ -152,7 +149,6 @@
                                                     <cells>
                                                         <Text text="{path: 'updated', formatter:'Formatters.stringDateShortFormatter'}"></Text>    
                                                         <Text text="{updatedBy}"></Text>                                                                                                        
-                                                        <Text text="{menasRef/name}"></Text>
                                                         <Text text="{menasRef/version}"></Text>
                                                         <List id="auditChangesList" items="{path: 'changes', templateShareable: false}">
                                                             <CustomListItem id="auditChangesListItem" class="auditTrailNestedListItem">
