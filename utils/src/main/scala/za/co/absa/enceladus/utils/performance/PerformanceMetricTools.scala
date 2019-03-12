@@ -51,7 +51,9 @@ object PerformanceMetricTools {
 
     // The number of executors minus the driver
     val numberOfExecutrs = sc.getExecutorMemoryStatus.keys.size - 1
-    val executorMemory = spark.sparkContext.getConf.get("spark.executor.memory")
+
+    val executorMemory = spark.sparkContext.getConf.getOption("spark.executor.memory")
+    executorMemory.foreach(mem => Atum.setAdditionalInfo(s"${optionPrefix}_executors_memory" -> s"$mem"))
 
     // Directory sizes and size ratio
     val inputDirSize = FileSystemVersionUtils.getDirectorySize(inputPath)(spark)
@@ -71,7 +73,6 @@ object PerformanceMetricTools {
     Atum.setAdditionalInfo(s"${optionPrefix}_application_id" -> spark.sparkContext.applicationId)
     Atum.setAdditionalInfo(s"${optionPrefix}_username" -> loginUserName)
     Atum.setAdditionalInfo(s"${optionPrefix}_executors_num" -> s"$numberOfExecutrs")
-    Atum.setAdditionalInfo(s"${optionPrefix}_executors_memory" -> s"$executorMemory")
     Atum.setAdditionalInfo(s"${optionPrefix}_records_succeeded" -> numRecordsSuccessful.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_records_failed" -> numRecordsFailed.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_errors_count" -> numOfErrors.toString)
