@@ -49,7 +49,7 @@ trait Auditable[T <: Product] { self: T =>
           val newVal = newValue.productElement(i)
           val oldVal = self.productElement(i)
           if (newVal != oldVal)
-            Some(AuditTrailChange(field = name.declaredField, oldValue = Some(oldVal.toString), newValue = Some(newVal.toString), message = s"${name.humanReadableField} updated."))
+            Some(AuditTrailChange(field = name.declaredField, oldValue = Some(unwrapOption(oldVal).toString), newValue = Some(unwrapOption(newVal).toString), message = s"${name.humanReadableField} updated."))
           else None
       })
 
@@ -69,11 +69,19 @@ trait Auditable[T <: Product] { self: T =>
       val newSeq = newValue.productElement(i).asInstanceOf[Seq[_]]
       val oldSeq = self.productElement(i).asInstanceOf[Seq[_]]
       
-      val added = newSeq.diff(oldSeq).map(v => AuditTrailChange(field = fieldName.declaredField, oldValue = None, newValue = Some(v.toString), message = s"${fieldName.humanReadableField} added."))
-      val removed = oldSeq.diff(newSeq).map(v => AuditTrailChange(field = fieldName.declaredField, oldValue = Some(v.toString), newValue = None, message = s"${fieldName.humanReadableField} removed."))
+      val added = newSeq.diff(oldSeq).map(v => AuditTrailChange(field = fieldName.declaredField, oldValue = None, newValue = Some(unwrapOption(v).toString), message = s"${fieldName.humanReadableField} added."))
+      val removed = oldSeq.diff(newSeq).map(v => AuditTrailChange(field = fieldName.declaredField, oldValue = Some(unwrapOption(v).toString), newValue = None, message = s"${fieldName.humanReadableField} removed."))
       
       removed ++ added
     }).getOrElse(Seq())
+  }
+
+  /**
+   * Utility function to unwrap defined option values (if Some) or keep the original value otherwise.
+   */
+  private def unwrapOption(obj: Any): Any = obj match {
+    case Some(x) => x
+    case other => other
   }
 
   def getAuditMessages(newRecord: T): AuditTrailEntry
