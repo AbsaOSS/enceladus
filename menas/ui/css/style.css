@@ -36,3 +36,7 @@ html, body {
 	max-width: 100% !important;
 	background-color: inherit !important;
 }
+
+.auditTrailNestedList > ul > .sapMListNoData {
+    background-color: inherit !important;
+}
