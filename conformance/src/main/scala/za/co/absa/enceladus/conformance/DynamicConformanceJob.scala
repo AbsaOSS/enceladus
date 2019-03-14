@@ -44,7 +44,7 @@ object DynamicConformanceJob {
 
   private val format = new SimpleDateFormat("yyyy-MM-dd")
   private val infoDateColumn = "enceladus_info_date"
-  private  val infoVersionColumn = "enceladus_info_version"
+  private val infoVersionColumn = "enceladus_info_version"
 
   private val log: Logger = LogManager.getLogger("enceladus.conformance.DynamicConformanceJob")
   private val conf: Config = ConfigFactory.load()
@@ -120,7 +120,7 @@ object DynamicConformanceJob {
       throw new IllegalStateException(s"Path $publishPath already exists. Increment the run version, or delete $publishPath")
     }
     // init performance measurer
-    val performance: PerformanceMeasurer = new PerformanceMeasurer(spark.sparkContext.appName)
+    val performance = new PerformanceMeasurer(spark.sparkContext.appName)
     val stdDirSize = FileSystemVersionUtils.getDirectorySize(stdPath)
     performance.startMeasurement(stdDirSize)
     // load data for input and mapping tables

@@ -27,10 +27,7 @@ import org.apache.spark.sql.SparkSession
 object TimeZoneNormalizer {
   private val log: Logger = LogManager.getLogger(this.getClass)
   private val timeZone: String = getConf("timezone", "UTC")
-  private var justBuilt: Boolean = false
 
-  setJVMTimeZone()
-  justBuilt = true
 
   private def getConf(path: String, default: String): String = {
     val config: Config = ConfigFactory.load()
@@ -43,12 +40,8 @@ object TimeZoneNormalizer {
   }
 
   private def setJVMTimeZone(): Unit = {
-    if (justBuilt) {
-      justBuilt = false
-    } else {
-      TimeZone.setDefault(TimeZone.getTimeZone(timeZone))
-      log.debug(s"JVM time zone set to $timeZone")
-    }
+    TimeZone.setDefault(TimeZone.getTimeZone(timeZone))
+    log.debug(s"JVM time zone set to $timeZone")
   }
 
   def normalizeSessionTimeZone(spark: SparkSession): Unit = {
