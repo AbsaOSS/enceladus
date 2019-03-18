@@ -18,6 +18,11 @@ pipeline {
         timestamps()
     }
     stages {
+        stage ('Prepare') {
+            steps {
+                enceladusCreateConfigurationFiles()
+            }
+        }
         stage ('Build') {
             steps {
                 configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
