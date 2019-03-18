@@ -83,12 +83,12 @@ object StandardizationJob {
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, path)
 
-    process(performance, dfAll, schema, cmd, path, stdPath)
+    executeStandardization(performance, dfAll, schema, cmd, path, stdPath)
     cmd.performanceMetricsFile.foreach(fileName => {
       try {
         performance.writeMetricsToFile(fileName)
       } catch {
-        case NonFatal(_) => log.error(s"Unable to write performance metrics to file '$fileName'")
+        case NonFatal(e) => log.error(s"Unable to write performance metrics to file '$fileName': ${e.getMessage}")
       }
     })
   }
@@ -130,9 +130,9 @@ object StandardizationJob {
     ensureSplittable(dfWithSchema, path, schema)
   }
 
-  private def process(performance: PerformanceMeasurer, dfAll: DataFrame, schema: StructType, cmd: CmdConfig,
-                      path: String, stdPath: String)
-                     (implicit spark: SparkSession, udfLib: UDFLibrary): Unit = {
+  private def executeStandardization(performance: PerformanceMeasurer, dfAll: DataFrame, schema: StructType,
+                                     cmd: CmdConfig, path: String, stdPath: String)
+                                    (implicit spark: SparkSession, udfLib: UDFLibrary): Unit = {
     val rawDirSize: Long = FileSystemVersionUtils.getDirectorySize(path)
     performance.startMeasurement(rawDirSize)
 
@@ -168,14 +168,16 @@ object StandardizationJob {
       throw new IllegalStateException(errMsg)
     }
     stdRenameSourceColumns.write.parquet(stdPath)
-    // Store performance metrics (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
+    // Store performance metrics
+    // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
     val stdDirSize = FileSystemVersionUtils.getDirectorySize(stdPath)
     performance.finishMeasurement(stdDirSize, recordCount)
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     if (cmd.csvDelimiter.isDefined) {
       cmd.csvDelimiter.foreach(deLimiter => Atum.setAdditionalInfo("csv_delimiter" -> deLimiter))
     }
-    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", path, stdPath, LoggedInUserInfo.getUserName)
+    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", path, stdPath,
+                                                               LoggedInUserInfo.getUserName)
     stdRenameSourceColumns.writeInfoFile(stdPath)
   }
 
@@ -232,10 +234,12 @@ object StandardizationJob {
 
   def buildRawPath(cmd: CmdConfig, dataset: Dataset, dateTokens: Array[String]): String = {
     cmd.rawPathOverride match {
-      case None => cmd.folderPrefix match {
-        case None => s"${dataset.hdfsPath}/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmd.reportVersion}"
-        case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmd.reportVersion}"
-      }
+      case None =>
+        val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmd.reportVersion}"
+        cmd.folderPrefix match {
+          case None => s"${dataset.hdfsPath}$folderSuffix"
+          case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
+        }
       case Some(rawPathOverride) => rawPathOverride
     }
   }
