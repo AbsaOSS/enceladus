@@ -33,7 +33,7 @@ pipeline {
         stage ('Deploy') {
             steps {
                 configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
-                    sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${nexusRepoDetails} deploy"
+                    sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${nexusRepoDetails} deploy:deploy"
                 }
             }
         }
