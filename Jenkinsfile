@@ -1,19 +1,20 @@
-def nexusRepoDetails = getNexusRepoDetails()
+def nexusSnapshotRepoDetails = getNexusSnapshotRepoDetails()
+def nexusReleaseRepoDetails = getNexusReleaseRepoDetails()
 def mavenSettingsId = getMavenSettingsId()
 def mavenAdditionalSettings = getMavenAdditionalSettings()
 def enceladusSlaveLabel = getEnceladusSlaveLabel()
-
+def deploymentStageRun = 'false'
 
 pipeline {
     agent {
         label "${enceladusSlaveLabel}"
     }
-    tools { 
+    tools {
         jdk 'openjdk-1.8.0'
-        maven 'Maven-3.6.0' 
+        maven 'Maven-3.6.0'
         git 'git-latest'
     }
-    options { 
+    options {
         buildDiscarder(logRotator(numToKeepStr: '20'))
         timestamps()
     }
@@ -30,11 +31,38 @@ pipeline {
                 }
             }
         }
-        stage ('Deploy') {
+        stage ('Deploy-to-Snapshot') {
+            when {
+                    branch 'develop'
+            }
             steps {
                 configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
-                    sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${nexusRepoDetails} deploy:deploy"
+                    sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${nexusSnapshotRepoDetails} -DskipTests -Dmaven.test.skip deploy"
                 }
+                script {
+                    deploymentStageRun = sh(returnStdout: true, script: "echo true")
+                }
+            }
+        }
+        stage ('Deploy-to-Releasae') {
+            when {
+                    branch 'master'
+            }
+            steps {
+                configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
+                    sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${nexusReleaseRepoDetails} -DskipTests -Dmaven.test.skip deploy"
+                }
+                script {
+                    deploymentStageRun = sh(returnStdout: true, script: "echo true")
+                }
+            }
+        }
+    }
+    post {
+        success {
+            script {
+                if (deploymentStageRun != 'true')
+                    sh "echo 'Deployment or artifacts to internal repository skipped, branch is not develop/master'"
             }
         }
     }
