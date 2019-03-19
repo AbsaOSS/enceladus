@@ -260,30 +260,21 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>${maven.enforcer.version}</version>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>${maven.ant.plugin.version}</version>
                 <executions>
                     <execution>
-                        <id>enforce-app-properties-exist</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
+                        <id>copy</id>
+                        <phase>validate</phase>
                         <configuration>
-                            <rules>
-                                <requireFilesExist>
-                                    <files>
-                                        <file>${project.basedir}/src/main/resources/application.properties</file>
-                                    </files>
-                                    <level>ERROR</level>
-                                    <message>/src/main/resources/application.properties not found.
-To build Menas it is required to have 'application.properties' in the resources directory.
-Please, copy the template file 'application.properties.template' into 'application.properties' and make changes
-corresponding to your use case.
-                                    </message>
-                                </requireFilesExist>
-                            </rules>
-                            <fail>true</fail>
+                            <target>
+                                <copy file="${project.basedir}/src/main/resources/application.conf.template" tofile="${project.basedir}/src/main/resources/application.conf" failonerror="false" overwrite="false" />
+                            </target>
+                            <failOnError>false</failOnError>
                         </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
