@@ -32,7 +32,7 @@ import java.text.SimpleDateFormat
 
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
+import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 
 import scala.util.control.NonFatal
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
@@ -44,45 +44,6 @@ object DynamicConformanceJob {
   val log: Logger = LogManager.getLogger("enceladus.conformance.DynamicConformanceJob")
   val conf: Config = ConfigFactory.load()
   
-  /** This method adds performance metrics to the _INFO file metadata **/
-  def addPerformanceMetadata(spark: SparkSession, publishDirSize: Long, outputPath: String): Unit = {
-    // Enceladus version
-    val enceladusVersion = conf.getString("enceladus.version")
-    Atum.setAdditionalInfo("conform_enceladus_version" -> enceladusVersion)
-
-    // Spark job configuration
-    val sc = spark.sparkContext
-    // The number of executors minus the driver
-    val numberOfExecutrs = sc.getExecutorMemoryStatus.keys.size - 1
-    val executorMemory = spark.sparkContext.getConf.get("spark.executor.memory")
-    Atum.setAdditionalInfo("conform_application_id" -> spark.sparkContext.applicationId)
-    Atum.setAdditionalInfo("conform_executors_num" -> s"$numberOfExecutrs")
-    Atum.setAdditionalInfo("conform_executors_memory" -> s"$executorMemory")
-    Atum.setAdditionalInfo("publish_dir_size" -> publishDirSize.toString)
-
-    // Calculate the number of errors
-    import spark.implicits._
-
-    val df = spark.read.parquet(outputPath)
-    val numRecordsFailed = df
-      .filter(size($"errCol")>0).count
-    val numRecordsSuccessful = df
-      .filter(size($"errCol")===0).count
-    val numOfErrors = df
-      .withColumn("enceladus_error_count", size($"errCol")).agg(sum($"enceladus_error_count"))
-      .take(1)(0)(0).toString.toLong
-
-    Atum.setAdditionalInfo("conform_records_succeeded" -> numRecordsSuccessful.toString)
-    Atum.setAdditionalInfo("conform_records_failed" -> numRecordsFailed.toString)
-    Atum.setAdditionalInfo("conform_errors_count" -> numOfErrors.toString)
-    Atum.setAdditionalInfo("conform_username" -> LoggedInUserInfo.getUserName)
-
-    if (numRecordsSuccessful == 0) {
-      log.error("No successful records after running Dynamic Conformance. Possibly some of the conformance rules are incorrectly defined for the dataset.")
-    }
-  }
-
-
   def main(args: Array[String]) {
 
     val infoDateColumn = "enceladus_info_date"
@@ -174,7 +135,10 @@ object DynamicConformanceJob {
 
     val publishDirSize = FileSystemVersionUtils.getDirectorySize(publishPath)
     performance.finishMeasurement(publishDirSize, recordCount)
-    addPerformanceMetadata(spark, publishDirSize, publishPath)
+
+    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "conform",
+      stdPath, publishPath, LoggedInUserInfo.getUserName)
+
     withPartCols.writeInfoFile(publishPath)
     cmd.performanceMetricsFile.foreach(fileName => {
       try {

@@ -128,20 +128,19 @@
                                         <Button text="Upload File" press="handleUploadPress" />
                                     </IconTabFilter>
                                     <IconTabFilter id="UsedIn" icon="sap-icon://detail-view" text="Used In">
-                                        <Panel headerText="Datasets" height="50%">
-                                            <List items="{/currentSchema/usedIn/datasets}" mode="None"
-                                                noDataText="Currently not used in any Datasets">
-                                                <StandardListItem title="{name}" description="v.{version}" type="Active"
-                                                    press="usedInNavTo" cust:collection="datasets" cust:name="{name}" cust:version="{version}"></StandardListItem>
-                                            </List>
-                                        </Panel>
-                                        <Panel headerText="Mapping Tables" height="50%">
-                                            <List items="{/currentSchema/usedIn/mappingTables}"
-                                                noDataText="Currently not used in any Mapping Tables" mode="None" selectionChange="usedInNavTo">
-                                                <StandardListItem itle="{name}" description="v. {version}" type="Active" press="usedInNavTo"
-                                                    cust:collection="mappingTables" cust:name="{name}" cust:version="{version}"></StandardListItem>
-                                            </List>
-                                        </Panel>
+										<Panel headerText="Datasets" height="50%">
+											<List items="{/currentSchema/usedIn/datasets}" mode="None" noDataText="Currently not used in any Datasets">
+												<StandardListItem title="{name}" description="v.{version}" type="Active" press="usedInNavTo" cust:collection="datasets"
+													cust:name="{name}" cust:version="{version}"/>
+											</List>
+										</Panel>
+										<Panel headerText="Mapping Tables" height="50%">
+											<List items="{/currentSchema/usedIn/mappingTables}" noDataText="Currently not used in any Mapping Tables" mode="None"
+												selectionChange="usedInNavTo">
+												<StandardListItem title="{name}" description="v.{version}" type="Active" press="usedInNavTo" cust:collection="mappingTables"
+													cust:name="{name}" cust:version="{version}"/>
+											</List>
+										</Panel>
                                     </IconTabFilter>
                                     <IconTabFilter id="auditTrail" icon="sap-icon://history" text="Audit Trail">
                                         <Table id="auditTrailTable" itemPress="auditVersionPress" items="{/currentSchema/auditTrail/entries}">

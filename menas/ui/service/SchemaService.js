@@ -75,7 +75,7 @@ var SchemaService = new function() {
 			SchemaService.getSchemaList();
 		}, function() {
 			sap.m.MessageBox.error("Failed to update the schema. Please wait a moment and try reloading the application")
-		})			
+		})
 	};
 	
 	this.getSchemaUsedIn = function(sId, iVersion) {
@@ -86,16 +86,21 @@ var SchemaService = new function() {
 		})			
 	};
 	
-	this.getAllSchemaVersions = function(sName, oControl) {
-		if(oControl) oControl.setBusy(true);
-		Functions.ajax("api/schema/allVersions/" + encodeURI(sName), "GET", {}, function(oData) {
-			model.setProperty("/currentSchemaVersions", oData)
-			if(oControl) oControl.setBusy(false);
-		}, function() {
-			sap.m.MessageBox.error("Failed to retreive all versions of the schema, please try again later.")
-			oControl.setBusy(false);
-		}, oControl)	
-	};
+  this.getAllSchemaVersions = function(sName, oControl, oModel, sProperty) {
+    if(oControl) oControl.setBusy(true);
+    Functions.ajax("api/schema/allVersions/" + encodeURI(sName), "GET", {}, function(oData) {
+      model.setProperty("/currentSchemaVersions", oData);
+      if(oControl) {
+        oControl.setBusy(false);
+      }
+      if (oModel && sProperty) {
+        oModel.setProperty(sProperty, oData[oData.length - 1].version)
+      }
+    }, function() {
+      sap.m.MessageBox.error("Failed to retreive all versions of the schema, please try again later.")
+      oControl.setBusy(false);
+    }, oControl)
+  };
 
   this.disableSchema = function(sId, iVersion) {
     let uri = "api/schema/disable/" + encodeURI(sId);
@@ -113,11 +118,10 @@ var SchemaService = new function() {
       }
     }, function(xhr) {
       if (xhr.status === 400) {
-        let err = "Disabling schema failed. Clear the following dependencies first:\n";
         let oData = JSON.parse(xhr.responseText);
-        for(let ind in oData) {
-          err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
-        }
+
+        let err = EntityService.buildDisableFailureMsg(oData, "Dataset");
+
         sap.m.MessageBox.error(err)
       } else {
         sap.m.MessageBox.error("Failed to disable schema. Ensure no mapping tables or datasets use this schema(and/or version)")
@@ -139,7 +143,7 @@ var SchemaService = new function() {
 		})	
 	};
 
-  this.isUniqueSchemaName = function(sName) {
+  this.hasUniqueName = function(sName) {
     Functions.ajax("api/schema/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
       model.setProperty("/newSchema/nameUnique", oData)
     }, function() {

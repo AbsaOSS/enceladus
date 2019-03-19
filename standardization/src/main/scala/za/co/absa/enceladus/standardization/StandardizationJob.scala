@@ -29,14 +29,12 @@ import java.text.MessageFormat
 import java.util.UUID
 
 import org.apache.log4j.{LogManager, Logger}
-import org.apache.spark.sql
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
+import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 
 import scala.util.control.NonFatal
-import org.apache.spark.sql.functions.{size, sum}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.enceladus.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
@@ -45,53 +43,6 @@ object StandardizationJob {
 
   val log: Logger = LogManager.getLogger("enceladus.standardization.StandardizationJob")
   val conf: Config = ConfigFactory.load()
-
-  /** This method adds performance metrics to the _INFO file metadata **/
-  def addPerformanceMetadata(spark: SparkSession, rawDirSize: Long, stdDirSize: Long, outputPath: String): Unit = {
-    // Enceladus version
-    val enceladusVersion = conf.getString("enceladus.version")
-    Atum.setAdditionalInfo("std_enceladus_version" -> enceladusVersion)
-
-    // Spark job configuration
-    val sc = spark.sparkContext
-    sc.getConf.getAll.mkString("\n")
-    // The number of executors minus the driver
-    val numberOfExecutrs = sc.getExecutorMemoryStatus.keys.size - 1
-    val executorMemory = spark.sparkContext.getConf.get("spark.executor.memory")
-    Atum.setAdditionalInfo("std_application_id" -> spark.sparkContext.applicationId)
-    Atum.setAdditionalInfo("std_executors_num" -> s"$numberOfExecutrs")
-    Atum.setAdditionalInfo("std_executors_memory" -> s"$executorMemory")
-
-    // Directory sizes
-    if (rawDirSize > 0) {
-      val percent = (stdDirSize.toDouble / rawDirSize.toDouble) * 100
-      val percentFormatted = f"$percent%3.2f"
-      Atum.setAdditionalInfo("std_size_ratio" -> s"$percentFormatted %")
-    }
-    Atum.setAdditionalInfo("raw_dir_size" -> rawDirSize.toString)
-    Atum.setAdditionalInfo("std_dir_size" -> stdDirSize.toString)
-
-    // Calculate the number of errors
-    import spark.implicits._
-
-    val df = spark.read.parquet(outputPath)
-    val numRecordsFailed = df
-      .filter(size($"errCol") > 0).count
-    val numRecordsSuccessful = df
-      .filter(size($"errCol") === 0).count
-    val numOfErrors = df
-      .withColumn("enceladus_error_count", size($"errCol")).agg(sum($"enceladus_error_count"))
-      .take(1)(0)(0).toString.toLong
-
-    Atum.setAdditionalInfo("std_records_succeeded" -> numRecordsSuccessful.toString)
-    Atum.setAdditionalInfo("std_records_failed" -> numRecordsFailed.toString)
-    Atum.setAdditionalInfo("std_errors_count" -> numOfErrors.toString)
-    Atum.setAdditionalInfo("std_username" -> LoggedInUserInfo.getUserName)
-
-    if (numRecordsSuccessful == 0) {
-      log.error("No successful records after running Standardization. Possibly the schema is incorrectly defined for the dataset.")
-    }
-  }
 
   def main(args: Array[String]) {
 
@@ -207,7 +158,9 @@ object StandardizationJob {
     performance.finishMeasurement(stdDirSize, recordCount)
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     if (cmd.csvDelimiter.isDefined) cmd.csvDelimiter.foreach(deLimiter => Atum.setAdditionalInfo("csv_delimiter" -> deLimiter))
-    addPerformanceMetadata(spark, rawDirSize, stdDirSize, stdPath)
+
+    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", path, stdPath, LoggedInUserInfo.getUserName)
+
     stdRenameSourceColumns.writeInfoFile(stdPath)
     cmd.performanceMetricsFile.foreach(fileName => {
       try {

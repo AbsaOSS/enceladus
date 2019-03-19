@@ -13,17 +13,21 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model
+package za.co.absa.enceladus.utils.general
 
-import za.co.absa.enceladus.model.menas.MenasReference
+import com.typesafe.config.{Config, ConfigFactory}
 
-case class UsedIn(
-  datasets: Option[Seq[MenasReference]] = None,
-  mappingTables: Option[Seq[MenasReference]] = None
-) {
+object ProjectMetadataTools {
+  private val conf: Config = ConfigFactory.load()
 
-  def nonEmpty: Boolean = {
-    datasets.exists(_.nonEmpty) || mappingTables.exists(_.nonEmpty)
+  private val enceladusVersionKey = "enceladus.version"
+
+  /** Returns Enceladus version from the application configuration properties */
+  def getEnceladusVersion: String = {
+    if (conf.hasPath(enceladusVersionKey)) {
+      conf.getString(enceladusVersionKey)
+    } else {
+      "N/A"
+    }
   }
-
 }

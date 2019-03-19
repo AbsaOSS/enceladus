@@ -34,11 +34,6 @@
         </dependency>
         <dependency>
             <groupId>za.co.absa</groupId>
-            <artifactId>enceladus-dataModel</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa</groupId>
             <artifactId>enceladus-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -131,6 +126,35 @@
                             <goal>compile</goal>
                             <goal>testCompile</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven.enforcer.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-app-properties-exist</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireFilesExist>
+                                    <files>
+                                        <file>${project.basedir}/src/main/resources/application.conf</file>
+                                    </files>
+                                    <level>ERROR</level>
+                                    <message>/src/main/resources/application.conf not found.
+To build Conformance module it is required to have 'application.conf' in the resources directory.
+Please, copy the template file 'application.conf.template' into 'application.conf' and make changes
+corresponding to your use case.
+                                    </message>
+                                </requireFilesExist>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

@@ -116,11 +116,12 @@
                                         </table:TreeTable>
                                     </IconTabFilter>
                                     <IconTabFilter id="UsedIn" icon="sap-icon://detail-view" text="Used In">
-                                        <Panel headerText="Datasets" height="50%">
-                                            <List items="{/currentMappingTable/usedIn/datasets}" noDataText="Currently not used in any Datasets">
-                                                <StandardListItem title="{name}" description="v.{version}" type="Active"></StandardListItem>
-                                            </List>
-                                        </Panel>
+ 										<Panel headerText="Datasets" height="50%">
+											<List items="{/currentMappingTable/usedIn/datasets}" noDataText="Currently not used in any Datasets">
+												<StandardListItem title="{name}" description="v.{version}" type="Active" press="usedInNavTo" cust:collection="datasets"
+                                                  cust:name="{name}" cust:version="{version}"/>
+											</List>
+										</Panel>
                                     </IconTabFilter>
                                     <IconTabFilter id="Defaults" icon="sap-icon://cancel-maintenance" text="Defaults">
                                         <Table items="{/currentMappingTable/defaultMappingValue}">

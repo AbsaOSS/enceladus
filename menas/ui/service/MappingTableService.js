@@ -20,7 +20,7 @@ var MappingTableService = new function () {
 
   this.getMappingTableList = function (bLoadFirst, bGetSchema) {
     Functions.ajax("api/mappingTable/list", "GET", {}, function (oData) {
-      model.setProperty("/mappingTables", oData)
+      model.setProperty("/mappingTables", oData);
       if (oData.length > 0 && bLoadFirst)
         MappingTableService.getMappingTableVersion(oData[0]._id, oData[0].latestVersion, bGetSchema)
     }, function () {
@@ -83,20 +83,20 @@ var MappingTableService = new function () {
     })
   };
 
-  this.isUniqueMappingName = function (sName) {
+  this.hasUniqueName = function (sName) {
     model.setProperty("/newMappingTable/nameUsed", undefined)
     Functions.ajax("api/mappingTable/isUniqueName/" + encodeURI(sName), "GET", {}, function (oData) {
       model.setProperty("/newMappingTable/nameUnique", oData)
     }, function () {
       sap.m.MessageBox.error("Failed to retreive isUniqueName. Please try again later.")
     })
-  }
+  };
 
-  this.createMappingTable = function (sName, sDescription, sHdfsPath, sSchemaName, iSchemaVersion) {
+  this.createMappingTable = function (sName, sDescription, sHDFSPath, sSchemaName, iSchemaVersion) {
     Functions.ajax("api/mappingTable/create", "POST", {
       name: sName,
       description: sDescription,
-      hdfsPath: sHdfsPath,
+      hdfsPath: sHDFSPath,
       schemaName: sSchemaName,
       schemaVersion: iSchemaVersion
     }, function (oData) {
@@ -110,12 +110,12 @@ var MappingTableService = new function () {
     })
   };
 
-  this.editMappingTable = function (sName, iVersion, sDescription, sHdfsPath, sSchemaName, iSchemaVersion) {
+  this.editMappingTable = function (sName, iVersion, sDescription, sHDFSPath, sSchemaName, iSchemaVersion) {
     Functions.ajax("api/mappingTable/edit", "POST", {
       name: sName,
       version: iVersion,
       description: sDescription,
-      hdfsPath: sHdfsPath,
+      hdfsPath: sHDFSPath,
       schemaName: sSchemaName,
       schemaVersion: iSchemaVersion
     }, function (oData) {
@@ -182,11 +182,10 @@ var MappingTableService = new function () {
       }
     }, function(xhr) {
       if (xhr.status === 400) {
-        let err = "Disabling mapping table failed. Clear the following dependencies first:\n";
         let oData = JSON.parse(xhr.responseText);
-        for(let ind in oData) {
-          err += "\t - " + oData[ind].name + " (v. " + oData[ind].version + ")";
-        }
+
+        let err = EntityService.buildDisableFailureMsg(oData, "Schema");
+
         sap.m.MessageBox.error(err)
       } else {
         sap.m.MessageBox.error("Failed to disable mapping table. Ensure no active datasets use this mapping table(and/or version)")

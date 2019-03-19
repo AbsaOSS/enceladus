@@ -83,7 +83,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
            else if(latestVersion.get != updated.version) throw new EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.") 
            else Future.successful(latestVersion.get + 1)
       newInfo <- Future.successful(updated.setUpdatedInfo(username).setVersion(newVersion).setParent(Some(getParent(updated))).asInstanceOf[C])
-      res <- collection.insertOne(newInfo).head()
+      res <- collection.insertOne(newInfo).toFuture()
     } yield newInfo
     
   }
@@ -103,6 +103,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection
       .find[MenasReference](filter)
       .projection(fields(include("name", "version"), computed("collection", collectionName)))
+      .sort(Sorts.ascending("name", "version"))
       .toFuture()
   }
 

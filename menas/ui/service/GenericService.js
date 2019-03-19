@@ -49,8 +49,21 @@ var GenericService = new function () {
     })
   };
 
-  this.validateEntityName = function (sName) {
-    return /\W/.test(sName)
+  this.hasWhitespace = function (str) {
+    return /\W/.test(str);
+  };
+
+  this.isValidEntityName = function (sName) {
+    return sName && sName !== "" && !this.hasWhitespace(sName);
+  };
+
+  this.isNameUnique = function(sName, oModel, sEntityType) {
+    oModel.setProperty("/nameUsed", undefined);
+    Functions.ajax("api/" + sEntityType + "/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
+      oModel.setProperty("/nameUnique", oData)
+    }, function() {
+      sap.m.MessageBox.error("Failed to retrieve isUniqueName. Please try again later.")
+    })
   };
 
 }();

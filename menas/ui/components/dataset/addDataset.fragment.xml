@@ -32,7 +32,7 @@
                         <Label text="RAW HDFS Path"></Label>
                         <Text id="selectedRawHDFSPathLabel"></Text>
                         <Label text="HDFS conformed data publish folder path" />
-                        <hdfs:HDFSBrowser id="newDatasetPublishDFSBrowser" height="300px" width="100%" busyControl="addDatasetDialog"
+                        <hdfs:HDFSBrowser id="newDatasetPublishHDFSBrowser" height="300px" width="100%" busyControl="addDatasetDialog"
                             pathLabel="selectedPublishHDFSPathLabel" restURI="api/hdfs/list" HDFSPath="{entity>/hdfsPublishPath}"></hdfs:HDFSBrowser>
                         <Label text="Publish HDFS Path"></Label>
                         <Text id="selectedPublishHDFSPathLabel"></Text>
