@@ -67,9 +67,9 @@ class SchemaServiceTest extends VersionedModelServiceTest[Schema] {
       AuditTrailEntry(MenasReference(None, "TestSchema1", 1), null, testSchemas(4).lastUpdated,
         List(AuditTrailChange("fields", None, Some("SchemaField(b,String,,None,None,true,Map(),List())"), "Schema field added."))),
       AuditTrailEntry(MenasReference(None, "TestSchema1", 0), null, testSchemas(3).lastUpdated,
-        List(AuditTrailChange("description", Some("Some(Test desc)"), Some("Some(Test desc 2)"), "Description updated."))),
+        List(AuditTrailChange("description", Some("Test desc"), Some("Test desc 2"), "Description updated."))),
       AuditTrailEntry(MenasReference(None, "TestSchema", 1), null, testSchemas(1).lastUpdated,
-        List(AuditTrailChange("description", Some("None"), Some("Some(Test desc)"), "Description updated."))),        
+        List(AuditTrailChange("description", Some("None"), Some("Test desc"), "Description updated."))),        
       AuditTrailEntry(MenasReference(None, "TestSchema", 0), null, testSchemas(0).lastUpdated,
         List(AuditTrailChange("", None, None, "Schema TestSchema created.")))))
 
@@ -82,7 +82,7 @@ class SchemaServiceTest extends VersionedModelServiceTest[Schema] {
     val expected = AuditTrail(Stream(AuditTrailEntry(MenasReference(None, "TestSchema", 2), null, testSchemas(2).lastUpdated,
         List(AuditTrailChange("fields", None, Some("SchemaField(a,Integer,,None,None,true,Map(),List())"), "Schema field added."))),
       AuditTrailEntry(MenasReference(None, "TestSchema", 1), null, testSchemas(1).lastUpdated,
-        List(AuditTrailChange("description", Some("None"), Some("Some(Test desc)"), "Description updated."))),
+        List(AuditTrailChange("description", Some("None"), Some("Test desc"), "Description updated."))),
       AuditTrailEntry(MenasReference(None, "TestSchema", 0), null, testSchemas(0).lastUpdated,
         List(AuditTrailChange("", None, None, "Schema TestSchema created.")))))
 
