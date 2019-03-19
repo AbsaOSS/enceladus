@@ -62,7 +62,7 @@ pipeline {
         success {
             script {
                 if (deploymentStageRun != 'true')
-                    sh "echo 'Deployment or artifacts to internal repository skipped, branch is not develop/master'"
+                    sh "echo 'Deployment of artifacts to internal repository skipped, branch is not develop/master'"
             }
         }
     }
