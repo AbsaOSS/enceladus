@@ -129,10 +129,6 @@ sap.ui.controller("components.schema.schemaMain", {
     this._addDialog.open();
   },
 
-  onPressLogout : function() {
-    GenericService.logout();
-  },
-
   schemaSelected : function(oEv) {
     var selected = oEv.getParameter("listItem").data("id")
     this._router.navTo("schemas", {
