@@ -44,7 +44,7 @@ pipeline {
                 }
             }
         }
-        stage ('Deploy-to-Releasae') {
+        stage ('Deploy-to-Release') {
             when {
                     branch 'master'
             }
