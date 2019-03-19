@@ -30,9 +30,7 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
     ErrorMessage.stdCastErr(errCol, rawValue)
   })
 
-  spark.udf.register("stdNullErr", { (errCol: String) =>
-    ErrorMessage.stdNullErr(errCol)
-  })
+  spark.udf.register("stdNullErr", { errCol: String => ErrorMessage.stdNullErr(errCol)})
 
   spark.udf.register("confMappingErr", { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
     ErrorMessage.confMappingErr(errCol, rawValues, mappings)
@@ -46,10 +44,11 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
     ErrorMessage.confNegErr(errCol, rawValue)
   })
 
-  spark.udf.register("arrayDistinctErrors", (arr: mutable.WrappedArray[ErrorMessage]) => arr.distinct.filter((a: AnyRef) => a != null))
+  spark.udf.register("arrayDistinctErrors",
+    (arr: mutable.WrappedArray[ErrorMessage]) => arr.distinct.filter((a: AnyRef) => a != null))
 
-  val cleanErrCol = new UDF1[Seq[Row], Seq[Row]] {
-    override def call(t1: Seq[Row]) = {
+  private val cleanErrCol = new UDF1[Seq[Row], Seq[Row]] {
+    override def call(t1: Seq[Row]): Seq[Row] = {
       t1.filter({ row =>
         row != null && {
           val typ = row.getString(0)
@@ -61,12 +60,12 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
 
   spark.udf.register("cleanErrCol", cleanErrCol, ArrayType.apply(ErrorMessage.errorColSchema, false))
 
-  val errorColumnAppend = new UDF2[Seq[Row], Row, Seq[Row]] {
+  private val errorColumnAppend = new UDF2[Seq[Row], Row, Seq[Row]] {
     override def call(t1: Seq[Row], t2: Row) : Seq[Row] = {
       t1 :+ t2
     }
   }
 
   spark.udf.register("errorColumnAppend", errorColumnAppend, ArrayType.apply(ErrorMessage.errorColSchema, false))
- 
+
 }
