@@ -21,7 +21,11 @@ var MappingTableService = new function () {
   this.getMappingTableList = function (bLoadFirst, bGetSchema) {
     Functions.ajax("api/mappingTable/list", "GET", {}, function (oData) {
       model.setProperty("/mappingTables", oData);
-      if (oData.length > 0 && bLoadFirst)
+      if(oData.length == 0) {
+        //ensure the detail is empty too
+        model.setProperty("/currentMappingTable", {});
+      }
+      else if (bLoadFirst)
         MappingTableService.getMappingTableVersion(oData[0]._id, oData[0].latestVersion, bGetSchema)
     }, function () {
       sap.m.MessageBox.error("Failed to get the list of mapping tables. Please wait a moment and try reloading the application")
