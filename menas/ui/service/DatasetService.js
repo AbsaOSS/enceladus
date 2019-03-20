@@ -22,7 +22,11 @@ var DatasetService = new function() {
   this.getDatasetList = function(bLoadFirst) {
     Functions.ajax("api/dataset/list", "GET", {}, function(oData) {
       model.setProperty("/datasets", oData)
-      if (oData.length > 0 && bLoadFirst)
+      if(oData.length == 0) {
+        //ensure the detail is empty too
+        model.setProperty("/currentDataset", {});
+      }
+      else if (bLoadFirst)
         DatasetService.getDatasetVersion(oData[0]._id, oData[0].latestVersion)
     }, function() {
       sap.m.MessageBox
