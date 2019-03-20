@@ -314,7 +314,7 @@ sap.ui.controller("components.mappingTable.mappingTableMain", {
     current.isEdit = true;
     current.title = "Edit";
 
-    this._model.setProperty("/newMappingTable", current);
+    this._model.setProperty("/newMappingTable", jQuery.extend(true, {}, current));
 
     SchemaService.getAllSchemaVersions(current.schemaName, sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"))
 

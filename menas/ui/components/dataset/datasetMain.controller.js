@@ -205,7 +205,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     current.isEdit = true;
     current.title = "Edit";
 
-    this._addDialog.setModel(new sap.ui.model.json.JSONModel(current), "entity");
+    this._addDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
 
     SchemaService.getAllSchemaVersions(current.schemaName, sap.ui.getCore().byId("schemaVersionSelect"));
 
