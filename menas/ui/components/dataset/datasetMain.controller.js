@@ -64,7 +64,7 @@ sap.ui.controller("components.dataset.datasetMain", {
       let old = this._model.getProperty(sBindPath);
       this.fetchSchema();
       this._model.setProperty("/newRule", {
-        ...JSON.parse(JSON.stringify(old)),
+        ...$.extend(true, {}, old),
         title: "Edit",
         isEdit: true,
       });
@@ -205,7 +205,7 @@ sap.ui.controller("components.dataset.datasetMain", {
     current.isEdit = true;
     current.title = "Edit";
 
-    this._addDialog.setModel(new sap.ui.model.json.JSONModel(current), "entity");
+    this._addDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
 
     SchemaService.getAllSchemaVersions(current.schemaName, sap.ui.getCore().byId("schemaVersionSelect"));
 

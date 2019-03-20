@@ -55,7 +55,8 @@ sap.ui.controller("components.schema.schemaMain", {
   },
 
   onEditPress: function() {
-    this._model.setProperty("/newSchema", this._model.getProperty("/currentSchema"));
+    //here perform deep copy of the object, otherwise 2 ways binding will update the referenced path
+    this._model.setProperty("/newSchema", jQuery.extend(true, {}, this._model.getProperty("/currentSchema")));
     this._editDialog.open();
   },
 
