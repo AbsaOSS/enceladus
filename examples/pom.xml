@@ -51,6 +51,26 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>${maven.ant.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>validate</phase>
+                        <configuration>
+                            <target>
+                                <copy file="${project.basedir}/src/main/resources/application.conf.template" tofile="${project.basedir}/src/main/resources/application.conf" failonerror="false" overwrite="false" />
+                            </target>
+                            <failOnError>false</failOnError>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <resources>
             <resource>

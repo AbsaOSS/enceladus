@@ -161,7 +161,7 @@ object CustomRuleSample4 {
       )
     )
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
 
     outputData.show()
     saveToCsv(outputData, cmdConfigLocal.outPath)
