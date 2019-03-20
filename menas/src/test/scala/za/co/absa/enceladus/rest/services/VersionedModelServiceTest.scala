@@ -14,14 +14,11 @@
  */
 package za.co.absa.enceladus.rest.services
 
-import java.util.concurrent.TimeUnit
-
 import org.mockito.Mockito
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.rest.models.Validation
 import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
 
-import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import za.co.absa.enceladus.model.menas.audit.Auditable
 
@@ -29,9 +26,6 @@ abstract class VersionedModelServiceTest[C <: VersionedModel with Product with A
 
   val modelRepository: VersionedMongoRepository[C]
   val service: VersionedModelService[C]
-
-  val millis100 = Duration(100, TimeUnit.MILLISECONDS)
-  val millis200 = Duration(200, TimeUnit.MILLISECONDS)
 
   private val validName = "validName"
 
