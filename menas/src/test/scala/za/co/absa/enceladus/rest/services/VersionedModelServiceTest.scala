@@ -31,7 +31,8 @@ abstract class VersionedModelServiceTest[C <: VersionedModel with Product with A
   val service: VersionedModelService[C]
 
   val millis100 = Duration(100, TimeUnit.MILLISECONDS)
-
+  val millis200 = Duration(100, TimeUnit.MILLISECONDS)
+  
   private val validName = "validName"
       
   test("Validate dataset with valid, unique name") {
