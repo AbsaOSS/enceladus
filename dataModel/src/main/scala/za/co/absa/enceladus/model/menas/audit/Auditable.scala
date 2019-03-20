@@ -52,8 +52,9 @@ trait Auditable[T <: Product] { self: T =>
             Some(AuditTrailChange(field = name.declaredField, oldValue = Some(unwrapOption(oldVal).toString), newValue = Some(unwrapOption(newVal).toString), message = s"${name.humanReadableField} updated."))
           else None
       })
-
-    }).filter(_.isDefined).map(_.get)
+    }).collect { 
+      case Some(change) => change
+    }
   }
   
   /**
