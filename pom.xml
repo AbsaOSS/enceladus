@@ -37,6 +37,7 @@
         <module>conformance</module>
         <module>standardization</module>
         <module>dataModel</module>
+        <module>examples</module>
         <module>dao</module>
         <module>menas</module>
         <module>migrations</module>
@@ -267,12 +268,6 @@
             <id>selenium</id>
             <modules>
                 <module>selenium</module>
-            </modules>
-        </profile>
-        <profile>
-            <id>examples</id>
-            <modules>
-                <module>examples</module>
             </modules>
         </profile>
     </profiles>
