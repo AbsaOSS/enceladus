@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.testutils
+package za.co.absa.enceladus.testutils.e2eSparkRunner
 
 import org.apache.log4j.{LogManager, Logger}
 
