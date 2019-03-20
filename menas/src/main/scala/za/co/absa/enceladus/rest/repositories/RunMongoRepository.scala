@@ -17,16 +17,18 @@ package za.co.absa.enceladus.rest.repositories
 
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts.descending
-import org.mongodb.scala.model.{FindOneAndUpdateOptions, ReturnDocument, Updates}
+import org.mongodb.scala.model._
 import org.mongodb.scala.{Completed, MapReduceObservable, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.model.{Run, SplineReference}
-import za.co.absa.enceladus.rest.models.{RunWrapper, Validation}
+import za.co.absa.enceladus.rest.models.{RunSummary, RunWrapper}
 
 import scala.concurrent.Future
 
@@ -42,6 +44,13 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   private[rest] override def collectionName: String = RunMongoRepository.collectionName
 
+  private val summaryProjection: Bson = project(fields(
+    computed("datasetName", "$dataset"),
+    computed("status", "$runStatus.status"),
+    include("datasetVersion", "runId", "startDateTime"),
+    excludeId()
+  ))
+
   def getAllLatest(): Future[Seq[Run]] = {
     getLatestOfEach()
       .toFuture()
@@ -53,6 +62,39 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .filter(regex("startDateTime", s"^$startDate"))
       .toFuture()
       .map(_.map(bson => ControlUtils.fromJson[RunWrapper](bson.toJson).value))
+  }
+
+  def getAllSummaries(): Future[Seq[RunSummary]] = {
+    val pipeline = Seq(
+      summaryProjection
+    )
+    collection
+      .aggregate[RunSummary](pipeline)
+      .toFuture()
+  }
+
+  def getSummariesByDatasetName(datasetName: String): Future[Seq[RunSummary]] = {
+    val pipeline = Seq(
+      filter(
+        equal("dataset", datasetName)
+      ),
+      summaryProjection
+    )
+    collection
+      .aggregate[RunSummary](pipeline)
+      .toFuture()
+  }
+  def getSummariesByDatasetNameAndVersion(datasetName: String, datasetVersion: Int): Future[Seq[RunSummary]] = {
+    val pipeline = Seq(
+      filter(and(
+        equal("dataset", datasetName),
+        equal("datasetVersion", datasetVersion)
+      )),
+      summaryProjection
+    )
+    collection
+      .aggregate[RunSummary](pipeline)
+      .toFuture()
   }
 
   private def getLatestOfEach(): MapReduceObservable[BsonDocument] = {

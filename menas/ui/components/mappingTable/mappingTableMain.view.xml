@@ -22,9 +22,7 @@
                     <Title text="Mapping Tables"></Title>
                 </contentMiddle>
                 <contentRight>
-                    <Text text="Logged in as:"></Text>
-                    <Text text="{/userInfo/username}"></Text>
-                    <Button id="logout" icon="sap-icon://log" press="GenericService.logout"></Button>
+                    <core:Fragment type="XML" fragmentName="components.userInfo"/>
                 </contentRight>
             </Bar>
         </customHeader>
@@ -44,7 +42,6 @@
                                 </contentRight>
                             </Bar>
                         </footer>
-
                     </Page>
                 </masterPages>
                 <detailPages>

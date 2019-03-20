@@ -21,10 +21,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
 import za.co.absa.enceladus.model.{Run, SplineReference}
-import za.co.absa.enceladus.rest.Application
 import za.co.absa.enceladus.rest.factories.RunFactory
 import za.co.absa.enceladus.rest.integration.fixtures.RunFixtureService
-import za.co.absa.enceladus.rest.models.Validation
+import za.co.absa.enceladus.rest.models.{RunSummary, Validation}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -128,6 +127,168 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           val body = response.getBody
           assert(!body.isValid)
           assert(body == Validation().withError("startDate", "must have format dd-MM-yyyy: 01-29-2019"))
+        }
+      }
+    }
+  }
+
+  s"GET $apiUrl" can {
+    "return 200" when {
+      "there are Run entities in the database" should {
+        "return a Summary of each Run" in {
+          val startDateTime1 = "29-01-2019 13:01:12 +0200"
+          val startDateTime2 = "29-03-2019 13:01:12 +0200"
+
+          val dataset1v1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1,
+            runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())), startDateTime = startDateTime1)
+          val dataset1v1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2,
+            runStatus = RunStatus(RunState.running, None), startDateTime = startDateTime2)
+          val dataset1v2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1,
+            runStatus = RunStatus(RunState.stageSucceeded, None), startDateTime = startDateTime1)
+          val dataset2v1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1,
+            runStatus = RunStatus(RunState.allSucceeded, None), startDateTime = startDateTime2)
+          runFixture.add(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1)
+
+          val response = sendGet[Array[RunSummary]](s"$apiUrl")
+
+          val dataset1v1run1summary = RunSummary(datasetName = "dataset1", datasetVersion = 1, runId = 1,
+            status = "failed", startDateTime = startDateTime1)
+          val dataset1v1run2summary = RunSummary(datasetName = "dataset1", datasetVersion = 1, runId = 2,
+            status = "running", startDateTime = startDateTime2)
+          val dataset1v2run1summary = RunSummary(datasetName = "dataset1", datasetVersion = 2, runId = 1,
+            status = "stageSucceeded", startDateTime = startDateTime1)
+          val dataset2v1run1summary = RunSummary(datasetName = "dataset2", datasetVersion = 1, runId = 1,
+            status = "allSucceeded", startDateTime = startDateTime2)
+          val expected = List(dataset1v1run1summary, dataset1v1run2summary, dataset1v2run1summary, dataset2v1run1summary)
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body.sameElements(expected))
+        }
+      }
+
+      "there are no Run entities stored in the database" should {
+        "return an empty collection" in {
+          val response = sendGet[Array[RunSummary]](s"$apiUrl")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body.isEmpty)
+        }
+      }
+    }
+  }
+
+  s"GET $apiUrl/{datasetName}" can {
+    val startDateTime1 = "29-01-2019 13:01:12 +0200"
+    val startDateTime2 = "29-03-2019 13:01:12 +0200"
+
+    val queriedDatasetName = "dataset1"
+    val wrongDatasetName = "dataset2"
+
+    "return 200" when {
+      "there are Runs with the specified Dataset Name" should {
+        "return a Summary of each Run" in {
+          val dataset1v1run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 1, runId = 1,
+            runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())), startDateTime = startDateTime1)
+          val dataset1v1run2 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 1, runId = 2,
+            runStatus = RunStatus(RunState.running, None), startDateTime = startDateTime2)
+          val dataset1v2run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 2, runId = 1,
+            runStatus = RunStatus(RunState.stageSucceeded, None), startDateTime = startDateTime1)
+
+          val dataset2v1run1 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = 1, runId = 1,
+            runStatus = RunStatus(RunState.allSucceeded, None), startDateTime = startDateTime2)
+          runFixture.add(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1)
+
+          val response = sendGet[Array[RunSummary]](s"$apiUrl/$queriedDatasetName")
+
+          val dataset1v1run1summary = RunSummary(datasetName = queriedDatasetName, datasetVersion = 1, runId = 1,
+            status = "failed", startDateTime = startDateTime1)
+          val dataset1v1run2summary = RunSummary(datasetName = queriedDatasetName, datasetVersion = 1, runId = 2,
+            status = "running", startDateTime = startDateTime2)
+          val dataset1v2run1summary = RunSummary(datasetName = queriedDatasetName, datasetVersion = 2, runId = 1,
+            status = "stageSucceeded", startDateTime = startDateTime1)
+          val expected = List(dataset1v1run1summary, dataset1v1run2summary, dataset1v2run1summary)
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body.sameElements(expected))
+        }
+      }
+
+      "there are no Runs with the specified Dataset Name" should {
+        "return an empty collection" in {
+          val run = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = 1, runId = 1,
+            runStatus = RunStatus(RunState.allSucceeded, None), startDateTime = startDateTime2)
+          runFixture.add(run)
+
+          val response = sendGet[Array[RunSummary]](s"$apiUrl/$queriedDatasetName")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body.isEmpty)
+        }
+      }
+    }
+  }
+
+  s"GET $apiUrl/{datasetName}/{datasetVersion}" can {
+    val startDateTime1 = "29-01-2019 13:01:12 +0200"
+    val startDateTime2 = "29-03-2019 13:01:12 +0200"
+
+    val queriedDatasetName = "dataset1"
+    val wrongDatasetName = "dataset2"
+
+    val queriedDatasetVersion = 1
+    val wrongDatasetVersion = 2
+
+    "return 200" when {
+      "there are Runs with the specified Dataset Name and Version" should {
+        "return a Summary of each Run" in {
+          val dataset1v1run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = queriedDatasetVersion, runId = 1,
+            runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())), startDateTime = startDateTime1)
+          val dataset1v1run2 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = queriedDatasetVersion, runId = 2,
+            runStatus = RunStatus(RunState.running, None), startDateTime = startDateTime2)
+
+          val dataset1v2run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = wrongDatasetVersion, runId = 1,
+            runStatus = RunStatus(RunState.stageSucceeded, None), startDateTime = startDateTime1)
+          val dataset2v1run1 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = queriedDatasetVersion, runId = 1,
+            runStatus = RunStatus(RunState.allSucceeded, None), startDateTime = startDateTime2)
+          runFixture.add(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1)
+
+          val response = sendGet[Array[RunSummary]](s"$apiUrl/$queriedDatasetName/$queriedDatasetVersion")
+
+          val dataset1v1run1summary = RunSummary(datasetName = queriedDatasetName, datasetVersion = 1, runId = 1,
+            status = "failed", startDateTime = startDateTime1)
+          val dataset1v1run2summary = RunSummary(datasetName = queriedDatasetName, datasetVersion = 1, runId = 2,
+            status = "running", startDateTime = startDateTime2)
+          val expected = List(dataset1v1run1summary, dataset1v1run2summary)
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body.sameElements(expected))
+        }
+      }
+
+      "there are no Runs with the specified Dataset Name and Version" should {
+        "return an empty collection" in {
+          val dataset1v2run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = wrongDatasetVersion, runId = 1,
+            runStatus = RunStatus(RunState.stageSucceeded, None), startDateTime = startDateTime1)
+          val dataset2v1run1 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = queriedDatasetVersion, runId = 1,
+            runStatus = RunStatus(RunState.allSucceeded, None), startDateTime = startDateTime2)
+          runFixture.add(dataset1v2run1, dataset2v1run1)
+
+          val response = sendGet[Array[RunSummary]](s"$apiUrl/$queriedDatasetName/$queriedDatasetVersion")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body.isEmpty)
         }
       }
     }
