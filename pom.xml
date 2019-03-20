@@ -270,11 +270,5 @@
                 <module>selenium</module>
             </modules>
         </profile>
-        <profile>
-            <id>examples</id>
-            <modules>
-                <module>examples</module>
-            </modules>
-        </profile>
     </profiles>
 </project>
