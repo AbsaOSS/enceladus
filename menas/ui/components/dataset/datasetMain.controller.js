@@ -64,7 +64,7 @@ sap.ui.controller("components.dataset.datasetMain", {
       let old = this._model.getProperty(sBindPath);
       this.fetchSchema();
       this._model.setProperty("/newRule", {
-        ...JSON.parse(JSON.stringify(old)),
+        ...$.extend(true, {}, old),
         title: "Edit",
         isEdit: true,
       });
