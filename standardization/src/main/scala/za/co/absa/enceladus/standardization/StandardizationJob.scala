@@ -43,7 +43,7 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object StandardizationJob {
 
-  private val log: Logger = LogManager.getLogger("enceladus.standardization.StandardizationJob")
+  private val log: Logger = LogManager.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
 
   def main(args: Array[String]) {
