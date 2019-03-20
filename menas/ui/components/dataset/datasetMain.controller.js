@@ -88,6 +88,15 @@ sap.ui.controller("components.dataset.datasetMain", {
     }
   },
 
+  auditVersionPress: function(oEv) {
+    let oSrc = oEv.getParameter("listItem");
+    let oRef = oSrc.data("menasRef");
+    this._router.navTo("datasets", {
+      id: oRef.name,
+      version: oRef.version
+    });    
+  },
+  
   toSchema: function (oEv) {
     let src = oEv.getSource();
     sap.ui.core.UIComponent.getRouterFor(this).navTo("schemas", {
@@ -244,6 +253,7 @@ sap.ui.controller("components.dataset.datasetMain", {
       DatasetService.getDatasetList();
       DatasetService.getDatasetVersion(oParams.id, oParams.version)
     }
+    this.byId("datasetIconTabBar").setSelectedKey("info");
   },
 
   conformanceRuleFactory: function (sId, oContext) {

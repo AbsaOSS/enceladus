@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.model.versionedModel
 
 import java.time.ZonedDateTime
+import za.co.absa.enceladus.model.menas.MenasReference
 
 trait VersionedModel {
   val name: String
@@ -32,6 +33,8 @@ trait VersionedModel {
   val dateDisabled: Option[ZonedDateTime]
   val userDisabled: Option[String]
   
+  val parent: Option[MenasReference]
+  
   def setVersion(value: Int): VersionedModel
   def setDisabled(disabled: Boolean) : VersionedModel
   def setLastUpdated(time: ZonedDateTime) : VersionedModel
@@ -39,7 +42,8 @@ trait VersionedModel {
   def setDescription(desc: Option[String]): VersionedModel
   def setDateCreated(time: ZonedDateTime): VersionedModel
   def setUserCreated(user: String): VersionedModel
-
+  def setParent(newParent: Option[MenasReference]): VersionedModel
+  
   def setCreatedInfo(username: String): VersionedModel = {
     setDateCreated(ZonedDateTime.now).setUserCreated(username)
   }

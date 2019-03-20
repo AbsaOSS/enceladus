@@ -21,13 +21,15 @@ import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{Dataset, UsedIn}
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
 import scala.concurrent.Future
+import za.co.absa.enceladus.model.menas.MenasReference
 
 @Service
-class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository)
-  extends VersionedModelService(datasetMongoRepository) {
+class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepository) extends VersionedModelService(datasetMongoRepository) {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
-    super.update(username, dataset.name) { latest =>
+    super.update(username, dataset.name, dataset.version) { latest =>
       latest
         .setSchemaName(dataset.schemaName)
         .setSchemaVersion(dataset.schemaVersion)
@@ -55,8 +57,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     super.create(dataset, username)
   }
 
-  def addConformanceRule(username: String, datasetName: String, rule: ConformanceRule): Future[Option[Dataset]] = {
-    super.update(username, datasetName) { dataset =>
+  def addConformanceRule(username: String, datasetName: String, datasetVersion: Int, rule: ConformanceRule): Future[Option[Dataset]] = {
+    super.update(username, datasetName, datasetVersion) { dataset =>
       dataset.copy(conformance = dataset.conformance :+ rule)
     }
   }

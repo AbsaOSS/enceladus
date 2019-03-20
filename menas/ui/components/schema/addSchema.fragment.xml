@@ -17,8 +17,8 @@
 	<Dialog id="addSchemaDialog" title="New Schema" stretchOnPhone="true">
 		<content>
 			<VBox>
-				<Input id="newSchemaName" type="text" placeholder="Schema name*" width="100%" value="{/newSchema/name}"></Input>
-				<Input id="newSchemaDescription" type="text" placeholder="Description" width="100%" value="{/newSchema/description}"></Input>
+				<Input id="newSchemaName" type="Text" placeholder="Schema name*" width="100%" value="{/newSchema/name}"></Input>
+				<Input id="newSchemaDescription" type="Text" placeholder="Description" width="100%" value="{/newSchema/description}"></Input>
 			</VBox>
 		</content>
 		<buttons>

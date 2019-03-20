@@ -30,12 +30,18 @@ import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSumma
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
+import za.co.absa.enceladus.rest.exceptions.EntityAlreadyExistsException
+import za.co.absa.enceladus.rest.exceptions.NotFoundException
 
 abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatabase)(implicit ct: ClassTag[C])
   extends MongoRepository[C](mongoDb) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  private def getParent(oldEntity: C): MenasReference = {
+    MenasReference(collection = Some(collectionName), name = oldEntity.name, version = oldEntity.version) 
+  }
+  
   def getLatestVersions(): Future[Seq[VersionedSummary]] = {
     val pipeline = Seq(
       filter(getNotDisabledFilter),
@@ -48,17 +54,18 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.find(getNameVersionFilterEnabled(name, Some(version))).headOption()
   }
 
-  def getLatestVersionValue(name: String): Future[Int] = {
+  def getLatestVersionValue(name: String): Future[Option[Int]] = {
     val pipeline = Seq(
       filter(getNameFilter(name)),
       filter(getNotDisabledFilter),
       Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
     )
-    collection.aggregate[VersionedSummary](pipeline).head().map(_.latestVersion)
+    collection.aggregate[VersionedSummary](pipeline).headOption().map(_.map(_.latestVersion))
   }
 
-  def getAllVersions(name: String): Future[Seq[C]] = {
-    collection.find(getNameFilterEnabled(name)).toFuture()
+  def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {
+    val filter = if(inclDisabled) getNameFilter(name) else getNameFilterEnabled(name)
+    collection.find(filter).toFuture()
   }
 
   def create(item: C, username: String): Future[Completed] = {
@@ -69,8 +76,16 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     )
   }
 
-  def update(username: String, updated: C): Future[Completed] = {
-    collection.insertOne(updated.setUpdatedInfo(username).setVersion(updated.version + 1).asInstanceOf[C]).head()
+  def update(username: String, updated: C): Future[C] = {
+    for {
+      latestVersion <- getLatestVersionValue(updated.name)
+      newVersion <- if(latestVersion.isEmpty) throw new NotFoundException()
+           else if(latestVersion.get != updated.version) throw new EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.") 
+           else Future.successful(latestVersion.get + 1)
+      newInfo <- Future.successful(updated.setUpdatedInfo(username).setVersion(newVersion).setParent(Some(getParent(updated))).asInstanceOf[C])
+      res <- collection.insertOne(newInfo).toFuture()
+    } yield newInfo
+    
   }
 
   def disableVersion(name: String, version: Option[Int], username: String): Future[UpdateResult] = {
@@ -80,7 +95,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       set("userDisabled", username))).toFuture()
   }
 
-  def getUsedIn(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = {
+  def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = {
     val filter = version match {
       case Some(ver) => Filters.and(getNotDisabledFilter, equal(refNameCol, name), equal(refVersionCol, ver))
       case None      => Filters.and(getNotDisabledFilter, equal(refNameCol, name))

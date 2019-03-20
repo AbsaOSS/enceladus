@@ -19,35 +19,47 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.{MappingTable, UsedIn}
 import za.co.absa.enceladus.rest.repositories.{DatasetMongoRepository, MappingTableMongoRepository}
-
 import scala.concurrent.Future
+import za.co.absa.enceladus.model.DefaultValue
 
 @Service
-class MappingTableService @Autowired()(mappingTableMongoRepository: MappingTableMongoRepository,
-                                       datasetMongoRepository: DatasetMongoRepository)
-  extends VersionedModelService(mappingTableMongoRepository) {
+class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTableMongoRepository,
+    datasetMongoRepository: DatasetMongoRepository) extends VersionedModelService(mappingTableMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
-    datasetMongoRepository.getUsedIn("name", "version", name, version).map { usedInD =>
-      UsedIn(Some(usedInD))
+  override def getUsedIn(mappingTableName: String, mappingTableVersion: Option[Int]): Future[UsedIn] = {
+    val used = mappingTableVersion match {
+      case Some(version) => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName), ("mappingTableVersion", version))
+      case None          => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName))
     }
+    
+    used.map(refs => UsedIn(Some(refs), None))
   }
 
   override def create(mt: MappingTable, username: String): Future[Option[MappingTable]] = {
-    val mappingTable = MappingTable(
-      name = mt.name,
+    val mappingTable = MappingTable(name = mt.name,
       description = mt.description,
       schemaName = mt.schemaName,
       schemaVersion = mt.schemaVersion,
-      hdfsPath = mt.hdfsPath
-    )
+      hdfsPath = mt.hdfsPath)
     super.create(mappingTable, username)
   }
 
+  def updateDefaults(username: String, mtName: String, mtVersion: Int, defaultValues: List[DefaultValue]): Future[Option[MappingTable]] = {
+    super.update(username, mtName, mtVersion) { latest =>
+      latest.setDefaultMappingValue(defaultValues)
+    }
+  }
+
+  def addDefault(username: String, mtName: String, mtVersion: Int, defaultValue: DefaultValue): Future[Option[MappingTable]] = {
+    super.update(username, mtName, mtVersion) { latest =>
+      latest.setDefaultMappingValue(latest.defaultMappingValue :+ defaultValue)
+    }
+  }
+
   override def update(username: String, mt: MappingTable): Future[Option[MappingTable]] = {
-    super.update(username, mt.name) { latest =>
+    super.update(username, mt.name, mt.version) { latest =>
       latest
         .setHDFSPath(mt.hdfsPath)
         .setSchemaName(mt.schemaName)

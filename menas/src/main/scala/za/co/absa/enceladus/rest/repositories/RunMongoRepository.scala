@@ -42,7 +42,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private[repositories] override def collectionName: String = RunMongoRepository.collectionName
+  private[rest] override def collectionName: String = RunMongoRepository.collectionName
 
   private val summaryProjection: Bson = project(fields(
     computed("datasetName", "$dataset"),

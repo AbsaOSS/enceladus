@@ -29,31 +29,40 @@ var DatasetService = new function() {
       else if (bLoadFirst)
         DatasetService.getDatasetVersion(oData[0]._id, oData[0].latestVersion)
     }, function() {
-      sap.m.MessageBox
-          .error("Failed to get the list of datasets. Please wait a moment and try reloading the application")
+      sap.m.MessageBox.error("Failed to get the list of datasets. Please wait a moment and try reloading the application")
     })
   };
 
-    this.getLatestDatasetVersion = function(sId) {
-        Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/latest", "GET", {}, function(oData) {
-          DatasetService.setCurrentDataset(oData);
-        }, function() {
-            sap.m.MessageBox.error("Failed to get the detail of the dataset. Please wait a moment and try reloading the application");
-            window.location.hash = "#/dataset"
-        })
-    };
+  this.getLatestDatasetVersion = function(sId) {
+    Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/latest", "GET", {}, function(oData) {
+      DatasetService.setCurrentDataset(oData);
+      DatasetService.getAuditTrail(oData["name"]);
+    }, function() {
+      sap.m.MessageBox.error("Failed to get the detail of the dataset. Please wait a moment and try reloading the application");
+      window.location.hash = "#/dataset"
+    })
+  };
 
-    this.getDatasetVersion = function(sId, iVersion, sModelPath) {
-        var modelPath;
-        if(sModelPath) modelPath = sModelPath;
-        else modelPath = "/currentDataset";
-        Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, function(oData) {
-            model.setProperty(modelPath, oData)
-        }, function() {
-            sap.m.MessageBox.error("Failed to get the detail of the dataset. Please wait a moment and try reloading the application");
-            window.location.hash = "#/dataset"
-        })
-    };
+  this.getDatasetVersion = function(sId, iVersion, sModelPath) {
+    var modelPath;
+    if(sModelPath) modelPath = sModelPath;
+    else modelPath = "/currentDataset";
+    Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, function(oData) {
+      model.setProperty(modelPath, oData)
+      DatasetService.getAuditTrail(oData["name"]);
+    }, function() {
+      sap.m.MessageBox.error("Failed to get the detail of the dataset. Please wait a moment and try reloading the application");
+      window.location.hash = "#/dataset"
+    })
+  };
+
+  this.getAuditTrail = function(sId) {
+    Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/audit", "GET", {}, function(oData) {
+      model.setProperty("/currentDataset/auditTrail", oData)
+    }, function() {
+      sap.m.MessageBox.error("Failed to get the audit trail of the dataset. Please wait a moment and/or try reloading the application")
+    })    
+  };  
 
     this.disableDataset = function(sId, iVersion) {
       let uri = "api/dataset/disable/" + encodeURI(sId);
@@ -82,6 +91,7 @@ var DatasetService = new function() {
             DatasetService.getDatasetList();
             SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
             DatasetService.setCurrentDataset(oData);
+            DatasetService.getAuditTrail(oData["name"]);
             sap.m.MessageToast.show("Dataset created.");
         }, function() {
             sap.m.MessageBox.error("Failed to create the dataset, try reloading the application or try again later.")
@@ -92,6 +102,7 @@ var DatasetService = new function() {
       Functions.ajax("api/dataset/edit", "POST", oDataset, function(oData) {
             DatasetService.getDatasetList();
             DatasetService.setCurrentDataset(oData);
+            DatasetService.getAuditTrail(oData["name"]);
             SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
             sap.m.MessageToast.show("Dataset updated.");
         }, function() {

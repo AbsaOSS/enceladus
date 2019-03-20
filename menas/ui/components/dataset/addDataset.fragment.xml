@@ -21,9 +21,9 @@
                     <form:content>
                         <Label text="Dataset Name"/>
                         <Input id="newDatasetName" enabled="{path:'entity>/isEdit', formatter:'Formatters.not'}"
-                               type="text" placeholder="Dataset name*" width="100%" value="{entity>/name}"/>
+                               type="Text" placeholder="Dataset name*" width="100%" value="{entity>/name}"/>
                         <Label text="Dataset Description"/>
-                        <Input id="newDatasetDescription" type="text" placeholder="Description" width="100%"
+                        <Input id="newDatasetDescription" type="Text" placeholder="Description" width="100%"
                                value="{entity>/description}"/>
                         <core:Fragment type="XML" fragmentName="components.schemaSelector" />
                         <Label text="HDFS raw data folder path" />

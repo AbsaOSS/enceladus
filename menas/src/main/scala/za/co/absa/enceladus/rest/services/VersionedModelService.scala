@@ -20,14 +20,16 @@ import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import za.co.absa.enceladus.model.UsedIn
+import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
-import za.co.absa.enceladus.rest.exceptions.{EntityInUseException, ValidationException}
+import za.co.absa.enceladus.rest.exceptions._
 import za.co.absa.enceladus.rest.models.Validation
 import za.co.absa.enceladus.rest.repositories.VersionedMongoRepository
-
+import za.co.absa.enceladus.model.menas.audit._
 import scala.concurrent.Future
+import java.time.ZonedDateTime
 
-abstract class VersionedModelService[C <: VersionedModel](versionedMongoRepository: VersionedMongoRepository[C])
+abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]](versionedMongoRepository: VersionedMongoRepository[C])
   extends ModelService(versionedMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -47,32 +49,72 @@ abstract class VersionedModelService[C <: VersionedModel](versionedMongoReposito
   }
 
   def getLatestVersion(name: String): Future[Option[C]] = {
-    versionedMongoRepository.getLatestVersionValue(name).flatMap(version => getVersion(name, version))
+    versionedMongoRepository.getLatestVersionValue(name).flatMap({
+      case Some(version) => getVersion(name, version)
+      case _ => throw NotFoundException()
+    })
+    
+  }
+  
+  def getLatestVersionValue(name: String): Future[Option[Int]] = {
+    versionedMongoRepository.getLatestVersionValue(name)
+  }
+  
+  private[services] def getParents(name: String, fromVersion: Option[Int] = None): Future[Seq[C]] = {
+    for {
+      versions <- {
+        //store all in version ascending order
+        val all = versionedMongoRepository.getAllVersions(name, true).map(_.sortBy(_.version))
+        //get those relevant to us
+        if (fromVersion.isDefined) all.map(_.filter(_.version <= fromVersion.get)) else all
+      }
+      res <- {
+        //see if this was branched from a different entity
+        val topParent = if (versions.isEmpty) None
+          else if (versions.head.parent.isEmpty) None
+          else versions.head.parent
+        if(topParent.isDefined) getParents(topParent.get.name, Some(topParent.get.version)) else Future.successful(Seq())
+      }
+    } yield res ++ versions
+  }
+  
+  def getAuditTrail(name: String): Future[AuditTrail] = {
+    val allParents = getParents(name)
+    
+    allParents.map({ parents =>
+      val msgs = if(parents.size < 2) Seq() else {
+        val pairs = parents.sliding(2)
+        pairs.map(p => p.head.getAuditMessages(p(1))).toSeq
+      }
+      AuditTrail(msgs.reverse :+ parents.head.createdMessage)
+    })
   }
 
   def getUsedIn(name: String, version: Option[Int]): Future[UsedIn]
 
-  def create(item: C, username: String): Future[Option[C]] = {
+  private[rest] def getMenasRef(item: C): MenasReference = MenasReference(Some(versionedMongoRepository.collectionName), item.name, item.version)
+
+  private[rest] def create(item: C, username: String): Future[Option[C]] = {
     for {
       validation <- validate(item)
-      _ <-
-        if (validation.isValid()) versionedMongoRepository.create(item, username)
-        else throw ValidationException(validation)
+      _ <- if (validation.isValid()) versionedMongoRepository.create(item, username)
+      else throw ValidationException(validation)
       detail <- getLatestVersion(item.name)
     } yield detail
   }
 
   def update(username: String, item: C): Future[Option[C]]
 
-  def update(username: String, itemName: String)(transform: C => C): Future[Option[C]] = {
-    getLatestVersion(itemName).flatMap {
-      case Some(latest) =>
-        versionedMongoRepository.update(username, transform(latest)).flatMap { _ =>
-          getLatestVersion(itemName)
-        }
-      case None => Future.successful(None)
-    }
+  private[services] def update(username: String, itemName: String, itemVersion: Int)(transform: C => C): Future[Option[C]] = {
+    for {
+      version <- getVersion(itemName, itemVersion)
+      transformed <- if (version.isEmpty) Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
+      else Future.successful(transform(version.get))
+      update <- versionedMongoRepository.update(username, transformed)
+    } yield Some(update)
   }
+
+  def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
 
   def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
     val auth = SecurityContextHolder.getContext.getAuthentication

@@ -17,7 +17,7 @@
 	<Dialog id="editSchemaDialog" title="Edit Schema" stretchOnPhone="true">
 		<content>
 			<VBox>
-				<Input id="editSchemaDescription" type="text" placeholder="Description" width="100%" value="{/newSchema/description}"></Input>
+				<Input id="editSchemaDescription" type="Text" placeholder="Description" width="100%" value="{/newSchema/description}"></Input>
 			</VBox>
 		</content>
 		<buttons>

@@ -19,6 +19,8 @@ import java.time.ZonedDateTime
 
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
+import za.co.absa.enceladus.model.menas.audit._
+import za.co.absa.enceladus.model.menas.MenasReference
 
 case class Dataset(
   name:    String,
@@ -40,8 +42,9 @@ case class Dataset(
   disabled:     Boolean               = false,
   dateDisabled: Option[ZonedDateTime] = None,
   userDisabled: Option[String]        = None,
-  conformance:  List[ConformanceRule]) extends VersionedModel {
-
+  conformance:  List[ConformanceRule],
+  parent:       Option[MenasReference] = None) extends VersionedModel with Auditable[Dataset] {
+    
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
   override def setLastUpdated(time: ZonedDateTime): VersionedModel = this.copy(lastUpdated = time)
@@ -54,6 +57,7 @@ case class Dataset(
   def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
   def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
+  override def setParent(newParent: Option[MenasReference]) = this.copy(parent = newParent)
 
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the dots are
@@ -67,6 +71,10 @@ case class Dataset(
    */
   def decode: Dataset = substituteMappingConformanceRuleCharacter(this, MappingConformanceRule.DOT_REPLACEMENT_SYMBOL, '.')
 
+  override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
+    updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
+    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset ${name} created.")))
+
   private def substituteMappingConformanceRuleCharacter(dataset: Dataset, from: Char, to: Char): Dataset = {
     val conformanceRules = dataset.conformance.map {
       case m: MappingConformanceRule => {
@@ -78,5 +86,18 @@ case class Dataset(
     }
 
     dataset.copy(conformance = conformanceRules)
+  }
+
+  override def getAuditMessages(newRecord: Dataset): AuditTrailEntry = {
+    AuditTrailEntry(menasRef = MenasReference(collection = None, name = newRecord.name, version = newRecord.version),
+      updated = newRecord.lastUpdated,
+      updatedBy = newRecord.userUpdated,
+      changes = super.getPrimitiveFieldsAudit(newRecord,
+        Seq(AuditFieldName("description", "Description"),
+          AuditFieldName("hdfsPath", "HDFS Path"),
+          AuditFieldName("hdfsPublishPath", "HDFS Publish Path"),
+          AuditFieldName("schemaName", "Schema Name"),
+          AuditFieldName("schemaVersion", "Schema Version"))) ++
+        super.getSeqFieldsAudit(newRecord, AuditFieldName("conformance", "Conformance rule")))
   }
 }
