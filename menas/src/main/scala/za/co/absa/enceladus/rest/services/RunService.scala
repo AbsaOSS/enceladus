@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest.exceptions.{NotFoundException, ValidationException}
-import za.co.absa.enceladus.rest.models.Validation
+import za.co.absa.enceladus.rest.models.{RunSummary, Validation}
 import za.co.absa.enceladus.rest.repositories.RunMongoRepository
 
 import scala.concurrent.Future
@@ -49,6 +49,18 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
         val validation = Validation().withError("startDate", s"must have format dd-MM-yyyy: $startDate")
         throw ValidationException(validation)
     }
+  }
+
+  def getAllSummaries(): Future[Seq[RunSummary]] = {
+    runMongoRepository.getAllSummaries()
+  }
+
+  def getSummariesByDatasetName(datasetName: String): Future[Seq[RunSummary]] = {
+    runMongoRepository.getSummariesByDatasetName(datasetName)
+  }
+
+  def getSummariesByDatasetNameAndVersion(datasetName: String, datasetVersion: Int): Future[Seq[RunSummary]] = {
+    runMongoRepository.getSummariesByDatasetNameAndVersion(datasetName, datasetVersion)
   }
 
   def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Run] = {
