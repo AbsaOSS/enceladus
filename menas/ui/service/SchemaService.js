@@ -21,9 +21,9 @@ var SchemaService = new function() {
   this.getSchemaList = function(bLoadFirst, bGetAllVersionsOfFirst) {
     Functions.ajax("api/schema/list", "GET", {}, function(oData) {
       model.setProperty("/schemas", oData)
-      if (oData.length > 0 && bLoadFirst) {
+      if(oData.length > 0 && bLoadFirst) {
         SchemaService.getSchemaVersion(oData[0]._id, oData[0].latestVersion)
-      } else if (bGetAllVersionsOfFirst) {
+      } else if(bGetAllVersionsOfFirst) {
         SchemaService.getAllSchemaVersions(oData[0]._id)
       }
     }, function() {
@@ -52,7 +52,7 @@ var SchemaService = new function() {
 
   this.getSchemaVersion = function(sId, iVersion, sModelPath) {
     var modelPath;
-    if (sModelPath)
+    if(sModelPath)
       modelPath = sModelPath
     else
       modelPath = "/currentSchema"
@@ -68,9 +68,9 @@ var SchemaService = new function() {
 
   this.updateSchema = function(sId, iVersion, sDesc) {
     Functions.ajax("api/schema/edit", "POST", {
-      name : sId,
-      version : iVersion,
-      description : sDesc
+      name: sId,
+      version: iVersion,
+      description: sDesc
     }, function(oData) {
       model.setProperty("/currentSchema", oData)
       SchemaService.getAuditTrail(oData.name);
@@ -89,14 +89,14 @@ var SchemaService = new function() {
   };
 
   this.getAllSchemaVersions = function(sName, oControl, oModel, sProperty) {
-    if (oControl)
+    if(oControl)
       oControl.setBusy(true);
     Functions.ajax("api/schema/allVersions/" + encodeURI(sName), "GET", {}, function(oData) {
       model.setProperty("/currentSchemaVersions", oData);
-      if (oControl) {
+      if(oControl) {
         oControl.setBusy(false);
       }
-      if (oModel && sProperty) {
+      if(oModel && sProperty) {
         oModel.setProperty(sProperty, oData[oData.length - 1].version)
       }
     }, function() {
@@ -107,20 +107,20 @@ var SchemaService = new function() {
 
   this.disableSchema = function(sId, iVersion) {
     let uri = "api/schema/disable/" + encodeURI(sId);
-    if (typeof (iVersion) !== "undefined") {
+    if(typeof (iVersion) !== "undefined") {
       uri += "/" + encodeURI(iVersion)
     }
 
     Functions.ajax(uri, "GET", {}, function(oData) {
       sap.m.MessageToast.show("Schema disabled.");
-      if (window.location.hash !== "#/schema") {
+      if(window.location.hash !== "#/schema") {
         window.location.hash = "#/schema"
       } else {
         SchemaService.getSchemaList(true, false)
         SchemaService.getAuditTrail(oData.name);
       }
     }, function(xhr) {
-      if (xhr.status === 400) {
+      if(xhr.status === 400) {
         let oData = JSON.parse(xhr.responseText);
 
         let err = EntityService.buildDisableFailureMsg(oData, "Dataset");
@@ -134,8 +134,8 @@ var SchemaService = new function() {
 
   this.createSchema = function(sName, sDescription) {
     Functions.ajax("api/schema/create", "POST", {
-      name : sName,
-      description : sDescription
+      name: sName,
+      description: sDescription
     }, function(oData) {
       SchemaService.getSchemaList();
       model.setProperty("/currentSchema", oData)
@@ -162,7 +162,7 @@ var SchemaService = new function() {
     let pathToks = sBindingPath.replace(sModelPathBase, "").split("/");
 
     let helper = function(aToks, sModelPathAcc, aAcc) {
-      if (aToks.length === 0) {
+      if(aToks.length === 0) {
         return aAcc.join(".");
       }
 
