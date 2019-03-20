@@ -1,18 +1,21 @@
-def nexusSnapshotRepoDetails = getNexusSnapshotRepoDetails()
-def nexusReleaseRepoDetails = getNexusReleaseRepoDetails()
-def mavenSettingsId = getMavenSettingsId()
-def mavenAdditionalSettings = getMavenAdditionalSettings()
 def enceladusSlaveLabel = getEnceladusSlaveLabel()
-def deploymentStageRun = 'false'
+def toolVersionJava = getToolVersionJava()
+def toolVersionMaven = getToolVersionMaven()
+def toolVersionGit = getToolVersionGit()
+def mavenSettingsId = getMavenSettingsId()
+def mavenAdditionalSettingsBuild = getMavenAdditionalSettingsBuild()
+def mavenAdditionalSettingsDeploy = getMavenAdditionalSettingsDeploy()
+def nexusURL = getNexusUrl()
+
 
 pipeline {
     agent {
         label "${enceladusSlaveLabel}"
     }
     tools {
-        jdk 'openjdk-1.8.0'
-        maven 'Maven-3.6.0'
-        git 'git-latest'
+        jdk "${toolVersionJava}"
+        maven "${toolVersionMaven}"
+        git "${toolVersionGit}"
     }
     options {
         buildDiscarder(logRotator(numToKeepStr: '20'))
@@ -27,43 +30,21 @@ pipeline {
         stage ('Build') {
             steps {
                 configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
-                    sh "mvn -s $MAVEN_SETTINGS_XML clean package ${mavenAdditionalSettings}"
+                    sh "mvn -s $MAVEN_SETTINGS_XML ${mavenAdditionalSettings} clean package"
                 }
             }
         }
-        stage ('Deploy-to-Snapshot') {
+        stage ('Deploy') {
             when {
-                    branch 'develop'
+                expression { 
+                    env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'master' 
+                }
             }
             steps {
                 configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
-                    sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${nexusSnapshotRepoDetails} -DskipTests -Dmaven.test.skip deploy"
-                }
-                script {
-                    deploymentStageRun = sh(returnStdout: true, script: "echo true")
+                    sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${nexusURL} ${mavenAdditionalSettingsDeploy} deploy"
                 }
             }
-        }
-        stage ('Deploy-to-Release') {
-            when {
-                    branch 'master'
-            }
-            steps {
-                configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
-                    sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${nexusReleaseRepoDetails} -DskipTests -Dmaven.test.skip deploy"
-                }
-                script {
-                    deploymentStageRun = sh(returnStdout: true, script: "echo true")
-                }
-            }
-        }
-    }
-    post {
-        success {
-            script {
-                if (deploymentStageRun != 'true')
-                    sh "echo 'Deployment of artifacts to internal repository skipped, branch is not develop/master'"
-            }
-        }
+         }
     }
 }
