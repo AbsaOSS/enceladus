@@ -268,9 +268,8 @@
                         <phase>validate</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.basedir}/src/main/resources/application.conf.template" tofile="${project.basedir}/src/main/resources/application.conf" failonerror="false" overwrite="false" />
+                                <copy file="${project.basedir}/src/main/resources/application.conf.template" tofile="${project.basedir}/src/main/resources/application.conf" overwrite="false" />
                             </target>
-                            <failOnError>false</failOnError>
                         </configuration>
                         <goals>
                             <goal>run</goal>
