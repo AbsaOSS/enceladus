@@ -28,7 +28,7 @@ trait SparkTestBase {
   .config("spark.driver.bindAddress","127.0.0.1")
   .config("spark.driver.host", "127.0.0.1")
   .getOrCreate()
-  TimeZoneNormalizer.normalizeTimezone()
+  TimeZoneNormalizer.normalizeAll(Seq(spark))
 
   // Do not display INFO entries for tests
   Logger.getLogger("org").setLevel(Level.WARN)

@@ -46,7 +46,7 @@ object DynamicConformanceJob {
   private val infoDateColumn = "enceladus_info_date"
   private val infoVersionColumn = "enceladus_info_version"
 
-  private val log: Logger = LogManager.getLogger("enceladus.conformance.DynamicConformanceJob")
+  private val log: Logger = LogManager.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
 
   def main(args: Array[String]) {
@@ -101,7 +101,7 @@ object DynamicConformanceJob {
     val spark: SparkSession = SparkSession.builder()
       .appName(s"Dynamic Conformance ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} ${cmd.reportVersion}")
       .getOrCreate()
-    TimeZoneNormalizer.normalizeTimezone()(spark)
+    TimeZoneNormalizer.normalizeAll(Seq(spark))
     spark
   }
 

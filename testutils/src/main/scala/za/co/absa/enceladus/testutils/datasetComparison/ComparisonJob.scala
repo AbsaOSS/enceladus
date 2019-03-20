@@ -68,7 +68,7 @@ object ComparisonJob {
       .appName(s"Dataset comparison - '${cmd.newPath}' and '${cmd.refPath}'")
       .config("spark.sql.codegen.wholeStage", enableWholeStage)
       .getOrCreate()
-    TimeZoneNormalizer.normalizeTimezone()
+    TimeZoneNormalizer.normalizeAll(Seq(sparkSession))
 
     implicit val sc: SparkContext = sparkSession.sparkContext
 

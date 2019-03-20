@@ -26,37 +26,31 @@ import org.apache.spark.sql.SparkSession
    */
 object TimeZoneNormalizer {
   private val log: Logger = LogManager.getLogger(this.getClass)
-  private val timeZone: String = getConf("timezone", "UTC")
-
+  private lazy val timeZone: String = getConf("timezone", "UTC")
 
   private def getConf(path: String, default: String): String = {
     val config: Config = ConfigFactory.load()
     if (config.hasPath(path)) {
       config.getString(path)
     } else {
-      log.warn(s"No time zone (TimeZone) setting found. Setting to default, which is $default.")
+      log.warn(s"No time zone (timezone) setting found. Setting to default, which is $default.")
       default
     }
   }
 
-  private def setJVMTimeZone(): Unit = {
+  def normalizeJVMTimeZone(): Unit = {
     TimeZone.setDefault(TimeZone.getTimeZone(timeZone))
     log.debug(s"JVM time zone set to $timeZone")
   }
 
   def normalizeSessionTimeZone(spark: SparkSession): Unit = {
     spark.conf.set("spark.sql.session.timeZone", timeZone)
-    log.debug(s"Spark session time zone of name ${spark.sparkContext.appName} set to $timeZone")
+    log.debug(s"Spark session ${spark.sparkContext.applicationId} time zone of name ${spark.sparkContext.appName} set to $timeZone")
   }
 
-  // scalastyle:off null
-  // Not nice, but we want to use null here in case no Spark session is available
-  def normalizeTimezone()(implicit spark: SparkSession = null): Unit = {
-    setJVMTimeZone()
-    if (spark != null) {
-      normalizeSessionTimeZone(spark)
-    } // else even if no Spark session was provided, the JVM time zone was still normalized
+  def normalizeAll(spars: Seq[SparkSession]): Unit = {
+    normalizeJVMTimeZone()
+    spars.foreach(normalizeSessionTimeZone)
   }
-  // scalastyle:on null
 
 }

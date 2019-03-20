@@ -40,7 +40,7 @@ object RestRunnerJob {
       .appName(s"Rest call test from - '${cmd.testDataPath}")
       .config("spark.sql.codegen.wholeStage", enableWholeStage)
       .getOrCreate()
-    TimeZoneNormalizer.normalizeTimezone()
+    TimeZoneNormalizer.normalizeAll(Seq(sparkSession))
 
     implicit val sc: SparkContext = sparkSession.sparkContext
 

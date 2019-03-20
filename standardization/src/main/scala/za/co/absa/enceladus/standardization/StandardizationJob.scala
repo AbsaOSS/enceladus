@@ -98,7 +98,7 @@ object StandardizationJob {
       .appName(s"Standardisation ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} ${cmd.reportVersion}")
       .config("spark.sql.codegen.wholeStage", false) //disable whole stage code gen - the plan is too long
       .getOrCreate()
-    TimeZoneNormalizer.normalizeTimezone()(spark)
+    TimeZoneNormalizer.normalizeAll(Seq(spark))
     spark
   }
 

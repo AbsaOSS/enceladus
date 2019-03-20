@@ -34,7 +34,7 @@ class SparkConfig {
       .config("spark.driver.bindAddress","127.0.0.1")
       .appName("Menas Spark controller")
       .getOrCreate()
-    TimeZoneNormalizer.normalizeTimezone()(sparkSession)
+    TimeZoneNormalizer.normalizeAll(Seq(sparkSession))
     sparkSession
   }
 
