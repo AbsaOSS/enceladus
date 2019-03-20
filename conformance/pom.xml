@@ -140,6 +140,7 @@
                         <configuration>
                             <target>
                                 <copy file="${project.basedir}/src/main/resources/application.conf.template" tofile="${project.basedir}/src/main/resources/application.conf" overwrite="false" />
+                                <copy file="${project.basedir}/src/main/resources/spline.properties.template" tofile="${project.basedir}/src/main/resources/spline.properties" overwrite="false" />                                
                             </target>
                         </configuration>
                         <goals>
