@@ -170,9 +170,6 @@
                                             </items>
                                         </Table>
                                     </IconTabFilter>
-                                    <IconTabFilter id="Lineage" icon="sap-icon://tree" key="lineage"
-                                                   text="Lineage">
-                                    </IconTabFilter>
                                 </items>
                             </IconTabBar>
                         </content>
