@@ -63,7 +63,7 @@ object CustomRuleSample1 {
       )
     )
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
     outputData.show(false)
   }
 }

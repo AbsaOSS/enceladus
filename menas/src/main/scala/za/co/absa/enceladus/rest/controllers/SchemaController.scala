@@ -31,13 +31,13 @@ import za.co.absa.enceladus.rest.utils.converters.SparkMenasSchemaConvertor
 
 @RestController
 @RequestMapping(Array("/api/schema"))
-class SchemaController @Autowired() (schemaService:     SchemaService,
-                                     attachmentService: AttachmentService,
-                                     sparkMenasConvertor: SparkMenasSchemaConvertor)
+class SchemaController @Autowired() (
+  schemaService:     SchemaService,
+  attachmentService: AttachmentService,
+  sparkMenasConvertor: SparkMenasSchemaConvertor)
   extends VersionedModelController(schemaService) {
 
   import za.co.absa.enceladus.rest.utils.implicits._
-
   import scala.concurrent.ExecutionContext.Implicits.global
 
   @PostMapping(Array("/upload"))
@@ -52,7 +52,7 @@ class SchemaController @Autowired() (schemaService:     SchemaService,
 
     for {
       upload <- attachmentService.uploadAttachment(origFile)
-      update <- schemaService.update(principal.getUsername, name)(oldSchema => oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(struct.fields).toList))
+      update <- schemaService.schemaUpload(principal.getUsername, name, version, struct)
     } yield update
   }
 

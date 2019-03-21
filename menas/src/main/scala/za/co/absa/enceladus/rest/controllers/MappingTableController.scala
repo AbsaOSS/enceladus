@@ -37,25 +37,23 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
   @PostMapping(path = Array("/updateDefaults"))
   @ResponseStatus(HttpStatus.OK)
   def updateDefaults(@AuthenticationPrincipal user: UserDetails,
-                     @RequestBody upd: MenasObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
-    mappingTableService.update(user.getUsername, upd.id.name) { mt =>
-      mt.setDefaultMappingValue(upd.value.toList)
-    }.map {
-      case Some(entity) => entity
-      case None         => throw notFound()
-    }
+    @RequestBody upd: MenasObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
+    mappingTableService.updateDefaults(user.getUsername, upd.id.name,
+      upd.id.version, upd.value.toList).map {
+        case Some(entity) => entity
+        case None         => throw notFound()
+      }
   }
 
   @PostMapping(path = Array("/addDefault"))
   @ResponseStatus(HttpStatus.OK)
   def addDefault(@AuthenticationPrincipal user: UserDetails,
-                 @RequestBody newDefault: MenasObject[DefaultValue]): CompletableFuture[MappingTable] = {
-    mappingTableService.update(user.getUsername, newDefault.id.name) { mt =>
-      mt.setDefaultMappingValue(mt.defaultMappingValue :+ newDefault.value)
-    }.map {
-      case Some(entity) => entity
-      case None         => throw notFound()
-    }
+    @RequestBody newDefault: MenasObject[DefaultValue]): CompletableFuture[MappingTable] = {
+    mappingTableService.addDefault(user.getUsername, newDefault.id.name,
+      newDefault.id.version, newDefault.value).map {
+        case Some(entity) => entity
+        case None         => throw notFound()
+      }
   }
 
 }

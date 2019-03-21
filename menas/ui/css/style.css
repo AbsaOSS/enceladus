@@ -26,8 +26,29 @@ html, body {
   min-width: 40rem !important;
 }
 
+.mt10 {
+	margin-top: 10px;
+}
+
 .menasAddMappingFlex {
   div {
     width: calc(100% - 38px);
   }
+}
+
+.auditTrailNestedListItem {
+	max-width: 100%;
+	background-color: inherit !important;
+	border-bottom: 0px !important;
+}
+
+.auditTrailNestedList > ul > .sapMListNoData {
+    background-color: inherit !important;
+    border-bottom: 0px !important;
+    padding-left: 0px !important;
+}
+
+.auditTrailNestedList > ul > li {
+    width: 100%;
+    display: inline-block !important;
 }

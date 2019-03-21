@@ -12,18 +12,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
-	<Dialog id="addSchemaDialog" title="New Schema" stretchOnPhone="true">
-		<content>
-			<VBox>
-				<Input id="newSchemaName" type="Text" placeholder="Schema name*" width="100%" value="{/newSchema/name}"></Input>
-				<Input id="newSchemaDescription" type="Text" placeholder="Description" width="100%" value="{/newSchema/description}"></Input>
-			</VBox>
-		</content>
-		<buttons>
-			<Button id="newSchemaAddButton" text="Add" icon="sap-icon://accept"></Button>
-			<Button id="newSchemaCancelButton" text="Cancel" icon="sap-icon://cancel"></Button>
-		</buttons>
-	</Dialog>
+    <Text text="Logged in as:"/>
+    <Text text="{/userInfo/username}"/>
+    <Button id="logout" icon="sap-icon://log" press="GenericService.logout()"/>
 </core:FragmentDefinition>

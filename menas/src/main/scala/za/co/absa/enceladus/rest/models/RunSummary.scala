@@ -13,19 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.repositories
+package za.co.absa.enceladus.rest.models
 
-import org.mongodb.scala.{Completed, MongoDatabase, SingleObservable}
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Repository
-import za.co.absa.enceladus.model.menas.MenasAttachment
-
-import scala.reflect.ClassTag
-
-@Repository
-class AttachmentMongoRepository @Autowired()(mongoDb: MongoDatabase)
-  extends MongoRepository[MenasAttachment](mongoDb)(ClassTag(classOf[MenasAttachment])) {
-
-  private[rest] override def collectionName = "attachment"
-
-}
+case class RunSummary(datasetName: String, datasetVersion: Int, runId: Int, status: String, startDateTime: String)

@@ -21,7 +21,11 @@ var MappingTableService = new function () {
   this.getMappingTableList = function (bLoadFirst, bGetSchema) {
     Functions.ajax("api/mappingTable/list", "GET", {}, function (oData) {
       model.setProperty("/mappingTables", oData);
-      if (oData.length > 0 && bLoadFirst)
+      if(oData.length == 0) {
+        //ensure the detail is empty too
+        model.setProperty("/currentMappingTable", {});
+      }
+      else if (bLoadFirst)
         MappingTableService.getMappingTableVersion(oData[0]._id, oData[0].latestVersion, bGetSchema)
     }, function () {
       sap.m.MessageBox.error("Failed to get the list of mapping tables. Please wait a moment and try reloading the application")
@@ -46,6 +50,7 @@ var MappingTableService = new function () {
       if (bGetSchema) {
         SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentMappingTable/schema")
       }
+      MappingTableService.getAuditTrail(oData.name);
     }, function () {
       sap.m.MessageBox.error("Failed to get the detail of the mapping table. Please wait a moment and try reloading the application")
       window.location.hash = "#/mapping"
@@ -59,11 +64,20 @@ var MappingTableService = new function () {
       if (bGetSchema) {
         SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentMappingTable/schema")
       }
+      MappingTableService.getAuditTrail(oData.name);
     }, function () {
       sap.m.MessageBox.error("Failed to get the detail of the mapping table. Please wait a moment and try reloading the application")
       window.location.hash = "#/mapping"
     })
   };
+  
+  this.getAuditTrail = function(sId) {
+    Functions.ajax("api/mappingTable/detail/" + encodeURI(sId) + "/audit", "GET", {}, function(oData) {
+      model.setProperty("/currentMappingTable/auditTrail", oData)
+    }, function() {
+      sap.m.MessageBox.error("Failed to get the audit trail of the mapping table. Please wait a moment and/or try reloading the application")
+    })    
+  };  
 
   this.getMappingTableUsedIn = function (sId, iVersion) {
     Functions.ajax("api/mappingTable/usedIn/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, function (oData) {
@@ -93,6 +107,7 @@ var MappingTableService = new function () {
       MappingTableService.getMappingTableList();
       SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentMappingTable/schema")
       model.setProperty("/currentMappingTable", oData)
+      MappingTableService.getAuditTrail(oData.name);
       sap.m.MessageToast.show("Mapping Table created.");
     }, function () {
       sap.m.MessageBox.error("Failed to create the mapping table, try reloading the application or try again later.")
@@ -109,8 +124,9 @@ var MappingTableService = new function () {
       schemaVersion: iSchemaVersion
     }, function (oData) {
       MappingTableService.getMappingTableList();
-      model.setProperty("/currentMappingTable", oData)
-      SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentMappingTable/schema")
+      model.setProperty("/currentMappingTable", oData);
+      SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentMappingTable/schema");
+      MappingTableService.getAuditTrail(oData.name);
       sap.m.MessageToast.show("Mapping Table updated.");
     }, function () {
       sap.m.MessageBox.error("Failed to create the mapping table, try reloading the application or try again later.")
@@ -127,6 +143,7 @@ var MappingTableService = new function () {
     }, function (oData) {
       MappingTableService.getMappingTableList();
       model.setProperty("/currentMappingTable", oData)
+      MappingTableService.getAuditTrail(oData.name);
       SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentMappingTable/schema")
       sap.m.MessageToast.show("Default values updated.");
     }, function () {
@@ -147,6 +164,7 @@ var MappingTableService = new function () {
     }, function (oData) {
       MappingTableService.getMappingTableList();
       MappingTableService.getLatestMappingTableVersion(sName, true)
+      MappingTableService.getAuditTrail(oData.name);
       sap.m.MessageToast.show("Default value added.");
     }, function () {
       sap.m.MessageBox.error("Failed add default value, try reloading the application or try again later.")

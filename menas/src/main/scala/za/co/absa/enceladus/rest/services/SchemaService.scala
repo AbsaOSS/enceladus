@@ -21,24 +21,32 @@ import za.co.absa.enceladus.model.{Schema, UsedIn}
 import za.co.absa.enceladus.rest.repositories.{DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository}
 
 import scala.concurrent.Future
+import org.apache.spark.sql.types.StructType
+import za.co.absa.enceladus.rest.utils.converters.SparkMenasSchemaConvertor
 
 @Service
-class SchemaService @Autowired()(schemaMongoRepository: SchemaMongoRepository,
-                                 datasetMongoRepository: DatasetMongoRepository,
-                                 mappingTableMongoRepository: MappingTableMongoRepository)
-  extends VersionedModelService(schemaMongoRepository) {
+class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
+    mappingTableMongoRepository: MappingTableMongoRepository,
+    datasetMongoRepository: DatasetMongoRepository,
+    sparkMenasConvertor: SparkMenasSchemaConvertor) extends VersionedModelService(schemaMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
     for {
-      usedInD <- datasetMongoRepository.getUsedIn("schemaName", "schemaVersion", name, version)
-      usedInM <- mappingTableMongoRepository.getUsedIn("schemaName", "schemaVersion", name, version)
+      usedInD <- datasetMongoRepository.findRefEqual("schemaName", "schemaVersion", name, version)
+      usedInM <- mappingTableMongoRepository.findRefEqual("schemaName", "schemaVersion", name, version)
     } yield UsedIn(Some(usedInD), Some(usedInM))
   }
 
+  def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[Option[Schema]] = {
+    super.update(username, schemaName, schemaVersion)({ oldSchema =>
+      oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(fields.fields).toList)
+    })
+  }
+
   override def update(username: String, schema: Schema): Future[Option[Schema]] = {
-    super.update(username, schema.name) { latest =>
+    super.update(username, schema.name, schema.version) { latest =>
       latest.setDescription(schema.description).asInstanceOf[Schema]
     }
   }

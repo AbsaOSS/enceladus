@@ -107,7 +107,7 @@ sap.ui.define([
 
     onRuleSubmit: function () {
       let currentDataset = this._model.getProperty("/currentDataset");
-      let newRule = JSON.parse(JSON.stringify(this._model.getProperty("/newRule")));
+      let newRule = $.extend(true, {}, this._model.getProperty("/newRule"));
       this.beforeSubmitChanges(newRule);
       if(this._model.getProperty("/newRule/isEdit")) {
         this.updateRule(currentDataset, newRule);

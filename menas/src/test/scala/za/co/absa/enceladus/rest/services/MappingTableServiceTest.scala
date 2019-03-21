@@ -15,12 +15,12 @@
 package za.co.absa.enceladus.rest.services
 
 import za.co.absa.enceladus.model.MappingTable
-import za.co.absa.enceladus.rest.repositories.{DatasetMongoRepository, MappingTableMongoRepository}
+import za.co.absa.enceladus.rest.repositories.{ DatasetMongoRepository, MappingTableMongoRepository }
 
 class MappingTableServiceTest extends VersionedModelServiceTest[MappingTable] {
 
-  val datasetMongoRepository = mock[DatasetMongoRepository]
+  val datasetRepository = mock[DatasetMongoRepository]
   override val modelRepository = mock[MappingTableMongoRepository]
-  override val service = new MappingTableService(modelRepository, datasetMongoRepository)
+  override val service = new MappingTableService(modelRepository, datasetRepository)
 
 }

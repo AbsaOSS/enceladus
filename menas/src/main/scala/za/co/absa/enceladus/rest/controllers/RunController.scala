@@ -24,6 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.rest.models.RunSummary
 import za.co.absa.enceladus.rest.services.RunService
 
 @RestController
@@ -42,6 +43,25 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   @ResponseStatus(HttpStatus.OK)
   def getByStartDate(@PathVariable startDate: String): CompletableFuture[Seq[Run]] = {
     runService.getByStartDate(startDate)
+  }
+
+  @GetMapping()
+  @ResponseStatus(HttpStatus.OK)
+  def getAllSummaries(): CompletableFuture[Seq[RunSummary]] = {
+    runService.getAllSummaries()
+  }
+
+  @GetMapping(Array("/{datasetName}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getSummariesByDatasetName(@PathVariable datasetName: String): CompletableFuture[Seq[RunSummary]] = {
+    runService.getSummariesByDatasetName(datasetName)
+  }
+
+  @GetMapping(Array("/{datasetName}/{datasetVersion}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getSummariesByDatasetNameAndVersion(@PathVariable datasetName: String,
+                                          @PathVariable datasetVersion: Int): CompletableFuture[Seq[RunSummary]] = {
+    runService.getSummariesByDatasetNameAndVersion(datasetName, datasetVersion)
   }
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}"))

@@ -160,8 +160,7 @@ object CustomRuleSample4 {
         LPadCustomConformanceRule(order = 1, outputColumn = "final", controlCheckpoint = false, inputColumn = "upper", len = 25, pad = ".")
       )
     )
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
-
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
     outputData.show()
     saveToCsv(outputData, cmdConfigLocal.outPath)
   }

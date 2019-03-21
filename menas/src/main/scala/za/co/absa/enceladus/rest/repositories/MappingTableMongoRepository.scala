@@ -24,8 +24,8 @@ import scala.reflect.ClassTag
 
 @Repository
 class MappingTableMongoRepository @Autowired()(mongoDb: MongoDatabase)
-  extends VersionedMongoRepository[MappingTable](mongoDb: MongoDatabase)(ClassTag(classOf[MappingTable])) {
+  extends VersionedMongoRepository[MappingTable](mongoDb)(ClassTag(classOf[MappingTable])) {
 
-  private[repositories] override def collectionName = "mapping_table"
+  override private[rest] def collectionName = "mapping_table"
 
 }

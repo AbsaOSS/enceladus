@@ -16,12 +16,20 @@ package za.co.absa.enceladus.rest.services
 
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.rest.repositories.{DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository}
+import za.co.absa.enceladus.rest.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.SchemaField
+import scala.concurrent.Future
+import org.mockito.Mockito
+import scala.concurrent.Await
+import za.co.absa.enceladus.model.menas.audit._
 
 class SchemaServiceTest extends VersionedModelServiceTest[Schema] {
 
   val datasetMongoRepository = mock[DatasetMongoRepository]
   val mappingTableMongoRepository = mock[MappingTableMongoRepository]
+  val sparkMenasConvertor = mock[SparkMenasSchemaConvertor]
   override val modelRepository = mock[SchemaMongoRepository]
-  override val service = new SchemaService(modelRepository, datasetMongoRepository, mappingTableMongoRepository)
+  override val service = new SchemaService(modelRepository, mappingTableMongoRepository, datasetMongoRepository, sparkMenasConvertor)
 
 }

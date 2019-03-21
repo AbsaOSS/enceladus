@@ -27,9 +27,10 @@ import za.co.absa.enceladus.model.UsedIn
 import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.rest.exceptions.NotFoundException
 import za.co.absa.enceladus.rest.services.VersionedModelService
+import za.co.absa.enceladus.model.menas.audit._
 
 
-abstract class VersionedModelController[C <: VersionedModel](versionedModelService: VersionedModelService[C])
+abstract class VersionedModelController[C <: VersionedModel with Product with Auditable[C]](versionedModelService: VersionedModelService[C])
   extends BaseController {
 
   import za.co.absa.enceladus.rest.utils.implicits._
@@ -60,6 +61,12 @@ abstract class VersionedModelController[C <: VersionedModel](versionedModelServi
       case None         => throw NotFoundException()
     }
   }
+  
+  @GetMapping(Array("/detail/{name}/audit"))
+  @ResponseStatus(HttpStatus.OK)
+  def getAuditTrail(@PathVariable name: String): CompletableFuture[AuditTrail] = {
+    versionedModelService.getAuditTrail(name)
+  }
 
   @GetMapping(Array("/isUniqueName/{name}"))
   @ResponseStatus(HttpStatus.OK)
@@ -82,8 +89,7 @@ abstract class VersionedModelController[C <: VersionedModel](versionedModelServi
 
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
-  def create(@AuthenticationPrincipal principal: UserDetails,
-             @RequestBody item: C): CompletableFuture[C] = {
+  def create(@AuthenticationPrincipal principal: UserDetails, @RequestBody item: C): CompletableFuture[C] = {
     versionedModelService.create(item, principal.getUsername).map {
       case Some(entity) => entity
       case None         => throw notFound()

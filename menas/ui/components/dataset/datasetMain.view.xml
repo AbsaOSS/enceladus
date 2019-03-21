@@ -24,9 +24,7 @@
 					<Title text="Datasets"/>
 				</contentMiddle>
 				<contentRight>
-					<Text text="Logged in as:"/>
-					<Text text="{/userInfo/username}"/>
-					<Button id="logout" icon="sap-icon://log" press="GenericService.logout"/>
+                    <core:Fragment type="XML" fragmentName="components.userInfo"/>
 				</contentRight>
 			</Bar>
 		</customHeader>
@@ -127,6 +125,46 @@
                                             path: '/currentDataset/conformance',
                                             factory: '.conformanceRuleFactory'
                                         }"/>
+                                    </IconTabFilter>
+                                    <IconTabFilter id="auditTrail" icon="sap-icon://history" text="Audit Trail">
+                                        <Table id="auditTrailTable" itemPress="auditVersionPress" items="{/currentDataset/auditTrail/entries}">
+                                            <columns>
+                                                <Column width="15%">
+                                                    <Text text="Change Time" />
+                                                </Column>   
+                                                <Column width="10%">
+                                                    <Text text="Author" />
+                                                </Column>                                                                                         
+                                                <Column width="10%">
+                                                    <Text text="Dataset Version" />
+                                                </Column>
+                                                <Column width="65%">
+                                                    <Text text="Changes" />
+                                                </Column>
+                                            </columns>
+                                            <items>
+                                                <ColumnListItem id="auditTrailListItem" type="Active" cust:menasRef="{menasRef}">
+                                                    <cells>
+                                                        <Text text="{path: 'updated', formatter:'Formatters.stringDateShortFormatter'}"></Text>    
+                                                        <Text text="{updatedBy}"></Text>                                                                                                        
+                                                        <Text text="{menasRef/version}"></Text>
+                                                        <List id="auditChangesList" items="{path: 'changes', templateShareable: false}" noDataText="No changes detected" class="auditTrailNestedList">
+                                                            <CustomListItem id="auditChangesListItem" class="auditTrailNestedListItem">
+                                                                <Text width="100%" text="{message}" wrapping="true" wrappingType="Hyphenated"></Text>
+                                                                <form:SimpleForm layout="GridLayout" class="mt10">
+                                                                    <form:content>
+                                                                        <Label visible="{path:'newValue', formatter:'Formatters.nonEmptyObject'}" text="New Value"></Label>
+                                                                        <Text visible="{path:'newValue', formatter:'Formatters.nonEmptyObject'}" text="{newValue}"></Text>
+                                                                        <Label visible="{path:'oldValue', formatter:'Formatters.nonEmptyObject'}" text="Old Value"></Label>
+                                                                        <Text visible="{path:'oldValue', formatter:'Formatters.nonEmptyObject'}" text="{oldValue}"></Text>
+                                                                    </form:content>
+                                                                </form:SimpleForm>
+                                                            </CustomListItem>
+                                                        </List>
+                                                    </cells>
+                                                </ColumnListItem>
+                                            </items>
+                                        </Table>
                                     </IconTabFilter>
                                 </items>
 							</IconTabBar>

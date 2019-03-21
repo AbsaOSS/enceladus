@@ -55,7 +55,8 @@ sap.ui.controller("components.schema.schemaMain", {
   },
 
   onEditPress: function() {
-    this._model.setProperty("/newSchema", this._model.getProperty("/currentSchema"));
+    //here perform deep copy of the object, otherwise 2 ways binding will update the referenced path
+    this._model.setProperty("/newSchema", jQuery.extend(true, {}, this._model.getProperty("/currentSchema")));
     this._editDialog.open();
   },
 
@@ -74,6 +75,15 @@ sap.ui.controller("components.schema.schemaMain", {
       id : source.data("name"),
       version : source.data("version")
     })
+  },
+  
+  auditVersionPress: function(oEv) {
+    let oSrc = oEv.getParameter("listItem");
+    let oRef = oSrc.data("menasRef");
+    this._router.navTo("schemas", {
+      id: oRef.name,
+      version: oRef.version
+    });
   },
 
   schemaAddSubmit : function() {
@@ -129,10 +139,6 @@ sap.ui.controller("components.schema.schemaMain", {
     this._addDialog.open();
   },
 
-  onPressLogout : function() {
-    GenericService.logout();
-  },
-
   schemaSelected : function(oEv) {
     var selected = oEv.getParameter("listItem").data("id")
     this._router.navTo("schemas", {
@@ -186,6 +192,7 @@ sap.ui.controller("components.schema.schemaMain", {
     } else {
       SchemaService.getSchemaVersion(oParams.id, oParams.version)
     }
+    this.byId("schemaIconTabBar").setSelectedKey("info");
   },
 
   handleUploadPress : function(oParams) {
