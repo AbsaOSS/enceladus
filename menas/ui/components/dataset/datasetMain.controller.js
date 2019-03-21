@@ -113,11 +113,29 @@ sap.ui.controller("components.dataset.datasetMain", {
     })
   },
 
+  toRun: function (oEv) {
+    let src = oEv.getSource();
+    let datasetName = src.data("datasetName");
+    let datasetVersion = src.data("datasetVersion");
+    let runId = src.data("runId");
+
+    this._router.navTo("runs", {
+      dataset: datasetName,
+      version: datasetVersion,
+      id: runId
+    });
+  },
+
   fetchSchema: function (oEv) {
     let dataset = sap.ui.getCore().getModel().getProperty("/currentDataset");
     if (typeof (dataset.schema) === "undefined") {
       SchemaService.getSchemaVersion(dataset.schemaName, dataset.schemaVersion, "/currentDataset/schema")
     }
+  },
+
+  fetchRuns: function (oEv) {
+    let dataset = sap.ui.getCore().getModel().getProperty("/currentDataset");
+    RunService.getDatasetRuns(this.byId("Runs"), dataset.name, dataset.version);
   },
 
   datasetAddCancel: function () {
@@ -179,8 +197,12 @@ sap.ui.controller("components.dataset.datasetMain", {
   },
 
   tabSelect: function (oEv) {
-    if (oEv.getParameter("selectedKey") === "schema")
+    if (oEv.getParameter("selectedKey") === "schema") {
       this.fetchSchema();
+    }
+    if (oEv.getParameter("selectedKey") === "runs") {
+      this.fetchRuns();
+    }
   },
 
   onAddPress: function () {

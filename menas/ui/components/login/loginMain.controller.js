@@ -86,7 +86,7 @@ sap.ui.define([
         localStorage.setItem("csrfToken", csrfToken);
         Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
-          this._router.navTo("schemas");
+          this._router.navTo("runs");
         });
       };
 
