@@ -74,9 +74,8 @@ Other configurations are Spark dependant and are out of scope of this README.
 In progress. Framework for running REST API test.
 
 ##  <a name="e2e-spark-runner" />E2E Spark Runner
-A script for running end to end (E2E) tests for Standartization and Conformance.
-It takes the data provided and runs both of these and at each step runs a comparison
-job, so it does expect reference data like:
+Runs both Standardization and Confromance on the data provided. After each, a comparison job is run 
+to check the results against expected reference data:
 - `/ref/tmp/conformance-output/standartized-<DatasetName>-<datasetVersion>-<reportDate>/*.parquet` 
 - `/ref/publish/<DatasetName>/enceladus_info_date=<reportDate>/enceladus_info_version=<reportVersion>` 
 
