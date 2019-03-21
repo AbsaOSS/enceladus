@@ -114,7 +114,7 @@ sap.ui.controller("components.dataset.datasetMain", {
   },
 
   toRun: function (oEv) {
-    let src = oEv.getSource();
+    let src = oEv.getParameter("listItem");
     let datasetName = src.data("datasetName");
     let datasetVersion = src.data("datasetVersion");
     let runId = src.data("runId");
