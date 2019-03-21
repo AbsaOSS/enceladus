@@ -107,7 +107,17 @@ var RunService = new function () {
   this._mapAdditionalInfo = function (info) {
     return Object.keys(info).map(key => {
       return {"infoKey": key, "infoValue": info[key]}
-    });
+    }).sort((a, b) => {
+      if (a.infoKey > b.infoKey) {
+        return -1;
+      }
+
+      if (a.infoKey < b.infoKey) {
+        return 1;
+      }
+
+      return 0;
+    })
   };
 
   this._normalizeStatus = function(sStatus) {
