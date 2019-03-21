@@ -35,9 +35,8 @@ object CustomRuleSample2 {
     .getOrCreate()
 
   def main(args: Array[String]) {
-    import spark.implicits._
-
-    TimeZoneNormalizer.normalizeTimezone()
+    // scalastyle:off magic.number
+    TimeZoneNormalizer.normalizeAll(Seq(spark))
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     implicit val enableCF: Boolean = false
@@ -59,11 +58,17 @@ object CustomRuleSample2 {
       schemaVersion = 9999,
 
       conformance = List(
-        LPadCustomConformanceRule(order = 0, outputColumn = "donePad", controlCheckpoint = false, inputColumn = "addPad", len = 20, pad = "~")
+        LPadCustomConformanceRule(order = 0,
+                                  outputColumn = "donePad",
+                                  controlCheckpoint = false,
+                                  inputColumn = "addPad",
+                                  len = 20,
+                                  pad = "~")
       )
     )
 
     val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
     outputData.show(false)
+    // scalastyle:on magic.number
   }
 }
