@@ -94,21 +94,19 @@ object E2ESparkRunner {
 
     val standartisation = s"spark-submit $sparkConf $stdClass $stdJarPath $stdJobConf"
     log.debug(standartisation)
-    println("Running Standartization")
+    log.info("Running Standartization")
     val standartisationResult: String = (s"echo $standartisation" #| "bash").!!
     log.debug(standartisationResult)
-    println("Standartization Passed")
+    log.info("Standartization Passed")
     val stdComparison = s"spark-submit $sparkConf $compClass $testUtilsJarPath $stdComparisonConf"
-    println(stdComparison)
     log.debug(stdComparison)
-    println("Running Standartization Comparison")
+    log.info("Running Standartization Comparison")
     val stdComparisonResult: String = (s"echo $stdComparison" #| "bash").!!
     log.debug(stdComparisonResult)
-    println("Standartization Comparison Passed")
+    log.info("Standartization Comparison Passed")
 
     val conformance = s"spark-submit $sparkConf $confClass $confJarPath $confJobConf"
     log.debug(conformance)
-    println(conformance)
     log.info("Running Conformance")
     val conformanceResult: String = (s"echo $conformance" #| "bash").!!
     log.debug(conformanceResult)
