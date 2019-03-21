@@ -25,9 +25,7 @@
                     <Title text="Runs"/>
                 </contentMiddle>
                 <contentRight>
-                    <Text text="Logged in as:"/>
-                    <Text text="{/userInfo/username}"/>
-                    <Button id="logout" icon="sap-icon://log" press="GenericService.logout()"/>
+                    <core:Fragment type="XML" fragmentName="components.userInfo"/>
                 </contentRight>
             </Bar>
         </customHeader>
