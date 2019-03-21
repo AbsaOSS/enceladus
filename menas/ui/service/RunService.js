@@ -91,6 +91,7 @@ var RunService = new function () {
     oRunSummaries.forEach(run => {
       run.status = this._normalizeStatus(run.status)
     });
+    oRunSummaries.sort((a, b) => b.runId - a.runId);
     oControl.setModel(new sap.ui.model.json.JSONModel(oRunSummaries), "runs");
   };
 
