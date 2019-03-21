@@ -26,7 +26,6 @@ import java.time.format.DateTimeFormatter
   * @param pattern  the formatting string, in case it's an epoch format the values wil need to be convertible to Long
   */
 case class EnceladusDateParser(pattern: Format) {
-  //TODO use Option.when with Scala 2.13
   private val formatter: Option[SimpleDateFormat] = if (pattern.isEpoch) {
     None
   } else {

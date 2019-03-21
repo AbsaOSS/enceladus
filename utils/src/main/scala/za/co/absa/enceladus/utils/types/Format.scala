@@ -45,7 +45,8 @@ class Format(val pattern: Option[String], val forType: Option[DataType] = None){
 }
 
 object Format {
-  private val thousand = 1000
+  private val epochUnitFactor = 1
+  private val epochThousandFactor = 1000
 
   def apply(structField: StructField ): Format = {
     val formatString: Option[String] = Try(structField.metadata.getString("pattern")).toOption
@@ -66,16 +67,16 @@ object Format {
 
   def epochFactor(format: String): Long = {
     format.toLowerCase match {
-      case "epoch"      => 1
-      case "milliepoch" => thousand
+      case "epoch"      => epochUnitFactor
+      case "milliepoch" => epochThousandFactor
       case _            => throw new InvalidParameterException(s"'$format' is not an epoch format")
     }
   }
 
   def epochMilliFactor(format: String): Long = {
     format.toLowerCase match {
-      case "epoch"      => thousand
-      case "milliepoch" => 1
+      case "epoch"      => epochThousandFactor
+      case "milliepoch" => epochUnitFactor
       case _            => throw new InvalidParameterException(s"'$format' is not an epoch format")
     }
   }
