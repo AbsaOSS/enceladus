@@ -15,7 +15,8 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core"
                          xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <Table items="{runs>/}">
+    <Table items="{runs>/}"
+           itemPress="toRun">
         <columns>
             <Column width="10%">
                 <Text text="Run ID"/>
@@ -28,12 +29,12 @@
             </Column>
         </columns>
         <items>
-            <ColumnListItem>
+            <ColumnListItem type="Active"
+                            cust:datasetName="{runs>datasetName}"
+                            cust:datasetVersion="{runs>datasetVersion}"
+                            cust:runId="{runs>runId}">
                 <cells>
-                    <Link text="{runs>runId}" press="toRun"
-                          cust:datasetName="{runs>datasetName}"
-                          cust:datasetVersion="{runs>datasetVersion}"
-                          cust:runId="{runs>runId}"/>
+                    <Text text="{runs>runId}"/>
                     <Text text="{runs>status}"/>
                     <Text text="{
                         path: 'runs>startDateTime',
