@@ -17,12 +17,11 @@ package za.co.absa.enceladus.testutils.e2eSparkRunner
 
 import org.apache.log4j.{LogManager, Logger}
 
-import scala.collection.mutable
 import sys.process._
 import scala.io.Source
 
 object E2ESparkRunner {
-  private val log: Logger = LogManager.getLogger("enceladus.testutils.E2ESparkRunner")
+  private val log: Logger = LogManager.getLogger(this.getClass)
 
   private final val stdJarPath: String = "$DCE_JAR_PATH/$DCE_STD_SPT_JAR"
   private final val confJarPath: String = "$DCE_JAR_PATH/$DCE_CNFRM_SPT_JAR"
@@ -36,47 +35,50 @@ object E2ESparkRunner {
     s"--raw-format parquet --new-path $newPath --ref-path $refPath --out-path $outPath --keys $keys"
   }
 
-  private def getStandartizationPath(options: Map[String, String]): String = {
+  private def getStandartizationPath(cmd: CmdConfig): String = {
     "conformance-output/standardized-" +
-      s"${options("--dataset-name")}-" +
-      s"${options("--dataset-version")}-" +
-      s"${options("--report-date")}-" +
-      s"${options("--report-version")}"
+      s"${cmd.datasetName.split(" ")(1)}-" +
+      s"${cmd.datasetVersion.split(" ")(1)}-" +
+      s"${cmd.reportDate.split(" ")(1)}-" +
+      s"${cmd.reportVersion.split(" ")(1)}"
   }
 
-  private def getConformancePath(options: Map[String, String]): String = {
-    s"${options("--dataset-name")}/" +
-      s"enceladus_info_date=${options("--report-date")}/" +
-      s"enceladus_info_version=${options("--report-version")}"
+  private def getConformancePath(cmd: CmdConfig): String = {
+    s"${cmd.datasetName.split(" ")(1)}/" +
+      s"enceladus_info_date=${cmd.reportDate.split(" ")(1)}/" +
+      s"enceladus_info_version=${cmd.reportVersion.split(" ")(1)}"
   }
 
-  private def getConformanceJobConf(options: Map[String, String]): String = {
-    s"--dataset-name ${options("--dataset-name")} " +
-      s"--dataset-version ${options("--dataset-version")} " +
-      s"--report-date ${options("--report-date")} " +
-      s"--report-version ${options("--report-version")} " +
-      s"--menas-credentials-file ${options("--menas-credentials-file")}"
+  private def getConformanceJobConf(cmd: CmdConfig): String = {
+    s"${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} ${cmd.reportVersion} ${cmd.menasCredentialsFile}"
   }
 
-  private def getStandartizationJobConf(options: Map[String, String]): String = {
-    options.foldLeft("") { case (accumulated, (k, v)) => s"$accumulated $k $v" }
+  private def getStandartizationJobConf(cmd: CmdConfig): String = {
+    val base: String = s"${cmd.datasetName} " +
+      s"${cmd.datasetVersion} " +
+      s"${cmd.reportDate} " +
+      s"${cmd.reportVersion} " +
+      s"${cmd.menasCredentialsFile}"
+
+    val format: String = cmd.rawFormat match {
+      case "csv" => s"--raw-format ${cmd.rawFormat} --delimiter ${cmd.csvDelimiter.get} --header ${cmd.csvHeader.get}"
+      case "xml" => s"--raw-format ${cmd.rawFormat} --row-tag ${cmd.rowTag.get}"
+      case _ => s"--raw-format ${cmd.rawFormat}"
+    }
+
+    s"$base $format"
   }
 
   def main(args: Array[String]): Unit = {
-    val argumentsByTwo = args.sliding(2, 2).toList
-    val options: mutable.Map[String, String] = collection.mutable.Map[String, String]()
-    argumentsByTwo.foreach(tupleLike => options += (tupleLike(0) -> tupleLike(1)))
+    val cmd = CmdConfig.getCmdLineArguments(args)
 
-    val sparkConf = Source.fromFile(options("--spark-conf-file")).getLines().mkString
-    val keys = options("--keys")
-    options.remove("--spark-conf-file")
-    options.remove("--keys")
+    val sparkConf = Source.fromFile(cmd.sparkConfFile).getLines().mkString
 
-    val stdJobConf = getStandartizationJobConf(options.toMap)
-    val confJobConf = getConformanceJobConf(options.toMap)
+    val stdJobConf = getStandartizationJobConf(cmd)
+    val confJobConf = getConformanceJobConf(cmd)
 
-    val stdPaths = getStandartizationPath(options.toMap)
-    val confPaths = getConformancePath(options.toMap)
+    val stdPaths = getStandartizationPath(cmd)
+    val confPaths = getConformancePath(cmd)
 
     val defaultStdOut = s"/tmp/$stdPaths"
     val defaultConfOut = s"/publish/$confPaths"
@@ -87,24 +89,26 @@ object E2ESparkRunner {
     val cmpStdPath = s"/cmp/tmp/$stdPaths"
     val cmpConfPath = s"/cmp/publish/$confPaths"
 
-    val stdComparisonConf = getComparisonConf(defaultStdOut, refStdOut, cmpStdPath, keys)
-    val confComparisonConf = getComparisonConf(defaultConfOut, refConfOut, cmpConfPath, keys)
+    val stdComparisonConf = getComparisonConf(defaultStdOut, refStdOut, cmpStdPath, cmd.keys)
+    val confComparisonConf = getComparisonConf(defaultConfOut, refConfOut, cmpConfPath, cmd.keys)
 
     val standartisation = s"spark-submit $sparkConf $stdClass $stdJarPath $stdJobConf"
     log.debug(standartisation)
-    log.info("Running Standartization")
+    println("Running Standartization")
     val standartisationResult: String = (s"echo $standartisation" #| "bash").!!
     log.debug(standartisationResult)
-    log.info("Standartization Passed")
+    println("Standartization Passed")
     val stdComparison = s"spark-submit $sparkConf $compClass $testUtilsJarPath $stdComparisonConf"
+    println(stdComparison)
     log.debug(stdComparison)
-    log.info("Running Standartization Comparison")
+    println("Running Standartization Comparison")
     val stdComparisonResult: String = (s"echo $stdComparison" #| "bash").!!
     log.debug(stdComparisonResult)
-    log.info("Standartization Comparison Passed")
+    println("Standartization Comparison Passed")
 
     val conformance = s"spark-submit $sparkConf $confClass $confJarPath $confJobConf"
     log.debug(conformance)
+    println(conformance)
     log.info("Running Conformance")
     val conformanceResult: String = (s"echo $conformance" #| "bash").!!
     log.debug(conformanceResult)
