@@ -93,7 +93,6 @@ class NegationRuleSuite extends FunSuite with SparkTestBase {
 
   private def testRule(inputDataset: Dataset[String], enceladusDataset: ConfDataset, expectedJSON: String): Unit = {
     val inputDf = spark.read.schema(NegationRuleSamples.schema).json(inputDataset)
-    spark.conf.set("spark.sql.session.timeZone", "GMT")
 
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")

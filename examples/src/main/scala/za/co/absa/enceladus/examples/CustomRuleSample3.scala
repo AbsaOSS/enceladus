@@ -21,6 +21,7 @@ import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object CustomRuleSample3 {
   implicit val spark: SparkSession = SparkSession.builder
@@ -32,8 +33,7 @@ object CustomRuleSample3 {
   spark.sparkContext.setLogLevel("WARN")
 
   def main(args: Array[String]): Unit = {
-    // there is an example file at /src/test/resources/AvroReadingExample.properties
-
+    TimeZoneNormalizer.normalizeTimezone()
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     implicit val enableCF: Boolean = false

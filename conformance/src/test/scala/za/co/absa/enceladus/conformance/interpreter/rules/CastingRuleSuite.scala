@@ -31,8 +31,6 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
     import spark.implicits._
     val inputDf = spark.read.schema(CastingRuleSamples.ordersSchema).json(CastingRuleSamples.ordersData.toDS)
 
-    spark.conf.set("spark.sql.session.timeZone", "GMT")
-
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
     implicit val enableCF: Boolean = false

@@ -21,38 +21,12 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.testutils.exceptions._
 import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions, HelperFunctions}
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object ComparisonJob {
-  private val log: Logger = LogManager.getLogger("enceladus.testutils.ComparisonJob")
+  private val log: Logger = LogManager.getLogger(this.getClass)
   private val errorColumnName: String = "errCol"
   private val tmpColumnName: String = "tmp"
-
-  private def renameColumns(dataSet: Dataset[Row], keys: Seq[String], prefix: String): DataFrame = {
-    val renamedColumns = dataSet.columns.map { c =>
-      if (keys.contains(c)) {
-        dataSet(c)
-      } else {
-        dataSet(c).as(s"$prefix$c")
-      }}
-
-    dataSet.select(renamedColumns: _*)
-  }
-
-  private def getKeyBasedOutput(expectedMinusActual: Dataset[Row],
-                        actualMinusExpected: Dataset[Row],
-                        keys: Seq[String]): DataFrame = {
-    val dfNewExpected = renameColumns(expectedMinusActual, keys, "expected_")
-    val dfNewColumnsActual = renameColumns(actualMinusExpected, keys, "actual_")
-    dfNewExpected.join(dfNewColumnsActual, keys,"full")
-  }
-
-  private def checkForDuplicateRows(actualDf: DataFrame, keys: Seq[String], path: String): Unit = {
-    val duplicates = actualDf.groupBy(keys.head, keys.tail: _*).count().filter("`count` >= 2")
-    if (duplicates.count() > 0) {
-      duplicates.write.format("parquet").save(path)
-      throw DuplicateRowsInDF(path)
-    }
-  }
 
   def main(args: Array[String]): Unit = {
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
@@ -67,6 +41,7 @@ object ComparisonJob {
       .appName(s"Dataset comparison - '${cmd.newPath}' and '${cmd.refPath}'")
       .config("spark.sql.codegen.wholeStage", enableWholeStage)
       .getOrCreate()
+    TimeZoneNormalizer.normalizeAll(Seq(sparkSession))
 
     implicit val sc: SparkContext = sparkSession.sparkContext
 
@@ -101,6 +76,33 @@ object ComparisonJob {
       throw CmpJobDatasetsDifferException(cmd.refPath, cmd.newPath, cmd.outPath, expectedDf.count(), actualDf.count())
     } else {
       log.info("Expected and actual datasets are the same.")
+    }
+  }
+
+  private def renameColumns(dataSet: Dataset[Row], keys: Seq[String], prefix: String): DataFrame = {
+    val renamedColumns = dataSet.columns.map { c =>
+      if (keys.contains(c)) {
+        dataSet(c)
+      } else {
+        dataSet(c).as(s"$prefix$c")
+      }}
+
+    dataSet.select(renamedColumns: _*)
+  }
+
+  private def getKeyBasedOutput(expectedMinusActual: Dataset[Row],
+                                actualMinusExpected: Dataset[Row],
+                                keys: Seq[String]): DataFrame = {
+    val dfNewExpected = renameColumns(expectedMinusActual, keys, "expected_")
+    val dfNewColumnsActual = renameColumns(actualMinusExpected, keys, "actual_")
+    dfNewExpected.join(dfNewColumnsActual, keys,"full")
+  }
+
+  private def checkForDuplicateRows(actualDf: DataFrame, keys: Seq[String], path: String): Unit = {
+    val duplicates = actualDf.groupBy(keys.head, keys.tail: _*).count().filter("`count` >= 2")
+    if (duplicates.count() > 0) {
+      duplicates.write.format("parquet").save(path)
+      throw DuplicateRowsInDF(path)
     }
   }
 

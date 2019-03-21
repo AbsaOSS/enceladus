@@ -18,9 +18,9 @@ package za.co.absa.enceladus.conformance
 import java.io.{PrintWriter, StringWriter}
 
 import org.apache.log4j.{LogManager, Logger}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.dao.{EnceladusRestDAO, LoggedInUserInfo}
+import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO, LoggedInUserInfo}
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.atum.AtumImplicits._
@@ -38,67 +38,50 @@ import scala.util.control.NonFatal
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object DynamicConformanceJob {
 
-  val log: Logger = LogManager.getLogger("enceladus.conformance.DynamicConformanceJob")
-  val conf: Config = ConfigFactory.load()
-  
+  private val format = new SimpleDateFormat("yyyy-MM-dd")
+  private val infoDateColumn = "enceladus_info_date"
+  private val infoVersionColumn = "enceladus_info_version"
+
+  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val conf: Config = ConfigFactory.load()
+
   def main(args: Array[String]) {
-
-    val infoDateColumn = "enceladus_info_date"
-    val infoVersionColumn = "enceladus_info_version"
-
-    implicit val cmd = CmdConfig.getCmdLineArguments(args)
-
-    // initialize spark
-    implicit val spark = SparkSession.builder()
-      .appName(s"Dynamic Conformance - ${args(0)} (${args(1)}) - ${cmd.reportDate} - ${cmd.reportVersion}")
-      .getOrCreate()
-    import spark.implicits._
-
-    spark.enableControlMeasuresTracking()
-      .setControlMeasuresWorkflow("Conformance")
-
-    // Enable control framework performance optimization for pipeline-like jobs
-    Atum.setAllowUnpersistOldDatasets(true)
-
-    MenasPlugin.enableMenas()
-
-    // enable Spline
-    import za.co.absa.spline.core.SparkLineageInitializer._
+    implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+    implicit val spark: SparkSession = obtainSparkSession(cmd) // initialize spark
+    spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
+    Atum.setAllowUnpersistOldDatasets(true) // Enable control framework performance optimization for pipeline-like jobs
+    MenasPlugin.enableMenas() // Enable Menas
+    import za.co.absa.spline.core.SparkLineageInitializer._ // Enable Spline
     spark.enableLineageTracking()
-
-    // use REST DAO
-    implicit val dao = EnceladusRestDAO
-    implicit val enableCF = true
-
+    implicit val dao: EnceladusDAO = EnceladusRestDAO // use REST DAO
+    implicit val enableCF: Boolean = true
     val menasCredentials = cmd.menasCredentials
     EnceladusRestDAO.postLogin(menasCredentials.username, menasCredentials.password)
-
     // get the dataset definition
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
-    
     val dateTokens = cmd.reportDate.split("-")
-    val stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName, cmd.datasetVersion.toString, cmd.reportDate, cmd.reportVersion.toString)
-
+    val stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName,
+      cmd.datasetVersion.toString, cmd.reportDate, cmd.reportVersion.toString)
     val publishPath: String = buildPublishPath(infoDateColumn, infoVersionColumn, cmd, conformance)
-
     log.info(s"stdpath = $stdPath, publishPath = $publishPath")
-
     // die before performing any computation if the output path already exists
-    if (FileSystemVersionUtils.exists(publishPath)) throw new IllegalStateException(s"Path $publishPath already exists. Increment the run version, or delete $publishPath")
-
+    if (FileSystemVersionUtils.exists(publishPath)) {
+      throw new IllegalStateException(
+        s"Path $publishPath already exists. Increment the run version, or delete $publishPath"
+      )
+    }
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
     val stdDirSize = FileSystemVersionUtils.getDirectorySize(stdPath)
     performance.startMeasurement(stdDirSize)
-
     // load data for input and mapping tables
     val inputData = DataSource.getData(stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
-
     // perform the conformance
-    val result = try {
+    val result: DataFrame = try {
       DynamicInterpreter.interpret(conformance, inputData, experimentalMappingRule = cmd.experimentalMappingRule)
     }
     catch {
@@ -111,9 +94,19 @@ object DynamicConformanceJob {
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, sw.toString)
         throw e
     }
+    processResult(result, performance, publishPath, stdPath)
+  }
 
-    val format = new SimpleDateFormat("yyyy-MM-dd")
+  private def obtainSparkSession(cmd: CmdConfig): SparkSession = {
+    val spark: SparkSession = SparkSession.builder()
+      .appName(s"Dynamic Conformance ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} ${cmd.reportVersion}")
+      .getOrCreate()
+    TimeZoneNormalizer.normalizeAll(Seq(spark))
+    spark
+  }
 
+  private def processResult(result: DataFrame, performance: PerformanceMeasurer, publishPath: String, stdPath: String)
+                           (implicit spark: SparkSession, cmd: CmdConfig): Unit = {
     val withPartCols = result.withColumn(infoDateColumn, lit(new java.sql.Date(format.parse(cmd.reportDate).getTime)))
       .withColumn(infoVersionColumn, lit(cmd.reportVersion))
 
@@ -127,7 +120,6 @@ object DynamicConformanceJob {
       AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", errMsg, "")
       throw new IllegalStateException(errMsg)
     }
-
     // ensure the whole path but version exists
     FileSystemVersionUtils.createAllButLastSubDir(publishPath)
 
@@ -135,7 +127,6 @@ object DynamicConformanceJob {
 
     val publishDirSize = FileSystemVersionUtils.getDirectorySize(publishPath)
     performance.finishMeasurement(publishDirSize, recordCount)
-
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "conform",
       stdPath, publishPath, LoggedInUserInfo.getUserName)
 
@@ -144,18 +135,22 @@ object DynamicConformanceJob {
       try {
         performance.writeMetricsToFile(fileName)
       } catch {
-        case NonFatal(_) => log.error(s"Unable to write performance metrics to file '$fileName'")
+        case NonFatal(e) => log.error(s"Unable to write performance metrics to file '$fileName': ${e.getMessage}")
       }
     })
   }
 
-  def buildPublishPath(infoDateColumn: String, infoVersionColumn: String, cmd: CmdConfig, conformance: Dataset): String = {
-    cmd.publishPathOverride match {
-      case None => cmd.folderPrefix match {
-        case None => s"${conformance.hdfsPublishPath}/$infoDateColumn=${cmd.reportDate}/$infoVersionColumn=${cmd.reportVersion}"
-        case Some(folderPrefix) => s"${conformance.hdfsPublishPath}/$folderPrefix/$infoDateColumn=${cmd.reportDate}/$infoVersionColumn=${cmd.reportVersion}"
-      }
-      case Some(publishPathOverride) => publishPathOverride
+  def buildPublishPath(infoDateCol: String,
+                       infoVersionCol: String,
+                       cmd: CmdConfig,
+                       ds: Dataset): String = {
+    (cmd.publishPathOverride, cmd.folderPrefix) match {
+      case (None, None) =>
+        s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=${cmd.reportVersion}"
+      case (None, Some(folderPrefix)) =>
+        s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=${cmd.reportVersion}"
+      case (Some(publishPathOverride), _) =>
+        publishPathOverride
     }
   }
 }
