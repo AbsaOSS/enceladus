@@ -33,7 +33,7 @@ object CustomRuleSample3 {
   spark.sparkContext.setLogLevel("WARN")
 
   def main(args: Array[String]): Unit = {
-    TimeZoneNormalizer.normalizeTimezone()
+    TimeZoneNormalizer.normalizeAll(Seq(spark))
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     implicit val enableCF: Boolean = false
@@ -42,6 +42,7 @@ object CustomRuleSample3 {
       .option("header", "true")
       .csv("examples/data/input/example_data.csv")
 
+    // scalastyle:off magic.number
     val conformanceDef =  Dataset(
       name = "Custom rule sample 3",
       version = 0,
@@ -52,11 +53,19 @@ object CustomRuleSample3 {
       schemaVersion = 9999,
 
       conformance = List(
-        UppercaseCustomConformanceRule(order = 0, outputColumn = "upper", controlCheckpoint = false, inputColumn = "text_column"),
-        LPadCustomConformanceRule(order = 1, outputColumn = "final", controlCheckpoint = false, inputColumn = "upper", len = 25, pad = ".")
+        UppercaseCustomConformanceRule(order = 0,
+                                       outputColumn = "upper",
+                                       controlCheckpoint = false,
+                                       inputColumn = "text_column"),
+        LPadCustomConformanceRule(order = 1,
+                                  outputColumn = "final",
+                                  controlCheckpoint = false,
+                                  inputColumn = "upper",
+                                  len = 25,
+                                  pad = ".")
       )
     )
-
+    // scalastyle:on magic.number
     val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
 
     outputData.show()
