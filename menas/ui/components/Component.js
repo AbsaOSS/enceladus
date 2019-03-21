@@ -43,6 +43,11 @@ sap.ui.define([
               target: "login"
             },
             {
+              name: "runs",
+              pattern: "runs/:dataset:/:version:/:id:",
+              target: "runs"
+            },
+            {
               name: "schemas",
               pattern: "schema/:id:/:version:", //here id and version are optional
               target: "schemas"
@@ -63,6 +68,11 @@ sap.ui.define([
               viewName: "components.login.loginMain",
               viewLevel: 0,
               viewId: "loginMainView"
+            },
+            runs: {
+              viewName: "components.run.runMain",
+              viewLevel: 1,
+              viewId: "runMainView"
             },
             schemas: {
               viewName: "components.schema.schemaMain",

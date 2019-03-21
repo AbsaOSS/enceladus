@@ -30,6 +30,7 @@
 				</customHeader>
 				<List>
 					<items>
+						<ActionListItem id="Runs" text="Runs" type="Active" press="onRunsPress"></ActionListItem>
 						<ActionListItem id="Schemas" text="Schemas" type="Active" press="onSchemaPress"></ActionListItem>
 						<ActionListItem id="Datasets" text="Datasets" type="Active" press="onDatasetPress"></ActionListItem>
 						<ActionListItem id="MappingTables" text="Mapping Tables" type="Active" press="onMappingPress"></ActionListItem>

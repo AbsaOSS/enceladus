@@ -36,7 +36,7 @@ sap.ui.define([
         if (typeof userInfo.username === 'undefined') {
           this._router.navTo("login");
         } else {
-          this._router.navTo("schemas");
+          this._router.navTo("runs");
         }
       }, this);
 
@@ -58,6 +58,10 @@ sap.ui.define([
 
     handleMenuPress: function (oEv) {
       this.byId("menasApp").hideMaster();
+    },
+
+    onRunsPress: function (oEv) {
+      this._router.navTo("runs")
     },
 
     onSchemaPress: function (oEv) {
