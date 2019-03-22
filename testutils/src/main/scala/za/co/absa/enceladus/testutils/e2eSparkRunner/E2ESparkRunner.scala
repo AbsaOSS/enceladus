@@ -17,6 +17,7 @@ package za.co.absa.enceladus.testutils.e2eSparkRunner
 
 import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.testutils.HelperFunctions
+import za.co.absa.enceladus.testutils.models.ProcessMeasurement
 
 import sys.process._
 import scala.io.Source
@@ -100,29 +101,27 @@ object E2ESparkRunner {
     val standartisation = s"spark-submit $sparkConf $stdClass $stdJarPath $stdJobConf"
     log.debug(standartisation)
     log.info("Running Standartization")
-    lazy val standartisationResult: String = runBashCmd(standartisation)
-    val stdTime = HelperFunctions.calculateTime { standartisationResult }
-    log.debug(standartisationResult)
+    val ProcessMeasurement(stdTime, standartisationRes) = HelperFunctions.calculateTime { runBashCmd(standartisation) }
+    log.debug(standartisationRes)
     log.info("Standartization Passed")
     val stdComparison = s"spark-submit $sparkConf $compClass $testUtilsJarPath $stdComparisonConf"
     log.debug(stdComparison)
     log.info("Running Standartization Comparison")
-    val stdComparisonResult: String = runBashCmd(stdComparison)
-    log.debug(stdComparisonResult)
+    val stdComparisonRes: String = runBashCmd(stdComparison)
+    log.debug(stdComparisonRes)
     log.info("Standartization Comparison Passed")
     val conformance = s"spark-submit $sparkConf $confClass $confJarPath $confJobConf"
 
     log.debug(conformance)
     log.info("Running Conformance")
-    lazy val conformanceResult: String = runBashCmd(conformance)
-    val confTime = HelperFunctions.calculateTime { conformanceResult }
-    log.debug(conformanceResult)
+    val ProcessMeasurement(confTime, conformanceRes) = HelperFunctions.calculateTime { runBashCmd(conformance) }
+    log.debug(conformanceRes)
     log.info("Conformance Passed")
     val confComparison = s"spark-submit $sparkConf $compClass $testUtilsJarPath $confComparisonConf"
     log.debug(confComparison)
     log.info("Running Conformance Comparison")
-    val confComparisonResult: String = runBashCmd(confComparison)
-    log.debug(confComparisonResult)
+    val confComparisonRes: String = runBashCmd(confComparison)
+    log.debug(confComparisonRes)
     log.info("Conformance Comparison Passed")
 
     log.info(s"Standartization and Conformance passed. It took them $stdTime and $confTime respectively")
