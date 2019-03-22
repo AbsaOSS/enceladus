@@ -18,6 +18,7 @@ package za.co.absa.enceladus.utils.types
 import java.text.SimpleDateFormat
 import java.sql.Date
 import java.sql.Timestamp
+import java.time.format.DateTimeFormatter
 
 /**
   * Enables to parse string to date and timestamp based on the provided format
@@ -25,14 +26,16 @@ import java.sql.Timestamp
   * @param pattern  the formatting string, in case it's an epoch format the values wil need to be convertible to Long
   */
 case class EnceladusDateParser(pattern: Format) {
-  private val simpleDateFormat: Option[SimpleDateFormat] = if (pattern.isEpoch) {
+  private val formatter: Option[SimpleDateFormat] = if (pattern.isEpoch) {
     None
   } else {
     Some(new SimpleDateFormat(pattern))
   }
 
   private def convertValue(value: String): Long = {
-    simpleDateFormat.map(_.parse(value).getTime).getOrElse(value.toLong * (1000 / pattern.epochFactor))
+    formatter.map(_.parse(value).getTime).getOrElse(
+      value.toLong * pattern.epochMilliFactor
+    )
   }
 
   def parseDate(dateValue: String): Date = {
@@ -41,6 +44,12 @@ case class EnceladusDateParser(pattern: Format) {
 
   def parseTimestamp(timestampValue: String): Timestamp = {
     new Timestamp(convertValue(timestampValue))
+  }
+
+  def format(time: java.util.Date): String = {
+    formatter.map(_.format(time)).getOrElse(
+      (time.getTime / pattern.epochMilliFactor).toString
+    )
   }
 }
 

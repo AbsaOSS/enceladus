@@ -17,6 +17,9 @@ package za.co.absa.enceladus.utils.validation
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneOffset, ZonedDateTime}
+import java.sql.Timestamp
+
+import za.co.absa.enceladus.utils.types.EnceladusDateParser
 
 import scala.util.control.NonFatal
 
@@ -26,8 +29,7 @@ import scala.util.control.NonFatal
 object DateTimeValidators {
 
   // This is an example date that can be used for checking pattern conversion
-  private val exampleDate: ZonedDateTime = Instant.ofEpochMilli(1511864185000L)
-    .atZone(ZoneOffset.UTC)
+  private val exampleDate: Timestamp = new Timestamp(System.currentTimeMillis)
 
   /**
     * Checks if date/time pattern is valid and can be used, i.e., using it does not raise an exception.
@@ -40,11 +42,11 @@ object DateTimeValidators {
   def isDateTimePatternValid(pattern: String, default: Option[String] = None): Option[ValidationIssue] ={
     try {
       // Checking pattern syntax
-      val dateFormat = DateTimeFormatter.ofPattern(pattern)
+      val parser = EnceladusDateParser(pattern)
       // Checking pattern's ability to be used in formatting date/time values
-      dateFormat.format(exampleDate)
+      parser.format(exampleDate)
       // Checking default value correctness
-      default.map( dateFormat.parse(_) )
+      default.map( parser.parseDate )
       // Success
       None
     }
