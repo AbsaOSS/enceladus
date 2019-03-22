@@ -25,13 +25,13 @@ import scala.io.Source
 object E2ESparkRunner {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
-  private final val stdJarPath: String = "$DCE_JAR_PATH/$DCE_STD_SPT_JAR"
-  private final val confJarPath: String = "$DCE_JAR_PATH/$DCE_CNFRM_SPT_JAR"
-  private final val testUtilsJarPath: String = "$DCE_JAR_PATH/$TEST_UTILS_JAR"
+  private val stdJarPath: String = "$DCE_JAR_PATH/$DCE_STD_SPT_JAR"
+  private val confJarPath: String = "$DCE_JAR_PATH/$DCE_CNFRM_SPT_JAR"
+  private val testUtilsJarPath: String = "$DCE_JAR_PATH/$TEST_UTILS_JAR"
 
-  private final val stdClass = "--class za.co.absa.enceladus.standardization.StandardizationJob"
-  private final val confClass = "--class za.co.absa.enceladus.conformance.DynamicConformanceJob"
-  private final val compClass = "--class za.co.absa.enceladus.testutils.datasetComparison.ComparisonJob"
+  private val stdClass = "--class za.co.absa.enceladus.standardization.StandardizationJob"
+  private val confClass = "--class za.co.absa.enceladus.conformance.DynamicConformanceJob"
+  private val compClass = "--class za.co.absa.enceladus.testutils.datasetComparison.ComparisonJob"
 
   private def getComparisonConf(newPath: String, refPath: String, outPath: String, keys: String): String = {
     s"--raw-format parquet --new-path $newPath --ref-path $refPath --out-path $outPath --keys $keys"
