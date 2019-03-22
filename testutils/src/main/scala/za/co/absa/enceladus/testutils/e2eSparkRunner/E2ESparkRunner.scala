@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.testutils.e2eSparkRunner
 
 import org.apache.log4j.{LogManager, Logger}
+import za.co.absa.enceladus.testutils.HelperFunctions
 
 import sys.process._
 import scala.io.Source
@@ -69,6 +70,10 @@ object E2ESparkRunner {
     s"$base $format"
   }
 
+  private def runBashCmd(bashCmd: String): String = {
+    (s"echo $bashCmd" #| "bash").!!
+  }
+
   def main(args: Array[String]): Unit = {
     val cmd = CmdConfig.getCmdLineArguments(args)
 
@@ -95,28 +100,32 @@ object E2ESparkRunner {
     val standartisation = s"spark-submit $sparkConf $stdClass $stdJarPath $stdJobConf"
     log.debug(standartisation)
     log.info("Running Standartization")
-    val standartisationResult: String = (s"echo $standartisation" #| "bash").!!
+    lazy val standartisationResult: String = runBashCmd(standartisation)
+    val stdTime = HelperFunctions.calculateTime { standartisationResult }
     log.debug(standartisationResult)
     log.info("Standartization Passed")
     val stdComparison = s"spark-submit $sparkConf $compClass $testUtilsJarPath $stdComparisonConf"
     log.debug(stdComparison)
     log.info("Running Standartization Comparison")
-    val stdComparisonResult: String = (s"echo $stdComparison" #| "bash").!!
+    val stdComparisonResult: String = runBashCmd(stdComparison)
     log.debug(stdComparisonResult)
     log.info("Standartization Comparison Passed")
-
     val conformance = s"spark-submit $sparkConf $confClass $confJarPath $confJobConf"
+
     log.debug(conformance)
     log.info("Running Conformance")
-    val conformanceResult: String = (s"echo $conformance" #| "bash").!!
+    lazy val conformanceResult: String = runBashCmd(conformance)
+    val confTime = HelperFunctions.calculateTime { conformanceResult }
     log.debug(conformanceResult)
     log.info("Conformance Passed")
     val confComparison = s"spark-submit $sparkConf $compClass $testUtilsJarPath $confComparisonConf"
     log.debug(confComparison)
     log.info("Running Conformance Comparison")
-    val confComparisonResult: String = (s"echo $confComparison" #| "bash").!!
+    val confComparisonResult: String = runBashCmd(confComparison)
     log.debug(confComparisonResult)
     log.info("Conformance Comparison Passed")
+
+    log.info(s"Standartization and Conformance passed. It took them $stdTime and $confTime respectively")
   }
 }
 
