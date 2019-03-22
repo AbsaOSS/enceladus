@@ -33,8 +33,9 @@ object RestCaller {
     * @return Returns a result in a form of [[TestCaseResult]]
     */
   def run(testCase: TestCase): TestCaseResult = {
-    lazy val callOutput = call(testCase.method, testCase.url, testCase.payload, testCase.contentType)
-    val time = HelperFunctions.calculateTime { callOutput }
+    val ProcessMeasurement(time, callOutput) = HelperFunctions.calculateTime {
+      call(testCase.method, testCase.url, testCase.payload, testCase.contentType)
+    }
     val diff = compareJsons(testCase.expectedOutput, callOutput.text)
     val statusCodeOk = callOutput.statusCode.toString == testCase.expectedStatusCode
     val statusCodeMessage = s"Should be ${testCase.expectedStatusCode}, is ${callOutput.statusCode}"
