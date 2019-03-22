@@ -127,4 +127,17 @@ object HelperFunctions {
     val flatteningFormula: List[Column] = flattenSchema(df)
     df.select(flatteningFormula: _*)
   }
+
+  /**
+    * Calculates times that it took for passed block of code to execute and finish.
+    * @param callback Block of code, to be executed
+    * @tparam A A type parameter specifying callback return
+    * @return Returns a millisecond difference between start and end time
+    */
+  def calculateTime[A](callback: => A): Long = {
+    val startTime = System.nanoTime()
+    callback
+    val endTime = System.nanoTime()
+    endTime - startTime
+  }
 }

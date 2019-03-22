@@ -17,6 +17,7 @@ package za.co.absa.enceladus.testutils.rest
 
 import requests.Response
 import gnieh.diffson.sprayJson._
+import za.co.absa.enceladus.testutils.HelperFunctions
 import za.co.absa.enceladus.testutils.models._
 
 import scala.annotation.switch
@@ -33,7 +34,7 @@ object RestCaller {
     */
   def run(testCase: TestCase): TestCaseResult = {
     lazy val callOutput = call(testCase.method, testCase.url, testCase.payload, testCase.contentType)
-    val time = calculateTime { callOutput }
+    val time = HelperFunctions.calculateTime { callOutput }
     val diff = compareJsons(testCase.expectedOutput, callOutput.text)
     val statusCodeOk = callOutput.statusCode.toString == testCase.expectedStatusCode
     val statusCodeMessage = s"Should be ${testCase.expectedStatusCode}, is ${callOutput.statusCode}"
@@ -113,18 +114,5 @@ object RestCaller {
     */
   private def compareJsons(expectedJson: String, actualJson: String): String = {
     JsonDiff.diff(expectedJson, actualJson, remember = false).toString
-  }
-
-  /**
-    * Calculates times that it took for passed block of code to execute and finish.
-    * @param callback Block of code, to be executed
-    * @tparam A A type parameter specifying callback return
-    * @return Returns a millisecond difference between start and end time
-    */
-  private def calculateTime[A](callback: => A): Long = {
-    val startTime = System.nanoTime()
-    callback
-    val endTime = System.nanoTime()
-    endTime - startTime
   }
 }
