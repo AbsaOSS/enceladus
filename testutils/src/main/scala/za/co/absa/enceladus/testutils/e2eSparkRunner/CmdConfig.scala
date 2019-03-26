@@ -19,6 +19,7 @@ import java.io.File
 
 import scopt.OptionParser
 
+import scala.io.Source
 import scala.util.matching.Regex
 
 /**
@@ -38,10 +39,74 @@ case class CmdConfig(rawFormat: String = "xml",
                      datasetVersion: String = "",
                      reportDate: String = "",
                      reportVersion: String = "",
-                     sparkConfFile: String = "")
+                     sparkConfFile: String = "") {
+  private val stdPaths = "conformance-output/standardized-" +
+                        s"$datasetName-" +
+                        s"$datasetVersion-" +
+                        s"$reportDate-" +
+                        s"$reportVersion"
+  private val confPaths = s"$datasetName/" +
+                          s"enceladus_info_date=$reportDate/" +
+                          s"enceladus_info_version=$reportVersion"
+
+  private val defaultStdOut = s"/tmp/$stdPaths"
+  private val defaultConfOut = s"/publish/$confPaths"
+
+  private val refStdOut = s"/ref/tmp/$stdPaths"
+  private val refConfOut = s"/ref/publish/$confPaths"
+
+  private val cmpStdPath = s"/cmp/tmp/$stdPaths"
+  private val cmpConfPath = s"/cmp/publish/$confPaths"
+
+  val sparkConf: String = Source.fromFile(sparkConfFile).getLines().mkString
+
+  val stdComparisonConf: String = comparisonConf(defaultStdOut, refStdOut, cmpStdPath, keys)
+  val confComparisonConf: String = comparisonConf(defaultConfOut, refConfOut, cmpConfPath, keys)
+
+  /**
+    * Get Conformance options like dataset name, dataset version, etc.
+    * @return A string of conformance job options
+    */
+  def conformanceJobConf: String = {
+    s"--dataset-name $datasetName " +
+      s"--dataset-version $datasetVersion " +
+      s"--report-date $reportDate " +
+      s"--report-version $reportVersion " +
+      s"--menas-credentials-file $menasCredentialsFile"
+  }
+
+  /**
+    * Get Standartization options like dataset name, dataset version, etc.
+    * @return A string of Standartization job options
+    */
+  def standartizationJobConf: String = {
+    val base: String = s"--dataset-name $datasetName " +
+      s"--dataset-version $datasetVersion " +
+      s"--report-date $reportDate " +
+      s"--report-version $reportVersion " +
+      s"--menas-credentials-file $menasCredentialsFile"
+
+    val format: String = rawFormat match {
+      case "csv" => s"--raw-format $rawFormat --delimiter ${csvDelimiter.get} --header ${csvHeader.get}"
+      case "xml" => s"--raw-format $rawFormat --row-tag ${rowTag.get}"
+      case _ => s"--raw-format $rawFormat"
+    }
+
+    s"$base $format"
+  }
+
+  private def comparisonConf(newPath: String, refPath: String, outPath: String, keys: String): String = {
+    s"--raw-format parquet --new-path $newPath --ref-path $refPath --out-path $outPath --keys $keys"
+  }
+}
 
 object CmdConfig {
 
+  /**
+    * Parses and validates an Array of input parameters and creates an instance of CmdConfig case class
+    * @param args Array of argument to be parsed
+    * @return Returns a CmdConfig instance holding parameters passed
+    */
   def getCmdLineArguments(args: Array[String]): CmdConfig = {
     val parser = new CmdParser("spark-submit [spark options] TestUtils.jar")
 
@@ -110,7 +175,7 @@ object CmdConfig {
     help("help").text("prints this usage text")
 
     opt[String]("menas-credentials-file").required.action((value, config) => {
-      config.copy(menasCredentialsFile = s"--menas-credentials-file $value")
+      config.copy(menasCredentialsFile = value)
     }).text("Path to Menas credentials config file. Suitable only for client mode")
       .validate(path =>
         if (new File(path).isFile) success
@@ -118,11 +183,11 @@ object CmdConfig {
       )
 
     opt[String]("dataset-name").required.action((value, config) => {
-      config.copy(datasetName = s"--dataset-name $value")
+      config.copy(datasetName = value)
     }).text("Dataset name")
 
     opt[String]("dataset-version").required.action((value, config) => {
-      config.copy(datasetVersion  = s"--dataset-version $value")
+      config.copy(datasetVersion = value)
     }).text("Dataset version")
       .validate(value =>
         if (value.toInt > 0) success
@@ -130,7 +195,7 @@ object CmdConfig {
 
     val reportDateMatcher: Regex = "^\\d{4}-\\d{2}-\\d{2}$".r
     opt[String]("report-date").required.action((value, config) => {
-      config.copy(reportDate = s"--report-date $value")
+      config.copy(reportDate = value)
     }).text("Report date in 'yyyy-MM-dd' format")
       .validate(value =>
         reportDateMatcher.findFirstIn(value) match {
@@ -142,7 +207,7 @@ object CmdConfig {
       )
 
     opt[String]("report-version").required.action((value, config) => {
-      config.copy(reportVersion = s"--report-version $value")
+      config.copy(reportVersion = value)
     }).text("Report version")
       .validate(value =>
         if (value.toInt > 0) success
