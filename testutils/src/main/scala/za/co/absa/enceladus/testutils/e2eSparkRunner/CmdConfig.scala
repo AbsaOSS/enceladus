@@ -62,7 +62,6 @@ object CmdConfig {
       config.copy(rawFormat = value)
     }).text("format of the raw data (csv, xml, parquet,fixed-width, etc.)")
 
-
     opt[String]("row-tag").optional.action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")
       .validate(value =>
@@ -106,8 +105,7 @@ object CmdConfig {
 
     opt[String]("keys").required.action((value, config) => {
       config.copy(keys = value)
-    }).text("If there are know unique keys, they can be specified for better output. Keys should " +
-      "be specified one by one, with , (comma) between them.")
+    }).text("""Unique key(s) of the dataset. Keys should be specified one by one, with "," (comma) between them.""")
 
     help("help").text("prints this usage text")
 

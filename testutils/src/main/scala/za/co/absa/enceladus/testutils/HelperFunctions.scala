@@ -130,9 +130,9 @@ object HelperFunctions {
   }
 
   /**
-    * Calculates times that it took for passed block of code to execute and finish.
+    * Calculates the time it took for passed block of code to execute and finish.
     * @param processToRun Block of code, to be executed
-    * @tparam A A type parameter specifying callback return
+    * @tparam A A type parameter specifying output from processToRun
     * @return Returns a millisecond difference between start and end time
     */
   def calculateTime[A](processToRun: => A): ProcessMeasurement[A] = {
@@ -140,6 +140,5 @@ object HelperFunctions {
     val returnValue = processToRun
     val endTime = System.nanoTime()
     ProcessMeasurement(endTime - startTime, returnValue)
-
   }
 }
