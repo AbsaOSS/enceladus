@@ -33,14 +33,15 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
 
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
-    implicit val enableCF: Boolean = false
+    val experimentalMR = true
+    val enableCF: Boolean = false
 
     mockWhen (dao.getDataset("Orders Conformance", 1)) thenReturn CastingRuleSamples.ordersDS
 
     val mappingTablePattern = "{0}/{1}/{2}"
 
     import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS, inputDf, experimentalMappingRule = true).cache
+    val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS, inputDf, experimentalMR, enableCF).cache
 
     val conformedJSON = JsonUtils.prettySparkJSON(conformed.orderBy($"id").toJSON.collect)
 

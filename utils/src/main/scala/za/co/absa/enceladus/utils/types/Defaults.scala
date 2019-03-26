@@ -24,7 +24,7 @@ import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser
 
 object Defaults {
 
-  private def getParser(option: Option[String], exceptionMessage: String = ""): EnceladusDateTimeParser = {
+  private def getDTParser(option: Option[String], exceptionMessage: String = ""): EnceladusDateTimeParser = {
     var pattern: String = option.getOrElse(throw new IllegalArgumentException(exceptionMessage))
     EnceladusDateTimeParser(pattern)
   }
@@ -65,16 +65,19 @@ object Defaults {
       case _: DoubleType    => value.toDouble
       case _: LongType      => value.toLong
       case _: StringType    => value
-      case _: DateType      => getParser(dtPattern,"No date format specified.").parseDate(value)
-      case _: TimestampType => getParser(dtPattern,"No timestamp format specified.").parseTimestamp(value)
+      case _: DateType      => getDTParser(dtPattern, "No date format specified.").parseDate(value)
+      case _: TimestampType => getDTParser(dtPattern, "No timestamp format specified.").parseTimestamp(value)
       case _: BooleanType   => value.toBoolean
       case _: DecimalType   => new java.math.BigDecimal(value)
       case _                => throw new IllegalStateException(s"No default value defined for data type ${dt.typeName}")
     }
   }
 
-  /** Wrapper which returns the parsed default value for datetype and timestamptype returns,
+  /**
+    * Wrapper which returns the parsed default value for datetype and timestamptype returns,
     * default value for other primitive type from metadata first (if any) and the global one otherwise
+    * @param st the field to get the default value for
+    * @return   the default value to be used
     */
   def getDefaultValue(st: StructField): Any = {
     getDefaultOpt(st) match {

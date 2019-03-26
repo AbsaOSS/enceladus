@@ -19,19 +19,16 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.utils.types.Defaults
-
 import scala.util.Random
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.SchemaUtils.appendPath
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.spark.hofs._
-
 import scala.collection.Seq
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import org.slf4j.{Logger, LoggerFactory}
 import java.security.InvalidParameterException
-
 import za.co.absa.enceladus.utils.time.DateTimePattern
 
 object TypeParser {
@@ -55,7 +52,7 @@ object TypeParser {
     * Also supports epoch format
     */
   private def dateTimePreProcess(field: StructField, origSchema: StructType, path: String, attr: Column, epochFormat: String, castFunction: (Column, String) => Column): Column = {
-    val format: DateTimePattern = DateTimePattern(field)
+    val format = DateTimePattern(field)
 
     if (DateTimePattern.isEpoch(format)) {
       from_unixtime(attr.cast("Long") / format.epochFactor, epochFormat)

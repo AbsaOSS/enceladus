@@ -29,13 +29,14 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase {
   def conformanceRuleShouldMatchExpected(inputDf: DataFrame, inputDataset: Dataset, expectedJSON: String) {
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
-    implicit val enableCF: Boolean = false
+    val experimentalMR = true
+    val enableCF: Boolean = false
 
     mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn inputDataset
     mockWhen(dao.getDataset("Library Conformance", 1)) thenReturn inputDataset
 
     import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(inputDataset, inputDf, experimentalMappingRule = true).cache
+    val conformed = DynamicInterpreter.interpret(inputDataset, inputDf, experimentalMR, enableCF).cache
 
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 

@@ -38,7 +38,10 @@ object SparkTypeResolver {
         case _: DateType | TimestampType => toSparkTimestamp(field, value)
         case _: BooleanType => value.toBoolean
         case _: DecimalType => new java.math.BigDecimal(value)
-        case _ => throw new IllegalStateException(s"${field.dataType.typeName} is not a supported type in this version of fixed-width library")
+        case _ =>
+          throw new IllegalStateException(
+            s"${field.dataType.typeName} is not a supported type in this version of fixed-width library"
+          )
       }
     }
     catch {
@@ -57,14 +60,15 @@ object SparkTypeResolver {
 
   private def castToDateTimeType(field: StructField, dateString: String, pattern: String): Any = {
     try {
-      val parser: EnceladusDateTimeParser = EnceladusDateTimeParser(pattern)
+      val parser = EnceladusDateTimeParser(pattern)
       field.dataType match {
         case _: TimestampType => parser.parseTimestamp(dateString)
         case _: DateType      => parser.parseDate(dateString)
       }
     }
     catch {
-      case NonFatal(e) => throw new IllegalStateException(s"Unable to parse the date string $dateString using pattern $pattern")
+      case NonFatal(e) =>
+        throw new IllegalStateException(s"Unable to parse the date string $dateString using pattern $pattern")
     }
   }
 

@@ -20,7 +20,7 @@ import java.text.SimpleDateFormat
 
 /**
   * Enables to parse string to date and timestamp based on the provided format
-  * Unlike SimpleDateFormat it also supports an epoch ("epoch", "epochmilli"...) formatting strings
+  * Unlike SimpleDateFormat it also supports keywords to format epoch related values
   * @param pattern  the formatting string, in case it's an epoch format the values wil need to be convertible to Long
   */
 case class EnceladusDateTimeParser(pattern: DateTimePattern) {

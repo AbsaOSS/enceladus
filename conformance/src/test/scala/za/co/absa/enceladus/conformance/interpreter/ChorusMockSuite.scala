@@ -44,15 +44,15 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
     val inputDf = spark.createDataFrame(d)
     val mappingDf = spark.createDataFrame(mapping)
 
-    implicit val progArgs = CmdConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
-    implicit val dao = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here (if not working with menas)
-    implicit val enableCF = false
+    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
+    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here (if not working with menas)
+    val enableCF = false
 
     mockWhen(dao.getMappingTable("myMappingTable", 0)) thenReturn MappingTable(name = "myMappingTable", version = 0, hdfsPath = "myMappingTable", schemaName = "whatev", schemaVersion = 0, defaultMappingValue = List())
 
     DataSource.setData("myMappingTable", mappingDf)
 
-    val conformanceDef = new ConfDataset(
+    val conformanceDef = ConfDataset(
       name = "My dummy conformance workflow", // whatev here
       version = 0, // whatev here
       hdfsPath = "/a/b/c",
@@ -66,7 +66,7 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
           attributeMappings = Map("id" -> "toJoin"), targetAttribute = "mappedAttr", outputColumn = "confMapping")))
 
     val confd = DynamicInterpreter.interpret(conformanceDef, inputDf,
-      experimentalMappingRule = useExperimentalMappingRule).repartition(2)
+      useExperimentalMappingRule, enableCF).repartition(2)
 
     confd.show(100, false)
     confd.printSchema()

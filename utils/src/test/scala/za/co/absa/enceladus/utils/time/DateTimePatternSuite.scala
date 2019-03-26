@@ -24,18 +24,18 @@ class DateTimePatternSuite extends FunSuite {
 
   test("Format class for timestamp") {
     val pattern: String = "yyyy~mm~dd_HH.mm.ss"
-    val format: DateTimePattern = new DateTimePattern(Some(pattern), Some(TimestampType))
-    assert(!format.isDefault)
-    assert(format.get == pattern)
-    assert(format.getOrElse("foo") == pattern)
-    assert(!format.isEpoch)
-    val expectedMessage = s"'${format.get}' is not an epoch format"
+    val dateTimePattern = new DateTimePattern(Some(pattern), Some(TimestampType))
+    assert(!dateTimePattern.isDefault)
+    assert(dateTimePattern.get == pattern)
+    assert(dateTimePattern.getOrElse("foo") == pattern)
+    assert(!dateTimePattern.isEpoch)
+    val expectedMessage = s"'${dateTimePattern.get}' is not an epoch pattern"
     val caught = intercept[InvalidParameterException] {
-      DateTimePattern.epochFactor(format)
+      DateTimePattern.epochFactor(dateTimePattern)
     }
     assert(caught.getMessage == expectedMessage)
     val caught2 = intercept[InvalidParameterException] {
-      DateTimePattern.epochMilliFactor(format)
+      DateTimePattern.epochMilliFactor(dateTimePattern)
     }
     assert(caught2.getMessage == expectedMessage)
   }
@@ -43,58 +43,58 @@ class DateTimePatternSuite extends FunSuite {
 
   test("Format class for date") {
     val pattern: String = "yyyy~mm~dd_HH.mm.ss"
-    val format: DateTimePattern = new DateTimePattern(Some(pattern), Some(DateType))
-    assert(!format.isDefault)
-    assert(format.get == pattern)
-    assert(format.getOrElse("fox") == pattern)
-    assert(!format.isEpoch)
-    val expectedMessage = s"'${format.get}' is not an epoch format"
+    val dateTimePattern = new DateTimePattern(Some(pattern), Some(DateType))
+    assert(!dateTimePattern.isDefault)
+    assert(dateTimePattern.get == pattern)
+    assert(dateTimePattern.getOrElse("fox") == pattern)
+    assert(!dateTimePattern.isEpoch)
+    val expectedMessage = s"'${dateTimePattern.get}' is not an epoch pattern"
     val caught = intercept[InvalidParameterException] {
-      DateTimePattern.epochFactor(format)
+      DateTimePattern.epochFactor(dateTimePattern)
     }
     assert(caught.getMessage == expectedMessage)
     val caught2 = intercept[InvalidParameterException] {
-      DateTimePattern.epochMilliFactor(format)
+      DateTimePattern.epochMilliFactor(dateTimePattern)
     }
     assert(caught2.getMessage == expectedMessage)
   }
 
   test("Format class with default value - timestamp") {
-    val format: DateTimePattern = new DateTimePattern(None, Some(TimestampType))
-    assert(format.isDefault)
-    assert(format.get == "yyyy-MM-dd HH:mm:ss")
-    assert(format.getOrElse("foo") == "foo")
-    assert(!format.isEpoch)
-    val expectedMessage = s"'${format.get}' is not an epoch format"
+    val dateTimePattern = new DateTimePattern(None, Some(TimestampType))
+    assert(dateTimePattern.isDefault)
+    assert(dateTimePattern.get == "yyyy-MM-dd HH:mm:ss")
+    assert(dateTimePattern.getOrElse("foo") == "foo")
+    assert(!dateTimePattern.isEpoch)
+    val expectedMessage = s"'${dateTimePattern.get}' is not an epoch pattern"
     val caught = intercept[InvalidParameterException] {
-      DateTimePattern.epochFactor(format)
+      DateTimePattern.epochFactor(dateTimePattern)
     }
     assert(caught.getMessage == expectedMessage)
     val caught2 = intercept[InvalidParameterException] {
-      DateTimePattern.epochMilliFactor(format)
+      DateTimePattern.epochMilliFactor(dateTimePattern)
     }
     assert(caught2.getMessage == expectedMessage)
   }
 
   test("Format class with default value - date") {
-    val format: DateTimePattern = new DateTimePattern(None, Some(DateType))
-    assert(format.isDefault)
-    assert(format.get == "yyyy-MM-dd")
-    assert(format.getOrElse("fox") == "fox")
-    assert(!format.isEpoch)
-    val expectedMessage = s"'${format.get}' is not an epoch format"
+    val dateTimePattern = new DateTimePattern(None, Some(DateType))
+    assert(dateTimePattern.isDefault)
+    assert(dateTimePattern.get == "yyyy-MM-dd")
+    assert(dateTimePattern.getOrElse("fox") == "fox")
+    assert(!dateTimePattern.isEpoch)
+    val expectedMessage = s"'${dateTimePattern.get}' is not an epoch pattern"
     val caught = intercept[InvalidParameterException] {
-      DateTimePattern.epochFactor(format)
+      DateTimePattern.epochFactor(dateTimePattern)
     }
     assert(caught.getMessage == expectedMessage)
     val caught2 = intercept[InvalidParameterException] {
-      DateTimePattern.epochMilliFactor(format)
+      DateTimePattern.epochMilliFactor(dateTimePattern)
     }
     assert(caught2.getMessage == expectedMessage)
   }
 
   test("Format class with default value - double") {
-    val dt: DoubleType = DoubleType
+    val dt = DoubleType
     val expectedMessage = s"No default format defined for data type ${dt.typeName}"
     val caught = intercept[IllegalStateException] {
       new DateTimePattern(None, Some(dt))
@@ -110,15 +110,15 @@ class DateTimePatternSuite extends FunSuite {
 
   test("Format.isEpoch returns expected values.") {
     val result1 = DateTimePattern.isEpoch("epoch")
-    assert(result1 == true)
+    assert(result1)
     val result2 = DateTimePattern.isEpoch("epochmilli")
-    assert(result2 == true)
+    assert(result2)
     val result3 = DateTimePattern.isEpoch(" epoch ")
-    assert(result3 == false)
+    assert(!result3)
     val result4 = DateTimePattern.isEpoch("add 54")
-    assert(result4 == false)
+    assert(!result4)
     val result5 = DateTimePattern.isEpoch("")
-    assert(result5 == false)
+    assert(!result5)
   }
 
   test("Format.epochFactor returns expected values.") {
@@ -131,7 +131,7 @@ class DateTimePatternSuite extends FunSuite {
     val result4 = DateTimePattern.epochMilliFactor("EpOcHmIlLi")
     assert(result4 == 1L)
     val formatString = "xxxx"
-    val expectedMessage = s"'$formatString' is not an epoch format"
+    val expectedMessage = s"'$formatString' is not an epoch pattern"
     val caught = intercept[InvalidParameterException] {
       DateTimePattern.epochFactor(formatString)
     }

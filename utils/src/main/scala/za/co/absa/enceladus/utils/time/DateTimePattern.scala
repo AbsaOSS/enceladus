@@ -48,6 +48,8 @@ class DateTimePattern(val pattern: Option[String], val forType: Option[DataType]
 }
 
 object DateTimePattern {
+  implicit def formatToString(format: DateTimePattern): String = format.get
+
   private val epochUnitFactor = 1
   private val epochThousandFactor = 1000
 
@@ -72,7 +74,7 @@ object DateTimePattern {
     format.toLowerCase match {
       case "epoch"      => epochUnitFactor
       case "epochmilli" => epochThousandFactor
-      case _            => throw new InvalidParameterException(s"'$format' is not an epoch format")
+      case _            => throw new InvalidParameterException(s"'$format' is not an epoch pattern")
     }
   }
 
@@ -80,10 +82,7 @@ object DateTimePattern {
     format.toLowerCase match {
       case "epoch"      => epochThousandFactor
       case "epochmilli" => epochUnitFactor
-      case _            => throw new InvalidParameterException(s"'$format' is not an epoch format")
+      case _            => throw new InvalidParameterException(s"'$format' is not an epoch pattern")
     }
   }
-
-  implicit def format2String(format: DateTimePattern): String = format.get
-
 }
