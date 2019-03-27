@@ -46,6 +46,7 @@ object E2ESparkRunner {
     val ProcessMeasurement(stdTime, standartisationRes) = HelperFunctions.calculateTime { runBashCmd(standartisation) }
     log.debug(standartisationRes)
     log.info("Standartization Passed")
+
     val stdComparison = s"spark-submit ${cmd.sparkConf} $compClass $testUtilsJarPath ${cmd.stdComparisonConf}"
     log.debug(stdComparison)
     log.info("Running Standartization Comparison")
@@ -59,6 +60,7 @@ object E2ESparkRunner {
     val ProcessMeasurement(confTime, conformanceRes) = HelperFunctions.calculateTime { runBashCmd(conformance) }
     log.debug(conformanceRes)
     log.info("Conformance Passed")
+
     val confComparison = s"spark-submit ${cmd.sparkConf} $compClass $testUtilsJarPath ${cmd.confComparisonConf}"
     log.debug(confComparison)
     log.info("Running Conformance Comparison")
@@ -66,7 +68,10 @@ object E2ESparkRunner {
     log.debug(confComparisonRes)
     log.info("Conformance Comparison Passed")
 
-    log.info(s"Standartization and Conformance passed. It took them $stdTime and $confTime respectively")
+    val humanReadableStdTime = f"${stdTime / 1000 / 60} min ${stdTime  / 1000.0 % 60.0}%.2f s"
+    val humanReadableConfTime = f"${confTime / 1000 / 60} min ${confTime / 1000.0 % 60.0}%.2f s"
+    log.info(s"Standartization and Conformance passed. It took them $humanReadableStdTime and " +
+      s"$humanReadableConfTime respectively")
   }
 }
 
