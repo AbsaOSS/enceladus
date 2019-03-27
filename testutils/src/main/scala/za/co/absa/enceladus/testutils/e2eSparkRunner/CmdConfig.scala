@@ -119,7 +119,7 @@ object CmdConfig {
   }
 
   private class CmdParser(programName: String) extends OptionParser[CmdConfig](programName) {
-    head("\nDatasets Comparison", "")
+    head("\nEnd2End Test Runner", "")
     var rawFormat: Option[String] = None
 
     opt[String]('f', "raw-format").required.action((value, config) => {
