@@ -41,29 +41,30 @@ object E2ESparkRunner {
     val cmd = CmdConfig.getCmdLineArguments(args)
 
     val standartisation = s"spark-submit ${cmd.sparkConf} $stdClass $stdJarPath ${cmd.standartizationJobConf}"
-    log.debug(standartisation)
+    val stdComparison = s"spark-submit ${cmd.sparkConf} $compClass $testUtilsJarPath ${cmd.stdComparisonConf}"
+    val conformance = s"spark-submit ${cmd.sparkConf} $confClass $confJarPath ${cmd.conformanceJobConf}"
+    val confComparison = s"spark-submit ${cmd.sparkConf} $compClass $testUtilsJarPath ${cmd.confComparisonConf}"
+
     log.info("Running Standartization")
+    log.debug(standartisation)
     val ProcessMeasurement(stdTime, standartisationRes) = HelperFunctions.calculateTime { runBashCmd(standartisation) }
     log.debug(standartisationRes)
     log.info("Standartization Passed")
 
-    val stdComparison = s"spark-submit ${cmd.sparkConf} $compClass $testUtilsJarPath ${cmd.stdComparisonConf}"
-    log.debug(stdComparison)
     log.info("Running Standartization Comparison")
+    log.debug(stdComparison)
     val stdComparisonRes: String = runBashCmd(stdComparison)
     log.debug(stdComparisonRes)
     log.info("Standartization Comparison Passed")
-    val conformance = s"spark-submit ${cmd.sparkConf} $confClass $confJarPath ${cmd.conformanceJobConf}"
 
-    log.debug(conformance)
     log.info("Running Conformance")
+    log.debug(conformance)
     val ProcessMeasurement(confTime, conformanceRes) = HelperFunctions.calculateTime { runBashCmd(conformance) }
     log.debug(conformanceRes)
     log.info("Conformance Passed")
 
-    val confComparison = s"spark-submit ${cmd.sparkConf} $compClass $testUtilsJarPath ${cmd.confComparisonConf}"
-    log.debug(confComparison)
     log.info("Running Conformance Comparison")
+    log.debug(confComparison)
     val confComparisonRes: String = runBashCmd(confComparison)
     log.debug(confComparisonRes)
     log.info("Conformance Comparison Passed")
