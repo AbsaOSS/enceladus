@@ -134,7 +134,8 @@ object CustomRuleSample4 {
 
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with Menas)
-    implicit val enableCF: Boolean = false
+    val experimentalMR= true
+    val enableCF: Boolean = false
 
     val dfReader: DataFrameReader = {
       val dfReader0 = spark.read
@@ -172,7 +173,7 @@ object CustomRuleSample4 {
       )
     )
     // scalastyle:on magic.number
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
     outputData.show()
     saveToCsv(outputData, cmd.outPath)
   }

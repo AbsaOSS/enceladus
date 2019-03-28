@@ -17,10 +17,17 @@ package za.co.absa.enceladus.utils.types
 
 import java.sql.Date
 import java.sql.Timestamp
+
 import scala.util.Try
 import org.apache.spark.sql.types._
+import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser}
 
 object Defaults {
+
+  private def getDTParser(option: Option[String], exceptionMessage: String = ""): EnceladusDateTimeParser = {
+    var pattern: String = option.getOrElse(throw new IllegalArgumentException(exceptionMessage))
+    EnceladusDateTimeParser(pattern)
+  }
 
   /** A function which defines default values for primitive types */
   def getGlobalDefault(dt: DataType): Any =
@@ -30,16 +37,15 @@ object Defaults {
       case _: ByteType      => 0.toByte
       case _: ShortType     => 0.toShort
       case _: DoubleType    => 0.0d
-      case _: LongType      => 0l
+      case _: LongType      => 0L
       case _: StringType    => ""
       case _: DateType      => new Date(0) //linux epoch
       case _: TimestampType => new Timestamp(0)
       case _: BooleanType   => false
-      case t: DecimalType => {
+      case t: DecimalType   =>
         val rest = t.precision - t.scale
         new java.math.BigDecimal(("0" * rest) + "." + ("0" * t.scale))
-      }
-      case _ => throw new IllegalStateException(s"No default value defined for data type ${dt.typeName}")
+      case _                => throw new IllegalStateException(s"No default value defined for data type ${dt.typeName}")
     }
 
   /** A function which defines default formats for primitive types */
@@ -59,21 +65,25 @@ object Defaults {
       case _: DoubleType    => value.toDouble
       case _: LongType      => value.toLong
       case _: StringType    => value
-      case _: DateType      => EnceladusDateParser(dtPattern.getOrElse(throw new IllegalArgumentException("No date format specified."))).parseDate(value)
-      case _: TimestampType => EnceladusDateParser(dtPattern.getOrElse(throw new IllegalArgumentException("No timestamp format specified."))).parseTimestamp(value)
+      case _: DateType      => getDTParser(dtPattern, "No date format specified.").parseDate(value)
+      case _: TimestampType => getDTParser(dtPattern, "No timestamp format specified.").parseTimestamp(value)
       case _: BooleanType   => value.toBoolean
       case _: DecimalType   => new java.math.BigDecimal(value)
       case _                => throw new IllegalStateException(s"No default value defined for data type ${dt.typeName}")
     }
   }
 
-  /** Wrapper which returns the parsed default value for datetype and timestamptype returns ,default value for other primtive type
-    * from metadata first (if any) and the global one otherwise */
+  /**
+    * Wrapper which returns the parsed default value for datetype and timestamptype returns,
+    * default value for other primitive type from metadata first (if any) and the global one otherwise
+    * @param st the field to get the default value for
+    * @return   the default value to be used
+    */
   def getDefaultValue(st: StructField): Any = {
     getDefaultOpt(st) match {
       case Some(default) =>
-        val format: Option[Format] = st.dataType match {
-          case _: DateType | _: TimestampType => Some(Format(st))
+        val format: Option[DateTimePattern] = st.dataType match {
+          case _: DateType | _: TimestampType => Some(DateTimePattern(st))
           case _ => None
         }
         parseDefault(st.dataType, default, format.map(_.get))

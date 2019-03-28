@@ -82,7 +82,7 @@ object DynamicConformanceJob {
     val inputData = DataSource.getData(stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
     // perform the conformance
     val result: DataFrame = try {
-      DynamicInterpreter.interpret(conformance, inputData, experimentalMappingRule = cmd.experimentalMappingRule)
+      DynamicInterpreter.interpret(conformance, inputData, cmd.experimentalMappingRule, enableCF)
     }
     catch {
       case e: ValidationException =>
