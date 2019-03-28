@@ -16,28 +16,381 @@
 package za.co.absa.enceladus.standardization.interpreter.stages
 
 import java.security.InvalidParameterException
-import java.util.TimeZone
-import java.util.regex.Pattern
+import java.sql.{Date, Timestamp}
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser}
 import za.co.absa.enceladus.utils.types.Defaults
+import org.apache.spark.sql.functions._
+import scala.util.Random
 
 class TypeParserSuite extends FunSuite with SparkTestBase {
 
-  TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+  implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
 
-  private def substringCount(text: String, substr: String): Int = {
-    Pattern.quote(substr).r.findAllMatchIn(text).length
+  val showStandardization: Boolean = false
+
+  private case class DS(precision: Int, scale: Int) //DecimalSize
+
+  private type TestData = Map[DataType, Seq[String]]
+
+  private case class TestInput(
+    defaultValueDate: String,
+    defaultValueTimestamp: String,
+    datePattern: String,
+    timestampPattern: String,
+    timezone: String,
+    baseType: DataType,
+    path: String,
+    datetimeNeedsPattern: Boolean = true,
+    datePatternDS: DS = DS(0, 0),
+    timestampPatternDS: DS = DS(0, 0),
+    testData: TestData = Map.empty
+  )
+
+  private def fullName(path: String, fieldName: String): String = {
+    if (path.nonEmpty) s"$path.$fieldName" else fieldName
   }
 
-  private def assertStringOccurrences(resultToCheck: ParseOutput, substrToSearch: String, colCount: Integer, errCount: Integer = 0): Unit = {
-    val resultCol = substringCount(resultToCheck.stdCol.expr.toString(), substrToSearch)
-    assert(colCount == resultCol, s"Expected $colCount, got $resultCol\n  of: $substrToSearch\n  in: ${resultToCheck.stdCol.expr.toString()}")
-    val resultErr = substringCount(resultToCheck.stdCol.expr.toString(), substrToSearch)
-    assert(colCount == resultErr, s"Expected $colCount, got $resultCol\n  of: $substrToSearch\n  in: ${resultToCheck.errors.expr.toString()}")
+  private def testCast(output: ParseOutput, path: String, src: String, pattern: String, fromType: DataType, toType: DataType): Unit = {
+    def expandPath(pathSegments: Seq[String], col: Column): Column = {
+      pathSegments match {
+        case Nil => col
+        case _ => struct(expandPath(pathSegments.tail, col)).as(pathSegments.head)
+      }
+    }
+
+    import spark.implicits._
+
+    val srcF = fullName(path, src)
+    val pathSeq: Seq[String] = if (path.isEmpty) {Nil} else  {path.split("\\.")}
+
+    val dataString: Option[String] = (fromType, toType) match {
+      case (BooleanType, _) => Some(Random.nextBoolean.toString)
+      case (_, TimestampType) => Some(EnceladusDateTimeParser(pattern).format(new Timestamp(System.currentTimeMillis())))
+      case (_, DateType) => Some(EnceladusDateTimeParser(pattern).format(new Date(System.currentTimeMillis())))
+      case (_, IntegerType) => Some(Random.nextInt.toString)
+      case (_, LongType) => Some(Random.nextLong.toString)
+      case (IntegerType, FloatType) |
+           (IntegerType, DoubleType) |
+           (LongType, FloatType) |
+           (LongType, DoubleType) => Some(Random.nextInt.toString)
+      case (FloatType, FloatType) |
+           (FloatType, DoubleType) |
+           (DoubleType, FloatType) |
+           (DoubleType, DoubleType) |
+           (FloatType, DecimalType()) |
+           (DoubleType, DecimalType()) |
+           (DecimalType(), FloatType) |
+           (DecimalType(), DoubleType)  => Some(Random.nextFloat.toString)
+      case (StringType, StringType) => Some(Random.nextString(25))
+      case _ =>
+        if (showStandardization) {
+          println(s"No data generation method for '${fromType.typeName}'->'${toType.typeName}' standardization")
+        }
+        None
+    }
+
+    dataString.foreach( data => {
+      val srcDF = Seq(data)
+        .toDF("raw")
+        .select(expandPath(pathSeq, col("raw").cast(fromType).as(src)))
+      val convertedDF = srcDF.select(
+        col(srcF),
+        output.stdCol,
+        output.errors
+      )
+      if (showStandardization) {
+        convertedDF.printSchema()
+        convertedDF.show(false)
+      }
+    })
+  }
+
+  private def createCastTemplate(fromType: DataType,
+                                 toType: DataType,
+                                 pattern: String,
+                                 ds: DS,
+                                 timezone: Option[String]
+                                 ): String = {
+    val isEpoch = DateTimePattern.isEpoch(pattern)
+    (fromType, toType, isEpoch, timezone) match {
+      case (_, DateType, true, _)                      => s"to_date(from_unixtime((CAST(`%s` AS BIGINT) / ${DateTimePattern.epochFactor(pattern)}L), 'yyyy-MM-dd'), 'yyyy-MM-dd')"
+      case (_, TimestampType, true, _)                 => s"to_timestamp(from_unixtime((CAST(`%s` AS BIGINT) / ${DateTimePattern.epochFactor(pattern)}L), 'yyyy-MM-dd HH:mm:ss'), 'yyyy-MM-dd HH:mm:ss')"
+      case (StringType, DateType, _, Some(tz))         => s"to_utc_timestamp(to_timestamp(`%s`, '$pattern'), $tz)"
+      case (StringType, TimestampType, _, Some(tz))    => s"to_utc_timestamp(to_timestamp(`%s`, '$pattern'), $tz)"
+      case (DoubleType, TimestampType, _, Some(tz))    => s"to_utc_timestamp(to_timestamp(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern'), $tz)"
+      case (FloatType, TimestampType, _, Some(tz))     => s"to_utc_timestamp(to_timestamp(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern'), $tz)"
+      case (DoubleType, DateType, _, Some(tz))         => s"to_utc_timestamp(to_timestamp(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern'), $tz)"
+      case (FloatType, DateType, _, Some(tz))          => s"to_utc_timestamp(to_timestamp(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern'), $tz)"
+      case (TimestampType, TimestampType, _, Some(tz)) => s"to_utc_timestamp(%s, $tz)"
+      case (TimestampType, DateType, _, Some(tz))      => s"to_date(to_utc_timestamp(`%s`, '$tz'))"
+      case (DateType, TimestampType, _, Some(tz))      => s"to_utc_timestamp(%s, $tz)"
+      case (DateType, DateType, _, Some(tz))           => s"to_date(to_utc_timestamp(`%s`, '$tz'))"
+      case (_, DateType, _, Some(tz))                  => s"to_utc_timestamp(to_timestamp(CAST(`%s` AS STRING), '$pattern'), $tz)"
+      case (_, TimestampType, _, Some(tz))             => s"to_utc_timestamp(to_timestamp(CAST(`%s` AS STRING), '$pattern'), $tz)"
+      case (TimestampType, TimestampType, _, _)        |
+           (DateType, DateType, _, _)                  => "%s"
+      case (DoubleType, TimestampType, _, _)           |
+           (FloatType, TimestampType, _, _)            => s"to_timestamp(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern')"
+      case (DoubleType, DateType, _, _)                |
+           (FloatType, DateType, _, _)                 => s"to_date(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern')"
+      case (StringType, TimestampType, _, _)           =>  s"to_timestamp(`%s`, '$pattern')"
+      case (StringType, DateType, _, _)                => s"to_date(`%s`, '$pattern')"
+      case (TimestampType, DateType, _, _)             => "to_date(`%s`)"
+      case (DateType, TimestampType, _, _)             => "to_timestamp(`%s`)"
+      case (_, TimestampType, _, _)                    => s"to_timestamp(CAST(`%s` AS STRING), '$pattern')"
+      case (_, DateType, _, _)                         => s"to_date(CAST(`%s` AS STRING), '$pattern')"
+      case _                                           => s"CAST(%s AS ${toType.sql})"
+    }
+  }
+
+  private def checkOutput(output: ParseOutput,
+                          path: String,
+                          target: StructField,
+                          baseType: DataType,
+                          pattern: String = "",
+                          decimalSize: DS = DS(0, 0),
+                          timezone: Option[String] = None,
+                          src: String = "sourceField",
+                          testData: TestData = Map.empty
+                         ): Unit = {
+
+    val srcF = fullName(path, src)
+    val boolS = (!target.nullable).toString
+
+    val default = Defaults.getDefaultValue(target) match {
+      case d: Date => s"DATE '${d.toString}'"
+      case t: Timestamp => s"TIMESTAMP('${t.toString}')"
+      case s: String => s
+      case x => x.toString
+    }
+
+    val castString = createCastTemplate(baseType, target.dataType, pattern, decimalSize, timezone).format(srcF)
+
+    val std = s"CASE WHEN ((size(CASE WHEN (($srcF IS NULL) AND $boolS) THEN array(stdNullErr($srcF)) ELSE CASE WHEN (($srcF IS NOT NULL) AND ($castString IS NULL)) THEN array(stdCastErr($srcF, CAST($srcF AS STRING))) ELSE [] END END) = 0) AND ($srcF IS NOT NULL)) THEN $castString ELSE CASE WHEN (size(CASE WHEN (($srcF IS NULL) AND $boolS) THEN array(stdNullErr($srcF)) ELSE CASE WHEN (($srcF IS NOT NULL) AND ($castString IS NULL)) THEN array(stdCastErr($srcF, CAST($srcF AS STRING))) ELSE [] END END) = 0) THEN NULL ELSE $default END END AS `${target.name}`"
+    val actual = output.stdCol.toString().replaceFirst("#\\d+$", "")
+    assert(actual == std)
+
+    val err = s"CASE WHEN (($srcF IS NULL) AND $boolS) THEN array(stdNullErr($srcF)) ELSE CASE WHEN (($srcF IS NOT NULL) AND ($castString IS NULL)) THEN array(stdCastErr($srcF, CAST($srcF AS STRING))) ELSE [] END END"
+    assert(output.errors.toString() == err)
+
+    testCast(output, path, src, pattern, baseType, target.dataType)
+  }
+
+  private def testTemplate(input:TestInput): Unit = {
+    val dateEpochPattern = "epoch"
+    val timestampEpochPattern = "epochmilli"
+
+    val sourceField = StructField("sourceField", input.baseType)
+    val noMetaField = StructField("no_metaField", input.baseType, nullable = false,
+      new MetadataBuilder().putString("meta", "data").build)
+    val stringField = StructField("stringField", StringType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").build)
+    val floatField = StructField("floatField", FloatType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").build)
+    val integerField = StructField("integerField", IntegerType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").build)
+    val booleanField = StructField("booleanField", BooleanType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").build)
+    val dateField = StructField("dateField", DateType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").build)
+    val timestampField = StructField("timestampField", TimestampType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").build)
+    val datePatternField = StructField("datePatternField", DateType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").putString("pattern", input.datePattern).build)
+    val timestampPatternField = StructField("timestampPatternField", TimestampType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").putString("pattern", input.timestampPattern).build)
+    val datePatternDefaultField = StructField("datePatternDefaultField", DateType, nullable = true,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").putString("pattern", input.datePattern).putString("default", input.defaultValueDate).build)
+    val timestampPatternDefaultField = StructField("timestampPatternDefaultField", TimestampType, nullable = true,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").putString("pattern", input.timestampPattern).putString("default", input.defaultValueTimestamp).build)
+    val datePatternTmzField = StructField("datePatternTmzField", DateType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").putString("pattern", input.datePattern).putString("timezone", input.timezone).build)
+    val timestampPatternTmzField = StructField("timestampPatternTmzField", TimestampType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").putString("pattern", input.timestampPattern).putString("timezone", input.timezone).build)
+    val dateEpochField = StructField("dateEpochField", DateType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").putString("pattern", dateEpochPattern).build)
+    val timestampEpochField = StructField("timestampEpochField", TimestampType, nullable = false,
+      new MetadataBuilder().putString("sourcecolumn", "sourceField").putString("pattern", timestampEpochPattern).build)
+
+    val schema = buildSchema(input.path, Array(
+      sourceField,
+      noMetaField,
+      stringField,
+      floatField,
+      integerField,
+      booleanField,
+      dateField,
+      timestampField,
+      datePatternField,
+      timestampPatternField,
+      datePatternDefaultField,
+      timestampPatternDefaultField,
+      datePatternTmzField,
+      timestampPatternTmzField,
+      dateEpochField,
+      timestampEpochField
+    ))
+
+    var output: ParseOutput = TypeParser.standardize(sourceField, input.path, schema)
+    checkOutput(output, input.path, sourceField, input.baseType)
+    output = TypeParser.standardize(noMetaField, input.path, schema)
+    checkOutput(output, input.path, noMetaField, input.baseType, src = "no_metaField")
+    output = TypeParser.standardize(stringField, input.path, schema)
+    checkOutput(output, input.path, stringField, input.baseType)
+    output = TypeParser.standardize(floatField, input.path, schema)
+    checkOutput(output, input.path, floatField, input.baseType)
+    output = TypeParser.standardize(integerField, input.path, schema)
+    checkOutput(output, input.path, integerField,input.baseType)
+    output = TypeParser.standardize(booleanField, input.path, schema)
+    checkOutput(output, input.path, booleanField, input.baseType)
+
+    if (input.datetimeNeedsPattern) {
+      var errMessage = s"Dates & times represented as ${input.baseType.typeName} values need specified 'pattern' metadata"
+      var caughtErr = intercept[InvalidParameterException] {
+        TypeParser.standardize(dateField, input.path, schema)
+      }
+      assert(caughtErr.getMessage == errMessage)
+      errMessage = s"Dates & times represented as ${input.baseType.typeName} values need specified 'pattern' metadata"
+      caughtErr = intercept[InvalidParameterException] {
+        TypeParser.standardize(timestampField, input.path, schema)
+      }
+      assert(caughtErr.getMessage == errMessage)
+    } else {
+      output = TypeParser.standardize(dateField, input.path, schema)
+      checkOutput(output, input.path, dateField,  input.baseType, "yyyy-MM-dd")
+      output = TypeParser.standardize(timestampField, input.path, schema)
+      checkOutput(output, input.path, timestampField, input.baseType, "yyyy-MM-dd HH:mm:ss")
+    }
+    output = TypeParser.standardize(datePatternField, input.path, schema)
+    checkOutput(output, input.path, datePatternField, input.baseType, input.datePattern, input.datePatternDS)
+    output = TypeParser.standardize(timestampPatternField, input.path, schema)
+    checkOutput(output, input.path, timestampPatternField, input.baseType, input.timestampPattern, input.timestampPatternDS)
+    output = TypeParser.standardize(datePatternDefaultField, input.path, schema)
+    checkOutput(output, input.path, datePatternDefaultField, input.baseType, input.datePattern, input.datePatternDS)
+    output = TypeParser.standardize(timestampPatternDefaultField, input.path, schema)
+    checkOutput(output, input.path, timestampPatternDefaultField, input.baseType, input.timestampPattern, input.timestampPatternDS)
+    output = TypeParser.standardize(datePatternTmzField, input.path, schema)
+    checkOutput(output, input.path, datePatternTmzField, input.baseType, input.datePattern, input.datePatternDS, Some(input.timezone))
+    output = TypeParser.standardize(timestampPatternTmzField, input.path, schema)
+    checkOutput(output, input.path, timestampPatternTmzField, input.baseType, input.timestampPattern, input.timestampPatternDS, Some(input.timezone))
+    output = TypeParser.standardize(dateEpochField, input.path, schema)
+    checkOutput(output, input.path, dateEpochField, input.baseType, dateEpochPattern)
+    output = TypeParser.standardize(timestampEpochField, input.path, schema)
+    checkOutput(output, input.path, timestampEpochField, input.baseType, timestampEpochPattern)
+  }
+
+  private def buildSchema(path:String, fields: Array[StructField]): StructType = {
+    val innerSchema = StructType(fields)
+
+    if (path.nonEmpty) {
+      StructType(Array(StructField(path, innerSchema)))
+    } else {
+      innerSchema
+    }
+  }
+
+  test("From string source") {
+    val input = TestInput(
+      defaultValueDate = "01.01.1970",
+      defaultValueTimestamp = "01.01.1970 00:00:00",
+      datePattern = "dd.MM.yyyy",
+      timestampPattern = "dd.MM.yyyy HH:mm:ss",
+      timezone = "CET",
+      baseType = StringType,
+      path = "",
+      datetimeNeedsPattern = false
+    )
+    testTemplate(input)
+  }
+
+  test("From long source") {
+    val input = TestInput(
+      defaultValueDate = "20001010",
+      defaultValueTimestamp = "199912311201",
+      datePattern = "yyyyMMdd",
+      timestampPattern = "yyyyMMddHHmm",
+      timezone = "EST",
+      baseType = LongType,
+      path = "Hey"
+    )
+    testTemplate(input)
+  }
+
+  test("From boolean source") {
+    val input = TestInput(
+      defaultValueDate = "0",
+      defaultValueTimestamp = "1",
+      datePattern = "u",
+      timestampPattern = "F",
+      timezone = "WST",
+      baseType = BooleanType,
+      path = "Boo"
+    )
+    testTemplate(input)
+  }
+
+  test("From decimal source") {
+    val input = TestInput(
+      defaultValueDate = "700101",
+      defaultValueTimestamp = "991231.2359",
+      datePattern = "yyMMdd",
+      timestampPattern = "yyMMdd.HHmm",
+      timezone = "CST",
+      baseType = DecimalType(10, 4),
+      path = "hello"
+    )
+    testTemplate(input)
+  }
+
+
+  test("From double source") {
+    val input = TestInput(
+      defaultValueDate = "7001.01",
+      defaultValueTimestamp = "991231.2359",
+      datePattern = "yyMM.dd",
+      timestampPattern = "yyMMdd.HHmm",
+      timezone = "CEST",
+      baseType = DoubleType,
+      path = "Double",
+      datePatternDS = DS(6, 2),
+      timestampPatternDS = DS(10, 4)
+    )
+    testTemplate(input)
+  }
+
+
+  test("From timestamp source") {
+    val input = TestInput(
+      defaultValueDate = "700101",
+      defaultValueTimestamp = "991231.2359",
+      datePattern = "yyMMdd",
+      timestampPattern = "yyMMdd.HHmm",
+      timezone = "CST",
+      baseType = TimestampType,
+      path = "timestamp",
+      datetimeNeedsPattern = false
+    )
+    testTemplate(input)
+  }
+
+  test("From date source") {
+    val input = TestInput(
+      defaultValueDate = "700101",
+      defaultValueTimestamp = "991231.2359",
+      datePattern = "yyMMdd",
+      timestampPattern = "yyMMdd.HHmm",
+      timezone = "CST",
+      baseType = DateType,
+      path = "Date",
+      datetimeNeedsPattern = false
+    )
+    testTemplate(input)
   }
 
   test("Test standardize with sourcecolumn metadata") {
@@ -65,166 +418,6 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
     assertResult(false)(parseOutputStructFieldWithMetadataSourceColumn.errors.expr.toString().contains("path.c"))
     assertResult(true)(parseOutputStructFieldWithMetadataSourceColumn.errors.expr.toString().contains("path.override_c"))
     assertResult(false)(parseOutputStructFieldWithMetadataSourceColumn.errors.expr.toString().replaceAll("path.override_c", "").contains("path"))
-  }
-
-
-  test("Date field without format") {
-    val path: String = "path"
-    val defaultFormat: String = Defaults.getGlobalFormat(DateType)
-    val defaultValue: String = "1999-12-31"
-    val defaultValueParsed: Integer = 10956 //this is the above date transformed within the expression
-    val structFieldNoDefault = StructField("field0", DateType)
-    val structFieldWithDefaultMetadataColumn = StructField("field1", DateType, nullable = false, new MetadataBuilder().putString("default", defaultValue).build)
-    val structFieldWithMetadataSource2Column = StructField("field2", DateType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field2_source").build)
-    val structFieldWithMetadataSource3Column = StructField("field3", DateType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field3_source").build)
-    val structFieldSource2Column = StructField("field2_source", DoubleType, nullable = false)
-    val structFieldSource3Column = StructField("field3_source", DecimalType(10,2), nullable = false)
-    val schema: StructType = StructType(Array(StructField(path, StructType(Array(structFieldNoDefault, structFieldWithDefaultMetadataColumn, structFieldWithMetadataSource2Column, structFieldWithMetadataSource3Column, structFieldSource2Column, structFieldSource3Column)))))
-
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
-    val parseOutputStructFieldNoDefault: ParseOutput = TypeParser.standardize(structFieldNoDefault, path, schema)
-    assertStringOccurrences(parseOutputStructFieldNoDefault, s"to_date('$path.field0, Some($defaultFormat))", 3, 1)
-    val parseOutputStructFieldWithMetadataNotSourceColumn: ParseOutput = TypeParser.standardize(structFieldWithDefaultMetadataColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_date('$path.field1, Some($defaultFormat))", 3, 1)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
-    val message = "Dates & times represented as numeric values need specified 'pattern' metadata"
-    val caught1 = intercept[InvalidParameterException] {
-      TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
-    }
-    assert(caught1.getMessage == message)
-    val caught2 = intercept[InvalidParameterException] {
-      TypeParser.standardize(structFieldWithMetadataSource3Column, path, schema)
-    }
-    assert(caught2.getMessage == message)
-  }
-
-  test("Timestamp fields without format") {
-    val path: String = "path"
-    val defaultFormat: String = Defaults.getGlobalFormat(TimestampType)
-    val defaultValue: String = "1999-12-31 09:51:30"
-    val defaultValueParsed: Long = 946633890000000L //this is the above timestamp transformed within the expression
-    val structFieldNoDefault = StructField("field0", TimestampType)
-    val structFieldWithDefaultMetadataColumn = StructField("field1", TimestampType, nullable = false, new MetadataBuilder().putString("default", defaultValue).build)
-    val structFieldWithMetadataSource2Column = StructField("field2", TimestampType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field2_source").build)
-    val structFieldWithMetadataSource3Column = StructField("field3", TimestampType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field3_source").build)
-    val structFieldSource2Column = StructField("field2_source", DoubleType, nullable = false)
-    val structFieldSource3Column = StructField("field3_source", DecimalType(10,2), nullable = false)
-    val schema: StructType = StructType(Array(StructField(path, StructType(Array(structFieldNoDefault, structFieldWithDefaultMetadataColumn, structFieldWithMetadataSource2Column, structFieldWithMetadataSource3Column, structFieldSource2Column, structFieldSource3Column)))))
-
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
-    val parseOutputStructFieldNoDefault: ParseOutput = TypeParser.standardize(structFieldNoDefault, path, schema)
-    assertStringOccurrences(parseOutputStructFieldNoDefault, s"to_timestamp('$path.field0, Some($defaultFormat))", 3, 1)
-    val parseOutputStructFieldWithMetadataNotSourceColumn: ParseOutput = TypeParser.standardize(structFieldWithDefaultMetadataColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_timestamp('$path.field1, Some($defaultFormat))", 3, 1)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
-    val message = "Dates & times represented as numeric values need specified 'pattern' metadata"
-    val caught1 = intercept[InvalidParameterException] {
-      TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
-    }
-    assert(caught1.getMessage == message)
-    val caught2 = intercept[InvalidParameterException] {
-      TypeParser.standardize(structFieldWithMetadataSource3Column, path, schema)
-    }
-    assert(caught2.getMessage == message)
-  }
-
-  test("Date fields with format") {
-    val path: String = "path"
-    val defaultValue1: String = "1999:31:12"
-    val defaultValue2: String = "121999.31"
-    val defaultValue3: String = "31121999"
-    val defaultValueParsed: Integer = 10956 //this is the above date transformed within the expression
-    val structFieldNoDefault = StructField("field0", DateType, nullable = false, new MetadataBuilder().putString("pattern", "dd/MM/yyyy").build)
-    val structFieldWithDefaultMetadataColumn = StructField("field1", DateType, nullable = false, new MetadataBuilder().putString("default", defaultValue1).putString("pattern", "yyyy:dd:MM").build)
-    val structFieldWithMetadataSource2Column = StructField("field2", DateType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field2_source").putString("pattern", "MMyyyy.dd").putString("default", defaultValue2).build)
-    val structFieldWithMetadataSource3Column = StructField("field3", DateType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field3_source").putString("pattern", "ddMMyyyy").putString("default", defaultValue3).build)
-    val structFieldSource2Column = StructField("field2_source", DoubleType, nullable = false)
-    val structFieldSource3Column = StructField("field3_source", DecimalType(10,2), nullable = false)
-    val schema: StructType = StructType(Array(StructField(path, StructType(Array(structFieldNoDefault, structFieldWithDefaultMetadataColumn, structFieldWithMetadataSource2Column, structFieldWithMetadataSource3Column, structFieldSource2Column, structFieldSource3Column)))))
-
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
-    val parseOutputStructFieldNoDefault: ParseOutput = TypeParser.standardize(structFieldNoDefault, path, schema)
-    assertStringOccurrences(parseOutputStructFieldNoDefault, s"to_date('$path.field0, Some(dd/MM/yyyy))", 3, 1)
-    val parseOutputStructFieldWithMetadataNotSourceColumn: ParseOutput = TypeParser.standardize(structFieldWithDefaultMetadataColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_date('$path.field1, Some(yyyy:dd:MM))", 3, 1)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
-    val parseOutputStructFieldWithMetadataSource2Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSource2Column, s"to_date(cast(cast('$path.field2_source as decimal(8,2)) as string), Some(MMyyyy.dd))", 3, 1)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSource2Column, s"ELSE $defaultValueParsed END", 1)
-    val parseOutputStructFieldWithMetadataSource3Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource3Column, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSource3Column, s"to_date(cast('$path.field3_source as string), Some(ddMMyyyy))", 3, 1)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSource3Column, s"ELSE $defaultValueParsed END", 1)
-  }
-
-  test("Timestamp fields with format") {
-    val path: String = "path"
-    val defaultValue: String = "1999-12-31 09:51:30"
-    val defaultValue1: String = "1999:31:12_09~51~30"
-    val defaultValue2: String = "31121999.095130"
-    val defaultValue3: String = "31121999095130"
-    val defaultValueParsed: Long = 946633890000000L //this is the above timestamp transformed within the expression
-    val structFieldNoDefault = StructField("field0", TimestampType, nullable = false, new MetadataBuilder().putString("pattern", "dd/MM/yyyy/hh/mm/ss").build)
-    val structFieldWithDefaultMetadataColumn = StructField("field1", TimestampType, nullable = false, new MetadataBuilder().putString("default", defaultValue1).putString("pattern", "yyyy:dd:MM_hh~mm~ss").build)
-    val structFieldWithMetadataSource2Column = StructField("field2", TimestampType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field2_source").putString("pattern", "ddMMyyyy.hhmmss").putString("default", defaultValue2).build)
-    val structFieldWithMetadataSource3Column = StructField("field3", TimestampType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field3_source").putString("pattern", "ddMMyyyyhhmmss").putString("default", defaultValue3).build)
-    val structFieldSource2Column = StructField("field2_source", DoubleType, nullable = false)
-    val structFieldSource3Column = StructField("field3_source", DecimalType(10,2), nullable = false)
-    val schema: StructType = StructType(Array(StructField(path, StructType(Array(structFieldNoDefault, structFieldWithDefaultMetadataColumn, structFieldWithMetadataSource2Column, structFieldWithMetadataSource3Column, structFieldSource2Column, structFieldSource3Column)))))
-
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
-    val parseOutputStructFieldNoDefault: ParseOutput = TypeParser.standardize(structFieldNoDefault, path, schema)
-    assertStringOccurrences(parseOutputStructFieldNoDefault, s"to_timestamp('$path.field0, Some(dd/MM/yyyy/hh/mm/ss))", 3, 1)
-    val parseOutputStructFieldWithMetadataNotSourceColumn: ParseOutput = TypeParser.standardize(structFieldWithDefaultMetadataColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"to_timestamp('$path.field1, Some(yyyy:dd:MM_hh~mm~ss))", 3, 1)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataNotSourceColumn, s"ELSE $defaultValueParsed END", 1)
-    val parseOutputStructFieldWithMetadataSource2Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource2Column, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSource2Column, s"to_timestamp(cast(cast('$path.field2_source as decimal(14,6)) as string), Some(ddMMyyyy.hhmmss))", 3, 1)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSource2Column, s"ELSE $defaultValueParsed END", 1)
-    val parseOutputStructFieldWithMetadataSource3Column: ParseOutput = TypeParser.standardize(structFieldWithMetadataSource3Column, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSource3Column, s"to_timestamp(cast('$path.field3_source as string), Some(ddMMyyyyhhmmss))", 3, 1)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSource3Column, s"ELSE $defaultValueParsed END", 1)
-  }
-
-  test("Date fields with epoch format") {
-    val path: String = "path"
-    val structFieldEpochColumn = StructField("field0", DateType, nullable = false, new MetadataBuilder().putString("pattern", "epoch").build)
-    val structFieldEpochMilliColumn = StructField("field1", DateType, nullable = false, new MetadataBuilder().putString("pattern", "epochmilli").build)
-    val structFieldWithMetadataSourceEpochColumn = StructField("field2", DateType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field2_source").putString("pattern", "epoch").build)
-    val structFieldWithMetadataSourceEpochMilliColumn = StructField("field3", DateType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field3_source").putString("pattern", "epochmilli").build)
-    val structFieldSource2Column = StructField("field2_source", IntegerType, nullable = false)
-    val structFieldSource3Column = StructField("field3_source", DecimalType(16,0), nullable = false)
-    val schema: StructType = StructType(Array(StructField(path, StructType(Array(structFieldEpochColumn, structFieldEpochMilliColumn, structFieldWithMetadataSourceEpochColumn, structFieldWithMetadataSourceEpochMilliColumn, structFieldSource2Column, structFieldSource3Column)))))
-
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
-    val parseOutputStructFieldEpoch: ParseOutput = TypeParser.standardize(structFieldEpochColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldEpoch, s"from_unixtime((cast('$path.field0 as bigint) / 1), yyyy-MM-dd, None)", 3, 1)
-    val parseOutputStructFieldEpochMilli: ParseOutput = TypeParser.standardize(structFieldEpochMilliColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldEpochMilli, s"from_unixtime((cast('$path.field1 as bigint) / 1000), yyyy-MM-dd, None)", 3, 1)
-    val parseOutputStructFieldWithMetadataSourceEpoch: ParseOutput = TypeParser.standardize(structFieldWithMetadataSourceEpochColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSourceEpoch, s"from_unixtime((cast('$path.field2_source as bigint) / 1), yyyy-MM-dd, None)", 3, 1)
-    val parseOutputStructFieldWithMetadataSourceEpochMilli: ParseOutput = TypeParser.standardize(structFieldWithMetadataSourceEpochMilliColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSourceEpochMilli, s"from_unixtime((cast('$path.field3_source as bigint) / 1000), yyyy-MM-dd, None)", 3, 1)
-  }
-
-  test("Timestamp fields with epoch format") {
-    val path: String = "path"
-    val structFieldEpochColumn = StructField("field0", TimestampType, nullable = false, new MetadataBuilder().putString("pattern", "epoch").build)
-    val structFieldEpochMilliColumn = StructField("field1", TimestampType, nullable = false, new MetadataBuilder().putString("pattern", "epochmilli").build)
-    val structFieldWithMetadataSourceEpochColumn = StructField("field2", TimestampType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field2_source").putString("pattern", "epoch").build)
-    val structFieldWithMetadataSourceEpochMilliColumn = StructField("field3", TimestampType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "field3_source").putString("pattern", "epochmilli").build)
-    val structFieldSource2Column = StructField("field2_source", IntegerType, nullable = false)
-    val structFieldSource3Column = StructField("field3_source", DecimalType(16,0), nullable = false)
-    val schema: StructType = StructType(Array(StructField(path, StructType(Array(structFieldEpochColumn, structFieldEpochMilliColumn, structFieldWithMetadataSourceEpochColumn, structFieldWithMetadataSourceEpochMilliColumn, structFieldSource2Column, structFieldSource3Column)))))
-
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
-    val parseOutputStructFieldEpoch: ParseOutput = TypeParser.standardize(structFieldEpochColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldEpoch, s"from_unixtime((cast('$path.field0 as bigint) / 1), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
-    val parseOutputStructFieldEpochMilli: ParseOutput = TypeParser.standardize(structFieldEpochMilliColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldEpochMilli, s"from_unixtime((cast('$path.field1 as bigint) / 1000), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
-    val parseOutputStructFieldWithMetadataSourceEpoch: ParseOutput = TypeParser.standardize(structFieldWithMetadataSourceEpochColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSourceEpoch, s"from_unixtime((cast('$path.field2_source as bigint) / 1), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
-    val parseOutputStructFieldWithMetadataSourceEpochMilli: ParseOutput = TypeParser.standardize(structFieldWithMetadataSourceEpochMilliColumn, path, schema)
-    assertStringOccurrences(parseOutputStructFieldWithMetadataSourceEpochMilli, s"from_unixtime((cast('$path.field3_source as bigint) / 1000), yyyy-MM-dd HH:mm:ss, None)", 3, 1)
   }
 
 }

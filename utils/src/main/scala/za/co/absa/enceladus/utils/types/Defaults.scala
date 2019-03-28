@@ -82,11 +82,11 @@ object Defaults {
   def getDefaultValue(st: StructField): Any = {
     getDefaultOpt(st) match {
       case Some(default) =>
-        val format: Option[DateTimePattern] = st.dataType match {
+        val pattern: Option[DateTimePattern] = st.dataType match {
           case _: DateType | _: TimestampType => Some(DateTimePattern(st))
           case _ => None
         }
-        parseDefault(st.dataType, default, format.map(_.get))
+        parseDefault(st.dataType, default, pattern.map(_.get))
       case None          => getGlobalDefault (st.dataType)
     }
   }

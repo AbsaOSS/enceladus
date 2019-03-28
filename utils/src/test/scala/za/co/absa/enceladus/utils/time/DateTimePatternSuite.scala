@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.utils.time
 
 import java.security.InvalidParameterException
-
 import org.apache.spark.sql.types.{DateType, DoubleType, TimestampType}
 import org.scalatest.FunSuite
 
@@ -141,4 +140,99 @@ class DateTimePatternSuite extends FunSuite {
     }
     assert(caught2.getMessage == expectedMessage)
   }
+
+  test("Epoch in pattern") {
+    val dateTimePattern1 = DateTimePattern("epoch")
+    assert(dateTimePattern1.timeZoneInPattern)
+    val dateTimePattern2 = DateTimePattern("epochmilli")
+    assert(dateTimePattern2.timeZoneInPattern)
+  }
+
+  test("Time zone NOT in pattern") {
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss")
+    assert(!dateTimePattern1.timeZoneInPattern)
+    val dateTimePattern2 = DateTimePattern("")
+    assert(!dateTimePattern2.timeZoneInPattern)
+  }
+
+  test("Standard time zone in pattern") {
+    val dateTimePattern1 = DateTimePattern("ZZ yyyy-MM-dd HH:mm:ss")
+    assert(dateTimePattern1.timeZoneInPattern)
+    val dateTimePattern2 = DateTimePattern(" HH:mm:ss ZZZZ yyyy-MM-dd")
+    assert(dateTimePattern2.timeZoneInPattern)
+  }
+
+  test("Offset time zone in pattern") {
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ssXX")
+    assert(dateTimePattern1.timeZoneInPattern)
+    val dateTimePattern2 = DateTimePattern("HH:mm:ss XX yyyy-MM-dd")
+    assert(dateTimePattern2.timeZoneInPattern)
+    val dateTimePattern3 = DateTimePattern("XXX HH:mm:ss yyyy-MM-dd")
+    assert(dateTimePattern3.timeZoneInPattern)
+  }
+
+  test("Time zone with literals in the pattern") {
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss'zz'")
+    assert(!dateTimePattern1.timeZoneInPattern)
+    val dateTimePattern2 = DateTimePattern("'XXX: 'HH:mm:ss XX yyyy-MM-dd")
+    assert(dateTimePattern2.timeZoneInPattern)
+    val dateTimePattern3 = DateTimePattern("'Date:'yyyy-MM-dd HH:mm:ss\\'ZZ\\'")
+    assert(dateTimePattern3.timeZoneInPattern)
+  }
+
+  test("Default time zone - not present") {
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some(TimestampType))
+    assert(dateTimePattern1.defaultTimeZone.isEmpty)
+    val dateTimePattern2 = DateTimePattern("yyyy-MM-dd", Some(DateType), None)
+    assert(dateTimePattern2.defaultTimeZone.isEmpty)
+    val dateTimePattern3 = DateTimePattern("")
+    assert(dateTimePattern3.defaultTimeZone.isEmpty)
+  }
+
+  test("Default time zone - present") {
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some(TimestampType), Some("CET"))
+    assert(dateTimePattern1.defaultTimeZone.contains("CET"))
+    val dateTimePattern2 = DateTimePattern("", "")
+    assert(dateTimePattern2.defaultTimeZone.contains(""))
+  }
+
+  test("Default time zone - overridden by time zone in pattern") {
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss zz", Some(TimestampType), Some("CST")) //Standard time zone
+    assert(dateTimePattern1.defaultTimeZone.isEmpty)
+    val dateTimePattern2 = DateTimePattern("yyyy-MM-dd HH:mm:ssXX", Some(TimestampType), Some("WST")) //Offset time zone
+    assert(dateTimePattern2.defaultTimeZone.isEmpty)
+  }
+
+  test("Default time zone - epoch") {
+    val dateTimePattern1 = DateTimePattern("epochmilli", "WST")
+    assert(dateTimePattern1.defaultTimeZone.isEmpty)
+  }
+
+  test("Is NOT time-zoned ") {
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some(TimestampType))
+    assert(!dateTimePattern1.isTimeZoned)
+    val dateTimePattern2 = DateTimePattern("yyyy-MM-dd", Some(DateType), None)
+    assert(!dateTimePattern2.isTimeZoned)
+  }
+
+  test("Is time-zoned - default time zone") {
+    val dateTimePattern = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some(TimestampType), Some("EST"))
+    assert(dateTimePattern.isTimeZoned)
+  }
+
+  test("Is time-zoned - standard time zone in pattern") {
+    val dateTimePattern = DateTimePattern("yyyy-MM-dd HH:mm:ss zz", Some(TimestampType)) //Standard time zone
+    assert(dateTimePattern.isTimeZoned)
+  }
+
+  test("Is time-zoned - offset time zone in pattern") {
+    val dateTimePattern = DateTimePattern("yyyy-MM-dd HH:mm:ssXX", Some(TimestampType)) //Offset time zone
+    assert(dateTimePattern.isTimeZoned)
+  }
+
+  test("Is time-zoned - epoch") {
+    val dateTimePattern = DateTimePattern("epoch")
+    assert(dateTimePattern.isTimeZoned)
+  }
+
 }
