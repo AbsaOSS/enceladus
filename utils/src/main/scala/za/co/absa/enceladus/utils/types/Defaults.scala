@@ -86,7 +86,7 @@ object Defaults {
           case _: DateType | _: TimestampType => Some(DateTimePattern(st))
           case _ => None
         }
-        parseDefault(st.dataType, default, pattern.map(_.get))
+        parseDefault(st.dataType, default, pattern.map(_.pattern))
       case None          => getGlobalDefault (st.dataType)
     }
   }

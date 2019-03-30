@@ -22,28 +22,33 @@ import scala.util.Try
 
 /**
   * Class to carry enhanced information about formatting patterns in conversion from/to string
-  * @param pattern  actual pattern to format the type conversion; if none global default pattern for the type is used
+  * @param inputPattern  actual pattern to format the type conversion; if none global default pattern for the type is used
   * @param forType  type the format is intended for
   */
-class TypePattern(pattern: Option[String], forType: Option[DataType] = None) {
+class TypePattern(inputPattern: Option[String], forType: Option[DataType] = None) {
 
-  val get: String = pattern.getOrElse(Defaults.getGlobalFormat(forType.get))
+  val pattern: String = inputPattern.getOrElse(Defaults.getGlobalFormat(forType.get))
 
-  def isDefault: Boolean = pattern.isEmpty
+  def isDefault: Boolean = inputPattern.isEmpty
 
-  def getOrElse(default: String): String = pattern.getOrElse(default)
+  def getOrElse(default: String): String = inputPattern.getOrElse(default)
 }
 
 object TypePattern {
+  implicit def patternToString(pattern: TypePattern): String = pattern.pattern
+
+  private def getMetadata(structField: StructField, key: String): Option[String] = {
+    Try(structField.metadata.getString(key)).toOption
+  }
 
   def apply(structField: StructField ):TypePattern = {
-    val data = structField.dataType
-    val patternString: Option[String] = Try(structField.metadata.getString("pattern")).toOption
-    data match {
+    val dataType = structField.dataType
+    val patternString: Option[String] = getMetadata(structField, "pattern")
+    dataType match {
       case _: DateType | _: TimestampType =>
-        val timeZone: Option[String] = Try(structField.metadata.getString("timezone")).toOption
-        new DateTimePattern(patternString, Some(data), timeZone)
-      case _ => new TypePattern(patternString, Some(data))
+        val timeZone: Option[String] = getMetadata(structField,"timezone")
+        new DateTimePattern(patternString, Some(dataType), timeZone)
+      case _ => new TypePattern(patternString, Some(dataType))
     }
   }
 
@@ -54,10 +59,4 @@ object TypePattern {
       case _ => new TypePattern(Some(pattern), forType)
     }
   }
-
-  implicit def pattern2String(format: TypePattern): String = format.get
 }
-
-
-
-

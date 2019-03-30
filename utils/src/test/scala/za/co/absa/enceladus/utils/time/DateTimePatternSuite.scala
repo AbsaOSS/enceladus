@@ -25,10 +25,10 @@ class DateTimePatternSuite extends FunSuite {
     val pattern: String = "yyyy~mm~dd_HH.mm.ss"
     val dateTimePattern = new DateTimePattern(Some(pattern), Some(TimestampType))
     assert(!dateTimePattern.isDefault)
-    assert(dateTimePattern.get == pattern)
+    assert(dateTimePattern.pattern == pattern)
     assert(dateTimePattern.getOrElse("foo") == pattern)
     assert(!dateTimePattern.isEpoch)
-    val expectedMessage = s"'${dateTimePattern.get}' is not an epoch pattern"
+    val expectedMessage = s"'${dateTimePattern.pattern}' is not an epoch pattern"
     val caught = intercept[InvalidParameterException] {
       DateTimePattern.epochFactor(dateTimePattern)
     }
@@ -44,10 +44,10 @@ class DateTimePatternSuite extends FunSuite {
     val pattern: String = "yyyy~mm~dd_HH.mm.ss"
     val dateTimePattern = new DateTimePattern(Some(pattern), Some(DateType))
     assert(!dateTimePattern.isDefault)
-    assert(dateTimePattern.get == pattern)
+    assert(dateTimePattern.pattern == pattern)
     assert(dateTimePattern.getOrElse("fox") == pattern)
     assert(!dateTimePattern.isEpoch)
-    val expectedMessage = s"'${dateTimePattern.get}' is not an epoch pattern"
+    val expectedMessage = s"'${dateTimePattern.pattern}' is not an epoch pattern"
     val caught = intercept[InvalidParameterException] {
       DateTimePattern.epochFactor(dateTimePattern)
     }
@@ -61,10 +61,10 @@ class DateTimePatternSuite extends FunSuite {
   test("Format class with default value - timestamp") {
     val dateTimePattern = new DateTimePattern(None, Some(TimestampType))
     assert(dateTimePattern.isDefault)
-    assert(dateTimePattern.get == "yyyy-MM-dd HH:mm:ss")
+    assert(dateTimePattern.pattern == "yyyy-MM-dd HH:mm:ss")
     assert(dateTimePattern.getOrElse("foo") == "foo")
     assert(!dateTimePattern.isEpoch)
-    val expectedMessage = s"'${dateTimePattern.get}' is not an epoch pattern"
+    val expectedMessage = s"'${dateTimePattern.pattern}' is not an epoch pattern"
     val caught = intercept[InvalidParameterException] {
       DateTimePattern.epochFactor(dateTimePattern)
     }
@@ -78,10 +78,10 @@ class DateTimePatternSuite extends FunSuite {
   test("Format class with default value - date") {
     val dateTimePattern = new DateTimePattern(None, Some(DateType))
     assert(dateTimePattern.isDefault)
-    assert(dateTimePattern.get == "yyyy-MM-dd")
+    assert(dateTimePattern.pattern == "yyyy-MM-dd")
     assert(dateTimePattern.getOrElse("fox") == "fox")
     assert(!dateTimePattern.isEpoch)
-    val expectedMessage = s"'${dateTimePattern.get}' is not an epoch pattern"
+    val expectedMessage = s"'${dateTimePattern.pattern}' is not an epoch pattern"
     val caught = intercept[InvalidParameterException] {
       DateTimePattern.epochFactor(dateTimePattern)
     }
@@ -176,23 +176,23 @@ class DateTimePatternSuite extends FunSuite {
     assert(!dateTimePattern1.timeZoneInPattern)
     val dateTimePattern2 = DateTimePattern("'XXX: 'HH:mm:ss XX yyyy-MM-dd")
     assert(dateTimePattern2.timeZoneInPattern)
-    val dateTimePattern3 = DateTimePattern("'Date:'yyyy-MM-dd HH:mm:ss\\'ZZ\\'")
+    val dateTimePattern3 = DateTimePattern("""'Date:'yyyy-MM-dd HH:mm:ss\'ZZ\'""")
     assert(dateTimePattern3.timeZoneInPattern)
   }
 
   test("Default time zone - not present") {
     val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some(TimestampType))
     assert(dateTimePattern1.defaultTimeZone.isEmpty)
-    val dateTimePattern2 = DateTimePattern("yyyy-MM-dd", Some(DateType), None)
+    val dateTimePattern2 = DateTimePattern("yyyy-MM-dd", Some(DateType), assignedDefaultTimeZone = None)
     assert(dateTimePattern2.defaultTimeZone.isEmpty)
     val dateTimePattern3 = DateTimePattern("")
     assert(dateTimePattern3.defaultTimeZone.isEmpty)
   }
 
   test("Default time zone - present") {
-    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some(TimestampType), Some("CET"))
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some(TimestampType), assignedDefaultTimeZone = Some("CET"))
     assert(dateTimePattern1.defaultTimeZone.contains("CET"))
-    val dateTimePattern2 = DateTimePattern("", "")
+    val dateTimePattern2 = DateTimePattern("", assignedDefaultTimeZone = "")
     assert(dateTimePattern2.defaultTimeZone.contains(""))
   }
 
@@ -206,6 +206,8 @@ class DateTimePatternSuite extends FunSuite {
   test("Default time zone - epoch") {
     val dateTimePattern1 = DateTimePattern("epochmilli", "WST")
     assert(dateTimePattern1.defaultTimeZone.isEmpty)
+    val dateTimePattern2 = DateTimePattern("epoch", "CET")
+    assert(dateTimePattern2.defaultTimeZone.isEmpty)
   }
 
   test("Is NOT time-zoned ") {

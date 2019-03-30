@@ -38,7 +38,7 @@ object TypeParser {
 
   def standardize(field: StructField, path: String, origSchema: StructType)
                  (implicit spark: SparkSession, udfLib: UDFLibrary): ParseOutput = {
-    ParserWorker(field, path, origSchema).standardize
+    ParserWorker(field, path, origSchema).standardize()
   }
 
   private type Parent = Option[Either[Column, Column]]
@@ -79,7 +79,10 @@ object TypeParser {
       workerClass(field, path, origSchema, parent)
     }
 
-    case class ArrayPW(field: StructField, path: String, origSchema: StructType, parent: Parent) extends ParserWorker {
+    sealed case class ArrayPW(field: StructField,
+                              path: String,
+                              origSchema: StructType,
+                              parent: Parent) extends ParserWorker {
       private val fieldType: ArrayType = field.dataType.asInstanceOf[ArrayType]
       private val arrayField = StructField(fieldName, fieldType.elementType, fieldType.containsNull)
 
@@ -106,7 +109,10 @@ object TypeParser {
       }
     }
 
-    case class StructPW(field: StructField, path: String, origSchema: StructType, parent: Parent) extends ParserWorker {
+    sealed case class StructPW(field: StructField,
+                               path: String,
+                               origSchema: StructType,
+                               parent: Parent) extends ParserWorker {
       private val fieldType: StructType = field.dataType.asInstanceOf[StructType]
 
       override def standardize()(implicit spark: SparkSession, udfLib: UDFLibrary): ParseOutput = {
@@ -132,11 +138,11 @@ object TypeParser {
       }
     }
 
-    trait PrimitivePW extends ParserWorker {
-      /** Defines the cast error logic for numeric and other primitive types **/
-      //the casting logic differs by class, but within is the same, no need to evalute more timez
-      private lazy val primitiveCastLogic: Column = getPrimitiveCastLogic
-      protected def getPrimitiveCastLogic: Column
+    sealed trait PrimitivePW extends ParserWorker {
+      // Defines the cast error logic for numeric and other primitive types *
+      // the casting logic differs by class, but within is the same, no need to evalute mulitple times
+      private lazy val primitiveCastLogic: Column = evaluatePrimitiveCastLogic()
+      protected def evaluatePrimitiveCastLogic(): Column
 
       def primitiveCastErrorLogic: Column = {
         val castedCol = primitiveCastLogic
@@ -183,14 +189,23 @@ object TypeParser {
     }
 
     trait SimplePW extends  PrimitivePW {
-      override def getPrimitiveCastLogic: Column = column.cast(field.dataType)
+      override def evaluatePrimitiveCastLogic(): Column = column.cast(field.dataType)
     }
 
-    case class NumericPW(field: StructField, path: String, origSchema: StructType, parent: Parent) extends SimplePW
+    sealed case class NumericPW(field: StructField,
+                                path: String,
+                                origSchema: StructType,
+                                parent: Parent) extends SimplePW
 
-    case class StringPW(field: StructField, path: String, origSchema: StructType, parent: Parent) extends SimplePW
+    sealed case class StringPW(field: StructField,
+                               path: String,
+                               origSchema: StructType,
+                               parent: Parent) extends SimplePW
 
-    case class BooleanPW(field: StructField, path: String, origSchema: StructType, parent: Parent) extends SimplePW
+    sealed case class BooleanPW(field: StructField,
+                                path: String,
+                                origSchema: StructType,
+                                parent: Parent) extends SimplePW
 
     /**
       * Timestamp conversion logic
@@ -215,9 +230,9 @@ object TypeParser {
       * Other         | ->String                        | ->String->to_timestamp->to_utc_timestamp->to_date
       */
 
-    trait DateTimePW extends PrimitivePW {
-      protected def basicCastFunction: (Column, String) => Column  //for epoch casting
-      protected def epochPattern: String
+    sealed trait DateTimePW extends PrimitivePW {
+      protected val basicCastFunction: (Column, String) => Column  //for epoch casting
+      protected val epochPattern: String
       protected val pattern: DateTimePattern = DateTimePattern(field)
       protected lazy val defaultTimeZone: Option[String] = pattern.defaultTimeZone
 
@@ -272,7 +287,7 @@ object TypeParser {
 
       protected def castTimestampColumn(timestampColumn: Column): Column
 
-      override def getPrimitiveCastLogic: Column = {
+      override def evaluatePrimitiveCastLogic(): Column = {
         if (DateTimePattern.isEpoch(pattern)) {
           castEpoch()
         } else {
@@ -281,9 +296,12 @@ object TypeParser {
       }
     }
 
-    case class DatePW(field: StructField, path: String, origSchema: StructType, parent: Parent) extends DateTimePW {
-      val basicCastFunction: (Column, String) => Column = to_date //for epoch casting
-      lazy val epochPattern: String = Defaults.getGlobalFormat(DateType)
+    sealed case class DatePW(field: StructField,
+                             path: String,
+                             origSchema: StructType,
+                             parent: Parent) extends DateTimePW {
+      protected val basicCastFunction: (Column, String) => Column = to_date //for epoch casting
+      protected lazy val epochPattern: String = Defaults.getGlobalFormat(DateType)
 
       override protected def castStringColumn(stringColumn: Column): Column = {
         defaultTimeZone.map(
@@ -310,12 +328,12 @@ object TypeParser {
       }
     }
 
-    case class TimestampPW(field: StructField,
+    sealed case class TimestampPW(field: StructField,
                            path: String,
                            origSchema: StructType,
                            parent: Parent) extends DateTimePW {
-      val basicCastFunction: (Column, String) => Column = to_timestamp //for epoch casting
-      lazy val epochPattern: String = Defaults.getGlobalFormat(TimestampType)
+      protected val basicCastFunction: (Column, String) => Column = to_timestamp //for epoch casting
+      protected lazy val epochPattern: String = Defaults.getGlobalFormat(TimestampType)
 
       override protected def castStringColumn(stringColumn: Column): Column = {
         val interim: Column = to_timestamp(stringColumn, pattern)

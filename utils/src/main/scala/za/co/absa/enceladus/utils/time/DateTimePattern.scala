@@ -26,32 +26,23 @@ import za.co.absa.enceladus.utils.types.TypePattern
   * @param assignedDefaultTimeZone default time zone string; should be taken into account only if pattern does not
   *                                contain time zone designation
   */
-class DateTimePattern(pattern: Option[String],
+class DateTimePattern(inputPattern: Option[String],
                       forType: Option[DataType] = None,
-                      assignedDefaultTimeZone: Option[String] = None) extends TypePattern(pattern, forType){
+                      assignedDefaultTimeZone: Option[String] = None) extends TypePattern(inputPattern, forType){
 
-  def isEpoch: Boolean = {
-    DateTimePattern.isEpoch(get)
-  }
-
-  def epochFactor: Long = {
-    DateTimePattern.epochFactor(get)
-  }
-
-  def epochMilliFactor: Long = {
-    DateTimePattern.epochMilliFactor(get)
-  }
+  lazy val isEpoch: Boolean = DateTimePattern.isEpoch(pattern)
+  lazy val epochFactor: Long = DateTimePattern.epochFactor(pattern)
+  lazy val epochMilliFactor: Long = DateTimePattern.epochMilliFactor(pattern)
 
   lazy val defaultTimeZone: Option[String] = assignedDefaultTimeZone.filterNot(_ => timeZoneInPattern)
-  lazy val timeZoneInPattern: Boolean = DateTimePattern.timeZoneInPattern(get)
+  lazy val timeZoneInPattern: Boolean = DateTimePattern.timeZoneInPattern(pattern)
   lazy val isTimeZoned: Boolean = timeZoneInPattern || assignedDefaultTimeZone.nonEmpty
 }
 
 object DateTimePattern {
-  implicit def patternToString(pattern: DateTimePattern): String = pattern.get
-
   private val epochUnitFactor = 1
   private val epochThousandFactor = 1000
+  private val quotedTextRegEx = """(^|[^\\])'.*[^\\]'""".r
 
   def apply(structField: StructField ): DateTimePattern = {
     TypePattern(structField).asInstanceOf[DateTimePattern]
@@ -95,7 +86,7 @@ object DateTimePattern {
     if (isEpoch(pattern)) {
       true
     } else {
-      val sanitized = "(^|[^\\\\])'.*[^\\\\]'".r.replaceAllIn(pattern, "$1") //clear literals
+      val sanitized = quotedTextRegEx.replaceAllIn(pattern, "$1") //clear literals
       "[XzZ]".r.findFirstIn(sanitized).nonEmpty
     }
   }}
