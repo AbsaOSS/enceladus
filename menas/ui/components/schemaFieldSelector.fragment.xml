@@ -19,7 +19,7 @@
         <Tree id="schemaFieldSelector" mode="SingleSelect" enableBusyIndicator="true"
               selectionChange="onSchemaFieldSelect"
               items="{path: 'schema/fields', parameters:{arrayNames:['children']}}">
-            <StandardTreeItem title="{name}" type="active" cust:path="{path}"/>
+            <StandardTreeItem title="{name}" type="Active" cust:path="{path}"/>
         </Tree>
     </ScrollContainer>
 </core:FragmentDefinition>

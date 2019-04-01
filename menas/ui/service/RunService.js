@@ -17,18 +17,28 @@ jQuery.sap.require("sap.m.MessageBox");
 
 var RunService = new function () {
 
-  this.getRuns = function (oMasterPage, oDetailPage, oTable) {
+  this.getRuns = function (oMasterPage) {
     Functions.ajax("api/runs", "GET", {},
       oData => {
         this._bindRunSummaries(oData, oMasterPage);
-        if (oData.length > 0 && oDetailPage) {
-          let firstDataset = oData[0];
-          this.getRun(oDetailPage, oTable, firstDataset.datasetName, firstDataset.datasetVersion, firstDataset.runId)
-        }
       },
       () => {
         sap.m.MessageBox
           .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
+      })
+  };
+
+  this.getFirstRun = function(oControl, oTable) {
+    Functions.ajax("api/runs", "GET", {},
+      oData => {
+        if (oData.length > 0 && oControl) {
+          let firstDataset = oData[0];
+          this.getRun(oControl, oTable, firstDataset.datasetName, firstDataset.datasetVersion, firstDataset.runId)
+        }
+      },
+      () => {
+        sap.m.MessageBox
+          .error("Failed to get the any run. Please wait a moment and try reloading the application")
       })
   };
 

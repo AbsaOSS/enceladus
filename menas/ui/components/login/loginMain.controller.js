@@ -34,6 +34,8 @@ sap.ui.define([
      * @memberOf components.login.loginMain
      */
     onInit: function () {
+      this._eventBus = sap.ui.getCore().getEventBus();
+
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
       let model = {username: "", password: "", submit: "Login"};
 
@@ -87,6 +89,7 @@ sap.ui.define([
         Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
           this._router.navTo("runs");
+          this._eventBus.publish("nav", "login");
         });
       };
 

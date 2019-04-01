@@ -13,415 +13,328 @@
  * limitations under the License.
  */
 
-jQuery.sap.require("sap.m.MessageToast")
-jQuery.sap.require("sap.m.MessageItem");
-jQuery.sap.require("sap.m.MessageBox");
-jQuery.sap.require("sap.m.MessagePopover");
-sap.ui.controller("components.mappingTable.mappingTableMain", {
+sap.ui.define([
+  "sap/ui/core/mvc/Controller",
+  "sap/ui/core/Fragment",
+  "sap/m/MessageToast",
+  "sap/m/MessageItem",
+  "sap/m/MessageBox",
+  "sap/m/MessagePopover"
+], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, MessagePopover) {
+  "use strict";
 
-  /**
-   * Called when a controller is instantiated and its View controls (if available) are already created. Can be used to
-   * modify the View before it is displayed, to bind event handlers and do other one-time initialization.
-   *
-   * @memberOf components.mappingTable.mappingTableMain
-   */
-  onInit : function() {
-    this._model = sap.ui.getCore().getModel()
-    this._router = sap.ui.core.UIComponent.getRouterFor(this)
-    this._router.getRoute("mappingTables").attachMatched(function(oEvent) {
-      let arguments = oEvent.getParameter("arguments")
-      this.routeMatched(arguments);
-    }, this);
+  return Controller.extend("components.mappingTable.mappingTableMain", {
 
-    this._addDialog = sap.ui.xmlfragment("components.mappingTable.addMappingTable", this);
-    sap.ui.getCore().byId("newMappingTableAddButton").attachPress(this.MTAddSubmit, this)
-    sap.ui.getCore().byId("newMappingTableCancelButton").attachPress(this.MTAddCancel, this)
-    sap.ui.getCore().byId("newMappingTableName").attachChange(this.mappingTableNameChange, this)
-    sap.ui.getCore().byId("newMappingTableSchemaNameSelect").attachChange(this.schemaSelect, this)
-    this._addDialog.setBusyIndicatorDelay(0)
+    /**
+     * Called when a controller is instantiated and its View controls (if available) are already created. Can be used to
+     * modify the View before it is displayed, to bind event handlers and do other one-time initialization.
+     *
+     * @memberOf components.mappingTable.mappingTableMain
+     */
+    onInit: function () {
+      this._model = sap.ui.getCore().getModel();
+      this._router = sap.ui.core.UIComponent.getRouterFor(this);
+      this._router.getRoute("mappingTables").attachMatched(function (oEvent) {
+        let args = oEvent.getParameter("arguments");
+        this.routeMatched(args);
+      }, this);
 
-    this._addDefaultDialog = sap.ui.xmlfragment("components.mappingTable.addDefaultValue", this);
-    sap.ui.getCore().byId("newDefaultValueAddButton").attachPress(this.defaultSubmit, this)
-    sap.ui.getCore().byId("newDefaultValueCancelButton").attachPress(this.defaultCancel, this)
-    sap.ui.getCore().byId("addDefaultValueDialog").attachAfterOpen(this.defaultDialogAfterOpen, this)
+      this._editFragment = new AddMappingTableFragment(this, Fragment.load).getEdit();
 
-    this._addDefaultDialog.setBusyIndicatorDelay(0)
-  },
-  
-  auditVersionPress: function(oEv) {
-    let oSrc = oEv.getParameter("listItem");
-    let oRef = oSrc.data("menasRef");
-    this._router.navTo("mappingTables", {
-      id: oRef.name,
-      version: oRef.version
-    });    
-  },
+      this._addDefaultDialog = sap.ui.xmlfragment("components.mappingTable.addDefaultValue", this);
+      sap.ui.getCore().byId("newDefaultValueAddButton").attachPress(this.defaultSubmit, this)
+      sap.ui.getCore().byId("newDefaultValueCancelButton").attachPress(this.defaultCancel, this)
+      sap.ui.getCore().byId("addDefaultValueDialog").attachAfterOpen(this.defaultDialogAfterOpen, this)
 
-  onAddDefaultPress : function() {
-    this._model.setProperty("/newDefaultValue", {
-      title : "Add"
-    })
-    this._addDefaultDialog.open();
-  },
+      this._addDefaultDialog.setBusyIndicatorDelay(0)
+    },
 
-  defaultDialogAfterOpen : function(oEv) {
-    let scrollCont = sap.ui.getCore().byId("defValFieldSelectScroll");
-    let selected = sap.ui.getCore().byId("schemaFieldSelector").getSelectedItem();
+    auditVersionPress: function (oEv) {
+      let oSrc = oEv.getParameter("listItem");
+      let oRef = oSrc.data("menasRef");
+      this._router.navTo("mappingTables", {
+        id: oRef.name,
+        version: oRef.version
+      });
+    },
 
-    // this needs to be already rendered for it to work
-    setTimeout(function() {
-      scrollCont.scrollToElement(selected, 500);
-    }, 1000);
-  },
+    onAddDefaultPress: function () {
+      this._model.setProperty("/newDefaultValue", {
+        title: "Add"
+      })
+      this._addDefaultDialog.open();
+    },
 
-  defaultCancel : function() {
-    // This is a workaround for a bug in the Tree component of 1.56.x and 1.58.x
-    // TODO: verify whether this was fixed in the subsequent versions
-    let tree = sap.ui.getCore().byId("schemaFieldSelector");
-    let items = tree.getItems();
-    for ( let i in items) {
-      items[i].setSelected(false)
-    }
+    defaultDialogAfterOpen: function (oEv) {
+      let scrollCont = sap.ui.getCore().byId("defValFieldSelectScroll");
+      let selected = sap.ui.getCore().byId("schemaFieldSelector").getSelectedItem();
 
-    this.resetNewDefaultValueState();
-    this._addDefaultDialog.close();
-  },
+      // this needs to be already rendered for it to work
+      setTimeout(function () {
+        scrollCont.scrollToElement(selected, 500);
+      }, 1000);
+    },
 
-  resetNewDefaultValueState : function(oEv) {
-    sap.ui.getCore().byId("newDefaultValueExpr").setValueState(sap.ui.core.ValueState.None)
-    sap.ui.getCore().byId("newDefaultValueExpr").setValueStateText("");
+    defaultCancel: function () {
+      // This is a workaround for a bug in the Tree component of 1.56.x and 1.58.x
+      // TODO: verify whether this was fixed in the subsequent versions
+      let tree = sap.ui.getCore().byId("schemaFieldSelector");
+      let items = tree.getItems();
+      for (let i in items) {
+        items[i].setSelected(false)
+      }
 
-    let items = sap.ui.getCore().byId("schemaFieldSelector").getItems();
-    for ( let ind in items) {
-      items[ind].setHighlight(sap.ui.core.MessageType.None)
-    }
-  },
+      this.resetNewDefaultValueState();
+      this._addDefaultDialog.close();
+    },
 
-  validateNewDefaultValue : function() {
-    this.resetNewDefaultValueState();
-    let oDef = this._model.getProperty("/newDefaultValue")
-    let isOk = true
+    resetNewDefaultValueState: function (oEv) {
+      sap.ui.getCore().byId("newDefaultValueExpr").setValueState(sap.ui.core.ValueState.None)
+      sap.ui.getCore().byId("newDefaultValueExpr").setValueStateText("");
 
-    if (!oDef.value || oDef.value === "") {
-      sap.ui.getCore().byId("newDefaultValueExpr").setValueState(sap.ui.core.ValueState.Error)
-      sap.ui.getCore().byId("newDefaultValueExpr").setValueStateText("Default value cannot be empty")
-      isOk = false;
-    }
-
-    if (!oDef.columnName || oDef.columnName === "") {
       let items = sap.ui.getCore().byId("schemaFieldSelector").getItems();
-      for ( let ind in items) {
-        items[ind].setHighlight(sap.ui.core.MessageType.Error)
+      for (let ind in items) {
+        items[ind].setHighlight(sap.ui.core.MessageType.None)
       }
-      sap.m.MessageToast.show("Please choose the target column for this default value")
-      isOk = false;
-    }
-    return isOk;
-  },
+    },
 
-  onSchemaFieldSelect : function(oEv) {
-    let bind = oEv.getParameter("listItem").getBindingContext().getPath();
-    let modelPathBase = "/currentMappingTable/schema/fields/";
-    let model = sap.ui.getCore().getModel();
-    SchemaService.fieldSelect(bind, modelPathBase, model, "/newDefaultValue/columnName");
-  },
+    validateNewDefaultValue: function () {
+      this.resetNewDefaultValueState();
+      let oDef = this._model.getProperty("/newDefaultValue")
+      let isOk = true
 
-  defaultSubmit : function() {
-    let newDef = this._model.getProperty("/newDefaultValue")
-    let bindPath = newDef["bindPath"];
-
-    let currMT = this._model.getProperty("/currentMappingTable")
-
-    if (this.validateNewDefaultValue()) {
-      // send and update UI
-      if (newDef.isEdit) {
-        let defs = currMT["defaultMappingValue"].map(function(el) {
-          return {
-            columnName : el.columnName,
-            value : el.value
-          };
-        });
-
-        MappingTableService.editDefaultValues(currMT.name, currMT.version, defs);
-      } else {
-        MappingTableService.addDefault(currMT.name, currMT.version, newDef)
+      if (!oDef.value || oDef.value === "") {
+        sap.ui.getCore().byId("newDefaultValueExpr").setValueState(sap.ui.core.ValueState.Error)
+        sap.ui.getCore().byId("newDefaultValueExpr").setValueStateText("Default value cannot be empty")
+        isOk = false;
       }
-      this.defaultCancel(); // close & clean up
-    }
-  },
 
-  _schemaFieldSelectorSelectPath : function(sExpandTo) {
+      if (!oDef.columnName || oDef.columnName === "") {
+        let items = sap.ui.getCore().byId("schemaFieldSelector").getItems();
+        for (let ind in items) {
+          items[ind].setHighlight(sap.ui.core.MessageType.Error)
+        }
+        MessageToast.show("Please choose the target column for this default value")
+        isOk = false;
+      }
+      return isOk;
+    },
 
-    let aTokens = sExpandTo.split(".");
-    let oCtl = sap.ui.getCore().byId("schemaFieldSelector")
+    onSchemaFieldSelect: function (oEv) {
+      let bind = oEv.getParameter("listItem").getBindingContext().getPath();
+      let modelPathBase = "/currentMappingTable/schema/fields/";
+      let model = sap.ui.getCore().getModel();
+      SchemaService.fieldSelect(bind, modelPathBase, model, "/newDefaultValue/columnName");
+    },
 
-    oCtl.collapseAll();
+    defaultSubmit: function () {
+      let newDef = this._model.getProperty("/newDefaultValue")
+      let bindPath = newDef["bindPath"];
 
-    let sRealPath = "/currentMappingTable/schema/fields"
+      let currMT = this._model.getProperty("/currentMappingTable")
+
+      if (this.validateNewDefaultValue()) {
+        // send and update UI
+        if (newDef.isEdit) {
+          let defs = currMT["defaultMappingValue"].map(function (el) {
+            return {
+              columnName: el.columnName,
+              value: el.value
+            };
+          });
+
+          MappingTableService.editDefaultValues(currMT.name, currMT.version, defs);
+        } else {
+          MappingTableService.addDefault(currMT.name, currMT.version, newDef)
+        }
+        this.defaultCancel(); // close & clean up
+      }
+    },
+
+    _schemaFieldSelectorSelectPath: function (sExpandTo) {
+
+      let aTokens = sExpandTo.split(".");
+      let oCtl = sap.ui.getCore().byId("schemaFieldSelector")
+
+      oCtl.collapseAll();
+
+      let sRealPath = "/currentMappingTable/schema/fields"
       // let sNewPath = "/currentMappingTable/schema/children"
 
       let model = sap.ui.getCore().getModel();
-    // model.setProperty(sNewPath, model.getProperty(sRealPath))
+      // model.setProperty(sNewPath, model.getProperty(sRealPath))
 
-    let helper = function(aToks, sModelPathAcc) {
-      if (aToks.length === 0) {
-        let items = oCtl.getItems()
-        for ( let i in items) {
-          let p = items[i].getBindingContext().getPath()
-          let modelPath = sModelPathAcc.substring(0, sModelPathAcc.length - 9) // substring
-          // to get rid of the children suffix
-          if (p === modelPath) {
-            oCtl.setSelectedItem(items[i]);
-            sap.ui.getCore().byId("defValFieldSelectScroll").scrollToElement(items[i])
-          }
-        }
-      } else {
-        let curr = model.getProperty(sModelPathAcc);
-        for ( let i in curr) {
-          if (curr[i]["name"] === aToks[0]) {
-            let newPath = sModelPathAcc + "/" + i + "/children"
-            let items = oCtl.getItems()
-            for ( let x in items) {
-              let itemPath = items[x].data("path") + "." + items[x].getTitle()
-              let modelPath = curr[i]["path"] + "." + curr[i]["name"]
-              if (itemPath === modelPath) {
-                oCtl.expand(parseInt(x));
-                break;
-              }
+      let helper = function (aToks, sModelPathAcc) {
+        if (aToks.length === 0) {
+          let items = oCtl.getItems()
+          for (let i in items) {
+            let p = items[i].getBindingContext().getPath()
+            let modelPath = sModelPathAcc.substring(0, sModelPathAcc.length - 9) // substring
+            // to get rid of the children suffix
+            if (p === modelPath) {
+              oCtl.setSelectedItem(items[i]);
+              sap.ui.getCore().byId("defValFieldSelectScroll").scrollToElement(items[i])
             }
-            helper(aToks.slice(1), newPath);
-            return;
+          }
+        } else {
+          let curr = model.getProperty(sModelPathAcc);
+          for (let i in curr) {
+            if (curr[i]["name"] === aToks[0]) {
+              let newPath = sModelPathAcc + "/" + i + "/children"
+              let items = oCtl.getItems()
+              for (let x in items) {
+                let itemPath = items[x].data("path") + "." + items[x].getTitle()
+                let modelPath = curr[i]["path"] + "." + curr[i]["name"]
+                if (itemPath === modelPath) {
+                  oCtl.expand(parseInt(x));
+                  break;
+                }
+              }
+              helper(aToks.slice(1), newPath);
+              return;
+            }
           }
         }
+
+      };
+
+      helper(aTokens, "/currentMappingTable/schema/fields")
+    },
+
+    onDefaultValueMenuAction: function (oEv) {
+      let sAction = oEv.getParameter("item").data("action")
+      let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
+
+      if (sAction === "edit") {
+        let old = this._model.getProperty(sBindPath);
+        old.title = "Edit";
+        old.isEdit = true;
+        old.bindPath = sBindPath;
+        this._model.setProperty("/newDefaultValue", old);
+        this._addDefaultDialog.open();
+        this._schemaFieldSelectorSelectPath(old["columnName"])
+      } else if (sAction === "delete") {
+        MessageBox.confirm("Are you sure you want to delete the default value?", {
+          actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+          onClose: function (oResponse) {
+            if (oResponse === MessageBox.Action.YES) {
+              let toks = sBindPath.split("/");
+              let index = toks[toks.length - 1];
+              let currMT = this._model.getProperty("/currentMappingTable");
+              let defs = currMT["defaultMappingValue"].filter((el, ind) => ind !== parseInt(index));
+              MappingTableService.editDefaultValues(currMT.name, currMT.version, defs);
+            }
+          }.bind(this)
+        });
       }
+    },
 
-    }
+    metadataPress: function (oEv) {
+      let binding = oEv.getSource().getBindingContext().getPath() + "/metadata";
+      let bindingArr = binding + "Arr";
+      // hmm bindAggregation doesn't take formatter :-/
+      let arrMeta = Formatters.objToKVArray(this._model.getProperty(binding))
+      this._model.setProperty(bindingArr, arrMeta)
 
-    helper(aTokens, "/currentMappingTable/schema/fields")
-  },
-
-  onDefaultValueMenuAction : function(oEv) {
-    let sAction = oEv.getParameter("item").data("action")
-    let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
-
-    if (sAction === "edit") {
-      let old = this._model.getProperty(sBindPath);
-      old.title = "Edit";
-      old.isEdit = true;
-      old.bindPath = sBindPath;
-      this._model.setProperty("/newDefaultValue", old);
-      this._addDefaultDialog.open();
-      this._schemaFieldSelectorSelectPath(old["columnName"])
-    } else if (sAction === "delete") {
-      sap.m.MessageBox.confirm("Are you sure you want to delete the default value?", {
-        actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
-        onClose: function(oResponse) {
-          if(oResponse == sap.m.MessageBox.Action.YES) {
-            let toks = sBindPath.split("/")
-            let index = toks[toks.length-1]
-            let currMT = this._model.getProperty("/currentMappingTable")
-            let defs = currMT["defaultMappingValue"].filter((el, ind) => ind !== parseInt(index))
-            MappingTableService.editDefaultValues(currMT.name, currMT.version, defs);
-          }
-        }.bind(this)
+      let oMessageTemplate = new MessageItem({
+        title: '{key}',
+        subtitle: '{value}',
+        type: sap.ui.core.MessageType.None
       });
-    }
-  },
 
-  metadataPress : function(oEv) {
-    let binding = oEv.getSource().getBindingContext().getPath() + "/metadata";
-    let bindingArr = binding + "Arr";
-    // hmm bindAggregation doesn't take formatter :-/
-    let arrMeta = Formatters.objToKVArray(this._model.getProperty(binding))
-    this._model.setProperty(bindingArr, arrMeta)
-
-    let oMessageTemplate = new sap.m.MessageItem({
-      title : '{key}',
-      subtitle : '{value}',
-      type : sap.ui.core.MessageType.None
-    });
-
-    let oMessagePopover = new sap.m.MessagePopover({
-      items : {
-        path : bindingArr,
-        template : oMessageTemplate
-      }
-    }).setModel(this._model);
-
-    oMessagePopover.toggle(oEv.getSource());
-  },
-
-  MTAddCancel : function() {
-    // This is a workaround for a bug in the Tree component of 1.56.5
-    // TODO: verify whether this was fixed in the subsequent versions
-    let tree = sap.ui.getCore().byId("addMtHDFSBrowser")
-    tree.unselectAll();
-
-    tree.collapseAll();
-    this.resetNewMappingValueState();
-    this._addDialog.close();
-  },
-
-  MTAddSubmit : function() {
-    let newMT = this._model.getProperty("/newMappingTable")
-    // we may wanna wait for a call to determine whether this is unique
-    if (!newMT.isEdit && newMT.name && typeof (newMT.nameUnique) === "undefined") {
-      // need to wait for the service call
-      setTimeout(this.MTAddSubmit.bind(this), 500);
-      return;
-    }
-    if (this.isValidMappingTable()) {
-      // send and update UI
-      if (newMT.isEdit) {
-        MappingTableService.editMappingTable(newMT.name, newMT.version, newMT.description, newMT.hdfsPath, newMT.schemaName, newMT.schemaVersion)
-      } else {
-        MappingTableService.createMappingTable(newMT.name, newMT.description, newMT.hdfsPath, newMT.schemaName, newMT.schemaVersion)
-      }
-      this.MTAddCancel(); // close & clean up
-    }
-  },
-
-  resetNewMappingValueState : function() {
-    sap.ui.getCore().byId("newMappingTableName").setValueState(sap.ui.core.ValueState.None)
-    sap.ui.getCore().byId("newMappingTableName").setValueStateText("")
-
-    sap.ui.getCore().byId("newMappingTableSchemaNameSelect").setValueState(sap.ui.core.ValueState.None)
-    sap.ui.getCore().byId("newMappingTableSchemaNameSelect").setValueStateText("")
-
-    sap.ui.getCore().byId("newMappingTableSchemaVersionSelect").setValueState(sap.ui.core.ValueState.None)
-    sap.ui.getCore().byId("newMappingTableSchemaVersionSelect").setValueStateText("")
-
-    sap.ui.getCore().byId("addMtHDFSBrowser").setValueState(sap.ui.core.ValueState.None)
-  },
-
-  isValidMappingTable : function() {
-    this.resetNewMappingValueState();
-    let oMT = this._model.getProperty("/newMappingTable");
-
-    let hasValidName = EntityValidationService.hasValidName(oMT, "Mapping Table",
-      sap.ui.getCore().byId("newMappingTableName"));
-    let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Dataset",
-      sap.ui.getCore().byId("newMappingTableSchemaNameSelect"), sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"));
-    let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT, "Mapping Table",
-      sap.ui.getCore().byId("addMtHDFSBrowser"));
-
-    return hasValidName && hasValidSchema && hasValidHDFSPath;
-  },
-
-  onAfterRendering : function() {
-    // get schemas after rendering. This will be used for add/edit
-    // functionality
-    let schemas = this._model.getProperty("/schemas")
-    if (!schemas || schemas.length === 0) {
-      SchemaService.getSchemaList(false, true);
-    }
-  },
-
-  onEditPress : function() {
-    let current = this._model.getProperty("/currentMappingTable");
-
-    current.isEdit = true;
-    current.title = "Edit";
-
-    this._model.setProperty("/newMappingTable", jQuery.extend(true, {}, current));
-
-    SchemaService.getAllSchemaVersions(current.schemaName, sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"))
-
-    this._addDialog.open();
-  },
-
-  onAddPress : function() {
-    let oFirstSchema = this._model.getProperty("/schemas")[0];
-
-    this._model.setProperty("/newMappingTable", {
-      name: "",
-      description: "",
-      schemaName: oFirstSchema._id,
-      schemaVersion: oFirstSchema.latestVersion,
-      hdfsPath: "/",
-      isEdit : false,
-      title : "Add"
-    });
-
-    this._addDialog.open();
-  },
-
-  schemaSelect : function(oEv) {
-    let sSchemaId = oEv.getParameter("selectedItem").getKey()
-    SchemaService.getAllSchemaVersions(sSchemaId, sap.ui.getCore().byId("newMappingTableSchemaVersionSelect"),
-      this._model, "/newMappingTable/schemaVersion")
-  },
-
-  mappingTableSelected : function(oEv) {
-    let selected = oEv.getParameter("listItem").data("id")
-    this._router.navTo("mappingTables", {
-      id : selected
-    });
-  },
-
-  mappingTableNameChange : function() {
-    let sName = this._model.getProperty("/newMappingTable/name");
-    if (GenericService.isValidEntityName(sName)) {
-      MappingTableService.hasUniqueName(sName)
-    } else {
-      this._model.setProperty("/newMappingTable/nameUnique", true)
-    }
-  },
-
-  onRemovePress : function(oEv) {
-    let current = this._model.getProperty("/currentMappingTable")
-
-    sap.m.MessageBox.show("This action will remove ALL versions of the mapping table definition. \nAre you sure?.", {
-      icon : sap.m.MessageBox.Icon.WARNING,
-      title : "Are you sure?",
-      actions : [ sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO ],
-      onClose : function(oAction) {
-        if (oAction == "YES") {
-          MappingTableService.disableMappingTable(current.name)
+      let oMessagePopover = new MessagePopover({
+        items: {
+          path: bindingArr,
+          template: oMessageTemplate
         }
+      }).setModel(this._model);
+
+      oMessagePopover.toggle(oEv.getSource());
+    },
+
+    onEditPress: function () {
+      this._editFragment.onPress();
+    },
+
+    onMTSubmit: function () {
+      this._editFragment.submit();
+    },
+
+    onMTCancel: function () {
+      this._editFragment.cancel();
+    },
+
+    onNameChange: function () {
+      this._editFragment.onNameChange();
+    },
+
+    onSchemaSelect: function (oEv) {
+      this._editFragment.onSchemaSelect(oEv);
+    },
+
+    onAfterRendering: function () {
+      // get schemas after rendering. This will be used for add/edit functionality
+      let schemas = this._model.getProperty("/schemas");
+      if (!schemas || schemas.length === 0) {
+        SchemaService.getSchemaList(false, true);
       }
-    });
-  },
+    },
 
-  routeMatched : function(oParams) {
-    if (Prop.get(oParams, "id") === undefined) {
-      MappingTableService.getMappingTableList(true, true);
-    } else if (Prop.get(oParams, "version") === undefined) {
-      MappingTableService.getMappingTableList();
-      MappingTableService.getLatestMappingTableVersion(oParams.id, true)
-    } else {
-      MappingTableService.getMappingTableList();
-      MappingTableService.getMappingTableVersion(oParams.id, oParams.version, true)
+    onRemovePress: function (oEv) {
+      let current = this._model.getProperty("/currentMappingTable")
+
+      MessageBox.show("This action will remove ALL versions of the mapping table definition. \nAre you sure?.", {
+        icon: MessageBox.Icon.WARNING,
+        title: "Are you sure?",
+        actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+        onClose: function (oAction) {
+          if (oAction == "YES") {
+            MappingTableService.disableMappingTable(current.name)
+          }
+        }
+      });
+    },
+
+    routeMatched: function (oParams) {
+      if (Prop.get(oParams, "id") === undefined) {
+        MappingTableService.getMappingTableList(true, true);
+      } else if (Prop.get(oParams, "version") === undefined) {
+        MappingTableService.getMappingTableList();
+        MappingTableService.getLatestMappingTableVersion(oParams.id, true)
+      } else {
+        MappingTableService.getMappingTableList();
+        MappingTableService.getMappingTableVersion(oParams.id, oParams.version, true)
+      }
+      this.byId("mappingTableIconTabBar").setSelectedKey("info");
+    },
+
+    toSchema: function (oEv) {
+      let src = oEv.getSource();
+      sap.ui.core.UIComponent.getRouterFor(this).navTo("schemas", {
+        id: src.data("name"),
+        version: src.data("version")
+      })
+    },
+
+    fetchSchema: function (oEv) {
+      let mappingTable = sap.ui.getCore().getModel().getProperty("/currentMappingTable");
+      if (typeof (mappingTable.schema) === "undefined") {
+        SchemaService.getSchemaVersion(mappingTable.schemaName, mappingTable.schemaVersion, "/currentMappingTable/schema")
+      }
+    },
+
+    usedInNavTo: function (oEv) {
+      let source = oEv.getSource();
+      sap.ui.core.UIComponent.getRouterFor(this).navTo(source.data("collection"), {
+        id: source.data("name"),
+        version: source.data("version")
+      })
+    },
+
+    tabSelect: function (oEv) {
+      if (oEv.getParameter("selectedKey") === "schema")
+        this.fetchSchema();
     }
-    this.byId("mappingTableIconTabBar").setSelectedKey("info");
-  },
 
-  toSchema : function(oEv) {
-    let src = oEv.getSource();
-    sap.ui.core.UIComponent.getRouterFor(this).navTo("schemas", {
-      id : src.data("name"),
-      version : src.data("version")
-    })
-  },
-
-  fetchSchema : function(oEv) {
-    let mappingTable = sap.ui.getCore().getModel().getProperty("/currentMappingTable");
-    if (typeof (mappingTable.schema) === "undefined") {
-      SchemaService.getSchemaVersion(mappingTable.schemaName, mappingTable.schemaVersion, "/currentMappingTable/schema")
-    }
-  },
-
-  usedInNavTo : function(oEv) {
-    let source = oEv.getSource();
-    sap.ui.core.UIComponent.getRouterFor(this).navTo(source.data("collection"), {
-      id : source.data("name"),
-      version : source.data("version")
-    })
-  },
-
-  tabSelect : function(oEv) {
-    if (oEv.getParameter("selectedKey") === "schema")
-      this.fetchSchema();
-  }
-
+  });
 });

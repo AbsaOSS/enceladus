@@ -13,37 +13,44 @@
   ~ limitations under the License.
   -->
 
-<core:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="components.app"
-	xmlns:html="http://www.w3.org/1999/xhtml">
-	<SplitApp id="menasApp" mode="HideMode">
-		<masterPages>
-			<Page>
-				<customHeader>
-					<Bar>
-						<contentLeft>
-							<Button id="Navigation" icon="sap-icon://menu" press="handleMenuPress"></Button>
-						</contentLeft>
-						<contentMiddle>
-							<Title text="Navigation" level="H3"></Title>
-						</contentMiddle>
-					</Bar>
-				</customHeader>
-				<List>
-					<items>
-						<ActionListItem id="Runs" text="Runs" type="Active" press="onRunsPress"></ActionListItem>
-						<ActionListItem id="Schemas" text="Schemas" type="Active" press="onSchemaPress"></ActionListItem>
-						<ActionListItem id="Datasets" text="Datasets" type="Active" press="onDatasetPress"></ActionListItem>
-						<ActionListItem id="MappingTables" text="Mapping Tables" type="Active" press="onMappingPress"></ActionListItem>
-					</items>
-				</List>
-				<footer>
-					<Bar>
-						<contentMiddle>
-							<Label text="Menas v. {/menasVersion}"></Label>
-						</contentMiddle>
-					</Bar>
-				</footer>
-			</Page>
-		</masterPages>
-	</SplitApp>
-</core:View>
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="components.app">
+    <SplitApp id="menasApp" initialMaster="navPage" mode="HideMode">
+        <masterPages>
+            <Page id="navPage">
+                <customHeader>
+                    <Bar>
+                        <contentLeft>
+                            <Button id="Navigation" icon="sap-icon://menu" press="handleMenuPress"/>
+                        </contentLeft>
+                        <contentMiddle>
+                            <Title text="Navigation" level="H3"/>
+                        </contentMiddle>
+                    </Bar>
+                </customHeader>
+                <List>
+                    <items>
+                        <ActionListItem id="Runs" text="Runs" type="Navigation" press="onRunsPress"
+                                        visible="{= ${/userInfo/username} !== undefined}"/>
+                        <ActionListItem id="Schemas" text="Schemas" type="Navigation" press="onSchemasPress"
+                                        visible="{= ${/userInfo/username} !== undefined}"/>
+                        <ActionListItem id="Datasets" text="Datasets" type="Navigation" press="onDatasetPress"
+                                        visible="{= ${/userInfo/username} !== undefined}"/>
+                        <ActionListItem id="MappingTables" text="Mapping Tables" type="Navigation"
+                                        press="onMappingPress" visible="{= ${/userInfo/username} !== undefined}"/>
+                    </items>
+                </List>
+                <footer>
+                    <Bar>
+                        <contentMiddle>
+                            <Label text="Menas v. {/menasVersion}"/>
+                        </contentMiddle>
+                    </Bar>
+                </footer>
+            </Page>
+            <mvc:XMLView id="runsPage" viewName="components.run.runMaster"/>
+            <mvc:XMLView id="schemasPage" viewName="components.schema.schemaMaster"/>
+            <mvc:XMLView id="datasetsPage" viewName="components.dataset.datasetMaster"/>
+            <mvc:XMLView id="mappingTablesPage" viewName="components.mappingTable.mappingTableMaster"/>
+        </masterPages>
+    </SplitApp>
+</mvc:View>

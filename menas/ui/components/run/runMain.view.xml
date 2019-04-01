@@ -18,11 +18,11 @@
            xmlns:form="sap.ui.layout.form"
            xmlns:table="sap.ui.table"
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <Page title="Runs" enableScrolling="false">
+    <Page id="detailPage" enableScrolling="false">
         <customHeader>
             <Bar>
                 <contentMiddle>
-                    <Title text="Runs"/>
+                    <Title text="{run>/dataset}(v{run>/datasetVersion}) - Run {run>/runId}"/>
                 </contentMiddle>
                 <contentRight>
                     <core:Fragment type="XML" fragmentName="components.userInfo"/>
@@ -30,56 +30,20 @@
             </Bar>
         </customHeader>
         <content>
-            <SplitContainer>
-                <masterPages>
-                    <Page id="masterPage" title="Datasets" showHeader="false">
-                        <content>
-                            <List items="{runs>/}" mode="SingleSelectMaster" selectionChange="runSelected">
-                                <StandardListItem title="{runs>datasetName}(v{runs>datasetVersion}) - Run {runs>runId}"
-                                                  description="{
-                                                    path: 'runs>startDateTime',
-                                                    type: 'sap.ui.model.type.DateTime',
-                                                    formatOptions: {
-                                                        source: {
-                                                            pattern: 'dd-MM-yyyy HH:mm:ss ZZZ'
-                                                        }
-                                                    }
-                                                }: {runs>status}"
-                                                  cust:dataset="{runs>datasetName}" cust:version="{runs>datasetVersion}"
-                                                  cust:runId="{runs>runId}" type="Active">
-                                </StandardListItem>
-                            </List>
-                        </content>
-                        <footer>
-                            <Bar/>
-                        </footer>
-                    </Page>
-                </masterPages>
-                <detailPages>
-                    <Page id="detailPage">
-                        <customHeader>
-                            <Bar>
-                                <contentLeft>
-                                    <Title
-                                        text="{run>/dataset}(v{run>/datasetVersion}) - Run {run>/runId}"/>
-                                </contentLeft>
-                            </Bar>
-                        </customHeader>
-                        <content>
-                            <IconTabBar id="runIconTabBar" select="tabSelect">
-                                <items>
-                                    <IconTabFilter id="Results" icon="sap-icon://activities" key="results"
-                                                   text="Results">
-                                        <form:SimpleForm>
-                                            <form:content>
-                                                <Label text="Dataset"/>
-                                                <Link id="dataset" text="{run>/dataset} (v{run>/datasetVersion})"
-                                                      press="toDataset"
-                                                      cust:name="{run>/dataset}" cust:version="{run>/datasetVersion}"/>
-                                                <Label text="Status"/>
-                                                <Text id="status" text="{run>/status}"/>
-                                                <Label text="Standardization Start Time"/>
-                                                <Text text="{
+            <IconTabBar id="runIconTabBar" select="tabSelect">
+                <items>
+                    <IconTabFilter id="Results" icon="sap-icon://activities" key="results"
+                                   text="Results">
+                        <form:SimpleForm>
+                            <form:content>
+                                <Label text="Dataset"/>
+                                <Link id="dataset" text="{run>/dataset} (v{run>/datasetVersion})"
+                                      press="toDataset"
+                                      cust:name="{run>/dataset}" cust:version="{run>/datasetVersion}"/>
+                                <Label text="Status"/>
+                                <Text id="status" text="{run>/status}"/>
+                                <Label text="Standardization Start Time"/>
+                                <Text text="{
                                                     path: 'run>/stdTime/startDateTime',
                                                     type: 'sap.ui.model.type.DateTime',
                                                     formatOptions: {
@@ -88,8 +52,8 @@
                                                         }
                                                     }
                                                 }"/>
-                                                <Label text="Standardization End Time"/>
-                                                <Text text="{
+                                <Label text="Standardization End Time"/>
+                                <Text text="{
                                                     path: 'run>/stdTime/endDateTime',
                                                     type: 'sap.ui.model.type.DateTime',
                                                     formatOptions: {
@@ -98,10 +62,10 @@
                                                         }
                                                     }
                                                 }"/>
-                                                <Label text="Standardization duration"/>
-                                                <Text text="{run>/stdTime/duration}"/>
-                                                <Label text="Conformance Start Time"/>
-                                                <Text text="{
+                                <Label text="Standardization duration"/>
+                                <Text text="{run>/stdTime/duration}"/>
+                                <Label text="Conformance Start Time"/>
+                                <Text text="{
                                                     path: 'run>/cfmTime/startDateTime',
                                                     type: 'sap.ui.model.type.DateTime',
                                                     formatOptions: {
@@ -110,8 +74,8 @@
                                                         }
                                                     }
                                                 }"/>
-                                                <Label text="Conformance End Time"/>
-                                                <Text text="{
+                                <Label text="Conformance End Time"/>
+                                <Text text="{
                                                     path: 'run>/cfmTime/endDateTime',
                                                     type: 'sap.ui.model.type.DateTime',
                                                     formatOptions: {
@@ -120,65 +84,61 @@
                                                         }
                                                     }
                                                 }"/>
-                                                <Label text="Conformance duration"/>
-                                                <Text text="{run>/cfmTime/duration}"/>
-                                                <Label text="Error" visible="{= ${run>/status} === 'Failed'}"/>
-                                                <Text id="error" text="{run>/runStatus/error/description}"
-                                                      visible="{= ${run>/status} === 'Failed'}"/>
-                                            </form:content>
-                                        </form:SimpleForm>
-                                        <table:Table id="Checkpoints"
-                                                     selectionMode="None">
-                                        </table:Table>
-                                    </IconTabFilter>
-                                    <IconTabFilter id="Metadata" icon="sap-icon://hint" key="metadata" text="Metadata">
-                                        <form:SimpleForm>
-                                            <form:content>
-                                                <Label text="Source Application"/>
-                                                <Text text="{metadata>/sourceApplication}"/>
-                                                <Label text="Country"/>
-                                                <Text text="{metadata>/country}"/>
-                                                <Label text="History Type"/>
-                                                <Text text="{metadata>/historyType}"/>
-                                                <Label text="Data Filename"/>
-                                                <Text text="{metadata>/dataFilename}"/>
-                                                <Label text="Source Type"/>
-                                                <Text text="{metadata>/sourceType}"/>
-                                                <Label text="Version"/>
-                                                <Text text="{metadata>/version}"/>
-                                                <Label text="Information Date"/>
-                                                <Text text="{metadata>/informationDate}"/>
-                                            </form:content>
-                                        </form:SimpleForm>
-                                        <Table headerText="Additional Info" items="{metadata>/additionalInfo}"
-                                               noDataText="No Additional Info">
-                                            <columns>
-                                                <Column width="40%" hAlign="Right">
-                                                    <Text text="Info Key"/>
-                                                </Column>
-                                                <Column width="60%">
-                                                    <Text text="Info Value"/>
-                                                </Column>
-                                            </columns>
-                                            <items>
-                                                <ColumnListItem vAlign="Middle">
-                                                    <cells>
-                                                        <Text text="{metadata>infoKey}"/>
-                                                        <Text text="{metadata>infoValue}"/>
-                                                    </cells>
-                                                </ColumnListItem>
-                                            </items>
-                                        </Table>
-                                    </IconTabFilter>
-                                </items>
-                            </IconTabBar>
-                        </content>
-                        <footer>
-                            <Bar/>
-                        </footer>
-                    </Page>
-                </detailPages>
-            </SplitContainer>
+                                <Label text="Conformance duration"/>
+                                <Text text="{run>/cfmTime/duration}"/>
+                                <Label text="Error" visible="{= ${run>/status} === 'Failed'}"/>
+                                <Text id="error" text="{run>/runStatus/error/description}"
+                                      visible="{= ${run>/status} === 'Failed'}"/>
+                            </form:content>
+                        </form:SimpleForm>
+                        <table:Table id="Checkpoints"
+                                     selectionMode="None">
+                        </table:Table>
+                    </IconTabFilter>
+                    <IconTabFilter id="Metadata" icon="sap-icon://hint" key="metadata" text="Metadata">
+                        <form:SimpleForm>
+                            <form:content>
+                                <Label text="Source Application"/>
+                                <Text text="{metadata>/sourceApplication}"/>
+                                <Label text="Country"/>
+                                <Text text="{metadata>/country}"/>
+                                <Label text="History Type"/>
+                                <Text text="{metadata>/historyType}"/>
+                                <Label text="Data Filename"/>
+                                <Text text="{metadata>/dataFilename}"/>
+                                <Label text="Source Type"/>
+                                <Text text="{metadata>/sourceType}"/>
+                                <Label text="Version"/>
+                                <Text text="{metadata>/version}"/>
+                                <Label text="Information Date"/>
+                                <Text text="{metadata>/informationDate}"/>
+                            </form:content>
+                        </form:SimpleForm>
+                        <Table headerText="Additional Info" items="{metadata>/additionalInfo}"
+                               noDataText="No Additional Info">
+                            <columns>
+                                <Column width="40%" hAlign="Right">
+                                    <Text text="Info Key"/>
+                                </Column>
+                                <Column width="60%">
+                                    <Text text="Info Value"/>
+                                </Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem vAlign="Middle">
+                                    <cells>
+                                        <Text text="{metadata>infoKey}"/>
+                                        <Text text="{metadata>infoValue}"/>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </IconTabFilter>
+                </items>
+            </IconTabBar>
         </content>
+        <footer>
+            <Bar/>
+        </footer>
     </Page>
 </core:View>

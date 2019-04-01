@@ -18,6 +18,8 @@ var GenericService = new function () {
 
   let model = sap.ui.getCore().getModel();
 
+  let eventBus = sap.ui.getCore().getEventBus();
+
   this.getUserInfo = function () {
     let fnSuccess = (oInfo) => {
       model.setProperty("/userInfo", oInfo)
@@ -33,7 +35,7 @@ var GenericService = new function () {
   this.clearSession = function (sLogoutMessage) {
     model.setProperty("/userInfo", {});
     localStorage.clear();
-    window.location.href = "#/login";
+    eventBus.publish("nav", "logout");
     if (sLogoutMessage) {
       sap.m.MessageToast.show(sLogoutMessage)
     }

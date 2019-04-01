@@ -32,22 +32,9 @@ sap.ui.define([
         let args = oEvent.getParameter("arguments");
         this.routeMatched(args);
       }, this);
-      this._master = this.byId("masterPage");
+
       this._detail = this.byId("detailPage");
       this._checkpointsTable = this.byId("Checkpoints");
-    },
-
-    runSelected: function (oEv) {
-      let selectedItem = oEv.getParameter("listItem");
-      let datasetName = selectedItem.data("dataset");
-      let datasetVersion = selectedItem.data("version");
-      let runId = selectedItem.data("runId");
-
-      this._router.navTo("runs", {
-        dataset: datasetName,
-        version: datasetVersion,
-        id: runId
-      });
     },
 
     toDataset : function(oEv) {
@@ -60,15 +47,12 @@ sap.ui.define([
 
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "dataset") === undefined) {
-        RunService.getRuns(this._master, this._detail, this._checkpointsTable);
+        RunService.getFirstRun(this._detail, this._checkpointsTable);
       } else if (Prop.get(oParams, "version") === undefined) {
-        RunService.getRuns(this._master);
         RunService.getLatestRunForLatestVersion(this._detail, this._checkpointsTable, oParams.dataset)
       } else if (Prop.get(oParams, "id") === undefined) {
-        RunService.getRuns(this._master);
         RunService.getLatestRun(this._detail, this._checkpointsTable, oParams.dataset, oParams.version)
       } else {
-        RunService.getRuns(this._master);
         RunService.getRun(this._detail, this._checkpointsTable, oParams.dataset, oParams.version, oParams.id)
       }
     },
