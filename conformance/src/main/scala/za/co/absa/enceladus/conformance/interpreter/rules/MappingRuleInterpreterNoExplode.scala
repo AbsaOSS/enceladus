@@ -56,7 +56,9 @@ case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule,
     logJoinCondition(mapTable.schema, joinContidionStr)
     validateMappingRule(df, dao, mappingTableDef, mapTable, joinContidionStr, defaultMappingValueMap)
 
-    val joined = df.as(MappingRuleInterpreterNoExplode.inputDfAlias)
+    val (explodedDf, explodeContext) = ExplodeTools.explodeAllArraysInPath(rule.outputColumn, df)
+
+    val joined = explodedDf.as(MappingRuleInterpreterNoExplode.inputDfAlias)
       .join(mapTable.as(MappingRuleInterpreterNoExplode.mappingTableAlias),
         MappingRuleInterpreterNoExplode.getJoinCondition(rule), "left_outer")
       .select(col(s"${MappingRuleInterpreterNoExplode.inputDfAlias}.*"),
@@ -77,7 +79,9 @@ case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule,
         outCol.isNull.and(arrayErrorCondition)
       })
 
-    errorsDf
+    val implodeDf = ExplodeTools.revertAllExplosions(errorsDf, explodeContext, Some(ErrorMessage.errorColumnName))
+
+    implodeDf
   }
 
   private def addErrorsToErrCol(df: DataFrame,

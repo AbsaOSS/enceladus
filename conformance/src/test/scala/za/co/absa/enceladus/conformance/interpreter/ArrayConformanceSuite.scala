@@ -99,8 +99,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   }
 
   test("Testing Array Type conformance (non-explosion mapping rule)") {
-    // (ToDo) This fails on Catalyst optimizing the execution plan. Need a workaround for that
-    //testArrayTypeConformance(useExperimentalMappingRule = true)
+    testArrayTypeConformance(useExperimentalMappingRule = true)
   }
 
   test("Conformance should NOT generate errors when matching null (explode mapping rule)") {
@@ -108,7 +107,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   }
 
   test("Conformance should NOT generate errors when matching null (non-explosion mapping rule)") {
-    //testConformanceMatchingNull(useExperimentalMappingRule = true)
+    testConformanceMatchingNull(useExperimentalMappingRule = true)
   }
 
   test("Conformance should NOT generate errors when matching empty arrays (explode mapping rule)") {
@@ -116,6 +115,6 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   }
 
   test("Conformance should NOT generate errors when matching empty arrays (non-explosion mapping rule)") {
-    //testConformanceMatchingEmptyArrays(useExperimentalMappingRule = true)
+    testConformanceMatchingEmptyArrays(useExperimentalMappingRule = true)
   }
 }
