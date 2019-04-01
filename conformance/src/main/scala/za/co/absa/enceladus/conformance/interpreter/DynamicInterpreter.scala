@@ -65,7 +65,7 @@ object DynamicInterpreter {
     conformedDf
   }
 
-  private def applyConformanceRules(inputValidDf: DataFrame)
+  private def applyConformanceRules(inputDf: DataFrame)
                                    (implicit ictx: InterpreterContext): DataFrame = {
     implicit val spark: SparkSession = ictx.spark
     implicit val dao: EnceladusDAO = ictx.dao
@@ -77,19 +77,19 @@ object DynamicInterpreter {
     val steps = getConformanceSteps(ictx)
 
     // Fold left on rules
-    val conformedDf = steps.foldLeft(inputValidDf)({
+    val conformedDf = steps.foldLeft(inputDf)({
       case (df, rule) =>
         val confd = rule match {
-          case r: DropConformanceRule => DropRuleInterpreter(r).conform(df)
-          case r: ConcatenationConformanceRule => ConcatenationRuleInterpreter(r).conform(df)
-          case r: LiteralConformanceRule => LiteralRuleInterpreter(r).conform(df)
-          case r: SingleColumnConformanceRule => SingleColumnRuleInterpreter(r).conform(df)
+          case r: DropConformanceRule             => DropRuleInterpreter(r).conform(df)
+          case r: ConcatenationConformanceRule    => ConcatenationRuleInterpreter(r).conform(df)
+          case r: LiteralConformanceRule          => LiteralRuleInterpreter(r).conform(df)
+          case r: SingleColumnConformanceRule     => SingleColumnRuleInterpreter(r).conform(df)
           case r: SparkSessionConfConformanceRule => SparkSessionConfRuleInterpreter(r).conform(df)
-          case r: UppercaseConformanceRule => UppercaseRuleInterpreter(r).conform(df)
-          case r: CastingConformanceRule => CastingRuleInterpreter(r).conform(df)
-          case r: NegationConformanceRule => NegationRuleInterpreter(r).conform(df)
-          case r: CustomConformanceRule => r.getInterpreter().conform(df)
-          case r: MappingConformanceRule =>
+          case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r).conform(df)
+          case r: CastingConformanceRule          => CastingRuleInterpreter(r).conform(df)
+          case r: NegationConformanceRule         => NegationRuleInterpreter(r).conform(df)
+          case r: CustomConformanceRule           => r.getInterpreter().conform(df)
+          case r: MappingConformanceRule          =>
             if (ictx.experimentalMappingRule) {
               MappingRuleInterpreterNoExplode(r, ictx.conformance, explodeContext).conform(df)
             } else {
