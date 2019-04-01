@@ -15,18 +15,22 @@
 
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
-  "sap/m/MessageToast",
-], function (Controller, MessageToast) {
+  "sap/ui/core/Fragment",
+  "sap/m/MessageToast"
+], function (Controller, Fragment, MessageToast) {
   "use strict";
 
   return Controller.extend("components.app", {
 
-    /**
-     * Called when a controller is instantiated and its View controls (if available) are already created.
-     * Can be used to modify the View before it is displayed, to bind event handlers and do other one-time initialization.
-     * @memberOf menas.main
-     */
     onInit: function (oEv) {
+      this._eventBus = sap.ui.getCore().getEventBus();
+      this._eventBus.subscribe("nav", "back", this.onPressMasterBack, this);
+      this._eventBus.subscribe("nav", "logout", this.onLogout, this);
+
+      this._app = this.byId("menasApp");
+
+      this._model = sap.ui.getCore().getModel();
+
       this.getView().setModel(sap.ui.getCore().getModel());
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
       GenericService.getUserInfo(this);
@@ -49,7 +53,7 @@ sap.ui.define([
       }, this);
 
       this._router.attachRouteMatched((oEvent) => {
-        let userInfo = sap.ui.getCore().getModel().getProperty("/userInfo");
+        let userInfo = this._model.getProperty("/userInfo");
         if (typeof userInfo.username === 'undefined') {
           this._router.navTo("login");
         }
@@ -57,33 +61,41 @@ sap.ui.define([
     },
 
     handleMenuPress: function (oEv) {
-      this.byId("menasApp").hideMaster();
+      this._app.hideMaster();
+    },
+
+    onPressMasterBack: function () {
+      this._app.backMaster();
     },
 
     onRunsPress: function (oEv) {
-      this._router.navTo("runs")
+      this._eventBus.publish("runs", "list");
+      this._app.toMaster(this.createId("runsPage"));
     },
 
-    onSchemaPress: function (oEv) {
-      this._router.navTo("schemas")
+    onSchemasPress: function (oEv) {
+      this._eventBus.publish("schemas", "list");
+      this._app.toMaster(this.createId("schemasPage"));
     },
 
     onDatasetPress: function (oEv) {
-      this._router.navTo("datasets")
+      this._eventBus.publish("dataset", "list");
+      this._app.toMaster(this.createId("datasetsPage"));
     },
 
     onMappingPress: function (oEv) {
-      this._router.navTo("mappingTables")
+      this._eventBus.publish("mappingTable", "list");
+      this._app.toMaster(this.createId("mappingTablesPage"));
     },
 
-    /**
-     * Called when the View has been rendered (so its HTML is part of the document). Post-rendering manipulations of the HTML could be done here.
-     * This hook is the same one that SAPUI5 controls get after being rendered.
-     * @memberOf menas.main
-     */
+    onLogout: function () {
+      this._app.backToTopMaster();
+      this._router.navTo("root");
+    },
+
     onAfterRendering: function () {
       component.setBusy(false)
-    },
+    }
 
   });
 });

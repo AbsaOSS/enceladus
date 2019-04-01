@@ -13,46 +13,55 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:l="sap.ui.layout"
-    xmlns:table="sap.ui.table" xmlns:hdfs="components.hdfs">
-    <Dialog id="addMappingTableDialog" title="{/newMappingTable/title} Mapping Table" resizable="true" draggable="true" class="minW40rem">
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
+                         xmlns:hdfs="components.hdfs">
+    <Dialog id="addMappingTableDialog" title="{/newMappingTable/title} Mapping Table" resizable="true" draggable="true"
+            class="minW40rem">
         <content>
             <VBox class="sapUiSmallMargin">
                 <form:SimpleForm adjustLabelSpan="true" editable="true">
                     <form:content>
-                        <Label text="Mapping Table Name"></Label>
-                        <Input id="newMappingTableName" enabled="{path:'/newMappingTable/isEdit', formatter:'Formatters.not'}" type="Text"
-                            placeholder="Enter mapping table name" width="100%" value="{/newMappingTable/name}"></Input>
-                        <Label text="Mapping Table Description"></Label>
-                        <Input id="newMappingTableDescription" type="Text" placeholder="Enter mapping table description" width="100%"
-                            value="{/newMappingTable/description}"></Input>
-                        <Label text="Schema Name"></Label>
-                        <Select id="newMappingTableSchemaNameSelect" showSecondaryValues="true" items="{/schemas}" forceSelection="false"
-                            selectedKey="{/newMappingTable/schemaName}">
-                            <core:ListItem key="{_id}" text="{_id}" additionalText="Latest version: {latestVersion}"></core:ListItem>
+                        <Label text="Mapping Table Name"/>
+                        <Input id="newMappingTableName"
+                               enabled="{path:'/newMappingTable/isEdit', formatter:'Formatters.not'}"
+                               type="Text" placeholder="Enter mapping table name" width="100%"
+                               value="{/newMappingTable/name}" change="onNameChange"/>
+                        <Label text="Mapping Table Description"/>
+                        <Input id="newMappingTableDescription" type="Text" placeholder="Enter mapping table description"
+                               width="100%"
+                               value="{/newMappingTable/description}"/>
+                        <Label text="Schema Name"/>
+                        <Select id="newMappingTableSchemaNameSelect" showSecondaryValues="true" items="{/schemas}"
+                                forceSelection="false" selectedKey="{/newMappingTable/schemaName}"
+                                change="onSchemaSelect">
+                            <core:ListItem key="{_id}" text="{_id}" additionalText="Latest version: {latestVersion}"/>
                         </Select>
-                        <Label text="Schema Version"></Label>
+                        <Label text="Schema Version"/>
                         <FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">
-                            <Select id="newMappingTableSchemaVersionSelect" class="menasAddMappingSelect" items="{/currentSchemaVersions}"
-                                showSecondaryValues="true" forceSelection="false" width="auto" selectedKey="{/newMappingTable/schemaVersion}">
+                            <Select id="newMappingTableSchemaVersionSelect" class="menasAddMappingSelect"
+                                    items="{/currentSchemaVersions}"
+                                    showSecondaryValues="true" forceSelection="false" width="auto"
+                                    selectedKey="{/newMappingTable/schemaVersion}">
                                 <core:ListItem key="{version}" text="{version}"
-                                    additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"></core:ListItem>
+                                               additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
                             </Select>
                             <Button icon="sap-icon://action">
                             </Button>
                         </FlexBox>
-                        <Label text="HDFS Path"></Label>
-                        <hdfs:HDFSBrowser id="addMtHDFSBrowser" height="300px" width="100%" busyControl="addMappingTableDialog"
-                            pathLabel="selectedHDFSPathLabel" restURI="api/hdfs/list" HDFSPath="{/newMappingTable/hdfsPath}"></hdfs:HDFSBrowser>
-                        <Label text="Selected Path"></Label>
-                        <Text id="selectedHDFSPathLabel"></Text>
+                        <Label text="HDFS Path"/>
+                        <hdfs:HDFSBrowser id="addMtHDFSBrowser" height="300px" width="100%"
+                                          busyControl="addMappingTableDialog"
+                                          pathLabel="selectedHDFSPathLabel" restURI="api/hdfs/list"
+                                          HDFSPath="{/newMappingTable/hdfsPath}"/>
+                        <Label text="Selected Path"/>
+                        <Text id="selectedHDFSPathLabel"/>
                     </form:content>
                 </form:SimpleForm>
             </VBox>
         </content>
         <buttons>
-            <Button id="newMappingTableAddButton" text="Save" icon="sap-icon://save"></Button>
-            <Button id="newMappingTableCancelButton" text="Cancel" icon="sap-icon://cancel"></Button>
+            <Button id="newMappingTableAddButton" text="Save" icon="sap-icon://save" press="onMTSubmit"/>
+            <Button id="newMappingTableCancelButton" text="Cancel" icon="sap-icon://cancel" press="onMTCancel"/>
         </buttons>
     </Dialog>
 </core:FragmentDefinition>

@@ -41,13 +41,6 @@ sap.ui.controller("components.schema.schemaMain", {
       value : localStorage.getItem("csrfToken")
     }));
 
-    SchemaService.getSchemaList();
-
-    this._addDialog = sap.ui.xmlfragment("components.schema.addSchema", this);
-    sap.ui.getCore().byId("newSchemaAddButton").attachPress(this.schemaAddSubmit, this)
-    sap.ui.getCore().byId("newSchemaCancelButton").attachPress(this.schemaAddCancel, this)
-    sap.ui.getCore().byId("newSchemaName").attachChange(this.schemaNameChange, this)
-
     this._editDialog = sap.ui.xmlfragment("components.schema.editSchema", this);
     sap.ui.getCore().byId("editSchemaSaveButton").attachPress(this.schemaEditSubmit, this)
     sap.ui.getCore().byId("editSchemaCancelButton").attachPress(this.schemaEditCancel, this)
@@ -58,15 +51,6 @@ sap.ui.controller("components.schema.schemaMain", {
     //here perform deep copy of the object, otherwise 2 ways binding will update the referenced path
     this._model.setProperty("/newSchema", jQuery.extend(true, {}, this._model.getProperty("/currentSchema")));
     this._editDialog.open();
-  },
-
-  schemaNameChange : function() {
-    let sName = this._model.getProperty("/newSchema/name");
-    if (GenericService.isValidEntityName(sName)) {
-      SchemaService.hasUniqueName(sName)
-    } else {
-      this._model.setProperty("/newSchema/nameUnique", true)
-    }
   },
 
   usedInNavTo : function(oEv) {
@@ -86,24 +70,6 @@ sap.ui.controller("components.schema.schemaMain", {
     });
   },
 
-  schemaAddSubmit : function() {
-    var newSchema = this._model.getProperty("/newSchema")
-    if (newSchema.name && typeof (newSchema.nameUnique) === "undefined") {
-      // need to wait for the service call
-      setTimeout(this.schemaAddSubmit.bind(this), 500);
-    } else if (this.isValidSchema()) {
-      // send and update UI
-      SchemaService.createSchema(newSchema.name, newSchema.description)
-      this.schemaAddCancel(); // close & clean up
-    }
-  },
-
-  schemaAddCancel : function() {
-    this.resetNewSchemaValueState();
-    this._model.setProperty("/newSchema", {});
-    this._addDialog.close();
-  },
-
   schemaEditCancel : function() {
     this._model.setProperty("/newSchema", {});
     this._editDialog.close();
@@ -114,36 +80,6 @@ sap.ui.controller("components.schema.schemaMain", {
     var currSchema = this._model.getProperty("/currentSchema")
     SchemaService.updateSchema(currSchema.name, currSchema.version, newSchema.description)
     this.schemaEditCancel();
-  },
-
-  resetNewSchemaValueState : function() {
-    sap.ui.getCore().byId("newSchemaName").setValueState(sap.ui.core.ValueState.None);
-    sap.ui.getCore().byId("newSchemaName").setValueStateText("");
-
-    this.byId("fileUploader").setValueState(sap.ui.core.ValueState.None);
-    this.byId("fileUploader").setValueStateText("");
-  },
-
-  isValidSchema : function() {
-    this.resetNewSchemaValueState();
-    let schema = this._model.getProperty("/newSchema");
-
-    let hasValidName = EntityValidationService.hasValidName(schema, "Schema",
-      sap.ui.getCore().byId("newSchemaName"));
-
-    return hasValidName;
-  },
-
-
-  onAddPress : function() {
-    this._addDialog.open();
-  },
-
-  schemaSelected : function(oEv) {
-    var selected = oEv.getParameter("listItem").data("id")
-    this._router.navTo("schemas", {
-      id : selected
-    });
   },
 
   metadataPress: function(oEv) {
