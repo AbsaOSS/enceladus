@@ -21,7 +21,7 @@ import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.dao.EnceladusDAO
-import za.co.absa.enceladus.model.conformanceRule._
+import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.conformance.interpreter.rules._
@@ -41,7 +41,6 @@ object DynamicInterpreter {
     * @param jobShortName            A job name used for checkpoints
     * @param experimentalMappingRule If true the new explode-optimized conformance mapping rule interpreter will be used
     * @param enableControlFramework  If true sets the checkpoints on the dataset upon conforming
-    *
     * @return The conformed dataframe
     *
     */
@@ -50,51 +49,72 @@ object DynamicInterpreter {
                 experimentalMappingRule: Boolean,
                 enableControlFramework: Boolean,
                 jobShortName: String = "Conformance"
-               ) (implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): DataFrame = {
+               )(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): DataFrame = {
+
+    //noinspection TypeAnnotation
+    implicit val interpreterContext = InterpreterContext(conformance, experimentalMappingRule, enableControlFramework,
+      jobShortName, spark, dao, progArgs)
+
+    applyCheckpoint(inputDf, "Start")
+
+    val conformedDf: DataFrame = applyConformanceRules(ensureErrorColumnExists(inputDf))
+
+    applyCheckpoint(inputDf, "End")
+    logExecutionPlan(conformedDf)
+
+    conformedDf
+  }
+
+  private def applyConformanceRules(inputValidDf: DataFrame)
+                                   (implicit ictx: InterpreterContext): DataFrame = {
+    implicit val spark: SparkSession = ictx.spark
+    implicit val dao: EnceladusDAO = ictx.dao
+    implicit val progArgs: CmdConfig = ictx.progArgs
     implicit val udfLib: UDFLibrary = new UDFLibrary
 
-    if (enableControlFramework) {
-      inputDf.setCheckpoint(s"$jobShortName - Start")
-    }
-    val steps = conformance.conformance.sortBy(_.order)
-    val (explodedDf, explodeContext) = prepareDataFrame(inputDf, steps,experimentalMappingRule)
+    val explodeContext = ExplosionContext()
+
+    val steps = getConformanceSteps(ictx)
+
     // Fold left on rules
-    val ds = steps.foldLeft(explodedDf)({
+    val conformedDf = steps.foldLeft(inputValidDf)({
       case (df, rule) =>
         val confd = rule match {
-          case r: DropConformanceRule             => DropRuleInterpreter(r).conform(df)
-          case r: ConcatenationConformanceRule    => ConcatenationRuleInterpreter(r).conform(df)
-          case r: LiteralConformanceRule          => LiteralRuleInterpreter(r).conform(df)
-          case r: SingleColumnConformanceRule     => SingleColumnRuleInterpreter(r).conform(df)
+          case r: DropConformanceRule => DropRuleInterpreter(r).conform(df)
+          case r: ConcatenationConformanceRule => ConcatenationRuleInterpreter(r).conform(df)
+          case r: LiteralConformanceRule => LiteralRuleInterpreter(r).conform(df)
+          case r: SingleColumnConformanceRule => SingleColumnRuleInterpreter(r).conform(df)
           case r: SparkSessionConfConformanceRule => SparkSessionConfRuleInterpreter(r).conform(df)
-          case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r).conform(df)
-          case r: CastingConformanceRule          => CastingRuleInterpreter(r).conform(df)
-          case r: NegationConformanceRule         => NegationRuleInterpreter(r).conform(df)
-          case r: CustomConformanceRule           => r.getInterpreter().conform(df)
-          case r: MappingConformanceRule          =>
-            if (experimentalMappingRule) {
-              MappingRuleInterpreterNoExplode(r, conformance, explodeContext).conform(df)
+          case r: UppercaseConformanceRule => UppercaseRuleInterpreter(r).conform(df)
+          case r: CastingConformanceRule => CastingRuleInterpreter(r).conform(df)
+          case r: NegationConformanceRule => NegationRuleInterpreter(r).conform(df)
+          case r: CustomConformanceRule => r.getInterpreter().conform(df)
+          case r: MappingConformanceRule =>
+            if (ictx.experimentalMappingRule) {
+              MappingRuleInterpreterNoExplode(r, ictx.conformance, explodeContext).conform(df)
             } else {
-              MappingRuleInterpreter(r, conformance).conform(df)
+              MappingRuleInterpreter(r, ictx.conformance).conform(df)
             }
           case _ => throw new IllegalStateException(s"Unrecognized rule class: ${rule.getClass.getName}")
         }
-        applyCheckpoint(rule, confd, jobShortName, explodeContext, enableControlFramework)
+        applyRuleCheckpoint(rule, confd, ictx.jobShortName, explodeContext, ictx.enableControlFramework)
     })
+    conformedDf
+  }
 
-    // Imploding all arrays back
-    val implodeDf = ExplodeTools.revertAllExplosions(ds, explodeContext, Some(ErrorMessage.errorColumnName))
-
-    if (enableControlFramework) {
-      implodeDf.setCheckpoint(s"$jobShortName - End", persistInDatabase = false)
+  private def getConformanceSteps(ictx: InterpreterContext): List[ConformanceRule] = {
+    val steps = ictx.conformance.conformance.sortBy(_.order)
+    if (ictx.experimentalMappingRule) {
+      getExplosionOptimizedSteps(steps)
+    } else {
+      steps
     }
+  }
 
-    val explain = ExplainCommand(implodeDf.queryExecution.logical, extended = true)
-    spark.sessionState.executePlan(explain).executedPlan.executeCollect().foreach {
-      r => log.debug("Output Dataset plan: \n" + r.getString(0))
-    }
+  private def getExplosionOptimizedSteps(inputSteps: List[ConformanceRule]): List[ConformanceRule] = {
+    // ToDo: Add explosion optimization here
 
-    implodeDf
+    inputSteps
   }
 
   /**
@@ -117,14 +137,21 @@ object DynamicInterpreter {
     }
   }
 
+  /** Applies a control framework checkpoint given a stage of the conformance */
+  private def applyCheckpoint(df: Dataset[Row], jobStage: String)(implicit ictx: InterpreterContext): Unit = {
+    if (ictx.enableControlFramework) {
+      df.setCheckpoint(s"${ictx.jobShortName} - $jobStage")
+    }
+  }
+
   /**
-    * applyCheckpoint Function which takes a generic rule and the dataframe and applies the control framework
+    * applyRuleCheckpoint Function which takes a generic rule and the dataframe and applies the control framework
     * checkpoint if configured
     *
     * @param rule The conformance rule
     * @param df   Dataframe to apply the checkpoint on
     */
-  private def applyCheckpoint(rule: ConformanceRule,
+  private def applyRuleCheckpoint(rule: ConformanceRule,
                               df: Dataset[Row],
                               jobShortName: String,
                               explodeContext: ExplosionContext,
@@ -142,30 +169,24 @@ object DynamicInterpreter {
     }
   }
 
-  /**
-    * Ensures the existene of error columns and if needed explodes the arrays
-    *
-    * @param inputDf                  the input data frame
-    * @param steps                    list of conformance rules that are to be executed upon the dataframe
-    * @param experimentalMappingRule   ensures arrays explosion for mapping rules if the experimental version is used
-    * @return touple of the dataframme to execute the rules on and the explosion context
-    */
-  private def prepareDataFrame(inputDf: Dataset[Row], steps: List[ConformanceRule], experimentalMappingRule: Boolean):
-                                (DataFrame, ExplosionContext) = {
+  private def logExecutionPlan(df: DataFrame)(implicit spark: SparkSession): Unit = {
+    val explain = ExplainCommand(df.queryExecution.logical, extended = true)
+    spark.sessionState.executePlan(explain).executedPlan.executeCollect().foreach {
+      r => log.debug("Output Dataset plan: \n" + r.getString(0))
+    }
+  }
 
-    // Add the error column if it's missing
-    val dfWithErrorColumn = if (inputDf.columns.contains(ErrorMessage.errorColumnName)) {
+  /**
+    * Ensures the existence of the error error column
+    *
+    * @param inputDf the input data frame
+    * @return A dataframe that has an error column
+    */
+  private def ensureErrorColumnExists(inputDf: Dataset[Row]): DataFrame = {
+    if (inputDf.columns.contains(ErrorMessage.errorColumnName)) {
       inputDf
     } else {
       inputDf.withColumn(ErrorMessage.errorColumnName, typedLit(List[ErrorMessage]()))
-    }
-
-    // Exploding all mapping rule arrays
-    if (experimentalMappingRule) {
-      log.info("Exploding all arrays in all mapping rules...")
-      explodeAllMappingRuleArrays(dfWithErrorColumn, steps)
-    } else {
-      (dfWithErrorColumn, ExplosionContext())
     }
   }
 
