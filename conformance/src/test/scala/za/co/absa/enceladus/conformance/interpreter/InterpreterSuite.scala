@@ -98,6 +98,8 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
 
     mockWhen(dao.getDataset("Trade Conformance", 1)) thenReturn TradeConformance.tradeDS
     mockWhen(dao.getMappingTable("country", 0)) thenReturn TradeConformance.countryMT
+    mockWhen(dao.getMappingTable("currency", 0)) thenReturn TradeConformance.currencyMT
+    mockWhen(dao.getMappingTable("product", 0)) thenReturn TradeConformance.productMT
     mockWhen(dao.getSchema("Trade", 0)) thenReturn dfs.schema
 
     val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs,
@@ -126,7 +128,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     assert(data == expected)
 
     // check that all the expected checkpoints are there
-    assert(checkpoints.lengthCompare(9) == 0)
+    assert(checkpoints.lengthCompare(11) == 0)
 
     checkpoints.foreach({ cp =>
       assert(cp.controls(0).controlValue === 7)

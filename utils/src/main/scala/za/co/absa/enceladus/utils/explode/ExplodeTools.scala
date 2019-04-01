@@ -49,7 +49,7 @@ object ExplodeTools {
       (contextPair, arrayColName) => {
         contextPair match {
           case (df, context) =>
-            log.warn(s"Exploding $arrayColName...")
+            log.info(s"Exploding $arrayColName...")
             explodeArray(arrayColName, df, context)
         }
       })
