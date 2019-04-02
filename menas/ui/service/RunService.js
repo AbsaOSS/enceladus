@@ -38,7 +38,7 @@ var RunService = new function () {
       },
       () => {
         sap.m.MessageBox
-          .error("Failed to get the any run. Please wait a moment and try reloading the application")
+          .error("Failed to get any run. Please wait a moment and try reloading the application")
       })
   };
 
