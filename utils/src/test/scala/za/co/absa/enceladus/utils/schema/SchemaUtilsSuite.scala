@@ -198,6 +198,61 @@ class SchemaUtilsSuite extends FunSuite {
     assert (deepestPath.get == "a.b.c")
   }
 
+  test("Test getDeepestArrayPath() for a path without an array") {
+    val schema = StructType(Seq[StructField](
+      StructField("a",
+        StructType(Seq[StructField](
+          StructField("b", StringType))
+        ))))
+
+    assert (getDeepestArrayPath(schema, "a.b").isEmpty)
+  }
+
+  test("Test getDeepestArrayPath() for a path with a single array at top level") {
+    val schema = StructType(Seq[StructField](
+      StructField("a", ArrayType(StructType(Seq[StructField](
+        StructField("b", StringType)))
+      ))))
+
+    val deepestPath = getDeepestArrayPath(schema, "a.b")
+
+    assert (deepestPath.nonEmpty)
+    assert (deepestPath.get == "a")
+  }
+
+  test("Test getDeepestArrayPath() for a path with a single array at nested level") {
+    val schema = StructType(Seq[StructField](
+      StructField("a", StructType(Seq[StructField](
+        StructField("b", ArrayType(StringType))))
+      )))
+
+    val deepestPath = getDeepestArrayPath(schema, "a.b")
+    val deepestPath2 = getDeepestArrayPath(schema, "a")
+
+    assert (deepestPath.nonEmpty)
+    assert (deepestPath.get == "a.b")
+    assert (deepestPath2.isEmpty)
+  }
+
+  test("Test getDeepestArrayPath() for a path with several nested arrays of struct") {
+    val schema = StructType(Seq[StructField](
+      StructField("a", ArrayType(StructType(Seq[StructField](
+        StructField("b", StructType(Seq[StructField](
+          StructField("c", ArrayType(StructType(Seq[StructField](
+            StructField("d", StructType(Seq[StructField](
+              StructField("e", StringType))
+            )))
+          ))))
+        )))
+      )))))
+
+    val deepestPath = getDeepestArrayPath(schema, "a.b.c.d.e")
+
+    assert (deepestPath.nonEmpty)
+    assert (deepestPath.get == "a.b.c")
+  }
+
+
   test("Test getClosestUniqueName() is working properly") {
     val schema = StructType(Seq[StructField](
       StructField("value", StringType)))

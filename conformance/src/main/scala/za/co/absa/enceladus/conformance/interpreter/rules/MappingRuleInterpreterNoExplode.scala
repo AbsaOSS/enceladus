@@ -56,7 +56,11 @@ case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule,
     logJoinCondition(mapTable.schema, joinContidionStr)
     validateMappingRule(df, dao, mappingTableDef, mapTable, joinContidionStr, defaultMappingValueMap)
 
-    val (explodedDf, explodeContext) = ExplodeTools.explodeAllArraysInPath(rule.outputColumn, df)
+    val (explodedDf, expCtx) = if (explodeContext.explosions.isEmpty) {
+      ExplodeTools.explodeAllArraysInPath(rule.outputColumn, df)
+    } else {
+      (df, explodeContext)
+    }
 
     val joined = explodedDf.as(MappingRuleInterpreterNoExplode.inputDfAlias)
       .join(mapTable.as(MappingRuleInterpreterNoExplode.mappingTableAlias),
@@ -73,13 +77,17 @@ case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule,
 
     val defaultMappingValue = defaultMappingValueMap.get(rule.targetAttribute)
 
-    val arrayErrorCondition = explodeContext.getArrayErrorCondition(rule.outputColumn)
+    val arrayErrorCondition = expCtx.getArrayErrorCondition(rule.outputColumn)
     val errorsDf = addErrorsToErrCol(placedDf, rule.attributeMappings.values.toSeq, rule.outputColumn,
       defaultMappingValue, mappingErrUdfCall, (srcCols, outCol) => {
         outCol.isNull.and(arrayErrorCondition)
       })
 
-    val implodeDf = ExplodeTools.revertAllExplosions(errorsDf, explodeContext, Some(ErrorMessage.errorColumnName))
+    val implodeDf = if (explodeContext.explosions.isEmpty) {
+      ExplodeTools.revertAllExplosions(errorsDf, expCtx, Some(ErrorMessage.errorColumnName))
+    } else {
+      errorsDf
+    }
 
     implodeDf
   }

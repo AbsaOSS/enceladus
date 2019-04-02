@@ -16,19 +16,22 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.apache.log4j.LogManager
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import za.co.absa.atum.AtumImplicits._
+import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.interpreter.rules._
+import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.error.UDFLibrary
-import za.co.absa.enceladus.conformance.interpreter.rules._
-import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
-import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
+import za.co.absa.enceladus.utils.schema.SchemaUtils
+
+import scala.collection.mutable.ListBuffer
 
 object DynamicInterpreter {
   private val log = LogManager.getLogger("enceladus.conformance.DynamicInterpreter")
@@ -52,8 +55,8 @@ object DynamicInterpreter {
                )(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): DataFrame = {
 
     //noinspection TypeAnnotation
-    implicit val interpreterContext = InterpreterContext(conformance, experimentalMappingRule, enableControlFramework,
-      jobShortName, spark, dao, progArgs)
+    implicit val interpreterContext = InterpreterContext(inputDf.schema, conformance, experimentalMappingRule,
+      enableControlFramework, jobShortName, spark, dao, progArgs)
 
     applyCheckpoint(inputDf, "Start")
 
@@ -72,7 +75,7 @@ object DynamicInterpreter {
     implicit val progArgs: CmdConfig = ictx.progArgs
     implicit val udfLib: UDFLibrary = new UDFLibrary
 
-    val explodeContext = ExplosionContext()
+    var explodeContext = ExplosionContext()
 
     val steps = getConformanceSteps(ictx)
 
@@ -95,6 +98,16 @@ object DynamicInterpreter {
             } else {
               MappingRuleInterpreter(r, ictx.conformance).conform(df)
             }
+          // Array explode and collect pseudo rules apply array explosions for mapping rule groups that operate on
+          // the same arrays
+          case r: ArrayExplodePseudoRule          =>
+            val (dfOut, ctx) = ExplodeTools.explodeAllArraysInPath(r.outputColumn, df, explodeContext)
+            explodeContext = ctx
+            dfOut
+          case r: ArrayCollectPseudoRule          =>
+            val dfOut = ExplodeTools.revertAllExplosions(df, explodeContext, Some(ErrorMessage.errorColumnName))
+            explodeContext = ExplosionContext()
+            dfOut
           case _ => throw new IllegalStateException(s"Unrecognized rule class: ${rule.getClass.getName}")
         }
         applyRuleCheckpoint(rule, confd, ictx.jobShortName, explodeContext, ictx.enableControlFramework)
@@ -105,16 +118,19 @@ object DynamicInterpreter {
   private def getConformanceSteps(ictx: InterpreterContext): List[ConformanceRule] = {
     val steps = ictx.conformance.conformance.sortBy(_.order)
     if (ictx.experimentalMappingRule) {
-      getExplosionOptimizedSteps(steps)
+      getExplosionOptimizedSteps(steps, ictx.schema)
     } else {
       steps
     }
   }
 
-  private def getExplosionOptimizedSteps(inputSteps: List[ConformanceRule]): List[ConformanceRule] = {
-    // ToDo: Add explosion optimization here
-
-    inputSteps
+  private[interpreter] def getExplosionOptimizedSteps(inputSteps: List[ConformanceRule],
+                                                      schema: StructType): List[ConformanceRule] = {
+    reorderConformanceRules(
+      addExplosionsToMappingRuleGroups(
+        groupMappingRules(inputSteps, schema), schema
+      )
+    )
   }
 
   /**
@@ -188,6 +204,77 @@ object DynamicInterpreter {
     } else {
       inputDf.withColumn(ErrorMessage.errorColumnName, typedLit(List[ErrorMessage]()))
     }
+  }
+
+  /**
+    * Groups mapping rules if their output columns are inside the same array
+    *
+    * @param rules  a list of conformance rules
+    * @param schema a schema of a dataset
+    * @return The list of lists of conformance rule groups
+    */
+  private def groupMappingRules(rules: List[ConformanceRule], schema: StructType): List[List[ConformanceRule]] = {
+    val groups = new ListBuffer[List[ConformanceRule]]
+    var group = new ListBuffer[ConformanceRule]
+    var lastArrayParent = ""
+
+    def pushGroup(arrayPath: String = ""): Unit = {
+      if (group.nonEmpty) {
+        groups += group.toList
+        group = new ListBuffer[ConformanceRule]
+      }
+      lastArrayParent = arrayPath
+    }
+
+    for (rule <- rules) {
+      rule match {
+        case m: MappingConformanceRule =>
+          val arrayParent = SchemaUtils.getDeepestArrayPath(schema, rule.outputColumn)
+          arrayParent match {
+            case Some(arr) =>
+              if (lastArrayParent != arr) {
+                pushGroup(arr)
+              }
+              group += m
+            case None =>
+              pushGroup()
+              groups += List(m)
+          }
+
+          // Something
+        case a =>
+          pushGroup()
+          groups += List(a)
+      }
+    }
+    pushGroup()
+    groups.toList
+  }
+
+  private def addExplosionsToMappingRuleGroups(ruleGroups: List[List[ConformanceRule]],
+                                               schema: StructType): List[ConformanceRule] = {
+    ruleGroups.flatMap(rules => {
+      if (rules.lengthCompare(1)>0) {
+        val optArray = SchemaUtils.getDeepestArrayPath(schema, rules.head.outputColumn)
+        optArray match {
+          case Some(arr) =>
+            (ArrayExplodePseudoRule(0, arr, controlCheckpoint = false) :: rules) :+
+              ArrayCollectPseudoRule(0, "", controlCheckpoint = false)
+          case None =>
+            throw new IllegalStateException("")
+        }
+      } else {
+        rules
+      }
+    })
+  }
+
+  private def reorderConformanceRules(rules: List[ConformanceRule]): List[ConformanceRule] = {
+    var index = 0
+    rules.map(rule => {
+      index += 1
+      rule.withUpdatedOrder(index)
+    })
   }
 
 }

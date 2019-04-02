@@ -15,13 +15,15 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.StructType
+import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
-import za.co.absa.enceladus.conformance.CmdConfig
 
 /** Holds everything that is needed in between dynamic conformance interpreter stages */
 case class InterpreterContext (
+                                schema: StructType,
                                 conformance: ConfDataset,
                                 experimentalMappingRule: Boolean,
                                 enableControlFramework: Boolean,
