@@ -108,7 +108,7 @@ sap.ui.controller("components.schema.schemaMain", {
   onRemovePress : function(oEv) {
     var current = this._model.getProperty("/currentSchema");
 
-    sap.m.MessageBox.show("This action will remove all versions of the schema definition. \nAre you sure?.", {
+    sap.m.MessageBox.show("This action will remove all versions of the schema definition. \nAre you sure?", {
       icon : sap.m.MessageBox.Icon.WARNING,
       title : "Are you sure?",
       actions : [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
