@@ -283,7 +283,7 @@ sap.ui.define([
     onRemovePress: function (oEv) {
       let current = this._model.getProperty("/currentMappingTable")
 
-      MessageBox.show("This action will remove ALL versions of the mapping table definition. \nAre you sure?", {
+      MessageBox.show("This action will remove all versions of the mapping table definition. \nAre you sure?", {
         icon: MessageBox.Icon.WARNING,
         title: "Are you sure?",
         actions: [MessageBox.Action.YES, MessageBox.Action.NO],
