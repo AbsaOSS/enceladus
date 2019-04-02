@@ -79,11 +79,11 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
     assert(readAgain.count === 3)
   }
 
-  test("Test conformance of Chorus mock data (explode mapping rule)") {
+  test("Test conformance of Chorus mock data") {
     testChorusMockData(useExperimentalMappingRule = false)
   }
 
-  test("Test conformance of Chorus mock data (non-explosion mapping rule)") {
+  test("Test conformance of Chorus mock data (experimental optimized mapping rule)") {
     testChorusMockData(useExperimentalMappingRule = true)
   }
 }

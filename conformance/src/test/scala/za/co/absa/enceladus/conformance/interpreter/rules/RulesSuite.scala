@@ -33,28 +33,28 @@ class RulesSuite extends FunSuite with SparkTestBase {
 
   test("Test country code join condition") {
     val countryRule = EmployeeConformance.countryRule
-    val countryCondGen = MappingRuleInterpreterNoExplode.getJoinCondition(countryRule).expr
+    val countryCondGen = MappingRuleInterpreterGroupExplode.getJoinCondition(countryRule).expr
     val countryCond = (lit(true)
-      && (col(s"${MappingRuleInterpreterNoExplode.inputDfAlias}.country") === col(s"${MappingRuleInterpreterNoExplode.mappingTableAlias}.country_code"))) expr
+      && (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.country") === col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.country_code"))) expr
 
     assert(countryCondGen.semanticEquals(countryCond))
   }
 
   test("Test department join condition") {
     val deptRule = EmployeeConformance.departmentRule
-    val deptCondGen = MappingRuleInterpreterNoExplode.getJoinCondition(deptRule).expr
+    val deptCondGen = MappingRuleInterpreterGroupExplode.getJoinCondition(deptRule).expr
     val deptCond = (lit(true) &&
-      (col(s"${MappingRuleInterpreterNoExplode.inputDfAlias}.dept") === col(s"${MappingRuleInterpreterNoExplode.mappingTableAlias}.dept_id"))) expr
+      (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.dept") === col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.dept_id"))) expr
 
     assert(deptCondGen.semanticEquals(deptCond))
   }
 
   test("Test role join condition") {
     val roleRule = EmployeeConformance.roleRule
-    val roleCondGen = MappingRuleInterpreterNoExplode.getJoinCondition(roleRule).expr
+    val roleCondGen = MappingRuleInterpreterGroupExplode.getJoinCondition(roleRule).expr
     val roleCond = (lit(true) &&
-      (col(s"${MappingRuleInterpreterNoExplode.inputDfAlias}.role") <=> col(s"${MappingRuleInterpreterNoExplode.mappingTableAlias}.role_id")) &&
-      (col(s"${MappingRuleInterpreterNoExplode.inputDfAlias}.conformed_country") <=> col(s"${MappingRuleInterpreterNoExplode.mappingTableAlias}.country"))) expr
+      (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.role") <=> col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.role_id")) &&
+      (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.conformed_country") <=> col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.country"))) expr
 
     assert(roleCondGen.semanticEquals(roleCond))
   }
@@ -111,48 +111,48 @@ class RulesSuite extends FunSuite with SparkTestBase {
         )
       ))
 
-    MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("id_test", schema, "id", "1")
-    MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("name_test", schema, "name", "'test'")
-    MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("name_null_ok", schema, "name", "null")
-    MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("decimal_test", schema, "price", "1.6127")
-    MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("date_test", schema, "orders.orderdate", "'2017-10-25'")
-    MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("timestamp_test", schema, "orders.delivertime", "'2017-10-25 08:35:43'")
-    MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("boolean_test", schema, "orders.happy", "true")
-    MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("struct_test", schema, "orders.system", "struct('Unknown' as name, 'None' as description)")
+    MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("id_test", schema, "id", "1")
+    MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("name_test", schema, "name", "'test'")
+    MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("name_null_ok", schema, "name", "null")
+    MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("decimal_test", schema, "price", "1.6127")
+    MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("date_test", schema, "orders.orderdate", "'2017-10-25'")
+    MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("timestamp_test", schema, "orders.delivertime", "'2017-10-25 08:35:43'")
+    MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("boolean_test", schema, "orders.happy", "true")
+    MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("struct_test", schema, "orders.system", "struct('Unknown' as name, 'None' as description)")
 
     assert(intercept[ValidationException] {
-      MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("no_attribute_test", schema, "code", "")
+      MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("no_attribute_test", schema, "code", "")
     }.getMessage contains "does not contain the specified target attribute")
 
     assert(intercept[ValidationException] {
-      MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("not_string", schema, "name", "struct('Unknown' as name)")
+      MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("not_string", schema, "name", "struct('Unknown' as name)")
     }.getMessage contains "A string expected")
 
     println(intercept[ValidationException] {
-      MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("id_null", schema, "id", "null")
+      MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("id_null", schema, "id", "null")
     }.getMessage)
 
     intercept[ValidationException] {
-      MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("id_test", schema, "id", "wrong")
+      MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("id_test", schema, "id", "wrong")
     }
 
     assert(intercept[ValidationException] {
-      MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("decimal_test", schema, "price", "12345.67")
+      MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("decimal_test", schema, "price", "12345.67")
     }.getMessage contains "Scale/precision don't match the value")
 
     assert(intercept[ValidationException] {
-      MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("date_test", schema, "orders.orderdate", "'25/10/2017'")
+      MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("date_test", schema, "orders.orderdate", "'25/10/2017'")
     }.getMessage contains "Make sure the value matches 'yyyy-MM-dd'")
 
     assert(intercept[ValidationException] {
-      MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("timestamp_test", schema, "orders.delivertime", "'25-10-201708:25:43'")
+      MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("timestamp_test", schema, "orders.delivertime", "'25-10-201708:25:43'")
     }.getMessage contains "Make sure the value matches 'yyyy-MM-dd HH:mm:ss'")
 
     intercept[ValidationException] {
-      MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("boolean_test", schema, "orders.happy", "a")
+      MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("boolean_test", schema, "orders.happy", "a")
     }
     intercept[ValidationException] {
-      MappingRuleInterpreterNoExplode.ensureDefaultValueMatchSchema("struct_test", schema, "orders.system", "struct('unknown' as name)")
+      MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("struct_test", schema, "orders.system", "struct('unknown' as name)")
     }
 
   }

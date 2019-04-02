@@ -106,7 +106,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
       useExperimentalMappingRule, enableCF).cache
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
 
-    // Different results for explode and non-explode algorithms because of:
+    // Different results for the original mapping rule interreter algorithm and for the optmized one because of:
     // 1. Order of the columns differ
     // 2. The explode (original version) seems do not handle empty array case very well if there is an array inside an array
     val expected = if (useExperimentalMappingRule){
@@ -137,19 +137,19 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     })
   }
 
-  test("End to end dynamic conformance test (explode mapping rule)") {
+  test("End to end dynamic conformance test") {
     testEndToEndDynamicConformance(useExperimentalMappingRule = false)
   }
 
-  test("End to end dynamic conformance test (non-explosion mapping rule)") {
+  test("End to end dynamic conformance test (experimental optimized mapping rule)") {
     testEndToEndDynamicConformance(useExperimentalMappingRule = true)
   }
 
-  test("End to end array dynamic conformance test (explode mapping rule)") {
+  test("End to end array dynamic conformance test") {
     testEndToEndArrayConformance(useExperimentalMappingRule = false)
   }
 
-  test("End to end array dynamic conformance test (non-explosion mapping rule)") {
+  test("End to end array dynamic conformance test (experimental optimized mapping rule)") {
     testEndToEndArrayConformance(useExperimentalMappingRule = true)
   }
 }
