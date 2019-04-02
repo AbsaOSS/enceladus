@@ -94,27 +94,27 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     assert(numOfErrors == EmtpyArraySamples.totalNumberOfErrors)
   }
 
-  test("Testing Array Type conformance (explode mapping rule)") {
+  test("Testing Array Type conformance") {
     testArrayTypeConformance(useExperimentalMappingRule = false)
   }
 
-  test("Testing Array Type conformance (non-explosion mapping rule)") {
+  test("Testing Array Type conformance (experimental optimized mapping rule)") {
     testArrayTypeConformance(useExperimentalMappingRule = true)
   }
 
-  test("Conformance should NOT generate errors when matching null (explode mapping rule)") {
+  test("Conformance should NOT generate errors when matching null") {
     testConformanceMatchingNull(useExperimentalMappingRule = false)
   }
 
-  test("Conformance should NOT generate errors when matching null (non-explosion mapping rule)") {
+  test("Conformance should NOT generate errors when matching null (experimental optimized mapping rule)") {
     testConformanceMatchingNull(useExperimentalMappingRule = true)
   }
 
-  test("Conformance should NOT generate errors when matching empty arrays (explode mapping rule)") {
+  test("Conformance should NOT generate errors when matching empty arrays") {
     testConformanceMatchingEmptyArrays(useExperimentalMappingRule = false)
   }
 
-  test("Conformance should NOT generate errors when matching empty arrays (non-explosion mapping rule)") {
+  test("Conformance should NOT generate errors when matching empty arrays (experimental optimized mapping rule)") {
     testConformanceMatchingEmptyArrays(useExperimentalMappingRule = true)
   }
 }

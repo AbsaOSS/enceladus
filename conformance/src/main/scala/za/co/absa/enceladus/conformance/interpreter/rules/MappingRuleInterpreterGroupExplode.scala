@@ -22,7 +22,7 @@ import org.apache.spark.sql.types._
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.RuleValidators
-import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreterNoExplode._
+import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreterGroupExplode._
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
@@ -35,9 +35,9 @@ import za.co.absa.enceladus.utils.validation._
 import scala.util.Try
 import scala.util.control.NonFatal
 
-case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule,
-                                           conformance: ConfDataset,
-                                           explodeContext: ExplosionContext)
+case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
+                                              conformance: ConfDataset,
+                                              explodeContext: ExplosionContext)
   extends RuleInterpreter {
   // scalastyle:off null
 
@@ -62,11 +62,11 @@ case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule,
       (df, explodeContext)
     }
 
-    val joined = explodedDf.as(MappingRuleInterpreterNoExplode.inputDfAlias)
-      .join(mapTable.as(MappingRuleInterpreterNoExplode.mappingTableAlias),
-        MappingRuleInterpreterNoExplode.getJoinCondition(rule), "left_outer")
-      .select(col(s"${MappingRuleInterpreterNoExplode.inputDfAlias}.*"),
-        col(s"${MappingRuleInterpreterNoExplode.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn)
+    val joined = explodedDf.as(MappingRuleInterpreterGroupExplode.inputDfAlias)
+      .join(mapTable.as(MappingRuleInterpreterGroupExplode.mappingTableAlias),
+        MappingRuleInterpreterGroupExplode.getJoinCondition(rule), "left_outer")
+      .select(col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.*"),
+        col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn)
 
     val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
     val mappingErrUdfCall = callUDF("confMappingErr", lit(rule.outputColumn),
@@ -133,7 +133,7 @@ case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule,
     }
 
     // validate join fields existence
-    MappingRuleInterpreterNoExplode.validateMappingFieldsExist(s"the dataset, join condition = $joinContidionStr",
+    MappingRuleInterpreterGroupExplode.validateMappingFieldsExist(s"the dataset, join condition = $joinContidionStr",
       df.schema, mapTable.schema, rule)
   }
 
@@ -144,7 +144,7 @@ case class MappingRuleInterpreterNoExplode(rule: MappingConformanceRule,
   }
 }
 
-object MappingRuleInterpreterNoExplode {
+object MappingRuleInterpreterGroupExplode {
 
   private[rules] val inputDfAlias = "input"
   private[rules] val mappingTableAlias = "mapTable"
