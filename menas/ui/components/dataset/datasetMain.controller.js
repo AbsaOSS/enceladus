@@ -171,7 +171,7 @@ sap.ui.define([
     onRemovePress: function (oEv) {
       let current = this._model.getProperty("/currentDataset");
 
-      sap.m.MessageBox.show("This action will remove all versions of the dataset definition. \nAre you sure?.", {
+      sap.m.MessageBox.show("This action will remove all versions of the dataset definition. \nAre you sure?", {
         icon: sap.m.MessageBox.Icon.WARNING,
         title: "Are you sure?",
         actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
