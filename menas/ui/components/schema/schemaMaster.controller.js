@@ -48,7 +48,9 @@ sap.ui.define([
       let oView = this.getView();
 
       let addSchemaDialog = this.byId("addSchemaDialog");
-      if (!this.byId("addSchemaDialog")) {
+      if (this.byId("addSchemaDialog")) {
+        addSchemaDialog.open();
+      } else {
         Fragment.load({
           id: oView.getId(),
           name: "components.schema.addSchema",
@@ -57,8 +59,6 @@ sap.ui.define([
           oView.addDependent(oDialog);
           oDialog.open();
         });
-      } else {
-        addSchemaDialog.open()
       }
     },
 
