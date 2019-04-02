@@ -43,7 +43,7 @@
                                 <Label text="HDFS Path"/>
                                 <Text text="{/currentMappingTable/hdfsPath}"/>
                                 <Label text="Schema"/>
-                                <Link text="{/currentMappingTable/schemaName} (v. {/currentMappingTable/schemaVersion})"
+                                <Link text="{/currentMappingTable/schemaName} (v{/currentMappingTable/schemaVersion})"
                                       press="toSchema" cust:name="{/currentMappingTable/schemaName}"
                                       cust:version="{/currentMappingTable/schemaVersion}"/>
                                 <Label text="Last Update"/>
@@ -97,7 +97,7 @@
                         <Panel headerText="Datasets" height="50%">
                             <List items="{/currentMappingTable/usedIn/datasets}"
                                   noDataText="Currently not used in any Datasets">
-                                <StandardListItem title="{name}" description="v.{version}" type="Active"
+                                <StandardListItem title="{name}" description="v{version}" type="Active"
                                                   press="usedInNavTo" cust:collection="datasets"
                                                   cust:name="{name}" cust:version="{version}"/>
                             </List>

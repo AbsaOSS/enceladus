@@ -42,7 +42,7 @@
                 <footer>
                     <Bar>
                         <contentMiddle>
-                            <Label text="Menas v. {/menasVersion}"/>
+                            <Label text="Menas v{/menasVersion}"/>
                         </contentMiddle>
                     </Bar>
                 </footer>
