@@ -36,27 +36,37 @@ package object conformanceRule {
     val order: Int
     val outputColumn: String
     val controlCheckpoint: Boolean
+
+    def withUpdatedOrder(newOrder: Int): ConformanceRule
   }
 
   case class ConcatenationConformanceRule(order: Int,
                                           outputColumn: String,
                                           controlCheckpoint: Boolean,
-                                          inputColumns: Seq[String]) extends ConformanceRule
+                                          inputColumns: Seq[String]) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
 
   case class CastingConformanceRule(order: Int,
                                     outputColumn: String,
                                     controlCheckpoint: Boolean,
                                     inputColumn: String,
-                                    outputDataType: String) extends ConformanceRule
+                                    outputDataType: String) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
 
   case class DropConformanceRule(order: Int,
                                  controlCheckpoint: Boolean,
-                                 outputColumn: String) extends ConformanceRule
+                                 outputColumn: String) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
 
   case class LiteralConformanceRule(order: Int,
                                     outputColumn: String,
                                     controlCheckpoint: Boolean,
-                                    value: String) extends ConformanceRule
+                                    value: String) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
 
 
   case class MappingConformanceRule(order: Int,
@@ -66,12 +76,16 @@ package object conformanceRule {
                                     attributeMappings: Map[String, String], // key = mapping table column, value = input df column
                                     targetAttribute: String,
                                     outputColumn: String,
-                                    isNullSafe: Boolean = false) extends ConformanceRule
+                                    isNullSafe: Boolean = false) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
 
   case class NegationConformanceRule(order: Int,
                                      outputColumn: String,
                                      controlCheckpoint: Boolean,
-                                     inputColumn: String) extends ConformanceRule
+                                     inputColumn: String) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
 
   /**
     * Used to create a conformed struct out of a single column
@@ -82,7 +96,9 @@ package object conformanceRule {
                                          controlCheckpoint: Boolean,
                                          outputColumn: String,
                                          inputColumn: String,
-                                         inputColumnAlias: String) extends ConformanceRule
+                                         inputColumnAlias: String) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
 
   /**
     * Rule for getting values out of spark session conf.
@@ -94,12 +110,30 @@ package object conformanceRule {
   case class SparkSessionConfConformanceRule(order: Int,
                                              outputColumn: String,
                                              controlCheckpoint: Boolean,
-                                             sparkConfKey: String) extends ConformanceRule
+                                             sparkConfKey: String) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
 
   case class UppercaseConformanceRule(order: Int,
                                       outputColumn: String,
                                       controlCheckpoint: Boolean,
-                                      inputColumn: String) extends ConformanceRule
+                                      inputColumn: String) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
+
+  /** This is a pseudo conformance rule for doing array explosions between groups of mapping rules. */
+  case class ArrayExplodePseudoRule(order: Int,
+                                    outputColumn: String,
+                                    controlCheckpoint: Boolean) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
+
+  /** This is a pseudo conformance rule for doing array collect() between groups of mapping rules. */
+  case class ArrayCollectPseudoRule(order: Int,
+                                    outputColumn: String,
+                                    controlCheckpoint: Boolean) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
 
   abstract class ExtensibleConformanceRule() extends ConformanceRule
 

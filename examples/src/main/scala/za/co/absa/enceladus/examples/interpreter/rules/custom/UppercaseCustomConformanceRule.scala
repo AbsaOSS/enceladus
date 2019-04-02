@@ -23,6 +23,7 @@ import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConforman
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import org.apache.spark.sql.functions._
+import za.co.absa.enceladus.model.conformanceRule
 
 case class UppercaseCustomConformanceRule(
   order: Int,
@@ -31,6 +32,8 @@ case class UppercaseCustomConformanceRule(
   inputColumn: String
 ) extends CustomConformanceRule  {
   override def getInterpreter(): RuleInterpreter = UppercaseCustomRuleInterpreter(this)
+
+  override def withUpdatedOrder(newOrder: Int): conformanceRule.ConformanceRule = copy(order = newOrder)
 }
 
 case class UppercaseCustomRuleInterpreter(rule: UppercaseCustomConformanceRule) extends RuleInterpreter {

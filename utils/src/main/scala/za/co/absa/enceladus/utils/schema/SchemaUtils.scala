@@ -159,10 +159,29 @@ object SchemaUtils {
     * @param fieldPaths A list of paths to analyze
     * @return Returns a common array path if there is one and None if any of the arrays are on diverging paths
     */
-  def getDeepestCommonArrayPath(schema: StructType, fieldPaths: Seq[String]): Option[String] = {
+def getDeepestCommonArrayPath(schema: StructType, fieldPaths: Seq[String]): Option[String] = {
     val arrayPaths = fieldPaths.flatMap(path => getAllArraysInPath(path, schema)).distinct
 
     if (arrayPaths.nonEmpty && isCommonSubPath(arrayPaths: _*)) {
+      Some(arrayPaths.maxBy(_.length))
+    } else {
+      None
+    }
+  }
+
+  /**
+    * For a field path determines the deepest array path.
+    *
+    * For instance, if given 'a.b.c.d' where b and c are arrays the deepest array is 'a.b.c'.
+    *
+    * @param schema    A Spark schema
+    * @param fieldPath A path to analyze
+    * @return Returns a common array path if there is one and None if any of the arrays are on diverging paths
+    */
+  def getDeepestArrayPath(schema: StructType, fieldPath: String): Option[String] = {
+    val arrayPaths = getAllArraysInPath(fieldPath, schema)
+
+    if (arrayPaths.nonEmpty) {
       Some(arrayPaths.maxBy(_.length))
     } else {
       None

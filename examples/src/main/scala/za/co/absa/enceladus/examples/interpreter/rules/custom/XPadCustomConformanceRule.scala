@@ -22,6 +22,7 @@ import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConforman
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import ColumnFunctionCustomConformanceRule.RuleFunc
+import za.co.absa.enceladus.model.conformanceRule
 
 trait ColumnFunctionCustomConformanceRule extends CustomConformanceRule {
   def inputColumn: String
@@ -63,6 +64,8 @@ case class RPadCustomConformanceRule (
     inputColumn: Column =>
       coalesce(greatest(rpad(inputColumn : Column, len, pad), inputColumn.cast(org.apache.spark.sql.types.StringType)), lit(fullString))
   }
+
+  override def withUpdatedOrder(newOrder: Int): conformanceRule.ConformanceRule = copy(order = newOrder)
 }
 
 
@@ -79,4 +82,6 @@ case class LPadCustomConformanceRule (
       val lengthColumn = coalesce(length(inputColumn), lit(0))
       when(lengthColumn === 0, lit(fullString)).otherwise(when(lengthColumn >= len, inputColumn).otherwise(lpad(inputColumn, len, pad)))
   }
+
+  override def withUpdatedOrder(newOrder: Int): conformanceRule.ConformanceRule = copy(order = newOrder)
 }
