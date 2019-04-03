@@ -32,7 +32,6 @@ sap.ui.define([
     },
 
     list: function () {
-      console.log("list");
       SchemaService.getSchemaList(this.byId("masterPage"));
     },
 

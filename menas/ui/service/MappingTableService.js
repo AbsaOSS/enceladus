@@ -20,7 +20,7 @@ var MappingTableService = new function () {
   let eventBus = sap.ui.getCore().getEventBus();
 
   this.updateMasterPage = function () {
-    eventBus.publish("mappingTable", "list");
+    eventBus.publish("mappingTables", "list");
   };
 
   this.getMappingTableList = function (oMasterPage) {
@@ -117,11 +117,7 @@ var MappingTableService = new function () {
       schemaName: sSchemaName,
       schemaVersion: iSchemaVersion
     }, (oData) => {
-      this.updateMasterPage();
-
-      SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentMappingTable/schema")
-      model.setProperty("/currentMappingTable", oData);
-      MappingTableService.getAuditTrail(oData.name);
+      eventBus.publish("mappingTables", "created", oData);
       sap.m.MessageToast.show("Mapping Table created.");
     }, () => {
       sap.m.MessageBox.error("Failed to create the mapping table, try reloading the application or try again later.")
