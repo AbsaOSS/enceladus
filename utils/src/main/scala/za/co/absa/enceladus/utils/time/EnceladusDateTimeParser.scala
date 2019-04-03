@@ -13,26 +13,27 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.types
+package za.co.absa.enceladus.utils.time
 
+import java.sql.{Date, Timestamp}
 import java.text.SimpleDateFormat
-import java.sql.Date
-import java.sql.Timestamp
 
 /**
   * Enables to parse string to date and timestamp based on the provided format
-  * Unlike SimpleDateFormat it also supports an epoch ("epoch", "milliepoch"...) formatting strings
+  * Unlike SimpleDateFormat it also supports keywords to format epoch related values
   * @param pattern  the formatting string, in case it's an epoch format the values wil need to be convertible to Long
   */
-case class EnceladusDateParser(pattern: Format) {
-  private val simpleDateFormat: Option[SimpleDateFormat] = if (pattern.isEpoch) {
+case class EnceladusDateTimeParser(pattern: DateTimePattern) {
+  private val formatter: Option[SimpleDateFormat] = if (pattern.isEpoch) {
     None
   } else {
     Some(new SimpleDateFormat(pattern))
   }
 
   private def convertValue(value: String): Long = {
-    simpleDateFormat.map(_.parse(value).getTime).getOrElse(value.toLong * (1000 / pattern.epochFactor))
+    formatter.map(_.parse(value).getTime).getOrElse(
+      value.toLong * pattern.epochMilliFactor
+    )
   }
 
   def parseDate(dateValue: String): Date = {
@@ -42,8 +43,14 @@ case class EnceladusDateParser(pattern: Format) {
   def parseTimestamp(timestampValue: String): Timestamp = {
     new Timestamp(convertValue(timestampValue))
   }
+
+  def format(time: java.util.Date): String = {
+    formatter.map(_.format(time)).getOrElse(
+      (time.getTime / pattern.epochMilliFactor).toString
+    )
+  }
 }
 
-object EnceladusDateParser {
-  def apply(pattern: String): EnceladusDateParser = new EnceladusDateParser(Format(pattern))
+object EnceladusDateTimeParser {
+  def apply(pattern: String): EnceladusDateTimeParser = new EnceladusDateTimeParser(DateTimePattern(pattern))
 }

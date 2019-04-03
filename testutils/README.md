@@ -4,14 +4,11 @@ ___
 
 - [Dataset Comparison](#dataset-comparison)
 - [Rest Runner](#rest-runner)
+- [E2E Spark Runner](#e2e-spark-runner)
 - More to come...
 
 <!-- tocstop -->
-
-## <a name="dataset-comparison" />Dataset Comparison
-A Spark job for comparing two data sets. 
-
-### Build
+## Build
 ```bash
 mvn clean package
 ```
@@ -27,8 +24,10 @@ Known to work with:
 - Scala 2.12.7
 - Hadoop 2.7.5 
 
+## <a name="dataset-comparison" />Dataset Comparison
+A Spark job for comparing two data sets. 
+
 ### Running
-```
 Basic running example
 ```bash
 spark-submit \
@@ -47,7 +46,7 @@ spark-submit \
 ```
 
 #### Where
-```
+```bash
 Datasets Comparison 
 Usage: spark-submit [spark options] TestUtils.jar [options]
 
@@ -67,10 +66,28 @@ Usage: spark-submit [spark options] TestUtils.jar [options]
                                output. Keys should be specified one by one, with , (comma) 
                                between them.
   --help                   prints this usage text
-
 ```
 
 Other configurations are Spark dependant and are out of scope of this README.
 
 ##  <a name="rest-runner" />Rest Runner
 In progress. Framework for running REST API test.
+
+##  <a name="e2e-spark-runner" />E2E Spark Runner
+Runs both Standardization and Confromance on the data provided. After each, a comparison job is run 
+to check the results against expected reference data:
+- `/ref/tmp/conformance-output/standartized-<DatasetName>-<datasetVersion>-<reportDate>/*.parquet` 
+- `/ref/publish/<DatasetName>/enceladus_info_date=<reportDate>/enceladus_info_version=<reportVersion>` 
+
+Basic running example:
+```bash
+java -cp enceladus-testUtils-0.99.0-SNAPSHOT.jar za.co.absa.enceladus.testutils.E2ESparkRunner \
+--menas-credentials-file /path/to/credentials/file \
+--dataset-name <datasetName> \
+--dataset-version <datasetVersion> \
+--report-date <reportData> \
+--report-version <reportVersion> \
+--raw-format <rawFormat> 
+--keys <key1,key2,...> 
+--spark-conf-file /path/to/spark/configuration/file
+```

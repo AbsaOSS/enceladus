@@ -21,6 +21,7 @@ import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.LPadCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object CustomRuleSample2 {
 
@@ -34,11 +35,12 @@ object CustomRuleSample2 {
     .getOrCreate()
 
   def main(args: Array[String]) {
-    import spark.implicits._
-
+    // scalastyle:off magic.number
+    TimeZoneNormalizer.normalizeAll(Seq(spark))
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
-    implicit val enableCF: Boolean = false
+    val experimentalMR = true
+    val enableCF: Boolean = false
 
     val inputData: DataFrame = spark.createDataFrame(
       Seq(
@@ -57,11 +59,17 @@ object CustomRuleSample2 {
       schemaVersion = 9999,
 
       conformance = List(
-        LPadCustomConformanceRule(order = 0, outputColumn = "donePad", controlCheckpoint = false, inputColumn = "addPad", len = 20, pad = "~")
+        LPadCustomConformanceRule(order = 0,
+                                  outputColumn = "donePad",
+                                  controlCheckpoint = false,
+                                  inputColumn = "addPad",
+                                  len = 20,
+                                  pad = "~")
       )
     )
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
     outputData.show(false)
+    // scalastyle:on magic.number
   }
 }

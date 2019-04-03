@@ -32,6 +32,8 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   implicit var dao: EnceladusDAO = null
   implicit var progArgs: CmdConfig = null
 
+  private val enableCF = false
+
   override def beforeAll(): Unit = {
 
     val mapDF = spark.createDataFrame(MappingsSamples.mapping)
@@ -50,8 +52,8 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     val df = spark.createDataFrame(ArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
-    val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef,
-      df, experimentalMappingRule = useExperimentalMappingRule)(spark, dao, progArgs, enableCF = false).cache()
+
+    val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef, df, useExperimentalMappingRule, enableCF).cache()
     val expected = ArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[ConformedOuter].collect().sortBy(_.order).toList
     assertResult(expected)(conformed)
@@ -64,8 +66,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     val df = spark.createDataFrame(NullArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
-    val conformedDf = DynamicInterpreter.interpret(NullArraySamples.mappingOnlyConformanceDef,
-      df, experimentalMappingRule = useExperimentalMappingRule)(spark, dao, progArgs, false).cache()
+    val conformedDf = DynamicInterpreter.interpret(NullArraySamples.mappingOnlyConformanceDef, df, useExperimentalMappingRule, enableCF).cache()
     val expected = NullArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
 
@@ -82,8 +83,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     val df = spark.createDataFrame(EmtpyArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
-    val conformedDf = DynamicInterpreter.interpret(EmtpyArraySamples.mappingOnlyConformanceDef,
-      df, experimentalMappingRule = useExperimentalMappingRule)(spark, dao, progArgs, false).cache()
+    val conformedDf = DynamicInterpreter.interpret(EmtpyArraySamples.mappingOnlyConformanceDef, df, useExperimentalMappingRule, enableCF).cache()
     val expected = EmtpyArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
 

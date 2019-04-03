@@ -18,3 +18,6 @@ standardized.hdfs.path="/tmp/conformance-output/standardized-{0}-{1}-{2}-{3}"
 # Pattern to look for mapping table for the specified date
 # {0} - Year, {1} - Month, {2} - Day of month
 conformance.mappingtable.pattern="reportDate={0}-{1}-{2}"
+
+#system-wide time zone
+timezone="UTC"

@@ -13,10 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.types
+package za.co.absa.enceladus.utils.time
 
 import java.security.InvalidParameterException
+
 import org.apache.spark.sql.types.{DataType, StructField}
+import za.co.absa.enceladus.utils.types.Defaults
+
 import scala.util.Try
 
 /**
@@ -24,7 +27,7 @@ import scala.util.Try
   * @param pattern  the actual pattern to format the type conversion; if none global default pattern for the type is used
   * @param forType  the type the format is intended for
   */
-class Format(val pattern: Option[String], val forType: Option[DataType] = None){
+class DateTimePattern(val pattern: Option[String], val forType: Option[DataType] = None){
   private val actualFormat: String = pattern.getOrElse(Defaults.getGlobalFormat(forType.get))
 
   def isDefault: Boolean = pattern.isEmpty
@@ -32,40 +35,54 @@ class Format(val pattern: Option[String], val forType: Option[DataType] = None){
   def getOrElse(default: String): String =  pattern.getOrElse(default)
 
   def isEpoch: Boolean = {
-    Format.isEpoch(get)
+    DateTimePattern.isEpoch(get)
   }
 
   def epochFactor: Long = {
-    Format.epochFactor(get)
+    DateTimePattern.epochFactor(get)
+  }
+
+  def epochMilliFactor: Long = {
+    DateTimePattern.epochMilliFactor(get)
   }
 }
 
-object Format {
-  def apply(structField: StructField ): Format = {
+object DateTimePattern {
+  implicit def formatToString(format: DateTimePattern): String = format.get
+
+  private val epochUnitFactor = 1
+  private val epochThousandFactor = 1000
+
+  def apply(structField: StructField ): DateTimePattern = {
     val formatString: Option[String] = Try(structField.metadata.getString("pattern")).toOption
     val dataType: DataType = structField.dataType
-    new Format(formatString, Some(dataType))
+    new DateTimePattern(formatString, Some(dataType))
   }
 
-  def apply(pattern: String, forType: Option[DataType] = None): Format = {
-    new Format(Some(pattern), forType)
+  def apply(pattern: String, forType: Option[DataType] = None): DateTimePattern = {
+    new DateTimePattern(Some(pattern), forType)
   }
 
   def isEpoch(format: String): Boolean = {
     format.toLowerCase match {
-      case "epoch" | "milliepoch" => true
+      case "epoch" | "epochmilli" => true
       case _ => false
     }
   }
 
   def epochFactor(format: String): Long = {
     format.toLowerCase match {
-      case "epoch"      => 1
-      case "milliepoch" => 1000
-      case _            => throw new InvalidParameterException(s"'$format' is not an epoch format")
+      case "epoch"      => epochUnitFactor
+      case "epochmilli" => epochThousandFactor
+      case _            => throw new InvalidParameterException(s"'$format' is not an epoch pattern")
     }
   }
 
-  implicit def format2String(format: Format): String = format.get
-
+  def epochMilliFactor(format: String): Long = {
+    format.toLowerCase match {
+      case "epoch"      => epochThousandFactor
+      case "epochmilli" => epochUnitFactor
+      case _            => throw new InvalidParameterException(s"'$format' is not an epoch pattern")
+    }
+  }
 }

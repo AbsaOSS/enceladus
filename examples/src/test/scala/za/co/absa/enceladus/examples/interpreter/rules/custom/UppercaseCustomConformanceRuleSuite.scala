@@ -38,7 +38,8 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
 
   implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
-  implicit val enableCF: Boolean = false
+  val experimentalMR = true
+  val enableCF: Boolean = false
 
   test("Golden flow") {
     val input: Seq[TestInputRow] = Seq(
@@ -61,7 +62,7 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
     val output: Seq[TestOutputRow] = outputData.as[TestOutputRow].collect().toSeq
     val expected: Seq[TestOutputRow] = (input zip Seq("HELLO WORLD", "ONE RING TO RULE THEM ALL", "ALREADY CAPS")).map(x => TestOutputRow(x._1, x._2))
 
@@ -89,7 +90,7 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
     val output: Seq[TestOutputRow] = outputData.as[TestOutputRow].collect().toSeq
     val expected: Seq[TestOutputRow] = (input zip Seq("1", "4", "9")).map(x => TestOutputRow(x._1, x._2))
 
@@ -117,7 +118,7 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
     val output: List[TestOutputRow] = outputData.as[TestOutputRow].collect().toList
     val expected: List[TestOutputRow] = (input zip Seq("WHAT A BEAUTIFUL PLACE", "ONE RING TO FIND THEM", null)).map(x => TestOutputRow(x._1, x._2)).toList
 

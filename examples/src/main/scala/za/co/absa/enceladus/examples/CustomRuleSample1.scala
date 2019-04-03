@@ -21,6 +21,7 @@ import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.UppercaseCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object CustomRuleSample1 {
 
@@ -34,11 +35,12 @@ object CustomRuleSample1 {
     .getOrCreate()
 
   def main(args: Array[String]) {
-    import spark.implicits._
-
+    // scalastyle:off magic.number
+    TimeZoneNormalizer.normalizeAll(Seq(spark))
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
-    implicit val enableCF: Boolean = false
+    val experimentalMR = true
+    val enableCF: Boolean = false
 
     val inputData = spark.createDataFrame(
       Seq(
@@ -54,14 +56,19 @@ object CustomRuleSample1 {
       hdfsPublishPath = "/publish/a/b/c",
 
       schemaName = "Not really used here",
+
       schemaVersion = 9999,
 
       conformance = List(
-        UppercaseCustomConformanceRule(order = 0, outputColumn = "doneUpper", controlCheckpoint = false, inputColumn = "makeUpper")
+        UppercaseCustomConformanceRule(order = 0,
+                                       outputColumn = "doneUpper",
+                                       controlCheckpoint = false,
+                                       inputColumn = "makeUpper")
       )
     )
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
     outputData.show(false)
+    //scalastyleon: magicnumber
   }
 }

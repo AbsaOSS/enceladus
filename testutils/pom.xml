@@ -27,38 +27,38 @@
         <version>0.99.0-SNAPSHOT</version>
     </parent>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.github.scopt</groupId>
-			<artifactId>scopt_${scala.compat.version}</artifactId>
-			<version>${scopt.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>za.co.absa</groupId>
-			<artifactId>enceladus-utils</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.lihaoyi</groupId>
-			<artifactId>requests_${scala.compat.version}</artifactId>
-			<version>${requests.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.lihaoyi</groupId>
-			<artifactId>ujson_${scala.compat.version}</artifactId>
-			<version>${ujson.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.gnieh</groupId>
-			<artifactId>diffson_${scala.compat.version}</artifactId>
-			<version>${diffson.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.spray</groupId>
-			<artifactId>spray-json_${scala.compat.version}</artifactId>
-			<version>${spray.json.version}</version>
-		</dependency>
-	</dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>com.github.scopt</groupId>
+            <artifactId>scopt_${scala.compat.version}</artifactId>
+            <version>${scopt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>enceladus-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.lihaoyi</groupId>
+            <artifactId>requests_${scala.compat.version}</artifactId>
+            <version>${requests.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.lihaoyi</groupId>
+            <artifactId>ujson_${scala.compat.version}</artifactId>
+            <version>${ujson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.gnieh</groupId>
+            <artifactId>diffson_${scala.compat.version}</artifactId>
+            <version>${diffson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.spray</groupId>
+            <artifactId>spray-json_${scala.compat.version}</artifactId>
+            <version>${spray.json.version}</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>

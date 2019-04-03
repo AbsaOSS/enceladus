@@ -24,6 +24,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.{Dataset, SparkSession}
 import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions}
 import za.co.absa.enceladus.testutils.models.{TestCase, TestCaseResult, TestRun}
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object RestRunnerJob {
   def main(args: Array[String]): Unit = {
@@ -39,6 +40,7 @@ object RestRunnerJob {
       .appName(s"Rest call test from - '${cmd.testDataPath}")
       .config("spark.sql.codegen.wholeStage", enableWholeStage)
       .getOrCreate()
+    TimeZoneNormalizer.normalizeAll(Seq(sparkSession))
 
     implicit val sc: SparkContext = sparkSession.sparkContext
 

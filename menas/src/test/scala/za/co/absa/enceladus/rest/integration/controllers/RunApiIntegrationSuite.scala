@@ -495,6 +495,30 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           val body = response.getBody
           assert(body == expected)
         }
+        "override any specified runId in favor of a generated one" which {
+          "is 1 on first run for the given Dataset Name and Version" in {
+            val run = RunFactory.getDummyRun(username = Option("fakeUsername"))
+
+            val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
+
+            assertCreated(response)
+
+            val expected = run.copy(username = Option(user))
+            val body = response.getBody
+            assert(body == expected)
+          }
+          "is the latest previous run + 1 on subsequent runs for the given Dataset Name and Version" in {
+            val run = RunFactory.getDummyRun(username = Option("fakeUsername"))
+
+            val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
+
+            assertCreated(response)
+
+            val expected = run.copy(username = Option(user))
+            val body = response.getBody
+            assert(body == expected)
+          }
+        }
       }
     }
 

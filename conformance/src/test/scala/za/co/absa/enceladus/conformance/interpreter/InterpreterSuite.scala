@@ -39,8 +39,8 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     spark.sessionState.conf.setConfString("co.za.absa.enceladus.confTest", "hello :)")
 
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
-    implicit val progArgs = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = useExperimentalMappingRule)
-    implicit val enableCF = true
+    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = useExperimentalMappingRule)
+    val enableCF = true
 
     import spark.implicits._
     val mappingTablePattern = "{0}/{1}/{2}"
@@ -54,7 +54,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     mockWhen(dao.getSchema("Employee", 0)) thenReturn dfs.schema
 
     val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs,
-      experimentalMappingRule = useExperimentalMappingRule).cache
+      useExperimentalMappingRule, enableCF).cache
     val data = conformed.as[ConformedEmployee].collect.sortBy(_.employee_id).toList
     val expected = EmployeeConformance.conformedEmployees.sortBy(_.employee_id).toList
 
@@ -88,8 +88,8 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     spark.enableControlMeasuresTracking("src/test/testData/trade/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
 
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
-    implicit val progArgs = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = useExperimentalMappingRule)
-    implicit val enableCF = true
+    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = useExperimentalMappingRule)
+    val enableCF = true
 
     import spark.implicits._
     val mappingTablePattern = "{0}/{1}/{2}"
@@ -101,7 +101,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     mockWhen(dao.getSchema("Trade", 0)) thenReturn dfs.schema
 
     val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs,
-      experimentalMappingRule = useExperimentalMappingRule).cache
+      useExperimentalMappingRule, enableCF).cache
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
 
     // Different results for explode and non-explode algorithms because of:

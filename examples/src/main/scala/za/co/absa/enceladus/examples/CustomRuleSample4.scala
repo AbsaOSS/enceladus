@@ -24,6 +24,7 @@ import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object CustomRuleSample4 {
   /**
@@ -116,54 +117,64 @@ object CustomRuleSample4 {
       .save(path)
   }
 
-  def main(args: Array[String]): Unit = {
-    val cmdConfigLocal: CmdConfigLocal = getCmdLineArguments(args)
-
-    implicit val spark: SparkSession = SparkSession.builder
+  private def buildSparkSession(): SparkSession = {
+    val result = SparkSession.builder
       .master("local[*]")
       .appName("CustomRuleSample4")
       .config("spark.sql.codegen.wholeStage", value = false)
       .getOrCreate()
+    TimeZoneNormalizer.normalizeAll(Seq(result))
+    result
+  }
+
+  def main(args: Array[String]): Unit = {
+    val cmd: CmdConfigLocal = getCmdLineArguments(args)
+
+    implicit val spark: SparkSession = buildSparkSession()
 
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
-    implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
-    implicit val enableCF: Boolean = false
-
+    implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with Menas)
+    val experimentalMR= true
+    val enableCF: Boolean = false
 
     val dfReader: DataFrameReader = {
       val dfReader0 = spark.read
-      val dfReader1 = if (cmdConfigLocal.rowTag.isDefined) dfReader0.option("rowTag", cmdConfigLocal.rowTag.get) else dfReader0
-      val dfReader2 = if (cmdConfigLocal.csvDelimiter.isDefined) dfReader1.option("delimiter", cmdConfigLocal.csvDelimiter.get) else dfReader1
-      val dfReader3 = if (cmdConfigLocal.csvHeader.isDefined) dfReader2.option("header", cmdConfigLocal.csvHeader.get) else dfReader2
+      val dfReader1 = if (cmd.rowTag.isDefined) dfReader0.option("rowTag", cmd.rowTag.get) else dfReader0
+      val dfReader2 = if (cmd.csvDelimiter.isDefined) dfReader1.option("delimiter", cmd.csvDelimiter.get) else dfReader1
+      val dfReader3 = if (cmd.csvHeader.isDefined) dfReader2.option("header", cmd.csvHeader.get) else dfReader2
       dfReader3
     }
-
-    val inputData: DataFrame = cmdConfigLocal.inputFormat.toLowerCase match {
-      case "csv" => dfReader.csv(cmdConfigLocal.inputFile)
-      case "xml" => dfReader.format("com.databricks.spark.xml").load(cmdConfigLocal.inputFile)
-      case "parquet" => dfReader.parquet(cmdConfigLocal.inputFile)
-      case "json" => dfReader.json(cmdConfigLocal.inputFile)
+    val inputData: DataFrame = cmd.inputFormat.toLowerCase match {
+      case "csv" => dfReader.csv(cmd.inputFile)
+      case "xml" => dfReader.format("com.databricks.spark.xml").load(cmd.inputFile)
+      case "parquet" => dfReader.parquet(cmd.inputFile)
+      case "json" => dfReader.json(cmd.inputFile)
       case _ => throw new Exception("Unsupported input format")
     }
-
+    // scalastyle:off magic.number
     val conformanceDef =  Dataset(
       name = "Custom rule sample 4",
       version = 0,
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
-
       schemaName = "Not really used here",
       schemaVersion = 9999,
-
       conformance = List(
-        UppercaseCustomConformanceRule(order = 0, outputColumn = "upper", controlCheckpoint = false, inputColumn = "text_column"),
-        LPadCustomConformanceRule(order = 1, outputColumn = "final", controlCheckpoint = false, inputColumn = "upper", len = 25, pad = ".")
+        UppercaseCustomConformanceRule(order = 0,
+                                       outputColumn = "upper",
+                                       controlCheckpoint = false,
+                                       inputColumn = "text_column"),
+        LPadCustomConformanceRule(order = 1,
+                                  outputColumn = "final",
+                                  controlCheckpoint = false,
+                                  inputColumn = "upper",
+                                  len = 25,
+                                  pad = ".")
       )
     )
-
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMappingRule = true)
-
+    // scalastyle:on magic.number
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
     outputData.show()
-    saveToCsv(outputData, cmdConfigLocal.outPath)
+    saveToCsv(outputData, cmd.outPath)
   }
 }

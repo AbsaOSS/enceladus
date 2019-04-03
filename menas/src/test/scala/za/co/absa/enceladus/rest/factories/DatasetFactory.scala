@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter
 
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
+import za.co.absa.enceladus.model.menas.MenasReference
 
 object DatasetFactory {
 
@@ -40,11 +41,12 @@ object DatasetFactory {
                       disabled: Boolean = false,
                       dateDisabled: Option[ZonedDateTime] = None,
                       userDisabled: Option[String] = None,
-                      conformance: List[ConformanceRule] = List()): Dataset = {
+                      conformance: List[ConformanceRule] = List(),
+                      parent: Option[MenasReference] = None): Dataset = {
 
     Dataset(name, version, description, hdfsPath, hdfsPublishPath, schemaName,
       schemaVersion, dateCreated, userCreated, lastUpdated, userUpdated,
-      disabled, dateDisabled, userDisabled, conformance)
+      disabled, dateDisabled, userDisabled, conformance, parent)
   }
 
   def getDummyConcatenationRule(order: Int = 1,
@@ -116,6 +118,12 @@ object DatasetFactory {
                             controlCheckpoint: Boolean = true,
                             inputColumn: String = "dummyInputCol"): UppercaseConformanceRule = {
     UppercaseConformanceRule(order, outputColumn, controlCheckpoint, inputColumn)
+  }
+
+  def getDummyDatasetParent(collection: Option[String] = Some("dataset"),
+                            name: String = "dataset",
+                            version: Int = 1): MenasReference = {
+    MenasReference(collection, name, version)
   }
 
 }

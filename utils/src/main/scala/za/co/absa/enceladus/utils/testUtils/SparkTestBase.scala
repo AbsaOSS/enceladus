@@ -23,9 +23,11 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path, FileSystem}
 import scala.collection.JavaConversions._
 import java.io.File
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 trait SparkTestBase { self =>
   System.setProperty("user.timezone", "UTC");
+  TimeZoneNormalizer.normalizeAll(Seq(spark))
 
   val config = ConfigFactory.load()
   val sparkMaster = config.getString("enceladus.utils.testUtils.sparkTestBaseMaster")

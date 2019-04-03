@@ -13,3 +13,6 @@
 # limitations under the License.
 
 menas.rest.uri="http://localhost:8080/menas/api"
+
+#system-wide time zone
+timezone="UTC"

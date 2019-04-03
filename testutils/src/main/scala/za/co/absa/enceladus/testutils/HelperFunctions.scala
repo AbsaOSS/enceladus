@@ -19,6 +19,7 @@ import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.functions.{expr, max}
 import org.apache.spark.sql.types.{ArrayType, StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame}
+import za.co.absa.enceladus.testutils.models.ProcessMeasurement
 
 import scala.collection.mutable
 
@@ -126,5 +127,18 @@ object HelperFunctions {
   def flattenDataFrame(df: DataFrame): DataFrame = {
     val flatteningFormula: List[Column] = flattenSchema(df)
     df.select(flatteningFormula: _*)
+  }
+
+  /**
+    * Calculates the time it took for passed block of code to execute and finish.
+    * @param processToRun Block of code, to be executed
+    * @tparam A A type parameter specifying output from processToRun
+    * @return Returns a millisecond difference between start and end time
+    */
+  def calculateTime[A](processToRun: => A): ProcessMeasurement[A] = {
+    val startTime = System.nanoTime()
+    val returnValue = processToRun
+    val endTime = System.nanoTime()
+    ProcessMeasurement(endTime - startTime, returnValue)
   }
 }

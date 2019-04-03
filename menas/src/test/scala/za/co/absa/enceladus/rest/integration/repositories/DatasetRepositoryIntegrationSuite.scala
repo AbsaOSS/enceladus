@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
+import za.co.absa.enceladus.rest.exceptions.EntityAlreadyExistsException
 import za.co.absa.enceladus.rest.factories.DatasetFactory
 import za.co.absa.enceladus.rest.integration.fixtures.DatasetFixtureService
 import za.co.absa.enceladus.rest.repositories.DatasetMongoRepository
@@ -369,17 +370,14 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
       }
     }
 
-    "allow duplicate entries (this should be prohibited at the service layer)" in {
+    "not allow duplicate entries" in {
       val storedDataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1)
       datasetFixture.add(storedDataset)
       val preUpdateDataset = DatasetFactory.getDummyDataset(name = "dataset", version = 0)
 
-      await(datasetMongoRepository.update("user", preUpdateDataset))
-
-      val actual = await(datasetMongoRepository.getVersion("dataset", 1))
-      assert(await(datasetMongoRepository.count()) == 2)
-      assert(actual.isDefined)
-      assert(actual.contains(storedDataset))
+      assertThrows[EntityAlreadyExistsException] {
+        await(datasetMongoRepository.update("user", preUpdateDataset))
+      }
     }
   }
 
@@ -387,7 +385,8 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
   private def testUpdate(conformanceRules: List[ConformanceRule]): Unit = {
     val storedDataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1)
     datasetFixture.add(storedDataset)
-    val preUpdateDataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1, conformance = conformanceRules)
+    val preUpdateDataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1,
+      conformance = conformanceRules, parent = Option(DatasetFactory.getDummyDatasetParent()))
 
     await(datasetMongoRepository.update("user", preUpdateDataset))
 

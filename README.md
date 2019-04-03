@@ -78,7 +78,7 @@ password=changeme
 <standardization_<build_version>.jar> \
 --menas-credentials-file <path_to_menas_credentials> \
 --dataset-name <dataset_name> \
---dataset-version <dataset_ersion> \
+--dataset-version <dataset_version> \
 --report-date <date> \
 --report-version <data_run-version> \
 --raw-format <data_format> \
@@ -101,7 +101,7 @@ password=changeme
 <conformance_<build_version>.jar> \
 --menas-credentials-file <path_to_menas_credentials> \
 --dataset-name <dataset_name> \
---dataset-version <dataset_ersion> \
+--dataset-version <dataset_version> \
 --report-date <date> \
 --report-version <data_run-version>
 ```

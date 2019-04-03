@@ -84,6 +84,7 @@
         <webjars.locator.version>0.35</webjars.locator.version>
         <bson.codec.jsr310.version>3.1.3</bson.codec.jsr310.version>
         <openui5.version>1.60.2</openui5.version>
+        <momentjs.version>2.22.2</momentjs.version>
         <hadoop.version>2.7.7</hadoop.version>
         <parquet.version>1.10.0</parquet.version>
         <ujson.version>0.7.1</ujson.version>

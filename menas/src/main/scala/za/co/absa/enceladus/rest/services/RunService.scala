@@ -85,12 +85,9 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   }
 
   def create(newRun: Run, username: String): Future[Run] = {
-    val uniqueId = newRun.uniqueId match {
-      case Some(id) => id
-      case None     => UUID.randomUUID().toString
-    }
-    val run = newRun.copy(username = Option(username), uniqueId = Option(uniqueId))
     for {
+      latestOpt  <- runMongoRepository.getLatestRun(newRun.dataset, newRun.datasetVersion)
+      run        <- getRunIdentifiersIfAbsent(newRun, username, latestOpt)
       validation <- validate(run)
       createdRun <-
         if (validation.isValid()) {
@@ -148,4 +145,28 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
       case false => validation
     }
   }
+
+
+  private def getNewRunId(latestOpt: Option[Run]): Int = {
+    latestOpt match {
+      case Some(latest) => latest.runId + 1
+      case None         => 1
+    }
+  }
+
+  private def getUniqueIdIfAbsent(newRun: Run): String = {
+    newRun.uniqueId match {
+      case Some(id) => id
+      case None     => UUID.randomUUID().toString
+    }
+  }
+
+  private def getRunIdentifiersIfAbsent(newRun: Run, username: String, latestOpt: Option[Run]): Future[Run] = {
+    Future.successful {
+      val uniqueId = getUniqueIdIfAbsent(newRun)
+      val runId = getNewRunId(latestOpt)
+      newRun.copy(username = Option(username), uniqueId = Option(uniqueId), runId = runId)
+    }
+  }
+
 }

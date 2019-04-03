@@ -17,6 +17,6 @@ package za.co.absa.enceladus.fixedWidth
 
 import org.scalatest.FunSuite
 
-class FormatSuite extends FunSuite {
-
+class FixedWidthRelationSuite extends FunSuite {
+  //TODO #276
 }

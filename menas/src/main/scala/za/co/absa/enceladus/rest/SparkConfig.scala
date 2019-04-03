@@ -18,6 +18,7 @@ package za.co.absa.enceladus.rest
 import org.springframework.context.annotation.{ Configuration, Bean }
 import org.apache.spark.sql.SparkSession
 import org.springframework.beans.factory.annotation.Value
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 @Configuration
 class SparkConfig {
@@ -27,10 +28,14 @@ class SparkConfig {
 
   @Bean
   def spark: SparkSession = {
-    SparkSession.builder().master(master)
+    val sparkSession = SparkSession.builder()
+      .master(master)
       .config("spark.ui.enabled", "false")
       .config("spark.driver.bindAddress","127.0.0.1")
-      .appName("Menas Spark controller").getOrCreate()
+      .appName("Menas Spark controller")
+      .getOrCreate()
+    TimeZoneNormalizer.normalizeAll(Seq(sparkSession))
+    sparkSession
   }
 
 }
