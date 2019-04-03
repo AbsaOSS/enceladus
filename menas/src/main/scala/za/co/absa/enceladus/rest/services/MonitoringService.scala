@@ -18,7 +18,7 @@ package za.co.absa.enceladus.rest.services
 import java.util.UUID
 
 import org.joda.time.format.DateTimeFormat
-import org.mongodb.scala.Document
+import org.mongodb.scala.{Document, bson}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
@@ -40,8 +40,8 @@ class MonitoringService @Autowired()(monitoringMongoRepository: MonitoringMongoR
   @Value("${za.co.absa.enceladus.spline.urlTemplate}")
   val splineUrlTemplate: String = null
 
-  def getMonitoringDataPoints(datasetName: String): Future[Seq[String]] = {
-    monitoringMongoRepository.getMonitoringDataPoints(datasetName)
+  def getMonitoringDataPoints(datasetName: String): Future[String] = {
+    monitoringMongoRepository.getMonitoringDataPoints(datasetName).map(_.mkString("[", ",", "]"))
   }
 
 
