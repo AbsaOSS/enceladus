@@ -41,5 +41,15 @@ pipeline {
                 }
             }
          }
+         stage ('Deploy to Test Server') {
+            when {
+                expression { 
+                    env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'master' 
+                }
+            }
+            steps {
+                callSSHPublish()
+            }
+         }
     }
 }
