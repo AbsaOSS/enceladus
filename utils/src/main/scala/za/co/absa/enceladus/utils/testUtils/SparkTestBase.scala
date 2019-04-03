@@ -40,7 +40,7 @@ trait SparkTestBase { self =>
     val confDir = config.getString("enceladus.utils.testUtils.hadoop.conf.dir")
     val distJarsDir = config.getString("enceladus.utils.testUtils.spark.distJars.dir")
     val sparkHomeDir = config.getString("enceladus.utils.testUtils.spark.home.dir")
-    
+
     //load all hadoop configs
     val hadoopConf = new Configuration()
     hadoopConf.addResource(new Path(s"$confDir/hdfs-site.xml"))
@@ -51,21 +51,21 @@ trait SparkTestBase { self =>
 
     //load spark configs from SPARK_HOME
     val sparkConfigIn = ConfigFactory.empty().atPath(s"$sparkHomeDir/conf/spark-defaults.conf")
-    val sparkConfigs = sparkConfigIn.entrySet().filter(_.getKey != "spark.yarn.jars").map(entry => (entry.getKey, entry.getValue.unwrapped().toString())).toMap   
-    
+    val sparkConfigs = sparkConfigIn.entrySet().filter(_.getKey != "spark.yarn.jars").map(entry => (entry.getKey, entry.getValue.unwrapped().toString())).toMap
+
     val allConfigs = hadoopConfigs ++ sparkConfigs
-    
+
     //get a list of all dist jars
     val distJars = FileSystem.get(hadoopConf).listStatus(new Path(distJarsDir)).map(_.getPath)
 
     //get a list of jars used by the given test - spark jars are taken from dist jars, so include absa deps only
     val cl = this.getClass.getClassLoader
-    val localJars = cl.asInstanceOf[java.net.URLClassLoader].getURLs.filter(c => c.toString().contains("absa")).map(_.toString()) 
-    
+    val localJars = cl.asInstanceOf[java.net.URLClassLoader].getURLs.filter(c => c.toString().contains("absa")).map(_.toString())
+
     //figure out the current jar - we also need to send the class of the test to executors
     val targetDir = new File(s"${System.getProperty("user.dir")}/target")
     val currentJars = targetDir.listFiles().filter(f => f.getName.split("\\.").last.toLowerCase() == "jar" && f.getName.contains("original"))
-        
+
     val deps = (distJars ++ localJars ++ currentJars).mkString(",")
 
     sparkBuilder.config(new SparkConf().setAll(allConfigs))
@@ -79,9 +79,8 @@ trait SparkTestBase { self =>
       .config("spark.driver.host", "127.0.0.1")
       .getOrCreate()
   }
-  
-  TimeZoneNormalizer.normalizeAll(Seq(spark))
 
+  TimeZoneNormalizer.normalizeAll(Seq(spark))
 
   // Do not display INFO entries for tests
   Logger.getLogger("org").setLevel(Level.WARN)
