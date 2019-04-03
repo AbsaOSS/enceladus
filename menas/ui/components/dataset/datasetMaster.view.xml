@@ -17,10 +17,10 @@
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Page id="masterPage" title="Datasets" showNavButton="true" navButtonPress="onPressMasterBack">
         <content>
-            <List items="{/datasets}" mode="SingleSelectMaster" selectionChange="datasetSelected"
+            <List items="{datasets>/}" mode="SingleSelectMaster" selectionChange="datasetSelected"
                   noDataText="No Datasets">
-                <StandardListItem title="{_id}" description="latest version: {latestVersion}"
-                                  cust:id="{_id}" type="Active">
+                <StandardListItem title="{datasets>_id}" description="latest version: {datasets>latestVersion}"
+                                  cust:id="{datasets>_id}" type="Active">
                 </StandardListItem>
             </List>
         </content>

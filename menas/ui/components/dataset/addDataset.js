@@ -30,6 +30,7 @@ var AddDatasetFragment = function (oController, fnLoad) {
   };
 
   let oDialog = loadDialogFragment();
+  SchemaService.getSchemaList(oDialog, false, true);
 
   let oFragment = {
     submit: function () {
@@ -110,7 +111,7 @@ var AddDatasetFragment = function (oController, fnLoad) {
 
   this.getAdd = function() {
     oFragment.onPress = () => {
-      let oFirstSchema = oController._model.getProperty("/schemas")[0];
+      let oFirstSchema = oDialog.getModel("schemas").oData[0];
 
       oDialog.setModel(new sap.ui.model.json.JSONModel({
         name: "",

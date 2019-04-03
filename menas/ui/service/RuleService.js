@@ -17,7 +17,7 @@ jQuery.sap.require("sap.m.MessageBox");
 
 var RuleService = new function () {
 
-  var model = sap.ui.getCore().getModel();
+  let model = sap.ui.getCore().getModel();
 
   this.getRuleList = function (bLoadFirst) {
     Functions.ajax("api/rule/list", "GET", {}, function (oData) {
@@ -55,7 +55,9 @@ var RuleService = new function () {
     let conformance = oCurrentDataset["conformance"]
       .filter((_, index) => index !== iRuleIndex)
       .sort((first, second) => first.order > second.order)
-      .map((currElement, index) => {return {...currElement, order: index}});
+      .map((currElement, index) => {
+        return {...currElement, order: index}
+      });
 
     return {...oCurrentDataset, conformance: conformance};
   };
@@ -72,13 +74,13 @@ var RuleService = new function () {
   this.createRule = function (oCurrentDataset, oRule) {
     Functions.ajax("api/dataset/" + encodeURI(oCurrentDataset.name) + "/rule/create", "POST", oRule,
       function (oData) {
-      DatasetService.getDatasetList();
-      SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
-      DatasetService.setCurrentDataset(oData);
-      sap.m.MessageToast.show("Rule created.");
-    }, function () {
-      sap.m.MessageBox.error("Failed to create the rule, try reloading the application or try again later.")
-    })
+        SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
+        DatasetService.setCurrentDataset(oData);
+        DatasetService.updateMasterPage();
+        sap.m.MessageToast.show("Rule created.");
+      }, function () {
+        sap.m.MessageBox.error("Failed to create the rule, try reloading the application or try again later.")
+      })
   };
 
   this.editRule = function (sName, iVersion, sDescription, sHDFSPath, sHDFSPublishPath, sSchemaName, iSchemaVersion) {
@@ -94,6 +96,7 @@ var RuleService = new function () {
       RuleService.getRuleList();
       model.setProperty("/currentRule", oData);
       SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
+      DatasetService.updateMasterPage();
       sap.m.MessageToast.show("Rule updated.");
     }, function () {
       sap.m.MessageBox.error("Failed to update the rule, try reloading the application or try again later.")

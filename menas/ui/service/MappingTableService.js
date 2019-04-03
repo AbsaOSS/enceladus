@@ -16,28 +16,41 @@
 jQuery.sap.require("sap.m.MessageBox");
 var MappingTableService = new function () {
 
-  var model = sap.ui.getCore().getModel();
+  let model = sap.ui.getCore().getModel();
+  let eventBus = sap.ui.getCore().getEventBus();
 
-  this.getMappingTableList = function (bLoadFirst, bGetSchema) {
+  this.updateMasterPage = function () {
+    eventBus.publish("mappingTable", "list");
+  };
+
+  this.getMappingTableList = function (oMasterPage) {
     Functions.ajax("api/mappingTable/list", "GET", {}, function (oData) {
-      model.setProperty("/mappingTables", oData);
-      if(oData.length == 0) {
-        //ensure the detail is empty too
-        model.setProperty("/currentMappingTable", {});
-      }
-      else if (bLoadFirst)
-        MappingTableService.getMappingTableVersion(oData[0]._id, oData[0].latestVersion, bGetSchema)
+      oMasterPage.setModel(new sap.ui.model.json.JSONModel(oData), "mappingTables");
     }, function () {
       sap.m.MessageBox.error("Failed to get the list of mapping tables. Please wait a moment and try reloading the application")
     })
   };
 
-  this.getAllMappingTableVersions = function(sName, oControl) {
-    if(oControl) oControl.setBusy(true);
-    Functions.ajax("api/mappingTable/allVersions/" + encodeURI(sName), "GET", {}, function(oData) {
+  this.getFirstMappingTable = function () {
+    Functions.ajax("api/mappingTable/list", "GET", {}, function (oData) {
+      model.setProperty("/mappingTables", oData);
+      if (oData.length === 0) {
+        //ensure the detail is empty too
+        model.setProperty("/currentMappingTable", {});
+      } else {
+        MappingTableService.getMappingTableVersion(oData[0]._id, oData[0].latestVersion, true)
+      }
+    }, function () {
+      sap.m.MessageBox.error("Failed to get any mapping tables. Please wait a moment and try reloading the application")
+    })
+  };
+
+  this.getAllMappingTableVersions = function (sName, oControl) {
+    if (oControl) oControl.setBusy(true);
+    Functions.ajax("api/mappingTable/allVersions/" + encodeURI(sName), "GET", {}, function (oData) {
       model.setProperty("/currentMappingTableVersions", oData);
-      if(oControl) oControl.setBusy(false);
-    }, function() {
+      if (oControl) oControl.setBusy(false);
+    }, function () {
       sap.m.MessageBox.error("Failed to retrieve all versions of the mapping table, please try again later.");
       oControl.setBusy(false);
     }, oControl)
@@ -70,14 +83,14 @@ var MappingTableService = new function () {
       window.location.hash = "#/mapping"
     })
   };
-  
-  this.getAuditTrail = function(sId) {
-    Functions.ajax("api/mappingTable/detail/" + encodeURI(sId) + "/audit", "GET", {}, function(oData) {
+
+  this.getAuditTrail = function (sId) {
+    Functions.ajax("api/mappingTable/detail/" + encodeURI(sId) + "/audit", "GET", {}, function (oData) {
       model.setProperty("/currentMappingTable/auditTrail", oData)
-    }, function() {
+    }, function () {
       sap.m.MessageBox.error("Failed to get the audit trail of the mapping table. Please wait a moment and/or try reloading the application")
-    })    
-  };  
+    })
+  };
 
   this.getMappingTableUsedIn = function (sId, iVersion) {
     Functions.ajax("api/mappingTable/usedIn/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, function (oData) {
@@ -103,13 +116,14 @@ var MappingTableService = new function () {
       hdfsPath: sHDFSPath,
       schemaName: sSchemaName,
       schemaVersion: iSchemaVersion
-    }, function (oData) {
-      MappingTableService.getMappingTableList();
+    }, (oData) => {
+      this.updateMasterPage();
+
       SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentMappingTable/schema")
-      model.setProperty("/currentMappingTable", oData)
+      model.setProperty("/currentMappingTable", oData);
       MappingTableService.getAuditTrail(oData.name);
       sap.m.MessageToast.show("Mapping Table created.");
-    }, function () {
+    }, () => {
       sap.m.MessageBox.error("Failed to create the mapping table, try reloading the application or try again later.")
     })
   };
@@ -122,13 +136,14 @@ var MappingTableService = new function () {
       hdfsPath: sHDFSPath,
       schemaName: sSchemaName,
       schemaVersion: iSchemaVersion
-    }, function (oData) {
-      MappingTableService.getMappingTableList();
+    }, (oData) => {
+      this.updateMasterPage();
+
       model.setProperty("/currentMappingTable", oData);
       SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentMappingTable/schema");
       MappingTableService.getAuditTrail(oData.name);
       sap.m.MessageToast.show("Mapping Table updated.");
-    }, function () {
+    }, () => {
       sap.m.MessageBox.error("Failed to create the mapping table, try reloading the application or try again later.")
     })
   };
@@ -140,13 +155,14 @@ var MappingTableService = new function () {
         version: iVersion
       },
       value: aDefaults
-    }, function (oData) {
-      MappingTableService.getMappingTableList();
+    }, (oData) => {
+      this.updateMasterPage();
+
       model.setProperty("/currentMappingTable", oData)
       MappingTableService.getAuditTrail(oData.name);
       SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentMappingTable/schema")
       sap.m.MessageToast.show("Default values updated.");
-    }, function () {
+    }, () => {
       sap.m.MessageBox.error("Failed to update the default value, try reloading the application or try again later.")
     })
   };
@@ -161,30 +177,32 @@ var MappingTableService = new function () {
         columnName: oDefault.columnName,
         value: oDefault.value
       }
-    }, function (oData) {
-      MappingTableService.getMappingTableList();
-      MappingTableService.getLatestMappingTableVersion(sName, true)
+    }, (oData) => {
+      this.updateMasterPage();
+      MappingTableService.getLatestMappingTableVersion(sName, true);
       MappingTableService.getAuditTrail(oData.name);
       sap.m.MessageToast.show("Default value added.");
-    }, function () {
+    }, () => {
       sap.m.MessageBox.error("Failed add default value, try reloading the application or try again later.")
     })
   };
 
-  this.disableMappingTable = function(sId, iVersion) {
+  this.disableMappingTable = function (sId, iVersion) {
     let uri = "api/mappingTable/disable/" + encodeURI(sId)
     if (typeof (iVersion) !== "undefined") {
       uri += "/" + encodeURI(iVersion)
     }
 
-    Functions.ajax(uri, "GET", {}, function(oData) {
+    Functions.ajax(uri, "GET", {}, (oData) => {
       sap.m.MessageToast.show("Mapping table disabled.");
+      this.updateMasterPage();
+
       if (window.location.hash !== "#/mapping") {
-        window.location.hash = "#/mapping"
+        window.location.hash = "#/mapping";
       } else {
-        MappingTableService.getMappingTableList(true, false)
+        MappingTableService.getFirstMappingTable();
       }
-    }, function(xhr) {
+    }, (xhr) => {
       if (xhr.status === 400) {
         let oData = JSON.parse(xhr.responseText);
 

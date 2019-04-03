@@ -15,102 +15,111 @@
 
 jQuery.sap.require("sap.m.MessageBox");
 
-var DatasetService = new function() {
+var DatasetService = new function () {
 
-  var model = sap.ui.getCore().getModel();
+  let model = sap.ui.getCore().getModel();
+  let eventBus = sap.ui.getCore().getEventBus();
 
-  this.getDatasetList = function(bLoadFirst) {
-    Functions.ajax("api/dataset/list", "GET", {}, function(oData) {
-      model.setProperty("/datasets", oData)
-      if(oData.length == 0) {
-        //ensure the detail is empty too
-        model.setProperty("/currentDataset", {});
-      }
-      else if (bLoadFirst)
-        DatasetService.getDatasetVersion(oData[0]._id, oData[0].latestVersion)
-    }, function() {
+  this.updateMasterPage = function () {
+    eventBus.publish("dataset", "list");
+  };
+
+  this.getDatasetList = function (oControl) {
+    Functions.ajax("api/dataset/list", "GET", {}, (oData) => {
+      oControl.setModel(new sap.ui.model.json.JSONModel(oData), "datasets");
+    }, () => {
       sap.m.MessageBox.error("Failed to get the list of datasets. Please wait a moment and try reloading the application")
     })
   };
 
-  this.getLatestDatasetVersion = function(sId) {
-    Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/latest", "GET", {}, function(oData) {
+  this.getFirstDataset = function () {
+    Functions.ajax("api/dataset/list", "GET", {}, (oData) => {
+      DatasetService.getDatasetVersion(oData[0]._id, oData[0].latestVersion);
+    }, () => {
+      sap.m.MessageBox.error("Failed to get any dataset. Please wait a moment and try reloading the application")
+    })
+  };
+
+  this.getLatestDatasetVersion = function (sId) {
+    Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/latest", "GET", {}, (oData) => {
       DatasetService.setCurrentDataset(oData);
       DatasetService.getAuditTrail(oData["name"]);
-    }, function() {
+    }, () => {
       sap.m.MessageBox.error("Failed to get the detail of the dataset. Please wait a moment and try reloading the application");
       window.location.hash = "#/dataset"
     })
   };
 
-  this.getDatasetVersion = function(sId, iVersion, sModelPath) {
+  this.getDatasetVersion = function (sId, iVersion, sModelPath) {
     var modelPath;
-    if(sModelPath) modelPath = sModelPath;
+    if (sModelPath) modelPath = sModelPath;
     else modelPath = "/currentDataset";
-    Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, function(oData) {
-      model.setProperty(modelPath, oData)
+    Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, (oData) => {
+      model.setProperty(modelPath, oData);
       DatasetService.getAuditTrail(oData["name"]);
-    }, function() {
+    }, () => {
       sap.m.MessageBox.error("Failed to get the detail of the dataset. Please wait a moment and try reloading the application");
       window.location.hash = "#/dataset"
     })
   };
 
-  this.getAuditTrail = function(sId) {
-    Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/audit", "GET", {}, function(oData) {
+  this.getAuditTrail = function (sId) {
+    Functions.ajax("api/dataset/detail/" + encodeURI(sId) + "/audit", "GET", {}, (oData) => {
       model.setProperty("/currentDataset/auditTrail", oData)
-    }, function() {
+    }, () => {
       sap.m.MessageBox.error("Failed to get the audit trail of the dataset. Please wait a moment and/or try reloading the application")
-    })    
-  };  
+    })
+  };
 
-    this.disableDataset = function(sId, iVersion) {
-      let uri = "api/dataset/disable/" + encodeURI(sId);
-      if(typeof(iVersion) !== "undefined") {
-          uri += "/" + encodeURI(iVersion)
+  this.disableDataset = function (sId, iVersion) {
+    let uri = "api/dataset/disable/" + encodeURI(sId);
+    if (typeof (iVersion) !== "undefined") {
+      uri += "/" + encodeURI(iVersion)
+    }
+
+    Functions.ajax(uri, "GET", {}, (oData) => {
+      sap.m.MessageToast.show("Dataset disabled.");
+      this.updateMasterPage();
+
+      if (window.location.hash !== "#/dataset") {
+        window.location.hash = "#/dataset";
+      } else {
+        DatasetService.getFirstDataset();
       }
+    }, (xhr) => {
+      sap.m.MessageBox.error("Failed to disable dataset.")
+    })
+  };
 
-      Functions.ajax(uri , "GET", {}, function(oData) {
-        sap.m.MessageToast.show("Dataset disabled.");
-        if(window.location.hash !== "#/dataset") {
-            window.location.hash = "#/dataset"
-        } else {
-            DatasetService.getDatasetList(true, false)
-        }
-      }, function(xhr) {
-        sap.m.MessageBox.error("Failed to disable dataset.")
-      })
-    };
+  this.hasUniqueName = function (sName, oModel) {
+    GenericService.isNameUnique(sName, oModel, "dataset")
+  };
 
-    this.hasUniqueName = function(sName, oModel) {
-        GenericService.isNameUnique(sName, oModel, "dataset")
-    };
+  this.createDataset = function (oDataset) {
+    Functions.ajax("api/dataset/create", "POST", oDataset, (oData) => {
+      this.updateMasterPage();
+      SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
+      DatasetService.setCurrentDataset(oData);
+      DatasetService.getAuditTrail(oData["name"]);
+      sap.m.MessageToast.show("Dataset created.");
+    }, () => {
+      sap.m.MessageBox.error("Failed to create the dataset, try reloading the application or try again later.")
+    })
+  };
 
-    this.createDataset = function(oDataset) {
-        Functions.ajax("api/dataset/create", "POST", oDataset, function(oData) {
-            DatasetService.getDatasetList();
-            SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
-            DatasetService.setCurrentDataset(oData);
-            DatasetService.getAuditTrail(oData["name"]);
-            sap.m.MessageToast.show("Dataset created.");
-        }, function() {
-            sap.m.MessageBox.error("Failed to create the dataset, try reloading the application or try again later.")
-        })
-    };
+  this.editDataset = function (oDataset) {
+    Functions.ajax("api/dataset/edit", "POST", oDataset, (oData) => {
+      this.updateMasterPage();
+      DatasetService.setCurrentDataset(oData);
+      DatasetService.getAuditTrail(oData["name"]);
+      SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
+      sap.m.MessageToast.show("Dataset updated.");
+    }, () => {
+      sap.m.MessageBox.error("Failed to update the dataset, try reloading the application or try again later.")
+    })
+  };
 
-    this.editDataset = function(oDataset) {
-      Functions.ajax("api/dataset/edit", "POST", oDataset, function(oData) {
-            DatasetService.getDatasetList();
-            DatasetService.setCurrentDataset(oData);
-            DatasetService.getAuditTrail(oData["name"]);
-            SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
-            sap.m.MessageToast.show("Dataset updated.");
-        }, function() {
-            sap.m.MessageBox.error("Failed to update the dataset, try reloading the application or try again later.")
-        })
-    };
-
-  this.setCurrentDataset = function(oDataset) {
+  this.setCurrentDataset = function (oDataset) {
     oDataset.conformance = oDataset.conformance.sort((first, second) => first.order > second.order);
     model.setProperty("/currentDataset", oDataset);
   };
