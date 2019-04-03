@@ -79,7 +79,7 @@ object TypeParser {
       workerClass(field, path, origSchema, parent)
     }
 
-    sealed case class ArrayPW(field: StructField,
+    case class ArrayPW(field: StructField,
                               path: String,
                               origSchema: StructType,
                               parent: Parent) extends ParserWorker {
@@ -109,7 +109,7 @@ object TypeParser {
       }
     }
 
-    sealed case class StructPW(field: StructField,
+    case class StructPW(field: StructField,
                                path: String,
                                origSchema: StructType,
                                parent: Parent) extends ParserWorker {
@@ -139,8 +139,8 @@ object TypeParser {
     }
 
     sealed trait PrimitivePW extends ParserWorker {
-      // Defines the cast error logic for numeric and other primitive types *
-      // the casting logic differs by class, but within is the same, no need to evalute mulitple times
+      // Defines the cast logic of the type,it differs by class, but within one it remain the same,
+      // no need to evaluate the expression multiple times
       private lazy val primitiveCastLogic: Column = evaluatePrimitiveCastLogic()
       protected def evaluatePrimitiveCastLogic(): Column
 
@@ -192,17 +192,17 @@ object TypeParser {
       override def evaluatePrimitiveCastLogic(): Column = column.cast(field.dataType)
     }
 
-    sealed case class NumericPW(field: StructField,
+    case class NumericPW(field: StructField,
                                 path: String,
                                 origSchema: StructType,
                                 parent: Parent) extends SimplePW
 
-    sealed case class StringPW(field: StructField,
+    case class StringPW(field: StructField,
                                path: String,
                                origSchema: StructType,
                                parent: Parent) extends SimplePW
 
-    sealed case class BooleanPW(field: StructField,
+    case class BooleanPW(field: StructField,
                                 path: String,
                                 origSchema: StructType,
                                 parent: Parent) extends SimplePW
@@ -233,7 +233,7 @@ object TypeParser {
     sealed trait DateTimePW extends PrimitivePW {
       protected val basicCastFunction: (Column, String) => Column  //for epoch casting
       protected val epochPattern: String
-      protected val pattern: DateTimePattern = DateTimePattern(field)
+      protected val pattern: DateTimePattern = DateTimePattern.fromStructField(field)
       protected lazy val defaultTimeZone: Option[String] = pattern.defaultTimeZone
 
       private def patternNeeded(originType: DataType): Unit = {
@@ -296,7 +296,7 @@ object TypeParser {
       }
     }
 
-    sealed case class DatePW(field: StructField,
+    case class DatePW(field: StructField,
                              path: String,
                              origSchema: StructType,
                              parent: Parent) extends DateTimePW {
@@ -328,7 +328,7 @@ object TypeParser {
       }
     }
 
-    sealed case class TimestampPW(field: StructField,
+    case class TimestampPW(field: StructField,
                            path: String,
                            origSchema: StructType,
                            parent: Parent) extends DateTimePW {

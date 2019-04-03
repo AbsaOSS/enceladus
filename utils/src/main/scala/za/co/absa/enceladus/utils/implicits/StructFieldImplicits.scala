@@ -13,19 +13,23 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.types
+package za.co.absa.enceladus.utils.implicits
 
 import org.apache.spark.sql.types.StructField
-
+import za.co.absa.enceladus.utils.types.Defaults
 import scala.util.Try
 
-/**
-  * Class to carry enhanced information about formatting pattern in conversion from/to string
-  * @param pattern  actual pattern to format the type conversion
-  * @param isDefault  marks if the pattern is actually an assigned value or taken for global defaults
-  */
-abstract class TypePattern(val pattern: String, val isDefault: Boolean = false)
+object StructFieldImplicits {
+  implicit class StructFieldImprovements(val structField: StructField) {
+    def getMetadata( key: String): Option[String] = {
+      Try(structField.metadata.getString(key)).toOption
+    }
 
-object TypePattern {
-  implicit def patternToString(pattern: TypePattern): String = pattern.pattern
+    def readPatternInfo(): PatternInfo = {
+      val patternOpt: Option[String] = getMetadata("pattern")
+      PatternInfo(patternOpt.getOrElse(Defaults.getGlobalFormat(structField.dataType)), patternOpt.isEmpty)
+    }
+  }
+
+  case class PatternInfo (pattern: String, isDefault: Boolean)
 }

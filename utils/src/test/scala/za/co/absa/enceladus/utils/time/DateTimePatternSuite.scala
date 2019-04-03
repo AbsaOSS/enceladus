@@ -16,98 +16,33 @@
 package za.co.absa.enceladus.utils.time
 
 import java.security.InvalidParameterException
-import org.apache.spark.sql.types.{DateType, DoubleType, TimestampType}
+
+import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
 
 class DateTimePatternSuite extends FunSuite {
 
-  test("Format class for timestamp") {
+  test("Pattern for timestamp") {
     val pattern: String = "yyyy~mm~dd_HH.mm.ss"
-    val dateTimePattern = new DateTimePattern(Some(pattern), Some(TimestampType))
+    val dateTimePattern = DateTimePattern(pattern)
     assert(!dateTimePattern.isDefault)
     assert(dateTimePattern.pattern == pattern)
-    assert(dateTimePattern.getOrElse("foo") == pattern)
     assert(!dateTimePattern.isEpoch)
-    val expectedMessage = s"'${dateTimePattern.pattern}' is not an epoch pattern"
-    val caught = intercept[InvalidParameterException] {
-      DateTimePattern.epochFactor(dateTimePattern)
-    }
-    assert(caught.getMessage == expectedMessage)
-    val caught2 = intercept[InvalidParameterException] {
-      DateTimePattern.epochMilliFactor(dateTimePattern)
-    }
-    assert(caught2.getMessage == expectedMessage)
+    assert(0 == dateTimePattern.epochFactor)
+    assert(0 == dateTimePattern.epochMilliFactor)
   }
 
-
-  test("Format class for date") {
-    val pattern: String = "yyyy~mm~dd_HH.mm.ss"
-    val dateTimePattern = new DateTimePattern(Some(pattern), Some(DateType))
+  test("Pattern for date") {
+    val pattern: String = "yyyy~mm~dd"
+    val dateTimePattern = DateTimePattern(pattern)
     assert(!dateTimePattern.isDefault)
     assert(dateTimePattern.pattern == pattern)
-    assert(dateTimePattern.getOrElse("fox") == pattern)
     assert(!dateTimePattern.isEpoch)
-    val expectedMessage = s"'${dateTimePattern.pattern}' is not an epoch pattern"
-    val caught = intercept[InvalidParameterException] {
-      DateTimePattern.epochFactor(dateTimePattern)
-    }
-    assert(caught.getMessage == expectedMessage)
-    val caught2 = intercept[InvalidParameterException] {
-      DateTimePattern.epochMilliFactor(dateTimePattern)
-    }
-    assert(caught2.getMessage == expectedMessage)
+    assert(dateTimePattern.epochFactor == 0)
+    assert(dateTimePattern.epochMilliFactor  == 0)
   }
 
-  test("Format class with default value - timestamp") {
-    val dateTimePattern = new DateTimePattern(None, Some(TimestampType))
-    assert(dateTimePattern.isDefault)
-    assert(dateTimePattern.pattern == "yyyy-MM-dd HH:mm:ss")
-    assert(dateTimePattern.getOrElse("foo") == "foo")
-    assert(!dateTimePattern.isEpoch)
-    val expectedMessage = s"'${dateTimePattern.pattern}' is not an epoch pattern"
-    val caught = intercept[InvalidParameterException] {
-      DateTimePattern.epochFactor(dateTimePattern)
-    }
-    assert(caught.getMessage == expectedMessage)
-    val caught2 = intercept[InvalidParameterException] {
-      DateTimePattern.epochMilliFactor(dateTimePattern)
-    }
-    assert(caught2.getMessage == expectedMessage)
-  }
-
-  test("Format class with default value - date") {
-    val dateTimePattern = new DateTimePattern(None, Some(DateType))
-    assert(dateTimePattern.isDefault)
-    assert(dateTimePattern.pattern == "yyyy-MM-dd")
-    assert(dateTimePattern.getOrElse("fox") == "fox")
-    assert(!dateTimePattern.isEpoch)
-    val expectedMessage = s"'${dateTimePattern.pattern}' is not an epoch pattern"
-    val caught = intercept[InvalidParameterException] {
-      DateTimePattern.epochFactor(dateTimePattern)
-    }
-    assert(caught.getMessage == expectedMessage)
-    val caught2 = intercept[InvalidParameterException] {
-      DateTimePattern.epochMilliFactor(dateTimePattern)
-    }
-    assert(caught2.getMessage == expectedMessage)
-  }
-
-  test("Format class with default value - double") {
-    val dt = DoubleType
-    val expectedMessage = s"No default format defined for data type ${dt.typeName}"
-    val caught = intercept[IllegalStateException] {
-      new DateTimePattern(None, Some(dt))
-    }
-    assert(caught.getMessage == expectedMessage)
-  }
-
-  test("Format class with Nones") {
-    intercept[NoSuchElementException] {
-      new DateTimePattern(None, None)
-    }
-  }
-
-  test("Format.isEpoch returns expected values.") {
+  test("DateTimePattern.isEpoch returns expected values.") {
     val result1 = DateTimePattern.isEpoch("epoch")
     assert(result1)
     val result2 = DateTimePattern.isEpoch("epochmilli")
@@ -120,25 +55,19 @@ class DateTimePatternSuite extends FunSuite {
     assert(!result5)
   }
 
-  test("Format.epochFactor returns expected values.") {
-    val result1 = DateTimePattern.epochFactor("Epoch")
-    assert(result1 == 1L)
-    val result2 = DateTimePattern.epochFactor("EpOcHmIlLi")
-    assert(result2 == 1000L)
-    val result3 = DateTimePattern.epochMilliFactor("Epoch")
-    assert(result3 == 1000L)
-    val result4 = DateTimePattern.epochMilliFactor("EpOcHmIlLi")
-    assert(result4 == 1L)
-    val formatString = "xxxx"
-    val expectedMessage = s"'$formatString' is not an epoch pattern"
-    val caught = intercept[InvalidParameterException] {
-      DateTimePattern.epochFactor(formatString)
-    }
-    assert(caught.getMessage == expectedMessage)
-    val caught2 = intercept[InvalidParameterException] {
-      DateTimePattern.epochMilliFactor(formatString)
-    }
-    assert(caught2.getMessage == expectedMessage)
+  test("DateTimePattern.epochFactor/epochMilliFactor returns expected values.") {
+    var result = DateTimePattern.epochFactor("Epoch")
+    assert(result == 1L)
+    result = DateTimePattern.epochFactor("EpOcHmIlLi")
+    assert(result == 1000L)
+    result = DateTimePattern.epochFactor("zoom")
+    assert(result == 0L)
+    result = DateTimePattern.epochMilliFactor("Epoch")
+    assert(result == 1000L)
+    result = DateTimePattern.epochMilliFactor("EpOcHmIlLi")
+    assert(result == 1L)
+    result = DateTimePattern.epochMilliFactor("xxxx")
+    assert(result == 0L)
   }
 
   test("Epoch in pattern") {
@@ -181,60 +110,129 @@ class DateTimePatternSuite extends FunSuite {
   }
 
   test("Default time zone - not present") {
-    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some(TimestampType))
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss")
     assert(dateTimePattern1.defaultTimeZone.isEmpty)
-    val dateTimePattern2 = DateTimePattern("yyyy-MM-dd", Some(DateType), assignedDefaultTimeZone = None)
+    val dateTimePattern2 = DateTimePattern("yyyy-MM-dd", assignedDefaultTimeZone = None)
     assert(dateTimePattern2.defaultTimeZone.isEmpty)
     val dateTimePattern3 = DateTimePattern("")
     assert(dateTimePattern3.defaultTimeZone.isEmpty)
   }
 
   test("Default time zone - present") {
-    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some(TimestampType), assignedDefaultTimeZone = Some("CET"))
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss", assignedDefaultTimeZone = Some("CET"))
     assert(dateTimePattern1.defaultTimeZone.contains("CET"))
-    val dateTimePattern2 = DateTimePattern("", assignedDefaultTimeZone = "")
+    val dateTimePattern2 = DateTimePattern("", assignedDefaultTimeZone = Some(""))
     assert(dateTimePattern2.defaultTimeZone.contains(""))
   }
 
   test("Default time zone - overridden by time zone in pattern") {
-    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss zz", Some(TimestampType), Some("CST")) //Standard time zone
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss zz", Some("CST")) //Standard time zone
     assert(dateTimePattern1.defaultTimeZone.isEmpty)
-    val dateTimePattern2 = DateTimePattern("yyyy-MM-dd HH:mm:ssXX", Some(TimestampType), Some("WST")) //Offset time zone
+    val dateTimePattern2 = DateTimePattern("yyyy-MM-dd HH:mm:ssXX", Some("WST")) //Offset time zone
     assert(dateTimePattern2.defaultTimeZone.isEmpty)
   }
 
   test("Default time zone - epoch") {
-    val dateTimePattern1 = DateTimePattern("epochmilli", "WST")
+    val dateTimePattern1 = DateTimePattern("epochmilli", Some("WST"))
     assert(dateTimePattern1.defaultTimeZone.isEmpty)
-    val dateTimePattern2 = DateTimePattern("epoch", "CET")
+    val dateTimePattern2 = DateTimePattern("epoch", Some("CET"))
     assert(dateTimePattern2.defaultTimeZone.isEmpty)
   }
 
   test("Is NOT time-zoned ") {
-    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some(TimestampType))
+    val dateTimePattern1 = DateTimePattern("yyyy-MM-dd HH:mm:ss")
     assert(!dateTimePattern1.isTimeZoned)
-    val dateTimePattern2 = DateTimePattern("yyyy-MM-dd", Some(DateType), None)
+    val dateTimePattern2 = DateTimePattern("yyyy-MM-dd", assignedDefaultTimeZone = None)
     assert(!dateTimePattern2.isTimeZoned)
   }
 
   test("Is time-zoned - default time zone") {
-    val dateTimePattern = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some(TimestampType), Some("EST"))
+    val dateTimePattern = DateTimePattern("yyyy-MM-dd HH:mm:ss", Some("EST"))
     assert(dateTimePattern.isTimeZoned)
   }
 
   test("Is time-zoned - standard time zone in pattern") {
-    val dateTimePattern = DateTimePattern("yyyy-MM-dd HH:mm:ss zz", Some(TimestampType)) //Standard time zone
+    val dateTimePattern = DateTimePattern("yyyy-MM-dd HH:mm:ss zz") //Standard time zone
     assert(dateTimePattern.isTimeZoned)
   }
 
   test("Is time-zoned - offset time zone in pattern") {
-    val dateTimePattern = DateTimePattern("yyyy-MM-dd HH:mm:ssXX", Some(TimestampType)) //Offset time zone
+    val dateTimePattern = DateTimePattern("yyyy-MM-dd HH:mm:ssXX") //Offset time zone
     assert(dateTimePattern.isTimeZoned)
   }
 
   test("Is time-zoned - epoch") {
     val dateTimePattern = DateTimePattern("epoch")
     assert(dateTimePattern.isTimeZoned)
+  }
+
+  test("fromStructField") {
+    def check(dtp: DateTimePattern,
+              pattern: String,
+              isDefault: Boolean,
+              timeZoneInPattern: Boolean,
+              defaultTimeZone: Option[String]
+             ): Unit = {
+      assert(dtp.pattern == pattern)
+      assert(dtp.isDefault == isDefault)
+      assert(!dtp.isEpoch)
+      assert(dtp.epochFactor == 0)
+      assert(dtp.epochMilliFactor == 0)
+      assert(dtp.timeZoneInPattern == timeZoneInPattern)
+      assert(dtp.defaultTimeZone == defaultTimeZone)
+    }
+
+    //wrong type
+    val sfwt = StructField("stringField", StringType)
+    val expectedMessage = s"StrucField data type for DateTimePattern has to be DateType or TimestampType, instead ${sfwt.dataType.typeName} was given."
+    val caught = intercept[InvalidParameterException] {
+      DateTimePattern.fromStructField(sfwt)
+    }
+    assert(caught.getMessage  == expectedMessage)
+    //timestamp type - default
+    val sftd =StructField("timestampPatternDefaultField", TimestampType, nullable = true)
+    val dtptd = DateTimePattern.fromStructField(sftd)
+    check(dtptd, "yyyy-MM-dd HH:mm:ss", isDefault = true, timeZoneInPattern = false, None)
+    //date type - default
+    val sfdd =StructField("datePatternDefaultField", DateType, nullable = true)
+    val dtpdd = DateTimePattern.fromStructField(sfdd)
+    check(dtpdd, "yyyy-MM-dd", isDefault = true, timeZoneInPattern = false, None)
+    //timestamp type - with pattern
+    val pattern1 = "yyyy/MM/dd_HHmmss"
+    val sf1 = StructField("timestampField", TimestampType, nullable = true,
+      new MetadataBuilder().putString("pattern", pattern1).build)
+    val dtp1 = DateTimePattern.fromStructField(sf1)
+    check(dtp1, pattern1, isDefault = false, timeZoneInPattern = false, None)
+    val pattern2 = "yyyy~MM~dd~HH~mm~ss~z"
+    val sf2 = StructField("timestampField", TimestampType, nullable = true,
+      new MetadataBuilder().putString("pattern", pattern2).build)
+    val dtp2 = DateTimePattern.fromStructField(sf2)
+    check(dtp2, pattern2, isDefault = false, timeZoneInPattern = true, None)
+    //date type - with pattern
+    val pattern3 = "dd.MM.yyyy"
+    val sf3 = StructField("dateField", DateType, nullable = true,
+      new MetadataBuilder().putString("pattern", pattern3).build)
+    val dtp3 = DateTimePattern.fromStructField(sf3)
+    check(dtp3, pattern3, isDefault = false, timeZoneInPattern = false, None)
+    val pattern4 = "dd_MM_yyyy_X"
+    val sf4 = StructField("dateField", TimestampType, nullable = true,
+      new MetadataBuilder().putString("pattern", pattern4).build)
+    val dtp4 = DateTimePattern.fromStructField(sf4)
+    check(dtp4, pattern4, isDefault = false, timeZoneInPattern = true, None)
+    //timestamp type - with pattern & timezone
+    val pattern5 = "yyyy/MM/dd_HHmmss"
+    val timeZone5 = "CET"
+    val sf5 = StructField("timestampField", TimestampType, nullable = true,
+      new MetadataBuilder().putString("pattern", pattern5).putString("timezone", timeZone5).build)
+    val dtp5 = DateTimePattern.fromStructField(sf5)
+    check(dtp5, pattern5, isDefault = false, timeZoneInPattern = false, Some(timeZone5))
+    //date type - with pattern & timezone
+    val pattern6 = "dd.MM.yyyy"
+    val timeZone6 = "EET"
+    val sf6 = StructField("dateField", DateType, nullable = true,
+      new MetadataBuilder().putString("pattern", pattern6).putString("timezone", timeZone6).build)
+    val dtp6 = DateTimePattern.fromStructField(sf6)
+    check(dtp6, pattern6, isDefault = false, timeZoneInPattern = false, Some(timeZone6))
   }
 
 }

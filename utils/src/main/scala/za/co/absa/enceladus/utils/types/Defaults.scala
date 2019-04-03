@@ -83,7 +83,7 @@ object Defaults {
     getDefaultOpt(st) match {
       case Some(default) =>
         val pattern: Option[DateTimePattern] = st.dataType match {
-          case _: DateType | _: TimestampType => Some(DateTimePattern(st))
+          case _: DateType | _: TimestampType => Some(DateTimePattern.fromStructField(st))
           case _ => None
         }
         parseDefault(st.dataType, default, pattern.map(_.pattern))

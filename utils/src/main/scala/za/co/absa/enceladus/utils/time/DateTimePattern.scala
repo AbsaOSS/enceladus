@@ -16,77 +16,141 @@
 package za.co.absa.enceladus.utils.time
 
 import java.security.InvalidParameterException
-import org.apache.spark.sql.types.{DataType, StructField}
+
+import org.apache.spark.sql.types.{DateType, StructField, TimestampType}
 import za.co.absa.enceladus.utils.types.TypePattern
+import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.{PatternInfo, StructFieldImprovements}
+import za.co.absa.enceladus.utils.implicits.StringImplicits.StringImprovements
 
 /**
-  * Class to carry enhanced information about formatting patterns in conversion from/to string
-  * @param pattern  actual pattern to format the type conversion; if none global default pattern for the type is used
-  * @param forType  type the format is intended for
-  * @param assignedDefaultTimeZone default time zone string; should be taken into account only if pattern does not
-  *                                contain time zone designation
+  * Class to carry enhanced information about date/time formatting pattern in conversion from/to string
+  * @param pattern  actual pattern to format the type conversion
+  * @param isDefault  marks if the pattern is actually an assigned value or taken for global defaults
   */
-class DateTimePattern(inputPattern: Option[String],
-                      forType: Option[DataType] = None,
-                      assignedDefaultTimeZone: Option[String] = None) extends TypePattern(inputPattern, forType){
+abstract sealed class DateTimePattern(pattern: String, isDefault: Boolean = false)
+  extends TypePattern(pattern, isDefault){
 
-  lazy val isEpoch: Boolean = DateTimePattern.isEpoch(pattern)
-  lazy val epochFactor: Long = DateTimePattern.epochFactor(pattern)
-  lazy val epochMilliFactor: Long = DateTimePattern.epochMilliFactor(pattern)
+  val isEpoch: Boolean
+  val epochFactor: Long
+  val epochMilliFactor: Long
 
-  lazy val defaultTimeZone: Option[String] = assignedDefaultTimeZone.filterNot(_ => timeZoneInPattern)
-  lazy val timeZoneInPattern: Boolean = DateTimePattern.timeZoneInPattern(pattern)
-  lazy val isTimeZoned: Boolean = timeZoneInPattern || assignedDefaultTimeZone.nonEmpty
+  val timeZoneInPattern: Boolean
+  val defaultTimeZone: Option[String]
+  val isTimeZoned: Boolean
 }
 
 object DateTimePattern {
+
+  val EpochKeyword = "epoch"
+  val EpochMilliKeyword = "epochmilli"
+
   private val epochUnitFactor = 1
   private val epochThousandFactor = 1000
-  private val quotedTextRegEx = """(^|[^\\])'.*[^\\]'""".r
+  private val patternTimeZoneChars = Set('X','z','Z')
 
-  def apply(structField: StructField ): DateTimePattern = {
-    TypePattern(structField).asInstanceOf[DateTimePattern]
+  private final case class EpochDTPattern(override val pattern: String,
+                                          override val isDefault: Boolean = false)
+    extends DateTimePattern(pattern, isDefault) {
+
+    override val isEpoch: Boolean = true
+    override val epochFactor: Long = DateTimePattern.epochFactor(pattern)
+    override val epochMilliFactor: Long = DateTimePattern.epochMilliFactor(pattern)
+
+    override val timeZoneInPattern: Boolean = true
+    override val defaultTimeZone: Option[String] = None
+    override val isTimeZoned: Boolean = true
+  }
+
+  private final case class StandardDTPattern(override val pattern: String,
+                                             assignedDefaultTimeZone: Option[String] = None,
+                                             override val isDefault: Boolean = false)
+    extends DateTimePattern(pattern, isDefault) {
+
+    override val isEpoch: Boolean = false
+    override val epochFactor: Long = 0
+    override val epochMilliFactor: Long = 0
+
+    override val timeZoneInPattern: Boolean = DateTimePattern.timeZoneInPattern(pattern)
+    override val defaultTimeZone: Option[String] = assignedDefaultTimeZone.filterNot(_ => timeZoneInPattern)
+    override val isTimeZoned: Boolean = timeZoneInPattern || defaultTimeZone.nonEmpty
+  }
+
+  private def createDateTimePattern(pattern: String,
+                                    assignedDefaultTimeZone: Option[String],
+                                    isDefault: Boolean): DateTimePattern = {
+    if (isEpoch(pattern)) {
+      EpochDTPattern(pattern, isDefault)
+    } else {
+      StandardDTPattern(pattern, assignedDefaultTimeZone, isDefault)
+    }
   }
 
   def apply(pattern: String,
-            forType: Option[DataType] = None,
             assignedDefaultTimeZone: Option[String] = None): DateTimePattern = {
-    new DateTimePattern(Some(pattern), forType, assignedDefaultTimeZone)
+    createDateTimePattern(pattern, assignedDefaultTimeZone, isDefault = false)
   }
 
-  def apply(pattern: String, assignedDefaultTimeZone: String): DateTimePattern = {
-    new DateTimePattern(Some(pattern), None, Some(assignedDefaultTimeZone))
+  def fromStructField(structField: StructField ): DateTimePattern = {
+    if (!Seq(DateType, TimestampType).contains(structField.dataType)) {
+      val typeName = structField.dataType.typeName
+      throw new InvalidParameterException(
+        s"StrucField data type for DateTimePattern has to be DateType or TimestampType, instead $typeName was given."
+      )
+    }
+    val PatternInfo(pattern, isDefault) = structField.readPatternInfo()
+    val timeZoneOpt = structField.getMetadata("timezone")
+    createDateTimePattern(pattern, timeZoneOpt, isDefault)
   }
 
   def isEpoch(pattern: String): Boolean = {
     pattern.toLowerCase match {
-      case "epoch" | "epochmilli" => true
+      case EpochKeyword | EpochMilliKeyword => true
       case _ => false
     }
   }
 
   def epochFactor(pattern: String): Long = {
     pattern.toLowerCase match {
-      case "epoch"      => epochUnitFactor
-      case "epochmilli" => epochThousandFactor
-      case _            => throw new InvalidParameterException(s"'$pattern' is not an epoch pattern")
+      case EpochKeyword      => epochUnitFactor
+      case EpochMilliKeyword => epochThousandFactor
+      case _                 => 0
     }
   }
 
   def epochMilliFactor(pattern: String): Long = {
     pattern.toLowerCase match {
-      case "epoch"      => epochThousandFactor
-      case "epochmilli" => epochUnitFactor
-      case _            => throw new InvalidParameterException(s"'$pattern' is not an epoch pattern")
+      case EpochKeyword      => epochThousandFactor
+      case EpochMilliKeyword => epochUnitFactor
+      case _                 => 0
     }
   }
-
 
   def timeZoneInPattern(pattern: String): Boolean = {
     if (isEpoch(pattern)) {
       true
     } else {
-      val sanitized = quotedTextRegEx.replaceAllIn(pattern, "$1") //clear literals
-      "[XzZ]".r.findFirstIn(sanitized).nonEmpty
+      pattern.hasUnquoted(patternTimeZoneChars, Set('''))
     }
-  }}
+  }
+
+  /* TODO ---
+  private def scanForFreeOccurrence(string: String, chars: Seq[Char], quote: Char, escape: Char = '\\' ): Boolean = {
+    @tailrec
+    def scan(sub: String, inQuote: Boolean, escaped: Boolean = false):Boolean = {
+      if (sub.isEmpty) {
+        false
+      } else {
+        sub.head match {
+          case `escape` => scan(sub.tail, inQuote, !escaped)
+          case `quote` => scan(sub.tail, if (escaped) inQuote else !inQuote)
+          case _ if inQuote => scan(sub.tail, inQuote)
+          case c if chars.contains(c) => true
+          case _ => scan(sub.tail, inQuote = false)
+        }
+      }
+    }
+
+    scan(string, inQuote = false)
+  }
+  */
+}
