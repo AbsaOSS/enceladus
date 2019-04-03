@@ -32,7 +32,7 @@ sap.ui.define([
     },
 
     list: function () {
-      MappingTableService.getMappingTableList();
+      MappingTableService.getMappingTableList(this.byId("masterPage"));
     },
 
     onPressMasterBack: function () {
@@ -65,14 +65,6 @@ sap.ui.define([
     onSchemaSelect: function (oEv) {
       this._addFragment.onSchemaSelect(oEv);
     },
-
-    onAfterRendering: function () {
-      // get schemas after rendering. This will be used for add/edit functionality
-      let schemas = this._model.getProperty("/schemas");
-      if (!schemas || schemas.length === 0) {
-        SchemaService.getSchemaList(false, true);
-      }
-    }
 
   });
 });

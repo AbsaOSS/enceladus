@@ -272,14 +272,6 @@ sap.ui.define([
       this._editFragment.onSchemaSelect(oEv);
     },
 
-    onAfterRendering: function () {
-      // get schemas after rendering. This will be used for add/edit functionality
-      let schemas = this._model.getProperty("/schemas");
-      if (!schemas || schemas.length === 0) {
-        SchemaService.getSchemaList(false, true);
-      }
-    },
-
     onRemovePress: function (oEv) {
       let current = this._model.getProperty("/currentMappingTable")
 
@@ -297,12 +289,10 @@ sap.ui.define([
 
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "id") === undefined) {
-        MappingTableService.getMappingTableList(true, true);
+        MappingTableService.getFirstMappingTable();
       } else if (Prop.get(oParams, "version") === undefined) {
-        MappingTableService.getMappingTableList();
         MappingTableService.getLatestMappingTableVersion(oParams.id, true)
       } else {
-        MappingTableService.getMappingTableList();
         MappingTableService.getMappingTableVersion(oParams.id, oParams.version, true)
       }
       this.byId("mappingTableIconTabBar").setSelectedKey("info");

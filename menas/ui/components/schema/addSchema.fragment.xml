@@ -14,18 +14,19 @@
   -->
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
-    <Dialog id="addSchemaDialog" title="New Schema" stretchOnPhone="true">
+    <Dialog id="addSchemaDialog" title="{/newSchema/title} Schema" stretchOnPhone="true">
         <content>
             <VBox>
                 <Input id="newSchemaName" type="Text" placeholder="Schema name*" width="100%" value="{/newSchema/name}"
-                       change="schemaNameChange"/>
+                       enabled="{path:'/newSchema/isEdit', formatter:'Formatters.not'}"
+                       change="onNameChange"/>
                 <Input id="newSchemaDescription" type="Text" placeholder="Description" width="100%"
                        value="{/newSchema/description}"/>
             </VBox>
         </content>
         <buttons>
-            <Button id="newSchemaAddButton" text="Add" icon="sap-icon://accept" press="schemaAddSubmit"/>
-            <Button id="newSchemaCancelButton" text="Cancel" icon="sap-icon://cancel" press="schemaAddCancel"/>
+            <Button id="newSchemaAddButton" text="Save" icon="sap-icon://accept" press="onSchemaSubmit"/>
+            <Button id="newSchemaCancelButton" text="Cancel" icon="sap-icon://cancel" press="onSchemaCancel"/>
         </buttons>
     </Dialog>
 </core:FragmentDefinition>

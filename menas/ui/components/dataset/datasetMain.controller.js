@@ -185,12 +185,10 @@ sap.ui.define([
 
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "id") === undefined) {
-        DatasetService.getDatasetList(true);
+        DatasetService.getFirstDataset()
       } else if (Prop.get(oParams, "version") === undefined) {
-        DatasetService.getDatasetList();
         DatasetService.getLatestDatasetVersion(oParams.id)
       } else {
-        DatasetService.getDatasetList();
         DatasetService.getDatasetVersion(oParams.id, oParams.version)
       }
       this.byId("datasetIconTabBar").setSelectedKey("info");
@@ -216,21 +214,6 @@ sap.ui.define([
 
       return sap.ui.xmlfragment(sId, sFragmentName, this);
     },
-
-    /**
-     * Called when the View has been rendered (so its HTML is part of the document).
-     * Post-rendering manipulations of the HTML could be done here. This hook is the
-     * same one that SAPUI5 controls get after being rendered.
-     *
-     * @memberOf components.dataset.datasetMain
-     */
-    onAfterRendering: function () {
-      // get schemas after rendering. This will be used for add/edit functionality
-      let schemas = this._model.getProperty("/schemas");
-      if (!schemas || schemas.length === 0) {
-        SchemaService.getSchemaList(false, true);
-      }
-    }
 
   });
 });

@@ -27,10 +27,13 @@ sap.ui.define([
 
       this._model = sap.ui.getCore().getModel();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
+
+      this._addFragment = new AddSchemaFragment(this, Fragment.load).getAdd();
     },
 
     list: function () {
-      SchemaService.getSchemaList();
+      console.log("list");
+      SchemaService.getSchemaList(this.byId("masterPage"));
     },
 
     onPressMasterBack: function () {
@@ -45,63 +48,19 @@ sap.ui.define([
     },
 
     onAddPress: function () {
-      let oView = this.getView();
-
-      let addSchemaDialog = this.byId("addSchemaDialog");
-      if (this.byId("addSchemaDialog")) {
-        addSchemaDialog.open();
-      } else {
-        Fragment.load({
-          id: oView.getId(),
-          name: "components.schema.addSchema",
-          controller: this
-        }).then(function (oDialog) {
-          oView.addDependent(oDialog);
-          oDialog.open();
-        });
-      }
+      this._addFragment.onPress();
     },
 
-    schemaAddSubmit: function () {
-      let newSchema = this._model.getProperty("/newSchema");
-      if (newSchema.name && typeof (newSchema.nameUnique) === "undefined") {
-        // need to wait for the service call
-        setTimeout(this.schemaAddSubmit.bind(this), 500);
-      } else if (this.isValidSchema()) {
-        // send and update UI
-        SchemaService.createSchema(newSchema.name, newSchema.description);
-        this.schemaAddCancel(); // close & clean up
-      }
+    onSchemaSubmit: function () {
+      this._addFragment.submit();
     },
 
-    schemaAddCancel: function () {
-      this.resetNewSchemaValueState();
-      this._model.setProperty("/newSchema", {});
-      this.byId("addSchemaDialog").close();
+    onSchemaCancel: function () {
+      this._addFragment.cancel();
     },
 
-    isValidSchema: function () {
-      this.resetNewSchemaValueState();
-      let schema = this._model.getProperty("/newSchema");
-
-      let hasValidName = EntityValidationService.hasValidName(schema, "Schema",
-        this.byId("newSchemaName"));
-
-      return hasValidName;
-    },
-
-    resetNewSchemaValueState: function () {
-      this.byId("newSchemaName").setValueState(sap.ui.core.ValueState.None);
-      this.byId("newSchemaName").setValueStateText("");
-    },
-
-    schemaNameChange: function () {
-      let sName = this._model.getProperty("/newSchema/name");
-      if (GenericService.isValidEntityName(sName)) {
-        SchemaService.hasUniqueName(sName)
-      } else {
-        this._model.setProperty("/newSchema/nameUnique", true)
-      }
+    onNameChange: function () {
+      this._addFragment.onNameChange();
     }
 
   });

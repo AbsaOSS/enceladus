@@ -17,11 +17,11 @@
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Page id="masterPage" title="Schemas" showNavButton="true" navButtonPress="onPressMasterBack">
         <content>
-            <List items="{/schemas}" mode="SingleSelectMaster" selectionChange="schemaSelected"
+            <List items="{schemas>/}" mode="SingleSelectMaster" selectionChange="schemaSelected"
                   noDataText="No Schemas">
             <items>
-                    <StandardListItem title="{_id}" description="latest version: {latestVersion}" type="Active"
-                                      cust:id="{_id}"/>
+                    <StandardListItem title="{schemas>_id}" description="latest version: {schemas>latestVersion}" type="Active"
+                                      cust:id="{schemas>_id}"/>
                 </items>
             </List>
         </content>

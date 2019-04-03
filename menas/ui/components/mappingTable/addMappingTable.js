@@ -30,6 +30,7 @@ var AddMappingTableFragment = function (oController, fnLoad) {
   };
 
   let oDialog = loadDialogFragment();
+  SchemaService.getSchemaList(oDialog, false, true);
 
   let oFragment = {
     submit: function () {
@@ -40,7 +41,8 @@ var AddMappingTableFragment = function (oController, fnLoad) {
         setTimeout(this.submit.bind(this), 500);
         return;
       }
-
+console.log(oMT)
+console.log(oMT.nameUnique)
       if (this.isValid(oMT)) {
         // send and update UI
         if (oMT.isEdit) {
@@ -107,7 +109,7 @@ var AddMappingTableFragment = function (oController, fnLoad) {
 
   this.getAdd = function() {
     oFragment.onPress = () => {
-      let oFirstSchema = oController._model.getProperty("/schemas")[0];
+      let oFirstSchema = oDialog.getModel("schemas").oData[0];
 
       oController._model.setProperty("/newMappingTable", {
         name: "",

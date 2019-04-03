@@ -16,9 +16,9 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core"
                          xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Label text="Schema Name"/>
-    <Select id="schemaNameSelect" showSecondaryValues="true" items="{/schemas}"
+    <Select id="schemaNameSelect" showSecondaryValues="true" items="{schemas>/}"
             selectedKey="{entity>/schemaName}" change="onSchemaSelect">
-        <core:ListItem key="{_id}" text="{_id}" additionalText="Latest version: {latestVersion}"/>
+        <core:ListItem key="{schemas>_id}" text="{schemas>_id}" additionalText="Latest version: {schemas>latestVersion}"/>
     </Select>
     <Label text="Schema Version"/>
     <FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">

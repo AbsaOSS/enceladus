@@ -14,117 +14,127 @@
  */
 
 jQuery.sap.require("sap.m.MessageBox");
-var SchemaService = new function() {
+var SchemaService = new function () {
 
-  var model = sap.ui.getCore().getModel();
+  let model = sap.ui.getCore().getModel();
+  let eventBus = sap.ui.getCore().getEventBus();
 
-  this.getSchemaList = function(bLoadFirst, bGetAllVersionsOfFirst) {
-    Functions.ajax("api/schema/list", "GET", {}, function(oData) {
-      model.setProperty("/schemas", oData)
-      if(oData.length == 0) {
+  this.updateMasterPage = function () {
+    eventBus.publish("schemas", "list");
+  };
+
+  this.getSchemaList = function (oControl, bLoadFirst, bGetAllVersionsOfFirst) {
+    Functions.ajax("api/schema/list", "GET", {}, (oData) => {
+      oControl.setModel(new sap.ui.model.json.JSONModel(oData), "schemas");
+      if (oData.length === 0) {
         //ensure the detail is empty too
         model.setProperty("/currentSchema", {});
-      }
-      else if(bLoadFirst) {
+      } else if (bLoadFirst) {
         SchemaService.getSchemaVersion(oData[0]._id, oData[0].latestVersion)
-      } else if(bGetAllVersionsOfFirst) {
+      } else if (bGetAllVersionsOfFirst) {
         SchemaService.getAllSchemaVersions(oData[0]._id)
-      } 
-    }, function() {
+      }
+    }, () => {
       sap.m.MessageBox.error("Failed to get the list of schemas. Please wait a moment and try reloading the application")
     })
   };
 
-  this.getLatestSchemaVersion = function(sId) {
-    Functions.ajax("api/schema/detail/" + encodeURI(sId) + "/latest", "GET", {}, function(oData) {
-      model.setProperty("/currentSchema", oData)
-      SchemaService.getSchemaUsedIn(oData.name, oData.version)
+  this.getFirstSchema = function () {
+    Functions.ajax("api/schema/list", "GET", {}, (oData) => {
+      SchemaService.getSchemaVersion(oData[0]._id, oData[0].latestVersion)
+    }, () => {
+      sap.m.MessageBox.error("Failed to get any schemas. Please wait a moment and try reloading the application")
+    })
+  };
+
+  this.getLatestSchemaVersion = function (sId) {
+    Functions.ajax("api/schema/detail/" + encodeURI(sId) + "/latest", "GET", {}, (oData) => {
+      model.setProperty("/currentSchema", oData);
+      SchemaService.getSchemaUsedIn(oData.name, oData.version);
       SchemaService.getAuditTrail(oData.name);
-    }, function() {
+    }, () => {
       sap.m.MessageBox.error("Failed to get the detail of the schema. Please wait a moment and try reloading the application")
       window.location.hash = "#/schema"
     })
   };
 
-  this.getAuditTrail = function(sId) {
-    Functions.ajax("api/schema/detail/" + encodeURI(sId) + "/audit", "GET", {}, function(oData) {
+  this.getAuditTrail = function (sId) {
+    Functions.ajax("api/schema/detail/" + encodeURI(sId) + "/audit", "GET", {}, (oData) => {
       model.setProperty("/currentSchema/auditTrail", oData)
-    }, function() {
+    }, () => {
       sap.m.MessageBox.error("Failed to get the audit trail of the schema. Please wait a moment and/or try reloading the application")
     })
   };
 
-  this.getSchemaVersion = function(sId, iVersion, sModelPath) {
-    var modelPath;
-    if(sModelPath)
-      modelPath = sModelPath
-    else
-      modelPath = "/currentSchema"
-    Functions.ajax("api/schema/detail/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, function(oData) {
-      model.setProperty(modelPath, oData)
-      SchemaService.getSchemaUsedIn(oData.name, oData.version)
+  this.getSchemaVersion = function (sId, iVersion, sModelPath) {
+    let modelPath = (sModelPath) ? sModelPath : "/currentSchema";
+
+    Functions.ajax("api/schema/detail/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, (oData) => {
+      model.setProperty(modelPath, oData);
+      SchemaService.getSchemaUsedIn(oData.name, oData.version);
       SchemaService.getAuditTrail(oData.name)
-    }, function() {
+    }, () => {
       sap.m.MessageBox.error("Failed to get the detail of the schema. Please wait a moment and try reloading the application")
       window.location.hash = "#/schema"
     })
   };
 
-  this.updateSchema = function(sId, iVersion, sDesc) {
+  this.updateSchema = function (sId, iVersion, sDesc) {
     Functions.ajax("api/schema/edit", "POST", {
       name: sId,
       version: iVersion,
       description: sDesc
-    }, function(oData) {
-      model.setProperty("/currentSchema", oData)
+    }, (oData) => {
+      model.setProperty("/currentSchema", oData);
       SchemaService.getAuditTrail(oData.name);
-      SchemaService.getSchemaList();
-    }, function() {
+      this.updateMasterPage();
+    }, () => {
       sap.m.MessageBox.error("Failed to update the schema. Please wait a moment and try reloading the application")
     })
   };
 
-  this.getSchemaUsedIn = function(sId, iVersion) {
-    Functions.ajax("api/schema/usedIn/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, function(oData) {
+  this.getSchemaUsedIn = function (sId, iVersion) {
+    Functions.ajax("api/schema/usedIn/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, (oData) => {
       model.setProperty("/currentSchema/usedIn", oData)
-    }, function() {
+    }, () => {
       sap.m.MessageBox.error("Failed to retreive the 'Used In' section, please try again later.")
     })
   };
 
-  this.getAllSchemaVersions = function(sName, oControl, oModel, sProperty) {
-    if(oControl)
+  this.getAllSchemaVersions = function (sName, oControl, oModel, sProperty) {
+    if (oControl)
       oControl.setBusy(true);
-    Functions.ajax("api/schema/allVersions/" + encodeURI(sName), "GET", {}, function(oData) {
+    Functions.ajax("api/schema/allVersions/" + encodeURI(sName), "GET", {}, (oData) => {
       model.setProperty("/currentSchemaVersions", oData);
-      if(oControl) {
+      if (oControl) {
         oControl.setBusy(false);
       }
-      if(oModel && sProperty) {
+      if (oModel && sProperty) {
         oModel.setProperty(sProperty, oData[oData.length - 1].version)
       }
-    }, function() {
+    }, () => {
       sap.m.MessageBox.error("Failed to retreive all versions of the schema, please try again later.")
       oControl.setBusy(false);
     }, oControl)
   };
 
-  this.disableSchema = function(sId, iVersion) {
+  this.disableSchema = function (sId, iVersion) {
     let uri = "api/schema/disable/" + encodeURI(sId);
-    if(typeof (iVersion) !== "undefined") {
+    if (typeof (iVersion) !== "undefined") {
       uri += "/" + encodeURI(iVersion)
     }
 
-    Functions.ajax(uri, "GET", {}, function(oData) {
+    Functions.ajax(uri, "GET", {}, (oData) => {
       sap.m.MessageToast.show("Schema disabled.");
-      if(window.location.hash !== "#/schema") {
+      this.updateMasterPage();
+
+      if (window.location.hash !== "#/schema") {
         window.location.hash = "#/schema"
       } else {
-        SchemaService.getSchemaList(true, false)
-        SchemaService.getAuditTrail(oData.name);
+        SchemaService.getFirstSchema();
       }
-    }, function(xhr) {
-      if(xhr.status === 400) {
+    }, function (xhr) {
+      if (xhr.status === 400) {
         let oData = JSON.parse(xhr.responseText);
 
         let err = EntityService.buildDisableFailureMsg(oData, "Dataset");
@@ -136,37 +146,37 @@ var SchemaService = new function() {
     })
   };
 
-  this.createSchema = function(sName, sDescription) {
+  this.createSchema = function (sName, sDescription) {
     Functions.ajax("api/schema/create", "POST", {
       name: sName,
       description: sDescription
-    }, function(oData) {
-      SchemaService.getSchemaList();
-      model.setProperty("/currentSchema", oData)
+    }, (oData) => {
+      this.updateMasterPage();
+      model.setProperty("/currentSchema", oData);
       SchemaService.getAuditTrail(oData.name);
       sap.m.MessageToast.show("Schema created.");
-    }, function() {
+    }, () => {
       sap.m.MessageBox.error("Failed to create the schema, try reloading the application or try again later.")
     })
   };
 
-  this.hasUniqueName = function(sName) {
-    Functions.ajax("api/schema/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
+  this.hasUniqueName = function (sName) {
+    Functions.ajax("api/schema/isUniqueName/" + encodeURI(sName), "GET", {}, (oData) => {
       model.setProperty("/newSchema/nameUnique", oData)
-    }, function() {
+    }, () => {
       sap.m.MessageBox.error("Failed to retreive isUniqueName. Please try again later.")
     })
   };
 
-  this.fieldSelect = function(sBindingPath, sModelPathBase, oModel, sOutputProperty) {
+  this.fieldSelect = function (sBindingPath, sModelPathBase, oModel, sOutputProperty) {
     model.setProperty(sOutputProperty, this._buildSchemaPath(sBindingPath, sModelPathBase, oModel));
   };
 
-  this._buildSchemaPath = function(sBindingPath, sModelPathBase, oModel) {
+  this._buildSchemaPath = function (sBindingPath, sModelPathBase, oModel) {
     let pathToks = sBindingPath.replace(sModelPathBase, "").split("/");
 
-    let helper = function(aToks, sModelPathAcc, aAcc) {
-      if(aToks.length === 0) {
+    let helper = function (aToks, sModelPathAcc, aAcc) {
+      if (aToks.length === 0) {
         return aAcc.join(".");
       }
 

@@ -31,10 +31,10 @@
                                width="100%"
                                value="{/newMappingTable/description}"/>
                         <Label text="Schema Name"/>
-                        <Select id="newMappingTableSchemaNameSelect" showSecondaryValues="true" items="{/schemas}"
+                        <Select id="newMappingTableSchemaNameSelect" showSecondaryValues="true" items="{schemas>/}"
                                 forceSelection="false" selectedKey="{/newMappingTable/schemaName}"
                                 change="onSchemaSelect">
-                            <core:ListItem key="{_id}" text="{_id}" additionalText="Latest version: {latestVersion}"/>
+                            <core:ListItem key="{schemas>_id}" text="{schemas>_id}" additionalText="Latest version: {schemas>latestVersion}"/>
                         </Select>
                         <Label text="Schema Version"/>
                         <FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">

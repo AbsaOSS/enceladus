@@ -82,7 +82,7 @@ sap.ui.define([
     onBeforeOpen: function () {
       this._dialog = sap.ui.getCore().byId("upsertConformanceRuleDialog");
       this._ruleForm = sap.ui.getCore().byId("ruleForm");
-      MappingTableService.getMappingTableList(true, true);
+      MappingTableService.getMappingTableList(this._dialog);
       if(this._model.getProperty("/newRule/isEdit")) {
         this.showFormFragment(this._model.getProperty("/newRule/_t"));
       } else {
@@ -179,7 +179,7 @@ sap.ui.define([
       if (currentRule._t === "MappingConformanceRule") {
         if(!currentRule.isEdit){
           newRule.newJoinConditions = [{mappingTableField: "", datasetField: ""}];
-          newRule.mappingTable = this._model.getProperty("/mappingTables")[0]._id;
+          newRule.mappingTable = this._dialog.getModel("mappingTables").oData[0]._id;
         } else {
           let oAttributeMappings = newRule.attributeMappings;
           let aNewJoinConditions = [];
