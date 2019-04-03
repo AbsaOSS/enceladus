@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.rest.repositories
 import org.mongodb.scala._
+import org.mongodb.scala.bson.BsonDocument
 
 import scala.collection.immutable.HashMap
 //import org.mongodb.scala.{AggregateObservable, Completed, Document, MapReduceObservable, MongoDatabase}
@@ -22,7 +23,7 @@ import scala.collection.immutable.HashMap
 //import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Aggregates._
-//import org.mongodb.scala.model.Sorts._
+import org.mongodb.scala.model.Sorts._
 //import org.mongodb.scala.model.{FindOneAndUpdateOptions, ReturnDocument, Updates}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
@@ -34,16 +35,21 @@ import za.co.absa.enceladus.rest.models.RunWrapper
 import scala.concurrent.Future
 import org.mongodb.scala.Document
 
+object MonitoringMongoRepository {
+  val collectionName = "run"
+}
+
 @Repository
 class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
-  extends MongoRepository[Document](mongoDb) {
+  extends MongoRepository[Run](mongoDb) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
+  private[repositories] override def collectionName: String = MonitoringMongoRepository.collectionName
 
-  private[repositories] override def collectionName: String = "run"
+  //case class DocumentWrapper(value: Document)
 
   def getMonitoringDataPoints(datasetName: String): Future[Seq[String]] = {
-    /***val responce: Future[Seq[Run]] = collection
+    /***val observable: AggregateObservable[Document] = collection
       .aggregate(Seq(
         filter(equal("dataset", datasetName)),
         addFields(),
@@ -52,18 +58,12 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
           descending("controlMeasure.metadata.version"),
           descending("startDateTime")
         ))
-      )).toFuture() ***/
-    //responce.toFuture().map(_.map(bson => ControlUtils.fromJson[MonitoringDataPointWrapper](bson.toJson).value))
-    val responce = collection.aggregate(Seq(filter(equal("dataset", datasetName))))
-    responce
-      //.toFuture()
-      //.map(_.map(bson => bson.toJson()))
-    //responce.subscribe((result: Document) => ControlUtils.fromJson[Document](result.toJson))
-    //ControlUtils.fromJson[Run](bson.toJson)
-    //responce.map(bson => ControlUtils.fromJson[Document](bson.toJson)).toFuture()
-    //collection.find().first().printHeadResult()
-    //responce
-    Future(Seq("a","b"))
+      )) ***/
+
+    val observable: AggregateObservable[Document] = collection.aggregate(Seq(filter(equal("dataset", datasetName))))
+
+    observable.map(doc => doc.toJson).toFuture()
   }
 
 }
+

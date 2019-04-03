@@ -17,7 +17,7 @@ package za.co.absa.enceladus.rest.controllers
 
 import java.util.concurrent.CompletableFuture
 
-import org.mongodb.scala.Document
+import org.mongodb.scala.{Document, bson}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -30,6 +30,10 @@ import za.co.absa.enceladus.rest.repositories.RefCollection
 import za.co.absa.enceladus.rest.services.MonitoringService
 import za.co.absa.enceladus.rest.models.MonitoringDataPoint
 import za.co.absa.enceladus.rest.utils.converters.SparkMenasSchemaConvertor
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
+
+import scala.concurrent.Future
 
 @RestController
 @RequestMapping(Array("/api/monitoring"))
@@ -40,10 +44,10 @@ class MonitoringController @Autowired()(monitoringService: MonitoringService)
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  @GetMapping(Array("/{datasetName}"))
+  @GetMapping(value = Array("/{datasetName}"), produces = Array("application/json"))
   @ResponseStatus(HttpStatus.OK)
-  def getJson(@PathVariable datasetName: String): CompletableFuture[Seq[String]] = {
+  def getJson(@PathVariable datasetName: String): CompletableFuture[String] = {
     monitoringService.getMonitoringDataPoints(datasetName)
-  }
+}
 
 }
