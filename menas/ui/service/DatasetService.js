@@ -21,7 +21,7 @@ var DatasetService = new function () {
   let eventBus = sap.ui.getCore().getEventBus();
 
   this.updateMasterPage = function () {
-    eventBus.publish("dataset", "list");
+    eventBus.publish("datasets", "list");
   };
 
   this.getDatasetList = function (oControl) {
@@ -97,10 +97,7 @@ var DatasetService = new function () {
 
   this.createDataset = function (oDataset) {
     Functions.ajax("api/dataset/create", "POST", oDataset, (oData) => {
-      this.updateMasterPage();
-      SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
-      DatasetService.setCurrentDataset(oData);
-      DatasetService.getAuditTrail(oData["name"]);
+      eventBus.publish("datasets", "created", oData);
       sap.m.MessageToast.show("Dataset created.");
     }, () => {
       sap.m.MessageBox.error("Failed to create the dataset, try reloading the application or try again later.")

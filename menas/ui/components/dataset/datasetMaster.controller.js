@@ -23,7 +23,7 @@ sap.ui.define([
 
     onInit: function () {
       this._eventBus = sap.ui.getCore().getEventBus();
-      this._eventBus.subscribe("dataset", "list", this.list, this);
+      this._eventBus.subscribe("datasets", "list", this.list, this);
 
       this._model = sap.ui.getCore().getModel();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);

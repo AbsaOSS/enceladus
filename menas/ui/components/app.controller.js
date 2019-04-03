@@ -26,6 +26,9 @@ sap.ui.define([
       this._eventBus = sap.ui.getCore().getEventBus();
       this._eventBus.subscribe("nav", "back", this.onPressMasterBack, this);
       this._eventBus.subscribe("nav", "logout", this.onLogout, this);
+      this._eventBus.subscribe("schemas", "created", this.onEntityCreated, this);
+      this._eventBus.subscribe("datasets", "created", this.onEntityCreated, this);
+      this._eventBus.subscribe("mappingTables", "created", this.onEntityCreated, this);
 
       this._app = this.byId("menasApp");
 
@@ -79,13 +82,21 @@ sap.ui.define([
     },
 
     onDatasetPress: function (oEv) {
-      this._eventBus.publish("dataset", "list");
+      this._eventBus.publish("datasets", "list");
       this._app.toMaster(this.createId("datasetsPage"));
     },
 
     onMappingPress: function (oEv) {
-      this._eventBus.publish("mappingTable", "list");
+      this._eventBus.publish("mappingTables", "list");
       this._app.toMaster(this.createId("mappingTablesPage"));
+    },
+
+    onEntityCreated: function (sTopic, sEvent, oData) {
+      this._eventBus.publish(sTopic, "list");
+      this._router.navTo(sTopic, {
+        id: oData.name,
+        version: oData.version
+      })
     },
 
     onLogout: function () {

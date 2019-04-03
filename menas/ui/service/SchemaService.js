@@ -151,9 +151,7 @@ var SchemaService = new function () {
       name: sName,
       description: sDescription
     }, (oData) => {
-      this.updateMasterPage();
-      model.setProperty("/currentSchema", oData);
-      SchemaService.getAuditTrail(oData.name);
+      eventBus.publish("schemas", "created", oData);
       sap.m.MessageToast.show("Schema created.");
     }, () => {
       sap.m.MessageBox.error("Failed to create the schema, try reloading the application or try again later.")
