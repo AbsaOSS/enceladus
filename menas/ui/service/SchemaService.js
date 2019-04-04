@@ -23,16 +23,12 @@ var SchemaService = new function () {
     eventBus.publish("schemas", "list");
   };
 
-  this.getSchemaList = function (oControl, bLoadFirst, bGetAllVersionsOfFirst) {
+  this.getSchemaList = function (oControl, fnOnComplete) {
     Functions.ajax("api/schema/list", "GET", {}, (oData) => {
       oControl.setModel(new sap.ui.model.json.JSONModel(oData), "schemas");
-      if (oData.length === 0) {
-        //ensure the detail is empty too
-        model.setProperty("/currentSchema", {});
-      } else if (bLoadFirst) {
-        SchemaService.getSchemaVersion(oData[0]._id, oData[0].latestVersion)
-      } else if (bGetAllVersionsOfFirst) {
-        SchemaService.getAllSchemaVersions(oData[0]._id)
+      console.log("done");
+      if (fnOnComplete) {
+        fnOnComplete(oData);
       }
     }, () => {
       sap.m.MessageBox.error("Failed to get the list of schemas. Please wait a moment and try reloading the application")
