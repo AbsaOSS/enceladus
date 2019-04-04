@@ -14,8 +14,12 @@
  */
 
 package za.co.absa.enceladus.rest.repositories
+import java.util
+
+import org.json4s.jackson.Json
 import org.mongodb.scala._
 import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.model.Field
 
 import scala.collection.immutable.HashMap
 //import org.mongodb.scala.{AggregateObservable, Completed, Document, MapReduceObservable, MongoDatabase}
@@ -24,6 +28,7 @@ import scala.collection.immutable.HashMap
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Sorts._
+import org.mongodb.scala.model.Updates._
 //import org.mongodb.scala.model.{FindOneAndUpdateOptions, ReturnDocument, Updates}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
@@ -46,21 +51,98 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
   import scala.concurrent.ExecutionContext.Implicits.global
   private[repositories] override def collectionName: String = MonitoringMongoRepository.collectionName
 
-  //case class DocumentWrapper(value: Document)
 
   def getMonitoringDataPoints(datasetName: String): Future[Seq[String]] = {
-    /***val observable: AggregateObservable[Document] = collection
+    // scala mongodb driver does not yet support all mql features, so we use Document()
+    val observable: AggregateObservable[Document] = collection
       .aggregate(Seq(
+        // filter by dataset name
         filter(equal("dataset", datasetName)),
-        addFields(),
-        sort(orderBy(
-          descending("controlMeasure.metadata.informationDate"),
-          descending("controlMeasure.metadata.version"),
-          descending("startDateTime")
-        ))
-      )) ***/
+        //add casted dates
+        Document("""{$addFields: {
+                   |          startDateTimeCasted: {
+                   |              $dateFromString: {
+                   |                  dateString: "$startDateTime",
+                   |                  format: "%d-%m-%Y %H:%M:%S %z",
+                   |                  onError: "$startDateTime"
+                   |              }
+                   |          },
+                   |          informationDateCasted: {
+                   |              $dateFromString: {
+                   |                  dateString: "$controlMeasure.metadata.informationDate",
+                   |                  format: "%d-%m-%Y",
+                   |                  onError: "wrongFormat"
+                   |              }
+                   |          },
+                   | }},""".stripMargin),
+        // TODO: filter by informationDateCasted in order to limit the number of elements
+        // bring the raw checkpoint to root for further access
+        Document(""" {$addFields: {
+                   |           raw_checkpoint : {
+                   |              $arrayElemAt : [ {
+                   |                  $filter : {
+                   |                      input : "$controlMeasure.checkpoints",
+                   |                      as : "checkpoint",
+                   |                      cond : { $eq : [ "$$checkpoint.name", "Raw"] }
+                   |                  }
+                   |              }, 0 ]
+                   |          }
+                   |      }}""".stripMargin),
+        // add the raw record count
+        Document(""" {$addFields: {
+                   |           raw_recordcount_control : {
+                   |              $arrayElemAt : [ {
+                   |                  $filter : {
+                   |                      input : "$raw_checkpoint.controls",
+                   |                      as : "control",
+                   |                      cond : { $eq : [ "$$control.controlName", "recordcount"] }
+                   |                  }
+                   |              }, 0 ]
+                   |          }
+                   |      }}""".stripMargin),
+        // sort intermidiate results before further grouping (needed as we use $first to keep the latest run only)
+        Document(
+          """{$sort: {
+            |    informationDateCasted : -1,
+            |    "controlMeasure.metadata.version" : -1,
+            |    startDateTimeCasted : -1
+            |} }""".stripMargin),
+        // group, so that we have a single object per infoDate and report version, which corresponds to the latest run
+        // here we also project the data of interest
+        Document(""" {$group : {
+                   |          "_id": {informationDateCasted: "$informationDateCasted", reportVersion: "$controlMeasure.metadata.version"},
+                   |          "runObjectId" : {$first: "$_id"},
+                   |          "startDateTime" : {$first: "$startDateTimeCasted"},
+                   |          "datasetVersion" : {$first: "$datasetVersion"},
+                   |          informationDate : {$first: "$controlMeasure.metadata.informationDate"},
+                   |          informationDateCasted : {$first: "$informationDateCasted"},
+                   |          reportVersion : {$first: "$controlMeasure.metadata.version"},
+                   |          "runId" : {$first: "$runId"} ,
+                   |          "status" : {$first: "$runStatus.status"},
+                   |          "std_records_succeeded" : {$first: "$controlMeasure.metadata.additionalInfo.std_records_succeeded"},
+                   |          "std_records_failed" : {$first: "$controlMeasure.metadata.additionalInfo.std_records_failed"},
+                   |          "conform_records_succeeded" : {$first: "$controlMeasure.metadata.additionalInfo.conform_records_succeeded"},
+                   |          "conform_records_failed" : {$first: "$controlMeasure.metadata.additionalInfo.conform_records_failed"},
+                   |          raw_recordcount : {$first: "$raw_recordcount_control.controlValue"},
+                   |
+                   |      }}""".stripMargin),
+        // sort the final results
+        Document("""{$sort: {informationDateCasted : -1, reportVersion: -1}}""".stripMargin)
 
-    val observable: AggregateObservable[Document] = collection.aggregate(Seq(filter(equal("dataset", datasetName))))
+        //addFields(new Field("startDateTimeCasted", "blah"))
+        /***project( Document("""{startDateTimeCasted: {$dateFromString: {
+                                                                          dateString: "$startDateTime",
+                                                                          format: "%d-%m-%Y %H:%M:%S %z",
+                                                                          onError: "$startDateTime"
+                                                                      }}}""")) ***/
+       // sort(orderBy(
+       //   descending("controlMeasure.metadata.informationDate"),
+       //   descending("controlMeasure.metadata.version"),
+       //   descending("startDateTime")
+       // ))
+      ))
+
+    //val observable: AggregateObservable[Document] = collection.aggregate(Seq(filter(equal("dataset", datasetName))))
 
     observable.map(doc => doc.toJson).toFuture()
   }
