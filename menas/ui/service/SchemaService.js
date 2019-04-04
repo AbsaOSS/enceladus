@@ -26,7 +26,6 @@ var SchemaService = new function () {
   this.getSchemaList = function (oControl, fnOnComplete) {
     Functions.ajax("api/schema/list", "GET", {}, (oData) => {
       oControl.setModel(new sap.ui.model.json.JSONModel(oData), "schemas");
-      console.log("done");
       if (fnOnComplete) {
         fnOnComplete(oData);
       }
