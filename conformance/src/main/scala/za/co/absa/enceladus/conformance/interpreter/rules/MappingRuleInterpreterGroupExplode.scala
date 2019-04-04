@@ -73,11 +73,10 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
 
     val defaultMappingValue = defaultMappingValueMap.get(rule.targetAttribute)
 
-    val arrayErrorCondition = expCtx.getArrayErrorCondition(rule.outputColumn)
+    val arrayErrorCondition = col(rule.outputColumn).isNull.and(expCtx.getArrayErrorCondition(rule.outputColumn))
+    log.debug(s"Array Error Condition = $arrayErrorCondition")
     val errorsDf = addErrorsToErrCol(placedDf, rule.attributeMappings.values.toSeq, rule.outputColumn,
-      defaultMappingValue, mappingErrUdfCall, (srcCols, outCol) => {
-        outCol.isNull.and(arrayErrorCondition)
-      })
+      defaultMappingValue, mappingErrUdfCall, arrayErrorCondition)
 
     val collectedDf = collectIfNeeded(expCtx, errorsDf)
 
@@ -107,7 +106,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
                                 outputCol: String,
                                 defaultMappingValue: Option[String],
                                 mappingErrUdfCall: Column,
-                                errorCondition: (Seq[Column], Column) => Column): DataFrame = {
+                                errorCondition: Column): DataFrame = {
 
     val errorsDf = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, outputCol, outputCol,
       ErrorMessage.errorColumnName,
@@ -117,8 +116,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
           case None => c
         }
       }, _ => {
-        when(errorCondition(sourceCols.map(col), col(outputCol)),
-          mappingErrUdfCall).otherwise(null)
+        when(errorCondition, mappingErrUdfCall).otherwise(null)
       }
     )
     errorsDf
