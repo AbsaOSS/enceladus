@@ -54,13 +54,12 @@ object DynamicInterpreter {
                 jobShortName: String = "Conformance"
                )(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): DataFrame = {
 
-    //noinspection TypeAnnotation
-    implicit val interpreterContext = InterpreterContext(inputDf.schema, conformance, experimentalMappingRule,
-      enableControlFramework, jobShortName, spark, dao, progArgs)
+    implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
+      experimentalMappingRule, enableControlFramework, jobShortName, spark, dao, progArgs)
 
     applyCheckpoint(inputDf, "Start")
 
-    val conformedDf: DataFrame = applyConformanceRules(ensureErrorColumnExists(inputDf))
+    val conformedDf = applyConformanceRules(ensureErrorColumnExists(inputDf))
 
     applyCheckpoint(inputDf, "End")
     logExecutionPlan(conformedDf)
@@ -77,7 +76,7 @@ object DynamicInterpreter {
 
     var explodeContext = ExplosionContext()
 
-    val steps = getConformanceSteps(ictx)
+    val steps = getConformanceSteps
 
     // Fold left on rules
     val conformedDf = steps.foldLeft(inputDf)({
@@ -104,18 +103,23 @@ object DynamicInterpreter {
             val (dfOut, ctx) = ExplodeTools.explodeAllArraysInPath(r.outputColumn, df, explodeContext)
             explodeContext = ctx
             dfOut
-          case r: ArrayCollectPseudoRule          =>
+          case _: ArrayCollectPseudoRule          =>
             val dfOut = ExplodeTools.revertAllExplosions(df, explodeContext, Some(ErrorMessage.errorColumnName))
             explodeContext = ExplosionContext()
             dfOut
           case _ => throw new IllegalStateException(s"Unrecognized rule class: ${rule.getClass.getName}")
         }
-        applyRuleCheckpoint(rule, confd, ictx.jobShortName, explodeContext, ictx.enableControlFramework)
+        applyRuleCheckpoint(rule, confd, explodeContext)
     })
     conformedDf
   }
 
-  private def getConformanceSteps(ictx: InterpreterContext): List[ConformanceRule] = {
+  /**
+    * Gets the list of conformance rules from the context and applies optimization rearrangements if needed
+    *
+    * @return A list of conformance rules
+    */
+  def getConformanceSteps(implicit ictx: InterpreterContext): List[ConformanceRule] = {
     val steps = ictx.conformance.conformance.sortBy(_.order)
     if (ictx.experimentalMappingRule) {
       getExplosionOptimizedSteps(steps, ictx.schema)
@@ -124,6 +128,16 @@ object DynamicInterpreter {
     }
   }
 
+  /**
+    * Transforms a list of steps (conformance rules) such as mapping rules operating on the same array will
+    * grouped by a single explosion. The explode/collect pairs will be added between conformance rules
+    * as corresponding pseudo-rules.
+    *
+    * @param inputSteps       The list of the rules to apply in the order of how they should be applied
+    * @param schema The schema of the original dataframe to check which fields are arrays
+    *
+    * @return The transformed list of conformance rules
+    */
   private[interpreter] def getExplosionOptimizedSteps(inputSteps: List[ConformanceRule],
                                                       schema: StructType): List[ConformanceRule] = {
     reorderConformanceRules(
@@ -134,26 +148,11 @@ object DynamicInterpreter {
   }
 
   /**
-    * Explodes all arrays for mapping rules so the dataframe can be joined to mapping tables
+    * Applies a control framework checkpoint given a stage of the conformance
     *
-    * @param inputDf An input dataframe
-    * @param steps   A list of conformance rules
+    * @param df       Dataframe to apply the checkpoint on
+    * @param jobStage Specifies a job stage that will be added to the checkpoint name
     */
-  private def explodeAllMappingRuleArrays(inputDf: DataFrame,
-                                          steps: List[ConformanceRule]): (DataFrame, ExplosionContext) = {
-
-    steps.foldLeft((inputDf, ExplosionContext())) {
-      case ((df, context), rule) =>
-        rule match {
-          case r: MappingConformanceRule =>
-            ExplodeTools.explodeAllArraysInPath(r.outputColumn, df, context)
-          case _ =>
-            (df, context)
-        }
-    }
-  }
-
-  /** Applies a control framework checkpoint given a stage of the conformance */
   private def applyCheckpoint(df: Dataset[Row], jobStage: String)(implicit ictx: InterpreterContext): Unit = {
     if (ictx.enableControlFramework) {
       df.setCheckpoint(s"${ictx.jobShortName} - $jobStage")
@@ -161,23 +160,24 @@ object DynamicInterpreter {
   }
 
   /**
-    * applyRuleCheckpoint Function which takes a generic rule and the dataframe and applies the control framework
-    * checkpoint if configured
+    * Create a new Control Framework checkpoint for a specified Conformance Rule (after the rule is applied)
     *
-    * @param rule The conformance rule
-    * @param df   Dataframe to apply the checkpoint on
+    * @param rule           The conformance rule
+    * @param df             Dataframe to apply the checkpoint on
+    * @param explodeContext An exploded context to be taken into account if a checkpoint is created for an exploded
+    *                       dataframe
+    * @return A cached dataframe if a checkpoint is calculated, otherwise returns the original dataframe
     */
   private def applyRuleCheckpoint(rule: ConformanceRule,
-                              df: Dataset[Row],
-                              jobShortName: String,
-                              explodeContext: ExplosionContext,
-                              enableCF: Boolean): Dataset[Row] = {
-    if (enableCF && rule.controlCheckpoint) {
+                                  df: Dataset[Row],
+                                  explodeContext: ExplosionContext)
+                                 (implicit ictx: InterpreterContext): Dataset[Row] = {
+    if (ictx.enableControlFramework && rule.controlCheckpoint) {
       val explodeFilter = explodeContext.getControlFrameworkFilter
       // Cache the data first since Atum will execute an action for each control metric
       val cachedDf = df.cache
       cachedDf.filter(explodeFilter)
-        .setCheckpoint(s"$jobShortName (${rule.order}) - ${rule.outputColumn}")
+        .setCheckpoint(s"${ictx.jobShortName} (${rule.order}) - ${rule.outputColumn}")
       cachedDf
     }
     else {
@@ -193,7 +193,7 @@ object DynamicInterpreter {
   }
 
   /**
-    * Ensures the existence of the error error column
+    * Ensures the existence of the error column
     *
     * @param inputDf the input data frame
     * @return A dataframe that has an error column
@@ -254,7 +254,7 @@ object DynamicInterpreter {
   private def addExplosionsToMappingRuleGroups(ruleGroups: List[List[ConformanceRule]],
                                                schema: StructType): List[ConformanceRule] = {
     ruleGroups.flatMap(rules => {
-      if (rules.lengthCompare(1)>0) {
+      if (rules.lengthCompare(1) > 0) {
         val optArray = SchemaUtils.getDeepestArrayPath(schema, rules.head.outputColumn)
         optArray match {
           case Some(arr) =>

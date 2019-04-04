@@ -24,14 +24,20 @@ object TradeConformance {
   val countryMT = MappingTable(name = "country", version = 0, hdfsPath = "src/test/testData/country",
     schemaName = "country", schemaVersion = 0)
 
-  // Seq(("Kc", "CZK"), ("Rand", "ZAR"), ("SWK","SEK")).toDF
-  // .select($"_1".as("currency_code"), $"_2".as("currency_name"))
-  // .write.parquet("src/test/testData/currency/reportDate=2017-11-01")
+  // This mapping table is provided as a parquet file. To re-generate a parquet file for the mapping table use this
+  // Spark shell command:
+  //
+  //   Seq(("Kc", "CZK"), ("Rand", "ZAR"), ("SWK","SEK")).toDF
+  //     .select($"_1".as("currency_code"), $"_2".as("currency_name"))
+  //     .write.parquet("src/test/testData/currency/reportDate=2017-11-01")
   val currencyMT = MappingTable(name = "currency", version = 0, hdfsPath = "src/test/testData/currency",
     schemaName = "currency", schemaVersion = 0)
 
-  // Seq(("Stock", "STK"), ("Bond", "BND")).toDF.select($"_1".as("product_code"), $"_2".as("product_name"))
-  // .write.parquet("src/test/testData/product/reportDate=2017-11-01")
+  // This mapping table is provided as a parquet file. To re-generate a parquet file for the mapping table use this
+  // Spark shell command:
+  //
+  //   Seq(("Stock", "STK"), ("Bond", "BND")).toDF.select($"_1".as("product_code"), $"_2".as("product_name"))
+  //     .write.parquet("src/test/testData/product/reportDate=2017-11-01")
   val productMT = MappingTable(name = "product", version = 0, hdfsPath = "src/test/testData/product",
     schemaName = "product", schemaVersion = 0)
 

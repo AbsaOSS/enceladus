@@ -78,27 +78,23 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     val errorsDf = addErrorsToErrCol(placedDf, rule.attributeMappings.values.toSeq, rule.outputColumn,
       defaultMappingValue, mappingErrUdfCall, arrayErrorCondition)
 
-    val collectedDf = collectIfNeeded(expCtx, errorsDf)
-
-    collectedDf
+    collectIfNeeded(expCtx, errorsDf)
   }
 
   private def explodeIfNeeded(df: Dataset[Row]): (Dataset[Row], ExplosionContext) = {
-    val (explodedDf, expCtx) = if (explodeContext.explosions.isEmpty) {
+    if (explodeContext.explosions.isEmpty) {
       ExplodeTools.explodeAllArraysInPath(rule.outputColumn, df)
     } else {
       (df, explodeContext)
     }
-    (explodedDf, expCtx)
   }
 
   private def collectIfNeeded(expCtx: ExplosionContext, errorsDf: DataFrame): DataFrame = {
-    val collectedDf = if (explodeContext.explosions.isEmpty) {
+    if (explodeContext.explosions.isEmpty) {
       ExplodeTools.revertAllExplosions(errorsDf, expCtx, Some(ErrorMessage.errorColumnName))
     } else {
       errorsDf
     }
-    collectedDf
   }
 
   private def addErrorsToErrCol(df: DataFrame,

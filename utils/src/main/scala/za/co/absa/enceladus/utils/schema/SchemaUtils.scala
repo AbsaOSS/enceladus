@@ -159,7 +159,7 @@ object SchemaUtils {
     * @param fieldPaths A list of paths to analyze
     * @return Returns a common array path if there is one and None if any of the arrays are on diverging paths
     */
-def getDeepestCommonArrayPath(schema: StructType, fieldPaths: Seq[String]): Option[String] = {
+  def getDeepestCommonArrayPath(schema: StructType, fieldPaths: Seq[String]): Option[String] = {
     val arrayPaths = fieldPaths.flatMap(path => getAllArraysInPath(path, schema)).distinct
 
     if (arrayPaths.nonEmpty && isCommonSubPath(arrayPaths: _*)) {
