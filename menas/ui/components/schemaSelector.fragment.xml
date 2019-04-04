@@ -28,7 +28,5 @@
             <core:ListItem key="{version}" text="{version}"
                            additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
         </Select>
-        <Button icon="sap-icon://action">
-        </Button>
     </FlexBox>
 </core:FragmentDefinition>
