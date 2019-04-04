@@ -41,8 +41,7 @@ var AddMappingTableFragment = function (oController, fnLoad) {
         setTimeout(this.submit.bind(this), 500);
         return;
       }
-console.log(oMT)
-console.log(oMT.nameUnique)
+
       if (this.isValid(oMT)) {
         // send and update UI
         if (oMT.isEdit) {
