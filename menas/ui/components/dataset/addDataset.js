@@ -30,7 +30,6 @@ var AddDatasetFragment = function (oController, fnLoad) {
   };
 
   let oDialog = loadDialogFragment();
-  SchemaService.getSchemaList(oDialog, false, true);
 
   let oFragment = {
     submit: function () {
@@ -111,20 +110,24 @@ var AddDatasetFragment = function (oController, fnLoad) {
 
   this.getAdd = function() {
     oFragment.onPress = () => {
-      let oFirstSchema = oDialog.getModel("schemas").oData[0];
 
-      oDialog.setModel(new sap.ui.model.json.JSONModel({
-        name: "",
-        description: "",
-        schemaName: oFirstSchema._id,
-        schemaVersion: oFirstSchema.latestVersion,
-        hdfsPath: "/",
-        hdfsPublishPath: "/",
-        isEdit: false,
-        title: "Add"
-      }), "entity");
+      SchemaService.getSchemaList(oDialog, oData => {
+        SchemaService.getAllSchemaVersions(oData[0]._id);
+        let oFirstSchema = oDialog.getModel("schemas").oData[0];
+
+        oDialog.setModel(new sap.ui.model.json.JSONModel({
+          name: "",
+          description: "",
+          schemaName: oFirstSchema._id,
+          schemaVersion: oFirstSchema.latestVersion,
+          hdfsPath: "/",
+          hdfsPublishPath: "/",
+          isEdit: false,
+          title: "Add"
+        }), "entity");
 
       oDialog.open();
+      });
     };
 
     return oFragment;
@@ -132,15 +135,18 @@ var AddDatasetFragment = function (oController, fnLoad) {
 
   this.getEdit = function() {
     oFragment.onPress = () => {
-      let current = oController._model.getProperty("/currentDataset");
-      current.isEdit = true;
-      current.title = "Edit";
 
-      oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
+      SchemaService.getSchemaList(oDialog, () => {
+        let current = oController._model.getProperty("/currentDataset");
+        current.isEdit = true;
+        current.title = "Edit";
 
-      SchemaService.getAllSchemaVersions(current.schemaName, sap.ui.getCore().byId("schemaVersionSelect"));
+        oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
 
-      oDialog.open();
+        SchemaService.getAllSchemaVersions(current.schemaName, sap.ui.getCore().byId("schemaVersionSelect"));
+
+        oDialog.open();
+      });
     };
 
     return oFragment;

@@ -30,7 +30,6 @@ var AddMappingTableFragment = function (oController, fnLoad) {
   };
 
   let oDialog = loadDialogFragment();
-  SchemaService.getSchemaList(oDialog, false, true);
 
   let oFragment = {
     submit: function () {
@@ -108,19 +107,22 @@ var AddMappingTableFragment = function (oController, fnLoad) {
 
   this.getAdd = function() {
     oFragment.onPress = () => {
-      let oFirstSchema = oDialog.getModel("schemas").oData[0];
+      SchemaService.getSchemaList(oDialog, oData => {
+        const oFirstSchema = oData[0];
+        SchemaService.getAllSchemaVersions(oFirstSchema._id);
 
-      oController._model.setProperty("/newMappingTable", {
-        name: "",
-        description: "",
-        schemaName: oFirstSchema._id,
-        schemaVersion: oFirstSchema.latestVersion,
-        hdfsPath: "/",
-        isEdit: false,
-        title: "Add"
+        oController._model.setProperty("/newMappingTable", {
+          name: "",
+          description: "",
+          schemaName: oFirstSchema._id,
+          schemaVersion: oFirstSchema.latestVersion,
+          hdfsPath: "/",
+          isEdit: false,
+          title: "Add"
+        });
+
+        oDialog.open();
       });
-
-      oDialog.open();
     };
 
     return oFragment;
@@ -128,16 +130,18 @@ var AddMappingTableFragment = function (oController, fnLoad) {
 
   this.getEdit = function() {
     oFragment.onPress = () => {
-      let current = oController._model.getProperty("/currentMappingTable");
+      SchemaService.getSchemaList(oDialog, () => {
+        const current = oController._model.getProperty("/currentMappingTable");
 
-      current.isEdit = true;
-      current.title = "Edit";
+        current.isEdit = true;
+        current.title = "Edit";
 
-      oController._model.setProperty("/newMappingTable", jQuery.extend(true, {}, current));
+        oController._model.setProperty("/newMappingTable", jQuery.extend(true, {}, current));
 
-      SchemaService.getAllSchemaVersions(current.schemaName, oController.byId("newMappingTableSchemaVersionSelect"));
+        SchemaService.getAllSchemaVersions(current.schemaName, oController.byId("newMappingTableSchemaVersionSelect"));
 
-      oDialog.open();
+        oDialog.open();
+      });
     };
 
     return oFragment;
