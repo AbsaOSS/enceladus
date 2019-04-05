@@ -110,9 +110,9 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
     // 1. Order of the columns differ
     // 2. The explode (original version) seems do not handle empty array case very well if there is an array inside an array
     val expected = if (useExperimentalMappingRule){
-      TradeConformance.expectedConformedJsonNoExplode.mkString("\n")
+      TradeConformance.expectedConformedGroupExplode.mkString("\n")
     } else {
-      TradeConformance.expectedConformedJsonWithExplode.mkString("\n")
+      TradeConformance.expectedConformedJson.mkString("\n")
     }
 
     conformed.coalesce(1).orderBy($"id").write.mode("overwrite").parquet("src/test/testData/_tradeOutput")

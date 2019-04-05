@@ -181,7 +181,10 @@ object ExplodeTools {
         decDf
           .orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*)
           .agg(collect_list(decField).as(tmpColName),
-            array_distinct(flatten(collect_list(col(errorCol)))).as(errorCol))
+            // This is a workaround for Spark's array_distinct() issue
+            callUDF("arrayDistinctErrors", flatten(collect_list(col(errorCol)))).as(errorCol))
+            // When it is fixed in Spark the code should look like this:
+            // array_distinct(flatten(collect_list(col(errorCol)))).as(errorCol))
     }
 
     // Restore null values to yet another temporary field
