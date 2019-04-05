@@ -68,6 +68,20 @@ class SchemaUtilsSuite extends FunSuite {
     assert(getFieldType("f.g.h.a", schema).isEmpty)
   }
 
+  test ("Test isColumnArrayOfStruct") {
+    assert(!isColumnArrayOfStruct("a", schema))
+    assert(!isColumnArrayOfStruct("b", schema))
+    assert(!isColumnArrayOfStruct("b.c", schema))
+    assert(!isColumnArrayOfStruct("b.d", schema))
+    assert(!isColumnArrayOfStruct("b.d.e", schema))
+    assert(!isColumnArrayOfStruct("f", schema))
+    assert(isColumnArrayOfStruct("f.g", schema))
+    assert(!isColumnArrayOfStruct("f.g.h", schema))
+    assert(!isColumnArrayOfStruct("a", nestedSchema))
+    assert(isColumnArrayOfStruct("b", nestedSchema))
+    assert(isColumnArrayOfStruct("b.c.d", nestedSchema))
+  }
+
   test("Testing getFirstArrayPath") {
     assertResult("f.g")(getFirstArrayPath("f.g.h", schema))
     assertResult("f.g")(getFirstArrayPath("f.g", schema))

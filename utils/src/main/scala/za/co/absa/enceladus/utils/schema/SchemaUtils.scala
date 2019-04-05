@@ -51,6 +51,28 @@ object SchemaUtils {
   }
 
   /**
+    * Checks if the specified path is an array of structs
+    *
+    * @param path   The dot-separated path to the field
+    * @param schema The schema which should contain the specified path
+    * @return true if the field is an array of structs
+    */
+  def isColumnArrayOfStruct(path: String, schema: StructType): Boolean = {
+    getFieldType(path, schema) match {
+      case Some(dt) =>
+        dt match {
+          case arrayType: ArrayType =>
+            arrayType.elementType match {
+              case _: StructType => true
+              case _ => false
+            }
+          case _ => false
+        }
+      case None => false
+    }
+  }
+
+  /**
     * Get nullability of a field from a text path and a given schema
     *
     * @param path   The dot-separated path to the field
