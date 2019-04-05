@@ -29,9 +29,6 @@ import org.apache.spark.sql.functions._
 import scala.util.Random
 
 class TypeParserSuite extends FunSuite with SparkTestBase {
-
-  implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
-
   val showStandardization: Boolean = false
 
   private case class DS(precision: Int, scale: Int) //DecimalSize
@@ -121,17 +118,17 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
     (fromType, toType, isEpoch, timezone) match {
       case (_, DateType, true, _)                      => s"to_date(from_unixtime((CAST(`%s` AS BIGINT) / ${DateTimePattern.epochFactor(pattern)}L), 'yyyy-MM-dd'), 'yyyy-MM-dd')"
       case (_, TimestampType, true, _)                 => s"to_timestamp(from_unixtime((CAST(`%s` AS BIGINT) / ${DateTimePattern.epochFactor(pattern)}L), 'yyyy-MM-dd HH:mm:ss'), 'yyyy-MM-dd HH:mm:ss')"
-      case (StringType, DateType, _, Some(tz))         => s"to_utc_timestamp(to_timestamp(`%s`, '$pattern'), $tz)"
+      case (StringType, DateType, _, Some(tz))         => s"to_date(to_utc_timestamp(to_timestamp(`%s`, '$pattern'), '$tz'))"
       case (StringType, TimestampType, _, Some(tz))    => s"to_utc_timestamp(to_timestamp(`%s`, '$pattern'), $tz)"
       case (DoubleType, TimestampType, _, Some(tz))    => s"to_utc_timestamp(to_timestamp(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern'), $tz)"
       case (FloatType, TimestampType, _, Some(tz))     => s"to_utc_timestamp(to_timestamp(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern'), $tz)"
-      case (DoubleType, DateType, _, Some(tz))         => s"to_utc_timestamp(to_timestamp(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern'), $tz)"
-      case (FloatType, DateType, _, Some(tz))          => s"to_utc_timestamp(to_timestamp(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern'), $tz)"
+      case (DoubleType, DateType, _, Some(tz))         => s"to_date(to_utc_timestamp(to_timestamp(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern'), '$tz'))"
+      case (FloatType, DateType, _, Some(tz))          => s"to_date(to_utc_timestamp(to_timestamp(CAST(CAST(`%s` AS DECIMAL(${ds.precision},${ds.scale})) AS STRING), '$pattern'), '$tz'))"
       case (TimestampType, TimestampType, _, Some(tz)) => s"to_utc_timestamp(%s, $tz)"
       case (TimestampType, DateType, _, Some(tz))      => s"to_date(to_utc_timestamp(`%s`, '$tz'))"
       case (DateType, TimestampType, _, Some(tz))      => s"to_utc_timestamp(%s, $tz)"
       case (DateType, DateType, _, Some(tz))           => s"to_date(to_utc_timestamp(`%s`, '$tz'))"
-      case (_, DateType, _, Some(tz))                  => s"to_utc_timestamp(to_timestamp(CAST(`%s` AS STRING), '$pattern'), $tz)"
+      case (_, DateType, _, Some(tz))                  => s"to_date(to_utc_timestamp(to_timestamp(CAST(`%s` AS STRING), '$pattern'), '$tz'))"
       case (_, TimestampType, _, Some(tz))             => s"to_utc_timestamp(to_timestamp(CAST(`%s` AS STRING), '$pattern'), $tz)"
       case (TimestampType, TimestampType, _, _)        |
            (DateType, DateType, _, _)                  => "%s"
@@ -159,6 +156,14 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
                           src: String = "sourceField",
                           testData: TestData = Map.empty
                          ): Unit = {
+    def doAssert(expected: String, actual: String): Unit = {
+      if (actual!=expected) {
+        println(s"${baseType.typeName}->${target.dataType.typeName} (Pattern: $pattern, Tz: $timezone)")
+        println(s"Exp: $expected")
+        println(s"Act: $actual")
+        assert(actual == expected)
+      }
+    }
 
     val srcF = fullName(path, src)
     val boolS = (!target.nullable).toString
@@ -174,10 +179,15 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
 
     val std = s"CASE WHEN ((size(CASE WHEN (($srcF IS NULL) AND $boolS) THEN array(stdNullErr($srcF)) ELSE CASE WHEN (($srcF IS NOT NULL) AND ($castString IS NULL)) THEN array(stdCastErr($srcF, CAST($srcF AS STRING))) ELSE [] END END) = 0) AND ($srcF IS NOT NULL)) THEN $castString ELSE CASE WHEN (size(CASE WHEN (($srcF IS NULL) AND $boolS) THEN array(stdNullErr($srcF)) ELSE CASE WHEN (($srcF IS NOT NULL) AND ($castString IS NULL)) THEN array(stdCastErr($srcF, CAST($srcF AS STRING))) ELSE [] END END) = 0) THEN NULL ELSE $default END END AS `${target.name}`"
     val actual = output.stdCol.toString().replaceFirst("#\\d+$", "")
-    assert(actual == std)
+    doAssert(std, actual)
 
     val err = s"CASE WHEN (($srcF IS NULL) AND $boolS) THEN array(stdNullErr($srcF)) ELSE CASE WHEN (($srcF IS NOT NULL) AND ($castString IS NULL)) THEN array(stdCastErr($srcF, CAST($srcF AS STRING))) ELSE [] END END"
-    assert(output.errors.toString() == err)
+    val errActual = output.errors.toString()
+    if (actual!=std) {
+      println(s"Exp: $err")
+      println(s"Act: $errActual")
+    }
+    doAssert(err, errActual)
 
     testCast(output, path, src, pattern, baseType, target.dataType)
   }
@@ -399,8 +409,6 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
     val structFieldWithMetadataSourceColumn = StructField("c", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "override_c").build)
     val schema = StructType(Array(structFieldNoMetadata, structFieldWithMetadataNotSourceColumn, structFieldWithMetadataSourceColumn))
     //Just Testing field name override
-    import spark.implicits._
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
     val parseOutputStructFieldNoMetadata = TypeParser.standardize(structFieldNoMetadata, "path", schema)
     assertResult(true)(parseOutputStructFieldNoMetadata.stdCol.expr.toString().contains("path.a"))
     assertResult(false)(parseOutputStructFieldNoMetadata.stdCol.expr.toString().replaceAll("path.a", "").contains("path"))
@@ -419,5 +427,4 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
     assertResult(true)(parseOutputStructFieldWithMetadataSourceColumn.errors.expr.toString().contains("path.override_c"))
     assertResult(false)(parseOutputStructFieldWithMetadataSourceColumn.errors.expr.toString().replaceAll("path.override_c", "").contains("path"))
   }
-
 }
