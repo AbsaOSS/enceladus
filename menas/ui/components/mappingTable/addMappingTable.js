@@ -107,6 +107,10 @@ var AddMappingTableFragment = function (oController, fnLoad) {
 
   this.getAdd = function() {
     oFragment.onPress = () => {
+
+      oDialog.setBusy(true);
+      oDialog.open();
+
       SchemaService.getSchemaList(oDialog, oData => {
         const oFirstSchema = oData[0];
         SchemaService.getAllSchemaVersions(oFirstSchema._id);
@@ -121,7 +125,7 @@ var AddMappingTableFragment = function (oController, fnLoad) {
           title: "Add"
         });
 
-        oDialog.open();
+        oDialog.setBusy(false);
       });
     };
 
@@ -130,6 +134,10 @@ var AddMappingTableFragment = function (oController, fnLoad) {
 
   this.getEdit = function() {
     oFragment.onPress = () => {
+
+      oDialog.setBusy(true);
+      oDialog.open();
+
       SchemaService.getSchemaList(oDialog, () => {
         const current = oController._model.getProperty("/currentMappingTable");
 
@@ -140,7 +148,7 @@ var AddMappingTableFragment = function (oController, fnLoad) {
 
         SchemaService.getAllSchemaVersions(current.schemaName, oController.byId("newMappingTableSchemaVersionSelect"));
 
-        oDialog.open();
+        oDialog.setBusy(false);
       });
     };
 

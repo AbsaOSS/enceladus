@@ -111,6 +111,9 @@ var AddDatasetFragment = function (oController, fnLoad) {
   this.getAdd = function() {
     oFragment.onPress = () => {
 
+      oDialog.setBusy(true);
+      oDialog.open();
+
       SchemaService.getSchemaList(oDialog, oData => {
         SchemaService.getAllSchemaVersions(oData[0]._id);
         let oFirstSchema = oDialog.getModel("schemas").oData[0];
@@ -126,7 +129,7 @@ var AddDatasetFragment = function (oController, fnLoad) {
           title: "Add"
         }), "entity");
 
-      oDialog.open();
+        oDialog.setBusy(false);
       });
     };
 
@@ -136,16 +139,17 @@ var AddDatasetFragment = function (oController, fnLoad) {
   this.getEdit = function() {
     oFragment.onPress = () => {
 
+      oDialog.setBusy(true);
+      oDialog.open();
+
       SchemaService.getSchemaList(oDialog, () => {
         let current = oController._model.getProperty("/currentDataset");
         current.isEdit = true;
         current.title = "Edit";
-
-        oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
-
         SchemaService.getAllSchemaVersions(current.schemaName, sap.ui.getCore().byId("schemaVersionSelect"));
 
-        oDialog.open();
+        oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
+        oDialog.setBusy(false);
       });
     };
 
