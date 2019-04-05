@@ -21,7 +21,7 @@ import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
 
 case class MappingTable(name: String,
-    version: Int = 0,
+    version: Int = 1,
     description: Option[String] = None,
 
     hdfsPath: String,

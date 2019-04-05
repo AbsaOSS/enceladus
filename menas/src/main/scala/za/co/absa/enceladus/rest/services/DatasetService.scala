@@ -47,7 +47,6 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
   override def create(newDataset: Dataset, username: String): Future[Option[Dataset]] = {
     val dataset = Dataset(
       name = newDataset.name,
-      version = 0,
       description = newDataset.description,
       hdfsPath = newDataset.hdfsPath,
       hdfsPublishPath = newDataset.hdfsPublishPath,
