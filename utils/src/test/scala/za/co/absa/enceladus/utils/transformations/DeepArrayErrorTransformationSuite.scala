@@ -878,6 +878,127 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
 
   }
 
+  test("Test to demonstrate that array_distinct() from Spark API works incorrectly on StructTypes"){
+    val sourceData =
+      """{
+        |  "id": 3,
+        |  "MyLiteral": "abcdef",
+        |  "MyUpperLiteral": "ABCDEF",
+        |  "errCol": [
+        |    {
+        |      "errType": "confMapError",
+        |      "errCode": "E00001",
+        |      "errMsg": "Conformance Error - Null produced by mapping conformance rule",
+        |      "errCol": "legs.conditions.conformed_country",
+        |      "rawValues": [
+        |        "SWE"
+        |      ],
+        |      "mappings": [
+        |        {
+        |          "mappingTableColumn": "country_code",
+        |          "mappedDatasetColumn": "legs.conditions.country"
+        |        }
+        |      ]
+        |    },
+        |    {
+        |      "errType": "confMapError",
+        |      "errCode": "E00001",
+        |      "errMsg": "Conformance Error - Null produced by mapping conformance rule",
+        |      "errCol": "legs.conditions.conformed_country",
+        |      "rawValues": [
+        |        "SWE"
+        |      ],
+        |      "mappings": [
+        |        {
+        |          "mappingTableColumn": "country_code",
+        |          "mappedDatasetColumn": "legs.conditions.country"
+        |        }
+        |      ]
+        |    },
+        |    {
+        |      "errType": "confMapError",
+        |      "errCode": "E00001",
+        |      "errMsg": "Conformance Error - Null produced by mapping conformance rule",
+        |      "errCol": "legs.conditions.conformed_currency",
+        |      "rawValues": [
+        |        "Dummy"
+        |      ],
+        |      "mappings": [
+        |        {
+        |          "mappingTableColumn": "currency_code",
+        |          "mappedDatasetColumn": "legs.conditions.currency"
+        |        }
+        |      ]
+        |    }
+        |  ],
+        |  "legs": [
+        |    {
+        |      "conditions": [
+        |        {
+        |          "checks": [],
+        |          "country": "SWE",
+        |          "currency": "SWK",
+        |          "product": "Stock",
+        |          "conformed_currency": "SEK",
+        |          "conformed_product": "STK"
+        |        }
+        |      ],
+        |      "legid": 300
+        |    },
+        |    {
+        |      "conditions": [
+        |        {
+        |          "checks": [],
+        |          "country": "SA",
+        |          "currency": "Dummy",
+        |          "product": "Bond",
+        |          "conformed_country": "South Africa",
+        |          "conformed_currency": "Unknown",
+        |          "conformed_product": "BND"
+        |        }
+        |      ],
+        |      "legid": 301
+        |    }
+        |  ]
+        |}""".stripMargin
+
+    val expectedDistinct =
+      """{
+        |  "MyLiteral" : "abcdef",
+        |  "errCol" : [ {
+        |    "errCode" : "E00001",
+        |    "errCol" : "legs.conditions.conformed_country",
+        |    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+        |    "errType" : "confMapError",
+        |    "mappings" : [ {
+        |      "mappedDatasetColumn" : "legs.conditions.country",
+        |      "mappingTableColumn" : "country_code"
+        |    } ],
+        |    "rawValues" : [ "SWE" ]
+        |  }, {
+        |    "errCode" : "E00001",
+        |    "errCol" : "legs.conditions.conformed_currency",
+        |    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+        |    "errType" : "confMapError",
+        |    "mappings" : [ {
+        |      "mappedDatasetColumn" : "legs.conditions.currency",
+        |      "mappingTableColumn" : "currency_code"
+        |    } ],
+        |    "rawValues" : [ "Dummy" ]
+        |  } ]
+        |}""".stripMargin.replace("\r\n", "\n")
+
+    val df = JsonUtils.getDataFrameFromJson(spark, Seq(sourceData))
+
+    val dfDistinct = df.select(col("MyLiteral"), array_distinct(col("errCol")).as("errCol"))
+
+    val actualDistinct = JsonUtils.prettyJSON(dfDistinct.toJSON.take(1)(0))
+
+    // This test DOES NOT pass due to possibly a bug in Spark.
+    //assert(actualDistinct == expectedDistinct)
+
+  }
+
   private def processCastExample(df: DataFrame, inputColumn: String, outputColumn: String, expectedSchema: String,
                                  expectedResults: String): Unit = {
     val dfOut = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, inputColumn, outputColumn, "errors",
