@@ -178,13 +178,19 @@ object ExplodeTools {
       case Some(errorCol) =>
         // Implode taking into account the error column
         // Errors should be collected, flattened and made distinct
-        decDf
-          .orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*)
-          .agg(collect_list(decField).as(tmpColName),
-            // This is a workaround for Spark's array_distinct() issue
+        val isErrorColumnStruct = SchemaUtils.getFieldType(errorCol, inputDf.schema)
+          .exists(_.isInstanceOf[StructType])
+        val gatheredDf = decDf.orderBy(orderByCol)
+          .groupBy(groupedCol +: allOtherColumns: _*)
+        if (isErrorColumnStruct) {
+          // This is a workaround for Spark's array_distinct() issue for StructTypes
+          gatheredDf.agg(collect_list(decField).as(tmpColName),
             callUDF("arrayDistinctErrors", flatten(collect_list(col(errorCol)))).as(errorCol))
-            // When it is fixed in Spark the code should look like this:
-            // array_distinct(flatten(collect_list(col(errorCol)))).as(errorCol))
+        } else {
+          // This is more generic way, but this not always works in Spark 2.4.0
+          gatheredDf.agg(collect_list(decField).as(tmpColName),
+            array_distinct(flatten(collect_list(col(errorCol)))).as(errorCol))
+        }
     }
 
     // Restore null values to yet another temporary field
