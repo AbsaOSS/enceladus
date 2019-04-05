@@ -178,8 +178,7 @@ object ExplodeTools {
       case Some(errorCol) =>
         // Implode taking into account the error column
         // Errors should be collected, flattened and made distinct
-        val isErrorColumnStruct = SchemaUtils.getFieldType(errorCol, inputDf.schema)
-          .exists(_.isInstanceOf[StructType])
+        val isErrorColumnStruct = SchemaUtils.isColumnArrayOfStruct(errorCol, inputDf.schema)
         val gatheredDf = decDf.orderBy(orderByCol)
           .groupBy(groupedCol +: allOtherColumns: _*)
         if (isErrorColumnStruct) {
