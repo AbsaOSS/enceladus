@@ -14,19 +14,9 @@
   -->
 
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="components.app">
-    <SplitApp id="menasApp" initialMaster="navPage" mode="HideMode">
+    <SplitApp id="menasApp" initialMaster="navPage" mode="ShowHideMode">
         <masterPages>
-            <Page id="navPage">
-                <customHeader>
-                    <Bar>
-                        <contentLeft>
-                            <Button id="Navigation" icon="sap-icon://menu" press="handleMenuPress"/>
-                        </contentLeft>
-                        <contentMiddle>
-                            <Title text="Navigation" level="H3"/>
-                        </contentMiddle>
-                    </Bar>
-                </customHeader>
+            <Page id="navPage" showHeader="true" title="Navigation">
                 <List>
                     <items>
                         <ActionListItem id="Runs" text="Runs" type="Navigation" press="onRunsPress"
