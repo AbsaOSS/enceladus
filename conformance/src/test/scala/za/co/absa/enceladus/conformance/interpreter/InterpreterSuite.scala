@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.FunSuite
+import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
@@ -28,7 +28,17 @@ import org.json4s.native.JsonParser._
 
 import scala.io.Source
 
-class InterpreterSuite extends FunSuite with SparkTestBase {
+class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll {
+
+  override def beforeAll(): Unit = {
+    super.beforeAll
+    TradeConformance.createTestDataFiles()
+  }
+
+  override def afterAll(): Unit = {
+    TradeConformance.deleteTestData()
+    super.afterAll
+  }
 
   def testEndToEndDynamicConformance(useExperimentalMappingRule: Boolean): Unit = {
     // Enable Conformance Framweork
@@ -85,7 +95,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase {
   def testEndToEndArrayConformance(useExperimentalMappingRule: Boolean): Unit = {
     // Enable Conformance Framweork
     import za.co.absa.atum.AtumImplicits._
-    spark.enableControlMeasuresTracking("src/test/testData/trade/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
+    spark.enableControlMeasuresTracking("src/test/testData/_tradeData/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
 
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = useExperimentalMappingRule)

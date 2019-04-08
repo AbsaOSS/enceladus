@@ -47,6 +47,10 @@ dependency-reduced-pom.xml
 
 _testOutput
 _tradeOutput
+_tradeData
+_countryMT
+_currencyMT
+_productMT
 myTestCheckpoints
 
 **/main/resources/application.properties
