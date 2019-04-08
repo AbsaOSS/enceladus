@@ -29,9 +29,8 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
+import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-
-import scala.collection.mutable.ListBuffer
 
 object DynamicInterpreter {
   private val log = LogManager.getLogger("enceladus.conformance.DynamicInterpreter")
@@ -214,43 +213,20 @@ object DynamicInterpreter {
     * @return The list of lists of conformance rule groups
     */
   private def groupMappingRules(rules: List[ConformanceRule], schema: StructType): List[List[ConformanceRule]] = {
-    val groups = new ListBuffer[List[ConformanceRule]]
-    var group = new ListBuffer[ConformanceRule]
-    var lastArrayParent = ""
-
-    def pushGroup(arrayPath: String = ""): Unit = {
-      if (group.nonEmpty) {
-        groups += group.toList
-        group = new ListBuffer[ConformanceRule]
-      }
-      lastArrayParent = arrayPath
-    }
-
-    for (rule <- rules) {
-      rule match {
-        case m: MappingConformanceRule =>
-          val arrayParent = SchemaUtils.getDeepestArrayPath(schema, rule.outputColumn)
-          arrayParent match {
-            case Some(arr) =>
-              if (lastArrayParent != arr) {
-                pushGroup(arr)
-              }
-              group += m
-            case None =>
-              pushGroup()
-              groups += List(m)
-          }
-
-          // Something
-        case a =>
-          pushGroup()
-          groups += List(a)
-      }
-    }
-    pushGroup()
-    groups.toList
+    Algorithms.stableGroupByOption[ConformanceRule, String](rules, {
+      case m: MappingConformanceRule => SchemaUtils.getDeepestArrayPath(schema, m.outputColumn)
+      case _ => None
+    }).map(_.toList).toList
   }
 
+  /**
+    * Adds an explosion pseudo-rule before each group of more than 1 mapping rule.
+    * Adds a collection pseudo-rule after each group of more than 1 mapping rule
+    *
+    * @param ruleGroups A list of rules grouped together if they are mapping rules operating at the same array level
+    * @param schema     A schema of a dataset
+    * @return The new list of rules that might contain pseudo-rules
+    */
   private def addExplosionsToMappingRuleGroups(ruleGroups: List[List[ConformanceRule]],
                                                schema: StructType): List[ConformanceRule] = {
     ruleGroups.flatMap(rules => {
@@ -269,6 +245,12 @@ object DynamicInterpreter {
     })
   }
 
+  /**
+    * Reorders a list of conformance rules according to their appearance in the list.
+    *
+    * @param rules A list of rules to reorder
+    * @return A reordered list of rules
+    */
   private def reorderConformanceRules(rules: List[ConformanceRule]): List[ConformanceRule] = {
     var index = 0
     rules.map(rule => {
