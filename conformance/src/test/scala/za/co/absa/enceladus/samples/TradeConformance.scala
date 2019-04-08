@@ -15,30 +15,26 @@
 
 package za.co.absa.enceladus.samples
 
+import java.io.File
+
+import org.apache.commons.io.FileUtils
+import org.apache.log4j.{LogManager, Logger}
+import org.apache.spark.sql.{SaveMode, SparkSession}
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.{Dataset, DefaultValue, MappingTable}
-import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.error.Mapping
+
+import scala.util.control.NonFatal
 
 object TradeConformance {
-  val countryMT = MappingTable(name = "country", version = 0, hdfsPath = "src/test/testData/country",
+  private val log: Logger = LogManager.getLogger(this.getClass)
+
+  val countryMT = MappingTable(name = "country", version = 0, hdfsPath = "src/test/testData/_countryMT",
     schemaName = "country", schemaVersion = 0)
 
-  // This mapping table is provided as a parquet file. To re-generate a parquet file for the mapping table use this
-  // Spark shell command:
-  //
-  //   Seq(("Kc", "CZK"), ("Rand", "ZAR"), ("SWK","SEK")).toDF
-  //     .select($"_1".as("currency_code"), $"_2".as("currency_name"))
-  //     .write.parquet("src/test/testData/currency/reportDate=2017-11-01")
-  val currencyMT = MappingTable(name = "currency", version = 0, hdfsPath = "src/test/testData/currency",
+  val currencyMT = MappingTable(name = "currency", version = 0, hdfsPath = "src/test/testData/_currencyMT",
     schemaName = "currency", schemaVersion = 0, defaultMappingValue = List(DefaultValue("currency_name", "\"Unknown\"")))
 
-  // This mapping table is provided as a parquet file. To re-generate a parquet file for the mapping table use this
-  // Spark shell command:
-  //
-  //   Seq(("Stock", "STK"), ("Bond", "BND")).toDF.select($"_1".as("product_code"), $"_2".as("product_name"))
-  //     .write.parquet("src/test/testData/product/reportDate=2017-11-01")
-  val productMT = MappingTable(name = "product", version = 0, hdfsPath = "src/test/testData/product",
+  val productMT = MappingTable(name = "product", version = 0, hdfsPath = "src/test/testData/_productMT",
     schemaName = "product", schemaVersion = 0)
 
   val countryRule = MappingConformanceRule(order = 1, mappingTable = "country", controlCheckpoint = true,
@@ -70,11 +66,84 @@ object TradeConformance {
   val singleColRule = SingleColumnConformanceRule(order = 9, outputColumn = "legs.ConformedLegId",
     controlCheckpoint = true, inputColumn = "legs.legid", inputColumnAlias = "legId")
 
-  val tradeDS = Dataset(name = "Trade Conformance", version = 1, hdfsPath = "src/test/testData/trade",
+  val tradeDS = Dataset(name = "Trade Conformance", version = 1, hdfsPath = "src/test/testData/_tradeData",
     hdfsPublishPath = "testData/conformedTrade",
     schemaName = "Employee", schemaVersion = 0,
     conformance = List(countryRule, litRule, upperRule, currencyRule, productRule, lit2Rule, dropRule,
       concatRule, singleColRule))
+
+  val tradeInfoFile: String =
+    """{
+      |  "metadata": {
+      |    "sourceApplication": "Test Data",
+      |    "country": "ZA",
+      |    "historyType": "Snapshot",
+      |    "dataFilename": "tradeData_20170721.dat",
+      |    "sourceType": "Golden",
+      |    "version": 1,
+      |    "informationDate": "01-01-2017",
+      |    "additionalInfo": {
+      |      "key1": "value1",
+      |      "key2": "value2"
+      |    }
+      |  },
+      |  "checkpoints": [
+      |    {
+      |      "name": "Source",
+      |      "processStartTime": "01-01-2017 08:00:00",
+      |      "processEndTime": "01-01-2017 08:00:00",
+      |      "workflowName": "Source",
+      |      "order": 1,
+      |      "controls": [
+      |        {
+      |          "controlName": "totalCount",
+      |          "controlType": "controlType.count",
+      |          "controlCol": "*",
+      |          "controlValue": 7
+      |        },
+      |        {
+      |          "controlName": "countId",
+      |          "controlType": "controlType.distinctCount",
+      |          "controlCol": "id",
+      |          "controlValue": 7
+      |        },
+      |        {
+      |          "controlName": "sumId",
+      |          "controlType": "controlType.aggregatedTotal",
+      |          "controlCol": "id",
+      |          "controlValue": 28
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "name": "Raw",
+      |      "processStartTime": "01-01-2017 08:00:00",
+      |      "processEndTime": "01-01-2017 08:00:00",
+      |      "workflowName": "Raw",
+      |      "order": 2,
+      |      "controls": [
+      |        {
+      |          "controlName": "totalCount",
+      |          "controlType": "controlType.count",
+      |          "controlCol": "*",
+      |          "controlValue": 7
+      |        },
+      |        {
+      |          "controlName": "countId",
+      |          "controlType": "controlType.distinctCount",
+      |          "controlCol": "id",
+      |          "controlValue": 7
+      |        },
+      |        {
+      |          "controlName": "sumId",
+      |          "controlType": "controlType.aggregatedTotal",
+      |          "controlCol": "id",
+      |          "controlValue": 28
+      |        }
+      |      ]
+      |    }
+      |  ]
+      |}""".stripMargin
 
   // The original sample used to create the parquet file
   // import spark.implicits._
@@ -106,4 +175,76 @@ object TradeConformance {
       """{"id":5,"legs":[{"conditions":[],"legid":500,"ConformedLegId":{"legId":500}},{"conditions":[],"legid":501,"ConformedLegId":{"legId":501}},{"conditions":[],"legid":502,"ConformedLegId":{"legId":502}}],"MyLiteral":"abcdef","MyUpperLiteral":"ABCDEF","errCol":[{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"legs.conditions.conformed_country","rawValues":[null],"mappings":[{"mappingTableColumn":"country_code","mappedDatasetColumn":"legs.conditions.country"}]},{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"legs.conditions.conformed_currency","rawValues":[null],"mappings":[{"mappingTableColumn":"currency_code","mappedDatasetColumn":"legs.conditions.currency"}]},{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"legs.conditions.conformed_product","rawValues":[null],"mappings":[{"mappingTableColumn":"product_code","mappedDatasetColumn":"legs.conditions.product"}]}],"Concatenated":"abcdefABCDEF"}""" ::
       """{"id":6,"legs":[],"MyLiteral":"abcdef","MyUpperLiteral":"ABCDEF","errCol":[{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"legs.conditions.conformed_country","rawValues":[null],"mappings":[{"mappingTableColumn":"country_code","mappedDatasetColumn":"legs.conditions.country"}]},{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"legs.conditions.conformed_currency","rawValues":[null],"mappings":[{"mappingTableColumn":"currency_code","mappedDatasetColumn":"legs.conditions.currency"}]},{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"legs.conditions.conformed_product","rawValues":[null],"mappings":[{"mappingTableColumn":"product_code","mappedDatasetColumn":"legs.conditions.product"}]}],"Concatenated":"abcdefABCDEF"}""" ::
       """{"id":7,"MyLiteral":"abcdef","MyUpperLiteral":"ABCDEF","errCol":[{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"legs.conditions.conformed_country","rawValues":[null],"mappings":[{"mappingTableColumn":"country_code","mappedDatasetColumn":"legs.conditions.country"}]},{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"legs.conditions.conformed_currency","rawValues":[null],"mappings":[{"mappingTableColumn":"currency_code","mappedDatasetColumn":"legs.conditions.currency"}]},{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"legs.conditions.conformed_product","rawValues":[null],"mappings":[{"mappingTableColumn":"product_code","mappedDatasetColumn":"legs.conditions.product"}]}],"Concatenated":"abcdefABCDEF"}""" :: Nil
+
+  def createTestDataFiles()(implicit spark: SparkSession): Unit = {
+    createTradeData()
+    createCountryMT()
+    createCurrencyMT()
+    createProductMT()
+  }
+
+  def createTradeData()(implicit spark: SparkSession): Unit = {
+    import spark.implicits._
+    val dfA = spark.read.json(sample.toDS)
+    dfA
+      .repartition(1)
+      .write
+      .mode(SaveMode.Overwrite)
+      .parquet(getTradeDataPath(tradeDS.hdfsPath))
+    FileUtils.writeStringToFile(new File(s"${getTradeDataPath(tradeDS.hdfsPath)}/_INFO"), tradeInfoFile)
+  }
+
+  def createCountryMT()(implicit spark: SparkSession): Unit = {
+    import spark.implicits._
+    Seq(("CZE", "Czech Republic"), ("SA", "South Africa"), ("IN", "India"), ("DE", "Germany")).toDF
+      .select($"_1".as("country_code"), $"_2".as("country_name"))
+      .write.mode(SaveMode.Overwrite).parquet(getMappingTablePath(countryMT.hdfsPath))
+  }
+
+  def createCurrencyMT()(implicit spark: SparkSession): Unit = {
+    import spark.implicits._
+    Seq(("Kc", "CZK"), ("Rand", "ZAR"), ("SWK", "SEK")).toDF
+      .select($"_1".as("currency_code"), $"_2".as("currency_name"))
+      .write.mode(SaveMode.Overwrite).parquet(getMappingTablePath(currencyMT.hdfsPath))
+  }
+
+  def createProductMT()(implicit spark: SparkSession): Unit = {
+    import spark.implicits._
+    Seq(("Stock", "STK"), ("Bond", "BND")).toDF.select($"_1".as("product_code"), $"_2".as("product_name"))
+         .write.mode(SaveMode.Overwrite).parquet(getMappingTablePath(productMT.hdfsPath))
+  }
+
+  def deleteTestData(): Unit = {
+    deleteTradeData()
+    deleteCountryMT()
+    deleteCurrencyMT()
+    deleteProductMT()
+  }
+
+  def deleteTradeData(): Unit = {
+    safeDeleteMappingTableDir(getTradeDataPath(tradeDS.hdfsPath))
+  }
+
+  def deleteCountryMT(): Unit = {
+    safeDeleteMappingTableDir(countryMT.hdfsPath)
+  }
+
+  def deleteCurrencyMT(): Unit = {
+    safeDeleteMappingTableDir(currencyMT.hdfsPath)
+  }
+
+  def deleteProductMT(): Unit = {
+    safeDeleteMappingTableDir(productMT.hdfsPath)
+  }
+
+  def safeDeleteMappingTableDir(path: String): Unit = {
+    try {
+      FileUtils.deleteDirectory(new File(getMappingTablePath(path)))
+    } catch {
+      case NonFatal(e) => log.warn(s"Unable to delete a test mapping table directory $path")
+    }
+  }
+
+  private def getTradeDataPath(basePath: String): String = s"$basePath/2017/11/01/"
+  private def getMappingTablePath(basePath: String): String = s"$basePath/reportDate=2017-11-01"
 }
