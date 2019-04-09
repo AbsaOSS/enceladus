@@ -21,6 +21,6 @@ import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
 
 abstract class BaseServiceTest extends FunSuite with MockitoSugar with BeforeAndAfter {
-  val millis100 = Duration(100, TimeUnit.MILLISECONDS)
-  val millis500 = Duration(500, TimeUnit.MILLISECONDS)
+  val shortTimeout = Duration(100, TimeUnit.MILLISECONDS)
+  val longTimeout = Duration(500, TimeUnit.MILLISECONDS)
 }
