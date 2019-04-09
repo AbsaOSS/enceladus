@@ -32,7 +32,7 @@ abstract class VersionedModelServiceTest[C <: VersionedModel with Product with A
   test("Validate dataset with valid, unique name") {
     Mockito.when(modelRepository.isUniqueName(validName)).thenReturn(Future.successful(true))
 
-    val result = Await.result(service.validateName(validName), millis100)
+    val result = Await.result(service.validateName(validName), shortTimeout)
     assert(result.isValid())
     assert(result == Validation())
   }
@@ -40,7 +40,7 @@ abstract class VersionedModelServiceTest[C <: VersionedModel with Product with A
   test("Validate dataset with valid, taken name") {
     Mockito.when(modelRepository.isUniqueName(validName)).thenReturn(Future.successful(false))
 
-    val result = Await.result(service.validateName(validName), millis100)
+    val result = Await.result(service.validateName(validName), shortTimeout)
     assert(!result.isValid())
     assert(result == Validation(Map("name" -> List(s"entity with name already exists: '$validName'"))))
   }
@@ -54,7 +54,7 @@ abstract class VersionedModelServiceTest[C <: VersionedModel with Product with A
   }
 
   private def assertHasWhitespace(name: String): Unit = {
-    val result = Await.result(service.validateName(name), millis100)
+    val result = Await.result(service.validateName(name), shortTimeout)
     assert(!result.isValid())
     assert(result == Validation(Map("name" -> List(s"name contains whitespace: '$name'"))))
   }
