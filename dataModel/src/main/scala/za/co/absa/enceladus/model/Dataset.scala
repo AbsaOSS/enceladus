@@ -24,7 +24,7 @@ import za.co.absa.enceladus.model.menas.MenasReference
 
 case class Dataset(
   name:    String,
-  version: Int,
+  version: Int = 1,
   description: Option[String] = None,
   
   hdfsPath:        String,
