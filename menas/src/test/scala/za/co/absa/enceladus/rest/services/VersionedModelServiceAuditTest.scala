@@ -49,19 +49,19 @@ class VersionedModelServiceAuditTest extends BaseServiceTest {
   test("Test getParents TestSchema1") {
     //The order here is important and is it represents the trail of parents
     val exp = Seq(testSchemas(0), testSchemas(1), testSchemas(3), testSchemas(4))
-    val actual = Await.result(service.getParents("TestSchema1"), millis200)
+    val actual = Await.result(service.getParents("TestSchema1"), millis500)
     assertResult(exp)(actual)
   }
 
   test("Test getParents TestSchema") {
     //The order here is important and is it represents the trail of parents
     val exp = Seq(testSchemas(0), testSchemas(1), testSchemas(2))
-    val actual = Await.result(service.getParents("TestSchema"), millis200)
+    val actual = Await.result(service.getParents("TestSchema"), millis500)
     assertResult(exp)(actual)
   }
 
   test("Test getAuditTrail TestSchema1") {
-    val actual = Await.result(service.getAuditTrail("TestSchema1"), millis200)
+    val actual = Await.result(service.getAuditTrail("TestSchema1"), millis500)
     val expected = AuditTrail(Stream(AuditTrailEntry(MenasReference(None, "TestSchema1", 1), null, testSchemas(4).lastUpdated,
         List(AuditTrailChange("fields", None, Some("SchemaField(b,String,,None,None,true,Map(),List())"), "Schema field added."))),
       AuditTrailEntry(MenasReference(None, "TestSchema1", 0), null, testSchemas(3).lastUpdated,
@@ -75,7 +75,7 @@ class VersionedModelServiceAuditTest extends BaseServiceTest {
   }
 
   test("Test getAuditTrail TestSchema") {
-    val actual = Await.result(service.getAuditTrail("TestSchema"), millis200)
+    val actual = Await.result(service.getAuditTrail("TestSchema"), millis500)
 
     val expected = AuditTrail(Stream(AuditTrailEntry(MenasReference(None, "TestSchema", 2), null, testSchemas(2).lastUpdated,
       List(AuditTrailChange("fields", None, Some("SchemaField(a,Integer,,None,None,true,Map(),List())"), "Schema field added."))),
