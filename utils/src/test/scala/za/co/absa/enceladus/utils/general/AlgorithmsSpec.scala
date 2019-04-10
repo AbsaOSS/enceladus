@@ -100,8 +100,8 @@ class AlgorithmsSpec extends FunSuite {
   }
 
   test("Test stableGroupByPredicate() grouping values in the beginning and at the end") {
-    val numbers = Seq(1, 1, 1, 2, 1, 1, 1)
-    val expected = Seq(Seq(1, 1, 1), Seq(2), Seq(1, 1, 1))
+    val numbers = Seq(1, 1, 1, 2, 2, 1, 1, 3, 3, 1, 1)
+    val expected = Seq(Seq(1, 1, 1), Seq(2), Seq(2), Seq(1, 1), Seq(3), Seq(3), Seq(1, 1))
 
     val actual = Algorithms.stableGroupByPredicate[Int](numbers, a => a == 1)
 
