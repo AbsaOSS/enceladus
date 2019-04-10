@@ -16,7 +16,6 @@
 sap.ui.define([], function() {
 
   var HDFSBrowserRenderer = {};
-  HDFSBrowserRenderer.init = false;
   HDFSBrowserRenderer.render = function(oRm, oControl) {
 
     var items = oControl._tree.getItems();
@@ -29,11 +28,8 @@ sap.ui.define([], function() {
     oControl._scroll.setVertical(oControl.getProperty("verticalScroll"));
     oControl._scroll.setHorizontal(oControl.getProperty("horizontalScroll"));
 
-    if(!HDFSBrowserRenderer.init) {
-      HDFSBrowserRenderer.init = true;
-      oControl._enableBusy(oControl);
-      oControl._treeNavigateTo(oControl.getHDFSPath());
-    }
+    oControl._enableBusy(oControl);
+    oControl._treeNavigateTo(oControl.getHDFSPath());
 
     oRm.write("<div");
     oRm.writeControlData(oControl);
