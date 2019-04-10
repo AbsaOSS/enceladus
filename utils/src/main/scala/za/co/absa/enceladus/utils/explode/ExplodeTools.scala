@@ -178,26 +178,17 @@ object ExplodeTools {
       case Some(errorCol) =>
         // Implode taking into account the error column
         // Errors should be collected, flattened and made distinct
-        val isErrorColumnStruct = SchemaUtils.isColumnArrayOfStruct(errorCol, inputDf.schema)
-        val gatheredDf = decDf
-          .orderBy(orderByRecordCol, orderByInsideArray)
+        decDf.orderBy(orderByRecordCol, orderByInsideArray)
           .groupBy(groupByColumns: _*)
-        if (isErrorColumnStruct) {
-          // This is a workaround for Spark's array_distinct() issue for StructTypes
-          gatheredDf.agg(collect_list(deconstructedField).as(tmpColName),
-            callUDF("arrayDistinctErrors", flatten(collect_list(col(errorCol)))).as(errorCol))
-        } else {
-          // This is more generic way, but this not always works in Spark 2.4.0
-          gatheredDf.agg(collect_list(deconstructedField).as(tmpColName),
+          .agg(collect_list(deconstructedField).as(tmpColName),
             array_distinct(flatten(collect_list(col(errorCol)))).as(errorCol))
-        }
     }
 
     // Restore null values to yet another temporary field
     val tmpColName2 = getUniqueName(nullRestoredTmpColumnName, Some(inputDf.schema))
     val nullsRestored = dfImploded
       .withColumn(tmpColName2, when(col(explosion.sizeFieldName) > 0, col(tmpColName))
-          .otherwise(when(col(explosion.sizeFieldName) === 0, typedLit(Array())).otherwise(null))
+        .otherwise(when(col(explosion.sizeFieldName) === 0, typedLit(Array())).otherwise(null))
       )
 
     val dfArraysRestored = nestedRenameReplace(nullsRestored, tmpColName2, explosion.arrayFieldName,
