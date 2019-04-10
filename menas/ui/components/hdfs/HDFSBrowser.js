@@ -65,8 +65,7 @@ sap.ui.define([], function() {
     }});
 
   /**
-   * If the busy control association is set, this retrieves the control
-   * and prepares it to display the busy indicator
+   * If the busy control association is set, this retrieves the control and prepares it to display the busy indicator
    */
   HDFSBrowser.prototype._enableBusy = function(oCtl) {
     // here the life cycle of associations is externally managed
@@ -117,38 +116,36 @@ sap.ui.define([], function() {
     })
 
     this._scroll.addContent(this._tree);
-
   };
 
   HDFSBrowser.prototype.onBeforeRendering = function() {
-    var sPath = this.getHDFSPath();
-    this._treeNavigateTo(sPath);
   };
 
   HDFSBrowser.prototype.onAfterRendering = function() {
     this._updatePathLabel(this.getHDFSPath());
+    this._tree.rerender();
   };
 
   /**
-   * This is called when a tree item is expanded or collapsed. If
-   * expanded, we need to get the correct HDFS listings for children.
+   * This is called when a tree item is expanded or collapsed. If expanded, we need to get the correct HDFS listings for
+   * children.
    */
   HDFSBrowser.prototype._toggleOpenState = function(oEv) {
     if (oEv.getParameter("expanded")) {
-      var context = oEv.getParameter("itemContext").getPath()
-      var path = this._model.getProperty(context).path
-      if (path !== "/")
-        this._getList(path, context, sap.ui.getCore().byId(this.getBusyControl()), function() {
-          this._tree.rerender(); // same here, it won't propagate
-          // the update
-          // :-/
-        }.bind(this))
+      var context = oEv.getParameter("itemContext").getPath();
+      var path = this._model.getProperty(context).path;
+      if(path == "/") context = "/HDFS";
+      this._getList(path, context, sap.ui.getCore().byId(this.getBusyControl()), function() {
+          this._tree.rerender(); 
+      }.bind(this))
+    } else {
+      this._tree.rerender();
     }
   };
 
   /**
-   * This retrieves the selected path label association (if provided and
-   * already existing) and configures the text of the label
+   * This retrieves the selected path label association (if provided and already existing) and configures the text of
+   * the label
    */
   HDFSBrowser.prototype._updatePathLabel = function(sPath) {
     var sLbl = this.getPathLabel()
@@ -158,9 +155,8 @@ sap.ui.define([], function() {
   };
 
   /**
-   * Here we split the HDFS path and for each level, we fire a call (to
-   * ensure we build the whole tree including siblings), while also making
-   * sure that the correct item from the list is selected etc
+   * Here we split the HDFS path and for each level, we fire a call (to ensure we build the whole tree including
+   * siblings), while also making sure that the correct item from the list is selected etc
    */
   HDFSBrowser.prototype._treeNavigateTo = function(sPath) {
     if(!sPath) return;
@@ -179,10 +175,10 @@ sap.ui.define([], function() {
       // deal with initial cases
       if (sPathAcc === "") {
         sNewPath = tok;
-      } else if (sPathAcc === "/") {
+      } else if (sPathAcc === "/" && sPath !== "/") {
         sNewPath = sPathAcc + tok;
-        sModelPath += "/0"; // the service wraps the root in an
-        // array
+        // the service wraps the root in an array
+        sModelPath += "/0"; 
       }
 
       if (sNewPath !== "/") {
@@ -200,25 +196,22 @@ sap.ui.define([], function() {
         var items = that._tree.getItems();
         for ( var i in items) {
           var bindingPath = items[i].getBindingContextPath();
-          var hdfsPath = that._model.getProperty(bindingPath).path
-          if (hdfsPath === sNewPath) {
-            try{
-              that._tree.expand(parseInt(i))
-            } catch (e) {
-              // some weirdness if theres no such child
-            }
+          let oItem = that._model.getProperty(bindingPath);
+          var hdfsPath = oItem["path"];
+          if (hdfsPath === sNewPath && oItem["children"] !== null && 
+              (sPath === "/" || hdfsPath !== sPath)) {
+            let index = parseInt(i);
+            that._tree.expand(index);
           }
           // also select the correct list item
           if (hdfsPath === sPath) {
             items[i].setSelected(true);
           }
         }
-        if(rev.length === 0) {
-          // this binding seems weird on these nested models
+        if(rev.length > 0) fnHelper(sNewPath, sModelPath, rev.reverse());
+        else {
           that._tree.rerender();
-          return;
-        } else
-          fnHelper(sNewPath, sModelPath, rev.reverse());
+        }
       })
     }
 
@@ -227,7 +220,7 @@ sap.ui.define([], function() {
 
   /**
    * This unselects all items.
-   *
+   * 
    * Having selected tree items caused certain issues in ui5
    */
   HDFSBrowser.prototype.unselectAll = function() {
@@ -239,7 +232,7 @@ sap.ui.define([], function() {
 
   /**
    * This collapses all items.
-   *
+   * 
    * Having selected tree items caused certain issues in ui5
    */
   HDFSBrowser.prototype.collapseAll = function() {
@@ -251,13 +244,18 @@ sap.ui.define([], function() {
    */
   HDFSBrowser.prototype._getList = function(sPath, sModelPath, oControl, fnSuccCallback) {
     Functions.ajax(this.getRestURI(), "POST", sPath, function(oData) {
-      var tmp = oData;
+      
+      let original = this._model.getProperty(sModelPath)
+      
+      let merged = {};
       if (sPath === "/") {
-        tmp = [ tmp ]; // root should be wrapped.. it expects a
-        // list of items
-        tmp[0].name = "/";
+        merged = _.defaultsDeep(oData, original[0]);
+        merged = [ merged ]; // root should be wrapped.. it expects a list of items
+        merged[0].name = "/";
+      } else {
+        merged = _.defaultsDeep(oData, original);
       }
-      this._model.setProperty(sModelPath, tmp)
+      this._model.setProperty(sModelPath, merged);
       if (typeof (fnSuccCallback) !== "undefined")
         fnSuccCallback();
     }.bind(this), function(jqXHR, textStatus, errorThrown) {
@@ -267,8 +265,7 @@ sap.ui.define([], function() {
   };
 
   /**
-   * Here update the associated label when the user changes the selection
-   * through the UI
+   * Here update the associated label when the user changes the selection through the UI
    */
   HDFSBrowser.prototype._selectionChange = function(oEv) {
     var sModelPath = oEv.getParameter("listItem").getBindingContext(this._modelName).getPath()
