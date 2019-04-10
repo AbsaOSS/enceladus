@@ -878,7 +878,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
 
   }
 
-  test("Test to demonstrate that array_distinct() from Spark API works incorrectly on StructTypes"){
+  test("Test array_distinct() from Spark API (didn't work in 2.4.0, fixed in 2.4.1)"){
     val sourceData =
       """{
         |  "id": 3,
@@ -994,9 +994,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
 
     val actualDistinct = JsonUtils.prettyJSON(dfDistinct.toJSON.take(1)(0))
 
-    // This test DOES NOT pass due to possibly a bug in Spark.
-    //assert(actualDistinct == expectedDistinct)
-
+    assert(actualDistinct == expectedDistinct)
   }
 
   private def processCastExample(df: DataFrame, inputColumn: String, outputColumn: String, expectedSchema: String,
