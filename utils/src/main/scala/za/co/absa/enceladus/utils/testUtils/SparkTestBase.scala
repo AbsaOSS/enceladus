@@ -27,7 +27,6 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import com.typesafe.config.Config
 
 trait SparkTestBase { self =>
-  System.setProperty("user.timezone", "UTC")
 
   val config: Config = ConfigFactory.load()
   val sparkMaster: String = config.getString("enceladus.utils.testUtils.sparkTestBaseMaster")
