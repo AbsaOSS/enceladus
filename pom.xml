@@ -61,9 +61,9 @@
         <scalatest.maven.version>2.0.0</scalatest.maven.version>
         <scala.version>2.11.12</scala.version>
         <scala.compat.version>2.11</scala.compat.version>
-        <spark.version>2.4.0</spark.version>
+        <spark.version>2.4.1</spark.version>
         <spark.compat.version>2.4</spark.compat.version>
-        <spark.hofs.version>0.1.0</spark.hofs.version>
+        <spark.hofs.version>0.2.0</spark.hofs.version>
         <typesafe.config.version>1.3.1</typesafe.config.version>
         <spline.version>0.3.6</spline.version>
         <mongo.java.driver.version>3.6.4</mongo.java.driver.version>
