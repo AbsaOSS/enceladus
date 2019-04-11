@@ -114,6 +114,8 @@ sap.ui.define([], function() {
         arrayNames: ['children']
       }
     })
+    
+    this._valueState = sap.ui.core.MessageType.None;
 
     this._scroll.addContent(this._tree);
   };
@@ -231,6 +233,19 @@ sap.ui.define([], function() {
   };
 
   /**
+   * Set the highlight and text for all items in the list
+   * 
+   */
+  HDFSBrowser.prototype.setValueState = function(valueState, text) {
+    this._valueState = valueState;
+    var items = this._tree.getItems()
+    for ( var i in items) {
+      items[i].setHighlight(valueState);
+      items[i].setHighlightText(text);
+    }
+  };
+  
+  /**
    * This collapses all items.
    * 
    * Having selected tree items caused certain issues in ui5
@@ -259,9 +274,14 @@ sap.ui.define([], function() {
       if (typeof (fnSuccCallback) !== "undefined")
         fnSuccCallback();
     }.bind(this), function(jqXHR, textStatus, errorThrown) {
-      sap.m.MessageBox.error("Failed to retreive the HDFS folder contents for " + sPath + ", please try again later.")
-      console.log(errorThrown)
-    }, oControl)
+      if(jqXHR.status === 404) {
+        sap.m.MessageBox.error(`Path ${sPath} not found! Please choose a valid HDFS path.`);
+        this.setValueState(sap.ui.core.MessageType.Error, "Select a valid HDFS path");
+      } else {
+        sap.m.MessageBox.error("Failed to retreive the HDFS folder contents for " + sPath + ", please try again later.");
+      }
+      
+    }.bind(this), oControl)
   };
 
   /**
@@ -272,6 +292,7 @@ sap.ui.define([], function() {
     var sPath = this._model.getProperty(sModelPath).path
     this.setProperty("HDFSPath", sPath, true);
     this._updatePathLabel(sPath);
+    this.setValueState(sap.ui.core.MessageType.None, "");
   };
 
   return HDFSBrowser;
