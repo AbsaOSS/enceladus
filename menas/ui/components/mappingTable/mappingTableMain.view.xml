@@ -17,7 +17,7 @@
            xmlns:form="sap.ui.layout.form" xmlns:table="sap.ui.table"
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
            controllerName="components.mappingTable.mappingTableMain">
-    <Page enableScrolling="false">
+    <Page enableScrolling="true">
         <customHeader>
             <Bar>
                 <contentMiddle>
