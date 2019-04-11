@@ -49,10 +49,10 @@
                         <Label text="HDFS Path"/>
                         <hdfs:HDFSBrowser id="addMtHDFSBrowser" height="300px" width="100%"
                                           busyControl="addMappingTableDialog"
-                                          pathLabel="selectedHDFSPathLabel" restURI="api/hdfs/list"
+                                          pathInput="selectedHDFSPathLabel" restURI="api/hdfs/list"
                                           HDFSPath="{/newMappingTable/hdfsPath}"/>
                         <Label text="Selected Path"/>
-                        <Text id="selectedHDFSPathLabel"/>
+                        <Input type="Text" id="selectedHDFSPathLabel"/>
                     </form:content>
                 </form:SimpleForm>
             </VBox>

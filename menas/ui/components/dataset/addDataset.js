@@ -74,9 +74,6 @@ var AddDatasetFragment = function (oController, fnLoad) {
 
       oController.byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
       oController.byId("schemaVersionSelect").setValueStateText("");
-
-      oController.byId("newDatasetRawHDFSBrowser").setValueState(sap.ui.core.ValueState.None);
-      oController.byId("newDatasetPublishHDFSBrowser").setValueState(sap.ui.core.ValueState.None);
     },
 
     isValid: function (oDataset) {
@@ -86,10 +83,10 @@ var AddDatasetFragment = function (oController, fnLoad) {
         oController.byId("newDatasetName"));
       let hasValidSchema = EntityValidationService.hasValidSchema(oDataset, "Dataset",
         oController.byId("schemaNameSelect"), oController.byId("schemaVersionSelect"));
-      let hasValidHDFSPaths = EntityValidationService.hasValidHDFSPaths(oDataset, "Dataset",
-        oController.byId("newDatasetRawHDFSBrowser"), oController.byId("newDatasetPublishHDFSBrowser"));
-
-      return hasValidName && hasValidSchema && hasValidHDFSPaths;
+      let hasValidRawHDFSPath = oController.byId("newDatasetRawHDFSBrowser").validate();
+      let hasValidPublishHDFSPath = oController.byId("newDatasetPublishHDFSBrowser").validate();
+      
+      return hasValidName && hasValidSchema && hasValidPublishHDFSPath && hasValidRawHDFSPath;
     },
 
     onNameChange: function () {

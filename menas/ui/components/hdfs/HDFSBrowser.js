@@ -46,10 +46,6 @@ sap.ui.define([], function() {
         "HDFSPath" : {
           type : "string",
           defaultValue : "/"
-        },
-        "valueState": {
-          type: "sap.ui.core.ValueState",
-          defaultValue : sap.ui.core.ValueState.None
         }
       },
       associations : {
@@ -57,8 +53,8 @@ sap.ui.define([], function() {
           type : "sap.ui.core.Control",
           multiple : false
         },
-        "pathLabel" : {
-          type : "sap.m.Text",
+        "pathInput" : {
+          type : "sap.m.Input",
           multiple : false
         }
       }
@@ -115,16 +111,27 @@ sap.ui.define([], function() {
       }
     })
     
+    this._model.attachPropertyChange((oEv) => {
+      if(oEv.getParameter("path") === "/currentPath") {
+        this.setHDFSPath(oEv.getParameter("value"));
+      }
+    });
+    
     this._valueState = sap.ui.core.MessageType.None;
-
     this._scroll.addContent(this._tree);
   };
 
   HDFSBrowser.prototype.onBeforeRendering = function() {
+    // bind the associations.. This is done once before render, as onInit the associations may not be initalized yet
+    if(!this._assocInitialized) {
+      this._assocInitialized = true;
+      let pathCtl = sap.ui.getCore().byId(this.getPathInput());
+      pathCtl.setModel(this._model, this._modelName);
+      pathCtl.bindProperty("value", {path: `${this._modelName}>/currentPath`});
+    }
   };
 
   HDFSBrowser.prototype.onAfterRendering = function() {
-    this._updatePathLabel(this.getHDFSPath());
     this._tree.rerender();
   };
 
@@ -146,22 +153,14 @@ sap.ui.define([], function() {
   };
 
   /**
-   * This retrieves the selected path label association (if provided and already existing) and configures the text of
-   * the label
-   */
-  HDFSBrowser.prototype._updatePathLabel = function(sPath) {
-    var sLbl = this.getPathLabel()
-    if(sLbl && sap.ui.getCore().byId(sLbl)) {
-      sap.ui.getCore().byId(sLbl).setText(sPath);
-    }
-  };
-
-  /**
    * Here we split the HDFS path and for each level, we fire a call (to ensure we build the whole tree including
    * siblings), while also making sure that the correct item from the list is selected etc
    */
   HDFSBrowser.prototype._treeNavigateTo = function(sPath) {
     if(!sPath) return;
+    
+    this.unselectAll();
+    
     // tokenize the path into suqsequent calls
     var paths = sPath.split("/").filter(x => x !== "");
     paths.unshift("/") // provide the leading slash
@@ -233,16 +232,31 @@ sap.ui.define([], function() {
   };
 
   /**
+   * This functions checks the current state. If invalid path is selected, the result of confirmation dialog is returned
+   */
+  HDFSBrowser.prototype.validate = function() {
+    if(this._valueState === sap.ui.core.ValueState.Warning){
+      return confirm(`Selected HDFS Path "${this.getHDFSPath()}" does not exist. Are you sure you want to continue?`);
+    } else {
+      return true;
+    }
+  }
+  
+  /**
    * Set the highlight and text for all items in the list
    * 
    */
-  HDFSBrowser.prototype.setValueState = function(valueState, text) {
+  HDFSBrowser.prototype._setValueState = function(valueState, text) {
+    // update in pathInput too
+    let oInputCtl =  sap.ui.getCore().byId(this.getPathInput());
+    oInputCtl.setValueState(valueState);
+    oInputCtl.setValueStateText(text);
     this._valueState = valueState;
     var items = this._tree.getItems()
     for ( var i in items) {
       items[i].setHighlight(valueState);
-      items[i].setHighlightText(text);
     }
+    this._tree.rerender();
   };
   
   /**
@@ -260,6 +274,8 @@ sap.ui.define([], function() {
   HDFSBrowser.prototype._getList = function(sPath, sModelPath, oControl, fnSuccCallback) {
     Functions.ajax(this.getRestURI(), "POST", sPath, function(oData) {
       
+      this._setValueState(sap.ui.core.MessageType.None, "");
+      
       let original = this._model.getProperty(sModelPath)
       
       let merged = {};
@@ -273,26 +289,26 @@ sap.ui.define([], function() {
       this._model.setProperty(sModelPath, merged);
       if (typeof (fnSuccCallback) !== "undefined")
         fnSuccCallback();
-    }.bind(this), function(jqXHR, textStatus, errorThrown) {
+    }.bind(this), function(jqXHR) {
       if(jqXHR.status === 404) {
-        sap.m.MessageBox.error(`Path ${sPath} not found! Please choose a valid HDFS path.`);
-        this.setValueState(sap.ui.core.MessageType.Error, "Select a valid HDFS path");
+        this._setValueState(sap.ui.core.MessageType.Warning, "Select a valid HDFS path");
+        this.unselectAll();
       } else {
         sap.m.MessageBox.error("Failed to retreive the HDFS folder contents for " + sPath + ", please try again later.");
       }
       
     }.bind(this), oControl)
   };
-
+  
   /**
    * Here update the associated label when the user changes the selection through the UI
    */
   HDFSBrowser.prototype._selectionChange = function(oEv) {
     var sModelPath = oEv.getParameter("listItem").getBindingContext(this._modelName).getPath()
     var sPath = this._model.getProperty(sModelPath).path
-    this.setProperty("HDFSPath", sPath, true);
-    this._updatePathLabel(sPath);
-    this.setValueState(sap.ui.core.MessageType.None, "");
+    this._model.setProperty("/currentPath", sPath);
+    this.setHDFSPath(sPath);
+    this._setValueState(sap.ui.core.MessageType.None, "");
   };
 
   return HDFSBrowser;

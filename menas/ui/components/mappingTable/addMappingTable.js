@@ -72,8 +72,6 @@ var AddMappingTableFragment = function (oController, fnLoad) {
 
       oController.byId("newMappingTableSchemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
       oController.byId("newMappingTableSchemaVersionSelect").setValueStateText("");
-
-      oController.byId("addMtHDFSBrowser").setValueState(sap.ui.core.ValueState.None);
     },
 
     isValid: function (oMT) {
@@ -83,8 +81,7 @@ var AddMappingTableFragment = function (oController, fnLoad) {
         oController.byId("newMappingTableName"));
       let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Dataset",
         oController.byId("newMappingTableSchemaNameSelect"), oController.byId("newMappingTableSchemaVersionSelect"));
-      let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT, "Mapping Table",
-        oController.byId("addMtHDFSBrowser"));
+      let hasValidHDFSPath = oController.byId("addMtHDFSBrowser").validate();
 
       return hasValidName && hasValidSchema && hasValidHDFSPath;
     },

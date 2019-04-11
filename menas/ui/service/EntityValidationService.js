@@ -81,14 +81,4 @@ var EntityValidationService = new function () {
     return isOk;
   };
 
-  this._isValidHDFSPath = function(sPath, oInput) {
-    let isOk = true;
-    if (!sPath || sPath === "/") {
-      oInput.setValueState(sap.ui.core.ValueState.Error);
-      isOk = false;
-    }
-
-    return isOk;
-  };
-
 }();
