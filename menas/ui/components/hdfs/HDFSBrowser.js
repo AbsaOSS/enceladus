@@ -208,7 +208,9 @@ sap.ui.define([], function() {
             items[i].setSelected(true);
           }
         }
-        if(rev.length > 0) fnHelper(sNewPath, sModelPath, rev.reverse());
+        if(rev.length > 0) {
+          fnHelper(sNewPath, sModelPath, rev.reverse());
+        }
         else {
           that._tree.rerender();
         }

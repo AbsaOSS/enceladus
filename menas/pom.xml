@@ -238,8 +238,7 @@
                             <filtering>true</filtering>
                         </resource>
                     </webResources>
-                    <packagingExcludes> META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA 
-                    </packagingExcludes>
+                    <packagingExcludes>META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA</packagingExcludes>
                     <archive>
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
