@@ -147,20 +147,19 @@ object ExplodeTools {
 
     val isNested = explosion.arrayFieldName.contains('.')
 
-    val (decDf, decField, transientColumn) = if (isNested) {
+    val (decDf, deconstructedField, transientColumn) = if (isNested) {
       val deconstructedData = deconstructNestedColumn(inputDf, explosion.arrayFieldName)
       DeconstructedNestedField.unapply(deconstructedData).get
     } else {
       (inputDf, explosion.arrayFieldName, None)
     }
 
-    val orderByCol = col(explosion.indexFieldName)
-    val groupedCol = col(explosion.idFieldName)
+    val orderByInsideArray = col(explosion.indexFieldName)
+    val orderByRecordCol = col(explosion.idFieldName)
 
     // Do not group by columns that are explosion artifacts
-    val allOtherColumns = inputDf.schema
-      .filter(a => a.name != explosion.idFieldName
-        && a.name != explosion.indexFieldName
+    val groupByColumns = inputDf.schema
+      .filter(a => a.name != explosion.indexFieldName
         && (a.name != explosion.arrayFieldName || isNested)
         && (errorColumn.isEmpty || a.name != errorColumn.get)
       )
@@ -173,21 +172,23 @@ object ExplodeTools {
     val dfImploded = errorColumn match {
       case None =>
         decDf
-          .orderBy(orderByCol).groupBy(groupedCol +: allOtherColumns: _*)
-          .agg(collect_list(decField).as(tmpColName))
+          .orderBy(orderByRecordCol, orderByInsideArray)
+          .groupBy(groupByColumns: _*)
+          .agg(collect_list(deconstructedField).as(tmpColName))
       case Some(errorCol) =>
         // Implode taking into account the error column
         // Errors should be collected, flattened and made distinct
         val isErrorColumnStruct = SchemaUtils.isColumnArrayOfStruct(errorCol, inputDf.schema)
-        val gatheredDf = decDf.orderBy(orderByCol)
-          .groupBy(groupedCol +: allOtherColumns: _*)
+        val gatheredDf = decDf
+          .orderBy(orderByRecordCol, orderByInsideArray)
+          .groupBy(groupByColumns: _*)
         if (isErrorColumnStruct) {
           // This is a workaround for Spark's array_distinct() issue for StructTypes
-          gatheredDf.agg(collect_list(decField).as(tmpColName),
+          gatheredDf.agg(collect_list(deconstructedField).as(tmpColName),
             callUDF("arrayDistinctErrors", flatten(collect_list(col(errorCol)))).as(errorCol))
         } else {
           // This is more generic way, but this not always works in Spark 2.4.0
-          gatheredDf.agg(collect_list(decField).as(tmpColName),
+          gatheredDf.agg(collect_list(deconstructedField).as(tmpColName),
             array_distinct(flatten(collect_list(col(errorCol)))).as(errorCol))
         }
     }
@@ -213,9 +214,9 @@ object ExplodeTools {
       // Drop the array size column
       .drop(col(explosion.sizeFieldName))
       // restore original record order
-      .orderBy(groupedCol)
+      .orderBy(orderByRecordCol)
       // remove monotonic id created during explode
-      .drop(groupedCol)
+      .drop(orderByRecordCol)
   }
   // scalastyle:on method.length
 
