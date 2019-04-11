@@ -40,28 +40,28 @@ case class CmdConfig(rawFormat: String = "xml",
                      reportDate: String = "",
                      reportVersion: String = "",
                      sparkConfFile: String = "") {
-  private val stdPaths = "conformance-output/standardized-" +
+  private lazy val stdPaths = "conformance-output/standardized-" +
                         s"$datasetName-" +
                         s"$datasetVersion-" +
                         s"$reportDate-" +
                         s"$reportVersion"
-  private val confPaths = s"$datasetName/" +
+  private lazy val confPaths = s"$datasetName/" +
                           s"enceladus_info_date=$reportDate/" +
                           s"enceladus_info_version=$reportVersion"
 
-  private val defaultStdOut = s"/tmp/$stdPaths"
-  private val defaultConfOut = s"/publish/$confPaths"
+  private lazy val defaultStdOut = s"/tmp/$stdPaths"
+  private lazy val defaultConfOut = s"/publish/$confPaths"
 
-  private val refStdOut = s"/ref/tmp/$stdPaths"
-  private val refConfOut = s"/ref/publish/$confPaths"
+  private lazy val refStdOut = s"/ref/tmp/$stdPaths"
+  private lazy val refConfOut = s"/ref/publish/$confPaths"
 
-  private val cmpStdPath = s"/cmp/tmp/$stdPaths"
-  private val cmpConfPath = s"/cmp/publish/$confPaths"
+  private lazy val cmpStdPath = s"/cmp/tmp/$stdPaths"
+  private lazy val cmpConfPath = s"/cmp/publish/$confPaths"
 
-  val sparkConf: String = Source.fromFile(sparkConfFile).getLines().mkString
+  lazy val sparkConf: String = Source.fromFile(sparkConfFile).getLines().mkString
 
-  val stdComparisonConf: String = comparisonConf(defaultStdOut, refStdOut, cmpStdPath, keys)
-  val confComparisonConf: String = comparisonConf(defaultConfOut, refConfOut, cmpConfPath, keys)
+  lazy val stdComparisonConf: String = comparisonConf(defaultStdOut, refStdOut, cmpStdPath, keys)
+  lazy val confComparisonConf: String = comparisonConf(defaultConfOut, refConfOut, cmpConfPath, keys)
 
   /**
     * Get Conformance options like dataset name, dataset version, etc.
