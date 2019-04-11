@@ -5,7 +5,7 @@ def toolVersionGit = getToolVersionGit()
 def mavenSettingsId = getMavenSettingsId()
 def mavenAdditionalSettingsBuild = getMavenAdditionalSettingsBuild()
 def mavenAdditionalSettingsDeploy = getMavenAdditionalSettingsDeploy()
-def nexusURL = getNexusUrl()
+def artifactoryURL = getArtifactoryUrl()
 
 
 pipeline {
@@ -38,7 +38,7 @@ pipeline {
             steps {
                 configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
                     sh "mvn versions:set -DnewVersion=${env.GIT_COMMIT}-SNAPSHOT"
-                    sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${nexusURL} ${mavenAdditionalSettingsDeploy} deploy"
+                    sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${artifactoryURL} ${mavenAdditionalSettingsDeploy} deploy"
                 }
             }
          }
