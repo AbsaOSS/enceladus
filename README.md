@@ -61,7 +61,7 @@ Ensure the properties there fit your environment.
 Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
 
 #### Standardization and Conformance requirements:
-- **Spark 2.4.0** installation
+- **Spark 2.4.1** installation
 - **Hadoop 2.7** installation
 - **Menas** running instance
 - **Menas Credentials File** in your home directory (a configuration file for authenticating the Spark jobs with Menas) 
