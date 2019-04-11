@@ -17,7 +17,7 @@
            xmlns:form="sap.ui.layout.form" xmlns:table="sap.ui.table"
            controllerName="components.dataset.datasetMain"
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <Page title="Datasets" enableScrolling="false">
+    <Page title="Datasets" enableScrolling="true">
         <customHeader>
             <Bar>
                 <contentMiddle>
