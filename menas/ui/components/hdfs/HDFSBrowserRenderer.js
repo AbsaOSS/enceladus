@@ -16,11 +16,10 @@
 sap.ui.define([], function() {
 
   var HDFSBrowserRenderer = {};
-
-  HDFSBrowserRenderer.render = function(oRm, oControl){
+  HDFSBrowserRenderer.render = function(oRm, oControl) {
 
     var items = oControl._tree.getItems();
-    for ( var ind in items) {
+    for( var ind in items) {
       items[ind].setHighlight(oControl.getValueState())
     }
 
@@ -31,13 +30,15 @@ sap.ui.define([], function() {
 
     oControl._enableBusy(oControl);
     oControl._treeNavigateTo(oControl.getHDFSPath());
+
     oRm.write("<div");
     oRm.writeControlData(oControl);
     oRm.write(">")
     oRm.renderControl(oControl._scroll)
     oRm.write("</div>")
+
   };
 
   return HDFSBrowserRenderer;
 
-}, /* bExport= */ true);
+}, /* bExport= */true);
