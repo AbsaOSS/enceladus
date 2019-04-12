@@ -31,17 +31,17 @@
                         <Label text="HDFS raw data folder path"/>
                         <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%"
                                           busyControl="addDatasetDialog"
-                                          pathLabel="selectedRawHDFSPathLabel" restURI="api/hdfs/list"
+                                          pathInput ="selectedRawHDFSPathLabel" restURI="api/hdfs/list"
                                           HDFSPath="{entity>/hdfsPath}"/>
                         <Label text="RAW HDFS Path"/>
-                        <Text id="selectedRawHDFSPathLabel"/>
+                        <Input type="Text" id="selectedRawHDFSPathLabel"/>
                         <Label text="HDFS conformed data publish folder path"/>
                         <hdfs:HDFSBrowser id="newDatasetPublishHDFSBrowser" height="300px" width="100%"
                                           busyControl="addDatasetDialog"
-                                          pathLabel="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
+                                          pathInput="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
                                           HDFSPath="{entity>/hdfsPublishPath}"/>
                         <Label text="Publish HDFS Path"/>
-                        <Text id="selectedPublishHDFSPathLabel"/>
+                        <Input type="Text" id="selectedPublishHDFSPathLabel"/>
                     </form:content>
                 </form:SimpleForm>
             </VBox>
