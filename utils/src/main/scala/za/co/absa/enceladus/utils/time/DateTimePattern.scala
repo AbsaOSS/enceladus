@@ -94,7 +94,7 @@ object DateTimePattern {
     if (!Seq(DateType, TimestampType).contains(structField.dataType)) {
       val typeName = structField.dataType.typeName
       throw new InvalidParameterException(
-        s"StrucField data type for DateTimePattern has to be DateType or TimestampType, instead $typeName was given."
+        s"StructField data type for DateTimePattern has to be DateType or TimestampType, instead $typeName was given."
       )
     }
     val PatternInfo(pattern, isDefault) = structField.readPatternInfo()
@@ -126,31 +126,6 @@ object DateTimePattern {
   }
 
   def timeZoneInPattern(pattern: String): Boolean = {
-    if (isEpoch(pattern)) {
-      true
-    } else {
-      pattern.hasUnquoted(patternTimeZoneChars, Set('''))
-    }
+    isEpoch(pattern) || pattern.hasUnquoted(patternTimeZoneChars, Set('''))
   }
-
-  /* TODO ---
-  private def scanForFreeOccurrence(string: String, chars: Seq[Char], quote: Char, escape: Char = '\\' ): Boolean = {
-    @tailrec
-    def scan(sub: String, inQuote: Boolean, escaped: Boolean = false):Boolean = {
-      if (sub.isEmpty) {
-        false
-      } else {
-        sub.head match {
-          case `escape` => scan(sub.tail, inQuote, !escaped)
-          case `quote` => scan(sub.tail, if (escaped) inQuote else !inQuote)
-          case _ if inQuote => scan(sub.tail, inQuote)
-          case c if chars.contains(c) => true
-          case _ => scan(sub.tail, inQuote = false)
-        }
-      }
-    }
-
-    scan(string, inQuote = false)
-  }
-  */
 }

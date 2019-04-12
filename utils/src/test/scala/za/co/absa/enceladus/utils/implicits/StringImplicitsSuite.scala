@@ -139,7 +139,6 @@ class StringImplicitsSuite  extends FunSuite {
   }
 
   test("StringImprovements.findFirstUnquoted - escape in quote chars") { //better to do with other then \
-    //TODO
     val escapeChar = '~'
     val quotes = Set(''', escapeChar)
     val charsToFind = Set('w', 'e', 'l')

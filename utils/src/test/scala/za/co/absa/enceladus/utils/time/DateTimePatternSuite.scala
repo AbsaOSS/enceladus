@@ -184,7 +184,7 @@ class DateTimePatternSuite extends FunSuite {
 
     //wrong type
     val sfwt = StructField("stringField", StringType)
-    val expectedMessage = s"StrucField data type for DateTimePattern has to be DateType or TimestampType, instead ${sfwt.dataType.typeName} was given."
+    val expectedMessage = s"StructField data type for DateTimePattern has to be DateType or TimestampType, instead ${sfwt.dataType.typeName} was given."
     val caught = intercept[InvalidParameterException] {
       DateTimePattern.fromStructField(sfwt)
     }
