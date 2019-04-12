@@ -84,7 +84,7 @@ var AddDatasetFragment = function (oController, fnLoad) {
       let hasValidSchema = EntityValidationService.hasValidSchema(oDataset, "Dataset",
         oController.byId("schemaNameSelect"), oController.byId("schemaVersionSelect"));
       let hasValidRawHDFSPath = oController.byId("newDatasetRawHDFSBrowser").validate();
-      let hasValidPublishHDFSPath = oController.byId("newDatasetPublishHDFSBrowser").validate();
+      let hasValidPublishHDFSPath = hasValidRawHDFSPath ? oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
       
       return hasValidName && hasValidSchema && hasValidPublishHDFSPath && hasValidRawHDFSPath;
     },
