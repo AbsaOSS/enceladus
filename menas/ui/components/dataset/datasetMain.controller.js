@@ -68,8 +68,20 @@ sap.ui.define([
         title: "Add",
         isEdit: false,
       });
-      this.fetchSchema();
+
+      const rules = this._model.getProperty("/currentDataset/conformance");
+      this._setRuleDialogModel(rules);
+
       this._upsertConformanceRuleDialog.open();
+    },
+
+    _setRuleDialogModel: function(rules) {
+      const currentDataset = this._model.getProperty("/currentDataset");
+      SchemaService.getSchemaVersionPromise(currentDataset.schemaName, currentDataset.schemaVersion)
+        .then(schema => {
+          schema.fields = SchemaManager.updateTransitiveSchema(schema.fields, rules);
+          this._upsertConformanceRuleDialog.setModel(new sap.ui.model.json.JSONModel(schema), "schema");
+        });
     },
 
     onRuleMenuAction: function (oEv) {
@@ -84,6 +96,10 @@ sap.ui.define([
           title: "Edit",
           isEdit: true,
         });
+
+        const rules = this._model.getProperty("/currentDataset/conformance").slice(0, old.order);
+        this._setRuleDialogModel(rules);
+
         this._upsertConformanceRuleDialog.open();
       } else if (sAction === "delete") {
         sap.m.MessageBox.confirm("Are you sure you want to delete the conformance rule?", {

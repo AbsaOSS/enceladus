@@ -62,6 +62,13 @@ sap.ui.define([
       this._model.setProperty("/newDefaultValue", {
         title: "Add"
       })
+
+      let currentMT = this._model.getProperty("/currentMappingTable");
+      this._addDefaultDialog.setModel(new sap.ui.model.json.JSONModel(currentMT.schema), "schema");
+      SchemaService.getSchemaVersionPromise(currentMT.schemaName, currentMT.schemaVersion)
+        .then(oData => {
+          this._addDefaultDialog.getModel("schema").setProperty("/fields", oData.fields);
+        });
       this._addDefaultDialog.open();
     },
 
@@ -121,9 +128,9 @@ sap.ui.define([
     },
 
     onSchemaFieldSelect: function (oEv) {
-      let bind = oEv.getParameter("listItem").getBindingContext().getPath();
-      let modelPathBase = "/currentMappingTable/schema/fields/";
-      let model = sap.ui.getCore().getModel();
+      let bind = oEv.getParameter("listItem").getBindingContext("schema").getPath();
+      let modelPathBase = "/fields/";
+      let model = this._addDefaultDialog.getModel("schema");
       SchemaService.fieldSelect(bind, modelPathBase, model, "/newDefaultValue/columnName");
     },
 
@@ -154,24 +161,21 @@ sap.ui.define([
     _schemaFieldSelectorSelectPath: function (sExpandTo) {
 
       let aTokens = sExpandTo.split(".");
-      let oCtl = sap.ui.getCore().byId("schemaFieldSelector")
+      let oCtl = sap.ui.getCore().byId("schemaFieldSelector");
 
       oCtl.collapseAll();
 
-      let sRealPath = "/currentMappingTable/schema/fields"
-      // let sNewPath = "/currentMappingTable/schema/children"
-
-      let model = sap.ui.getCore().getModel();
-      // model.setProperty(sNewPath, model.getProperty(sRealPath))
+      let model = this._addDefaultDialog.getModel("schema");
 
       let helper = function (aToks, sModelPathAcc) {
         if (aToks.length === 0) {
-          let items = oCtl.getItems()
+          let items = oCtl.getItems();
           for (let i in items) {
-            let p = items[i].getBindingContext().getPath()
-            let modelPath = sModelPathAcc.substring(0, sModelPathAcc.length - 9) // substring
-            // to get rid of the children suffix
+            let p = items[i].getBindingContext("schema").getPath();
+            // substring to get rid of the children suffix
+            let modelPath = sModelPathAcc.substring(0, sModelPathAcc.length - 9);
             if (p === modelPath) {
+              console.log(items[i]);
               oCtl.setSelectedItem(items[i]);
               sap.ui.getCore().byId("defValFieldSelectScroll").scrollToElement(items[i])
             }
@@ -180,11 +184,11 @@ sap.ui.define([
           let curr = model.getProperty(sModelPathAcc);
           for (let i in curr) {
             if (curr[i]["name"] === aToks[0]) {
-              let newPath = sModelPathAcc + "/" + i + "/children"
-              let items = oCtl.getItems()
+              let newPath = sModelPathAcc + "/" + i + "/children";
+              let items = oCtl.getItems();
               for (let x in items) {
-                let itemPath = items[x].data("path") + "." + items[x].getTitle()
-                let modelPath = curr[i]["path"] + "." + curr[i]["name"]
+                let itemPath = items[x].data("path") + "." + items[x].getTitle();
+                let modelPath = curr[i]["path"] + "." + curr[i]["name"];
                 if (itemPath === modelPath) {
                   oCtl.expand(parseInt(x));
                   break;
@@ -198,7 +202,7 @@ sap.ui.define([
 
       };
 
-      helper(aTokens, "/currentMappingTable/schema/fields")
+      helper(aTokens, "/fields")
     },
 
     onDefaultValueMenuAction: function (oEv) {

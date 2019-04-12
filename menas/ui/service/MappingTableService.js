@@ -70,6 +70,10 @@ var MappingTableService = new function () {
     })
   };
 
+  this.getMappingTableVersionPromise = function(sId, iVersion) {
+    return $.ajax("api/mappingTable/detail/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET")
+  };
+
   this.getMappingTableVersion = function (sId, iVersion, bGetSchema) {
     Functions.ajax("api/mappingTable/detail/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, function (oData) {
       model.setProperty("/currentMappingTable", oData)

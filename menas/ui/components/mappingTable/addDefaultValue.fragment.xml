@@ -20,7 +20,7 @@
             <form:SimpleForm adjustLabelSpan="true" editable="true">
                 <form:content>
                     <Label text="Target Column"></Label>
-                    <core:Fragment fragmentName="components.schemaFieldSelector" type="XML" binding="{/currentMappingTable}"/>
+                    <core:Fragment fragmentName="components.schemaFieldSelector" type="XML" binding="{entity>/}"/>
                     <Label text="Selected Target Column"></Label>
                     <Text text="{/newDefaultValue/columnName}"></Text>
                     <Label text="Default Value"></Label>
