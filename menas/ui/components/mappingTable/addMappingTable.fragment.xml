@@ -47,12 +47,19 @@
                             </Select>
                         </FlexBox>
                         <Label text="HDFS Path"/>
-                        <hdfs:HDFSBrowser id="addMtHDFSBrowser" height="300px" width="100%"
+                        <Panel expandable="true" expanded="false">
+                            <headerToolbar>
+                                <Toolbar>
+                                    <Input type="Text" id="selectedHDFSPathLabel"/>
+                                </Toolbar>
+                            </headerToolbar>
+                            <content>
+                            <hdfs:HDFSBrowser id="addMtHDFSBrowser" height="300px" width="100%"
                                           busyControl="addMappingTableDialog"
                                           pathInput="selectedHDFSPathLabel" restURI="api/hdfs/list"
                                           HDFSPath="{/newMappingTable/hdfsPath}"/>
-                        <Label text="Selected Path"/>
-                        <Input type="Text" id="selectedHDFSPathLabel"/>
+                            </content>
+                        </Panel>
                     </form:content>
                 </form:SimpleForm>
             </VBox>

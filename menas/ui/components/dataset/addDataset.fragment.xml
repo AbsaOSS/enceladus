@@ -29,19 +29,33 @@
                                value="{entity>/description}"/>
                         <core:Fragment type="XML" fragmentName="components.schemaSelector"/>
                         <Label text="HDFS raw data folder path"/>
-                        <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%"
-                                          busyControl="addDatasetDialog"
-                                          pathInput ="selectedRawHDFSPathLabel" restURI="api/hdfs/list"
-                                          HDFSPath="{entity>/hdfsPath}"/>
-                        <Label text="RAW HDFS Path"/>
-                        <Input type="Text" id="selectedRawHDFSPathLabel"/>
-                        <Label text="HDFS conformed data publish folder path"/>
-                        <hdfs:HDFSBrowser id="newDatasetPublishHDFSBrowser" height="300px" width="100%"
-                                          busyControl="addDatasetDialog"
-                                          pathInput="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
-                                          HDFSPath="{entity>/hdfsPublishPath}"/>
-                        <Label text="Publish HDFS Path"/>
-                        <Input type="Text" id="selectedPublishHDFSPathLabel"/>
+                        <Panel expandable="true" expanded="false">
+                            <headerToolbar>
+                                <Toolbar>
+                                    <Input type="Text" id="selectedRawHDFSPathLabel"/>
+                                </Toolbar>
+                            </headerToolbar>
+                            <content>
+                                <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%"
+                                                  busyControl="addDatasetDialog"
+                                                  pathInput ="selectedRawHDFSPathLabel" restURI="api/hdfs/list"
+                                                  HDFSPath="{entity>/hdfsPath}"/>
+                            </content>
+                        </Panel>
+                        <Label text="HDFS conformed data publish folder path"/>                        
+                        <Panel expandable="true" expanded="false">
+                            <headerToolbar>
+                                <Toolbar>
+                                    <Input type="Text" id="selectedPublishHDFSPathLabel"/>
+                                </Toolbar>
+                            </headerToolbar>
+                            <content>
+                                <hdfs:HDFSBrowser id="newDatasetPublishHDFSBrowser" height="300px" width="100%"
+                                                  busyControl="addDatasetDialog"
+                                                  pathInput="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
+                                                  HDFSPath="{entity>/hdfsPublishPath}"/>
+                            </content>
+                        </Panel>
                     </form:content>
                 </form:SimpleForm>
             </VBox>

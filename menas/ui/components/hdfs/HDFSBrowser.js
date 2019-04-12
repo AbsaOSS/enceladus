@@ -157,7 +157,7 @@ sap.ui.define([], function() {
    * siblings), while also making sure that the correct item from the list is selected etc
    */
   HDFSBrowser.prototype._treeNavigateTo = function(sPath) {
-    if(!sPath) return;
+    if(!sPath || sPath === this._loadedHDFSPath) return;
     
     this.unselectAll();
     
@@ -207,6 +207,7 @@ sap.ui.define([], function() {
           // also select the correct list item
           if (hdfsPath === sPath) {
             items[i].setSelected(true);
+            this._loadedHDFSPath = sPath;
           }
         }
         if(rev.length > 0) fnHelper(sNewPath, sModelPath, rev.reverse());
