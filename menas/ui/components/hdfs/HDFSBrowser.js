@@ -157,9 +157,12 @@ sap.ui.define([], function() {
    * siblings), while also making sure that the correct item from the list is selected etc
    */
   HDFSBrowser.prototype._treeNavigateTo = function(sPath) {
-    if(!sPath) return;
+    if(!sPath || sPath === this._loadedHDFSPath) return;
+    
+    this._setValueState(sap.ui.core.MessageType.None, "");
     
     this.unselectAll();
+    this.collapseAll();
     
     // tokenize the path into suqsequent calls
     var paths = sPath.split("/").filter(x => x !== "");
@@ -207,6 +210,7 @@ sap.ui.define([], function() {
           // also select the correct list item
           if (hdfsPath === sPath) {
             items[i].setSelected(true);
+            this._loadedHDFSPath = sPath;
           }
         }
         if(rev.length > 0) {
@@ -275,8 +279,6 @@ sap.ui.define([], function() {
    */
   HDFSBrowser.prototype._getList = function(sPath, sModelPath, oControl, fnSuccCallback) {
     Functions.ajax(this.getRestURI(), "POST", sPath, function(oData) {
-      
-      this._setValueState(sap.ui.core.MessageType.None, "");
       
       let original = this._model.getProperty(sModelPath)
       

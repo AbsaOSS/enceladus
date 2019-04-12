@@ -29,19 +29,21 @@
                                value="{entity>/description}"/>
                         <core:Fragment type="XML" fragmentName="components.schemaSelector"/>
                         <Label text="HDFS raw data folder path"/>
-                        <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%"
+                        <VBox>
+                        	<Input type="Text" id="selectedRawHDFSPathLabel"/>
+                            <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%"
                                           busyControl="addDatasetDialog"
                                           pathInput ="selectedRawHDFSPathLabel" restURI="api/hdfs/list"
-                                          HDFSPath="{entity>/hdfsPath}"/>
-                        <Label text="RAW HDFS Path"/>
-                        <Input type="Text" id="selectedRawHDFSPathLabel"/>
+                                          HDFSPath="{entity>/hdfsPath}"/>                       
+                        </VBox>
                         <Label text="HDFS conformed data publish folder path"/>
-                        <hdfs:HDFSBrowser id="newDatasetPublishHDFSBrowser" height="300px" width="100%"
+                        <VBox>
+                            <Input type="Text" id="selectedPublishHDFSPathLabel"/>
+                            <hdfs:HDFSBrowser id="newDatasetPublishHDFSBrowser" height="300px" width="100%"
                                           busyControl="addDatasetDialog"
                                           pathInput="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
-                                          HDFSPath="{entity>/hdfsPublishPath}"/>
-                        <Label text="Publish HDFS Path"/>
-                        <Input type="Text" id="selectedPublishHDFSPathLabel"/>
+                                          HDFSPath="{entity>/hdfsPublishPath}"/>                            
+                        </VBox>
                     </form:content>
                 </form:SimpleForm>
             </VBox>
