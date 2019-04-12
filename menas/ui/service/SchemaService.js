@@ -61,6 +61,10 @@ var SchemaService = new function () {
     })
   };
 
+  this.getSchemaVersionPromise = function(sId, iVersion) {
+    return $.ajax("api/schema/detail/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET")
+  };
+
   this.getSchemaVersion = function (sId, iVersion, sModelPath) {
     let modelPath = (sModelPath) ? sModelPath : "/currentSchema";
 

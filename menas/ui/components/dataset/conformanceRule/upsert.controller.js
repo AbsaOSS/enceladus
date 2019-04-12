@@ -162,9 +162,9 @@ sap.ui.define([
     },
 
     onSchemaFieldSelect: function (oEv) {
-      let bind = oEv.getParameter("listItem").getBindingContext().getPath();
-      let modelPathBase = "/currentDataset/schema/fields/";
-      let model = sap.ui.getCore().getModel();
+      let bind = oEv.getParameter("listItem").getBindingContext("schema").getPath();
+      let modelPathBase = "/fields/";
+      let model = this._dialog.getModel("schema");
       SchemaService.fieldSelect(bind, modelPathBase, model, "/newRule/inputColumn");
     },
 
