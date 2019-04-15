@@ -96,7 +96,6 @@ class ConformanceRule {
       if (!element) {
         element = (index === splitPath.length - 1) ? newField : new SchemaField(path, splitPath.slice(0, index).join(","), "struct", true, []);
         acc.push(element);
-        return element.children;
       }
       let ch = element.children;
       if (!ch) {
