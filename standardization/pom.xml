@@ -26,6 +26,10 @@
         <version>0.99.0-SNAPSHOT</version>
     </parent>
 
+    <properties>
+        <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>za.co.absa</groupId>
@@ -155,8 +159,12 @@
                         <phase>validate</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.basedir}/src/main/resources/application.conf.template" tofile="${project.basedir}/src/main/resources/application.conf" overwrite="false" />
-                                <copy file="${project.basedir}/src/main/resources/spline.properties.template" tofile="${project.basedir}/src/main/resources/spline.properties" overwrite="false" />
+                                <copy file="${project.basedir}/src/main/resources/application.conf.template"
+                                      tofile="${project.basedir}/src/main/resources/application.conf"
+                                      overwrite="false"/>
+                                <copy file="${project.basedir}/src/main/resources/spline.properties.template"
+                                      tofile="${project.basedir}/src/main/resources/spline.properties"
+                                      overwrite="false"/>
                             </target>
                         </configuration>
                         <goals>
