@@ -19,7 +19,12 @@
         <Tree id="schemaFieldSelector" mode="SingleSelect" enableBusyIndicator="true"
               selectionChange="onSchemaFieldSelect"
               items="{path: 'schema>/fields', parameters:{arrayNames:['children']}}">
-            <StandardTreeItem title="{schema>name}" type="Active" cust:path="{schema>path}"/>
+            <CustomTreeItem type="Active" cust:path="{schema>path}">
+                <VBox>
+                    <FormattedText htmlText="&lt;strong&gt;{schema>name}&lt;/strong&gt;"/>
+                    <Label text="type: {schema>type}; nullable: {schema>nullable}"/>
+                </VBox>
+            </CustomTreeItem>
         </Tree>
     </ScrollContainer>
 </core:FragmentDefinition>
