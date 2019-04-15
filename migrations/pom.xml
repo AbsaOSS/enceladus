@@ -25,6 +25,10 @@
         <version>0.99.0-SNAPSHOT</version>
     </parent>
 
+    <properties>
+        <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
+    </properties>
+
     <dependencies>
         <dependency> <!-- TODO: remove -->
             <groupId>org.scala-lang</groupId>
