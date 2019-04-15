@@ -165,7 +165,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
     Future.successful {
       val uniqueId = getUniqueIdIfAbsent(newRun)
       val runId = getNewRunId(latestOpt)
-      newRun.copy(username = Option(username), uniqueId = Option(uniqueId), runId = runId)
+      newRun.copy(uniqueId = Option(uniqueId), runId = runId)
     }
   }
 

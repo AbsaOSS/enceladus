@@ -32,9 +32,8 @@ object RunFactory {
                   splineRef: SplineReference = getDummySplineReference(),
                   startDateTime: String = dummyDateString,
                   runStatus: RunStatus = getDummyRunStatus(),
-                  controlMeasure: ControlMeasure = getDummyControlMeasure(),
-                  username: Option[String] = Option("dummyUsername")): Run = {
-    Run(uniqueId, runId, dataset, datasetVersion, splineRef, startDateTime, runStatus, controlMeasure, username)
+                  controlMeasure: ControlMeasure = getDummyControlMeasure()): Run = {
+    Run(uniqueId, runId, dataset, datasetVersion, splineRef, startDateTime, runStatus, controlMeasure)
   }
 
   def getDummySplineReference(sparkApplicationId: String = "dummySparkApplicationId",

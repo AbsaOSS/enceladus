@@ -461,19 +461,18 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
     "return 201" when {
       "a new Run is created" should {
-        "return the created Run with the authenticated user's username" in {
-          val run = RunFactory.getDummyRun(username = None)
+        "return the created Run" in {
+          val run = RunFactory.getDummyRun()
 
           val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
 
           assertCreated(response)
 
-          val expected = run.copy(username = Option(user))
           val body = response.getBody
-          assert(body == expected)
+          assert(body == run)
         }
         "provide a uniqueId if none is specified" in {
-          val run = RunFactory.getDummyRun(username = None, uniqueId = None)
+          val run = RunFactory.getDummyRun(uniqueId = None)
 
           val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
 
@@ -481,42 +480,29 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
           val body = response.getBody
           assert(body.uniqueId.isDefined)
-          val expected = run.copy(username = Option(user), uniqueId = body.uniqueId)
-          assert(body == expected)
-        }
-        "override any specified username in favor of the authenticated user's username" in {
-          val run = RunFactory.getDummyRun(username = Option("fakeUsername"))
-
-          val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
-
-          assertCreated(response)
-
-          val expected = run.copy(username = Option(user))
-          val body = response.getBody
+          val expected = run.copy(uniqueId = body.uniqueId)
           assert(body == expected)
         }
         "override any specified runId in favor of a generated one" which {
           "is 1 on first run for the given Dataset Name and Version" in {
-            val run = RunFactory.getDummyRun(username = Option("fakeUsername"))
+            val run = RunFactory.getDummyRun()
 
             val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
 
             assertCreated(response)
 
-            val expected = run.copy(username = Option(user))
             val body = response.getBody
-            assert(body == expected)
+            assert(body == run)
           }
           "is the latest previous run + 1 on subsequent runs for the given Dataset Name and Version" in {
-            val run = RunFactory.getDummyRun(username = Option("fakeUsername"))
+            val run = RunFactory.getDummyRun()
 
             val response = sendPost[Run, Run](endpointBase, bodyOpt = Option(run))
 
             assertCreated(response)
 
-            val expected = run.copy(username = Option(user))
             val body = response.getBody
-            assert(body == expected)
+            assert(body == run)
           }
         }
       }
@@ -527,7 +513,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
         val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
         val presentRun = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
         runFixture.add(presentRun)
-        val run = RunFactory.getDummyRun(username = None, uniqueId = Option(uniqueId))
+        val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
 
         val response = sendPost[Run, Validation](endpointBase, bodyOpt = Option(run))
 

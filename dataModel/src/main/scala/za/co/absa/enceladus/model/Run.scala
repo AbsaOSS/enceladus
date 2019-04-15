@@ -26,6 +26,5 @@ case class Run
   splineRef: SplineReference,
   startDateTime: String,
   runStatus: RunStatus,
-  controlMeasure: ControlMeasure,
-  username: Option[String] = None
+  controlMeasure: ControlMeasure
 )
