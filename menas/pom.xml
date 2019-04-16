@@ -215,7 +215,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring.version}</version>
                 <configuration>
-                    <mainClass>za.co.absa.enceladus.rest.Application</mainClass>
+                    <mainClass>za.co.absa.enceladus.menas.Application</mainClass>
                 </configuration>
             </plugin>
             <plugin>
