@@ -31,9 +31,13 @@ var AddSchemaFragment = function (oController, fnLoad) {
 
   let oDialog = loadDialogFragment();
 
+  const model = sap.ui.getCore().getModel();
+  const eventBus = sap.ui.getCore().getEventBus();
+  const schemaService = new SchemaService(model, eventBus);
+
   let oFragment = {
     submit: function () {
-      let newSchema = oController._model.getProperty("/newSchema");
+      let newSchema = oDialog.getModel("entity").oData;
       if (!newSchema.isEdit && newSchema.name && typeof (newSchema.nameUnique) === "undefined") {
         // need to wait for the service call
         setTimeout(this.submit.bind(this), 500);
@@ -43,10 +47,9 @@ var AddSchemaFragment = function (oController, fnLoad) {
       if (this.isValid(newSchema)) {
         // send and update UI
         if (newSchema.isEdit) {
-          let currSchema = oController._model.getProperty("/currentSchema");
-          SchemaService.updateSchema(currSchema.name, currSchema.version, newSchema.description);
+          schemaService.update(newSchema);
         } else {
-          SchemaService.createSchema(newSchema.name, newSchema.description);
+          schemaService.create(newSchema);
         }
         this.cancel(); // close & clean up
       }
@@ -54,7 +57,6 @@ var AddSchemaFragment = function (oController, fnLoad) {
 
     cancel: function () {
       this.resetValueState();
-      oController._model.setProperty("/newSchema", {});
       oDialog.close();
     },
 
@@ -73,23 +75,23 @@ var AddSchemaFragment = function (oController, fnLoad) {
     },
 
     onNameChange: function () {
-      let sName = oController._model.getProperty("/newSchema/name");
+      let sName = oDialog.getModel("entity").getProperty("/name");
       if (GenericService.isValidEntityName(sName)) {
-        SchemaService.hasUniqueName(sName)
+        SchemaService.hasUniqueName(sName, oDialog.getModel("entity"))
       } else {
-        oController._model.setProperty("/newSchema/nameUnique", true)
+        oDialog.getModel("entity").setProperty("/newSchema/nameUnique", true)
       }
     }
   };
 
   this.getAdd = function () {
     oFragment.onPress = () => {
-      oController._model.setProperty("/newSchema", {
+      oDialog.setModel(new sap.ui.model.json.JSONModel({
         name: "",
         description: "",
         isEdit: false,
         title: "Add"
-      });
+      }), "entity");
 
       oDialog.open();
     };
@@ -103,8 +105,7 @@ var AddSchemaFragment = function (oController, fnLoad) {
       current.isEdit = true;
       current.title = "Edit";
 
-      oController._model.setProperty("/newSchema", jQuery.extend(true, {}, current));
-
+      oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
       oDialog.open();
     };
 

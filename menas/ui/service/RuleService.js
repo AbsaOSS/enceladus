@@ -17,7 +17,11 @@ jQuery.sap.require("sap.m.MessageBox");
 
 var RuleService = new function () {
 
-  let model = sap.ui.getCore().getModel();
+  const model = sap.ui.getCore().getModel();
+  const eventBus = sap.ui.getCore().getEventBus();
+
+  const datasetService = new DatasetService(model, eventBus);
+  const schemaService = new SchemaService(model, eventBus);
 
   this.getRuleList = function (bLoadFirst) {
     Functions.ajax("api/rule/list", "GET", {}, function (oData) {
@@ -74,9 +78,9 @@ var RuleService = new function () {
   this.createRule = function (oCurrentDataset, oRule) {
     Functions.ajax("api/dataset/" + encodeURI(oCurrentDataset.name) + "/rule/create", "POST", oRule,
       function (oData) {
-        SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
-        DatasetService.setCurrentDataset(oData);
-        DatasetService.updateMasterPage();
+        schemaService.getByNameAndVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
+        datasetService.setCurrent(oData);
+        datasetService.updateMasterPage();
         sap.m.MessageToast.show("Rule created.");
       }, function () {
         sap.m.MessageBox.error("Failed to create the rule, try reloading the application or try again later.")
@@ -95,8 +99,8 @@ var RuleService = new function () {
     }, function (oData) {
       RuleService.getRuleList();
       model.setProperty("/currentRule", oData);
-      SchemaService.getSchemaVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
-      DatasetService.updateMasterPage();
+      schemaService.getByNameAndVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
+      datasetService.updateMasterPage();
       sap.m.MessageToast.show("Rule updated.");
     }, function () {
       sap.m.MessageBox.error("Failed to update the rule, try reloading the application or try again later.")

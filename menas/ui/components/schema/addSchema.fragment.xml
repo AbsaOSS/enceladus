@@ -14,14 +14,14 @@
   -->
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
-    <Dialog id="addSchemaDialog" title="{/newSchema/title} Schema" stretchOnPhone="true">
+    <Dialog id="addSchemaDialog" title="{entity>/title} Schema" stretchOnPhone="true">
         <content>
             <VBox>
-                <Input id="newSchemaName" type="Text" placeholder="Schema name*" width="100%" value="{/newSchema/name}"
-                       enabled="{path:'/newSchema/isEdit', formatter:'Formatters.not'}"
+                <Input id="newSchemaName" type="Text" placeholder="Schema name*" width="100%" value="{entity>/name}"
+                       enabled="{path:'entity>/isEdit', formatter:'Formatters.not'}"
                        change="onNameChange"/>
                 <Input id="newSchemaDescription" type="Text" placeholder="Description" width="100%"
-                       value="{/newSchema/description}"/>
+                       value="{entity>/description}"/>
             </VBox>
         </content>
         <buttons>

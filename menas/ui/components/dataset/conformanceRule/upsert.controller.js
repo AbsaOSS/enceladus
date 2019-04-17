@@ -77,12 +77,16 @@ sap.ui.define([
       this._model.setProperty("/rules", this.rules);
       this._model.setProperty("/dataTypes", this.dataTypes);
       this._formFragments = {};
+      this._eventBus = sap.ui.getCore().getEventBus();
+      this._datasetService = new DatasetService(this._model, this._eventBus);
+      this._mappingTableService = new MappingTableService(this._model, this._eventBus);
+      this._schemaService = new SchemaService(this._model, this._eventBus)
     },
 
     onBeforeOpen: function () {
       this._dialog = sap.ui.getCore().byId("upsertConformanceRuleDialog");
       this._ruleForm = sap.ui.getCore().byId("ruleForm");
-      MappingTableService.getMappingTableList(this._dialog);
+      this._mappingTableService.getList(this._dialog);
       if(this._model.getProperty("/newRule/isEdit")) {
         this.showFormFragment(this._model.getProperty("/newRule/_t"));
       } else {
@@ -133,7 +137,7 @@ sap.ui.define([
 
     onMappingTableSelect: function (oEv) {
       let sMappingTableId = oEv.getParameter("selectedItem").getKey();
-      MappingTableService.getAllMappingTableVersions(sMappingTableId, sap.ui.getCore().byId("schemaVersionSelect"));
+      this._mappingTableService.getAllVersions(sMappingTableId, sap.ui.getCore().byId("schemaVersionSelect"));
     },
 
     onRuleSelect: function () {
@@ -165,7 +169,7 @@ sap.ui.define([
       let bind = oEv.getParameter("listItem").getBindingContext("schema").getPath();
       let modelPathBase = "/fields/";
       let model = this._dialog.getModel("schema");
-      SchemaService.fieldSelect(bind, modelPathBase, model, "/newRule/inputColumn");
+      this._schemaService.fieldSelect(bind, modelPathBase, model, "/newRule/inputColumn");
     },
 
     beforeShowFragmentChanges: function () {
@@ -191,7 +195,7 @@ sap.ui.define([
           }
           newRule.newJoinConditions = aNewJoinConditions;
         }
-        MappingTableService.getAllMappingTableVersions(newRule.mappingTable, sap.ui.getCore().byId("schemaVersionSelect"));
+        this._mappingTableService.getAllVersions(newRule.mappingTable, sap.ui.getCore().byId("schemaVersionSelect"));
       }
 
       if(!currentRule.isEdit) {
@@ -217,7 +221,7 @@ sap.ui.define([
 
     updateRule: function (currentDataset, newRule) {
       currentDataset.conformance[newRule.order] = newRule;
-      DatasetService.editDataset(currentDataset);
+      this._datasetService.update(currentDataset);
     },
 
     showFormFragment: function (sFragmentName) {

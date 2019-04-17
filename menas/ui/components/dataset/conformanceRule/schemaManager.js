@@ -23,7 +23,6 @@ class SchemaManager {
 
 }
 
-
 // TODO: break this down into files (#224) after we bundle the resources (#314)
 class RuleFactory {
   static createRule(rule) {
@@ -189,18 +188,17 @@ class MappingConformanceRule extends ConformanceRule {
 
   apply(fields) {
     return ArrayUtils.applyOnCopy(fields, c => {
-      let mappingTablePromise = MappingTableService.getMappingTableVersionPromise(this.rule.mappingTable, this.rule.mappingTableVersion);
+      let mappingTablePromise = new MappingTableRestDAO().getByNameAndVersion(this.rule.mappingTable, this.rule.mappingTableVersion);
       const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
 
       mappingTablePromise.then(mappingTable => {
-        const schemaPromise = SchemaService.getSchemaVersionPromise(mappingTable.schemaName, mappingTable.schemaVersion);
-        schemaPromise.then(schema => {
-          const targetCol = this.getTargetCol(schema.fields);
-          newField.type = targetCol.type;
-          newField.children = targetCol.children;
-        })
+        return new SchemaRestDAO().getByNameAndVersion(mappingTable.schemaName, mappingTable.schemaVersion);
+        }).then(schema => {
+        const targetCol = this.getTargetCol(schema.fields);
+        newField.type = targetCol.type;
+        newField.children = targetCol.children;
+        this.addNewField(c, newField)
       });
-      this.addNewField(c, newField)
     });
   }
 

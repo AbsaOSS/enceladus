@@ -29,10 +29,12 @@ sap.ui.define([
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
 
       this._addFragment = new AddMappingTableFragment(this, Fragment.load).getAdd();
+
+      this._mappingTableService = new MappingTableService(this._model, this._eventBus)
     },
 
     list: function () {
-      MappingTableService.getMappingTableList(this.byId("masterPage"));
+      this._mappingTableService.getList(this.byId("masterPage"));
     },
 
     onPressMasterBack: function () {
