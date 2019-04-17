@@ -24,7 +24,7 @@ class BaseMigrationSuite extends FunSuite {
   object MigrationExample1 extends JsonMigration with QueryMigration {
     override val targetVersion: Int = 1
 
-    migrate("dataset")(jsonIn => {
+    transformJSON("dataset")(jsonIn => {
       jsonIn + "_transformed"
     })
 
