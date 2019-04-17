@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
+import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
+
 import scala.collection.mutable
 
 /**
@@ -46,6 +48,10 @@ import scala.collection.mutable
 trait JsonMigration extends Migration {
   type DocumentTransformer = String => String
 
+  if (targetVersion <= 0) {
+    throw new IllegalStateException("The target version of a JsonMigration should be greater than 0.")
+  }
+
   /**
     * This function is used by derived classes to add transformations for affected collections.
     * This is used for complex migrations that requite complex model version maps.
@@ -54,7 +60,7 @@ trait JsonMigration extends Migration {
     * @param f              A transformation to applied to each document of the collection
     *
     */
-  def migrate(collectionName: String)(f: String => String): Unit = {
+  def transformJSON(collectionName: String)(f: String => String): Unit = {
     if (transformers.contains(collectionName)) {
       throw new IllegalArgumentException(s"A transformer for '$collectionName' has already been added.")
     }
@@ -69,6 +75,14 @@ trait JsonMigration extends Migration {
     *
     */
   def getTransformer(collectionName: String): Option[DocumentTransformer] = transformers.get(collectionName)
+
+  /**
+    * Executes a migration on a given database and a list of collection names.
+    */
+  override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
+    ???
+  }
+
 
   private val transformers = new mutable.HashMap[String, DocumentTransformer]()
 }

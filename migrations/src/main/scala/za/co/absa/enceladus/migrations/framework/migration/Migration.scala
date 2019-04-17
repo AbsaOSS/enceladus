@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
+import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
+
 /**
   * A base trait for all types of migration.
   */
@@ -24,4 +26,15 @@ trait Migration {
     * The source version for each migration is assume to be `tagretVersion - 1`
     */
   val targetVersion: Int
+
+  /**
+    * Executes a migration on a given database and a list of collection names.
+    */
+  def execute(db: DocumentDb, collectionNames: Seq[String]): Unit
+
+  /**
+    * If a migration adds or removes collections it should provide a new list of collections based
+    * on the list of collections available for he previous version of a database.
+    */
+  def applyCollectionChanges(collections: List[String]): List[String] = collections
 }
