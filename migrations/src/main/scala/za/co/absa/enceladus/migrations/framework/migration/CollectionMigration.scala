@@ -40,10 +40,6 @@ import scala.collection.mutable.ListBuffer
   */
 trait CollectionMigration extends Migration {
 
-  if (targetVersion <= 0) {
-    throw new IllegalStateException("The target version of a CollectionMigration should be 0 or bigger.")
-  }
-
   /**
     * This method is used by derived classes to add new collection as a step of migration process.
     *
@@ -107,8 +103,12 @@ trait CollectionMigration extends Migration {
       }
     }
     val collectionsToRemove = getCollectionsToRemove
-    newCollections = newCollections.filter(c => collectionsToRemove.contains(c))
-    newCollections
+    newCollections = newCollections.filterNot(c => collectionsToRemove.contains(c))
+
+    val renameMap = collectionsToRename.toMap
+    newCollections.map(collectionName => {
+      renameMap.getOrElse(collectionName, collectionName)
+    })
   }
 
   /**
@@ -116,6 +116,12 @@ trait CollectionMigration extends Migration {
     */
   override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
     ???
+  }
+
+  override protected def validateMigration(): Unit = {
+    if (targetVersion < 0) {
+      throw new IllegalStateException("The target version of a CollectionMigration should be 0 or bigger.")
+    }
   }
 
   private val collectionsToAdd = new ListBuffer[String]()

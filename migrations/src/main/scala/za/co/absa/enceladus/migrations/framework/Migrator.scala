@@ -30,6 +30,11 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
   /**
     * Do the migration from a specified version of the database to the target one.
     *
+    * The migrations passed into the constructor should be be
+    * - In the order of database versions
+    * - Without gaps in version numbers
+    * - There should be only one migration per version switch
+    *
     * @param sourceDbVersion A version of the database to migrate from
     * @param targetDbVersion A version of the database to migrate to
     */
@@ -52,8 +57,13 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     }
   }
 
+  /**
+    * Get the list of collection names valid for a particular version of the database.
+    *
+    * @param dbVersion A version number of the database
+    */
   def getCollectionNames(dbVersion: Int): List[String] = {
-    val collectionMigrations = getCollectionMigrations.sortBy(_.targetVersion)
+    val collectionMigrations = getCollectionMigrations
     var collections: List[String] = Nil
     breakable {
       collectionMigrations.foreach(m => {
@@ -65,6 +75,58 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
       })
     }
     collections
+  }
+
+
+  /**
+    * Validates migrations for self consistency.
+    *
+    * - Target version numbers should be consequent
+    * - Collections should be added, removed or renamed consistently
+    * - Migrations should refer only to collections that do exist
+    * - Validate that migration path exists from version 0 to `targetDbVersion`
+    *
+    * @param targetDbVersion A version of the database that should be reachable by applying migrations
+    */
+  def validate(targetDbVersion: Int): Unit = {
+    validateVersionNumbersConsequent()
+    validateCollectionManipulationConsistency()
+    validateCollectionsExists()
+    validateTargetVersion(targetDbVersion)
+  }
+
+  private def validateVersionNumbersConsequent(): Unit = {
+    var i = -1
+    migrations.foreach(m => {
+      val v = m.targetVersion
+      if (v < 0) {
+        throw new IllegalStateException(s"A negative ($v) target version is encountered in a migration spec.")
+      }
+      if (v - i > 1) {
+        throw new IllegalStateException(s"The list of migrations jumps from version $i to $v.")
+      }
+      if (v < i) {
+        throw new IllegalStateException(s"The the migrations for version $i and version $v are out of order.")
+      }
+      if (v == i) {
+        throw new IllegalStateException(s"Found 2 migrations for the same target version $i.")
+      }
+      i = v
+    })
+  }
+
+  private def validateCollectionManipulationConsistency(): Unit = {
+    // ToDo
+  }
+
+  private def validateCollectionsExists(): Unit = {
+    // ToDo
+  }
+
+  private def validateTargetVersion(targetDbVersion: Int): Unit = {
+    if (!migrations.exists(_.targetVersion == targetDbVersion)) {
+      throw new IllegalStateException(s"The target database version ($targetDbVersion) is not reachable.")
+    }
   }
 
   private def validateDbVersios(sourceDbVersion: Int, targetDbVersion: Int): Unit = {

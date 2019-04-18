@@ -37,4 +37,6 @@ trait Migration {
     * on the list of collections available for he previous version of a database.
     */
   def applyCollectionChanges(collections: List[String]): List[String] = collections
+
+  protected def validateMigration()
 }

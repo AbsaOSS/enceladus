@@ -16,27 +16,20 @@
 package za.co.absa.enceladus.migrations.framework
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.migrations.framework.migration.{JsonMigration, QueryMigration}
+import za.co.absa.enceladus.migrations.framework.fixture.MigrationTestData._
+import za.co.absa.enceladus.migrations.framework.fixture.MigrationTestDoubles._
 
 class BaseMigrationSuite extends FunSuite {
 
-  // This is an example migration spec
-  object MigrationExample1 extends JsonMigration with QueryMigration {
-    override val targetVersion: Int = 1
+  test("Test collection names are determined properly for a given db version") {
+    val mig = new Migrator(DocumentDbStub, MigrationExample0 :: MigrationExample1 :: Nil)
 
-    transformJSON("dataset")(jsonIn => {
-      jsonIn + "_transformed"
-    })
+    val collectionsInV0 = mig.getCollectionNames(0)
+    val collectionsInV1 = mig.getCollectionNames(1)
 
-    applyQuery("schema") {
-      "script1"
-    }
-
-    applyQuery("schema") {
-      "script2"
-    }
+    assert(collectionsInV0 == "dataset" :: "schema" :: "mapping" :: "foo" :: Nil)
+    assert(collectionsInV1 == "dataset" :: "schema" :: "mapping_table" :: "attachment" :: Nil)
   }
-
 
   test("Test a migration provides JSON transformations and queries") {
     assert(MigrationExample1.getTransformer("schema").isEmpty)
@@ -50,6 +43,53 @@ class BaseMigrationSuite extends FunSuite {
     assert(queries.length == 2)
     assert(queries.head == "script1")
     assert(queries(1) == "script2")
+  }
+
+  test("Test that migrator checks for invalid transformations") {
+    intercept[ExceptionInInitializerError] {
+      new Migrator(DocumentDbStub, MigrationExample0 :: MigrationExample2 :: MigrationExample3Throw :: Nil)
+    }
+  }
+
+  test("Test that an exception is thrown if migration versions are inconsistent") {
+    val migGap = new Migrator(DocumentDbStub, MigrationExample0 :: MigrationExample2 :: Nil)
+    val migOutOfOrder = new Migrator(DocumentDbStub, MigrationExample1 :: MigrationExample0 :: Nil)
+    val migUnreachable = new Migrator(DocumentDbStub, MigrationExample0 :: MigrationExample1 :: Nil)
+
+    intercept[IllegalStateException] {
+      migGap.validate(2)
+    }
+
+    intercept[IllegalStateException] {
+      migOutOfOrder.validate(1)
+    }
+
+    intercept[IllegalStateException] {
+      migUnreachable.validate(2)
+    }
+  }
+
+  test("Test that an exception is thrown if a migration requires a collection that does not exist") {
+    val mig = new Migrator(DocumentDbStub, MigrationExample0 :: MigrationExample1 :: MigrationExample2 ::
+      MigrationExample3WrongCollection :: Nil)
+    //intercept[IllegalStateException] {
+    //  mig.validate(3)
+    //}
+  }
+
+  test("Test that an exception is thrown if collections are not manipulated consistently") {
+    val mig = new Migrator(DocumentDbStub, MigrationExample0 :: MigrationExample1 :: MigrationExample2 ::
+      MigrationExample3InconsistentManipulations :: Nil)
+    //intercept[IllegalStateException] {
+    //  mig.validate(3)
+    //}
+  }
+
+  test("Test that an exception is thrown if the target database version is not reachable") {
+    val mig = new Migrator(DocumentDbStub, MigrationExample0 :: MigrationExample1 :: MigrationExample2 :: Nil)
+    intercept[IllegalStateException] {
+      mig.validate(3)
+    }
   }
 
 }

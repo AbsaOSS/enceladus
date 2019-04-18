@@ -47,10 +47,6 @@ import scala.collection.mutable.ListBuffer
 trait QueryMigration extends Migration {
   type JsQuery = String
 
-  if (targetVersion < 0) {
-    throw new IllegalStateException("The target version of a QueryMigration should be 0 or bigger.")
-  }
-
   /**
     * This method is used by derived classes to add queries to be executed on the affected collections.
     * Use this for quicker migrations like an addition of a column.
@@ -82,6 +78,12 @@ trait QueryMigration extends Migration {
     */
   override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
     ???
+  }
+
+  override protected def validateMigration(): Unit = {
+    if (targetVersion < 0) {
+      throw new IllegalStateException("The target version of a QueryMigration should be 0 or bigger.")
+    }
   }
 
   private val queries = new ListBuffer[(String, JsQuery)]()
