@@ -23,11 +23,6 @@
 
     <repositories>
         <repository>
-            <id>spark-absa</id>
-            <name>Spark-Absa</name>
-            <url>https://dl.bintray.com/absa/spark-absa</url>
-        </repository>
-        <repository>
             <id>mongo-absa</id>
             <name>Mongo-Absa</name>
             <url>https://dl.bintray.com/absa/mongo-absa</url>
