@@ -48,10 +48,6 @@ import scala.collection.mutable
 trait JsonMigration extends Migration {
   type DocumentTransformer = String => String
 
-  if (targetVersion <= 0) {
-    throw new IllegalStateException("The target version of a JsonMigration should be greater than 0.")
-  }
-
   /**
     * This function is used by derived classes to add transformations for affected collections.
     * This is used for complex migrations that requite complex model version maps.
@@ -83,6 +79,11 @@ trait JsonMigration extends Migration {
     ???
   }
 
+  override protected def validateMigration(): Unit = {
+    if (targetVersion <= 0) {
+      throw new IllegalStateException("The target version of a JsonMigration should be greater than 0.")
+    }
+  }
 
   private val transformers = new mutable.HashMap[String, DocumentTransformer]()
 }
