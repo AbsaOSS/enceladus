@@ -13,10 +13,16 @@
   ~ limitations under the License.
   -->
 
-<core:View id="datasetMainView" xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:form="sap.ui.layout.form" xmlns:table="sap.ui.table"
-		   controllerName="components.monitoring.monitoringMain"
+<core:View id="monitoringMainView" controllerName="components.monitoring.monitoringMain"
+           xmlns="sap.m"
+           xmlns:core="sap.ui.core"
+           xmlns:mvc="sap.ui.core.mvc"
+           xmlns:layout="sap.ui.layout"
+           xmlns:form="sap.ui.layout.form"
+           xmlns:table="sap.ui.table"
 		   xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
-		   xmlns:html="http://www.w3.org/1999/xhtml">
+		   xmlns:html="http://www.w3.org/1999/xhtml"
+           xmlns:lab="it.designfuture.chartjs">
 	<Page title="Monitoring" enableScrolling="true">
 		<customHeader>
 			<Bar>
@@ -50,91 +56,33 @@
 						<customHeader>
 							<Bar>
 								<contentLeft>
-									<Title text="{/currentDataset/name} (v{/currentDataset/version})" />
+									<Title text="{/currentDataset/name}" />
 								</contentLeft>
 							</Bar>
 						</customHeader>
-						<content>
-							<IconTabBar id="datasetIconTabBar" select="tabSelect">
-								<items>
-									<IconTabFilter id="BasicInfo" icon="sap-icon://hint" key="info" text="Basic Info">
-										<form:SimpleForm>
-											<form:content>
-												<Label text="Dataset"/>
-												<Text id="currentDatasetName" text="{/currentDataset/name}"/>
-												<Label text="Description"/>
-												<Text id="currentDatasetDescription" text="{/currentDataset/description}"/>
-												<Label text="Version"/>
-												<Text id="currentDatasetVersion" text="{/currentDataset/version}"/>
-												<Label text="HDFS raw data folder path"/>
-												<Text id="currentDatasetRawPath" text="{/currentDataset/hdfsPath}"/>
-												<Label text="HDFS conformed data publish folder path"/>
-												<Text id="currentDatasetPublishedPath" text="{/currentDataset/hdfsPublishPath}"/>
-												<Label text="Schema"/>
-												<Link text="{/currentDataset/schemaName} (v. {/currentDataset/schemaVersion})" press="toSchema"
-													  cust:name="{/currentDataset/schemaName}" cust:version="{/currentDataset/schemaVersion}"
-													  id="currentDatasetSchmea"/>
-												<Label text="Last Update"/>
-												<Text id="currentDatasetLastUpdate" text="{path: '/currentDataset/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
-												<Label text="Last Update By"/>
-												<Text id="currentDatasetUserUpdated" text="{/currentDataset/userUpdated}"/>
-												<Label text="Created"/>
-												<Text id="currentDatasetCreated" text="{path: '/currentDataset/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"/>
-												<Label text="Created By"/>
-												<Text id="currentDatasetUserCreated" text="{/currentDataset/userCreated}"/>
-											</form:content>
-										</form:SimpleForm>
-									</IconTabFilter>
-									<IconTabFilter id="Schema" icon="sap-icon://tree" key="schema" text="Schema">
-										<table:TreeTable id="datasetSchemaTreeTable"
-														 rows="{path:'/currentDataset/schema/fields', parameters: {arrayNames:['children']}}"
-														 visibleRowCountMode="Interactive"
-														 minAutoRowCount="10" rowHeight="49px" selectionMode="None">
-											<table:columns>
-												<table:Column width="60%">
-													<Label text="Fields" />
-													<table:template>
-														<Text text="{name}" wrapping="false" />
-													</table:template>
-												</table:Column>
-												<table:Column width="20%">
-													<Label text="Type" />
-													<table:template>
-														<Text text="{type}"/>
-													</table:template>
-												</table:Column>
-												<table:Column width="10%">
-													<Label text="Nullable" />
-													<table:template>
-														<CheckBox selected="{nullable}" editable="false"/>
-													</table:template>
-												</table:Column>
-												<table:Column width="10%">
-													<Label text="Metadata" />
-													<table:template>
-														<Button icon="sap-icon://action" press="metadataPress" visible="{path:'metadata', formatter:'Formatters.nonEmptyObject'}"/>
-													</table:template>
-												</table:Column>
-											</table:columns>
-										</table:TreeTable>
-									</IconTabFilter>
-                                    <IconTabFilter id="ConformanceRules" icon="sap-icon://list" key="conformanceRules" text="Conformance Rules">
-                                        <List headerText="Conformance Rules" items="{
-                                            path: '/currentDataset/conformance',
-                                            factory: '.conformanceRuleFactory'
-                                        }"/>
-                                    </IconTabFilter>
-                                </items>
-							</IconTabBar>
-						</content>
+                            <content>
+                                <lab:BarChartJS
+                                    id="bar_chart"
+                                    datasets="{/plotData/datasets}"
+                                    labels="{/plotData/labels}"
+                                    titleDisplay="true"
+                                    titleText="Chronological by info date and version"
+                                    onLegendItemClick="onLegendItemClick"
+                                    onLegendItemHover="onLegendItemHover"
+                                    onClick="onClick"
+                                    onHover="onHover"
+                                    tooltipEnabled="true"
+                                    onAnimationProgress="onAnimationProgress"
+                                    onAnimationComplete="onAnimationComplete"
+                                    isHorizontal="true">
+                                </lab:BarChartJS>
+                                <List items="{/monitoringPoints}" mode="SingleSelectMaster">
+                                    <StandardListItem title="{informationDate}_v{reportVersion}" description="status: {status}"
+                                     info = "RAW: {raw_recordcount} STD: {std_records_succeeded}/{std_records_failed} CNFRM: {conform_records_succeeded}/{conform_records_failed}" cust:id="{informationDate}_v{reportVersion}" type="Active">
+                                    </StandardListItem>
+                                </List>
+                            </content>
 						<footer>
-							<Bar>
-								<contentRight>
-									<Button id="Delete" text="Delete" icon="sap-icon://delete" press="onRemovePress"/>
-									<Button id="AddRule" text="Add Conformance Rule" icon="sap-icon://add-equipment" press="onAddConformanceRulePress"></Button>
-									<Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress"/>
-								</contentRight>
-							</Bar>
 						</footer>
 					</Page>
 				</detailPages>

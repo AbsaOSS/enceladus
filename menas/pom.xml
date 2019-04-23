@@ -196,6 +196,12 @@
             <artifactId>webjars-locator-core</artifactId>
             <version>${webjars.locator.version}</version>
         </dependency>
+        <!-- Plot -->
+        <dependency>
+            <groupId>org.webjars.bower</groupId>
+            <artifactId>chart.js</artifactId>
+            <version>2.7.3</version>
+        </dependency>
 
         <!-- Test -->
         <dependency>
