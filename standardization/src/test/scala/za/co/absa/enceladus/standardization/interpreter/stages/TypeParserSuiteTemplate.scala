@@ -24,13 +24,14 @@ import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate._
+import za.co.absa.enceladus.utils.time.DateTimePattern
 
 trait TypeParserSuiteTemplate extends FunSuite {
   protected def createCastTemplate(toType: DataType, pattern: String, timezone: Option[String]): String
 
   private val sourceFieldName = "sourceField"
-  private val dateEpochPattern = "epoch"
-  private val timestampEpochPattern = "epochmilli"
+  private val dateEpochPattern = DateTimePattern.EpochKeyword
+  private val timestampEpochPattern = DateTimePattern.EpochMilliKeyword
 
   protected val log: Logger = LogManager.getLogger(this.getClass)
 
@@ -215,8 +216,8 @@ trait TypeParserSuiteTemplate extends FunSuite {
 
   private def doAssert(expectedExpression: String, actualExpression: String): Unit = {
     if (actualExpression != expectedExpression) {
-      //the expressions tend to be rather long, the assert most often cuts the beginning and/or end of the string
-      // showing just the vicinity of the difference, therefor the output of the whole strings
+      // the expressions tend to be rather long, the assert most often cuts the beginning and/or end of the string
+      // showing just the vicinity of the difference, so we log the output of the whole strings
       log.error(s"Expected: $expectedExpression")
       log.error(s"Actual  : $actualExpression")
       assert(actualExpression == expectedExpression)

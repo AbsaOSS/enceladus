@@ -18,7 +18,6 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 import java.security.InvalidParameterException
 
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
@@ -58,7 +57,7 @@ sealed trait TypeParser {
   val fieldName: String = SchemaUtils.getFieldNameOverriddenByMetadata(field)
   val currentColumnPath: String = appendPath(path, fieldName) // absolute path to field to parse
   val column: Column = parent.map(_.childColumn(fieldName)).getOrElse(col(currentColumnPath)) // no parent
-  val isArrayElement: Boolean = parent.exists(_.isArray)
+  val isArrayElement: Boolean = parent.exists(_.isInstanceOf[TypeParser.ArrayParent])
 }
 
 object TypeParser {
@@ -70,16 +69,13 @@ object TypeParser {
 
   sealed trait Parent {
     val parentColumn: Column
-    val isArray: Boolean
     def childColumn(fieldName: String): Column
   }
 
   private final case class ArrayParent (parentColumn: Column) extends Parent {
-    val isArray = true
     override def childColumn(fieldName: String): Column = parentColumn
   }
   private final case class StructParent (parentColumn: Column) extends Parent {
-    val isArray = false
     override def childColumn(fieldName: String): Column = parentColumn(fieldName)
   }
 

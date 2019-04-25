@@ -75,9 +75,7 @@ object DateTimePattern {
     override val isTimeZoned: Boolean = timeZoneInPattern || defaultTimeZone.nonEmpty
   }
 
-  private def createDateTimePattern(pattern: String,
-                                    assignedDefaultTimeZone: Option[String],
-                                    isDefault: Boolean): DateTimePattern = {
+  private def create(pattern: String, assignedDefaultTimeZone: Option[String], isDefault: Boolean): DateTimePattern = {
     if (isEpoch(pattern)) {
       EpochDTPattern(pattern, isDefault)
     } else {
@@ -87,7 +85,7 @@ object DateTimePattern {
 
   def apply(pattern: String,
             assignedDefaultTimeZone: Option[String] = None): DateTimePattern = {
-    createDateTimePattern(pattern, assignedDefaultTimeZone, isDefault = false)
+    create(pattern, assignedDefaultTimeZone, isDefault = false)
   }
 
   def fromStructField(structField: StructField ): DateTimePattern = {
@@ -99,7 +97,7 @@ object DateTimePattern {
     }
     val PatternInfo(pattern, isDefault) = structField.readPatternInfo()
     val timeZoneOpt = structField.getMetadata("timezone")
-    createDateTimePattern(pattern, timeZoneOpt, isDefault)
+    create(pattern, timeZoneOpt, isDefault)
   }
 
   def isEpoch(pattern: String): Boolean = {
