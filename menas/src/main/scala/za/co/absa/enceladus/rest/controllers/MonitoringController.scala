@@ -44,10 +44,22 @@ class MonitoringController @Autowired()(monitoringService: MonitoringService)
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  @GetMapping(value = Array("/{datasetName}"), produces = Array("application/json"))
+  @GetMapping(value = Array("data/datasets/{datasetName}"), produces = Array("application/json"))
   @ResponseStatus(HttpStatus.OK)
-  def getJson(@PathVariable datasetName: String): CompletableFuture[String] = {
+  def getMonitoringDataPoints(@PathVariable datasetName: String): CompletableFuture[String] = {
     monitoringService.getMonitoringDataPoints(datasetName)
 }
+
+  @GetMapping(value = Array("checkpoints/datasets/{datasetName}"), produces = Array("application/json"))
+  @ResponseStatus(HttpStatus.OK)
+  def getRecentCheckpointsPerDataset(@PathVariable datasetName: String): CompletableFuture[String] = {
+    monitoringService.getRecentCheckpointsPerDataset(datasetName)
+  }
+
+  @GetMapping(value = Array("checkpoints/users/{userName}"), produces = Array("application/json"))
+  @ResponseStatus(HttpStatus.OK)
+  def getRecentCheckpointsPerUser(@PathVariable userName: String): CompletableFuture[String] = {
+    monitoringService.getRecentCheckpointsPerUser(userName)
+  }
 
 }

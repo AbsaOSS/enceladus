@@ -44,5 +44,13 @@ class MonitoringService @Autowired()(monitoringMongoRepository: MonitoringMongoR
     monitoringMongoRepository.getMonitoringDataPoints(datasetName).map(_.mkString("[", ",", "]"))
   }
 
+  def getRecentCheckpointsPerDataset(datasetName: String): Future[String] = {
+    monitoringMongoRepository.getRecentCheckpointsPerDataset(datasetName).map(_.mkString("[", ",", "]"))
+  }
+
+  def getRecentCheckpointsPerUser(userName: String): Future[String] = {
+    monitoringMongoRepository.getRecentCheckpointsPerUser(userName).map(_.mkString("[", ",", "]"))
+  }
+
 
 }

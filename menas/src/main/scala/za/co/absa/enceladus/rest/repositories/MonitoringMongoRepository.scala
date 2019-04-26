@@ -53,7 +53,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
 
   def getMonitoringDataPoints(datasetName: String): Future[Seq[String]] = {
-    // scala mongodb driver does not yet support all mql features, so we use Document()
+    // scala mongodb driver does not yet support all mql features, so we use Document() with aggregate pipelines
     val observable: AggregateObservable[Document] = collection
       .aggregate(Seq(
         // filter by dataset name
@@ -64,14 +64,22 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |              $dateFromString: {
                    |                  dateString: "$startDateTime",
                    |                  format: "%d-%m-%Y %H:%M:%S %z",
-                   |                  onError: "$startDateTime"
+                   |                  onError: {$dateFromString: {
+                   |                      dateString: "$startDateTime",
+                   |                      format: "%d-%m-%Y %H:%M:%S",
+                   |                      onError: "wrongFormat"
+                   |                  }}
                    |              }
                    |          },
                    |          informationDateCasted: {
                    |              $dateFromString: {
                    |                  dateString: "$controlMeasure.metadata.informationDate",
-                   |                  format: "%d-%m-%Y",
-                   |                  onError: "wrongFormat"
+                   |                  format: "%Y-%m-%d",
+                   |                  onError: {$dateFromString: {
+                   |                      dateString: "$controlMeasure.metadata.informationDate",
+                   |                      format: "%d-%m-%Y",
+                   |                      onError: "wrongFormat"
+                   |                  }}
                    |              }
                    |          },
                    | }},""".stripMargin),
@@ -88,7 +96,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |              }, 0 ]
                    |          }
                    |      }}""".stripMargin),
-        // add the raw record count
+        // add the raw recordcount
         Document(""" {$addFields: {
                    |           raw_recordcount_control : {
                    |              $arrayElemAt : [ {
@@ -127,19 +135,9 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |
                    |      }}""".stripMargin),
         // sort the final results
-        Document("""{$sort: {informationDateCasted : -1, reportVersion: -1}}""".stripMargin)
+        Document("""{$sort: {informationDateCasted : -1, reportVersion: -1}}""".stripMargin),
+        Document("""{$limit: 20}""".stripMargin)
 
-        //addFields(new Field("startDateTimeCasted", "blah"))
-        /***project( Document("""{startDateTimeCasted: {$dateFromString: {
-                                                                          dateString: "$startDateTime",
-                                                                          format: "%d-%m-%Y %H:%M:%S %z",
-                                                                          onError: "$startDateTime"
-                                                                      }}}""")) ***/
-       // sort(orderBy(
-       //   descending("controlMeasure.metadata.informationDate"),
-       //   descending("controlMeasure.metadata.version"),
-       //   descending("startDateTime")
-       // ))
       ))
 
     //val observable: AggregateObservable[Document] = collection.aggregate(Seq(filter(equal("dataset", datasetName))))
@@ -147,5 +145,132 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
     observable.map(doc => doc.toJson).toFuture()
   }
 
+  def getRecentCheckpointsPerDataset(datasetName: String): Future[Seq[String]] = {
+
+    val observable: AggregateObservable[Document] = collection
+      .aggregate(Seq(
+        // filter by user name
+        filter(equal("dataset", datasetName)),
+        // expand to one document per checkpoint
+        Document("""{$unwind: "$controlMeasure.checkpoints"}""".stripMargin),
+        // add casted start and end time
+        Document(
+          """
+            |{$addFields: {
+            |          processStartTimeCasted: {
+            |              $dateFromString: {
+            |                  dateString: "$controlMeasure.checkpoints.processStartTime",
+            |                  format: "%d-%m-%Y %H:%M:%S %z",
+            |                  onError: {$dateFromString: {
+            |                      dateString: "$controlMeasure.checkpoints.processStartTime",
+            |                      format: "%d-%m-%Y %H:%M:%S",
+            |                      onError: "wrongFormat"
+            |                  }}
+            |              }
+            |          },
+            |          processEndTimeCasted: {
+            |              $dateFromString: {
+            |                  dateString: "$controlMeasure.checkpoints.processEndTime",
+            |                  format: "%d-%m-%Y %H:%M:%S %z",
+            |                  onError: {$dateFromString: {
+            |                      dateString: "$controlMeasure.checkpoints.processEndTime",
+            |                      format: "%d-%m-%Y %H:%M:%S",
+            |                      onError: "wrongFormat"
+            |                  }}
+            |              }
+            |          }
+            |  }}
+          """.stripMargin),
+        // sort by checkpoint start time, end time and runID
+        Document("""{$sort: { processEndTimeCasted: -1, processStartTimeCasted : -1, runId : -1 } }""".stripMargin),
+        // limit the number of output documents
+        Document("""{$limit: 100}""".stripMargin),
+        // project documents to desired format
+        Document(
+          """
+            |{$project : {
+            |     "_id": 1,
+            |     "username" : 1,
+            |     "dataset" : 1,
+            |     "datasetVersion" : 1,
+            |     "runId" : 1,
+            |     "informationDate" : "$controlMeasure.metadata.informationDate",
+            |     "reportVersion" : "$controlMeasure.metadata.version",
+            |     "runStatus" : "$runStatus.status",
+            |     "processStartTimeCasted" : 1,
+            |     "processEndTimeCasted" : 1,
+            |     "processStartTime" : "$controlMeasure.checkpoints.processStartTime",
+            |     "processEndTime" : "$controlMeasure.checkpoints.processEndTime",
+            |     "checkpointName" : "$controlMeasure.checkpoints.name",
+            |     "workflowName" : "$controlMeasure.checkpoints.workflowName"
+            |      }}
+          """.stripMargin)
+      ))
+    observable.map(doc => doc.toJson).toFuture()
+  }
+
+  def getRecentCheckpointsPerUser(userName: String): Future[Seq[String]] = {
+    // scala mongodb driver does not yet support all mql features, so we use Document() with aggregate pipelines
+    val observable: AggregateObservable[Document] = collection
+      .aggregate(Seq(
+        // filter by user name
+        filter(equal("username", userName)),
+        // expand to one document per checkpoint
+        Document("""{$unwind: "$controlMeasure.checkpoints"}""".stripMargin),
+        // add casted start and end time
+        Document(
+          """
+            |{$addFields: {
+            |          processStartTimeCasted: {
+            |              $dateFromString: {
+            |                  dateString: "$controlMeasure.checkpoints.processStartTime",
+            |                  format: "%d-%m-%Y %H:%M:%S %z",
+            |                  onError: {$dateFromString: {
+            |                      dateString: "$controlMeasure.checkpoints.processStartTime",
+            |                      format: "%d-%m-%Y %H:%M:%S",
+            |                      onError: "wrongFormat"
+            |                  }}
+            |              }
+            |          },
+            |          processEndTimeCasted: {
+            |              $dateFromString: {
+            |                  dateString: "$controlMeasure.checkpoints.processEndTime",
+            |                  format: "%d-%m-%Y %H:%M:%S %z",
+            |                  onError: {$dateFromString: {
+            |                      dateString: "$controlMeasure.checkpoints.processEndTime",
+            |                      format: "%d-%m-%Y %H:%M:%S",
+            |                      onError: "wrongFormat"
+            |                  }}
+            |              }
+            |          }
+            |  }}
+          """.stripMargin),
+        // sort by checkpoint start time, end time and runID
+        Document("""{$sort: { processEndTimeCasted: -1, processStartTimeCasted : -1, runId : -1 } }""".stripMargin),
+        // limit the number of output documents
+        Document("""{$limit: 100}""".stripMargin),
+        // project documents to desired format
+        Document(
+          """
+            |{$project : {
+            |     "_id": 1,
+            |     "username" : 1,
+            |     "dataset" : 1,
+            |     "datasetVersion" : 1,
+            |     "runId" : 1,
+            |     "informationDate" : "$controlMeasure.metadata.informationDate",
+            |     "reportVersion" : "$controlMeasure.metadata.version",
+            |     "runStatus" : "$runStatus.status",
+            |     "processStartTimeCasted" : 1,
+            |     "processEndTimeCasted" : 1,
+            |     "processStartTime" : "$controlMeasure.checkpoints.processStartTime",
+            |     "processEndTime" : "$controlMeasure.checkpoints.processEndTime",
+            |     "checkpointName" : "$controlMeasure.checkpoints.name",
+            |     "workflowName" : "$controlMeasure.checkpoints.workflowName"
+            |      }}
+          """.stripMargin)
+      ))
+    observable.map(doc => doc.toJson).toFuture()
+  }
 }
 
