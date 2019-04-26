@@ -52,6 +52,11 @@
             <version>${ujson.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.9.5</version>
+        </dependency>
+        <dependency>
             <groupId>org.gnieh</groupId>
             <artifactId>diffson_${scala.compat.version}</artifactId>
             <version>${diffson.version}</version>
