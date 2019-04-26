@@ -74,6 +74,7 @@ sap.ui.controller("components.monitoring.monitoringMain", {
     } else {
       MonitoringService.getDatasetList();
       MonitoringService.getMonitoringPoints(oParams.id);
+      MonitoringService.getDatasetCheckpoints(oParams.id);
       //this.preparePlotData(aMonitoringPoints)
       //this.getPlotData()
     }

@@ -81,6 +81,22 @@
                                      info = "RAW: {raw_recordcount} STD: {std_records_succeeded}/{std_records_failed} CNFRM: {conform_records_succeeded}/{conform_records_failed}" cust:id="{informationDate}_v{reportVersion}" type="Active">
                                     </StandardListItem>
                                 </List>
+                                <Bar>
+                                <contentMiddle>
+                                    <Title text="Checkpoints"/>
+                                </contentMiddle>
+                                </Bar>
+                                <TileContainer
+                                    id="checkpoint_container"
+                                    tiles="{/checkpoints}">
+                                    <StandardTile
+                                        type="Monitor"
+                                        number="{informationDate}"
+                                        numberUnit="v{reportVersion}"
+                                        title="{processEndTime} "
+                                        info="{checkpointName}"
+                                        infoState="Success" />
+                                </TileContainer>
                             </content>
 						<footer>
 						</footer>

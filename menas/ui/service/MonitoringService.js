@@ -20,23 +20,62 @@ var MonitoringService = new function() {
   var model = sap.ui.getCore().getModel();
 
   this.getMonitoringPoints = function(sId) {
-    Functions.ajax("api/monitoring/" + encodeURI(sId), "GET", {}, function(oData) {
+    Functions.ajax("api/monitoring/data/datasets/" + encodeURI(sId), "GET", {}, function(oData) {
       model.setProperty("/monitoringPoints", oData)
       let plotLabels = []
-      let raw_recordcount = []
-      let std_records_succeeded = []
-      let std_records_failed = []
-      let conform_records_succeeded = []
-      let conform_records_failed = []
+
+      let conformed = []
+      let failedAfterConformance = []
+      let waitingToConform = []
+      let failedAfterStandardization = []
+      let unprocessedRaw = []
 
       if (oData != undefined && oData.length != 0) {
         for (let elem of oData) {
-          plotLabels.push(elem["informationDate"] + "_" + elem["reportVersion"])
-          raw_recordcount.push(elem["raw_recordcount"])
-          std_records_succeeded.push(elem["std_records_succeeded"])
-          std_records_failed.push(elem["std_records_failed"])
-          conform_records_succeeded.push(elem["conform_records_succeeded"])
-          conform_records_failed.push(elem["conform_records_failed"])
+
+          let rawTotal = elem["raw_recordcount"]
+          let stdS = elem["std_records_succeeded"]
+          let stdF = elem["std_records_failed"]
+          let confS = elem["conform_records_succeeded"]
+          let confF = elem["conform_records_failed"]
+
+          if (rawTotal != undefined && stdS != undefined && stdF != undefined && confS != undefined && confF != undefined) {
+            // conformance finished
+            conformed.push(stdS)
+            failedAfterConformance.push(confF - stdF)
+            waitingToConform.push(0)
+            failedAfterStandardization.push(stdF)
+            unprocessedRaw.push(rawTotal - confS - confF)
+
+            plotLabels.push(elem["informationDate"] + "_v" + elem["reportVersion"])
+            continue
+          } else if (rawTotal != undefined && stdS != undefined && stdF != undefined && confS === undefined && confF === undefined) {
+            // only standartization finished
+            conformed.push(0)
+            failedAfterConformance.push(0)
+            waitingToConform.push(stdS)
+            failedAfterStandardization.push(stdF)
+            unprocessedRaw.push(rawTotal - stdS - stdF)
+
+
+            plotLabels.push(elem["informationDate"] + "_v" + elem["reportVersion"])
+            continue
+          } else if (rawTotal != undefined && stdS === undefined && stdF === undefined && confS === undefined && confF === undefined) {
+            // only raw data is available
+            conformed.push(0)
+            failedAfterConformance.push(0)
+            waitingToConform.push(0)
+            failedAfterStandardization.push(0)
+            unprocessedRaw.push(rawTotal)
+
+            plotLabels.push(elem["informationDate"] + "_v" + elem["reportVersion"])
+            continue
+          } else {
+            // rund data is inconsistent
+            plotLabels.push(elem["informationDate"] + "_v" + elem["reportVersion"] + " ! inconsistent_run_data")
+            continue
+          }
+
         }
       }
 
@@ -44,11 +83,34 @@ var MonitoringService = new function() {
         labels: plotLabels,
         datasets: [
           {
-            label: "raw recordcount",
+            label: "Conformed",
             fill: true,
             lineTension: 0.1,
-            backgroundColor: "black",
-            borderColor: "black",
+            backgroundColor: "green",
+            borderColor: "green",
+            borderCapStyle: 'butt',
+            borderDash: [],
+            borderDashOffset: 0.3,
+            borderJoinStyle: 'miter',
+            pointBorderColor: "rgba(75,192,192,1)",
+            pointBackgroundColor: "#fff",
+            pointBorderWidth: 1,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: "rgba(75,192,192,1)",
+            pointHoverBorderColor: "rgba(220,220,220,1)",
+            pointHoverBorderWidth: 2,
+            pointRadius: 1,
+            pointHitRadius: 10,
+            data: conformed,
+            spanGaps: false,
+            stack: "all"
+          },
+          {
+            label: "Failed at conformance",
+            fill: true,
+            lineTension: 0.1,
+            backgroundColor: "red",
+            borderColor: "red",
             borderCapStyle: 'butt',
             borderDash: [],
             borderDashOffset: 0.0,
@@ -62,11 +124,12 @@ var MonitoringService = new function() {
             pointHoverBorderWidth: 2,
             pointRadius: 1,
             pointHitRadius: 10,
-            data: raw_recordcount,
+            data: failedAfterConformance,
             spanGaps: false,
+            stack: "all"
           },
           {
-            label: "std_records_succeeded",
+            label: "Waiting for conformance",
             fill: true,
             lineTension: 0.1,
             backgroundColor: "blue",
@@ -84,58 +147,13 @@ var MonitoringService = new function() {
             pointHoverBorderWidth: 2,
             pointRadius: 1,
             pointHitRadius: 10,
-            data: std_records_succeeded,
+            data: waitingToConform,
             spanGaps: false,
-            stack: "std"
+            stack: "all"
           },
+
           {
-            label: "std_records_failed",
-            fill: true,
-            lineTension: 0.1,
-            backgroundColor: "firebrick",
-            borderColor: "firebrick",
-            borderCapStyle: 'butt',
-            borderDash: [],
-            borderDashOffset: 0.0,
-            borderJoinStyle: 'miter',
-            pointBorderColor: "rgba(75,192,192,1)",
-            pointBackgroundColor: "#fff",
-            pointBorderWidth: 1,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: "rgba(75,192,192,1)",
-            pointHoverBorderColor: "rgba(220,220,220,1)",
-            pointHoverBorderWidth: 2,
-            pointRadius: 1,
-            pointHitRadius: 10,
-            data: std_records_failed,
-            spanGaps: false,
-            stack: "std"
-          },
-          {
-            label: "conform_records_succeeded",
-            fill: true,
-            lineTension: 0.1,
-            backgroundColor: "limegreen",
-            borderColor: "limegreen",
-            borderCapStyle: 'butt',
-            borderDash: [],
-            borderDashOffset: 0.0,
-            borderJoinStyle: 'miter',
-            pointBorderColor: "rgba(75,192,192,1)",
-            pointBackgroundColor: "#fff",
-            pointBorderWidth: 1,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: "rgba(75,192,192,1)",
-            pointHoverBorderColor: "rgba(220,220,220,1)",
-            pointHoverBorderWidth: 2,
-            pointRadius: 1,
-            pointHitRadius: 10,
-            data: conform_records_succeeded,
-            spanGaps: false,
-            stack: "conform"
-          },
-          {
-            label: "conform_records_failed",
+            label: "Failed at standardization",
             fill: true,
             lineTension: 0.1,
             backgroundColor: "orange",
@@ -153,9 +171,33 @@ var MonitoringService = new function() {
             pointHoverBorderWidth: 2,
             pointRadius: 1,
             pointHitRadius: 10,
-            data: conform_records_failed,
+            data: failedAfterStandardization,
             spanGaps: false,
-            stack: "conform"
+            stack: "all"
+          },
+
+          {
+            label: "Unprocessed raw",
+            fill: true,
+            lineTension: 0.1,
+            backgroundColor: "black",
+            borderColor: "black",
+            borderCapStyle: 'butt',
+            borderDash: [],
+            borderDashOffset: 0.0,
+            borderJoinStyle: 'miter',
+            pointBorderColor: "rgba(75,192,192,1)",
+            pointBackgroundColor: "#fff",
+            pointBorderWidth: 1,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: "rgba(75,192,192,1)",
+            pointHoverBorderColor: "rgba(220,220,220,1)",
+            pointHoverBorderWidth: 2,
+            pointRadius: 1,
+            pointHitRadius: 10,
+            data: unprocessedRaw,
+            spanGaps: false,
+            stack: "all"
           }
         ]
       };
@@ -181,4 +223,13 @@ var MonitoringService = new function() {
     model.setProperty("/currentDataset", oDataset);
   };
 
-}();
+  this.getDatasetCheckpoints = function(sId) {
+    Functions.ajax("api/monitoring/checkpoints/datasets/" + encodeURI(sId), "GET", {}, function (oData) {
+      model.setProperty("/checkpoints", oData)
+    }, function () {
+      sap.m.MessageBox
+        .error("Failed to get checkpoints points. Please wait a moment and try reloading the application")
+    })
+  }
+
+}
