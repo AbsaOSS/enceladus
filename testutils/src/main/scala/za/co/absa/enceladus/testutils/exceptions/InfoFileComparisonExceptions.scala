@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.testutils.exceptions
 
-final case class InfoFilesDifferException(private val refPath: String,
-                                               private val stdPath: String,
-                                               private val outPath: String)
+final case class InfoFilesDifferException(refPath: String,
+                                          stdPath: String,
+                                          outPath: String)
   extends Exception("Expected and actual info files differ.\n" +
     s"Reference path: $refPath\n" +
     s"Actual dataset path: $stdPath\n" +
