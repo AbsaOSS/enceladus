@@ -32,7 +32,7 @@ object InfoFileComparisonJob {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   def main(args: Array[String]): Unit = {
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+    val cmd = CmdConfig.getCmdLineArguments(args)
     val enableWholeStage = false //disable whole stage code gen - the plan is too long
 
     implicit val sparkSession: SparkSession = SparkSession.builder()
@@ -47,8 +47,8 @@ object InfoFileComparisonJob {
     val newPathLoader = new ControlMeasuresLoaderJsonFile(hadoopConfiguration, new Path(cmd.newPath))
     val refPathLoader = new ControlMeasuresLoaderJsonFile(hadoopConfiguration, new Path(cmd.refPath))
 
-    val newControlMeasure: ControlMeasure = newPathLoader.load()
-    val refControlMeasure: ControlMeasure = refPathLoader.load()
+    val newControlMeasure = newPathLoader.load()
+    val refControlMeasure = refPathLoader.load()
 
     val diff: List[ModelDifference[_]] = refControlMeasure.compareWith(newControlMeasure)
 
