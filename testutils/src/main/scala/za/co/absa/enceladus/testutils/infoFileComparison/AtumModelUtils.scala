@@ -20,7 +20,7 @@ import za.co.absa.atum.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata
 import za.co.absa.atum.utils.ControlUtils
 
 /**
-  *
+  * A case class for the differences and the JSONPath like path to them
   * @param path Path to the difference through the model
   * @param was Value it had in reference
   * @param is Value it has now
@@ -35,8 +35,8 @@ object ModelDifferenceParser {
   /**
     * The method returns JSON representation of a [[ModelDifference]] object
     */
-  def asJson(modelDifference: List[ModelDifference[_]]): String = {
-    ControlUtils.asJsonPretty[List[ModelDifference[_]]](modelDifference)
+  def asJson(modelDifferences: List[ModelDifference[_]]): String = {
+    ControlUtils.asJsonPretty[List[ModelDifference[_]]](modelDifferences)
   }
 }
 
@@ -53,14 +53,14 @@ object AtumModelUtils {
   implicit class ControlMeasureOps (controlMeasure: ControlMeasure){
     /**
       * Compare this ControLMeasure with the one passed in
-      * @param secondControlMeasure Second control measure
+      * @param otherControlMeasure Second control measure
       * @return Returns a list of model differences
       */
-    def compareWith(secondControlMeasure: ControlMeasure): List[ModelDifference[_]] = {
-      val metadataDifferences = controlMeasure.metadata.compareWith(secondControlMeasure.metadata, "metadata")
+    def compareWith(otherControlMeasure: ControlMeasure): List[ModelDifference[_]] = {
+      val metadataDifferences = controlMeasure.metadata.compareWith(otherControlMeasure.metadata, "metadata")
       val checkpointsDifferences = controlMeasure.checkpoints.zipWithIndex.foldLeft(List[ModelDifference[_]]()) {
         case (agg, (value, index)) =>
-          value.compareWith(secondControlMeasure.checkpoints(index), s"checkpoints[$index]") ::: agg
+          value.compareWith(otherControlMeasure.checkpoints(index), s"checkpoints[$index]") ::: agg
       }
       metadataDifferences ::: checkpointsDifferences
     }
@@ -73,23 +73,23 @@ object AtumModelUtils {
   implicit class ControlMeasureMetadataOps (metadata: ControlMeasureMetadata){
     /**
       * Compare this ControlMeasureMetadata with the one passed in
-      * @param secondMetadata Second control measure metadata
+      * @param otherMetadata Second control measure metadata
       * @param curPath Path to the ControlMeasureMetadata through the model
       * @return Returns a list of model differences
       */
-    def compareWith(secondMetadata: ControlMeasureMetadata, curPath: String): List[ModelDifference[_]] = {
+    def compareWith(otherMetadata: ControlMeasureMetadata, curPath: String): List[ModelDifference[_]] = {
       val diffs = simpleCompare(metadata.sourceApplication,
-        secondMetadata.sourceApplication, s"$curPath.sourceApplication") ::
-      simpleCompare(metadata.country, secondMetadata.country, s"$curPath.country") ::
-      simpleCompare(metadata.historyType, secondMetadata.historyType, s"$curPath.historyType") ::
-      simpleCompare(metadata.dataFilename, secondMetadata.dataFilename, s"$curPath.dataFilename") ::
-      simpleCompare(metadata.sourceType, secondMetadata.sourceType, s"$curPath.sourceType") ::
-      simpleCompare(metadata.version, secondMetadata.version, s"$curPath.version") ::
-      simpleCompare(metadata.informationDate, secondMetadata.informationDate, s"$curPath.informationDate") ::
+        otherMetadata.sourceApplication, s"$curPath.sourceApplication") ::
+      simpleCompare(metadata.country, otherMetadata.country, s"$curPath.country") ::
+      simpleCompare(metadata.historyType, otherMetadata.historyType, s"$curPath.historyType") ::
+      simpleCompare(metadata.dataFilename, otherMetadata.dataFilename, s"$curPath.dataFilename") ::
+      simpleCompare(metadata.sourceType, otherMetadata.sourceType, s"$curPath.sourceType") ::
+      simpleCompare(metadata.version, otherMetadata.version, s"$curPath.version") ::
+      simpleCompare(metadata.informationDate, otherMetadata.informationDate, s"$curPath.informationDate") ::
         Nil
 
       val additionalInfoDiff = additionalInfoComparison(metadata.additionalInfo,
-        secondMetadata.additionalInfo,
+        otherMetadata.additionalInfo,
         s"$curPath.additionalInfo")
 
       (diffs flatten) ::: additionalInfoDiff
@@ -132,23 +132,23 @@ object AtumModelUtils {
     * Checkpoint's class extension adding compareWith
     * @param checkpoint Checkpoint instance
     */
-  implicit class CheckpointOps (checkpoint: Checkpoint){
+  implicit class CheckpointOps (checkpoint: Checkpoint) {
     /**
       * Compare this Checkpoint with the one passed in
-      * @param secondCheckpoint Second checkpoint
+      * @param otherCheckpoint Second checkpoint
       * @param curPath Path to the checkpoint through the model
       * @return Returns a list of model differences
       */
-    def compareWith(secondCheckpoint: Checkpoint, curPath: String): List[ModelDifference[_]] = {
+    def compareWith(otherCheckpoint: Checkpoint, curPath: String): List[ModelDifference[_]] = {
       val diffs =
-        simpleCompare(checkpoint.name, secondCheckpoint.name, s"$curPath.name") ::
-        simpleCompare(checkpoint.workflowName, secondCheckpoint.workflowName, s"$curPath.workflowName") ::
-        simpleCompare(checkpoint.order, secondCheckpoint.order, s"$curPath.order") :: Nil
+        simpleCompare(checkpoint.name, otherCheckpoint.name, s"$curPath.name") ::
+        simpleCompare(checkpoint.workflowName, otherCheckpoint.workflowName, s"$curPath.workflowName") ::
+        simpleCompare(checkpoint.order, otherCheckpoint.order, s"$curPath.order") :: Nil
 
       val controls = checkpoint.controls.zipWithIndex.foldLeft(List[ModelDifference[_]]()) {
         case (agg, (value, index)) =>
           val nextPath = s"$curPath.controls[$index]"
-          value.compareWith(secondCheckpoint.controls(index), nextPath) ::: agg
+          value.compareWith(otherCheckpoint.controls(index), nextPath) ::: agg
       }
 
       diffs.flatten ::: controls
@@ -162,16 +162,16 @@ object AtumModelUtils {
   implicit class MeasurementOps (measurement: Measurement){
     /**
       * Compare this Measurement with the one passed in
-      * @param secondMeasurement Second measurement
+      * @param otherMeasurement Second measurement
       * @param curPath Path to the measurement through the model
       * @return Returns a list of model differences
       */
-    def compareWith(secondMeasurement: Measurement, curPath: String): List[ModelDifference[_]] ={
+    def compareWith(otherMeasurement: Measurement, curPath: String): List[ModelDifference[_]] ={
       val diffs =
-        simpleCompare(measurement.controlName,secondMeasurement.controlName, s"$curPath.controlName") ::
-        simpleCompare(measurement.controlType, secondMeasurement.controlType, s"$curPath.controlType") ::
-        simpleCompare(measurement.controlCol, secondMeasurement.controlCol, s"$curPath.controlCol") ::
-        simpleCompare(measurement.controlValue, secondMeasurement.controlValue, s"$curPath.controlValue") ::
+        simpleCompare(measurement.controlName,otherMeasurement.controlName, s"$curPath.controlName") ::
+        simpleCompare(measurement.controlType, otherMeasurement.controlType, s"$curPath.controlType") ::
+        simpleCompare(measurement.controlCol, otherMeasurement.controlCol, s"$curPath.controlCol") ::
+        simpleCompare(measurement.controlValue, otherMeasurement.controlValue, s"$curPath.controlValue") ::
         Nil
       diffs.flatten
     }
@@ -180,13 +180,17 @@ object AtumModelUtils {
   /**
     *
     * @param first First value or the ref value
-    * @param second Second value or the new value
+    * @param other Second value or the new value
     * @param curPath Current path to the values, so they are traceable
     * @tparam T Any value that has == implemented
     * @return Returns an Option of ModelDifference. If None is returned, there is no difference in the two values
     */
-  private def simpleCompare[T](first: T, second: T, curPath: String): Option[ModelDifference[T]] = {
-    if (first != second) Some(ModelDifference(curPath, first, second))
-    else None
+  private def simpleCompare[T](first: T, other: T, curPath: String): Option[ModelDifference[T]] = {
+    if (first != other) {
+      Some(ModelDifference(curPath, first, other))
+    }
+    else {
+      None
+    }
   }
 }
