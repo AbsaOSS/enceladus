@@ -28,7 +28,7 @@ sap.ui.define([
       this._model = sap.ui.getCore().getModel();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
 
-      this._addFragment = new AddMappingTableFragment(this, Fragment.load).getAdd();
+      new MappingTableDialogFactory(this, Fragment.load).getAdd();
 
       this._mappingTableService = new MappingTableService(this._model, this._eventBus)
     },
@@ -46,27 +46,7 @@ sap.ui.define([
       this._router.navTo("mappingTables", {
         id: selected
       });
-    },
-
-    onAddPress: function () {
-      this._addFragment.onPress();
-    },
-
-    onMTSubmit: function () {
-      this._addFragment.submit();
-    },
-
-    onMTCancel: function () {
-      this._addFragment.cancel();
-    },
-
-    onNameChange: function () {
-      this._addFragment.onNameChange();
-    },
-
-    onSchemaSelect: function (oEv) {
-      this._addFragment.onSchemaSelect(oEv);
-    },
+    }
 
   });
 });

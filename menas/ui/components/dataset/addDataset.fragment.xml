@@ -22,8 +22,7 @@
                     <form:content>
                         <Label text="Dataset Name"/>
                         <Input id="newDatasetName" enabled="{path:'entity>/isEdit', formatter:'Formatters.not'}"
-                               type="Text" placeholder="Dataset name*" width="100%" value="{entity>/name}"
-                               change="datasetNameChange"/>
+                               type="Text" placeholder="Dataset name*" width="100%" value="{entity>/name}"/>
                         <Label text="Dataset Description"/>
                         <Input id="newDatasetDescription" type="Text" placeholder="Description" width="100%"
                                value="{entity>/description}"/>
@@ -49,8 +48,8 @@
             </VBox>
         </content>
         <buttons>
-            <Button id="newDatasetAddButton" text="Save" icon="sap-icon://accept" press="onDatasetSubmit"/>
-            <Button id="newDatasetCancelButton" text="Cancel" icon="sap-icon://cancel" press="onDatasetCancel"/>
+            <Button id="newDatasetAddButton" text="Save" icon="sap-icon://accept"/>
+            <Button id="newDatasetCancelButton" text="Cancel" icon="sap-icon://cancel"/>
         </buttons>
     </Dialog>
 </core:FragmentDefinition>

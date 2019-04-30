@@ -28,7 +28,7 @@ sap.ui.define([
       this._model = sap.ui.getCore().getModel();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
 
-      this._addFragment = new AddSchemaFragment(this, Fragment.load).getAdd();
+      new SchemaDialogFactory(this, Fragment.load).getAdd();
 
       this._schemaService = new SchemaService(this._model, this._eventBus)
     },
@@ -46,22 +46,6 @@ sap.ui.define([
       this._router.navTo("schemas", {
         id: selected
       });
-    },
-
-    onAddPress: function () {
-      this._addFragment.onPress();
-    },
-
-    onSchemaSubmit: function () {
-      this._addFragment.submit();
-    },
-
-    onSchemaCancel: function () {
-      this._addFragment.cancel();
-    },
-
-    onNameChange: function () {
-      this._addFragment.onNameChange();
     }
 
   });

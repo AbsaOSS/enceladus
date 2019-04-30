@@ -166,8 +166,7 @@ class EntityService {
 
   update(entity) {
     return this.restDAO.update(entity).then((oData) => {
-      this.updateMasterPage();
-      this.modelBinder.setProperty(oData);
+      this.publishUpdatedEvent(oData);
       sap.m.MessageToast.show(this.messageProvider.entityUpdated());
       return oData;
     }).fail(() => {
@@ -244,6 +243,10 @@ class DatasetService extends EntityService {
     this.eventBus.publish("datasets", "created", oDataset);
   }
 
+  publishUpdatedEvent(oDataset) {
+    this.eventBus.publish("datasets", "updated", oDataset);
+  }
+
   getList(oControl) {
     return super.getList(oControl, "datasets")
   }
@@ -295,6 +298,10 @@ class SchemaService extends DependentEntityService {
 
   publishCreatedEvent(oSchema) {
     this.eventBus.publish("schemas", "created", oSchema);
+  }
+
+  publishUpdatedEvent(oSchema) {
+    this.eventBus.publish("schemas", "updated", oSchema);
   }
 
   getList(oControl) {
@@ -371,6 +378,10 @@ class MappingTableService extends DependentEntityService {
 
   publishCreatedEvent(oMappingTable) {
     this.eventBus.publish("mappingTables", "created", oMappingTable);
+  }
+
+  publishUpdatedEvent(oMappingTable) {
+    this.eventBus.publish("mappingTables", "updated", oMappingTable);
   }
 
   getList(oControl) {
