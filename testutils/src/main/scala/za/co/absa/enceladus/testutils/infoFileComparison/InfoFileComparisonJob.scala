@@ -19,30 +19,18 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.permission.FsPermission
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.{LogManager, Logger}
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.SparkSession
-import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.atum.persistence.ControlMeasuresLoaderJsonFile
 import za.co.absa.atum.utils.ARMImplicits
 import za.co.absa.enceladus.testutils.exceptions.InfoFilesDifferException
 import za.co.absa.enceladus.testutils.infoFileComparison.AtumModelUtils._
-import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object InfoFileComparisonJob {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   def main(args: Array[String]): Unit = {
     val cmd = CmdConfig.getCmdLineArguments(args)
-    val enableWholeStage = false //disable whole stage code gen - the plan is too long
 
-    implicit val sparkSession: SparkSession = SparkSession.builder()
-      .appName(s"_INFO file comparison - '${cmd.newPath}' and '${cmd.refPath}'")
-      .config("spark.sql.codegen.wholeStage", enableWholeStage)
-      .getOrCreate()
-    TimeZoneNormalizer.normalizeAll(Seq(sparkSession))
-
-    implicit val sc: SparkContext = sparkSession.sparkContext
-    val hadoopConfiguration = sparkSession.sparkContext.hadoopConfiguration
+    val hadoopConfiguration = getHadoopConfiguration
 
     val newPathLoader = new ControlMeasuresLoaderJsonFile(hadoopConfiguration, new Path(cmd.newPath))
     val refPathLoader = new ControlMeasuresLoaderJsonFile(hadoopConfiguration, new Path(cmd.refPath))
@@ -83,5 +71,17 @@ object InfoFileComparisonJob {
     ){
       fos.write(data.getBytes)
     }
+  }
+
+  private[this] def getHadoopConfiguration: Configuration = {
+    val hadoopConfDir = sys.env("HADOOP_CONF_DIR")
+    val coreSiteXmlPath = s"$hadoopConfDir/core-site.xml"
+    val hdfsSiteXmlPath = s"$hadoopConfDir/hdfs-site.xml"
+    val conf = new Configuration()
+    conf.clear()
+
+    conf.addResource(new Path(coreSiteXmlPath))
+    conf.addResource(new Path(hdfsSiteXmlPath))
+    conf
   }
 }
