@@ -18,11 +18,13 @@
            xmlns:core="sap.ui.core"
            xmlns:mvc="sap.ui.core.mvc"
            xmlns:layout="sap.ui.layout"
+           xmlns:u="sap.ui.unified"
            xmlns:form="sap.ui.layout.form"
            xmlns:table="sap.ui.table"
 		   xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
 		   xmlns:html="http://www.w3.org/1999/xhtml"
-           xmlns:lab="it.designfuture.chartjs">
+           xmlns:lab="it.designfuture.chartjs"
+           class="viewPadding">
 	<Page title="Monitoring" enableScrolling="true">
 		<customHeader>
 			<Bar>
@@ -61,12 +63,36 @@
 							</Bar>
 						</customHeader>
                             <content>
+                                <u:Calendar
+                                    id="calendar"
+                                    select="handleCalendarSelect"
+                                    intervalSelection="true"
+                                    weekNumberSelect="handleWeekNumberSelect"/>
+                                <layout:HorizontalLayout>
+                                    <Label
+                                        text="Selected From:"
+                                        class="labelMarginLeft" />
+                                    <Text
+                                        id="selectedDateFrom"
+                                        text="No Date Selected"
+                                        class="labelMarginLeft"/>
+                                </layout:HorizontalLayout>
+                                <layout:HorizontalLayout>
+                                    <Label
+                                        text=" To:"
+                                        class="labelMarginLeft" />
+                                    <Text
+                                        id="selectedDateTo"
+                                        text="No Date Selected"
+                                        class="labelMarginLeft"/>
+                                </layout:HorizontalLayout>
+
                                 <lab:BarChartJS
                                     id="bar_chart"
                                     datasets="{/plotData/datasets}"
                                     labels="{/plotData/labels}"
                                     titleDisplay="true"
-                                    titleText="Chronological by info date and version"
+                                    titleText="Number of records"
                                     onLegendItemClick="onLegendItemClick"
                                     onLegendItemHover="onLegendItemHover"
                                     onClick="onClick"
