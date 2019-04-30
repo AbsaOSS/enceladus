@@ -28,7 +28,7 @@
         <footer>
             <Bar>
                 <contentRight>
-                    <Button id="NewMappingTable"
+                    <Button id="Add"
                             text="New Mapping Table"
                             icon="sap-icon://add"
                             press="onAddPress"/>

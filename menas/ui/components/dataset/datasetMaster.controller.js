@@ -28,7 +28,7 @@ sap.ui.define([
       this._model = sap.ui.getCore().getModel();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
 
-      this._addFragment = new AddDatasetFragment(this, Fragment.load).getAdd();
+      new DatasetDialogFactory(this, Fragment.load).getAdd();
 
       this._datasetService = new DatasetService(this._model, this._eventBus)
     },
@@ -46,27 +46,7 @@ sap.ui.define([
       this._router.navTo("datasets", {
         id: selected
       });
-    },
-
-    onAddPress: function () {
-      this._addFragment.onPress();
-    },
-
-    onDatasetSubmit: function () {
-      this._addFragment.submit();
-    },
-
-    onDatasetCancel: function () {
-      this._addFragment.cancel();
-    },
-
-    datasetNameChange: function () {
-      this._addFragment.onNameChange();
-    },
-
-    onSchemaSelect: function (oEv) {
-      this._addFragment.onSchemaSelect(oEv)
-    },
+    }
 
   });
 });

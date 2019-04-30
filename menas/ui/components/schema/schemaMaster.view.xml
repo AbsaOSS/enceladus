@@ -28,7 +28,7 @@
         <footer>
             <Bar>
                 <contentRight>
-                    <Button id="NewSchema" text="New Schema" icon="sap-icon://add" press="onAddPress"/>
+                    <Button id="Add" text="New Schema" icon="sap-icon://add"/>
                 </contentRight>
             </Bar>
         </footer>

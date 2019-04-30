@@ -39,22 +39,17 @@ sap.ui.define([
         value: localStorage.getItem("csrfToken")
       }));
 
-      this._editFragment = new AddSchemaFragment(this, Fragment.load).getEdit();
+      new SchemaDialogFactory(this, Fragment.load).getEdit();
 
       this._eventBus = sap.ui.getCore().getEventBus();
-      this._schemaService = new SchemaService(this._model, this._eventBus)
+      this._eventBus.subscribe("schemas", "updated", this.onEntityUpdated, this);
+
+      this._schemaService = new SchemaService(this._model, this._eventBus);
     },
 
-    onEditPress: function () {
-      this._editFragment.onPress();
-    },
-
-    onSchemaSubmit: function () {
-      this._editFragment.submit();
-    },
-
-    onSchemaCancel: function () {
-      this._editFragment.cancel();
+    onEntityUpdated: function (sTopic, sEvent, oData) {
+      this._model.setProperty("/currentSchema", oData);
+      this.load();
     },
 
     usedInNavTo: function (oEv) {

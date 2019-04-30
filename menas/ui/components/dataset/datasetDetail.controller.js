@@ -39,32 +39,19 @@ sap.ui.define([
       let cont = sap.ui.controller("components.dataset.conformanceRule.upsert", true);
       this._upsertConformanceRuleDialog = sap.ui.xmlfragment("components.dataset.conformanceRule.upsert", cont);
 
-      this._editFragment = new AddDatasetFragment(this, Fragment.load).getEdit();
+      new DatasetDialogFactory(this, Fragment.load).getEdit();
 
       const eventBus = sap.ui.getCore().getEventBus();
+      eventBus.subscribe("datasets", "updated", this.onEntityUpdated, this);
+
       this._datasetService = new DatasetService(this._model, eventBus);
       this._mappingTableService = new MappingTableService(this._model, eventBus);
       this._schemaService = new SchemaService(this._model, eventBus)
     },
 
-    onEditPress: function () {
-      this._editFragment.onPress();
-    },
-
-    onDatasetSubmit: function () {
-      this._editFragment.submit();
-    },
-
-    onDatasetCancel: function () {
-      this._editFragment.cancel();
-    },
-
-    datasetNameChange: function () {
-      this._editFragment.onNameChange();
-    },
-
-    onSchemaSelect: function (oEv) {
-      this._editFragment.onSchemaSelect(oEv)
+    onEntityUpdated: function (sTopic, sEvent, oData) {
+      this._model.setProperty("/currentDataset", oData);
+      this.load();
     },
 
     onAddConformanceRulePress: function () {
