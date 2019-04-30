@@ -13,8 +13,12 @@
  * limitations under the License.
  */
 jQuery.sap.require("sap.m.MessageBox");
+jQuery.sap.require("sap.ui.unified.DateRange");
+jQuery.sap.require("sap.ui.core.mvc.Controller");
 
 sap.ui.controller("components.monitoring.monitoringMain", {
+
+  oFormatYyyymmdd: null,
 
   /**
    * Called when a controller is instantiated and its View controls (if
@@ -31,6 +35,9 @@ sap.ui.controller("components.monitoring.monitoringMain", {
       let arguments = oEvent.getParameter("arguments");
       this.routeMatched(arguments);
     }, this);
+    this.oFormatYyyymmdd = sap.ui.core.format.DateFormat.getInstance({pattern: "yyyy-MM-dd", calendarType: sap.ui.core.CalendarType.Gregorian});
+    this.setDefaultDateInterval()
+
 
   },
 
@@ -73,106 +80,95 @@ sap.ui.controller("components.monitoring.monitoringMain", {
       MonitoringService.getDatasetList(true);
     } else {
       MonitoringService.getDatasetList();
+
+      let sStartDate = "2018-06-01"
+      let sEndDate = "2019-06-30"
+
+      this._model.setProperty("/datasetId", oParams.id)
       MonitoringService.getMonitoringPoints(oParams.id);
-      MonitoringService.getDatasetCheckpoints(oParams.id);
-      //this.preparePlotData(aMonitoringPoints)
-      //this.getPlotData()
+
+      //MonitoringService.getDatasetCheckpoints(oParams.id);
+
     }
   },
 
-  /**
-   * Called when the View has been rendered (so its HTML is part of the document).
-   * Post-rendering manipulations of the HTML could be done here. This hook is the
-   * same one that SAPUI5 controls get after being rendered.
-   *
-   * @memberOf components.dataset.datasetMain
-   */
+  // Calendar
 
-  /**
-  preparePlotData: function (aMonitoringPoints) {
-    let plotLabels = ["test"]
-    let raw_recordcount = [1]
-    //let std_records_succeeded = []
-    //let std_records_failed = []
-    //let conform_records_succeeded = []
-    //let conform_records_failed = []
-    //let testArray1 = []
-    //let testArray2 = []
-    let monitoringPoints = sap.ui.getCore().getModel().getProperty("/monitoringPoints")
+  handleCalendarSelect: function(oEvent) {
+    var oCalendar = oEvent.getSource();
+    this._updateText(oCalendar.getSelectedDates()[0]);
+  },
 
-    if (monitoringPoints != undefined && monitoringPoints.length != 0) {
-      for (let elem of monitoringPoints) {
-        plotLabels.push(elem["informationDate"] + "_" + elem["reportVersion"])
-        raw_recordcount.push(elem["raw_recordcount"])
+  _updateText: function(oSelectedDates) {
+    var oSelectedDateFrom = this.byId("selectedDateFrom");
+    var oSelectedDateTo = this.byId("selectedDateTo");
+    var oDate;
+    if (oSelectedDates) {
+      oDate = oSelectedDates.getStartDate();
+      if (oDate) {
+        oSelectedDateFrom.setText(this.oFormatYyyymmdd.format(oDate));
+        this._model.setProperty("/dateFrom", this.oFormatYyyymmdd.format(oDate))
+      } else {
+        oSelectedDateTo.setText("No Date Selected");
+        this._model.setProperty("/plotData", [])
+        this._model.setProperty("/monitoringPoints", [])
+      }
+      oDate = oSelectedDates.getEndDate();
+      if (oDate) {
+        oSelectedDateTo.setText(this.oFormatYyyymmdd.format(oDate));
+        this._model.setProperty("/dateTo", this.oFormatYyyymmdd.format(oDate))
+      } else {
+        oSelectedDateTo.setText("No Date Selected");
+        this._model.setProperty("/plotData", [])
+        this._model.setProperty("/monitoringPoints", [])
       }
     } else {
-      alert(monitoringPoints)
+      oSelectedDateFrom.setText("No Date Selected");
+      oSelectedDateTo.setText("No Date Selected");
+      this._model.setProperty("/plotData", [])
+      this._model.setProperty("/monitoringPoints", [])
     }
+    this.updateMonitoringData()
 
-    let data = {
-      labels: plotLabels,
-      datasets: [
-        {
-          label: "raw recordcount",
-          fill: false,
-          lineTension: 0.1,
-          backgroundColor: "rgba(75,192,192,0.4)",
-          borderColor: "rgba(75,192,192,1)",
-          borderCapStyle: 'butt',
-          borderDash: [],
-          borderDashOffset: 0.0,
-          borderJoinStyle: 'miter',
-          pointBorderColor: "rgba(75,192,192,1)",
-          pointBackgroundColor: "#fff",
-          pointBorderWidth: 1,
-          pointHoverRadius: 5,
-          pointHoverBackgroundColor: "rgba(75,192,192,1)",
-          pointHoverBorderColor: "rgba(220,220,220,1)",
-          pointHoverBorderWidth: 2,
-          pointRadius: 1,
-          pointHitRadius: 10,
-          data: raw_recordcount,
-          spanGaps: false,
-        }
-      ]
-    };
-
-    model.setProperty("/plotData", data)
-    //model.setProperty("/testArray1", testArray1)
-    //model.setProperty("/testArray2", testArray2)
   },
 
-  getPlotData: function () {
-    let labels = ["January", "February", "March", "April", "May", "June", "July"]
-    //labels.push("July")
-    let data = {
-      labels: labels,
-      datasets: [
-        {
-          label: "My First dataset",
-          fill: false,
-          lineTension: 0.1,
-          backgroundColor: "rgba(75,192,192,0.4)",
-          borderColor: "rgba(75,192,192,1)",
-          borderCapStyle: 'butt',
-          borderDash: [],
-          borderDashOffset: 0.0,
-          borderJoinStyle: 'miter',
-          pointBorderColor: "rgba(75,192,192,1)",
-          pointBackgroundColor: "#fff",
-          pointBorderWidth: 1,
-          pointHoverRadius: 5,
-          pointHoverBackgroundColor: "rgba(75,192,192,1)",
-          pointHoverBorderColor: "rgba(220,220,220,1)",
-          pointHoverBorderWidth: 2,
-          pointRadius: 1,
-          pointHitRadius: 10,
-          data: [65, 59, 80, 81, 56, 55, 40, 13],
-          spanGaps: false,
-        }
-      ]
-    };
-    model.setProperty("/plotData", data)
+  updateMonitoringData: function () {
+    if (this._model.getProperty("/dateFrom") && this._model.getProperty("/dateTo")) {
+      MonitoringService.getMonitoringPoints(this._model.getProperty("/datasetId"));
+    }
+  },
+
+
+  handleWeekNumberSelect: function(oEvent) {
+    var oDateRange = oEvent.getParameter("weekDays");
+    // var iWeekNumber = oEvent.getParameter("weekNumber");
+    this._updateText(oDateRange);
+  },
+
+  _selectWeekInterval: function(iDays) {
+    var oCurrent = new Date();     // get current date
+    var iWeekstart = oCurrent.getDate() - oCurrent.getDay() + 1;
+    var iWeekend = iWeekstart + iDays;       // end day is the first day + 6
+    var oMonday = new Date(oCurrent.setDate(iWeekstart));
+    var oSunday = new Date(oCurrent.setDate(iWeekend));
+
+    var oCalendar = this.byId("calendar");
+
+    oCalendar.removeAllSelectedDates();
+    oCalendar.addSelectedDate(new DateRange({startDate: oMonday, endDate: oSunday}));
+
+    this._updateText(oCalendar.getSelectedDates()[0]);
+  },
+
+  setDefaultDateInterval: function () {
+    let oEnd = new Date()
+    // Two weeks before today
+    let oStart = new Date(oEnd.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+    let oCalendar = this.byId("calendar");
+    oCalendar.removeAllSelectedDates();
+    oCalendar.addSelectedDate(new sap.ui.unified.DateRange({startDate: oStart, endDate: oEnd}))
+    this._updateText(oCalendar.getSelectedDates()[0]);
   }
-   **/
+
 });

@@ -40,8 +40,8 @@ class MonitoringService @Autowired()(monitoringMongoRepository: MonitoringMongoR
   @Value("${za.co.absa.enceladus.spline.urlTemplate}")
   val splineUrlTemplate: String = null
 
-  def getMonitoringDataPoints(datasetName: String): Future[String] = {
-    monitoringMongoRepository.getMonitoringDataPoints(datasetName).map(_.mkString("[", ",", "]"))
+  def getMonitoringDataPoints(datasetName: String, startDate: String, endDate: String): Future[String] = {
+    monitoringMongoRepository.getMonitoringDataPoints(datasetName, startDate, endDate).map(_.mkString("[", ",", "]"))
   }
 
   def getRecentCheckpointsPerDataset(datasetName: String): Future[String] = {

@@ -52,7 +52,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
   private[repositories] override def collectionName: String = MonitoringMongoRepository.collectionName
 
 
-  def getMonitoringDataPoints(datasetName: String): Future[Seq[String]] = {
+  def getMonitoringDataPoints(datasetName: String, startDate: String, endDate: String): Future[Seq[String]] = {
     // scala mongodb driver does not yet support all mql features, so we use Document() with aggregate pipelines
     val observable: AggregateObservable[Document] = collection
       .aggregate(Seq(
@@ -83,7 +83,12 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |              }
                    |          },
                    | }},""".stripMargin),
-        // TODO: filter by informationDateCasted in order to limit the number of elements
+        // filter by informationDateCasted in order to limit the number of elements
+        Document(
+          s"""
+            |{ $$match: {
+            |    informationDateCasted: {$$gte: ISODate("${startDate}T00:00:00.0Z"), $$lte: ISODate("${endDate}T00:00:00.0Z") }
+            |}},""".stripMargin),
         // bring the raw checkpoint to root for further access
         Document(""" {$addFields: {
                    |           raw_checkpoint : {
@@ -135,8 +140,8 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |
                    |      }}""".stripMargin),
         // sort the final results
-        Document("""{$sort: {informationDateCasted : -1, reportVersion: -1}}""".stripMargin),
-        Document("""{$limit: 20}""".stripMargin)
+        Document("""{$sort: {informationDateCasted : -1, reportVersion: -1}}""".stripMargin)
+        //Document("""{$limit: 20}""".stripMargin)
 
       ))
 
