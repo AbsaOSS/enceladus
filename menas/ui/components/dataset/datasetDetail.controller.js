@@ -29,7 +29,7 @@ sap.ui.define([
      * @memberOf components.dataset.datasetDetail
      */
     onInit: function () {
-      this._model = this._model;
+      this._model = sap.ui.getCore().getModel();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
       this._router.getRoute("datasets").attachMatched(function (oEvent) {
         let args = oEvent.getParameter("arguments");
@@ -217,7 +217,9 @@ sap.ui.define([
     load: function() {
       let currentDataset = this._model.getProperty("/currentDataset");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentDataset), "dataset");
-      this.fetchSchema()
+      this.fetchSchema();
+      const auditTable = this.byId("auditTrailTable")
+      this._datasetService.getAuditTrail(currentDataset.name, auditTable);
     },
 
     conformanceRuleFactory: function (sId, oContext) {

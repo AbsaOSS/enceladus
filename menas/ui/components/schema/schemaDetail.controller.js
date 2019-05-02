@@ -164,8 +164,10 @@ sap.ui.define([
     },
 
     load: function () {
-      let currentSchema = this._model.getProperty("/currentSchema");
+      const currentSchema = this._model.getProperty("/currentSchema");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentSchema), "schema");
+      const auditTable = this.byId("auditTrailTable");
+      this._schemaService.getAuditTrail(currentSchema.name, auditTable);
     }
 
   });
