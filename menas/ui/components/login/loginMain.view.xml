@@ -19,8 +19,8 @@
 		<content>
 			<VBox id="loginForm" fitContainer="true" justifyContent="Center" alignItems="Center">
 				<items>
-					<Input type="Text" id="username" value="{login>/username}" placeholder="username" submit="onLoginSubmit"/>
-					<Input type="Password" id="password" value="{login>/password}" placeholder="password" submit="onLoginSubmit"/>
+					<Input type="Text" id="username" placeholder="username" submit="onLoginSubmit"/>
+					<Input type="Password" id="password" placeholder="password" submit="onLoginSubmit"/>
 					<Button type="Emphasized" id="loginSubmit" text="Login" width="10rem" press="onLoginSubmit"/>
 				</items>
 			</VBox>

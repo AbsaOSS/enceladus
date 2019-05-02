@@ -37,14 +37,13 @@ sap.ui.define([
       this._eventBus = sap.ui.getCore().getEventBus();
 
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
-      let model = {username: "", password: "", submit: "Login"};
-
-      this.loginForm = this.byId("loginForm");
-      this.loginForm.setModel(new sap.ui.model.json.JSONModel(model), "login");
     },
 
     onLoginSubmit: function (oEvent) {
-      let oData = this.loginForm.getModel("login").oData;
+      let oData = {
+          username: this.byId(usernameField).getValue(),
+          password: this.byId(passwordField).getValue()
+      };
 
       this._resetLoginFormState();
       if (this._validateLogin(oData)) {
