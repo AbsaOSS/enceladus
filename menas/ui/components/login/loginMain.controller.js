@@ -37,6 +37,12 @@ sap.ui.define([
       this._eventBus = sap.ui.getCore().getEventBus();
 
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
+      this._router.getRoute("login").attachMatched(function (oEvent) {
+        let config = oEvent.getParameter("config");
+        this._appMasterId = `${config.targetParent}--${config.controlId}-Master`;
+        sap.ui.getCore().byId(this._appMasterId).setVisible(false);
+      }, this);
+      
       let model = {username: "", password: "", submit: "Login"};
 
       this.loginForm = this.byId("loginForm");
@@ -88,6 +94,7 @@ sap.ui.define([
         localStorage.setItem("csrfToken", csrfToken);
         Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
+          sap.ui.getCore().byId(this._appMasterId).setVisible(true);
           this._router.navTo("runs");
           this._eventBus.publish("nav", "login");
         });
