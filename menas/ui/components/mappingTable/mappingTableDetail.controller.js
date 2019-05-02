@@ -333,12 +333,15 @@ sap.ui.define([
     load: function() {
       let currentMT = this._model.getProperty("/currentMappingTable");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentMT), "mappingTable")
-      this.fetchSchema()
+      this.fetchSchema();
+      const auditTable = this.byId("auditTrailTable");
+      this._mappingTableService.getAuditTrail(currentMT.name, auditTable);
     },
 
     tabSelect: function (oEv) {
-      if (oEv.getParameter("selectedKey") === "schema")
+      if (oEv.getParameter("selectedKey") === "schema") {
         this.fetchSchema();
+      }
     }
 
   });

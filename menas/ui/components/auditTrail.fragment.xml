@@ -1,0 +1,69 @@
+<!--
+  ~ Copyright 2018-2019 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core"
+                         xmlns:form="sap.ui.layout.form"
+                         xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+    <Table id="auditTrailTable" itemPress="auditVersionPress"
+           items="{auditTrail>/entries}">
+        <columns>
+            <Column width="15%">
+                <Text text="Change Time"/>
+            </Column>
+            <Column width="10%">
+                <Text text="Author"/>
+            </Column>
+            <Column width="10%">
+                <Text text="Version"/>
+            </Column>
+            <Column width="65%">
+                <Text text="Changes"/>
+            </Column>
+        </columns>
+        <items>
+            <ColumnListItem id="auditTrailListItem" type="Active" cust:menasRef="{auditTrail>menasRef}">
+                <cells>
+                    <Text
+                        text="{path: 'auditTrail>updated', formatter:'Formatters.stringDateShortFormatter'}"/>
+                    <Text text="{auditTrail>updatedBy}"/>
+                    <Text text="{auditTrail>menasRef/version}"/>
+                    <List id="auditChangesList" items="{path: 'auditTrail>changes', templateShareable: false}"
+                          noDataText="No changes detected" class="auditTrailNestedList">
+                        <CustomListItem id="auditChangesListItem" class="auditTrailNestedListItem">
+                            <Text width="100%" text="{auditTrail>message}" wrapping="true"
+                                  wrappingType="Hyphenated"/>
+                            <form:SimpleForm layout="GridLayout" class="mt10">
+                                <form:content>
+                                    <Label
+                                        visible="{path:'auditTrail>newValue', formatter:'Formatters.nonEmptyObject'}"
+                                        text="New Value"/>
+                                    <Text
+                                        visible="{path:'auditTrail>newValue', formatter:'Formatters.nonEmptyObject'}"
+                                        text="{auditTrail>newValue}"/>
+                                    <Label
+                                        visible="{path:'auditTrail>oldValue', formatter:'Formatters.nonEmptyObject'}"
+                                        text="Old Value"/>
+                                    <Text
+                                        visible="{path:'auditTrail>oldValue', formatter:'Formatters.nonEmptyObject'}"
+                                        text="{oldValue}"/>
+                                </form:content>
+                            </form:SimpleForm>
+                        </CustomListItem>
+                    </List>
+                </cells>
+            </ColumnListItem>
+        </items>
+    </Table>
+</core:FragmentDefinition>

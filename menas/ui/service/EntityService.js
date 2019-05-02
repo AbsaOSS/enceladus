@@ -108,7 +108,6 @@ class EntityService {
   getLatestByName(sName, sHash) {
     return this.restDAO.getLatestByName(sName).then((oData) => {
       this.modelBinder.setProperty(oData);
-      this.getAuditTrail(oData.name);
       return oData
     }).fail(() => {
       sap.m.MessageBox.error(this.messageProvider.failedGetLatestByName())
@@ -119,7 +118,6 @@ class EntityService {
   getByNameAndVersion(sName, iVersion, sModelPath, sHash) {
     return this.restDAO.getByNameAndVersion(sName, iVersion).then((oData) => {
       this.modelBinder.setProperty(oData, sModelPath, true);
-      this.getAuditTrail(oData["name"]);
       return oData
     }, () => {
       sap.m.MessageBox.error(this.messageProvider.failedGetByNameAndVersion());
@@ -147,9 +145,9 @@ class EntityService {
     })
   }
 
-  getAuditTrail(sName) {
+  getAuditTrail(sName, oControl) {
     return this.restDAO.getAuditTrail(sName).then((oData) => {
-      this.modelBinder.setProperty(oData, "/auditTrail");
+      oControl.setModel(new sap.ui.model.json.JSONModel(oData), "auditTrail");
       return oData
     }).fail(() => {
       sap.m.MessageBox.error(this.messageProvider.failedToGetAuditTrail())
@@ -170,7 +168,6 @@ class EntityService {
     return this.restDAO.update(entity).then((oData) => {
       this.updateMasterPage();
       this.modelBinder.setProperty(oData);
-      this.getAuditTrail(oData.name);
       sap.m.MessageToast.show(this.messageProvider.entityUpdated());
       return oData;
     }).fail(() => {
@@ -415,7 +412,6 @@ class MappingTableService extends DependentEntityService {
     return this.restDAO.addDefaultValue(sName, iVersion, oDefault).then((oData) => {
       this.updateMasterPage();
       this.getLatestByName(sName, true);
-      this.getAuditTrail(oData.name);
       sap.m.MessageToast.show(this.messageProvider.defaultValueAdded());
       return oData
     }).fail(() => {
@@ -428,7 +424,6 @@ class MappingTableService extends DependentEntityService {
       this.updateMasterPage();
 
       this.modelBinder.setProperty(oData)
-      this.getAuditTrail(oData.name);
       this.schemaRestDAO.getByNameAndVersion(oData.schemaName, oData.schemaVersion).then((oData) => {
         this.modelBinder.setProperty(oData, "/schema");
       });
