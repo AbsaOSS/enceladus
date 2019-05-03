@@ -22,7 +22,7 @@ sap.ui.define([
   const usernameField = "username";
   const passwordField = "password";
 
-  return Controller.extend("components.login.loginMain", {
+  return Controller.extend("components.login.loginDetail", {
     loginForm: {},
 
     /**
@@ -31,7 +31,7 @@ sap.ui.define([
      * is displayed, to bind event handlers and do other one-time
      * initialization.
      *
-     * @memberOf components.login.loginMain
+     * @memberOf components.login.loginDetail
      */
     onInit: function () {
       this._eventBus = sap.ui.getCore().getEventBus();

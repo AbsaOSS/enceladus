@@ -19,7 +19,7 @@ sap.ui.define([
 ], function (Controller, Fragment, MessageBox) {
   "use strict";
 
-  return Controller.extend("components.dataset.datasetMain", {
+  return Controller.extend("components.dataset.datasetDetail", {
 
     /**
      * Called when a controller is instantiated and its View controls (if
@@ -27,7 +27,7 @@ sap.ui.define([
      * is displayed, to bind event handlers and do other one-time
      * initialization.
      *
-     * @memberOf components.dataset.datasetMain
+     * @memberOf components.dataset.datasetDetail
      */
     onInit: function () {
       this._model = sap.ui.getCore().getModel();

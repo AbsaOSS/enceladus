@@ -27,7 +27,7 @@ import static org.testng.AssertJUnit.*;
 
 public class SchemaTest extends BaseTest {
   private By schemasTab = By.id("__xmlview0--Schemas");
-  private String schemaNavigation = "__navigation0---schemaMainView--";
+  private String schemaNavigation = "__navigation0---schemaDetailView--";
 
   @Test
   public void addSchema() throws InterruptedException {
