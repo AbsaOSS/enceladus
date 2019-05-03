@@ -21,14 +21,18 @@ sap.ui.define([
 
     return UIComponent.extend("navigation", {
       metadata: {
-        rootView: "components.app",
+        rootView : {
+          viewName: "components.app",
+          id: "rootView", 
+          type: "XML" 
+        },
         routing: {
           config: {
             routerClass: "sap.m.routing.Router",
             viewPath: "",
             controlId: "menasApp",
             controlAggregation: "detailPages",
-            viewType: "XML",
+            viewType: "XML"
           },
           routes: [
             {
@@ -49,7 +53,7 @@ sap.ui.define([
             },
             {
               name: "schemas",
-              pattern: "schema/:id:/:version:", //here id and version are optional
+              pattern: "schema/:id:/:version:", // here id and version are optional
               target: "schemas"
             },
             {
