@@ -9,29 +9,31 @@ ___
 
 <!-- toc -->
 - [What is Enceladus?](#what-is-enceladus)
-    - [Menas](#menas)
-    - [Standardization](#standardization)
-    - [Conformance](#conformance)
+    - [Menas](#wie-menas)
+    - [Standardization](#wie-standardization)
+    - [Conformance](#wie-conformance)
 - [How to build](#build)
 - [How to run](#run)
 - [How to contribute](#contribute)
+- [How to use](#use)
+    - [Standardization](#use-standardization)
 <!-- tocstop -->
 
 ## <a name="what-is-enceladus"/>What is Enceladus?
 **Enceladus** is a **Dynamic Conformance Engine** which allows data from different formats to be standardized to parquet and conformed to group-accepted common reference (e.g. data for country designation which are **DE** in one source system and **Deutschland** in another, can be conformed to **Germany**).
 
 The project is comprised of three main components:
-### <a name="menas"/>Menas
+### <a name="wie-menas"/>Menas
 This is the user-facing web client, used to **specify the standardization schema**, and **define the steps required to conform** a dataset.  
 There are three models used to do this:
  - **Dataset**: Specifies where the dataset will be read from on HDFS (**RAW**), the conformance rules that will be applied to it, and where it will land on HDFS once it is conformed (**PUBLISH**)
  - **Schema**: Specifies the schema towards which the dataset will be standardized
  - **Mapping Table**: Specifies where tables with master reference data can be found (parquet on HDFS), which are used when applying Mapping conformance rules (e.g. the dataset uses **Germany**, which maps to the master reference **DE** in the mapping table)
 
-### <a name="standardization"/>Standardization
+### <a name="wie-standardization"/>Standardization
 This is a Spark job which reads an input dataset in any of the supported formats and **produces a parquet dataset with the Menas-specified schema** as output. 
 
-### <a name="conformance"/>Conformance
+### <a name="wie-conformance"/>Conformance
 This is a Spark job which **applies the Menas-specified conformance rules to the standardized dataset**.
 
 ## <a name="build"/>How to build
@@ -114,3 +116,10 @@ password=changeme
 
 ## <a name="contribute"/>How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
+
+## <a name="use"/>How to use
+In this section some more complex and less obvious usage patterns are going to be described.
+
+### <a name="use-standardization"/>Standardization
+#### Date & time
+Dates and especially timestamps (date + time) can be tricky.
