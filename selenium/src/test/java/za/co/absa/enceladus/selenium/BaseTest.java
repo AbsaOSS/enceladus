@@ -33,9 +33,9 @@ import org.testng.annotations.BeforeMethod;
 public class BaseTest {
   String postfix = dtf.format(LocalDateTime.now());
   String username = "user";
-  By schemasView = By.id("__navigation0---schemaMainView");
-  By datasetsView = By.id("__navigation0---datasetMainView");
-  By mappingTablesView = By.id("__navigation0---mappingTableMainView");
+  By schemasView = By.id("__navigation0---schemaDetailView");
+  By datasetsView = By.id("__navigation0---datasetDetailView");
+  By mappingTablesView = By.id("__navigation0---mappingTableDetailView");
   WebDriver driver;
   WebDriverWait wait;
   private By nameField = By.name("username");

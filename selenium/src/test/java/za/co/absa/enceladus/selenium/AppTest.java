@@ -33,12 +33,12 @@ public class AppTest extends BaseTest {
     By schemasTab = By.id("__xmlview0--Schemas");
 
     By[] elements = {
-      By.id("__navigation0---schemaMainView--BasicInfo"),
-      By.id("__navigation0---schemaMainView--Fields"),
-      By.id("__navigation0---schemaMainView--UploadNew"),
-      By.id("__navigation0---schemaMainView--UsedIn"),
-      By.id("__navigation0---schemaMainView--Delete"),
-      By.id("__navigation0---schemaMainView--Edit")
+      By.id("__navigation0---schemaDetailView--BasicInfo"),
+      By.id("__navigation0---schemaDetailView--Fields"),
+      By.id("__navigation0---schemaDetailView--UploadNew"),
+      By.id("__navigation0---schemaDetailView--UsedIn"),
+      By.id("__navigation0---schemaDetailView--Delete"),
+      By.id("__navigation0---schemaDetailView--Edit")
     };
 
     chooseTab(schemasTab);
@@ -53,10 +53,10 @@ public class AppTest extends BaseTest {
     By datasetsTab = By.id("__xmlview0--Datasets");
 
     By[] elements = {
-      By.id("__navigation0---datasetMainView--BasicInfo"),
-      By.id("__navigation0---datasetMainView--Schema"),
-      By.id("__navigation0---datasetMainView--Delete"),
-      By.id("__navigation0---datasetMainView--Edit")
+      By.id("__navigation0---datasetDetailView--BasicInfo"),
+      By.id("__navigation0---datasetDetailView--Schema"),
+      By.id("__navigation0---datasetDetailView--Delete"),
+      By.id("__navigation0---datasetDetailView--Edit")
     };
 
     chooseTab(datasetsTab);
@@ -71,13 +71,13 @@ public class AppTest extends BaseTest {
     By mappingTablesTab = By.id("__xmlview0--MappingTables");
 
     By[] elements = {
-      By.id("__navigation0---mappingTableMainView--BasicInfo"),
-      By.id("__navigation0---mappingTableMainView--Schema"),
-      By.id("__navigation0---mappingTableMainView--UsedIn"),
-      By.id("__navigation0---mappingTableMainView--Defaults"),
-      By.id("__navigation0---mappingTableMainView--Delete"),
-      By.id("__navigation0---mappingTableMainView--AddDefaultValue"),
-      By.id("__navigation0---mappingTableMainView--Edit")
+      By.id("__navigation0---mappingTableDetailView--BasicInfo"),
+      By.id("__navigation0---mappingTableDetailView--Schema"),
+      By.id("__navigation0---mappingTableDetailView--UsedIn"),
+      By.id("__navigation0---mappingTableDetailView--Defaults"),
+      By.id("__navigation0---mappingTableDetailView--Delete"),
+      By.id("__navigation0---mappingTableDetailView--AddDefaultValue"),
+      By.id("__navigation0---mappingTableDetailView--Edit")
     };
 
     chooseTab(mappingTablesTab);

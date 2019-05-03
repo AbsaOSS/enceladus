@@ -30,8 +30,8 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class ModelFactory {
   private static final DateTimeFormatter timeStampFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm");
-  private static final String schemaNavigation = "__navigation0---schemaMainView--";
-  private static final String datasetNavigation = "__navigation0---datasetMainView--";
+  private static final String schemaNavigation = "__navigation0---schemaDetailView--";
+  private static final String datasetNavigation = "__navigation0---datasetDetailView--";
   private static final int defaultWaitTime = 10;
 
   public static Dataset getDataset(WebDriver driver, String nameCheck) {

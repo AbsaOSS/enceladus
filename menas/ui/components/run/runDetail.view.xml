@@ -13,8 +13,8 @@
   ~ limitations under the License.
   -->
 
-<core:View id="runMainView" xmlns:core="sap.ui.core" xmlns="sap.m"
-           controllerName="components.run.runMain"
+<core:View id="runDetailView" xmlns:core="sap.ui.core" xmlns="sap.m"
+           controllerName="components.run.runDetail"
            xmlns:form="sap.ui.layout.form"
            xmlns:table="sap.ui.table"
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">

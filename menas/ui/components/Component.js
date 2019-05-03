@@ -69,29 +69,29 @@ sap.ui.define([
           ],
           targets: {
             login: {
-              viewName: "components.login.loginMain",
+              viewName: "components.login.loginDetail",
               viewLevel: 0,
-              viewId: "loginMainView"
+              viewId: "loginDetailView"
             },
             runs: {
-              viewName: "components.run.runMain",
+              viewName: "components.run.runDetail",
               viewLevel: 1,
-              viewId: "runMainView"
+              viewId: "runDetailView"
             },
             schemas: {
-              viewName: "components.schema.schemaMain",
+              viewName: "components.schema.schemaDetail",
               viewLevel: 1,
-              viewId: "schemaMainView"
+              viewId: "schemaDetailView"
             },
             dataset: {
-              viewName: "components.dataset.datasetMain",
+              viewName: "components.dataset.datasetDetail",
               viewLevel: 1,
-              viewId: "datasetMainView"
+              viewId: "datasetDetailView"
             },
             mappingTable: {
-              viewName: "components.mappingTable.mappingTableMain",
+              viewName: "components.mappingTable.mappingTableDetail",
               viewLevel: 1,
-              viewId: "mappingTableMainView"
+              viewId: "mappingTableDetailView"
             }
           }
         }

@@ -23,13 +23,13 @@ sap.ui.define([
 ], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, MessagePopover) {
   "use strict";
 
-  return Controller.extend("components.mappingTable.mappingTableMain", {
+  return Controller.extend("components.mappingTable.mappingTableDetail", {
 
     /**
      * Called when a controller is instantiated and its View controls (if available) are already created. Can be used to
      * modify the View before it is displayed, to bind event handlers and do other one-time initialization.
      *
-     * @memberOf components.mappingTable.mappingTableMain
+     * @memberOf components.mappingTable.mappingTableDetail
      */
     onInit: function () {
       this._model = sap.ui.getCore().getModel();

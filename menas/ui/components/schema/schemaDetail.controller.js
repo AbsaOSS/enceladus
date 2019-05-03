@@ -23,7 +23,7 @@ sap.ui.define([
 ], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, MessagePopover) {
   "use strict";
 
-  return Controller.extend("components.schema.schemaMain", {
+  return Controller.extend("components.schema.schemaDetail", {
 
     onInit: function () {
       this._model = sap.ui.getCore().getModel();
