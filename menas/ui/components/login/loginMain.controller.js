@@ -42,15 +42,13 @@ sap.ui.define([
         this._appMasterId = `${config.targetParent}--${config.controlId}-Master`;
         sap.ui.getCore().byId(this._appMasterId).setVisible(false);
       }, this);
-      
-      let model = {username: "", password: "", submit: "Login"};
-
-      this.loginForm = this.byId("loginForm");
-      this.loginForm.setModel(new sap.ui.model.json.JSONModel(model), "login");
     },
 
     onLoginSubmit: function (oEvent) {
-      let oData = this.loginForm.getModel("login").oData;
+      let oData = {
+          username: this.byId(usernameField).getValue(),
+          password: this.byId(passwordField).getValue()
+      };
 
       this._resetLoginFormState();
       if (this._validateLogin(oData)) {
