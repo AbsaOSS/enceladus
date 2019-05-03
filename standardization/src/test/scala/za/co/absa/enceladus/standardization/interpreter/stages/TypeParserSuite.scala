@@ -17,9 +17,12 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class TypeParserSuite extends FunSuite with SparkTestBase {
+
+  private implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
 
   test("Test standardize with sourcecolumn metadata") {
     val structFieldNoMetadata = StructField("a", IntegerType)

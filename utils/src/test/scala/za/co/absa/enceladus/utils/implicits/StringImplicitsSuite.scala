@@ -171,4 +171,86 @@ class StringImplicitsSuite  extends FunSuite {
     assert("Hello world".hasUnquoted(Set('w', 'e', 'l'), Set('`')))
     assert(!"`Hello world`".hasUnquoted(Set('w', 'e', 'l'), Set('`')))
   }
+
+  test("StringImprovements.countUnquoted: empty variants") {
+    val expected = Map(
+      'x'->0,
+      'y'->0,
+      'z'->0
+    )
+    val charsToFind = Set('x', 'y', 'z')
+    val empty = Set.empty[Char]
+    assert("".countUnquoted(charsToFind, Set('"')) == expected)
+    assert("Lorem ipsum".countUnquoted(charsToFind, empty) == expected)
+    assert("Hello world".countUnquoted(empty, Set('|')) == Map.empty)
+  }
+
+  test("StringImprovements.countUnquoted: simple test") {
+    val charsToFind = Set('x', 'y', 'z')
+    val expected1 = Map(
+      'x'->0,
+      'y'->0,
+      'z'->0
+    )
+    assert("Lorem ipsum".countUnquoted(charsToFind, Set(''')) == expected1)
+    assert("Hello 'xyz' world".countUnquoted(charsToFind, Set(''')) == expected1)
+    val expected2 = Map(
+      'x'->3,
+      'y'->2,
+      'z'->1
+    )
+    assert("xxxyzy".countUnquoted(charsToFind, Set('-')) == expected2)
+    val expected3 = Map(
+      'x'->1,
+      'y'->2,
+      'z'->5
+    )
+    assert("x-xxy-yyzzz|zyyy|zz".countUnquoted(charsToFind, Set('-', '|')) == expected3)
+  }
+
+  test("StringImprovements.countUnquoted: escape involved") {
+    val charsToFind = Set('x', 'y', 'z')
+    val expected = Map(
+      'x'->3,
+      'y'->2,
+      'z'->3
+    )
+    assert("x~yz~'xxyyzz 'xxxx~'zzzz'~''yyyy".countUnquoted(charsToFind, Set('''),'~') == expected)
+  }
+
+  test("StringImprovements.countUnquoted: search and quote chars overlap") {
+    val charsToFind = Set('a', '#', '$', '%')
+    val quoteChars = Set('$', '%', '^')
+    val expected = Map(
+      'a'->0,
+      '#'->1,
+      '$'->1,
+      '%'->0
+    )
+    assert("#^##^|$%%%%".countUnquoted(charsToFind, quoteChars, '|') == expected)
+  }
+
+  test("StringImprovements.countUnquoted: escape in search for chars") {
+    val charsToFind = Set('a', 'b', 'c', 'd', '|')
+    val quoteChars = Set('%', '^')
+    val expected = Map(
+      'a'->2,
+      'b'->0,
+      'c'->2,
+      'd'->0,
+      '|'->1
+    )
+    assert("aa||%bb%|^cc^a|cd||d|^b^".countUnquoted(charsToFind, quoteChars, '|') == expected)
+  }
+
+  test("StringImprovements.countUnquoted: escape in quote chars") {
+    val charsToFind = Set('a', 'b', 'c')
+    val quoteChars = Set('$', '%', '^')
+    val expected = Map(
+      'a'->1,
+      'b'->0,
+      'c'->0
+    )
+    assert("a$$bc$$".countUnquoted(charsToFind, quoteChars, '$') == expected)
+  }
 }

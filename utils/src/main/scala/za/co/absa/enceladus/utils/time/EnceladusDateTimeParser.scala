@@ -17,6 +17,7 @@ package za.co.absa.enceladus.utils.time
 
 import java.sql.{Date, Timestamp}
 import java.text.SimpleDateFormat
+import java.util.Locale
 
 /**
   * Enables to parse string to date and timestamp based on the provided format
@@ -27,7 +28,7 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
   private val formatter: Option[SimpleDateFormat] = if (pattern.isEpoch) {
     None
   } else {
-    Some(new SimpleDateFormat(pattern))
+    Some(new SimpleDateFormat(pattern, Locale.US))
   }
 
   private def convertValue(value: String): Long = {

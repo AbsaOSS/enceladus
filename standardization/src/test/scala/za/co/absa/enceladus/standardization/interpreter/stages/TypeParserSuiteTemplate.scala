@@ -24,9 +24,14 @@ import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate._
+import za.co.absa.enceladus.utils.error.UDFLibrary
+import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.time.DateTimePattern
 
-trait TypeParserSuiteTemplate extends FunSuite {
+trait TypeParserSuiteTemplate extends FunSuite with SparkTestBase  {
+
+  private implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+
   protected def createCastTemplate(toType: DataType, pattern: String, timezone: Option[String]): String
 
   private val sourceFieldName = "sourceField"

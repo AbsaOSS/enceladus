@@ -18,9 +18,9 @@ package za.co.absa.enceladus.utils.types
 import java.sql.Date
 import java.sql.Timestamp
 
-import scala.util.Try
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser}
+import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldImprovements
 
 object Defaults {
 
@@ -80,7 +80,7 @@ object Defaults {
     * @return   the default value to be used
     */
   def getDefaultValue(st: StructField): Any = {
-    getDefaultOpt(st) match {
+    st.defaultValueAsString match {
       case Some(default) =>
         val pattern: Option[DateTimePattern] = st.dataType match {
           case _: DateType | _: TimestampType => Some(DateTimePattern.fromStructField(st))
@@ -90,8 +90,5 @@ object Defaults {
       case None          => getGlobalDefault (st.dataType)
     }
   }
-
-  /** Get option of a default */
-  def getDefaultOpt(st: StructField): Option[String] = Try(st.metadata.getString("default")).toOption
 }
 

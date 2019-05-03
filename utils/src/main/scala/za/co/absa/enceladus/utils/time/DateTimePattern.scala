@@ -37,6 +37,12 @@ abstract sealed class DateTimePattern(pattern: String, isDefault: Boolean = fals
   val timeZoneInPattern: Boolean
   val defaultTimeZone: Option[String]
   val isTimeZoned: Boolean
+
+  override def toString: String = {
+    val q = "\""
+    s"pattern: $q$pattern$q" + defaultTimeZone.map(x => s" (default time zone: $q$x$q)").getOrElse("")
+  }
+
 }
 
 object DateTimePattern {
