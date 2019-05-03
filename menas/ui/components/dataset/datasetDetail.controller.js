@@ -45,6 +45,7 @@ sap.ui.define([
       this._datasetService = new DatasetService(this._model, eventBus);
       this._mappingTableService = new MappingTableService(this._model, eventBus);
       this._schemaService = new SchemaService(this._model, eventBus)
+      this._schemaTable = new SchemaTable(this)
     },
 
     onEditPress: function () {
@@ -180,8 +181,8 @@ sap.ui.define([
     },
 
     tabSelect: function (oEv) {
-      if (oEv.getParameter("selectedKey") === "schema") {
-        this.fetchSchema();
+      if (oEv.getParameter("selectedKey") === "schemaFields") {
+        this._schemaTable.model = this._model.getProperty("/currentDataset/schema")
       }
       if (oEv.getParameter("selectedKey") === "runs") {
         this.fetchRuns();

@@ -18,9 +18,8 @@ sap.ui.define([
   "sap/ui/core/Fragment",
   "sap/m/MessageToast",
   "sap/m/MessageItem",
-  "sap/m/MessageBox",
-  "sap/m/MessagePopover"
-], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, MessagePopover) {
+  "sap/m/MessageBox"
+], function (Controller, Fragment, MessageToast, MessageItem, MessageBox) {
   "use strict";
 
   return Controller.extend("components.schema.schemaDetail", {
@@ -43,6 +42,7 @@ sap.ui.define([
 
       this._eventBus = sap.ui.getCore().getEventBus();
       this._schemaService = new SchemaService(this._model, this._eventBus)
+      this._schemaTable = new SchemaTable(this)
     },
 
     onEditPress: function () {
@@ -72,29 +72,6 @@ sap.ui.define([
         id: oRef.name,
         version: oRef.version
       });
-    },
-
-    metadataPress: function (oEv) {
-      let binding = oEv.getSource().getBindingContext().getPath() + "/metadata";
-      let bindingArr = binding + "Arr";
-      //hmm bindAggregation doesn't take formatter :-/
-      let arrMeta = Formatters.objToKVArray(this._model.getProperty(binding));
-      this._model.setProperty(bindingArr, arrMeta);
-
-      let oMessageTemplate = new MessageItem({
-        title: '{key}',
-        subtitle: '{value}',
-        type: sap.ui.core.MessageType.None
-      });
-
-      let oMessagePopover = new MessagePopover({
-        items: {
-          path: bindingArr,
-          template: oMessageTemplate
-        }
-      }).setModel(this._model);
-
-      oMessagePopover.toggle(oEv.getSource());
     },
 
     onRemovePress: function (oEv) {
@@ -168,6 +145,12 @@ sap.ui.define([
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentSchema), "schema");
       const auditTable = this.byId("auditTrailTable");
       this._schemaService.getAuditTrail(currentSchema.name, auditTable);
+    },
+
+    tabSelect: function (oEv) {
+      if (oEv.getParameter("selectedKey") === "schemaFields") {
+        this._schemaTable.model = this._model.getProperty("/currentSchema")
+      }
     }
 
   });

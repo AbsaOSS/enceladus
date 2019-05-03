@@ -51,6 +51,7 @@ sap.ui.define([
       const eventBus = sap.ui.getCore().getEventBus();
       this._mappingTableService = new MappingTableService(this._model, eventBus)
       this._schemaService = new SchemaService(this._model, eventBus)
+      this._schemaTable = new SchemaTable(this)
     },
 
     auditVersionPress: function (oEv) {
@@ -339,8 +340,8 @@ sap.ui.define([
     },
 
     tabSelect: function (oEv) {
-      if (oEv.getParameter("selectedKey") === "schema") {
-        this.fetchSchema();
+      if (oEv.getParameter("selectedKey") === "schemaFields") {
+        this._schemaTable.model = this._model.getProperty("/currentMappingTable/schema")
       }
     }
 
