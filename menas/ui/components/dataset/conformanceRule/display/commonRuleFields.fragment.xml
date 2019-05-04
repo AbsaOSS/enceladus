@@ -13,8 +13,7 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:l="sap.ui.layout"
-                         xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
         <Title text="{_t}" level="H2"/>
         <Label text="Output Column: "/>
         <Text text="{outputColumn}"/>
