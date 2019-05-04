@@ -98,7 +98,7 @@ sap.ui.define([
     },
 
     onRemovePress: function (oEv) {
-      let current = this._model.getProperty("/currentSchema");
+      let currentSchema = this._model.getProperty("/currentSchema");
 
       MessageBox.show("This action will remove all versions of the schema definition. \nAre you sure?", {
         icon: MessageBox.Icon.WARNING,
@@ -106,7 +106,7 @@ sap.ui.define([
         actions: [MessageBox.Action.YES, MessageBox.Action.NO],
         onClose: (oAction) => {
           if (oAction === "YES") {
-            this._schemaService.disable(current.name);
+            this._schemaService.disable(currentSchema.name);
           }
         }
       });
@@ -114,11 +114,11 @@ sap.ui.define([
 
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "id") === undefined) {
-        this._schemaService.getTop();
+        this._schemaService.getTop().then(() => this.load())
       } else if (Prop.get(oParams, "version") === undefined) {
-        this._schemaService.getLatestByName(oParams.id);
+        this._schemaService.getLatestByName(oParams.id).then(() => this.load())
       } else {
-        this._schemaService.getByNameAndVersion(oParams.id, oParams.version)
+        this._schemaService.getByNameAndVersion(oParams.id, oParams.version).then(() => this.load())
       }
       this.byId("schemaIconTabBar").setSelectedKey("info");
     },
@@ -161,6 +161,11 @@ sap.ui.define([
         isOk = false;
       }
       return isOk;
+    },
+
+    load: function () {
+      let currentSchema = this._model.getProperty("/currentSchema");
+      this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentSchema), "schema");
     }
 
   });
