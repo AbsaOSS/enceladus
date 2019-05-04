@@ -33,26 +33,7 @@
             <IconTabBar id="schemaIconTabBar">
                 <items>
                     <IconTabFilter id="BasicInfo" icon="sap-icon://hint" key="info" text="Basic Info">
-                        <form:SimpleForm>
-                            <form:content>
-                                <Label text="Schema"></Label>
-                                <Text id="currentShemaName" text="{/currentSchema/name}"></Text>
-                                <Label text="Description"></Label>
-                                <Text id="currentShemaDescription" text="{/currentSchema/description}"></Text>
-                                <Label text="Version"></Label>
-                                <Text id="currentShemaVersion" text="{/currentSchema/version}"></Text>
-                                <Label text="Last Update"></Label>
-                                <Text id="currentShemaLastUpdated"
-                                      text="{path: '/currentSchema/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"></Text>
-                                <Label text="Last Update By"></Label>
-                                <Text id="currentShemaUserUpdated" text="{/currentSchema/userUpdated}"></Text>
-                                <Label text="Created"></Label>
-                                <Text id="currentShemaDateCreated"
-                                      text="{path: '/currentSchema/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"></Text>
-                                <Label text="Created By"></Label>
-                                <Text id="currentShemaUserCreated" text="{/currentSchema/userCreated}"></Text>
-                            </form:content>
-                        </form:SimpleForm>
+                        <core:Fragment type="XML" fragmentName="components.schema.schemaInfo"/>
                     </IconTabFilter>
                     <IconTabFilter id="Fields" icon="sap-icon://tree" text="Fields">
                         <table:TreeTable id="schemaFieldsTreeTable"
