@@ -215,6 +215,9 @@ sap.ui.define([
         old.isEdit = true;
         old.bindPath = sBindPath;
         this._model.setProperty("/newDefaultValue", old);
+
+        let currentMT = this._model.getProperty("/currentMappingTable");
+        this._addDefaultDialog.setModel(new sap.ui.model.json.JSONModel(currentMT.schema), "schema");
         this._addDefaultDialog.open();
         this._schemaFieldSelectorSelectPath(old["columnName"])
       } else if (sAction === "delete") {
