@@ -32,32 +32,7 @@
             <IconTabBar id="mappingTableIconTabBar" select="tabSelect">
                 <items>
                     <IconTabFilter id="BasicInfo" icon="sap-icon://hint" key="info" text="Basic Info">
-                        <form:SimpleForm>
-                            <form:content>
-                                <Label text="Mapping Table"/>
-                                <Text text="{/currentMappingTable/name}"/>
-                                <Label text="Description"/>
-                                <Text text="{/currentMappingTable/description}"/>
-                                <Label text="Version"/>
-                                <Text text="{/currentMappingTable/version}"/>
-                                <Label text="HDFS Path"/>
-                                <Text text="{/currentMappingTable/hdfsPath}"/>
-                                <Label text="Schema"/>
-                                <Link text="{/currentMappingTable/schemaName} (v{/currentMappingTable/schemaVersion})"
-                                      press="toSchema" cust:name="{/currentMappingTable/schemaName}"
-                                      cust:version="{/currentMappingTable/schemaVersion}"/>
-                                <Label text="Last Update"/>
-                                <Text
-                                    text="{path: '/currentMappingTable/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
-                                <Label text="Last Update By"/>
-                                <Text text="{/currentMappingTable/userUpdated}"/>
-                                <Label text="Created"/>
-                                <Text
-                                    text="{path: '/currentMappingTable/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"/>
-                                <Label text="Created By"/>
-                                <Text text="{/currentMappingTable/userCreated}"/>
-                            </form:content>
-                        </form:SimpleForm>
+                        <core:Fragment type="XML" fragmentName="components.mappingTable.mappingTableInfo"/>
                     </IconTabFilter>
                     <IconTabFilter id="Schema" icon="sap-icon://tree" key="schema" text="Schema">
                         <table:TreeTable id="mappingSchemaTreeTable"

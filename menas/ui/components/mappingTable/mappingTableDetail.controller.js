@@ -141,7 +141,7 @@ sap.ui.define([
     defaultSubmit: function () {
       let newDef = this._model.getProperty("/newDefaultValue")
 
-      let currMT = this._model.getProperty("/currentMappingTable")
+      let currentMT = this._model.getProperty("/currentMappingTable")
 
       if (this.validateNewDefaultValue()) {
         // send and update UI
@@ -152,9 +152,9 @@ sap.ui.define([
             value: newDef.value
           });
 
-          this._mappingTableService.editDefaultValues(currMT.name, currMT.version, currMT.defaultMappingValue);
+          this._mappingTableService.editDefaultValues(currentMT.name, currentMT.version, currentMT.defaultMappingValue);
         } else {
-          this._mappingTableService.addDefaultValue(currMT.name, currMT.version, newDef)
+          this._mappingTableService.addDefaultValue(currentMT.name, currentMT.version, newDef)
         }
         this.defaultCancel(); // close & clean up
       }
@@ -229,9 +229,9 @@ sap.ui.define([
             if (oResponse === MessageBox.Action.YES) {
               let toks = sBindPath.split("/");
               let index = toks[toks.length - 1];
-              let currMT = this._model.getProperty("/currentMappingTable");
-              let defs = currMT["defaultMappingValue"].filter((el, ind) => ind !== parseInt(index));
-              this._mappingTableService.editDefaultValues(currMT.name, currMT.version, defs);
+              let currentMT = this._model.getProperty("/currentMappingTable");
+              let defs = currentMT["defaultMappingValue"].filter((el, ind) => ind !== parseInt(index));
+              this._mappingTableService.editDefaultValues(currentMT.name, currentMT.version, defs);
             }
           }.bind(this)
         });
@@ -282,7 +282,7 @@ sap.ui.define([
     },
 
     onRemovePress: function (oEv) {
-      let current = this._model.getProperty("/currentMappingTable")
+      let currentMT = this._model.getProperty("/currentMappingTable")
 
       MessageBox.show("This action will remove all versions of the mapping table definition. \nAre you sure?", {
         icon: MessageBox.Icon.WARNING,
@@ -290,7 +290,7 @@ sap.ui.define([
         actions: [MessageBox.Action.YES, MessageBox.Action.NO],
         onClose: (oAction) => {
           if (oAction === "YES") {
-            this._mappingTableService.disable(current.name)
+            this._mappingTableService.disable(currentMT.name)
           }
         }
       });
@@ -298,11 +298,11 @@ sap.ui.define([
 
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "id") === undefined) {
-        this._mappingTableService.getTop().then(() => this.fetchSchema());
+        this._mappingTableService.getTop().then(() => this.load())
       } else if (Prop.get(oParams, "version") === undefined) {
-        this._mappingTableService.getLatestByName(oParams.id).then(() => this.fetchSchema());
+        this._mappingTableService.getLatestByName(oParams.id).then(() => this.load())
       } else {
-        this._mappingTableService.getByNameAndVersion(oParams.id, oParams.version).then(() => this.fetchSchema());
+        this._mappingTableService.getByNameAndVersion(oParams.id, oParams.version).then(() => this.load())
       }
       this.byId("mappingTableIconTabBar").setSelectedKey("info");
     },
@@ -316,9 +316,9 @@ sap.ui.define([
     },
 
     fetchSchema: function (oEv) {
-      let mappingTable = sap.ui.getCore().getModel().getProperty("/currentMappingTable");
-      if (typeof (mappingTable.schema) === "undefined") {
-        this._schemaService.getByNameAndVersion(mappingTable.schemaName, mappingTable.schemaVersion, "/currentMappingTable/schema")
+      let currentMT = this._model.getProperty("/currentMappingTable");
+      if (typeof (currentMT.schema) === "undefined") {
+        this._schemaService.getByNameAndVersion(currentMT.schemaName, currentMT.schemaVersion, "/currentMappingTable/schema")
       }
     },
 
@@ -328,6 +328,12 @@ sap.ui.define([
         id: source.data("name"),
         version: source.data("version")
       })
+    },
+
+    load: function() {
+      let currentMT = this._model.getProperty("/currentMappingTable");
+      this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentMT), "mappingTable")
+      this.fetchSchema()
     },
 
     tabSelect: function (oEv) {
