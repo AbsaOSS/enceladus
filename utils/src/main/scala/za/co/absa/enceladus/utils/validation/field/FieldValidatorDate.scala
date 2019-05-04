@@ -17,13 +17,13 @@ package za.co.absa.enceladus.utils.validation.field
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.utils.implicits.StringImplicits.StringImprovements
 import org.apache.spark.sql.types.TimestampType
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.utils.validation._
 
 object FieldValidatorDate extends FieldValidatorDateTime {
+  import za.co.absa.enceladus.utils.implicits.StringImplicits.StringImprovements
 
   override protected def patternAnalysisIssues(pattern: DateTimePattern,
                                                defaultValue: Option[String],
@@ -33,7 +33,7 @@ object FieldValidatorDate extends FieldValidatorDateTime {
         "Pattern includes time zone placeholder and default time zone is also defined (will never be used)"
       ))
     } else {
-      Seq.empty
+      Nil
     }
 
     val timeZoneIssue: Option[ValidationIssue] = if (!pattern.isEpoch && pattern.isTimeZoned) {
@@ -64,7 +64,7 @@ object FieldValidatorDate extends FieldValidatorDateTime {
         case _ => acc
       }}
     } else {
-      Seq.empty
+      Nil
     }
 
     patternIssues ++ doubleTimeZoneIssue ++ timeZoneIssue.toSet

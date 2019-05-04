@@ -42,7 +42,7 @@ object StringImplicits {
       @tailrec
       def scan(sub: String, idx: Integer, charToExitQuotes: Option[Char], escaped: Boolean = false): Option[Integer] = {
         //escaped flag defaults to false, as every non-escape character clears it
-        val head: Option[Char] = sub.find(_ => true) //get the first character of the string if it exists
+        val head = sub.headOption
         (head, examineChar(head, charsToFind, quoteChars, escape, charToExitQuotes, escaped)) match {
           case (None, _) => None // scanned the whole string without a hit
           case (_, None) => Option(idx) // hit found

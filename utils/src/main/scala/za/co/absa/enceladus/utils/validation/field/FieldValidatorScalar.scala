@@ -61,7 +61,7 @@ object FieldValidatorScalar extends FieldValidator {
           case _ => true //can return anything, value is not important
         }
       }
-      Seq.empty
+      Nil
     }
     catch {
       case NonFatal(e) => Seq(ValidationError(e.toString))

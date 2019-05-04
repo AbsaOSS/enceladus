@@ -56,8 +56,7 @@ object SchemaValidator {
     if (columnName contains '.') {
       val structMsg = if (structPath.isEmpty) "" else s" of the struct '$structPath'"
       Seq(ValidationError(s"Column name '$columnName'$structMsg contains an illegal character: '.'"))
-    }
-    else {
+    } else {
       Nil
     }
   }

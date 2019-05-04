@@ -20,9 +20,9 @@ import java.sql.Timestamp
 
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser}
-import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldImprovements
 
 object Defaults {
+  import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldImprovements
 
   private def getDTParser(option: Option[String], exceptionMessage: String = ""): EnceladusDateTimeParser = {
     var pattern: String = option.getOrElse(throw new IllegalArgumentException(exceptionMessage))

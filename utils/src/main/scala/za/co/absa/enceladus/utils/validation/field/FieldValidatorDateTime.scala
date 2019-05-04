@@ -21,14 +21,14 @@ import java.util.TimeZone
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
 import org.apache.spark.sql.types.{StringType, StructField}
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
-import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldImprovements
 import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser, TimeZoneNormalizer}
 import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.utils.error.ErrorMessage
 
 import scala.util.control.NonFatal
 
 trait FieldValidatorDateTime extends FieldValidator {
+  import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldImprovements
+
   override def validateStructField(field: StructField): Seq[ValidationIssue] = {
     val pattern = DateTimePattern.fromStructField(field)
     val defaultValue = field.defaultValueAsString

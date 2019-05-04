@@ -44,6 +44,6 @@ object FieldValidator {
         Option(FieldValidatorScalar)
       case _ => None
     }
-    validator.map(_.validateStructField(field)).getOrElse(Seq.empty[ValidationIssue])
+    validator.map(_.validateStructField(field)).getOrElse(Nil)
   }
 }
