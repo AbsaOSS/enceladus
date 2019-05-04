@@ -34,15 +34,6 @@
                 </List>
             </form:content>
         </form:SimpleForm>
-        <MenuButton icon="sap-icon://menu" class="sapUiSmallMargin">
-            <menu>
-                <Menu itemSelected="onRuleMenuAction">
-                    <items>
-                        <MenuItem text="Edit" icon="sap-icon://edit" cust:action="edit"/>
-                        <MenuItem text="Delete" icon="sap-icon://delete" cust:action="delete"/>
-                    </items>
-                </Menu>
-            </menu>
-        </MenuButton>
+        <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.actionMenu"/>
     </CustomListItem>
 </core:FragmentDefinition>
