@@ -136,21 +136,19 @@ sap.ui.define([
 
     defaultSubmit: function () {
       let newDef = this._model.getProperty("/newDefaultValue")
-      let bindPath = newDef["bindPath"];
 
       let currMT = this._model.getProperty("/currentMappingTable")
 
       if (this.validateNewDefaultValue()) {
         // send and update UI
         if (newDef.isEdit) {
-          let defs = currMT["defaultMappingValue"].map(function (el) {
-            return {
-              columnName: el.columnName,
-              value: el.value
-            };
+          let bindPath = newDef.bindPath;
+          this._model.setProperty(bindPath, {
+            columnName: newDef.columnName,
+            value: newDef.value
           });
 
-          MappingTableService.editDefaultValues(currMT.name, currMT.version, defs);
+          MappingTableService.editDefaultValues(currMT.name, currMT.version, currMT.defaultMappingValue);
         } else {
           MappingTableService.addDefault(currMT.name, currMT.version, newDef)
         }
@@ -210,7 +208,7 @@ sap.ui.define([
       let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
 
       if (sAction === "edit") {
-        let old = this._model.getProperty(sBindPath);
+        let old = $.extend(true, {}, this._model.getProperty(sBindPath));
         old.title = "Edit";
         old.isEdit = true;
         old.bindPath = sBindPath;
