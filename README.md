@@ -123,29 +123,29 @@ In this section some more complex and less obvious usage patterns are going to b
 ### <a name="use-standardization"/>Standardization
 #### Standardization prescriptions
 The _Standardization_ can be influenced by `metadata` in the schema of the data. These are the possible properties taken
-into account with description of their purpose.
+into account with the description of their purpose.
 
 | Property | Target data type | Description |
 | --- | --- | --- |
 | _sourcecolumn_ | any | The source column to provide data of the described column |
-| _default_ | any atomic type| Default value to use in case dat are missing on entry |
+| _default_ | any atomic type| Default value to use in case data are missing |
 | _pattern_ | date & timestamp | Pattern for the date or timestamp representation |
 | _timezone_ | timestamp (also date) | The time zone of the timestamp when that is not part of the pattern (NB! for date it can return unexpected results) |
 
 #### Date & time
-Dates and especially timestamps (date + time) can be tricky. And it doesn't help that Spark does  not have a very 
-good notion of time zones - all time entries are considered to be in the current system time zone, be default.
-T0 address this potential source of discrepancies the following has been implemented:
-1. All parts of Enceladus system are set to run in GMT time zone
-1. As part of _Standardization_ all time related entries are normalized to GMT
+Dates and especially timestamps (date + time) can be tricky. And it doesn't help that Spark does not have a very 
+good notion of time zones - all time entries are considered to be in the current system time zone by default.
+To address this potential source of discrepancies the following has been implemented:
+1. All Enceladus components are set to run in UTC
+1. As part of **Standardization** all time related entries are normalized to UTC
 1. There are several methods how to ensure that a timestamp entry is normalized as expected
-1. We urge users, that all timestamp entries should include time zone information in one of the forms
-1. While this is all valid for date entries too, it should be noted that GMT normalization of a date can have unexpected 
-consequences - namely all dates west from GMT would be shifted to a day earlier
+1. We urge users, that all timestamp entries should include time zone information in one of the supported ways
+1. While this is all valid for date entries too, it should be noted that UTC normalization of a date can have unexpected 
+consequences - namely all dates west from UTC would be shifted to a day earlier
 
 ##### Date & timestamp pattern
-To enable processing of time entries from other systems Enceladus Standardization offers the possibility to convert 
-string and even numeric values to timestamp or date types. It's done using Sparks abilities to convert strings to 
+To enable processing of time entries from other systems **Standardization** offers the possibility to convert 
+string and even numeric values to timestamp or date types. It's done using Spark's ability to convert strings to 
 timestamp/date with some enhancements. The pattern placeholders and usage is described in Java's 
 [`SimpleDateFormat` class description](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html) with 
 the addition of recognizing two keywords `epoch` and `milliepoch` (case insensitive) to denote the number of 
@@ -185,25 +185,25 @@ Summary:
 **NB!** Spark uses US Locale and because on-the-fly conversion would be complicated, at the moment we stick to this 
 hardcoded locale as well. E.g. `am/pm` for `a` placeholder, English names of days and months etc.
 
-**NB!** The keywords are case **insensitive**. Therefore there is no difference between `epoch` and `EpoCH`.
+**NB!** The keywords are case **insensitive**. Therefore, there is no difference between `epoch` and `EpoCH`.
    
 ##### Time Zone support
-As it has been mentioned, it's highly recommended to use timestamps with time zone. But it's not unlikely that the 
+As it has been mentioned, it's highly recommended to use timestamps with the time zone. But it's not unlikely that the 
 source for standardization doesn't provide the time zone information. On the other hand, these times are usually within
-one time zone. To ensure proper standardization, the prescription _metadata_ can include the `timezone` value.
+one time zone. To ensure proper standardization, the schema's _metadata_ can include the `timezone` value.
 All timestamps then will be standardized as belonging to the particular time zone.  
 
-E.g. _2019-05-04 11:31:10_ with `timzene` specified as _CET_ will be standardized to _2019-05-04 10:31:10_ (GMT of 
+E.g. _2019-05-04 11:31:10_ with `timzene` specified as _CET_ will be standardized to _2019-05-04 10:31:10_ (UTC of 
 course)
 
-In case thou, the pattern already includes information to recognize time zone, the `timezone` entry in _metadata_ will 
+In case the pattern already includes information to recognize the time zone, the `timezone` entry in _metadata_ will 
 be ignored. Namely if the pattern includes 'z', 'Z' or 'X' placeholder or `epoch`/`milliepoch` keywords.
 
 **NB!** Due to spark limitation, only values roughly consisting of General time zone option (`z` placeholder) are 
 supported. To get the full list of supported time zone denominators see the output of Java's 
-[`TimeZone.getAvailableIDs()` function](https://docs.oracle.com/javase/8/docs/api/java/util/TimeZone.html). 
+[`TimeZone.getAvailableIDs()` function](https://docs.oracle.com/javase/8/docs/api/java/util/TimeZone.html#getAvailableIDs--). 
 
 ##### Default value
-Default value is used when the input for the row is empty, just like in the case of other types standardization. The one
-notable difference is, that the value of metadata `default` has to adhere to the provided `pattern`. If no pattern is 
+Default value is used to handle **NULL** values in non-nullable columns when they are being standardized. This can be due to type mismatch or **NULL** entries.
+Date and timestamp default values, specifically, have to adhere to the provided `pattern`. If no pattern is 
 provided, the implicit pattern is used - `yyyy-MM-dd` for dates and `yyyy-MM-dd HH:mm:ss` for timestamps.
