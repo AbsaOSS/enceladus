@@ -32,41 +32,7 @@
             <IconTabBar id="datasetIconTabBar" select="tabSelect">
                 <items>
                     <IconTabFilter id="BasicInfo" icon="sap-icon://hint" key="info" text="Basic Info">
-                        <form:SimpleForm>
-                            <form:content>
-                                <Label text="Dataset"/>
-                                <Text id="currentDatasetName" text="{/currentDataset/name}"/>
-                                <Label text="Description"/>
-                                <Text id="currentDatasetDescription"
-                                      text="{/currentDataset/description}"/>
-                                <Label text="Version"/>
-                                <Text id="currentDatasetVersion" text="{/currentDataset/version}"/>
-                                <Label text="HDFS raw data folder path"/>
-                                <Text id="currentDatasetRawPath" text="{/currentDataset/hdfsPath}"/>
-                                <Label text="HDFS conformed data publish folder path"/>
-                                <Text id="currentDatasetPublishedPath"
-                                      text="{/currentDataset/hdfsPublishPath}"/>
-                                <Label text="Schema"/>
-                                <Link
-                                    text="{/currentDataset/schemaName} (v{/currentDataset/schemaVersion})"
-                                    press="toSchema"
-                                    cust:name="{/currentDataset/schemaName}"
-                                    cust:version="{/currentDataset/schemaVersion}"
-                                    id="currentDatasetSchmea"/>
-                                <Label text="Last Update"/>
-                                <Text id="currentDatasetLastUpdate"
-                                      text="{path: '/currentDataset/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
-                                <Label text="Last Update By"/>
-                                <Text id="currentDatasetUserUpdated"
-                                      text="{/currentDataset/userUpdated}"/>
-                                <Label text="Created"/>
-                                <Text id="currentDatasetCreated"
-                                      text="{path: '/currentDataset/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"/>
-                                <Label text="Created By"/>
-                                <Text id="currentDatasetUserCreated"
-                                      text="{/currentDataset/userCreated}"/>
-                            </form:content>
-                        </form:SimpleForm>
+                        <core:Fragment type="XML" fragmentName="components.dataset.datasetInfo"/>
                     </IconTabFilter>
                     <IconTabFilter id="Schema" icon="sap-icon://tree" key="schema" text="Schema">
                         <table:TreeTable id="datasetSchemaTreeTable"

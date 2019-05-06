@@ -15,8 +15,10 @@
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
   "sap/ui/core/Fragment",
-  "sap/m/MessageBox"
-], function (Controller, Fragment, MessageBox) {
+  "sap/m/MessageItem",
+  "sap/m/MessageBox",
+  "sap/m/MessagePopover"
+], function (Controller, Fragment, MessageItem, MessageBox, MessagePopover) {
   "use strict";
 
   return Controller.extend("components.dataset.datasetDetail", {
@@ -164,7 +166,7 @@ sap.ui.define([
     },
 
     fetchSchema: function (oEv) {
-      let dataset = sap.ui.getCore().getModel().getProperty("/currentDataset");
+      let dataset = this._model.getProperty("/currentDataset");
       if (typeof (dataset.schema) === "undefined") {
         this._schemaService.getByNameAndVersion(dataset.schemaName, dataset.schemaVersion, "/currentDataset/schema")
       }
@@ -206,13 +208,19 @@ sap.ui.define([
 
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "id") === undefined) {
-        this._datasetService.getTop()
+        this._datasetService.getTop().then(() => this.load())
       } else if (Prop.get(oParams, "version") === undefined) {
-        this._datasetService.getLatestByName(oParams.id)
+        this._datasetService.getLatestByName(oParams.id).then(() => this.load())
       } else {
-        this._datasetService.getByNameAndVersion(oParams.id, oParams.version)
+        this._datasetService.getByNameAndVersion(oParams.id, oParams.version).then(() => this.load())
       }
       this.byId("datasetIconTabBar").setSelectedKey("info");
+    },
+
+    load: function() {
+      let current = this._model.getProperty("/currentDataset");
+      this.byId("info").setModel(new sap.ui.model.json.JSONModel(current), "dataset");
+      this.fetchSchema()
     },
 
     conformanceRuleFactory: function (sId, oContext) {
