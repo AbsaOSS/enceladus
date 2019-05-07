@@ -121,20 +121,38 @@ Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
 In this section some more complex and less obvious usage patterns are going to be described.
 
 ### <a name="use-standardization"/>Standardization
-#### Standardization prescriptions
-The _Standardization_ can be influenced by `metadata` in the schema of the data. These are the possible properties taken
+#### Adjusting Standardization Of Data
+_Standardization_ can be influenced by `metadata` in the schema of the data. These are the possible properties taken
 into account with the description of their purpose.
 
-| Property | Target data type | Description |
-| --- | --- | --- |
-| _sourcecolumn_ | any | The source column to provide data of the described column |
-| _default_ | any atomic type| Default value to use in case data are missing |
-| _pattern_ | date & timestamp | Pattern for the date or timestamp representation |
-| _timezone_ | timestamp (also date) | The time zone of the timestamp when that is not part of the pattern (NB! for date it can return unexpected results) |
+| Property | Target data type | Description | Example |
+| --- | --- | --- | --- |
+| _sourcecolumn_ | any | The source column to provide data of the described column | _id_ |
+| _default_ | any atomic type| Default value to use in case data are missing | _0_ |
+| _pattern_ | date & timestamp | Pattern for the date or timestamp representation | _dd.MM.yy_ |
+| _timezone_ | timestamp (also date) | The time zone of the timestamp when that is not part of the pattern (NB! for date it can return unexpected results) | _US/Pacific_ |
+
+Schema entry example:
+```
+{
+    "name": "MODIFIEDTIMESTAMP",
+    "type": "timestamp",
+    "nullable": true,
+    "metadata": {    
+        "description": "Timestamp when the row was last changed.",
+        "sourcecolumn": "MODIFIED"
+        "default": "1970/01/01 01-00-00"
+        "pattern": "yyyy/MM/dd HH-mm-ss"
+        "timezone": "CET"
+    }
+}
+  ```
 
 #### Date & time
-Dates and especially timestamps (date + time) can be tricky. And it doesn't help that Spark does not have a very 
-good notion of time zones - all time entries are considered to be in the current system time zone by default.
+Dates and especially timestamps (date + time) can be tricky. Currently Spark considers all time entries to be in the 
+current system time zone by default. (For more detailed explanation of possible issues with that see 
+[Consistent timestamp types in Hadoop SQL engines](https://docs.google.com/document/d/1gNRww9mZJcHvUDCXklzjFEQGpefsuR_akCDfWsdE35Q/edit#heading=h.n699ftkvhjlo).)
+
 To address this potential source of discrepancies the following has been implemented:
 1. All Enceladus components are set to run in UTC
 1. As part of **Standardization** all time related entries are normalized to UTC
@@ -149,8 +167,8 @@ string and even numeric values to timestamp or date types. It's done using Spark
 timestamp/date with some enhancements. The pattern placeholders and usage is described in Java's 
 [`SimpleDateFormat` class description](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html) with 
 the addition of recognizing two keywords `epoch` and `milliepoch` (case insensitive) to denote the number of 
-seconds/milliseconds since epoch (1970/01/01 00:00:00.000 GMT).
-It should be noted explicitly that epoch and milliepoch are considered a pattern including time zone.
+seconds/milliseconds since epoch (1970/01/01 00:00:00.000 UTC).
+It should be noted explicitly that `epoch` and `milliepoch` are considered a pattern including time zone.
  
 Summary:
 
@@ -199,8 +217,8 @@ course)
 In case the pattern already includes information to recognize the time zone, the `timezone` entry in _metadata_ will 
 be ignored. Namely if the pattern includes 'z', 'Z' or 'X' placeholder or `epoch`/`milliepoch` keywords.
 
-**NB!** Due to spark limitation, only values roughly consisting of General time zone option (`z` placeholder) are 
-supported. To get the full list of supported time zone denominators see the output of Java's 
+**NB!** Due to spark limitation, only time zone ids are accepted as valid values. To get the full list of supported time
+ zone denominators see the output of Java's 
 [`TimeZone.getAvailableIDs()` function](https://docs.oracle.com/javase/8/docs/api/java/util/TimeZone.html#getAvailableIDs--). 
 
 ##### Default value
