@@ -17,8 +17,7 @@ class SchemaTable {
 
   constructor(oController) {
     this._oController = oController;
-    this._model;
-    this._schemaTable = oController.byId("schemaFieldsTreeTable")
+    this._schemaTable = oController.byId("schemaFieldsTreeTable");
     oController.byId("metadataButton").attachPress(this.metadataPress, this);
   }
 
@@ -31,11 +30,11 @@ class SchemaTable {
   }
 
   get model() {
-    return this._model
+    return this._model;
   }
 
   set model(newModel) {
-    newModel = new sap.ui.model.json.JSONModel(newModel)
+    newModel = new sap.ui.model.json.JSONModel(newModel);
     this.schemaTable.setModel(newModel, "schema");
     this._model = newModel
   }
