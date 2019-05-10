@@ -29,10 +29,12 @@ sap.ui.define([
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
 
       this._addFragment = new AddDatasetFragment(this, Fragment.load).getAdd();
+
+      this._datasetService = new DatasetService(this._model, this._eventBus)
     },
 
     list: function () {
-      DatasetService.getDatasetList(this.byId("masterPage"));
+      this._datasetService.getList(this.byId("masterPage"));
     },
 
     onPressMasterBack: function () {

@@ -29,10 +29,12 @@ sap.ui.define([
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
 
       this._addFragment = new AddSchemaFragment(this, Fragment.load).getAdd();
+
+      this._schemaService = new SchemaService(this._model, this._eventBus)
     },
 
     list: function () {
-      SchemaService.getSchemaList(this.byId("masterPage"));
+      this._schemaService.getList(this.byId("masterPage"));
     },
 
     onPressMasterBack: function () {

@@ -31,6 +31,11 @@ var AddDatasetFragment = function (oController, fnLoad) {
 
   let oDialog = loadDialogFragment();
 
+  const model = sap.ui.getCore().getModel();
+  const eventBus = sap.ui.getCore().getEventBus();
+  const datasetService = new DatasetService(model, eventBus);
+  const schemaService = new SchemaService(model, eventBus);
+
   let oFragment = {
     submit: function () {
       let oDataset = oDialog.getModel("entity").oData;
@@ -44,9 +49,9 @@ var AddDatasetFragment = function (oController, fnLoad) {
       if (this.isValid(oDataset)) {
         // send and update UI
         if (oDataset.isEdit) {
-          DatasetService.editDataset(oDataset)
+          datasetService.update(oDataset)
         } else {
-          DatasetService.createDataset(oDataset)
+          datasetService.create(oDataset)
         }
         this.cancel(); // close & clean up
       }
@@ -85,7 +90,7 @@ var AddDatasetFragment = function (oController, fnLoad) {
         oController.byId("schemaNameSelect"), oController.byId("schemaVersionSelect"));
       let hasValidRawHDFSPath = oController.byId("newDatasetRawHDFSBrowser").validate();
       let hasValidPublishHDFSPath = hasValidRawHDFSPath ? oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
-      
+
       return hasValidName && hasValidSchema && hasValidPublishHDFSPath && hasValidRawHDFSPath;
     },
 
@@ -100,19 +105,19 @@ var AddDatasetFragment = function (oController, fnLoad) {
 
     onSchemaSelect: function (oEv) {
       let sSchemaId = oEv.getParameter("selectedItem").getKey();
-      SchemaService.getAllSchemaVersions(sSchemaId, sap.ui.getCore().byId("schemaVersionSelect"),
+      schemaService.getAllVersions(sSchemaId, oController.byId("schemaVersionSelect"),
         oDialog.getModel("entity"), "/schemaVersion")
     }
   };
 
-  this.getAdd = function() {
+  this.getAdd = function () {
     oFragment.onPress = () => {
 
       oDialog.setBusy(true);
       oDialog.open();
 
-      SchemaService.getSchemaList(oDialog, oData => {
-        SchemaService.getAllSchemaVersions(oData[0]._id);
+      schemaService.getList(oDialog).then(oData => {
+        schemaService.getAllVersions(oData[0]._id);
         let oFirstSchema = oDialog.getModel("schemas").oData[0];
 
         oDialog.setModel(new sap.ui.model.json.JSONModel({
@@ -133,17 +138,17 @@ var AddDatasetFragment = function (oController, fnLoad) {
     return oFragment;
   };
 
-  this.getEdit = function() {
+  this.getEdit = function () {
     oFragment.onPress = () => {
 
       oDialog.setBusy(true);
       oDialog.open();
 
-      SchemaService.getSchemaList(oDialog, () => {
+      schemaService.getList(oDialog).then(() => {
         let current = oController._model.getProperty("/currentDataset");
         current.isEdit = true;
         current.title = "Edit";
-        SchemaService.getAllSchemaVersions(current.schemaName, sap.ui.getCore().byId("schemaVersionSelect"));
+        schemaService.getAllVersions(current.schemaName, oController.byId("schemaVersionSelect"));
 
         oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
         oDialog.setBusy(false);

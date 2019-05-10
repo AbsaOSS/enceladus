@@ -42,11 +42,15 @@ sap.ui.define([
       this._editFragment = new AddMappingTableFragment(this, Fragment.load).getEdit();
 
       this._addDefaultDialog = sap.ui.xmlfragment("components.mappingTable.addDefaultValue", this);
-      sap.ui.getCore().byId("newDefaultValueAddButton").attachPress(this.defaultSubmit, this)
-      sap.ui.getCore().byId("newDefaultValueCancelButton").attachPress(this.defaultCancel, this)
-      sap.ui.getCore().byId("addDefaultValueDialog").attachAfterOpen(this.defaultDialogAfterOpen, this)
+      sap.ui.getCore().byId("newDefaultValueAddButton").attachPress(this.defaultSubmit, this);
+      sap.ui.getCore().byId("newDefaultValueCancelButton").attachPress(this.defaultCancel, this);
+      sap.ui.getCore().byId("addDefaultValueDialog").attachAfterOpen(this.defaultDialogAfterOpen, this);
 
-      this._addDefaultDialog.setBusyIndicatorDelay(0)
+      this._addDefaultDialog.setBusyIndicatorDelay(0);
+
+      const eventBus = sap.ui.getCore().getEventBus();
+      this._mappingTableService = new MappingTableService(this._model, eventBus)
+      this._schemaService = new SchemaService(this._model, eventBus)
     },
 
     auditVersionPress: function (oEv) {
@@ -65,7 +69,7 @@ sap.ui.define([
 
       let currentMT = this._model.getProperty("/currentMappingTable");
       this._addDefaultDialog.setModel(new sap.ui.model.json.JSONModel(currentMT.schema), "schema");
-      SchemaService.getSchemaVersionPromise(currentMT.schemaName, currentMT.schemaVersion)
+      new SchemaRestDAO().getByNameAndVersion(currentMT.schemaName, currentMT.schemaVersion)
         .then(oData => {
           this._addDefaultDialog.getModel("schema").setProperty("/fields", oData.fields);
         });
@@ -131,7 +135,7 @@ sap.ui.define([
       let bind = oEv.getParameter("listItem").getBindingContext("schema").getPath();
       let modelPathBase = "/fields/";
       let model = this._addDefaultDialog.getModel("schema");
-      SchemaService.fieldSelect(bind, modelPathBase, model, "/newDefaultValue/columnName");
+      this._schemaService.fieldSelect(bind, modelPathBase, model, "/newDefaultValue/columnName");
     },
 
     defaultSubmit: function () {
@@ -148,9 +152,9 @@ sap.ui.define([
             value: newDef.value
           });
 
-          MappingTableService.editDefaultValues(currMT.name, currMT.version, currMT.defaultMappingValue);
+          this._mappingTableService.editDefaultValues(currMT.name, currMT.version, currMT.defaultMappingValue);
         } else {
-          MappingTableService.addDefault(currMT.name, currMT.version, newDef)
+          this._mappingTableService.addDefaultValue(currMT.name, currMT.version, newDef)
         }
         this.defaultCancel(); // close & clean up
       }
@@ -227,7 +231,7 @@ sap.ui.define([
               let index = toks[toks.length - 1];
               let currMT = this._model.getProperty("/currentMappingTable");
               let defs = currMT["defaultMappingValue"].filter((el, ind) => ind !== parseInt(index));
-              MappingTableService.editDefaultValues(currMT.name, currMT.version, defs);
+              this._mappingTableService.editDefaultValues(currMT.name, currMT.version, defs);
             }
           }.bind(this)
         });
@@ -284,9 +288,9 @@ sap.ui.define([
         icon: MessageBox.Icon.WARNING,
         title: "Are you sure?",
         actions: [MessageBox.Action.YES, MessageBox.Action.NO],
-        onClose: function (oAction) {
-          if (oAction == "YES") {
-            MappingTableService.disableMappingTable(current.name)
+        onClose: (oAction) => {
+          if (oAction === "YES") {
+            this._mappingTableService.disable(current.name)
           }
         }
       });
@@ -294,11 +298,11 @@ sap.ui.define([
 
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "id") === undefined) {
-        MappingTableService.getFirstMappingTable();
+        this._mappingTableService.getTop().then(() => this.fetchSchema());
       } else if (Prop.get(oParams, "version") === undefined) {
-        MappingTableService.getLatestMappingTableVersion(oParams.id, true)
+        this._mappingTableService.getLatestByName(oParams.id).then(() => this.fetchSchema());
       } else {
-        MappingTableService.getMappingTableVersion(oParams.id, oParams.version, true)
+        this._mappingTableService.getByNameAndVersion(oParams.id, oParams.version).then(() => this.fetchSchema());
       }
       this.byId("mappingTableIconTabBar").setSelectedKey("info");
     },
@@ -314,7 +318,7 @@ sap.ui.define([
     fetchSchema: function (oEv) {
       let mappingTable = sap.ui.getCore().getModel().getProperty("/currentMappingTable");
       if (typeof (mappingTable.schema) === "undefined") {
-        SchemaService.getSchemaVersion(mappingTable.schemaName, mappingTable.schemaVersion, "/currentMappingTable/schema")
+        this._schemaService.getByNameAndVersion(mappingTable.schemaName, mappingTable.schemaVersion, "/currentMappingTable/schema")
       }
     },
 

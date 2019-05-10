@@ -31,9 +31,14 @@ var AddMappingTableFragment = function (oController, fnLoad) {
 
   let oDialog = loadDialogFragment();
 
+  const model = sap.ui.getCore().getModel();
+  const eventBus = sap.ui.getCore().getEventBus();
+  const mappingTableService = new MappingTableService(model, eventBus);
+  const schemaService = new SchemaService(model, eventBus);
+
   let oFragment = {
     submit: function () {
-      let oMT = oController._model.getProperty("/newMappingTable");
+      let oMT = oDialog.getModel("entity").oData;
       // we may want to wait for a call to determine whether this is unique
       if (!oMT.isEdit && oMT.name && typeof (oMT.nameUnique) === "undefined") {
         // need to wait for the service call
@@ -44,9 +49,9 @@ var AddMappingTableFragment = function (oController, fnLoad) {
       if (this.isValid(oMT)) {
         // send and update UI
         if (oMT.isEdit) {
-          MappingTableService.editMappingTable(oMT.name, oMT.version, oMT.description, oMT.hdfsPath, oMT.schemaName, oMT.schemaVersion);
+          mappingTableService.update(oMT);
         } else {
-          MappingTableService.createMappingTable(oMT.name, oMT.description, oMT.hdfsPath, oMT.schemaName, oMT.schemaVersion);
+          mappingTableService.create(oMT);
         }
         this.cancel(); // close & clean up
       }
@@ -67,11 +72,11 @@ var AddMappingTableFragment = function (oController, fnLoad) {
       oController.byId("newMappingTableName").setValueState(sap.ui.core.ValueState.None);
       oController.byId("newMappingTableName").setValueStateText("");
 
-      oController.byId("newMappingTableSchemaNameSelect").setValueState(sap.ui.core.ValueState.None);
-      oController.byId("newMappingTableSchemaNameSelect").setValueStateText("");
+      oController.byId("schemaNameSelect").setValueState(sap.ui.core.ValueState.None);
+      oController.byId("schemaNameSelect").setValueStateText("");
 
-      oController.byId("newMappingTableSchemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
-      oController.byId("newMappingTableSchemaVersionSelect").setValueStateText("");
+      oController.byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
+      oController.byId("schemaVersionSelect").setValueStateText("");
     },
 
     isValid: function (oMT) {
@@ -79,26 +84,26 @@ var AddMappingTableFragment = function (oController, fnLoad) {
 
       let hasValidName = EntityValidationService.hasValidName(oMT, "Mapping Table",
         oController.byId("newMappingTableName"));
-      let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Dataset",
-        oController.byId("newMappingTableSchemaNameSelect"), oController.byId("newMappingTableSchemaVersionSelect"));
+      let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Mapping Table",
+        oController.byId("schemaNameSelect"), oController.byId("schemaVersionSelect"));
       let hasValidHDFSPath = oController.byId("addMtHDFSBrowser").validate();
 
       return hasValidName && hasValidSchema && hasValidHDFSPath;
     },
 
     onNameChange: function () {
-      let sName = oController._model.getProperty("/newMappingTable/name");
+      let sName = oDialog.getModel("entity").getProperty("/name");
       if (GenericService.isValidEntityName(sName)) {
-        MappingTableService.hasUniqueName(sName)
+        MappingTableService.hasUniqueName(sName, oDialog.getModel("entity"))
       } else {
-        oController._model.setProperty("/newMappingTable/nameUnique", true)
+        oDialog.getModel("entity").setProperty("/nameUnique", true);
       }
     },
 
     onSchemaSelect: function (oEv) {
       let sSchemaId = oEv.getParameter("selectedItem").getKey();
-      SchemaService.getAllSchemaVersions(sSchemaId, oController.byId("newMappingTableSchemaVersionSelect"),
-        oController._model, "/newMappingTable/schemaVersion")
+      schemaService.getAllVersions(sSchemaId, oController.byId("schemaVersionSelect"),
+        oDialog.getModel("entity"), "/schemaVersion")
     }
   };
 
@@ -108,11 +113,11 @@ var AddMappingTableFragment = function (oController, fnLoad) {
       oDialog.setBusy(true);
       oDialog.open();
 
-      SchemaService.getSchemaList(oDialog, oData => {
+      schemaService.getList(oDialog).then(oData => {
         const oFirstSchema = oData[0];
-        SchemaService.getAllSchemaVersions(oFirstSchema._id);
+        schemaService.getAllVersions(oFirstSchema._id);
 
-        oController._model.setProperty("/newMappingTable", {
+        oDialog.setModel(new sap.ui.model.json.JSONModel({
           name: "",
           description: "",
           schemaName: oFirstSchema._id,
@@ -120,7 +125,7 @@ var AddMappingTableFragment = function (oController, fnLoad) {
           hdfsPath: "/",
           isEdit: false,
           title: "Add"
-        });
+        }), "entity");
 
         oDialog.setBusy(false);
       });
@@ -135,16 +140,14 @@ var AddMappingTableFragment = function (oController, fnLoad) {
       oDialog.setBusy(true);
       oDialog.open();
 
-      SchemaService.getSchemaList(oDialog, () => {
+      schemaService.getList(oDialog).then(() => {
         const current = oController._model.getProperty("/currentMappingTable");
 
         current.isEdit = true;
         current.title = "Edit";
+        schemaService.getAllVersions(current.schemaName, oController.byId("schemaVersionSelect"));
 
-        oController._model.setProperty("/newMappingTable", jQuery.extend(true, {}, current));
-
-        SchemaService.getAllSchemaVersions(current.schemaName, oController.byId("newMappingTableSchemaVersionSelect"));
-
+        oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
         oDialog.setBusy(false);
       });
     };

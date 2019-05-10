@@ -42,6 +42,7 @@ sap.ui.define([
       this._editFragment = new AddSchemaFragment(this, Fragment.load).getEdit();
 
       this._eventBus = sap.ui.getCore().getEventBus();
+      this._schemaService = new SchemaService(this._model, this._eventBus)
     },
 
     onEditPress: function () {
@@ -103,9 +104,9 @@ sap.ui.define([
         icon: MessageBox.Icon.WARNING,
         title: "Are you sure?",
         actions: [MessageBox.Action.YES, MessageBox.Action.NO],
-        onClose: function (oAction) {
+        onClose: (oAction) => {
           if (oAction === "YES") {
-            SchemaService.disableSchema(current.name);
+            this._schemaService.disable(current.name);
           }
         }
       });
@@ -113,11 +114,11 @@ sap.ui.define([
 
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "id") === undefined) {
-        SchemaService.getFirstSchema();
+        this._schemaService.getTop();
       } else if (Prop.get(oParams, "version") === undefined) {
-        SchemaService.getLatestSchemaVersion(oParams.id);
+        this._schemaService.getLatestByName(oParams.id);
       } else {
-        SchemaService.getSchemaVersion(oParams.id, oParams.version)
+        this._schemaService.getByNameAndVersion(oParams.id, oParams.version)
       }
       this.byId("schemaIconTabBar").setSelectedKey("info");
     },

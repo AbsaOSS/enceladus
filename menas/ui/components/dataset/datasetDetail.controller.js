@@ -41,6 +41,11 @@ sap.ui.define([
       this._upsertConformanceRuleDialog = sap.ui.xmlfragment("components.dataset.conformanceRule.upsert", cont);
 
       this._editFragment = new AddDatasetFragment(this, Fragment.load).getEdit();
+
+      const eventBus = sap.ui.getCore().getEventBus();
+      this._datasetService = new DatasetService(this._model, eventBus);
+      this._mappingTableService = new MappingTableService(this._model, eventBus);
+      this._schemaService = new SchemaService(this._model, eventBus)
     },
 
     onEditPress: function () {
@@ -77,7 +82,7 @@ sap.ui.define([
 
     _setRuleDialogModel: function(rules) {
       const currentDataset = this._model.getProperty("/currentDataset");
-      SchemaService.getSchemaVersionPromise(currentDataset.schemaName, currentDataset.schemaVersion)
+      new SchemaRestDAO().getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion)
         .then(schema => {
           schema.fields = SchemaManager.updateTransitiveSchema(schema.fields, rules);
           this._upsertConformanceRuleDialog.setModel(new sap.ui.model.json.JSONModel(schema), "schema");
@@ -112,7 +117,7 @@ sap.ui.define([
               let newDataset = RuleService.removeRule(currentDataset, ruleIndex);
 
               if (newDataset) {
-                DatasetService.editDataset(newDataset);
+                this._datasetService.update(newDataset);
               }
             }
           }.bind(this)
@@ -161,7 +166,7 @@ sap.ui.define([
     fetchSchema: function (oEv) {
       let dataset = sap.ui.getCore().getModel().getProperty("/currentDataset");
       if (typeof (dataset.schema) === "undefined") {
-        SchemaService.getSchemaVersion(dataset.schemaName, dataset.schemaVersion, "/currentDataset/schema")
+        this._schemaService.getByNameAndVersion(dataset.schemaName, dataset.schemaVersion, "/currentDataset/schema")
       }
     },
 
@@ -172,7 +177,7 @@ sap.ui.define([
 
     mappingTableSelect: function (oEv) {
       let sMappingTableId = oEv.getParameter("selectedItem").getKey();
-      MappingTableService.getAllMappingTableVersions(sMappingTableId, sap.ui.getCore().byId("schemaVersionSelect"))
+      this._mappingTableService.getAllVersions(sMappingTableId, sap.ui.getCore().byId("schemaVersionSelect"))
     },
 
     tabSelect: function (oEv) {
@@ -191,9 +196,9 @@ sap.ui.define([
         icon: sap.m.MessageBox.Icon.WARNING,
         title: "Are you sure?",
         actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
-        onClose: function (oAction) {
+        onClose: (oAction) => {
           if (oAction === "YES") {
-            DatasetService.disableDataset(current.name)
+            this._datasetService.disable(current.name)
           }
         }
       });
@@ -201,11 +206,11 @@ sap.ui.define([
 
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "id") === undefined) {
-        DatasetService.getFirstDataset()
+        this._datasetService.getTop()
       } else if (Prop.get(oParams, "version") === undefined) {
-        DatasetService.getLatestDatasetVersion(oParams.id)
+        this._datasetService.getLatestByName(oParams.id)
       } else {
-        DatasetService.getDatasetVersion(oParams.id, oParams.version)
+        this._datasetService.getByNameAndVersion(oParams.id, oParams.version)
       }
       this.byId("datasetIconTabBar").setSelectedKey("info");
     },
