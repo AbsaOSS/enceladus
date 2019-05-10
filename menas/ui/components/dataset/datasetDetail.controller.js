@@ -14,11 +14,8 @@
  */
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
-  "sap/ui/core/Fragment",
-  "sap/m/MessageItem",
-  "sap/m/MessageBox",
-  "sap/m/MessagePopover"
-], function (Controller, Fragment, MessageItem, MessageBox, MessagePopover) {
+  "sap/ui/core/Fragment"
+], function (Controller, Fragment) {
   "use strict";
 
   return Controller.extend("components.dataset.datasetDetail", {
@@ -32,7 +29,7 @@ sap.ui.define([
      * @memberOf components.dataset.datasetDetail
      */
     onInit: function () {
-      this._model = sap.ui.getCore().getModel();
+      this._model = this._model;
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
       this._router.getRoute("datasets").attachMatched(function (oEvent) {
         let args = oEvent.getParameter("arguments");
@@ -166,15 +163,15 @@ sap.ui.define([
     },
 
     fetchSchema: function (oEv) {
-      let dataset = this._model.getProperty("/currentDataset");
-      if (typeof (dataset.schema) === "undefined") {
-        this._schemaService.getByNameAndVersion(dataset.schemaName, dataset.schemaVersion, "/currentDataset/schema")
+      let currentDataset = this._model.getProperty("/currentDataset");
+      if (typeof (currentDataset.schema) === "undefined") {
+        this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema")
       }
     },
 
     fetchRuns: function (oEv) {
-      let dataset = sap.ui.getCore().getModel().getProperty("/currentDataset");
-      RunService.getDatasetRuns(this.byId("Runs"), dataset.name, dataset.version);
+      let currentDataset = this._model.getProperty("/currentDataset");
+      RunService.getDatasetRuns(this.byId("Runs"), currentDataset.name, currentDataset.version);
     },
 
     mappingTableSelect: function (oEv) {
@@ -192,7 +189,7 @@ sap.ui.define([
     },
 
     onRemovePress: function (oEv) {
-      let current = this._model.getProperty("/currentDataset");
+      let currentDataset = this._model.getProperty("/currentDataset");
 
       sap.m.MessageBox.show("This action will remove all versions of the dataset definition. \nAre you sure?", {
         icon: sap.m.MessageBox.Icon.WARNING,
@@ -200,7 +197,7 @@ sap.ui.define([
         actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
         onClose: (oAction) => {
           if (oAction === "YES") {
-            this._datasetService.disable(current.name)
+            this._datasetService.disable(currentDataset.name)
           }
         }
       });
@@ -218,8 +215,8 @@ sap.ui.define([
     },
 
     load: function() {
-      let current = this._model.getProperty("/currentDataset");
-      this.byId("info").setModel(new sap.ui.model.json.JSONModel(current), "dataset");
+      let currentDataset = this._model.getProperty("/currentDataset");
+      this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentDataset), "dataset");
       this.fetchSchema()
     },
 
