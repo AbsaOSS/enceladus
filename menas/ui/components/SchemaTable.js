@@ -22,28 +22,28 @@ class SchemaTable {
   }
 
   get schemaTable() {
-    return this._schemaTable;
+    return this._schemaTable
   }
 
   get oController() {
-    return this._oController;
+    return this._oController
   }
 
   get model() {
-    return this._model;
+    return this._model
   }
 
   set model(newModel) {
     newModel = new sap.ui.model.json.JSONModel(newModel);
     this.schemaTable.setModel(newModel, "schema");
-    this._model = newModel
+    this._model = newModel;
   }
 
   metadataPress(oEv) {
     let binding = oEv.getSource().getBindingContext("schema").getPath() + "/metadata";
     let bindingArr = binding + "Arr";
     //hmm bindAggregation doesn't take formatter :-/
-    const model = this.oController.byId("schemaFieldsTreeTable").getModel("schema")
+    const model = this.oController.byId("schemaFieldsTreeTable").getModel("schema");
     let arrMeta = Formatters.objToKVArray(model.getProperty(binding));
     model.setProperty(bindingArr, arrMeta);
 
