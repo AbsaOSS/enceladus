@@ -298,11 +298,11 @@ sap.ui.define([
 
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "id") === undefined) {
-        this._mappingTableService.getTop();
+        this._mappingTableService.getTop().then(() => this.fetchSchema());
       } else if (Prop.get(oParams, "version") === undefined) {
-        this._mappingTableService.getLatestByName(oParams.id)
+        this._mappingTableService.getLatestByName(oParams.id).then(() => this.fetchSchema());
       } else {
-        this._mappingTableService.getByNameAndVersion(oParams.id, oParams.version)
+        this._mappingTableService.getByNameAndVersion(oParams.id, oParams.version).then(() => this.fetchSchema());
       }
       this.byId("mappingTableIconTabBar").setSelectedKey("info");
     },
