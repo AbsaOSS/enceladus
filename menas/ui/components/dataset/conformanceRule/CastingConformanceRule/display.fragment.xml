@@ -13,8 +13,7 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
-                         xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
     <CustomListItem>
         <form:SimpleForm adjustLabelSpan="true" editable="false">
             <form:content>
@@ -24,15 +23,6 @@
                 <Text text="{outputDataType}"/>
             </form:content>
         </form:SimpleForm>
-        <MenuButton icon="sap-icon://menu" class="sapUiSmallMargin">
-            <menu>
-                <Menu itemSelected="onRuleMenuAction">
-                    <items>
-                        <MenuItem text="Edit" icon="sap-icon://edit" cust:action="edit"/>
-                        <MenuItem text="Delete" icon="sap-icon://delete" cust:action="delete"/>
-                    </items>
-                </Menu>
-            </menu>
-        </MenuButton>
+        <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.actionMenu"/>
     </CustomListItem>
 </core:FragmentDefinition>

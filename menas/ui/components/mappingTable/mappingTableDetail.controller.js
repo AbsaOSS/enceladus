@@ -140,21 +140,19 @@ sap.ui.define([
 
     defaultSubmit: function () {
       let newDef = this._model.getProperty("/newDefaultValue")
-      let bindPath = newDef["bindPath"];
 
       let currMT = this._model.getProperty("/currentMappingTable")
 
       if (this.validateNewDefaultValue()) {
         // send and update UI
         if (newDef.isEdit) {
-          let defs = currMT["defaultMappingValue"].map(function (el) {
-            return {
-              columnName: el.columnName,
-              value: el.value
-            };
+          let bindPath = newDef.bindPath;
+          this._model.setProperty(bindPath, {
+            columnName: newDef.columnName,
+            value: newDef.value
           });
 
-          this._mappingTableService.editDefaultValues(currMT.name, currMT.version, defs);
+          this._mappingTableService.editDefaultValues(currMT.name, currMT.version, currMT.defaultMappingValue);
         } else {
           this._mappingTableService.addDefaultValue(currMT.name, currMT.version, newDef)
         }
@@ -214,11 +212,14 @@ sap.ui.define([
       let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
 
       if (sAction === "edit") {
-        let old = this._model.getProperty(sBindPath);
+        let old = $.extend(true, {}, this._model.getProperty(sBindPath));
         old.title = "Edit";
         old.isEdit = true;
         old.bindPath = sBindPath;
         this._model.setProperty("/newDefaultValue", old);
+
+        let currentMT = this._model.getProperty("/currentMappingTable");
+        this._addDefaultDialog.setModel(new sap.ui.model.json.JSONModel(currentMT.schema), "schema");
         this._addDefaultDialog.open();
         this._schemaFieldSelectorSelectPath(old["columnName"])
       } else if (sAction === "delete") {
