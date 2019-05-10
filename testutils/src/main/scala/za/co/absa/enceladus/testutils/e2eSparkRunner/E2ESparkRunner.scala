@@ -17,10 +17,8 @@ package za.co.absa.enceladus.testutils.e2eSparkRunner
 
 import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.testutils.HelperFunctions
-import za.co.absa.enceladus.testutils.models.ProcessMeasurement
 
 import sys.process._
-import scala.io.Source
 
 object E2ESparkRunner {
   private val log: Logger = LogManager.getLogger(this.getClass)
@@ -47,7 +45,7 @@ object E2ESparkRunner {
 
     log.info("Running Standartization")
     log.debug(standartisation)
-    val ProcessMeasurement(stdTime, standartisationRes) = HelperFunctions.calculateTime { runBashCmd(standartisation) }
+    val (stdTime, standartisationRes) = HelperFunctions.calculateTime { runBashCmd(standartisation) }
     log.debug(standartisationRes)
     log.info("Standartization Passed")
 
@@ -59,7 +57,7 @@ object E2ESparkRunner {
 
     log.info("Running Conformance")
     log.debug(conformance)
-    val ProcessMeasurement(confTime, conformanceRes) = HelperFunctions.calculateTime { runBashCmd(conformance) }
+    val (confTime, conformanceRes) = HelperFunctions.calculateTime { runBashCmd(conformance) }
     log.debug(conformanceRes)
     log.info("Conformance Passed")
 
@@ -69,8 +67,8 @@ object E2ESparkRunner {
     log.debug(confComparisonRes)
     log.info("Conformance Comparison Passed")
 
-    val humanReadableStdTime = f"${stdTime / 1000 / 60} min ${stdTime  / 1000.0 % 60.0}%.2f s"
-    val humanReadableConfTime = f"${confTime / 1000 / 60} min ${confTime / 1000.0 % 60.0}%.2f s"
+    val humanReadableStdTime = f"${stdTime / 1000 / 60} min ${stdTime / 1000 % 60.0}%.2f s"
+    val humanReadableConfTime = f"${confTime / 1000 / 60} min ${confTime / 1000 % 60.0}%.2f s"
     log.info(s"Standartization and Conformance passed. It took them $humanReadableStdTime and " +
       s"$humanReadableConfTime respectively")
   }

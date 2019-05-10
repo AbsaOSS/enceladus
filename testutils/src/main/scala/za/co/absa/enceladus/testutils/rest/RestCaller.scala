@@ -33,7 +33,7 @@ object RestCaller {
     * @return Returns a result in a form of [[TestCaseResult]]
     */
   def run(testCase: TestCase): TestCaseResult = {
-    val ProcessMeasurement(time, callOutput) = HelperFunctions.calculateTime {
+    val (time, callOutput) = HelperFunctions.calculateTime {
       call(testCase.method, testCase.url, testCase.payload, testCase.contentType)
     }
     val diff = compareJsons(testCase.expectedOutput, callOutput.text)

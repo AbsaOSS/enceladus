@@ -19,7 +19,6 @@ import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.functions.{expr, max}
 import org.apache.spark.sql.types.{ArrayType, StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame}
-import za.co.absa.enceladus.testutils.models.ProcessMeasurement
 
 import scala.collection.mutable
 
@@ -133,12 +132,14 @@ object HelperFunctions {
     * Calculates the time it took for passed block of code to execute and finish.
     * @param processToRun Block of code, to be executed
     * @tparam A A type parameter specifying output from processToRun
-    * @return Returns a millisecond difference between start and end time
+    * @return Returns a tuple of milliseconds difference between start and end time
+    *         and return value
     */
-  def calculateTime[A](processToRun: => A): ProcessMeasurement[A] = {
+  def calculateTime[A](processToRun: => A): (Long, A) = {
     val startTime = System.nanoTime()
     val returnValue = processToRun
     val endTime = System.nanoTime()
-    ProcessMeasurement(endTime - startTime, returnValue)
+    val millisecondsPassed = (endTime - startTime) / 1000000
+    (millisecondsPassed, returnValue)
   }
 }
