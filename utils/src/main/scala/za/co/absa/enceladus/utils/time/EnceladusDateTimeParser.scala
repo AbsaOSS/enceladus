@@ -28,7 +28,7 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
   private val formatter: Option[SimpleDateFormat] = if (pattern.isEpoch) {
     None
   } else {
-    Some(new SimpleDateFormat(pattern, Locale.US))
+    Some(new SimpleDateFormat(pattern, Locale.US)) // locale here is hardcoded to the same value as Spark uses
   }
 
   private def convertValue(value: String): Long = {

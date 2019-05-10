@@ -51,7 +51,7 @@ object StringImplicits {
         }
       }
 
-      check(charsToFind, quoteChars, escape: Char)
+      checkInputsOverlap(charsToFind, quoteChars, escape: Char)
       scan(string, 0, charToExitQuotes = None)
     }
 
@@ -84,7 +84,7 @@ object StringImplicits {
       * @return map where charsToFind are the keys and values are the respective number of occurrences
       */
     def countUnquoted(charsToFind: Set[Char], quoteChars: Set[Char], escape: Char = '\\'): Map[Char, Int] = {
-      check(charsToFind, quoteChars, escape: Char)
+      checkInputsOverlap(charsToFind, quoteChars, escape: Char)
       val resultInit: Map[Char, Int] = charsToFind.map((_, 0)).toMap
       val examineInit: (Option[Char], Boolean) = (Option.empty, false)
       val (result, _) = string.foldLeft((resultInit, examineInit)) ((acc, char) => {
@@ -96,7 +96,7 @@ object StringImplicits {
       result
     }
 
-    private def check(charsToFind: Set[Char], quoteChars: Set[Char], escape: Char = '\\'):Unit = {
+    private def checkInputsOverlap(charsToFind: Set[Char], quoteChars: Set[Char], escape: Char = '\\'):Unit = {
       if (charsToFind.contains(escape) && quoteChars.contains(escape)) {
         throw new InvalidParameterException(
           s"Escape character '$escape 'is both between charsToFind and quoteChars. That's not allowed."
