@@ -159,13 +159,13 @@ object HelperFunctions {
 
     def extractTimeSegment(remaining: Long, multiplier: Long): (Long, Long) = {
       val count = remaining / multiplier
-      val newRemaining = remaining - (count * multiplier)
+      val newRemaining = remaining % multiplier
       (count, newRemaining)
     }
 
-    val minuteMultiplier: Int = 1000 * 60
-    val hourMultiplier: Int = minuteMultiplier * 60
-    val dayMultiplier: Int = hourMultiplier * 24
+    val minuteMultiplier = 1000 * 60
+    val hourMultiplier = minuteMultiplier * 60
+    val dayMultiplier = hourMultiplier * 24
 
     val (numberOfDays, remainingAfterDay) = extractTimeSegment(elapsedTime, dayMultiplier)
     val (numberOfHours, remainingAfterHours) = extractTimeSegment(remainingAfterDay, hourMultiplier)
