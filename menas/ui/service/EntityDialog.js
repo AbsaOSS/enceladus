@@ -199,10 +199,6 @@ class SchemaDialog extends EntityDialog {
 
 class AddSchemaDialog extends SchemaDialog {
 
-  constructor(oDialog, schemaService, oController) {
-    super(oDialog, schemaService, oController);
-  }
-
   onPress() {
     this.oDialog.setModel(new sap.ui.model.json.JSONModel({
       name: "",
