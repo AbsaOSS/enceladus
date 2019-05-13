@@ -117,6 +117,7 @@ sap.ui.define([
         MessageToast.show("Schema successfully uploaded.");
         let oData = JSON.parse(oParams.getParameter("responseRaw"));
         model.setProperty("/currentSchema", oData);
+        this._schemaTable.model = oData
         // update the list as well - may be cheaper in future to update locally
         this._eventBus.publish("schemas", "list");
         // nav back to info
