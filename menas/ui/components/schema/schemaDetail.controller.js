@@ -138,14 +138,9 @@ sap.ui.define([
     load: function () {
       const currentSchema = this._model.getProperty("/currentSchema");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentSchema), "schema");
+      this._schemaTable.model = this._model.getProperty("/currentSchema")
       const auditTable = this.byId("auditTrailTable");
       this._schemaService.getAuditTrail(currentSchema.name, auditTable);
-    },
-
-    tabSelect: function (oEv) {
-      if (oEv.getParameter("selectedKey") === "schemaFields") {
-        this._schemaTable.model = this._model.getProperty("/currentSchema")
-      }
     }
 
   });

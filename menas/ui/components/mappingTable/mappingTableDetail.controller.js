@@ -305,9 +305,9 @@ sap.ui.define([
 
     fetchSchema: function (oEv) {
       let currentMT = this._model.getProperty("/currentMappingTable");
-      if (typeof (currentMT.schema) === "undefined") {
-        this._schemaService.getByNameAndVersion(currentMT.schemaName, currentMT.schemaVersion, "/currentMappingTable/schema")
-      }
+      this._schemaService.getByNameAndVersion(currentMT.schemaName, currentMT.schemaVersion, "/currentMappingTable/schema").then((schema) => {
+        this._schemaTable.model = schema;
+      });
     },
 
     usedInNavTo: function (oEv) {
@@ -324,12 +324,6 @@ sap.ui.define([
       this.fetchSchema();
       const auditTable = this.byId("auditTrailTable");
       this._mappingTableService.getAuditTrail(currentMT.name, auditTable);
-    },
-
-    tabSelect: function (oEv) {
-      if (oEv.getParameter("selectedKey") === "schemaFields") {
-        this._schemaTable.model = this._model.getProperty("/currentMappingTable/schema")
-      }
     }
 
   });
