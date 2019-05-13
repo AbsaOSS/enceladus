@@ -27,7 +27,7 @@
         <footer>
             <Bar>
                 <contentRight>
-                    <Button id="NewDataset" text="New Dataset" icon="sap-icon://add"
+                    <Button id="Add" text="New Dataset" icon="sap-icon://add"
                             press="onAddPress"/>
                 </contentRight>
             </Bar>

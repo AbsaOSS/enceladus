@@ -18,15 +18,14 @@
         <content>
             <VBox>
                 <Input id="newSchemaName" type="Text" placeholder="Schema name*" width="100%" value="{entity>/name}"
-                       enabled="{path:'entity>/isEdit', formatter:'Formatters.not'}"
-                       change="onNameChange"/>
+                       enabled="{path:'entity>/isEdit', formatter:'Formatters.not'}"/>
                 <Input id="newSchemaDescription" type="Text" placeholder="Description" width="100%"
                        value="{entity>/description}"/>
             </VBox>
         </content>
         <buttons>
-            <Button id="newSchemaAddButton" text="Save" icon="sap-icon://accept" press="onSchemaSubmit"/>
-            <Button id="newSchemaCancelButton" text="Cancel" icon="sap-icon://cancel" press="onSchemaCancel"/>
+            <Button id="newSchemaAddButton" text="Save" icon="sap-icon://accept"/>
+            <Button id="newSchemaCancelButton" text="Cancel" icon="sap-icon://cancel"/>
         </buttons>
     </Dialog>
 </core:FragmentDefinition>

@@ -39,7 +39,7 @@ sap.ui.define([
         this.routeMatched(args);
       }, this);
 
-      this._editFragment = new AddMappingTableFragment(this, Fragment.load).getEdit();
+      new MappingTableDialogFactory(this, Fragment.load).getEdit();
 
       this._addDefaultDialog = sap.ui.xmlfragment("components.mappingTable.addDefaultValue", this);
       sap.ui.getCore().byId("newDefaultValueAddButton").attachPress(this.defaultSubmit, this);
@@ -49,9 +49,16 @@ sap.ui.define([
       this._addDefaultDialog.setBusyIndicatorDelay(0);
 
       const eventBus = sap.ui.getCore().getEventBus();
-      this._mappingTableService = new MappingTableService(this._model, eventBus)
-      this._schemaService = new SchemaService(this._model, eventBus)
-      this._schemaTable = new SchemaTable(this)
+      eventBus.subscribe("mappingTables", "updated", this.onEntityUpdated, this);
+
+      this._mappingTableService = new MappingTableService(this._model, eventBus);
+      this._schemaService = new SchemaService(this._model, eventBus);
+      this._schemaTable = new SchemaTable(this);
+    },
+
+    onEntityUpdated: function (sTopic, sEvent, oData) {
+      this._model.setProperty("/currentMappingTable", oData);
+      this.load();
     },
 
     auditVersionPress: function (oEv) {
@@ -260,26 +267,6 @@ sap.ui.define([
       }).setModel(this._model);
 
       oMessagePopover.toggle(oEv.getSource());
-    },
-
-    onEditPress: function () {
-      this._editFragment.onPress();
-    },
-
-    onMTSubmit: function () {
-      this._editFragment.submit();
-    },
-
-    onMTCancel: function () {
-      this._editFragment.cancel();
-    },
-
-    onNameChange: function () {
-      this._editFragment.onNameChange();
-    },
-
-    onSchemaSelect: function (oEv) {
-      this._editFragment.onSchemaSelect(oEv);
     },
 
     onRemovePress: function (oEv) {

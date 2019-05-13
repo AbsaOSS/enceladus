@@ -79,7 +79,7 @@
             <Bar>
                 <contentRight>
                     <Button id="Delete" text="Delete" icon="sap-icon://delete" press="onRemovePress"></Button>
-                    <Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress"></Button>
+                    <Button id="Edit" text="Edit" icon="sap-icon://edit" press=".dialog.onPress"></Button>
                 </contentRight>
             </Bar>
         </footer>
