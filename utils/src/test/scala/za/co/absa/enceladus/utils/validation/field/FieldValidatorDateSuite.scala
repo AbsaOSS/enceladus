@@ -83,23 +83,23 @@ class FieldValidatorDateSuite extends FunSuite  {
   test("invalid default") {
     //empty default
     val expected1 = Set(
-      ValidationError("""Default value "" does not adhere to pattern: "yyMMdd_zz""""),
+      ValidationError("""Unparseable date: """""),
       ValidationWarning("Time zone is defined in pattern for date. While it's valid, it can lead to unexpected outcomes.")
     )
     assert(FieldValidatorDate.validateStructField(field("yyMMdd_zz", Option(""))).toSet == expected1)
     //wrong default
     val expected2 = Set(
-      ValidationError("""Default value "1999-12-31" does not adhere to pattern: "yyyy/MM/dd"""")
+      ValidationError("""Unparseable date: "1999-12-31"""")
     )
     assert(FieldValidatorDate.validateStructField(field("yyyy/MM/dd", Option("1999-12-31"))).toSet == expected2)
     //invalid epoch default
     val expected3 = Set(
-      ValidationError("""Default value "2019-01-01" does not adhere to pattern: "epoch"""")
+      ValidationError("""For input string: "2019-01-01"""")
     )
     assert(FieldValidatorDate.validateStructField(field("epoch", Option("2019-01-01"))).toSet == expected3)
     //epoch overflow
     val expected5 = Set(
-      ValidationError("""Default value "8748743743948390823948239084294938231122123" does not adhere to pattern: "epoch"""")
+      ValidationError("""For input string: "8748743743948390823948239084294938231122123"""")
     )
     assert(FieldValidatorDate.validateStructField(field("epoch", Option("8748743743948390823948239084294938231122123"))).toSet == expected5)
   }

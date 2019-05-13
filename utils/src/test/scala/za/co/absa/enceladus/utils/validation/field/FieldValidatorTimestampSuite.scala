@@ -83,13 +83,13 @@ class FieldValidatorTimestampSuite extends FunSuite  {
   test("invalid default") {
     //empty default
     val expected1 = Set(
-      ValidationError("""Default value "" does not adhere to pattern: "yyMMdd_hhmmss_zz""""),
+      ValidationError("""Unparseable date: """""),
       ValidationWarning("Placeholder for hour 1-12 'h' found, but no am/pm 'a' placeholder. Possibly 0-23 'H' intended.")
     )
     assert(FieldValidatorTimestamp.validateStructField(field("yyMMdd_hhmmss_zz", Option(""))).toSet == expected1)
     //wrong default
     val expected2 = Set(
-      ValidationError("""Default value "1999-12-31" does not adhere to pattern: "yyyy/MM/dd""""),
+      ValidationError("""Unparseable date: "1999-12-31""""),
       ValidationWarning("No hour placeholder 'HH' found."),
       ValidationWarning("No minute placeholder 'mm' found."),
       ValidationWarning("No second placeholder 'ss' found.")
@@ -97,18 +97,18 @@ class FieldValidatorTimestampSuite extends FunSuite  {
     assert(FieldValidatorTimestamp.validateStructField(field("yyyy/MM/dd", Option("1999-12-31"))).toSet == expected2)
     //invalid epoch default
     val expected3 = Set(
-      ValidationError("""Default value "2019-01-01" does not adhere to pattern: "epoch"""")
+      ValidationError("""For input string: "2019-01-01"""")
     )
     assert(FieldValidatorTimestamp.validateStructField(field("epoch", Option("2019-01-01"))).toSet == expected3)
     //timestamp pattern, date default
     val expected4 = Set(
-      ValidationError("""Default value "31.12.2004" does not adhere to pattern: "dd.MM.yyyy hh-mm-ss""""),
+      ValidationError("""Unparseable date: "31.12.2004""""),
       ValidationWarning("Placeholder for hour 1-12 'h' found, but no am/pm 'a' placeholder. Possibly 0-23 'H' intended.")
     )
     assert(FieldValidatorTimestamp.validateStructField(field("dd.MM.yyyy hh-mm-ss", Option("31.12.2004"))).toSet == expected4)
     //epoch overflow
     val expected5 = Set(
-      ValidationError("""Default value "8748743743948390823948239084294938231122123" does not adhere to pattern: "epoch"""")
+      ValidationError("""For input string: "8748743743948390823948239084294938231122123"""")
     )
     assert(FieldValidatorTimestamp.validateStructField(field("epoch", Option("8748743743948390823948239084294938231122123"))).toSet == expected5)
   }

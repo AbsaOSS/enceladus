@@ -18,6 +18,3 @@ enceladus.utils.testUtils.sparkTestBaseMaster = "local[4]"
 #enceladus.utils.testUtils.hadoop.conf.dir = "/path/to/HADOOP_CONF_DIR"
 #enceladus.utils.testUtils.spark.distJars.dir = "hdfs:///path/to/spark/jars"
 #enceladus.utils.testUtils.spark.home.dir = "/path/to/SPARK_HOME
-
-#system-wide time zone
-timezone="UTC"

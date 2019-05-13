@@ -15,10 +15,12 @@
 
 package za.co.absa.enceladus.utils.validation.field
 
+import java.util.Date
+
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.TimestampType
-import za.co.absa.enceladus.utils.time.DateTimePattern
+import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser}
 import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.utils.validation._
 
@@ -70,13 +72,8 @@ object FieldValidatorDate extends FieldValidatorDateTime {
     patternIssues ++ doubleTimeZoneIssue ++ timeZoneIssue.toSet
   }
 
-  override protected def conversion(column: Column, pattern: DateTimePattern): Column = {
-    (pattern.isEpoch, pattern.defaultTimeZone) match {
-      case (true, _) =>
-        val epochPattern: String = Defaults.getGlobalFormat(TimestampType)
-        to_date(from_unixtime(column.cast("Long")  / pattern.epochFactor, epochPattern), epochPattern)
-      case (false, Some(tz)) => to_date(to_utc_timestamp(to_timestamp(column, pattern), tz))
-      case _ => to_date(column, pattern)
-    }
+  override def verifyStringDateTime(dateTime: String)(implicit parser: EnceladusDateTimeParser): Date = {
+    parser.parseDate(dateTime)
   }
+
 }

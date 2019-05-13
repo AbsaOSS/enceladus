@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.utils.validation.field
 
+import java.util.Date
 import java.sql.Timestamp
 import java.util.TimeZone
 
-import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
 import org.apache.spark.sql.types.{StringType, StructField}
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
 import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser, TimeZoneNormalizer}
@@ -46,44 +46,19 @@ trait FieldValidatorDateTime extends FieldValidator {
   }
 
   private def patternConversionIssues(pattern: DateTimePattern, defaultValue: Option[String]): Seq[ValidationIssue] = {
-
-    import FieldValidatorDateTime._
-    import spark.implicits._
-
-    val descriptionColName = "description"
-    val sourceColName = "source"
-    val convertedColName = "converted"
-    val q = "\""
-
     try {
       implicit val parser: EnceladusDateTimeParser = EnceladusDateTimeParser(pattern)
-      // Checking pattern's ability to be used in formatting date/time values
 
-      val data = Seq(
-        generateRow("current time", exampleDate),
-        generateRow("epoch", epochStart),
-        generateRow("epoch day end", epochStartDayEnd)
-      ) ++ defaultValue.map(
-        s =>(s"Default value $q$s$q does not adhere to ${pattern.toString}", s)
-      ).toSeq
-      val df =  data.toDF(descriptionColName, sourceColName)
-      val converted = conversion(col(sourceColName), pattern)
+      val exampleDateStr = parser.format(FieldValidatorDateTime.exampleDate)
+      verifyStringDateTime(exampleDateStr)
+      val epochStartStr = parser.format(FieldValidatorDateTime.epochStart)
+      verifyStringDateTime(epochStartStr)
+      val epochStartDayEndStr = parser.format(FieldValidatorDateTime.epochStartDayEnd)
+      verifyStringDateTime(epochStartDayEndStr)
 
-      val dfWithConversion = df.select(
-        col(descriptionColName),
-        col(sourceColName),
-        converted.as(convertedColName),
-        converted.isNull.as("failed")
-      )
+      defaultValue.map(verifyStringDateTime)
 
-      val issues: Seq[ValidationIssue] = dfWithConversion
-        .collect()
-        .map(x => (x.get(0), x.get(3)))
-        .toList
-        .collect {
-          case (description, true) => ValidationError(s"$description")
-      }
-      issues
+      Nil
     }
     catch {
       case NonFatal(e) => Seq(ValidationError(e.getMessage))
@@ -100,7 +75,8 @@ trait FieldValidatorDateTime extends FieldValidator {
                                       defaultValue: Option[String],
                                       defaultTimeZone: Option[String]): Seq[ValidationIssue]
 
-  protected def conversion(column: Column, pattern: DateTimePattern): Column
+  protected def verifyStringDateTime(dateTime: String)(implicit parser: EnceladusDateTimeParser): Date
+
 }
 
 object FieldValidatorDateTime {
@@ -109,13 +85,6 @@ object FieldValidatorDateTime {
   private val exampleDate = new Timestamp(System.currentTimeMillis)
   private val epochStart = new Timestamp(0)
   private val epochStartDayEnd = new Timestamp(dayMilliSeconds - 1)
-
-  private val spark: SparkSession = SparkSession.builder()
-    .master("local[*]")
-    .appName("FieldValidatorDateTime")
-    .config("spark.sql.codegen.wholeStage", value = false)
-    .getOrCreate()
-  TimeZoneNormalizer.normalizeSessionTimeZone(spark)
 
 }
 
