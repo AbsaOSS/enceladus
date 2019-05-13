@@ -67,8 +67,8 @@ object E2ESparkRunner {
     log.debug(confComparisonRes)
     log.info("Conformance Comparison Passed")
 
-    val humanReadableStdTime = f"${stdTime / 1000 / 60} min ${stdTime / 1000 % 60.0}%.2f s"
-    val humanReadableConfTime = f"${confTime / 1000 / 60} min ${confTime / 1000 % 60.0}%.2f s"
+    val humanReadableStdTime = HelperFunctions.prettyPrintElapsedTime(stdTime)
+    val humanReadableConfTime = HelperFunctions.prettyPrintElapsedTime(confTime)
     log.info(s"Standartization and Conformance passed. It took them $humanReadableStdTime and " +
       s"$humanReadableConfTime respectively")
   }
