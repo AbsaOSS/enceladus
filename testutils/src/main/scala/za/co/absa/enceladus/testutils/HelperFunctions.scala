@@ -142,4 +142,44 @@ object HelperFunctions {
     val millisecondsPassed = (endTime - startTime) / 1000000
     (millisecondsPassed, returnValue)
   }
+
+  /**
+    * Pretty prints elapsed time. If given 91441000 will return "1 day, 1 hour, 24 minutes and 1.00 second"
+    * @param elapsedTime Elapsed time in milliseconds you want to pretty print
+    * @return Returns a string format with human readable time segments
+    */
+  def prettyPrintElapsedTime(elapsedTime: Long): String = {
+    def stringify(count: Double, noun: String, formatter: String = "%.0f"): Option[String] = {
+      if (count == 0) { None }
+      else {
+        val formatted = formatter.format(count)
+        Some(s"$formatted $noun${if (count == 1) { "" } else { "s" }}")
+      }
+    }
+
+    def extractTimeSegment(remaining: Long, multiplier: Long): (Long, Long) = {
+      val count = remaining / multiplier
+      val newRemaining = remaining - (count * multiplier)
+      (count, newRemaining)
+    }
+
+    val minuteMultiplier: Int = 1000 * 60
+    val hourMultiplier: Int = minuteMultiplier * 60
+    val dayMultiplier: Int = hourMultiplier * 24
+
+    val (numberOfDays, remainingAfterDay) = extractTimeSegment(elapsedTime, dayMultiplier)
+    val (numberOfHours, remainingAfterHours) = extractTimeSegment(remainingAfterDay, hourMultiplier)
+    val (numberOfMinutes, remainingAfterMinutes) = extractTimeSegment(remainingAfterHours, minuteMultiplier)
+    val numberOfSeconds = remainingAfterMinutes / 1000.0
+
+    val daysString = stringify(numberOfDays, "day")
+    val hoursString = stringify(numberOfHours, "hour")
+    val minutesString = stringify(numberOfMinutes, "minute")
+    val secondsString = stringify(numberOfSeconds, "second", "%.2f")
+
+    val returnVal = Array(daysString, hoursString, minutesString, secondsString).flatten.mkString(", ")
+    val patchIndex = returnVal.lastIndexOf(',')
+    if (patchIndex == -1) { returnVal }
+    else { returnVal.patch(returnVal.lastIndexOf(','), " and", 1) }
+  }
 }
