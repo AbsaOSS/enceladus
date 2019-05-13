@@ -63,12 +63,12 @@ class EntityDialog {
 class DatasetDialog extends EntityDialog {
 
   constructor(oDialog, datasetService, schemaService, oController) {
-    super(oDialog, datasetService, oController)
+    super(oDialog, datasetService, oController);
     this._schemaService = schemaService;
-    oController.byId("newDatasetAddButton").attachPress(this.submit, this)
-    oController.byId("newDatasetCancelButton").attachPress(this.cancel, this)
-    oController.byId("newDatasetName").attachChange(this.onNameChange, this)
-    oController.byId("schemaNameSelect").attachChange(this.onSchemaSelect, this)
+    oController.byId("newDatasetAddButton").attachPress(this.submit, this);
+    oController.byId("newDatasetCancelButton").attachPress(this.cancel, this);
+    oController.byId("newDatasetName").attachChange(this.onNameChange, this);
+    oController.byId("schemaNameSelect").attachChange(this.onSchemaSelect, this);
   }
 
   get schemaService() {
@@ -102,7 +102,7 @@ class DatasetDialog extends EntityDialog {
   onNameChange() {
     let sName = this.oDialog.getModel("entity").getProperty("/name");
     if (GenericService.isValidEntityName(sName)) {
-      DatasetService.hasUniqueName(sName, this.oDialog.getModel("entity"))
+      DatasetService.hasUniqueName(sName, this.oDialog.getModel("entity"));
     } else {
       this.oDialog.getModel("entity").setProperty("/nameUnique", true);
     }
@@ -111,16 +111,12 @@ class DatasetDialog extends EntityDialog {
   onSchemaSelect(oEv) {
     let sSchemaId = oEv.getParameter("selectedItem").getKey();
     this.schemaService.getAllVersions(sSchemaId, this.oController.byId("schemaVersionSelect"),
-      this.oDialog.getModel("entity"), "/schemaVersion")
+      this.oDialog.getModel("entity"), "/schemaVersion");
   }
 
 }
 
 class AddDatasetDialog extends DatasetDialog {
-
-  constructor(oDialog, datasetService, schemaService, oController) {
-    super(oDialog, datasetService, schemaService, oController);
-  }
 
   onPress() {
     this.oDialog.setBusy(true);
@@ -149,10 +145,6 @@ class AddDatasetDialog extends DatasetDialog {
 
 class EditDatasetDialog extends DatasetDialog {
 
-  constructor(oDialog, datasetService, schemaService, oController) {
-    super(oDialog, datasetService, schemaService, oController);
-  }
-
   onPress() {
     this.oDialog.setBusy(true);
     this.oDialog.open();
@@ -174,10 +166,10 @@ class EditDatasetDialog extends DatasetDialog {
 class SchemaDialog extends EntityDialog {
 
   constructor(oDialog, schemaService, oController) {
-    super(oDialog, schemaService, oController)
-    oController.byId("newSchemaAddButton").attachPress(this.submit, this)
-    oController.byId("newSchemaCancelButton").attachPress(this.cancel, this)
-    oController.byId("newSchemaName").attachChange(this.onNameChange, this)
+    super(oDialog, schemaService, oController);
+    oController.byId("newSchemaAddButton").attachPress(this.submit, this);
+    oController.byId("newSchemaCancelButton").attachPress(this.cancel, this);
+    oController.byId("newSchemaName").attachChange(this.onNameChange, this);
   }
 
   resetValueState() {
@@ -226,10 +218,6 @@ class AddSchemaDialog extends SchemaDialog {
 
 class EditSchemaDialog extends SchemaDialog {
 
-  constructor(oDialog, schemaService, oController) {
-    super(oDialog, schemaService, oController);
-  }
-
   onPress() {
     let current = this.oController._model.getProperty("/currentSchema");
     current.isEdit = true;
@@ -245,12 +233,12 @@ class EditSchemaDialog extends SchemaDialog {
 class MappingTableDialog extends EntityDialog {
 
   constructor(oDialog, mappingTableService, schemaService, oController) {
-    super(oDialog, mappingTableService, oController)
+    super(oDialog, mappingTableService, oController);
     this._schemaService = schemaService;
-    oController.byId("newMappingTableAddButton").attachPress(this.submit, this)
-    oController.byId("newMappingTableCancelButton").attachPress(this.cancel, this)
-    oController.byId("newMappingTableName").attachChange(this.onNameChange, this)
-    oController.byId("schemaNameSelect").attachChange(this.onSchemaSelect, this)
+    oController.byId("newMappingTableAddButton").attachPress(this.submit, this);
+    oController.byId("newMappingTableCancelButton").attachPress(this.cancel, this);
+    oController.byId("newMappingTableName").attachChange(this.onNameChange, this);
+    oController.byId("schemaNameSelect").attachChange(this.onSchemaSelect, this);
   }
 
   get schemaService() {
@@ -283,7 +271,7 @@ class MappingTableDialog extends EntityDialog {
   onNameChange() {
     let sName = this.oDialog.getModel("entity").getProperty("/name");
     if (GenericService.isValidEntityName(sName)) {
-      MappingTableService.hasUniqueName(sName, this.oDialog.getModel("entity"))
+      MappingTableService.hasUniqueName(sName, this.oDialog.getModel("entity"));
     } else {
       this.oDialog.getModel("entity").setProperty("/nameUnique", true);
     }
@@ -292,16 +280,12 @@ class MappingTableDialog extends EntityDialog {
   onSchemaSelect(oEv) {
     let sSchemaId = oEv.getParameter("selectedItem").getKey();
     this.schemaService.getAllVersions(sSchemaId, this.oController.byId("schemaVersionSelect"),
-      this.oDialog.getModel("entity"), "/schemaVersion")
+      this.oDialog.getModel("entity"), "/schemaVersion");
   }
 
 }
 
 class AddMappingTableDialog extends MappingTableDialog {
-
-  constructor(oDialog, datasetService, schemaService, oController) {
-    super(oDialog, datasetService, schemaService, oController);
-  }
 
   onPress() {
     this.oDialog.setBusy(true);
@@ -328,10 +312,6 @@ class AddMappingTableDialog extends MappingTableDialog {
 }
 
 class EditMappingTableDialog extends MappingTableDialog {
-
-  constructor(oDialog, datasetService, schemaService, oController) {
-    super(oDialog, datasetService, schemaService, oController);
-  }
 
   onPress() {
     this.oDialog.setBusy(true);
