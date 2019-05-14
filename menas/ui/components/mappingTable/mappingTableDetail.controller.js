@@ -162,9 +162,11 @@ sap.ui.define([
             value: newDef.value
           });
 
-          this._mappingTableService.editDefaultValues(currentMT.name, currentMT.version, currentMT.defaultMappingValue);
+          this._mappingTableService.editDefaultValues(currentMT.name, currentMT.version, currentMT.defaultMappingValue)
+            .then(() => this.load());
         } else {
           this._mappingTableService.addDefaultValue(currentMT.name, currentMT.version, newDef)
+            .then(() => this.load());
         }
         this.defaultCancel(); // close & clean up
       }

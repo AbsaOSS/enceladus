@@ -399,9 +399,8 @@ class MappingTableService extends DependentEntityService {
   addDefaultValue(sName, iVersion, oDefault) {
     return this.restDAO.addDefaultValue(sName, iVersion, oDefault).then((oData) => {
       this.updateMasterPage();
-      this.getLatestByName(sName, true);
       sap.m.MessageToast.show(this.messageProvider.defaultValueAdded());
-      return oData
+      return this.getLatestByName(sName, true);
     }).fail(() => {
       sap.m.MessageBox.error(this.messageProvider.failedToAddDefaultValue())
     })
@@ -412,11 +411,10 @@ class MappingTableService extends DependentEntityService {
       this.updateMasterPage();
 
       this.modelBinder.setProperty(oData)
-      this.schemaRestDAO.getByNameAndVersion(oData.schemaName, oData.schemaVersion).then((oData) => {
+      sap.m.MessageToast.show(this.messageProvider.defaultValuesUpdated());
+      return this.schemaRestDAO.getByNameAndVersion(oData.schemaName, oData.schemaVersion).then((oData) => {
         this.modelBinder.setProperty(oData, "/schema");
       });
-      sap.m.MessageToast.show(this.messageProvider.defaultValuesUpdated());
-      return oData
     }).fail(() => {
       sap.m.MessageBox.error(this.messageProvider.failedToUpdateDefaultValues())
     })
