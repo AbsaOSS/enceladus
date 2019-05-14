@@ -85,6 +85,7 @@ sap.ui.define([
 
     onBeforeOpen: function () {
       this._dialog = sap.ui.getCore().byId("upsertConformanceRuleDialog");
+      this._schemaFieldSelector = new ConformanceRuleSchemaFieldSelector(this, this._dialog);
       this._ruleForm = sap.ui.getCore().byId("ruleForm");
       this._mappingTableService.getList(this._dialog);
       if(this._model.getProperty("/newRule/isEdit")) {
@@ -166,10 +167,11 @@ sap.ui.define([
     },
 
     onSchemaFieldSelect: function (oEv) {
-      let bind = oEv.getParameter("listItem").getBindingContext("schema").getPath();
-      let modelPathBase = "/fields/";
-      let model = this._dialog.getModel("schema");
-      this._schemaService.fieldSelect(bind, modelPathBase, model, "/newRule/inputColumn");
+      this._schemaFieldSelector.onSchemaFieldSelect(oEv);
+    },
+
+    preselectSchemaFieldSelector: function(ruleType) {
+      this._schemaFieldSelector.preselectSchemaFieldSelector(this._model.getProperty("/newRule/inputColumn"), ruleType)
     },
 
     beforeShowFragmentChanges: function () {
@@ -247,7 +249,7 @@ sap.ui.define([
       // workaround for "Cannot read property 'setSelectedIndex' of undefined" error
       const content = this._ruleForm.getContent();
       content.filter(function (element) {
-        return element.sId.includes("FieldSelectScroll")
+        return element.sId.includes("fieldSelectScroll")
       }).forEach(function (element) {
         element.getContent().forEach(function (tree) {
           let items = tree.getItems();
@@ -258,39 +260,6 @@ sap.ui.define([
         })
       });
       this._ruleForm.removeAllContent();
-    },
-
-    preselectSchemaFieldSelector: function(ruleType) {
-      let sExpandTo= this._model.getProperty("/newRule/inputColumn");
-      let aTokens = sExpandTo.split(".");
-      let oCtl = sap.ui.getCore().byId(ruleType + "--schemaFieldSelector");
-      let oScr = sap.ui.getCore().byId(ruleType + "--defValFieldSelectScroll");
-      oCtl.collapseAll();
-
-      let _preselectRadioButton = function(aToks, oldSize, lastIndex) {
-        let newItems = oCtl.getItems();
-        let newSize = newItems.length - oldSize;
-        let uniqueItems = newItems.slice(lastIndex+1, lastIndex+newSize+1);
-        let itemToProcess = uniqueItems.find(item => item.getProperty("title") === aToks[0]);
-
-        if(aToks.length === 1){
-          itemToProcess.setSelected(true);
-          let delegate = {
-            onAfterRendering: function() {
-              oScr.scrollToElement(itemToProcess);
-              oCtl.removeEventDelegate(delegate);
-            }.bind(this)
-          };
-          oCtl.addEventDelegate(delegate);
-        } else {
-          let index = newItems.indexOf(itemToProcess);
-          let oldSize = newItems.length;
-          oCtl.expand(index);
-          _preselectRadioButton(aToks.slice(1), oldSize, index);
-        }
-      };
-
-      _preselectRadioButton(aTokens, 0, -1);
     }
 
   });

@@ -15,7 +15,7 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core"
                          xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <ScrollContainer id="defValFieldSelectScroll" height="300px" vertical="true" horizontal="true" width="100%">
+    <ScrollContainer id="fieldSelectScroll" height="300px" vertical="true" horizontal="true" width="100%">
         <Tree id="schemaFieldSelector" mode="SingleSelect" enableBusyIndicator="true"
               selectionChange="onSchemaFieldSelect"
               items="{path: 'schema>/fields', parameters:{arrayNames:['children']}}">
