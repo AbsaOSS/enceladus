@@ -47,6 +47,7 @@ sap.ui.define([
       this._datasetService = new DatasetService(this._model, eventBus);
       this._mappingTableService = new MappingTableService(this._model, eventBus);
       this._schemaService = new SchemaService(this._model, eventBus)
+      this._schemaTable = new SchemaTable(this)
     },
 
     onEntityUpdated: function (sTopic, sEvent, oData) {
@@ -81,7 +82,6 @@ sap.ui.define([
 
       if (sAction === "edit") {
         let old = this._model.getProperty(sBindPath);
-        this.fetchSchema();
         this._model.setProperty("/newRule", {
           ...$.extend(true, {}, old),
           title: "Edit",
@@ -149,14 +149,14 @@ sap.ui.define([
       });
     },
 
-    fetchSchema: function (oEv) {
+    fetchSchema: function () {
       let currentDataset = this._model.getProperty("/currentDataset");
-      if (typeof (currentDataset.schema) === "undefined") {
-        this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema")
-      }
+      this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema").then((schema) => {
+        this._schemaTable.model = schema;
+      });
     },
 
-    fetchRuns: function (oEv) {
+    fetchRuns: function () {
       let currentDataset = this._model.getProperty("/currentDataset");
       RunService.getDatasetRuns(this.byId("Runs"), currentDataset.name, currentDataset.version);
     },
@@ -167,9 +167,6 @@ sap.ui.define([
     },
 
     tabSelect: function (oEv) {
-      if (oEv.getParameter("selectedKey") === "schema") {
-        this.fetchSchema();
-      }
       if (oEv.getParameter("selectedKey") === "runs") {
         this.fetchRuns();
       }
@@ -205,7 +202,7 @@ sap.ui.define([
       let currentDataset = this._model.getProperty("/currentDataset");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentDataset), "dataset");
       this.fetchSchema();
-      const auditTable = this.byId("auditTrailTable")
+      const auditTable = this.byId("auditTrailTable");
       this._datasetService.getAuditTrail(currentDataset.name, auditTable);
     },
 

@@ -92,7 +92,6 @@ sap.ui.define([
     },
 
     onEntityCreated: function (sTopic, sEvent, oData) {
-      this._eventBus.publish(sTopic, "list");
       this._router.navTo(sTopic, {
         id: oData.name,
         version: oData.version

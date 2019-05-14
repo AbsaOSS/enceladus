@@ -156,6 +156,7 @@ class EntityService {
 
   create(entity) {
     return this.restDAO.create(entity).then((oData) => {
+      this.updateMasterPage();
       this.publishCreatedEvent(oData);
       sap.m.MessageToast.show(this.messageProvider.entityCreated());
       return oData
@@ -166,6 +167,7 @@ class EntityService {
 
   update(entity) {
     return this.restDAO.update(entity).then((oData) => {
+      this.updateMasterPage();
       this.publishUpdatedEvent(oData);
       sap.m.MessageToast.show(this.messageProvider.entityUpdated());
       return oData;

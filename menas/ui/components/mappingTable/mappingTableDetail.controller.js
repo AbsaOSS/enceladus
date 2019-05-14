@@ -53,6 +53,7 @@ sap.ui.define([
 
       this._mappingTableService = new MappingTableService(this._model, eventBus);
       this._schemaService = new SchemaService(this._model, eventBus);
+      this._schemaTable = new SchemaTable(this);
     },
 
     onEntityUpdated: function (sTopic, sEvent, oData) {
@@ -304,9 +305,9 @@ sap.ui.define([
 
     fetchSchema: function (oEv) {
       let currentMT = this._model.getProperty("/currentMappingTable");
-      if (typeof (currentMT.schema) === "undefined") {
-        this._schemaService.getByNameAndVersion(currentMT.schemaName, currentMT.schemaVersion, "/currentMappingTable/schema")
-      }
+      this._schemaService.getByNameAndVersion(currentMT.schemaName, currentMT.schemaVersion, "/currentMappingTable/schema").then((schema) => {
+        this._schemaTable.model = schema;
+      });
     },
 
     usedInNavTo: function (oEv) {
@@ -323,12 +324,6 @@ sap.ui.define([
       this.fetchSchema();
       const auditTable = this.byId("auditTrailTable");
       this._mappingTableService.getAuditTrail(currentMT.name, auditTable);
-    },
-
-    tabSelect: function (oEv) {
-      if (oEv.getParameter("selectedKey") === "schema") {
-        this.fetchSchema();
-      }
     }
 
   });
