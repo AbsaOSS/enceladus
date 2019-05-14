@@ -28,6 +28,7 @@
 
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
+        <netty.io.version>4.1.36.Final</netty.io.version>
     </properties>
 
     <dependencies>
@@ -60,6 +61,11 @@
             <groupId>io.spray</groupId>
             <artifactId>spray-json_${scala.compat.version}</artifactId>
             <version>${spray.json.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>${netty.io.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
