@@ -332,31 +332,6 @@ class SchemaService extends DependentEntityService {
     })
   }
 
-  fieldSelect(sBindingPath, sModelPathBase, oModel, sOutputProperty) {
-    this.modelBinder.setProperty(this._buildSchemaPath(sBindingPath, sModelPathBase, oModel), sOutputProperty, true);
-  }
-
-  _buildSchemaPath(sBindingPath, sModelPathBase, oModel) {
-    let pathToks = sBindingPath.replace(sModelPathBase, "").split("/");
-
-    let helper = (aToks, sModelPathAcc, aAcc) => {
-      if (aToks.length === 0) {
-        return aAcc.join(".");
-      }
-
-      let rev = aToks.reverse();
-      let sCurrPath = sModelPathAcc + rev.pop() + "/";
-      let curr = oModel.getProperty(sCurrPath);
-      aAcc.push(curr.name);
-
-      let newPath = sCurrPath + rev.pop() + "/";
-
-      return helper(rev.reverse(), newPath, aAcc)
-    };
-
-    return helper(pathToks, sModelPathBase, [])
-  }
-
 }
 
 class MappingTableService extends DependentEntityService {
