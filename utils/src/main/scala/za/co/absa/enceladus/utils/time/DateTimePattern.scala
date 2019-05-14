@@ -19,8 +19,6 @@ import java.security.InvalidParameterException
 
 import org.apache.spark.sql.types.{DateType, StructField, TimestampType}
 import za.co.absa.enceladus.utils.types.TypePattern
-import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.{PatternInfo, StructFieldImprovements}
-import za.co.absa.enceladus.utils.implicits.StringImplicits.StringImprovements
 
 /**
   * Class to carry enhanced information about date/time formatting pattern in conversion from/to string
@@ -37,9 +35,17 @@ abstract sealed class DateTimePattern(pattern: String, isDefault: Boolean = fals
   val timeZoneInPattern: Boolean
   val defaultTimeZone: Option[String]
   val isTimeZoned: Boolean
+
+  override def toString: String = {
+    val q = "\""
+    s"pattern: $q$pattern$q" + defaultTimeZone.map(x => s" (default time zone: $q$x$q)").getOrElse("")
+  }
+
 }
 
 object DateTimePattern {
+  import za.co.absa.enceladus.utils.implicits.StringImplicits.StringImprovements
+  import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.{StructFieldImprovements, PatternInfo}
 
   val EpochKeyword = "epoch"
   val EpochMilliKeyword = "epochmilli"

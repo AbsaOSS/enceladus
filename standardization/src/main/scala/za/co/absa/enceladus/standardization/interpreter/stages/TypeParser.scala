@@ -26,7 +26,7 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils.appendPath
 import za.co.absa.enceladus.utils.types.Defaults
 import org.apache.spark.sql.functions._
 import za.co.absa.spark.hofs.transform
-import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.time.DateTimePattern
 
 import scala.util.Random
@@ -39,7 +39,7 @@ import scala.util.Random
   *     ArrayParser !
   *     StructParser !
   *     PrimitiveParser
-  *       SimpleParser
+  *       ScalarParser
   *         NumericParser !
   *         StringParser !
   *         BooleanParser !
@@ -63,7 +63,9 @@ sealed trait TypeParser {
 object TypeParser {
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  def standardize(field: StructField, path: String, origSchema: StructType): ParseOutput = {
+  def standardize(field: StructField, path: String, origSchema: StructType)
+                 (implicit udfLib: UDFLibrary): ParseOutput = {
+    // udfLib implicit is present for error column UDF implementation
     TypeParser(field, path, origSchema).standardize()
   }
 
@@ -159,7 +161,7 @@ object TypeParser {
 
   private trait PrimitiveParser extends TypeParser {
     override def standardize(): ParseOutput = {
-      val castedCol: Column = primitiveCastLogic
+      val castedCol: Column = assemblePrimitiveCastLogic
       val err = when((column isNull) and lit(!field.nullable),
         array(callUDF("stdNullErr", lit(s"$currentColumnPath${if (isArrayElement) "[*]" else ""}")))
       ).otherwise(
@@ -186,7 +188,7 @@ object TypeParser {
       ParseOutput(std, err)
     }
 
-    protected def primitiveCastLogic: Column //this differs based on the field data type
+    protected def assemblePrimitiveCastLogic: Column //this differs based on the field data type
 
     private def primitiveCastErrorLogic(castedCol: Column): Column = { //this one is same for all primitive data types
       field.dataType match {
@@ -205,24 +207,24 @@ object TypeParser {
 
   }
 
-  private trait SimpleParser extends  PrimitiveParser {
-    override def primitiveCastLogic: Column = column.cast(field.dataType)
+  private trait ScalarParser extends  PrimitiveParser {
+    override def assemblePrimitiveCastLogic: Column = column.cast(field.dataType)
   }
 
   private final case class NumericParser(field: StructField,
                                          path: String,
                                          origSchema: StructType,
-                                         parent: Option[Parent]) extends SimpleParser
+                                         parent: Option[Parent]) extends ScalarParser
 
   private final case class StringParser(field: StructField,
                                         path: String,
                                         origSchema: StructType,
-                                        parent: Option[Parent]) extends SimpleParser
+                                        parent: Option[Parent]) extends ScalarParser
 
   private final case class BooleanParser(field: StructField,
                                          path: String,
                                          origSchema: StructType,
-                                         parent: Option[Parent]) extends SimpleParser
+                                         parent: Option[Parent]) extends ScalarParser
 
   /**
     * Timestamp conversion logic
@@ -250,7 +252,7 @@ object TypeParser {
     protected val basicCastFunction: (Column, String) => Column  //for epoch casting
     protected val pattern: DateTimePattern = DateTimePattern.fromStructField(field)
 
-    override protected def primitiveCastLogic: Column = {
+    override protected def assemblePrimitiveCastLogic: Column = {
       if (DateTimePattern.isEpoch(pattern)) {
         castEpoch()
       } else {

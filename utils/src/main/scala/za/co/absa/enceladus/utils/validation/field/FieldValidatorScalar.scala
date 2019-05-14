@@ -24,43 +24,47 @@ import scala.util.control.NonFatal
 /**
   * Scalar types schema validation against default value
   */
-class FieldValidatorScalar extends FieldValidator {
+object FieldValidatorScalar extends FieldValidator {
   override def validateStructField(field: StructField): Seq[ValidationIssue] = {
-    val issues = new ListBuffer[ValidationIssue]
     try {
       val defaultName = "default"
       if (field.metadata contains defaultName) {
-        val default = field.metadata.getString("default")
+        val default = field.metadata.getString(defaultName)
         field.dataType match {
-          case v: BooleanType => default.toBoolean
-          case v: ByteType => default.toByte
-          case v: ShortType => default.toShort
-          case v: IntegerType => default.toInt
-          case v: LongType => default.toLong
-          case v: FloatType =>
+          case _: BooleanType => default.toBoolean
+          case _: ByteType => default.toByte
+          case _: ShortType => default.toShort
+          case _: IntegerType => default.toInt
+          case _: LongType => default.toLong
+          case _: FloatType =>
             val a: Float = default.toFloat
-            if (a == Float.NaN)
+            if (a == Float.NaN) {
               throw new NumberFormatException(s"The Float value '$default' is NaN")
-            if (a.isInfinity)
+            }
+            if (a.isInfinity) {
               throw new NumberFormatException(s"The Float value '$default' is infinite or out of range")
-          case v: DoubleType =>
+            }
+          case _: DoubleType =>
             val a = default.toDouble
-            if (a == Double.NaN)
+            if (a == Double.NaN) {
               throw new NumberFormatException(s"The Double value '$default' is NaN")
-            if (a.isInfinity)
+            }
+            if (a.isInfinity) {
               throw new NumberFormatException(s"The Double value '$default' is infinite or out of range")
+            }
           case v: DecimalType =>
             val a = BigDecimal(default)
-            if (a.precision > v.precision || a.scale > v.scale)
+            if (a.precision > v.precision || a.scale > v.scale) {
               throw new NumberFormatException(s"The Decimal(${v.precision},${v.scale}) value '$default' is " +
                 s"out of range with precision=${a.precision} and scale=${a.scale} ")
-          case _ => true
+            }
+          case _ => true //can return anything, value is not important
         }
       }
+      Nil
     }
     catch {
-      case NonFatal(e) => issues += ValidationError(e.toString)
+      case NonFatal(e) => Seq(ValidationError(e.toString))
     }
-    issues
   }
 }
