@@ -137,6 +137,10 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |          "conform_records_succeeded" : {$first: "$controlMeasure.metadata.additionalInfo.conform_records_succeeded"},
                    |          "conform_records_failed" : {$first: "$controlMeasure.metadata.additionalInfo.conform_records_failed"},
                    |          raw_recordcount : {$first: "$raw_recordcount_control.controlValue"},
+                   |          latestCheckpoint: {$first: {$slice: ["$controlMeasure.checkpoints", -1]}},
+                   |          "publish_dir_size" : {$first: "$controlMeasure.metadata.additionalInfo.publish_dir_size"},
+                   |          "std_dir_size" : {$first: "$controlMeasure.metadata.additionalInfo.std_dir_size"},
+                   |          "raw_dir_size" : {$first: "$controlMeasure.metadata.additionalInfo.raw_dir_size"}
                    |
                    |      }}""".stripMargin),
         // sort the final results

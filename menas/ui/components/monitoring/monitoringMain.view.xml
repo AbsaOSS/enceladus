@@ -24,6 +24,7 @@
 		   xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
 		   xmlns:html="http://www.w3.org/1999/xhtml"
            xmlns:lab="it.designfuture.chartjs"
+           xmlns:tnt="sap.tnt"
            class="viewPadding">
 	<Page title="Monitoring" enableScrolling="true">
 		<customHeader>
@@ -87,6 +88,21 @@
                                         class="labelMarginLeft"/>
                                 </layout:HorizontalLayout>
 
+                                <lab:PieChartJS
+                                    id="record_totals"
+                                    datasets="{/recordCountTotals/datasets}"
+                                    labels="{/recordCountTotals/labels}"
+                                    titleDisplay="true"
+                                    titleText="Total number of records"
+                                    onLegendItemClick="onLegendItemClick"
+                                    onLegendItemHover="onLegendItemHover"
+                                    onClick="onClick"
+                                    onHover="onHover"
+                                    tooltipEnabled="true"
+                                    onAnimationProgress="onAnimationProgress"
+                                    onAnimationComplete="onAnimationComplete">
+                                </lab:PieChartJS>
+
                                 <lab:BarChartJS
                                     id="bar_chart"
                                     datasets="{/plotData/datasets}"
@@ -102,27 +118,133 @@
                                     onAnimationComplete="onAnimationComplete"
                                     isHorizontal="true">
                                 </lab:BarChartJS>
-                                <List items="{/monitoringPoints}" mode="SingleSelectMaster">
-                                    <StandardListItem title="{informationDate}_v{reportVersion}" description="status: {status}"
-                                     info = "RAW: {raw_recordcount} STD: {std_records_succeeded}/{std_records_failed} CNFRM: {conform_records_succeeded}/{conform_records_failed}" cust:id="{informationDate}_v{reportVersion}" type="Active">
-                                    </StandardListItem>
-                                </List>
-                                <Bar>
-                                <contentMiddle>
-                                    <Title text="Checkpoints"/>
-                                </contentMiddle>
-                                </Bar>
-                                <TileContainer
-                                    id="checkpoint_container"
-                                    tiles="{/checkpoints}">
-                                    <StandardTile
-                                        type="Monitor"
-                                        number="{informationDate}"
-                                        numberUnit="v{reportVersion}"
-                                        title="{processEndTime} "
-                                        info="{checkpointName}"
-                                        infoState="Success" />
-                                </TileContainer>
+
+                                <table:Table
+                                    rows="{/monitoringPoints}"
+                                    title="Run details"
+                                    selectionMode="None"
+                                    alternateRowColors="true"
+                                    showColumnVisibilityMenu="true"
+                                    visibleRowCountMode="Interactive"
+                                    minAutoRowCount="10">
+                                    <table:columns>
+                                        <table:Column id="multiheader-info" width="6rem" >
+                                            <table:multiLabels>
+                                                <Label text="Information" textAlign="Center" width="100%"/>
+                                                <Label text="Date" textAlign="Center" width="100%"/>
+                                            </table:multiLabels>
+                                            <table:template>
+                                                <Text text="{informationDate}" wrapping="false" />
+                                            </table:template>
+                                        </table:Column>
+                                        <table:Column width="5rem">
+                                            <table:multiLabels>
+                                                <Label text="Information"/>
+                                                <Label text="Version" textAlign="Center" width="100%"/>
+                                            </table:multiLabels>
+                                            <table:template>
+                                                <Text text="{reportVersion}" wrapping="false" />
+                                            </table:template>
+
+                                        </table:Column>
+                                        <table:Column width="5rem">
+                                            <Label text="Dataset version"  textAlign="Center" width="100%" wrapping="true"/>
+                                            <table:template>
+                                                <Text text="{datasetVersion}" wrapping="false" />
+                                            </table:template>
+                                        </table:Column>
+
+                                        <table:Column width="10rem">
+                                            <Label text="Status"  textAlign="Center" width="100%" />
+                                            <table:template>
+                                                <tnt:InfoLabel
+                                                    text="{status}"
+                                                    colorScheme= "{infoLabel}"/>
+                                            </table:template>
+                                        </table:Column>
+
+                                        <table:Column id="multiheader-checkpoint" width="12rem">
+                                            <table:multiLabels>
+                                                <Label text="Latest checkpoint" textAlign="Center" width="100%"/>
+                                                <Label text="End timestamp" textAlign="Center" width="100%"/>
+                                            </table:multiLabels>
+                                            <table:template>
+                                                <Text text="{latestCheckpoint/0/processEndTime}" wrapping="false" />
+                                            </table:template>
+                                        </table:Column>
+                                        <table:Column width="7rem" visible="false">
+                                            <table:multiLabels>
+                                                <Label text="Latest checkpoint" />
+                                                <Label text="Stage" textAlign="Center" width="100%"/>
+                                            </table:multiLabels>
+                                            <table:template>
+                                                <Text text="{latestCheckpoint/0/workflowName}" wrapping="false" />
+                                            </table:template>
+                                        </table:Column>
+                                        <table:Column width="10rem">
+                                            <table:multiLabels>
+                                                <Label text="Latest checkpoint"/>
+                                                <Label text="Name" textAlign="Center" width="100%"/>
+                                            </table:multiLabels>
+                                            <table:template>
+                                                <Text text="{latestCheckpoint/0/name}" wrapping="false" />
+                                            </table:template>
+                                        </table:Column>
+
+                                        <table:Column id="multiheader-recordcount-raw" width="5rem">
+                                            <table:multiLabels>
+                                                <Label text="Records" textAlign="Center" width="100%" />
+                                                <Label text="Raw" textAlign="Center" width="100%" />
+                                                <Label text="Total" textAlign="Center" width="100%" />
+                                            </table:multiLabels>
+                                            <table:template>
+                                                <Text text="{raw_recordcount}" wrapping="false" />
+                                            </table:template>
+                                        </table:Column>
+                                        <table:Column id="multiheader-recordcount-std" width="7rem">
+                                            <table:multiLabels>
+                                                <Label text="Records" />
+                                                <Label text="Standardization" textAlign="Center" width="100%" />
+                                                <Label text="Succeded" textAlign="Center" width="100%" />
+                                            </table:multiLabels>
+                                            <table:template>
+                                                <Text text="{std_records_succeeded}" wrapping="false" />
+                                            </table:template>
+                                        </table:Column>
+                                        <table:Column width="5rem">
+                                            <table:multiLabels>
+                                                <Label text="Records" />
+                                                <Label text="Standardization" />
+                                                <Label text="Failed" textAlign="Center" width="100%" />
+                                            </table:multiLabels>
+                                            <table:template>
+                                                <Text text="{std_records_failed}" wrapping="false" />
+                                            </table:template>
+                                        </table:Column>
+                                        <table:Column id="multiheader-recordcount-cnfrm" width="7rem">
+                                            <table:multiLabels>
+                                                <Label text="Records" />
+                                                <Label text="Conformance" textAlign="Center" width="100%" />
+                                                <Label text="Succeded" textAlign="Center" width="100%" />
+                                            </table:multiLabels>
+                                            <table:template>
+                                                <Text text="{conform_records_succeeded}" wrapping="false" />
+                                            </table:template>
+                                        </table:Column>
+                                        <table:Column width="5rem">
+                                            <table:multiLabels>
+                                                <Label text="Records" />
+                                                <Label text="Conformance" />
+                                                <Label text="Failed" textAlign="Center" width="100%" />
+                                            </table:multiLabels>
+                                            <table:template>
+                                                <Text text="{conform_records_failed}" wrapping="false" />
+                                            </table:template>
+                                        </table:Column>
+                                    </table:columns>
+                                </table:Table>
+
+
                             </content>
 						<footer>
 						</footer>
