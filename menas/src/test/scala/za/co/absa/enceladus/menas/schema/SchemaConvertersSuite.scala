@@ -95,4 +95,191 @@ class SchemaConvertersSuite extends FunSuite {
 
     assert(actualSchema.prettyJson == expectedSchema.prettyJson)
   }
+
+  test("Test nested StructType to StructType schema conversion") {
+    val inputJson =
+      """
+        |{
+        |	"type": "struct",
+        |	"fields": [
+        |		{
+        |			"name": "field1",
+        |			"type": "string",
+        |			"nullable": true,
+        |			"metadata": {}
+        |		},
+        |		{
+        |			"name": "field2",
+        |			"type": "integer",
+        |			"nullable": true,
+        |			"metadata": {}
+        |		},
+        |		{
+        |			"name": "field3",
+        |			"type": "date",
+        |			"nullable": true,
+        |			"metadata": {
+        |				"pattern": "yyyy-MM-dd"
+        |			}
+        |		},
+        |		{
+        |			"name": "field4",
+        |			"type": "decimal(38,18)",
+        |			"nullable": true,
+        |			"metadata": {}
+        |		},
+        |		{
+        |			"name": "field5",
+        |			"type": "boolean",
+        |			"nullable": true,
+        |			"metadata": {}
+        |		},
+        |		{
+        |			"name": "field6",
+        |			"type": "timestamp",
+        |			"nullable": true,
+        |			"metadata": {
+        |				"pattern": "yyyy-MM-dd'T'HH:mm:ss"
+        |			}
+        |		},
+        |		{
+        |			"name": "nested1",
+        |			"type": {
+        |				"type": "struct",
+        |				"fields": [
+        |					{
+        |						"name": "nested2",
+        |						"type": {
+        |							"type": "array",
+        |							"elementType": {
+        |								"type": "struct",
+        |								"fields": [
+        |									{
+        |										"name": "field7",
+        |										"type": "decimal(38,18)",
+        |										"nullable": true,
+        |										"metadata": {}
+        |									},
+        |									{
+        |										"name": "field8",
+        |										"type": "string",
+        |										"nullable": false,
+        |										"metadata": {}
+        |									},
+        |									{
+        |										"name": "field9",
+        |										"type": "date",
+        |										"nullable": true,
+        |										"metadata": {
+        |											"pattern": "yyyy-MM-dd"
+        |										}
+        |									},
+        |									{
+        |										"name": "field10",
+        |										"type": "integer",
+        |										"nullable": true,
+        |										"metadata": {}
+        |									}
+        |								]
+        |							},
+        |							"containsNull": true
+        |						},
+        |						"nullable": true,
+        |						"metadata": {}
+        |					}
+        |				]
+        |			},
+        |			"nullable": true,
+        |			"metadata": {}
+        |		},
+        |		{
+        |			"name": "nested3",
+        |			"type": {
+        |				"type": "struct",
+        |				"fields": [
+        |					{
+        |						"name": "nested4",
+        |						"type": {
+        |							"type": "array",
+        |							"elementType": {
+        |								"type": "struct",
+        |								"fields": [
+        |									{
+        |										"name": "field11",
+        |										"type": "date",
+        |										"nullable": true,
+        |										"metadata": {
+        |											"pattern": "yyyy-MM-dd"
+        |										}
+        |									},
+        |									{
+        |										"name": "field12",
+        |										"type": "timestamp",
+        |										"nullable": true,
+        |										"metadata": {
+        |											"pattern": "yyyy-MM-dd'T'HH:mm:ss"
+        |										}
+        |									},
+        |									{
+        |										"name": "field13",
+        |										"type": "integer",
+        |										"nullable": false,
+        |										"metadata": {}
+        |									},
+        |									{
+        |										"name": "field14",
+        |										"type": "string",
+        |										"nullable": true,
+        |										"metadata": {}
+        |									}
+        |								]
+        |							},
+        |							"containsNull": true
+        |						},
+        |						"nullable": true,
+        |						"metadata": {}
+        |					}
+        |				]
+        |			},
+        |			"nullable": true,
+        |			"metadata": {}
+        |		},
+        |		{
+        |			"name": "field15",
+        |			"type": "string",
+        |			"nullable": true,
+        |			"metadata": {}
+        |		}
+        |	]
+        |}
+      """.stripMargin
+
+    val expectedSchema = StructType(Seq(
+      StructField("field1",StringType,true),
+      StructField("field2",IntegerType,true),
+      StructField("field3",DateType,true,Metadata.fromJson("""{"pattern": "yyyy-MM-dd"}""")),
+      StructField("field4",DecimalType(38,18),true),
+      StructField("field5",BooleanType,true),
+      StructField("field6",TimestampType,true,Metadata.fromJson("""{"pattern": "yyyy-MM-dd'T'HH:mm:ss"}""")),
+      StructField("nested1",StructType(Seq(
+        StructField("nested2",ArrayType(StructType(Seq(
+          StructField("field7",DecimalType(38,18),true),
+          StructField("field8",StringType,false),
+          StructField("field9",DateType,true,Metadata.fromJson("""{"pattern": "yyyy-MM-dd"}""")),
+          StructField("field10",IntegerType,true))),true),true)
+      )),true),
+      StructField("nested3",StructType(Seq(
+        StructField("nested4",ArrayType(StructType(Seq(
+          StructField("field11",DateType,true,Metadata.fromJson("""{"pattern": "yyyy-MM-dd"}""")),
+          StructField("field12",TimestampType,true,Metadata.fromJson("""{"pattern": "yyyy-MM-dd'T'HH:mm:ss"}""")),
+          StructField("field13",IntegerType,false),
+          StructField("field14",StringType,true))),true),true))),true),
+      StructField("field15",StringType,true)
+    ))
+
+    val actualSchema = sparkConverter.convertAnyToStructType(inputJson)
+
+    assert(actualSchema.prettyJson == expectedSchema.prettyJson)
+  }
+
 }
