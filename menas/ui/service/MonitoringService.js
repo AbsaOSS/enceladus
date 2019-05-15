@@ -34,50 +34,107 @@ var MonitoringService = new function() {
       let waitingToConform = []
       let failedAfterStandardization = []
       let unprocessedRaw = []
+      let inconsistentState = []
+
+      let totalConformed = 0
+      let totalFailedAfterConformance = 0
+      let totalWaitingToConform = 0
+      let totalFailedAfterStandardization = 0
+      let totalUnprocessedRaw = 0
+      let totalInconsistentState = 0
+
+      let statusDict = {
+        "allSucceeded" : 8,
+        "stageSucceeded" : 5,
+        "running" : 7,
+        "failed" : 3
+      }
+
 
       if (oData != undefined && oData.length != 0) {
         for (let elem of oData) {
-
+          elem["infoLabel"] = statusDict[elem["status"]]
           let rawTotal = elem["raw_recordcount"]
           let stdS = elem["std_records_succeeded"]
           let stdF = elem["std_records_failed"]
           let confS = elem["conform_records_succeeded"]
           let confF = elem["conform_records_failed"]
+          plotLabels.push(elem["informationDate"] + " v" + elem["reportVersion"])
 
-          if (rawTotal != undefined && stdS != undefined && stdF != undefined && confS != undefined && confF != undefined) {
-            // conformance finished
-            conformed.push(stdS)
-            failedAfterConformance.push(confF - stdF)
-            waitingToConform.push(0)
-            failedAfterStandardization.push(stdF)
-            unprocessedRaw.push(rawTotal - confS - confF)
+          // conformance finished
+          if (rawTotal != undefined && stdS != undefined && stdF != undefined && confS != undefined && confF != undefined
+            // sanity checks
+            && (+stdS) + (+stdF) == (+rawTotal)
+            && (+confS) + (+confF) == (+rawTotal)
+            && (+stdF) <= (+confF)
+            && (+stdS) >= (+confS)) {
 
-            plotLabels.push(elem["informationDate"] + "_v" + elem["reportVersion"]+ " datasetVersion: " + elem["datasetVersion"])
-            continue
-          } else if (rawTotal != undefined && stdS != undefined && stdF != undefined && confS == undefined && confF == undefined) {
+              conformed.push(+confS)
+              failedAfterConformance.push(confF - stdF)
+              waitingToConform.push(0)
+              failedAfterStandardization.push(+stdF)
+              unprocessedRaw.push(0)
+              inconsistentState.push(0)
+
+              totalConformed += (+confS)
+              totalFailedAfterConformance += confF - stdF
+              totalFailedAfterStandardization += +stdF
+              totalUnprocessedRaw += rawTotal - confS - confF
+
+              continue
+
             // only standartization finished
+          } else if (rawTotal != undefined && stdS != undefined && stdF != undefined && confS == undefined && confF == undefined
+            //sanity checks
+            && (+stdS) + (+stdF) == (+rawTotal) ) {
+
             conformed.push(0)
             failedAfterConformance.push(0)
-            waitingToConform.push(stdS)
+            waitingToConform.push(+stdS)
             failedAfterStandardization.push(stdF)
-            unprocessedRaw.push(rawTotal - stdS - stdF)
+            unprocessedRaw.push(0)
+            inconsistentState.push(0)
 
+            totalWaitingToConform += +stdS
+            totalFailedAfterStandardization += +stdF
+            totalUnprocessedRaw += rawTotal - stdS - stdF
 
-            plotLabels.push(elem["informationDate"] + "_v" + elem["reportVersion"] + " datasetVersion: " + elem["datasetVersion"])
             continue
-          } else if (rawTotal != undefined && stdS == undefined && stdF == undefined && confS == undefined && confF == undefined) {
+
             // only raw data is available
+          } else if (rawTotal != undefined && stdS == undefined && stdF == undefined && confS == undefined && confF == undefined) {
+
             conformed.push(0)
             failedAfterConformance.push(0)
             waitingToConform.push(0)
             failedAfterStandardization.push(0)
-            unprocessedRaw.push(rawTotal)
+            unprocessedRaw.push(+rawTotal)
+            inconsistentState.push(0)
 
-            plotLabels.push(elem["informationDate"] + "_v" + elem["reportVersion"]+  " datasetVersion: " + elem["datasetVersion"])
+            totalUnprocessedRaw += +rawTotal
+
             continue
-          } else {
+
             // run data is inconsistent
-            plotLabels.push(" ! inconsistent_run_data" + elem["informationDate"] + "_v" + elem["reportVersion"]+ " datasetVersion: " + elem["datasetVersion"])
+          } else {
+            conformed.push(0)
+            failedAfterConformance.push(0)
+            waitingToConform.push(0)
+            failedAfterStandardization.push(0)
+            unprocessedRaw.push(0)
+
+            // try to estimate number of records involved in this run
+            let estimatedRecordCount = 0
+            if ( !isNaN(rawTotal) ) {
+              estimatedRecordCount = +rawTotal
+            } else if (!isNaN((+stdS) + (+stdF))){
+              estimatedRecordCount = (+stdS) + (+stdF)
+            } else if (!isNaN((+confS) + (+confF)) ) {
+              estimatedRecordCount = (+confS) + (+confF)
+            }
+            inconsistentState.push(estimatedRecordCount)
+            totalInconsistentState += estimatedRecordCount
+            //elem["infoLabel"] = 4
             continue
           }
 
@@ -202,14 +259,78 @@ var MonitoringService = new function() {
               data: unprocessedRaw,
               spanGaps: false,
               stack: "all"
+            },
+            {
+              label: "Inconsistent run state",
+              fill: true,
+              lineTension: 0.1,
+              backgroundColor: "magenta",
+              borderColor: "magenta",
+              borderCapStyle: 'butt',
+              borderDash: [],
+              borderDashOffset: 0.0,
+              borderJoinStyle: 'miter',
+              pointBorderColor: "rgba(75,192,192,1)",
+              pointBackgroundColor: "#fff",
+              pointBorderWidth: 1,
+              pointHoverRadius: 5,
+              pointHoverBackgroundColor: "rgba(75,192,192,1)",
+              pointHoverBorderColor: "rgba(220,220,220,1)",
+              pointHoverBorderWidth: 2,
+              pointRadius: 1,
+              pointHitRadius: 10,
+              data: inconsistentState,
+              spanGaps: false,
+              stack: "all"
             }
           ]
         };
         model.setProperty("/plotData", data)
+
+        let recordCountTotals = {
+          labels: [
+            "Conformed",
+            "Failed at conformance",
+            "Standartized, not conformed yet",
+            "Failed at standardization",
+            "Unprocessed raw",
+            "Inconsistent run state"
+          ],
+          datasets: [
+            {
+              data: [
+                 totalConformed,
+                 totalFailedAfterConformance,
+                 totalWaitingToConform,
+                 totalFailedAfterStandardization,
+                 totalUnprocessedRaw,
+                 totalInconsistentState
+              ],
+              backgroundColor: [
+                "green",
+                "red",
+                "blue",
+                "orange",
+                "black",
+                "magenta"
+              ],
+              hoverBackgroundColor: [
+                "green",
+                "red",
+                "blue",
+                "orange",
+                "black",
+                "magenta"
+              ]
+            }]
+
+        };
+        model.setProperty("/recordCountTotals", recordCountTotals)
+
       } else {
         // no datapoints for this interval
         model.setProperty("/plotData", [])
-        model.setProperty("/monitoringPoints", [])
+        //model.setProperty("/monitoringPoints", [])
       }
     }, function() {
       sap.m.MessageBox

@@ -37,6 +37,13 @@ sap.ui.controller("components.monitoring.monitoringMain", {
     }, this);
     this.oFormatYyyymmdd = sap.ui.core.format.DateFormat.getInstance({pattern: "yyyy-MM-dd", calendarType: sap.ui.core.CalendarType.Gregorian});
     this.setDefaultDateInterval()
+    var oView = this.getView();
+    oView.byId("multiheader-info").setHeaderSpan([2,1]);
+    oView.byId("multiheader-checkpoint").setHeaderSpan([3,1]);
+    oView.byId("multiheader-recordcount-raw").setHeaderSpan([5,1,1]);
+    oView.byId("multiheader-recordcount-std").setHeaderSpan([0,2,1]);
+    oView.byId("multiheader-recordcount-cnfrm").setHeaderSpan([0,2,1]);
+
 
 
   },
