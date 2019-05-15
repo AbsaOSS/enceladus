@@ -282,4 +282,131 @@ class SchemaConvertersSuite extends FunSuite {
     assert(actualSchema.prettyJson == expectedSchema.prettyJson)
   }
 
+  test("Test 0.9.* Menas to StructType schema conversion") {
+    val inputJson =
+      """
+        |{
+        |    "name" : "TestSchema",
+        |    "version" : 18,
+        |    "fields" : [
+        |        {
+        |            "name" : "field1",
+        |            "type" : "string",
+        |            "nullable" : true,
+        |            "metadata" : {},
+        |            "children" : []
+        |        },
+        |        {
+        |            "name" : "field2",
+        |            "type" : "integer",
+        |            "nullable" : true,
+        |            "metadata" : {},
+        |            "children" : []
+        |        },
+        |        {
+        |            "name" : "field3",
+        |            "type" : "date",
+        |            "nullable" : true,
+        |            "metadata" : {
+        |                "pattern" : "yyyy-MM-dd"
+        |            },
+        |            "children" : []
+        |        },
+        |        {
+        |            "name" : "field4",
+        |            "type" : "decimal(38,18)",
+        |            "nullable" : true,
+        |            "metadata" : {},
+        |            "children" : []
+        |        },
+        |        {
+        |            "name" : "field5",
+        |            "type" : "boolean",
+        |            "nullable" : true,
+        |            "metadata" : {},
+        |            "children" : []
+        |        },
+        |        {
+        |            "name" : "field6",
+        |            "type" : "timestamp",
+        |            "nullable" : true,
+        |            "metadata" : {
+        |                "pattern" : "yyyy-MM-dd'T'HH:mm:ss"
+        |            },
+        |            "children" : []
+        |        },
+        |        {
+        |            "name" : "nested1",
+        |            "type" : "struct",
+        |            "nullable" : true,
+        |            "metadata" : {},
+        |            "children" : [
+        |                {
+        |                    "name" : "nested2",
+        |                    "type" : "array",
+        |                    "elementType" : "struct",
+        |                    "containsNull" : true,
+        |                    "nullable" : true,
+        |                    "metadata" : {},
+        |                    "children" : [
+        |                        {
+        |                            "name" : "field7",
+        |                            "type" : "decimal(38,18)",
+        |                            "nullable" : true,
+        |                            "metadata" : {},
+        |                            "children" : []
+        |                        },
+        |                        {
+        |                            "name" : "field8",
+        |                            "type" : "string",
+        |                            "nullable" : false,
+        |                            "metadata" : {},
+        |                            "children" : []
+        |                        },
+        |                        {
+        |                            "name" : "field9",
+        |                            "type" : "date",
+        |                            "nullable" : true,
+        |                            "metadata" : {
+        |                                "pattern" : "yyyy-MM-dd"
+        |                            },
+        |                            "children" : []
+        |                        }
+        |                    ]
+        |                }
+        |            ]
+        |        },
+        |        {
+        |            "name" : "field10",
+        |            "type" : "string",
+        |            "nullable" : true,
+        |            "metadata" : {},
+        |            "children" : []
+        |        }
+        |    ]
+        |}
+      """.stripMargin
+
+    val expectedSchema = StructType(Seq(
+      StructField("field1",StringType,true),
+      StructField("field2",IntegerType,true),
+      StructField("field3",DateType,true, Metadata.fromJson("""{"pattern": "yyyy-MM-dd"}""")),
+      StructField("field4",DecimalType(38,18),true),
+      StructField("field5",BooleanType,true),
+      StructField("field6",TimestampType,true, Metadata.fromJson("""{"pattern": "yyyy-MM-dd'T'HH:mm:ss"}""")),
+      StructField("nested1",StructType(Seq(
+        StructField("nested2",ArrayType(StructType(Seq(
+          StructField("field7",DecimalType(38,18),true),
+          StructField("field8",StringType,false),
+          StructField("field9",DateType,true, Metadata.fromJson("""{"pattern": "yyyy-MM-dd"}""")))
+        ),true),true))),true),
+      StructField("field10",StringType,true)
+    ))
+
+
+    val actualSchema = sparkConverter.convertAnyToStructType(inputJson)
+
+    assert(actualSchema.prettyJson == expectedSchema.prettyJson)
+  }
+
 }
