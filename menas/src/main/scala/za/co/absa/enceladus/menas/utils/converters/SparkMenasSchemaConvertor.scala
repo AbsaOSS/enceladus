@@ -23,8 +23,27 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
 
+import scala.util.control.NonFatal
+
 @Component
 class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
+
+  def convertAnyToStructType(inputJson: String): StructType = {
+    convertStructTypeJsonToStructType(inputJson) match {
+      case Some(schema) => schema
+      case None => throw new IllegalStateException("Unable to convert uploaded schema.")
+    }
+  }
+
+  def convertStructTypeJsonToStructType(inputJson: String): Option[StructType] = {
+    try {
+      val schema = DataType.fromJson(inputJson).asInstanceOf[StructType]
+      Some(schema)
+    }
+    catch {
+      case NonFatal(_) => None
+    }
+  }
 
   /**
     * Converts a seq of menas schema fields onto the spark structfields
