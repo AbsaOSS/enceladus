@@ -39,7 +39,8 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
         convertMenasModel0JsonToStructType(inputJson) match {
           case Left(schema) => schema
           case Right(message2) =>
-            throw new IllegalStateException(s"StructType serializer: $message1\nMenas serializer: $message2")
+            throw new IllegalStateException(
+              s"Unable to parse schema JSON\nStructType serializer: $message1\nMenas serializer: $message2")
         }
     }
   }
