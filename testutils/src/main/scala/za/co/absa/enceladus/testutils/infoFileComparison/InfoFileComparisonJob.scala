@@ -15,36 +15,38 @@
 
 package za.co.absa.enceladus.testutils.infoFileComparison
 
+import java.io.FileInputStream
+
+import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.permission.FsPermission
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.{LogManager, Logger}
-import za.co.absa.atum.persistence.ControlMeasuresLoaderJsonFile
+import za.co.absa.atum.model.ControlMeasure
+import za.co.absa.atum.persistence.ControlMeasuresParser
 import za.co.absa.atum.utils.ARMImplicits
 import za.co.absa.enceladus.testutils.exceptions.InfoFilesDifferException
 import za.co.absa.enceladus.testutils.infoFileComparison.AtumModelUtils._
 
+import scala.collection.JavaConverters._
+import scala.reflect.io.File
+
 object InfoFileComparisonJob {
   private val log: Logger = LogManager.getLogger(this.getClass)
+  private lazy val hadoopConfiguration = getHadoopConfiguration
 
   def main(args: Array[String]): Unit = {
     val cmd = CmdConfig.getCmdLineArguments(args)
 
-    val hadoopConfiguration = getHadoopConfiguration
-
-    val newPathLoader = new ControlMeasuresLoaderJsonFile(hadoopConfiguration, new Path(cmd.newPath))
-    val refPathLoader = new ControlMeasuresLoaderJsonFile(hadoopConfiguration, new Path(cmd.refPath))
-
-    val newControlMeasure = newPathLoader.load()
-    val refControlMeasure = refPathLoader.load()
+    val newControlMeasure = loadControlMeasures(cmd.newPath)
+    val refControlMeasure = loadControlMeasures(cmd.refPath)
 
     val diff: List[ModelDifference[_]] = refControlMeasure.compareWith(newControlMeasure)
 
     if (diff.nonEmpty){
-      val path = new Path(cmd.outPath)
       val serializedData: String = ModelDifferenceParser.asJson(diff)
 
-      saveDataToFile(serializedData, path, hadoopConfiguration)
+      saveDataToFile(serializedData, cmd.outPath)
 
       throw InfoFilesDifferException(cmd.refPath, cmd.newPath, cmd.outPath)
     } else {
@@ -52,8 +54,17 @@ object InfoFileComparisonJob {
     }
   }
 
-  private[this] def saveDataToFile(data: String, path: Path, hadoopConfiguration: Configuration): Unit = {
+  private[this] def saveDataToFile(data: String, path: String): Unit = {
+    path match {
+      case p if p.startsWith("file://") => File(p.stripPrefix("file://")).writeAll(data)
+      case p => saveDataToHDFSFile(data, new Path(p))
+    }
+  }
+
+
+  private[this] def saveDataToHDFSFile(data: String, path: Path): Unit = {
     import ARMImplicits._
+
     val fs = FileSystem.get(hadoopConfiguration)
     val overwrite = true
     val progress = null
@@ -83,5 +94,14 @@ object InfoFileComparisonJob {
     conf.addResource(new Path(coreSiteXmlPath))
     conf.addResource(new Path(hdfsSiteXmlPath))
     conf
+  }
+
+  private[this] def loadControlMeasures(path: String): ControlMeasure = {
+    val stream = path match {
+      case p if p.startsWith("file://") => new FileInputStream(p.stripPrefix("file://"))
+      case p => FileSystem.get(hadoopConfiguration).open(new Path(p))
+    }
+    val controlInfoJson = try IOUtils.readLines(stream).asScala.mkString("\n") finally stream.close()
+    ControlMeasuresParser.fromJson(controlInfoJson)
   }
 }
