@@ -48,7 +48,7 @@ class SchemaController @Autowired() (
     val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase, refName = name, refVersion = version + 1, attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = file.getOriginalFilename, fileContent = file.getBytes, fileMIMEType = file.getContentType)
 
-    val struct = DataType.fromJson(new String(file.getBytes)).asInstanceOf[StructType]
+    val struct = sparkMenasConvertor.convertAnyToStructType(new String(file.getBytes))
 
     for {
       upload <- attachmentService.uploadAttachment(origFile)
