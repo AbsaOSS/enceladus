@@ -59,8 +59,8 @@ object AtumModelUtils {
     def compareWith(otherControlMeasure: ControlMeasure): List[ModelDifference[_]] = {
       val metadataDifferences = controlMeasure.metadata.compareWith(otherControlMeasure.metadata, "metadata")
       val checkpointsDifferences = controlMeasure.checkpoints.zipWithIndex.foldLeft(List[ModelDifference[_]]()) {
-        case (agg, (value, index)) =>
-          value.compareWith(otherControlMeasure.checkpoints(index), s"checkpoints[$index]") ::: agg
+        case (agg, (checkpointValue, index)) =>
+          checkpointValue.compareWith(otherControlMeasure.checkpoints(index), s"checkpoints[$index]") ::: agg
       }
       metadataDifferences ::: checkpointsDifferences
     }
@@ -71,6 +71,9 @@ object AtumModelUtils {
     * @param metadata ControlMeasureMetadata instance
     */
   implicit class ControlMeasureMetadataOps (metadata: ControlMeasureMetadata){
+    private val stdVersion = "std_enceladus_version"
+    private val confVersion = "conform_enceladus_version"
+
     /**
       * Compare this ControlMeasureMetadata with the one passed in
       * @param otherMetadata Second control measure metadata
@@ -92,7 +95,7 @@ object AtumModelUtils {
         otherMetadata.additionalInfo,
         s"$curPath.additionalInfo")
 
-      (diffs flatten) ::: additionalInfoDiff
+      diffs.flatten ::: additionalInfoDiff
     }
 
     /**
@@ -106,10 +109,12 @@ object AtumModelUtils {
                                          is: Map[String,String],
                                          curPath: String): List[ModelDifference[_]] = {
       was.flatMap {
-        case (wasKey, wasValue) if wasKey == "conform_enceladus_version" =>
+        case (wasKey, wasValue) if wasKey == confVersion =>
           logVersionAndContinue("Conformance", wasValue, is.get(wasKey))
-        case (wasKey, wasValue) if wasKey == "std_enceladus_version" =>
+          None
+        case (wasKey, wasValue) if wasKey == stdVersion =>
           logVersionAndContinue("Standartization", wasValue, is.get(wasKey))
+          None
         case (wasKey, _) if wasKey == "std_application_id" || wasKey == "conform_application_id" => None
         case (wasKey, wasValue) =>
           is.get(wasKey) match {
@@ -117,14 +122,13 @@ object AtumModelUtils {
             case None                                 => Some(ModelDifference(s"$curPath.$wasKey", wasValue, "Null"))
             case _                                    => None
           }
-      }.toList
+      }.toList.sortBy({ f: ModelDifference[String] => f.path })
     }
 
-    private def logVersionAndContinue(name: String, refVersion: String, newVersion: Option[String]): Option[Nothing] = {
+    private def logVersionAndContinue(name: String, refVersion: String, newVersion: Option[String]): Unit = {
       logger.info(s"$name versions is:")
       logger.info(s"Reference - $refVersion")
-      logger.info(s"New - $newVersion")
-      None
+      logger.info(s"New - ${newVersion.getOrElse("NOT SPECIFIED")}")
     }
   }
 
@@ -146,9 +150,9 @@ object AtumModelUtils {
         simpleCompare(checkpoint.order, otherCheckpoint.order, s"$curPath.order") :: Nil
 
       val controls = checkpoint.controls.zipWithIndex.foldLeft(List[ModelDifference[_]]()) {
-        case (agg, (value, index)) =>
+        case (agg, (checkpointValue, index)) =>
           val nextPath = s"$curPath.controls[$index]"
-          value.compareWith(otherCheckpoint.controls(index), nextPath) ::: agg
+          checkpointValue.compareWith(otherCheckpoint.controls(index), nextPath) ::: agg
       }
 
       diffs.flatten ::: controls
