@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component
 import za.co.absa.enceladus.model.api.HDFSFolder
 
 import scala.concurrent.Future
+import scala.util.Try
 
 @Component
 class HDFSService @Autowired() (fs: FileSystem) {
@@ -39,13 +40,17 @@ class HDFSService @Autowired() (fs: FileSystem) {
         Some(
           status.map({ x =>
             val child = x.getPath
-            HDFSFolder(child.toUri.getPath, child.getName,
-              if (fs.listStatus(child).isEmpty) None else Some(Seq(HDFSFolder("", "", None))))
-
+            HDFSFolder(child.toUri.getPath, child.getName, safeLS(child))
           }).toSeq)
       }
       HDFSFolder(path.toUri.getPath, path.getName, children)
     }
   }
 
+  private def safeLS(path: Path): Option[Seq[HDFSFolder]] = {
+    Try {
+      fs.listStatus(path)
+    }.toOption.flatMap(children =>
+      if (children.isEmpty) None else Some(Seq(HDFSFolder("", "", None))))
+  }
 }
