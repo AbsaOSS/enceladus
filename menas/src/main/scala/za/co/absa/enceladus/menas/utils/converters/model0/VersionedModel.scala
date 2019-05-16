@@ -19,8 +19,5 @@ trait VersionedModel {
   val name: String
   val version: Int
 
-  /*  val dateCreated: LocalDateTime
-    val userCreated: String*/
-
   def setVersion(value: Int): VersionedModel
 }

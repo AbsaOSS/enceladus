@@ -19,10 +19,6 @@ case class Schema
 (
   name: String,
   version: Int,
-
-  /*  dateCreated: LocalDateTime = LocalDateTime.now,
-    userCreated: String = "System",*/
-
   fields: List[SchemaField]
 ) extends VersionedModel {
 
