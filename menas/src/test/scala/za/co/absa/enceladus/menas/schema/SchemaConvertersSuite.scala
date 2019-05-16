@@ -282,7 +282,7 @@ class SchemaConvertersSuite extends FunSuite {
     assert(actualSchema.prettyJson == expectedSchema.prettyJson)
   }
 
-  test("Test 0.9.* Menas to StructType schema conversion") {
+  test("Test pre-release Menas JSON format to StructType schema conversion") {
     val inputJson =
       """
         |{

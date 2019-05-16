@@ -39,7 +39,7 @@ object Serializer {
   /**
     * Converts a JSON in Model 0 format to a Spark StructType
     */
-  def convertFromModel0ToStructType(json: String): StructType = convertToStructType(deserialize(json))
+  def convertToStructType(json: String): StructType = convertToStructType(deserialize(json))
 
   /**
     * Deserializes a Model 0 JSON
@@ -52,13 +52,11 @@ object Serializer {
     * Converts a Model 0 shema object to Spark StructType
     */
   def convertToStructType(schema: Schema): StructType = {
-    StructType(schema.fields.map({ menas =>
-      convertMenasToSparkField(menas)
-    }))
+    StructType(convertMenasToSparkFields(schema.fields))
   }
 
   /**
-    * Converts a Mode 0 struct field to a Spark's StructField
+    * Converts a Model 0 struct field to a Spark's StructField
     */
   private def convertMenasToSparkField(menasField: SchemaField): StructField = {
     val outStream = new ByteArrayOutputStream()
@@ -74,7 +72,7 @@ object Serializer {
    }
 
   /**
-    * Converts a Mode 0 data type to a Spark's data type
+    * Converts a Model 0 data type to a Spark's data type
     */
   private def convertMenasToSparkDataType(menasField: SchemaField): DataType = {
     menasField.`type` match {
@@ -85,7 +83,7 @@ object Serializer {
   }
 
   /**
-    * Converts a Mode 0 array field to a Spark's ArrayType field
+    * Converts a Model 0 array field to a Spark's ArrayType field
     */
   private def convertMenasToSparkArray(arrayField: SchemaField): ArrayType = {
     if (arrayField.`type` != "array") {

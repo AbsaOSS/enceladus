@@ -59,11 +59,11 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
   }
 
   /**
-    * Converts a JSON in Menas 0.9.* (Model 0) format into an instance of Spark's StructType
+    * Converts a model 0 JSON (pre-release Menas) format into an instance of Spark's StructType
     */
   def convertMenasModel0JsonToStructType(inputJson: String): Either[StructType, String] = {
     try {
-      val schema = model0.Serializer.convertFromModel0ToStructType(inputJson)
+      val schema = model0.Serializer.convertToStructType(inputJson)
       Left(schema)
     }
     catch {
