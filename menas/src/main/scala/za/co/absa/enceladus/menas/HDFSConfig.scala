@@ -15,29 +15,24 @@
 
 package za.co.absa.enceladus.menas
 
-import org.springframework.context.annotation.{ Bean, Configuration }
-import org.springframework.beans.factory.annotation.Value
-import org.slf4j.LoggerFactory
-import org.apache.hadoop.conf.{ Configuration => HadoopConfiguration }
-import org.apache.hadoop.fs.{ FileSystem, Path }
-import org.ietf.jgss.Oid
-import javax.security.auth.login.LoginContext
-import javax.security.auth.Subject
-import scala.util.Try
-import org.apache.hadoop.security.UserGroupInformation
-import javax.security.auth.callback._;
-import org.apache.hadoop.security.SecurityUtil
+import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.security.{SecurityUtil, UserGroupInformation}
 import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod
-import org.springframework.beans.factory.annotation.Autowired
 import org.apache.spark.sql.SparkSession
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.springframework.context.annotation.{Bean, Configuration}
 
 @Configuration
 class HDFSConfig @Autowired()(spark: SparkSession) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.method}") 
+  @Value("${za.co.absa.enceladus.menas.hadoop.auth.method}")
   val authMethod: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.debug:}") 
+  @Value("${za.co.absa.enceladus.menas.hadoop.auth.user}")
+  val authUser: String = ""
+  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.debug:}")
   val krb5debug: String = ""
   @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.realm:}")
   val krb5realm: String = ""
@@ -46,9 +41,10 @@ class HDFSConfig @Autowired()(spark: SparkSession) {
   @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.username:}")
   val krb5username: String = ""
   @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.keytab:}")
-  val krb5keytab: String = ""  
+  val krb5keytab: String = ""
 
-  private val hadoopConfDir = sys.env.getOrElse("HADOOP_CONF_DIR", throw new IllegalStateException("Missing HADOOP_CONF_DIR environment variable."))
+  private val hadoopConfDir = sys.env.getOrElse("HADOOP_CONF_DIR",
+    throw new IllegalStateException("Missing HADOOP_CONF_DIR environment variable."))
 
   @Bean
   def hadoopConf(): HadoopConfiguration = {
@@ -66,20 +62,31 @@ class HDFSConfig @Autowired()(spark: SparkSession) {
 
       logger.info("Using kerberos hadoop authentication")
 
-      System.setProperty("sun.security.krb5.debug", krb5debug);
-      System.setProperty("java.security.krb5.realm", krb5realm);
-      System.setProperty("java.security.krb5.kdc", krb5kdc);
+      System.setProperty("sun.security.krb5.debug", krb5debug)
+      System.setProperty("java.security.krb5.realm", krb5realm)
+      System.setProperty("java.security.krb5.kdc", krb5kdc)
 
 
       val c = hadoopConf()
-      
+
       SecurityUtil.setAuthenticationMethod(AuthenticationMethod.KERBEROS, c)
       UserGroupInformation.reset()
-      UserGroupInformation.setConfiguration(c);
+      UserGroupInformation.setConfiguration(c)
       UserGroupInformation.loginUserFromKeytab(krb5username, krb5keytab)
 
       FileSystem.get(c)
-      
-    } else FileSystem.get(hadoopConf)
+
+    } else if (authMethod == "simple") {
+      logger.info(s"Using simple hadoop authentication as $authUser")
+      val conf = hadoopConf()
+      SecurityUtil.setAuthenticationMethod(AuthenticationMethod.SIMPLE, conf)
+      UserGroupInformation.setConfiguration(conf)
+      UserGroupInformation.setLoginUser(UserGroupInformation.createRemoteUser(authUser))
+      FileSystem.get(conf)
+    }
+    else {
+      logger.info("Using default hadoop authentication")
+      FileSystem.get(hadoopConf())
+    }
   }
 }
