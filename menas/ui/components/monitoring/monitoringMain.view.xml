@@ -59,65 +59,68 @@
 						<customHeader>
 							<Bar>
 								<contentLeft>
-									<Title text="{/currentDataset/name}" />
+									<Title text="{/datasetId} From: {/dateFrom} To: {/dateTo} "  />
 								</contentLeft>
 							</Bar>
 						</customHeader>
                             <content>
-                                <u:Calendar
-                                    id="calendar"
-                                    select="handleCalendarSelect"
-                                    intervalSelection="true"
-                                    weekNumberSelect="handleWeekNumberSelect"/>
-                                <layout:HorizontalLayout>
-                                    <Label
-                                        text="Selected From:"
-                                        class="labelMarginLeft" />
-                                    <Text
-                                        id="selectedDateFrom"
-                                        text="No Date Selected"
-                                        class="labelMarginLeft"/>
-                                </layout:HorizontalLayout>
-                                <layout:HorizontalLayout>
-                                    <Label
-                                        text=" To:"
-                                        class="labelMarginLeft" />
-                                    <Text
-                                        id="selectedDateTo"
-                                        text="No Date Selected"
-                                        class="labelMarginLeft"/>
-                                </layout:HorizontalLayout>
+                                    <layout:BlockLayout id="BlockLayout">
+                                    <layout:BlockLayoutRow>
 
-                                <lab:PieChartJS
-                                    id="record_totals"
-                                    datasets="{/recordCountTotals/datasets}"
-                                    labels="{/recordCountTotals/labels}"
-                                    titleDisplay="true"
-                                    titleText="Total number of records"
-                                    onLegendItemClick="onLegendItemClick"
-                                    onLegendItemHover="onLegendItemHover"
-                                    onClick="onClick"
-                                    onHover="onHover"
-                                    tooltipEnabled="true"
-                                    onAnimationProgress="onAnimationProgress"
-                                    onAnimationComplete="onAnimationComplete">
-                                </lab:PieChartJS>
+                                        <layout:BlockLayoutCell
+                                            title="Info date interval"
+                                            titleAlignment="Center"
+                                            width="50rem">
+                                            <u:Calendar
+                                                id="calendar"
+                                                select="handleCalendarSelect"
+                                                intervalSelection="true"
+                                                weekNumberSelect="handleWeekNumberSelect"/>
+                                        </layout:BlockLayoutCell>
 
-                                <lab:BarChartJS
-                                    id="bar_chart"
-                                    datasets="{/plotData/datasets}"
-                                    labels="{/plotData/labels}"
-                                    titleDisplay="true"
-                                    titleText="Number of records"
-                                    onLegendItemClick="onLegendItemClick"
-                                    onLegendItemHover="onLegendItemHover"
-                                    onClick="onClick"
-                                    onHover="onHover"
-                                    tooltipEnabled="true"
-                                    onAnimationProgress="onAnimationProgress"
-                                    onAnimationComplete="onAnimationComplete"
-                                    isHorizontal="true">
-                                </lab:BarChartJS>
+                                        <layout:BlockLayoutCell
+                                            title="Runs by status"
+                                            titleAlignment="Center"
+                                            width="50rem">
+                                            <lab:PieChartJS
+                                                id="Status_of_runs"
+                                                datasets="{/statusPieData/datasets}"
+                                                labels="{/statusPieData/labels}"
+                                                titleDisplay="false"
+                                                titleText=""
+                                                tooltipEnabled="true">
+                                            </lab:PieChartJS>
+                                        </layout:BlockLayoutCell>
+
+                                        <layout:BlockLayoutCell
+                                            title="Records by status"
+                                            titleAlignment="Center"
+                                            width="50rem">
+                                            <lab:PieChartJS
+                                                id="record_totals"
+                                                datasets="{/recordCountTotals/datasets}"
+                                                labels="{/recordCountTotals/labels}"
+                                                titleDisplay="false"
+                                                titleText=""
+                                                tooltipEnabled="true">
+                                            </lab:PieChartJS>
+                                        </layout:BlockLayoutCell>
+
+                                    </layout:BlockLayoutRow>
+                                    </layout:BlockLayout>
+
+                                <FlexBox id="bar-chart-FlexBox" width="100vw" height="50rem">
+                                    <lab:BarChartJS
+                                        id="bar_chart"
+                                        datasets="{/plotData/datasets}"
+                                        labels="{/plotData/labels}"
+                                        titleDisplay="true"
+                                        titleText="Records per run"
+                                        tooltipEnabled="true"
+                                        isHorizontal="true"
+                                        maintainAspectRatio="false">
+                                    </lab:BarChartJS>
+                                </FlexBox>
 
                                 <table:Table
                                     rows="{/monitoringPoints}"
@@ -126,7 +129,7 @@
                                     alternateRowColors="true"
                                     showColumnVisibilityMenu="true"
                                     visibleRowCountMode="Interactive"
-                                    minAutoRowCount="10">
+                                    minAutoRowCount="20">
                                     <table:columns>
                                         <table:Column id="multiheader-info" width="6rem" >
                                             <table:multiLabels>
@@ -243,8 +246,6 @@
                                         </table:Column>
                                     </table:columns>
                                 </table:Table>
-
-
                             </content>
 						<footer>
 						</footer>

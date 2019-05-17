@@ -37,7 +37,7 @@ sap.ui.controller("components.monitoring.monitoringMain", {
     }, this);
     this.oFormatYyyymmdd = sap.ui.core.format.DateFormat.getInstance({pattern: "yyyy-MM-dd", calendarType: sap.ui.core.CalendarType.Gregorian});
     this.setDefaultDateInterval()
-    var oView = this.getView();
+    let oView = this.getView();
     oView.byId("multiheader-info").setHeaderSpan([2,1]);
     oView.byId("multiheader-checkpoint").setHeaderSpan([3,1]);
     oView.byId("multiheader-recordcount-raw").setHeaderSpan([5,1,1]);
@@ -88,11 +88,9 @@ sap.ui.controller("components.monitoring.monitoringMain", {
     } else {
       MonitoringService.getDatasetList();
 
-      let sStartDate = "2018-06-01"
-      let sEndDate = "2019-06-30"
-
       this._model.setProperty("/datasetId", oParams.id)
-      MonitoringService.getMonitoringPoints(oParams.id);
+      this.updateMonitoringData()
+      //MonitoringService.getMonitoringPoints(oParams.id);
 
       //MonitoringService.getDatasetCheckpoints(oParams.id);
 
@@ -107,31 +105,23 @@ sap.ui.controller("components.monitoring.monitoringMain", {
   },
 
   _updateText: function(oSelectedDates) {
-    var oSelectedDateFrom = this.byId("selectedDateFrom");
-    var oSelectedDateTo = this.byId("selectedDateTo");
-    var oDate;
+    let oDate;
     if (oSelectedDates) {
       oDate = oSelectedDates.getStartDate();
       if (oDate) {
-        oSelectedDateFrom.setText(this.oFormatYyyymmdd.format(oDate));
         this._model.setProperty("/dateFrom", this.oFormatYyyymmdd.format(oDate))
       } else {
-        oSelectedDateTo.setText("No Date Selected");
         this._model.setProperty("/plotData", [])
         this._model.setProperty("/monitoringPoints", [])
       }
       oDate = oSelectedDates.getEndDate();
       if (oDate) {
-        oSelectedDateTo.setText(this.oFormatYyyymmdd.format(oDate));
         this._model.setProperty("/dateTo", this.oFormatYyyymmdd.format(oDate))
       } else {
-        oSelectedDateTo.setText("No Date Selected");
         this._model.setProperty("/plotData", [])
         this._model.setProperty("/monitoringPoints", [])
       }
     } else {
-      oSelectedDateFrom.setText("No Date Selected");
-      oSelectedDateTo.setText("No Date Selected");
       this._model.setProperty("/plotData", [])
       this._model.setProperty("/monitoringPoints", [])
     }
@@ -142,6 +132,14 @@ sap.ui.controller("components.monitoring.monitoringMain", {
   updateMonitoringData: function () {
     if (this._model.getProperty("/dateFrom") && this._model.getProperty("/dateTo")) {
       MonitoringService.getMonitoringPoints(this._model.getProperty("/datasetId"));
+
+      // set barchart size
+      let labels = this._model.getProperty("/plotData/labels")
+      if (labels != undefined ) {
+        let oView = this.getView();
+        oView.byId("bar-chart-FlexBox").setHeight(10 + 1 * labels.length + "rem");
+      }
+
     }
   },
 
