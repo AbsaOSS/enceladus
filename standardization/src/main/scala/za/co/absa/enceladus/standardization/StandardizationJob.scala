@@ -46,8 +46,8 @@ object StandardizationJob {
   private val conf: Config = ConfigFactory.load()
 
   def main(args: Array[String]) {
+    implicit val spark: SparkSession = obtainSparkSession()
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-    implicit val spark: SparkSession = obtainSparkSession(cmd)
     import spark.implicits._
     implicit val udfLib: UDFLibrary = new UDFLibrary
 
@@ -92,10 +92,9 @@ object StandardizationJob {
     })
   }
 
-  private def obtainSparkSession(cmd: CmdConfig): SparkSession = {
+  private def obtainSparkSession(): SparkSession = {
     val spark = SparkSession.builder()
-      .appName(s"Standardisation ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} ${cmd.reportVersion}")
-      .config("spark.sql.codegen.wholeStage", false) //disable whole stage code gen - the plan is too long
+      .appName(s"Standardisation")
       .getOrCreate()
     TimeZoneNormalizer.normalizeAll(Seq(spark))
     spark

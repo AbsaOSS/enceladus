@@ -16,10 +16,12 @@ package za.co.absa.enceladus.menas.services
 
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
+import za.co.absa.enceladus.menas.repositories.OozieRepository
 
 class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
 
   override val modelRepository = mock[DatasetMongoRepository]
-  override val service = new DatasetService(modelRepository)
+  val oozieRepository = mock[OozieRepository]
+  override val service = new DatasetService(modelRepository, oozieRepository)
 
 }

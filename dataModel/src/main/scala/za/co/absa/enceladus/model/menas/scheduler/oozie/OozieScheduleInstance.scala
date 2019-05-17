@@ -13,27 +13,8 @@
  * limitations under the License.
  */
 
-var model = new sap.ui.model.json.JSONModel({
-  userInfo : {},
-  schemas: [],
-  mappingTables: [],
-  currentSchema: {},
-  currentMappingTable: {},
-  newMappingTable: {},
-  newSchema: {},
-  menasVersion: "${project.version}",
-  appInfo: {
-    oozie: {}
-  },
-  newSchedule: {scheduleTiming: {}, runtimeParams: {}},
-  supportedDataFormats: [
-    {key: "xml", name: "XML"},
-    {key: "csv", name: "CSV"},
-    {key: "parquet", name: "Parquet"},
-    {key: "fixed-width", name: "Fixed Width"},
-  ]
-})
+package za.co.absa.enceladus.model.menas.scheduler.oozie
 
-model.setSizeLimit(5000)
-
-sap.ui.getCore().setModel(model)
+case class OozieScheduleInstance(workflowPath: String,
+    coordinatorPath: String,
+    coordinatorId: String)

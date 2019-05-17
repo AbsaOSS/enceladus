@@ -26,7 +26,8 @@ class RestClient {
       contentType: "application/json",
       headers: {
         "X-CSRF-TOKEN" : localStorage.getItem("csrfToken")
-      }
+      },
+      timeout: 120000
     })
   }
 

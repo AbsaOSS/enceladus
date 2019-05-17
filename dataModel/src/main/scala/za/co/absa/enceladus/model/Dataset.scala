@@ -21,6 +21,8 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConfo
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
+import org.apache.spark.sql.RuntimeConfig
+import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
 
 case class Dataset(
   name:    String,
@@ -43,7 +45,8 @@ case class Dataset(
   dateDisabled: Option[ZonedDateTime] = None,
   userDisabled: Option[String]        = None,
   conformance:  List[ConformanceRule],
-  parent:       Option[MenasReference] = None) extends VersionedModel with Auditable[Dataset] {
+  parent:       Option[MenasReference] = None,
+  schedule:     Option[OozieSchedule] = None) extends VersionedModel with Auditable[Dataset] {
     
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -57,8 +60,9 @@ case class Dataset(
   def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
   def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
+  def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   override def setParent(newParent: Option[MenasReference]) = this.copy(parent = newParent)
-
+  
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the dots are
    *         <MappingConformanceRule.DOT_REPLACEMENT_SYMBOL>
@@ -97,7 +101,8 @@ case class Dataset(
           AuditFieldName("hdfsPath", "HDFS Path"),
           AuditFieldName("hdfsPublishPath", "HDFS Publish Path"),
           AuditFieldName("schemaName", "Schema Name"),
-          AuditFieldName("schemaVersion", "Schema Version"))) ++
+          AuditFieldName("schemaVersion", "Schema Version"),
+          AuditFieldName("schedule", "Schedule"))) ++
         super.getSeqFieldsAudit(newRecord, AuditFieldName("conformance", "Conformance rule")))
   }
 }

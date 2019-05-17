@@ -50,8 +50,8 @@ object DynamicConformanceJob {
   private val conf: Config = ConfigFactory.load()
 
   def main(args: Array[String]) {
+    implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-    implicit val spark: SparkSession = obtainSparkSession(cmd) // initialize spark
     spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
     Atum.setAllowUnpersistOldDatasets(true) // Enable control framework performance optimization for pipeline-like jobs
     MenasPlugin.enableMenas() // Enable Menas
@@ -97,9 +97,9 @@ object DynamicConformanceJob {
     processResult(result, performance, publishPath, stdPath)
   }
 
-  private def obtainSparkSession(cmd: CmdConfig): SparkSession = {
+  private def obtainSparkSession(): SparkSession = {
     val spark: SparkSession = SparkSession.builder()
-      .appName(s"Dynamic Conformance ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} ${cmd.reportVersion}")
+      .appName(s"Dynamic Conformance")
       .getOrCreate()
     TimeZoneNormalizer.normalizeAll(Seq(spark))
     spark

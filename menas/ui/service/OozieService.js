@@ -13,27 +13,21 @@
  * limitations under the License.
  */
 
-var model = new sap.ui.model.json.JSONModel({
-  userInfo : {},
-  schemas: [],
-  mappingTables: [],
-  currentSchema: {},
-  currentMappingTable: {},
-  newMappingTable: {},
-  newSchema: {},
-  menasVersion: "${project.version}",
-  appInfo: {
-    oozie: {}
-  },
-  newSchedule: {scheduleTiming: {}, runtimeParams: {}},
-  supportedDataFormats: [
-    {key: "xml", name: "XML"},
-    {key: "csv", name: "CSV"},
-    {key: "parquet", name: "Parquet"},
-    {key: "fixed-width", name: "Fixed Width"},
-  ]
-})
+jQuery.sap.require("sap.m.MessageBox");
 
-model.setSizeLimit(5000)
+var OozieService = new function () {
 
-sap.ui.getCore().setModel(model)
+  const model = sap.ui.getCore().getModel();
+  const eventBus = sap.ui.getCore().getEventBus();
+
+  this.getCoordinatorStatus = function () {
+    const coordinatorId = model.getProperty("/currentDataset/schedule/activeInstance/coordinatorId")
+    if(coordinatorId) {
+      Functions.ajax(`api/oozie/coordinatorStatus/${coordinatorId}`, "GET", {}, function (oData) {
+        model.setProperty("/currentDataset/schedule/activeInstance/status", oData)
+      }, function () {
+      })      
+    }
+  };
+
+}();

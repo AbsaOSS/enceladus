@@ -1,0 +1,174 @@
+<!--
+  ~ Copyright 2018-2019 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<core:FragmentDefinition xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+    <Dialog id="editScheduleDialog" title="Edit Schedule" stretchOnPhone="true" contentWidth="80%">
+        <content>
+            <VBox class="sapUiSmallMargin">
+                <form:Form id="scheduleForm" editable="false">
+                    <form:layout>
+                        <form:ColumnLayout columnsM="2" columnsL="3" columnsXL="4" labelCellsLarge="1" />
+                    </form:layout>
+                    <form:formContainers>
+                        <form:FormContainer>
+                            <form:title>
+                                <core:Title text="Scheduling Timing (in UTC)"></core:Title>
+                            </form:title>
+                            <form:formElements>
+                                <form:FormElement label="Minute">
+                                    <form:fields>
+                                        <MultiComboBox items="{/cronFormTemplate/minute}" selectedKeys="{path: '/newSchedule/scheduleTiming/minute', type:'components.types.NonEmptyArrType'}">
+                                            <core:Item key="{key}" text="{name}" />
+                                        </MultiComboBox>
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Hour">
+                                    <form:fields>
+                                        <MultiComboBox items="{/cronFormTemplate/hour}" selectedKeys="{path: '/newSchedule/scheduleTiming/hour', type:'components.types.NonEmptyArrType'}">
+                                            <core:Item key="{key}" text="{name}" />
+                                        </MultiComboBox>
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Day of Month">
+                                    <form:fields>
+                                        <MultiComboBox items="{/cronFormTemplate/dayOfMonth}" selectedKeys="{path: '/newSchedule/scheduleTiming/dayOfMonth', type:'components.types.NonEmptyArrType'}">
+                                            <core:Item key="{key}" text="{name}" />
+                                        </MultiComboBox>
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Month">
+                                    <form:fields>
+                                        <MultiComboBox items="{/cronFormTemplate/month}" selectedKeys="{path: '/newSchedule/scheduleTiming/month', type:'components.types.NonEmptyArrType'}">
+                                            <core:Item key="{key}" text="{name}" />
+                                        </MultiComboBox>
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Day of Week">
+                                    <form:fields>
+                                        <MultiComboBox items="{/cronFormTemplate/dayOfWeek}" selectedKeys="{path: '/newSchedule/scheduleTiming/dayOfWeek', type:'components.types.NonEmptyArrType'}">
+                                            <core:Item key="{key}" text="{name}" />
+                                        </MultiComboBox>
+                                    </form:fields>
+                                </form:FormElement>
+                            </form:formElements>
+                        </form:FormContainer>
+                        <form:FormContainer>
+                            <form:title>
+                                <core:Title text="Runtime Parameters"></core:Title>
+                            </form:title>
+                            <form:formElements>
+                                <form:FormElement label="Standardization Number of executors">
+                                    <form:fields>
+                                        <StepInput value="{/newSchedule/runtimeParams/stdNumExecutors}" displayValuePrecision="0" min="2" max="64" step="1"/>
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Standardization Executor Memory (in GB)">
+                                    <form:fields>
+                                        <StepInput value="{/newSchedule/runtimeParams/stdExecutorMemory}" displayValuePrecision="0" min="2" max="16" step="1" />
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Conformance Number of executors">
+                                    <form:fields>
+                                        <StepInput value="{/newSchedule/runtimeParams/confNumExecutors}" displayValuePrecision="0" min="2" max="64" step="1"/>
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Conformance Executor Memory (in GB)">
+                                    <form:fields>
+                                        <StepInput value="{/newSchedule/runtimeParams/confExecutorMemory}" displayValuePrecision="0" min="2" max="16" step="1" />
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Driver Cores">
+                                    <form:fields>
+                                        <StepInput value="{/newSchedule/runtimeParams/driverCores}" displayValuePrecision="0" min="1" max="4" step="1" />
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Driver Memory (in GB)">
+                                    <form:fields>
+                                        <StepInput value="{/newSchedule/runtimeParams/driverMemory}" displayValuePrecision="0" min="2" max="16" step="1" />
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="System User">
+                                    <form:fields>
+                                        <Input id="sysUserInput" type="Text" placeholder="Enter a user, which will run the schedule"
+                                            value="{path:'/newSchedule/runtimeParams/sysUser', type: 'sap.ui.model.type.String', constraints:{minLength:'3'}}"
+                                        ></Input>
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Menas Credential File">
+                                    <form:fields>
+                                        <Input id="menasCredFileInput" type="Text" placeholder="Enter HDFS path of a file containing sysuser menas credentials"
+                                            value="{path:'/newSchedule/runtimeParams/menasCredentialFile', type: 'sap.ui.model.type.String', constraints:{search: '^(?!hdfs:\\/\\/)/\\S*'}}"
+                                        ></Input>
+                                    </form:fields>
+                                </form:FormElement>
+                            </form:formElements>
+                        </form:FormContainer>
+                        <form:FormContainer>
+                            <form:title>
+                                <core:Title text="Schedule Parameters"></core:Title>
+                            </form:title>
+                            <form:formElements>
+                                <form:FormElement label="Dataset Version">
+                                    <form:fields>
+                                        <Select id="datasetVersionSelect" forceSelection="true" selectedKey="{/newSchedule/datasetVersion}" items="{versions>/entries}" showSecondaryValues="true">
+                                            <core:ListItem key="{versions>menasRef/version}" text="{versions>menasRef/version}" additionalText="{versions>menasRef/description}" />
+                                        </Select>
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Mapping Table Folder Pattern">
+                                    <form:fields>
+                                        <Input id="mappingTablePatternInput" type="Text" placeholder="Default is reportDate=\{0\}-\{1\}-\{2\}" value="{path:'/newSchedule/mappingTablePattern'}"></Input>
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Report Date Offset">
+                                    <form:fields>
+                                        <StepInput value="{path: '/newSchedule/reportDateOffset'}" displayValuePrecision="0" max="0" step="1" />
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Raw Data Format">
+                                    <form:fields>
+                                        <Select id="rawDataFormatSelect" forceSelection="false" selectedKey="{path:'/newSchedule/rawFormat/name', type: 'sap.ui.model.type.String', constraints:{minLength:'1'}}" items="{/supportedDataFormats}">
+                                            <core:ListItem key="{key}" text="{name}" />
+                                        </Select>
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="XML Format Parameters" visible="{= ${/newSchedule/rawFormat/name} === 'xml' }">
+                                    <form:fields>
+                                        <Input type="Text" id="xmlFormatRowTagInput" placeholder="Enter XML row tag" value="{path: '/newSchedule/rawFormat/rowTag', type: 'sap.ui.model.type.String', constraints:{minLength:'1'}}" />
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="CSV Format Parameters" visible="{= ${/newSchedule/rawFormat/name} === 'csv' }">
+                                    <form:fields>
+                                        <Input type="Text" id="csvFormatDelimiter" placeholder="Enter CSV column delimiter" value="{path: '/newSchedule/rawFormat/csvDelimiter', type: 'sap.ui.model.type.String', constraints:{minLength:'0'}}" />
+                                        <CheckBox id="csvHeaderCheckbox" text="CSV files have header" selected="{path: '/newSchedule/rawFormat/csvHeader', type: 'sap.ui.model.type.Boolean'}" />
+                                    </form:fields>
+                                </form:FormElement>
+                                <form:FormElement label="Fixed Width Parameters" visible="{= ${/newSchedule/rawFormat/name} === 'fixed-width' }">
+                                    <form:fields>
+                                        <CheckBox id="fixedWidthTrimCheckbox" text="Trim values" selected="{path: '/newSchedule/rawFormat/trimValues', type: 'sap.ui.model.type.Boolean'}" />
+                                    </form:fields>
+                                </form:FormElement>
+                            </form:formElements>
+                        </form:FormContainer>
+                    </form:formContainers>
+                </form:Form>
+            </VBox>
+        </content>
+        <buttons>
+            <Button id="editScheduleSaveButton" press="onScheduleSave" text="Save" icon="sap-icon://accept" />
+            <Button id="editScheduleCancelButton" press="closeScheduleDialog" text="Cancel" icon="sap-icon://cancel" />
+        </buttons>
+    </Dialog>
+</core:FragmentDefinition>

@@ -56,6 +56,7 @@ class HDFSConfig @Autowired()(spark: SparkSession) {
     val conf = spark.sparkContext.hadoopConfiguration
     conf.addResource(new Path(hadoopConfDir, "core-site.xml"))
     conf.addResource(new Path(hadoopConfDir, "hdfs-site.xml"))
+    conf.addResource(new Path(hadoopConfDir, "yarn-site.xml"))
     conf
   }
 
@@ -74,7 +75,6 @@ class HDFSConfig @Autowired()(spark: SparkSession) {
       val c = hadoopConf()
       
       SecurityUtil.setAuthenticationMethod(AuthenticationMethod.KERBEROS, c)
-      UserGroupInformation.reset()
       UserGroupInformation.setConfiguration(c);
       UserGroupInformation.loginUserFromKeytab(krb5username, krb5keytab)
 

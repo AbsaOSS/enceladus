@@ -13,27 +13,15 @@
  * limitations under the License.
  */
 
-var model = new sap.ui.model.json.JSONModel({
-  userInfo : {},
-  schemas: [],
-  mappingTables: [],
-  currentSchema: {},
-  currentMappingTable: {},
-  newMappingTable: {},
-  newSchema: {},
-  menasVersion: "${project.version}",
-  appInfo: {
-    oozie: {}
-  },
-  newSchedule: {scheduleTiming: {}, runtimeParams: {}},
-  supportedDataFormats: [
-    {key: "xml", name: "XML"},
-    {key: "csv", name: "CSV"},
-    {key: "parquet", name: "Parquet"},
-    {key: "fixed-width", name: "Fixed Width"},
-  ]
-})
+package za.co.absa.enceladus.model.menas.scheduler
 
-model.setSizeLimit(5000)
-
-sap.ui.getCore().setModel(model)
+case class RuntimeConfig(
+    stdNumExecutors: Int = 4,
+    stdExecutorMemory: Int = 2,
+    confNumExecutors: Int = 4,
+    confExecutorMemory: Int = 2,
+    driverCores: Int = 2,
+    driverMemory: Int = 2,
+    sysUser: String,
+    menasCredentialFile: String
+)

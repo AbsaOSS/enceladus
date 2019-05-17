@@ -22,21 +22,59 @@ import za.co.absa.enceladus.model.{Dataset, UsedIn}
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import scala.concurrent.Future
 import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.menas.repositories.OozieRepository
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 
 @Service
-class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepository) extends VersionedModelService(datasetMongoRepository) {
+class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepository, oozieRepository: OozieRepository) extends VersionedModelService(datasetMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
-    super.update(username, dataset.name, dataset.version) { latest =>
-      latest
-        .setSchemaName(dataset.schemaName)
-        .setSchemaVersion(dataset.schemaVersion)
-        .setHDFSPath(dataset.hdfsPath)
-        .setHDFSPublishPath(dataset.hdfsPublishPath)
-        .setConformance(dataset.conformance)
-        .setDescription(dataset.description).asInstanceOf[Dataset]
+    super.updateFuture(username, dataset.name, dataset.version) { latest =>
+      this.updateSchedule(dataset, latest).map({ withSchedule =>
+        withSchedule
+          .setSchemaName(dataset.schemaName)
+          .setSchemaVersion(dataset.schemaVersion)
+          .setHDFSPath(dataset.hdfsPath)
+          .setHDFSPublishPath(dataset.hdfsPublishPath)
+          .setConformance(dataset.conformance)
+          .setDescription(dataset.description).asInstanceOf[Dataset]
+      })
+
+    }
+  }
+
+  private def updateSchedule(newDataset: Dataset, latest: Dataset): Future[Dataset] = {
+    if (newDataset.schedule == latest.schedule) {
+      Future(latest)
+    } else if (newDataset.schedule.isEmpty) {
+      Future(latest.setSchedule(None))
+    } else {
+      val instance = for {
+        wfPath <- oozieRepository.createWorkflow(newDataset)
+        coordPath <- oozieRepository.createCoordinator(newDataset, wfPath)
+        coordId <- latest.schedule match {
+          case Some(sched) => {
+            sched.activeInstance match {
+              case Some(instance) => {
+                oozieRepository.killCoordinator(instance.coordinatorId).flatMap({ res =>
+                  oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
+                })
+              }
+              case None => oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
+            }
+          }
+          case None => oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
+        }
+      } yield OozieScheduleInstance(wfPath, coordPath, coordId)
+
+      instance.map({ i =>
+        val schedule = newDataset.schedule.get.copy(activeInstance = Some(i))
+        newDataset.setSchedule(Some(schedule))
+      })
     }
   }
 
@@ -45,8 +83,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
   }
 
   override def create(newDataset: Dataset, username: String): Future[Option[Dataset]] = {
-    val dataset = Dataset(
-      name = newDataset.name,
+    val dataset = Dataset(name = newDataset.name,
       description = newDataset.description,
       hdfsPath = newDataset.hdfsPath,
       hdfsPublishPath = newDataset.hdfsPublishPath,

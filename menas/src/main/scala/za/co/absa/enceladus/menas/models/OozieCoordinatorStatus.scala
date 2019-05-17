@@ -13,27 +13,9 @@
  * limitations under the License.
  */
 
-var model = new sap.ui.model.json.JSONModel({
-  userInfo : {},
-  schemas: [],
-  mappingTables: [],
-  currentSchema: {},
-  currentMappingTable: {},
-  newMappingTable: {},
-  newSchema: {},
-  menasVersion: "${project.version}",
-  appInfo: {
-    oozie: {}
-  },
-  newSchedule: {scheduleTiming: {}, runtimeParams: {}},
-  supportedDataFormats: [
-    {key: "xml", name: "XML"},
-    {key: "csv", name: "CSV"},
-    {key: "parquet", name: "Parquet"},
-    {key: "fixed-width", name: "Fixed Width"},
-  ]
-})
+package za.co.absa.enceladus.menas.models
 
-model.setSizeLimit(5000)
+import org.apache.oozie.client.Job.Status
+import java.time.ZonedDateTime
 
-sap.ui.getCore().setModel(model)
+case class OozieCoordinatorStauts(status: Status, nextMaterializedTime: String)

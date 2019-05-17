@@ -13,27 +13,16 @@
  * limitations under the License.
  */
 
-var model = new sap.ui.model.json.JSONModel({
-  userInfo : {},
-  schemas: [],
-  mappingTables: [],
-  currentSchema: {},
-  currentMappingTable: {},
-  newMappingTable: {},
-  newSchema: {},
-  menasVersion: "${project.version}",
-  appInfo: {
-    oozie: {}
-  },
-  newSchedule: {scheduleTiming: {}, runtimeParams: {}},
-  supportedDataFormats: [
-    {key: "xml", name: "XML"},
-    {key: "csv", name: "CSV"},
-    {key: "parquet", name: "Parquet"},
-    {key: "fixed-width", name: "Fixed Width"},
-  ]
-})
+package za.co.absa.enceladus.model.menas.scheduler
 
-model.setSizeLimit(5000)
-
-sap.ui.getCore().setModel(model)
+case class ScheduleTiming(minute: Seq[String], hour: Seq[String], dayOfMonth: Seq[String], month: Seq[String], dayOfWeek: Seq[String]) {
+  def getCronSchedule: String = {
+    val minuteSep = minute.mkString(",")
+    val hourSep = hour.mkString(".")
+    val dayOfMonthSep = dayOfMonth.mkString(",")
+    val monthSep = month.mkString(",")
+    val dayOfWeekSep = dayOfWeek.mkString(",")
+    
+    s"$minuteSep $hourSep $dayOfMonthSep $monthSep $dayOfWeekSep"
+  }
+}
