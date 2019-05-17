@@ -50,10 +50,59 @@ var MonitoringService = new function() {
         "failed" : 3
       }
 
+      let statusPieData = {
+        labels: [
+          "allSucceeded",
+          "stageSucceeded",
+          "running",
+          "failed",
+          "other"
+        ],
+        datasets: [
+          {
+            data: [0,0,0,0,0],
+            backgroundColor: [
+              "green",
+              "blue",
+              "teal",
+              "red",
+              "magenta"
+            ],
+            hoverBackgroundColor: [
+              "green",
+              "blue",
+              "teal",
+              "red",
+              "magenta"
+            ]
+          }]
+
+      };
+
 
       if (oData != undefined && oData.length != 0) {
+
         for (let elem of oData) {
-          elem["infoLabel"] = statusDict[elem["status"]]
+          let status = elem["status"]
+          // check status
+          switch (status) {
+            case "allSucceeded":
+              statusPieData["datasets"]["0"]["data"]["0"] += 1
+              break
+            case "stageSucceeded":
+              statusPieData["datasets"]["0"]["data"]["1"] += 1
+              break
+            case "running":
+              statusPieData["datasets"]["0"]["data"]["2"] += 1
+              break
+            case "failed":
+              statusPieData["datasets"]["0"]["data"]["3"] += 1
+              break
+            default:
+              statusPieData["datasets"]["0"]["data"]["4"] += 1
+          }
+
+          elem["infoLabel"] = statusDict[status]
           let rawTotal = elem["raw_recordcount"]
           let stdS = elem["std_records_succeeded"]
           let stdF = elem["std_records_failed"]
@@ -134,7 +183,6 @@ var MonitoringService = new function() {
             }
             inconsistentState.push(estimatedRecordCount)
             totalInconsistentState += estimatedRecordCount
-            //elem["infoLabel"] = 4
             continue
           }
 
@@ -261,7 +309,7 @@ var MonitoringService = new function() {
               stack: "all"
             },
             {
-              label: "Inconsistent run state",
+              label: "Inconsistent run info",
               fill: true,
               lineTension: 0.1,
               backgroundColor: "magenta",
@@ -294,7 +342,7 @@ var MonitoringService = new function() {
             "Standartized, not conformed yet",
             "Failed at standardization",
             "Unprocessed raw",
-            "Inconsistent run state"
+            "Inconsistent run info"
           ],
           datasets: [
             {
@@ -326,6 +374,7 @@ var MonitoringService = new function() {
 
         };
         model.setProperty("/recordCountTotals", recordCountTotals)
+        model.setProperty("/statusPieData", statusPieData)
 
       } else {
         // no datapoints for this interval
