@@ -56,37 +56,44 @@ class HDFSConfig @Autowired()(spark: SparkSession) {
   }
 
   @Bean
-  def hadoopFS(): FileSystem = {
-    logger.info(s"Using hadoop authentication: $authMethod")
-    if (authMethod == "krb5") {
+  def hadoopFS(): FileSystem = FileSystem.get(authenticateHadoopConfig(hadoopConf(), authMethod))
 
-      logger.info("Using kerberos hadoop authentication")
-
-      System.setProperty("sun.security.krb5.debug", krb5debug)
-      System.setProperty("java.security.krb5.realm", krb5realm)
-      System.setProperty("java.security.krb5.kdc", krb5kdc)
-
-
-      val c = hadoopConf()
-
-      SecurityUtil.setAuthenticationMethod(AuthenticationMethod.KERBEROS, c)
-      UserGroupInformation.reset()
-      UserGroupInformation.setConfiguration(c)
-      UserGroupInformation.loginUserFromKeytab(krb5username, krb5keytab)
-
-      FileSystem.get(c)
-
-    } else if (authMethod == "simple") {
-      logger.info(s"Using simple hadoop authentication as $authUser")
-      val conf = hadoopConf()
-      SecurityUtil.setAuthenticationMethod(AuthenticationMethod.SIMPLE, conf)
-      UserGroupInformation.setConfiguration(conf)
-      UserGroupInformation.setLoginUser(UserGroupInformation.createRemoteUser(authUser))
-      FileSystem.get(conf)
+  def authenticateHadoopConfig(conf: HadoopConfiguration, authMethod: String): HadoopConfiguration = {
+    logger.info(s"Requested hadoop authentication: '$authMethod'")
+    authMethod match {
+      case "krb5"         => authenticateUsingKerberos(conf)
+      case "simple"       => authenticateUsingSimpleAuth(conf)
+      case "default" | "" => authenticateUsingDefaultAuth(conf)
+      case _ =>
+        logger.warn(s"Hadoop authentication method '$authMethod' in not one of 'default', 'simple' or 'krb5'.")
+        authenticateUsingDefaultAuth(conf)
     }
-    else {
-      logger.info("Using default hadoop authentication")
-      FileSystem.get(hadoopConf())
-    }
+  }
+
+  private def authenticateUsingKerberos(conf: HadoopConfiguration): HadoopConfiguration = {
+    logger.info("Using kerberos hadoop authentication")
+
+    System.setProperty("sun.security.krb5.debug", krb5debug)
+    System.setProperty("java.security.krb5.realm", krb5realm)
+    System.setProperty("java.security.krb5.kdc", krb5kdc)
+
+    SecurityUtil.setAuthenticationMethod(AuthenticationMethod.KERBEROS, conf)
+    UserGroupInformation.reset()
+    UserGroupInformation.setConfiguration(conf)
+    UserGroupInformation.loginUserFromKeytab(krb5username, krb5keytab)
+    conf
+  }
+
+  private def authenticateUsingSimpleAuth(conf: HadoopConfiguration): HadoopConfiguration = {
+    logger.info(s"Using simple hadoop authentication as $authUser")
+    SecurityUtil.setAuthenticationMethod(AuthenticationMethod.SIMPLE, conf)
+    UserGroupInformation.setConfiguration(conf)
+    UserGroupInformation.setLoginUser(UserGroupInformation.createRemoteUser(authUser))
+    conf
+  }
+
+  private def authenticateUsingDefaultAuth(conf: HadoopConfiguration): HadoopConfiguration = {
+    logger.info("Using default hadoop authentication")
+    conf
   }
 }
