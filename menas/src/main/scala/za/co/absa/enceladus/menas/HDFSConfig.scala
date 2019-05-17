@@ -30,7 +30,7 @@ class HDFSConfig @Autowired()(spark: SparkSession) {
 
   @Value("${za.co.absa.enceladus.menas.hadoop.auth.method}")
   val authMethod: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.user}")
+  @Value("${za.co.absa.enceladus.menas.hadoop.auth.user:}")
   val authUser: String = ""
   @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.debug:}")
   val krb5debug: String = ""
