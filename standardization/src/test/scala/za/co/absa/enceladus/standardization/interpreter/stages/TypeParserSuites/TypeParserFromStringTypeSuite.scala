@@ -15,7 +15,8 @@
 
 package za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuites
 
-import org.apache.spark.sql.types.{DataType, DateType, StringType, TimestampType}
+import org.apache.spark.sql.types.{ByteType, DataType, DateType, DoubleType, FloatType, IntegerType, LongType,
+  ShortType, StringType, StructField, TimestampType}
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate.Input
 import za.co.absa.enceladus.utils.time.DateTimePattern
@@ -46,8 +47,20 @@ class TypeParserFromStringTypeSuite extends TypeParserSuiteTemplate {
     }
   }
 
-  test("Within the column - type stays") {
-    doTestWithinColumn(input)
+  override protected def createErrorCondition(srcField: String, target: StructField, castS: String): String = {
+    target.dataType match {
+      case FloatType | DoubleType => s"(($castS IS NULL) OR isnan($castS)) OR ($castS IN (Infinity, -Infinity))"
+      case ByteType | ShortType | IntegerType | LongType => s"($castS IS NULL) OR contains($srcField, .)"
+      case _ => s"$castS IS NULL"
+    }
+  }
+
+  test("Within the column - type stays, nullable") {
+    doTestWithinColumnNullable(input)
+  }
+
+  test("Within the column - type stays, not nullable") {
+    doTestWithinColumnNotNullable(input)
   }
 
   test("Into string field") {

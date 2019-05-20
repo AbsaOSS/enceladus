@@ -102,7 +102,7 @@ object DateTimePattern {
       )
     }
     val PatternInfo(pattern, isDefault) = structField.readPatternInfo()
-    val timeZoneOpt = structField.getMetadata("timezone")
+    val timeZoneOpt = structField.getMetadataString("timezone")
     create(pattern, timeZoneOpt, isDefault)
   }
 

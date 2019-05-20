@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.standardization.interpreter.stages
 
 import java.security.InvalidParameterException
-
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
@@ -28,7 +27,6 @@ import org.apache.spark.sql.functions._
 import za.co.absa.spark.hofs.transform
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.time.DateTimePattern
-
 import scala.util.Random
 
 /**
@@ -85,17 +83,30 @@ object TypeParser {
                     path: String,
                     origSchema: StructType,
                     parent: Option[Parent] = None): TypeParser = {
-    val parserClass = field.dataType match {
-      case _: ArrayType     => ArrayParser
-      case _: StructType    => StructParser
-      case _: NumericType   => NumericParser
-      case _: StringType    => StringParser
-      case _: BooleanType   => BooleanParser
-      case _: DateType      => DateParser
-      case _: TimestampType => TimestampParser
+    field.dataType match {
+      case _: ArrayType                 => ArrayParser(field, path, origSchema, parent)
+      case _: StructType                => StructParser(field, path, origSchema, parent)
+      case _: ByteType                  => IntegralParser(field,
+        path,
+        origSchema,
+        parent,
+        Set(ShortType, IntegerType, LongType),
+        Byte.MinValue,
+        Byte.MaxValue)
+      case _: ShortType                 =>
+        IntegralParser(field, path, origSchema, parent, Set(IntegerType, LongType), Short.MinValue, Short.MaxValue)
+      case _: IntegerType               =>
+        IntegralParser(field, path, origSchema, parent, Set(LongType), Int.MinValue, Int.MaxValue)
+      case  _: LongType                 =>
+        IntegralParser(field, path, origSchema, parent, Set.empty, Long.MinValue, Long.MaxValue)
+      case _: FloatType | _: DoubleType => FractionalParser(field, path, origSchema, parent)
+      case _: DecimalType               => DecimalParser(field, path, origSchema, parent)
+      case _: StringType                => StringParser(field, path, origSchema, parent)
+      case _: BooleanType               => BooleanParser(field, path, origSchema, parent)
+      case _: DateType                  => DateParser(field, path, origSchema, parent)
+      case _: TimestampType             => TimestampParser(field, path, origSchema, parent)
       case t => throw new IllegalStateException(s"${t.typeName} is not a supported type in this version of Enceladus")
     }
-    parserClass(field, path, origSchema, parent)
   }
 
   private final case class ArrayParser(field: StructField,
@@ -161,28 +172,36 @@ object TypeParser {
 
   private trait PrimitiveParser extends TypeParser {
     override def standardize(): ParseOutput = {
+      val columnIdForUdf = if (isArrayElement) {
+        s"$currentColumnPath[*]"
+      } else {
+        currentColumnPath
+      }
       val castedCol: Column = assemblePrimitiveCastLogic
-      val err = when((column isNull) and lit(!field.nullable),
-        array(callUDF("stdNullErr", lit(s"$currentColumnPath${if (isArrayElement) "[*]" else ""}")))
-      ).otherwise(
-        when((column isNotNull) and primitiveCastErrorLogic(castedCol),
-          array(
-            callUDF("stdCastErr",
-              lit(s"$currentColumnPath${if (isArrayElement) "[*]" else ""}"),
-              column.cast(StringType))
-          )
-        ).otherwise(
-          typedLit(Seq[ErrorMessage]())
-        )
-      )
+      val castHasError: Column = assemblePrimitiveCastErrorLogic(castedCol)
 
-      val std = when((size(err) === lit(0)) and (column isNotNull),
+      val err: Column  = if (field.nullable) {
+        when(column.isNotNull and castHasError, // cast failed
+          array(callUDF("stdCastErr", lit(columnIdForUdf), column.cast(StringType)))
+        ).otherwise( // everything is OK
+          typedLit(Seq.empty[ErrorMessage])
+        )
+      } else {
+        when(column.isNull, // NULL not allowed
+          array(callUDF("stdNullErr", lit(columnIdForUdf)))
+        ).otherwise( when(castHasError, // cast failed
+          array(callUDF("stdCastErr", lit(columnIdForUdf), column.cast(StringType)))
+        ).otherwise( // everything is OK
+          typedLit(Seq.empty[ErrorMessage])
+        ))
+      }
+
+
+      val std: Column = when(size(err) > lit(0), // there was an error on cast
+        Defaults.getDefaultValue(field)
+      ).otherwise( when (column.isNotNull,
         castedCol
-      ).otherwise(
-        // scalastyle:off null
-        when(size(err) === lit(0), null
-          // scalastyle:on null
-        ).otherwise( Defaults.getDefaultValue(field) )
+      ) //.otherwise(null) - no need to explicitly mention
       ) as field.name
 
       ParseOutput(std, err)
@@ -190,19 +209,12 @@ object TypeParser {
 
     protected def assemblePrimitiveCastLogic: Column //this differs based on the field data type
 
-    private def primitiveCastErrorLogic(castedCol: Column): Column = { //this one is same for all primitive data types
-      field.dataType match {
-        // here we also want to check the numeric overflow by comparing with the original value this could break with
-        // trailing or leading zeros
-        case _: IntegerType |
-             _: ShortType |
-             _: FloatType |
-             _: DoubleType |
-             _: DecimalType |
-             _: ByteType |
-             _: LongType => castedCol isNull //TODO actual overflow/underflow check (#251)
-        case _ => castedCol isNull
-      }
+    protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
+      castedCol.isNull  //this one is sufficient for most primitive data types
+    }
+
+    protected def origType: DataType = {
+      SchemaUtils.getFieldType(currentColumnPath, origSchema).get
     }
 
   }
@@ -211,10 +223,60 @@ object TypeParser {
     override def assemblePrimitiveCastLogic: Column = column.cast(field.dataType)
   }
 
-  private final case class NumericParser(field: StructField,
-                                         path: String,
-                                         origSchema: StructType,
-                                         parent: Option[Parent]) extends ScalarParser
+  private trait NumericParser extends ScalarParser
+
+  private final case class IntegralParser(field: StructField,
+                                          path: String,
+                                          origSchema: StructType,
+                                          parent: Option[Parent],
+                                          overflowableTypes: Set[DataType ],
+                                          minValue: Long,
+                                          maxValue: Long
+                                         ) extends NumericParser {
+    override protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
+      val basicLogic: Column = super.assemblePrimitiveCastErrorLogic(castedCol)
+
+      origType match {
+        case  dt: DecimalType =>
+          // decimal can be too big, to catch overflow or imprecision  issues compare to original
+          basicLogic or (column =!= castedCol.cast(dt))
+        case DoubleType | FloatType | _: DecimalType =>
+          // same as Decimal but directly comparing fractional values is not reliable,
+          // best check for whole number is considered modulo 1.0
+          basicLogic or (column % 1.0 =!= 0.0) or column > maxValue or column < minValue
+        case ot if overflowableTypes.contains(ot) =>
+          // from these types there is the possibility of under-/overflow, extra check is needed
+          basicLogic or (castedCol =!= column.cast(LongType))
+        case StringType => basicLogic or column.contains(".")// string of decimals are not allowed
+        case _ => basicLogic
+      }
+    }
+  }
+
+  private final case class DecimalParser(field: StructField,
+                                            path: String,
+                                            origSchema: StructType,
+                                            parent: Option[Parent]) extends NumericParser
+
+  private final case class FractionalParser(field: StructField,
+                                            path: String,
+                                            origSchema: StructType,
+                                            parent: Option[Parent]) extends NumericParser {
+
+    import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldImprovements
+
+    private val allowInfinity = field.getMetadataBoolean("allowinfinity").getOrElse(false)
+
+    override protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
+      import za.co.absa.enceladus.utils.implicits.ColumnImplicits.RichColumn
+
+      if (allowInfinity) {
+        castedCol.isNumericOrInfinity
+      } else {
+        castedCol.isNotNumeric
+      }
+    }
+  }
 
   private final case class StringParser(field: StructField,
                                         path: String,
@@ -270,23 +332,26 @@ object TypeParser {
 
     private def castEpoch(): Column = {
       val epochPattern: String = Defaults.getGlobalFormat(field.dataType)
-      basicCastFunction(from_unixtime(column.cast("Long")  / pattern.epochFactor, epochPattern), epochPattern)
+      basicCastFunction(from_unixtime(column.cast(LongType)  / pattern.epochFactor, epochPattern), epochPattern)
     }
 
     private def castWithPattern(): Column = {
       // sadly with parquet support, incoming might not be all `plain`
-      val origType: DataType = SchemaUtils.getFieldType(currentColumnPath, origSchema).get
       origType match {
         case _: DateType                  => castDateColumn(column)
         case _: TimestampType             => castTimestampColumn(column)
         case _: StringType                => castStringColumn(column)
-        case _: DoubleType | _: FloatType =>
+        case ot: DoubleType               =>
           // this case covers some IBM date format where it's represented as a double ddmmyyyy.hhmmss
-          patternNeeded(origType)
-          castFractionalColumn(column, origType)
-        case _                            =>
-          patternNeeded(origType)
-          castNonStringColumn(column, origType)
+          patternNeeded(ot)
+          castFractionalColumn(column, ot)
+        case ot: FloatType =>
+          // this case covers some IBM date format where it's represented as a double ddmmyyyy.hhmmss
+          patternNeeded(ot)
+          castFractionalColumn(column, ot)
+        case ot                            =>
+          patternNeeded(ot)
+          castNonStringColumn(column, ot)
       }
     }
 

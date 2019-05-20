@@ -21,17 +21,21 @@ import scala.util.Try
 
 object StructFieldImplicits {
   implicit class StructFieldImprovements(val structField: StructField) {
-    def getMetadata(key: String): Option[String] = {
+    def getMetadataString(key: String): Option[String] = {
       Try(structField.metadata.getString(key)).toOption
     }
 
+    def getMetadataBoolean(key: String): Option[Boolean] = {
+      Try(structField.metadata.getBoolean(key)).toOption
+    }
+
     def readPatternInfo(): PatternInfo = {
-      val patternOpt: Option[String] = getMetadata("pattern")
+      val patternOpt: Option[String] = getMetadataString("pattern")
       PatternInfo(patternOpt.getOrElse(Defaults.getGlobalFormat(structField.dataType)), patternOpt.isEmpty)
     }
 
     def defaultValueAsString: Option[String] = {
-      getMetadata("default")
+      getMetadataString("default")
     }
   }
 

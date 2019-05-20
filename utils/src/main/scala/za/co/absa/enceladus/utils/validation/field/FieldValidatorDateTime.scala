@@ -32,7 +32,7 @@ trait FieldValidatorDateTime extends FieldValidator {
   override def validateStructField(field: StructField): Seq[ValidationIssue] = {
     val pattern = DateTimePattern.fromStructField(field)
     val defaultValue = field.defaultValueAsString
-    val defaultTimeZone = field.getMetadata("timezone")
+    val defaultTimeZone = field.getMetadataString("timezone")
     patternConversionIssues(pattern, defaultValue) ++
       defaultTimeZoneIssues(defaultTimeZone) ++
       patternAnalysisIssues(pattern, defaultValue, defaultTimeZone)
