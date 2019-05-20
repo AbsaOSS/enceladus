@@ -25,7 +25,7 @@ import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.utils.validation._
 
 object FieldValidatorDate extends FieldValidatorDateTime {
-  import za.co.absa.enceladus.utils.implicits.StringImplicits.StringImprovements
+  import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
 
   override protected def patternAnalysisIssues(pattern: DateTimePattern,
                                                defaultValue: Option[String],

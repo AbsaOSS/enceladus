@@ -51,25 +51,25 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       ("07-Exponential notation", "-1.23E4", "+9.8765E-3")
     )
     val src = seq.toDF("description","floatField", "doubleField")
-    showDateFrame(src)
+    showDataFrame(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     val exp = Seq(
       FractionalRow("01-Pi", Option(3.14F), Option(3.14)),
       FractionalRow("02-Null", Option(0), None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "floatField", Seq("null")))),
+        ErrorMessage.stdNullErr("floatField"))),
       FractionalRow("03-Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
       FractionalRow("04-infinity", Option(0), Option(0),  Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "floatField", Seq("-Infinity")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "doubleField", Seq("Infinity")))),
+        ErrorMessage.stdCastErr("floatField", "-Infinity"),
+        ErrorMessage.stdCastErr("doubleField", "Infinity"))),
       FractionalRow("05-Really big", Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "floatField", Seq("123456789123456791245678912324789123456789123456789.12")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "doubleField", Seq("12345678912345679124567891232478912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912346789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456789123456789123456789.1")))),
+        ErrorMessage.stdCastErr("floatField", "123456789123456791245678912324789123456789123456789.12"),
+        ErrorMessage.stdCastErr("doubleField", "12345678912345679124567891232478912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912346789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456789123456789123456789.1"))),
       FractionalRow("06-Text", Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "floatField", Seq("foo")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "doubleField", Seq("bar")))),
+        ErrorMessage.stdCastErr("floatField", "foo"),
+        ErrorMessage.stdCastErr("doubleField", "bar"))),
       FractionalRow("07-Exponential notation", Option(-12300.0f), Option(0.0098765))
     )
 
@@ -84,17 +84,17 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       InputRowLongsForFractional("03-Long", Option(-value), Option(value))
     )
     val src = spark.createDataFrame(seq)
-    showDateFrame(src)
+    showDataFrame(src)
 
     val exp = Seq(
       FractionalRow("01-Null", Option(0), None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "floatField", Seq("null")))),
+        ErrorMessage.stdNullErr("floatField"))),
       FractionalRow("02-Big Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
       FractionalRow("03-Long", Option(-value.toFloat), Option(value.toDouble))
     )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     assertResult(exp)(std.as[FractionalRow].collect().sortBy(_.description).toList)
   }
@@ -110,25 +110,25 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       InputRowDoublesForFractional("06-NaN", Option(Float.NaN), Option(Double.NaN))
     )
     val src = spark.createDataFrame(seq)
-    showDateFrame(src)
+    showDataFrame(src)
 
     val exp = Seq(
       FractionalRow("01-Pi", Option(Math.PI.toFloat), Option(Math.PI)),
       FractionalRow("02-Null", Option(0), None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "floatField", Seq("null")))),
+        ErrorMessage.stdNullErr("floatField"))),
       FractionalRow("03-Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
       FractionalRow("04-Infinity", Option(0), Option(0),  Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "floatField", Seq("-Infinity")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "doubleField", Seq("Infinity")))),
+        ErrorMessage.stdCastErr("floatField", "-Infinity"),
+        ErrorMessage.stdCastErr("doubleField", "Infinity"))),
       FractionalRow("05-Really big", Option(0), Option(reallyBig), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "floatField", Seq(reallyBig.toString)))),
+        ErrorMessage.stdCastErr("floatField", reallyBig.toString))),
       FractionalRow("06-NaN", Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "floatField", Seq("NaN")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "doubleField", Seq("NaN"))))
+        ErrorMessage.stdCastErr("floatField", "NaN"),
+        ErrorMessage.stdCastErr("doubleField", "NaN")))
     )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     assertResult(exp)(std.as[FractionalRow].collect().sortBy(_.description).toList)
   }
@@ -145,21 +145,21 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       ("07-Exponential notation", "-1.23E4", "+9.8765E-3")
     )
     val src = seq.toDF("description","floatField", "doubleField")
-    showDateFrame(src)
+    showDataFrame(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchemaWithInfinity, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     val exp = Seq(
       FractionalRow("01-Euler", Option(2.71F), Option(2.71)),
       FractionalRow("02-Null", Option(0), None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "floatField", Seq("null")))),
+        ErrorMessage.stdNullErr("floatField"))),
       FractionalRow("03-Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
       FractionalRow("04-infinity", Some(Float.NegativeInfinity), Option(Double.PositiveInfinity)),
       FractionalRow("05-Really big", Option(Float.PositiveInfinity), Option(Double.NegativeInfinity)),
       FractionalRow("06-Text", Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "floatField", Seq("foo")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "doubleField", Seq("bar")))),
+        ErrorMessage.stdCastErr("floatField", "foo"),
+        ErrorMessage.stdCastErr("doubleField", "bar"))),
       FractionalRow("07-Exponential notation", Option(-12300.0f), Option(0.0098765))
     )
 
@@ -177,22 +177,22 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       InputRowDoublesForFractional("06-NaN", Option(Float.NaN), Option(Double.NaN))
     )
     val src = spark.createDataFrame(seq)
-    showDateFrame(src)
+    showDataFrame(src)
 
     val exp = Seq(
       FractionalRow("01-Euler", Option(Math.E.toFloat), Option(Math.E)),
       FractionalRow("02-Null", Option(0), None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "floatField", Seq("null")))),
+        ErrorMessage.stdNullErr("floatField"))),
       FractionalRow("03-Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
       FractionalRow("04-Infinity", Option(Float.NegativeInfinity), Option(Double.PositiveInfinity)),
       FractionalRow("05-Really big", Option(Float.PositiveInfinity), Option(reallyBig)),
       FractionalRow("06-NaN", Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "floatField", Seq("NaN")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "doubleField", Seq("NaN"))))
+        ErrorMessage.stdCastErr("floatField", "NaN"),
+        ErrorMessage.stdCastErr("doubleField", "NaN")))
     )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchemaWithInfinity, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     assertResult(exp)(std.as[FractionalRow].collect().sortBy(_.description).toList)
   }

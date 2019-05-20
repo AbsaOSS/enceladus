@@ -72,7 +72,7 @@ trait SparkTestBase { self =>
   Logger.getLogger("akka").setLevel(Level.WARN)
 
   protected val showIsActive = false
-  protected def showDateFrame(df: DataFrame): Unit = {
+  protected def showDataFrame(df: DataFrame): Unit = {
     if (showIsActive) {
       df.printSchema()
       df.show(false)

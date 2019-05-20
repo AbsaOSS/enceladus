@@ -20,7 +20,7 @@ import java.security.InvalidParameterException
 import scala.annotation.tailrec
 
 object StringImplicits {
-  implicit class StringImprovements(string: String) {
+  implicit class StringEnhancements(string: String) {
 
     /**
       * Function to find the first occurrence of any of the characters from the charsToFind in the string. The

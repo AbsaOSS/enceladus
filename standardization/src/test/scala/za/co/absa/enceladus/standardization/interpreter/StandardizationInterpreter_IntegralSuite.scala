@@ -49,38 +49,38 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
     val src = spark.read
       .option("header", "true")
       .csv(s"${pathToTestData}integral_overflow_test.csv")
-    showDateFrame(src)
+    showDataFrame(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     val exp = Seq(
       IntegralRow("Decimal entry", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("1.0")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq("2.0")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq("3.0")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("4.0")))),
+        ErrorMessage.stdCastErr("bytesize", "1.0"),
+        ErrorMessage.stdCastErr("shortsize", "2.0"),
+        ErrorMessage.stdCastErr("integersize", "3.0"),
+        ErrorMessage.stdCastErr("longsize", "4.0"))),
       IntegralRow("Full negative", Option(-128), Option(-32768), Option(-2147483648), Option(-9223372036854775808L)),
       IntegralRow("Full positive", Option(127), Option(32767), Option(2147483647), Option(9223372036854775807L)),
       IntegralRow("Nulls", Option(0), Option(0), None, None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "bytesize", Seq("null")),
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "shortsize", Seq("null")))),
+        ErrorMessage.stdNullErr("bytesize"),
+        ErrorMessage.stdNullErr("shortsize"))),
       IntegralRow("One", Option(1), Option(1), Option(1), Option(1)),
       IntegralRow("Overflow", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("128")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq("32768")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq("2147483648")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("9223372036854775808")))),
+        ErrorMessage.stdCastErr("bytesize", "128"),
+        ErrorMessage.stdCastErr("shortsize", "32768"),
+        ErrorMessage.stdCastErr("integersize", "2147483648"),
+        ErrorMessage.stdCastErr("longsize", "9223372036854775808"))),
       IntegralRow("Underflow", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("-129")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq("-32769")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq("-2147483649")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("-9223372036854775809")))),
+        ErrorMessage.stdCastErr("bytesize", "-129"),
+        ErrorMessage.stdCastErr("shortsize", "-32769"),
+        ErrorMessage.stdCastErr("integersize", "-2147483649"),
+        ErrorMessage.stdCastErr("longsize", "-9223372036854775809"))),
       IntegralRow("With fractions", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("3.14")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq("2.71")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq("1.41")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("1.5")))),
+        ErrorMessage.stdCastErr("bytesize", "3.14"),
+        ErrorMessage.stdCastErr("shortsize", "2.71"),
+        ErrorMessage.stdCastErr("integersize", "1.41"),
+        ErrorMessage.stdCastErr("longsize", "1.5"))),
       IntegralRow("With plus sign", Option(127), Option(32767), Option(2147483647), Option(9223372036854775807L)),
       IntegralRow("With zeros", Option(0), Option(7), Option(-1), Option(0))
     )
@@ -89,38 +89,38 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
 
   test("Under-/overflow from JSON text") {
     val src = spark.read.json(s"${pathToTestData}integral_overflow_test_text.json")
-    showDateFrame(src)
+    showDataFrame(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     val exp = Seq(
       IntegralRow("Decimal entry", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("1.0")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq("2.0")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq("3.0")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("4.0")))),
+        ErrorMessage.stdCastErr("bytesize", "1.0"),
+        ErrorMessage.stdCastErr("shortsize", "2.0"),
+        ErrorMessage.stdCastErr("integersize", "3.0"),
+        ErrorMessage.stdCastErr("longsize", "4.0"))),
       IntegralRow("Full negative", Option(-128), Option(-32768), Option(-2147483648), Option(-9223372036854775808L)),
       IntegralRow("Full positive", Option(127), Option(32767), Option(2147483647), Option(9223372036854775807L)),
       IntegralRow("Nulls", Option(0), Option(0), None, None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "bytesize", Seq("null")),
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "shortsize", Seq("null")))),
+        ErrorMessage.stdNullErr("bytesize"),
+        ErrorMessage.stdNullErr("shortsize"))),
       IntegralRow("One", Option(1), Option(1), Option(1), Option(1)),
       IntegralRow("Overflow", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("128")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq("32768")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq("2147483648")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("9223372036854775808")))),
+        ErrorMessage.stdCastErr("bytesize", "128"),
+        ErrorMessage.stdCastErr("shortsize", "32768"),
+        ErrorMessage.stdCastErr("integersize", "2147483648"),
+        ErrorMessage.stdCastErr("longsize", "9223372036854775808"))),
       IntegralRow("Underflow", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("-129")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq("-32769")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq("-2147483649")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("-9223372036854775809")))),
+        ErrorMessage.stdCastErr("bytesize", "-129"),
+        ErrorMessage.stdCastErr("shortsize", "-32769"),
+        ErrorMessage.stdCastErr("integersize", "-2147483649"),
+        ErrorMessage.stdCastErr("longsize", "-9223372036854775809"))),
       IntegralRow("With fractions", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("3.14")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq("2.71")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq("1.41")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("1.5")))),
+        ErrorMessage.stdCastErr("bytesize", "3.14"),
+        ErrorMessage.stdCastErr("shortsize", "2.71"),
+        ErrorMessage.stdCastErr("integersize", "1.41"),
+        ErrorMessage.stdCastErr("longsize", "1.5"))),
       IntegralRow("With plus sign", Option(127), Option(32767), Option(2147483647), Option(9223372036854775807L)),
       IntegralRow("With zeros", Option(0), Option(7), Option(-1), Option(0))
     )
@@ -129,32 +129,32 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
 
   test("Under-/overflow from JSON numeric") {
     val src = spark.read.json(s"${pathToTestData}integral_overflow_test_numbers.json")
-    showDateFrame(src)
+    showDataFrame(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     val exp = Seq(
       IntegralRow("Decimal entry", Option(0), Option(2), Option(3), Option(4), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("1.1")))),
+        ErrorMessage.stdCastErr("bytesize", "1.1"))),
       IntegralRow("Full negative", Option(-128), Option(-32768), Option(-2147483648), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("-9223372036854776000")))),
+        ErrorMessage.stdCastErr("longsize", "-9223372036854776000"))),
       IntegralRow("Full positive", Option(127), Option(32767), Option(2147483647), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("9223372036854776000")))),
+        ErrorMessage.stdCastErr("longsize", "9223372036854776000"))),
       IntegralRow("Nulls", Option(0), Option(0), None, None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "bytesize", Seq("null")),
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "shortsize", Seq("null")))),
+        ErrorMessage.stdNullErr("bytesize"),
+        ErrorMessage.stdNullErr("shortsize"))),
       IntegralRow("One", Option(1), Option(1), Option(1), Option(1)),
       IntegralRow("Overflow", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("128.0")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq("32768")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq("2147483648")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("9223372036854776000")))),
+        ErrorMessage.stdCastErr("bytesize", "128.0"),
+        ErrorMessage.stdCastErr("shortsize", "32768"),
+        ErrorMessage.stdCastErr("integersize", "2147483648"),
+        ErrorMessage.stdCastErr("longsize", "9223372036854776000"))),
       IntegralRow("Underflow", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("-129.0")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq("-32769")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq("-2147483649")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("-9223372036854776000"))))
+        ErrorMessage.stdCastErr("bytesize", "-129.0"),
+        ErrorMessage.stdCastErr("shortsize", "-32769"),
+        ErrorMessage.stdCastErr("integersize", "-2147483649"),
+        ErrorMessage.stdCastErr("longsize", "-9223372036854776000")))
     )
     assertResult(exp)(std.as[IntegralRow].collect().sortBy(_.description).toList)
   }
@@ -170,32 +170,32 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
       new InputRowLongs("7-Int", Int.MinValue),
       new InputRowLongs("8-Long", Long.MinValue)
     ))
-    showDateFrame(src)
+    showDataFrame(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     val exp = Seq(
       IntegralRow("1-Byte", Option(Byte.MaxValue), Option(Byte.MaxValue), Option(Byte.MaxValue), Option(Byte.MaxValue)),
       IntegralRow("2-Short", Option(0), Option(Short.MaxValue), Option(Short.MaxValue), Option(Short.MaxValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Short.MaxValue.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Short.MaxValue.toString))),
       IntegralRow("3-Int", Option(0), Option(0), Option(Int.MaxValue), Option(Int.MaxValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Int.MaxValue.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(Int.MaxValue.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Int.MaxValue.toString),
+        ErrorMessage.stdCastErr("shortsize", Int.MaxValue.toString))),
       IntegralRow("4-Long", Option(0), Option(0), Option(0), Option(Long.MaxValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Long.MaxValue.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(Long.MaxValue.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(Long.MaxValue.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Long.MaxValue.toString),
+        ErrorMessage.stdCastErr("shortsize", Long.MaxValue.toString),
+        ErrorMessage.stdCastErr("integersize", Long.MaxValue.toString))),
       IntegralRow("5-Byte", Option(Byte.MinValue), Option(Byte.MinValue), Option(Byte.MinValue), Option(Byte.MinValue)),
       IntegralRow("6-Short", Option(0), Option(Short.MinValue), Option(Short.MinValue), Option(Short.MinValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Short.MinValue.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Short.MinValue.toString))),
       IntegralRow("7-Int", Option(0), Option(0), Option(Int.MinValue), Option(Int.MinValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Int.MinValue.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(Int.MinValue.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Int.MinValue.toString),
+        ErrorMessage.stdCastErr("shortsize", Int.MinValue.toString))),
       IntegralRow("8-Long", Option(0), Option(0), Option(0), Option(Long.MinValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Long.MinValue.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(Long.MinValue.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(Long.MinValue.toString))))
+        ErrorMessage.stdCastErr("bytesize", Long.MinValue.toString),
+        ErrorMessage.stdCastErr("shortsize", Long.MinValue.toString),
+        ErrorMessage.stdCastErr("integersize", Long.MinValue.toString)))
     )
     assertResult(exp)(std.as[IntegralRow].collect().sortBy(_.description).toList)
   }
@@ -224,62 +224,62 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
     )
 
     val src = spark.createDataFrame(seq)
-    showDateFrame(src)
+    showDataFrame(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     val exp = Seq(
       IntegralRow("00-One", Option(1), Option(1), Option(1), Option(1)),
       IntegralRow("01-Byte", Option(Byte.MaxValue), Option(Byte.MaxValue), Option(Byte.MaxValue), Option(Byte.MaxValue)),
       IntegralRow("02-Short", Option(0), Option(Short.MaxValue), Option(Short.MaxValue), Option(Short.MaxValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Short.MaxValue.toDouble.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Short.MaxValue.toDouble.toString))),
       IntegralRow("03-Int", Option(0), Option(0), Option(Int.MaxValue), Option(Int.MaxValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Int.MaxValue.toDouble.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(Int.MaxValue.toDouble.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Int.MaxValue.toDouble.toString),
+        ErrorMessage.stdCastErr("shortsize", Int.MaxValue.toDouble.toString))),
       IntegralRow("04-Long", Option(0), Option(0), Option(0), Option(Long.MaxValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Long.MaxValue.toDouble.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(Long.MaxValue.toDouble.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(Long.MaxValue.toDouble.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Long.MaxValue.toDouble.toString),
+        ErrorMessage.stdCastErr("shortsize", Long.MaxValue.toDouble.toString),
+        ErrorMessage.stdCastErr("integersize", Long.MaxValue.toDouble.toString))),
       IntegralRow("05-Byte", Option(Byte.MinValue), Option(Byte.MinValue), Option(Byte.MinValue), Option(Byte.MinValue)),
       IntegralRow("06-Short", Option(0), Option(Short.MinValue), Option(Short.MinValue), Option(Short.MinValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Short.MinValue.toDouble.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Short.MinValue.toDouble.toString))),
       IntegralRow("07-Int", Option(0), Option(0), Option(Int.MinValue), Option(Int.MinValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Int.MinValue.toDouble.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(Int.MinValue.toDouble.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Int.MinValue.toDouble.toString),
+        ErrorMessage.stdCastErr("shortsize", Int.MinValue.toDouble.toString))),
       IntegralRow("08-Long", Option(0), Option(0), Option(0), Option(Long.MinValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Long.MinValue.toDouble.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(Long.MinValue.toDouble.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(Long.MinValue.toDouble.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Long.MinValue.toDouble.toString),
+        ErrorMessage.stdCastErr("shortsize", Long.MinValue.toDouble.toString),
+        ErrorMessage.stdCastErr("integersize", Long.MinValue.toDouble.toString))),
       IntegralRow("09-Pi", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Math.PI.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(Math.PI.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(Math.PI.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq(Math.PI.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Math.PI.toString),
+        ErrorMessage.stdCastErr("shortsize", Math.PI.toString),
+        ErrorMessage.stdCastErr("integersize", Math.PI.toString),
+        ErrorMessage.stdCastErr("longsize", Math.PI.toString))),
       IntegralRow("10-Whole", Option(7), Option(7), Option(7), Option(7)),
       IntegralRow("11-Really small", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(Double.MinPositiveValue.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(Double.MinPositiveValue.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(Double.MinPositiveValue.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq(Double.MinPositiveValue.toString)))),
+        ErrorMessage.stdCastErr("bytesize", Double.MinPositiveValue.toString),
+        ErrorMessage.stdCastErr("shortsize", Double.MinPositiveValue.toString),
+        ErrorMessage.stdCastErr("integersize", Double.MinPositiveValue.toString),
+        ErrorMessage.stdCastErr("longsize", Double.MinPositiveValue.toString))),
       IntegralRow("12-Really big", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(reallyBig.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(reallyBig.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(reallyBig.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq(reallyBig.toString)))),
+        ErrorMessage.stdCastErr("bytesize", reallyBig.toString),
+        ErrorMessage.stdCastErr("shortsize", reallyBig.toString),
+        ErrorMessage.stdCastErr("integersize", reallyBig.toString),
+        ErrorMessage.stdCastErr("longsize", reallyBig.toString))),
       IntegralRow("13-Tiny fractional part", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(tinyFractionalPart.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(tinyFractionalPart.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(tinyFractionalPart.toString)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq(tinyFractionalPart.toString)))),
+        ErrorMessage.stdCastErr("bytesize", tinyFractionalPart.toString),
+        ErrorMessage.stdCastErr("shortsize", tinyFractionalPart.toString),
+        ErrorMessage.stdCastErr("integersize", tinyFractionalPart.toString),
+        ErrorMessage.stdCastErr("longsize", tinyFractionalPart.toString))),
       IntegralRow("14-NaN", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq("NaN")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq("NaN")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq("NaN")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq("NaN")))),
+        ErrorMessage.stdCastErr("bytesize", "NaN"),
+        ErrorMessage.stdCastErr("shortsize", "NaN"),
+        ErrorMessage.stdCastErr("integersize", "NaN"),
+        ErrorMessage.stdCastErr("longsize", "NaN"))),
       IntegralRow("15-Null", Option(0), Option(0), None, None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "bytesize", Seq("null")),
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "shortsize", Seq("null"))))
+        ErrorMessage.stdNullErr("bytesize"),
+        ErrorMessage.stdNullErr("shortsize")))
     )
 
     assertResult(exp)(std.as[IntegralRow].collect().sortBy(_.description).toList)
@@ -311,39 +311,39 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
       new InputRowBigDecimals("06-Null", null)
     )
     val src = spark.createDataFrame(seq)
-    showDateFrame(src)
+    showDataFrame(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     val exp = Seq(
       IntegralRow("00-One", Option(1), Option(1), Option(1), Option(1)),
       IntegralRow("01-Pi", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(formatBigDecimal(pi))),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(formatBigDecimal(pi))),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(formatBigDecimal(pi))),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq(formatBigDecimal(pi))))),
+        ErrorMessage.stdCastErr("bytesize", formatBigDecimal(pi)),
+        ErrorMessage.stdCastErr("shortsize", formatBigDecimal(pi)),
+        ErrorMessage.stdCastErr("integersize", formatBigDecimal(pi)),
+        ErrorMessage.stdCastErr("longsize", formatBigDecimal(pi)))),
       IntegralRow("02-Tiny fractional part", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(tinyFractionalPartStr)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(tinyFractionalPartStr)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(tinyFractionalPartStr)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq(tinyFractionalPartStr)))),
+        ErrorMessage.stdCastErr("bytesize", tinyFractionalPartStr),
+        ErrorMessage.stdCastErr("shortsize", tinyFractionalPartStr),
+        ErrorMessage.stdCastErr("integersize", tinyFractionalPartStr),
+        ErrorMessage.stdCastErr("longsize", tinyFractionalPartStr))),
       IntegralRow("03-Really big", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(reallyBigStr)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(reallyBigStr)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(reallyBigStr)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq(reallyBigStr)))),
+        ErrorMessage.stdCastErr("bytesize", reallyBigStr),
+        ErrorMessage.stdCastErr("shortsize", reallyBigStr),
+        ErrorMessage.stdCastErr("integersize", reallyBigStr),
+        ErrorMessage.stdCastErr("longsize", reallyBigStr))),
       IntegralRow("04-Really small", Option(0), Option(0), Option(0), Option(0), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(reallySmallStr)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(reallySmallStr)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "integersize", Seq(reallySmallStr)),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "longsize", Seq(reallySmallStr)))),
+        ErrorMessage.stdCastErr("bytesize", reallySmallStr),
+        ErrorMessage.stdCastErr("shortsize", reallySmallStr),
+        ErrorMessage.stdCastErr("integersize", reallySmallStr),
+        ErrorMessage.stdCastErr("longsize", reallySmallStr))),
       IntegralRow("05-Short", Option(0), Option(0), Option(Short.MaxValue + 1), Option(Short.MaxValue + 1), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "bytesize", Seq(formatBigDecimal(shortOverflow))),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "shortsize", Seq(formatBigDecimal(shortOverflow))))),
+        ErrorMessage.stdCastErr("bytesize", formatBigDecimal(shortOverflow)),
+        ErrorMessage.stdCastErr("shortsize", formatBigDecimal(shortOverflow)))),
       IntegralRow("06-Null", Option(0), Option(0), None, None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "bytesize", Seq("null")),
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "shortsize", Seq("null"))))
+        ErrorMessage.stdNullErr("bytesize"),
+        ErrorMessage.stdNullErr("shortsize")))
     )
 
     assertResult(exp)(std.as[IntegralRow].collect().sortBy(_.description).toList)

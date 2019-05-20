@@ -61,29 +61,29 @@ class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBas
       ("09-Loss of precision", "123.456", "123.456")
     )
     val src = seq.toDF("description","small", "big")
-    showDateFrame(src)
+    showDataFrame(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     val exp = Seq(
       DecimalRow("01-Pi", Option(bd(3.14)), Option(bd(3.14))),
       DecimalRow("02-Null", Option(zero), None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "small", Seq("null")))),
+        ErrorMessage.stdNullErr("small"))),
       DecimalRow("03-Long", Option(zero), Option(Long.MinValue), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "small", Seq(Long.MaxValue.toString)))),
+        ErrorMessage.stdCastErr("small", Long.MaxValue.toString))),
       DecimalRow("04-infinity", Option(zero), Option(zero),  Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "small", Seq("-Infinity")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "big", Seq("Infinity")))),
+        ErrorMessage.stdCastErr("small", "-Infinity"),
+        ErrorMessage.stdCastErr("big", "Infinity"))),
       DecimalRow("05-Really big", Option(zero), Option(zero), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "small", Seq("123456789123456791245678912324789123456789123456789.12")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "big", Seq("12345678912345679124567891232478912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912346789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456789123456789123456789.1")))),
+        ErrorMessage.stdCastErr("small", "123456789123456791245678912324789123456789123456789.12"),
+        ErrorMessage.stdCastErr("big", "12345678912345679124567891232478912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912346789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456789123456789123456789.1"))),
       DecimalRow("06-Text", Option(zero), Option(zero), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "small", Seq("foo")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "big", Seq("bar")))),
+        ErrorMessage.stdCastErr("small", "foo"),
+        ErrorMessage.stdCastErr("big", "bar"))),
       DecimalRow("07-Exponential notation", Option(bd(-123)), Option(bd(0.00098765))),
       DecimalRow("08-Small overflow", Option(zero), Option(bd(1000)), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "small", Seq("1000")))),
+        ErrorMessage.stdCastErr("small", "1000"))),
       DecimalRow("09-Loss of precision", Option(bd(123.46)), Option(bd(123.456)))
     )
 
@@ -101,27 +101,27 @@ class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBas
       InputRowDoublesForDecimal("06-NaN", Option(Float.NaN), Option(Double.NaN))
     )
     val src = spark.createDataFrame(seq)
-    showDateFrame(src)
+    showDataFrame(src)
 
     val exp = Seq(
       DecimalRow("01-Pi", Option(bd(3.14)), Option(bd(Math.PI))),
       DecimalRow("02-Null", Option(zero), None, Seq(
-        ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "small", Seq("null")))),
+        ErrorMessage.stdNullErr("small"))),
       DecimalRow("03-Long", Option(zero), Option(-9223372036854776000.0), Seq(  // rounding in doubles for large integers
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "small", Seq("9.223372036854776E18")))),
+        ErrorMessage.stdCastErr("small", "9.223372036854776E18"))),
       DecimalRow("04-Infinity", Option(zero), Option(zero),  Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "small", Seq("-Infinity")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "big", Seq("Infinity")))),
+        ErrorMessage.stdCastErr("small", "-Infinity"),
+        ErrorMessage.stdCastErr("big", "Infinity"))),
       DecimalRow("05-Really big", Option(zero), Option(zero), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "small", Seq(reallyBig.toString)),
-      ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "big", Seq(reallyBig.toString)))),
+        ErrorMessage.stdCastErr("small", reallyBig.toString),
+      ErrorMessage.stdCastErr("big", reallyBig.toString))),
       DecimalRow("06-NaN", Option(zero), Option(zero), Seq(
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "small", Seq("NaN")),
-        ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "big", Seq("NaN"))))
+        ErrorMessage.stdCastErr("small", "NaN"),
+        ErrorMessage.stdCastErr("big", "NaN")))
     )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDateFrame(std)
+    showDataFrame(std)
 
     assertResult(exp)(std.as[DecimalRow].collect().sortBy(_.description).toList)  }
 }

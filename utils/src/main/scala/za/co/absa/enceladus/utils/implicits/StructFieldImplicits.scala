@@ -20,7 +20,7 @@ import za.co.absa.enceladus.utils.types.Defaults
 import scala.util.Try
 
 object StructFieldImplicits {
-  implicit class StructFieldImprovements(val structField: StructField) {
+  implicit class StructFieldEnhancements(val structField: StructField) {
     def getMetadataString(key: String): Option[String] = {
       Try(structField.metadata.getString(key)).toOption
     }

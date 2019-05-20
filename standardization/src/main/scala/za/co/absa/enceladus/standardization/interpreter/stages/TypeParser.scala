@@ -240,7 +240,7 @@ object TypeParser {
         case  dt: DecimalType =>
           // decimal can be too big, to catch overflow or imprecision  issues compare to original
           basicLogic or (column =!= castedCol.cast(dt))
-        case DoubleType | FloatType | _: DecimalType =>
+        case DoubleType | FloatType =>
           // same as Decimal but directly comparing fractional values is not reliable,
           // best check for whole number is considered modulo 1.0
           basicLogic or (column % 1.0 =!= 0.0) or column > maxValue or column < minValue
@@ -263,15 +263,15 @@ object TypeParser {
                                             origSchema: StructType,
                                             parent: Option[Parent]) extends NumericParser {
 
-    import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldImprovements
+    import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldEnhancements
 
     private val allowInfinity = field.getMetadataBoolean("allowinfinity").getOrElse(false)
 
     override protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
-      import za.co.absa.enceladus.utils.implicits.ColumnImplicits.RichColumn
+      import za.co.absa.enceladus.utils.implicits.ColumnImplicits.ColumnEnhancements
 
       if (allowInfinity) {
-        castedCol.isNumericOrInfinity
+        castedCol.isNotNumericNorInfinity
       } else {
         castedCol.isNotNumeric
       }

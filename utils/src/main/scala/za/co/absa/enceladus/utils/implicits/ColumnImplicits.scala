@@ -19,7 +19,7 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions._
 
 object ColumnImplicits {
-  implicit class RichColumn(column: Column) {
+  implicit class ColumnEnhancements(column: Column) {
     def isInfinite: Column = {
       column.isin(Double.PositiveInfinity, Double.NegativeInfinity)
     }
@@ -28,9 +28,8 @@ object ColumnImplicits {
       column.isNull or column.isNaN or column.isin(Double.PositiveInfinity, Double.NegativeInfinity)
     }
 
-    def isNumericOrInfinity: Column = {
+    def isNotNumericNorInfinity: Column = {
       column.isNull or column.isNaN
     }
-
   }
 }

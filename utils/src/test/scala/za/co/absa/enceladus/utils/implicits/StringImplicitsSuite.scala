@@ -18,7 +18,7 @@ package za.co.absa.enceladus.utils.implicits
 import java.security.InvalidParameterException
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.implicits.StringImplicits.StringImprovements
+import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
 
 class StringImplicitsSuite  extends FunSuite {
   test("StringImprovements.findFirstUnquoted - empty string") {
