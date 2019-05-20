@@ -21,24 +21,31 @@ class HelperFunctionsSuite extends FunSuite {
   test("Test basic flow of prettyPrintElapsedTime") {
     val time = 90061000
     val response = "1 day, 1 hour, 1 minute and 1.00 second"
-    assert(response == HelperFunctions.prettyPrintElapsedTime(time))
+    assert(HelperFunctions.prettyPrintElapsedTime(time) == response)
   }
 
   test("Test one second prettyPrintElapsedTime") {
     val time = 1000
     val response = "1.00 second"
-    assert(response == HelperFunctions.prettyPrintElapsedTime(time))
+    assert(HelperFunctions.prettyPrintElapsedTime(time) == response)
   }
 
   test("Test two hours prettyPrintElapsedTime") {
     val time = 7200000
     val response = "2 hours"
-    assert(response == HelperFunctions.prettyPrintElapsedTime(time))
+    assert(HelperFunctions.prettyPrintElapsedTime(time) == response)
   }
 
   test("Test unordered segments prettyPrintElapsedTime") {
     val time = 432184026
     val response = "5 days, 3 minutes and 4.03 seconds"
-    assert(response == HelperFunctions.prettyPrintElapsedTime(time))
+    assert(HelperFunctions.prettyPrintElapsedTime(time) == response)
   }
+
+  test("Test 0") {
+    val time = 0
+    val response = "0 seconds"
+    assert(HelperFunctions.prettyPrintElapsedTime(time) == response)
+  }
+
 }
