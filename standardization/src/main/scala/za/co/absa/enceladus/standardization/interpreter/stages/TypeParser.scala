@@ -345,7 +345,7 @@ object TypeParser {
           // this case covers some IBM date format where it's represented as a double ddmmyyyy.hhmmss
           patternNeeded(ot)
           castFractionalColumn(column, ot)
-        case ot: FloatType =>
+        case ot: FloatType                =>
           // this case covers some IBM date format where it's represented as a double ddmmyyyy.hhmmss
           patternNeeded(ot)
           castFractionalColumn(column, ot)
