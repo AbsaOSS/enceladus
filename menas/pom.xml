@@ -177,7 +177,7 @@
         </dependency>
         <!-- WebJars -->
         <dependency>
-            <groupId>org.webjars</groupId>
+            <groupId>africa.absa</groupId>
             <artifactId>openui5</artifactId>
             <version>${openui5.version}</version>
         </dependency>
