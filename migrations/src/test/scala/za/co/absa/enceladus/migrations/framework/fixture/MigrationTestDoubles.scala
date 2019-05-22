@@ -20,6 +20,8 @@ import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 object MigrationTestDoubles {
 
   object DocumentDbStub extends DocumentDb {
+    override def getVersion(): Int = 0
+    override def setVersion(version: Int): Unit = {}
     override def collectionExists(collectionName: String): Boolean = true
     override def createCollection(collectionName: String): Unit = {}
     override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {}

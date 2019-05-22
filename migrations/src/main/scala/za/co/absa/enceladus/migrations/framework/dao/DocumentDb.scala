@@ -17,6 +17,10 @@ package za.co.absa.enceladus.migrations.framework.dao
 
 abstract class DocumentDb {
 
+  def getVersion(): Int
+
+  def setVersion(version: Int): Unit
+
   def collectionExists(collectionName: String): Boolean
 
   def createCollection(collectionName: String): Unit

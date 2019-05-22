@@ -63,5 +63,10 @@ class DocumentDbMock extends DocumentDb {
     db(collectionName).toIterator
   }
 
+  override def getVersion(): Int = version
+
+  override def setVersion(version: Int): Unit = this.version = version
+
   private val db = new mutable.HashMap[String, ArrayBuffer[String]]()
+  private var version = 0
 }
