@@ -21,11 +21,11 @@ abstract class DocumentDb {
 
   def createCollection(collectionName: String): Unit
 
-  def cloneCollection(collectionName: String): Unit
+  def cloneCollection(collectionName: String, newCollectionName: String): Unit
 
   def insertDocument(collectionName: String, document: String): Unit
 
-  def executeQuery(collectionName: String, query: String)
+  def executeQuery(query: String)
 
-  // ToDo Cursor operations
+  def getDocuments(collectionName: String): Iterator[String]
 }

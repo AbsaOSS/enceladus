@@ -22,9 +22,9 @@ object MigrationTestDoubles {
   object DocumentDbStub extends DocumentDb {
     override def collectionExists(collectionName: String): Boolean = true
     override def createCollection(collectionName: String): Unit = {}
-    override def cloneCollection(collectionName: String): Unit = {}
+    override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {}
     override def insertDocument(collectionName: String, document: String): Unit = {}
-    override def executeQuery(collectionName: String, query: String): Unit = {}
+    override def executeQuery(query: String): Unit = {}
+    override def getDocuments(collectionName: String): Iterator[String] = List[String]().toIterator
   }
-
 }
