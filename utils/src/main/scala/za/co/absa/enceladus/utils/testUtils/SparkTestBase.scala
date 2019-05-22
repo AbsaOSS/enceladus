@@ -16,15 +16,13 @@
 package za.co.absa.enceladus.utils.testUtils
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql. SparkSession
 import org.apache.spark.SparkConf
 import com.typesafe.config.ConfigFactory
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-
 import scala.collection.JavaConversions._
 import java.io.File
-
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import com.typesafe.config.Config
 
@@ -71,13 +69,7 @@ trait SparkTestBase { self =>
   Logger.getLogger("org").setLevel(Level.WARN)
   Logger.getLogger("akka").setLevel(Level.WARN)
 
-  protected val showIsActive = false
-  protected def showDataFrame(df: DataFrame): Unit = {
-    if (showIsActive) {
-      df.printSchema()
-      df.show(false)
-    }
-  }
+
 }
 
 object SparkTestBase {

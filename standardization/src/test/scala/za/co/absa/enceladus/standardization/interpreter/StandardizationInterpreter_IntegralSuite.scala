@@ -17,12 +17,13 @@ package za.co.absa.enceladus.standardization.interpreter
 
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Locale
+
 import org.apache.spark.sql.types.{ByteType, IntegerType, LongType, ShortType, StringType, StructField, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBase{
+class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBase with LoggerTestBase{
 
   import spark.implicits._
 
@@ -49,10 +50,10 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
     val src = spark.read
       .option("header", "true")
       .csv(s"${pathToTestData}integral_overflow_test.csv")
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     val exp = Seq(
       IntegralRow("Decimal entry", Option(0), Option(0), Option(0), Option(0), Seq(
@@ -89,10 +90,10 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
 
   test("Under-/overflow from JSON text") {
     val src = spark.read.json(s"${pathToTestData}integral_overflow_test_text.json")
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     val exp = Seq(
       IntegralRow("Decimal entry", Option(0), Option(0), Option(0), Option(0), Seq(
@@ -129,10 +130,10 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
 
   test("Under-/overflow from JSON numeric") {
     val src = spark.read.json(s"${pathToTestData}integral_overflow_test_numbers.json")
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     val exp = Seq(
       IntegralRow("Decimal entry", Option(0), Option(2), Option(3), Option(4), Seq(
@@ -161,19 +162,19 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
 
   test("Under-/overflow from strongly typed input - long") {
     val src = spark.createDataFrame(Seq(
-      new InputRowLongs("1-Byte", Byte.MaxValue),
-      new InputRowLongs("2-Short", Short.MaxValue),
-      new InputRowLongs("3-Int", Int.MaxValue),
-      new InputRowLongs("4-Long", Long.MaxValue),
-      new InputRowLongs("5-Byte", Byte.MinValue),
-      new InputRowLongs("6-Short", Short.MinValue),
-      new InputRowLongs("7-Int", Int.MinValue),
-      new InputRowLongs("8-Long", Long.MinValue)
+      new InputRowLongsForIntegral("1-Byte", Byte.MaxValue),
+      new InputRowLongsForIntegral("2-Short", Short.MaxValue),
+      new InputRowLongsForIntegral("3-Int", Int.MaxValue),
+      new InputRowLongsForIntegral("4-Long", Long.MaxValue),
+      new InputRowLongsForIntegral("5-Byte", Byte.MinValue),
+      new InputRowLongsForIntegral("6-Short", Short.MinValue),
+      new InputRowLongsForIntegral("7-Int", Int.MinValue),
+      new InputRowLongsForIntegral("8-Long", Long.MinValue)
     ))
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     val exp = Seq(
       IntegralRow("1-Byte", Option(Byte.MaxValue), Option(Byte.MaxValue), Option(Byte.MaxValue), Option(Byte.MaxValue)),
@@ -204,30 +205,30 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
 
     val reallyBig: Double = 24578754548798454658754546785454.0
     val tinyFractionalPart: Double = 1.000000000000001
-    val seq: Seq[InputRowDoubles] = Seq(
-      new InputRowDoubles("00-One", 1),
-      new InputRowDoubles("01-Byte", Byte.MaxValue.toDouble),
-      new InputRowDoubles("02-Short", Short.MaxValue.toDouble),
-      new InputRowDoubles("03-Int", Int.MaxValue.toDouble),
-      new InputRowDoubles("04-Long", Long.MaxValue.toDouble),
-      new InputRowDoubles("05-Byte", Byte.MinValue.toDouble),
-      new InputRowDoubles("06-Short", Short.MinValue.toDouble),
-      new InputRowDoubles("07-Int", Int.MinValue.toDouble),
-      new InputRowDoubles("08-Long", Long.MinValue.toDouble),
-      new InputRowDoubles("09-Pi", Math.PI),
-      new InputRowDoubles("10-Whole", 7.00),
-      new InputRowDoubles("11-Really small", Double.MinPositiveValue),
-      new InputRowDoubles("12-Really big", reallyBig),
-      new InputRowDoubles("13-Tiny fractional part", tinyFractionalPart),
-      new InputRowDoubles("14-NaN", Double.NaN),
-      InputRowDoubles("15-Null", None, None, None, None)
+    val seq: Seq[InputRowDoublesForIntegral] = Seq(
+      new InputRowDoublesForIntegral("00-One", 1),
+      new InputRowDoublesForIntegral("01-Byte", Byte.MaxValue.toDouble),
+      new InputRowDoublesForIntegral("02-Short", Short.MaxValue.toDouble),
+      new InputRowDoublesForIntegral("03-Int", Int.MaxValue.toDouble),
+      new InputRowDoublesForIntegral("04-Long", Long.MaxValue.toDouble),
+      new InputRowDoublesForIntegral("05-Byte", Byte.MinValue.toDouble),
+      new InputRowDoublesForIntegral("06-Short", Short.MinValue.toDouble),
+      new InputRowDoublesForIntegral("07-Int", Int.MinValue.toDouble),
+      new InputRowDoublesForIntegral("08-Long", Long.MinValue.toDouble),
+      new InputRowDoublesForIntegral("09-Pi", Math.PI),
+      new InputRowDoublesForIntegral("10-Whole", 7.00),
+      new InputRowDoublesForIntegral("11-Really small", Double.MinPositiveValue),
+      new InputRowDoublesForIntegral("12-Really big", reallyBig),
+      new InputRowDoublesForIntegral("13-Tiny fractional part", tinyFractionalPart),
+      new InputRowDoublesForIntegral("14-NaN", Double.NaN),
+      InputRowDoublesForIntegral("15-Null", None, None, None, None)
     )
 
     val src = spark.createDataFrame(seq)
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     val exp = Seq(
       IntegralRow("00-One", Option(1), Option(1), Option(1), Option(1)),
@@ -301,20 +302,20 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
     val reallyBigStr = "18446744073709551614.000000000000000000"
     val reallySmallStr = "-18446744073709551616.000000000000000000"
 
-    val seq: Seq[InputRowBigDecimals] = Seq(
-      new InputRowBigDecimals("00-One", 1.0),
-      new InputRowBigDecimals("01-Pi", pi),
-      new InputRowBigDecimals("02-Tiny fractional part", tinyFractionalPart),
-      new InputRowBigDecimals("03-Really big", reallyBig),
-      new InputRowBigDecimals("04-Really small", reallySmall),
-      new InputRowBigDecimals("05-Short", shortOverflow),
-      new InputRowBigDecimals("06-Null", null)
+    val seq: Seq[InputRowBigDecimalsForIntegral] = Seq(
+      new InputRowBigDecimalsForIntegral("00-One", 1.0),
+      new InputRowBigDecimalsForIntegral("01-Pi", pi),
+      new InputRowBigDecimalsForIntegral("02-Tiny fractional part", tinyFractionalPart),
+      new InputRowBigDecimalsForIntegral("03-Really big", reallyBig),
+      new InputRowBigDecimalsForIntegral("04-Really small", reallySmall),
+      new InputRowBigDecimalsForIntegral("05-Short", shortOverflow),
+      new InputRowBigDecimalsForIntegral("06-Null", null)
     )
     val src = spark.createDataFrame(seq)
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     val exp = Seq(
       IntegralRow("00-One", Option(1), Option(1), Option(1), Option(1)),
@@ -349,49 +350,4 @@ class StandardizationInterpreter_IntegerSuite extends FunSuite with SparkTestBas
     assertResult(exp)(std.as[IntegralRow].collect().sortBy(_.description).toList)
   }
 
-}
-
-case class IntegralRow(
-                        description: String,
-                        byteSize: Option[Byte],
-                        shortSize: Option[Short],
-                        integerSize: Option[Int],
-                        longSize: Option[Long],
-                        errCol: Seq[ErrorMessage] = Seq.empty
-                      )
-
-case class InputRowLongs(
-                          description: String,
-                          bytesize: Long,
-                          shortsize: Long,
-                          integersize: Long,
-                          longsize: Long
-                        ) {
-  def this(description: String, value: Long) = {
-    this(description, value, value, value, value)
-  }
-}
-
-case class InputRowDoubles(
-                            description: String,
-                            bytesize: Option[Double],
-                            shortsize: Option[Double],
-                            integersize: Option[Double],
-                            longsize: Option[Double]
-                          ) {
-  def this(description: String, value: Double) = {
-    this(description, Option(value), Option(value), Option(value), Option(value))
-  }
-}
-
-case class InputRowBigDecimals(
-                                description: String,
-                                bytesize: Option[BigDecimal],
-                                shortsize: Option[BigDecimal],
-                                integersize: Option[BigDecimal],
-                                longsize: Option[BigDecimal]
-                              ) {
-  def this(description: String, value: BigDecimal) = {
-    this(description, Option(value), Option(value), Option(value), Option(value))
-  }
 }

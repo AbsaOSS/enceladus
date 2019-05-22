@@ -17,12 +17,13 @@ package za.co.absa.enceladus.standardization.interpreter
 
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Locale
+
 import org.apache.spark.sql.types.{DecimalType, StringType, StructField, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBase {
+class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
@@ -54,17 +55,20 @@ class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBas
       ("03-Long", Long.MaxValue.toString, Long.MinValue.toString),
       ("04-infinity", "-Infinity", "Infinity"),
       ("05-Really big", "123456789123456791245678912324789123456789123456789.12",
-        "12345678912345679124567891232478912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912346789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456789123456789123456789.1"),
+        "12345678912345679124567891232478912345678912345678912345678912345678912345678912345678912345678912345678912345"
+        + "678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912346789123456"
+        + "789123456789123456789123456791245678912324789123456789123456789123456789123456789123456791245678912324789123"
+        + "456789123456789123456789123456789123456789123456789123456789.1"),
       ("06-Text", "foo", "bar"),
       ("07-Exponential notation", "-1.23E2", "+9.8765E-4"),
       ("08-Small overflow", "1000", "1000"),
       ("09-Loss of precision", "123.456", "123.456")
     )
     val src = seq.toDF("description","small", "big")
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     val exp = Seq(
       DecimalRow("01-Pi", Option(bd(3.14)), Option(bd(3.14))),
@@ -77,7 +81,11 @@ class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBas
         ErrorMessage.stdCastErr("big", "Infinity"))),
       DecimalRow("05-Really big", Option(zero), Option(zero), Seq(
         ErrorMessage.stdCastErr("small", "123456789123456791245678912324789123456789123456789.12"),
-        ErrorMessage.stdCastErr("big", "12345678912345679124567891232478912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912346789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456789123456789123456789.1"))),
+        ErrorMessage.stdCastErr("big", "1234567891234567912456789123247891234567891234567891234567891"
+          + "2345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678"
+          + "9123456789123456789123456789123456789123467891234567891234567891234567891234567912456789123247891234567891"
+          + "2345678912345678912345678912345679124567891232478912345678912345678912345678912345678912345678912345678912"
+          + "3456789.1"))),
       DecimalRow("06-Text", Option(zero), Option(zero), Seq(
         ErrorMessage.stdCastErr("small", "foo"),
         ErrorMessage.stdCastErr("big", "bar"))),
@@ -101,10 +109,10 @@ class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBas
       InputRowDoublesForDecimal("06-NaN", Option(Float.NaN), Option(Double.NaN))
     )
     val src = spark.createDataFrame(seq)
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val exp = Seq(
-      DecimalRow("01-Pi", Option(bd(3.14)), Option(bd(Math.PI))),
+      DecimalRow("01-Pi", Option(bd(3.14)), Option(bd(Math.PI))), //NB! Note the loss of precision in Pi
       DecimalRow("02-Null", Option(zero), None, Seq(
         ErrorMessage.stdNullErr("small"))),
       DecimalRow("03-Long", Option(zero), Option(-9223372036854776000.0), Seq(  // rounding in doubles for large integers
@@ -121,24 +129,7 @@ class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBas
     )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     assertResult(exp)(std.as[DecimalRow].collect().sortBy(_.description).toList)  }
-}
-
-case class DecimalRow(
-                          description: String,
-                          small: Option[BigDecimal],
-                          big: Option[BigDecimal],
-                          errCol: Seq[ErrorMessage] = Seq.empty
-                        )
-
-case class InputRowDoublesForDecimal(
-                                      description: String,
-                                      small: Option[Double],
-                                      big: Option[Double]
-                                    ) {
-  def this(description: String, value: Double) = {
-    this(description, Option(value), Option(value))
-  }
 }

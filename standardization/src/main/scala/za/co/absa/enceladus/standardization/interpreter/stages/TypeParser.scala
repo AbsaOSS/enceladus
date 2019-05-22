@@ -83,30 +83,22 @@ object TypeParser {
                     path: String,
                     origSchema: StructType,
                     parent: Option[Parent] = None): TypeParser = {
-    field.dataType match {
-      case _: ArrayType                 => ArrayParser(field, path, origSchema, parent)
-      case _: StructType                => StructParser(field, path, origSchema, parent)
-      case _: ByteType                  => IntegralParser(field,
-        path,
-        origSchema,
-        parent,
-        Set(ShortType, IntegerType, LongType),
-        Byte.MinValue,
-        Byte.MaxValue)
-      case _: ShortType                 =>
-        IntegralParser(field, path, origSchema, parent, Set(IntegerType, LongType), Short.MinValue, Short.MaxValue)
-      case _: IntegerType               =>
-        IntegralParser(field, path, origSchema, parent, Set(LongType), Int.MinValue, Int.MaxValue)
-      case  _: LongType                 =>
-        IntegralParser(field, path, origSchema, parent, Set.empty, Long.MinValue, Long.MaxValue)
-      case _: FloatType | _: DoubleType => FractionalParser(field, path, origSchema, parent)
-      case _: DecimalType               => DecimalParser(field, path, origSchema, parent)
-      case _: StringType                => StringParser(field, path, origSchema, parent)
-      case _: BooleanType               => BooleanParser(field, path, origSchema, parent)
-      case _: DateType                  => DateParser(field, path, origSchema, parent)
-      case _: TimestampType             => TimestampParser(field, path, origSchema, parent)
+    val parserClass: (StructField, String, StructType, Option[Parent]) => TypeParser = field.dataType match {
+      case _: ArrayType => ArrayParser
+      case _: StructType => StructParser
+      case _: ByteType => IntegralParser(_, _, _, _,Set(ShortType, IntegerType, LongType), Byte.MinValue, Byte.MaxValue)
+      case _: ShortType => IntegralParser(_, _, _, _, Set(IntegerType, LongType), Short.MinValue, Short.MaxValue)
+      case _: IntegerType => IntegralParser(_, _, _, _, Set(LongType), Int.MinValue, Int.MaxValue)
+      case _: LongType => IntegralParser(_, _, _, _, Set.empty, Long.MinValue, Long.MaxValue)
+      case _: FloatType | _: DoubleType => FractionalParser
+      case _: DecimalType => DecimalParser
+      case _: StringType => StringParser
+      case _: BooleanType => BooleanParser
+      case _: DateType => DateParser
+      case _: TimestampType => TimestampParser
       case t => throw new IllegalStateException(s"${t.typeName} is not a supported type in this version of Enceladus")
     }
+    parserClass(field, path, origSchema, parent)
   }
 
   private final case class ArrayParser(field: StructField,
@@ -247,8 +239,11 @@ object TypeParser {
         case ot if overflowableTypes.contains(ot) =>
           // from these types there is the possibility of under-/overflow, extra check is needed
           basicLogic or (castedCol =!= column.cast(LongType))
-        case StringType => basicLogic or column.contains(".")// string of decimals are not allowed
-        case _ => basicLogic
+        case StringType =>
+          // string of decimals are not allowed
+          basicLogic or column.contains(".")
+        case _ =>
+          basicLogic
       }
     }
   }
@@ -257,6 +252,8 @@ object TypeParser {
                                             path: String,
                                             origSchema: StructType,
                                             parent: Option[Parent]) extends NumericParser
+  // NB! loss of precision is not addressed for any DecimalType
+  // e.g. 3.241592 will be Standardized to Decimal(10,2) as 3.14
 
   private final case class FractionalParser(field: StructField,
                                             path: String,
@@ -268,12 +265,14 @@ object TypeParser {
     private val allowInfinity = field.getMetadataBoolean("allowinfinity").getOrElse(false)
 
     override protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
+      //NB! loss of precision is not addressed for any fractional type
+
       import za.co.absa.enceladus.utils.implicits.ColumnImplicits.ColumnEnhancements
 
       if (allowInfinity) {
-        castedCol.isNotNumericNorInfinity
+        castedCol.isNull or castedCol.isNaN
       } else {
-        castedCol.isNotNumeric
+        castedCol.isNull or castedCol.isNaN or castedCol.isInfinite
       }
     }
   }
@@ -349,7 +348,7 @@ object TypeParser {
           // this case covers some IBM date format where it's represented as a double ddmmyyyy.hhmmss
           patternNeeded(ot)
           castFractionalColumn(column, ot)
-        case ot                            =>
+        case ot                           =>
           patternNeeded(ot)
           castNonStringColumn(column, ot)
       }

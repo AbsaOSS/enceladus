@@ -18,9 +18,9 @@ package za.co.absa.enceladus.standardization.interpreter
 import org.apache.spark.sql.types.{DoubleType, FloatType, MetadataBuilder, StringType, StructField, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTestBase {
+class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
@@ -46,15 +46,18 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       ("03-Long", Long.MaxValue.toString, Long.MinValue.toString),
       ("04-infinity", "-Infinity", "Infinity"),
       ("05-Really big", "123456789123456791245678912324789123456789123456789.12",
-        "12345678912345679124567891232478912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912346789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456789123456789123456789.1"),
+        "12345678912345679124567891232478912345678912345678912345678912345678912345678912345678912345678912345678912345"
+        + "678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912346789123456"
+        + "789123456789123456789123456791245678912324789123456789123456789123456789123456789123456791245678912324789123"
+        + "456789123456789123456789123456789123456789123456789123456789.1"),
       ("06-Text", "foo", "bar"),
       ("07-Exponential notation", "-1.23E4", "+9.8765E-3")
     )
     val src = seq.toDF("description","floatField", "doubleField")
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     val exp = Seq(
       FractionalRow("01-Pi", Option(3.14F), Option(3.14)),
@@ -66,7 +69,11 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
         ErrorMessage.stdCastErr("doubleField", "Infinity"))),
       FractionalRow("05-Really big", Option(0), Option(0), Seq(
         ErrorMessage.stdCastErr("floatField", "123456789123456791245678912324789123456789123456789.12"),
-        ErrorMessage.stdCastErr("doubleField", "12345678912345679124567891232478912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912346789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456789123456789123456789.1"))),
+        ErrorMessage.stdCastErr("doubleField", "12345678912345679124567891232478912345678912345678912"
+          + "3456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789"
+          + "1234567891234567891234567891234567891234567891234678912345678912345678912345678912345679124567891232478912"
+          + "3456789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456789123"
+          + "456789123456789.1"))),
       FractionalRow("06-Text", Option(0), Option(0), Seq(
         ErrorMessage.stdCastErr("floatField", "foo"),
         ErrorMessage.stdCastErr("doubleField", "bar"))),
@@ -80,21 +87,21 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
     val value = 1984
     val seq = Seq(
       InputRowLongsForFractional("01-Null", None, None),
-      InputRowLongsForFractional("02-Big Long", Option(Long.MaxValue.toFloat), Option(Long.MinValue.toDouble)),
+      InputRowLongsForFractional("02-Big Long", Option(Long.MaxValue - 1), Option(Long.MinValue + 1)),
       InputRowLongsForFractional("03-Long", Option(-value), Option(value))
     )
     val src = spark.createDataFrame(seq)
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val exp = Seq(
       FractionalRow("01-Null", Option(0), None, Seq(
         ErrorMessage.stdNullErr("floatField"))),
-      FractionalRow("02-Big Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
+      FractionalRow("02-Big Long", Option(9.223372E18F), Option(-9.223372036854776E18)), //NBN! the loss of precision
       FractionalRow("03-Long", Option(-value.toFloat), Option(value.toDouble))
     )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     assertResult(exp)(std.as[FractionalRow].collect().sortBy(_.description).toList)
   }
@@ -110,7 +117,7 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       InputRowDoublesForFractional("06-NaN", Option(Float.NaN), Option(Double.NaN))
     )
     val src = spark.createDataFrame(seq)
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val exp = Seq(
       FractionalRow("01-Pi", Option(Math.PI.toFloat), Option(Math.PI)),
@@ -128,7 +135,7 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
     )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     assertResult(exp)(std.as[FractionalRow].collect().sortBy(_.description).toList)
   }
@@ -140,15 +147,18 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       ("03-Long", Long.MaxValue.toString, Long.MinValue.toString),
       ("04-infinity", "-Infinity", "Infinity"),
       ("05-Really big", "123456789123456791245678912324789123456789123456789.12",
-        "-12345678912345679124567891232478912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912346789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456789123456789123456789.1"),
+        "-1234567891234567912456789123247891234567891234567891234567891234567891234567891234567891234567891234567891234"
+        + "567891234567891234567891234567891234567891234567891234567891234567891234567891234567891234567891234678912345"
+        + "678912345678912345678912345679124567891232478912345678912345678912345678912345678912345679124567891232478912"
+        + "3456789123456789123456789123456789123456789123456789123456789.1"),
       ("06-Text", "foo", "bar"),
       ("07-Exponential notation", "-1.23E4", "+9.8765E-3")
     )
     val src = seq.toDF("description","floatField", "doubleField")
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val std = StandardizationInterpreter.standardize(src, desiredSchemaWithInfinity, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     val exp = Seq(
       FractionalRow("01-Euler", Option(2.71F), Option(2.71)),
@@ -177,7 +187,7 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       InputRowDoublesForFractional("06-NaN", Option(Float.NaN), Option(Double.NaN))
     )
     val src = spark.createDataFrame(seq)
-    showDataFrame(src)
+    logDataFrameContent(src)
 
     val exp = Seq(
       FractionalRow("01-Euler", Option(Math.E.toFloat), Option(Math.E)),
@@ -192,36 +202,9 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
     )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchemaWithInfinity, "").cache()
-    showDataFrame(std)
+    logDataFrameContent(std)
 
     assertResult(exp)(std.as[FractionalRow].collect().sortBy(_.description).toList)
   }
 
-}
-
-case class FractionalRow(
-                          description: String,
-                          floatField: Option[Float],
-                          doubleField: Option[Double],
-                          errCol: Seq[ErrorMessage] = Seq.empty
-                        )
-
-case class InputRowLongsForFractional(
-                                       description: String,
-                                       floatField: Option[Double],
-                                       doubleField: Option[Double]
-                                     ) {
-  def this(description: String, value: Double) = {
-    this(description, Option(value), Option(value))
-  }
-}
-
-case class InputRowDoublesForFractional(
-                                         description: String,
-                                         floatField: Option[Double],
-                                         doubleField: Option[Double]
-                                       ) {
-  def this(description: String, value: Double) = {
-    this(description, Option(value), Option(value))
-  }
 }

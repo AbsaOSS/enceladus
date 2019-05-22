@@ -13,15 +13,24 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.implicits
+package za.co.absa.enceladus.utils.testUtils
 
-import org.apache.spark.sql.Column
-import org.apache.spark.sql.functions._
+import java.io.ByteArrayOutputStream
 
-object ColumnImplicits {
-  implicit class ColumnEnhancements(column: Column) {
-    def isInfinite: Column = {
-      column.isin(Double.PositiveInfinity, Double.NegativeInfinity)
+import org.apache.spark.sql.DataFrame
+import org.slf4j.{Logger, LoggerFactory}
+
+trait LoggerTestBase {
+  val logger: Logger = LoggerFactory.getLogger(this.getClass)
+
+  protected def logDataFrameContent(df: DataFrame): Unit = {
+    logger.debug(df.schema.treeString)
+
+    val outCapture = new ByteArrayOutputStream
+    Console.withOut(outCapture) {
+      df.show(truncate = false)
     }
+    val dfData = new String(outCapture.toByteArray).replace("\r\n", "\n")
+    logger.debug(dfData)
   }
 }
