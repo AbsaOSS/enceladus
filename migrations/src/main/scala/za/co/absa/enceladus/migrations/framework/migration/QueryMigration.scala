@@ -31,7 +31,7 @@ import scala.collection.mutable.ListBuffer
   * 'schema_v5' or 'dataset_v5'.
   *
   * {{{
-  *   class MigrationTo1 extends QueryMigration {
+  *   class MigrationTo1 extends MigrationBase with QueryMigration {
   *
   *     applyQuery("collection1_name") ( versionedCollectionName => {
   *       s"""
@@ -84,7 +84,8 @@ trait QueryMigration extends Migration {
   /**
     * Executes a migration on a given database and a list of collection names.
     */
-  override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
+  abstract override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
+    super.execute(db, collectionNames)
     queries.foreach {
       case (queryCollection, queryGenerator) =>
         if (queryCollection.isEmpty) {
@@ -103,7 +104,8 @@ trait QueryMigration extends Migration {
   /**
     * Validate the possibility of running a migration given a list of collection names.
     */
-  override def validate(collectionNames: Seq[String]): Unit = {
+  abstract override def validate(collectionNames: Seq[String]): Unit = {
+    super.validate(collectionNames)
     queries.foreach{
       case (collectionToMigrate, _) => if (!collectionNames.contains(collectionToMigrate)) {
         throw new IllegalStateException(

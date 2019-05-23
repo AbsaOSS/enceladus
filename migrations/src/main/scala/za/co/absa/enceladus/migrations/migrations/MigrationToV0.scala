@@ -15,13 +15,13 @@
 
 package za.co.absa.enceladus.migrations.migrations
 
-import za.co.absa.enceladus.migrations.framework.migration.CollectionMigration
+import za.co.absa.enceladus.migrations.framework.migration.{CollectionMigration, MigrationBase}
 
 /**
   * This object is the initial migration from "nothing" to version 0. Basically, it just lists the collections that are
   * expected to be at version 0. No JSON transformations are possible at this stage, but queries can be ran.
   */
-object MigrationToV0 extends CollectionMigration {
+object MigrationToV0 extends MigrationBase with CollectionMigration {
 
   override val targetVersion: Int = 0
 

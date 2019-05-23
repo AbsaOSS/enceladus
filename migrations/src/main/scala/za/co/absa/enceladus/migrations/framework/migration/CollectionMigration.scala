@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
+import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
 import scala.collection.mutable.ListBuffer
@@ -26,7 +27,7 @@ import scala.collection.mutable.ListBuffer
   * collection changes:
   *
   * {{{
-  *   class MigrationTo1 extends CollectionMigration {
+  *   class MigrationTo1 extends MigrationBase with CollectionMigration {
   *
   *     addCollection("collection1_name")
   *     addCollection("collection2_name")
@@ -114,16 +115,22 @@ trait CollectionMigration extends Migration {
   /**
     * Executes a migration on a given database and a list of collection names.
     */
-  override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
-    collectionsToAdd.foreach(c => db.createCollection(c))
-    collectionsToRemove.foreach(c => db.dropCollection(c))
-    collectionsToRename.foreach { case (oldName, newName) => db.renameCollection(oldName, newName) }
+  abstract override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
+    super.execute(db, collectionNames)
+    collectionsToAdd.foreach(c => db.createCollection(MigrationUtils.getVersionedCollectionName(c, targetVersion)))
+    collectionsToRemove.foreach(c => db.dropCollection(MigrationUtils.getVersionedCollectionName(c, targetVersion)))
+    collectionsToRename.foreach {
+      case (oldName, newName) =>
+        db.renameCollection(MigrationUtils.getVersionedCollectionName(oldName, targetVersion),
+          MigrationUtils.getVersionedCollectionName(newName, targetVersion))
+    }
   }
 
   /**
     * Validate the possibility of running a migration given a list of collection names.
     */
-  override def validate(collectionNames: Seq[String]): Unit = {
+  abstract override def validate(collectionNames: Seq[String]): Unit = {
+    super.validate(collectionNames)
     collectionsToAdd.foreach(collectionToMigrate =>
       if (!collectionNames.contains(collectionToMigrate)) {
         throw new IllegalStateException(

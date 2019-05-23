@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.migrations.framework.fixture
 
-import za.co.absa.enceladus.migrations.framework.migration.{CollectionMigration, JsonMigration, QueryMigration}
+import za.co.absa.enceladus.migrations.framework.migration.{CollectionMigration, JsonMigration, MigrationBase, QueryMigration}
 
 object MigrationTestData {
 
-  object MigrationExample0 extends CollectionMigration {
+  object MigrationExample0 extends MigrationBase with CollectionMigration {
     override val targetVersion: Int = 0
 
     addCollection("dataset")
@@ -28,7 +28,7 @@ object MigrationTestData {
     addCollection("foo")
   }
 
-  object MigrationExample1 extends JsonMigration with QueryMigration with CollectionMigration {
+  object MigrationExample1 extends MigrationBase with CollectionMigration with JsonMigration with QueryMigration {
     override val targetVersion: Int = 1
 
     renameCollection("mapping", "mapping_table")
@@ -48,7 +48,7 @@ object MigrationTestData {
     })
   }
 
-  object MigrationExample2 extends QueryMigration {
+  object MigrationExample2 extends MigrationBase with QueryMigration {
     override val targetVersion: Int = 2
 
     applyQuery("schema") ( versionedCollectionName => {
@@ -60,7 +60,7 @@ object MigrationTestData {
     })
   }
 
-  object MigrationExample3 extends JsonMigration {
+  object MigrationExample3 extends MigrationBase with JsonMigration {
     override val targetVersion: Int = 3
 
     transformJSON("dataset")(jsonIn => {
@@ -72,7 +72,7 @@ object MigrationTestData {
     })
   }
 
-  object MigrationExample3Throw extends JsonMigration {
+  object MigrationExample3Throw extends MigrationBase with JsonMigration {
     override val targetVersion: Int = 3
 
     transformJSON("dataset")(jsonIn => {
@@ -84,7 +84,7 @@ object MigrationTestData {
     })
   }
 
-  object MigrationExample3WrongCollection extends JsonMigration {
+  object MigrationExample3WrongCollection extends MigrationBase with JsonMigration {
     override val targetVersion: Int = 3
 
     transformJSON("dataset")(jsonIn => {
@@ -96,7 +96,7 @@ object MigrationTestData {
     })
   }
 
-  object MigrationExample3InconsistentManipulations extends CollectionMigration {
+  object MigrationExample3InconsistentManipulations extends MigrationBase with CollectionMigration{
     override val targetVersion: Int = 3
 
     renameCollection("attachment", "attachment2")
