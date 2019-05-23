@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
+import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
 import scala.collection.mutable.ListBuffer
@@ -23,39 +24,45 @@ import scala.collection.mutable.ListBuffer
   * A QueryMigration represents an entity that provides queries to be executed for every affected collections in a model
   * when switching from one version of the model to another.
   *
-  * In order to create a query migration you need to extend from this trait and provide all the required queries:
+  * In order to create a query migration you need to extend from this trait and provide all the required queries
+  * as functions from a versioned collection names.
+  *
+  * A collection name can be 'schema' or 'dataset', for example. Corresponding versioned collection name will be
+  * 'schema_v5' or 'dataset_v5'.
   *
   * {{{
   *   class MigrationTo1 extends QueryMigration {
   *
-  *     applyQuery("collection1_name") {
-  *       """
-  *         | db.collection{ $set: { "newField1": "Initial value" } }
+  *     applyQuery("collection1_name") ( versionedCollectionName => {
+  *       s"""
+  *         | db.$versionedCollectionName{ \$set: { "newField1": "Initial value" } }
   *         |
   *       """.stripMargin
-  *     }
+  *     })
   *
-  *     applyQuery("collection2_name") {
-  *       """
-  *         | db.collection{ $set: { "newField2": "Initial value" } }
+  *     applyQuery("collection2_name") ( versionedCollectionName => {
+  *       s"""
+  *         | db.$versionedCollectionName{ \$set: { "newField2": "Initial value" } }
   *         |
   *       """.stripMargin
-  *     }
+  *     })
   *   }
   * }}}
   */
 trait QueryMigration extends Migration {
   type JsQuery = String
 
+  type QueryGenerator = String => JsQuery
+
   /**
     * This method is used by derived classes to add queries to be executed on the affected collections.
     * Use this for quicker migrations like an addition of a column.
     *
     * @param collectionName A collection name to be migrated
-    * @param qry            A query to applied to the collection
+    * @param queryGenerator A function that takes a versioned collection name and returns a query to be executed
     */
-  def applyQuery(collectionName: String)(qry: => JsQuery): Unit = {
-    queries += collectionName -> qry
+  def applyQuery(collectionName: String)(queryGenerator: QueryGenerator): Unit = {
+    queries += collectionName -> queryGenerator
   }
 
   /**
@@ -69,7 +76,8 @@ trait QueryMigration extends Migration {
   def getQueries(collectionName: String): List[JsQuery] = {
     queries
       .filter({ case (name, _) => name == collectionName })
-      .map({ case (_, query) => query })
+      .map({ case (collection, queryGen) =>
+        queryGen(MigrationUtils.getVersionedCollectionName(collection, targetVersion)) })
       .toList
   }
 
@@ -77,7 +85,16 @@ trait QueryMigration extends Migration {
     * Executes a migration on a given database and a list of collection names.
     */
   override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
-    ???
+    queries.foreach {
+      case (queryCollection, queryGenerator) =>
+        if (queryCollection.isEmpty) {
+          db.executeQuery(queryGenerator(""))
+        } else {
+          if (collectionNames.contains(queryCollection)) {
+            db.executeQuery(queryGenerator(MigrationUtils.getVersionedCollectionName(queryCollection, targetVersion)))
+          }
+        }
+    }
   }
 
   override protected def validateMigration(): Unit = {
@@ -86,5 +103,5 @@ trait QueryMigration extends Migration {
     }
   }
 
-  private val queries = new ListBuffer[(String, JsQuery)]()
+  private val queries = new ListBuffer[(String, QueryGenerator)]()
 }

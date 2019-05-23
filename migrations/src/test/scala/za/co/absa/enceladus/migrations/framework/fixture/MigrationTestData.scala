@@ -39,25 +39,25 @@ object MigrationTestData {
       jsonIn + "_transformed"
     })
 
-    applyQuery("schema") {
-      "script1"
-    }
+    applyQuery("schema") ( versionedCollectionName => {
+      s"$versionedCollectionName.execute(script1)"
+    })
 
-    applyQuery("schema") {
-      "script2"
-    }
+    applyQuery("schema") ( versionedCollectionName => {
+      s"$versionedCollectionName.execute(script2)"
+    })
   }
 
   object MigrationExample2 extends QueryMigration {
     override val targetVersion: Int = 2
 
-    applyQuery("schema") {
-      "script3"
-    }
+    applyQuery("schema") ( versionedCollectionName => {
+      s"$versionedCollectionName.execute(script3)"
+    })
 
-    applyQuery("schema") {
-      "script4"
-    }
+    applyQuery("schema") ( versionedCollectionName => {
+      s"$versionedCollectionName.execute(script4)"
+    })
   }
 
   object MigrationExample3 extends JsonMigration {
