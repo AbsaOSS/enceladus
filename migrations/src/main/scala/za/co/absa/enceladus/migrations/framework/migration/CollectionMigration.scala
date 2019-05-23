@@ -120,6 +120,56 @@ trait CollectionMigration extends Migration {
     collectionsToRename.foreach { case (oldName, newName) => db.renameCollection(oldName, newName) }
   }
 
+  /**
+    * Validate the possibility of running a migration given a list of collection names.
+    */
+  override def validate(collectionNames: Seq[String]): Unit = {
+    collectionsToAdd.foreach(collectionToMigrate =>
+      if (!collectionNames.contains(collectionToMigrate)) {
+        throw new IllegalStateException(
+          s"Attempt to add a collection that already exists in db version ${targetVersion - 1}: $collectionToMigrate.")
+      }
+    )
+    collectionsToRemove.foreach(collectionToMigrate =>
+      if (!collectionNames.contains(collectionToMigrate)) {
+        throw new IllegalStateException(
+          s"Attempt to drop a collection that does not exist in db version ${targetVersion - 1}: $collectionToMigrate.")
+      }
+    )
+    collectionsToRename.foreach {
+      case (oldName, newName) =>
+        if (!collectionNames.contains(oldName)) {
+          throw new IllegalStateException(
+            s"Attempt to rename a collection that does not exist: $oldName.")
+        }
+        if (!collectionNames.contains(newName)) {
+          throw new IllegalStateException(
+            s"Attempt to rename a collection to a one that already exists in db version ${targetVersion - 1}: " +
+              s"$newName.")
+        }
+        if (collectionsToAdd.contains(oldName)) {
+          throw new IllegalStateException(
+            s"Cannot add and rename a collection as a part of single migration in db version ${targetVersion - 1}: " +
+              s"$oldName.")
+        }
+        if (collectionsToAdd.contains(newName)) {
+          throw new IllegalStateException(
+            s"Cannot add and rename a collection as a part of single migration in db version ${targetVersion - 1}: " +
+              s"$newName.")
+        }
+        if (collectionsToRemove.contains(oldName)) {
+          throw new IllegalStateException(
+            s"Cannot drop and rename a collection as a part of single migration in db version ${targetVersion - 1}: " +
+              s"$oldName.")
+        }
+        if (collectionsToRemove.contains(newName)) {
+          throw new IllegalStateException(
+            s"Cannot drop and rename a collection as a part of single migration in db version ${targetVersion - 1}: " +
+              s"$newName.")
+        }
+    }
+  }
+
   override protected def validateMigration(): Unit = {
     if (targetVersion < 0) {
       throw new IllegalStateException("The target version of a CollectionMigration should be 0 or bigger.")

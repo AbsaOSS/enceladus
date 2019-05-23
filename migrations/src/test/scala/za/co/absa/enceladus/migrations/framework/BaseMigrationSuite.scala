@@ -72,17 +72,17 @@ class BaseMigrationSuite extends FunSuite {
   test("Test that an exception is thrown if a migration requires a collection that does not exist") {
     val mig = new Migrator(DocumentDbStub, MigrationExample0 :: MigrationExample1 :: MigrationExample2 ::
       MigrationExample3WrongCollection :: Nil)
-    //intercept[IllegalStateException] {
-    //  mig.validate(3)
-    //}
+    intercept[IllegalStateException] {
+      mig.validate(3)
+    }
   }
 
   test("Test that an exception is thrown if collections are not manipulated consistently") {
     val mig = new Migrator(DocumentDbStub, MigrationExample0 :: MigrationExample1 :: MigrationExample2 ::
       MigrationExample3InconsistentManipulations :: Nil)
-    //intercept[IllegalStateException] {
-    //  mig.validate(3)
-    //}
+    intercept[IllegalStateException] {
+      mig.validate(3)
+    }
   }
 
   test("Test that an exception is thrown if the target database version is not reachable") {
