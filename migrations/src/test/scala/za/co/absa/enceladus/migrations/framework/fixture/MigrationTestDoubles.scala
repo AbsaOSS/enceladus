@@ -22,6 +22,8 @@ object MigrationTestDoubles {
   object DocumentDbStub extends DocumentDb {
     override def getVersion(): Int = 0
     override def setVersion(version: Int): Unit = {}
+    override def dropCollection(collectionName: String): Unit = {}
+    override def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit = {}
     override def collectionExists(collectionName: String): Boolean = true
     override def createCollection(collectionName: String): Unit = {}
     override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {}

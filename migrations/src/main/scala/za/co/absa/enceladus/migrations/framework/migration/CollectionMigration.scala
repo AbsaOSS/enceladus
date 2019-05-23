@@ -115,7 +115,9 @@ trait CollectionMigration extends Migration {
     * Executes a migration on a given database and a list of collection names.
     */
   override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
-    ???
+    collectionsToAdd.foreach(c => db.createCollection(c))
+    collectionsToRemove.foreach(c => db.dropCollection(c))
+    collectionsToRename.foreach { case (oldName, newName) => db.renameCollection(oldName, newName) }
   }
 
   override protected def validateMigration(): Unit = {

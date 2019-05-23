@@ -25,6 +25,10 @@ abstract class DocumentDb {
 
   def createCollection(collectionName: String): Unit
 
+  def dropCollection(collectionName: String): Unit
+
+  def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit
+
   def cloneCollection(collectionName: String, newCollectionName: String): Unit
 
   def insertDocument(collectionName: String, document: String): Unit
