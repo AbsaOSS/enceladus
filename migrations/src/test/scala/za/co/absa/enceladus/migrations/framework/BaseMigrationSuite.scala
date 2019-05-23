@@ -41,8 +41,8 @@ class BaseMigrationSuite extends FunSuite {
 
     val queries = MigrationExample1.getQueries("schema")
     assert(queries.length == 2)
-    assert(queries.head == "script1")
-    assert(queries(1) == "script2")
+    assert(queries.head == "schema_v1.execute(script1)")
+    assert(queries(1) == "schema_v1.execute(script2)")
   }
 
   test("Test that migrator checks for invalid transformations") {
