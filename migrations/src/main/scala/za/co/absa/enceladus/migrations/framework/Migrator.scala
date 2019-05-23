@@ -90,8 +90,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     */
   def validate(targetDbVersion: Int): Unit = {
     validateVersionNumbersConsequent()
-    validateCollectionManipulationConsistency()
-    validateCollectionsExists()
+    validateCollectionManipulationConsistency(targetDbVersion)
     validateTargetVersion(targetDbVersion)
   }
 
@@ -115,12 +114,19 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     })
   }
 
-  private def validateCollectionManipulationConsistency(): Unit = {
-    // ToDo
-  }
+  private def validateCollectionManipulationConsistency(targetDbVersion: Int): Unit = {
+    var currentVersionCollections = getCollectionNames(0)
 
-  private def validateCollectionsExists(): Unit = {
-    // ToDo
+    if (currentVersionCollections.isEmpty) {
+      throw new IllegalStateException("No collection names are registered for db version 0.")
+    }
+
+    for (i <- 0 until targetDbVersion) {
+      val migrationsToExecute = migrations.filter(m => m.targetVersion == i)
+      migrationsToExecute.foreach(_.validate(currentVersionCollections))
+      migrationsToExecute.foreach(m =>
+        currentVersionCollections = m.applyCollectionChanges(currentVersionCollections))
+    }
   }
 
   private def validateTargetVersion(targetDbVersion: Int): Unit = {

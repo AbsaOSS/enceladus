@@ -86,6 +86,18 @@ trait JsonMigration extends Migration {
     )
   }
 
+  /**
+    * Validate the possibility of running a migration given a list of collection names.
+    */
+  override def validate(collectionNames: Seq[String]): Unit = {
+    transformers.foreach{
+      case (collectionToMigrate, _) => if (!collectionNames.contains(collectionToMigrate)) {
+        throw new IllegalStateException(
+          s"Attempt to apply a transform to a collection that does not exist: $collectionToMigrate.")
+      }
+    }
+  }
+
   override protected def validateMigration(): Unit = {
     if (targetVersion <= 0) {
       throw new IllegalStateException("The target version of a JsonMigration should be greater than 0.")
