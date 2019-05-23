@@ -92,6 +92,9 @@ trait QueryMigration extends Migration {
         } else {
           if (collectionNames.contains(queryCollection)) {
             db.executeQuery(queryGenerator(MigrationUtils.getVersionedCollectionName(queryCollection, targetVersion)))
+          } else {
+            throw new IllegalStateException(
+              s"Attempt to apply a query to a collection that does not exist: $queryCollection.")
           }
         }
     }

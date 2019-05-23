@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
+import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
 import scala.collection.mutable
@@ -76,13 +77,41 @@ trait JsonMigration extends Migration {
     * Executes a migration on a given database and a list of collection names.
     */
   override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
-    ???
+    collectionNames.foreach(collection =>
+      if (transformers.contains(collection)) {
+        applyTransformers(db, collection)
+      } else {
+        cloneCollection(db, collection)
+      }
+    )
   }
 
   override protected def validateMigration(): Unit = {
     if (targetVersion <= 0) {
       throw new IllegalStateException("The target version of a JsonMigration should be greater than 0.")
     }
+  }
+
+  /**
+    * Applies a transformer for each document of the collection to produce a migrated collection.
+    */
+  private def applyTransformers(db: DocumentDb, collectionName: String): Unit = {
+    val documents = db.getDocuments(MigrationUtils.getVersionedCollectionName(collectionName, targetVersion - 1))
+    val targetCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
+    val transformer = transformers(collectionName)
+    db.createCollection(targetCollection)
+    documents.foreach(doc =>
+      db.insertDocument(targetCollection, transformer(doc))
+    )
+  }
+
+  /**
+    * Clones a collection from one version to another. E.g. from 'schema_v1' to 'schema_v2'.
+    */
+  private def cloneCollection(db: DocumentDb, collectionName: String): Unit = {
+    val sourceCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion - 1)
+    val targetCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
+    db.cloneCollection(sourceCollection, targetCollection)
   }
 
   private val transformers = new mutable.HashMap[String, DocumentTransformer]()

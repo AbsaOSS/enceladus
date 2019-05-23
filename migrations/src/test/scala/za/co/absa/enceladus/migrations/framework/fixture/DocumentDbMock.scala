@@ -33,6 +33,25 @@ class DocumentDbMock extends DocumentDb {
     db.put(collectionName, new ArrayBuffer[String]())
   }
 
+  override def dropCollection(collectionName: String): Unit = {
+    if (!collectionExists(collectionName)) {
+      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
+    }
+    db.remove(collectionName)
+  }
+
+  override def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit = {
+    if (!collectionExists(collectionNameOld)) {
+      throw new IllegalStateException(s"Collection does not exist: '$collectionNameOld'.")
+    }
+    if (collectionExists(collectionNameNew)) {
+      throw new IllegalStateException(s"Collection already exists: '$collectionNameNew'.")
+    }
+    val docs = db(collectionNameOld)
+    db.remove(collectionNameOld)
+    db.put(collectionNameNew, docs)
+  }
+
   override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {
     if (!collectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
