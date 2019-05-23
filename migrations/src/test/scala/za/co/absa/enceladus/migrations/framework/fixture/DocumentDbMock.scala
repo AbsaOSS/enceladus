@@ -18,12 +18,16 @@ package za.co.absa.enceladus.migrations.framework.fixture
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 /**
   * This version of a document DB implements all methods required, but does not persist the data.
   */
 class DocumentDbMock extends DocumentDb {
+  override def getVersion(): Int = version
+
+  override def setVersion(version: Int): Unit = this.version = version
+
   override def collectionExists(collectionName: String): Boolean = db.contains(collectionName)
 
   override def createCollection(collectionName: String): Unit = {
@@ -73,7 +77,9 @@ class DocumentDbMock extends DocumentDb {
     documents += document
   }
 
-  override def executeQuery(query: String): Unit = {}
+  override def executeQuery(query: String): Unit = {
+    queriesExecuted += query
+  }
 
   override def getDocuments(collectionName: String): Iterator[String] = {
     if (!collectionExists(collectionName)) {
@@ -82,10 +88,9 @@ class DocumentDbMock extends DocumentDb {
     db(collectionName).toIterator
   }
 
-  override def getVersion(): Int = version
-
-  override def setVersion(version: Int): Unit = this.version = version
+  def getQueriesExecuted: List[String] = queriesExecuted.toList
 
   private val db = new mutable.HashMap[String, ArrayBuffer[String]]()
   private var version = 0
+  private val queriesExecuted = new ListBuffer[String]
 }

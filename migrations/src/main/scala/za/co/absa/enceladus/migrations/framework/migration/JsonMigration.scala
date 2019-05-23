@@ -31,7 +31,7 @@ import scala.collection.mutable
   * In order to create a JSON migration you need to extend from this trait and provide all the requited transformations:
   *
   * {{{
-  *   class MigrationTo1 extends JsonMigration {
+  *   class MigrationTo1 extends MigrationBase with JsonMigration {
   *
   *     migrate("collection1_name") (jsonIn => {
   *       val jsonOut = collection1Transformations(jsonIn)
@@ -76,12 +76,11 @@ trait JsonMigration extends Migration {
   /**
     * Executes a migration on a given database and a list of collection names.
     */
-  override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
+  abstract override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
+    super.execute(db, collectionNames)
     collectionNames.foreach(collection =>
       if (transformers.contains(collection)) {
         applyTransformers(db, collection)
-      } else {
-        cloneCollection(db, collection)
       }
     )
   }
@@ -89,7 +88,8 @@ trait JsonMigration extends Migration {
   /**
     * Validate the possibility of running a migration given a list of collection names.
     */
-  override def validate(collectionNames: Seq[String]): Unit = {
+  abstract override def validate(collectionNames: Seq[String]): Unit = {
+    super.validate(collectionNames)
     transformers.foreach{
       case (collectionToMigrate, _) => if (!collectionNames.contains(collectionToMigrate)) {
         throw new IllegalStateException(
@@ -111,19 +111,17 @@ trait JsonMigration extends Migration {
     val documents = db.getDocuments(MigrationUtils.getVersionedCollectionName(collectionName, targetVersion - 1))
     val targetCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
     val transformer = transformers(collectionName)
-    db.createCollection(targetCollection)
+    ensureCollectionEmpty(db, targetCollection)
     documents.foreach(doc =>
       db.insertDocument(targetCollection, transformer(doc))
     )
   }
 
-  /**
-    * Clones a collection from one version to another. E.g. from 'schema_v1' to 'schema_v2'.
-    */
-  private def cloneCollection(db: DocumentDb, collectionName: String): Unit = {
-    val sourceCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion - 1)
-    val targetCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
-    db.cloneCollection(sourceCollection, targetCollection)
+  private def ensureCollectionEmpty(db: DocumentDb, collectionName: String): Unit = {
+    if (db.collectionExists(collectionName)) {
+      db.dropCollection(collectionName)
+    }
+    db.createCollection(collectionName)
   }
 
   private val transformers = new mutable.HashMap[String, DocumentTransformer]()

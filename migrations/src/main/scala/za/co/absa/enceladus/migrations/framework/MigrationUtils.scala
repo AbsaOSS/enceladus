@@ -27,7 +27,11 @@ object MigrationUtils {
     * @param dbVersion      A version of database to be applied to the collection name
     */
   def getVersionedCollectionName(collectionName: String, dbVersion: Int): String = {
-    s"$collectionName${Constants.DatabaseVersionPrefix}$dbVersion"
+    if (dbVersion == 0) {
+      collectionName
+    } else {
+      s"$collectionName${Constants.DatabaseVersionPrefix}$dbVersion"
+    }
   }
 
 }

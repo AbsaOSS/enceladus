@@ -28,17 +28,17 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
   def getJsonMigrations: Seq[JsonMigration] = migrations.collect({case m: JsonMigration => m})
 
   /**
-    * Do the migration from a specified version of the database to the target one.
+    * Do the migration from the current version of the database to the target one.
     *
     * The migrations passed into the constructor should be be
     * - In the order of database versions
     * - Without gaps in version numbers
     * - There should be only one migration per version switch
     *
-    * @param sourceDbVersion A version of the database to migrate from
     * @param targetDbVersion A version of the database to migrate to
     */
-  def migrate(sourceDbVersion: Int, targetDbVersion: Int): Unit = {
+  def migrate(targetDbVersion: Int): Unit = {
+    val sourceDbVersion = db.getVersion()
     validateDbVersios(sourceDbVersion, targetDbVersion)
 
     var currentVersionCollections = getCollectionNames(sourceDbVersion)
@@ -48,7 +48,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     }
 
     if (targetDbVersion > sourceDbVersion) {
-      for (i <- sourceDbVersion until targetDbVersion) {
+      for (i <- sourceDbVersion + 1 to targetDbVersion) {
         val migrationsToExecute = migrations.filter(m => m.targetVersion == i)
         migrationsToExecute.foreach(_.execute(db, currentVersionCollections))
         migrationsToExecute.foreach(m =>
