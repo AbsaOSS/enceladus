@@ -13,24 +13,23 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuites
+package za.co.absa.enceladus.standardization.interpreter.stages
 
-import org.apache.spark.sql.types.{ByteType, DataType, DateType, DecimalType, DoubleType, FloatType, IntegerType,
-  LongType, ShortType, StructField, TimestampType}
-import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate
+import org.apache.spark.sql.types.{ByteType, DataType, DateType, DoubleType, FloatType, IntegerType, LongType,
+  ShortType, StructField, TimestampType}
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate.Input
 import za.co.absa.enceladus.utils.time.DateTimePattern
 
-class TypeParserFromDecimalTypeSuite extends TypeParserSuiteTemplate  {
+class TypeParser_FromLongTypeSuite extends TypeParserSuiteTemplate {
 
   private val input = Input(
-    baseType = DecimalType(10, 4),
-    defaultValueDate = "700101",
-    defaultValueTimestamp = "991231.2359",
-    datePattern = "yyMMdd",
-    timestampPattern = "yyMMdd.HHmm",
-    fixedTimezone = "CST",
-    path = "hello"
+    baseType = LongType,
+    defaultValueDate = "20001010",
+    defaultValueTimestamp = "199912311201",
+    datePattern = "yyyyMMdd",
+    timestampPattern = "yyyyMMddHHmm",
+    fixedTimezone = "EST",
+    path = "Hey"
   )
 
   override protected def createCastTemplate(toType: DataType, pattern: String, timezone: Option[String]): String = {
@@ -49,8 +48,8 @@ class TypeParserFromDecimalTypeSuite extends TypeParserSuiteTemplate  {
   override protected def createErrorCondition(srcField: String, target: StructField, castS: String): String = {
     target.dataType match {
       case FloatType | DoubleType => s"(($castS IS NULL) OR isnan($castS)) OR ($castS IN (Infinity, -Infinity))"
-      case ByteType | ShortType | IntegerType | LongType =>
-        s"($castS IS NULL) OR (NOT ($srcField = CAST($castS AS ${input.baseType.sql})))"
+      case ByteType | ShortType | IntegerType =>
+        s"($castS IS NULL) OR (NOT (CAST(Hey.sourceField AS INT) = CAST(Hey.sourceField AS BIGINT)))"
       case _ => s"$castS IS NULL"
     }
   }
