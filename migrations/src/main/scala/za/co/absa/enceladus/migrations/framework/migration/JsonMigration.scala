@@ -119,9 +119,8 @@ trait JsonMigration extends Migration {
 
   private def ensureCollectionEmpty(db: DocumentDb, collectionName: String): Unit = {
     if (db.collectionExists(collectionName)) {
-      db.dropCollection(collectionName)
+      db.emptyCollection(collectionName)
     }
-    db.createCollection(collectionName)
   }
 
   private val transformers = new mutable.HashMap[String, DocumentTransformer]()

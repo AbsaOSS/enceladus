@@ -29,8 +29,22 @@ class MigrationUseCaseSuite extends FunSuite {
 
     mig.migrate(1)
 
-    assert(db.getQueriesExecuted.size == 2)
-    assert(db.getQueriesExecuted == List("dataset_v1.execute(script1)", "mappingtable_v1.execute(script2)"))
+    assert(db.getVersion() == 1)
+
+    val expectedActions =
+        "clone(dataset,dataset_v1)" ::
+        "clone(schema,schema_v1)" ::
+        "clone(mappingtable,mappingtable_v1)" ::
+        "clone(foo,foo_v1)" ::
+        "create(attachment_v1)" ::
+        "drop(foo_v1)" ::
+        "rename(mappingtable_v1,mapping_table_v1)" ::
+        "empty(schema_v1)" ::
+        "insertTo(schema_v1)" ::
+        "dataset_v1.execute(script1)" ::
+        "mappingtable_v1.execute(script2)" ::
+        Nil
+    assert(db.getActionsExecuted == expectedActions)
 
     val expectedSchema = "{\"type\":\"struct\",\"fields\":[{\"name\":\"field1\",\"type\":\"string\",\"nullable\":" +
       "true,\"metadata\":{}},{\"name\":\"field2\",\"type\":\"integer\",\"nullable\":true,\"metadata\":{}}," +
@@ -39,6 +53,58 @@ class MigrationUseCaseSuite extends FunSuite {
     val actualSchema = db.getDocuments("schema_v1").next()
     assert(actualSchema == expectedSchema)
 
+    assert(db.collectionExists("dataset_v1"))
+    assert(db.collectionExists("schema_v1"))
+    assert(db.collectionExists("mapping_table_v1"))
+    assert(db.collectionExists("attachment_v1"))
+    assert(db.collectionExists("foo"))
+    assert(db.collectionExists("mappingtable"))
+    assert(!db.collectionExists("foo_v1"))
+    assert(!db.collectionExists("mappingtable_v1"))
+  }
+
+  test("Test a multistep migration") {
+    val testData = new UseCaseTestData
+
+    import testData._
+
+    val mig = new Migrator(db, Migration0 :: Migration1 :: Migration2 :: Nil)
+
+    mig.migrate(2)
+
+    assert(db.getVersion() == 2)
+
+    val expectedActions =
+        "clone(dataset,dataset_v1)" ::
+        "clone(schema,schema_v1)" ::
+        "clone(mappingtable,mappingtable_v1)" ::
+        "clone(foo,foo_v1)" ::
+        "create(attachment_v1)" ::
+        "drop(foo_v1)" ::
+        "rename(mappingtable_v1,mapping_table_v1)" ::
+        "empty(schema_v1)" ::
+        "insertTo(schema_v1)" ::
+        "dataset_v1.execute(script1)" ::
+        "mappingtable_v1.execute(script2)" ::
+        "clone(dataset_v1,dataset_v2)" ::
+        "clone(schema_v1,schema_v2)" ::
+        "clone(mapping_table_v1,mapping_table_v2)" ::
+        "clone(attachment_v1,attachment_v2)" ::
+        "empty(schema_v2)" ::
+        "insertTo(schema_v2)" ::
+        "schema_v2.execute(script10)" ::
+        Nil
+
+    assert(db.getActionsExecuted == expectedActions)
+
+    val expectedSchema = "{\"new_schema\": \"none\"}"
+    val actualSchema = db.getDocuments("schema_v2").next()
+    assert(actualSchema == expectedSchema)
+
+    assert(db.collectionExists("dataset_v2"))
+    assert(db.collectionExists("schema_v2"))
+    assert(db.collectionExists("mapping_table_v2"))
+    assert(db.collectionExists("attachment_v2"))
     assert(db.collectionExists("dataset_v1"))
     assert(db.collectionExists("schema_v1"))
     assert(db.collectionExists("mapping_table_v1"))

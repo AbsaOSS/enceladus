@@ -43,6 +43,7 @@ class UseCaseTestData {
     transformJSON("schema")(jsonIn => {
       jsonIn.replace(" ","")
         .replace("\n", "")
+        .replace("\r", "")
         .replace("\t","")
     })
 
@@ -52,6 +53,18 @@ class UseCaseTestData {
 
     applyQuery("mappingtable") ( versionedCollectionName => {
       s"$versionedCollectionName.execute(script2)"
+    })
+  }
+
+  object Migration2 extends MigrationBase with JsonMigration with QueryMigration  {
+    override val targetVersion: Int = 2
+
+    transformJSON("schema")(jsonIn => {
+      "{\"new_schema\": \"none\"}"
+    })
+
+    applyQuery("schema") ( versionedCollectionName => {
+      s"$versionedCollectionName.execute(script10)"
     })
   }
 
@@ -93,6 +106,8 @@ class UseCaseTestData {
         |		}
         |    ]
         |}""".stripMargin)
+
+    db.resetExecutedActions()
   }
 
 }

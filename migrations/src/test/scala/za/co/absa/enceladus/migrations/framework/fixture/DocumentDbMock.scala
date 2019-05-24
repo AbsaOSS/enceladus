@@ -35,6 +35,7 @@ class DocumentDbMock extends DocumentDb {
       throw new IllegalStateException(s"Collection already exists: '$collectionName'.")
     }
     db.put(collectionName, new ArrayBuffer[String]())
+    actionsExecuted += s"create($collectionName)"
   }
 
   override def dropCollection(collectionName: String): Unit = {
@@ -42,6 +43,15 @@ class DocumentDbMock extends DocumentDb {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
     db.remove(collectionName)
+    actionsExecuted += s"drop($collectionName)"
+  }
+
+  override def emptyCollection(collectionName: String): Unit = {
+    if (!collectionExists(collectionName)) {
+      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
+    }
+    db(collectionName) = new ArrayBuffer[String]()
+    actionsExecuted += s"empty($collectionName)"
   }
 
   override def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit = {
@@ -54,6 +64,7 @@ class DocumentDbMock extends DocumentDb {
     val docs = db(collectionNameOld)
     db.remove(collectionNameOld)
     db.put(collectionNameNew, docs)
+    actionsExecuted += s"rename($collectionNameOld,$collectionNameNew)"
   }
 
   override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {
@@ -67,6 +78,7 @@ class DocumentDbMock extends DocumentDb {
     val documentsCopy = new ArrayBuffer[String]()
     documentsCopy.insertAll(0, documents)
     db.put(newCollectionName, documentsCopy)
+    actionsExecuted += s"clone($collectionName,$newCollectionName)"
   }
 
   override def insertDocument(collectionName: String, document: String): Unit = {
@@ -75,10 +87,11 @@ class DocumentDbMock extends DocumentDb {
     }
     val documents = db(collectionName)
     documents += document
+    actionsExecuted += s"insertTo($collectionName)"
   }
 
   override def executeQuery(query: String): Unit = {
-    queriesExecuted += query
+    actionsExecuted += query
   }
 
   override def getDocuments(collectionName: String): Iterator[String] = {
@@ -88,9 +101,13 @@ class DocumentDbMock extends DocumentDb {
     db(collectionName).toIterator
   }
 
-  def getQueriesExecuted: List[String] = queriesExecuted.toList
+  def getActionsExecuted: List[String] = actionsExecuted.toList
+
+  def resetExecutedActions(): Unit = {
+    actionsExecuted.clear()
+  }
 
   private val db = new mutable.HashMap[String, ArrayBuffer[String]]()
   private var version = 0
-  private val queriesExecuted = new ListBuffer[String]
+  private val actionsExecuted = new ListBuffer[String]
 }
