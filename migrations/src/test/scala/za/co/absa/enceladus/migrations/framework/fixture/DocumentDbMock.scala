@@ -26,7 +26,10 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 class DocumentDbMock extends DocumentDb {
   override def getVersion(): Int = version
 
-  override def setVersion(version: Int): Unit = this.version = version
+  override def setVersion(version: Int): Unit = {
+    actionsExecuted += s"setDbVersion($version)"
+    this.version = version
+  }
 
   override def collectionExists(collectionName: String): Boolean = db.contains(collectionName)
 

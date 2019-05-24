@@ -15,17 +15,21 @@
 
 package za.co.absa.enceladus.migrations.framework
 
+import org.apache.log4j.{LogManager, Logger}
+
 import util.control.Breaks._
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
-import za.co.absa.enceladus.migrations.framework.migration.{CollectionMigration, JsonMigration, Migration, QueryMigration}
+import za.co.absa.enceladus.migrations.framework.migration._
 
 class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
 
-  def getCollectionMigrations: Seq[CollectionMigration] = migrations.collect({case m: CollectionMigration => m})
+  private val log: Logger = LogManager.getLogger("CollectionMigration")
 
-  def getQueryMigrations: Seq[QueryMigration] = migrations.collect({case m: QueryMigration => m})
+  def getCollectionMigrations: Seq[CollectionMigration] = migrations.collect({ case m: CollectionMigration => m })
 
-  def getJsonMigrations: Seq[JsonMigration] = migrations.collect({case m: JsonMigration => m})
+  def getQueryMigrations: Seq[QueryMigration] = migrations.collect({ case m: QueryMigration => m })
+
+  def getJsonMigrations: Seq[JsonMigration] = migrations.collect({ case m: JsonMigration => m })
 
   /**
     * Do the migration from the current version of the database to the target one.
@@ -49,6 +53,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
 
     if (targetDbVersion > sourceDbVersion) {
       for (i <- sourceDbVersion + 1 to targetDbVersion) {
+        cleanUpUnfinishedMigrations(db, currentVersionCollections, i)
         val migrationsToExecute = migrations.filter(m => m.targetVersion == i)
         migrationsToExecute.foreach(_.execute(db, currentVersionCollections))
         migrationsToExecute.foreach(m =>
@@ -146,5 +151,27 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     }
   }
 
+  private def cleanUpUnfinishedMigrations(db: DocumentDb, collections: List[String], targetVersion: Int): Unit = {
+    // Cleaning up cloned and not processed collections
+    dropCollections(db, collections, targetVersion)
+
+    // Cleaning up partially processed collections
+    val migrationsToExecute = migrations.filter(m => m.targetVersion == targetVersion)
+    var migratedCollections = collections
+    migrationsToExecute.foreach(m => {
+      migratedCollections = m.applyCollectionChanges(migratedCollections)
+      dropCollections(db, collections, targetVersion)
+    })
+  }
+
+  private def dropCollections(db: DocumentDb, collections: List[String], dbVersion: Int): Unit = {
+    collections
+      .map(c => MigrationUtils.getVersionedCollectionName(c, dbVersion))
+      .foreach(collection => if (db.collectionExists(collection)) {
+        log.info(s"Dropping partially migrated collection $collection")
+        db.dropCollection(collection)
+      }
+    )
+  }
 
 }

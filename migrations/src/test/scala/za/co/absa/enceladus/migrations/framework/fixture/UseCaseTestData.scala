@@ -107,6 +107,10 @@ class UseCaseTestData {
         |    ]
         |}""".stripMargin)
 
+    // Insert some partially migrated data
+    db.createCollection("schema_v2")
+    db.insertDocument("schema_v2", "{bogus}")
+
     db.resetExecutedActions()
   }
 
