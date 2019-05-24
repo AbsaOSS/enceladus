@@ -15,10 +15,13 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
+import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
 abstract class MigrationBase extends Migration {
+  private val log: Logger = LogManager.getLogger("MigrationBase")
+
   def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
     collectionNames.foreach(collection => cloneCollection(db, collection))
   }
@@ -31,6 +34,7 @@ abstract class MigrationBase extends Migration {
   private def cloneCollection(db: DocumentDb, collectionName: String): Unit = {
     val sourceCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion - 1)
     val targetCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
+    log.info(s"Cloning a collection $sourceCollection -> $targetCollection")
     db.cloneCollection(sourceCollection, targetCollection)
   }
 }
