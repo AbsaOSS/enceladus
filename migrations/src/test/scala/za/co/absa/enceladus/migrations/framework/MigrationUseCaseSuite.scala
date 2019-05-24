@@ -44,6 +44,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "insertTo(schema_v1)" ::
         "dataset_v1.execute(script1)" ::
         "mappingtable_v1.execute(script2)" ::
+        "setDbVersion(1)" ::
         Nil
     assert(db.getActionsExecuted == expectedActions)
 
@@ -88,6 +89,8 @@ class MigrationUseCaseSuite extends FunSuite {
         "insertTo(schema_v1)" ::
         "dataset_v1.execute(script1)" ::
         "mappingtable_v1.execute(script2)" ::
+        "setDbVersion(1)" ::
+        "drop(schema_v2)" ::
         "clone(dataset_v1,dataset_v2)" ::
         "clone(schema_v1,schema_v2)" ::
         "clone(mapping_table_v1,mapping_table_v2)" ::
@@ -96,6 +99,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "empty(schema_v2)" ::
         "insertTo(schema_v2)" ::
         "schema_v2.execute(script10)" ::
+        "setDbVersion(2)" ::
         Nil
 
     assert(db.getActionsExecuted == expectedActions)
