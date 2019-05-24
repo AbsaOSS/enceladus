@@ -98,6 +98,7 @@ class DocumentDbMock extends DocumentDb {
     if (!collectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
+    actionsExecuted += s"getDocuments($collectionName)"
     db(collectionName).toIterator
   }
 

@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
+import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
@@ -51,8 +52,9 @@ import scala.collection.mutable.ListBuffer
   */
 trait QueryMigration extends Migration {
   type JsQuery = String
-
   type QueryGenerator = String => JsQuery
+
+  private val log: Logger = LogManager.getLogger("QueryMigration")
 
   /**
     * This method is used by derived classes to add queries to be executed on the affected collections.
@@ -92,7 +94,9 @@ trait QueryMigration extends Migration {
           db.executeQuery(queryGenerator(""))
         } else {
           if (collectionNames.contains(queryCollection)) {
-            db.executeQuery(queryGenerator(MigrationUtils.getVersionedCollectionName(queryCollection, targetVersion)))
+            val collection = MigrationUtils.getVersionedCollectionName(queryCollection, targetVersion)
+            log.info(s"Executing a query on $collection")
+            db.executeQuery(queryGenerator(collection))
           } else {
             throw new IllegalStateException(
               s"Attempt to apply a query to a collection that does not exist: $queryCollection.")

@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
+import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
@@ -40,6 +41,7 @@ import scala.collection.mutable.ListBuffer
   * }}}
   */
 trait CollectionMigration extends Migration {
+  private val log: Logger = LogManager.getLogger("CollectionMigration")
 
   /**
     * This method is used by derived classes to add new collection as a step of migration process.
@@ -117,12 +119,34 @@ trait CollectionMigration extends Migration {
     */
   abstract override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
     super.execute(db, collectionNames)
-    collectionsToAdd.foreach(c => db.createCollection(MigrationUtils.getVersionedCollectionName(c, targetVersion)))
-    collectionsToRemove.foreach(c => db.dropCollection(MigrationUtils.getVersionedCollectionName(c, targetVersion)))
+    applyAddCollections(db)
+    applyRemoveCollections(db)
+    applyRenameCollection(db)
+  }
+
+  private def applyAddCollections(db: DocumentDb): Unit = {
+    collectionsToAdd.foreach(c => {
+      val newCollection = MigrationUtils.getVersionedCollectionName(c, targetVersion)
+      log.info(s"Adding new collection $newCollection")
+      db.createCollection(newCollection)
+    })
+  }
+
+  private def applyRemoveCollections(db: DocumentDb): Unit = {
+    collectionsToRemove.foreach(c => {
+      val collection = MigrationUtils.getVersionedCollectionName(c, targetVersion)
+      log.info(s"Removing collection $collection")
+      db.dropCollection(collection)
+    })
+  }
+
+  private def applyRenameCollection(db: DocumentDb): Unit = {
     collectionsToRename.foreach {
       case (oldName, newName) =>
-        db.renameCollection(MigrationUtils.getVersionedCollectionName(oldName, targetVersion),
-          MigrationUtils.getVersionedCollectionName(newName, targetVersion))
+        val oldVersionedCollection = MigrationUtils.getVersionedCollectionName(oldName, targetVersion)
+        val newVersionedCollection = MigrationUtils.getVersionedCollectionName(newName, targetVersion)
+        log.info(s"Renaming collection $oldVersionedCollection -> $newVersionedCollection")
+        db.renameCollection(oldVersionedCollection, newVersionedCollection)
     }
   }
 

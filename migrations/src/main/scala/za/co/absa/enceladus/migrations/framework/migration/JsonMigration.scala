@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
+import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
@@ -48,6 +49,8 @@ import scala.collection.mutable
   */
 trait JsonMigration extends Migration {
   type DocumentTransformer = String => String
+
+  private val log: Logger = LogManager.getLogger("JsonMigration")
 
   /**
     * This function is used by derived classes to add transformations for affected collections.
@@ -90,7 +93,7 @@ trait JsonMigration extends Migration {
     */
   abstract override def validate(collectionNames: Seq[String]): Unit = {
     super.validate(collectionNames)
-    transformers.foreach{
+    transformers.foreach {
       case (collectionToMigrate, _) => if (!collectionNames.contains(collectionToMigrate)) {
         throw new IllegalStateException(
           s"Attempt to apply a transform to a collection that does not exist: $collectionToMigrate.")
@@ -108,9 +111,11 @@ trait JsonMigration extends Migration {
     * Applies a transformer for each document of the collection to produce a migrated collection.
     */
   private def applyTransformers(db: DocumentDb, collectionName: String): Unit = {
-    val documents = db.getDocuments(MigrationUtils.getVersionedCollectionName(collectionName, targetVersion - 1))
+    val sourceCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion - 1)
     val targetCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
+    val documents = db.getDocuments(sourceCollection)
     val transformer = transformers(collectionName)
+    log.info(s"Applying a per-document transformation $sourceCollection -> $targetCollection")
     ensureCollectionEmpty(db, targetCollection)
     documents.foreach(doc =>
       db.insertDocument(targetCollection, transformer(doc))
