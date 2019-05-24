@@ -16,11 +16,11 @@
 package za.co.absa.enceladus.utils.testUtils
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql. SparkSession
 import org.apache.spark.SparkConf
 import com.typesafe.config.ConfigFactory
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{Path, FileSystem}
+import org.apache.hadoop.fs.{FileSystem, Path}
 import scala.collection.JavaConversions._
 import java.io.File
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
@@ -69,12 +69,13 @@ trait SparkTestBase { self =>
   Logger.getLogger("org").setLevel(Level.WARN)
   Logger.getLogger("akka").setLevel(Level.WARN)
 
+
 }
 
 object SparkTestBase {
   /**
    * Gets a Hadoop configuration object from the specified hadoopConfDir parameter
-   * 
+   *
    * @param hadoopConfDir string representation of HADOOP_CONF_DIR
    */
   def getHadoopConfiguration(hadoopConfDir: String): Configuration = {
@@ -88,20 +89,20 @@ object SparkTestBase {
 
   /**
    * Converts all entries from a Hadoop configuration to Map, which can be consumed by SparkConf
-   * 
+   *
    * @param hadoopConf Hadoop Configuration object to be converted into Spark configs
    */
   def hadoopConfToSparkMap(hadoopConf: Configuration): Map[String, String] = {
     hadoopConf.iterator().map(entry => (s"spark.hadoop.${entry.getKey}", entry.getValue)).toMap
   }
-  
+
   /**
    * Get Hadoop configuration consumable by SparkConf
    */
-  def getHadoopConfigurationForSpark(hadoopConfDir: String): Map[String, String] = { 
+  def getHadoopConfigurationForSpark(hadoopConfDir: String): Map[String, String] = {
     hadoopConfToSparkMap(getHadoopConfiguration(hadoopConfDir))
   }
-  
+
   /**
    * Loads spark defaults from the specified SPARK_HOME directory
    */

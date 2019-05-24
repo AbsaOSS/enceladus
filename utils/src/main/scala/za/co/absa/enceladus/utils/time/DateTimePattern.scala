@@ -44,8 +44,8 @@ abstract sealed class DateTimePattern(pattern: String, isDefault: Boolean = fals
 }
 
 object DateTimePattern {
-  import za.co.absa.enceladus.utils.implicits.StringImplicits.StringImprovements
-  import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.{StructFieldImprovements, PatternInfo}
+  import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
+  import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.{StructFieldEnhancements, PatternInfo}
 
   val EpochKeyword = "epoch"
   val EpochMilliKeyword = "epochmilli"
@@ -102,7 +102,7 @@ object DateTimePattern {
       )
     }
     val PatternInfo(pattern, isDefault) = structField.readPatternInfo()
-    val timeZoneOpt = structField.getMetadata("timezone")
+    val timeZoneOpt = structField.getMetadataString("timezone")
     create(pattern, timeZoneOpt, isDefault)
   }
 

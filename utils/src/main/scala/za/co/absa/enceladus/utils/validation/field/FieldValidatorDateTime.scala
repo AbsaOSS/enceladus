@@ -27,12 +27,12 @@ import org.apache.spark.sql.functions._
 import scala.util.control.NonFatal
 
 trait FieldValidatorDateTime extends FieldValidator {
-  import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldImprovements
+  import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldEnhancements
 
   override def validateStructField(field: StructField): Seq[ValidationIssue] = {
     val pattern = DateTimePattern.fromStructField(field)
     val defaultValue = field.defaultValueAsString
-    val defaultTimeZone = field.getMetadata("timezone")
+    val defaultTimeZone = field.getMetadataString("timezone")
     patternConversionIssues(pattern, defaultValue) ++
       defaultTimeZoneIssues(defaultTimeZone) ++
       patternAnalysisIssues(pattern, defaultValue, defaultTimeZone)

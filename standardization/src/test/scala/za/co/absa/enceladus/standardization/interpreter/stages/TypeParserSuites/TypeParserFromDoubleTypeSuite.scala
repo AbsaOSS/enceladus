@@ -15,7 +15,8 @@
 
 package za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuites
 
-import org.apache.spark.sql.types.{DataType, DateType, DoubleType, TimestampType}
+import org.apache.spark.sql.types.{ByteType, DataType, DateType, DoubleType, FloatType, IntegerType, LongType,
+  ShortType, StructField, TimestampType}
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate.Input
 import za.co.absa.enceladus.utils.time.DateTimePattern
@@ -49,8 +50,28 @@ class TypeParserFromDoubleTypeSuite extends TypeParserSuiteTemplate  {
     }
   }
 
-  test("Within the column - type stays") {
-    doTestWithinColumn(input)
+  override protected def createErrorCondition(srcField: String, target: StructField, castS: String): String = {
+    val (min, max) = target.dataType match {
+      case ByteType => (Byte.MinValue, Byte.MaxValue)
+      case ShortType => (Short.MinValue, Short.MaxValue)
+      case IntegerType => (Int.MinValue, Int.MaxValue)
+      case LongType => (Long.MinValue, Long.MaxValue)
+      case _ => (0,0 )
+    }
+    target.dataType match {
+      case FloatType | DoubleType => s"(($castS IS NULL) OR isnan($castS)) OR ($castS IN (Infinity, -Infinity))"
+      case ByteType | ShortType | IntegerType | LongType =>
+        s"((($castS IS NULL) OR (NOT (($srcField % 1.0) = 0.0))) OR ($srcField > $max)) OR ($srcField < $min)"
+      case _ => s"$castS IS NULL"
+    }
+  }
+
+  test("Within the column - type stays, nullable") {
+    doTestWithinColumnNullable(input)
+  }
+
+  test("Within the column - type stays, not nullable") {
+    doTestWithinColumnNotNullable(input)
   }
 
   test("Into string field") {

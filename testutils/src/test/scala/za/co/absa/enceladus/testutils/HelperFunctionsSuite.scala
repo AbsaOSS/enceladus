@@ -47,5 +47,4 @@ class HelperFunctionsSuite extends FunSuite {
     val response = "0 seconds"
     assert(HelperFunctions.prettyPrintElapsedTime(time) == response)
   }
-
 }
