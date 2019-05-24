@@ -23,6 +23,7 @@ object MigrationTestDoubles {
     override def getVersion(): Int = 0
     override def setVersion(version: Int): Unit = {}
     override def dropCollection(collectionName: String): Unit = {}
+    override def emptyCollection(collectionName: String): Unit = {}
     override def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit = {}
     override def collectionExists(collectionName: String): Boolean = true
     override def createCollection(collectionName: String): Unit = {}

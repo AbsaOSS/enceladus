@@ -53,6 +53,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
         migrationsToExecute.foreach(_.execute(db, currentVersionCollections))
         migrationsToExecute.foreach(m =>
           currentVersionCollections = m.applyCollectionChanges(currentVersionCollections))
+        db.setVersion(i)
       }
     }
   }
