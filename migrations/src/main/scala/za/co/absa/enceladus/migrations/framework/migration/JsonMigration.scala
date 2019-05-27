@@ -123,7 +123,7 @@ trait JsonMigration extends Migration {
   }
 
   private def ensureCollectionEmpty(db: DocumentDb, collectionName: String): Unit = {
-    if (db.collectionExists(collectionName)) {
+    if (db.isCollectionExists(collectionName)) {
       db.emptyCollection(collectionName)
     }
   }

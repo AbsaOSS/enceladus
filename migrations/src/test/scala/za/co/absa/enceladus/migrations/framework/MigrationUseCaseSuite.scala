@@ -55,14 +55,14 @@ class MigrationUseCaseSuite extends FunSuite {
     val actualSchema = db.getDocuments("schema_v1").next()
     assert(actualSchema == expectedSchema)
 
-    assert(db.collectionExists("dataset_v1"))
-    assert(db.collectionExists("schema_v1"))
-    assert(db.collectionExists("mapping_table_v1"))
-    assert(db.collectionExists("attachment_v1"))
-    assert(db.collectionExists("foo"))
-    assert(db.collectionExists("mappingtable"))
-    assert(!db.collectionExists("foo_v1"))
-    assert(!db.collectionExists("mappingtable_v1"))
+    assert(db.isCollectionExists("dataset_v1"))
+    assert(db.isCollectionExists("schema_v1"))
+    assert(db.isCollectionExists("mapping_table_v1"))
+    assert(db.isCollectionExists("attachment_v1"))
+    assert(db.isCollectionExists("foo"))
+    assert(db.isCollectionExists("mappingtable"))
+    assert(!db.isCollectionExists("foo_v1"))
+    assert(!db.isCollectionExists("mappingtable_v1"))
   }
 
   test("Test a multistep migration") {
@@ -108,18 +108,18 @@ class MigrationUseCaseSuite extends FunSuite {
     val actualSchema = db.getDocuments("schema_v2").next()
     assert(actualSchema == expectedSchema)
 
-    assert(db.collectionExists("dataset_v2"))
-    assert(db.collectionExists("schema_v2"))
-    assert(db.collectionExists("mapping_table_v2"))
-    assert(db.collectionExists("attachment_v2"))
-    assert(db.collectionExists("dataset_v1"))
-    assert(db.collectionExists("schema_v1"))
-    assert(db.collectionExists("mapping_table_v1"))
-    assert(db.collectionExists("attachment_v1"))
-    assert(db.collectionExists("foo"))
-    assert(db.collectionExists("mappingtable"))
-    assert(!db.collectionExists("foo_v1"))
-    assert(!db.collectionExists("mappingtable_v1"))
+    assert(db.isCollectionExists("dataset_v2"))
+    assert(db.isCollectionExists("schema_v2"))
+    assert(db.isCollectionExists("mapping_table_v2"))
+    assert(db.isCollectionExists("attachment_v2"))
+    assert(db.isCollectionExists("dataset_v1"))
+    assert(db.isCollectionExists("schema_v1"))
+    assert(db.isCollectionExists("mapping_table_v1"))
+    assert(db.isCollectionExists("attachment_v1"))
+    assert(db.isCollectionExists("foo"))
+    assert(db.isCollectionExists("mappingtable"))
+    assert(!db.isCollectionExists("foo_v1"))
+    assert(!db.isCollectionExists("mappingtable_v1"))
   }
 
 }
