@@ -15,7 +15,7 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
         <Title text="{_t}" level="H2"/>
-        <Label text="Output Column: "/>
+        <Label text="Output Column"/>
         <Text text="{outputColumn}"/>
         <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.checkpointBox"/>
 </core:FragmentDefinition>
