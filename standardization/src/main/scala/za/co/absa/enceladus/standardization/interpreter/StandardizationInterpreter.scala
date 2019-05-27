@@ -34,7 +34,7 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
   */
 object StandardizationInterpreter extends StandardizationCommon{
 
-  type ErrorCols = List[String]
+  private type ErrorCols = List[String]
 
   /**
     * Perform the standardization of the dataframe given the expected schema
@@ -48,7 +48,7 @@ object StandardizationInterpreter extends StandardizationCommon{
     logger.info(s"Step 1: Schema validation")
     validateSchemaAgainstSelfInconsistencies(expSchema)
 
-    // TODO: remove when spark-xml handles empty arrays
+    // TODO: remove when spark-xml handles empty arrays #417
     val df1: Dataset[Row] = if (inputType.toLowerCase() == "xml") {
       df.select(expSchema.fields.map { field: StructField =>
         SparkXMLHack.hack(field, "", df).as(field.name)
@@ -58,7 +58,7 @@ object StandardizationInterpreter extends StandardizationCommon{
     }
 
     logger.info(s"Step 2: Standardization")
-    val (std, errorColsAfterStandardization) = standardizeTheDataset(df1, expSchema)
+    val (std, errorColsAfterStandardization) = standardizeDataset(df1, expSchema)
 
     logger.info(s"Step 3.1: Preserve existing error column")
     val (stdWithErrColPreserved, errorColsWithErrColPreserved) = preserveExistingErrorColumn(
@@ -77,7 +77,7 @@ object StandardizationInterpreter extends StandardizationCommon{
     cleanedStd
   }
 
-  private def stdApplyLogic(stdOutput: ParseOutput, field: StructField, nextErrorColumnIndex: Long)
+  private def stdApplyLogic(stdOutput: ParseOutput, field: StructField, nextErrorColumnIndex: Int)
                            (implicit spark: SparkSession, udfLib: UDFLibrary): (Column, Column, String) = {
     val ParseOutput(stdCol, errs) = stdOutput
     val errField = s"error_${unpath(field.name)}_$nextErrorColumnIndex"
@@ -94,20 +94,21 @@ object StandardizationInterpreter extends StandardizationCommon{
     }
   }
 
-  private def standardizeTheDataset(df: Dataset[Row], expSchema: StructType)
-                                   (implicit spark: SparkSession, udfLib: UDFLibrary): (DataFrame, ErrorCols)  = {
+  private def standardizeDataset(df: Dataset[Row], expSchema: StructType)
+                                (implicit spark: SparkSession, udfLib: UDFLibrary): (DataFrame, ErrorCols)  = {
 
-    val(cols, errorColNames, _) = expSchema.fields.foldLeft(List.empty[Column], List.empty[String], 1L) { (acc, field) =>
-      logger.info(s"Standardizing field: ${field.name}")
-      val (accCols, accErrorCols, nextErrorColumnIndex) = acc
-      if (field.name == ErrorMessage.errorColumnName) {
-        (df.col(field.name)::accCols, accErrorCols, nextErrorColumnIndex)
-      } else {
-        val stdOutput = TypeParser.standardize(field, "", df.schema)
-        logger.info(s"Applying standardization plan for ${field.name}")
-        val (column1, column2, errField) = stdApplyLogic(stdOutput, field, nextErrorColumnIndex)
-        (column1::column2::accCols, errField::accErrorCols, nextErrorColumnIndex + 1)
-      }
+    val (cols, errorColNames, _) = expSchema.fields.foldLeft(List.empty[Column], List.empty[String], 1) {
+      (acc, field) =>
+        logger.info(s"Standardizing field: ${field.name}")
+        val (accCols, accErrorCols, nextErrorColumnIndex) = acc
+        if (field.name == ErrorMessage.errorColumnName) {
+          (df.col(field.name) :: accCols, accErrorCols, nextErrorColumnIndex)
+        } else {
+          val stdOutput = TypeParser.standardize(field, "", df.schema)
+          logger.info(s"Applying standardization plan for ${field.name}")
+          val (column1, column2, errField) = stdApplyLogic(stdOutput, field, nextErrorColumnIndex)
+          (column1 :: column2 :: accCols, errField::accErrorCols, nextErrorColumnIndex + 1)
+        }
     }
 
     (df.select(cols.reverse: _*), errorColNames)
@@ -117,16 +118,16 @@ object StandardizationInterpreter extends StandardizationCommon{
     if (dataFrame.columns.contains(ErrorMessage.errorColumnName)) {
       // preserve existing errors - rename into a temporary column
       val newName = s"${ErrorMessage.errorColumnName}0"
-      (dataFrame.withColumnRenamed(ErrorMessage.errorColumnName, newName), newName::errorCols)
+      (dataFrame.withColumnRenamed(ErrorMessage.errorColumnName, newName), newName :: errorCols)
     } else {
       (dataFrame, errorCols)
     }
   }
 
   private def collectAllTempErrorColumns(dataFrame: DataFrame, errorCols: ErrorCols)
-                                            (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
+                                        (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     // collect all of the error attributes into an array and flatten
-    logger.info(s"Error cols: ${errorCols.toList}")
+    logger.info(s"Error cols: $errorCols")
     ArrayTransformations.flattenArrays(
       //reversing errorCols as err columns when collected are appended to beginning of the list
       dataFrame.withColumn(ErrorMessage.errorColumnName, array(errorCols.reverse.map(col): _*)),
@@ -134,7 +135,7 @@ object StandardizationInterpreter extends StandardizationCommon{
   }
 
   private def dropAllTemporaryErrorColumn(dataFrame: DataFrame, errorCols: ErrorCols): DataFrame = {
-    dataFrame.drop(errorCols.toSeq: _*)
+    dataFrame.drop(errorCols: _*)
   }
 
   private def cleanTheFinalErrorColumn(dataFrame: DataFrame, errorCols: ErrorCols): DataFrame = {
