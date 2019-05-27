@@ -167,7 +167,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
   private def dropCollections(db: DocumentDb, collections: List[String], dbVersion: Int): Unit = {
     collections
       .map(c => MigrationUtils.getVersionedCollectionName(c, dbVersion))
-      .foreach(collection => if (db.collectionExists(collection)) {
+      .foreach(collection => if (db.isCollectionExists(collection)) {
         log.info(s"Dropping partially migrated collection $collection")
         db.dropCollection(collection)
       }

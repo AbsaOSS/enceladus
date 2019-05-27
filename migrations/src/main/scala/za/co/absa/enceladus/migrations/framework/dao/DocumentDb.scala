@@ -21,7 +21,7 @@ abstract class DocumentDb {
 
   def setVersion(version: Int): Unit
 
-  def collectionExists(collectionName: String): Boolean
+  def isCollectionExists(collectionName: String): Boolean
 
   def createCollection(collectionName: String): Unit
 
