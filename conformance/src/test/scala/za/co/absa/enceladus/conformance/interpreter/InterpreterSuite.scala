@@ -69,7 +69,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     val expected = EmployeeConformance.conformedEmployees.sortBy(_.employee_id).toList
 
     // perform the write
-    conformed.coalesce(1).orderBy($"employee_id" asc).write.mode("overwrite").parquet("src/test/testData/_testOutput")
+    conformed.coalesce(1).orderBy($"employee_id".asc).write.mode("overwrite").parquet("src/test/testData/_testOutput")
 
     spark.disableControlMeasuresTracking()
 
@@ -87,8 +87,8 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     assert(checkpoints.lengthCompare(9) == 0)
 
     checkpoints.foreach({ cp =>
-      assert(cp.controls(0).controlValue === 8)
-      assert(cp.controls(1).controlValue === 6)
+      assert(cp.controls(0).controlValue === "8")
+      assert(cp.controls(1).controlValue === "6")
     })
   }
 
@@ -141,9 +141,9 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     assert(checkpoints.lengthCompare(11) == 0)
 
     checkpoints.foreach({ cp =>
-      assert(cp.controls(0).controlValue === 7)
-      assert(cp.controls(1).controlValue === 7)
-      assert(cp.controls(2).controlValue === 28)
+      assert(cp.controls(0).controlValue === "7")
+      assert(cp.controls(1).controlValue === "7")
+      assert(cp.controls(2).controlValue === "28")
     })
   }
 
