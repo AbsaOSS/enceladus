@@ -27,7 +27,13 @@
                 <Label text="Join Conditions"/>
                 <List items="{joinConditions}">
                     <items>
-                        <StandardListItem title="{mappingTableField} - {datasetField}"/>
+                        <CustomListItem>
+                            <content>
+                                <Text wrapping="true"
+                                      wrappingType="Hyphenated"
+                                      text="{datasetField} = {mappingTableField}"/>
+                            </content>
+                        </CustomListItem>
                     </items>
                 </List>
                 <Label text="Target column"/>
