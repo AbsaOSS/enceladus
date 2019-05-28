@@ -79,7 +79,6 @@ class ConformanceRuleDialog {
       {
         _t: "NegationConformanceRule",
         schemaFieldSelectorSupportedRule: true
-
       },
       {
         _t: "SingleColumnConformanceRule",
@@ -106,7 +105,7 @@ class ConformanceRuleDialog {
       {type: "float"},
       {type: "double"},
       {type: "decimal(38,18)"},
-      {type: "char"},
+      // {type: "char"}, // TODO: First resolve https://github.com/AbsaOSS/enceladus/issues/425
       {type: "string"},
       {type: "date"},
       {type: "timestamp"}
