@@ -21,11 +21,15 @@
     <Label text="Join Conditions"/>
     <List mode="Delete" items="{/newRule/newJoinConditions}" delete=".onDeleteJoinCondition">
         <items>
-            <StandardListItem type="Active"
+            <CustomListItem type="Active"
                               press=".onJoinConditionSelect"
                               cust:mappingTableField="{mappingTableField}"
-                              cust:datasetField="{datasetField}"
-                              title="{/newRule/mappingTable}.{mappingTableField} - {/currentDataset/name}.{datasetField}"/>
+                              cust:datasetField="{datasetField}">
+                <content>
+                    <Text class="sapUiSmallMarginBegin"
+                        text="{/newRule/mappingTable}.{mappingTableField} - {/currentDataset/name}.{datasetField}"/>
+                </content>
+            </CustomListItem>
         </items>
     </List>
     <Label text="Add Join Condition"/>
