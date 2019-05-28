@@ -26,8 +26,9 @@
                               cust:mappingTableField="{mappingTableField}"
                               cust:datasetField="{datasetField}">
                 <content>
-                    <Text class="sapUiSmallMarginBegin"
-                        text="{/newRule/mappingTable}.{mappingTableField} - {/currentDataset/name}.{datasetField}"/>
+                    <Text class="sapUiSmallMarginBegin sapUiSmallMarginEnd" wrapping="true"
+                          wrappingType="Hyphenated"
+                          text="{/currentDataset/name}.{datasetField} = {/newRule/mappingTable}.{mappingTableField}"/>
                 </content>
             </CustomListItem>
         </items>
