@@ -36,8 +36,18 @@ sap.ui.define([
         this.routeMatched(args);
       }, this);
 
-      let cont = sap.ui.controller("components.dataset.conformanceRule.upsert", true);
-      this._upsertConformanceRuleDialog = sap.ui.xmlfragment("components.dataset.conformanceRule.upsert", cont);
+      let cont = new ConformanceRuleDialog(this);
+      let view = this.getView();
+
+      this._upsertConformanceRuleDialog = Fragment.load({
+        id: view.getId(),
+        name:"components.dataset.conformanceRule.upsert",
+        controller: cont
+      }).then(function (fragment) {
+        view.addDependent(fragment);
+      });
+
+      this._upsertConformanceRuleDialog = this.byId("upsertConformanceRuleDialog");
 
       new DatasetDialogFactory(this, Fragment.load).getEdit();
 

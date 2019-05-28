@@ -19,8 +19,6 @@
         <form:SimpleForm adjustLabelSpan="true" editable="false">
             <form:content>
                 <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.commonRuleFields"/>
-                <Label text="Target column"/>
-                <Text text="{targetAttribute}"/>
                 <Label text="Mapping Table"/>
                 <Link text="{mappingTable} (v{mappingTableVersion})" press="toMappingTable"
                       cust:name="{mappingTable}" cust:version="{mappingTableVersion}"/>
@@ -32,6 +30,8 @@
                         <StandardListItem title="{mappingTableField} - {datasetField}"/>
                     </items>
                 </List>
+                <Label text="Target column"/>
+                <Text text="{targetAttribute}"/>
             </form:content>
         </form:SimpleForm>
         <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.actionMenu"/>
