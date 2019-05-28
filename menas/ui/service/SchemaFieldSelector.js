@@ -114,7 +114,6 @@ class SchemaFieldSelector {
   reset(tree) {
     // This is a workaround for a bug in the Tree component of 1.56.x and 1.58.x
     // which throws "Cannot read property 'setSelectedIndex' of undefined" error
-    // TODO: verify whether this was fixed in the subsequent versions
     let items = tree.getItems();
     for (let i in items) {
       items[i].setSelected(false);
