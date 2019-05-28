@@ -107,7 +107,7 @@ object StandardizationInterpreter extends StandardizationCommon{
           val stdOutput = TypeParser.standardize(field, "", df.schema)
           logger.info(s"Applying standardization plan for ${field.name}")
           val (column1, column2, errField) = stdApplyLogic(stdOutput, field, nextErrorColumnIndex)
-          (column1 :: column2 :: accCols, errField::accErrorCols, nextErrorColumnIndex + 1)
+          (column1 :: column2 :: accCols, errField :: accErrorCols, nextErrorColumnIndex + 1)
         }
     }
 
