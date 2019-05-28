@@ -15,6 +15,9 @@
 
 package za.co.absa.enceladus.migrations.framework.dao
 
+/**
+  * This abstract class is the contract a document database need to implement in order to run migrations.
+  */
 abstract class DocumentDb {
 
   def getVersion(): Int

@@ -15,33 +15,38 @@
 
 package za.co.absa.enceladus.migrations.framework.dao
 
-import java.util.concurrent.TimeUnit
-
+import org.apache.log4j.{LogManager, Logger}
 import org.mongodb.scala.bson.codecs.Macros._
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
-import org.bson.codecs.configuration.{CodecRegistries, CodecRegistry}
-import org.mongodb.scala.{Completed, FindObservable, MongoCollection, MongoDatabase, Observable, SingleObservable}
+import org.bson.codecs.configuration.CodecRegistry
+import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.{MongoCollection, MongoDatabase, MongoNamespace}
 import za.co.absa.enceladus.migrations.framework.model.DbVersion
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
 class MongoDb (db: MongoDatabase) extends DocumentDb {
+  private val log: Logger = LogManager.getLogger(this.getClass)
 
   val dbVersionCollectionName = "db_version"
-  val queryTimeout = 30
   val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[DbVersion]), DEFAULT_CODEC_REGISTRY)
+
+  // This adds .execute() method to observables
+  import ScalaMongoImplicits._
 
   override def getVersion(): Int = {
     if (!isCollectionExists(dbVersionCollectionName)) {
-      synchronousCallSingle(db.createCollection(dbVersionCollectionName))
-      synchronousCallSingle(getCollection[DbVersion](dbVersionCollectionName)
-        .insertOne(DbVersion(0)))
+      createCollection(dbVersionCollectionName)
+      getCollection[DbVersion](dbVersionCollectionName)
+        .insertOne(DbVersion(0))
+        .execute()
     }
 
-    val versions = synchronousCallFind(getCollection(dbVersionCollectionName).find[DbVersion]())
+    val versions = getCollection(dbVersionCollectionName)
+      .find[DbVersion]()
+      .execute()
+
     if (versions.lengthCompare(1) != 0) {
       val len = versions.length
       throw new IllegalStateException(
@@ -51,39 +56,73 @@ class MongoDb (db: MongoDatabase) extends DocumentDb {
     versions.head.version
   }
 
-  override def setVersion(version: Int): Unit = ???
+  override def setVersion(version: Int): Unit = {
+    if (!isCollectionExists(dbVersionCollectionName)) {
+      createCollection(dbVersionCollectionName)
+      getCollection[DbVersion](dbVersionCollectionName)
+        .insertOne(DbVersion(version))
+        .execute()
+    } else {
+      getCollection[DbVersion](dbVersionCollectionName)
+        .replaceOne(new BsonDocument, DbVersion(version))
+        .execute()
+    }
+  }
 
   override def isCollectionExists(collectionName: String): Boolean = {
-    val collections = synchronousCall(db.listCollectionNames())
+    val collections = db.listCollectionNames().execute()
     collections.contains(collectionName)
   }
 
-  override def createCollection(collectionName: String): Unit = ???
+  override def createCollection(collectionName: String): Unit = {
+    log.info(s"Creating $collectionName collection...")
+    db.createCollection(collectionName).execute()
+  }
 
-  override def dropCollection(collectionName: String): Unit = ???
+  override def dropCollection(collectionName: String): Unit = {
+    log.info(s"Dropping $collectionName collection...")
+    db.getCollection(collectionName).drop().execute()
+  }
 
-  override def emptyCollection(collectionName: String): Unit = ???
+  override def emptyCollection(collectionName: String): Unit = {
+    log.info(s"Emptying $collectionName collection...")
+    db.getCollection(collectionName).deleteMany(new BsonDocument()).execute()
+  }
 
-  override def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit = ???
+  override def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit = {
+    log.info(s"Renaming $collectionNameOld to $collectionNameNew...")
+    db.getCollection(collectionNameOld).renameCollection(MongoNamespace(collectionNameNew)).execute()
+  }
 
-  override def cloneCollection(collectionName: String, newCollectionName: String): Unit = ???
+  override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {
+    log.info(s"Copying $collectionName to $newCollectionName...")
+    val cmd = s"""{
+                |  aggregate: "$collectionName",
+                |  pipeline: [
+                |    {
+                |      $$match: {}
+                |    },
+                |    {
+                |      $$out: "$newCollectionName"
+                |    }
+                |  ],
+                |  cursor: {}
+                |}
+                |""".stripMargin
+    db.runCommand(BsonDocument(cmd)).execute()
+  }
 
-  override def insertDocument(collectionName: String, document: String): Unit = ???
+  override def insertDocument(collectionName: String, document: String): Unit = {
+    db.getCollection(collectionName)
+      .insertOne(BsonDocument(document))
+      .execute()
+  }
 
   override def executeQuery(query: String): Unit = ???
 
-  override def getDocuments(collectionName: String): Iterator[String] = ???
-
-  private def synchronousCall[T](obs: Observable[T]): Seq[T] = {
-    Await.result(obs.toFuture(), Duration(queryTimeout, TimeUnit.SECONDS))
-  }
-
-  private def synchronousCallFind[T](obs: FindObservable[T]): Seq[T] = {
-    Await.result(obs.toFuture(), Duration(queryTimeout, TimeUnit.SECONDS))
-  }
-
-  private def synchronousCallSingle[T](obs: SingleObservable[T]): T = {
-    Await.result(obs.toFuture(), Duration(queryTimeout, TimeUnit.SECONDS))
+  override def getDocuments(collectionName: String): Iterator[String] = {
+    log.info(s"Getting all documents for $collectionName...")
+    db.getCollection(collectionName).find().execute().toIterator.map(_.toJson())
   }
 
   private def getCollection[T](collectionName: String)(implicit ct: ClassTag[T]): MongoCollection[T] = {
