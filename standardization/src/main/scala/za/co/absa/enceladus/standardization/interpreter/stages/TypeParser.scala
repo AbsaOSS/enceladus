@@ -16,17 +16,19 @@
 package za.co.absa.enceladus.standardization.interpreter.stages
 
 import java.security.InvalidParameterException
+
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.types._
-import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils.appendPath
 import za.co.absa.enceladus.utils.types.Defaults
 import org.apache.spark.sql.functions._
+import za.co.absa.enceladus.standardization.StandardizationCommon
 import za.co.absa.spark.hofs.transform
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.time.DateTimePattern
+
 import scala.util.Random
 
 /**
@@ -58,9 +60,7 @@ sealed trait TypeParser {
   val isArrayElement: Boolean = parent.exists(_.isInstanceOf[TypeParser.ArrayParent])
 }
 
-object TypeParser {
-  private val logger: Logger = LoggerFactory.getLogger(this.getClass)
-
+object TypeParser extends StandardizationCommon {
   def standardize(field: StructField, path: String, origSchema: StructType)
                  (implicit udfLib: UDFLibrary): ParseOutput = {
     // udfLib implicit is present for error column UDF implementation
@@ -107,8 +107,6 @@ object TypeParser {
                                        parent: Option[Parent]) extends TypeParser {
     private val fieldType = field.dataType.asInstanceOf[ArrayType]
     private val arrayField = StructField(fieldName, fieldType.elementType, fieldType.containsNull)
-
-    def unpath(path: String): String = path.replace('.', '_')
 
     override def standardize(): ParseOutput = {
       logger.info(s"Creating standardization plan for Array $currentColumnPath")
@@ -205,6 +203,7 @@ object TypeParser {
       castedCol.isNull  //this one is sufficient for most primitive data types
     }
 
+    @NoSuchElementException(s"The type of '$currentColumnPath' cannot be determined")
     protected def origType: DataType = {
       SchemaUtils.getFieldType(currentColumnPath, origSchema).get
     }

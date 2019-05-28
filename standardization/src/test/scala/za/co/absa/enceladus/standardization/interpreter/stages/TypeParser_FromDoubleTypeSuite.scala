@@ -13,15 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuites
+package za.co.absa.enceladus.standardization.interpreter.stages
 
 import org.apache.spark.sql.types.{ByteType, DataType, DateType, DoubleType, FloatType, IntegerType, LongType,
   ShortType, StructField, TimestampType}
-import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate.Input
 import za.co.absa.enceladus.utils.time.DateTimePattern
 
-class TypeParserFromDoubleTypeSuite extends TypeParserSuiteTemplate  {
+class TypeParser_FromDoubleTypeSuite extends TypeParserSuiteTemplate  {
 
   private val input = Input(
     baseType = DoubleType,
