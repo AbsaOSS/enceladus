@@ -91,7 +91,7 @@ class MongoDb (db: MongoDatabase) extends DocumentDb {
 
   override def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit = {
     log.info(s"Renaming $collectionNameOld to $collectionNameNew...")
-    db.getCollection(collectionNameOld).renameCollection(MongoNamespace(collectionNameNew)).execute()
+    db.getCollection(collectionNameOld).renameCollection(MongoNamespace(db.name, collectionNameNew)).execute()
   }
 
   override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {
