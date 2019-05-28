@@ -15,29 +15,10 @@
 
 package za.co.absa.enceladus.migrations.framework.integration
 
-import org.mongodb.scala.MongoClient
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
-import za.co.absa.enceladus.migrations.framework.dao.{MongoDb, ScalaMongoImplicits}
+import org.scalatest.FunSuite
+import za.co.absa.enceladus.migrations.framework.integration.fixture.MongoDbFixture
 
-class MongoDbIntegrationSuite extends FunSuite with BeforeAndAfterAll {
-
-  val integrationTestDbName = "migrations_integration"
-  val mongoConnectionString = "mongodb://localhost:27017"
-
-  private var mongoClient: MongoClient = _
-  private var db: MongoDb = _
-
-  import ScalaMongoImplicits._
-
-  override def beforeAll(): Unit = {
-    db = initDatabase()
-    super.beforeAll()
-  }
-
-  override def afterAll(): Unit = {
-    try super.afterAll()
-    finally mongoClient.getDatabase(integrationTestDbName).drop().execute()
-  }
+class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
 
   test("Test add/drop collections") {
     assert(!db.isCollectionExists("foo"))
@@ -86,9 +67,13 @@ class MongoDbIntegrationSuite extends FunSuite with BeforeAndAfterAll {
     db.dropCollection("bar3")
   }
 
-  private def initDatabase(): MongoDb = {
-    mongoClient = MongoClient(mongoConnectionString)
-    mongoClient.getDatabase(integrationTestDbName).drop().execute()
-    new MongoDb(mongoClient.getDatabase(integrationTestDbName))
+  test("Test collection renaming works") {
+    db.createCollection("bar4")
+    db.renameCollection("bar4", "bar5")
+
+    assert(db.isCollectionExists("bar5"))
+    assert(!db.isCollectionExists("bar4"))
+
+    db.dropCollection("bar5")
   }
 }
