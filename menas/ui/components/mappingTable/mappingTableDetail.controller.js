@@ -96,13 +96,7 @@ sap.ui.define([
     },
 
     defaultCancel: function () {
-      // This is a workaround for a bug in the Tree component of 1.56.x and 1.58.x
-      // TODO: verify whether this was fixed in the subsequent versions
-      let tree = sap.ui.getCore().byId("schemaFieldSelector");
-      let items = tree.getItems();
-      for (let i in items) {
-        items[i].setSelected(false)
-      }
+      this._schemaFieldSelector.reset();
 
       this.resetNewDefaultValueState();
       this._addDefaultDialog.close();

@@ -15,10 +15,11 @@
 
 class SchemaFieldSelector {
 
-  constructor(controller, dialog, outputPath) {
+  constructor(controller, dialog, outputPath, bindingContext) {
     this._controller = controller;
     this._dialog = dialog;
     this._outputPath = outputPath;
+    this._bindingContext = bindingContext;
   }
 
   get controller() {
@@ -33,10 +34,14 @@ class SchemaFieldSelector {
     return this._outputPath;
   }
 
+  get bindingContext() {
+    return this._bindingContext;
+  }
+
   onSchemaFieldSelect(oEv) {
-    let bindingPath = oEv.getParameter("listItem").getBindingContext("schema").getPath();
+    let bindingPath = oEv.getParameter("listItem").getBindingContext(this.bindingContext).getPath();
     let modelPathBase = "/fields/";
-    let model = this.dialog.getModel("schema");
+    let model = this.dialog.getModel(this.bindingContext);
     this.controller._model.setProperty(this.outputPath, this._buildSchemaPath(bindingPath, modelPathBase, model));
   }
 
@@ -106,12 +111,23 @@ class SchemaFieldSelector {
     return rawTitle.match(/<strong>(?<title>.+)<\/strong>/).groups.title;
   }
 
+  reset(tree) {
+    // This is a workaround for a bug in the Tree component of 1.56.x and 1.58.x
+    // which throws "Cannot read property 'setSelectedIndex' of undefined" error
+    // TODO: verify whether this was fixed in the subsequent versions
+    let items = tree.getItems();
+    for (let i in items) {
+      items[i].setSelected(false);
+      items[i].setHighlight(sap.ui.core.MessageType.None);
+    }
+  }
+
 }
 
 class DefaultValueSchemaFieldSelector extends SchemaFieldSelector {
 
   constructor(controller, dialog) {
-    super(controller, dialog, "/newDefaultValue/columnName");
+    super(controller, dialog, "/newDefaultValue/columnName", "schema");
   }
 
   preselectSchemaFieldSelector(sExpandTo, ruleType) {
@@ -120,18 +136,95 @@ class DefaultValueSchemaFieldSelector extends SchemaFieldSelector {
     super.preselectSchemaFieldSelector(sExpandTo, oControl, oScroll);
   }
 
+  reset() {
+    let tree = sap.ui.getCore().byId("schemaFieldSelector");
+    super.reset(tree);
+  }
+
 }
 
 class ConformanceRuleSchemaFieldSelector extends SchemaFieldSelector {
 
   constructor(controller, dialog) {
-    super(controller, dialog, "/newRule/inputColumn");
+    super(controller, dialog, "/newRule/inputColumn", "schema");
   }
 
   preselectSchemaFieldSelector(sExpandTo, ruleType) {
     let oControl = sap.ui.getCore().byId(ruleType + "--schemaFieldSelector");
     let oScroll = sap.ui.getCore().byId(ruleType + "--fieldSelectScroll");
     super.preselectSchemaFieldSelector(sExpandTo, oControl, oScroll);
+  }
+
+  reset(form) {
+    const content = form.getContent();
+    content.filter(element => {
+      return element.sId.includes("fieldSelectScroll")
+    }).forEach(scroll => {
+      scroll.getContent().forEach(super.reset)
+    });
+  }
+
+}
+
+class TargetAttributeFieldSelector extends SchemaFieldSelector {
+
+  constructor(controller, dialog) {
+    super(controller, dialog, "/newRule/targetAttribute", "schema");
+  }
+
+  preselectSchemaFieldSelector(sExpandTo) {
+    let oControl = sap.ui.getCore().byId("MappingConformanceRule--schemaFieldSelector");
+    let oScroll = sap.ui.getCore().byId("MappingConformanceRule--fieldSelectScroll");
+    super.preselectSchemaFieldSelector(sExpandTo, oControl, oScroll);
+  }
+
+  reset(form) {
+    const content = form.getContent();
+    content.filter(element => {
+      return element.sId.includes("fieldSelectScroll")
+    }).forEach(scroll => {
+      scroll.getContent().forEach(super.reset)
+    });
+  }
+
+}
+
+class JoinConditionDatasetSchemaFieldSelector extends SchemaFieldSelector {
+
+  constructor(controller, dialog) {
+    super(controller, dialog, "/datasetField", "datasetSchema");
+  }
+
+  preselectSchemaFieldSelector(sExpandTo) {
+    let oControl = this.controller.byId("datasetSchemaFieldSelector");
+    let oScroll = this.controller.byId("datasetSchemaFieldSelectScroll");
+    super.preselectSchemaFieldSelector(sExpandTo, oControl, oScroll);
+  }
+
+  reset() {
+    let scroll = this.controller.byId("datasetSchemaFieldSelectScroll");
+    scroll.getContent()
+      .forEach(super.reset);
+  }
+
+}
+
+class JoinConditionMappingTableSchemaFieldSelector extends SchemaFieldSelector {
+
+  constructor(controller, dialog) {
+    super(controller, dialog, "/mappingTableField", "mappingTableSchema");
+  }
+
+  preselectSchemaFieldSelector(sExpandTo) {
+    let oControl = this.controller.byId("mappingTableSchemaFieldSelector");
+    let oScroll = this.controller.byId("mappingTableSchemaFieldSelectScroll");
+    super.preselectSchemaFieldSelector(sExpandTo, oControl, oScroll);
+  }
+
+  reset() {
+    let scroll = this.controller.byId("mappingTableSchemaFieldSelectScroll");
+    scroll.getContent()
+      .forEach(super.reset);
   }
 
 }

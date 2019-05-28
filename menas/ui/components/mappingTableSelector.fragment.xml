@@ -22,7 +22,7 @@
     <Label text="Mapping Table Version"/>
     <FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">
         <Select id="mappingTableVersionSelect" class="menasAddMappingSelect" items="{/currentMappingTableVersions}"
-                showSecondaryValues="true" width="auto" selectedKey="{/newRule/mappingTableVersion}">
+                showSecondaryValues="true" width="auto" selectedKey="{/newRule/mappingTableVersion}" change="onMTVersionSelect">
             <core:ListItem key="{version}" text="{version}"
                            additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
         </Select>
