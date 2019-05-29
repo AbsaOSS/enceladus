@@ -49,11 +49,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scalap</artifactId>
-            <version>${scala.version}</version>
-        </dependency>
-        <dependency>
             <groupId>za.co.absa.spline</groupId>
             <artifactId>spline-core</artifactId>
             <version>${spline.version}</version>
