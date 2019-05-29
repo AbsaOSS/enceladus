@@ -29,6 +29,9 @@ object MenasCredentials {
   private def getFS(conf: Configuration) = FileSystem.get(conf)
   private val logger = LoggerFactory.getLogger(this.getClass)
   
+  /**
+   * Retrieves Menas Credentials from file either on local file system or on HDFS
+   */
   def fromFile(path: String)(implicit spark: SparkSession): MenasCredentials = {
     val conf = if(path.startsWith("hdfs://")) {
       val in = getFS(spark.sparkContext.hadoopConfiguration).open(new Path(path))
@@ -43,6 +46,9 @@ object MenasCredentials {
     MenasCredentials(conf.getString("username"), conf.getString("password"))
   }
   
+  /**
+   * Checks whether the file exists either on HDFS or on the local file system
+   */
   def exists(path: String)(implicit spark: SparkSession): Boolean = {
     if(path.startsWith("hdfs://")) {
       val exists = getFS(spark.sparkContext.hadoopConfiguration).exists(new Path(path))

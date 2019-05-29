@@ -36,5 +36,4 @@ class OozieConfig {
       case Failure(e) => Left(new OozieConfigurationException(e.getMessage, e))
     }
   }
-
 }

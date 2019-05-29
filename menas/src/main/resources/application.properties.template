@@ -54,22 +54,29 @@ za.co.absa.enceladus.spline.urlTemplate=http://localhost:8080/spline/dataset/lin
 #system-wide time zone
 timezone="UTC"
 
-#Oozie
+#--------Oozie
 #za.co.absa.enceladus.menas.oozie.oozieUrl=http://localhost:11000/oozie/
+
 #Path where oozie coordinators and workflows are stored on HDFS
 #za.co.absa.enceladus.menas.oozie.schedule.hdfs.path=/tmp
 #za.co.absa.enceladus.menas.oozie.timeZone=Africa/Ceuta
+
 #This is passed into oozie.action.sharelib.for.spark
 #This ensures that schedules are run with correct version of spark without updating oozie sharelibs globally
 za.co.absa.enceladus.menas.oozie.sharelibForSpark=spark-menas
+
 #Enceladus jars are going to be loaded into this location
 za.co.absa.enceladus.menas.oozie.enceladusJarLocation=hdfs:///tmp/enceladus-jars
+
 #Maven repo from which to resolve enceladus jars.. Can be local repo, maven central, nexus
 za.co.absa.enceladus.menas.oozie.mavenRepoLocation=https://repo.maven.apache.org/maven2/
+
 #standardization and conformance path in the repo
 za.co.absa.enceladus.menas.oozie.mavenStandardizationJarLocation=/za/co/absa/enceladus-standardization/@project.version@/enceladus-standardization-@project.version@.jar
 za.co.absa.enceladus.menas.oozie.mavenConformanceJarLocation=/za/co/absa/enceladus-conformance/@project.version@/enceladus-conformance-@project.version@.jar
+
 #Menas URL for submitted std and conf jobs
 za.co.absa.enceladus.menas.oozie.menasApiURL=http://menasHostname:8080/menas/api
+
 #Mongo address for spline for the submitted jobs
 za.co.absa.enceladus.menas.oozie.splineMongoURL=mongodb://localhost:27017
