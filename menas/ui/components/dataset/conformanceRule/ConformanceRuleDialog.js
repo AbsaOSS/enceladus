@@ -66,7 +66,7 @@ class ConformanceRuleDialog {
       },
       {
         _t: "DropConformanceRule",
-        schemaFieldSelectorSupportedRule: false
+        schemaFieldSelectorSupportedRule: true
       },
       {
         _t: "LiteralConformanceRule",
@@ -247,18 +247,30 @@ class ConformanceRuleDialog {
   }
 
   onSchemaFieldSelect(oEv) {
-    if (this.model.getProperty("/newRule/_t") === "MappingConformanceRule") {
-      this._targetAttributeSelector.onSchemaFieldSelect(oEv);
-    } else {
-      this._datasetSchemaFieldSelector.onSchemaFieldSelect(oEv);
+    let ruleType = this._model.getProperty("/newRule/_t");
+
+    switch(ruleType) {
+      case "MappingConformanceRule":
+        this._targetAttributeSelector.onSchemaFieldSelect(oEv, "/newRule/targetAttribute");
+        break;
+      case "DropConformanceRule":
+        this._datasetSchemaFieldSelector.onSchemaFieldSelect(oEv, "/newRule/outputColumn");
+        break;
+      default:
+        this._datasetSchemaFieldSelector.onSchemaFieldSelect(oEv, "/newRule/inputColumn");
     }
   }
 
   preselectSchemaFieldSelector(ruleType) {
-    if (ruleType === "MappingConformanceRule") {
-      this._targetAttributeSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/targetAttribute"))
-    } else {
-      this._datasetSchemaFieldSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/inputColumn"), ruleType)
+    switch(ruleType) {
+      case "MappingConformanceRule":
+        this._targetAttributeSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/targetAttribute"));
+        break;
+      case "DropConformanceRule":
+        this._datasetSchemaFieldSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/outputColumn"), ruleType);
+        break;
+      default:
+        this._datasetSchemaFieldSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/inputColumn"), ruleType);
     }
   }
 

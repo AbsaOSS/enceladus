@@ -135,7 +135,7 @@ sap.ui.define([
     },
 
     onSchemaFieldSelect: function (oEv) {
-      this._schemaFieldSelector.onSchemaFieldSelect(oEv);
+      this._schemaFieldSelector.onSchemaFieldSelect(oEv, "/newDefaultValue/columnName");
     },
 
     _schemaFieldSelectorSelectPath: function (sExpandTo) {
