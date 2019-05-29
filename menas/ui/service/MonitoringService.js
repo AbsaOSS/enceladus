@@ -18,374 +18,232 @@ jQuery.sap.require("sap.m.MessageBox");
 var MonitoringService = new function() {
 
   var model = sap.ui.getCore().getModel();
-  this.getMonitoringPoints = function(sId) {
-    let sStartDate = model.getProperty("/dateFrom")
-    let sEndDate = model.getProperty("/dateTo")
+
+  var barChartLabels = []; // run info-date + info-version
+
+  var runStatusAggregator = {
+    "allSucceeded" : {infoLabel: 8, color: "green", counter: 0},
+    "stageSucceeded" : {infoLabel: 5, color: "blue", counter: 0},
+    "running" : {infoLabel: 7, color: "teal", counter: 0},
+    "failed" : {infoLabel: 3, color: "red", counter: 0},
+    "other" : {infoLabel: 4, color: "magenta", counter: 0}
+  };
+
+  var recordsStatusAggregator = {
+    "Conformed" : {color: "green", counter: 0, recordCounts: []},
+    "Failed at conformance" : {color: "red", counter: 0, recordCounts: []},
+    "Standardized (not conformed)" : {color: "blue", counter: 0, recordCounts: []},
+    "Failed at standardization" : {color: "orange", counter: 0, recordCounts: []},
+    "Unprocessed raw" : {color: "grey", counter: 0, recordCounts: []},
+    "Inconsistent info" : {color: "magenta", counter: 0, recordCounts: []}
+  };
+
+  this.clearAggregators = function() {
+    barChartLabels = [];
+
+    // clear runStatusAggregator counters
+    Object.keys(runStatusAggregator).forEach(function(key) {
+      runStatusAggregator[key].counter = 0
+    });
+
+    // clear recordsStatusAggregator counters and arrays of data
+    Object.keys(recordsStatusAggregator).forEach(function(key) {
+      recordsStatusAggregator[key].counter = 0
+      recordsStatusAggregator[key].recordCounts = []
+    });
+  };
+
+  this.processRunStatus = function(oRun) {
+    let status = oRun["status"];
+    if (runStatusAggregator.hasOwnProperty(status)) {
+      runStatusAggregator[status].counter += 1;
+      oRun["infoLabel"] = runStatusAggregator[status].infoLabel
+    } else {
+      runStatusAggregator["other"].counter += 1;
+      oRun["infoLabel"] = runStatusAggregator["other"].infoLabel
+    }
+  };
+
+  this.clearMonitoringModel = function() {
+    model.setProperty("/barChartHeight", "10rem");
+    model.setProperty("/numberOfPoints", 0);
+    model.setProperty("/monitoringRunData", []);
+    model.setProperty("/barChartData", []);
+    model.setProperty("/pieChartRecordTotals", []);
+    model.setProperty("/pieChartStatusTotals", [])
+  };
+
+  this.setMonitoringModel = function(oData){
+
+    // prepare data for PIE chart of RUN statuses
+    let runStatusLabels = Object.keys(runStatusAggregator);
+    let pieChartStatusTotals = {
+      labels: runStatusLabels,
+      datasets: [
+        {
+          data: runStatusLabels.map(x => runStatusAggregator[x].counter),
+          backgroundColor: runStatusLabels.map(x => runStatusAggregator[x].color)
+        }]
+    };
+
+    // prepare data for PIE chart of statuses of RECORDS
+    let recordStatusLabels = Object.keys(recordsStatusAggregator);
+    let pieChartRecordTotals = {
+      labels: recordStatusLabels,
+      datasets: [
+        {
+          data: recordStatusLabels.map(x => recordsStatusAggregator[x].counter),
+          backgroundColor: recordStatusLabels.map(x => recordsStatusAggregator[x].color)
+        }]
+
+    };
+
+    // prepare data for BAR chart of RECORDS per run
+    let barChartData = {
+      labels: barChartLabels,
+      datasets: recordStatusLabels.map(x => {
+          label = x,
+          backgroundColor = recordsStatusAggregator[x].color,
+          data = recordsStatusAggregator[x].recordCounts,
+          stack = "all"
+      })
+    };
+
+    // set layout properties
+    model.setProperty("/barChartHeight", 10 + 1 * barChartLabels.length + "rem");
+    model.setProperty("/numberOfPoints", oData.length);
+
+    // set model
+    model.setProperty("/monitoringRunData", oData);
+    model.setProperty("/barChartData", barChartData);
+    model.setProperty("/pieChartRecordTotals", pieChartRecordTotals);
+    model.setProperty("/pieChartStatusTotals", pieChartStatusTotals)
+  };
+
+  this.processRecordCounts = function(oRun) {
+    barChartLabels.push(oRun["informationDate"] + " v" + oRun["reportVersion"]);
+    if (MonitoringService.conformanceFinishedCorrectly(oRun)) {
+      MonitoringService.processConformed(oRun);
+      return;
+    }else if (MonitoringService.standardizationFinishedCorrectly(oRun)) {
+      MonitoringService.processConformed(oRun);
+      return;
+    }else if (MonitoringService.rawRegisteredCorrectly(oRun)){
+      MonitoringService.processRaw(oRun);
+      return;
+    } else {
+      MonitoringService.processInconsistent(oRun);
+    }
+  };
+
+  this.conformanceFinishedCorrectly = function(oRun) {
+    return (oRun["raw_recordcount"] != undefined
+      && oRun["std_records_succeeded"] != undefined && oRun["std_records_failed"] != undefined
+      && oRun["conform_records_succeeded"] != undefined && oRun["conform_records_failed"] != undefined
+      // sanity checks
+      && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["raw_recordcount"])
+      && (+oRun["conform_records_succeeded"]) + (+oRun["conform_records_failed"]) == (+oRun["raw_recordcount"])
+      && (+oRun["std_records_succeeded"]) >= (+oRun["conform_records_succeeded"] ))
+  };
+
+
+  this.standardizationFinishedCorrectly = function(oRun) {
+    return (oRun["raw_recordcount"] != undefined
+      && oRun["std_records_succeeded"]  != undefined && oRun["std_records_failed"] != undefined
+      && oRun["conform_records_succeeded"] == undefined && oRun["conform_records_failed"] == undefined
+      //sanity checks
+      && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["raw_recordcount"]) )
+  };
+
+  this.rawRegisteredCorrectly = function(oRun) {
+    return (oRun["raw_recordcount"] != undefined
+      && oRun["std_records_succeeded"]  == undefined && oRun["std_records_failed"] == undefined
+      && oRun["conform_records_succeeded"]  == undefined && oRun["conform_records_failed"] == undefined)
+  };
+
+  this.processConformed = function(oRun) {
+    recordsStatusAggregator["Conformed"].recordCounts.push(+oRun["conform_records_succeeded"])
+    recordsStatusAggregator["Failed at conformance"].recordCounts.push(+oRun["conform_records_failed"] - +oRun["std_records_failed"])
+    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0)
+    recordsStatusAggregator["Failed at standardization"].recordCounts.push(+oRun["std_records_failed"])
+    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(0)
+    recordsStatusAggregator["Inconsistent info"].recordCounts.push(0)
+
+    recordsStatusAggregator["Conformed"].counter += +oRun["conform_records_succeeded"]
+    recordsStatusAggregator["Failed at conformance"].counter += +oRun["conform_records_failed"] - +oRun["std_records_failed"]
+    recordsStatusAggregator["Failed at standardization"].counter += +oRun["std_records_failed"]
+  };
+
+  this.processStandardized = function(oRun) {
+    recordsStatusAggregator["Conformed"].recordCounts.push(0)
+    recordsStatusAggregator["Failed at conformance"].recordCounts.push(0)
+    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(+oRun["std_records_succeeded"])
+    recordsStatusAggregator["Failed at standardization"].recordCounts.push(+oRun["std_records_failed"])
+    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(0)
+    recordsStatusAggregator["Inconsistent info"].recordCounts.push(0)
+
+    recordsStatusAggregator["Standardized (not conformed)"].counter += +oRun["std_records_succeeded"]
+    recordsStatusAggregator["Failed at standardization"].counter += +oRun["std_records_failed"]
+  };
+
+  this.processRaw = function(oRun) {
+    recordsStatusAggregator["Conformed"].recordCounts.push(0)
+    recordsStatusAggregator["Failed at conformance"].recordCounts.push(0)
+    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0)
+    recordsStatusAggregator["Failed at standardization"].recordCounts.push(0)
+    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(+oRun["raw_recordcount"])
+    recordsStatusAggregator["Inconsistent info"].recordCounts.push(0)
+
+    recordsStatusAggregator["Unprocessed raw"].counter += +oRun["raw_recordcount"]
+  };
+
+  this.processInconsistent = function(oRun) {
+    recordsStatusAggregator["Conformed"].recordCounts.push(0)
+    recordsStatusAggregator["Failed at conformance"].recordCounts.push(0)
+    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0)
+    recordsStatusAggregator["Failed at standardization"].recordCounts.push(0)
+    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(0)
+
+    // try to estimate number of records involved in this run
+    let estimatedRecordCount = 0
+    if ( oRun["raw_recordcount"] !=  undefined) {
+      estimatedRecordCount = +oRun["raw_recordcount"]
+    } else if (oRun["std_records_succeeded"] !=  undefined && oRun["std_records_failed"] !=  undefined){
+      estimatedRecordCount = (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"])
+    } else if (oRun["conform_records_succeeded"] !=  undefined && oRun["conform_records_failed"]  !=  undefined ) {
+      estimatedRecordCount = (+oRun["conform_records_succeeded"]) + (+oRun["conform_records_failed"] )
+    }
+    recordsStatusAggregator["Inconsistent info"].recordCounts.push(estimatedRecordCount)
+    recordsStatusAggregator["Inconsistent info"].counter += estimatedRecordCount
+  };
+
+
+  this.getData= function(sId, sStartDate, sEndDate) {
+    MonitoringService.clearAggregators();
     Functions.ajax("api/monitoring/data/datasets/"
       + encodeURI(sId) + "/"
       + encodeURI(sStartDate) + "/"
       + encodeURI(sEndDate),
       "GET", {}, function(oData) {
-      model.setProperty("/monitoringPoints", oData)
-      let plotLabels = []
-
-      let conformed = []
-      let failedAfterConformance = []
-      let waitingToConform = []
-      let failedAfterStandardization = []
-      let unprocessedRaw = []
-      let inconsistentState = []
-
-      let totalConformed = 0
-      let totalFailedAfterConformance = 0
-      let totalWaitingToConform = 0
-      let totalFailedAfterStandardization = 0
-      let totalUnprocessedRaw = 0
-      let totalInconsistentState = 0
-
-      let statusDict = {
-        "allSucceeded" : 8,
-        "stageSucceeded" : 5,
-        "running" : 7,
-        "failed" : 3
-      }
-
-      let statusPieData = {
-        labels: [
-          "allSucceeded",
-          "stageSucceeded",
-          "running",
-          "failed",
-          "other"
-        ],
-        datasets: [
-          {
-            data: [0,0,0,0,0],
-            backgroundColor: [
-              "green",
-              "blue",
-              "teal",
-              "red",
-              "magenta"
-            ],
-            hoverBackgroundColor: [
-              "green",
-              "blue",
-              "teal",
-              "red",
-              "magenta"
-            ]
-          }]
-
-      };
-
 
       if (oData != undefined && oData.length != 0) {
-
-        for (let elem of oData) {
-          let status = elem["status"]
-          // check status
-          switch (status) {
-            case "allSucceeded":
-              statusPieData["datasets"]["0"]["data"]["0"] += 1
-              break
-            case "stageSucceeded":
-              statusPieData["datasets"]["0"]["data"]["1"] += 1
-              break
-            case "running":
-              statusPieData["datasets"]["0"]["data"]["2"] += 1
-              break
-            case "failed":
-              statusPieData["datasets"]["0"]["data"]["3"] += 1
-              break
-            default:
-              statusPieData["datasets"]["0"]["data"]["4"] += 1
-          }
-
-          elem["infoLabel"] = statusDict[status]
-          let rawTotal = elem["raw_recordcount"]
-          let stdS = elem["std_records_succeeded"]
-          let stdF = elem["std_records_failed"]
-          let confS = elem["conform_records_succeeded"]
-          let confF = elem["conform_records_failed"]
-          plotLabels.push(elem["informationDate"] + " v" + elem["reportVersion"])
-
-          // conformance finished
-          if (rawTotal != undefined && stdS != undefined && stdF != undefined && confS != undefined && confF != undefined
-            // sanity checks
-            && (+stdS) + (+stdF) == (+rawTotal)
-            && (+confS) + (+confF) == (+rawTotal)
-            && (+stdF) <= (+confF)
-            && (+stdS) >= (+confS)) {
-
-              conformed.push(+confS)
-              failedAfterConformance.push(confF - stdF)
-              waitingToConform.push(0)
-              failedAfterStandardization.push(+stdF)
-              unprocessedRaw.push(0)
-              inconsistentState.push(0)
-
-              totalConformed += (+confS)
-              totalFailedAfterConformance += confF - stdF
-              totalFailedAfterStandardization += +stdF
-              totalUnprocessedRaw += rawTotal - confS - confF
-
-              continue
-
-            // only standartization finished
-          } else if (rawTotal != undefined && stdS != undefined && stdF != undefined && confS == undefined && confF == undefined
-            //sanity checks
-            && (+stdS) + (+stdF) == (+rawTotal) ) {
-
-            conformed.push(0)
-            failedAfterConformance.push(0)
-            waitingToConform.push(+stdS)
-            failedAfterStandardization.push(stdF)
-            unprocessedRaw.push(0)
-            inconsistentState.push(0)
-
-            totalWaitingToConform += +stdS
-            totalFailedAfterStandardization += +stdF
-            totalUnprocessedRaw += rawTotal - stdS - stdF
-
-            continue
-
-            // only raw data is available
-          } else if (rawTotal != undefined && stdS == undefined && stdF == undefined && confS == undefined && confF == undefined) {
-
-            conformed.push(0)
-            failedAfterConformance.push(0)
-            waitingToConform.push(0)
-            failedAfterStandardization.push(0)
-            unprocessedRaw.push(+rawTotal)
-            inconsistentState.push(0)
-
-            totalUnprocessedRaw += +rawTotal
-
-            continue
-
-            // run data is inconsistent
-          } else {
-            conformed.push(0)
-            failedAfterConformance.push(0)
-            waitingToConform.push(0)
-            failedAfterStandardization.push(0)
-            unprocessedRaw.push(0)
-
-            // try to estimate number of records involved in this run
-            let estimatedRecordCount = 0
-            if ( !isNaN(rawTotal) ) {
-              estimatedRecordCount = +rawTotal
-            } else if (!isNaN((+stdS) + (+stdF))){
-              estimatedRecordCount = (+stdS) + (+stdF)
-            } else if (!isNaN((+confS) + (+confF)) ) {
-              estimatedRecordCount = (+confS) + (+confF)
-            }
-            inconsistentState.push(estimatedRecordCount)
-            totalInconsistentState += estimatedRecordCount
-            continue
-          }
-
+        for (let oRun of oData) {
+          MonitoringService.processRunStatus(oRun);
+          MonitoringService.processRecordCounts(oRun)
         }
 
-        let data = {
-          labels: plotLabels,
-          datasets: [
-            {
-              label: "Conformed",
-              fill: true,
-              lineTension: 0.1,
-              backgroundColor: "green",
-              borderColor: "green",
-              borderCapStyle: 'butt',
-              borderDash: [],
-              borderDashOffset: 0.3,
-              borderJoinStyle: 'miter',
-              pointBorderColor: "rgba(75,192,192,1)",
-              pointBackgroundColor: "#fff",
-              pointBorderWidth: 1,
-              pointHoverRadius: 5,
-              pointHoverBackgroundColor: "rgba(75,192,192,1)",
-              pointHoverBorderColor: "rgba(220,220,220,1)",
-              pointHoverBorderWidth: 2,
-              pointRadius: 1,
-              pointHitRadius: 10,
-              data: conformed,
-              spanGaps: false,
-              stack: "all"
-            },
-            {
-              label: "Failed at conformance",
-              fill: true,
-              lineTension: 0.1,
-              backgroundColor: "red",
-              borderColor: "red",
-              borderCapStyle: 'butt',
-              borderDash: [],
-              borderDashOffset: 0.0,
-              borderJoinStyle: 'miter',
-              pointBorderColor: "rgba(75,192,192,1)",
-              pointBackgroundColor: "#fff",
-              pointBorderWidth: 1,
-              pointHoverRadius: 5,
-              pointHoverBackgroundColor: "rgba(75,192,192,1)",
-              pointHoverBorderColor: "rgba(220,220,220,1)",
-              pointHoverBorderWidth: 2,
-              pointRadius: 1,
-              pointHitRadius: 10,
-              data: failedAfterConformance,
-              spanGaps: false,
-              stack: "all"
-            },
-            {
-              label: "Standartized, not conformed yet",
-              fill: true,
-              lineTension: 0.1,
-              backgroundColor: "blue",
-              borderColor: "blue",
-              borderCapStyle: 'butt',
-              borderDash: [],
-              borderDashOffset: 0.0,
-              borderJoinStyle: 'miter',
-              pointBorderColor: "rgba(75,192,192,1)",
-              pointBackgroundColor: "#fff",
-              pointBorderWidth: 1,
-              pointHoverRadius: 5,
-              pointHoverBackgroundColor: "rgba(75,192,192,1)",
-              pointHoverBorderColor: "rgba(220,220,220,1)",
-              pointHoverBorderWidth: 2,
-              pointRadius: 1,
-              pointHitRadius: 10,
-              data: waitingToConform,
-              spanGaps: false,
-              stack: "all"
-            },
-
-            {
-              label: "Failed at standardization",
-              fill: true,
-              lineTension: 0.1,
-              backgroundColor: "orange",
-              borderColor: "orange",
-              borderCapStyle: 'butt',
-              borderDash: [],
-              borderDashOffset: 0.0,
-              borderJoinStyle: 'miter',
-              pointBorderColor: "rgba(75,192,192,1)",
-              pointBackgroundColor: "#fff",
-              pointBorderWidth: 1,
-              pointHoverRadius: 5,
-              pointHoverBackgroundColor: "rgba(75,192,192,1)",
-              pointHoverBorderColor: "rgba(220,220,220,1)",
-              pointHoverBorderWidth: 2,
-              pointRadius: 1,
-              pointHitRadius: 10,
-              data: failedAfterStandardization,
-              spanGaps: false,
-              stack: "all"
-            },
-
-            {
-              label: "Unprocessed raw",
-              fill: true,
-              lineTension: 0.1,
-              backgroundColor: "black",
-              borderColor: "black",
-              borderCapStyle: 'butt',
-              borderDash: [],
-              borderDashOffset: 0.0,
-              borderJoinStyle: 'miter',
-              pointBorderColor: "rgba(75,192,192,1)",
-              pointBackgroundColor: "#fff",
-              pointBorderWidth: 1,
-              pointHoverRadius: 5,
-              pointHoverBackgroundColor: "rgba(75,192,192,1)",
-              pointHoverBorderColor: "rgba(220,220,220,1)",
-              pointHoverBorderWidth: 2,
-              pointRadius: 1,
-              pointHitRadius: 10,
-              data: unprocessedRaw,
-              spanGaps: false,
-              stack: "all"
-            },
-            {
-              label: "Inconsistent run info",
-              fill: true,
-              lineTension: 0.1,
-              backgroundColor: "magenta",
-              borderColor: "magenta",
-              borderCapStyle: 'butt',
-              borderDash: [],
-              borderDashOffset: 0.0,
-              borderJoinStyle: 'miter',
-              pointBorderColor: "rgba(75,192,192,1)",
-              pointBackgroundColor: "#fff",
-              pointBorderWidth: 1,
-              pointHoverRadius: 5,
-              pointHoverBackgroundColor: "rgba(75,192,192,1)",
-              pointHoverBorderColor: "rgba(220,220,220,1)",
-              pointHoverBorderWidth: 2,
-              pointRadius: 1,
-              pointHitRadius: 10,
-              data: inconsistentState,
-              spanGaps: false,
-              stack: "all"
-            }
-          ]
-        };
-        model.setProperty("/plotData", data)
-
-        let recordCountTotals = {
-          labels: [
-            "Conformed",
-            "Failed at conformance",
-            "Standartized, not conformed yet",
-            "Failed at standardization",
-            "Unprocessed raw",
-            "Inconsistent run info"
-          ],
-          datasets: [
-            {
-              data: [
-                 totalConformed,
-                 totalFailedAfterConformance,
-                 totalWaitingToConform,
-                 totalFailedAfterStandardization,
-                 totalUnprocessedRaw,
-                 totalInconsistentState
-              ],
-              backgroundColor: [
-                "green",
-                "red",
-                "blue",
-                "orange",
-                "black",
-                "magenta"
-              ],
-              hoverBackgroundColor: [
-                "green",
-                "red",
-                "blue",
-                "orange",
-                "black",
-                "magenta"
-              ]
-            }]
-
-        };
-        model.setProperty("/recordCountTotals", recordCountTotals)
-        model.setProperty("/statusPieData", statusPieData)
+        MonitoringService.setMonitoringModel(oData)
 
       } else {
         // no datapoints for this interval
-        model.setProperty("/plotData", [])
-        //model.setProperty("/monitoringPoints", [])
+        MonitoringService.clearMonitoringModel()
       }
     }, function() {
+        MonitoringService.clearMonitoringModel();
       sap.m.MessageBox
         .error("Failed to get monitoring points. Please wait a moment and try reloading the application")
     })
-  }
+  };
 
 
   this.getDatasetList = function(bLoadFirst) {
@@ -402,13 +260,4 @@ var MonitoringService = new function() {
     model.setProperty("/currentDataset", oDataset);
   };
 
-  this.getDatasetCheckpoints = function(sId) {
-    Functions.ajax("api/monitoring/checkpoints/datasets/" + encodeURI(sId), "GET", {}, function (oData) {
-      model.setProperty("/checkpoints", oData)
-    }, function () {
-      sap.m.MessageBox
-        .error("Failed to get checkpoints points. Please wait a moment and try reloading the application")
-    })
-  }
-
-}
+}();

@@ -50,7 +50,11 @@
 							</List>
 						</content>
 						<footer>
-
+                            <Bar>
+                                <contentRight>
+                                    <Text text="{/currentDataset/name}" wrapping="false" />
+                                </contentRight>
+                            </Bar>
 						</footer>
 					</Page>
 				</masterPages>
@@ -59,7 +63,7 @@
 						<customHeader>
 							<Bar>
 								<contentLeft>
-									<Title text="{/datasetId} From: {/dateFrom} To: {/dateTo} "  />
+									<Title text="{/datasetId} From: {/dateFrom} To: {/dateTo}    {/numberOfPoints} runs"  />
 								</contentLeft>
 							</Bar>
 						</customHeader>
@@ -84,8 +88,8 @@
                                             width="50rem">
                                             <lab:PieChartJS
                                                 id="Status_of_runs"
-                                                datasets="{/statusPieData/datasets}"
-                                                labels="{/statusPieData/labels}"
+                                                datasets="{/pieChartStatusTotals/datasets}"
+                                                labels="{/pieChartStatusTotals/labels}"
                                                 titleDisplay="false"
                                                 titleText=""
                                                 tooltipEnabled="true">
@@ -98,8 +102,8 @@
                                             width="50rem">
                                             <lab:PieChartJS
                                                 id="record_totals"
-                                                datasets="{/recordCountTotals/datasets}"
-                                                labels="{/recordCountTotals/labels}"
+                                                datasets="{/pieChartRecordTotals/datasets}"
+                                                labels="{/pieChartRecordTotals/labels}"
                                                 titleDisplay="false"
                                                 titleText=""
                                                 tooltipEnabled="true">
@@ -109,11 +113,11 @@
                                     </layout:BlockLayoutRow>
                                     </layout:BlockLayout>
 
-                                <FlexBox id="bar-chart-FlexBox" width="100vw" height="50rem">
+                                <FlexBox id="bar-chart-FlexBox" width="100%" height="{/barChartHeight}">
                                     <lab:BarChartJS
                                         id="bar_chart"
-                                        datasets="{/plotData/datasets}"
-                                        labels="{/plotData/labels}"
+                                        datasets="{/barChartData/datasets}"
+                                        labels="{/barChartData/labels}"
                                         titleDisplay="true"
                                         titleText="Records per run"
                                         tooltipEnabled="true"
@@ -123,13 +127,14 @@
                                 </FlexBox>
 
                                 <table:Table
-                                    rows="{/monitoringPoints}"
+                                    rows="{/monitoringRunData}"
                                     title="Run details"
                                     selectionMode="None"
                                     alternateRowColors="true"
                                     showColumnVisibilityMenu="true"
-                                    visibleRowCountMode="Interactive"
-                                    minAutoRowCount="20">
+                                    visibleRowCountMode="Fixed"
+                                    visibleRowCount="{/numberOfPoints}"
+                                    width="100%">
                                     <table:columns>
                                         <table:Column id="multiheader-info" width="6rem" >
                                             <table:multiLabels>
@@ -246,8 +251,14 @@
                                         </table:Column>
                                     </table:columns>
                                 </table:Table>
+
                             </content>
 						<footer>
+                            <Bar>
+                                <contentRight>
+                                    <Text text="dataset: {/currentDataset/name} latest version: {/currentDataset/version}" wrapping="false" />
+                                </contentRight>
+                            </Bar>
 						</footer>
 					</Page>
 				</detailPages>

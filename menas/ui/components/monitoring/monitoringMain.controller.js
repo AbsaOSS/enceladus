@@ -37,17 +37,17 @@ sap.ui.controller("components.monitoring.monitoringMain", {
     }, this);
     this.oFormatYyyymmdd = sap.ui.core.format.DateFormat.getInstance({pattern: "yyyy-MM-dd", calendarType: sap.ui.core.CalendarType.Gregorian});
     this.setDefaultDateInterval()
+
+    // set spanning headers for the table
     let oView = this.getView();
     oView.byId("multiheader-info").setHeaderSpan([2,1]);
     oView.byId("multiheader-checkpoint").setHeaderSpan([3,1]);
     oView.byId("multiheader-recordcount-raw").setHeaderSpan([5,1,1]);
     oView.byId("multiheader-recordcount-std").setHeaderSpan([0,2,1]);
     oView.byId("multiheader-recordcount-cnfrm").setHeaderSpan([0,2,1]);
-
-
-
   },
 
+  // TODO: remove
   _formFragments: {},
 
   getFormFragment: function (sFragmentName) {
@@ -87,13 +87,11 @@ sap.ui.controller("components.monitoring.monitoringMain", {
       MonitoringService.getDatasetList(true);
     } else {
       MonitoringService.getDatasetList();
-
+      //DatasetService.getLatestDatasetVersion(oParams.id)
       this._model.setProperty("/datasetId", oParams.id)
       this.updateMonitoringData()
       //MonitoringService.getMonitoringPoints(oParams.id);
-
       //MonitoringService.getDatasetCheckpoints(oParams.id);
-
     }
   },
 
@@ -101,53 +99,41 @@ sap.ui.controller("components.monitoring.monitoringMain", {
 
   handleCalendarSelect: function(oEvent) {
     var oCalendar = oEvent.getSource();
-    this._updateText(oCalendar.getSelectedDates()[0]);
+    this._updateTimeInterval(oCalendar.getSelectedDates()[0]);
   },
 
-  _updateText: function(oSelectedDates) {
+  _updateTimeInterval: function(oSelectedDates) {
     let oDate;
     if (oSelectedDates) {
       oDate = oSelectedDates.getStartDate();
       if (oDate) {
         this._model.setProperty("/dateFrom", this.oFormatYyyymmdd.format(oDate))
-      } else {
-        this._model.setProperty("/plotData", [])
-        this._model.setProperty("/monitoringPoints", [])
       }
       oDate = oSelectedDates.getEndDate();
       if (oDate) {
         this._model.setProperty("/dateTo", this.oFormatYyyymmdd.format(oDate))
-      } else {
-        this._model.setProperty("/plotData", [])
-        this._model.setProperty("/monitoringPoints", [])
       }
-    } else {
-      this._model.setProperty("/plotData", [])
-      this._model.setProperty("/monitoringPoints", [])
     }
     this.updateMonitoringData()
 
   },
 
   updateMonitoringData: function () {
-    if (this._model.getProperty("/dateFrom") && this._model.getProperty("/dateTo")) {
-      MonitoringService.getMonitoringPoints(this._model.getProperty("/datasetId"));
-
-      // set barchart size
-      let labels = this._model.getProperty("/plotData/labels")
-      if (labels != undefined ) {
-        let oView = this.getView();
-        oView.byId("bar-chart-FlexBox").setHeight(10 + 1 * labels.length + "rem");
-      }
-
+    let dateFrom = this._model.getProperty("/dateFrom")
+    let dateTo = this._model.getProperty("/dateTo")
+    let datasetId = this._model.getProperty("/datasetId")
+    if (dateFrom != undefined && dateTo != undefined && datasetId != undefined) {
+      MonitoringService.getData(datasetId, dateFrom, dateTo);
+    } else {
+      MonitoringService.clearMonitoringModel()
     }
   },
 
-
+  // remove ?
   handleWeekNumberSelect: function(oEvent) {
     var oDateRange = oEvent.getParameter("weekDays");
     // var iWeekNumber = oEvent.getParameter("weekNumber");
-    this._updateText(oDateRange);
+    this._updateTimeInterval(oDateRange);
   },
 
   _selectWeekInterval: function(iDays) {
@@ -162,7 +148,7 @@ sap.ui.controller("components.monitoring.monitoringMain", {
     oCalendar.removeAllSelectedDates();
     oCalendar.addSelectedDate(new DateRange({startDate: oMonday, endDate: oSunday}));
 
-    this._updateText(oCalendar.getSelectedDates()[0]);
+    this._updateTimeInterval(oCalendar.getSelectedDates()[0]);
   },
 
   setDefaultDateInterval: function () {
@@ -173,7 +159,7 @@ sap.ui.controller("components.monitoring.monitoringMain", {
     let oCalendar = this.byId("calendar");
     oCalendar.removeAllSelectedDates();
     oCalendar.addSelectedDate(new sap.ui.unified.DateRange({startDate: oStart, endDate: oEnd}))
-    this._updateText(oCalendar.getSelectedDates()[0]);
+    this._updateTimeInterval(oCalendar.getSelectedDates()[0]);
   }
 
 });
