@@ -388,12 +388,14 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
     val preUpdateDataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1,
       conformance = conformanceRules, parent = Option(DatasetFactory.getDummyDatasetParent()))
 
-    await(datasetMongoRepository.update("user", preUpdateDataset))
+    val actualReturned = await(datasetMongoRepository.update("user", preUpdateDataset))
 
-    val actual = await(datasetMongoRepository.getVersion("dataset", 2))
-    assert(actual.isDefined)
-    val expected = preUpdateDataset.copy(userUpdated = "user", lastUpdated = actual.get.lastUpdated, version = 2)
-    assert(actual.contains(expected))
+    val expected = preUpdateDataset.copy(userUpdated = "user", lastUpdated = actualReturned.lastUpdated, version = 2)
+    assert(actualReturned == expected)
+
+    val actualStored = await(datasetMongoRepository.getVersion("dataset", 2))
+    assert(actualStored.isDefined)
+    assert(actualStored.contains(expected))
   }
 
 }
