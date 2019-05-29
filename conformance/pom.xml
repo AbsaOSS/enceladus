@@ -52,29 +52,58 @@
             <groupId>za.co.absa.spline</groupId>
             <artifactId>spline-core</artifactId>
             <version>${spline.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.jpountz.lz4</groupId>
+                    <artifactId>lz4</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>za.co.absa.spline</groupId>
             <artifactId>spline-core-spark-adapter-${spark.compat.version}</artifactId>
             <version>${spline.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.jpountz.lz4</groupId>
+                    <artifactId>lz4</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>za.co.absa.spline</groupId>
             <artifactId>spline-persistence-mongo</artifactId>
             <version>${spline.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.jpountz.lz4</groupId>
+                    <artifactId>lz4</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>za.co.absa.spline</groupId>
             <artifactId>spline-persistence-hdfs</artifactId>
             <version>${spline.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.jpountz.lz4</groupId>
+                    <artifactId>lz4</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongo-java-driver</artifactId>
             <version>${mongo.java.driver.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.lz4</groupId>
+            <artifactId>lz4-java</artifactId>
+            <version>1.4.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
-
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
@@ -116,7 +145,6 @@
                             <exclude>org.scala-lang:scala-compiler</exclude>
                             <exclude>org.scala-lang:scala-reflect</exclude>
                             <exclude>org.scala-lang:scala-library</exclude>
-                            <exclude>net.jpountz.lz4:*</exclude>
                         </excludes>
                     </artifactSet>
                 </configuration>
