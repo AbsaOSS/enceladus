@@ -15,6 +15,6 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
     <Label text="Drop Column"/>
-    <Input type="Text" width="100%" value="{/newRule/outputColumn}"/>
+    <core:Fragment fragmentName="components.schemaFieldSelector" type="XML"/>
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.checkpointBox"/>
 </core:FragmentDefinition>

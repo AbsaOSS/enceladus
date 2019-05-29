@@ -61,27 +61,27 @@ class JoinConditionDialog {
   }
 
   onDatasetSchemaFieldSelect(oEv) {
-    this.datasetSchemaFieldSelector.onSchemaFieldSelect(oEv);
+    this.datasetSchemaFieldSelector.onSchemaFieldSelect(oEv, "/datasetField");
   }
 
   preselectDatasetField(datasetField) {
-    this.datasetSchemaFieldSelector.preselectSchemaFieldSelector(datasetField)
+    this.datasetSchemaFieldSelector.preselectSchemaFieldSelector(datasetField);
   }
 
   onMappingTableSchemaFieldSelect(oEv) {
-    this.mappingTableSchemaFieldSelector.onSchemaFieldSelect(oEv);
+    this.mappingTableSchemaFieldSelector.onSchemaFieldSelect(oEv, "/mappingTableField");
   }
 
   preselectMappingTableField(mappingTableField) {
-    this.mappingTableSchemaFieldSelector.preselectSchemaFieldSelector(mappingTableField)
+    this.mappingTableSchemaFieldSelector.preselectSchemaFieldSelector(mappingTableField);
   }
 
   setMappingTableSchema(schema) {
-    this.oDialog.setModel(new sap.ui.model.json.JSONModel(schema), "mappingTableSchema")
+    this.oDialog.setModel(new sap.ui.model.json.JSONModel(schema), "mappingTableSchema");
   }
 
   setDatasetSchema(schema) {
-    this.oDialog.setModel(new sap.ui.model.json.JSONModel(schema), "datasetSchema")
+    this.oDialog.setModel(new sap.ui.model.json.JSONModel(schema), "datasetSchema");
   }
 
   onJoinSubmit() {

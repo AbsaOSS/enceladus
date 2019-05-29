@@ -15,10 +15,9 @@
 
 class SchemaFieldSelector {
 
-  constructor(controller, dialog, outputPath, bindingContext) {
+  constructor(controller, dialog, bindingContext) {
     this._controller = controller;
     this._dialog = dialog;
-    this._outputPath = outputPath;
     this._bindingContext = bindingContext;
   }
 
@@ -30,19 +29,15 @@ class SchemaFieldSelector {
     return this._dialog;
   }
 
-  get outputPath() {
-    return this._outputPath;
-  }
-
   get bindingContext() {
     return this._bindingContext;
   }
 
-  onSchemaFieldSelect(oEv) {
+  onSchemaFieldSelect(oEv, outputPath) {
     let bindingPath = oEv.getParameter("listItem").getBindingContext(this.bindingContext).getPath();
     let modelPathBase = "/fields/";
     let model = this.dialog.getModel(this.bindingContext);
-    this.controller._model.setProperty(this.outputPath, this._buildSchemaPath(bindingPath, modelPathBase, model));
+    this.controller._model.setProperty(outputPath, this._buildSchemaPath(bindingPath, modelPathBase, model));
   }
 
   _buildSchemaPath(bindingPath, modelPathBase, model) {
@@ -126,7 +121,7 @@ class SchemaFieldSelector {
 class DefaultValueSchemaFieldSelector extends SchemaFieldSelector {
 
   constructor(controller, dialog) {
-    super(controller, dialog, "/newDefaultValue/columnName", "schema");
+    super(controller, dialog, "schema");
   }
 
   preselectSchemaFieldSelector(sExpandTo, ruleType) {
@@ -145,7 +140,7 @@ class DefaultValueSchemaFieldSelector extends SchemaFieldSelector {
 class ConformanceRuleSchemaFieldSelector extends SchemaFieldSelector {
 
   constructor(controller, dialog) {
-    super(controller, dialog, "/newRule/inputColumn", "schema");
+    super(controller, dialog, "schema");
   }
 
   preselectSchemaFieldSelector(sExpandTo, ruleType) {
@@ -168,7 +163,7 @@ class ConformanceRuleSchemaFieldSelector extends SchemaFieldSelector {
 class TargetAttributeFieldSelector extends SchemaFieldSelector {
 
   constructor(controller, dialog) {
-    super(controller, dialog, "/newRule/targetAttribute", "schema");
+    super(controller, dialog, "schema");
   }
 
   preselectSchemaFieldSelector(sExpandTo) {
@@ -191,7 +186,7 @@ class TargetAttributeFieldSelector extends SchemaFieldSelector {
 class JoinConditionDatasetSchemaFieldSelector extends SchemaFieldSelector {
 
   constructor(controller, dialog) {
-    super(controller, dialog, "/datasetField", "datasetSchema");
+    super(controller, dialog, "datasetSchema");
   }
 
   preselectSchemaFieldSelector(sExpandTo) {
@@ -211,7 +206,7 @@ class JoinConditionDatasetSchemaFieldSelector extends SchemaFieldSelector {
 class JoinConditionMappingTableSchemaFieldSelector extends SchemaFieldSelector {
 
   constructor(controller, dialog) {
-    super(controller, dialog, "/mappingTableField", "mappingTableSchema");
+    super(controller, dialog, "mappingTableSchema");
   }
 
   preselectSchemaFieldSelector(sExpandTo) {
