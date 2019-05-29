@@ -33,13 +33,13 @@ class BaseMigrationSuite extends FunSuite {
 
   test("Test a migration provides JSON transformations and queries") {
     assert(MigrationExample1.getTransformer("schema").isEmpty)
-    assert(MigrationExample1.getQueries("dataset") == Nil)
+    assert(MigrationExample1.getCommands("dataset") == Nil)
 
     val transformation = MigrationExample1.getTransformer("dataset")
     assert(transformation.nonEmpty)
     assert (transformation.get.apply("foo") == "foo_transformed")
 
-    val queries = MigrationExample1.getQueries("schema")
+    val queries = MigrationExample1.getCommands("schema")
     assert(queries.length == 2)
     assert(queries.head == "schema_v1.execute(script1)")
     assert(queries(1) == "schema_v1.execute(script2)")

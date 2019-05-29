@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.fixture
 
-import za.co.absa.enceladus.migrations.framework.migration.{CollectionMigration, JsonMigration, MigrationBase, QueryMigration}
+import za.co.absa.enceladus.migrations.framework.migration.{CollectionMigration, JsonMigration, MigrationBase, CommandMigration}
 
 object MigrationTestData {
 
@@ -28,7 +28,7 @@ object MigrationTestData {
     addCollection("foo")
   }
 
-  object MigrationExample1 extends MigrationBase with CollectionMigration with JsonMigration with QueryMigration {
+  object MigrationExample1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration {
     override val targetVersion: Int = 1
 
     renameCollection("mapping", "mapping_table")
@@ -39,23 +39,23 @@ object MigrationTestData {
       jsonIn + "_transformed"
     })
 
-    applyQuery("schema") ( versionedCollectionName => {
+    runCommand("schema") (versionedCollectionName => {
       s"$versionedCollectionName.execute(script1)"
     })
 
-    applyQuery("schema") ( versionedCollectionName => {
+    runCommand("schema") (versionedCollectionName => {
       s"$versionedCollectionName.execute(script2)"
     })
   }
 
-  object MigrationExample2 extends MigrationBase with QueryMigration {
+  object MigrationExample2 extends MigrationBase with CommandMigration {
     override val targetVersion: Int = 2
 
-    applyQuery("schema") ( versionedCollectionName => {
+    runCommand("schema") (versionedCollectionName => {
       s"$versionedCollectionName.execute(script3)"
     })
 
-    applyQuery("schema") ( versionedCollectionName => {
+    runCommand("schema") (versionedCollectionName => {
       s"$versionedCollectionName.execute(script4)"
     })
   }

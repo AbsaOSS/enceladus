@@ -22,26 +22,26 @@ import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 import scala.collection.mutable.ListBuffer
 
 /**
-  * A QueryMigration represents an entity that provides queries to be executed for every affected collections in a model
+  * A CommandMigration represents an entity that provides commands to be executed for any collections in a model
   * when switching from one version of the model to another.
   *
-  * In order to create a query migration you need to extend from this trait and provide all the required queries
+  * In order to create a command migration you need to extend from this trait and provide all the required commands
   * as functions from a versioned collection names.
   *
   * A collection name can be 'schema' or 'dataset', for example. Corresponding versioned collection name will be
   * 'schema_v5' or 'dataset_v5'.
   *
   * {{{
-  *   class MigrationTo1 extends MigrationBase with QueryMigration {
+  *   class MigrationTo1 extends MigrationBase with CommandMigration {
   *
-  *     applyQuery("collection1_name") ( versionedCollectionName => {
+  *     runCommand("collection1_name") ( versionedCollectionName => {
   *       s"""
   *         | db.$versionedCollectionName{ \$set: { "newField1": "Initial value" } }
   *         |
   *       """.stripMargin
   *     })
   *
-  *     applyQuery("collection2_name") ( versionedCollectionName => {
+  *     runCommand("collection2_name") ( versionedCollectionName => {
   *       s"""
   *         | db.$versionedCollectionName{ \$set: { "newField2": "Initial value" } }
   *         |
@@ -50,36 +50,36 @@ import scala.collection.mutable.ListBuffer
   *   }
   * }}}
   */
-trait QueryMigration extends Migration {
-  type JsQuery = String
-  type QueryGenerator = String => JsQuery
+trait CommandMigration extends Migration {
+  type Command = String
+  type CommandGenerator = String => Command
 
-  private val log: Logger = LogManager.getLogger("QueryMigration")
+  private val log: Logger = LogManager.getLogger("CommandMigration")
 
   /**
-    * This method is used by derived classes to add queries to be executed on the affected collections.
+    * This method is used by derived classes to add commands to be executed on the affected collections.
     * Use this for quicker migrations like an addition of a column.
     *
     * @param collectionName A collection name to be migrated
-    * @param queryGenerator A function that takes a versioned collection name and returns a query to be executed
+    * @param commandGenerator A function that takes a versioned collection name and returns a command to be executed
     */
-  def applyQuery(collectionName: String)(queryGenerator: QueryGenerator): Unit = {
-    queries += collectionName -> queryGenerator
+  def runCommand(collectionName: String)(commandGenerator: CommandGenerator): Unit = {
+    commands += collectionName -> commandGenerator
   }
 
   /**
-    * Gets all queries need to be executed for the specified collection.
-    * The order of the queries corresponds to the order `applyQuery()` method invoked a derived class.
+    * Gets all commands need to be executed for the specified collection.
+    * The order of the commands corresponds to the order `runCommand()` method invoked a derived class.
     *
     * @param collectionName A collection name to be migrated
     *
-    * @return A string representing a JS query
+    * @return A string representing a command expressed in the db-specific language/format
     */
-  def getQueries(collectionName: String): List[JsQuery] = {
-    queries
+  def getCommands(collectionName: String): List[Command] = {
+    commands
       .filter({ case (name, _) => name == collectionName })
-      .map({ case (collection, queryGen) =>
-        queryGen(MigrationUtils.getVersionedCollectionName(collection, targetVersion)) })
+      .map({ case (collection, cmdGenerator) =>
+        cmdGenerator(MigrationUtils.getVersionedCollectionName(collection, targetVersion)) })
       .toList
   }
 
@@ -88,18 +88,18 @@ trait QueryMigration extends Migration {
     */
   abstract override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
     super.execute(db, collectionNames)
-    queries.foreach {
-      case (queryCollection, queryGenerator) =>
-        if (queryCollection.isEmpty) {
-          db.executeQuery(queryGenerator(""))
+    commands.foreach {
+      case (cmdCollection, cmdGenerator) =>
+        if (cmdCollection.isEmpty) {
+          db.executeCommand(cmdGenerator(""))
         } else {
-          if (collectionNames.contains(queryCollection)) {
-            val collection = MigrationUtils.getVersionedCollectionName(queryCollection, targetVersion)
-            log.info(s"Executing a query on $collection")
-            db.executeQuery(queryGenerator(collection))
+          if (collectionNames.contains(cmdCollection)) {
+            val collection = MigrationUtils.getVersionedCollectionName(cmdCollection, targetVersion)
+            log.info(s"Executing a command on $collection")
+            db.executeCommand(cmdGenerator(collection))
           } else {
             throw new IllegalStateException(
-              s"Attempt to apply a query to a collection that does not exist: $queryCollection.")
+              s"Attempt to run a command on a collection that does not exist: $cmdCollection.")
           }
         }
     }
@@ -110,19 +110,19 @@ trait QueryMigration extends Migration {
     */
   abstract override def validate(collectionNames: Seq[String]): Unit = {
     super.validate(collectionNames)
-    queries.foreach{
+    commands.foreach{
       case (collectionToMigrate, _) => if (!collectionNames.contains(collectionToMigrate)) {
         throw new IllegalStateException(
-          s"Attempt to apply a query to a collection that does not exist: $collectionToMigrate.")
+          s"Attempt to run a command on a collection that does not exist: $collectionToMigrate.")
       }
     }
   }
 
   override protected def validateMigration(): Unit = {
     if (targetVersion < 0) {
-      throw new IllegalStateException("The target version of a QueryMigration should be 0 or bigger.")
+      throw new IllegalStateException("The target version of a CommandMigration should be 0 or bigger.")
     }
   }
 
-  private val queries = new ListBuffer[(String, QueryGenerator)]()
+  private val commands = new ListBuffer[(String, CommandGenerator)]()
 }
