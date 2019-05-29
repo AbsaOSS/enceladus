@@ -19,11 +19,11 @@ import org.mongodb.scala.MongoClient
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import za.co.absa.enceladus.migrations.framework.dao.{MongoDb, ScalaMongoImplicits}
 
-trait MongoDbFixture extends BeforeAndAfterAll {
+trait MigrationsFixture extends BeforeAndAfterAll {
 
   this: Suite =>
 
-  val integrationTestDbName = "migrations_integration1"
+  val integrationTestDbName = "migrations_integration2"
   val mongoConnectionString = "mongodb://localhost:27017"
 
   protected var mongoClient: MongoClient = _
@@ -32,7 +32,7 @@ trait MongoDbFixture extends BeforeAndAfterAll {
   import ScalaMongoImplicits._
 
   override protected def beforeAll(): Unit = {
-    db = initDatabase()
+    initDatabase()
     super.beforeAll()
   }
 
@@ -41,13 +41,24 @@ trait MongoDbFixture extends BeforeAndAfterAll {
     finally mongoClient.getDatabase(integrationTestDbName).drop().execute()
   }
 
-  private def initDatabase(): MongoDb = {
+  private def initDatabase(): Unit = {
     mongoClient = MongoClient(mongoConnectionString)
     val dbs = mongoClient.listDatabaseNames().execute()
     if (dbs.contains(integrationTestDbName)) {
-      throw new IllegalStateException(s"MongoDB migration db tools integration test database " +
-        s"'$integrationTestDbName' already exists at '$mongoConnectionString'.")
+      throw new IllegalStateException(s"MongoDB migration use case integration test database " +
+      s"'$integrationTestDbName' already exists at '$mongoConnectionString'.")
     }
-    new MongoDb(mongoClient.getDatabase(integrationTestDbName))
+    db = new MongoDb(mongoClient.getDatabase(integrationTestDbName))
+    fillInitialData()
+  }
+
+  private def fillInitialData(): Unit = {
+    db.createCollection("foo1")
+    db.createCollection("foo2")
+    db.createCollection("foo3")
+    db.insertDocument("foo1", """ { "name" : "Gizmo" } """)
+    db.insertDocument("foo1", """ { "name" : "Doodad" } """)
+    db.insertDocument("foo2", """ { "name" : "Dingus" } """)
+    db.insertDocument("foo3", """ { "name" : "Doohickey" } """)
   }
 }
