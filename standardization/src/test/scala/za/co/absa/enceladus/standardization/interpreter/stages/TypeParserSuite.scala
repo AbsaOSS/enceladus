@@ -17,14 +17,17 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class TypeParserSuite extends FunSuite with SparkTestBase {
 
+  private implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+
   test("Test standardize with sourcecolumn metadata") {
-    val structFieldNoMetadata = StructField("a", IntegerType)
-    val structFieldWithMetadataNotSourceColumn = StructField("b", IntegerType, nullable = false, new MetadataBuilder().putString("meta", "data").build)
-    val structFieldWithMetadataSourceColumn = StructField("c", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "override_c").build)
+    val structFieldNoMetadata = StructField("a", StringType)
+    val structFieldWithMetadataNotSourceColumn = StructField("b", StringType, nullable = false, new MetadataBuilder().putString("meta", "data").build)
+    val structFieldWithMetadataSourceColumn = StructField("c", StringType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "override_c").build)
     val schema = StructType(Array(structFieldNoMetadata, structFieldWithMetadataNotSourceColumn, structFieldWithMetadataSourceColumn))
     //Just Testing field name override
     val parseOutputStructFieldNoMetadata = TypeParser.standardize(structFieldNoMetadata, "path", schema)

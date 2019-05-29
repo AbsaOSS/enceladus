@@ -54,6 +54,7 @@ sap.ui.define([
       this._mappingTableService = new MappingTableService(this._model, eventBus);
       this._schemaService = new SchemaService(this._model, eventBus);
       this._schemaTable = new SchemaTable(this);
+      this._schemaFieldSelector = new DefaultValueSchemaFieldSelector(this, this._addDefaultDialog)
     },
 
     onEntityUpdated: function (sTopic, sEvent, oData) {
@@ -85,7 +86,7 @@ sap.ui.define([
     },
 
     defaultDialogAfterOpen: function (oEv) {
-      let scrollCont = sap.ui.getCore().byId("defValFieldSelectScroll");
+      let scrollCont = sap.ui.getCore().byId("fieldSelectScroll");
       let selected = sap.ui.getCore().byId("schemaFieldSelector").getSelectedItem();
 
       // this needs to be already rendered for it to work
@@ -95,13 +96,7 @@ sap.ui.define([
     },
 
     defaultCancel: function () {
-      // This is a workaround for a bug in the Tree component of 1.56.x and 1.58.x
-      // TODO: verify whether this was fixed in the subsequent versions
-      let tree = sap.ui.getCore().byId("schemaFieldSelector");
-      let items = tree.getItems();
-      for (let i in items) {
-        items[i].setSelected(false)
-      }
+      this._schemaFieldSelector.reset();
 
       this.resetNewDefaultValueState();
       this._addDefaultDialog.close();
@@ -140,10 +135,11 @@ sap.ui.define([
     },
 
     onSchemaFieldSelect: function (oEv) {
-      let bind = oEv.getParameter("listItem").getBindingContext("schema").getPath();
-      let modelPathBase = "/fields/";
-      let model = this._addDefaultDialog.getModel("schema");
-      this._schemaService.fieldSelect(bind, modelPathBase, model, "/newDefaultValue/columnName");
+      this._schemaFieldSelector.onSchemaFieldSelect(oEv);
+    },
+
+    _schemaFieldSelectorSelectPath: function (sExpandTo) {
+      this._schemaFieldSelector.preselectSchemaFieldSelector(sExpandTo);
     },
 
     defaultSubmit: function () {
@@ -160,59 +156,14 @@ sap.ui.define([
             value: newDef.value
           });
 
-          this._mappingTableService.editDefaultValues(currentMT.name, currentMT.version, currentMT.defaultMappingValue);
+          this._mappingTableService.editDefaultValues(currentMT.name, currentMT.version, currentMT.defaultMappingValue)
+            .then(() => this.load());
         } else {
           this._mappingTableService.addDefaultValue(currentMT.name, currentMT.version, newDef)
+            .then(() => this.load());
         }
         this.defaultCancel(); // close & clean up
       }
-    },
-
-    _schemaFieldSelectorSelectPath: function (sExpandTo) {
-
-      let aTokens = sExpandTo.split(".");
-      let oCtl = sap.ui.getCore().byId("schemaFieldSelector");
-
-      oCtl.collapseAll();
-
-      let model = this._addDefaultDialog.getModel("schema");
-
-      let helper = function (aToks, sModelPathAcc) {
-        if (aToks.length === 0) {
-          let items = oCtl.getItems();
-          for (let i in items) {
-            let p = items[i].getBindingContext("schema").getPath();
-            // substring to get rid of the children suffix
-            let modelPath = sModelPathAcc.substring(0, sModelPathAcc.length - 9);
-            if (p === modelPath) {
-              console.log(items[i]);
-              oCtl.setSelectedItem(items[i]);
-              sap.ui.getCore().byId("defValFieldSelectScroll").scrollToElement(items[i])
-            }
-          }
-        } else {
-          let curr = model.getProperty(sModelPathAcc);
-          for (let i in curr) {
-            if (curr[i]["name"] === aToks[0]) {
-              let newPath = sModelPathAcc + "/" + i + "/children";
-              let items = oCtl.getItems();
-              for (let x in items) {
-                let itemPath = items[x].data("path") + "." + items[x].getTitle();
-                let modelPath = curr[i]["path"] + "." + curr[i]["name"];
-                if (itemPath === modelPath) {
-                  oCtl.expand(parseInt(x));
-                  break;
-                }
-              }
-              helper(aToks.slice(1), newPath);
-              return;
-            }
-          }
-        }
-
-      };
-
-      helper(aTokens, "/fields")
     },
 
     onDefaultValueMenuAction: function (oEv) {

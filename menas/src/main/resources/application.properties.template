@@ -29,8 +29,10 @@ za.co.absa.enceladus.menas.auth.ldap.search.filter=(&(samAccountName={0}))
 
 # Define how menas authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system
+#  "simple" -> will use authentication by a user name
 #  "krb5" -> menas will use specified kerberos configurations to authenticate via kerberos using specified username & keytab
 za.co.absa.enceladus.menas.hadoop.auth.method=default
+za.co.absa.enceladus.menas.hadoop.auth.user=hdfs
 za.co.absa.enceladus.menas.hadoop.auth.krb5.debug=true
 za.co.absa.enceladus.menas.hadoop.auth.krb5.realm=EXAMPLE.COM
 za.co.absa.enceladus.menas.hadoop.auth.krb5.kdc=localhost

@@ -99,19 +99,19 @@ object TradeConformance {
       |          "controlName": "totalCount",
       |          "controlType": "controlType.count",
       |          "controlCol": "*",
-      |          "controlValue": 7
+      |          "controlValue": "7"
       |        },
       |        {
       |          "controlName": "countId",
       |          "controlType": "controlType.distinctCount",
       |          "controlCol": "id",
-      |          "controlValue": 7
+      |          "controlValue": "7"
       |        },
       |        {
       |          "controlName": "sumId",
       |          "controlType": "controlType.aggregatedTotal",
       |          "controlCol": "id",
-      |          "controlValue": 28
+      |          "controlValue": "28"
       |        }
       |      ]
       |    },
@@ -126,19 +126,19 @@ object TradeConformance {
       |          "controlName": "totalCount",
       |          "controlType": "controlType.count",
       |          "controlCol": "*",
-      |          "controlValue": 7
+      |          "controlValue": "7"
       |        },
       |        {
       |          "controlName": "countId",
       |          "controlType": "controlType.distinctCount",
       |          "controlCol": "id",
-      |          "controlValue": 7
+      |          "controlValue": "7"
       |        },
       |        {
       |          "controlName": "sumId",
       |          "controlType": "controlType.aggregatedTotal",
       |          "controlCol": "id",
-      |          "controlValue": 28
+      |          "controlValue": "28"
       |        }
       |      ]
       |    }

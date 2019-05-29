@@ -33,15 +33,15 @@ object FieldValidator {
   def validate(field: StructField): Seq[ValidationIssue] = {
     val validator = field.dataType match {
       case _: DateType =>
-        Some(new FieldValidatorDate)
+        Option(FieldValidatorDate)
       case _: TimestampType =>
-        Some(new FieldValidatorTimestamp)
+        Option(FieldValidatorTimestamp)
       case _: BooleanType =>
-        Some(new FieldValidatorScalar)
+        Option(FieldValidatorScalar)
       case _: NumericType =>
-        Some(new FieldValidatorScalar)
+        Option(FieldValidatorScalar)
       case _: StringType =>
-        Some(new FieldValidatorScalar)
+        Option(FieldValidatorScalar)
       case _ => None
     }
     validator.map(_.validateStructField(field)).getOrElse(Nil)

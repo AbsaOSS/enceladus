@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.testutils
 
+import java.util.Locale
+
 import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.functions.{expr, max}
 import org.apache.spark.sql.types.{ArrayType, StructField, StructType}
@@ -149,37 +151,39 @@ object HelperFunctions {
     * @return Returns a string format with human readable time segments
     */
   def prettyPrintElapsedTime(elapsedTime: Long): String = {
-    def stringify(count: Double, noun: String, formatter: String = "%.0f"): Option[String] = {
-      if (count == 0) { None }
-      else {
-        val formatted = formatter.format(count)
-        Some(s"$formatted $noun${if (count == 1) { "" } else { "s" }}")
+    import scala.math.Integral.Implicits._
+
+    def stringify(count: Long, noun: String, factor: Long = 1): Option[String] = {
+      val formatted = (count, factor) match {
+        case (0, _) => None
+        case (c, 1) => Option("%d".formatLocal(Locale.US, c))
+        case (c, f) => Option("%.2f".formatLocal(Locale.US, c / f.toDouble))
       }
+      formatted.map(s => s"$s $noun${if (count == factor) { "" } else { "s" }}")
     }
 
-    def extractTimeSegment(remaining: Long, multiplier: Long): (Long, Long) = {
-      val count = remaining / multiplier
-      val newRemaining = remaining % multiplier
-      (count, newRemaining)
-    }
-
-    val minuteMultiplier = 1000 * 60
-    val hourMultiplier = minuteMultiplier * 60
-    val dayMultiplier = hourMultiplier * 24
-
-    val (numberOfDays, remainingAfterDay) = extractTimeSegment(elapsedTime, dayMultiplier)
-    val (numberOfHours, remainingAfterHours) = extractTimeSegment(remainingAfterDay, hourMultiplier)
-    val (numberOfMinutes, remainingAfterMinutes) = extractTimeSegment(remainingAfterHours, minuteMultiplier)
-    val numberOfSeconds = remainingAfterMinutes / 1000.0
+    val (numberOfDays, remainingAfterDay) = elapsedTime /% millisecondsPerDay
+    val (numberOfHours, remainingAfterHours) = remainingAfterDay /% millisecondsPerHour
+    val (numberOfMinutes, numberOfMilliseconds) = remainingAfterHours  /%  millisecondsPerMinute
 
     val daysString = stringify(numberOfDays, "day")
     val hoursString = stringify(numberOfHours, "hour")
     val minutesString = stringify(numberOfMinutes, "minute")
-    val secondsString = stringify(numberOfSeconds, "second", "%.2f")
+    val secondsString = stringify(numberOfMilliseconds, "second", millisecondsPerSecond)
 
-    val returnVal = Array(daysString, hoursString, minutesString, secondsString).flatten.mkString(", ")
-    val patchIndex = returnVal.lastIndexOf(',')
-    if (patchIndex == -1) { returnVal }
-    else { returnVal.patch(returnVal.lastIndexOf(','), " and", 1) }
+    val nonZeroSegments = Array(daysString, hoursString, minutesString, secondsString).flatten
+
+    nonZeroSegments.length match {
+      case 0 => "0 seconds"
+      case 1 => nonZeroSegments(0)
+      case len =>
+        val lastSegmentIndex = len -1
+        nonZeroSegments.slice(0, lastSegmentIndex).mkString(", ") + " and " + nonZeroSegments(lastSegmentIndex)
+    }
   }
+
+  val millisecondsPerSecond: Long = 1000
+  val millisecondsPerMinute: Long = millisecondsPerSecond * 60
+  val millisecondsPerHour: Long = millisecondsPerMinute * 60
+  val millisecondsPerDay: Long = millisecondsPerHour * 24
 }

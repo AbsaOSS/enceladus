@@ -23,8 +23,53 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
 
+import scala.util.control.NonFatal
+
 @Component
 class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
+
+  /**
+    * Converts a JSON of any supported format into a Spark StructType
+    */
+  def convertAnyToStructType(inputJson: String): StructType = {
+    // This looks like a monadic structure. I wonder if this code can be simplified.
+    convertStructTypeJsonToStructType(inputJson) match {
+      case Left(schema) => schema
+      case Right(message1) =>
+        convertMenasModel0JsonToStructType(inputJson) match {
+          case Left(schema) => schema
+          case Right(message2) =>
+            throw new IllegalStateException(
+              s"Unable to parse schema JSON\nStructType serializer: $message1\nMenas serializer: $message2")
+        }
+    }
+  }
+
+  /**
+    * Converts a JSON in Spark's StructType format into an instance of Spark's StructType
+    */
+  def convertStructTypeJsonToStructType(inputJson: String): Either[StructType, String] = {
+    try {
+      val schema = DataType.fromJson(inputJson).asInstanceOf[StructType]
+      Left(schema)
+    }
+    catch {
+      case NonFatal(e) => Right(e.getMessage)
+    }
+  }
+
+  /**
+    * Converts a model 0 JSON (pre-release Menas) format into an instance of Spark's StructType
+    */
+  def convertMenasModel0JsonToStructType(inputJson: String): Either[StructType, String] = {
+    try {
+      val schema = model0.Serializer.convertToStructType(inputJson)
+      Left(schema)
+    }
+    catch {
+      case NonFatal(e) => Right(e.getMessage)
+    }
+  }
 
   /**
     * Converts a seq of menas schema fields onto the spark structfields

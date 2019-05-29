@@ -39,8 +39,18 @@ sap.ui.define([
         this.routeMatched(args);
       }, this);
 
-      let cont = sap.ui.controller("components.dataset.conformanceRule.upsert", true);
-      this._upsertConformanceRuleDialog = sap.ui.xmlfragment("components.dataset.conformanceRule.upsert", cont);
+      let cont = new ConformanceRuleDialog(this);
+      let view = this.getView();
+
+      this._upsertConformanceRuleDialog = Fragment.load({
+        id: view.getId(),
+        name:"components.dataset.conformanceRule.upsert",
+        controller: cont
+      }).then(function (fragment) {
+        view.addDependent(fragment);
+      });
+
+      this._upsertConformanceRuleDialog = this.byId("upsertConformanceRuleDialog");
       this._editScheduleDialog = sap.ui.xmlfragment("components.dataset.scheduling.editSchedule", this);
       sap.ui.getCore().getMessageManager().registerObject(this._editScheduleDialog, true);
       
@@ -197,7 +207,7 @@ sap.ui.define([
       if(currentDataset) {
         this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema").then((schema) => {
           this._schemaTable.model = schema;
-        });       
+        });
       }
     },
 

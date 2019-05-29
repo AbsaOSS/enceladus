@@ -17,6 +17,7 @@ class RestClient {
 
   static get(url) {
     return $.get(url)
+      .then(this.identity, this.handleExpiredSession)
   }
 
   static post(url, data) {
@@ -26,9 +27,8 @@ class RestClient {
       contentType: "application/json",
       headers: {
         "X-CSRF-TOKEN" : localStorage.getItem("csrfToken")
-      },
-      timeout: 120000
-    })
+      }
+    }).then(this.identity, this.handleExpiredSession)
   }
 
   static put(url, data) {
@@ -39,7 +39,7 @@ class RestClient {
       headers: {
         "X-CSRF-TOKEN" : localStorage.getItem("csrfToken")
       }
-    })
+    }).then(this.identity, this.handleExpiredSession)
   }
 
   static delete(url) {
@@ -48,7 +48,18 @@ class RestClient {
       headers: {
         "X-CSRF-TOKEN" : localStorage.getItem("csrfToken")
       }
-    })
+    }).then(this.identity, this.handleExpiredSession)
+  }
+
+  static identity(result) {
+    return result;
+  }
+
+  static handleExpiredSession({status}) {
+    if (status === 401) {
+      GenericService.clearSession("Session has expired");
+      return $.Deferred().resolve({}).promise();
+    }
   }
 
 }

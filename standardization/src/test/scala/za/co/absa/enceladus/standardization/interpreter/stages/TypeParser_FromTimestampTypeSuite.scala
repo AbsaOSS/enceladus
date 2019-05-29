@@ -13,23 +13,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuites
+package za.co.absa.enceladus.standardization.interpreter.stages
 
-import org.apache.spark.sql.types.{DataType, DateType, StringType, TimestampType}
-import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate
+import org.apache.spark.sql.types.{DataType, DateType, DoubleType, FloatType, StructField, TimestampType}
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate.Input
 import za.co.absa.enceladus.utils.time.DateTimePattern
 
-class TypeParserFromStringTypeSuite extends TypeParserSuiteTemplate {
+class TypeParser_FromTimestampTypeSuite extends TypeParserSuiteTemplate  {
 
   private val input = Input(
-    baseType = StringType,
-    defaultValueDate = "01.01.1970",
-    defaultValueTimestamp = "01.01.1970 00:00:00",
-    datePattern = "dd.MM.yyyy",
-    timestampPattern = "dd.MM.yyyy HH:mm:ss",
-    fixedTimezone = "CET",
-    path = "",
+    baseType = TimestampType,
+    defaultValueDate = "2000-01-01",
+    defaultValueTimestamp = "2010-12-31 23:59:59",
+    datePattern = "yyyy-MM-dd",
+    timestampPattern = "yyyy-MM-dd HH:mm:ss",
+    fixedTimezone = "CST",
+    path = "timestamp",
     datetimeNeedsPattern = false
   )
 
@@ -38,16 +37,27 @@ class TypeParserFromStringTypeSuite extends TypeParserSuiteTemplate {
     (toType, isEpoch, timezone) match {
       case (DateType, true, _)          => s"to_date(from_unixtime((CAST(`%s` AS BIGINT) / ${DateTimePattern.epochFactor(pattern)}L), 'yyyy-MM-dd'), 'yyyy-MM-dd')"
       case (TimestampType, true, _)     => s"to_timestamp(from_unixtime((CAST(`%s` AS BIGINT) / ${DateTimePattern.epochFactor(pattern)}L), 'yyyy-MM-dd HH:mm:ss'), 'yyyy-MM-dd HH:mm:ss')"
-      case (DateType, _, Some(tz))      => s"to_date(to_utc_timestamp(to_timestamp(`%s`, '$pattern'), '$tz'))"
-      case (TimestampType, _, Some(tz)) => s"to_utc_timestamp(to_timestamp(`%s`, '$pattern'), $tz)"
-      case (DateType, _, _)             => s"to_date(`%s`, '$pattern')"
-      case (TimestampType, _, _)        => s"to_timestamp(`%s`, '$pattern')"
+      case (TimestampType, _, Some(tz)) => s"to_utc_timestamp(%s, $tz)"
+      case (DateType, _, Some(tz))      => s"to_date(to_utc_timestamp(`%s`, '$tz'))"
+      case (TimestampType, _, _)        => "%s"
+      case (DateType, _, _)             => "to_date(`%s`)"
       case _                            => s"CAST(%s AS ${toType.sql})"
     }
   }
 
-  test("Within the column - type stays") {
-    doTestWithinColumn(input)
+  override protected def createErrorCondition(srcField: String, target: StructField, castS: String): String = {
+    target.dataType match {
+      case FloatType | DoubleType => s"(($castS IS NULL) OR isnan($castS)) OR ($castS IN (Infinity, -Infinity))"
+      case _ => s"$castS IS NULL"
+    }
+  }
+
+  test("Within the column - type stays, nullable") {
+    doTestWithinColumnNullable(input)
+  }
+
+  test("Within the column - type stays, not nullable") {
+    doTestWithinColumnNotNullable(input)
   }
 
   test("Into string field") {

@@ -53,7 +53,7 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
   }
 
   override def update(username: String, updated: Dataset): Future[Dataset] = {
-    super.update(username, handleMappingRuleWrite(updated))
+    super.update(username, handleMappingRuleWrite(updated)).map(handleMappingRuleRead)
   }
 
   private def handleMappingRuleWrite(dataset: Dataset): Dataset = {

@@ -24,10 +24,16 @@ import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate._
+import za.co.absa.enceladus.utils.error.UDFLibrary
+import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.time.DateTimePattern
 
-trait TypeParserSuiteTemplate extends FunSuite {
+trait TypeParserSuiteTemplate extends FunSuite with SparkTestBase {
+
+  private implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+
   protected def createCastTemplate(toType: DataType, pattern: String, timezone: Option[String]): String
+  protected def createErrorCondition(srcField: String, target: StructField, castS: String):String
 
   private val sourceFieldName = "sourceField"
   private val dateEpochPattern = DateTimePattern.EpochKeyword
@@ -35,9 +41,18 @@ trait TypeParserSuiteTemplate extends FunSuite {
 
   protected val log: Logger = LogManager.getLogger(this.getClass)
 
-  protected def doTestWithinColumn(input: Input): Unit = {
+  protected def doTestWithinColumnNullable(input: Input): Unit = {
     import input._
-    val field = sourceField(baseType)
+    val nullable = true
+    val field = sourceField(baseType, nullable)
+    val schema = buildSchema(Array(field), path)
+    testTemplate(field, schema, path)
+  }
+
+  protected def doTestWithinColumnNotNullable(input: Input): Unit = {
+    import input._
+    val nullable = false
+    val field = sourceField(baseType, nullable)
     val schema = buildSchema(Array(field), path)
     testTemplate(field, schema, path)
   }
@@ -60,7 +75,7 @@ trait TypeParserSuiteTemplate extends FunSuite {
 
   protected def doTestIntoIntegerField(input: Input): Unit = {
     import input._
-    val integerField = StructField("integerField", IntegerType, nullable = false,
+    val integerField = StructField("integerField", IntegerType, nullable = true,
       new MetadataBuilder().putString("sourcecolumn", sourceFieldName).build)
     val schema = buildSchema(Array(sourceField(baseType), integerField), path)
     testTemplate(integerField, schema, path)
@@ -172,7 +187,7 @@ trait TypeParserSuiteTemplate extends FunSuite {
     testTemplate(timestampField, schema, path, timestampEpochPattern)
   }
 
-  private def sourceField(baseType: DataType): StructField = StructField(sourceFieldName, baseType)
+  private def sourceField(baseType: DataType, nullable: Boolean = true): StructField = StructField(sourceFieldName, baseType, nullable)
 
   private def buildSchema(fields: Array[StructField], path: String): StructType = {
     val innerSchema = StructType(fields)
@@ -186,32 +201,41 @@ trait TypeParserSuiteTemplate extends FunSuite {
 
   private def testTemplate(target: StructField, schema: StructType, path: String, pattern: String = "", timezone: Option[String] = None): Unit = {
     val srcField = fullName(path, sourceFieldName)
-    val nullableS = (!target.nullable).toString
-    val castString = createCastTemplate(target.dataType, pattern, timezone).format(srcField)
-    val stdCastExpression = assemblyCastExpression(srcField, nullableS, castString, target)
-    val errColumnExpression = assemblyErrorExpression(srcField, nullableS, castString)
+    val castString = createCastTemplate(target.dataType, pattern, timezone).format(srcField, srcField)
+    val errColumnExpression = assembleErrorExpression(srcField, target, castString)
+    val stdCastExpression = assembleCastExpression(srcField, target, castString, errColumnExpression)
     val output: ParseOutput = TypeParser.standardize(target, path, schema)
 
-    doAssert(stdCastExpression, output.stdCol.toString())
     doAssert(errColumnExpression, output.errors.toString())
+    doAssert(stdCastExpression, output.stdCol.toString())
   }
 
   private def fullName(path: String, fieldName: String): String = {
     if (path.nonEmpty) s"$path.$fieldName" else fieldName
   }
 
-  private def assemblyCastExpression(srcField: String, nullableS: String, castS: String, target: StructField): String = {
+  private def assembleCastExpression(srcField: String,
+                                     target: StructField,
+                                     castExpression: String,
+                                     errorExpression: String): String = {
     val default = Defaults.getDefaultValue(target) match {
       case d: Date => s"DATE '${d.toString}'"
       case t: Timestamp => s"TIMESTAMP('${t.toString}')"
       case s: String => s
       case x => x.toString
     }
-    s"CASE WHEN ((size(CASE WHEN (($srcField IS NULL) AND $nullableS) THEN array(stdNullErr($srcField)) ELSE CASE WHEN (($srcField IS NOT NULL) AND ($castS IS NULL)) THEN array(stdCastErr($srcField, CAST($srcField AS STRING))) ELSE [] END END) = 0) AND ($srcField IS NOT NULL)) THEN $castS ELSE CASE WHEN (size(CASE WHEN (($srcField IS NULL) AND $nullableS) THEN array(stdNullErr($srcField)) ELSE CASE WHEN (($srcField IS NOT NULL) AND ($castS IS NULL)) THEN array(stdCastErr($srcField, CAST($srcField AS STRING))) ELSE [] END END) = 0) THEN NULL ELSE $default END END AS `${target.name}`"
+
+    s"CASE WHEN (size($errorExpression) > 0) THEN $default ELSE CASE WHEN ($srcField IS NOT NULL) THEN $castExpression END END AS `${target.name}`"
   }
 
-  private def assemblyErrorExpression(srcField: String, nullableS: String, castS: String): String = {
-    s"CASE WHEN (($srcField IS NULL) AND $nullableS) THEN array(stdNullErr($srcField)) ELSE CASE WHEN (($srcField IS NOT NULL) AND ($castS IS NULL)) THEN array(stdCastErr($srcField, CAST($srcField AS STRING))) ELSE [] END END"
+  private def assembleErrorExpression(srcField: String, target: StructField, castS: String): String = {
+    val errCond = createErrorCondition(srcField, target, castS)
+
+    if (target.nullable) {
+      s"CASE WHEN (($srcField IS NOT NULL) AND ($errCond)) THEN array(stdCastErr($srcField, CAST($srcField AS STRING))) ELSE [] END"
+    } else {
+      s"CASE WHEN ($srcField IS NULL) THEN array(stdNullErr($srcField)) ELSE CASE WHEN ($errCond) THEN array(stdCastErr($srcField, CAST($srcField AS STRING))) ELSE [] END END"
+    }
   }
 
   private def doAssert(expectedExpression: String, actualExpression: String): Unit = {

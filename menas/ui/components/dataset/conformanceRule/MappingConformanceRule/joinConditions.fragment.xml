@@ -13,19 +13,26 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core"
+                         xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+
     <Label text="Data can have Null values in join conditions"/>
     <CheckBox selected="{/newRule/isNullSafe}"/>
-    <Button id="addJoinCondition" icon="sap-icon://add" press="onAddJoinCondition"/>
     <Label text="Join Conditions"/>
-    <List mode="Delete" items="{/newRule/newJoinConditions}" delete="onDeleteJoinCondition">
+    <List mode="Delete" items="{/newRule/newJoinConditions}" delete=".onDeleteJoinCondition">
         <items>
-            <CustomListItem>
-                <HBox justifyContent="SpaceAround">
-                    <Input type="Text" value="{mappingTableField}" placeholder="Mapping Table Column"/>
-                    <Input type="Text" value="{datasetField}" placeholder="Dataset Column"/>
-                </HBox>
+            <CustomListItem type="Active"
+                              press=".onJoinConditionSelect"
+                              cust:mappingTableField="{mappingTableField}"
+                              cust:datasetField="{datasetField}">
+                <content>
+                    <Text class="sapUiSmallMarginBegin sapUiSmallMarginEnd" wrapping="true"
+                          wrappingType="Hyphenated"
+                          text="{/currentDataset/name}.{datasetField} = {/newRule/mappingTable}.{mappingTableField}"/>
+                </content>
             </CustomListItem>
         </items>
     </List>
+    <Label text="Add Join Condition"/>
+    <Button id="AddJoin" icon="sap-icon://add" press=".onAddJoinCondition"/>
 </core:FragmentDefinition>
