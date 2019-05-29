@@ -65,6 +65,7 @@ class JoinConditionDialog {
   }
 
   preselectDatasetField(datasetField) {
+    this.model.setProperty("/datasetField", datasetField)
     this.datasetSchemaFieldSelector.preselectSchemaFieldSelector(datasetField);
   }
 
@@ -73,6 +74,7 @@ class JoinConditionDialog {
   }
 
   preselectMappingTableField(mappingTableField) {
+    this.model.setProperty("/mappingTableField", mappingTableField)
     this.mappingTableSchemaFieldSelector.preselectSchemaFieldSelector(mappingTableField);
   }
 
@@ -85,10 +87,9 @@ class JoinConditionDialog {
   }
 
   onJoinSubmit() {
-    const model = this.oController._model;
     const join = {
-      "datasetField" : model.getProperty("/datasetField"),
-      "mappingTableField" : model.getProperty("/mappingTableField")
+      "datasetField" : this.model.getProperty("/datasetField"),
+      "mappingTableField" : this.model.getProperty("/mappingTableField")
     };
     const joinConditionsPath = "/newRule/newJoinConditions";
     if (model.getProperty(joinConditionsPath) === undefined) {
