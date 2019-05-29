@@ -20,25 +20,59 @@ package za.co.absa.enceladus.migrations.framework.dao
   */
 abstract class DocumentDb {
 
+  /**
+    * Returns the version of the database. Version of a database determines the schema used for writes.
+    */
   def getVersion(): Int
 
+  /**
+    * Sets the version of the database. When a version is set it implies a migration to that version is completed
+    * successfully and the database can be used with the specified version of the schema.
+    */
   def setVersion(version: Int): Unit
 
+  /**
+    * Returns true if the specified collection exists in the database.
+    */
   def isCollectionExists(collectionName: String): Boolean
 
+  /**
+    * Creates a collection with the given name.
+    */
   def createCollection(collectionName: String): Unit
 
+  /**
+    * Drop a collection.
+    */
   def dropCollection(collectionName: String): Unit
 
+  /**
+    * Removes all documents from a collection.
+    */
   def emptyCollection(collectionName: String): Unit
 
+  /**
+    * Renames a collection
+    */
   def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit
 
+  /**
+    * Copies contents of a collection to a collection with a different name in the same database.
+    */
   def cloneCollection(collectionName: String, newCollectionName: String): Unit
 
+  /**
+    * Inserts a document into a collection.
+    */
   def insertDocument(collectionName: String, document: String): Unit
 
-  def executeQuery(query: String)
-
+  /**
+    * Returns an iterator on all documetns in the specified collection.
+    */
   def getDocuments(collectionName: String): Iterator[String]
+
+  /**
+    * Executes a command expressed in the database-specific language/format on the database.
+    */
+  def executeCommand(cmd: String)
 }

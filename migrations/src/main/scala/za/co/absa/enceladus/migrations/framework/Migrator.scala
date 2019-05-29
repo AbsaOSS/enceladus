@@ -27,7 +27,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
 
   def getCollectionMigrations: Seq[CollectionMigration] = migrations.collect({ case m: CollectionMigration => m })
 
-  def getQueryMigrations: Seq[QueryMigration] = migrations.collect({ case m: QueryMigration => m })
+  def getQueryMigrations: Seq[CommandMigration] = migrations.collect({ case m: CommandMigration => m })
 
   def getJsonMigrations: Seq[JsonMigration] = migrations.collect({ case m: JsonMigration => m })
 

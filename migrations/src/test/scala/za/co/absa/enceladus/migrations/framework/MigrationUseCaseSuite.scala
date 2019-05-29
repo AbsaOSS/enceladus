@@ -42,8 +42,8 @@ class MigrationUseCaseSuite extends FunSuite {
         "getDocuments(schema)" ::
         "empty(schema_v1)" ::
         "insertTo(schema_v1)" ::
-        "dataset_v1.execute(script1)" ::
-        "mappingtable_v1.execute(script2)" ::
+        "{collStats: \"dataset_v1\", scale: undefined, $readPreference: { mode: \"secondaryPreferred\"}}" ::
+        "{collStats: \"mappingtable_v1\", $readPreference: { mode: \"secondaryPreferred\"}}" ::
         "setDbVersion(1)" ::
         Nil
     assert(db.getActionsExecuted == expectedActions)
@@ -87,8 +87,8 @@ class MigrationUseCaseSuite extends FunSuite {
         "getDocuments(schema)" ::
         "empty(schema_v1)" ::
         "insertTo(schema_v1)" ::
-        "dataset_v1.execute(script1)" ::
-        "mappingtable_v1.execute(script2)" ::
+        "{collStats: \"dataset_v1\", scale: undefined, $readPreference: { mode: \"secondaryPreferred\"}}" ::
+        "{collStats: \"mappingtable_v1\", $readPreference: { mode: \"secondaryPreferred\"}}" ::
         "setDbVersion(1)" ::
         "drop(schema_v2)" ::
         "clone(dataset_v1,dataset_v2)" ::
@@ -98,7 +98,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "getDocuments(schema_v1)" ::
         "empty(schema_v2)" ::
         "insertTo(schema_v2)" ::
-        "schema_v2.execute(script10)" ::
+        "{collStats: \"schema_v2\"}" ::
         "setDbVersion(2)" ::
         Nil
 

@@ -16,9 +16,9 @@
 package za.co.absa.enceladus.migrations.framework.integration
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.migrations.framework.integration.fixture.MongoDbFixture
+import za.co.absa.enceladus.migrations.framework.integration.fixture.MigrtionsFixture
 
-class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
+class MongoDbIntegrationSuite extends FunSuite with MigrtionsFixture {
 
   test("Test add/drop collections") {
     assert(!db.isCollectionExists("foo"))

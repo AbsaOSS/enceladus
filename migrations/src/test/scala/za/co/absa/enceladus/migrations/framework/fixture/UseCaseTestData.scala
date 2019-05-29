@@ -33,7 +33,7 @@ class UseCaseTestData {
     addCollection("foo")
   }
 
-  object Migration1 extends MigrationBase with CollectionMigration with JsonMigration with QueryMigration  {
+  object Migration1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration  {
     override val targetVersion: Int = 1
 
     renameCollection("mappingtable", "mapping_table")
@@ -47,24 +47,25 @@ class UseCaseTestData {
         .replace("\t","")
     })
 
-    applyQuery("dataset") ( versionedCollectionName => {
-      s"$versionedCollectionName.execute(script1)"
+    runCommand("dataset") (versionedCollectionName => {
+      s"{collStats: ${'"'}$versionedCollectionName${'"'}, scale: undefined, $$readPreference: { " +
+        s"mode: ${'"'}secondaryPreferred${'"'}}}"
     })
 
-    applyQuery("mappingtable") ( versionedCollectionName => {
-      s"$versionedCollectionName.execute(script2)"
+    runCommand("mappingtable") (versionedCollectionName => {
+      s"{collStats: ${'"'}$versionedCollectionName${'"'}, $$readPreference: { mode: ${'"'}secondaryPreferred${'"'}}}"
     })
   }
 
-  object Migration2 extends MigrationBase with JsonMigration with QueryMigration  {
+  object Migration2 extends MigrationBase with JsonMigration with CommandMigration  {
     override val targetVersion: Int = 2
 
     transformJSON("schema")(jsonIn => {
       "{\"new_schema\": \"none\"}"
     })
 
-    applyQuery("schema") ( versionedCollectionName => {
-      s"$versionedCollectionName.execute(script10)"
+    runCommand("schema") (versionedCollectionName => {
+      s"{collStats: ${'"'}$versionedCollectionName${'"'}}"
     })
   }
 

@@ -93,16 +93,16 @@ class DocumentDbMock extends DocumentDb {
     actionsExecuted += s"insertTo($collectionName)"
   }
 
-  override def executeQuery(query: String): Unit = {
-    actionsExecuted += query
-  }
-
   override def getDocuments(collectionName: String): Iterator[String] = {
     if (!isCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
     actionsExecuted += s"getDocuments($collectionName)"
     db(collectionName).toIterator
+  }
+
+  override def executeCommand(cmd: String): Unit = {
+    actionsExecuted += cmd
   }
 
   def getActionsExecuted: List[String] = actionsExecuted.toList
