@@ -18,13 +18,14 @@ package za.co.absa.enceladus.migrations.framework.integration.fixture
 import org.mongodb.scala.MongoClient
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import za.co.absa.enceladus.migrations.framework.dao.{MongoDb, ScalaMongoImplicits}
+import za.co.absa.enceladus.migrations.framework.integration.config.IntegrationTestConfiguration
 
 trait MigrationsFixture extends BeforeAndAfterAll {
 
   this: Suite =>
 
-  val integrationTestDbName = "migrations_integration2"
-  val mongoConnectionString = "mongodb://localhost:27017"
+  private val mongoConnectionString = IntegrationTestConfiguration.getMongoDbConnectionString
+  private val integrationTestDbName = IntegrationTestConfiguration.getMongoDbDatabase
 
   protected var mongoClient: MongoClient = _
   protected var db: MongoDb = _
