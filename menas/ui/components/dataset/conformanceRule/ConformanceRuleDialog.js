@@ -66,7 +66,7 @@ class ConformanceRuleDialog {
       },
       {
         _t: "ConcatenationConformanceRule",
-        schemaFieldSelectorSupportedRule: true
+        schemaFieldSelectorSupportedRule: false
       },
       {
         _t: "DropConformanceRule",
