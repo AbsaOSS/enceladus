@@ -25,7 +25,7 @@ za.co.absa.enceladus.menas.auth.ad.server=ldap://ad.domain.com
 za.co.absa.enceladus.menas.auth.sysuser.principal=sysuser@ad.domain.com
 za.co.absa.enceladus.menas.auth.sysuser.keytab.location=/path/to/sysuser.keytab
 za.co.absa.enceladus.menas.auth.ldap.search.base=DC=AD,DC=DOMAIN,DC=com
-za.co.absa.enceladus.menas.auth.ldap.search.filter=(&(samAccountName={0}))
+za.co.absa.enceladus.menas.auth.ldap.search.filter=(&(objectClass=top)(sAMAccountName={0}))
 
 # Define how menas authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system
