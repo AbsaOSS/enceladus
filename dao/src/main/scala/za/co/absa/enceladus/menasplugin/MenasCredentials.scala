@@ -23,10 +23,10 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
+import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 object MenasCredentials {
 
-  private def getFS(conf: Configuration) = FileSystem.get(conf)
   private val logger = LoggerFactory.getLogger(this.getClass)
   
   /**
@@ -34,11 +34,7 @@ object MenasCredentials {
    */
   def fromFile(path: String)(implicit spark: SparkSession): MenasCredentials = {
     val conf = if(path.startsWith("hdfs://")) {
-      val in = getFS(spark.sparkContext.hadoopConfiguration).open(new Path(path))
-      val content = Array.fill(in.available())(0.toByte)
-      in.readFully(content)
-      val file = new String(content, "UTF-8")
-      logger.info(s"File: $file")
+     val file = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration).hdfsRead(path)
      ConfigFactory.parseString(file)
     } else {
      ConfigFactory.parseFile(new File(replaceHome(path)))
@@ -50,13 +46,7 @@ object MenasCredentials {
    * Checks whether the file exists either on HDFS or on the local file system
    */
   def exists(path: String)(implicit spark: SparkSession): Boolean = {
-    if(path.startsWith("hdfs://")) {
-      val exists = getFS(spark.sparkContext.hadoopConfiguration).exists(new Path(path))
-      logger.info(s"Exists $path $exists")
-      exists
-    } else {
-      new File(path).exists()
-    }
+    new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration).exists(path)
   }
 
   def replaceHome(path: String): String = {

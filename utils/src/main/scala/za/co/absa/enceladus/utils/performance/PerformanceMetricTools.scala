@@ -55,9 +55,10 @@ object PerformanceMetricTools {
     val executorMemory = spark.sparkContext.getConf.getOption("spark.executor.memory")
     executorMemory.foreach(mem => Atum.setAdditionalInfo(s"${optionPrefix}_executors_memory" -> s"$mem"))
 
+    val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     // Directory sizes and size ratio
-    val inputDirSize = FileSystemVersionUtils.getDirectorySize(inputPath)(spark)
-    val outputDirSize = FileSystemVersionUtils.getDirectorySize(outputPath)(spark)
+    val inputDirSize = fsUtils.getDirectorySize(inputPath)
+    val outputDirSize = fsUtils.getDirectorySize(outputPath)
 
     val (numRecordsFailed, numRecordsSuccessful, numOfErrors) = getNumberOfErrors(spark, outputPath)
 

@@ -97,12 +97,6 @@
             <artifactId>mongo-java-driver</artifactId>
             <version>${mongo.java.driver.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.lz4</groupId>
-            <artifactId>lz4-java</artifactId>
-            <version>1.4.0</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
