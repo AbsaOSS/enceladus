@@ -76,11 +76,11 @@ class ConformanceRule {
   }
 
   getInputCol(fields) {
-    return this.getCol(fields, "inputColumn");
+    return this.getCol(fields, this.rule.inputColumn);
   }
 
   getCol(fields, columnName) {
-    const splitPath = this.rule[columnName].split(".");
+    const splitPath = columnName.split(".");
     return splitPath.reduce((acc, path, index) => {
       const element = acc.find(field => field.name === path);
       const children = element.children;
@@ -130,12 +130,15 @@ class ConcatenationConformanceRule extends ConformanceRule {
 
   apply(fields) {
     return ArrayUtils.applyOnCopy(fields, c => {
-      const inputCol = this.getInputCol(c);
-      const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", inputCol.nullable, []);
+      const isNullable = this.getInputCols(c).some(field => field.nullable);
+      const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", isNullable, []);
       this.addNewField(c, newField);
     });
   }
 
+  getInputCols(fields) {
+    return this.rule.inputColumns.map(inputCol => this.getCol(fields, inputCol));
+  }
 }
 
 class DropConformanceRule extends ConformanceRule {
@@ -183,7 +186,7 @@ class MappingConformanceRule extends ConformanceRule {
   }
 
   getTargetCol(fields) {
-    return super.getCol(fields, "targetAttribute");
+    return super.getCol(fields, this.rule.targetAttribute);
   }
 
   apply(fields) {

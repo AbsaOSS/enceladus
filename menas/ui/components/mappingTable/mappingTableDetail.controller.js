@@ -41,10 +41,19 @@ sap.ui.define([
 
       new MappingTableDialogFactory(this, Fragment.load).getEdit();
 
-      this._addDefaultDialog = sap.ui.xmlfragment("components.mappingTable.addDefaultValue", this);
-      sap.ui.getCore().byId("newDefaultValueAddButton").attachPress(this.defaultSubmit, this);
-      sap.ui.getCore().byId("newDefaultValueCancelButton").attachPress(this.defaultCancel, this);
-      sap.ui.getCore().byId("addDefaultValueDialog").attachAfterOpen(this.defaultDialogAfterOpen, this);
+      const oView = this.getView();
+      Fragment.load({
+        id: oView.getId(),
+        name: "components.mappingTable.addDefaultValue",
+        controller: this
+      }).then(function (oDialog) {
+        oView.addDependent(oDialog);
+      });
+
+      this._addDefaultDialog = this.byId("addDefaultValueDialog");
+      this.byId("newDefaultValueAddButton").attachPress(this.defaultSubmit, this);
+      this.byId("newDefaultValueCancelButton").attachPress(this.defaultCancel, this);
+      this.byId("addDefaultValueDialog").attachAfterOpen(this.defaultDialogAfterOpen, this);
 
       this._addDefaultDialog.setBusyIndicatorDelay(0);
 
@@ -54,7 +63,7 @@ sap.ui.define([
       this._mappingTableService = new MappingTableService(this._model, eventBus);
       this._schemaService = new SchemaService(this._model, eventBus);
       this._schemaTable = new SchemaTable(this);
-      this._schemaFieldSelector = new DefaultValueSchemaFieldSelector(this, this._addDefaultDialog)
+      this._schemaFieldSelector = new SimpleSchemaFieldSelector(this, this._addDefaultDialog)
     },
 
     onEntityUpdated: function (sTopic, sEvent, oData) {
@@ -86,8 +95,8 @@ sap.ui.define([
     },
 
     defaultDialogAfterOpen: function (oEv) {
-      let scrollCont = sap.ui.getCore().byId("fieldSelectScroll");
-      let selected = sap.ui.getCore().byId("schemaFieldSelector").getSelectedItem();
+      let scrollCont = this.byId("fieldSelectScroll");
+      let selected = this.byId("schemaFieldSelector").getSelectedItem();
 
       // this needs to be already rendered for it to work
       setTimeout(function () {
@@ -103,10 +112,10 @@ sap.ui.define([
     },
 
     resetNewDefaultValueState: function (oEv) {
-      sap.ui.getCore().byId("newDefaultValueExpr").setValueState(sap.ui.core.ValueState.None)
-      sap.ui.getCore().byId("newDefaultValueExpr").setValueStateText("");
+      this.byId("newDefaultValueExpr").setValueState(sap.ui.core.ValueState.None)
+      this.byId("newDefaultValueExpr").setValueStateText("");
 
-      let items = sap.ui.getCore().byId("schemaFieldSelector").getItems();
+      let items = this.byId("schemaFieldSelector").getItems();
       for (let ind in items) {
         items[ind].setHighlight(sap.ui.core.MessageType.None)
       }
@@ -118,13 +127,13 @@ sap.ui.define([
       let isOk = true
 
       if (!oDef.value || oDef.value === "") {
-        sap.ui.getCore().byId("newDefaultValueExpr").setValueState(sap.ui.core.ValueState.Error)
-        sap.ui.getCore().byId("newDefaultValueExpr").setValueStateText("Default value cannot be empty")
+        this.byId("newDefaultValueExpr").setValueState(sap.ui.core.ValueState.Error)
+        this.byId("newDefaultValueExpr").setValueStateText("Default value cannot be empty")
         isOk = false;
       }
 
       if (!oDef.columnName || oDef.columnName === "") {
-        let items = sap.ui.getCore().byId("schemaFieldSelector").getItems();
+        let items = this.byId("schemaFieldSelector").getItems();
         for (let ind in items) {
           items[ind].setHighlight(sap.ui.core.MessageType.Error)
         }
