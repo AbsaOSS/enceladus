@@ -18,7 +18,7 @@ package za.co.absa.enceladus.model.menas.scheduler
 case class ScheduleTiming(minute: Seq[String], hour: Seq[String], dayOfMonth: Seq[String], month: Seq[String], dayOfWeek: Seq[String]) {
   def getCronSchedule: String = {
     val minuteSep = minute.mkString(",")
-    val hourSep = hour.mkString(".")
+    val hourSep = hour.mkString(",")
     val dayOfMonthSep = dayOfMonth.mkString(",")
     val monthSep = month.mkString(",")
     val dayOfWeekSep = dayOfWeek.mkString(",")

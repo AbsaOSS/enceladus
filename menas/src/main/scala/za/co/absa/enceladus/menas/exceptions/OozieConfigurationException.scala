@@ -15,5 +15,4 @@
 
 package za.co.absa.enceladus.menas.exceptions
 
-case class OozieConfigurationException(message:String = "", cause: Throwable = None.orNull) extends Exception(message, cause)
-
+case class OozieConfigurationException(message: String = "", cause: Throwable = None.orNull) extends Exception(message, cause)
