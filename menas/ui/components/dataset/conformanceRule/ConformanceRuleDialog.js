@@ -26,8 +26,8 @@ class ConformanceRuleDialog {
     this._datasetService = new DatasetService(this.model, eventBus);
     this._mappingTableService = new MappingTableService(this.model, eventBus);
     this._controller = controller;
-    const dialogFactory = new JoinConditionDialogFactory(this.controller, sap.ui.core.Fragment.load);
-    this._addJoinConditionDialog = dialogFactory.getDialog();
+    this._addJoinConditionDialog = new JoinConditionDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
+    this._addConcatColumnDialog = new ConcatenationColumnDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
   }
 
   get controller() {
@@ -54,6 +54,10 @@ class ConformanceRuleDialog {
     return this._addJoinConditionDialog;
   }
 
+  get addConcatColumnDialog() {
+    return this._addConcatColumnDialog;
+  }
+
   get rules() {
     return [
       {
@@ -62,7 +66,7 @@ class ConformanceRuleDialog {
       },
       {
         _t: "ConcatenationConformanceRule",
-        schemaFieldSelectorSupportedRule: false
+        schemaFieldSelectorSupportedRule: true
       },
       {
         _t: "DropConformanceRule",
@@ -152,11 +156,10 @@ class ConformanceRuleDialog {
     this.onClosePress();
   }
 
-  onAddInputColumn() {
-    let currentRule = this.model.getProperty("/newRule");
-    let inputColumnSize = currentRule.inputColumns.length;
-    let pathToNewInputColumn = "/newRule/inputColumns/" + inputColumnSize;
-    this.model.setProperty(pathToNewInputColumn, "");
+  onAddConcatColumn() {
+    const datasetSchema = this._dialog.getModel("schema").oData;
+    this.addConcatColumnDialog.setSchema(datasetSchema);
+    this.addConcatColumnDialog.onAddPress();
   }
 
   onAddJoinCondition() {
@@ -217,7 +220,7 @@ class ConformanceRuleDialog {
     this.showFormFragment(this.model.getProperty("/newRule/_t"));
   }
 
-  onDeleteInputColumn(oEv) {
+  onDeleteConcatColumn(oEv) {
     let sBindPath = oEv.getParameter("listItem").getBindingContext().getPath();
     let toks = sBindPath.split("/");
     let inputColumnIndex = parseInt(toks[toks.length - 1]);
@@ -244,6 +247,14 @@ class ConformanceRuleDialog {
     const index = item.getParent().indexOfItem(item);
 
     this.addJoinConditionDialog.onEditPress(index, datasetField, mappingTableField);
+  }
+
+  onConcatSelect(oEv) {
+    const item = oEv.getSource();
+    const concatField = item.data("concatField");
+    const index = item.getParent().indexOfItem(item);
+
+    this.addConcatColumnDialog.onEditPress(index, concatField);
   }
 
   onSchemaFieldSelect(oEv) {
@@ -279,7 +290,7 @@ class ConformanceRuleDialog {
     let newRule = currentRule;
 
     if (currentRule._t === "ConcatenationConformanceRule" && !currentRule.isEdit) {
-      newRule.inputColumns = ["", ""];
+      newRule.inputColumns = [];
     }
 
     if (currentRule._t === "MappingConformanceRule") {

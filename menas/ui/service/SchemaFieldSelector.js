@@ -118,20 +118,20 @@ class SchemaFieldSelector {
 
 }
 
-class DefaultValueSchemaFieldSelector extends SchemaFieldSelector {
+class SimpleSchemaFieldSelector extends SchemaFieldSelector {
 
   constructor(controller, dialog) {
     super(controller, dialog, "schema");
   }
 
   preselectSchemaFieldSelector(sExpandTo, ruleType) {
-    let oControl = sap.ui.getCore().byId("schemaFieldSelector");
-    let oScroll = sap.ui.getCore().byId("fieldSelectScroll");
+    let oControl = this.controller.byId("schemaFieldSelector");
+    let oScroll = this.controller.byId("fieldSelectScroll");
     super.preselectSchemaFieldSelector(sExpandTo, oControl, oScroll);
   }
 
   reset() {
-    let tree = sap.ui.getCore().byId("schemaFieldSelector");
+    let tree = this.controller.byId("schemaFieldSelector");
     super.reset(tree);
   }
 
