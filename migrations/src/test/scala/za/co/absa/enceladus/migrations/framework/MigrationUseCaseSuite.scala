@@ -39,8 +39,8 @@ class MigrationUseCaseSuite extends FunSuite {
         "create(attachment_v1)" ::
         "drop(foo_v1)" ::
         "rename(mappingtable_v1,mapping_table_v1)" ::
-        "getDocuments(schema)" ::
         "empty(schema_v1)" ::
+        "getDocuments(schema)" ::
         "insertTo(schema_v1)" ::
         "{collStats: \"dataset_v1\", scale: undefined, $readPreference: { mode: \"secondaryPreferred\"}}" ::
         "{collStats: \"mappingtable_v1\", $readPreference: { mode: \"secondaryPreferred\"}}" ::
@@ -84,8 +84,8 @@ class MigrationUseCaseSuite extends FunSuite {
         "create(attachment_v1)" ::
         "drop(foo_v1)" ::
         "rename(mappingtable_v1,mapping_table_v1)" ::
-        "getDocuments(schema)" ::
         "empty(schema_v1)" ::
+        "getDocuments(schema)" ::
         "insertTo(schema_v1)" ::
         "{collStats: \"dataset_v1\", scale: undefined, $readPreference: { mode: \"secondaryPreferred\"}}" ::
         "{collStats: \"mappingtable_v1\", $readPreference: { mode: \"secondaryPreferred\"}}" ::
@@ -95,8 +95,8 @@ class MigrationUseCaseSuite extends FunSuite {
         "clone(schema_v1,schema_v2)" ::
         "clone(mapping_table_v1,mapping_table_v2)" ::
         "clone(attachment_v1,attachment_v2)" ::
-        "getDocuments(schema_v1)" ::
         "empty(schema_v2)" ::
+        "getDocuments(schema_v1)" ::
         "insertTo(schema_v2)" ::
         "{collStats: \"schema_v2\"}" ::
         "setDbVersion(2)" ::

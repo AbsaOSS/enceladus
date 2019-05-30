@@ -46,11 +46,14 @@ import scala.collection.mutable
   *   }
   * }}}
   *
+  * If a source document is invalid for some reason and should be dropped, just return `InvalidDocument`.
+  *
   */
 trait JsonMigration extends Migration {
   type DocumentTransformer = String => String
 
   private val log: Logger = LogManager.getLogger("JsonMigration")
+  val InvalidDocument = ""
 
   /**
     * This function is used by derived classes to add transformations for affected collections.
@@ -113,13 +116,27 @@ trait JsonMigration extends Migration {
   private def applyTransformers(db: DocumentDb, collectionName: String): Unit = {
     val sourceCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion - 1)
     val targetCollection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
+    ensureCollectionEmpty(db, targetCollection)
+
+    log.info(s"Applying a per-document transformation $sourceCollection -> $targetCollection")
+
     val documents = db.getDocuments(sourceCollection)
     val transformer = transformers(collectionName)
-    log.info(s"Applying a per-document transformation $sourceCollection -> $targetCollection")
-    ensureCollectionEmpty(db, targetCollection)
-    documents.foreach(doc =>
-      db.insertDocument(targetCollection, transformer(doc))
-    )
+    var numberOfBugusDocuments = 0
+
+    documents.foreach(doc => {
+      val newDocument = transformer(doc)
+      if (newDocument.nonEmpty) {
+        db.insertDocument(targetCollection, transformer(doc))
+      } else {
+        numberOfBugusDocuments += 1
+        log.warn(s"Encountered a bogus document: $doc")
+      }
+    })
+
+    if (numberOfBugusDocuments > 0) {
+      log.warn(s"Total number of bogus documents encountered: $numberOfBugusDocuments")
+    }
   }
 
   private def ensureCollectionEmpty(db: DocumentDb, collectionName: String): Unit = {

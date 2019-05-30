@@ -47,12 +47,9 @@ object IntegrationTestConfiguration {
     properties.getProperty(databaseKey))
 
   private def loadConfig(): Unit = {
-    try {
-      val is = getClass.getResourceAsStream("/application.properties")
-      try
-        properties.load(is)
-      finally if (is != null) is.close()
-    }
+    val is = getClass.getResourceAsStream("/application.properties")
+    try properties.load(is)
+    finally if (is != null) is.close()
   }
 
 }
