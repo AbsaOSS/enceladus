@@ -41,7 +41,7 @@ sap.ui.define([
 
       this._upsertConformanceRuleDialog = Fragment.load({
         id: view.getId(),
-        name:"components.dataset.conformanceRule.upsert",
+        name: "components.dataset.conformanceRule.upsert",
         controller: cont
       }).then(function (fragment) {
         view.addDependent(fragment);
@@ -72,17 +72,19 @@ sap.ui.define([
       });
 
       const rules = this._model.getProperty("/currentDataset/conformance");
-      this._setRuleDialogModel(rules);
-
-      this._upsertConformanceRuleDialog.open();
+      this._setRuleDialogModel(rules).then(() =>
+        this._upsertConformanceRuleDialog.open()
+      );
     },
 
-    _setRuleDialogModel: function(rules) {
+    _setRuleDialogModel: function (rules) {
       const currentDataset = this._model.getProperty("/currentDataset");
-      new SchemaRestDAO().getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion)
+      return new SchemaRestDAO().getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion)
         .then(schema => {
-          schema.fields = SchemaManager.updateTransitiveSchema(schema.fields, rules);
-          this._upsertConformanceRuleDialog.setModel(new sap.ui.model.json.JSONModel(schema), "schema");
+          SchemaManager.updateTransitiveSchema(schema.fields, rules).then(fields => {
+            schema.fields = fields;
+            this._upsertConformanceRuleDialog.setModel(new sap.ui.model.json.JSONModel(schema), "schema");
+          });
         });
     },
 
@@ -99,9 +101,9 @@ sap.ui.define([
         });
 
         const rules = this._model.getProperty("/currentDataset/conformance").slice(0, old.order);
-        this._setRuleDialogModel(rules);
-
-        this._upsertConformanceRuleDialog.open();
+        this._setRuleDialogModel(rules).then(() =>
+          this._upsertConformanceRuleDialog.open()
+        );
       } else if (sAction === "delete") {
         sap.m.MessageBox.confirm("Are you sure you want to delete the conformance rule?", {
           actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
@@ -208,7 +210,7 @@ sap.ui.define([
       this.byId("datasetIconTabBar").setSelectedKey("info");
     },
 
-    load: function() {
+    load: function () {
       let currentDataset = this._model.getProperty("/currentDataset");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentDataset), "dataset");
       this.fetchSchema();
