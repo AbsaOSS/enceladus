@@ -16,9 +16,12 @@
 class SchemaManager {
 
   static updateTransitiveSchema(schemaFields, rules) {
-    return rules.map(RuleFactory.createRule).reduce((fields, rule) => {
-      return rule.apply(fields);
-    }, schemaFields);
+    const deferred = $.Deferred();
+    deferred.resolve(schemaFields);
+    rules.map(RuleFactory.createRule).forEach(rule => {
+      return deferred.then(fields => rule.apply(fields));
+    });
+    return deferred.promise();
   };
 
 }
@@ -112,11 +115,10 @@ class CastingConformanceRule extends ConformanceRule {
   }
 
   apply(fields) {
-    return ArrayUtils.applyOnCopy(fields, c => {
-      const inputCol = this.getInputCol(c);
-      const newField = new SchemaField(this.outputCol.name, this.outputCol.path, this.rule.outputDataType, inputCol.nullable, []);
-      this.addNewField(c, newField);
-    });
+    const inputCol = this.getInputCol(fields);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, this.rule.outputDataType, inputCol.nullable, []);
+    this.addNewField(fields, newField);
+    return fields;
   }
 
 }
@@ -128,11 +130,10 @@ class ConcatenationConformanceRule extends ConformanceRule {
   }
 
   apply(fields) {
-    return ArrayUtils.applyOnCopy(fields, c => {
-      const isNullable = this.getInputCols(c).some(field => field.nullable);
-      const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", isNullable, []);
-      this.addNewField(c, newField);
-    });
+    const isNullable = this.getInputCols(fields).some(field => field.nullable);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", isNullable, []);
+    this.addNewField(fields, newField);
+    return fields;
   }
 
   getInputCols(fields) {
@@ -147,18 +148,17 @@ class DropConformanceRule extends ConformanceRule {
   }
 
   apply(fields) {
-    return ArrayUtils.applyOnCopy(fields, c => {
-      const splitPath = this.rule.outputColumn.split(".");
-      splitPath.reduce((acc, path, index) => {
-        const elementIndex = acc.findIndex(field => path === field.name);
-        const element = acc[elementIndex];
-        const children = element.children;
-        if (splitPath.length === index + 1) {
-          acc.splice(elementIndex, 1);
-        }
-        return (children && children.length > 0 && splitPath.length > index + 1) ? children : element;
-      }, c);
-    });
+    const splitPath = this.rule.outputColumn.split(".");
+    splitPath.reduce((acc, path, index) => {
+      const elementIndex = acc.findIndex(field => path === field.name);
+      const element = acc[elementIndex];
+      const children = element.children;
+      if (splitPath.length === index + 1) {
+        acc.splice(elementIndex, 1);
+      }
+      return (children && children.length > 0 && splitPath.length > index + 1) ? children : element;
+    }, fields);
+    return fields;
   }
 
 }
@@ -170,10 +170,9 @@ class LiteralConformanceRule extends ConformanceRule {
   }
 
   apply(fields) {
-    return ArrayUtils.applyOnCopy(fields, c => {
-      const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
-      this.addNewField(c, newField) //TODO: type inference
-    });
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
+    this.addNewField(fields, newField);
+    return fields;
   }
 
 }
@@ -189,19 +188,19 @@ class MappingConformanceRule extends ConformanceRule {
   }
 
   apply(fields) {
-    return ArrayUtils.applyOnCopy(fields, c => {
-      let mappingTablePromise = new MappingTableRestDAO().getByNameAndVersion(this.rule.mappingTable, this.rule.mappingTableVersion);
-      const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
 
-      mappingTablePromise.then(mappingTable => {
+    return new MappingTableRestDAO().getByNameAndVersion(this.rule.mappingTable, this.rule.mappingTableVersion)
+      .then(mappingTable => {
         return new SchemaRestDAO().getByNameAndVersion(mappingTable.schemaName, mappingTable.schemaVersion);
-        }).then(schema => {
+      })
+      .then(schema => {
         const targetCol = this.getTargetCol(schema.fields);
         newField.type = targetCol.type;
         newField.children = targetCol.children;
-        this.addNewField(c, newField)
+        this.addNewField(fields, newField);
+        return fields;
       });
-    });
   }
 
 }
@@ -213,11 +212,10 @@ class NegationConformanceRule extends ConformanceRule {
   }
 
   apply(fields) {
-    return ArrayUtils.applyOnCopy(fields, c => {
-      const inputCol = this.getInputCol(c);
-      const newField = new SchemaField(this.outputCol.name, this.outputCol.path, inputCol.type, inputCol.nullable, []);
-      this.addNewField(c, newField);
-    });
+    const inputCol = this.getInputCol(fields);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, inputCol.type, inputCol.nullable, []);
+    this.addNewField(fields, newField);
+    return fields;
   }
 
 }
@@ -229,12 +227,11 @@ class SingleColumnConformanceRule extends ConformanceRule {
   }
 
   apply(fields) {
-    return ArrayUtils.applyOnCopy(fields, c => {
-      const inputCol = this.getInputCol(c);
-      const child = new SchemaField(this.rule.inputColumnAlias, this.rule.outputColumn, inputCol.type, inputCol.nullable, []);
-      const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "struct", false, [child]);
-      this.addNewField(c, newField);
-    });
+    const inputCol = this.getInputCol(fields);
+    const child = new SchemaField(this.rule.inputColumnAlias, this.rule.outputColumn, inputCol.type, inputCol.nullable, []);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "struct", false, [child]);
+    this.addNewField(fields, newField);
+    return fields;
   }
 
 }
@@ -246,10 +243,9 @@ class SparkSessionConfConformanceRule extends ConformanceRule {
   }
 
   apply(fields) {
-    return ArrayUtils.applyOnCopy(fields, c => {
-      const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
-      this.addNewField(c, newField)
-    });
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
+    this.addNewField(fields, newField);
+    return fields;
   }
 
 }
@@ -261,11 +257,10 @@ class UppercaseConformanceRule extends ConformanceRule {
   }
 
   apply(fields) {
-    return ArrayUtils.applyOnCopy(fields, fieldsCopy => {
-      const inputCol = this.getInputCol(fields);
-      const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", inputCol.nullable, []);
-      this.addNewField(fieldsCopy, newField);
-    });
+    const inputCol = this.getInputCol(fields);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", inputCol.nullable, []);
+    this.addNewField(fields, newField);
+    return fields;
   }
 
 }
@@ -321,12 +316,20 @@ class SchemaField {
   }
 }
 
-class ArrayUtils {
-
-  static applyOnCopy(input, fn) {
-    const copy = $.extend(true, [], input);
-    fn(copy);
-    return copy
-  }
-
-}
+// class ArrayUtils {
+//
+//   static applyOnCopy(input, fn) {
+//     const copy = $.extend(true, [], input);
+//     return fn(input);
+//     // fn(input)
+//     // return input;
+//   }
+//
+//   static applyOnDefferedCopy(input, fn) {
+//     const copy = $.extend(true, [], input);
+//     return $.Deferred().then(fn(input));
+//     // fn(input)
+//     // return input;
+//   }
+//
+// }
