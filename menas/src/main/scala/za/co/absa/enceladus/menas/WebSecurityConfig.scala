@@ -15,130 +15,46 @@
 
 package za.co.absa.enceladus.menas
 
-import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-import org.springframework.beans.factory.annotation.{Autowired, Value}
-import org.springframework.context.annotation.{Bean, Configuration}
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.BeanFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
-import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpStatus
-import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configuration.{EnableWebSecurity, WebSecurityConfigurerAdapter}
-import org.springframework.security.core.{Authentication, AuthenticationException}
-import org.springframework.security.crypto.password.NoOpPasswordEncoder
-import org.springframework.security.kerberos.authentication.KerberosServiceAuthenticationProvider
-import org.springframework.security.kerberos.authentication.sun.SunJaasKerberosTicketValidator
-import org.springframework.security.kerberos.client.config.SunJaasKrb5LoginConfig
-import org.springframework.security.kerberos.client.ldap.KerberosLdapContextSource
-import org.springframework.security.kerberos.web.authentication.{SpnegoAuthenticationProcessingFilter, SpnegoEntryPoint}
-import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider
-import org.springframework.security.ldap.search.FilterBasedLdapUserSearch
-import org.springframework.security.ldap.userdetails.{LdapUserDetailsMapper, LdapUserDetailsService}
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.AuthenticationException
 import org.springframework.security.web.AuthenticationEntryPoint
-import org.springframework.security.web.authentication.logout.{HttpStatusReturningLogoutSuccessHandler, LogoutSuccessHandler}
-import org.springframework.security.web.authentication.{AuthenticationFailureHandler, SimpleUrlAuthenticationFailureHandler, SimpleUrlAuthenticationSuccessHandler}
+import org.springframework.security.web.authentication.AuthenticationFailureHandler
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler
 import org.springframework.security.web.csrf.CsrfToken
-import org.springframework.security.web.savedrequest.{HttpSessionRequestCache, RequestCache, SavedRequest}
 import org.springframework.stereotype.Component
-import org.springframework.util.StringUtils
-import org.springframework.security.kerberos.authentication.sun.GlobalSunJaasKerberosConfig
-import org.apache.log4j.Logger
-import org.apache.log4j.Level
+
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
+import za.co.absa.enceladus.menas.auth.InMemoryMenasAuthentication
+import za.co.absa.enceladus.menas.auth.KerberosMenasAuthentication
+import za.co.absa.enceladus.menas.auth.MenasAuthentication
 
 @EnableWebSecurity
 class WebSecurityConfig {
 
-  @Value("${za.co.absa.enceladus.menas.auth.ad.domain}")
-  val adDomain: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.ad.server}")
-  val adServer: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.sysuser.principal}")
-  val servicePrincipal: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.sysuser.keytab.location}")
-  val keytabLocation: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.ldap.search.base}")
-  val ldapSearchBase: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.ldap.search.filter}")
-  val ldapSearchFilter: String = ""
+  @Value("${za.co.absa.enceladus.menas.auth.mechanism:}")
+  val authMechanism: String = ""
 
-  // Test-only in-memory auth
-  @Value("${za.co.absa.enceladus.menas.auth.inmemory.user}")
-  val username: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.inmemory.password}")
-  val password: String = ""
-
-  System.setProperty("javax.net.ssl.trustStore", "/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/jre/lib/security/cacerts");
-  System.setProperty("javax.net.debug", "true")
-  System.setProperty("sun.security.krb5.debug", "true")
-
-  @Bean
-  def activeDirectoryLdapAuthenticationProvider() = {
-    val prov = new ActiveDirectoryLdapAuthenticationProvider(adDomain, adServer, ldapSearchBase)
-    prov.setSearchFilter(ldapSearchFilter)
-    prov
-  }
-
-  @Bean
-  def spnegoEntryPoint() = {
-    new SpnegoEntryPoint("/login")
-  }
-
-  @Bean
-  def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager) = {
-    val filter = new SpnegoAuthenticationProcessingFilter()
-    filter.setAuthenticationManager(authenticationManager)
-    
-    filter
-  }
-
-  @Bean
-  def kerberosServiceAuthenticationProvider() = {
-    val provider = new KerberosServiceAuthenticationProvider()
-    provider.setTicketValidator(sunJaasKerberosTicketValidator())
-    provider.setUserDetailsService(ldapUserDetailsService())
-    provider
-  }
-
-  @Bean
-  def sunJaasKerberosTicketValidator() = {
-    val ticketValidator = new SunJaasKerberosTicketValidator()
-    ticketValidator.setServicePrincipal(servicePrincipal)
-    ticketValidator.setKeyTabLocation(new FileSystemResource(keytabLocation))
-    ticketValidator.setDebug(true)
-    ticketValidator.afterPropertiesSet()
-    ticketValidator
-  }
-
-  @Bean
-  def kerberosLdapContextSource() = {
-    val contextSource = new KerberosLdapContextSource(adServer)
-    contextSource.setLoginConfig(loginConfig())
-//    contextSource.setBase(ldapSearchBase)
-    contextSource.setUserDn("OU=Users,OU=CORP Accounts,DC=corp,DC=dsarena,DC=com")
-    contextSource
-  }
-
-  @Bean
-  def loginConfig() = {
-    val loginConfig = new SunJaasKrb5LoginConfig()
-    loginConfig.setKeyTabLocation(new FileSystemResource(keytabLocation))
-    loginConfig.setServicePrincipal(servicePrincipal)
-    loginConfig.setDebug(true)
-    loginConfig.setIsInitiator(true)
-    loginConfig.afterPropertiesSet()
-    loginConfig
-  }
-
-  @Bean
-  def ldapUserDetailsService() = {
-    val userSearch = new FilterBasedLdapUserSearch(ldapSearchBase, ldapSearchFilter, kerberosLdapContextSource());
-
-    val service = new LdapUserDetailsService(userSearch, new ActiveDirectoryLdapAuthoritiesPopulator());
-    service.setUserDetailsMapper(new LdapUserDetailsMapper())
-    service
-  }
-
+  @Autowired
+  val beanFactory: BeanFactory = null
+  
+  val logger = LoggerFactory.getLogger(this.getClass)
+  
   @Bean
   def authenticationFailureHandler(): AuthenticationFailureHandler = {
     new SimpleUrlAuthenticationFailureHandler()
@@ -187,20 +103,25 @@ class WebSecurityConfig {
           .invalidateHttpSession(true)
     }
 
-//    override def configure(auth: AuthenticationManagerBuilder) {
-//      auth
-//        .inMemoryAuthentication()
-//        .passwordEncoder(NoOpPasswordEncoder.getInstance())
-//        .withUser(username)
-//        .password(password)
-//        .authorities("ROLE_USER")
-//    }
 
     override def configure(auth: AuthenticationManagerBuilder) {
-       val res = auth.authenticationProvider(kerberosServiceAuthenticationProvider()).authenticationProvider(activeDirectoryLdapAuthenticationProvider())
-       Logger.getRootLogger().setLevel(Level.DEBUG);
+      this.getMenasAuthentication().configure(auth)
     }
 
+    private def getMenasAuthentication(): MenasAuthentication = {
+      authMechanism.toLowerCase match {
+        case "inmemory" => {
+          logger.info("Using InMemory Menas authentication")
+          beanFactory.getBean(classOf[InMemoryMenasAuthentication])
+        }
+        case "kerberos" => {
+          logger.info("Using Kerberos Menas Authentication")
+          beanFactory.getBean(classOf[KerberosMenasAuthentication])
+        }
+        case _ => throw new IllegalArgumentException(s"Invalid authentication mechanism - use one of: inmemory, kerberos")
+      }
+    }
+    
     @Bean
     override def authenticationManagerBean() = {
       super.authenticationManagerBean()
