@@ -23,7 +23,6 @@ class SchemaManager {
 
 }
 
-// TODO: break this down into files (#224) after we bundle the resources (#314)
 class RuleFactory {
   static createRule(rule) {
     switch (rule._t) {
