@@ -24,7 +24,7 @@
             <CustomListItem
                 type="Active"
                 press=".onConcatSelect"
-                cust:concatField="{concatField}">
+                cust:concatField="{}">
                 <Text
                     class="sapUiSmallMarginBegin sapUiSmallMarginEnd"
                     text="{}"/>
