@@ -17,16 +17,14 @@ package za.co.absa.enceladus.migrations.migrations.model1
 
 import java.time.ZonedDateTime
 
-import za.co.absa.enceladus.migrations.migrations.datetime.{DateTimeWrapper, ZonedDateTimeWrapper}
-
 case class Schema(name: String,
                   version: Int = 1,
                   description: Option[String],
 
-                  dateCreated: ZonedDateTimeWrapper,
+                  dateCreated: ZonedDateTime = ZonedDateTime.now(),
                   userCreated: String = null,
 
-                  lastUpdated: ZonedDateTimeWrapper,
+                  lastUpdated: ZonedDateTime = ZonedDateTime.now(),
                   userUpdated: String = null,
 
                   disabled: Boolean = false,

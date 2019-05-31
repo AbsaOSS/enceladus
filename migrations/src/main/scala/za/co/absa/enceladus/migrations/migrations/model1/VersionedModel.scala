@@ -17,17 +17,15 @@ package za.co.absa.enceladus.migrations.migrations.model1
 
 import java.time.ZonedDateTime
 
-import za.co.absa.enceladus.migrations.migrations.datetime.{DateTimeWrapper, ZonedDateTimeWrapper}
-
 trait VersionedModel {
   val name: String
   val version: Int
   val description: Option[String]
   
-  val dateCreated: ZonedDateTimeWrapper
+  val dateCreated: ZonedDateTime
   val userCreated: String
   
-  val lastUpdated: ZonedDateTimeWrapper
+  val lastUpdated: ZonedDateTime
   val userUpdated: String
   
   val disabled: Boolean

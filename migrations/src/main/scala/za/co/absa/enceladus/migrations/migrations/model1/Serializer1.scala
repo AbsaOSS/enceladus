@@ -18,8 +18,17 @@ package za.co.absa.enceladus.migrations.migrations.model1
 import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import io.github.cbartosiak.bson.codecs.jsr310.zoneddatetime.ZonedDateTimeAsDocumentCodec
+import org.bson.BsonDocumentWriter
+import org.bson.codecs.configuration.CodecRegistries
+import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
+import org.bson.codecs.{Codec, EncoderContext}
 import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
+import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.bson.codecs.Macros._
+
 
 /**
   * This is the object for deserializing Model 1 version of Enceladus Schema
@@ -32,11 +41,27 @@ object Serializer1 {
 
   implicit private val formatsJson: Formats = Serialization.formats(NoTypeHints).withBigDecimal
 
+  private val codecRegistry = fromRegistries(fromProviders(
+    classOf[Schema], classOf[SchemaField]),
+    CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
+
+  private val codec: Codec[Schema] = codecRegistry.get(classOf[Schema])
+
   /**
     * Serializes a Model 1 JSON
     */
   def serialize(schema: Schema): String = {
-    objectMapper.writeValueAsString(schema)
+    val bsonDocument = new BsonDocument
+    val bsonWriter = new BsonDocumentWriter(bsonDocument)
+    val encodeContext = EncoderContext.builder.build
+
+    codec.encode(bsonWriter, schema, encodeContext)
+
+    bsonDocument.toJson
+
+    // alternative 1
+    //objectMapper.writeValueAsString(schema)
+    // alternative 2
     //Serialization.write(schema)
   }
 
