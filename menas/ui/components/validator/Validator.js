@@ -34,6 +34,8 @@ sap.ui.define(["sap/ui/core/message/Message", "sap/ui/core/MessageType", "sap/ui
 
   Validator.prototype._traverseControlAggregations = function(oControl, fnTransform, fnReduceOp) {
     let fnReduce = fnReduceOp ? fnReduceOp : this._andReduceOp;
+  
+    if(!oControl || !oControl.getVisible || !oControl.getVisible()) return true;
 
     const aAllAggregations = this._aPossibleAggregations.map(currAgg => {
       const aAggContent = oControl.getAggregation(currAgg);
