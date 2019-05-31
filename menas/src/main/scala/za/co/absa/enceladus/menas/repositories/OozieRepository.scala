@@ -54,10 +54,10 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   @Value("${za.co.absa.enceladus.menas.oozie.schedule.hdfs.path:}")
   val oozieScheduleHDFSPath: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.timeZone:}")
+  @Value("${za.co.absa.enceladus.menas.oozie.timeZone:Africa/Ceuta}")
   val oozieTimezone: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.sharelibForSpark:}")
+  @Value("${za.co.absa.enceladus.menas.oozie.sharelibForSpark:spark}")
   val oozieShareLib: String = ""
 
   @Value("${za.co.absa.enceladus.menas.oozie.enceladusJarLocation:}")
@@ -94,30 +94,50 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     this.initializeJars()
   }
 
-  private def initializeJars() {
-    val hdfsStdPath = new Path(s"$enceladusJarLocation$standardizationJarPath")
-    val hdfsConfPath = new Path(s"$enceladusJarLocation$conformanceJarPath")
-    val mavenStdPath = s"$mavenRepoLocation$standardizationJarPath"
-    val mavenConfPath = s"$mavenRepoLocation$conformanceJarPath"
+  private def validateProperties(): Boolean = {
+    Seq((oozieScheduleHDFSPath, "za.co.absa.enceladus.menas.oozie.schedule.hdfs.path"),
+      (enceladusJarLocation, "zza.co.absa.enceladus.menas.oozie.enceladusJarLocation"),
+      (standardizationJarPath, "za.co.absa.enceladus.menas.oozie.mavenStandardizationJarLocation"),
+      (conformanceJarPath, "za.co.absa.enceladus.menas.oozie.mavenConformanceJarLocation"),
+      (mavenRepoLocation, "za.co.absa.enceladus.menas.oozie.mavenRepoLocation"),
+      (menasApiURL, "za.co.absa.enceladus.menas.oozie.menasApiURL"),
+      (splineMongoURL, "za.co.absa.enceladus.menas.oozie.splineMongoURL")).map(p => validateProperty(p._1, p._2)).reduce(_ && _)
+  }
 
-    if (!hadoopFS.exists(hdfsStdPath) || hadoopFS.getStatus(hdfsStdPath).getCapacity == 0) {
-      logger.info(s"Uploading standardization jar from $mavenStdPath to $hdfsStdPath")
-      val resFuture = this.downloadFile(mavenStdPath, hdfsStdPath)
-      resFuture.onSuccess({ case (u: Unit) => logger.info(s"Standardization jar loaded to $hdfsStdPath") })
-      resFuture.onFailure({
-        case (err: Throwable) =>
-          hadoopFS.delete(hdfsStdPath, true)
-      })
+  private def validateProperty(prop: String, propName: String): Boolean = {
+    if (prop == null || prop.isEmpty) {
+      logger.warn(s"Oozie support disabled. Missing required configuration property $propName")
+      false
     }
+    true
+  }
 
-    if (!hadoopFS.exists(hdfsConfPath) || hadoopFS.getStatus(hdfsConfPath).getCapacity == 0) {
-      logger.info(s"Uploading conformance jar from $mavenConfPath to $hdfsConfPath")
-      val resFuture = this.downloadFile(mavenConfPath, hdfsConfPath)
-      resFuture.onSuccess({ case (u: Unit) => logger.info(s"Conformance jar loaded to $hdfsConfPath") })
-      resFuture.onFailure({
-        case (err: Throwable) =>
-          hadoopFS.delete(hdfsConfPath, true)
-      })
+  private def initializeJars() {
+    if (this.isOozieEnabled) {
+      val hdfsStdPath = new Path(s"$enceladusJarLocation$standardizationJarPath")
+      val hdfsConfPath = new Path(s"$enceladusJarLocation$conformanceJarPath")
+      val mavenStdPath = s"$mavenRepoLocation$standardizationJarPath"
+      val mavenConfPath = s"$mavenRepoLocation$conformanceJarPath"
+
+      if (!hadoopFS.exists(hdfsStdPath) || hadoopFS.getStatus(hdfsStdPath).getCapacity == 0) {
+        logger.info(s"Uploading standardization jar from $mavenStdPath to $hdfsStdPath")
+        val resFuture = this.downloadFile(mavenStdPath, hdfsStdPath)
+        resFuture.onSuccess({ case (u: Unit) => logger.info(s"Standardization jar loaded to $hdfsStdPath") })
+        resFuture.onFailure({
+          case (err: Throwable) =>
+            hadoopFS.delete(hdfsStdPath, true)
+        })
+      }
+
+      if (!hadoopFS.exists(hdfsConfPath) || hadoopFS.getStatus(hdfsConfPath).getCapacity == 0) {
+        logger.info(s"Uploading conformance jar from $mavenConfPath to $hdfsConfPath")
+        val resFuture = this.downloadFile(mavenConfPath, hdfsConfPath)
+        resFuture.onSuccess({ case (u: Unit) => logger.info(s"Conformance jar loaded to $hdfsConfPath") })
+        resFuture.onFailure({
+          case (err: Throwable) =>
+            hadoopFS.delete(hdfsConfPath, true)
+        })
+      }
     }
   }
 
@@ -143,7 +163,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   }
 
   /**
-   * Read a template file packaged with the jar 
+   * Read a template file packaged with the jar
    */
   private def getTemplateFile(fileName: String): String = {
     new BufferedReader(
@@ -154,9 +174,8 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   /**
    * Whether or not oozie is enabled/configured
    */
-  def isOozieEnabled: Boolean = oozieClientRes.isRight
+  def isOozieEnabled: Boolean = this.validateProperties() && oozieClientRes.isRight
 
-  
   private def getOozieClient[T](fn: (OozieClient => Future[T])): Future[T] = {
     oozieClientRes match {
       case Right(client) => fn(client)
@@ -297,7 +316,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
 
   /**
    * Create a new workflow
-   * 
+   *
    * @return Workflow path
    */
   def createWorkflow(dataset: Dataset): Future[String] = {
@@ -308,7 +327,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
 
   /**
    * Create a new coordinator
-   * 
+   *
    * @return Coordinator path
    */
   def createCoordinator(dataset: Dataset, wfPath: String): Future[String] = {
