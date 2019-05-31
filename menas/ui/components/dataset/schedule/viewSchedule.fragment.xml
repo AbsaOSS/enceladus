@@ -54,7 +54,7 @@
         <Label text="System User" />
         <Text text="{/currentDataset/schedule/runtimeParams/sysUser}" />
         <Label text="Menas Credentials File" />
-        <Text text="{/newSchedule/runtimeParams/menasCredentialFile}" />
+        <Text text="{/currentDataset/schedule/runtimeParams/menasCredentialFile}" />
         <core:Title text="Schedule Parameters" />
         <Label text="Dataset Version" />
         <Text text="{/currentDataset/schedule/datasetVersion}" />
