@@ -51,7 +51,7 @@ sap.ui.define([
       });
 
       this._upsertConformanceRuleDialog = this.byId("upsertConformanceRuleDialog");
-      this._editScheduleDialog = sap.ui.xmlfragment("components.dataset.scheduling.editSchedule", this);
+      this._editScheduleDialog = sap.ui.xmlfragment("components.dataset.schedule.editSchedule", this);
       sap.ui.getCore().getMessageManager().registerObject(this._editScheduleDialog, true);
       
       new DatasetDialogFactory(this, Fragment.load).getEdit();
