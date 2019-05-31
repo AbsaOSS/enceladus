@@ -13,26 +13,21 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.migrations.migrations.model1
+package za.co.absa.enceladus.migrations.migrations.datetime
 
 import java.time.ZonedDateTime
 
-import za.co.absa.enceladus.migrations.migrations.datetime.{DateTimeWrapper, ZonedDateTimeWrapper}
+case class ZonedDateTimeWrapper(dateTime: DateTimeWrapper, offset: Int, zone: String)
 
-trait VersionedModel {
-  val name: String
-  val version: Int
-  val description: Option[String]
-  
-  val dateCreated: ZonedDateTimeWrapper
-  val userCreated: String
-  
-  val lastUpdated: ZonedDateTimeWrapper
-  val userUpdated: String
-  
-  val disabled: Boolean
-  val dateDisabled: Option[ZonedDateTime]
-  val userDisabled: Option[String]
-  
-  val parent: Option[MenasReference]
+object ZonedDateTimeWrapper {
+  def fromZonedDateTime(dt: ZonedDateTime): ZonedDateTimeWrapper = {
+    ZonedDateTimeWrapper(
+      DateTimeWrapper(
+        DateWrapper(dt.getYear, dt.getMonthValue, dt.getDayOfMonth),
+        TimeWrapper(dt.getHour, dt.getMinute, dt.getSecond, dt.getNano)
+      ),
+      dt.getOffset.getTotalSeconds,
+      dt.getZone.getId
+    )
+  }
 }

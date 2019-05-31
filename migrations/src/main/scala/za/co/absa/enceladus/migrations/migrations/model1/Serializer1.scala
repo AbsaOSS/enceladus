@@ -22,7 +22,7 @@ import org.json4s.jackson.Serialization
 import org.json4s.{Formats, NoTypeHints}
 
 /**
-  * This is the object for deserializing Model 0 version of Enceladus Schema
+  * This is the object for deserializing Model 1 version of Enceladus Schema
   */
 object Serializer1 {
   private val objectMapper = new ObjectMapper()
@@ -36,14 +36,16 @@ object Serializer1 {
     * Serializes a Model 1 JSON
     */
   def serialize(schema: Schema): String = {
-    Serialization.write[Schema](schema)
+    objectMapper.writeValueAsString(schema)
+    //Serialization.write(schema)
   }
 
   /**
     * Deserializes a Model 1 JSON
     */
   def deserialize(json: String): Schema = {
-    Serialization.read[Schema](json)
+    objectMapper.readValue(json, classOf[Schema])
+    //Serialization.read[Schema](json)
   }
 
 }
