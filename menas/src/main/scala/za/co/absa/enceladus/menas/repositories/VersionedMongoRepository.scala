@@ -39,7 +39,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
   import scala.concurrent.ExecutionContext.Implicits.global
 
   private def getParent(oldEntity: C): MenasReference = {
-    MenasReference(collection = Some(collectionName), name = oldEntity.name, version = oldEntity.version) 
+    MenasReference(collection = Some(collectionBaseName), name = oldEntity.name, version = oldEntity.version)
   }
   
   def getLatestVersions(): Future[Seq[VersionedSummary]] = {
@@ -102,7 +102,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     }
     collection
       .find[MenasReference](filter)
-      .projection(fields(include("name", "version"), computed("collection", collectionName)))
+      .projection(fields(include("name", "version"), computed("collection", collectionBaseName)))
       .sort(Sorts.ascending("name", "version"))
       .toFuture()
   }

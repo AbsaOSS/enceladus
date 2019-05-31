@@ -13,19 +13,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.repositories
+package za.co.absa.enceladus
 
-import org.mongodb.scala.MongoDatabase
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Repository
-import za.co.absa.enceladus.model.MappingTable
-
-import scala.reflect.ClassTag
-
-@Repository
-class MappingTableMongoRepository @Autowired()(mongoDb: MongoDatabase)
-  extends VersionedMongoRepository[MappingTable](mongoDb)(ClassTag(classOf[MappingTable])) {
-
-  override private[menas] def collectionBaseName = "mapping_table"
-
+package object model {
+  val ModelVersion = 1
+  val CollectionPostfix = s"_v$ModelVersion"
 }

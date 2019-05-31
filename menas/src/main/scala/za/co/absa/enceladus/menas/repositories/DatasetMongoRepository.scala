@@ -26,10 +26,13 @@ import scala.reflect.ClassTag
 import za.co.absa.enceladus.model.menas.MenasReference
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.Projections._
+import za.co.absa.enceladus.model
+
 import scala.concurrent.Future
 
 object DatasetMongoRepository {
-  val collectionName = "dataset"
+  val collectionBaseName = "dataset"
+  val collectionName = collectionBaseName + model.CollectionPostfix
 }
 
 @Repository
@@ -38,7 +41,7 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private[menas] override def collectionName: String = DatasetMongoRepository.collectionName
+  private[menas] override def collectionBaseName: String = DatasetMongoRepository.collectionBaseName
 
   override def getVersion(name: String, version: Int): Future[Option[Dataset]] = {
     super.getVersion(name, version).map(_.map(handleMappingRuleRead))
@@ -95,7 +98,7 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
     
     collection
       .find[MenasReference](filter)
-      .projection(fields(include("name", "version"), computed("collection", collectionName)))
+      .projection(fields(include("name", "version"), computed("collection", collectionBaseName)))
       .toFuture()
   }
 }
