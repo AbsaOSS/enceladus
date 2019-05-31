@@ -43,6 +43,11 @@ import javax.servlet.http.HttpServletResponse
 import za.co.absa.enceladus.menas.auth.InMemoryMenasAuthentication
 import za.co.absa.enceladus.menas.auth.KerberosMenasAuthentication
 import za.co.absa.enceladus.menas.auth.MenasAuthentication
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.kerberos.web.authentication.SpnegoAuthenticationProcessingFilter
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.security.kerberos.web.authentication.SpnegoEntryPoint
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter
 
 @EnableWebSecurity
 class WebSecurityConfig {
@@ -52,9 +57,9 @@ class WebSecurityConfig {
 
   @Autowired
   val beanFactory: BeanFactory = null
-  
+
   val logger = LoggerFactory.getLogger(this.getClass)
-  
+
   @Bean
   def authenticationFailureHandler(): AuthenticationFailureHandler = {
     new SimpleUrlAuthenticationFailureHandler()
@@ -76,33 +81,41 @@ class WebSecurityConfig {
     override def configure(http: HttpSecurity) {
       http
         .csrf()
-          .ignoringAntMatchers("/api/login")
+        .ignoringAntMatchers("/api/login", "/api/spnego/login")
         .and()
-          .exceptionHandling()
-          .authenticationEntryPoint(restAuthenticationEntyPoint)
+        .exceptionHandling()
+//                .authenticationEntryPoint(spnegoEntryPoint())
+        .authenticationEntryPoint(restAuthenticationEntyPoint)
         .and()
-          .authorizeRequests()
-          .antMatchers("/index.html", "/resources/**", "/generic/**",
-            "/service/**", "/webjars/**", "/css/**", "/components/**")
-          .permitAll()
+        .authorizeRequests()
+        .antMatchers("/index.html", "/resources/**", "/generic/**",
+          "/service/**", "/webjars/**", "/css/**", "/components/**")
+        .permitAll()
         .anyRequest()
-          .authenticated()
+        .authenticated()
         .and()
-          .formLogin()
-          .loginProcessingUrl("/api/login")
-          .successHandler(authenticationSuccessHandler)
-          .failureHandler(authenticationFailureHandler)
-          .permitAll()
+        .formLogin()
+        .loginProcessingUrl("/api/login")
+        .successHandler(authenticationSuccessHandler)
+        .failureHandler(authenticationFailureHandler)
+
+        .permitAll()
         .and()
         .logout()
-          .logoutUrl("/api/logout")
-          .logoutSuccessHandler(logoutSuccessHandler)
-          .permitAll()
-          .clearAuthentication(true)
-          .deleteCookies("JSESSIONID")
-          .invalidateHttpSession(true)
+        .logoutUrl("/api/logout")
+        .logoutSuccessHandler(logoutSuccessHandler)
+        .permitAll()
+        .clearAuthentication(true)
+        .deleteCookies("JSESSIONID")
+        .invalidateHttpSession(true)
+        .and
+        .addFilterBefore(KerberosMenasAuthentication.spnegoAuthenticationProcessingFilter(authenticationManagerBean), classOf[UsernamePasswordAuthenticationFilter])
     }
 
+    @Bean
+    def spnegoEntryPoint() = {
+      new SpnegoEntryPoint("/api/login");
+    }
 
     override def configure(auth: AuthenticationManagerBuilder) {
       this.getMenasAuthentication().configure(auth)
@@ -121,7 +134,7 @@ class WebSecurityConfig {
         case _ => throw new IllegalArgumentException(s"Invalid authentication mechanism - use one of: inmemory, kerberos")
       }
     }
-    
+
     @Bean
     override def authenticationManagerBean() = {
       super.authenticationManagerBean()
@@ -133,7 +146,8 @@ class WebSecurityConfig {
     override def commence(request: HttpServletRequest,
         response: HttpServletResponse,
         authException: AuthenticationException): Unit = {
-      response.sendError(HttpServletResponse.SC_UNAUTHORIZED, s"Unauthorized")
+      authException.printStackTrace()
+      response.sendError(HttpServletResponse.SC_UNAUTHORIZED, s"Unauthorized ${authException.getMessage}")
     }
   }
 

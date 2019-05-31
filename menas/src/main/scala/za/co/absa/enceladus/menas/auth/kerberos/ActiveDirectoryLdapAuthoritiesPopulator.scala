@@ -13,13 +13,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas
+package za.co.absa.enceladus.menas.auth.kerberos
 
-import org.springframework.ldap.core.DirContextOperations;
-import org.springframework.ldap.core.DistinguishedName;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.ldap.core.DirContextOperations
+import org.springframework.ldap.core.DistinguishedName
+import org.springframework.security.core.authority.AuthorityUtils
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator;
 
 class ActiveDirectoryLdapAuthoritiesPopulator extends LdapAuthoritiesPopulator  {

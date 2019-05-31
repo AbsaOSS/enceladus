@@ -32,7 +32,9 @@ class ConfigSuite extends FunSuite {
   private val hdfsRawPathOverride = "/bigdatahdfs/datalake/raw/system/feed/override"
   private val hdfsPublishPath = "/bigdatahdfs/datalake/publish/system/feed"
   private val menasCredentialsFile = "src/test/resources/menas-credentials.conf"
-  private val menasCredentials = MenasCredentials(username = "user", password = "changeme")
+  private val menasCredentials = Some(Left(MenasCredentials.fromFile(menasCredentialsFile)))
+  private val keytabPath = "/a/b/c.keytab"
+  private val menasKeytab = Some(Right(keytabPath))
   private val datasetName = "test-dataset-name"
   private val datasetVersion = 2
   private val description = None
@@ -50,6 +52,8 @@ class ConfigSuite extends FunSuite {
   private val rawFormat = "parquet"
   private val folderPrefix = s"year=$year/month=$month/day=$day"
 
+  
+  
   test("folder-prefix parameter") {
     val cmdConfigNoFolderPrefix = CmdConfig.getCmdLineArguments(
       Array(
@@ -74,14 +78,14 @@ class ConfigSuite extends FunSuite {
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
+        "--menas-auth-keytab", keytabPath,
         "--raw-format", rawFormat,
         "--folder-prefix", folderPrefix))
     assert(cmdConfigFolderPrefix.datasetName === datasetName)
     assert(cmdConfigFolderPrefix.datasetVersion === datasetVersion)
     assert(cmdConfigFolderPrefix.reportDate === reportDate)
     assert(cmdConfigFolderPrefix.reportVersion === reportVersion)
-    assert(cmdConfigNoFolderPrefix.menasCredentials === menasCredentials)
+    assert(cmdConfigFolderPrefix.menasCredentials === menasKeytab)
     assert(cmdConfigFolderPrefix.rawFormat === rawFormat)
     assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
     assert(cmdConfigFolderPrefix.folderPrefix.get === folderPrefix)
@@ -93,14 +97,13 @@ class ConfigSuite extends FunSuite {
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
         "--raw-format", rawFormat,
         "--debug-set-raw-path", hdfsRawPathOverride))
     assert(cmdConfigRawPathOverride.datasetName === datasetName)
     assert(cmdConfigRawPathOverride.datasetVersion === datasetVersion)
     assert(cmdConfigRawPathOverride.reportDate === reportDate)
     assert(cmdConfigRawPathOverride.reportVersion === reportVersion)
-    assert(cmdConfigNoFolderPrefix.menasCredentials === menasCredentials)
+    assert(cmdConfigRawPathOverride.menasCredentials === None)
     assert(cmdConfigRawPathOverride.rawFormat === rawFormat)
     assert(cmdConfigRawPathOverride.folderPrefix.isEmpty)
     assert(cmdConfigRawPathOverride.rawPathOverride.nonEmpty)

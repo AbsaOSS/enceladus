@@ -32,7 +32,7 @@ case class CmdConfig(datasetName: String = "",
                      datasetVersion: Int = 1,
                      reportDate: String = "",
                      reportVersion: Int = 1,
-                     menasCredentials: MenasCredentials = MenasCredentials("", ""),
+                     menasCredentials: Option[Either[MenasCredentials, CmdConfig.KeytabLocation]] = None,
                      performanceMetricsFile: Option[String] = None,
                      publishPathOverride: Option[String] = None,
                      folderPrefix: Option[String] = None,
@@ -40,6 +40,8 @@ case class CmdConfig(datasetName: String = "",
 
 object CmdConfig {
 
+    type KeytabLocation = String
+  
   def getCmdLineArguments(args: Array[String]): CmdConfig = {
     val parser = new CmdParser("spark-submit [spark options] ConformanceBundle.jar")
 
@@ -79,13 +81,29 @@ object CmdConfig {
         if (value > 0) success
         else failure("Option --report-version must be >0"))
 
-    opt[String]("menas-credentials-file").required().action((path, config) =>
-      config.copy(menasCredentials = MenasCredentials.fromFile(path)))
-      .text("Path to Menas credentials config file. Suitable only for client mode")
-      .validate(path =>
-        if (new File(MenasCredentials.replaceHome(path)).exists()) success
-        else failure("Credentials file does not exist. Make sure you are running in client mode and the file is present on your local filesystem")
-      )
+    private var credsFile: Option[String] = None
+    private var keytabFile: Option[String] = None
+    opt[String]("menas-credentials-file").hidden.optional().action({ (path, config) =>
+      val credential = Left(MenasCredentials.fromFile(path))
+      credsFile = Some(path)
+      config.copy(menasCredentials = Some(credential))
+    }).text("Path to Menas credentials config file.").validate(path =>
+      if (keytabFile.isDefined) {
+        failure("Only one authentication method is allow at a time")
+      } else if (new File(MenasCredentials.replaceHome(path)).exists()) {
+        success
+      } else {
+        failure("Credentials file does not exist. Make sure you are running in client mode")
+      })
+
+    opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
+      keytabFile = Some(file)
+      config.copy(menasCredentials = Some(Right(file)))
+    }).validate({ princ =>
+      if (credsFile.isDefined) {
+        failure("Only one authentication method is allow at a time")
+      } else success
+    }).text("Path to keytab file used for authenticating to menas")
 
     opt[String]("performance-file").optional().action((value, config) =>
       config.copy(performanceMetricsFile = Some(value))).text("Produce a performance metrics file at the given location (local filesystem)")

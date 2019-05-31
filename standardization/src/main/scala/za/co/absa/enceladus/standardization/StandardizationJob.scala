@@ -23,7 +23,7 @@ import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpret
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.validation.ValidationException
 import za.co.absa.enceladus.utils.error.UDFLibrary
-import za.co.absa.enceladus.dao.{EnceladusRestDAO, LoggedInUserInfo}
+import za.co.absa.enceladus.dao.{EnceladusRestDAO}
 import com.typesafe.config.{Config, ConfigFactory}
 import java.text.MessageFormat
 import java.util.UUID
@@ -39,6 +39,8 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.enceladus.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.menasplugin._
+import za.co.absa.enceladus.dao.UnauthorizedException
 
 object StandardizationJob {
 
@@ -52,7 +54,14 @@ object StandardizationJob {
     implicit val udfLib: UDFLibrary = new UDFLibrary
 
     val menasCredentials = cmd.menasCredentials
-    EnceladusRestDAO.postLogin(menasCredentials.username, menasCredentials.password)
+    menasCredentials match {
+      case Some(creds) => creds match {
+        case Left(userPassCreds: MenasCredentials) => EnceladusRestDAO.postLogin(userPassCreds.username, userPassCreds.password)
+        case Right(keytabLocation: String)         => EnceladusRestDAO.spnegoLogin(keytabLocation)
+      }
+      case None => UnauthorizedException("Menas credentials have to be provided")
+    }
+
     val dataset = EnceladusRestDAO.getDataset(cmd.datasetName, cmd.datasetVersion)
     val schema: StructType = EnceladusRestDAO.getSchema(dataset.schemaName, dataset.schemaVersion)
     val dateTokens = cmd.reportDate.split("-")
@@ -101,26 +110,25 @@ object StandardizationJob {
     spark
   }
 
-  private def readerFormatSpecific(dfReader: DataFrameReader, cmd: CmdConfig):DataFrameReader = {
+  private def readerFormatSpecific(dfReader: DataFrameReader, cmd: CmdConfig): DataFrameReader = {
     // applying format specific options
-    val  dfReader4= {
+    val dfReader4 = {
       val dfReader1 = if (cmd.rowTag.isDefined) dfReader.option("rowTag", cmd.rowTag.get) else dfReader
       val dfReader2 = if (cmd.csvDelimiter.isDefined) dfReader1.option("delimiter", cmd.csvDelimiter.get) else dfReader1
       val dfReader3 = if (cmd.csvHeader.isDefined) dfReader2.option("header", cmd.csvHeader.get) else dfReader2
       dfReader3
     }
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
-      val dfReader5=if (cmd.fixedWidthTrimValues.get) dfReader4.option("trimValues", "true") else dfReader4
+      val dfReader5 = if (cmd.fixedWidthTrimValues.get) dfReader4.option("trimValues", "true") else dfReader4
       dfReader5
     } else {
       dfReader4
     }
   }
 
-  private def prepareDataFrame(schema: StructType, cmd: CmdConfig, path: String)
-                              (implicit spark: SparkSession): DataFrame = {
+  private def prepareDataFrame(schema: StructType, cmd: CmdConfig, path: String)(implicit spark: SparkSession): DataFrame = {
     val dfReaderConfigured = readerFormatSpecific(spark.read.format(cmd.rawFormat), cmd)
-    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet") ) {
+    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
       dfReaderConfigured.schema(inputSchema)
     } else {
@@ -130,16 +138,14 @@ object StandardizationJob {
   }
 
   private def executeStandardization(performance: PerformanceMeasurer, dfAll: DataFrame, schema: StructType,
-                                     cmd: CmdConfig, path: String, stdPath: String)
-                                    (implicit spark: SparkSession, udfLib: UDFLibrary): Unit = {
+      cmd: CmdConfig, path: String, stdPath: String)(implicit spark: SparkSession, udfLib: UDFLibrary): Unit = {
     val rawDirSize: Long = FileSystemVersionUtils.getDirectorySize(path)
     performance.startMeasurement(rawDirSize)
 
     val std = try {
       StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
-    }
-    catch {
-      case e@ValidationException(msg, errors) =>
+    } catch {
+      case e @ ValidationException(msg, errors) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
           errors.mkString("\n")
         }", "")
@@ -158,7 +164,7 @@ object StandardizationJob {
     stdRenameSourceColumns.setCheckpoint("Standardization Finish", persistInDatabase = false)
 
     val recordCount = stdRenameSourceColumns.lastCheckpointRowCount match {
-      case None => std.count
+      case None    => std.count
       case Some(p) => p
     }
     if (recordCount == 0) {
@@ -176,7 +182,7 @@ object StandardizationJob {
       cmd.csvDelimiter.foreach(deLimiter => Atum.setAdditionalInfo("csv_delimiter" -> deLimiter))
     }
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", path, stdPath,
-                                                               LoggedInUserInfo.getUserName)
+      EnceladusRestDAO.userName)
     stdRenameSourceColumns.writeInfoFile(stdPath)
   }
 
@@ -236,7 +242,7 @@ object StandardizationJob {
       case None =>
         val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmd.reportVersion}"
         cmd.folderPrefix match {
-          case None => s"${dataset.hdfsPath}$folderSuffix"
+          case None               => s"${dataset.hdfsPath}$folderSuffix"
           case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
         }
       case Some(rawPathOverride) => rawPathOverride

@@ -24,6 +24,7 @@ multipart.maxRequestSize=16Mb
 za.co.absa.enceladus.menas.auth.mechanism = kerberos
 
 za.co.absa.enceladus.menas.auth.kerberos.debug=false
+za.co.absa.enceladus.menas.auth.kerberos.krb5conf=/etc/krb5/krb5.conf
 za.co.absa.enceladus.menas.auth.ad.domain=ad.domain.com
 za.co.absa.enceladus.menas.auth.ad.server=ldap://ad.domain.com
 za.co.absa.enceladus.menas.auth.sysuser.principal=sysuser@ad.domain.com
