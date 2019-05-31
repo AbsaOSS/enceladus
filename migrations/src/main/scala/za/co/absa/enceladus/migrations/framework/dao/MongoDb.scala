@@ -43,23 +43,25 @@ class MongoDb (db: MongoDatabase) extends DocumentDb {
     */
   override def getVersion(): Int = {
     if (!isCollectionExists(dbVersionCollectionName)) {
-      createCollection(dbVersionCollectionName)
-      getCollection[DbVersion](dbVersionCollectionName)
-        .insertOne(DbVersion(0))
-        .execute()
+      setVersion(0)
     }
 
     val versions = getCollection(dbVersionCollectionName)
       .find[DbVersion]()
       .execute()
 
-    if (versions.lengthCompare(1) != 0) {
+    if (versions.isEmpty) {
+      getCollection[DbVersion](dbVersionCollectionName)
+        .insertOne(DbVersion(0))
+        .execute()
+      0
+    } else if (versions.lengthCompare(1) != 0) {
       val len = versions.length
       throw new IllegalStateException(
         s"Unexpected number of documents in '$dbVersionCollectionName'. Expected 1, got $len")
+    } else {
+      versions.head.version
     }
-
-    versions.head.version
   }
 
   /**

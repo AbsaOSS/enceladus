@@ -15,10 +15,13 @@
 
 package za.co.absa.enceladus.migrations.migrations
 
+import java.time.ZonedDateTime
+
 import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.migrations.framework.migration.{JsonMigration, MigrationBase}
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 import za.co.absa.enceladus.migrations.migrations.model1.Serializer1
+import za.co.absa.enceladus.migrations.migrations.datetime.{DateTimeWrapper, ZonedDateTimeWrapper}
 
 import scala.util.control.NonFatal
 
@@ -39,6 +42,8 @@ object MigrationToV1 extends MigrationBase with JsonMigration {
         schema0.name,
         schema0.version,
         None,
+        dateCreated = ZonedDateTimeWrapper.fromZonedDateTime(ZonedDateTime.now()),
+        lastUpdated = ZonedDateTimeWrapper.fromZonedDateTime(ZonedDateTime.now()),
         userCreated = "migration",
         fields = schema0.fields.map(convertSchemaField(_, Nil))
       )
