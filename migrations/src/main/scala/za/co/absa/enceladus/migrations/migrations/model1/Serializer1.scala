@@ -42,20 +42,22 @@ object Serializer1 {
   implicit private val formatsJson: Formats = Serialization.formats(NoTypeHints).withBigDecimal
 
   private val codecRegistry = fromRegistries(fromProviders(
-    classOf[Schema], classOf[SchemaField]),
+    classOf[Schema], classOf[SchemaField],
+    classOf[MappingTable], classOf[DefaultValue], classOf[MenasReference]),
     CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
 
-  private val codec: Codec[Schema] = codecRegistry.get(classOf[Schema])
+  private val schemaCodec: Codec[Schema] = codecRegistry.get(classOf[Schema])
+  private val mappingTableCodec: Codec[MappingTable] = codecRegistry.get(classOf[MappingTable])
 
   /**
-    * Serializes a Model 1 JSON
+    * Serializes a Model 1 schema JSON
     */
-  def serialize(schema: Schema): String = {
+  def serializeSchema(schema: Schema): String = {
     val bsonDocument = new BsonDocument
     val bsonWriter = new BsonDocumentWriter(bsonDocument)
     val encodeContext = EncoderContext.builder.build
 
-    codec.encode(bsonWriter, schema, encodeContext)
+    schemaCodec.encode(bsonWriter, schema, encodeContext)
 
     bsonDocument.toJson
 
@@ -66,11 +68,31 @@ object Serializer1 {
   }
 
   /**
-    * Deserializes a Model 1 JSON
+    * Deserializes a Model 1 schema JSON
     */
-  def deserialize(json: String): Schema = {
+  def deserializeSchema(json: String): Schema = {
     objectMapper.readValue(json, classOf[Schema])
     //Serialization.read[Schema](json)
+  }
+
+  /**
+    * Serializes a Model 1 mapping table JSON
+    */
+  def serializeMappingTable(mappingTable: MappingTable): String = {
+    val bsonDocument = new BsonDocument
+    val bsonWriter = new BsonDocumentWriter(bsonDocument)
+    val encodeContext = EncoderContext.builder.build
+
+    mappingTableCodec.encode(bsonWriter, mappingTable, encodeContext)
+
+    bsonDocument.toJson
+  }
+
+  /**
+    * Deserializes a Model 1 mapping table JSON
+    */
+  def deserializeMappingTable(json: String): MappingTable = {
+    objectMapper.readValue(json, classOf[MappingTable])
   }
 
 }

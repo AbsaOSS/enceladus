@@ -15,27 +15,18 @@
 
 package za.co.absa.enceladus.migrations.migrations.model0
 
-import org.json4s.jackson.Serialization
-import org.json4s.{Formats, NoTypeHints}
+case class MappingTable
+(
+  name: String,
+  version: Int,
 
-/**
-  * This is the object for deserializing Model 0 version of Enceladus Schema
-  */
-object Serializer0 {
-  implicit private val formatsJson: Formats = Serialization.formats(NoTypeHints).withBigDecimal
+  hdfsPath: String,
 
-  /**
-    * Deserializes a Model 0 schema JSON
-    */
-  def deserializeSchema(json: String): Schema = {
-    Serialization.read[Schema](json)
-  }
+  schemaName: String,
+  schemaVersion: Int,
 
-  /**
-    * Deserializes a Model 0 mapping table JSON
-    */
-  def deserializeMappingTable(json: String): MappingTable = {
-    Serialization.read[MappingTable](json)
-  }
-
+  defaultMappingValue: Option[String] = None
+)
+  extends VersionedModel {
+  override def setVersion(value: Int): MappingTable = this.copy(version = value)
 }
