@@ -18,7 +18,7 @@ package za.co.absa.enceladus.migrations.migrations
 import java.time.ZonedDateTime
 
 import org.apache.log4j.{LogManager, Logger}
-import za.co.absa.enceladus.migrations.framework.migration.{CollectionMigration, JsonMigration, MigrationBase}
+import za.co.absa.enceladus.migrations.framework.migration.{CollectionMigration, CommandMigration, JsonMigration, MigrationBase}
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 import za.co.absa.enceladus.migrations.migrations.model1.{DefaultValue, Serializer1}
 
@@ -27,7 +27,7 @@ import scala.util.control.NonFatal
 /**
   * Migration from Menas 0.* to Menas 1.0 model
   */
-object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMigration {
+object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration {
 
   private val log: Logger = LogManager.getLogger(this.getClass)
 
@@ -86,6 +86,74 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
         InvalidDocument
     }
   })
+
+  /*runCommand("dataset")(versionedCollectionName => {
+
+    ???
+  })*/
+
+  transformJSON("dataset")(model0Json => {
+    val fixJson = model0Json.replaceAll("\"jsonClass\" :", "\"_t\" :")
+
+    val dataset0 = Serializer0.deserializeDataset(fixJson)
+
+    val dataset1 = model1.Dataset(
+      dataset0.name,
+      dataset0.version,
+      None,
+      dataset0.hdfsPath,
+      dataset0.hdfsPublishPath,
+      dataset0.schemaName,
+      dataset0.schemaVersion,
+      ZonedDateTime.now(),
+      "migration",
+      ZonedDateTime.now(),
+      "migration",
+      conformance = dataset0.conformance.map(convertConformanceRule)
+    )
+
+    Serializer1.serializeDataset(dataset1)
+
+    /*try {
+    } catch {
+      case NonFatal(e) =>
+        log.warn(s"Encountered a serialization error for 'dataset': ${e.getMessage}")
+        InvalidDocument
+    }*/
+  })
+
+  private def convertConformanceRule(rule: model0.conformanceRule.ConformanceRule): model1.conformanceRule.ConformanceRule = {
+    rule match {
+      case model0.conformanceRule.CastingConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, outputDataType) =>
+        model1.conformanceRule.CastingConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, outputColumn, "CastingConformanceRule")
+
+      case model0.conformanceRule.ConcatenationConformanceRule(order, outputColumn, controlCheckpoint, inputColumns) =>
+        model1.conformanceRule.ConcatenationConformanceRule(order, outputColumn, controlCheckpoint, inputColumns, "ConcatenationConformanceRule")
+
+      case model0.conformanceRule.DropConformanceRule(order, controlCheckpoint, outputColumn) =>
+        model1.conformanceRule.DropConformanceRule(order, controlCheckpoint, outputColumn, "DropConformanceRule")
+
+      case model0.conformanceRule.LiteralConformanceRule(order, outputColumn, controlCheckpoint, value) =>
+        model1.conformanceRule.LiteralConformanceRule(order, outputColumn, controlCheckpoint, value, "LiteralConformanceRule")
+
+      case model0.conformanceRule.MappingConformanceRule(order, controlCheckpoint, mappingTable, mappingTableVersion, attributeMappings, targetAttribute, outputColumn, isNullSafe) =>
+        model1.conformanceRule.MappingConformanceRule(order, controlCheckpoint, mappingTable, mappingTableVersion, attributeMappings, targetAttribute, outputColumn, isNullSafe, "MappingConformanceRule")
+
+      case model0.conformanceRule.NegationConformanceRule(order, outputColumn, controlCheckpoint, inputColumn) =>
+        model1.conformanceRule.NegationConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, "NegationConformanceRule")
+
+      case model0.conformanceRule.SingleColumnConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, inputColumnAlias) =>
+        model1.conformanceRule.SingleColumnConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, inputColumnAlias, "SingleColumnConformanceRule")
+
+      case model0.conformanceRule.SparkSessionConfConformanceRule(order, outputColumn, controlCheckpoint, sparkConfKey) =>
+        model1.conformanceRule.SparkSessionConfConformanceRule(order, outputColumn, controlCheckpoint, sparkConfKey, "SparkSessionConfConformanceRule")
+
+      case model0.conformanceRule.UppercaseConformanceRule(order, outputColumn, controlCheckpoint, inputColumn) =>
+        model1.conformanceRule.UppercaseConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, "UppercaseConformanceRule")
+      case _ =>
+        sys.error(s"Unknown conformance rule encountered $rule.")
+    }
+  }
 
   /**
     * Converts a Model 0 schema field into Model 1 schema field

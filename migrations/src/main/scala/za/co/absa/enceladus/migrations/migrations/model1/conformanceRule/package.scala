@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 
 package object conformanceRule {
+
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_t")
   @JsonSubTypes(Array(
     new Type(value = classOf[CastingConformanceRule], name = "CastingConformanceRule"),
@@ -42,7 +43,8 @@ package object conformanceRule {
   case class ConcatenationConformanceRule(order: Int,
                                           outputColumn: String,
                                           controlCheckpoint: Boolean,
-                                          inputColumns: Seq[String]) extends ConformanceRule {
+                                          inputColumns: Seq[String],
+                                          _t: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
   }
 
@@ -50,20 +52,23 @@ package object conformanceRule {
                                     outputColumn: String,
                                     controlCheckpoint: Boolean,
                                     inputColumn: String,
-                                    outputDataType: String) extends ConformanceRule {
+                                    outputDataType: String,
+                                    _t: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
   }
 
   case class DropConformanceRule(order: Int,
                                  controlCheckpoint: Boolean,
-                                 outputColumn: String) extends ConformanceRule {
+                                 outputColumn: String,
+                                 _t: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
   }
 
   case class LiteralConformanceRule(order: Int,
                                     outputColumn: String,
                                     controlCheckpoint: Boolean,
-                                    value: String) extends ConformanceRule {
+                                    value: String,
+                                    _t: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
   }
 
@@ -75,36 +80,42 @@ package object conformanceRule {
                                     attributeMappings: Map[String, String], // key = mapping table column, value = input df column
                                     targetAttribute: String,
                                     outputColumn: String,
-                                    isNullSafe: Boolean = false) extends ConformanceRule {
+                                    isNullSafe: Boolean,
+                                    _t: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
   }
 
   case class NegationConformanceRule(order: Int,
                                      outputColumn: String,
                                      controlCheckpoint: Boolean,
-                                     inputColumn: String) extends ConformanceRule {
+                                     inputColumn: String,
+                                     _t: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
   }
 
-  case class SingleColumnConformanceRule(order: Int,
-                                         controlCheckpoint: Boolean,
-                                         outputColumn: String,
-                                         inputColumn: String,
-                                         inputColumnAlias: String) extends ConformanceRule {
+  case class SingleColumnConformanceRule(
+                                          order: Int,
+                                          controlCheckpoint: Boolean,
+                                          outputColumn: String,
+                                          inputColumn: String,
+                                          inputColumnAlias: String,
+                                          _t: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
   }
 
   case class SparkSessionConfConformanceRule(order: Int,
                                              outputColumn: String,
                                              controlCheckpoint: Boolean,
-                                             sparkConfKey: String) extends ConformanceRule {
+                                             sparkConfKey: String,
+                                             _t: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
   }
 
   case class UppercaseConformanceRule(order: Int,
                                       outputColumn: String,
                                       controlCheckpoint: Boolean,
-                                      inputColumn: String) extends ConformanceRule {
+                                      inputColumn: String,
+                                      _t: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
   }
 

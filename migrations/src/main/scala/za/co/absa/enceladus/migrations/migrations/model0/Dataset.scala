@@ -15,8 +15,10 @@
 
 package za.co.absa.enceladus.migrations.migrations.model0
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import za.co.absa.enceladus.migrations.migrations.model0.conformanceRule.ConformanceRule
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 case class Dataset
 (
   name: String,

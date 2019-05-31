@@ -17,8 +17,10 @@ package za.co.absa.enceladus.migrations.migrations.model1
 
 import java.time.ZonedDateTime
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import za.co.absa.enceladus.migrations.migrations.model1.conformanceRule.ConformanceRule
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 case class Dataset(
   name:    String,
   version: Int = 1,
