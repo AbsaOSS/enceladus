@@ -15,25 +15,29 @@
 
 package za.co.absa.enceladus.migrations.migrations
 
+import java.time.ZonedDateTime
+
 import org.apache.log4j.{LogManager, Logger}
-import za.co.absa.enceladus.migrations.framework.migration.{JsonMigration, MigrationBase}
+import za.co.absa.enceladus.migrations.framework.migration.{CollectionMigration, JsonMigration, MigrationBase}
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
-import za.co.absa.enceladus.migrations.migrations.model1.Serializer1
+import za.co.absa.enceladus.migrations.migrations.model1.{DefaultValue, Serializer1}
 
 import scala.util.control.NonFatal
 
 /**
   * Migration from Menas 0.* to Menas 1.0 model
   */
-object MigrationToV1 extends MigrationBase with JsonMigration {
+object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMigration {
 
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   override val targetVersion: Int = 1
 
+  addCollection("attachment")
+
   transformJSON("schema")(model0Json => {
     try {
-      val schema0 = Serializer0.deserialize(model0Json)
+      val schema0 = Serializer0.deserializeSchema(model0Json)
 
       val schema1 = model1.Schema(
         schema0.name,
@@ -41,18 +45,47 @@ object MigrationToV1 extends MigrationBase with JsonMigration {
         None,
         userCreated = "migration",
         userUpdated = "migration",
-        disabled = false,
         fields = schema0.fields.map(convertSchemaField(_, Nil))
       )
 
-      Serializer1.serialize(schema1)
+      Serializer1.serializeSchema(schema1)
     } catch {
       case NonFatal(e) =>
-        log.warn(s"Encountered a serialization error: ${e.getMessage}")
+        log.warn(s"Encountered a serialization error for 'schema': ${e.getMessage}")
         InvalidDocument
     }
   })
 
+  transformJSON("mapping_table")(model0Json => {
+    try {
+      val mappingTable0 = Serializer0.deserializeMappingTable(model0Json)
+
+      val defaultValueList = mappingTable0.defaultMappingValue match {
+        case Some(value) => List(DefaultValue("*", value))
+        case None => Nil
+      }
+
+      val mappingTable1 = model1.MappingTable(
+        mappingTable0.name,
+        mappingTable0.version,
+        None,
+        mappingTable0.hdfsPath,
+        mappingTable0.schemaName,
+        mappingTable0.schemaVersion,
+        defaultValueList,
+        ZonedDateTime.now(),
+        "migration",
+        ZonedDateTime.now(),
+        "migration"
+      )
+
+      Serializer1.serializeMappingTable(mappingTable1)
+    } catch {
+      case NonFatal(e) =>
+        log.warn(s"Encountered a serialization error for 'mapping_table': ${e.getMessage}")
+        InvalidDocument
+    }
+  })
 
   /**
     * Converts a Model 0 schema field into Model 1 schema field
