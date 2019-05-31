@@ -15,8 +15,25 @@
 
 package za.co.absa.enceladus.migrations.migrations.model0
 
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id
+import com.fasterxml.jackson.annotation._
+import org.mongodb.scala.bson.ObjectId
+
 package object conformanceRule {
 
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_t")
+  @JsonSubTypes(Array(
+    new Type(value = classOf[CastingConformanceRule], name = "CastingConformanceRule"),
+    new Type(value = classOf[ConcatenationConformanceRule], name = "ConcatenationConformanceRule"),
+    new Type(value = classOf[DropConformanceRule], name = "DropConformanceRule"),
+    new Type(value = classOf[LiteralConformanceRule], name = "LiteralConformanceRule"),
+    new Type(value = classOf[MappingConformanceRule], name = "MappingConformanceRule"),
+    new Type(value = classOf[NegationConformanceRule], name = "NegationConformanceRule"),
+    new Type(value = classOf[SingleColumnConformanceRule], name = "SingleColumnConformanceRule"),
+    new Type(value = classOf[SparkSessionConfConformanceRule], name = "SparkSessionConfConformanceRule"),
+    new Type(value = classOf[UppercaseConformanceRule], name = "UppercaseConformanceRule")
+  ))
   sealed trait ConformanceRule {
     val order: Int
     val outputColumn: String
@@ -33,7 +50,7 @@ package object conformanceRule {
                                            order: Int,
                                            outputColumn: String,
                                            controlCheckpoint: Boolean,
-                                           inputColumns: String*) extends ConformanceRule
+                                           inputColumns: Seq[String]) extends ConformanceRule
 
   case class DropConformanceRule(
                                   order: Int,

@@ -15,19 +15,44 @@
 
 package za.co.absa.enceladus.migrations.migrations.model0
 
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.json4s.jackson.Serialization
-import org.json4s.{Formats, NoTypeHints}
+import org.json4s.{DefaultFormats, Formats, NoTypeHints, ShortTypeHints}
+import za.co.absa.enceladus.migrations.migrations.model0.conformanceRule._
+import org.mongodb.scala.bson.codecs.Macros._
 
 /**
   * This is the object for deserializing Model 0 version of Enceladus Schema
   */
 object Serializer0 {
-  implicit private val formatsJson: Formats = Serialization.formats(NoTypeHints).withBigDecimal
+  //implicit private val formatsJson: Formats = Serialization.formats(NoTypeHints).withBigDecimal
+  private val formatsDefault: Formats = DefaultFormats.withHints(NoTypeHints)
+
+  private val formatsDataset: Formats = DefaultFormats.withHints(ShortTypeHints(List(
+    classOf[ConformanceRule],
+    classOf[MappingConformanceRule],
+    classOf[LiteralConformanceRule],
+    classOf[ConcatenationConformanceRule],
+    classOf[DropConformanceRule],
+    classOf[SparkSessionConfConformanceRule],
+    classOf[UppercaseConformanceRule],
+    classOf[SingleColumnConformanceRule],
+    classOf[CastingConformanceRule],
+    classOf[NegationConformanceRule]
+  )))
+
+  private val objectMapper = new ObjectMapper()
+    .registerModule(DefaultScalaModule)
+    .registerModule(new JavaTimeModule())
+    .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 
   /**
     * Deserializes a Model 0 schema JSON
     */
   def deserializeSchema(json: String): Schema = {
+    implicit val formats: Formats = formatsDefault
     Serialization.read[Schema](json)
   }
 
@@ -35,7 +60,17 @@ object Serializer0 {
     * Deserializes a Model 0 mapping table JSON
     */
   def deserializeMappingTable(json: String): MappingTable = {
+    implicit val formats: Formats = formatsDefault
     Serialization.read[MappingTable](json)
+  }
+
+  /**
+    * Deserializes a Model 0 dataset JSON
+    */
+  def deserializeDataset(json: String): Dataset = {
+    //implicit val formats: Formats = formatsDataset
+    //Serialization.read[Dataset](json)
+    objectMapper.readValue(json, classOf[Dataset])
   }
 
 }

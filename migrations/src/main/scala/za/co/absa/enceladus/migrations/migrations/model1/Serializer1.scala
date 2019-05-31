@@ -28,7 +28,7 @@ import org.json4s.{Formats, NoTypeHints}
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros._
-
+import za.co.absa.enceladus.migrations.migrations.model1.conformanceRule._
 
 /**
   * This is the object for deserializing Model 1 version of Enceladus Schema
@@ -43,11 +43,16 @@ object Serializer1 {
 
   private val codecRegistry = fromRegistries(fromProviders(
     classOf[Schema], classOf[SchemaField],
-    classOf[MappingTable], classOf[DefaultValue], classOf[MenasReference]),
+    classOf[MappingTable], classOf[DefaultValue], classOf[MenasReference],
+    classOf[Dataset], classOf[ConcatenationConformanceRule],
+    classOf[MappingConformanceRule], classOf[LiteralConformanceRule], classOf[ConcatenationConformanceRule],
+    classOf[DropConformanceRule], classOf[SparkSessionConfConformanceRule], classOf[UppercaseConformanceRule],
+    classOf[SingleColumnConformanceRule], classOf[CastingConformanceRule], classOf[NegationConformanceRule]),
     CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
 
   private val schemaCodec: Codec[Schema] = codecRegistry.get(classOf[Schema])
   private val mappingTableCodec: Codec[MappingTable] = codecRegistry.get(classOf[MappingTable])
+  private val datasetCodec: Codec[Dataset] = codecRegistry.get(classOf[Dataset])
 
   /**
     * Serializes a Model 1 schema JSON
@@ -93,6 +98,26 @@ object Serializer1 {
     */
   def deserializeMappingTable(json: String): MappingTable = {
     objectMapper.readValue(json, classOf[MappingTable])
+  }
+
+  /**
+    * Serializes a Model 1 dataset JSON
+    */
+  def serializeDataset(dataset: Dataset): String = {
+    val bsonDocument = new BsonDocument
+    val bsonWriter = new BsonDocumentWriter(bsonDocument)
+    val encodeContext = EncoderContext.builder.build
+
+    datasetCodec.encode(bsonWriter, dataset, encodeContext)
+
+    bsonDocument.toJson
+  }
+
+  /**
+    * Deserializes a Model 1 dataset JSON
+    */
+  def deserializeDataset(json: String): Dataset = {
+    objectMapper.readValue(json, classOf[Dataset])
   }
 
 }

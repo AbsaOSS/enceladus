@@ -127,6 +127,10 @@ trait CollectionMigration extends Migration {
   private def applyAddCollections(db: DocumentDb): Unit = {
     collectionsToAdd.foreach(c => {
       val newCollection = MigrationUtils.getVersionedCollectionName(c, targetVersion)
+      if (db.isCollectionExists(newCollection)) {
+        log.info(s"Dropping existing collection $newCollection")
+        db.dropCollection(newCollection)
+      }
       log.info(s"Adding new collection $newCollection")
       db.createCollection(newCollection)
     })
