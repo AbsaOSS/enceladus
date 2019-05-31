@@ -310,7 +310,7 @@ sap.ui.define([
       if(currSchedule) {
         this._model.setProperty("/newSchedule", jQuery.extend(true, {}, currSchedule));
       } else {
-        this._model.setProperty("/newSchedule", {scheduleTiming: {}, runtimeParams: {}, rawFormat: {}});
+        this._model.setProperty("/newSchedule", jQuery.extend(true, {}, this._model.getProperty("/newScheduleDefault")));
       }
     },
     

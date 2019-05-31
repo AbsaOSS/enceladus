@@ -14,7 +14,7 @@
  */
 
 var model = new sap.ui.model.json.JSONModel({
-  userInfo : {},
+  userInfo: {},
   schemas: [],
   mappingTables: [],
   currentSchema: {},
@@ -25,13 +25,31 @@ var model = new sap.ui.model.json.JSONModel({
   appInfo: {
     oozie: {}
   },
-  newSchedule: {scheduleTiming: {}, runtimeParams: {}},
-  supportedDataFormats: [
-    {key: "xml", name: "XML"},
-    {key: "csv", name: "CSV"},
-    {key: "parquet", name: "Parquet"},
-    {key: "fixed-width", name: "Fixed Width"},
-  ]
+  newScheduleDefault: {
+    scheduleTiming: {},
+    runtimeParams: {
+      stdNumExecutors: 2,
+      stdExecutorMemory: 2,
+      confNumExecutors: 2,
+      confExecutorMemory: 2,
+      driverCores: 1,
+      driverMemory: 2
+    },
+    rawFormat: {}
+  },
+  supportedDataFormats: [{
+    key: "xml",
+    name: "XML"
+  }, {
+    key: "csv",
+    name: "CSV"
+  }, {
+    key: "parquet",
+    name: "Parquet"
+  }, {
+    key: "fixed-width",
+    name: "Fixed Width"
+  }, ]
 })
 
 model.setSizeLimit(5000)
