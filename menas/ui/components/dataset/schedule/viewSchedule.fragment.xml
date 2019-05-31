@@ -67,8 +67,8 @@
         <Label text="CSV Delimiter" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'csv' }"></Label>
         <Text text="{/currentDataset/schedule/rawFormat/csvDelimiter}" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'csv' }" />
         <Label text="CSV Header" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'csv' }"></Label>
-        <CheckBox selected="{/currentDataset/schedule/rawFormat/csvHeader}" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'csv' }" />
+        <CheckBox enabled="false" selected="{/currentDataset/schedule/rawFormat/csvHeader}" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'csv' }" />
         <Label text="Trim Values" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'fixed-width' }"></Label>
-        <CheckBox selected="{/currentDataset/schedule/rawFormat/trimValues}" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'fixed-width' }" />
+        <CheckBox enabled="false" selected="{/currentDataset/schedule/rawFormat/trimValues}" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'fixed-width' }" />
     </form:SimpleForm>
 </core:FragmentDefinition>
