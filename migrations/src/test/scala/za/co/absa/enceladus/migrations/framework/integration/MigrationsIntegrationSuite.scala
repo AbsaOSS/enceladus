@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.migrations.framework.integration
 
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.migrations.framework.Constants.DatabaseVersionCollectionName
 import za.co.absa.enceladus.migrations.framework.Migrator
 import za.co.absa.enceladus.migrations.framework.integration.fixture.MigrationsFixture
 import za.co.absa.enceladus.migrations.framework.integration.data.IntegrationTestData
@@ -28,11 +29,11 @@ class MigrationsIntegrationSuite extends FunSuite with MigrationsFixture {
   test("Test a migration") {
     val mig = new Migrator(db, Migration0 :: Migration1 :: Nil)
 
-    assert(!db.isCollectionExists("db_version"))
+    assert(!db.isCollectionExists(DatabaseVersionCollectionName))
 
     mig.migrate(1)
 
-    assert(db.isCollectionExists("db_version"))
+    assert(db.isCollectionExists(DatabaseVersionCollectionName))
     assert(db.getVersion() == 1)
 
     assert(db.isCollectionExists("foo1"))
