@@ -18,7 +18,7 @@ package za.co.absa.enceladus.migrations.migrations
 import java.time.ZonedDateTime
 
 import org.apache.log4j.{LogManager, Logger}
-import za.co.absa.enceladus.migrations.framework.migration.{CollectionMigration, CommandMigration, JsonMigration, MigrationBase}
+import za.co.absa.enceladus.migrations.framework.migration._
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 import za.co.absa.enceladus.migrations.migrations.model1.{DefaultValue, Serializer1}
 
@@ -30,6 +30,7 @@ import scala.util.control.NonFatal
 object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration {
 
   private val log: Logger = LogManager.getLogger(this.getClass)
+  private val migrationUserName = "migration"
 
   override val targetVersion: Int = 1
 
@@ -43,8 +44,8 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
         schema0.name,
         schema0.version,
         None,
-        userCreated = "migration",
-        userUpdated = "migration",
+        userCreated = migrationUserName,
+        userUpdated = migrationUserName,
         fields = schema0.fields.map(convertSchemaField(_, Nil))
       )
 
@@ -74,9 +75,9 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
         mappingTable0.schemaVersion,
         defaultValueList,
         ZonedDateTime.now(),
-        "migration",
+        migrationUserName,
         ZonedDateTime.now(),
-        "migration"
+        migrationUserName
       )
 
       Serializer1.serializeMappingTable(mappingTable1)
@@ -87,41 +88,38 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
     }
   })
 
-  /*runCommand("dataset")(versionedCollectionName => {
-
-    ???
-  })*/
-
   transformJSON("dataset")(model0Json => {
     val fixJson = model0Json.replaceAll("\"jsonClass\" :", "\"_t\" :")
 
-    val dataset0 = Serializer0.deserializeDataset(fixJson)
+    try {
+      val dataset0 = Serializer0.deserializeDataset(fixJson)
 
-    val dataset1 = model1.Dataset(
-      dataset0.name,
-      dataset0.version,
-      None,
-      dataset0.hdfsPath,
-      dataset0.hdfsPublishPath,
-      dataset0.schemaName,
-      dataset0.schemaVersion,
-      ZonedDateTime.now(),
-      "migration",
-      ZonedDateTime.now(),
-      "migration",
-      conformance = dataset0.conformance.map(convertConformanceRule)
-    )
+      val dataset1 = model1.Dataset(
+        dataset0.name,
+        dataset0.version,
+        None,
+        dataset0.hdfsPath,
+        dataset0.hdfsPublishPath,
+        dataset0.schemaName,
+        dataset0.schemaVersion,
+        ZonedDateTime.now(),
+        migrationUserName,
+        ZonedDateTime.now(),
+        migrationUserName,
+        conformance = dataset0.conformance.map(convertConformanceRule)
+      )
 
-    Serializer1.serializeDataset(dataset1)
-
-    /*try {
+      Serializer1.serializeDataset(dataset1)
     } catch {
       case NonFatal(e) =>
         log.warn(s"Encountered a serialization error for 'dataset': ${e.getMessage}")
         InvalidDocument
-    }*/
+    }
   })
 
+  /**
+    * Converts a Model 0 conformance rule into Model 1 conformance rule
+    */
   private def convertConformanceRule(rule: model0.conformanceRule.ConformanceRule): model1.conformanceRule.ConformanceRule = {
     rule match {
       case model0.conformanceRule.CastingConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, outputDataType) =>
@@ -160,28 +158,37 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
     */
   private def convertSchemaField(field0: model0.SchemaField, path: List[String]): model1.SchemaField = {
     field0.`type` match {
-      case "array"  => convertSchemaFieldArray(field0, path :+ field0.name)
+      case "array" => convertSchemaFieldArray(field0, path :+ field0.name)
       case "struct" => convertSchemaFieldStruct(field0, path :+ field0.name)
-      case _        => convertSchemaFieldPrimitive(field0, path :+ field0.name)
+      case _ => convertSchemaFieldPrimitive(field0, path :+ field0.name)
     }
   }
 
+  /**
+    * Schema field conversion helper for primitive fields
+    */
   private def convertSchemaFieldPrimitive(field0: model0.SchemaField, path: List[String]): model1.SchemaField = {
     model1.SchemaField(field0.name, field0.`type`, path.mkString("."), field0.elementType, field0.containsNull,
       field0.nullable, field0.metadata, Nil)
   }
 
+  /**
+    * Schema field conversion helper for struct fields
+    */
   private def convertSchemaFieldStruct(field0: model0.SchemaField, path: List[String]): model1.SchemaField = {
     model1.SchemaField(field0.name, field0.`type`, path.mkString("."), field0.elementType, field0.containsNull,
       field0.nullable, field0.metadata, field0.children.map(convertSchemaField(_, path)))
   }
 
+  /**
+    * Schema field conversion helper for array fields
+    */
   private def convertSchemaFieldArray(field0: model0.SchemaField, path: List[String]): model1.SchemaField = {
     field0.elementType.get match {
-      case "array"  => convertSchemaFieldArray(field0, path)
+      case "array" => convertSchemaFieldArray(field0, path)
       case "struct" =>
         convertSchemaFieldStruct(field0, path)
-      case _        =>
+      case _ =>
         model1.SchemaField(field0.name, field0.`type`, path.mkString("."), field0.elementType, field0.containsNull,
           field0.nullable, field0.metadata, Nil)
     }

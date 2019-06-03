@@ -69,6 +69,12 @@ class UseCaseTestData {
     })
   }
 
+  object Migration3err extends MigrationBase with CollectionMigration  {
+    override val targetVersion: Int = 3
+
+    addCollection("attachment")
+  }
+
   private def initializeDb(): Unit = {
     db.createCollection("schema")
     db.createCollection("dataset")

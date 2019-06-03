@@ -122,4 +122,17 @@ class MigrationUseCaseSuite extends FunSuite {
     assert(!db.isCollectionExists("mappingtable_v1"))
   }
 
+  test("Test a migration that tries to add a collection that already exists") {
+    val testData = new UseCaseTestData
+
+    import testData._
+
+    val mig = new Migrator(db, Migration0 :: Migration1 :: Migration2 :: Migration3err :: Nil)
+
+    assert(intercept[IllegalStateException] {
+      mig.migrate(3)
+    }.getMessage contains "Attempt to add a collection that already exists")
+
+  }
+
 }

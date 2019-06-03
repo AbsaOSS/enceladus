@@ -160,7 +160,7 @@ trait CollectionMigration extends Migration {
   abstract override def validate(collectionNames: Seq[String]): Unit = {
     super.validate(collectionNames)
     collectionsToAdd.foreach(collectionToMigrate =>
-      if (!collectionNames.contains(collectionToMigrate)) {
+      if (collectionNames.contains(collectionToMigrate)) {
         throw new IllegalStateException(
           s"Attempt to add a collection that already exists in db version ${targetVersion - 1}: $collectionToMigrate.")
       }
@@ -177,7 +177,7 @@ trait CollectionMigration extends Migration {
           throw new IllegalStateException(
             s"Attempt to rename a collection that does not exist: $oldName.")
         }
-        if (!collectionNames.contains(newName)) {
+        if (collectionNames.contains(newName)) {
           throw new IllegalStateException(
             s"Attempt to rename a collection to a one that already exists in db version ${targetVersion - 1}: " +
               s"$newName.")

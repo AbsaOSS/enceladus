@@ -152,6 +152,16 @@ class MongoDb (db: MongoDatabase) extends DocumentDb {
   }
 
   /**
+    * Returns the number of documents in the specified collection.
+    */
+  override def getDocumentsCount(collectionName: String): Long = {
+    if (!isCollectionExists(collectionName)) {
+      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
+    }
+    db.getCollection(collectionName).countDocuments().execute()
+  }
+
+  /**
     * Inserts a document into a collection.
     */
   override def insertDocument(collectionName: String, document: String): Unit = {

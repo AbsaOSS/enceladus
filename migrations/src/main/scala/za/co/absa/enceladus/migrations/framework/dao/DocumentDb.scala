@@ -62,6 +62,11 @@ abstract class DocumentDb {
   def cloneCollection(collectionName: String, newCollectionName: String): Unit
 
   /**
+    * Returns the number of documents in the specified collection.
+    */
+  def getDocumentsCount(collectionName: String): Long
+
+  /**
     * Inserts a document into a collection.
     */
   def insertDocument(collectionName: String, document: String): Unit

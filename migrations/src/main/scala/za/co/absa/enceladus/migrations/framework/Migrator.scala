@@ -42,6 +42,8 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     * @param targetDbVersion A version of the database to migrate to
     */
   def migrate(targetDbVersion: Int): Unit = {
+    validate(targetDbVersion)
+
     val sourceDbVersion = db.getVersion()
     validateDbVersios(sourceDbVersion, targetDbVersion)
 
@@ -127,7 +129,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
       throw new IllegalStateException("No collection names are registered for db version 0.")
     }
 
-    for (i <- 0 until targetDbVersion) {
+    for (i <- 1 to targetDbVersion) {
       val migrationsToExecute = migrations.filter(m => m.targetVersion == i)
       migrationsToExecute.foreach(_.validate(currentVersionCollections))
       migrationsToExecute.foreach(m =>

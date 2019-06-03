@@ -28,6 +28,7 @@ object MigrationTestDoubles {
     override def isCollectionExists(collectionName: String): Boolean = true
     override def createCollection(collectionName: String): Unit = {}
     override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {}
+    override def getDocumentsCount(collectionName: String): Long = 0
     override def insertDocument(collectionName: String, document: String): Unit = {}
     override def executeCommand(query: String): Unit = {}
     override def getDocuments(collectionName: String): Iterator[String] = List[String]().toIterator
