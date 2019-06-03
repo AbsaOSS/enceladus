@@ -55,6 +55,8 @@ trait JsonMigration extends Migration {
   private val log: Logger = LogManager.getLogger("JsonMigration")
   val InvalidDocument = ""
 
+  private val transformers = new mutable.HashMap[String, DocumentTransformer]()
+
   /**
     * This function is used by derived classes to add transformations for affected collections.
     * This is used for complex migrations that requite complex model version maps.
@@ -104,6 +106,9 @@ trait JsonMigration extends Migration {
     }
   }
 
+  /**
+    * Validate preconditions for this type of migration to run.
+    */
   override protected def validateMigration(): Unit = {
     if (targetVersion <= 0) {
       throw new IllegalStateException("The target version of a JsonMigration should be greater than 0.")
@@ -122,28 +127,49 @@ trait JsonMigration extends Migration {
 
     val documents = db.getDocuments(sourceCollection)
     val transformer = transformers(collectionName)
-    var numberOfBugusDocuments = 0
+    var invalidDocumentsCount = 0
 
     documents.foreach(doc => {
       val newDocument = transformer(doc)
       if (newDocument.nonEmpty) {
         db.insertDocument(targetCollection, transformer(doc))
       } else {
-        numberOfBugusDocuments += 1
+        invalidDocumentsCount += 1
         log.warn(s"Encountered a bogus document: $doc")
       }
     })
+    logMigrationStatistics(db, sourceCollection, targetCollection, invalidDocumentsCount)
+  }
 
-    if (numberOfBugusDocuments > 0) {
-      log.warn(s"Total number of bogus documents encountered: $numberOfBugusDocuments")
+  /**
+    * Logs statistics about the number of migrated documents processed.
+    */
+  private def logMigrationStatistics(db: DocumentDb,
+                                     sourceCollection: String,
+                                     targetCollection: String,
+                                     invalidDocumentsCount: Int): Unit = {
+    val sourceDocsCnt = db.getDocumentsCount(sourceCollection)
+    val targetDocsCnt = db.getDocumentsCount(targetCollection)
+    if (invalidDocumentsCount == 0) {
+      log.info(s"Migration '$sourceCollection' -> '$targetCollection' completed successfully. " +
+        s"Total documents migrated: $targetDocsCnt.")
+    } else {
+      if (invalidDocumentsCount == sourceDocsCnt) {
+        log.error(s"Migration '$sourceCollection' -> '$targetCollection' failed. " +
+          s"Unable to convert any of $sourceDocsCnt documents.")
+      } else {
+        log.warn(s"Migration '$sourceCollection' -> '$targetCollection' completed with errors. $targetDocsCnt out of " +
+          s"$sourceDocsCnt were migrated. The number of invalid documents: $invalidDocumentsCount.")
+      }
     }
   }
 
+  /**
+    * Ensures a collection is empty.
+    */
   private def ensureCollectionEmpty(db: DocumentDb, collectionName: String): Unit = {
     if (db.isCollectionExists(collectionName)) {
       db.emptyCollection(collectionName)
     }
   }
-
-  private val transformers = new mutable.HashMap[String, DocumentTransformer]()
 }

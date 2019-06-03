@@ -84,6 +84,13 @@ class DocumentDbMock extends DocumentDb {
     actionsExecuted += s"clone($collectionName,$newCollectionName)"
   }
 
+  override def getDocumentsCount(collectionName: String): Long = {
+    if (!isCollectionExists(collectionName)) {
+      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
+    }
+    db(collectionName).size
+  }
+
   override def insertDocument(collectionName: String, document: String): Unit = {
     if (!isCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")

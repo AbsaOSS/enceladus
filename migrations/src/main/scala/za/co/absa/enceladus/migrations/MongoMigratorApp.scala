@@ -23,16 +23,17 @@ import za.co.absa.enceladus.migrations.migrations.{MigrationToV0, MigrationToV1}
 object MongoMigratorApp {
 
   def main(args: Array[String]) {
-    val mongoConnectionString = "mongodb://localhost:27017"
-    val integrationTestDbName = "menas"
+    val mongoConnectionString = if (args.length>0) args(0) else "mongodb://localhost:27017"
+    val integrationTestDbName = if (args.length>1) args(1) else "menas"
+    val targetVersion = if (args.length>2) args(2).toInt else 1
 
     val mongoClient = MongoClient(mongoConnectionString)
     val db = new MongoDb(mongoClient.getDatabase(integrationTestDbName))
 
     val mig = new Migrator(db, MigrationToV0 :: MigrationToV1 :: Nil)
 
-    mig.validate(1)
-    mig.migrate(1)
+    mig.validate(targetVersion)
+    mig.migrate(targetVersion)
   }
 
 }
