@@ -20,12 +20,24 @@ import za.co.absa.enceladus.migrations.framework.Migrator
 import za.co.absa.enceladus.migrations.framework.dao.{MongoDb, ScalaMongoImplicits}
 import za.co.absa.enceladus.migrations.migrations.{MigrationToV0, MigrationToV1}
 
+/**
+  * This is a command line tool for running migrations on a MongoDb database.
+  *
+  * Syntax:
+  *   java -cp enceladus-migrations.jar za.co.absa.enceladus.migrations.MongoMigratorApp <MongoDbURL> <DbName> <TargetVersion>
+  */
 object MongoMigratorApp {
 
   def main(args: Array[String]) {
-    val mongoConnectionString = if (args.length>0) args(0) else "mongodb://localhost:27017"
-    val integrationTestDbName = if (args.length>1) args(1) else "menas"
-    val targetVersion = if (args.length>2) args(2).toInt else 1
+    if (args.length < 3) {
+      println("Syntax:")
+      println("\tjava -cp enceladus-migrations.jar za.co.absa.enceladus.migrations.MongoMigratorApp " +
+        "<MongoDbURL> <DbName> <TargetVersion>")
+      System.exit(1)
+    }
+    val mongoConnectionString = args(0)
+    val integrationTestDbName = args(1)
+    val targetVersion = args(2).toInt
 
     val mongoClient = MongoClient(mongoConnectionString)
     val db = new MongoDb(mongoClient.getDatabase(integrationTestDbName))
