@@ -30,7 +30,7 @@ object MigrationUtils {
     if (dbVersion == 0) {
       collectionName
     } else {
-      s"$collectionName${Constants.DatabaseVersionPrefix}$dbVersion"
+      s"$collectionName${Constants.DatabaseVersionPostfix}$dbVersion"
     }
   }
 

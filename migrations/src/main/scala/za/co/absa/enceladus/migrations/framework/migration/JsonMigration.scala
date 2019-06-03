@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.migrations.framework.migration
 
 import org.apache.log4j.{LogManager, Logger}
-import za.co.absa.enceladus.migrations.framework.MigrationUtils
+import za.co.absa.enceladus.migrations.framework.{MigrationUtils, ObjectIdTools}
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
 import scala.collection.mutable
@@ -130,9 +130,10 @@ trait JsonMigration extends Migration {
     var invalidDocumentsCount = 0
 
     documents.foreach(doc => {
-      val newDocument = transformer(doc)
+      val oid = ObjectIdTools.getObjectIdFromDocument(doc)
+      val newDocument = ObjectIdTools.putObjectIdIfNotPresent(transformer(doc), oid)
       if (newDocument.nonEmpty) {
-        db.insertDocument(targetCollection, transformer(doc))
+        db.insertDocument(targetCollection, newDocument)
       } else {
         invalidDocumentsCount += 1
         log.warn(s"Encountered a bogus document: $doc")

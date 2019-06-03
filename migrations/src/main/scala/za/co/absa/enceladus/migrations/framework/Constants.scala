@@ -17,7 +17,17 @@ package za.co.absa.enceladus.migrations.framework
 
 object Constants {
 
-  val MigrationsCollectionName = "evolutions"
-  val DatabaseVersionPrefix = "_v"
+  /**
+    * The name of the collection that keeps the latest usable database schema version.
+    */
+  val DatabaseVersionCollectionName = "db_version"
+
+  /**
+    * The collection postfix to use for a non-zero model version.
+    *
+    * For instance, if the collection's base name is 'dataset', for model version 0 the collection name will
+    * be 'dataset', for version 1 it will be 'dataset_v1', for version 2 it will be 'dataset_v2', etc.
+    */
+  val DatabaseVersionPostfix = "_v"
 
 }

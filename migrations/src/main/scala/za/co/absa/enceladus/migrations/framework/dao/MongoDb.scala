@@ -23,13 +23,13 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.{MongoCollection, MongoDatabase, MongoNamespace}
 import za.co.absa.enceladus.migrations.framework.model.DbVersion
+import za.co.absa.enceladus.migrations.framework.Constants.DatabaseVersionCollectionName
 
 import scala.reflect.ClassTag
 
 class MongoDb (db: MongoDatabase) extends DocumentDb {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
-  val dbVersionCollectionName = "db_version"
   val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[DbVersion]), DEFAULT_CODEC_REGISTRY)
 
   // This adds .execute() method to observables
@@ -42,23 +42,23 @@ class MongoDb (db: MongoDatabase) extends DocumentDb {
     * If there is no such a collection the version of the database is assumed to be 0.
     */
   override def getVersion(): Int = {
-    if (!isCollectionExists(dbVersionCollectionName)) {
+    if (!isCollectionExists(DatabaseVersionCollectionName)) {
       setVersion(0)
     }
 
-    val versions = getCollection(dbVersionCollectionName)
+    val versions = getCollection(DatabaseVersionCollectionName)
       .find[DbVersion]()
       .execute()
 
     if (versions.isEmpty) {
-      getCollection[DbVersion](dbVersionCollectionName)
+      getCollection[DbVersion](DatabaseVersionCollectionName)
         .insertOne(DbVersion(0))
         .execute()
       0
     } else if (versions.lengthCompare(1) != 0) {
       val len = versions.length
       throw new IllegalStateException(
-        s"Unexpected number of documents in '$dbVersionCollectionName'. Expected 1, got $len")
+        s"Unexpected number of documents in '$DatabaseVersionCollectionName'. Expected 1, got $len")
     } else {
       versions.head.version
     }
@@ -72,13 +72,13 @@ class MongoDb (db: MongoDatabase) extends DocumentDb {
     * If there is no such a collection the version of the database is assumed to be 0.
     */
   override def setVersion(version: Int): Unit = {
-    if (!isCollectionExists(dbVersionCollectionName)) {
-      createCollection(dbVersionCollectionName)
-      getCollection[DbVersion](dbVersionCollectionName)
+    if (!isCollectionExists(DatabaseVersionCollectionName)) {
+      createCollection(DatabaseVersionCollectionName)
+      getCollection[DbVersion](DatabaseVersionCollectionName)
         .insertOne(DbVersion(version))
         .execute()
     } else {
-      getCollection[DbVersion](dbVersionCollectionName)
+      getCollection[DbVersion](DatabaseVersionCollectionName)
         .replaceOne(new BsonDocument, DbVersion(version))
         .execute()
     }
@@ -216,7 +216,7 @@ class MongoDb (db: MongoDatabase) extends DocumentDb {
     * Returns a collection that is serialized as a case class.
     */
   private def getCollection[T](collectionName: String)(implicit ct: ClassTag[T]): MongoCollection[T] = {
-    db.getCollection[T](dbVersionCollectionName)
+    db.getCollection[T](DatabaseVersionCollectionName)
       .withCodecRegistry(codecRegistry)
   }
 }

@@ -16,6 +16,19 @@
 package za.co.absa.enceladus
 
 package object model {
-  val ModelVersion = 1
-  val CollectionPostfix = s"_v$ModelVersion"
+
+  /**
+    * The version of the data model.
+    *
+    * Each model version is expected to have a different schema.
+    */
+  final val ModelVersion = 1
+
+  /**
+    * The collection postfix to use for a non-zero model version.
+    *
+    * For instance, if the collection's base name is 'dataset', for model version 0 the collection name will
+    * be 'dataset', for version 1 it will be 'dataset_v1', for version 2 it will be 'dataset_v2', etc.
+    */
+  final val CollectionPostfix = s"_v$ModelVersion"
 }
