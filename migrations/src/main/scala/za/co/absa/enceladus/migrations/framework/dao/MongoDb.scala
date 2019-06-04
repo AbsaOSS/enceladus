@@ -28,6 +28,12 @@ import za.co.absa.enceladus.migrations.framework.Constants.DatabaseVersionCollec
 
 import scala.reflect.ClassTag
 
+/**
+  * This is a MongoDB implementation of the document DB API needed for migration framework to run.
+  *
+  * The implementation depends on MongoDB Scala driver. An instance of Scala Mongo Database is expected to be
+  * passed as a constructor parameter.
+  */
 class MongoDb(db: MongoDatabase) extends DocumentDb {
   private val log: Logger = LogManager.getLogger(this.getClass)
 

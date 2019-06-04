@@ -32,7 +32,7 @@ import scala.collection.mutable.ListBuffer
   * 'schema_v5' or 'dataset_v5'.
   *
   * {{{
-  *   class MigrationTo1 extends MigrationBase with CommandMigration {
+  *   object MigrationTo1 extends MigrationBase with CommandMigration {
   *
   *     runCommand("collection1_name") ( versionedCollectionName => {
   *       s"""
@@ -118,6 +118,9 @@ trait CommandMigration extends Migration {
     }
   }
 
+  /**
+    * Validate if migration parameters are specified properly.
+    */
   override protected def validateMigration(): Unit = {
     if (targetVersion < 0) {
       throw new IllegalStateException("The target version of a CommandMigration should be 0 or bigger.")

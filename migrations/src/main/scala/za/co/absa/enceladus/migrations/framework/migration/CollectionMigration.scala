@@ -28,7 +28,7 @@ import scala.collection.mutable.ListBuffer
   * collection changes:
   *
   * {{{
-  *   class MigrationTo1 extends MigrationBase with CollectionMigration {
+  *   object MigrationTo1 extends MigrationBase with CollectionMigration {
   *
   *     addCollection("collection1_name")
   *     addCollection("collection2_name")
@@ -37,6 +37,9 @@ import scala.collection.mutable.ListBuffer
   *     removeCollection("collection4_name")
   *     removeCollection("collection5_name")
   *     removeCollection("collection6_name")
+  *
+  *     createIndex("collection1_name", "foo1" :: "bar1" :: Nil)
+  *     dropIndex("collection2_name", "foo2" :: "bar2" :: Nil)
   *   }
   * }}}
   */
@@ -153,6 +156,9 @@ trait CollectionMigration extends Migration {
     applyIndexCreate(db)
   }
 
+  /**
+    * Applies additions of new collections to the provided database.
+    */
   private def applyCreateCollections(db: DocumentDb): Unit = {
     collectionsToCreate.foreach(c => {
       val newCollection = MigrationUtils.getVersionedCollectionName(c, targetVersion)
@@ -165,6 +171,9 @@ trait CollectionMigration extends Migration {
     })
   }
 
+  /**
+    * Applies collection removals to the provided database.
+    */
   private def applyDropCollections(db: DocumentDb): Unit = {
     collectionsToDrop.foreach(c => {
       val collection = MigrationUtils.getVersionedCollectionName(c, targetVersion)
@@ -173,6 +182,9 @@ trait CollectionMigration extends Migration {
     })
   }
 
+  /**
+    * Applies collection renames to the provided database.
+    */
   private def applyRenameCollection(db: DocumentDb): Unit = {
     collectionsToRename.foreach {
       case (oldName, newName) =>
@@ -183,6 +195,9 @@ trait CollectionMigration extends Migration {
     }
   }
 
+  /**
+    * Applies indexes creation the provided database.
+    */
   private def applyIndexCreate(db: DocumentDb): Unit = {
     indexesToCreate.foreach {
       case (collectionName, keys) =>
@@ -192,6 +207,9 @@ trait CollectionMigration extends Migration {
     }
   }
 
+  /**
+    * Applies indexes removals the provided database.
+    */
   private def applyIndexDrop(db: DocumentDb): Unit = {
     indexesToDrop.foreach {
       case (collectionName, keys) =>
@@ -252,6 +270,9 @@ trait CollectionMigration extends Migration {
     }
   }
 
+  /**
+    * Validate if migration parameters are specified properly.
+    */
   override protected def validateMigration(): Unit = {
     if (targetVersion < 0) {
       throw new IllegalStateException("The target version of a CollectionMigration should be 0 or bigger.")

@@ -15,6 +15,25 @@
 
 package za.co.absa.enceladus.migrations.framework
 
+/**
+  * The Object Id tools are used to fetch and inject an Object Ids from/to a JSON documents according
+  * to expectations of MongoDB.
+  *
+  * Tools work directly with JSON strings and do not depend on a way the way they are serialized.
+  *
+  * The motivation for these tools is to be able to transparently retain Object Ids of documents while
+  * doing JSON to JSON transformations during a migration.
+  *
+  * Data model usually don't contain Object Ids since it is storage-layer-specific thing. So if a JSON
+  * to JSON transformation is done through deserialization from an old model, copying to the new model, and
+  * subsequent serialization to a new JSON, the Object Ids will likely to get lost.
+  *
+  * The purpose of these tools is to extract Object Ids directly from MongoDB JSON documents and inject them
+  * into the output JSON documents, if no Object Id is there.
+  *
+  * If a source JSON string does not contain an Object Id (if a different storage layer is used, for instance),
+  * nothing will be injected into the target JSON.
+  */
 object ObjectIdTools {
   /**
     * Gets a MongoDB Object Id from a JSON string if it has one.

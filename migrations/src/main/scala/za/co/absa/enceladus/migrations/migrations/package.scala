@@ -19,7 +19,7 @@ import za.co.absa.enceladus.migrations.framework.migration.Migration
 
 package object migrations {
   /**
-    * This is the list of currently available migrations for the current data model
+    * This is the list of currently available migrations for the current Menas data model
     */
   val Migrations: List[Migration] = MigrationToV0 :: MigrationToV1 :: Nil
 }

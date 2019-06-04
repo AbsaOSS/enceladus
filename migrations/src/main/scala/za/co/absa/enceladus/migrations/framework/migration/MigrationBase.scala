@@ -19,6 +19,20 @@ import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
+/**
+  * This is the base abstract class each concrete migration should inherit from.
+  *
+  * The base class does not do much by itself. It is only responsible for cloning
+  * each collection before any transformation is applied.
+  *
+  * Each migration should use different migration strategies as mixings. For example,
+  * in order to create an instance of JSON to JSON transformer migration you need
+  * to define a migration like this:
+  *
+  * {{{
+  *   object MigrationTo1 extends MigrationBase with JsonMigration {...}
+  * }}}
+  */
 abstract class MigrationBase extends Migration {
   private val log: Logger = LogManager.getLogger("MigrationBase")
 

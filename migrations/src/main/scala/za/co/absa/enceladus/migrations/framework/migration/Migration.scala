@@ -43,5 +43,8 @@ trait Migration {
     */
   def applyCollectionChanges(collections: List[String]): List[String] = collections
 
+  /**
+    * Each migration should be able to validate if its properties are correctly set.
+    */
   protected def validateMigration()
 }
