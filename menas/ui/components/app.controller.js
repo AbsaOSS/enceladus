@@ -91,11 +91,6 @@ sap.ui.define([
       this._app.toMaster(this.createId("mappingTablesPage"));
     },
 
-    onMonitoringPress: function (oEv) {
-      this._eventBus.publish("monitoring", "list");
-      this._app.toMaster(this.createId("monitoringPage"));
-    },
-
     onEntityCreated: function (sTopic, sEvent, oData) {
       this._router.navTo(sTopic, {
         id: oData.name,

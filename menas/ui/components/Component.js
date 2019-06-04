@@ -65,11 +65,6 @@ sap.ui.define([
               name: "mappingTables",
               pattern: "mapping/:id:/:version:",
               target: "mappingTable"
-            },
-            {
-              name: "monitoring",
-              pattern: "monitoring/:id:",
-              target: "monitoring"
             }
           ],
           targets: {
@@ -97,11 +92,6 @@ sap.ui.define([
               viewName: "components.mappingTable.mappingTableDetail",
               viewLevel: 1,
               viewId: "mappingTableDetailView"
-            },
-            monitoring: {
-              viewName: "components.monitoring.monitoringMain",
-              viewLevel: 1,
-              viewId: "monitoringMainView"
             }
           }
         }
