@@ -68,9 +68,18 @@ var MonitoringService = new function() {
     model.setProperty("/barChartHeight", "10rem");
     model.setProperty("/numberOfPoints", 0);
     model.setProperty("/monitoringRunData", []);
-    model.setProperty("/barChartData", []);
-    model.setProperty("/pieChartRecordTotals", []);
-    model.setProperty("/pieChartStatusTotals", [])
+    model.setProperty("/barChartData", {
+      labels: [],
+      datasets: []
+    });
+    model.setProperty("/pieChartRecordTotals", {
+      labels: [],
+      datasets: []
+    });
+    model.setProperty("/pieChartStatusTotals", {
+      labels: [],
+      datasets: []
+    });
   };
 
   this.setMonitoringModel = function(oData){
@@ -99,15 +108,16 @@ var MonitoringService = new function() {
     };
 
     // prepare data for BAR chart of RECORDS per run
+    let datasets = [];
+    recordStatusLabels.map(x => datasets.push({
+      label : x,
+      backgroundColor : recordsStatusAggregator[x].color,
+      data : recordsStatusAggregator[x].recordCounts,
+      stack : "all"}));
     let barChartData = {
       labels: barChartLabels,
-      datasets: recordStatusLabels.map(x => {
-          label = x,
-          backgroundColor = recordsStatusAggregator[x].color,
-          data = recordsStatusAggregator[x].recordCounts,
-          stack = "all"
-      })
-    };
+      datasets: datasets
+      }
 
     // set layout properties
     model.setProperty("/barChartHeight", 10 + 1 * barChartLabels.length + "rem");
@@ -126,7 +136,7 @@ var MonitoringService = new function() {
       MonitoringService.processConformed(oRun);
       return;
     }else if (MonitoringService.standardizationFinishedCorrectly(oRun)) {
-      MonitoringService.processConformed(oRun);
+      MonitoringService.processStandardized(oRun);
       return;
     }else if (MonitoringService.rawRegisteredCorrectly(oRun)){
       MonitoringService.processRaw(oRun);
@@ -226,7 +236,7 @@ var MonitoringService = new function() {
       + encodeURI(sEndDate),
       "GET", {}, function(oData) {
 
-      if (oData != undefined && oData.length != 0) {
+      if (oData.length > 0) {
         for (let oRun of oData) {
           MonitoringService.processRunStatus(oRun);
           MonitoringService.processRecordCounts(oRun)
@@ -243,21 +253,6 @@ var MonitoringService = new function() {
       sap.m.MessageBox
         .error("Failed to get monitoring points. Please wait a moment and try reloading the application")
     })
-  };
-
-
-  this.getDatasetList = function(bLoadFirst) {
-    Functions.ajax("api/dataset/list", "GET", {}, function(oData) {
-      model.setProperty("/datasets", oData)
-    }, function() {
-      sap.m.MessageBox
-          .error("Failed to get the list of datasets. Please wait a moment and try reloading the application")
-    })
-  };
-
-  this.setCurrentDataset = function(oDataset) {
-    oDataset.conformance = oDataset.conformance.sort((first, second) => first.order > second.order);
-    model.setProperty("/currentDataset", oDataset);
   };
 
 }();

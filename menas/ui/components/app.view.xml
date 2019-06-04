@@ -43,7 +43,7 @@
             <mvc:XMLView id="schemasPage" viewName="components.schema.schemaMaster"/>
             <mvc:XMLView id="datasetsPage" viewName="components.dataset.datasetMaster"/>
             <mvc:XMLView id="mappingTablesPage" viewName="components.mappingTable.mappingTableMaster"/>
-            <mvc:XMLView id="monitoringPage" viewName="components.monitoring.monitoringMaster"/>
+            <mvc:XMLView id="monitoringPage" viewName="components.monitoring.monitoringMain"/>
         </masterPages>
     </SplitApp>
 </mvc:View>
