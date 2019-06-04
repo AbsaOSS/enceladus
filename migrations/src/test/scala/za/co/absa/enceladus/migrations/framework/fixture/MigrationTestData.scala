@@ -15,25 +15,26 @@
 
 package za.co.absa.enceladus.migrations.framework.fixture
 
-import za.co.absa.enceladus.migrations.framework.migration.{CollectionMigration, JsonMigration, MigrationBase, CommandMigration}
+import za.co.absa.enceladus.migrations.framework.migration._
 
 object MigrationTestData {
 
   object MigrationExample0 extends MigrationBase with CollectionMigration {
     override val targetVersion: Int = 0
 
-    addCollection("dataset")
-    addCollection("schema")
-    addCollection("mapping")
-    addCollection("foo")
+    createCollection("dataset")
+    createCollection("schema")
+    createCollection("mapping")
+    createCollection("foo")
   }
 
   object MigrationExample1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration {
     override val targetVersion: Int = 1
 
     renameCollection("mapping", "mapping_table")
-    removeCollection("foo")
-    addCollection("attachment")
+    dropCollection("foo")
+    createCollection("attachment")
+    createIndex("dataset", "order" :: Nil)
 
     transformJSON("dataset")(jsonIn => {
       jsonIn + "_transformed"
@@ -60,8 +61,10 @@ object MigrationTestData {
     })
   }
 
-  object MigrationExample3 extends MigrationBase with JsonMigration {
+  object MigrationExample3 extends MigrationBase with JsonMigration with CollectionMigration {
     override val targetVersion: Int = 3
+
+    dropIndex("dataset", "order" :: Nil)
 
     transformJSON("dataset")(jsonIn => {
       jsonIn + "_t1"
@@ -100,7 +103,7 @@ object MigrationTestData {
     override val targetVersion: Int = 3
 
     renameCollection("attachment", "attachment2")
-    removeCollection("attachment")
+    dropCollection("attachment")
   }
 
 }

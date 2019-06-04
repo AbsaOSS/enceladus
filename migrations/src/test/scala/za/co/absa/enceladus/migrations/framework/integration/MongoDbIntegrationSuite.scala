@@ -16,9 +16,10 @@
 package za.co.absa.enceladus.migrations.framework.integration
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.migrations.framework.integration.fixture.MigrationsFixture
+import za.co.absa.enceladus.migrations.framework.integration.fixture.MongoDbFixture
 
-class MongoDbIntegrationSuite extends FunSuite with MigrationsFixture {
+class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
+  import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits._
 
   test("Test add/drop collections") {
     assert(!db.isCollectionExists("foo"))
@@ -76,4 +77,22 @@ class MongoDbIntegrationSuite extends FunSuite with MigrationsFixture {
 
     db.dropCollection("bar5")
   }
+
+  test("Test index manipulation") {
+    db.createCollection("bar6")
+    db.insertDocument("bar6", "{\"item\": \"1\"}")
+    db.insertDocument("bar6", "{\"item\": \"2\"}")
+    db.insertDocument("bar6", "{\"item\": \"3\"}")
+    db.createIndex("bar6", "item" :: Nil)
+
+    val idx1 = dbRaw.getCollection("bar6").listIndexes().execute()
+    assert(idx1.size == 2)
+
+    db.dropIndex("bar6", "item" :: Nil)
+    val idx2 = dbRaw.getCollection("bar6").listIndexes().execute()
+    assert(idx2.size == 1)
+
+    db.dropCollection("bar6")
+  }
+
 }

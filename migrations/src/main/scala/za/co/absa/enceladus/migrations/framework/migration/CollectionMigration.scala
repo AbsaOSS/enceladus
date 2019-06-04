@@ -41,6 +41,9 @@ import scala.collection.mutable.ListBuffer
   * }}}
   */
 trait CollectionMigration extends Migration {
+
+  type Index = (String, Seq[String])
+
   private val log: Logger = LogManager.getLogger("CollectionMigration")
 
   /**
@@ -48,14 +51,14 @@ trait CollectionMigration extends Migration {
     *
     * @param collectionName A collection name to be added
     */
-  def addCollection(collectionName: String): Unit = {
-    if (collectionsToAdd.contains(collectionName)) {
+  def createCollection(collectionName: String): Unit = {
+    if (collectionsToCreate.contains(collectionName)) {
       throw new IllegalArgumentException(s"Collection '$collectionName' is already added.")
     }
-    if (collectionsToRemove.contains(collectionName)) {
+    if (collectionsToDrop.contains(collectionName)) {
       throw new IllegalArgumentException(s"Cannot both add and remove '$collectionName' as a migration step.")
     }
-    collectionsToAdd += collectionName
+    collectionsToCreate += collectionName
   }
 
   /**
@@ -63,14 +66,14 @@ trait CollectionMigration extends Migration {
     *
     * @param collectionName A collection name to be added
     */
-  def removeCollection(collectionName: String): Unit = {
-    if (collectionsToRemove.contains(collectionName)) {
+  def dropCollection(collectionName: String): Unit = {
+    if (collectionsToDrop.contains(collectionName)) {
       throw new IllegalArgumentException(s"Collection '$collectionName' is already in the removal list.")
     }
-    if (collectionsToAdd.contains(collectionName)) {
+    if (collectionsToCreate.contains(collectionName)) {
       throw new IllegalArgumentException(s"Cannot both add and remove '$collectionName' as a migration step.")
     }
-    collectionsToRemove += collectionName
+    collectionsToDrop += collectionName
   }
 
   /**
@@ -80,24 +83,48 @@ trait CollectionMigration extends Migration {
     * @param newName A new name for the collection
     */
   def renameCollection(oldName: String, newName: String): Unit = {
-    if (collectionsToRemove.contains(oldName)) {
+    if (collectionsToDrop.contains(oldName)) {
       throw new IllegalArgumentException(s"Collection '$oldName' is in the removal list.")
     }
-    if (collectionsToAdd.contains(oldName)) {
+    if (collectionsToCreate.contains(oldName)) {
       throw new IllegalArgumentException(s"Collection '$oldName' is in the list of new collections. Cannot rename it.")
     }
     collectionsToRename += oldName -> newName
   }
 
+  /**
+    * This method is used by derived classes to create an index on a collection.
+    *
+    * @param collectionName A collection for setting up an index
+    * @param fields         A list of fields that the index should contain
+    */
+  def createIndex(collectionName: String, fields: Seq[String]): Unit = {
+    indexesToCreate.append((collectionName, fields))
+  }
+
+  /**
+    * This method is used by derived classes to drop an index on a collection.
+    *
+    * @param collectionName A collection for dropping up an index
+    * @param fields         A list of fields that the index should contain
+    */
+  def dropIndex(collectionName: String, fields: Seq[String]): Unit = {
+    indexesToDrop.append((collectionName, fields))
+  }
+
   /** Returns a list of collections to be added during the migration */
-  def getCollectionsToAdd: List[String] = collectionsToAdd.toList
+  def getCollectionsToAdd: List[String] = collectionsToCreate.toList
 
   /** Returns a list of collections to be removed during the migration */
-  def getCollectionsToRemove: List[String] = collectionsToRemove.toList
+  def getCollectionsToRemove: List[String] = collectionsToDrop.toList
 
   /** Returns a list of collections to be removed during the migration */
   def getCollectionsToRename: List[(String, String)] = collectionsToRename.toList
 
+  /**
+    * If a migration adds or removes collections it should provide a new list of collections based
+    * on the list of collections available for he previous version of a database.
+    */
   override def applyCollectionChanges(collections: List[String]): List[String] = {
     var newCollections = collections
     for (c <- getCollectionsToAdd) {
@@ -119,13 +146,15 @@ trait CollectionMigration extends Migration {
     */
   abstract override def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
     super.execute(db, collectionNames)
-    applyAddCollections(db)
-    applyRemoveCollections(db)
+    applyCreateCollections(db)
+    applyDropCollections(db)
     applyRenameCollection(db)
+    applyIndexDrop(db)
+    applyIndexCreate(db)
   }
 
-  private def applyAddCollections(db: DocumentDb): Unit = {
-    collectionsToAdd.foreach(c => {
+  private def applyCreateCollections(db: DocumentDb): Unit = {
+    collectionsToCreate.foreach(c => {
       val newCollection = MigrationUtils.getVersionedCollectionName(c, targetVersion)
       if (db.isCollectionExists(newCollection)) {
         log.info(s"Dropping existing collection $newCollection")
@@ -136,8 +165,8 @@ trait CollectionMigration extends Migration {
     })
   }
 
-  private def applyRemoveCollections(db: DocumentDb): Unit = {
-    collectionsToRemove.foreach(c => {
+  private def applyDropCollections(db: DocumentDb): Unit = {
+    collectionsToDrop.foreach(c => {
       val collection = MigrationUtils.getVersionedCollectionName(c, targetVersion)
       log.info(s"Removing collection $collection")
       db.dropCollection(collection)
@@ -154,18 +183,36 @@ trait CollectionMigration extends Migration {
     }
   }
 
+  private def applyIndexCreate(db: DocumentDb): Unit = {
+    indexesToCreate.foreach {
+      case (collectionName, keys) =>
+        val collection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
+        log.info(s"Creating index '${keys.mkString(",")}' in '$collection'")
+        db.createIndex(collection, keys)
+    }
+  }
+
+  private def applyIndexDrop(db: DocumentDb): Unit = {
+    indexesToDrop.foreach {
+      case (collectionName, keys) =>
+        val collection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
+        log.info(s"Removing index '${keys.mkString(",")}' from '$collection'")
+        db.dropIndex(collection, keys)
+    }
+  }
+
   /**
     * Validate the possibility of running a migration given a list of collection names.
     */
   abstract override def validate(collectionNames: Seq[String]): Unit = {
     super.validate(collectionNames)
-    collectionsToAdd.foreach(collectionToMigrate =>
+    collectionsToCreate.foreach(collectionToMigrate =>
       if (collectionNames.contains(collectionToMigrate)) {
         throw new IllegalStateException(
           s"Attempt to add a collection that already exists in db version ${targetVersion - 1}: $collectionToMigrate.")
       }
     )
-    collectionsToRemove.foreach(collectionToMigrate =>
+    collectionsToDrop.foreach(collectionToMigrate =>
       if (!collectionNames.contains(collectionToMigrate)) {
         throw new IllegalStateException(
           s"Attempt to drop a collection that does not exist in db version ${targetVersion - 1}: $collectionToMigrate.")
@@ -182,22 +229,22 @@ trait CollectionMigration extends Migration {
             s"Attempt to rename a collection to a one that already exists in db version ${targetVersion - 1}: " +
               s"$newName.")
         }
-        if (collectionsToAdd.contains(oldName)) {
+        if (collectionsToCreate.contains(oldName)) {
           throw new IllegalStateException(
             s"Cannot add and rename a collection as a part of single migration in db version ${targetVersion - 1}: " +
               s"$oldName.")
         }
-        if (collectionsToAdd.contains(newName)) {
+        if (collectionsToCreate.contains(newName)) {
           throw new IllegalStateException(
             s"Cannot add and rename a collection as a part of single migration in db version ${targetVersion - 1}: " +
               s"$newName.")
         }
-        if (collectionsToRemove.contains(oldName)) {
+        if (collectionsToDrop.contains(oldName)) {
           throw new IllegalStateException(
             s"Cannot drop and rename a collection as a part of single migration in db version ${targetVersion - 1}: " +
               s"$oldName.")
         }
-        if (collectionsToRemove.contains(newName)) {
+        if (collectionsToDrop.contains(newName)) {
           throw new IllegalStateException(
             s"Cannot drop and rename a collection as a part of single migration in db version ${targetVersion - 1}: " +
               s"$newName.")
@@ -211,7 +258,9 @@ trait CollectionMigration extends Migration {
     }
   }
 
-  private val collectionsToAdd = new ListBuffer[String]()
-  private val collectionsToRemove = new ListBuffer[String]()
+  private val collectionsToCreate = new ListBuffer[String]()
+  private val collectionsToDrop = new ListBuffer[String]()
   private val collectionsToRename = new ListBuffer[(String, String)]()
+  private val indexesToCreate = new ListBuffer[Index]()
+  private val indexesToDrop = new ListBuffer[Index]()
 }

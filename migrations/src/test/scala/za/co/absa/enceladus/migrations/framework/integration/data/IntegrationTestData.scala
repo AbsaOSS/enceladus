@@ -21,17 +21,18 @@ class IntegrationTestData {
   object Migration0 extends MigrationBase with CollectionMigration {
     override val targetVersion: Int = 0
 
-    addCollection("foo1")
-    addCollection("foo2")
-    addCollection("foo3")
+    createCollection("foo1")
+    createCollection("foo2")
+    createCollection("foo3")
   }
 
   object Migration1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration {
     override val targetVersion: Int = 1
 
     renameCollection("foo2", "bar2")
-    removeCollection("foo3")
-    addCollection("bar1")
+    dropCollection("foo3")
+    createCollection("bar1")
+    createIndex("foo1", "name" :: Nil)
 
     transformJSON("foo1")(jsonIn => {
       jsonIn.replaceAll("Doodad", "Hickey")
