@@ -25,8 +25,8 @@ object MigrationToV0 extends MigrationBase with CollectionMigration {
 
   override val targetVersion: Int = 0
 
-  addCollection("dataset")
-  addCollection("schema")
-  addCollection("mapping_table")
-  addCollection("run")
+  createCollection("dataset")
+  createCollection("schema")
+  createCollection("mapping_table")
+  createCollection("run")
 }

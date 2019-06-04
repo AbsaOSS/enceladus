@@ -27,18 +27,19 @@ class UseCaseTestData {
   object Migration0 extends MigrationBase with CollectionMigration {
     override val targetVersion: Int = 0
 
-    addCollection("dataset")
-    addCollection("schema")
-    addCollection("mappingtable")
-    addCollection("foo")
+    createCollection("dataset")
+    createCollection("schema")
+    createCollection("mappingtable")
+    createCollection("foo")
   }
 
   object Migration1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration  {
     override val targetVersion: Int = 1
 
     renameCollection("mappingtable", "mapping_table")
-    removeCollection("foo")
-    addCollection("attachment")
+    dropCollection("foo")
+    createCollection("attachment")
+    createIndex("dataset", "order" :: Nil)
 
     transformJSON("schema")(jsonIn => {
       jsonIn.replace(" ","")
@@ -57,8 +58,10 @@ class UseCaseTestData {
     })
   }
 
-  object Migration2 extends MigrationBase with JsonMigration with CommandMigration  {
+  object Migration2 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration  {
     override val targetVersion: Int = 2
+
+    dropIndex("dataset", "order" :: Nil)
 
     transformJSON("schema")(jsonIn => {
       "{\"new_schema\": \"none\"}"
@@ -72,7 +75,7 @@ class UseCaseTestData {
   object Migration3err extends MigrationBase with CollectionMigration  {
     override val targetVersion: Int = 3
 
-    addCollection("attachment")
+    createCollection("attachment")
   }
 
   private def initializeDb(): Unit = {

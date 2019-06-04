@@ -62,6 +62,16 @@ abstract class DocumentDb {
   def cloneCollection(collectionName: String, newCollectionName: String): Unit
 
   /**
+    * Creates an index for a given list of keys.
+    */
+  def createIndex(collectionName: String, keys: Seq[String]): Unit
+
+  /**
+    * Drop an index for a given list of keys.
+    */
+  def dropIndex(collectionName: String, keys: Seq[String]): Unit
+
+  /**
     * Returns the number of documents in the specified collection.
     */
   def getDocumentsCount(collectionName: String): Long

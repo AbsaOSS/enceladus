@@ -39,6 +39,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "create(attachment_v1)" ::
         "drop(foo_v1)" ::
         "rename(mappingtable_v1,mapping_table_v1)" ::
+        "createIndex(dataset_v1,List(order))" ::
         "empty(schema_v1)" ::
         "getDocuments(schema)" ::
         "insertTo(schema_v1)" ::
@@ -84,6 +85,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "create(attachment_v1)" ::
         "drop(foo_v1)" ::
         "rename(mappingtable_v1,mapping_table_v1)" ::
+        "createIndex(dataset_v1,List(order))" ::
         "empty(schema_v1)" ::
         "getDocuments(schema)" ::
         "insertTo(schema_v1)" ::
@@ -95,6 +97,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "clone(schema_v1,schema_v2)" ::
         "clone(mapping_table_v1,mapping_table_v2)" ::
         "clone(attachment_v1,attachment_v2)" ::
+        "dropIndex(dataset_v2,List(order))" ::
         "empty(schema_v2)" ::
         "getDocuments(schema_v1)" ::
         "insertTo(schema_v2)" ::

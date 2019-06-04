@@ -34,7 +34,7 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
 
   override val targetVersion: Int = 1
 
-  addCollection("attachment")
+  createCollection("attachment")
 
   transformJSON("schema")(model0Json => {
     try {

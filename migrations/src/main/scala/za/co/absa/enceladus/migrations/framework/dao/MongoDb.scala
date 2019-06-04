@@ -21,13 +21,14 @@ import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.{MongoCollection, MongoDatabase, MongoNamespace}
 import za.co.absa.enceladus.migrations.framework.model.DbVersion
 import za.co.absa.enceladus.migrations.framework.Constants.DatabaseVersionCollectionName
 
 import scala.reflect.ClassTag
 
-class MongoDb (db: MongoDatabase) extends DocumentDb {
+class MongoDb(db: MongoDatabase) extends DocumentDb {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[DbVersion]), DEFAULT_CODEC_REGISTRY)
@@ -135,20 +136,47 @@ class MongoDb (db: MongoDatabase) extends DocumentDb {
     */
   override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {
     log.info(s"Copying $collectionName to $newCollectionName...")
-    val cmd = s"""{
-                |  aggregate: "$collectionName",
-                |  pipeline: [
-                |    {
-                |      $$match: {}
-                |    },
-                |    {
-                |      $$out: "$newCollectionName"
-                |    }
-                |  ],
-                |  cursor: {}
-                |}
-                |""".stripMargin
+    val cmd =
+      s"""{
+         |  aggregate: "$collectionName",
+         |  pipeline: [
+         |    {
+         |      $$match: {}
+         |    },
+         |    {
+         |      $$out: "$newCollectionName"
+         |    }
+         |  ],
+         |  cursor: {}
+         |}
+         |""".stripMargin
     db.runCommand(BsonDocument(cmd)).execute()
+  }
+
+  /**
+    * Creates an index for a given list of fields.
+    */
+  override def createIndex(collectionName: String, keys: Seq[String]): Unit = {
+    log.info(s"Creating an index for $collectionName, keys: ${keys.mkString(",")}...")
+    if (!isCollectionExists(collectionName)) {
+      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
+    }
+    db.getCollection(collectionName)
+      .createIndex(fieldsToBsonKeys(keys))
+      .execute()
+  }
+
+  /**
+    * Drops an index for a given list of fields.
+    */
+  override def dropIndex(collectionName: String, keys: Seq[String]): Unit = {
+    log.info(s"Dropping an index for $collectionName, keys: ${keys.mkString(",")}...")
+    if (!isCollectionExists(collectionName)) {
+      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
+    }
+    db.getCollection(collectionName)
+      .dropIndex(fieldsToBsonKeys(keys))
+      .execute()
   }
 
   /**
@@ -219,4 +247,15 @@ class MongoDb (db: MongoDatabase) extends DocumentDb {
     db.getCollection[T](DatabaseVersionCollectionName)
       .withCodecRegistry(codecRegistry)
   }
+
+  /**
+    * Returns a Bson document from the list of index key fields
+    */
+  private def fieldsToBsonKeys(keys: Seq[String]): Document = {
+    val numbers = 1 to keys.size
+    Document(keys.zip(numbers).map {
+      case (field, num) => field -> num
+    })
+  }
+
 }
