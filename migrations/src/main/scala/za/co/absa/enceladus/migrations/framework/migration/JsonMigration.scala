@@ -32,14 +32,14 @@ import scala.collection.mutable
   * In order to create a JSON migration you need to extend from this trait and provide all the requited transformations:
   *
   * {{{
-  *   class MigrationTo1 extends MigrationBase with JsonMigration {
+  *   object MigrationTo1 extends MigrationBase with JsonMigration {
   *
-  *     migrate("collection1_name") (jsonIn => {
+  *     transformJSON("collection1_name") (jsonIn => {
   *       val jsonOut = collection1Transformations(jsonIn)
   *       jsonOut
   *     })
   *
-  *     migrate("collection2_name") (jsonIn => {
+  *     transformJSON("collection2_name") (jsonIn => {
   *       val jsonOut = collection2Transformations(jsonIn)
   *       jsonOut
   *     })

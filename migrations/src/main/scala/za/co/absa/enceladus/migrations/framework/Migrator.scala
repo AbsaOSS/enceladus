@@ -34,12 +34,12 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
   /**
     * Do the migration from the current version of the database to the target one.
     *
-    * The migrations passed into the constructor should be be
+    * The migrations passed into the constructor should be:
     * - In the order of database versions
     * - Without gaps in version numbers
     * - There should be only one migration per version switch
     *
-    * @param targetDbVersion A version of the database to migrate to
+    * @param targetDbVersion A version of the database to migrate to.
     */
   def migrate(targetDbVersion: Int): Unit = {
     validate(targetDbVersion)
@@ -68,7 +68,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
   /**
     * Get the list of collection names valid for a particular version of the database.
     *
-    * @param dbVersion A version number of the database
+    * @param dbVersion A version number of the database.
     */
   def getCollectionNames(dbVersion: Int): List[String] = {
     val collectionMigrations = getCollectionMigrations
@@ -102,6 +102,10 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     validateTargetVersion(targetDbVersion)
   }
 
+  /**
+    * Validates that a list of migrations have target database versions in ascending order and there are no gaps
+    * between version numbers.
+    */
   private def validateVersionNumbersConsequent(): Unit = {
     var i = -1
     migrations.foreach(m => {
@@ -122,6 +126,13 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     })
   }
 
+  /**
+    * Validates that a list of migrations manipulate collections consistently, e.g.
+    *  - A migration for version 0 should provide the initial list of collections
+    *  - Same collections should not be added and removed inside a single migration
+    *  - Only existing collections can be removed or renamed
+    *  - Collections should not be added twice
+    */
   private def validateCollectionManipulationConsistency(targetDbVersion: Int): Unit = {
     var currentVersionCollections = getCollectionNames(0)
 
@@ -137,12 +148,18 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     }
   }
 
+  /**
+    * Validates that a target database version is reachable through migration steps.
+    */
   private def validateTargetVersion(targetDbVersion: Int): Unit = {
     if (!migrations.exists(_.targetVersion == targetDbVersion)) {
       throw new IllegalStateException(s"The target database version ($targetDbVersion) is not reachable.")
     }
   }
 
+  /**
+    * Validates that values of a source and a target database versions make sense.
+    */
   private def validateDbVersios(sourceDbVersion: Int, targetDbVersion: Int): Unit = {
     if (sourceDbVersion < 0) {
       throw new IllegalStateException(s"Source database version cannot be negative.")
@@ -153,6 +170,14 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     }
   }
 
+  /**
+    * Removes collections that were created during an interrupted migration process.
+    *
+    * Each migration always finished with setting up the current database version in 'db_version'.
+    * If the value in 'db_version' is, say, 5, but there are collections in the database with '_v6' postfix,
+    * e.g. 'dataset_v6', than it is assumed that a migration from v5 to v6 did not finish successfully.
+    * Collections created during that process will be dropped.
+    */
   private def cleanUpUnfinishedMigrations(db: DocumentDb, collections: List[String], targetVersion: Int): Unit = {
     // Cleaning up cloned and not processed collections
     dropCollections(db, collections, targetVersion)
@@ -166,6 +191,9 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     })
   }
 
+  /**
+    * Drops collections from the specified list and the specified database version number.
+    */
   private def dropCollections(db: DocumentDb, collections: List[String], dbVersion: Int): Unit = {
     collections
       .map(c => MigrationUtils.getVersionedCollectionName(c, dbVersion))
