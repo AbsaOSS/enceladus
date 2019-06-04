@@ -13,23 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.services
+package za.co.absa.enceladus.menas.services
 
-import java.util.UUID
-
-import org.joda.time.format.DateTimeFormat
-import org.mongodb.scala.{Document, bson}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
-import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
-import za.co.absa.enceladus.model.{Run, SplineReference}
-import za.co.absa.enceladus.rest.exceptions.{NotFoundException, ValidationException}
-import za.co.absa.enceladus.rest.models.Validation
-import za.co.absa.enceladus.rest.repositories.MonitoringMongoRepository
-import za.co.absa.enceladus.rest.models.MonitoringDataPoint
+import za.co.absa.enceladus.menas.repositories.MonitoringMongoRepository
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 
 @Service
 class MonitoringService @Autowired()(monitoringMongoRepository: MonitoringMongoRepository)

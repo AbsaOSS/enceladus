@@ -14,8 +14,9 @@
  */
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
-  "sap/ui/core/Fragment"
-], function (Controller, Fragment) {
+  "sap/ui/core/Fragment",
+  "./../external/it/designfuture/chartjs/library-preload"
+], function (Controller, Fragment, Openui5Chartjs) {
   "use strict";
 
   return Controller.extend("components.dataset.datasetDetail", {
@@ -38,6 +39,18 @@ sap.ui.define([
 
       let cont = new ConformanceRuleDialog(this);
       let view = this.getView();
+
+      view.byId("monitoring-multiheader-info").setHeaderSpan([2,1]);
+      view.byId("monitoring-multiheader-checkpoint").setHeaderSpan([3,1]);
+      view.byId("monitoring-multiheader-recordcount-raw").setHeaderSpan([5,1,1]);
+      view.byId("monitoring-multiheader-recordcount-std").setHeaderSpan([0,2,1]);
+      view.byId("monitoring-multiheader-recordcount-cnfrm").setHeaderSpan([0,2,1]);
+
+      this.oFormatYyyymmdd = sap.ui.core.format.DateFormat.getInstance({
+        pattern: "yyyy-MM-dd",
+        calendarType: sap.ui.core.CalendarType.Gregorian
+      });
+      this.setDefaultMonitoringDateInterval();
 
       this._upsertConformanceRuleDialog = Fragment.load({
         id: view.getId(),
@@ -240,9 +253,16 @@ sap.ui.define([
     },
 
     tabSelect: function (oEv) {
-      if (oEv.getParameter("selectedKey") === "runs") {
-        this.fetchRuns();
+      switch (oEv.getParameter("selectedKey")) {
+        case "runs":
+          this.fetchRuns();
+          break;
+        case "monitoring":
+          this.updateMonitoringData();
+          break;
       }
+
+
     },
 
     onRemovePress: function (oEv) {
@@ -316,6 +336,55 @@ sap.ui.define([
 
       return sap.ui.xmlfragment(sId, sFragmentName, this);
     },
+
+    // Monitoring related part
+
+    handleCalendarSelect: function(oEvent) {
+      var oCalendar = oEvent.getSource();
+      this._updateTimeInterval(oCalendar.getSelectedDates()[0]);
+    },
+
+    _updateTimeInterval: function(oSelectedDates) {
+      let oDate;
+      if (oSelectedDates) {
+        oDate = oSelectedDates.getStartDate();
+        if (oDate) {
+          this._model.setProperty("/monitoringDateFrom", this.oFormatYyyymmdd.format(oDate))
+        }
+        oDate = oSelectedDates.getEndDate();
+        if (oDate) {
+          this._model.setProperty("/monitoringDateTo", this.oFormatYyyymmdd.format(oDate))
+        }
+      }
+      this.updateMonitoringData()
+    },
+
+    updateMonitoringData: function () {
+      let monitoringDateFrom = this._model.getProperty("/monitoringDateFrom");
+      let monitoringDateTo = this._model.getProperty("/monitoringDateTo");
+      let datasetName = this._model.getProperty("/currentDataset/name");
+      if (monitoringDateFrom != undefined && monitoringDateTo != undefined && datasetName != undefined) {
+        MonitoringService.getData(datasetName, monitoringDateFrom, monitoringDateTo);
+      } else {
+        MonitoringService.clearMonitoringModel();
+      }
+    },
+
+    handleWeekNumberSelect: function(oEvent) {
+      var oDateRange = oEvent.getParameter("weekDays");
+      this._updateTimeInterval(oDateRange);
+    },
+
+    setDefaultMonitoringDateInterval: function () {
+      let oEnd = new Date();
+      let oStart = new Date(oEnd.getTime() - 14 * 24 * 60 * 60 * 1000); // Two weeks before today
+      let oCalendar = this.byId("calendar");
+      oCalendar.removeAllSelectedDates();
+      oCalendar.addSelectedDate(new sap.ui.unified.DateRange({startDate: oStart, endDate: oEnd}))
+      this._model.setProperty("/monitoringDateFrom", this.oFormatYyyymmdd.format(oStart))
+      this._model.setProperty("/monitoringDateTo", this.oFormatYyyymmdd.format(oEnd))
+      //this._updateTimeInterval(oCalendar.getSelectedDates()[0]);
+    }
 
   });
 });

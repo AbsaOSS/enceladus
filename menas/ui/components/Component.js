@@ -14,7 +14,7 @@
  */
 
 sap.ui.define([
-    "sap/ui/core/UIComponent"
+  "sap/ui/core/UIComponent",
   ],
   function (UIComponent) {
     "use strict";
@@ -68,7 +68,7 @@ sap.ui.define([
             },
             {
               name: "monitoring",
-              pattern: "monitoring/:id:/:version:",
+              pattern: "monitoring/:id:",
               target: "monitoring"
             }
           ],

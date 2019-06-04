@@ -13,32 +13,21 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest.repositories
-import java.util
+package za.co.absa.enceladus.menas.repositories
 
-import org.json4s.jackson.Json
 import org.mongodb.scala._
-import org.mongodb.scala.bson.BsonDocument
-import org.mongodb.scala.model.Field
-
-import scala.collection.immutable.HashMap
 //import org.mongodb.scala.{AggregateObservable, Completed, Document, MapReduceObservable, MongoDatabase}
 //import org.mongodb.scala.bson.BsonDocument
 //import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Aggregates._
-import org.mongodb.scala.model.Sorts._
-import org.mongodb.scala.model.Updates._
+import org.mongodb.scala.model.Filters._
 //import org.mongodb.scala.model.{FindOneAndUpdateOptions, ReturnDocument, Updates}
+import org.mongodb.scala.Document
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
-import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
-import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.model.{Run, SplineReference}
-import za.co.absa.enceladus.rest.models.{MonitoringDataPoint, MonitoringDataPointWrapper}
-import za.co.absa.enceladus.rest.models.RunWrapper
+import za.co.absa.enceladus.model.Run
+
 import scala.concurrent.Future
-import org.mongodb.scala.Document
 
 object MonitoringMongoRepository {
   val collectionName = "run"
@@ -47,9 +36,7 @@ object MonitoringMongoRepository {
 @Repository
 class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends MongoRepository[Run](mongoDb) {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
-  private[repositories] override def collectionName: String = MonitoringMongoRepository.collectionName
+  private[menas] override def collectionName: String = MonitoringMongoRepository.collectionName
 
 
   def getMonitoringDataPoints(datasetName: String, startDate: String, endDate: String): Future[Seq[String]] = {
