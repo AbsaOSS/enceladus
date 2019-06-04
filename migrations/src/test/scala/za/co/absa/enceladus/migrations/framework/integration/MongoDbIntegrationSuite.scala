@@ -78,7 +78,7 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
     db.dropCollection("bar5")
   }
 
-  test("Test index manipulation") {
+  test("Test index adding/removal") {
     db.createCollection("bar6")
     db.insertDocument("bar6", "{\"item\": \"1\"}")
     db.insertDocument("bar6", "{\"item\": \"2\"}")
@@ -93,6 +93,29 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
     assert(idx2.size == 1)
 
     db.dropCollection("bar6")
+  }
+
+  test("Test index copying on clone") {
+    db.createCollection("bar7")
+    db.insertDocument("bar7", "{\"name\": \"Apple\", \"type\": \"Fruit\"}")
+    db.insertDocument("bar7", "{\"name\": \"Pear\", \"type\": \"Fruit\"}")
+    db.insertDocument("bar7", "{\"name\": \"Orange\", \"type\": \"Fruit\"}")
+    db.createIndex("bar7", "name" :: "type" :: Nil)
+
+    val idx1 = dbRaw.getCollection("bar7").listIndexes().execute()
+    assert(idx1.size == 2)
+
+    db.cloneCollection("bar7", "bar8")
+
+    val idx2 = dbRaw.getCollection("bar8").listIndexes().execute()
+    assert(idx1.size == 2)
+
+    // Check if the second index contains 2 keys
+    val indexDocs = idx2.toIndexedSeq.map(idx => idx("key").asDocument())
+    assert(indexDocs(1).size == 2)
+
+    db.dropCollection("bar7")
+    db.dropCollection("bar8")
   }
 
 }

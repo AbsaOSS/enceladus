@@ -133,24 +133,27 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
 
   /**
     * Copies contents of a collection to a collection with a different name in the same database.
+    *
+    * Copies indexed as well.
     */
-  override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {
-    log.info(s"Copying $collectionName to $newCollectionName...")
+  override def cloneCollection(collectionFrom: String, collectionTo: String): Unit = {
+    log.info(s"Copying $collectionFrom to $collectionFrom...")
     val cmd =
       s"""{
-         |  aggregate: "$collectionName",
+         |  aggregate: "$collectionFrom",
          |  pipeline: [
          |    {
          |      $$match: {}
          |    },
          |    {
-         |      $$out: "$newCollectionName"
+         |      $$out: "$collectionTo"
          |    }
          |  ],
          |  cursor: {}
          |}
          |""".stripMargin
     db.runCommand(BsonDocument(cmd)).execute()
+    copyIndexes(collectionFrom, collectionTo)
   }
 
   /**
@@ -257,5 +260,21 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
       case (field, num) => field -> num
     })
   }
+
+  /**
+    * Copies indexes from one collection to another. Skips the index on '_id' that is created automatically
+    */
+  private def copyIndexes(collectionFrom: String, collectionTo: String): Unit = {
+    val indexes = db.getCollection(collectionFrom).listIndexes().execute()
+    indexes.foreach(idxBson => {
+      val indexDocument = idxBson("key").asDocument()
+      if (!indexDocument.containsKey("_id")) {
+        db.getCollection(collectionTo)
+          .createIndex(indexDocument)
+          .execute()
+      }
+    })
+  }
+
 
 }
