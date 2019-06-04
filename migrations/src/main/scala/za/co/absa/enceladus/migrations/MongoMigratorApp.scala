@@ -17,8 +17,8 @@ package za.co.absa.enceladus.migrations
 
 import org.mongodb.scala.MongoClient
 import za.co.absa.enceladus.migrations.framework.Migrator
-import za.co.absa.enceladus.migrations.framework.dao.{MongoDb, ScalaMongoImplicits}
-import za.co.absa.enceladus.migrations.migrations.{MigrationToV0, MigrationToV1}
+import za.co.absa.enceladus.migrations.framework.dao.MongoDb
+import za.co.absa.enceladus.migrations.migrations._
 
 /**
   * This is a command line tool for running migrations on a MongoDb database.
@@ -42,7 +42,7 @@ object MongoMigratorApp {
     val mongoClient = MongoClient(mongoConnectionString)
     val db = new MongoDb(mongoClient.getDatabase(integrationTestDbName))
 
-    val mig = new Migrator(db, MigrationToV0 :: MigrationToV1 :: Nil)
+    val mig = new Migrator(db, Migrations)
 
     mig.validate(targetVersion)
     mig.migrate(targetVersion)

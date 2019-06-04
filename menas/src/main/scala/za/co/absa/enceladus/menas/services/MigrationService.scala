@@ -15,42 +15,39 @@
 
 package za.co.absa.enceladus.menas.services
 
-import java.io.File
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-
 import javax.annotation.PostConstruct
-import org.mongodb.scala.MongoDatabase
-import org.mongodb.scala.bson.collection.immutable.Document
+import org.apache.hadoop.conf.Configuration
+import org.apache.log4j.{LogManager, Logger}
+import org.mongodb.scala.{MongoClient, MongoDatabase}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Component
-import za.co.absa.enceladus.migrations.MongoMigrator
-import za.co.absa.enceladus.migrations.models.{BackupConfiguration, Evolution, MigratorConfiguration}
-import org.apache.hadoop.conf.Configuration
+import za.co.absa.enceladus.migrations.framework.Migrator
+import za.co.absa.enceladus.migrations.framework.dao.MongoDb
+import za.co.absa.enceladus.migrations.migrations._
+import za.co.absa.enceladus.model._
 
 @Component
 class MigrationService @Autowired()(mongoDb: MongoDatabase, hadoopConf: Configuration) {
 
-  @Value("${za.co.absa.enceladus.migrations.dump.filepath}")
-  private val dumpFilepath: String = ""
   @Value("${za.co.absa.enceladus.menas.mongo.connection.string}")
   val connectionString: String = ""
   @Value("${za.co.absa.enceladus.menas.mongo.connection.database}")
   val database: String = ""
 
+  private val log: Logger = LogManager.getLogger(this.getClass)
+
   @PostConstruct
-  def init() = {
-    val fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("YYYY-MM-dd-HH-mm-ss"))
-    val backupConf = BackupConfiguration(s"$dumpFilepath${File.separator}$fileName.archive", connectionString, database, Some(hadoopConf))
-    val migratorConf = MigratorConfiguration(backupConf, mongoDb, 10)
-    val migrator = new MongoMigrator(migratorConf)
+  def init(): Unit = {
+    val mongoClient = MongoClient(connectionString)
+    val db = new MongoDb(mongoClient.getDatabase(database))
 
-    migrator.registerOne(Evolution(1, "Create index on evolutions collection", "chochovg").setEvolution { () =>
-      mongoDb.getCollection("evolutions").createIndex(Document("""{"order":1}"""))
-    })
-
-    // Register all evolutions here as above
-    migrator.runEvolutions()
+    if (db.isCollectionExists("schema") || db.isCollectionExists("db_version")) {
+      val version = db.getVersion()
+      if (ModelVersion > version) {
+        log.warn(s"Database version $version, the model version is $ModelVersion. A data migration is required.")
+        val mig = new Migrator(db, Migrations)
+        mig.migrate(ModelVersion)
+      }
+    }
   }
-
 }
