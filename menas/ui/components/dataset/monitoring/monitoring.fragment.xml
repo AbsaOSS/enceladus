@@ -19,30 +19,39 @@
                          xmlns:u="sap.ui.unified"
                          xmlns:table="sap.ui.table"
                          xmlns:lab="it.designfuture.chartjs"
+                         xmlns:form="sap.ui.layout.form"
                          xmlns:tnt="sap.tnt">
-        <Bar>
-            <contentLeft>
-                <Title text="From: {/monitoringDateFrom} To: {/monitoringDateTo}    {/numberOfPoints} runs"  />
-            </contentLeft>
-        </Bar>
-        <layout:BlockLayout id="BlockLayout">
+        <layout:BlockLayout id="BlockLayout" background="Dashboard">
             <layout:BlockLayoutRow>
-                <layout:BlockLayoutCell
-                    title="Info date interval"
-                    titleAlignment="Center"
-                    width="50rem">
+                <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
+                    <Title class="monitoringTitle" text="Select info date interval"/>
                     <u:Calendar
                         id="calendar"
                         select="handleCalendarSelect"
                         intervalSelection="true"
                         weekNumberSelect="handleWeekNumberSelect"/>
-                </layout:BlockLayoutCell>
+            </layout:BlockLayoutCell>
 
-                <layout:BlockLayoutCell
-                    title="Runs by status"
-                    titleAlignment="Center"
-                    width="50rem">
+                <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
+                    <Title class="monitoringTitle" text="Summary"/>
+                    <form:SimpleForm id="monitoringSummary">
+                        <form:content>
+                            <Label text="Info date FROM"/>
+                            <Text id="monitoringDateFrom" text="{/monitoringDateFrom}"/>
+                            <Label text="Info date TO"/>
+                            <Text id="monitoringDateTo" text="{/monitoringDateTo}"/>
+                            <Label text="Total runs"/>
+                            <Text id="monitoringTotalRuns" text="{/numberOfPoints}"/>
+                        </form:content>
+                    </form:SimpleForm>
+                </layout:BlockLayoutCell>
+            </layout:BlockLayoutRow>
+            <layout:BlockLayoutRow>
+                <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
+                    <Title class="monitoringTitle" text="Runs by status"/>
                     <lab:PieChartJS
+                        legendPosition="left"
+                        legendLabelBoxWidth="10"
                         id="Status_of_runs"
                         datasets="{/pieChartStatusTotals/datasets}"
                         labels="{/pieChartStatusTotals/labels}"
@@ -52,11 +61,11 @@
                     </lab:PieChartJS>
                 </layout:BlockLayoutCell>
 
-                <layout:BlockLayoutCell
-                    title="Records by status"
-                    titleAlignment="Center"
-                    width="50rem">
+                <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
+                    <Title class="monitoringTitle" text="Records by status"/>
                     <lab:PieChartJS
+                        legendPosition="left"
+                        legendLabelBoxWidth="10"
                         id="record_totals"
                         datasets="{/pieChartRecordTotals/datasets}"
                         labels="{/pieChartRecordTotals/labels}"
@@ -68,22 +77,26 @@
             </layout:BlockLayoutRow>
         </layout:BlockLayout>
 
-        <FlexBox id="bar-chart-FlexBox" width="100vw" height="{/barChartHeight}">
+        <Title class="monitoringTitle" text="Records per run"/>
+        <Panel id="bar-chart-canvas" height="{/barChartHeight}">
             <lab:BarChartJS
+                legendPosition="left"
+                legendLabelBoxWidth="10"
+                responsive="true"
                 id="bar_chart"
                 datasets="{/barChartData/datasets}"
                 labels="{/barChartData/labels}"
-                titleDisplay="true"
+                titleDisplay="false"
                 titleText="Records per run"
-                tooltipEnabled="true"
+                tooltipEnabled="false"
                 isHorizontal="true"
                 maintainAspectRatio="false">
             </lab:BarChartJS>
-        </FlexBox>
+        </Panel>
 
+        <Title class="monitoringTitle" text="Run details"/>
         <table:Table
             rows="{/monitoringRunData}"
-            title="Run details"
             selectionMode="None"
             alternateRowColors="true"
             showColumnVisibilityMenu="true"
@@ -94,7 +107,7 @@
             <table:columns>
                 <table:Column id="monitoring-multiheader-info" width="6rem" >
                     <table:multiLabels>
-                        <Label text="Information" textAlign="Center" width="100%"/>
+                        <Label text="Info" textAlign="Center" width="100%"/>
                         <Label text="Date" textAlign="Center" width="100%"/>
                     </table:multiLabels>
                     <table:template>
