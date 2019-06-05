@@ -304,7 +304,20 @@ sap.ui.define([
       this._model.setProperty("/monitoringDateFrom", this.oFormatYyyymmdd.format(oStart))
       this._model.setProperty("/monitoringDateTo", this.oFormatYyyymmdd.format(oEnd))
       //this._updateTimeInterval(oCalendar.getSelectedDates()[0]);
-    }
+    },
+
+    monitoringToRun: function (oEv) {
+      let oRow = oEv.getParameter("row");
+      let datasetName = this._model.getProperty("datasetName",oRow.getBindingContext());
+      let datasetVersion = this._model.getProperty("datasetVersion",oRow.getBindingContext());
+      let runId = this._model.getProperty("runId",oRow.getBindingContext());
+
+      this._router.navTo("runs", {
+        dataset: datasetName,
+        version: datasetVersion,
+        id: runId
+      });
+    },
 
   });
 });

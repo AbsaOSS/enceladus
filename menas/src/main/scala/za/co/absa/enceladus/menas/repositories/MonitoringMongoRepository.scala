@@ -111,6 +111,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
         // here we also project the data of interest
         Document(""" {$group : {
                    |          "_id": {informationDateCasted: "$informationDateCasted", reportVersion: "$controlMeasure.metadata.version"},
+                   |          "datasetName": {$first: "$dataset"},
                    |          "runObjectId" : {$first: "$_id"},
                    |          "startDateTime" : {$first: "$startDateTimeCasted"},
                    |          "datasetVersion" : {$first: "$datasetVersion"},
@@ -141,6 +142,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
     observable.map(doc => doc.toJson).toFuture()
   }
 
+  // TODO: monitoring of the latest events (checkpoints) in the system
   def getRecentCheckpointsPerDataset(datasetName: String): Future[Seq[String]] = {
 
     val observable: AggregateObservable[Document] = collection

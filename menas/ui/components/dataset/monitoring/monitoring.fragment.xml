@@ -15,7 +15,6 @@
 
 <core:FragmentDefinition xmlns="sap.m"
                          xmlns:core="sap.ui.core"
-                         xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
                          xmlns:layout="sap.ui.layout"
                          xmlns:u="sap.ui.unified"
                          xmlns:table="sap.ui.table"
@@ -90,6 +89,7 @@
             showColumnVisibilityMenu="true"
             visibleRowCountMode="Fixed"
             visibleRowCount="{/numberOfPoints}"
+            rowActionCount="1"
             width="100%">
             <table:columns>
                 <table:Column id="monitoring-multiheader-info" width="6rem" >
@@ -206,5 +206,10 @@
                     </table:template>
                 </table:Column>
             </table:columns>
+            <table:rowActionTemplate>
+                <table:RowAction>
+                    <table:RowActionItem press="monitoringToRun"	type="Navigation" icon="sap-icon://detail-view" />
+                </table:RowAction>
+            </table:rowActionTemplate>
         </table:Table>
 </core:FragmentDefinition>
