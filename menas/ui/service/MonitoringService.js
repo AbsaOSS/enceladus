@@ -120,14 +120,15 @@ var MonitoringService = new function() {
       }
 
     // set layout properties
-    model.setProperty("/barChartHeight", 10 + 1 * barChartLabels.length + "rem");
+
     model.setProperty("/numberOfPoints", oData.length);
+    model.setProperty("/barChartHeight", 10 + 2 * barChartLabels.length + "rem");
 
     // set model
     model.setProperty("/monitoringRunData", oData);
     model.setProperty("/barChartData", barChartData);
     model.setProperty("/pieChartRecordTotals", pieChartRecordTotals);
-    model.setProperty("/pieChartStatusTotals", pieChartStatusTotals)
+    model.setProperty("/pieChartStatusTotals", pieChartStatusTotals);
   };
 
   this.processRecordCounts = function(oRun) {

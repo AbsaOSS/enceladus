@@ -36,6 +36,16 @@ html, body {
   }
 }
 
+.monitoringBlockLayoutCell {
+    min-width: 23rem !important;
+    max-width: 30rem !important;
+}
+
+.monitoringTitle {
+    textAlign: Center;
+    width: 100%;
+}
+
 .auditTrailNestedListItem {
 	max-width: 100%;
 	background-color: inherit !important;
