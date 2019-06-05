@@ -36,7 +36,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
   }
 
   override def afterAll(): Unit = {
-    TradeConformance.deleteTestData()
+    //TradeConformance.deleteTestData()
     super.afterAll
   }
 
@@ -120,9 +120,9 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     // 1. Order of the columns differ
     // 2. The explode (original version) seems do not handle empty array case very well if there is an array inside an array
     val expected = if (useExperimentalMappingRule){
-      TradeConformance.expectedConformedGroupExplode.mkString("\n")
+      TradeConformance.expectedConformedGroupExplode
     } else {
-      TradeConformance.expectedConformedJson.mkString("\n")
+      TradeConformance.expectedConformedJson
     }
 
     conformed.coalesce(1).orderBy($"id").write.mode("overwrite").parquet("src/test/testData/_tradeOutput")
@@ -138,7 +138,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     assert(data == expected)
 
     // check that all the expected checkpoints are there
-    assert(checkpoints.lengthCompare(11) == 0)
+    assert(checkpoints.lengthCompare(12) == 0)
 
     checkpoints.foreach({ cp =>
       assert(cp.controls(0).controlValue === "7")
