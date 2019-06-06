@@ -16,10 +16,9 @@
 package za.co.absa.enceladus.menas.services
 
 import javax.annotation.PostConstruct
-import org.apache.hadoop.conf.Configuration
 import org.apache.log4j.{LogManager, Logger}
-import org.mongodb.scala.{MongoClient, MongoDatabase}
-import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.mongodb.scala.MongoDatabase
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import za.co.absa.enceladus.migrations.framework.Migrator
 import za.co.absa.enceladus.migrations.framework.dao.MongoDb
@@ -27,23 +26,17 @@ import za.co.absa.enceladus.migrations.migrations._
 import za.co.absa.enceladus.model._
 
 @Component
-class MigrationService @Autowired()(mongoDb: MongoDatabase, hadoopConf: Configuration) {
-
-  @Value("${za.co.absa.enceladus.menas.mongo.connection.string}")
-  val connectionString: String = ""
-  @Value("${za.co.absa.enceladus.menas.mongo.connection.database}")
-  val database: String = ""
+class MigrationService @Autowired()(mongoDb: MongoDatabase) {
 
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   @PostConstruct
   def init(): Unit = {
-    val mongoClient = MongoClient(connectionString)
-    val db = new MongoDb(mongoClient.getDatabase(database))
+    val db = new MongoDb(mongoDb)
     val mig = new Migrator(db, Migrations)
 
     if (mig.isDatabaseEmpty()) {
-      log.warn(s"The database '$database' is empty. Initializing...")
+      log.warn(s"The database '${mongoDb.name}' is empty. Initializing...")
       mig.initializeDatabase(ModelVersion)
     } else {
       if (mig.isMigrationRequired(ModelVersion)) {
@@ -51,6 +44,8 @@ class MigrationService @Autowired()(mongoDb: MongoDatabase, hadoopConf: Configur
         log.warn(s"Database version $version, the model version is $ModelVersion. " +
           "Data migration is going to start now...")
         mig.migrate(ModelVersion)
+      } else {
+        log.info(s"The database '${mongoDb.name}' schema is up to date, no migration needed.")
       }
     }
   }

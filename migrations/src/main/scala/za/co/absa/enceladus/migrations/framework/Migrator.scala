@@ -105,7 +105,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     validate(targetDbVersion)
 
     val sourceDbVersion = db.getVersion()
-    validateDbVersios(sourceDbVersion, targetDbVersion)
+    validateDbVersions(sourceDbVersion, targetDbVersion)
 
     var currentVersionCollections = getCollectionNames(sourceDbVersion)
 
@@ -115,11 +115,11 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
 
     for (i <- sourceDbVersion + 1 to targetDbVersion) {
       cleanUpUnfinishedMigrations(db, currentVersionCollections, i)
-      val migrationsToExecute = migrations.filter(m => m.targetVersion == i)
-      migrationsToExecute.foreach(_.execute(db, currentVersionCollections))
-      migrationsToExecute.foreach(m =>
-        currentVersionCollections = m.applyCollectionChanges(currentVersionCollections))
+
+      val mig = migrations(i)
+      mig.execute(db, currentVersionCollections)
       db.setVersion(i)
+      currentVersionCollections = mig.applyCollectionChanges(currentVersionCollections)
     }
   }
 
@@ -198,23 +198,21 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     * between version numbers.
     */
   private def validateVersionNumbersConsequent(): Unit = {
-    var i = -1
-    migrations.foreach(m => {
+    migrations.zipWithIndex.foreach{ case(m, i) =>
       val v = m.targetVersion
-      if (v < 0) {
+      if (v < 0 ) {
         throw new IllegalStateException(s"A negative ($v) target version is encountered in a migration spec.")
       }
-      if (v - i > 1) {
+      if (v - i > 0) {
         throw new IllegalStateException(s"The list of migrations jumps from version $i to $v.")
       }
-      if (v < i) {
+      if (v < i - 1) {
         throw new IllegalStateException(s"The the migrations for version $i and version $v are out of order.")
       }
-      if (v == i) {
+      if (v == i - 1) {
         throw new IllegalStateException(s"Found 2 migrations for the same target version $i.")
       }
-      i = v
-    })
+    }
   }
 
   /**
@@ -251,7 +249,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
   /**
     * Validates that values of a source and a target database versions make sense.
     */
-  private def validateDbVersios(sourceDbVersion: Int, targetDbVersion: Int): Unit = {
+  private def validateDbVersions(sourceDbVersion: Int, targetDbVersion: Int): Unit = {
     if (sourceDbVersion < 0) {
       throw new IllegalStateException(s"Source database version cannot be negative.")
     }
