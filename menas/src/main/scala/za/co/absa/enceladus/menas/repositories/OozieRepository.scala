@@ -195,7 +195,11 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   def getCoordinatorStatus(coordId: String): Future[OozieCoordinatorStauts] = {
     getOozieClientWrap({ oozieClient: OozieClient =>
       val jobInfo = oozieClient.getCoordJobInfo(coordId)
-      val nextMaterializeTime = dateFormat.format(jobInfo.getNextMaterializedTime)
+      val nextMaterializeTime = if(jobInfo.getNextMaterializedTime == null) {
+        ""
+      } else {
+        dateFormat.format(jobInfo.getNextMaterializedTime)
+      }
       OozieCoordinatorStauts(jobInfo.getStatus, nextMaterializeTime)
     })
   }
