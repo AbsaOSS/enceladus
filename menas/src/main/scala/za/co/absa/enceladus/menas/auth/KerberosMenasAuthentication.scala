@@ -51,20 +51,22 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
   @Value("${za.co.absa.enceladus.menas.auth.kerberos.debug:false}")
   val kerberosDebug: Boolean = false
 
-  lazy val requiredParameters = Seq((adDomain, "za.co.absa.enceladus.menas.auth.ad.domain"),
+  private lazy val requiredParameters = Seq((adDomain, "za.co.absa.enceladus.menas.auth.ad.domain"),
     (adServer, "za.co.absa.enceladus.menas.auth.ad.server"),
     (servicePrincipal, "za.co.absa.enceladus.menas.auth.sysuser.principal"),
     (keytabLocation, "za.co.absa.enceladus.menas.auth.sysuser.keytab.location"),
     (ldapSearchBase, "za.co.absa.enceladus.menas.auth.ldap.search.base"),
     (ldapSearchFilter, "za.co.absa.enceladus.menas.auth.ldap.search.filter"))
 
-  override def afterPropertiesSet() {
+  override def afterPropertiesSet() = {
     System.setProperty("javax.net.debug", kerberosDebug.toString)
     System.setProperty("sun.security.krb5.debug", kerberosDebug.toString)
   }
 
   private def validateParam(param: String, paramName: String) = {
-    if (param.isEmpty()) throw new IllegalArgumentException(s"$paramName has to be configured in order to use kerberos Menas authentication")
+    if (param.isEmpty()) {
+      throw new IllegalArgumentException(s"$paramName has to be configured in order to use kerberos Menas authentication")
+    }
   }
 
   private def validateParams() {
@@ -131,7 +133,8 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
 
   override def configure(auth: AuthenticationManagerBuilder) {
     this.validateParams()
-    auth.authenticationProvider(kerberosServiceAuthenticationProvider()).authenticationProvider(activeDirectoryLdapAuthenticationProvider())
+    auth.authenticationProvider(kerberosServiceAuthenticationProvider())
+      .authenticationProvider(activeDirectoryLdapAuthenticationProvider())
   }
 
 }

@@ -21,7 +21,7 @@ multipart.maxFileSize=16Mb
 multipart.maxRequestSize=16Mb
 
 # How will users authenticate to menas. Available options: inmemory, kerberos
-za.co.absa.enceladus.menas.auth.mechanism = kerberos
+za.co.absa.enceladus.menas.auth.mechanism = inmemory
 
 za.co.absa.enceladus.menas.auth.kerberos.debug=false
 za.co.absa.enceladus.menas.auth.ad.domain=ad.domain.com

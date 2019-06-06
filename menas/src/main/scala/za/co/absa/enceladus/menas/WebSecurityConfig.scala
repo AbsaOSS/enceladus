@@ -67,7 +67,7 @@ class WebSecurityConfig {
 
   @Configuration
   @Order(1)
-  class ApiWebSecurityConfigurationAdapter @Autowired() (restAuthenticationEntyPoint: RestAuthenticationEntryPoint,
+  class ApiWebSecurityConfigurationAdapter @Autowired() (restAuthenticationEntryPoint: RestAuthenticationEntryPoint,
       authenticationSuccessHandler: AuthSuccessHandler,
       authenticationFailureHandler: AuthenticationFailureHandler,
       logoutSuccessHandler: LogoutSuccessHandler)
@@ -79,7 +79,7 @@ class WebSecurityConfig {
           .ignoringAntMatchers("/api/login")
         .and()
           .exceptionHandling()
-          .authenticationEntryPoint(restAuthenticationEntyPoint)
+          .authenticationEntryPoint(restAuthenticationEntryPoint)
         .and()
           .authorizeRequests()
           .antMatchers("/index.html", "/resources/**", "/generic/**",
@@ -118,7 +118,9 @@ class WebSecurityConfig {
           logger.info("Using Kerberos Menas Authentication")
           beanFactory.getBean(classOf[KerberosMenasAuthentication])
         }
-        case _ => throw new IllegalArgumentException(s"Invalid authentication mechanism - use one of: inmemory, kerberos")
+        case _ => {
+          throw new IllegalArgumentException("Invalid authentication mechanism - use one of: inmemory, kerberos")
+        }
       }
     }
     
@@ -133,7 +135,7 @@ class WebSecurityConfig {
     override def commence(request: HttpServletRequest,
         response: HttpServletResponse,
         authException: AuthenticationException): Unit = {
-      response.sendError(HttpServletResponse.SC_UNAUTHORIZED, s"Unauthorized")
+      response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
     }
   }
 
