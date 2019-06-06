@@ -21,6 +21,7 @@ import za.co.absa.enceladus.migrations.framework.migration._
 class UseCaseTestData {
 
   val db = new DocumentDbMock
+  val emptyDb = new DocumentDbMock
 
   initializeDb()
 
@@ -31,6 +32,7 @@ class UseCaseTestData {
     createCollection("schema")
     createCollection("mappingtable")
     createCollection("foo")
+    createIndex("dataset", "name" :: Nil)
   }
 
   object Migration1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration  {
@@ -40,6 +42,7 @@ class UseCaseTestData {
     dropCollection("foo")
     createCollection("attachment")
     createIndex("dataset", "order" :: Nil)
+    createIndex("dataset", "version" :: Nil)
 
     transformJSON("schema")(jsonIn => {
       jsonIn.replace(" ","")

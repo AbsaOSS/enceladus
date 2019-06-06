@@ -29,7 +29,6 @@ import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.menas.models.{RunSummary, RunWrapper}
-import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository.collectionBaseName
 import za.co.absa.enceladus.model
 
 import scala.concurrent.Future

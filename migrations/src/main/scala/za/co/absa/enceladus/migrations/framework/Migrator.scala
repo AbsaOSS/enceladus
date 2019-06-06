@@ -21,7 +21,10 @@ import util.control.Breaks._
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 import za.co.absa.enceladus.migrations.framework.migration._
 
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+
 class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
+  type Index = (String, Seq[String])
 
   private val log: Logger = LogManager.getLogger("CollectionMigration")
 
@@ -32,12 +35,69 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
   def getJsonMigrations: Seq[JsonMigration] = migrations.collect({ case m: JsonMigration => m })
 
   /**
-    * Do the migration from the current version of the database to the target one.
+    * Checks if a database is empty
+    *
+    * - If there is 'db_version' collection in the database, it is definitely not empty.
+    * - If there is at least one of initial version 0 collections in the database => it is not empty
+    */
+  def isDatabaseEmpty(): Boolean = {
+    if (db.isCollectionExists("db_version")) {
+      false
+    } else {
+      val collections = getCollectionNames(0)
+      collections.forall(c => !db.isCollectionExists(c))
+    }
+  }
+
+  /**
+    * Returns if a migration is required given the expected model version of the database schema.
+    */
+  def isMigrationRequired(expectedModelVersion: Int): Boolean = {
+    val currentDbVersion = db.getVersion()
+    expectedModelVersion > currentDbVersion
+  }
+
+  /**
+    * Initializes the database of the specified version. Creates 'db_version', all collections and indexes
+    */
+  def initializeDatabase(targetDbVersion: Int): Unit = {
+    validate(targetDbVersion)
+
+    val collections = getCollectionNames(targetDbVersion)
+    collections.foreach(c => db.createCollection(MigrationUtils.getVersionedCollectionName(c, targetDbVersion)))
+
+    val indexes = getIndexes(targetDbVersion)
+    indexes.foreach { case (c, keys) =>
+      db.createIndex(MigrationUtils.getVersionedCollectionName(c, targetDbVersion), keys)
+    }
+
+    db.setVersion(targetDbVersion)
+  }
+
+  /**
+    * ==Runs a sequence of migrations==
+    * Does the migration from the current version of the database to the target one.
     *
     * The migrations passed into the constructor should be:
-    * - In the order of database versions
-    * - Without gaps in version numbers
-    * - There should be only one migration per version switch
+    * <ul>
+    * <li>In the order of database versions</li>
+    * <li>Without gaps in version numbers</li>
+    * <li>There should be only one migration per version switch</li>
+    * </ul>
+    *
+    * ==Migrations are non-destructive==
+    * Migrations are not destructive, they are safe to run on existing databases. Model v0 collections are expected to
+    * have no postfix, e.g. 'dataset', 'schema'. The model v1 collections are expected to have a version postfix, e.g.
+    * 'dataset_v1', 'schema_v1'. Several models can coexist in one database sharing all MongoDB connection settings.
+    * The latest usable model is specified in 'db_version' collection.
+    *
+    * ==Object Id retention==
+    * Object Ids are retained during migrations which opens a possibility to later have a continuous migration process.
+    *
+    * ==Interrupt tolerance==
+    * Migrations are interruption tolerant. The last thing a migration does is writing a new version into 'db_version'.
+    * If a process was interrupted before completion the version in 'db_version' will still be old. When a new migration
+    * starts it will drop all partially migrated collections and will start a migration from the beginning.
     *
     * @param targetDbVersion A version of the database to migrate to.
     */
@@ -53,15 +113,13 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
       throw new IllegalStateException(s"No collection names are registered for db version $sourceDbVersion.")
     }
 
-    if (targetDbVersion > sourceDbVersion) {
-      for (i <- sourceDbVersion + 1 to targetDbVersion) {
-        cleanUpUnfinishedMigrations(db, currentVersionCollections, i)
-        val migrationsToExecute = migrations.filter(m => m.targetVersion == i)
-        migrationsToExecute.foreach(_.execute(db, currentVersionCollections))
-        migrationsToExecute.foreach(m =>
-          currentVersionCollections = m.applyCollectionChanges(currentVersionCollections))
-        db.setVersion(i)
-      }
+    for (i <- sourceDbVersion + 1 to targetDbVersion) {
+      cleanUpUnfinishedMigrations(db, currentVersionCollections, i)
+      val migrationsToExecute = migrations.filter(m => m.targetVersion == i)
+      migrationsToExecute.foreach(_.execute(db, currentVersionCollections))
+      migrationsToExecute.foreach(m =>
+        currentVersionCollections = m.applyCollectionChanges(currentVersionCollections))
+      db.setVersion(i)
     }
   }
 
@@ -83,6 +141,39 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
       })
     }
     collections
+  }
+
+  /**
+    * Get the list of indexes that are expected to be at the target db version
+    *
+    * @param dbVersion A version number of the database.
+    */
+  def getIndexes(dbVersion: Int): Seq[Index] = {
+    val indexes = new ArrayBuffer[Index]()
+
+    def applyIndexChanges(c: CollectionMigration): Unit = {
+      c.getIndexesToRemove.foreach(idx => {
+        val i = indexes.indexOf(idx)
+        if (i >= 0) {
+          indexes.remove(i)
+        }
+      })
+
+      c.getIndexesToAdd.foreach(idx => {
+        val i = indexes.indexOf(idx)
+        if (i < 0) {
+          indexes += idx
+        }
+      })
+    }
+
+    migrations.foreach {
+      case c: CollectionMigration =>
+        applyIndexChanges(c)
+      case _ =>
+      // Nothing to do
+    }
+    indexes
   }
 
 
@@ -173,7 +264,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
   /**
     * Removes collections that were created during an interrupted migration process.
     *
-    * Each migration always finished with setting up the current database version in 'db_version'.
+    * Each migration always finishes with setting up the current database version in 'db_version'.
     * If the value in 'db_version' is, say, 5, but there are collections in the database with '_v6' postfix,
     * e.g. 'dataset_v6', than it is assumed that a migration from v5 to v6 did not finish successfully.
     * Collections created during that process will be dropped.
@@ -200,8 +291,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
       .foreach(collection => if (db.isCollectionExists(collection)) {
         log.info(s"Dropping partially migrated collection $collection")
         db.dropCollection(collection)
-      }
-    )
+      })
   }
 
 }
