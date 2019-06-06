@@ -29,23 +29,15 @@ import za.co.absa.enceladus.migrations.migrations._
 object MongoMigratorApp {
 
   def main(args: Array[String]) {
-    if (args.length < 3) {
-      println("Syntax:")
-      println("\tjava -cp enceladus-migrations.jar za.co.absa.enceladus.migrations.MongoMigratorApp " +
-        "<MongoDbURL> <DbName> <TargetVersion>")
-      System.exit(1)
-    }
-    val mongoConnectionString = args(0)
-    val integrationTestDbName = args(1)
-    val targetVersion = args(2).toInt
 
-    val mongoClient = MongoClient(mongoConnectionString)
-    val db = new MongoDb(mongoClient.getDatabase(integrationTestDbName))
+    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+
+    val mongoClient = MongoClient(cmd.mongoDbURL)
+    val db = new MongoDb(mongoClient.getDatabase(cmd.database))
 
     val mig = new Migrator(db, Migrations)
 
-    mig.validate(targetVersion)
-    mig.migrate(targetVersion)
+    mig.migrate(cmd.targetVersion)
   }
 
 }

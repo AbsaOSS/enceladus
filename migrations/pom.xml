@@ -30,6 +30,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.github.scopt</groupId>
+            <artifactId>scopt_${scala.compat.version}</artifactId>
+            <version>${scopt.version}</version>
+        </dependency>
+
         <!-- Jackson -->
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
