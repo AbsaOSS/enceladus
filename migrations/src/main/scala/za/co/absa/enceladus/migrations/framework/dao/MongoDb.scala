@@ -27,6 +27,7 @@ import za.co.absa.enceladus.migrations.framework.model.DbVersion
 import za.co.absa.enceladus.migrations.framework.Constants.DatabaseVersionCollectionName
 
 import scala.reflect.ClassTag
+import scala.util.control.NonFatal
 
 /**
   * This is a MongoDB implementation of the document DB API needed for migration framework to run.
@@ -170,9 +171,14 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     if (!isCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
-    db.getCollection(collectionName)
-      .createIndex(fieldsToBsonKeys(keys))
-      .execute()
+    try {
+      db.getCollection(collectionName)
+        .createIndex(fieldsToBsonKeys(keys))
+        .execute()
+    } catch {
+      case NonFatal(e) => log.warn(s"Unable to create an index for $collectionName, keys: ${keys.mkString(",")}: "
+        + e.getMessage)
+    }
   }
 
   /**
@@ -183,9 +189,14 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     if (!isCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
-    db.getCollection(collectionName)
-      .dropIndex(fieldsToBsonKeys(keys))
-      .execute()
+    try {
+      db.getCollection(collectionName)
+        .dropIndex(fieldsToBsonKeys(keys))
+        .execute()
+    } catch {
+      case NonFatal(e) => log.warn(s"Unable to drop an index for $collectionName, keys: ${keys.mkString(",")}: "
+        + e.getMessage)
+    }
   }
 
   /**

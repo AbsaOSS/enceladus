@@ -20,6 +20,45 @@ import za.co.absa.enceladus.migrations.framework.fixture.UseCaseTestData
 
 class MigrationUseCaseSuite extends FunSuite {
 
+  test("Test a database initialization") {
+    val testData = new UseCaseTestData
+
+    import testData._
+
+    val db = emptyDb
+
+    val mig = new Migrator(db, Migration0 :: Migration1 :: Migration2 :: Nil)
+
+    mig.initializeDatabase(2)
+
+    assert(db.getVersion() == 2)
+
+    val expectedActions =
+        "create(dataset_v2)" ::
+        "create(schema_v2)" ::
+        "create(mapping_table_v2)" ::
+        "create(attachment_v2)" ::
+        "createIndex(dataset_v2,List(name))" ::
+        "createIndex(dataset_v2,List(version))" ::
+        "setDbVersion(2)" ::
+        Nil
+
+    assert(db.getActionsExecuted == expectedActions)
+
+    assert(db.isCollectionExists("dataset_v2"))
+    assert(db.isCollectionExists("schema_v2"))
+    assert(db.isCollectionExists("mapping_table_v2"))
+    assert(db.isCollectionExists("attachment_v2"))
+    assert(!db.isCollectionExists("dataset_v1"))
+    assert(!db.isCollectionExists("schema_v1"))
+    assert(!db.isCollectionExists("mapping_table_v1"))
+    assert(!db.isCollectionExists("attachment_v1"))
+    assert(!db.isCollectionExists("foo"))
+    assert(!db.isCollectionExists("mappingtable"))
+    assert(!db.isCollectionExists("foo_v1"))
+    assert(!db.isCollectionExists("mappingtable_v1"))
+  }
+
   test("Test a simple migration") {
     val testData = new UseCaseTestData
 
@@ -40,6 +79,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "drop(foo_v1)" ::
         "rename(mappingtable_v1,mapping_table_v1)" ::
         "createIndex(dataset_v1,List(order))" ::
+        "createIndex(dataset_v1,List(version))" ::
         "empty(schema_v1)" ::
         "getDocuments(schema)" ::
         "insertTo(schema_v1)" ::
@@ -86,6 +126,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "drop(foo_v1)" ::
         "rename(mappingtable_v1,mapping_table_v1)" ::
         "createIndex(dataset_v1,List(order))" ::
+        "createIndex(dataset_v1,List(version))" ::
         "empty(schema_v1)" ::
         "getDocuments(schema)" ::
         "insertTo(schema_v1)" ::

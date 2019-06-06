@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.integration.fixture
 
-import org.mongodb.scala.MongoClient
+import org.mongodb.scala.{MongoClient, MongoDatabase}
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import za.co.absa.enceladus.migrations.framework.dao.{MongoDb, ScalaMongoImplicits}
 import za.co.absa.enceladus.migrations.framework.integration.config.IntegrationTestConfiguration
@@ -29,6 +29,7 @@ trait MigrationsFixture extends BeforeAndAfterAll {
 
   protected var mongoClient: MongoClient = _
   protected var db: MongoDb = _
+  protected var dbRaw: MongoDatabase = _
 
   import ScalaMongoImplicits._
 
@@ -49,7 +50,8 @@ trait MigrationsFixture extends BeforeAndAfterAll {
       throw new IllegalStateException(s"MongoDB migration use case integration test database " +
       s"'$integrationTestDbName' already exists at '$mongoConnectionString'.")
     }
-    db = new MongoDb(mongoClient.getDatabase(integrationTestDbName))
+    dbRaw = mongoClient.getDatabase(integrationTestDbName)
+    db = new MongoDb(dbRaw)
     fillInitialData()
   }
 

@@ -40,12 +40,16 @@ class MigrationService @Autowired()(mongoDb: MongoDatabase, hadoopConf: Configur
   def init(): Unit = {
     val mongoClient = MongoClient(connectionString)
     val db = new MongoDb(mongoClient.getDatabase(database))
+    val mig = new Migrator(db, Migrations)
 
-    if (db.isCollectionExists("schema") || db.isCollectionExists("db_version")) {
-      val version = db.getVersion()
-      if (ModelVersion > version) {
-        log.warn(s"Database version $version, the model version is $ModelVersion. A data migration is required.")
-        val mig = new Migrator(db, Migrations)
+    if (mig.isDatabaseEmpty()) {
+      log.warn(s"The database '$database' is empty. Initializing...")
+      mig.initializeDatabase(ModelVersion)
+    } else {
+      if (mig.isMigrationRequired(ModelVersion)) {
+        val version = db.getVersion()
+        log.warn(s"Database version $version, the model version is $ModelVersion. " +
+          "Data migration is going to start now...")
         mig.migrate(ModelVersion)
       }
     }

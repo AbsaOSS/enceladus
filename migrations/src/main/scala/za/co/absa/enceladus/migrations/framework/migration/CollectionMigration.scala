@@ -124,6 +124,12 @@ trait CollectionMigration extends Migration {
   /** Returns a list of collections to be removed during the migration */
   def getCollectionsToRename: List[(String, String)] = collectionsToRename.toList
 
+  /** Returns a list of indexes to be added during the migration */
+  def getIndexesToAdd: List[Index] = indexesToCreate.toList
+
+  /** Returns a list of indexes to be removed during the migration */
+  def getIndexesToRemove: List[Index] = indexesToDrop.toList
+
   /**
     * If a migration adds or removes collections it should provide a new list of collections based
     * on the list of collections available for he previous version of a database.

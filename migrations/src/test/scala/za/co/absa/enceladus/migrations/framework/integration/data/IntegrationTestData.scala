@@ -24,6 +24,7 @@ class IntegrationTestData {
     createCollection("foo1")
     createCollection("foo2")
     createCollection("foo3")
+    createIndex("foo1", "date" :: Nil)
   }
 
   object Migration1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration {
@@ -33,6 +34,7 @@ class IntegrationTestData {
     dropCollection("foo3")
     createCollection("bar1")
     createIndex("foo1", "name" :: Nil)
+    dropIndex("foo1", "date" :: Nil)
 
     transformJSON("foo1")(jsonIn => {
       jsonIn.replaceAll("Doodad", "Hickey")
@@ -43,4 +45,10 @@ class IntegrationTestData {
          | multi: false, upsert: false } ], ordered: true }""".stripMargin
     })
   }
+
+  object Migration2 extends MigrationBase with CollectionMigration  {
+    override val targetVersion: Int = 2
+    createIndex("foo1", "name" :: "date" :: Nil)
+  }
+
 }

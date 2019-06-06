@@ -18,6 +18,7 @@ package za.co.absa.enceladus.migrations.framework.integration
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.migrations.framework.Constants.DatabaseVersionCollectionName
 import za.co.absa.enceladus.migrations.framework.Migrator
+import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits
 import za.co.absa.enceladus.migrations.framework.integration.fixture.MigrationsFixture
 import za.co.absa.enceladus.migrations.framework.integration.data.IntegrationTestData
 
@@ -25,6 +26,7 @@ class MigrationsIntegrationSuite extends FunSuite with MigrationsFixture {
   val testData = new IntegrationTestData
 
   import testData._
+  import ScalaMongoImplicits._
 
   test("Test a migration") {
     val mig = new Migrator(db, Migration0 :: Migration1 :: Nil)
@@ -53,6 +55,49 @@ class MigrationsIntegrationSuite extends FunSuite with MigrationsFixture {
 
     assert(doc1.contains(""""name" : "Gizmo", "date" : "2018-10-10""""))
     assert(doc2.contains(""""name" : "Hickey""""))
+  }
+
+  test("Test a database initialization") {
+    val mig = new Migrator(db, Migration0 :: Migration1 :: Migration2 :: Nil)
+
+    assert(db.isCollectionExists(DatabaseVersionCollectionName))
+    assert(!mig.isDatabaseEmpty())
+    assert(mig.isMigrationRequired(2))
+
+    db.dropCollection("foo1")
+    db.dropCollection("foo2")
+    db.dropCollection("foo3")
+    db.dropCollection("foo1_v1")
+    db.dropCollection("bar1_v1")
+    db.dropCollection("bar2_v1")
+    db.dropCollection(DatabaseVersionCollectionName)
+
+    assert(mig.isDatabaseEmpty())
+
+    mig.initializeDatabase(2)
+
+    assert(db.isCollectionExists(DatabaseVersionCollectionName))
+    assert(db.getVersion() == 2)
+
+    assert(!db.isCollectionExists("foo1"))
+    assert(!db.isCollectionExists("foo2"))
+    assert(!db.isCollectionExists("foo3"))
+    assert(!db.isCollectionExists("foo1_v1"))
+    assert(!db.isCollectionExists("foo2_v1"))
+    assert(!db.isCollectionExists("foo3_v1"))
+    assert(!db.isCollectionExists("bar1_v1"))
+    assert(!db.isCollectionExists("bar2_v1"))
+
+    assert(db.isCollectionExists("foo1_v2"))
+    assert(db.isCollectionExists("bar1_v2"))
+    assert(db.isCollectionExists("bar2_v2"))
+
+    val idx1 = dbRaw.getCollection("foo1_v2").listIndexes().execute()
+    assert(idx1.size == 3)
+
+    // Check if the second index contains 2 keys
+    val indexDocs = idx1.toIndexedSeq.map(idx => idx("key").asDocument())
+    assert(indexDocs(2).size == 2)
   }
 
 }
