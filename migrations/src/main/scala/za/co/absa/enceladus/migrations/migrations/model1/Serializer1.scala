@@ -65,11 +65,6 @@ object Serializer1 {
     schemaCodec.encode(bsonWriter, schema, encodeContext)
 
     bsonDocument.toJson
-
-    // alternative 1
-    //objectMapper.writeValueAsString(schema)
-    // alternative 2
-    //Serialization.write(schema)
   }
 
   /**
@@ -77,7 +72,6 @@ object Serializer1 {
     */
   def deserializeSchema(json: String): Schema = {
     objectMapper.readValue(json, classOf[Schema])
-    //Serialization.read[Schema](json)
   }
 
   /**

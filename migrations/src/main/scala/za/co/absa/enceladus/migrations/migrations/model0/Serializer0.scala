@@ -19,29 +19,13 @@ import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.json4s.jackson.Serialization
-import org.json4s.{DefaultFormats, Formats, NoTypeHints, ShortTypeHints}
-import za.co.absa.enceladus.migrations.migrations.model0.conformanceRule._
-import org.mongodb.scala.bson.codecs.Macros._
+import org.json4s.{DefaultFormats, Formats, NoTypeHints}
 
 /**
   * This is the object for deserializing Model 0 version of Enceladus Schema
   */
 object Serializer0 {
-  //implicit private val formatsJson: Formats = Serialization.formats(NoTypeHints).withBigDecimal
   private val formatsDefault: Formats = DefaultFormats.withHints(NoTypeHints)
-
-  private val formatsDataset: Formats = DefaultFormats.withHints(ShortTypeHints(List(
-    classOf[ConformanceRule],
-    classOf[MappingConformanceRule],
-    classOf[LiteralConformanceRule],
-    classOf[ConcatenationConformanceRule],
-    classOf[DropConformanceRule],
-    classOf[SparkSessionConfConformanceRule],
-    classOf[UppercaseConformanceRule],
-    classOf[SingleColumnConformanceRule],
-    classOf[CastingConformanceRule],
-    classOf[NegationConformanceRule]
-  )))
 
   private val objectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
@@ -68,8 +52,6 @@ object Serializer0 {
     * Deserializes a Model 0 dataset JSON
     */
   def deserializeDataset(json: String): Dataset = {
-    //implicit val formats: Formats = formatsDataset
-    //Serialization.read[Dataset](json)
     objectMapper.readValue(json, classOf[Dataset])
   }
 

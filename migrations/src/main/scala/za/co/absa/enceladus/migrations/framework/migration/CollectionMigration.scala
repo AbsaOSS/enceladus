@@ -19,7 +19,7 @@ import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 /**
   * A CollectionMigration represents an entity that provides ability to add, rename and remove collections
@@ -30,13 +30,13 @@ import scala.collection.mutable.ListBuffer
   * {{{
   *   object MigrationTo1 extends MigrationBase with CollectionMigration {
   *
-  *     addCollection("collection1_name")
-  *     addCollection("collection2_name")
-  *     addCollection("collection3_name")
+  *     createCollection("collection1_name")
+  *     createCollection("collection2_name")
+  *     createCollection("collection3_name")
   *
-  *     removeCollection("collection4_name")
-  *     removeCollection("collection5_name")
-  *     removeCollection("collection6_name")
+  *     dropCollection("collection4_name")
+  *     dropCollection("collection5_name")
+  *     dropCollection("collection6_name")
   *
   *     createIndex("collection1_name", "foo1" :: "bar1" :: Nil)
   *     dropIndex("collection2_name", "foo2" :: "bar2" :: Nil)
@@ -45,9 +45,16 @@ import scala.collection.mutable.ListBuffer
   */
 trait CollectionMigration extends Migration {
 
+  // Index is a pair of a collection name and a list of key fields
   type Index = (String, Seq[String])
 
-  private val log: Logger = LogManager.getLogger("CollectionMigration")
+  private val log: Logger = LogManager.getLogger(this.getClass)
+
+  private val collectionsToCreate = new ListBuffer[String]()
+  private val collectionsToDrop = new ListBuffer[String]()
+  private val collectionsToRename = new ListBuffer[(String, String)]()
+  private val indexesToCreate = new ListBuffer[Index]()
+  private val indexesToDrop = new ListBuffer[Index]()
 
   /**
     * This method is used by derived classes to add new collection as a step of migration process.
@@ -87,10 +94,16 @@ trait CollectionMigration extends Migration {
     */
   def renameCollection(oldName: String, newName: String): Unit = {
     if (collectionsToDrop.contains(oldName)) {
-      throw new IllegalArgumentException(s"Collection '$oldName' is in the removal list.")
+      throw new IllegalArgumentException(s"Collection '$oldName' is in the removal list. Cannot rename it.")
     }
     if (collectionsToCreate.contains(oldName)) {
       throw new IllegalArgumentException(s"Collection '$oldName' is in the list of new collections. Cannot rename it.")
+    }
+    if (collectionsToDrop.contains(newName)) {
+      throw new IllegalArgumentException(s"Collection '$newName' is in the removal list. Cannot rename it.")
+    }
+    if (collectionsToCreate.contains(newName)) {
+      throw new IllegalArgumentException(s"Collection '$newName' is in the list of new collections. Cannot rename it.")
     }
     collectionsToRename += oldName -> newName
   }
@@ -102,6 +115,10 @@ trait CollectionMigration extends Migration {
     * @param fields         A list of fields that the index should contain
     */
   def createIndex(collectionName: String, fields: Seq[String]): Unit = {
+    if (collectionsToDrop.contains(collectionName)) {
+      throw new IllegalArgumentException(s"Collection '$collectionName' is in the removal list. " +
+        s"Cannot create an index on it.")
+    }
     indexesToCreate.append((collectionName, fields))
   }
 
@@ -112,6 +129,10 @@ trait CollectionMigration extends Migration {
     * @param fields         A list of fields that the index should contain
     */
   def dropIndex(collectionName: String, fields: Seq[String]): Unit = {
+    if (collectionsToDrop.contains(collectionName)) {
+      throw new IllegalArgumentException(s"Collection '$collectionName' is in the removal list. " +
+        s"No need to explicitly drop indexes.")
+    }
     indexesToDrop.append((collectionName, fields))
   }
 
@@ -135,19 +156,24 @@ trait CollectionMigration extends Migration {
     * on the list of collections available for he previous version of a database.
     */
   override def applyCollectionChanges(collections: List[String]): List[String] = {
-    var newCollections = collections
+    val newCollections = ArrayBuffer[String](collections:_*)
     for (c <- getCollectionsToAdd) {
       if (!newCollections.contains(c)) {
-        newCollections = newCollections :+ c
+        newCollections += c
       }
     }
     val collectionsToRemove = getCollectionsToRemove
-    newCollections = newCollections.filterNot(c => collectionsToRemove.contains(c))
+    collectionsToRemove.foreach(c => {
+      val i = newCollections.indexOf(c)
+      if (i >= 0) {
+        newCollections.remove(i)
+      }
+    })
 
     val renameMap = collectionsToRename.toMap
     newCollections.map(collectionName => {
       renameMap.getOrElse(collectionName, collectionName)
-    })
+    }).toList
   }
 
   /**
@@ -208,7 +234,7 @@ trait CollectionMigration extends Migration {
     indexesToCreate.foreach {
       case (collectionName, keys) =>
         val collection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
-        log.info(s"Creating index '${keys.mkString(",")}' in '$collection'")
+        log.info(s"Creating index '${keys.mkString(", ")}' in '$collection'")
         db.createIndex(collection, keys)
     }
   }
@@ -220,7 +246,7 @@ trait CollectionMigration extends Migration {
     indexesToDrop.foreach {
       case (collectionName, keys) =>
         val collection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
-        log.info(s"Removing index '${keys.mkString(",")}' from '$collection'")
+        log.info(s"Removing index '${keys.mkString(", ")}' from '$collection'")
         db.dropIndex(collection, keys)
     }
   }
@@ -285,9 +311,4 @@ trait CollectionMigration extends Migration {
     }
   }
 
-  private val collectionsToCreate = new ListBuffer[String]()
-  private val collectionsToDrop = new ListBuffer[String]()
-  private val collectionsToRename = new ListBuffer[(String, String)]()
-  private val indexesToCreate = new ListBuffer[Index]()
-  private val indexesToDrop = new ListBuffer[Index]()
 }

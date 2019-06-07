@@ -16,9 +16,7 @@
 package za.co.absa.enceladus.migrations.migrations.model0
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
-import com.fasterxml.jackson.annotation.JsonTypeInfo.Id
 import com.fasterxml.jackson.annotation._
-import org.mongodb.scala.bson.ObjectId
 
 package object conformanceRule {
 

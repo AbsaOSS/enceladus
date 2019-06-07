@@ -25,7 +25,7 @@ case class Dataset(
   name:    String,
   version: Int = 1,
   description: Option[String] = None,
-  
+
   hdfsPath:        String,
   hdfsPublishPath: String,
 
@@ -33,10 +33,10 @@ case class Dataset(
   schemaVersion: Int,
 
   dateCreated: ZonedDateTime = ZonedDateTime.now(),
-  userCreated: String        = null,
+  userCreated: String,
 
   lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-  userUpdated: String        = null,
+  userUpdated: String,
 
   disabled:     Boolean               = false,
   dateDisabled: Option[ZonedDateTime] = None,

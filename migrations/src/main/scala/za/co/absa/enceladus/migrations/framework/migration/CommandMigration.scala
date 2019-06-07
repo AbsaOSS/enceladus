@@ -51,10 +51,18 @@ import scala.collection.mutable.ListBuffer
   * }}}
   */
 trait CommandMigration extends Migration {
+
+  // A command is a generalization of a query that can be executed on a collection.
+  // In MongoDB command is a JSON string that specifies action to be executed in a DB.
   type Command = String
+
+  // A command generator is a function that takes a collection name and returns a command/query to be executed
+  // on that collection.
   type CommandGenerator = String => Command
 
-  private val log: Logger = LogManager.getLogger("CommandMigration")
+  private val log: Logger = LogManager.getLogger(this.getClass)
+
+  private val commands = new ListBuffer[(String, CommandGenerator)]()
 
   /**
     * This method is used by derived classes to add commands to be executed on the affected collections.
@@ -127,5 +135,4 @@ trait CommandMigration extends Migration {
     }
   }
 
-  private val commands = new ListBuffer[(String, CommandGenerator)]()
 }

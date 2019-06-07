@@ -47,12 +47,13 @@ import scala.collection.mutable
   * }}}
   *
   * If a source document is invalid for some reason and should be dropped, just return `InvalidDocument`.
-  *
   */
 trait JsonMigration extends Migration {
+
+  // A document transformer is a function that maps a JSON string to a JSON string
   type DocumentTransformer = String => String
 
-  private val log: Logger = LogManager.getLogger("JsonMigration")
+  private val log: Logger = LogManager.getLogger(this.getClass)
   val InvalidDocument = ""
 
   private val transformers = new mutable.HashMap[String, DocumentTransformer]()
@@ -63,7 +64,6 @@ trait JsonMigration extends Migration {
     *
     * @param collectionName A collection name to be migrated
     * @param f              A transformation to applied to each document of the collection
-    *
     */
   def transformJSON(collectionName: String)(f: String => String): Unit = {
     if (transformers.contains(collectionName)) {
@@ -77,7 +77,6 @@ trait JsonMigration extends Migration {
     *
     * @param collectionName A collection name to be migrated
     * @return A function that takes a JSON string and returns a transformed JSON string
-    *
     */
   def getTransformer(collectionName: String): Option[DocumentTransformer] = transformers.get(collectionName)
 
@@ -154,14 +153,12 @@ trait JsonMigration extends Migration {
     if (invalidDocumentsCount == 0) {
       log.info(s"Migration '$sourceCollection' -> '$targetCollection' completed successfully. " +
         s"Total documents migrated: $targetDocsCnt.")
+    } else if (invalidDocumentsCount == sourceDocsCnt) {
+      log.error(s"Migration '$sourceCollection' -> '$targetCollection' failed. " +
+        s"Unable to convert any of $sourceDocsCnt documents.")
     } else {
-      if (invalidDocumentsCount == sourceDocsCnt) {
-        log.error(s"Migration '$sourceCollection' -> '$targetCollection' failed. " +
-          s"Unable to convert any of $sourceDocsCnt documents.")
-      } else {
-        log.warn(s"Migration '$sourceCollection' -> '$targetCollection' completed with errors. $targetDocsCnt out of " +
-          s"$sourceDocsCnt were migrated. The number of invalid documents: $invalidDocumentsCount.")
-      }
+      log.warn(s"Migration '$sourceCollection' -> '$targetCollection' completed with errors. $targetDocsCnt out of " +
+        s"$sourceDocsCnt were migrated. The number of invalid documents: $invalidDocumentsCount.")
     }
   }
 

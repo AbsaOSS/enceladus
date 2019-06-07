@@ -22,10 +22,10 @@ case class Schema(name: String,
                   description: Option[String],
 
                   dateCreated: ZonedDateTime = ZonedDateTime.now(),
-                  userCreated: String = null,
+                  userCreated: String,
 
                   lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-                  userUpdated: String = null,
+                  userUpdated: String,
 
                   disabled: Boolean = false,
                   dateDisabled: Option[ZonedDateTime] = None,

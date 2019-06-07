@@ -185,9 +185,8 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
     */
   private def convertSchemaFieldArray(field0: model0.SchemaField, path: List[String]): model1.SchemaField = {
     field0.elementType.get match {
-      case "array" => convertSchemaFieldArray(field0, path)
-      case "struct" =>
-        convertSchemaFieldStruct(field0, path)
+      case "array" => convertSchemaFieldArray(field0.children.head, path)
+      case "struct" => convertSchemaFieldStruct(field0, path)
       case _ =>
         model1.SchemaField(field0.name, field0.`type`, path.mkString("."), field0.elementType, field0.containsNull,
           field0.nullable, field0.metadata, Nil)

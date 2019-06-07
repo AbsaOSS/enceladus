@@ -21,7 +21,5 @@ case class Schema
   version: Int,
   fields: List[SchemaField]
 ) extends VersionedModel {
-
-
   override def setVersion(value: Int): Schema = this.copy(version = value)
 }
