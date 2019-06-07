@@ -21,12 +21,14 @@ import util.control.Breaks._
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 import za.co.absa.enceladus.migrations.framework.migration._
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ArrayBuffer
 
 class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
+
+  // Index is a pair of a collection name and a list of key fields
   type Index = (String, Seq[String])
 
-  private val log: Logger = LogManager.getLogger("CollectionMigration")
+  private val log: Logger = LogManager.getLogger(this.getClass)
 
   def getCollectionMigrations: Seq[CollectionMigration] = migrations.collect({ case m: CollectionMigration => m })
 
@@ -41,7 +43,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     * - If there is at least one of initial version 0 collections in the database => it is not empty
     */
   def isDatabaseEmpty(): Boolean = {
-    if (db.isCollectionExists("db_version")) {
+    if (db.isCollectionExists(Constants.DatabaseVersionCollectionName)) {
       false
     } else {
       val collections = getCollectionNames(0)
@@ -189,8 +191,8 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     */
   def validate(targetDbVersion: Int): Unit = {
     validateVersionNumbersConsequent()
-    validateCollectionManipulationConsistency(targetDbVersion)
     validateTargetVersion(targetDbVersion)
+    validateCollectionManipulationConsistency(targetDbVersion)
   }
 
   /**
@@ -230,10 +232,9 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     }
 
     for (i <- 1 to targetDbVersion) {
-      val migrationsToExecute = migrations.filter(m => m.targetVersion == i)
-      migrationsToExecute.foreach(_.validate(currentVersionCollections))
-      migrationsToExecute.foreach(m =>
-        currentVersionCollections = m.applyCollectionChanges(currentVersionCollections))
+      val mig = migrations(i)
+      mig.validate(currentVersionCollections)
+      currentVersionCollections = mig.applyCollectionChanges(currentVersionCollections)
     }
   }
 

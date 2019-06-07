@@ -54,12 +54,12 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
       setVersion(0)
     }
 
-    val versions = getCollection(DatabaseVersionCollectionName)
+    val versions = getTypedCollection(DatabaseVersionCollectionName)
       .find[DbVersion]()
       .execute()
 
     if (versions.isEmpty) {
-      getCollection[DbVersion](DatabaseVersionCollectionName)
+      getTypedCollection[DbVersion](DatabaseVersionCollectionName)
         .insertOne(DbVersion(0))
         .execute()
       0
@@ -82,11 +82,11 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
   override def setVersion(version: Int): Unit = {
     if (!isCollectionExists(DatabaseVersionCollectionName)) {
       createCollection(DatabaseVersionCollectionName)
-      getCollection[DbVersion](DatabaseVersionCollectionName)
+      getTypedCollection[DbVersion](DatabaseVersionCollectionName)
         .insertOne(DbVersion(version))
         .execute()
     } else {
-      getCollection[DbVersion](DatabaseVersionCollectionName)
+      getTypedCollection[DbVersion](DatabaseVersionCollectionName)
         .replaceOne(new BsonDocument, DbVersion(version))
         .execute()
     }
@@ -113,7 +113,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     */
   override def dropCollection(collectionName: String): Unit = {
     log.info(s"Dropping $collectionName collection...")
-    db.getCollection(collectionName)
+    getCollection(collectionName)
       .drop()
       .execute()
   }
@@ -123,7 +123,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     */
   override def emptyCollection(collectionName: String): Unit = {
     log.info(s"Emptying $collectionName collection...")
-    db.getCollection(collectionName)
+    getCollection(collectionName)
       .deleteMany(new BsonDocument())
       .execute()
   }
@@ -133,7 +133,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     */
   override def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit = {
     log.info(s"Renaming $collectionNameOld to $collectionNameNew...")
-    db.getCollection(collectionNameOld)
+    getCollection(collectionNameOld)
       .renameCollection(MongoNamespace(db.name, collectionNameNew))
       .execute()
   }
@@ -145,6 +145,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     */
   override def cloneCollection(collectionFrom: String, collectionTo: String): Unit = {
     log.info(s"Copying $collectionFrom to $collectionFrom...")
+    ensureCollectionExists(collectionFrom)
     val cmd =
       s"""{
          |  aggregate: "$collectionFrom",
@@ -167,16 +168,13 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     * Creates an index for a given list of fields.
     */
   override def createIndex(collectionName: String, keys: Seq[String]): Unit = {
-    log.info(s"Creating an index for $collectionName, keys: ${keys.mkString(",")}...")
-    if (!isCollectionExists(collectionName)) {
-      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
-    }
+    log.info(s"Creating an index for $collectionName, keys: ${keys.mkString(", ")}...")
+    val collection = getCollection(collectionName)
     try {
-      db.getCollection(collectionName)
-        .createIndex(fieldsToBsonKeys(keys))
+      collection.createIndex(fieldsToBsonKeys(keys))
         .execute()
     } catch {
-      case NonFatal(e) => log.warn(s"Unable to create an index for $collectionName, keys: ${keys.mkString(",")}: "
+      case NonFatal(e) => log.warn(s"Unable to create an index for $collectionName, keys: ${keys.mkString(", ")}: "
         + e.getMessage)
     }
   }
@@ -185,16 +183,13 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     * Drops an index for a given list of fields.
     */
   override def dropIndex(collectionName: String, keys: Seq[String]): Unit = {
-    log.info(s"Dropping an index for $collectionName, keys: ${keys.mkString(",")}...")
-    if (!isCollectionExists(collectionName)) {
-      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
-    }
+    log.info(s"Dropping an index for $collectionName, keys: ${keys.mkString(", ")}...")
+    val collection = getCollection(collectionName)
     try {
-      db.getCollection(collectionName)
-        .dropIndex(fieldsToBsonKeys(keys))
+      collection.dropIndex(fieldsToBsonKeys(keys))
         .execute()
     } catch {
-      case NonFatal(e) => log.warn(s"Unable to drop an index for $collectionName, keys: ${keys.mkString(",")}: "
+      case NonFatal(e) => log.warn(s"Unable to drop an index for $collectionName, keys: ${keys.mkString(", ")}: "
         + e.getMessage)
     }
   }
@@ -203,17 +198,16 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     * Returns the number of documents in the specified collection.
     */
   override def getDocumentsCount(collectionName: String): Long = {
-    if (!isCollectionExists(collectionName)) {
-      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
-    }
-    db.getCollection(collectionName).countDocuments().execute()
+    getCollection(collectionName)
+      .countDocuments()
+      .execute()
   }
 
   /**
     * Inserts a document into a collection.
     */
   override def insertDocument(collectionName: String, document: String): Unit = {
-    db.getCollection(collectionName)
+    getCollection(collectionName)
       .insertOne(BsonDocument(document))
       .execute()
   }
@@ -223,7 +217,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     */
   override def getDocuments(collectionName: String): Iterator[String] = {
     log.info(s"Getting all documents for $collectionName...")
-    db.getCollection(collectionName)
+    getCollection(collectionName)
       .find()
       .execute()
       .toIterator
@@ -261,9 +255,28 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
   }
 
   /**
+    * Returns a collection by name and ensures it exists.
+    */
+  private def getCollection(collectionName: String): MongoCollection[Document] = {
+    if (!isCollectionExists(collectionName)) {
+      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
+    }
+    db.getCollection(collectionName)
+  }
+
+  /**
+    * Makes sure a collection exists, throws an exception otherwise.
+    */
+  private def ensureCollectionExists(collectionName: String): Unit = {
+    if (!isCollectionExists(collectionName)) {
+      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
+    }
+  }
+
+  /**
     * Returns a collection that is serialized as a case class.
     */
-  private def getCollection[T](collectionName: String)(implicit ct: ClassTag[T]): MongoCollection[T] = {
+  private def getTypedCollection[T](collectionName: String)(implicit ct: ClassTag[T]): MongoCollection[T] = {
     db.getCollection[T](DatabaseVersionCollectionName)
       .withCodecRegistry(codecRegistry)
   }
@@ -272,9 +285,8 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     * Returns a Bson document from the list of index key fields
     */
   private def fieldsToBsonKeys(keys: Seq[String]): Document = {
-    val numbers = 1 to keys.size
-    Document(keys.zip(numbers).map {
-      case (field, num) => field -> num
+    Document(keys.zipWithIndex.map {
+      case (field, num) => field -> (num + 1)
     })
   }
 
@@ -282,7 +294,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     * Copies indexes from one collection to another. Skips the index on '_id' that is created automatically
     */
   private def copyIndexes(collectionFrom: String, collectionTo: String): Unit = {
-    val indexes = db.getCollection(collectionFrom).listIndexes().execute()
+    val indexes = getCollection(collectionFrom).listIndexes().execute()
     indexes.foreach(idxBson => {
       val indexDocument = idxBson("key").asDocument()
       if (!indexDocument.containsKey("_id")) {

@@ -38,15 +38,13 @@ class MigrationService @Autowired()(mongoDb: MongoDatabase) {
     if (mig.isDatabaseEmpty()) {
       log.warn(s"The database '${mongoDb.name}' is empty. Initializing...")
       mig.initializeDatabase(ModelVersion)
+    } else if (mig.isMigrationRequired(ModelVersion)) {
+      val version = db.getVersion()
+      log.warn(s"Database version $version, the model version is $ModelVersion. " +
+        "Data migration is going to start now...")
+      mig.migrate(ModelVersion)
     } else {
-      if (mig.isMigrationRequired(ModelVersion)) {
-        val version = db.getVersion()
-        log.warn(s"Database version $version, the model version is $ModelVersion. " +
-          "Data migration is going to start now...")
-        mig.migrate(ModelVersion)
-      } else {
-        log.info(s"The database '${mongoDb.name}' schema is up to date, no migration needed.")
-      }
+      log.info(s"The database '${mongoDb.name}' schema is up to date, no migration needed.")
     }
   }
 }

@@ -25,7 +25,7 @@ import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
   * The base class does not do much by itself. It is only responsible for cloning
   * each collection before any transformation is applied.
   *
-  * Each migration should use different migration strategies as mixings. For example,
+  * Each migration should use different migration strategies as mixins. For example,
   * in order to create an instance of JSON to JSON transformer migration you need
   * to define a migration like this:
   *
@@ -34,7 +34,7 @@ import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
   * }}}
   */
 abstract class MigrationBase extends Migration {
-  private val log: Logger = LogManager.getLogger("MigrationBase")
+  private val log: Logger = LogManager.getLogger(this.getClass)
 
   def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
     collectionNames.foreach(collection => cloneCollection(db, collection))

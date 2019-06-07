@@ -29,10 +29,10 @@ case class MappingTable(name: String,
     defaultMappingValue: List[DefaultValue] = List(),
 
     dateCreated: ZonedDateTime = ZonedDateTime.now(),
-    userCreated: String = null,
+    userCreated: String,
 
     lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-    userUpdated: String = null,
+    userUpdated: String,
 
     disabled: Boolean = false,
     dateDisabled: Option[ZonedDateTime] = None,
