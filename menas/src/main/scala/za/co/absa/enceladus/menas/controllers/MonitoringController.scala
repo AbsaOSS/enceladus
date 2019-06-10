@@ -16,10 +16,10 @@
 package za.co.absa.enceladus.menas.controllers
 
 import java.util.concurrent.CompletableFuture
-
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import org.springframework.web.bind.annotation._
+import org.springframework.web.bind.annotation.{RestController, RequestMapping, GetMapping, ResponseStatus,
+  PathVariable}
 import za.co.absa.enceladus.menas.services.MonitoringService
 
 @RestController
@@ -36,17 +36,5 @@ class MonitoringController @Autowired()(monitoringService: MonitoringService)
                               @PathVariable endDate: String): CompletableFuture[String] = {
     monitoringService.getMonitoringDataPoints(datasetName, startDate, endDate)
 }
-
-  @GetMapping(value = Array("checkpoints/datasets/{datasetName}"), produces = Array("application/json"))
-  @ResponseStatus(HttpStatus.OK)
-  def getRecentCheckpointsPerDataset(@PathVariable datasetName: String): CompletableFuture[String] = {
-    monitoringService.getRecentCheckpointsPerDataset(datasetName)
-  }
-
-  @GetMapping(value = Array("checkpoints/users/{userName}"), produces = Array("application/json"))
-  @ResponseStatus(HttpStatus.OK)
-  def getRecentCheckpointsPerUser(@PathVariable userName: String): CompletableFuture[String] = {
-    monitoringService.getRecentCheckpointsPerUser(userName)
-  }
 
 }
