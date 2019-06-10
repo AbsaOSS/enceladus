@@ -163,7 +163,7 @@ class ConformanceRuleSchemaFieldSelector extends SchemaFieldSelector {
 class TargetAttributeFieldSelector extends SchemaFieldSelector {
 
   constructor(controller, dialog) {
-    super(controller, dialog, "schema");
+    super(controller, dialog, "mappingTableSchema");
   }
 
   preselectSchemaFieldSelector(sExpandTo) {
