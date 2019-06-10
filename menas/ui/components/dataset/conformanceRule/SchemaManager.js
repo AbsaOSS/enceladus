@@ -315,21 +315,3 @@ class SchemaField {
     this._children = value;
   }
 }
-
-// class ArrayUtils {
-//
-//   static applyOnCopy(input, fn) {
-//     const copy = $.extend(true, [], input);
-//     return fn(input);
-//     // fn(input)
-//     // return input;
-//   }
-//
-//   static applyOnDefferedCopy(input, fn) {
-//     const copy = $.extend(true, [], input);
-//     return $.Deferred().then(fn(input));
-//     // fn(input)
-//     // return input;
-//   }
-//
-// }
