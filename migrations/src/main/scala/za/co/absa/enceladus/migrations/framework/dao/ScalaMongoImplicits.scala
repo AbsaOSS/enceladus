@@ -18,6 +18,7 @@ package za.co.absa.enceladus.migrations.framework.dao
 import java.util.concurrent.TimeUnit
 
 import org.mongodb.scala.{FindObservable, Observable, SingleObservable}
+import za.co.absa.enceladus.migrations.framework.Configuration
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -27,7 +28,7 @@ import scala.concurrent.duration.Duration
   * to make synchronous calls.
   */
 object ScalaMongoImplicits {
-  val executionTimeout = Duration(60, TimeUnit.SECONDS)
+  val executionTimeout = Duration(Configuration.getMongoDbTimeoutSeconds, TimeUnit.SECONDS)
 
   implicit class ObservableExecutor[T](observable: Observable[T]) {
     def execute(): Seq[T] = Await.result(observable.toFuture, executionTimeout)

@@ -34,7 +34,7 @@ abstract class DocumentDb {
   /**
     * Returns true if the specified collection exists in the database.
     */
-  def isCollectionExists(collectionName: String): Boolean
+  def doesCollectionExists(collectionName: String): Boolean
 
   /**
     * Creates a collection with the given name.

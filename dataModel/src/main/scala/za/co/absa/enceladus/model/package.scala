@@ -30,5 +30,5 @@ package object model {
     * For instance, if the collection's base name is 'dataset', for model version 0 the collection name will
     * be 'dataset', for version 1 it will be 'dataset_v1', for version 2 it will be 'dataset_v2', etc.
     */
-  final val CollectionPostfix = s"_v$ModelVersion"
+  final val CollectionSuffix = s"_v$ModelVersion"
 }

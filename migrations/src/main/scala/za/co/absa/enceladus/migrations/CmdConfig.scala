@@ -32,7 +32,7 @@ object CmdConfig {
   def getCmdLineArguments(args: Array[String]): CmdConfig = {
     val parser = new CmdParser("java -cp MigrationsBundle.jar " +
       "za.co.absa.enceladus.migrations.MongoMigratorApp " +
-      "--mongodb-url <MongoDb URL> --database <database name> --db-version <Target DB version>")
+      "--mongodb-url <MongoDb URL> --database <Database Name> --new-db-version <New DB Version>")
 
     val optionCmd = parser.parse(args, CmdConfig())
     if (optionCmd.isEmpty) {
@@ -52,8 +52,8 @@ object CmdConfig {
     opt[String]('D', "database").required().action((value, config) =>
       config.copy(database = value)).text("A Database name")
 
-    opt[Int]('T', "db-version").required().action((value, config) =>
-      config.copy(targetVersion = value)).text("A Target version number")
+    opt[Int]('N', "new-db-version").required().action((value, config) =>
+      config.copy(targetVersion = value)).text("A new DB version number")
 
     help("help").text("prints this usage text")
   }

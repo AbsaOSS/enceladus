@@ -24,7 +24,8 @@ import za.co.absa.enceladus.migrations.migrations._
   * This is a command line tool for running migrations on a MongoDb database.
   *
   * Syntax:
-  *   java -cp enceladus-migrations.jar za.co.absa.enceladus.migrations.MongoMigratorApp <MongoDbURL> <DbName> <TargetVersion>
+  *   java -cp enceladus-migrations.jar za.co.absa.enceladus.migrations.MongoMigratorApp \
+  *     --mongodb-url <MongoDb URL> --database <Database Name> --new-db-version <New DB version>
   */
 object MongoMigratorApp {
 

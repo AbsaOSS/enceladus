@@ -166,7 +166,7 @@ trait JsonMigration extends Migration {
     * Ensures a collection is empty.
     */
   private def ensureCollectionEmpty(db: DocumentDb, collectionName: String): Unit = {
-    if (db.isCollectionExists(collectionName)) {
+    if (db.doesCollectionExists(collectionName)) {
       db.emptyCollection(collectionName)
     }
   }

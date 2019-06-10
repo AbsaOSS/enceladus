@@ -22,13 +22,13 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
   import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits._
 
   test("Test add/drop collections") {
-    assert(!db.isCollectionExists("foo"))
+    assert(!db.doesCollectionExists("foo"))
 
     db.createCollection("foo")
-    assert(db.isCollectionExists("foo"))
+    assert(db.doesCollectionExists("foo"))
 
     db.dropCollection("foo")
-    assert(!db.isCollectionExists("foo"))
+    assert(!db.doesCollectionExists("foo"))
   }
 
   test("Test that the initial database version is 0") {
@@ -49,8 +49,8 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
 
     assert(doc2.contains(""""item" : "1""""))
     assert(doc1 == doc2)
-    assert(db.isCollectionExists("bar1"))
-    assert(db.isCollectionExists("bar2"))
+    assert(db.doesCollectionExists("bar1"))
+    assert(db.doesCollectionExists("bar2"))
 
     db.dropCollection("bar1")
     db.dropCollection("bar2")
@@ -72,8 +72,8 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
     db.createCollection("bar4")
     db.renameCollection("bar4", "bar5")
 
-    assert(db.isCollectionExists("bar5"))
-    assert(!db.isCollectionExists("bar4"))
+    assert(db.doesCollectionExists("bar5"))
+    assert(!db.doesCollectionExists("bar4"))
 
     db.dropCollection("bar5")
   }

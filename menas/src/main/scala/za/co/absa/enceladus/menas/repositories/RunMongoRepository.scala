@@ -35,7 +35,7 @@ import scala.concurrent.Future
 
 object RunMongoRepository {
   val collectionBaseName = "run"
-  val collectionName = collectionBaseName + model.CollectionPostfix
+  val collectionName = collectionBaseName + model.CollectionSuffix
 }
 
 @Repository

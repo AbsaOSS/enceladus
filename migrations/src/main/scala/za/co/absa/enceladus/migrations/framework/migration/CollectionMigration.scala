@@ -38,6 +38,8 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
   *     dropCollection("collection5_name")
   *     dropCollection("collection6_name")
   *
+  *     renameCollection("collection7_name", "collection8_name")
+  *
   *     createIndex("collection1_name", "foo1" :: "bar1" :: Nil)
   *     dropIndex("collection2_name", "foo2" :: "bar2" :: Nil)
   *   }
@@ -194,7 +196,7 @@ trait CollectionMigration extends Migration {
   private def applyCreateCollections(db: DocumentDb): Unit = {
     collectionsToCreate.foreach(c => {
       val newCollection = MigrationUtils.getVersionedCollectionName(c, targetVersion)
-      if (db.isCollectionExists(newCollection)) {
+      if (db.doesCollectionExists(newCollection)) {
         log.info(s"Dropping existing collection $newCollection")
         db.dropCollection(newCollection)
       }

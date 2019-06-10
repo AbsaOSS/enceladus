@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.migrations.framework.integration
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.migrations.framework.Constants.DatabaseVersionCollectionName
+import za.co.absa.enceladus.migrations.framework.Configuration.DatabaseVersionCollectionName
 import za.co.absa.enceladus.migrations.framework.Migrator
 import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits
 import za.co.absa.enceladus.migrations.framework.integration.fixture.MigrationsFixture
@@ -31,22 +31,22 @@ class MigrationsIntegrationSuite extends FunSuite with MigrationsFixture {
   test("Test a migration") {
     val mig = new Migrator(db, Migration0 :: Migration1 :: Nil)
 
-    assert(!db.isCollectionExists(DatabaseVersionCollectionName))
+    assert(!db.doesCollectionExists(DatabaseVersionCollectionName))
 
     mig.migrate(1)
 
-    assert(db.isCollectionExists(DatabaseVersionCollectionName))
+    assert(db.doesCollectionExists(DatabaseVersionCollectionName))
     assert(db.getVersion() == 1)
 
-    assert(db.isCollectionExists("foo1"))
-    assert(db.isCollectionExists("foo2"))
-    assert(db.isCollectionExists("foo3"))
+    assert(db.doesCollectionExists("foo1"))
+    assert(db.doesCollectionExists("foo2"))
+    assert(db.doesCollectionExists("foo3"))
 
-    assert(db.isCollectionExists("foo1_v1"))
-    assert(!db.isCollectionExists("foo2_v1"))
-    assert(!db.isCollectionExists("foo3_v1"))
-    assert(db.isCollectionExists("bar1_v1"))
-    assert(db.isCollectionExists("bar2_v1"))
+    assert(db.doesCollectionExists("foo1_v1"))
+    assert(!db.doesCollectionExists("foo2_v1"))
+    assert(!db.doesCollectionExists("foo3_v1"))
+    assert(db.doesCollectionExists("bar1_v1"))
+    assert(db.doesCollectionExists("bar2_v1"))
 
     val docs = db.getDocuments("foo1_v1")
 
@@ -60,7 +60,7 @@ class MigrationsIntegrationSuite extends FunSuite with MigrationsFixture {
   test("Test a database initialization") {
     val mig = new Migrator(db, Migration0 :: Migration1 :: Migration2 :: Nil)
 
-    assert(db.isCollectionExists(DatabaseVersionCollectionName))
+    assert(db.doesCollectionExists(DatabaseVersionCollectionName))
     assert(!mig.isDatabaseEmpty())
     assert(mig.isMigrationRequired(2))
 
@@ -76,21 +76,21 @@ class MigrationsIntegrationSuite extends FunSuite with MigrationsFixture {
 
     mig.initializeDatabase(2)
 
-    assert(db.isCollectionExists(DatabaseVersionCollectionName))
+    assert(db.doesCollectionExists(DatabaseVersionCollectionName))
     assert(db.getVersion() == 2)
 
-    assert(!db.isCollectionExists("foo1"))
-    assert(!db.isCollectionExists("foo2"))
-    assert(!db.isCollectionExists("foo3"))
-    assert(!db.isCollectionExists("foo1_v1"))
-    assert(!db.isCollectionExists("foo2_v1"))
-    assert(!db.isCollectionExists("foo3_v1"))
-    assert(!db.isCollectionExists("bar1_v1"))
-    assert(!db.isCollectionExists("bar2_v1"))
+    assert(!db.doesCollectionExists("foo1"))
+    assert(!db.doesCollectionExists("foo2"))
+    assert(!db.doesCollectionExists("foo3"))
+    assert(!db.doesCollectionExists("foo1_v1"))
+    assert(!db.doesCollectionExists("foo2_v1"))
+    assert(!db.doesCollectionExists("foo3_v1"))
+    assert(!db.doesCollectionExists("bar1_v1"))
+    assert(!db.doesCollectionExists("bar2_v1"))
 
-    assert(db.isCollectionExists("foo1_v2"))
-    assert(db.isCollectionExists("bar1_v2"))
-    assert(db.isCollectionExists("bar2_v2"))
+    assert(db.doesCollectionExists("foo1_v2"))
+    assert(db.doesCollectionExists("bar1_v2"))
+    assert(db.doesCollectionExists("bar2_v2"))
 
     val idx1 = dbRaw.getCollection("foo1_v2").listIndexes().execute()
     assert(idx1.size == 3)

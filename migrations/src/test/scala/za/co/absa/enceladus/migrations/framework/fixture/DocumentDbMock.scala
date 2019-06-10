@@ -31,10 +31,10 @@ class DocumentDbMock extends DocumentDb {
     this.version = version
   }
 
-  override def isCollectionExists(collectionName: String): Boolean = db.contains(collectionName)
+  override def doesCollectionExists(collectionName: String): Boolean = db.contains(collectionName)
 
   override def createCollection(collectionName: String): Unit = {
-    if (isCollectionExists(collectionName)) {
+    if (doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection already exists: '$collectionName'.")
     }
     db.put(collectionName, new ArrayBuffer[String]())
@@ -42,7 +42,7 @@ class DocumentDbMock extends DocumentDb {
   }
 
   override def dropCollection(collectionName: String): Unit = {
-    if (!isCollectionExists(collectionName)) {
+    if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
     db.remove(collectionName)
@@ -50,7 +50,7 @@ class DocumentDbMock extends DocumentDb {
   }
 
   override def emptyCollection(collectionName: String): Unit = {
-    if (!isCollectionExists(collectionName)) {
+    if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
     db(collectionName) = new ArrayBuffer[String]()
@@ -58,10 +58,10 @@ class DocumentDbMock extends DocumentDb {
   }
 
   override def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit = {
-    if (!isCollectionExists(collectionNameOld)) {
+    if (!doesCollectionExists(collectionNameOld)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionNameOld'.")
     }
-    if (isCollectionExists(collectionNameNew)) {
+    if (doesCollectionExists(collectionNameNew)) {
       throw new IllegalStateException(s"Collection already exists: '$collectionNameNew'.")
     }
     val docs = db(collectionNameOld)
@@ -71,10 +71,10 @@ class DocumentDbMock extends DocumentDb {
   }
 
   override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {
-    if (!isCollectionExists(collectionName)) {
+    if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
-    if (isCollectionExists(newCollectionName)) {
+    if (doesCollectionExists(newCollectionName)) {
       throw new IllegalStateException(s"Collection already exists: '$newCollectionName'.")
     }
     val documents = db(collectionName)
@@ -85,28 +85,28 @@ class DocumentDbMock extends DocumentDb {
   }
 
   override def createIndex(collectionName: String, fieldsList: Seq[String]): Unit = {
-    if (!isCollectionExists(collectionName)) {
+    if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
     actionsExecuted += s"createIndex($collectionName,List(${fieldsList.mkString(",")}))"
   }
 
   override def dropIndex(collectionName: String, fieldsList: Seq[String]): Unit = {
-    if (!isCollectionExists(collectionName)) {
+    if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
     actionsExecuted += s"dropIndex($collectionName,List(${fieldsList.mkString(",")}))"
   }
 
   override def getDocumentsCount(collectionName: String): Long = {
-    if (!isCollectionExists(collectionName)) {
+    if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
     db(collectionName).size
   }
 
   override def insertDocument(collectionName: String, document: String): Unit = {
-    if (!isCollectionExists(collectionName)) {
+    if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
     val documents = db(collectionName)
@@ -115,7 +115,7 @@ class DocumentDbMock extends DocumentDb {
   }
 
   override def getDocuments(collectionName: String): Iterator[String] = {
-    if (!isCollectionExists(collectionName)) {
+    if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
     actionsExecuted += s"getDocuments($collectionName)"

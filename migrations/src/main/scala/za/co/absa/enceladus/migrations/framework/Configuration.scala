@@ -15,7 +15,15 @@
 
 package za.co.absa.enceladus.migrations.framework
 
-object Constants {
+import java.util.Properties
+
+object Configuration {
+  private val properties = new Properties()
+
+  /**
+    * A configuration key for setting up MongoDB query timeouts.
+    */
+  private val migrationQueryTimeoutSecondsKey = "za.co.absa.enceladus.migration.mongo.query.timeout.seconds"
 
   /**
     * The name of the collection that keeps the latest usable database schema version.
@@ -29,5 +37,19 @@ object Constants {
     * be 'dataset', for version 1 it will be 'dataset_v1', for version 2 it will be 'dataset_v2', etc.
     */
   val DatabaseVersionPostfix = "_v"
+
+  /**
+    * Returns a timeout in seconds for MongoDB queries.
+    */
+  lazy val getMongoDbTimeoutSeconds: Int = System.getProperty(migrationQueryTimeoutSecondsKey,
+    properties.getProperty(migrationQueryTimeoutSecondsKey)).toInt
+
+  loadConfig()
+
+  private def loadConfig(): Unit = {
+    val is = getClass.getResourceAsStream("/application.properties")
+    try properties.load(is)
+    finally if (is != null) is.close()
+  }
 
 }
