@@ -95,7 +95,10 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |                  $filter : {
                    |                      input : "$raw_checkpoint.controls",
                    |                      as : "control",
-                   |                      cond : { $eq : [ "$$control.controlName", "recordcount"] }
+                   |                      cond : { $or: [
+                   |                        {$eq : [ "$$control.controlName", "recordCount"]},
+                   |                        {$eq : [ "$$control.controlName", "recordcount"]}
+                   |                      ]}
                    |                  }
                    |              }, 0 ]
                    |          }
