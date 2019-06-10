@@ -135,8 +135,9 @@ class ConformanceRuleDialog {
     let schemaFieldSelectorSupportedRules =
       this.rules.filter(rule => rule.schemaFieldSelectorSupportedRule).map(rule => rule._t);
     let newRule = this.model.getProperty("/newRule");
-    if (newRule.isEdit && schemaFieldSelectorSupportedRules.includes(newRule._t))
+    if (newRule.isEdit && schemaFieldSelectorSupportedRules.includes(newRule._t)) {
       this.preselectSchemaFieldSelector(newRule._t);
+    }
   }
 
   onClosePress() {
@@ -196,8 +197,7 @@ class ConformanceRuleDialog {
       schemaRestDAO.getByNameAndVersionSync(mappingTable.schemaName, mappingTable.schemaVersion).then(mappingTableSchema => {
         this.addJoinConditionDialog.setMappingTableSchema(mappingTableSchema);
         if (this.model.getProperty("/newRule/_t") === "MappingConformanceRule") {
-          const targetAttributeSelector = sap.ui.getCore().byId("MappingConformanceRule--schemaFieldSelector");
-          targetAttributeSelector.setModel(new sap.ui.model.json.JSONModel(mappingTableSchema), "schema")
+          this._dialog.setModel(new sap.ui.model.json.JSONModel(mappingTableSchema), "mappingTableSchema")
         }
       });
       const datasetSchema = this._dialog.getModel("schema").oData;
