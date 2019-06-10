@@ -191,9 +191,9 @@ class ConformanceRuleDialog {
     let mappingTableId = this.model.getProperty("/newRule/mappingTable");
     let mappingTableVersion = this.model.getProperty("/newRule/mappingTableVersion");
 
-    new MappingTableRestDAO().getByNameAndVersion(mappingTableId, mappingTableVersion).then(mappingTable => {
+    new MappingTableRestDAO().getByNameAndVersionSync(mappingTableId, mappingTableVersion).then(mappingTable => {
       const schemaRestDAO = new SchemaRestDAO();
-      schemaRestDAO.getByNameAndVersion(mappingTable.schemaName, mappingTable.schemaVersion).then(mappingTableSchema => {
+      schemaRestDAO.getByNameAndVersionSync(mappingTable.schemaName, mappingTable.schemaVersion).then(mappingTableSchema => {
         this.addJoinConditionDialog.setMappingTableSchema(mappingTableSchema);
         if (this.model.getProperty("/newRule/_t") === "MappingConformanceRule") {
           const targetAttributeSelector = sap.ui.getCore().byId("MappingConformanceRule--schemaFieldSelector");
