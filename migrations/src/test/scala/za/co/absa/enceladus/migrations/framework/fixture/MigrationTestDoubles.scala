@@ -25,7 +25,7 @@ object MigrationTestDoubles {
     override def dropCollection(collectionName: String): Unit = {}
     override def emptyCollection(collectionName: String): Unit = {}
     override def renameCollection(collectionNameOld: String, collectionNameNew: String): Unit = {}
-    override def isCollectionExists(collectionName: String): Boolean = true
+    override def doesCollectionExists(collectionName: String): Boolean = true
     override def createCollection(collectionName: String): Unit = {}
     override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {}
     override def createIndex(collectionName: String, keys: Seq[String]): Unit = {}

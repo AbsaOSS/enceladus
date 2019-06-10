@@ -24,7 +24,7 @@ import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.{MongoCollection, MongoDatabase, MongoNamespace}
 import za.co.absa.enceladus.migrations.framework.model.DbVersion
-import za.co.absa.enceladus.migrations.framework.Constants.DatabaseVersionCollectionName
+import za.co.absa.enceladus.migrations.framework.Configuration.DatabaseVersionCollectionName
 
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
@@ -50,7 +50,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     * If there is no such a collection the version of the database is assumed to be 0.
     */
   override def getVersion(): Int = {
-    if (!isCollectionExists(DatabaseVersionCollectionName)) {
+    if (!doesCollectionExists(DatabaseVersionCollectionName)) {
       setVersion(0)
     }
 
@@ -80,7 +80,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     * If there is no such a collection the version of the database is assumed to be 0.
     */
   override def setVersion(version: Int): Unit = {
-    if (!isCollectionExists(DatabaseVersionCollectionName)) {
+    if (!doesCollectionExists(DatabaseVersionCollectionName)) {
       createCollection(DatabaseVersionCollectionName)
       getTypedCollection[DbVersion](DatabaseVersionCollectionName)
         .insertOne(DbVersion(version))
@@ -95,7 +95,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
   /**
     * Returns true if the specified collection exists in the database.
     */
-  override def isCollectionExists(collectionName: String): Boolean = {
+  override def doesCollectionExists(collectionName: String): Boolean = {
     val collections = db.listCollectionNames().execute()
     collections.contains(collectionName)
   }
@@ -160,7 +160,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
          |  cursor: {}
          |}
          |""".stripMargin
-    db.runCommand(BsonDocument(cmd)).execute()
+    executeCommand(cmd)
     copyIndexes(collectionFrom, collectionTo)
   }
 
@@ -258,7 +258,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     * Returns a collection by name and ensures it exists.
     */
   private def getCollection(collectionName: String): MongoCollection[Document] = {
-    if (!isCollectionExists(collectionName)) {
+    if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
     db.getCollection(collectionName)
@@ -268,7 +268,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     * Makes sure a collection exists, throws an exception otherwise.
     */
   private def ensureCollectionExists(collectionName: String): Unit = {
-    if (!isCollectionExists(collectionName)) {
+    if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
   }

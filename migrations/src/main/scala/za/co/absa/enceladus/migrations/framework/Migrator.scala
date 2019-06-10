@@ -43,11 +43,11 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     * - If there is at least one of initial version 0 collections in the database => it is not empty
     */
   def isDatabaseEmpty(): Boolean = {
-    if (db.isCollectionExists(Constants.DatabaseVersionCollectionName)) {
+    if (db.doesCollectionExists(Configuration.DatabaseVersionCollectionName)) {
       false
     } else {
       val collections = getCollectionNames(0)
-      collections.forall(c => !db.isCollectionExists(c))
+      collections.forall(c => !db.doesCollectionExists(c))
     }
   }
 
@@ -287,7 +287,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
   private def dropCollections(db: DocumentDb, collections: List[String], dbVersion: Int): Unit = {
     collections
       .map(c => MigrationUtils.getVersionedCollectionName(c, dbVersion))
-      .foreach(collection => if (db.isCollectionExists(collection)) {
+      .foreach(collection => if (db.doesCollectionExists(collection)) {
         log.info(s"Dropping partially migrated collection $collection")
         db.dropCollection(collection)
       })

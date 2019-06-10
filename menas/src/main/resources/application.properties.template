@@ -45,6 +45,9 @@ za.co.absa.enceladus.menas.auth.inmemory.password=changeme
 za.co.absa.enceladus.menas.mongo.connection.string=mongodb://localhost:27017
 za.co.absa.enceladus.menas.mongo.connection.database=menas
 
+# Timeout (in seconds) for MongoDB migration queries
+za.co.absa.enceladus.migration.mongo.query.timeout.seconds=300
+
 za.co.absa.enceladus.menas.version=@project.version@
 
 za.co.absa.enceladus.migrations.dump.filepath=/path/to/backups/menas

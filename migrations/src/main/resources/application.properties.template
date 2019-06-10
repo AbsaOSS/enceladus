@@ -15,3 +15,6 @@
 
 za.co.absa.enceladus.menas.mongo.connection.string=mongodb://localhost:27017
 za.co.absa.enceladus.menas.mongo.connection.database=menas
+
+# Timeout (in seconds) for MongoDB migration queries
+za.co.absa.enceladus.migration.mongo.query.timeout.seconds=300
