@@ -19,6 +19,13 @@ class RestClient {
     return $.get(url)
       .then(this.identity, this.handleExpiredSession)
   }
+  static getSync(url) {
+    return $.get({
+      url: url,
+      async: false
+    })
+      .then(this.identity, this.handleExpiredSession)
+  }
 
   static post(url, data) {
     return $.post({
@@ -88,6 +95,10 @@ class RestDAO {
 
   getByNameAndVersion(name, version) {
     return RestClient.get(`api/${this.entityType}/detail/${encodeURI(name)}/${encodeURI(version)}`)
+  }
+
+  getByNameAndVersionSync(name, version) {
+    return RestClient.getSync(`api/${this.entityType}/detail/${encodeURI(name)}/${encodeURI(version)}`)
   }
 
   getAuditTrail(name) {

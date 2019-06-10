@@ -72,8 +72,11 @@ sap.ui.define([
       });
 
       const rules = this._model.getProperty("/currentDataset/conformance");
+      this._upsertConformanceRuleDialog.open();
+      this._upsertConformanceRuleDialog.setBusy(true);
+
       this._setRuleDialogModel(rules).then(() =>
-        this._upsertConformanceRuleDialog.open()
+        this._upsertConformanceRuleDialog.setBusy(false)
       );
     },
 

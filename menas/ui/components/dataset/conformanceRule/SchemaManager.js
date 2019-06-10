@@ -19,6 +19,7 @@ class SchemaManager {
     const deferred = $.Deferred();
     deferred.resolve(schemaFields);
     rules.map(RuleFactory.createRule).forEach(rule => {
+      console.log(schemaFields);
       return deferred.then(fields => rule.apply(fields));
     });
     return deferred.promise();
@@ -190,9 +191,9 @@ class MappingConformanceRule extends ConformanceRule {
   apply(fields) {
     const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
 
-    return new MappingTableRestDAO().getByNameAndVersion(this.rule.mappingTable, this.rule.mappingTableVersion)
+    return new MappingTableRestDAO().getByNameAndVersionSync(this.rule.mappingTable, this.rule.mappingTableVersion)
       .then(mappingTable => {
-        return new SchemaRestDAO().getByNameAndVersion(mappingTable.schemaName, mappingTable.schemaVersion);
+        return new SchemaRestDAO().getByNameAndVersionSync(mappingTable.schemaName, mappingTable.schemaVersion);
       })
       .then(schema => {
         const targetCol = this.getTargetCol(schema.fields);
