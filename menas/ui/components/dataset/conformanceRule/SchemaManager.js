@@ -19,7 +19,6 @@ class SchemaManager {
     const deferred = $.Deferred();
     deferred.resolve(schemaFields);
     rules.map(RuleFactory.createRule).forEach(rule => {
-      console.log(schemaFields);
       return deferred.then(fields => rule.apply(fields));
     });
     return deferred.promise();
