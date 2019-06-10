@@ -105,7 +105,7 @@
             rowActionCount="1"
             width="100%">
             <table:columns>
-                <table:Column id="monitoring-multiheader-info" width="6rem" >
+                <table:Column id="monitoring-multiheader-info" width="6rem">
                     <table:multiLabels>
                         <Label text="Info" textAlign="Center" width="100%"/>
                         <Label text="Date" textAlign="Center" width="100%"/>

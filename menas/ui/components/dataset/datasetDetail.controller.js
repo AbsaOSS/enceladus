@@ -46,10 +46,6 @@ sap.ui.define([
       view.byId("monitoring-multiheader-recordcount-std").setHeaderSpan([0,2,1]);
       view.byId("monitoring-multiheader-recordcount-cnfrm").setHeaderSpan([0,2,1]);
 
-      this.oFormatYyyymmdd = sap.ui.core.format.DateFormat.getInstance({
-        pattern: "yyyy-MM-dd",
-        calendarType: sap.ui.core.CalendarType.Gregorian
-      });
       this.setDefaultMonitoringDateInterval();
 
       this._upsertConformanceRuleDialog = Fragment.load({
@@ -269,11 +265,11 @@ sap.ui.define([
       if (oSelectedDates) {
         oDate = oSelectedDates.getStartDate();
         if (oDate) {
-          this._model.setProperty("/monitoringDateFrom", this.oFormatYyyymmdd.format(oDate))
+          this._model.setProperty("/monitoringDateFrom", Formatters.toStringInfoDate(oDate))
         }
         oDate = oSelectedDates.getEndDate();
         if (oDate) {
-          this._model.setProperty("/monitoringDateTo", this.oFormatYyyymmdd.format(oDate))
+          this._model.setProperty("/monitoringDateTo", Formatters.toStringInfoDate(oDate))
         }
       }
       this.updateMonitoringData()
@@ -301,9 +297,8 @@ sap.ui.define([
       let oCalendar = this.byId("calendar");
       oCalendar.removeAllSelectedDates();
       oCalendar.addSelectedDate(new sap.ui.unified.DateRange({startDate: oStart, endDate: oEnd}))
-      this._model.setProperty("/monitoringDateFrom", this.oFormatYyyymmdd.format(oStart))
-      this._model.setProperty("/monitoringDateTo", this.oFormatYyyymmdd.format(oEnd))
-      //this._updateTimeInterval(oCalendar.getSelectedDates()[0]);
+      this._model.setProperty("/monitoringDateFrom", Formatters.toStringInfoDate(oStart))
+      this._model.setProperty("/monitoringDateTo", Formatters.toStringInfoDate(oEnd))
     },
 
     monitoringToRun: function (oEv) {

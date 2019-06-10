@@ -27,20 +27,8 @@ class MonitoringService @Autowired()(monitoringMongoRepository: MonitoringMongoR
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  @Value("${za.co.absa.enceladus.spline.urlTemplate}")
-  val splineUrlTemplate: String = null
-
   def getMonitoringDataPoints(datasetName: String, startDate: String, endDate: String): Future[String] = {
     monitoringMongoRepository.getMonitoringDataPoints(datasetName, startDate, endDate).map(_.mkString("[", ",", "]"))
   }
-
-  def getRecentCheckpointsPerDataset(datasetName: String): Future[String] = {
-    monitoringMongoRepository.getRecentCheckpointsPerDataset(datasetName).map(_.mkString("[", ",", "]"))
-  }
-
-  def getRecentCheckpointsPerUser(userName: String): Future[String] = {
-    monitoringMongoRepository.getRecentCheckpointsPerUser(userName).map(_.mkString("[", ",", "]"))
-  }
-
 
 }
