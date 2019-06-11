@@ -89,34 +89,83 @@ sap.ui.define([
       let sAction = oEv.getParameter("item").data("action");
       let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
 
-      if (sAction === "edit") {
-        let old = this._model.getProperty(sBindPath);
-        this._model.setProperty("/newRule", {
-          ...$.extend(true, {}, old),
-          title: "Edit",
-          isEdit: true,
-        });
-
-        const rules = this._model.getProperty("/currentDataset/conformance").slice(0, old.order);
-        this._setRuleDialogModel(rules);
-        this._upsertConformanceRuleDialog.open();
-      } else if (sAction === "delete") {
-        sap.m.MessageBox.confirm("Are you sure you want to delete the conformance rule?", {
-          actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
-          onClose: function (oResponse) {
-            if (oResponse === sap.m.MessageBox.Action.YES) {
-              let toks = sBindPath.split("/");
-              let ruleIndex = parseInt(toks[toks.length - 1]);
-              let currentDataset = this._model.getProperty("/currentDataset");
-              let newDataset = RuleService.removeRule(currentDataset, ruleIndex);
-
-              if (newDataset) {
-                this._datasetService.update(newDataset);
-              }
-            }
-          }.bind(this)
-        });
+      switch (sAction) {
+        case "edit":
+          this.editRule(sBindPath);
+          break;
+        case "delete":
+          this.deleteRule(sBindPath);
+          break;
+        case "moveUp":
+          this.moveUpRule(sBindPath);
+          break;
+        case "moveDown":
+          this.moveDownRule(sBindPath);
+          break;
+        default:
+          break;
       }
+    },
+
+    editRule: function(sBindPath) {
+      let old = this._model.getProperty(sBindPath);
+      this._model.setProperty("/newRule", {
+        ...$.extend(true, {}, old),
+        title: "Edit",
+        isEdit: true,
+      });
+
+      const rules = this._model.getProperty("/currentDataset/conformance").slice(0, old.order);
+      this._setRuleDialogModel(rules);
+      this._upsertConformanceRuleDialog.open();
+    },
+
+    deleteRule: function(sBindPath) {
+      sap.m.MessageBox.confirm("Are you sure you want to delete the conformance rule?", {
+        actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
+        onClose: function (oResponse) {
+          if (oResponse === sap.m.MessageBox.Action.YES) {
+            let ruleIndex = this._getRuleIndex(sBindPath);
+            let currentDataset = this._model.getProperty("/currentDataset");
+            let newDataset = RuleService.removeRule(currentDataset, ruleIndex);
+
+            if (newDataset) {
+              this._datasetService.update(newDataset);
+            }
+          }
+        }.bind(this)
+      });
+    },
+
+    moveUpRule: function(sBindPath) {
+      this._moveRule(sBindPath, RuleService.moveUpRule)
+    },
+
+    moveDownRule: function(sBindPath) {
+      this._moveRule(sBindPath, RuleService.moveDownRule)
+    },
+
+    _moveRule: function(sBindPath, moveRuleCallback) {
+      const ruleIndex = this._getRuleIndex(sBindPath);
+      const currentDataset = this._model.getProperty("/currentDataset");
+
+      new SchemaRestDAO().getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion).then(schema => {
+        const result = moveRuleCallback(currentDataset.conformance, schema.fields, ruleIndex);
+        if (result.isValid) {
+          const newDataset = {...currentDataset, conformance: result.result};
+
+          if (newDataset) {
+            this._datasetService.update(newDataset);
+          }
+        } else {
+          sap.m.MessageToast.show(result.errorMessage);
+        }
+      });
+    },
+
+    _getRuleIndex: function(sBindPath) {
+      let toks = sBindPath.split("/");
+      return parseInt(toks[toks.length - 1]);
     },
 
     auditVersionPress: function (oEv) {
@@ -216,6 +265,15 @@ sap.ui.define([
     },
 
     conformanceRuleFactory: function (sId, oContext) {
+      const lastIndex = this._model.getProperty("/currentDataset/conformance").length - 1;
+      const currentIndex = oContext.getProperty("order");
+      if (currentIndex === 0) {
+        this._model.setProperty(`/currentDataset/conformance/${currentIndex}/isFirst`, true);
+      }
+      if (currentIndex === lastIndex) {
+        this._model.setProperty(`/currentDataset/conformance/${currentIndex}/isLast`, true);
+      }
+
       let sFragmentName = "components.dataset.conformanceRule." + oContext.getProperty("_t") + ".display";
       if (oContext.getProperty("_t") === "MappingConformanceRule") {
 

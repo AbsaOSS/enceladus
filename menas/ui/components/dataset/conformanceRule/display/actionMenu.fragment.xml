@@ -20,6 +20,8 @@
                 <items>
                     <MenuItem text="Edit" icon="sap-icon://edit" cust:action="edit"/>
                     <MenuItem text="Delete" icon="sap-icon://delete" cust:action="delete"/>
+                    <MenuItem text="Move Up" icon="sap-icon://slim-arrow-up" cust:action="moveUp" visible="{=!${isFirst}}"/>
+                    <MenuItem text="Move Down" icon="sap-icon://slim-arrow-down" cust:action="moveDown" visible="{=!${isLast}}"/>
                 </items>
             </Menu>
         </menu>
