@@ -19,5 +19,9 @@ standardized.hdfs.path="/tmp/conformance-output/standardized-{0}-{1}-{2}-{3}"
 # {0} - Year, {1} - Month, {2} - Day of month
 conformance.mappingtable.pattern="reportDate={0}-{1}-{2}"
 
+# Use experimental mapping rule implementation that groups explosions for rules
+# operating on the same array
+conformance.mapping.rule.experimental.implementation=false
+
 #system-wide time zone
 timezone="UTC"

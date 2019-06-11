@@ -36,7 +36,7 @@ case class CmdConfig(datasetName: String = "",
                      performanceMetricsFile: Option[String] = None,
                      publishPathOverride: Option[String] = None,
                      folderPrefix: Option[String] = None,
-                     experimentalMappingRule: Boolean = false)
+                     experimentalMappingRule: Option[Boolean] = None)
 
 object CmdConfig {
 
@@ -96,8 +96,8 @@ object CmdConfig {
     opt[String]("folder-prefix").optional().action((value, config) =>
       config.copy(folderPrefix = Some(value))).text("Adds a folder prefix before the infoDateColumn")
 
-    opt[Unit]("experimental-mapping-rule").optional().action((value, config) =>
-      config.copy(experimentalMappingRule = true)).text("Use experimental optimized mapping conformance rule")
+    opt[Boolean]("experimental-mapping-rule").optional().action((value, config) =>
+      config.copy(experimentalMappingRule = Some(value))).text("Use experimental optimized mapping conformance rule")
 
     help("help").text("prints this usage text")
   }
