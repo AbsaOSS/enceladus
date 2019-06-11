@@ -197,7 +197,9 @@ class ConformanceRuleDialog {
       schemaRestDAO.getByNameAndVersionSync(mappingTable.schemaName, mappingTable.schemaVersion).then(mappingTableSchema => {
         this.addJoinConditionDialog.setMappingTableSchema(mappingTableSchema);
         if (this.model.getProperty("/newRule/_t") === "MappingConformanceRule") {
-          this._dialog.setModel(new sap.ui.model.json.JSONModel(mappingTableSchema), "mappingTableSchema")
+          const model = new sap.ui.model.json.JSONModel(mappingTableSchema);
+          model.setSizeLimit(5000);
+          this._dialog.setModel(model, "mappingTableSchema");
         }
       });
       const datasetSchema = this._dialog.getModel("schema").oData;
