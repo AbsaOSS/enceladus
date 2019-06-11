@@ -77,7 +77,10 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
 
   @Value("${za.co.absa.enceladus.menas.oozie.splineMongoURL:}")
   val splineMongoURL: String = ""
-
+  
+  @Value("${za.co.absa.enceladus.menas.oozie.sparkConf.surroundingQuoteChar:}")
+  val sparkConfQuotes: String = ""
+      
   val classLoader = Thread.currentThread().getContextClassLoader()
   val workflowTemplate = getTemplateFile("scheduling/oozie/workflow_template.xml")
   val coordinatorTemplate = getTemplateFile("scheduling/oozie/coordinator_template.xml")
@@ -248,6 +251,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       .replaceAll("\\$confExecutorMemory", s"${runtimeParams.confExecutorMemory}g")
       .replaceAll("\\$driverCores", s"${runtimeParams.driverCores}")
       .replaceAll("\\$menasCredentialsFile", s"$namenode${runtimeParams.menasCredentialFile}")
+      .replaceAll("\\$sparkConfQuotes", sparkConfQuotes)
       .getBytes("UTF-8")
   }
 

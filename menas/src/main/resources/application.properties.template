@@ -82,3 +82,7 @@ za.co.absa.enceladus.menas.oozie.menasApiURL=http://menasHostname:8080/menas/api
 
 #Mongo address for spline for the submitted jobs
 za.co.absa.enceladus.menas.oozie.splineMongoURL=mongodb://localhost:27017
+
+#In some cases extra driver options need to be surrounded by double quotes
+#This seems to depend of the version of oozie
+#za.co.absa.enceladus.menas.oozie.sparkConf.surroundingQuoteChar="

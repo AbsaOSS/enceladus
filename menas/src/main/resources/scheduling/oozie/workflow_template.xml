@@ -37,7 +37,7 @@
                 --num-executors $stdNumExecutors 
                 --executor-memory $stdExecutorMemory 
                 --driver-cores $driverCores
-                --conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties'"
+                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties'$sparkConfQuotes
             </spark-opts>
             <arg>-D</arg>
             <arg>$datasetName</arg>
@@ -69,7 +69,7 @@
                 --num-executors $confNumExecutors 
                 --executor-memory $confExecutorMemory 
                 --driver-cores $driverCores
-                --conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties' -Dconformance.mappingtable.pattern='$mappingTablePattern'"
+                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties' -Dconformance.mappingtable.pattern='$mappingTablePattern'$sparkConfQuotes
             </spark-opts>
             <arg>-D</arg>
             <arg>$datasetName</arg>
