@@ -28,7 +28,7 @@
         <spark xmlns="uri:oozie:spark-action:0.2">
             <job-tracker>$jobTracker</job-tracker>
             <name-node>$nameNode</name-node>
-            <master>yarn-cluster</master>
+            <master>yarn</master>
             <mode>cluster</mode>
             <name>$stdAppName</name>
             <class>za.co.absa.enceladus.standardization.StandardizationJob</class>
@@ -60,7 +60,7 @@
         <spark xmlns="uri:oozie:spark-action:0.2">
             <job-tracker>$jobTracker</job-tracker>
             <name-node>$nameNode</name-node>
-            <master>yarn-cluster</master>
+            <master>yarn</master>
             <mode>cluster</mode>
             <name>$confAppName</name>
             <class>za.co.absa.enceladus.conformance.DynamicConformanceJob</class>
