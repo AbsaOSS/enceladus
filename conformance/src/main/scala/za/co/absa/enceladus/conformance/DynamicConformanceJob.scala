@@ -82,7 +82,7 @@ object DynamicConformanceJob {
     val inputData = DataSource.getData(stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
     // perform the conformance
     val result: DataFrame = try {
-      DynamicInterpreter.interpret(conformance, inputData, cmd.experimentalMappingRule, enableCF)
+      DynamicInterpreter.interpret(conformance, inputData, getExperimentalRuleEnabled(), enableCF)
     }
     catch {
       case e: ValidationException =>
@@ -95,6 +95,15 @@ object DynamicConformanceJob {
         throw e
     }
     processResult(result, performance, publishPath, stdPath)
+  }
+
+  private def getExperimentalRuleEnabled()(implicit cmd: CmdConfig): Boolean = {
+    val enabled = cmd.experimentalMappingRule match {
+      case Some(b) => b
+      case None => conf.getBoolean("conformance.mapping.rule.experimental.implementation")
+    }
+    log.info(s"Experimental mapping rule enabled = $enabled")
+    enabled
   }
 
   private def obtainSparkSession(cmd: CmdConfig): SparkSession = {

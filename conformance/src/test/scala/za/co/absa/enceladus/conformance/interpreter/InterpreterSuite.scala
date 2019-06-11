@@ -49,7 +49,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     spark.sessionState.conf.setConfString("co.za.absa.enceladus.confTest", "hello :)")
 
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
-    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = useExperimentalMappingRule)
+    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = Option(useExperimentalMappingRule))
     val enableCF = true
 
     import spark.implicits._
@@ -98,7 +98,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     spark.enableControlMeasuresTracking("src/test/testData/_tradeData/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
 
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
-    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = useExperimentalMappingRule)
+    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = Option(useExperimentalMappingRule))
     val enableCF = true
 
     import spark.implicits._
