@@ -36,7 +36,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
   }
 
   override def afterAll(): Unit = {
-    //TradeConformance.deleteTestData()
+    TradeConformance.deleteTestData()
     super.afterAll
   }
 
