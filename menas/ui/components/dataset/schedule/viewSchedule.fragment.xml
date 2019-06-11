@@ -25,7 +25,7 @@
         <Label text="Next Materialization Time" />
         <Text text="{path:'/currentDataset/schedule/activeInstance/status/nextMaterializedTime', formatter: 'Formatters.stringDateShortFormatter'}" />
         <Label text="Schedule Status" />
-        <ObjectStatus class="sapMObjectStatusLarge" text="{/currentDataset/schedule/activeInstance/status/status}"
+        <ObjectStatus class="sapMObjectStatusLarge" text="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' ? 'Active' : ${/currentDataset/schedule/activeInstance/status/status} }"
             state="{path:'/currentDataset/schedule/activeInstance/status/status', formatter:'Formatters.oozieCoordinatorStatusFormatter'}" />
         <core:Title text="Schedule Timing (in UTC)" />
         <Label text="Minute" />
