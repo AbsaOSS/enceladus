@@ -105,10 +105,6 @@ sap.ui.define([
 
     onAfterRendering: function () {
       component.setBusy(false);
-
-      if(!sap.ui.Device.browser.chrome || (sap.ui.Device.browser.chrome && sap.ui.Device.browser.version < 68)) {
-        sap.m.MessageBox.warning("Chrome (version 68 and higher) is currently the only supported browser for menas");
-      }
     }
 
   });
