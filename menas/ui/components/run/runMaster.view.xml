@@ -18,7 +18,10 @@
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Page id="masterPage" title="Runs" showNavButton="true" navButtonPress="onPressMasterBack">
         <content>
-            <List items="{runs>/}" mode="SingleSelectMaster" selectionChange="runSelected"
+            <List items="{runs>/}"
+                  mode="SingleSelectMaster"
+                  selectionChange="runSelected"
+                  growing="true"
                   noDataText="No Runs">
                 <StandardListItem title="{runs>datasetName}(v{runs>datasetVersion}) - Run {runs>runId}"
                                   description="{
