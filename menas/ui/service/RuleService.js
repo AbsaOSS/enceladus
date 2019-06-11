@@ -13,49 +13,9 @@
  * limitations under the License.
  */
 
-jQuery.sap.require("sap.m.MessageBox");
+class RuleService {
 
-var RuleService = new function () {
-
-  const model = sap.ui.getCore().getModel();
-  const eventBus = sap.ui.getCore().getEventBus();
-
-  const datasetService = new DatasetService(model, eventBus);
-  const schemaService = new SchemaService(model, eventBus);
-
-  this.getRuleList = function (bLoadFirst) {
-    Functions.ajax("api/rule/list", "GET", {}, function (oData) {
-      model.setProperty("/rules", oData)
-      if (oData.length > 0 && bLoadFirst)
-        RuleService.getRuleVersion(oData[0]._id, oData[0].latestVersion)
-    }, function () {
-      sap.m.MessageBox
-        .error("Failed to get the list of rules. Please wait a moment and try reloading the application")
-    })
-  };
-
-  this.getLatestRuleVersion = function (sId) {
-    Functions.ajax("api/rule/detail/" + encodeURI(sId) + "/latest", "GET", {}, function (oData) {
-      model.setProperty("/currentRule", oData)
-    }, function () {
-      sap.m.MessageBox.error("Failed to get the detail of the rule. Please wait a moment and try reloading the application");
-      window.location.hash = "#/rule"
-    })
-  };
-
-  this.getRuleVersion = function (sId, iVersion, sModelPath) {
-    var modelPath;
-    if (sModelPath) modelPath = sModelPath;
-    else modelPath = "/currentRule";
-    Functions.ajax("api/rule/detail/" + encodeURI(sId) + "/" + encodeURI(iVersion), "GET", {}, function (oData) {
-      model.setProperty(modelPath, oData)
-    }, function () {
-      sap.m.MessageBox.error("Failed to get the detail of the rule. Please wait a moment and try reloading the application");
-      window.location.hash = "#/rule"
-    })
-  };
-
-  this.removeRule = function (oCurrentDataset, iRuleIndex) {
+  static removeRule(oCurrentDataset, iRuleIndex) {
     let conformance = oCurrentDataset["conformance"]
       .filter((_, index) => index !== iRuleIndex)
       .sort((first, second) => first.order > second.order)
@@ -64,46 +24,80 @@ var RuleService = new function () {
       });
 
     return {...oCurrentDataset, conformance: conformance};
-  };
+  }
 
-  this.isUniqueRuleName = function (sName, model) {
-    model.setProperty("/nameUsed", undefined);
-    Functions.ajax("api/rule/isUniqueName/" + encodeURI(sName), "GET", {}, function (oData) {
-      model.setProperty("/nameUnique", oData)
-    }, function () {
-      sap.m.MessageBox.error("Failed to retreive isUniqueName. Please try again later.")
-    })
-  };
+  static moveUpRule(originalRules, schemaFields, iRuleIndex) {
+    const conformanceRules = $.extend(true, [], originalRules);
+    if (iRuleIndex === 0) {
+      return new InvalidResult("Unable to move up first rule.");
+    }
 
-  this.createRule = function (oCurrentDataset, oRule) {
-    Functions.ajax("api/dataset/" + encodeURI(oCurrentDataset.name) + "/rule/create", "POST", oRule,
-      function (oData) {
-        schemaService.getByNameAndVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
-        datasetService.setCurrent(oData);
-        datasetService.updateMasterPage();
-        sap.m.MessageToast.show("Rule created.");
-      }, function () {
-        sap.m.MessageBox.error("Failed to create the rule, try reloading the application or try again later.")
-      })
-  };
+    RuleService.swap(conformanceRules, iRuleIndex, iRuleIndex - 1);
 
-  this.editRule = function (sName, iVersion, sDescription, sHDFSPath, sHDFSPublishPath, sSchemaName, iSchemaVersion) {
-    Functions.ajax("api/dataset/edit", "POST", { // TODO: make this work
-      name: sName,
-      version: iVersion,
-      description: sDescription,
-      hdfsPath: sHDFSPath,
-      hdfsPublishPath: sHDFSPublishPath,
-      schemaName: sSchemaName,
-      schemaVersion: iSchemaVersion
-    }, function (oData) {
-      RuleService.getRuleList();
-      model.setProperty("/currentRule", oData);
-      schemaService.getByNameAndVersion(oData.schemaName, oData.schemaVersion, "/currentDataset/schema");
-      datasetService.updateMasterPage();
-      sap.m.MessageToast.show("Rule updated.");
-    }, function () {
-      sap.m.MessageBox.error("Failed to update the rule, try reloading the application or try again later.")
-    })
-  };
-}();
+    const newRules = conformanceRules
+      .map((currElement, index) => {
+        return {...currElement, order: index}
+      });
+
+    return new ValidResult(newRules);
+  }
+
+  static moveDownRule(originalRules, schemaFields, iRuleIndex) {
+    const conformanceRules = $.extend(true, [], originalRules);
+    if (iRuleIndex === conformanceRules.length - 1) {
+      return new InvalidResult("Unable to move down last rule.");
+    }
+
+    RuleService.swap(conformanceRules, iRuleIndex, iRuleIndex + 1);
+
+    const newRules = conformanceRules
+      .map((currElement, index) => {
+        return {...currElement, order: index}
+      });
+
+    return new ValidResult(newRules);
+  }
+
+  static swap(array, index1, index2) {
+    [array[index1], array[index2]] = [array[index2], array[index1]];
+  }
+
+}
+
+class Result {
+
+  constructor(result, isValid, errorMessage) {
+    this._result = result;
+    this._isValid = isValid;
+    this._errorMessage = errorMessage;
+  }
+
+  get result() {
+    return this._result;
+  }
+
+  get isValid() {
+    return this._isValid;
+  }
+
+  get errorMessage() {
+    return this._errorMessage;
+  }
+
+}
+
+class ValidResult extends Result {
+
+  constructor(result) {
+    super(result, true);
+  }
+
+}
+
+class InvalidResult extends Result {
+
+  constructor(errorMessage) {
+    super(null, false, errorMessage);
+  }
+
+}
