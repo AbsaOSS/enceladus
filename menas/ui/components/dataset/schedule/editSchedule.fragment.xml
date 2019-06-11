@@ -151,7 +151,7 @@
                                 </form:FormElement>
                                 <form:FormElement label="CSV Format Parameters" visible="{= ${/newSchedule/rawFormat/name} === 'csv' }">
                                     <form:fields>
-                                        <Input type="Text" id="csvFormatDelimiter" placeholder="Enter CSV column delimiter" value="{path: '/newSchedule/rawFormat/csvDelimiter', type: 'sap.ui.model.type.String', constraints:{minLength:'0'}}" />
+                                        <Input type="Text" id="csvFormatDelimiter" placeholder="Enter CSV column delimiter" value="{path: '/newSchedule/rawFormat/csvDelimiter', type: 'sap.ui.model.type.String', constraints:{minLength:'0', maxLength: '1'}}" />
                                         <CheckBox id="csvHeaderCheckbox" text="CSV files have header" selected="{path: '/newSchedule/rawFormat/csvHeader', type: 'sap.ui.model.type.Boolean'}" />
                                     </form:fields>
                                 </form:FormElement>

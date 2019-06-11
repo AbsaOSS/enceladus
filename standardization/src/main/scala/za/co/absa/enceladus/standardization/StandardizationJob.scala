@@ -48,7 +48,7 @@ object StandardizationJob {
   def main(args: Array[String]) {
     implicit val spark: SparkSession = obtainSparkSession()
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-    implicit val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+    implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
 
     import spark.implicits._
     implicit val udfLib: UDFLibrary = new UDFLibrary
@@ -118,7 +118,8 @@ object StandardizationJob {
     }
   }
 
-  private def prepareDataFrame(schema: StructType, cmd: CmdConfig, path: String)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils): DataFrame = {
+  private def prepareDataFrame(schema: StructType, cmd: CmdConfig, path: String)
+                              (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils): DataFrame = {
     val dfReaderConfigured = readerFormatSpecific(spark.read.format(cmd.rawFormat), cmd)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
@@ -129,8 +130,12 @@ object StandardizationJob {
     ensureSplittable(dfWithSchema, path, schema)
   }
 
-  private def executeStandardization(performance: PerformanceMeasurer, dfAll: DataFrame, schema: StructType,
-      cmd: CmdConfig, path: String, stdPath: String)(implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
+  private def executeStandardization(performance: PerformanceMeasurer,
+      dfAll: DataFrame, 
+      schema: StructType,
+      cmd: CmdConfig, 
+      path: String, 
+      stdPath: String)(implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
     val rawDirSize: Long = fsUtils.getDirectorySize(path)
     performance.startMeasurement(rawDirSize)
 
@@ -178,7 +183,8 @@ object StandardizationJob {
     stdRenameSourceColumns.writeInfoFile(stdPath)
   }
 
-  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
+  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)
+                              (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
     if (fsUtils.isNonSplittable(path)) {
       convertToSplittable(df, path, schema)
     } else {
@@ -186,7 +192,8 @@ object StandardizationJob {
     }
   }
 
-  private def convertToSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
+  private def convertToSplittable(df: DataFrame, path: String, schema: StructType)
+                                 (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
     log.warn("Dataset is stored in a non-splittable format. This can have a severe performance impact.")
 
     val tempParquetDir = s"/tmp/nonsplittable-to-parquet-${UUID.randomUUID()}"

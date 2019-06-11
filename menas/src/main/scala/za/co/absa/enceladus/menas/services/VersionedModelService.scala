@@ -89,7 +89,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
       if(parents.isEmpty) {
         this.getLatestVersion(name).map({
           case Some(entity) => AuditTrail(msgs.reverse :+ entity.createdMessage)
-          case None => throw new NotFoundException()
+          case None => throw NotFoundException()
         })
       } else {
         Future(AuditTrail(msgs.reverse :+ parents.head.createdMessage))

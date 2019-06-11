@@ -20,20 +20,18 @@ import org.springframework.beans.factory.annotation.Autowired
 import za.co.absa.enceladus.menas.services.OozieService
 import java.util.concurrent.CompletableFuture
 import org.springframework.http.HttpStatus
-import za.co.absa.enceladus.menas.models.OozieCoordinatorStauts
+import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
 
 @RestController
 @RequestMapping(Array("/api/oozie"))
 class OozieController @Autowired() (oozieService: OozieService) extends BaseController {
   import za.co.absa.enceladus.menas.utils.implicits._
 
-  import scala.concurrent.ExecutionContext.Implicits.global
-
   @GetMapping(path = Array("/isEnabled"))
   @ResponseStatus(HttpStatus.OK)
-  def isOozieEnabled(): Boolean = oozieService.isOozieEnabled
+  def isOozieEnabled: Boolean = oozieService.isOozieEnabled
 
   @GetMapping(path = Array("/coordinatorStatus/{id}"))
-  def getCoordinatorStatus(@PathVariable id: String): CompletableFuture[OozieCoordinatorStauts] = oozieService.getCoordinatorStatus(id)  
+  def getCoordinatorStatus(@PathVariable id: String): CompletableFuture[OozieCoordinatorStatus] = oozieService.getCoordinatorStatus(id)  
   
 }

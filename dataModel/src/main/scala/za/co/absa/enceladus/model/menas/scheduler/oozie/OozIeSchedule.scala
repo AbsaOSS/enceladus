@@ -25,5 +25,6 @@ case class OozieSchedule(
    mappingTablePattern: Option[String],
    rawFormat: DataFormat,
    activeInstance: Option[OozieScheduleInstance] = None,
+   //by default we're going to run yesterday's data
    reportDateOffset: Int = -1
 )

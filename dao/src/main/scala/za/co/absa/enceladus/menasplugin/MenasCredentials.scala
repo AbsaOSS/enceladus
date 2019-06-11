@@ -17,12 +17,11 @@ package za.co.absa.enceladus.menasplugin
 
 import java.io.File
 
-import com.typesafe.config.ConfigFactory
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
+
+import com.typesafe.config.ConfigFactory
+
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 object MenasCredentials {

@@ -35,11 +35,11 @@ package object dataFormats {
     override def getArguments(): Seq[String] = Seq("--row-tag", rowTag)
   }
 
-  case class CSVDataFormat(csvDelimiter: Option[String], csvHeader: Option[Boolean]) extends DataFormat {
+  case class CSVDataFormat(csvDelimiter: Option[Char], csvHeader: Option[Boolean]) extends DataFormat {
     val name: String = "csv"
-    private val delimiter = csvDelimiter.flatMap(d => if(d.isEmpty()) None else Some(Seq("--delimiter", d))).getOrElse(Seq[String]())
+    private val delimiter = csvDelimiter.map(d => Seq("--delimiter", d.toString)).getOrElse(Seq[String]())
     private val header = csvHeader.map(h => Seq("--header", h.toString)).getOrElse(Seq[String]())
-    override def getArguments(): Seq[String] = (delimiter ++ header).filter(_.nonEmpty)
+    override def getArguments(): Seq[String] = (delimiter ++ header)
   }
 
   case class ParquetDataFormat() extends DataFormat {
@@ -50,6 +50,6 @@ package object dataFormats {
   case class FixedWidthDataFormat(trimValues: Option[Boolean]) extends DataFormat {
     val name: String = "fixed-width"
     private val trim = trimValues.map(t => Seq("--trimValues", t.toString)).getOrElse(Seq[String]())
-    override def getArguments(): Seq[String] = trim.filter(_.nonEmpty)
+    override def getArguments(): Seq[String] = trim
   }
 }

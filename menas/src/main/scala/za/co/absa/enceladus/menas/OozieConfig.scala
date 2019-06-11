@@ -33,7 +33,7 @@ class OozieConfig {
   def oozieClient: Either[OozieConfigurationException, OozieClient] = {
     Try(new OozieClient(oozieUrl)) match {
       case Success(client) => Right(client)
-      case Failure(e) => Left(new OozieConfigurationException(e.getMessage, e))
+      case Failure(e) => Left(OozieConfigurationException(e.getMessage, e))
     }
   }
 }

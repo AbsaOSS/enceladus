@@ -16,6 +16,5 @@
 package za.co.absa.enceladus.menas.models
 
 import org.apache.oozie.client.Job.Status
-import java.time.ZonedDateTime
 
-case class OozieCoordinatorStauts(status: Status, nextMaterializedTime: String)
+case class OozieCoordinatorStatus(status: Status, nextMaterializedTime: String)

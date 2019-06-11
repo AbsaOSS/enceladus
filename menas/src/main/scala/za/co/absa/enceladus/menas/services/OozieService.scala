@@ -15,23 +15,20 @@
 
 package za.co.absa.enceladus.menas.services
 
+import scala.concurrent.Future
+
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import scala.concurrent.Future
-import scala.util.Try
+import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
 import za.co.absa.enceladus.menas.repositories.OozieRepository
-import za.co.absa.enceladus.model.Dataset
-import org.apache.oozie.client.Job.Status
-import za.co.absa.enceladus.menas.models.OozieCoordinatorStauts
 
 @Component
 class OozieService @Autowired() (oozieRepository: OozieRepository) {
-  import scala.concurrent.ExecutionContext.Implicits.global
   
   def isOozieEnabled: Boolean = oozieRepository.isOozieEnabled
   
-  def getCoordinatorStatus(coordinatorId: String): Future[OozieCoordinatorStauts] = {
+  def getCoordinatorStatus(coordinatorId: String): Future[OozieCoordinatorStatus] = {
     oozieRepository.getCoordinatorStatus(coordinatorId)
   }
 }

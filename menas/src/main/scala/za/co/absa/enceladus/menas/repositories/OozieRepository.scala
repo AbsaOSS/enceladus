@@ -15,41 +15,42 @@
 
 package za.co.absa.enceladus.menas.repositories
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Repository
-import org.apache.oozie.client.OozieClient
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Properties
+import java.util.TimeZone
+
 import scala.concurrent.Future
-import org.apache.oozie.client.WorkflowJob.{Status => WorkflowStatus}
+
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-import java.io.InputStreamReader
-import java.io.BufferedReader
-import java.io.ByteArrayInputStream
-import org.apache.hadoop.conf.Configuration
-import java.util.Properties
-import za.co.absa.enceladus.model.Dataset
-import org.springframework.beans.factory.annotation.Value
-import za.co.absa.enceladus.menas.exceptions.OozieConfigurationException
-import java.text.SimpleDateFormat
-import java.time.LocalDateTime
-import java.util.Date
-import java.util.TimeZone
-import org.apache.oozie.client.Job.Status
-import za.co.absa.enceladus.menas.models.OozieCoordinatorStauts
-import org.apache.hadoop.fs.permission.FsPermission
 import org.apache.hadoop.fs.permission.FsAction
-import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
-import java.net.URL
-import java.net.HttpURLConnection
-import org.springframework.beans.factory.InitializingBean
+import org.apache.hadoop.fs.permission.FsPermission
+import org.apache.oozie.client.OozieClient
+import org.apache.oozie.client.WorkflowJob.{Status => WorkflowStatus}
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Repository
+
+import za.co.absa.enceladus.menas.exceptions.OozieConfigurationException
+import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
+import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
 
 @Repository
-class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationException, OozieClient], datasetMongoRepository: DatasetMongoRepository,
-    hadoopFS: FileSystem, hadoopConf: Configuration) extends InitializingBean {
+class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationException, OozieClient],
+    datasetMongoRepository: DatasetMongoRepository,
+    hadoopFS: FileSystem,
+    hadoopConf: Configuration) extends InitializingBean {
 
   import scala.concurrent.ExecutionContext.Implicits.global
-  import scala.collection.JavaConversions._
 
   @Value("${za.co.absa.enceladus.menas.oozie.schedule.hdfs.path:}")
   val oozieScheduleHDFSPath: String = ""
@@ -77,17 +78,17 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
 
   @Value("${za.co.absa.enceladus.menas.oozie.splineMongoURL:}")
   val splineMongoURL: String = ""
-  
+
   @Value("${za.co.absa.enceladus.menas.oozie.sparkConf.surroundingQuoteChar:}")
   val sparkConfQuotes: String = ""
-      
-  val classLoader = Thread.currentThread().getContextClassLoader()
-  val workflowTemplate = getTemplateFile("scheduling/oozie/workflow_template.xml")
-  val coordinatorTemplate = getTemplateFile("scheduling/oozie/coordinator_template.xml")
-  val namenode = hadoopConf.get("fs.defaultFS")
-  val resourceManager = hadoopConf.get("yarn.resourcemanager.address")
-  val dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
-  val logger = LoggerFactory.getLogger(this.getClass)
+
+  private val classLoader = Thread.currentThread().getContextClassLoader()
+  private val workflowTemplate = getTemplateFile("scheduling/oozie/workflow_template.xml")
+  private val coordinatorTemplate = getTemplateFile("scheduling/oozie/coordinator_template.xml")
+  private val namenode = hadoopConf.get("fs.defaultFS")
+  private val resourceManager = hadoopConf.get("yarn.resourcemanager.address")
+  private val dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   override def afterPropertiesSet() {
     logger.info(s"Enceladus Jar Location: $enceladusJarLocation")
@@ -122,25 +123,24 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       val mavenStdPath = s"$mavenRepoLocation$standardizationJarPath"
       val mavenConfPath = s"$mavenRepoLocation$conformanceJarPath"
 
-      if (!hadoopFS.exists(hdfsStdPath) || hadoopFS.getStatus(hdfsStdPath).getCapacity == 0) {
-        logger.info(s"Uploading standardization jar from $mavenStdPath to $hdfsStdPath")
-        val resFuture = this.downloadFile(mavenStdPath, hdfsStdPath)
-        resFuture.onSuccess({ case (u: Unit) => logger.info(s"Standardization jar loaded to $hdfsStdPath") })
-        resFuture.onFailure({
-          case (err: Throwable) =>
-            hadoopFS.delete(hdfsStdPath, true)
-        })
+      val resFutureStd = this.downloadFile(mavenStdPath, hdfsStdPath)
+      resFutureStd.onSuccess {
+        case _ => logger.info(s"Standardization jar loaded to $hdfsStdPath")
+      }
+      resFutureStd.onFailure {
+        case (err: Throwable) =>
+          hadoopFS.delete(hdfsStdPath, true)
       }
 
-      if (!hadoopFS.exists(hdfsConfPath) || hadoopFS.getStatus(hdfsConfPath).getCapacity == 0) {
-        logger.info(s"Uploading conformance jar from $mavenConfPath to $hdfsConfPath")
-        val resFuture = this.downloadFile(mavenConfPath, hdfsConfPath)
-        resFuture.onSuccess({ case (u: Unit) => logger.info(s"Conformance jar loaded to $hdfsConfPath") })
-        resFuture.onFailure({
-          case (err: Throwable) =>
-            hadoopFS.delete(hdfsConfPath, true)
-        })
+      val resFutureConf = this.downloadFile(mavenConfPath, hdfsConfPath)
+      resFutureConf.onSuccess {
+        case _ => logger.info(s"Conformance jar loaded to $hdfsConfPath")
       }
+      resFutureConf.onFailure {
+        case (err: Throwable) =>
+          hadoopFS.delete(hdfsConfPath, true)
+      }
+
     }
   }
 
@@ -149,19 +149,22 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    */
   private def downloadFile(url: String, hadoopPath: Path) = {
     Future {
-      val connection = new URL(url).openConnection()
-      connection match {
-        case httpConn: HttpURLConnection => httpConn.setRequestMethod("GET")
-        case _                           => Unit
-      }
+      if (!hadoopFS.exists(hadoopPath) || hadoopFS.getStatus(hadoopPath).getCapacity == 0) {
+        logger.info(s"Uploading jar from $url to $hadoopPath")
+        val connection = new URL(url).openConnection()
+        connection match {
+          case httpConn: HttpURLConnection => httpConn.setRequestMethod("GET")
+          case _                           => Unit
+        }
 
-      val in = connection.getInputStream
-      val targetArray = Array.fill(in.available)(0.toByte)
-      in.read(targetArray)
-      val os = hadoopFS.create(hadoopPath, true)
-      os.write(targetArray)
-      os.flush()
-      os.close()
+        val in = connection.getInputStream
+        val targetArray = Array.fill(in.available)(0.toByte)
+        in.read(targetArray)
+        val os = hadoopFS.create(hadoopPath, true)
+        os.write(targetArray)
+        os.flush()
+        os.close()
+      }
     }
   }
 
@@ -195,15 +198,15 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   /**
    * Get status of submitted coordinater
    */
-  def getCoordinatorStatus(coordId: String): Future[OozieCoordinatorStauts] = {
+  def getCoordinatorStatus(coordId: String): Future[OozieCoordinatorStatus] = {
     getOozieClientWrap({ oozieClient: OozieClient =>
       val jobInfo = oozieClient.getCoordJobInfo(coordId)
-      val nextMaterializeTime = if(jobInfo.getNextMaterializedTime == null) {
+      val nextMaterializeTime = if (jobInfo.getNextMaterializedTime == null) {
         ""
       } else {
         dateFormat.format(jobInfo.getNextMaterializedTime)
       }
-      OozieCoordinatorStauts(jobInfo.getStatus, nextMaterializeTime)
+      OozieCoordinatorStatus(jobInfo.getStatus, nextMaterializeTime)
     })
   }
 
@@ -231,27 +234,27 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   private def getWorkflowFromTemplate(ds: Dataset): Array[Byte] = {
     val schedule = ds.schedule.get
     val runtimeParams = schedule.runtimeParams
-    workflowTemplate.replaceAll("\\$stdAppName", s"Menas Schedule Standardization ${ds.name} (${ds.version})")
-      .replaceAll("\\$confAppName", s"Menas Schedule Conformance ${ds.name} (${ds.version})")
-      .replaceAll("\\$stdJarPath", s"$enceladusJarLocation$standardizationJarPath")
-      .replaceAll("\\$confJarPath", s"$enceladusJarLocation$conformanceJarPath")
-      .replaceAll("\\$datasetVersion", schedule.datasetVersion.toString)
-      .replaceAll("\\$datasetName", ds.name)
-      .replaceAll("\\$mappingTablePattern", schedule.mappingTablePattern.flatMap(p => if (p.isEmpty()) None else Some(p)).getOrElse("reportDate={0}-{1}-{2}").trim)
-      .replaceAll("\\$dataFormat", schedule.rawFormat.name)
-      .replaceAll("\\$otherDFArguments", schedule.rawFormat.getArguments.map(arg => s"<arg>$arg</arg>").mkString("\n"))
-      .replaceAll("\\$jobTracker", resourceManager)
-      .replaceAll("\\$sharelibForSpark", oozieShareLib)
-      .replaceAll("\\$nameNode", namenode)
-      .replaceAll("\\$menasRestURI", menasApiURL)
-      .replaceAll("\\$splineMongoURL", splineMongoURL)
-      .replaceAll("\\$stdNumExecutors", runtimeParams.stdNumExecutors.toString)
-      .replaceAll("\\$stdExecutorMemory", s"${runtimeParams.stdExecutorMemory}g")
-      .replaceAll("\\$confNumExecutors", runtimeParams.confNumExecutors.toString)
-      .replaceAll("\\$confExecutorMemory", s"${runtimeParams.confExecutorMemory}g")
-      .replaceAll("\\$driverCores", s"${runtimeParams.driverCores}")
-      .replaceAll("\\$menasCredentialsFile", s"$namenode${runtimeParams.menasCredentialFile}")
-      .replaceAll("\\$sparkConfQuotes", sparkConfQuotes)
+    workflowTemplate.replaceAllLiterally("$stdAppName", s"Menas Schedule Standardization ${ds.name} (${ds.version})")
+      .replaceAllLiterally("$confAppName", s"Menas Schedule Conformance ${ds.name} (${ds.version})")
+      .replaceAllLiterally("$stdJarPath", s"$enceladusJarLocation$standardizationJarPath")
+      .replaceAllLiterally("$confJarPath", s"$enceladusJarLocation$conformanceJarPath")
+      .replaceAllLiterally("$datasetVersion", schedule.datasetVersion.toString)
+      .replaceAllLiterally("$datasetName", ds.name)
+      .replaceAllLiterally("$mappingTablePattern", schedule.mappingTablePattern.map(_.trim).filter(_.nonEmpty).getOrElse("reportDate={0}-{1}-{2}").trim)
+      .replaceAllLiterally("$dataFormat", schedule.rawFormat.name)
+      .replaceAllLiterally("$otherDFArguments", schedule.rawFormat.getArguments.map(arg => s"<arg>$arg</arg>").mkString("\n"))
+      .replaceAllLiterally("$jobTracker", resourceManager)
+      .replaceAllLiterally("$sharelibForSpark", oozieShareLib)
+      .replaceAllLiterally("$nameNode", namenode)
+      .replaceAllLiterally("$menasRestURI", menasApiURL)
+      .replaceAllLiterally("$splineMongoURL", splineMongoURL)
+      .replaceAllLiterally("$stdNumExecutors", runtimeParams.stdNumExecutors.toString)
+      .replaceAllLiterally("$stdExecutorMemory", s"${runtimeParams.stdExecutorMemory}g")
+      .replaceAllLiterally("$confNumExecutors", runtimeParams.confNumExecutors.toString)
+      .replaceAllLiterally("$confExecutorMemory", s"${runtimeParams.confExecutorMemory}g")
+      .replaceAllLiterally("$driverCores", s"${runtimeParams.driverCores}")
+      .replaceAllLiterally("$menasCredentialsFile", s"$namenode${runtimeParams.menasCredentialFile}")
+      .replaceAllLiterally("$sparkConfQuotes", sparkConfQuotes)
       .getBytes("UTF-8")
   }
 
@@ -266,13 +269,13 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     val timezoneOffset = TimeZone.getTimeZone(oozieTimezone).getOffset(currentTime)
     val startDate = new Date(currentTime)
     val endDate = new Date(futureTime)
-    coordinatorTemplate.replaceAll("\\$coordName", s"Menas Schedule Coordinator ${ds.name} (${ds.version})")
-      .replaceAll("\\$cronTiming", schedule.scheduleTiming.getCronSchedule)
-      .replaceAll("\\$reportDateOffset", schedule.reportDateOffset.toString)
-      .replaceAll("\\$timezone", oozieTimezone)
-      .replaceAll("\\$startDate", dateFormat.format(startDate))
-      .replaceAll("\\$endDate", dateFormat.format(endDate))
-      .replaceAll("\\$wfApplicationPath", wfPath).getBytes("UTF-8")
+    coordinatorTemplate.replaceAllLiterally("$coordName", s"Menas Schedule Coordinator ${ds.name} (${ds.version})")
+      .replaceAllLiterally("$cronTiming", schedule.scheduleTiming.getCronSchedule)
+      .replaceAllLiterally("$reportDateOffset", schedule.reportDateOffset.toString)
+      .replaceAllLiterally("$timezone", oozieTimezone)
+      .replaceAllLiterally("$startDate", dateFormat.format(startDate))
+      .replaceAllLiterally("$endDate", dateFormat.format(endDate))
+      .replaceAllLiterally("$wfApplicationPath", wfPath).getBytes("UTF-8")
   }
 
   /**

@@ -21,7 +21,6 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConfo
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
-import org.apache.spark.sql.RuntimeConfig
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
 
 case class Dataset(
@@ -61,7 +60,7 @@ case class Dataset(
   def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
   def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
-  override def setParent(newParent: Option[MenasReference]) = this.copy(parent = newParent)
+  override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
   
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the dots are

@@ -22,7 +22,7 @@ case class ScheduleTiming(minute: Seq[String], hour: Seq[String], dayOfMonth: Se
     val dayOfMonthSep = dayOfMonth.mkString(",")
     val monthSep = month.mkString(",")
     val dayOfWeekSep = dayOfWeek.mkString(",")
-    
+
     s"$minuteSep $hourSep $dayOfMonthSep $monthSep $dayOfWeekSep"
   }
 }
