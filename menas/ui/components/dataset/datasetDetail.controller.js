@@ -86,7 +86,9 @@ sap.ui.define([
         .then(schema => {
           SchemaManager.updateTransitiveSchema(schema.fields, rules).then(fields => {
             schema.fields = fields;
-            this._upsertConformanceRuleDialog.setModel(new sap.ui.model.json.JSONModel(schema), "schema");
+            const model = new sap.ui.model.json.JSONModel(schema);
+            model.setSizeLimit(5000);
+            this._upsertConformanceRuleDialog.setModel(model, "schema");
           });
         });
     },
