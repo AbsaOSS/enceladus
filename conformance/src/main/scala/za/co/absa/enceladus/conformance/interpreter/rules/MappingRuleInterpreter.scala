@@ -58,16 +58,16 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     val mapTable = DataSource.getData(mappingTableDef.hdfsPath, progArgs.reportDate, mapPartitioning)
 
     // join & perform projection on the target attribute
-    val joinContidionStr = MappingRuleInterpreter.getJoinCondition(rule).toString
+    val joinConditionStr = MappingRuleInterpreter.getJoinCondition(rule).toString
     log.info("Mapping table: \n" + mapTable.schema.treeString)
     log.info("Rule: " + this.toString)
-    log.info("Join Condition: " + joinContidionStr)
+    log.info("Join Condition: " + joinConditionStr)
 
     // validate the default value against the mapping table schema
     val defaultValueOpt = getDefaultValue(mappingTableDef)
 
     // validate join fields existence
-    MappingRuleInterpreter.validateMappingFieldsExist(s"the dataset, join condition = $joinContidionStr", df.schema, mapTable.schema, rule)
+    MappingRuleInterpreter.validateMappingFieldsExist(s"the dataset, join condition = $joinConditionStr", df.schema, mapTable.schema, rule)
 
     var errorsDf = df
 
@@ -88,11 +88,13 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
         when((col(s"`${rule.outputColumn}`") isNull) and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).otherwise(col(ErrorMessage.errorColumnName)))
 
       // see if we need to apply default value
-      val resDf = if (defaultValueOpt.nonEmpty) {
-        ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, when(col(s"`${rule.outputColumn}`") isNotNull, col(s"`${rule.outputColumn}`")).
-          otherwise(expr(defaultValueOpt.get)))
-      } else ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, col(s"`${rule.outputColumn}`"))
-      resDf
+      defaultValueOpt match {
+        case Some(defaultValue) =>
+          ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, when(col(s"`${rule.outputColumn}`") isNotNull, col(s"`${rule.outputColumn}`"))
+            .otherwise(expr(defaultValue)))
+        case None =>
+          ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, col(s"`${rule.outputColumn}`"))
+      }
     }
 
     val errNested = errorsDf.groupBy(idField).agg(collect_list(col(ErrorMessage.errorColumnName)) as ErrorMessage.errorColumnName)
@@ -129,13 +131,14 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
       case None => genericDefaultValueOpt
     }
 
-    if (defaultValueOpt.nonEmpty) {
-      val mappingTableSchema = dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion)
-      if (mappingTableSchema != null) {
-        MappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, mappingTableSchema,
-          rule.targetAttribute, defaultMappingValueMap(rule.targetAttribute))
-      } else {
-        log.warn("Mapping table schema loading failed")
+    if (defaultValueOpt.isDefined) {
+      val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
+      mappingTableSchemaOpt match {
+        case Some(schema) =>
+          MappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
+            rule.targetAttribute, defaultMappingValueMap(rule.targetAttribute))
+        case None =>
+          log.warn("Mapping table schema loading failed")
       }
     }
     defaultValueOpt

@@ -50,11 +50,11 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
 
     // find the data frame from the mapping table
     val mapTable = DataSource.getData(mappingTableDef.hdfsPath, progArgs.reportDate, mapPartitioning)
-    val joinContidionStr = getJoinCondition(rule).toString
+    val joinConditionStr = getJoinCondition(rule).toString
     val defaultValueOpt = getDefaultValue(mappingTableDef)
 
-    logJoinCondition(mapTable.schema, joinContidionStr)
-    validateMappingRule(df, dao, mappingTableDef, mapTable, joinContidionStr)
+    logJoinCondition(mapTable.schema, joinConditionStr)
+    validateMappingRule(df, dao, mappingTableDef, mapTable, joinConditionStr)
 
     val (explodedDf, expCtx) = explodeIfNeeded(df)
 
@@ -117,7 +117,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
   }
 
   private def getDefaultValue(mappingTableDef: MappingTable)
-                             (implicit spark: SparkSession, dao: EnceladusDAO): Option[String] = {
+                     (implicit spark: SparkSession, dao: EnceladusDAO): Option[String] = {
     val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
 
     val attributeDefaultValueOpt = defaultMappingValueMap.get(rule.targetAttribute)
@@ -128,13 +128,14 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
       case None => genericDefaultValueOpt
     }
 
-    if (defaultValueOpt.nonEmpty) {
-      val mappingTableSchema = dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion)
-      if (mappingTableSchema != null) {
-        MappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, mappingTableSchema,
-          rule.targetAttribute, defaultMappingValueMap(rule.targetAttribute))
-      } else {
-        log.warn("Mapping table schema loading failed")
+    if (defaultValueOpt.isDefined) {
+      val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
+      mappingTableSchemaOpt match {
+        case Some(schema) =>
+          MappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
+            rule.targetAttribute, defaultMappingValueMap(rule.targetAttribute))
+        case None =>
+          log.warn("Mapping table schema loading failed")
       }
     }
     defaultValueOpt
@@ -144,11 +145,11 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
                                   dao: EnceladusDAO,
                                   mappingTableDef: MappingTable,
                                   mapTable: Dataset[Row],
-                                  joinContidionStr: String)
+                                  joinConditionStr: String)
                                  (implicit spark: SparkSession): Unit = {
 
     // validate join fields existence
-    MappingRuleInterpreterGroupExplode.validateMappingFieldsExist(s"the dataset, join condition = $joinContidionStr",
+    MappingRuleInterpreterGroupExplode.validateMappingFieldsExist(s"the dataset, join condition = $joinConditionStr",
       df.schema, mapTable.schema, rule)
   }
 
