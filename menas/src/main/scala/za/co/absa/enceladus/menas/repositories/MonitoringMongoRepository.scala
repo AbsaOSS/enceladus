@@ -45,25 +45,15 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |          startDateTimeCasted: {
                    |              $dateFromString: {
                    |                  dateString: "$startDateTime",
-                   |                  format: "%d-%m-%Y %H:%M:%S %z",
-                   |                  onError: {$dateFromString: {
-                   |                      dateString: "$startDateTime",
-                   |                      format: "%d-%m-%Y %H:%M:%S",
-                   |                      onError: "wrongFormat"
-                   |                  }}
+                   |                  onError: "wrongFormat"
                    |              }
                    |          },
                    |          informationDateCasted: {
                    |              $dateFromString: {
                    |                  dateString: "$controlMeasure.metadata.informationDate",
-                   |                  format: "%Y-%m-%d",
-                   |                  onError: {$dateFromString: {
-                   |                      dateString: "$controlMeasure.metadata.informationDate",
-                   |                      format: "%d-%m-%Y",
-                   |                      onError: "wrongFormat"
-                   |                  }}
+                   |                  onError: "wrongFormat"
                    |              }
-                   |          },
+                   |          }
                    | }},""".stripMargin),
         // filter by informationDateCasted in order to limit the number of elements
         Document(
