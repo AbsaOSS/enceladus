@@ -20,12 +20,19 @@ multipart.maxFileSize=16Mb
 # Set the total request size for a multipart/form-data (default 10Mb)
 multipart.maxRequestSize=16Mb
 
-za.co.absa.enceladus.menas.auth.ad.domain=ad.domain.com
-za.co.absa.enceladus.menas.auth.ad.server=ldap://ad.domain.com
-za.co.absa.enceladus.menas.auth.sysuser.principal=sysuser@ad.domain.com
-za.co.absa.enceladus.menas.auth.sysuser.keytab.location=/path/to/sysuser.keytab
-za.co.absa.enceladus.menas.auth.ldap.search.base=DC=AD,DC=DOMAIN,DC=com
-za.co.absa.enceladus.menas.auth.ldap.search.filter=(&(samAccountName={0}))
+# How will users authenticate to menas. Available options: inmemory, kerberos
+za.co.absa.enceladus.menas.auth.mechanism = inmemory
+
+#za.co.absa.enceladus.menas.auth.kerberos.debug=false
+#za.co.absa.enceladus.menas.auth.ad.domain=ad.domain.com
+#za.co.absa.enceladus.menas.auth.ad.server=ldap://ad.domain.com
+#za.co.absa.enceladus.menas.auth.sysuser.principal=sysuser@ad.domain.com
+#za.co.absa.enceladus.menas.auth.sysuser.keytab.location=/path/to/sysuser.keytab
+#za.co.absa.enceladus.menas.auth.ldap.search.base=DC=AD,DC=DOMAIN,DC=com
+#za.co.absa.enceladus.menas.auth.ldap.search.filter=(&(objectClass=top)(sAMAccountName={0}))
+
+za.co.absa.enceladus.menas.auth.inmemory.user=user
+za.co.absa.enceladus.menas.auth.inmemory.password=changeme
 
 # Define how menas authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system
@@ -38,9 +45,6 @@ za.co.absa.enceladus.menas.hadoop.auth.krb5.realm=EXAMPLE.COM
 za.co.absa.enceladus.menas.hadoop.auth.krb5.kdc=localhost
 za.co.absa.enceladus.menas.hadoop.auth.krb5.username=hdfs@EXAMPLE.COM
 za.co.absa.enceladus.menas.hadoop.auth.krb5.keytab=hdfs.keytab
-
-za.co.absa.enceladus.menas.auth.inmemory.user=user
-za.co.absa.enceladus.menas.auth.inmemory.password=changeme
 
 za.co.absa.enceladus.menas.mongo.connection.string=mongodb://localhost:27017
 za.co.absa.enceladus.menas.mongo.connection.database=menas
