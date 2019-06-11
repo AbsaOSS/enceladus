@@ -64,13 +64,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
         // bring the raw checkpoint to root for further access
         Document(""" {$addFields: {
                    |           raw_checkpoint : {
-                   |              $arrayElemAt : [ {
-                   |                  $filter : {
-                   |                      input : "$controlMeasure.checkpoints",
-                   |                      as : "checkpoint",
-                   |                      cond : { $eq : [ "$$checkpoint.name", "Raw"] }
-                   |                  }
-                   |              }, 0 ]
+                   |              $arrayElemAt: ["$controlMeasure.checkpoints", 0]
                    |          }
                    |      }}""".stripMargin),
         // add the raw recordcount
