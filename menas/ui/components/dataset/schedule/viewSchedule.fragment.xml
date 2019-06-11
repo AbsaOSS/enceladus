@@ -22,10 +22,12 @@
         <Text text="{/currentDataset/schedule/activeInstance/coordinatorPath}" />
         <Label text="Workflow Path" />
         <Text text="{/currentDataset/schedule/activeInstance/workflowPath}" />
-        <Label text="Next Materialization Time" />
-        <Text text="{path:'/currentDataset/schedule/activeInstance/status/nextMaterializedTime', formatter: 'Formatters.stringDateShortFormatter'}" />
+        <Label text="Next Materialization Time" visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' }"/>
+        <Text text="{path:'/currentDataset/schedule/activeInstance/status/nextMaterializedTime', formatter: 'Formatters.stringDateShortFormatter'}" 
+            visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' }" />
         <Label text="Schedule Status" />
-        <ObjectStatus class="sapMObjectStatusLarge" text="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' ? 'Active' : ${/currentDataset/schedule/activeInstance/status/status} }"
+        <ObjectStatus class="sapMObjectStatusLarge" 
+            text="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' ? 'Active' : ${/currentDataset/schedule/activeInstance/status/status} }"
             state="{path:'/currentDataset/schedule/activeInstance/status/status', formatter:'Formatters.oozieCoordinatorStatusFormatter'}" />
         <core:Title text="Schedule Timing (in UTC)" />
         <Label text="Minute" />
