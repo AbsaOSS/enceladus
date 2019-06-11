@@ -88,7 +88,7 @@
                 labels="{/barChartData/labels}"
                 titleDisplay="false"
                 titleText="Records per run"
-                tooltipEnabled="false"
+                tooltipEnabled="true"
                 isHorizontal="true"
                 maintainAspectRatio="false">
             </lab:BarChartJS>

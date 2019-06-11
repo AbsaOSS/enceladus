@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.menas.repositories
 
 import org.mongodb.scala.{AggregateObservable, MongoDatabase}
-import org.mongodb.scala.model.Aggregates.filter
+import org.mongodb.scala.model.Aggregates.{filter, limit}
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.Document
 import org.springframework.beans.factory.annotation.Autowired
@@ -74,10 +74,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |                  $filter : {
                    |                      input : "$raw_checkpoint.controls",
                    |                      as : "control",
-                   |                      cond : { $or: [
-                   |                        {$eq : [ "$$control.controlName", "recordCount"]},
-                   |                        {$eq : [ "$$control.controlName", "recordcount"]}
-                   |                      ]}
+                   |                      cond : {$eq : [ { $toLower: "$$control.controlName"}, "recordcount"]}
                    |                  }
                    |              }, 0 ]
                    |          }
@@ -114,7 +111,8 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |
                    |      }}""".stripMargin),
         // sort the final results
-        Document("""{$sort: {informationDateCasted : -1, reportVersion: -1}}""".stripMargin)
+        Document("""{$sort: {informationDateCasted : -1, reportVersion: -1}}""".stripMargin),
+        limit(500)
       ))
     observable.map(doc => doc.toJson).toFuture()
   }
