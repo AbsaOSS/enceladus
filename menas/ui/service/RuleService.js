@@ -48,17 +48,21 @@ class RuleService {
   static moveRule(originalRules, schema, ruleIndex, direction) {
     const conformanceRules = $.extend(true, [], originalRules);
 
-    RuleService.swap(conformanceRules, ruleIndex, ruleIndex + direction);
+    const otherRuleIndex = ruleIndex + direction;
+    RuleService.swap(conformanceRules, ruleIndex, otherRuleIndex);
 
     const newRules = conformanceRules
       .map((currElement, index) => {
         return {...currElement, order: index}
       });
+
     const schemas = [schema];
     try {
       SchemaManager.updateTransitiveSchemas(schemas, newRules);
     } catch (e) {
-      return new InvalidResult(`Unable to move conformance rule as it depends on column "${e.fieldPath}"`)
+      const smallerIndex = Math.min(ruleIndex, otherRuleIndex);
+      const largerIndex = Math.max(ruleIndex, otherRuleIndex);
+      return new InvalidResult(`Unable to move conformance rule as it would break the dependency on column "${e.fieldPath}" between rule ${smallerIndex} and ${largerIndex}`)
     }
 
     return new ValidResult(newRules);

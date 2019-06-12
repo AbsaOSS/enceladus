@@ -155,7 +155,7 @@ sap.ui.define([
           const newDataset = {...currentDataset, conformance: result.result};
           this._datasetService.update(newDataset);
         } else {
-          sap.m.MessageToast.show(result.errorMessage);
+          sap.m.MessageToast.show(result.errorMessage, { width: "20em" });
         }
       });
     },

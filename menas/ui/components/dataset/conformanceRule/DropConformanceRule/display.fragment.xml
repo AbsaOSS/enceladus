@@ -17,7 +17,7 @@
     <CustomListItem>
         <form:SimpleForm adjustLabelSpan="true" editable="false">
             <form:content>
-                <Title text="{_t}" level="H2"/>
+                <Title text="{order}. {_t}" level="H2"/>
                 <Label text="Drop Column"/>
                 <Text text="{outputColumn}"/>
                 <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.checkpointBox"/>
