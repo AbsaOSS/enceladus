@@ -18,15 +18,25 @@ class RuleService {
   static UP = -1;
   static DOWN = 1;
 
-  static removeRule(oCurrentDataset, iRuleIndex) {
-    let conformance = oCurrentDataset["conformance"]
-      .filter((_, index) => index !== iRuleIndex)
+  static removeRule(originalRules, schema, ruleIndex) {
+    const conformanceRules = $.extend(true, [], originalRules);
+
+    const newRules = conformanceRules
+      .filter((_, index) => index !== ruleIndex)
       .sort((first, second) => first.order > second.order)
       .map((currElement, index) => {
         return {...currElement, order: index}
       });
 
-    return {...oCurrentDataset, conformance: conformance};
+    const schemas = [schema];
+    try {
+      SchemaManager.updateTransitiveSchemas(schemas, newRules);
+    } catch (e) {
+      const indexOfBrokenRule = e.order + 1; // adding 1 to account for the order being on a schema without the removed rule
+      return new InvalidResult(`Unable to remove conformance rule ${ruleIndex} as it would break the dependency on column "${e.fieldPath}" by rule ${indexOfBrokenRule}`)
+    }
+
+    return new ValidResult(newRules);
   }
 
   static moveRuleUp(rules, schema, ruleIndex) {

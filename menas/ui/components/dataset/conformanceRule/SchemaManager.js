@@ -54,16 +54,20 @@ class RuleFactory {
 
 class UnknownFiledError extends Error {
 
-  constructor(fieldPath) {
+  constructor(fieldPath, order) {
     super(`Unable to find field: ${fieldPath}`);
     Error.captureStackTrace(this, UnknownFiledError);
     this._fieldPath = fieldPath;
+    this._order = order;
   }
 
   get fieldPath() {
     return this._fieldPath;
   }
 
+  get order() {
+    return this._order;
+  }
 }
 
 class ConformanceRule {
@@ -99,7 +103,7 @@ class ConformanceRule {
     return splitPath.reduce((fields, path, index) => {
       const field = fields.find(field => field.name === path);
       if (field === undefined) {
-        throw new UnknownFiledError(columnName)
+        throw new UnknownFiledError(columnName, this.rule.order)
       }
       const children = field.children;
       return (children && children.length > 0 && splitPath.length > index + 1) ? children : field;
@@ -169,7 +173,7 @@ class DropConformanceRule extends ConformanceRule {
       const elementIndex = acc.findIndex(field => path === field.name);
       const element = acc[elementIndex];
       if (element === undefined) {
-        throw new UnknownFiledError(this.rule.outputColumn)
+        throw new UnknownFiledError(this.rule.outputColumn, this.rule.order)
       }
       const children = element.children;
       if (splitPath.length === index + 1) {

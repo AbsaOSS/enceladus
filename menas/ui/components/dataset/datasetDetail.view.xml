@@ -39,10 +39,12 @@
                     </IconTabFilter>
                     <IconTabFilter id="ConformanceRules" icon="sap-icon://list" key="conformanceRules"
                                    text="Conformance Rules">
-                        <List headerText="Conformance Rules" items="{
-                                            path: '/currentDataset/conformance',
-                                            factory: '.conformanceRuleFactory'
-                                        }"/>
+                        <List id="ConformanceRulesList"
+                              headerText="Conformance Rules"
+                              items="{
+                                        path: '/currentDataset/conformance',
+                                        factory: '.conformanceRuleFactory'
+                                      }"/>
                     </IconTabFilter>
                     <IconTabFilter id="Runs" icon="sap-icon://activities" key="runs" text="Runs">
                         <core:Fragment type="XML" fragmentName="components.dataset.run.runs"/>

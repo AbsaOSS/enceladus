@@ -127,11 +127,17 @@ sap.ui.define([
           if (oResponse === sap.m.MessageBox.Action.YES) {
             let ruleIndex = this._getRuleIndex(sBindPath);
             let currentDataset = this._model.getProperty("/currentDataset");
-            let newDataset = RuleService.removeRule(currentDataset, ruleIndex);
+            new SchemaRestDAO().getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion).then(schema => {
+              let result = RuleService.removeRule(currentDataset.conformance, schema, ruleIndex);
 
-            if (newDataset) {
-              this._datasetService.update(newDataset);
-            }
+              if (result.isValid) {
+                const newDataset = {...currentDataset, conformance: result.result};
+                console.log("del")
+                // this._datasetService.update(newDataset);
+              } else {
+                sap.m.MessageToast.show(result.errorMessage, {width: "20em"});
+              }
+            });
           }
         }.bind(this)
       });
