@@ -34,6 +34,7 @@ import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.user._
 import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.menas.models.RunSummary
+import za.co.absa.enceladus.menas.models.DistinctCount
 
 package object implicits {
   implicit def optJavaScala[C](in: Optional[C]) = if (in.isPresent()) Some(in.get) else None
@@ -45,7 +46,7 @@ package object implicits {
     classOf[ConformanceRule],
     classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
     classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference], classOf[RunSummary],
-    classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference]),
+    classOf[UserInfo], classOf[DistinctCount], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference]),
     CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
 
 }

@@ -1,0 +1,23 @@
+<core:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="components.home.landingPage" xmlns:html="http://www.w3.org/1999/xhtml">
+    <Page title="Menas" enableScrolling="false">
+        <customHeader>
+            <Bar>
+                <contentMiddle>
+                    <Title text="Menas" />
+                </contentMiddle>
+                <contentRight>
+                    <core:Fragment type="XML" fragmentName="components.userInfo" />
+                </contentRight>
+            </Bar>
+        </customHeader>
+        <content>
+            <TileContainer id="landingPageTileContainer">
+                <GenericTile header="Total number of datasets">
+                    <TileContent>
+                        <NumericContent value="{/landingPageInfo/totalNumberDatasets}"></NumericContent>
+                    </TileContent>
+                </GenericTile>
+            </TileContainer>
+        </content>
+    </Page>
+</core:View>

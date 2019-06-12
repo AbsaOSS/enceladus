@@ -19,6 +19,8 @@
             <Page id="navPage" showHeader="true" title="Navigation">
                 <List>
                     <items>
+                        <ActionListItem id="Home" text="Home" type="Navigation" press="onHomePress"
+                                        visible="{= ${/userInfo/username} !== undefined}"/>
                         <ActionListItem id="Runs" text="Runs" type="Navigation" press="onRunsPress"
                                         visible="{= ${/userInfo/username} !== undefined}"/>
                         <ActionListItem id="Schemas" text="Schemas" type="Navigation" press="onSchemasPress"

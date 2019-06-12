@@ -43,7 +43,7 @@ sap.ui.define([
         if (typeof userInfo.username === 'undefined') {
           this._router.navTo("login");
         } else {
-          this._router.navTo("runs");
+          this._router.navTo("home");
         }
       }, this);
 
@@ -74,6 +74,11 @@ sap.ui.define([
     onRunsPress: function (oEv) {
       this._eventBus.publish("runs", "list");
       this._app.toMaster(this.createId("runsPage"));
+    },
+    
+    onHomePress: function (oEv) {
+      this._eventBus.publish("home", "home");
+      this._router.navTo("home")
     },
 
     onSchemasPress: function (oEv) {

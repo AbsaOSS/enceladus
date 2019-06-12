@@ -13,17 +13,12 @@
  * limitations under the License.
  */
 
-var model = new sap.ui.model.json.JSONModel({
-  userInfo : {},
-  landingPageInfo: {},
-  schemas: [],
-  mappingTables: [],
-  currentSchema: {},
-  currentMappingTable: {},
-  newMappingTable: {},
-  newSchema: {},
-  menasVersion: "${project.version}"
-})
-model.setSizeLimit(5000)
+package za.co.absa.enceladus.menas.models
 
-sap.ui.getCore().setModel(model)
+case class DistinctCount(distinctCount: Int)  
+
+case class LandingPageInformation(
+  totalNumberDatasets: Int,
+  totalNumberMappingTables: Int,
+  totalNumberSchemas: Int
+)

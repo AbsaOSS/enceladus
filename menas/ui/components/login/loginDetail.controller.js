@@ -99,7 +99,7 @@ sap.ui.define([
         Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
           sap.ui.getCore().byId(this._appMasterId).setVisible(true);
-          this._router.navTo("runs");
+          this._router.navTo("home");
           this._eventBus.publish("nav", "login");
         });
       };
