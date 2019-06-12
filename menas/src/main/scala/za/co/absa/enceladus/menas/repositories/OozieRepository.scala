@@ -43,6 +43,7 @@ import za.co.absa.enceladus.menas.exceptions.OozieConfigurationException
 import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
+import za.co.absa.enceladus.menas.exceptions.EntityAlreadyExistsException
 
 @Repository
 class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationException, OozieClient],
@@ -312,9 +313,9 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     Future {
       val p = new Path(path)
       if (hadoopFS.exists(p)) {
-        hadoopFS.delete(p, true)
+        throw EntityAlreadyExistsException(s"Schedule already exists! Please delete $path and/or try again")
       }
-      val os = hadoopFS.create(p, true)
+      val os = hadoopFS.create(p)
       os.write(content)
       os.flush()
       os.close()
