@@ -260,7 +260,7 @@ sap.ui.define([
       this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema").then((schema) => {
         this._schemaTable.model = schema;
         transitiveSchemas.push(schema);
-        SchemaManager.updateTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
+        SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
       });
 
       const auditTable = this.byId("auditTrailTable");
@@ -283,11 +283,11 @@ sap.ui.define([
         let oAttributeMappings = oContext.getProperty("attributeMappings");
         let aJoinConditions = [];
         for (let key in oAttributeMappings) {
-          let mappingTableName = oContext.getProperty("mappingTable");
-          let datasetName = this._model.getProperty("/currentDataset/name");
           aJoinConditions.push({
-            mappingTableField: mappingTableName + "." + key,
-            datasetField: datasetName + "." + oAttributeMappings[key]
+            mappingTableField: key,
+            datasetField: oAttributeMappings[key],
+            datasetName: this._model.getProperty("/currentDataset/name"),
+            mappingTableName: this._model.getProperty("/currentDataset/name")
           });
         }
 

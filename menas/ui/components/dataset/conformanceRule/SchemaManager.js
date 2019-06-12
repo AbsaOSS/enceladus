@@ -15,10 +15,18 @@
 
 class SchemaManager {
 
-  static updateTransitiveSchemas(schemas, rules) {
+  static getTransitiveSchemas(schemas, rules) {
     rules.map(RuleFactory.createRule).forEach((rule, index) => {
       const schema = $.extend(true, [], schemas[index]);
       rule.apply(schema.fields);
+      schemas.push(schema);
+    })
+  }
+
+  static validateTransitiveSchemas(schemas, rules) {
+    rules.map(RuleFactory.createRule).forEach((rule, index) => {
+      const schema = $.extend(true, [], schemas[index]);
+      rule.validate(schema.fields);
       schemas.push(schema);
     })
   }
@@ -126,6 +134,10 @@ class ConformanceRule {
     }, fields);
   }
 
+  validate(fields) {
+    return this.apply(fields);
+  }
+
 }
 
 class CastingConformanceRule extends ConformanceRule {
@@ -159,6 +171,7 @@ class ConcatenationConformanceRule extends ConformanceRule {
   getInputCols(fields) {
     return this.rule.inputColumns.map(inputCol => this.getCol(fields, inputCol));
   }
+
 }
 
 class DropConformanceRule extends ConformanceRule {
@@ -224,6 +237,13 @@ class MappingConformanceRule extends ConformanceRule {
         this.addNewField(fields, newField);
         return fields;
       });
+  }
+
+  validate(fields) {
+    this.rule.joinConditions.forEach(join => {
+      this.getCol(fields, join.datasetField);
+    });
+    return this.apply(fields)
   }
 
 }

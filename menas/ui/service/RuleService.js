@@ -30,7 +30,7 @@ class RuleService {
 
     const schemas = [schema];
     try {
-      SchemaManager.updateTransitiveSchemas(schemas, newRules);
+      SchemaManager.validateTransitiveSchemas(schemas, newRules);
     } catch (e) {
       const indexOfBrokenRule = e.order + 1; // adding 1 to account for the order being on a schema without the removed rule
       return new InvalidResult(`Unable to remove conformance rule ${ruleIndex} as it would break the dependency on column "${e.fieldPath}" by rule ${indexOfBrokenRule}`)
@@ -68,7 +68,7 @@ class RuleService {
 
     const schemas = [schema];
     try {
-      SchemaManager.updateTransitiveSchemas(schemas, newRules);
+      SchemaManager.validateTransitiveSchemas(schemas, newRules);
     } catch (e) {
       const smallerIndex = Math.min(ruleIndex, otherRuleIndex);
       const largerIndex = Math.max(ruleIndex, otherRuleIndex);
