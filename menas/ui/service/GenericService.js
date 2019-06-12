@@ -34,7 +34,7 @@ var GenericService = new function () {
   };
   
   this.getLandingPageInfo = function() {
-    RestClient.get("/api/landing/info").then((oData) => {
+    RestClient.get("api/landing/info").then((oData) => {
       model.setProperty("/landingPageInfo", oData);
     }).fail(() => {
       sap.m.MessageBox.error("Failed to load landing page information");

@@ -11,13 +11,25 @@
             </Bar>
         </customHeader>
         <content>
-            <TileContainer id="landingPageTileContainer">
-                <GenericTile header="Total number of datasets">
-                    <TileContent>
-                        <NumericContent value="{/landingPageInfo/totalNumberDatasets}"></NumericContent>
-                    </TileContent>
-                </GenericTile>
-            </TileContainer>
+            <FlexBox height="100px" alignItems="Start" justifyContent="Center" class="sapUiResponsiveMargin">
+                <items>
+                    <GenericTile header="Datasets" class="sapUiResponsiveMargin">
+                        <TileContent>
+                            <NumericContent icon="sap-icon://database" value="{/landingPageInfo/totalNumberDatasets}"></NumericContent>
+                        </TileContent>
+                    </GenericTile>
+                    <GenericTile header="Schemas" class="sapUiResponsiveMargin">
+                        <TileContent>
+                            <NumericContent icon="sap-icon://SAP-icons-TNT/constrains" value="{/landingPageInfo/totalNumberSchemas}"></NumericContent>
+                        </TileContent>
+                    </GenericTile>
+                    <GenericTile header="Mapping Tables" class="sapUiResponsiveMargin">
+                        <TileContent>
+                            <NumericContent icon="sap-icon://SAP-icons-TNT/value-mapping" value="{/landingPageInfo/totalNumberMappingTables}"></NumericContent>
+                        </TileContent>
+                    </GenericTile>
+                </items>
+            </FlexBox>
         </content>
     </Page>
 </core:View>

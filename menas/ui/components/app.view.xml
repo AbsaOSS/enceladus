@@ -19,15 +19,15 @@
             <Page id="navPage" showHeader="true" title="Navigation">
                 <List>
                     <items>
-                        <ActionListItem id="Home" text="Home" type="Navigation" press="onHomePress"
+                        <StandardListItem id="Home" title="Home" type="Navigation" press="onHomePress" icon="sap-icon://home"
                                         visible="{= ${/userInfo/username} !== undefined}"/>
-                        <ActionListItem id="Runs" text="Runs" type="Navigation" press="onRunsPress"
+                        <StandardListItem id="Runs" title="Runs" type="Navigation" press="onRunsPress" icon="sap-icon://physical-activity"
                                         visible="{= ${/userInfo/username} !== undefined}"/>
-                        <ActionListItem id="Schemas" text="Schemas" type="Navigation" press="onSchemasPress"
+                        <StandardListItem id="Schemas" title="Schemas" type="Navigation" press="onSchemasPress" icon="sap-icon://SAP-icons-TNT/constrains"
                                         visible="{= ${/userInfo/username} !== undefined}"/>
-                        <ActionListItem id="Datasets" text="Datasets" type="Navigation" press="onDatasetPress"
+                        <StandardListItem id="Datasets" title="Datasets" type="Navigation" press="onDatasetPress" icon="sap-icon://database"
                                         visible="{= ${/userInfo/username} !== undefined}"/>
-                        <ActionListItem id="MappingTables" text="Mapping Tables" type="Navigation"
+                        <StandardListItem id="MappingTables" title="Mapping Tables" type="Navigation" icon="sap-icon://SAP-icons-TNT/value-mapping"
                                         press="onMappingPress" visible="{= ${/userInfo/username} !== undefined}"/>
                     </items>
                 </List>

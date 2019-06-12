@@ -61,6 +61,7 @@ sap.ui.define([
           this._router.navTo("login");
         }
       });
+      
     },
 
     handleMenuPress: function (oEv) {
