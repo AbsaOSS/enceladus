@@ -31,6 +31,7 @@ object MonitoringMongoRepository {
 @Repository
 class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends MongoRepository[Run](mongoDb) {
+
   private[menas] override def collectionName: String = MonitoringMongoRepository.collectionName
 
 

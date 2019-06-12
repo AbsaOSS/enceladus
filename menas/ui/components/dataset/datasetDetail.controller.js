@@ -40,12 +40,6 @@ sap.ui.define([
       let cont = new ConformanceRuleDialog(this);
       let view = this.getView();
 
-      view.byId("monitoring-multiheader-info").setHeaderSpan([2,1]);
-      view.byId("monitoring-multiheader-checkpoint").setHeaderSpan([3,1]);
-      view.byId("monitoring-multiheader-recordcount-raw").setHeaderSpan([5,1,1]);
-      view.byId("monitoring-multiheader-recordcount-std").setHeaderSpan([0,2,1]);
-      view.byId("monitoring-multiheader-recordcount-cnfrm").setHeaderSpan([0,2,1]);
-
       this.setDefaultMonitoringDateInterval();
 
       this._upsertConformanceRuleDialog = Fragment.load({
