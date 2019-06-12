@@ -32,24 +32,24 @@ package object dataFormats {
 
   case class XMLDataFormat(rowTag: String) extends DataFormat {
     val name: String = "xml"
-    override def getArguments(): Seq[String] = Seq("--row-tag", rowTag)
+    override def getArguments: Seq[String] = Seq("--row-tag", rowTag)
   }
 
   case class CSVDataFormat(csvDelimiter: Option[Char], csvHeader: Option[Boolean]) extends DataFormat {
     val name: String = "csv"
     private val delimiter = csvDelimiter.map(d => Seq("--delimiter", d.toString)).getOrElse(Seq[String]())
     private val header = csvHeader.map(h => Seq("--header", h.toString)).getOrElse(Seq[String]())
-    override def getArguments(): Seq[String] = (delimiter ++ header)
+    override def getArguments: Seq[String] = (delimiter ++ header)
   }
 
   case class ParquetDataFormat() extends DataFormat {
     val name: String = "parquet"
-    override def getArguments(): Seq[String] = Seq()
+    override def getArguments: Seq[String] = Seq()
   }
 
   case class FixedWidthDataFormat(trimValues: Option[Boolean]) extends DataFormat {
     val name: String = "fixed-width"
     private val trim = trimValues.map(t => Seq("--trimValues", t.toString)).getOrElse(Seq[String]())
-    override def getArguments(): Seq[String] = trim
+    override def getArguments: Seq[String] = trim
   }
 }
