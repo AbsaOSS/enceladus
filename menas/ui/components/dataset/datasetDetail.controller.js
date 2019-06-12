@@ -73,24 +73,16 @@ sap.ui.define([
 
       const rules = this._model.getProperty("/currentDataset/conformance");
       this._upsertConformanceRuleDialog.open();
-      this._upsertConformanceRuleDialog.setBusy(true);
 
-      this._setRuleDialogModel(rules).then(() =>
-        this._upsertConformanceRuleDialog.setBusy(false)
-      );
+      this._setRuleDialogModel(rules)
     },
 
     _setRuleDialogModel: function (rules) {
-      const currentDataset = this._model.getProperty("/currentDataset");
-      return new SchemaRestDAO().getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion)
-        .then(schema => {
-          SchemaManager.updateTransitiveSchema(schema.fields, rules).then(fields => {
-            schema.fields = fields;
-            const model = new sap.ui.model.json.JSONModel(schema);
-            model.setSizeLimit(5000);
-            this._upsertConformanceRuleDialog.setModel(model, "schema");
-          });
-        });
+      const ruleIndex = rules.length;
+      const schema = this._transitiveSchemas[ruleIndex];
+      const model = new sap.ui.model.json.JSONModel(schema);
+      model.setSizeLimit(5000);
+      this._upsertConformanceRuleDialog.setModel(model, "schema");
     },
 
     onRuleMenuAction: function (oEv) {
@@ -106,9 +98,8 @@ sap.ui.define([
         });
 
         const rules = this._model.getProperty("/currentDataset/conformance").slice(0, old.order);
-        this._setRuleDialogModel(rules).then(() =>
-          this._upsertConformanceRuleDialog.open()
-        );
+        this._setRuleDialogModel(rules);
+        this._upsertConformanceRuleDialog.open();
       } else if (sAction === "delete") {
         sap.m.MessageBox.confirm("Are you sure you want to delete the conformance rule?", {
           actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
@@ -166,13 +157,6 @@ sap.ui.define([
       });
     },
 
-    fetchSchema: function () {
-      let currentDataset = this._model.getProperty("/currentDataset");
-      this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema").then((schema) => {
-        this._schemaTable.model = schema;
-      });
-    },
-
     fetchRuns: function () {
       let currentDataset = this._model.getProperty("/currentDataset");
       RunService.getDatasetRuns(this.byId("Runs"), currentDataset.name, currentDataset.version);
@@ -218,7 +202,15 @@ sap.ui.define([
     load: function () {
       let currentDataset = this._model.getProperty("/currentDataset");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentDataset), "dataset");
-      this.fetchSchema();
+
+      this._transitiveSchemas = [];
+      const transitiveSchemas = this._transitiveSchemas;
+      this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema").then((schema) => {
+        this._schemaTable.model = schema;
+        transitiveSchemas.push(schema);
+        SchemaManager.updateTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
+      });
+
       const auditTable = this.byId("auditTrailTable");
       this._datasetService.getAuditTrail(currentDataset.name, auditTable);
     },
