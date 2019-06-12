@@ -17,6 +17,9 @@ package za.co.absa.enceladus.model.menas.scheduler
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import za.co.absa.enceladus.model.menas.jackson.OptCharDeserializer
 
 package object dataFormats {
 
@@ -29,13 +32,13 @@ package object dataFormats {
     val name: String
     def getArguments: Seq[String]
   }
-
+  
   case class XMLDataFormat(rowTag: String) extends DataFormat {
     val name: String = "xml"
     override def getArguments: Seq[String] = Seq("--row-tag", rowTag)
   }
 
-  case class CSVDataFormat(csvDelimiter: Option[Char], csvHeader: Option[Boolean]) extends DataFormat {
+  case class CSVDataFormat(@JsonDeserialize(using = classOf[OptCharDeserializer]) csvDelimiter: Option[Char], csvHeader: Option[Boolean]) extends DataFormat {
     val name: String = "csv"
     private val delimiter = csvDelimiter.map(d => Seq("--delimiter", d.toString)).getOrElse(Seq[String]())
     private val header = csvHeader.map(h => Seq("--header", h.toString)).getOrElse(Seq[String]())
