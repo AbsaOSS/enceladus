@@ -15,14 +15,13 @@
 
 class SchemaManager {
 
-  static updateTransitiveSchema(schemaFields, rules) {
-    const deferred = $.Deferred();
-    deferred.resolve(schemaFields);
-    rules.map(RuleFactory.createRule).forEach(rule => {
-      return deferred.then(fields => rule.apply(fields));
-    });
-    return deferred.promise();
-  };
+  static updateTransitiveSchemas(schemas, rules) {
+    rules.map(RuleFactory.createRule).forEach((rule, index) => {
+      const schema = $.extend(true, [], schemas[index]);
+      rule.apply(schema.fields);
+      schemas[index + 1] = schema;
+    })
+  }
 
 }
 
