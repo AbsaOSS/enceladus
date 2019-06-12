@@ -31,7 +31,7 @@
                             <content>
                                 <Text wrapping="true"
                                       wrappingType="Hyphenated"
-                                      text="{datasetField} = {mappingTableField}"/>
+                                      text="{datasetName}.{datasetField} = {mappingTableName}.{mappingTableField}"/>
                             </content>
                         </CustomListItem>
                     </items>
