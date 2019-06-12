@@ -105,7 +105,7 @@
             rowActionCount="1"
             width="100%">
             <table:columns>
-                <table:Column id="monitoring-multiheader-info" width="6rem">
+                <table:Column id="monitoring-multiheader-info" width="6rem" headerSpan="{=[2,1]}">
                     <table:multiLabels>
                         <Label text="Info" textAlign="Center" width="100%"/>
                         <Label text="Date" textAlign="Center" width="100%"/>
@@ -140,7 +140,7 @@
                     </table:template>
                 </table:Column>
 
-                <table:Column id="monitoring-multiheader-checkpoint" width="12rem">
+                <table:Column id="monitoring-multiheader-checkpoint" width="12rem" headerSpan="{=[3,1]}">
                     <table:multiLabels>
                         <Label text="Latest checkpoint" textAlign="Center" width="100%"/>
                         <Label text="End timestamp" textAlign="Center" width="100%"/>
@@ -168,7 +168,7 @@
                     </table:template>
                 </table:Column>
 
-                <table:Column id="monitoring-multiheader-recordcount-raw" width="5rem">
+                <table:Column id="monitoring-multiheader-recordcount-raw" width="5rem" headerSpan="{=[5,1,1]}">
                     <table:multiLabels>
                         <Label text="Records" textAlign="Center" width="100%" />
                         <Label text="Raw" textAlign="Center" width="100%" />
@@ -178,7 +178,7 @@
                         <Text text="{raw_recordcount}" wrapping="false" />
                     </table:template>
                 </table:Column>
-                <table:Column id="monitoring-multiheader-recordcount-std" width="7rem">
+                <table:Column id="monitoring-multiheader-recordcount-std" width="7rem" headerSpan="{=[0,2,1]}">
                     <table:multiLabels>
                         <Label text="Records" />
                         <Label text="Standardization" textAlign="Center" width="100%" />
@@ -198,7 +198,7 @@
                         <Text text="{std_records_failed}" wrapping="false" />
                     </table:template>
                 </table:Column>
-                <table:Column id="monitoring-multiheader-recordcount-cnfrm" width="7rem">
+                <table:Column id="monitoring-multiheader-recordcount-cnfrm" width="7rem" headerSpan="{=[0,2,1]}">
                     <table:multiLabels>
                         <Label text="Records" />
                         <Label text="Conformance" textAlign="Center" width="100%" />
