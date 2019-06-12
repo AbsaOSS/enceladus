@@ -15,6 +15,9 @@
 
 class RuleService {
 
+  static UP = -1;
+  static DOWN = 1;
+
   static removeRule(oCurrentDataset, iRuleIndex) {
     let conformance = oCurrentDataset["conformance"]
       .filter((_, index) => index !== iRuleIndex)
@@ -26,34 +29,37 @@ class RuleService {
     return {...oCurrentDataset, conformance: conformance};
   }
 
-  static moveUpRule(originalRules, schemaFields, iRuleIndex) {
-    const conformanceRules = $.extend(true, [], originalRules);
-    if (iRuleIndex === 0) {
+  static moveRuleUp(rules, schema, ruleIndex) {
+    if (ruleIndex === 0) {
       return new InvalidResult("Unable to move up first rule.");
     }
 
-    RuleService.swap(conformanceRules, iRuleIndex, iRuleIndex - 1);
-
-    const newRules = conformanceRules
-      .map((currElement, index) => {
-        return {...currElement, order: index}
-      });
-
-    return new ValidResult(newRules);
+    return RuleService.moveRule(rules, schema, ruleIndex, RuleService.UP);
   }
 
-  static moveDownRule(originalRules, schemaFields, iRuleIndex) {
-    const conformanceRules = $.extend(true, [], originalRules);
-    if (iRuleIndex === conformanceRules.length - 1) {
+  static moveRuleDown(rules, schema, ruleIndex) {
+    if (ruleIndex === rules.length - 1) {
       return new InvalidResult("Unable to move down last rule.");
     }
 
-    RuleService.swap(conformanceRules, iRuleIndex, iRuleIndex + 1);
+    return RuleService.moveRule(rules, schema, ruleIndex, RuleService.DOWN);
+  }
+
+  static moveRule(originalRules, schema, ruleIndex, direction) {
+    const conformanceRules = $.extend(true, [], originalRules);
+
+    RuleService.swap(conformanceRules, ruleIndex, ruleIndex + direction);
 
     const newRules = conformanceRules
       .map((currElement, index) => {
         return {...currElement, order: index}
       });
+    const schemas = [schema];
+    try {
+      SchemaManager.updateTransitiveSchemas(schemas, newRules);
+    } catch (e) {
+      return new InvalidResult(`Unable to move conformance rule as it depends on column "${e.fieldPath}"`)
+    }
 
     return new ValidResult(newRules);
   }

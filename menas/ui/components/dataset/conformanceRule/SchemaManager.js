@@ -19,7 +19,7 @@ class SchemaManager {
     rules.map(RuleFactory.createRule).forEach((rule, index) => {
       const schema = $.extend(true, [], schemas[index]);
       rule.apply(schema.fields);
-      schemas[index + 1] = schema;
+      schemas.push(schema);
     })
   }
 
@@ -52,6 +52,20 @@ class RuleFactory {
   }
 }
 
+class UnknownFiledError extends Error {
+
+  constructor(fieldPath) {
+    super(`Unable to find field: ${fieldPath}`);
+    Error.captureStackTrace(this, UnknownFiledError);
+    this._fieldPath = fieldPath;
+  }
+
+  get fieldPath() {
+    return this._fieldPath;
+  }
+
+}
+
 class ConformanceRule {
 
   constructor(rule) {
@@ -82,10 +96,13 @@ class ConformanceRule {
 
   getCol(fields, columnName) {
     const splitPath = columnName.split(".");
-    return splitPath.reduce((acc, path, index) => {
-      const element = acc.find(field => field.name === path);
-      const children = element.children;
-      return (children && children.length > 0 && splitPath.length > index + 1) ? children : element;
+    return splitPath.reduce((fields, path, index) => {
+      const field = fields.find(field => field.name === path);
+      if (field === undefined) {
+        throw new UnknownFiledError(columnName)
+      }
+      const children = field.children;
+      return (children && children.length > 0 && splitPath.length > index + 1) ? children : field;
     }, fields);
   }
 
@@ -151,6 +168,9 @@ class DropConformanceRule extends ConformanceRule {
     splitPath.reduce((acc, path, index) => {
       const elementIndex = acc.findIndex(field => path === field.name);
       const element = acc[elementIndex];
+      if (element === undefined) {
+        throw new UnknownFiledError(this.rule.outputColumn)
+      }
       const children = element.children;
       if (splitPath.length === index + 1) {
         acc.splice(elementIndex, 1);

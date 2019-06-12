@@ -97,10 +97,10 @@ sap.ui.define([
           this.deleteRule(sBindPath);
           break;
         case "moveUp":
-          this.moveUpRule(sBindPath);
+          this.moveRuleUp(sBindPath);
           break;
         case "moveDown":
-          this.moveDownRule(sBindPath);
+          this.moveRuleDown(sBindPath);
           break;
         default:
           break;
@@ -137,12 +137,12 @@ sap.ui.define([
       });
     },
 
-    moveUpRule: function(sBindPath) {
-      this._moveRule(sBindPath, RuleService.moveUpRule)
+    moveRuleUp: function(sBindPath) {
+      this._moveRule(sBindPath, RuleService.moveRuleUp)
     },
 
-    moveDownRule: function(sBindPath) {
-      this._moveRule(sBindPath, RuleService.moveDownRule)
+    moveRuleDown: function(sBindPath) {
+      this._moveRule(sBindPath, RuleService.moveRuleDown)
     },
 
     _moveRule: function(sBindPath, moveRuleCallback) {
@@ -150,13 +150,10 @@ sap.ui.define([
       const currentDataset = this._model.getProperty("/currentDataset");
 
       new SchemaRestDAO().getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion).then(schema => {
-        const result = moveRuleCallback(currentDataset.conformance, schema.fields, ruleIndex);
+        const result = moveRuleCallback(currentDataset.conformance, schema, ruleIndex);
         if (result.isValid) {
           const newDataset = {...currentDataset, conformance: result.result};
-
-          if (newDataset) {
-            this._datasetService.update(newDataset);
-          }
+          this._datasetService.update(newDataset);
         } else {
           sap.m.MessageToast.show(result.errorMessage);
         }
