@@ -88,16 +88,16 @@ object CmdConfig {
       )
 
     opt[String]("performance-file").optional().action((value, config) =>
-      config.copy(performanceMetricsFile = Some(value))).text("Produce a performance metrics file at the given location (local filesystem)")
+      config.copy(performanceMetricsFile = Option(value))).text("Produce a performance metrics file at the given location (local filesystem)")
 
     opt[String]("debug-set-publish-path").optional().hidden().action((value, config) =>
-      config.copy(publishPathOverride = Some(value))).text("override the path of the published data (used internally for testing)")
+      config.copy(publishPathOverride = Option(value))).text("override the path of the published data (used internally for testing)")
 
     opt[String]("folder-prefix").optional().action((value, config) =>
-      config.copy(folderPrefix = Some(value))).text("Adds a folder prefix before the infoDateColumn")
+      config.copy(folderPrefix = Option(value))).text("Adds a folder prefix before the infoDateColumn")
 
     opt[Boolean]("experimental-mapping-rule").optional().action((value, config) =>
-      config.copy(experimentalMappingRule = Some(value))).text("Use experimental optimized mapping conformance rule")
+      config.copy(experimentalMappingRule = Option(value))).text("Use experimental optimized mapping conformance rule")
 
     help("help").text("prints this usage text")
   }

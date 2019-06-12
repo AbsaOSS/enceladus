@@ -82,7 +82,7 @@ object DynamicConformanceJob {
     val inputData = DataSource.getData(stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
     // perform the conformance
     val result: DataFrame = try {
-      DynamicInterpreter.interpret(conformance, inputData, getExperimentalRuleEnabled(), enableCF)
+      DynamicInterpreter.interpret(conformance, inputData, isExperimentalRuleEnabled(), enableCF)
     }
     catch {
       case e: ValidationException =>
@@ -97,10 +97,16 @@ object DynamicConformanceJob {
     processResult(result, performance, publishPath, stdPath)
   }
 
-  private def getExperimentalRuleEnabled()(implicit cmd: CmdConfig): Boolean = {
+  private def isExperimentalRuleEnabled()(implicit cmd: CmdConfig): Boolean = {
+    val configPath = "conformance.mapping.rule.experimental.implementation"
     val enabled = cmd.experimentalMappingRule match {
       case Some(b) => b
-      case None => conf.getBoolean("conformance.mapping.rule.experimental.implementation")
+      case None =>
+        if (conf.hasPath(configPath)) {
+          conf.getBoolean(configPath)
+        } else {
+          false
+        }
     }
     log.info(s"Experimental mapping rule enabled = $enabled")
     enabled
