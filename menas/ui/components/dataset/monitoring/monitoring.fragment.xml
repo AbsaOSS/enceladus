@@ -99,7 +99,7 @@
             rows="{/monitoringRunData}"
             selectionMode="None"
             alternateRowColors="true"
-            showColumnVisibilityMenu="true"
+            showColumnVisibilityMenu="false"
             visibleRowCountMode="Fixed"
             visibleRowCount="{/numberOfPoints}"
             rowActionCount="1"
