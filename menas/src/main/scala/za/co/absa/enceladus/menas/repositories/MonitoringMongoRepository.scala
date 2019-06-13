@@ -29,14 +29,14 @@ import za.co.absa.enceladus.model.Run
 import scala.concurrent.Future
 
 object MonitoringMongoRepository {
-  val collectionName = "run"
+  val collectionBaseName = "run"
 }
 
 @Repository
 class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends MongoRepository[Run](mongoDb) {
 
-  private[menas] override def collectionName: String = MonitoringMongoRepository.collectionName
+  private[menas] override def collectionBaseName: String = MonitoringMongoRepository.collectionBaseName
 
 
   def getMonitoringDataPoints(datasetName: String, startDate: String, endDate: String): Future[Seq[String]] = {
