@@ -66,15 +66,7 @@ sap.ui.define([
     },
 
     onAddConformanceRulePress: function () {
-      this._model.setProperty("/newRule", {
-        title: "Add",
-        isEdit: false,
-      });
-
-      const rules = this._model.getProperty("/currentDataset/conformance");
-      this._upsertConformanceRuleDialog.open();
-
-      this._setRuleDialogModel(rules)
+      this._addRule()
     },
 
     _setRuleDialogModel: function (rules) {
@@ -101,6 +93,12 @@ sap.ui.define([
           break;
         case "moveDown":
           this.moveRuleDown(sBindPath);
+          break;
+        case "addBefore":
+          this.addRuleBefore(sBindPath);
+          break;
+        case "addAfter":
+          this.addRuleAfter(sBindPath);
           break;
         default:
           break;
@@ -163,6 +161,29 @@ sap.ui.define([
           sap.m.MessageToast.show(result.errorMessage, { width: "20em" });
         }
       });
+    },
+
+    addRuleBefore: function(sBindPath) {
+      const ruleIndex = this._getRuleIndex(sBindPath);
+      this._addRule(ruleIndex);
+    },
+
+    addRuleAfter: function(sBindPath) {
+      const ruleIndex = this._getRuleIndex(sBindPath);
+      this._addRule(ruleIndex + 1);
+    },
+
+    _addRule: function(index) {
+      this._model.setProperty("/newRule", {
+        title: "Add",
+        isEdit: false,
+        order: index
+      });
+
+      const rules = this._model.getProperty("/currentDataset/conformance").slice(0, index);
+      this._upsertConformanceRuleDialog.open();
+
+      this._setRuleDialogModel(rules)
     },
 
     _getRuleIndex: function(sBindPath) {
