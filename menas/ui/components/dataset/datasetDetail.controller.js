@@ -132,8 +132,7 @@ sap.ui.define([
 
               if (result.isValid) {
                 const newDataset = {...currentDataset, conformance: result.result};
-                console.log("del")
-                // this._datasetService.update(newDataset);
+                this._datasetService.update(newDataset);
               } else {
                 sap.m.MessageToast.show(result.errorMessage, {width: "20em"});
               }
