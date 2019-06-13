@@ -40,19 +40,37 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
   implicit protected val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
   implicit protected val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
 
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  protected val upperRule1 = UppercaseConformanceRule(order = 1, inputColumn = "strings.with_new_lines",
+    controlCheckpoint = false, outputColumn = "strings.with_new_lines_upper")
 
-  private val upperRule = UppercaseConformanceRule(order = 3, inputColumn = "MyLiteral", controlCheckpoint = false,
-    outputColumn = "MyUpperLiteral")
+  protected val upperRule2 = UppercaseConformanceRule(order = 2, inputColumn = "strings.all_random",
+    controlCheckpoint = false, outputColumn = "strings.all_random_upper")
 
-  private val nestedStructsDS = Dataset(
+  protected val upperRule3 = UppercaseConformanceRule(order = 3, inputColumn = "strings.whitespaces",
+    controlCheckpoint = false, outputColumn = "strings.whitespaces_upper")
+
+  protected val negationRule1 = NegationConformanceRule(order = 4, inputColumn = "numerics.small_positive",
+    controlCheckpoint = false, outputColumn = "numerics.small_positive_negated")
+
+  protected val negationRule2 = NegationConformanceRule(order = 5, inputColumn = "numerics.small_negative",
+    controlCheckpoint = false, outputColumn = "numerics.small_negative_negated")
+
+  protected val negationRule3 = NegationConformanceRule(order = 6, inputColumn = "numerics.big_positive",
+    controlCheckpoint = false, outputColumn = "numerics.big_positive_negated")
+
+  protected val negationRule4 = NegationConformanceRule(order = 7, inputColumn = "numerics.big_negative",
+    controlCheckpoint = false, outputColumn = "numerics.big_negative_negated")
+
+  protected val nestedStructsDS = Dataset(
     name = "Nested Structs Conformance",
     version = 1,
     hdfsPath = "src/test/testData/_nestedStructs",
     hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
     schemaName = "NestedStructs", schemaVersion = 0,
-    conformance = List(upperRule)
+    conformance = List(upperRule1, upperRule2, upperRule3, negationRule1, negationRule2, negationRule3, negationRule4)
   )
+
+  private val log: Logger = LogManager.getLogger(this.getClass)
 
   private val infoFileContents: String = IOUtils.toString(this.getClass
     .getResourceAsStream("/interpreter/nestedStructs/info.json"), "UTF-8")
