@@ -16,12 +16,16 @@
 package za.co.absa.enceladus.menas.repositories
 
 import org.mongodb.scala.{AggregateObservable, MongoDatabase}
-import org.mongodb.scala.model.Aggregates.{filter, limit}
-import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.model.Aggregates.{filter, group, limit, sort}
+import org.mongodb.scala.model.Accumulators.first
+import org.mongodb.scala.model.Filters.{equal, gte, lte}
+import org.mongodb.scala.model.Sorts.{descending, orderBy}
+import org.mongodb.scala.model.Projections.{slice}
 import org.mongodb.scala.Document
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.model.Run
+
 import scala.concurrent.Future
 
 object MonitoringMongoRepository {
@@ -36,60 +40,81 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
 
   def getMonitoringDataPoints(datasetName: String, startDate: String, endDate: String): Future[Seq[String]] = {
-    // scala mongodb driver does not yet support all mql features, so we use Document() with aggregate pipelines
+    // scala mongodb driver does not yet support all mql features, working with dates in particular,
+    // therefore, we use Document() in corresponding aggregate pipelines
     val observable: AggregateObservable[Document] = collection
-      .aggregate(Seq(
+      .aggregate(List(
         // filter by dataset name
         filter(equal("dataset", datasetName)),
         //add casted dates
         Document("""{$addFields: {
-                   |          startDateTimeCasted: {
-                   |              $dateFromString: {
-                   |                  dateString: "$startDateTime",
-                   |                  onError: "wrongFormat"
-                   |              }
-                   |          },
-                   |          informationDateCasted: {
-                   |              $dateFromString: {
-                   |                  dateString: "$controlMeasure.metadata.informationDate",
-                   |                  onError: "wrongFormat"
-                   |              }
-                   |          }
-                   | }},""".stripMargin),
-        // filter by informationDateCasted in order to limit the number of elements
+                   |  startDateTimeCasted: {
+                   |    $dateFromString: {
+                   |      dateString: "$startDateTime",
+                   |      onError: "wrongFormat"
+                   |    }
+                   |  },
+                   |  informationDateCasted: {
+                   |    $dateFromString: {
+                   |      dateString: "$controlMeasure.metadata.informationDate",
+                   |      onError: "wrongFormat"
+                   |    }
+                   |  }
+                   |}},""".stripMargin),
+        // filter by informationDateCasted
         Document(
-          s"""
-            |{ $$match: {
-            |    informationDateCasted: {$$gte: ISODate("${startDate}T00:00:00.0Z"), $$lte: ISODate("${endDate}T00:00:00.0Z") }
-            |}},""".stripMargin),
+          s"""{ $$match: {
+             |    informationDateCasted: {$$gte: ISODate("${startDate}T00:00:00.0Z"),
+             |      $$lte: ISODate("${endDate}T00:00:00.0Z") }
+             |}},""".stripMargin),
         // bring the raw checkpoint to root for further access
-        Document(""" {$addFields: {
-                   |           raw_checkpoint : {
-                   |              $arrayElemAt: ["$controlMeasure.checkpoints", 0]
-                   |          }
-                   |      }}""".stripMargin),
+        Document("""{$addFields: {
+                   |  raw_checkpoint : {
+                   |    $arrayElemAt: ["$controlMeasure.checkpoints", 0]
+                   |  }
+                   |}}""".stripMargin),
         // add the raw recordcount
-        Document(""" {$addFields: {
-                   |           raw_recordcount_control : {
-                   |              $arrayElemAt : [ {
-                   |                  $filter : {
-                   |                      input : "$raw_checkpoint.controls",
-                   |                      as : "control",
-                   |                      cond : {$eq : [ { $toLower: "$$control.controlName"}, "recordcount"]}
-                   |                  }
-                   |              }, 0 ]
-                   |          }
-                   |      }}""".stripMargin),
+        Document("""{$addFields: {
+                   |  raw_recordcount_control : {
+                   |    $arrayElemAt : [ {
+                   |      $filter : {
+                   |        input : "$raw_checkpoint.controls",
+                   |        as : "control",
+                   |        cond : {$eq : [ { $toLower: "$$control.controlName"}, "recordcount"]}
+                   |      }
+                   |    }, 0 ]
+                   |  }
+                   |}}""".stripMargin),
         // sort intermidiate results before further grouping (needed as we use $first to keep the latest run only)
-        Document(
-          """{$sort: {
-            |    informationDateCasted : -1,
-            |    "controlMeasure.metadata.version" : -1,
-            |    startDateTimeCasted : -1
-            |} }""".stripMargin),
+        sort(orderBy(
+          descending("informationDateCasted"),
+          descending("controlMeasure.metadata.version"),
+          descending("startDateTimeCasted"))),
         // group, so that we have a single object per infoDate and report version, which corresponds to the latest run
         // here we also project the data of interest
-        Document(""" {$group : {
+        group(
+          Document("""{informationDateCasted: "$informationDateCasted",
+            | reportVersion: "$controlMeasure.metadata.version"}""".stripMargin),
+          first("datasetName", "$dataset" ),
+          first("runObjectId", "$_id"),
+          first("startDateTime", "$startDateTimeCasted"),
+          first("datasetVersion", "$datasetVersion"),
+          first("informationDate", "$controlMeasure.metadata.informationDate"),
+          first("informationDateCasted", "$informationDateCasted"),
+          first("reportVersion", "$controlMeasure.metadata.version"),
+          first("runId", "$runId"),
+          first("status", "$runStatus.status"),
+          first("std_records_succeeded", "$controlMeasure.metadata.additionalInfo.std_records_succeeded"),
+          first("std_records_failed", "$controlMeasure.metadata.additionalInfo.std_records_failed"),
+          first("conform_records_succeeded", "$controlMeasure.metadata.additionalInfo.conform_records_succeeded"),
+          first("conform_records_failed", "$controlMeasure.metadata.additionalInfo.conform_records_failed"),
+          first("raw_recordcount", "$raw_recordcount_control.controlValue"),
+          first("controlMeasure", "$controlMeasure"),
+          first("publish_dir_size", "$controlMeasure.metadata.additionalInfo.publish_dir_size"),
+          first("std_dir_size", "$controlMeasure.metadata.additionalInfo.std_dir_size"),
+          first("raw_dir_size", "$controlMeasure.metadata.additionalInfo.raw_dir_size")
+        ),
+        /**Document(""" {$group : {
                    |          "_id": {informationDateCasted: "$informationDateCasted", reportVersion: "$controlMeasure.metadata.version"},
                    |          "datasetName": {$first: "$dataset"},
                    |          "runObjectId" : {$first: "$_id"},
@@ -110,9 +135,12 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |          "std_dir_size" : {$first: "$controlMeasure.metadata.additionalInfo.std_dir_size"},
                    |          "raw_dir_size" : {$first: "$controlMeasure.metadata.additionalInfo.raw_dir_size"}
                    |
-                   |      }}""".stripMargin),
+                   |      }}""".stripMargin), **/
         // sort the final results
-        Document("""{$sort: {informationDateCasted : -1, reportVersion: -1}}""".stripMargin),
+        sort(orderBy(
+          descending("informationDateCasted"),
+          descending("reportVersion")
+        )),
         limit(500)
       ))
     observable.map(doc => doc.toJson).toFuture()
