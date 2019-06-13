@@ -24,9 +24,7 @@ class RuleService {
     const newRules = conformanceRules
       .filter((_, index) => index !== ruleIndex)
       .sort((first, second) => first.order > second.order)
-      .map((currElement, index) => {
-        return {...currElement, order: index}
-      });
+      .map(this.orderByIndex);
 
     const schemas = [schema];
     try {
@@ -37,6 +35,10 @@ class RuleService {
     }
 
     return new ValidResult(newRules);
+  }
+
+  static orderByIndex(currElement, index) {
+    return {...currElement, order: index}
   }
 
   static moveRuleUp(rules, schema, ruleIndex) {
@@ -61,10 +63,7 @@ class RuleService {
     const otherRuleIndex = ruleIndex + direction;
     RuleService.swap(conformanceRules, ruleIndex, otherRuleIndex);
 
-    const newRules = conformanceRules
-      .map((currElement, index) => {
-        return {...currElement, order: index}
-      });
+    const newRules = conformanceRules.map(this.orderByIndex);
 
     const schemas = [schema];
     try {

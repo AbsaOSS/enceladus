@@ -314,7 +314,7 @@ class ConformanceRuleDialog {
       this.selectMappingTable(newRule.mappingTable)
     }
 
-    if (!currentRule.isEdit) {
+    if (!currentRule.isEdit && newRule.order === undefined) {
       newRule.order = this.model.getProperty("/currentDataset").conformance.length;
     }
 
@@ -332,7 +332,11 @@ class ConformanceRuleDialog {
   }
 
   addRule(currentDataset, newRule) {
-    this.updateRule(currentDataset, newRule)
+    const rules = currentDataset.conformance;
+    rules.splice(newRule.order, 0, newRule);
+    currentDataset.conformance = rules.map(RuleService.orderByIndex);
+    sap.ui.getCore().getEventBus().publish("conformance", "updated", currentDataset.conformance);
+    this.datasetService.update(currentDataset);
   }
 
   updateRule(currentDataset, newRule) {
