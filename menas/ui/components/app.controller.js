@@ -60,6 +60,8 @@ sap.ui.define([
         let userInfo = this._model.getProperty("/userInfo");
         if (typeof userInfo.username === 'undefined') {
           this._router.navTo("login");
+        } else {
+          GenericService.getOozieInfo();
         }
       });
       
