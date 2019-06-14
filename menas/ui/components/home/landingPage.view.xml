@@ -13,20 +13,35 @@
         <content>
             <FlexBox height="100px" alignItems="Start" justifyContent="Center" class="sapUiResponsiveMargin">
                 <items>
-                    <GenericTile header="Datasets" class="sapUiResponsiveMargin">
-                        <TileContent>
-                            <NumericContent icon="sap-icon://database" value="{/landingPageInfo/totalNumberDatasets}"></NumericContent>
-                        </TileContent>
+                    <GenericTile header="Datasets" class="sapUiResponsiveMargin" press="masterNavigate">
+                        <customData>
+                            <core:CustomData key="target" value="datasets"></core:CustomData>
+                        </customData>
+                        <tileContent>
+                            <TileContent>
+                                <NumericContent icon="sap-icon://database" value="{/landingPageInfo/totalNumberDatasets}"></NumericContent>
+                            </TileContent>
+                        </tileContent>
                     </GenericTile>
-                    <GenericTile header="Schemas" class="sapUiResponsiveMargin">
-                        <TileContent>
-                            <NumericContent icon="sap-icon://SAP-icons-TNT/constrains" value="{/landingPageInfo/totalNumberSchemas}"></NumericContent>
-                        </TileContent>
+                    <GenericTile header="Schemas" class="sapUiResponsiveMargin" press="masterNavigate">
+                        <customData>
+                            <core:CustomData key="target" value="schemas"></core:CustomData>
+                        </customData>
+                        <tileContent>
+                            <TileContent>
+                                <NumericContent icon="sap-icon://SAP-icons-TNT/constrains" value="{/landingPageInfo/totalNumberSchemas}"></NumericContent>
+                            </TileContent>
+                        </tileContent>
                     </GenericTile>
-                    <GenericTile header="Mapping Tables" class="sapUiResponsiveMargin">
-                        <TileContent>
-                            <NumericContent icon="sap-icon://SAP-icons-TNT/value-mapping" value="{/landingPageInfo/totalNumberMappingTables}"></NumericContent>
-                        </TileContent>
+                    <GenericTile header="Mapping Tables" class="sapUiResponsiveMargin" press="masterNavigate">
+                        <customData>
+                            <core:CustomData key="target" value="mappingTables"></core:CustomData>
+                        </customData>
+                        <tileContent>
+                            <TileContent>
+                                <NumericContent icon="sap-icon://SAP-icons-TNT/value-mapping" value="{/landingPageInfo/totalNumberMappingTables}"></NumericContent>
+                            </TileContent>
+                        </tileContent>
                     </GenericTile>
                 </items>
             </FlexBox>
