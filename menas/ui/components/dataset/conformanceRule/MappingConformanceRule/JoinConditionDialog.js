@@ -61,34 +61,39 @@ class JoinConditionDialog {
   }
 
   onDatasetSchemaFieldSelect(oEv) {
-    this.datasetSchemaFieldSelector.onSchemaFieldSelect(oEv);
+    this.datasetSchemaFieldSelector.onSchemaFieldSelect(oEv, "/datasetField");
   }
 
   preselectDatasetField(datasetField) {
-    this.datasetSchemaFieldSelector.preselectSchemaFieldSelector(datasetField)
+    this.model.setProperty("/datasetField", datasetField);
+    this.datasetSchemaFieldSelector.preselectSchemaFieldSelector(datasetField);
   }
 
   onMappingTableSchemaFieldSelect(oEv) {
-    this.mappingTableSchemaFieldSelector.onSchemaFieldSelect(oEv);
+    this.mappingTableSchemaFieldSelector.onSchemaFieldSelect(oEv, "/mappingTableField");
   }
 
   preselectMappingTableField(mappingTableField) {
-    this.mappingTableSchemaFieldSelector.preselectSchemaFieldSelector(mappingTableField)
+    this.model.setProperty("/mappingTableField", mappingTableField);
+    this.mappingTableSchemaFieldSelector.preselectSchemaFieldSelector(mappingTableField);
   }
 
   setMappingTableSchema(schema) {
-    this.oDialog.setModel(new sap.ui.model.json.JSONModel(schema), "mappingTableSchema")
+    const mappingTableSchemaModel = new sap.ui.model.json.JSONModel(schema);
+    mappingTableSchemaModel.setSizeLimit(5000);
+    this.oDialog.setModel(mappingTableSchemaModel, "mappingTableSchema");
   }
 
   setDatasetSchema(schema) {
-    this.oDialog.setModel(new sap.ui.model.json.JSONModel(schema), "datasetSchema")
+    const datasetSchemaModel = new sap.ui.model.json.JSONModel(schema);
+    datasetSchemaModel.setSizeLimit(5000);
+    this.oDialog.setModel(datasetSchemaModel, "datasetSchema");
   }
 
   onJoinSubmit() {
-    const model = this.oController._model;
     const join = {
-      "datasetField" : model.getProperty("/datasetField"),
-      "mappingTableField" : model.getProperty("/mappingTableField")
+      "datasetField" : this.model.getProperty("/datasetField"),
+      "mappingTableField" : this.model.getProperty("/mappingTableField")
     };
     const joinConditionsPath = "/newRule/newJoinConditions";
     if (model.getProperty(joinConditionsPath) === undefined) {

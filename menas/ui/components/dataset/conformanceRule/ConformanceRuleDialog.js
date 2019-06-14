@@ -26,8 +26,8 @@ class ConformanceRuleDialog {
     this._datasetService = new DatasetService(this.model, eventBus);
     this._mappingTableService = new MappingTableService(this.model, eventBus);
     this._controller = controller;
-    const dialogFactory = new JoinConditionDialogFactory(this.controller, sap.ui.core.Fragment.load);
-    this._addJoinConditionDialog = dialogFactory.getDialog();
+    this._addJoinConditionDialog = new JoinConditionDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
+    this._addConcatColumnDialog = new ConcatenationColumnDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
   }
 
   get controller() {
@@ -54,6 +54,10 @@ class ConformanceRuleDialog {
     return this._addJoinConditionDialog;
   }
 
+  get addConcatColumnDialog() {
+    return this._addConcatColumnDialog;
+  }
+
   get rules() {
     return [
       {
@@ -66,7 +70,7 @@ class ConformanceRuleDialog {
       },
       {
         _t: "DropConformanceRule",
-        schemaFieldSelectorSupportedRule: false
+        schemaFieldSelectorSupportedRule: true
       },
       {
         _t: "LiteralConformanceRule",
@@ -131,8 +135,9 @@ class ConformanceRuleDialog {
     let schemaFieldSelectorSupportedRules =
       this.rules.filter(rule => rule.schemaFieldSelectorSupportedRule).map(rule => rule._t);
     let newRule = this.model.getProperty("/newRule");
-    if (newRule.isEdit && schemaFieldSelectorSupportedRules.includes(newRule._t))
+    if (newRule.isEdit && schemaFieldSelectorSupportedRules.includes(newRule._t)) {
       this.preselectSchemaFieldSelector(newRule._t);
+    }
   }
 
   onClosePress() {
@@ -152,11 +157,10 @@ class ConformanceRuleDialog {
     this.onClosePress();
   }
 
-  onAddInputColumn() {
-    let currentRule = this.model.getProperty("/newRule");
-    let inputColumnSize = currentRule.inputColumns.length;
-    let pathToNewInputColumn = "/newRule/inputColumns/" + inputColumnSize;
-    this.model.setProperty(pathToNewInputColumn, "");
+  onAddConcatColumn() {
+    const datasetSchema = this._dialog.getModel("schema").oData;
+    this.addConcatColumnDialog.setSchema(datasetSchema);
+    this.addConcatColumnDialog.onAddPress();
   }
 
   onAddJoinCondition() {
@@ -188,13 +192,14 @@ class ConformanceRuleDialog {
     let mappingTableId = this.model.getProperty("/newRule/mappingTable");
     let mappingTableVersion = this.model.getProperty("/newRule/mappingTableVersion");
 
-    new MappingTableRestDAO().getByNameAndVersion(mappingTableId, mappingTableVersion).then(mappingTable => {
+    new MappingTableRestDAO().getByNameAndVersionSync(mappingTableId, mappingTableVersion).then(mappingTable => {
       const schemaRestDAO = new SchemaRestDAO();
-      schemaRestDAO.getByNameAndVersion(mappingTable.schemaName, mappingTable.schemaVersion).then(mappingTableSchema => {
+      schemaRestDAO.getByNameAndVersionSync(mappingTable.schemaName, mappingTable.schemaVersion).then(mappingTableSchema => {
         this.addJoinConditionDialog.setMappingTableSchema(mappingTableSchema);
         if (this.model.getProperty("/newRule/_t") === "MappingConformanceRule") {
-          const targetAttributeSelector = sap.ui.getCore().byId("MappingConformanceRule--schemaFieldSelector");
-          targetAttributeSelector.setModel(new sap.ui.model.json.JSONModel(mappingTableSchema), "schema")
+          const model = new sap.ui.model.json.JSONModel(mappingTableSchema);
+          model.setSizeLimit(5000);
+          this._dialog.setModel(model, "mappingTableSchema");
         }
       });
       const datasetSchema = this._dialog.getModel("schema").oData;
@@ -217,7 +222,7 @@ class ConformanceRuleDialog {
     this.showFormFragment(this.model.getProperty("/newRule/_t"));
   }
 
-  onDeleteInputColumn(oEv) {
+  onDeleteConcatColumn(oEv) {
     let sBindPath = oEv.getParameter("listItem").getBindingContext().getPath();
     let toks = sBindPath.split("/");
     let inputColumnIndex = parseInt(toks[toks.length - 1]);
@@ -246,19 +251,39 @@ class ConformanceRuleDialog {
     this.addJoinConditionDialog.onEditPress(index, datasetField, mappingTableField);
   }
 
+  onConcatSelect(oEv) {
+    const item = oEv.getSource();
+    const concatField = item.data("concatField");
+    const index = item.getParent().indexOfItem(item);
+
+    this.addConcatColumnDialog.onEditPress(index, concatField);
+  }
+
   onSchemaFieldSelect(oEv) {
-    if (this.model.getProperty("/newRule/_t") === "MappingConformanceRule") {
-      this._targetAttributeSelector.onSchemaFieldSelect(oEv);
-    } else {
-      this._datasetSchemaFieldSelector.onSchemaFieldSelect(oEv);
+    let ruleType = this._model.getProperty("/newRule/_t");
+
+    switch(ruleType) {
+      case "MappingConformanceRule":
+        this._targetAttributeSelector.onSchemaFieldSelect(oEv, "/newRule/targetAttribute");
+        break;
+      case "DropConformanceRule":
+        this._datasetSchemaFieldSelector.onSchemaFieldSelect(oEv, "/newRule/outputColumn");
+        break;
+      default:
+        this._datasetSchemaFieldSelector.onSchemaFieldSelect(oEv, "/newRule/inputColumn");
     }
   }
 
   preselectSchemaFieldSelector(ruleType) {
-    if (ruleType === "MappingConformanceRule") {
-      this._targetAttributeSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/targetAttribute"))
-    } else {
-      this._datasetSchemaFieldSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/inputColumn"), ruleType)
+    switch(ruleType) {
+      case "MappingConformanceRule":
+        this._targetAttributeSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/targetAttribute"));
+        break;
+      case "DropConformanceRule":
+        this._datasetSchemaFieldSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/outputColumn"), ruleType);
+        break;
+      default:
+        this._datasetSchemaFieldSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/inputColumn"), ruleType);
     }
   }
 
@@ -267,7 +292,7 @@ class ConformanceRuleDialog {
     let newRule = currentRule;
 
     if (currentRule._t === "ConcatenationConformanceRule" && !currentRule.isEdit) {
-      newRule.inputColumns = ["", ""];
+      newRule.inputColumns = [];
     }
 
     if (currentRule._t === "MappingConformanceRule") {
@@ -289,7 +314,7 @@ class ConformanceRuleDialog {
       this.selectMappingTable(newRule.mappingTable)
     }
 
-    if (!currentRule.isEdit) {
+    if (!currentRule.isEdit && newRule.order === undefined) {
       newRule.order = this.model.getProperty("/currentDataset").conformance.length;
     }
 
@@ -307,7 +332,11 @@ class ConformanceRuleDialog {
   }
 
   addRule(currentDataset, newRule) {
-    this.updateRule(currentDataset, newRule)
+    const rules = currentDataset.conformance;
+    rules.splice(newRule.order, 0, newRule);
+    currentDataset.conformance = rules.map(RuleService.orderByIndex);
+    sap.ui.getCore().getEventBus().publish("conformance", "updated", currentDataset.conformance);
+    this.datasetService.update(currentDataset);
   }
 
   updateRule(currentDataset, newRule) {

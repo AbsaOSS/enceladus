@@ -29,11 +29,13 @@ import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.menas.models.{RunSummary, RunWrapper}
+import za.co.absa.enceladus.model
 
 import scala.concurrent.Future
 
 object RunMongoRepository {
-  val collectionName = "run"
+  val collectionBaseName = "run"
+  val collectionName = collectionBaseName + model.CollectionSuffix
 }
 
 @Repository
@@ -42,7 +44,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private[menas] override def collectionName: String = RunMongoRepository.collectionName
+  private[menas] override def collectionBaseName: String = RunMongoRepository.collectionBaseName
 
   private val summaryProjection: Bson = project(fields(
     computed("datasetName", "$dataset"),

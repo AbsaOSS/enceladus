@@ -21,6 +21,7 @@ import scopt.OptionParser
 import za.co.absa.enceladus.menasplugin.MenasCredentials
 
 import scala.util.matching.Regex
+import org.apache.spark.sql.SparkSession
 
 /**
   * This is a class for configuration provided by the command line parameters
@@ -36,13 +37,13 @@ case class CmdConfig(datasetName: String = "",
                      performanceMetricsFile: Option[String] = None,
                      publishPathOverride: Option[String] = None,
                      folderPrefix: Option[String] = None,
-                     experimentalMappingRule: Boolean = false)
+                     experimentalMappingRule: Option[Boolean] = None)
 
 object CmdConfig {
 
     type KeytabLocation = String
   
-  def getCmdLineArguments(args: Array[String]): CmdConfig = {
+  def getCmdLineArguments(args: Array[String])(implicit spark: SparkSession): CmdConfig = {
     val parser = new CmdParser("spark-submit [spark options] ConformanceBundle.jar")
 
     val optionCmd = parser.parse(args, CmdConfig())
@@ -53,7 +54,7 @@ object CmdConfig {
     optionCmd.get
   }
 
-  private class CmdParser(programName: String) extends OptionParser[CmdConfig](programName) {
+  private class CmdParser(programName: String)(implicit spark: SparkSession) extends OptionParser[CmdConfig](programName) {
     head("Dynamic Conformance", "")
 
     opt[String]('D', "dataset-name").required().action((value, config) =>
@@ -88,13 +89,9 @@ object CmdConfig {
       credsFile = Some(path)
       config.copy(menasCredentials = Some(credential))
     }).text("Path to Menas credentials config file.").validate(path =>
-      if (keytabFile.isDefined) {
-        failure("Only one authentication method is allow at a time")
-      } else if (new File(MenasCredentials.replaceHome(path)).exists()) {
-        success
-      } else {
-        failure("Credentials file does not exist. Make sure you are running in client mode")
-      })
+      if (keytabFile.isDefined) failure("Only one authentication method is allow at a time")
+      if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
+      else failure("Credentials file does not exist. Make sure you are running in client mode"))
 
     opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
       keytabFile = Some(file)
@@ -106,16 +103,16 @@ object CmdConfig {
     }).text("Path to keytab file used for authenticating to menas")
 
     opt[String]("performance-file").optional().action((value, config) =>
-      config.copy(performanceMetricsFile = Some(value))).text("Produce a performance metrics file at the given location (local filesystem)")
+      config.copy(performanceMetricsFile = Option(value))).text("Produce a performance metrics file at the given location (local filesystem)")
 
     opt[String]("debug-set-publish-path").optional().hidden().action((value, config) =>
-      config.copy(publishPathOverride = Some(value))).text("override the path of the published data (used internally for testing)")
+      config.copy(publishPathOverride = Option(value))).text("override the path of the published data (used internally for testing)")
 
     opt[String]("folder-prefix").optional().action((value, config) =>
-      config.copy(folderPrefix = Some(value))).text("Adds a folder prefix before the infoDateColumn")
+      config.copy(folderPrefix = Option(value))).text("Adds a folder prefix before the infoDateColumn")
 
-    opt[Unit]("experimental-mapping-rule").optional().action((value, config) =>
-      config.copy(experimentalMappingRule = true)).text("Use experimental optimized mapping conformance rule")
+    opt[Boolean]("experimental-mapping-rule").optional().action((value, config) =>
+      config.copy(experimentalMappingRule = Option(value))).text("Use experimental optimized mapping conformance rule")
 
     help("help").text("prints this usage text")
   }

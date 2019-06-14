@@ -17,7 +17,10 @@
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Page id="masterPage" title="Mapping Tables" showNavButton="true" navButtonPress="onPressMasterBack">
         <content>
-            <List items="{mappingTables>/}" mode="SingleSelectMaster" selectionChange="mappingTableSelected"
+            <List items="{mappingTables>/}"
+                  mode="SingleSelectMaster"
+                  selectionChange="mappingTableSelected"
+                  growing="true"
                   noDataText="No Mapping Tables">
                 <StandardListItem title="{mappingTables>_id}"
                                   description="latest version: {mappingTables>latestVersion}"

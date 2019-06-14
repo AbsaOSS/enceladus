@@ -81,18 +81,25 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   def getAuditTrail(name: String): Future[AuditTrail] = {
     val allParents = getParents(name)
     
-    allParents.map({ parents =>
+    allParents.flatMap({ parents =>
       val msgs = if(parents.size < 2) Seq() else {
         val pairs = parents.sliding(2)
         pairs.map(p => p.head.getAuditMessages(p(1))).toSeq
       }
-      AuditTrail(msgs.reverse :+ parents.head.createdMessage)
+      if(parents.isEmpty) {
+        this.getLatestVersion(name).map({
+          case Some(entity) => AuditTrail(msgs.reverse :+ entity.createdMessage)
+          case None => throw NotFoundException()
+        })
+      } else {
+        Future(AuditTrail(msgs.reverse :+ parents.head.createdMessage))
+      }
     })
   }
 
   def getUsedIn(name: String, version: Option[Int]): Future[UsedIn]
 
-  private[menas] def getMenasRef(item: C): MenasReference = MenasReference(Some(versionedMongoRepository.collectionName), item.name, item.version)
+  private[menas] def getMenasRef(item: C): MenasReference = MenasReference(Some(versionedMongoRepository.collectionBaseName), item.name, item.version)
 
   private[menas] def create(item: C, username: String): Future[Option[C]] = {
     for {
@@ -105,15 +112,23 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   def update(username: String, item: C): Future[Option[C]]
 
-  private[services] def update(username: String, itemName: String, itemVersion: Int)(transform: C => C): Future[Option[C]] = {
+  private[services] def updateFuture(username: String, itemName: String, itemVersion: Int)(transform: C => Future[C]): Future[Option[C]] = {
     for {
       version <- getVersion(itemName, itemVersion)
       transformed <- if (version.isEmpty) Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
-      else Future.successful(transform(version.get))
+      else transform(version.get)
       update <- versionedMongoRepository.update(username, transformed)
     } yield Some(update)
   }
 
+  private[services] def update(username: String, itemName: String, itemVersion: Int)(transform: C => C): Future[Option[C]] = {
+    this.updateFuture(username, itemName, itemVersion){ item: C =>
+      Future {
+        transform(item)
+      }
+    }
+  }
+  
   def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
 
   def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {

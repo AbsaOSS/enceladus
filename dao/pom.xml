@@ -40,19 +40,24 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>enceladus-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
+            <version>${jackson.spark.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-scala_${scala.compat.version}</artifactId>
-            <version>${jackson.version}</version>
+            <version>${jackson.spark.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${jackson.version}</version>
+            <version>${jackson.spark.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>

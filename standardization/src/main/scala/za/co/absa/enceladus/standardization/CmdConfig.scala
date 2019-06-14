@@ -21,14 +21,14 @@ import scopt.OptionParser
 import za.co.absa.enceladus.menasplugin.MenasCredentials
 
 import scala.util.matching.Regex
+import org.apache.spark.sql.SparkSession
 
 /**
- * This is a class for configuration provided by the command line parameters
- *
- * Note: scopt requires all fields to have default values.
- * Even if a field is mandatory it needs a default value.
- */
-
+  * This is a class for configuration provided by the command line parameters
+  *
+  * Note: scopt requires all fields to have default values.
+  * Even if a field is mandatory it needs a default value.
+  */
 case class CmdConfig(datasetName: String = "",
     datasetVersion: Int = 1,
     reportDate: String = "",
@@ -47,7 +47,7 @@ object CmdConfig {
 
   type KeytabLocation = String
 
-  def getCmdLineArguments(args: Array[String]): CmdConfig = {
+  def getCmdLineArguments(args: Array[String])(implicit spark: SparkSession): CmdConfig = {
     val parser = new CmdParser("spark-submit [spark options] StandardizationBundle.jar")
 
     val optionCmd = parser.parse(args, CmdConfig())
@@ -58,7 +58,7 @@ object CmdConfig {
     optionCmd.get
   }
 
-  private class CmdParser(programName: String) extends OptionParser[CmdConfig](programName) {
+  private class CmdParser(programName: String)(implicit spark: SparkSession) extends OptionParser[CmdConfig](programName) {
     head("\nStandardization", "")
     var rawFormat: Option[String] = None
 
@@ -87,13 +87,9 @@ object CmdConfig {
       credsFile = Some(path)
       config.copy(menasCredentials = Some(credential))
     }).text("Path to Menas credentials config file.").validate(path =>
-      if (keytabFile.isDefined) {
-        failure("Only one authentication method is allow at a time")
-      } else if (new File(MenasCredentials.replaceHome(path)).exists()) {
-        success
-      } else {
-        failure("Credentials file does not exist. Make sure you are running in client mode")
-      })
+    if (keytabFile.isDefined) failure("Only one authentication method is allow at a time")
+    if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
+    else failure("Credentials file does not exist. Make sure you are running in client mode"))
 
     opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
       keytabFile = Some(file)

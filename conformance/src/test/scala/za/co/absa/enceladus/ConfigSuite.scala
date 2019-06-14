@@ -24,8 +24,9 @@ import za.co.absa.enceladus.menasplugin.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 
 import scala.util.{Failure, Success, Try}
+import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class ConfigSuite extends FunSuite {
+class ConfigSuite extends FunSuite with SparkTestBase {
 
   private val year = "2018"
   private val month = "12"

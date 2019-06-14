@@ -17,77 +17,102 @@ package za.co.absa.enceladus.utils.fs
 
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.LogManager
-import org.apache.spark.sql.SparkSession
+import java.io.File
+import org.apache.hadoop.conf.Configuration
 
 /**
  * A set of functions to help with the date partitioning and version control
  */
 
-object FileSystemVersionUtils {
+class FileSystemVersionUtils(conf: Configuration) {
 
   private val log = LogManager.getLogger("enceladus.utils.fs")
-
+  private val fs = FileSystem.get(conf)
   /**
-    * Split path URI by separating scheme+server and path part
-    * Example:
-    * hdfs://server:8020/user/data/input -> (hdfs://server:8020, /user/data/input)
-    * /user/data/input -> ("", /user/data/input)
-    */
+   * Split path URI by separating scheme+server and path part
+   * Example:
+   * hdfs://server:8020/user/data/input -> (hdfs://server:8020, /user/data/input)
+   * /user/data/input -> ("", /user/data/input)
+   */
   def splitUriPath(path: Path): (String, String) = {
     val uri = path.toUri
     val scheme = uri.getScheme
     val authority = uri.getAuthority
-    val prefix = if (scheme == null || authority == null) "" else scheme + "://" + authority
+    val prefix = if (scheme == null || authority == null) "" else scheme+"://"+authority
     val rawPath = uri.getRawPath
     (prefix, rawPath)
   }
 
   /**
-    * Ensure that all (excluding the last subdirectory) exists in HDFS
-    * Example:
-    * /datalake/dataset/publish/2017/22/10/1 will create the following path (if needed) /datalake/dataset/publish/2017/22/10
-    *
-    */
-  def createAllButLastSubDir(path: Path)(implicit spark: SparkSession) {
-    val (prefix, rawPath) = splitUriPath (path)
+   * Ensure that all (excluding the last subdirectory) exists in HDFS
+   * Example:
+   * /datalake/dataset/publish/2017/22/10/1 will create the following path (if needed) /datalake/dataset/publish/2017/22/10
+   *
+   */
+  def createAllButLastSubDir(path: Path) {
+    val (prefix, rawPath) = splitUriPath(path)
     log.info(s"prefix = $prefix, rawPath = $rawPath")
 
     val tokens = rawPath.split("/").init.filter(!_.isEmpty)
-    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
 
     var currPath = prefix
     tokens.foreach({ dir =>
-      currPath = currPath + "/" + dir
+      currPath = currPath+"/"+dir
       val p = new Path(currPath)
       log.info(s"Checking path: ${p.toUri.toString}")
-      if(!fs.exists(p)) {
+      if (!fs.exists(p)) {
         fs.mkdirs(p)
       }
     })
   }
-  
+
   /**
    * Check if a given path exists on HDFS
    */
-  def exists(path: String)(implicit spark: SparkSession): Boolean = {
+  def hdfsExists(path: String): Boolean = {
     log.info(s"Cheking if $path exists")
-    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
     fs.exists(new Path(path))
   }
 
   /**
-    * Returns directory size in bytes
-    */
-  def getDirectorySize(path: String)(implicit spark: SparkSession): Long = {
+   * Check if a given files exists on the local file system
+   */
+  def localExists(path: String): Boolean = {
+    new File(path).exists()
+  }
+
+  /**
+   * Function which determines whether the file exists on HDFS or local file system
+   *
+   * This function uses the protocol to determine that.
+   */
+  def exists(path: String): Boolean = {
+    if (path.startsWith("hdfs://")) {
+      this.hdfsExists(path)
+    } else {
+      this.localExists(path)
+    }
+  }
+
+  def hdfsRead(path: String): String = {
+    val in = fs.open(new Path(path))
+    val content = Array.fill(in.available())(0.toByte)
+    in.readFully(content)
+    new String(content, "UTF-8")
+  }
+
+  /**
+   * Returns directory size in bytes
+   */
+  def getDirectorySize(path: String): Long = {
     val hdfsPath = new Path(path)
-    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
     fs.getContentSummary(hdfsPath).getLength
   }
 
   /**
-    * Checks if the path contains non-splittable files
-    */
-  def isNonSplittable(path: String)(implicit spark: SparkSession): Boolean = {
+   * Checks if the path contains non-splittable files
+   */
+  def isNonSplittable(path: String): Boolean = {
     val nonSplittableExtensions = List("gz")
 
     val files = getFilePaths(path)
@@ -95,22 +120,20 @@ object FileSystemVersionUtils {
   }
 
   /**
-    * Returns an array of the absolute paths for files found at the input path
-    * Example:
-    * /path/to/dir -> ("path/to/dir/file1.extension", "path/to/dir/file2.extension")
-    */
-  def getFilePaths(path: String)(implicit spark: SparkSession): Array[String] = {
+   * Returns an array of the absolute paths for files found at the input path
+   * Example:
+   * /path/to/dir -> ("path/to/dir/file1.extension", "path/to/dir/file2.extension")
+   */
+  def getFilePaths(path: String): Array[String] = {
     val hdfsPath = new Path(path)
-    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
     fs.listStatus(hdfsPath).map(_.getPath.toString)
   }
 
   /**
-    * Marks a path to be deleted when HDFS is closed
-    */
-  def deleteOnExit(path: String)(implicit spark: SparkSession): Unit = {
+   * Marks a path to be deleted when HDFS is closed
+   */
+  def deleteOnExit(path: String): Unit = {
     val hdfsPath = new Path(path)
-    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
     fs.deleteOnExit(hdfsPath)
   }
 

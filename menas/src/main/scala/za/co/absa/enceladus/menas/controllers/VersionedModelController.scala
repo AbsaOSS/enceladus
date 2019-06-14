@@ -28,7 +28,7 @@ import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.menas.exceptions.NotFoundException
 import za.co.absa.enceladus.menas.services.VersionedModelService
 import za.co.absa.enceladus.model.menas.audit._
-
+import org.springframework.transaction.annotation.Transactional
 
 abstract class VersionedModelController[C <: VersionedModel with Product with Auditable[C]](versionedModelService: VersionedModelService[C])
   extends BaseController {
@@ -46,7 +46,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @GetMapping(Array("/detail/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
   def getVersionDetail(@PathVariable name: String,
-                       @PathVariable version: Int): CompletableFuture[C] = {
+      @PathVariable version: Int): CompletableFuture[C] = {
     versionedModelService.getVersion(name, version).map {
       case Some(entity) => entity
       case None         => throw notFound()
@@ -61,7 +61,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
       case None         => throw NotFoundException()
     }
   }
-  
+
   @GetMapping(Array("/detail/{name}/audit"))
   @ResponseStatus(HttpStatus.OK)
   def getAuditTrail(@PathVariable name: String): CompletableFuture[AuditTrail] = {
@@ -77,7 +77,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @GetMapping(Array("/usedIn/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
   def usedIn(@PathVariable name: String,
-             @PathVariable version: Int): CompletableFuture[UsedIn] = {
+      @PathVariable version: Int): CompletableFuture[UsedIn] = {
     versionedModelService.getUsedIn(name, Some(version))
   }
 
@@ -95,11 +95,12 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
       case None         => throw notFound()
     }
   }
-
+  
   @PostMapping(Array("/edit"))
+  @Transactional(timeout = 120)
   @ResponseStatus(HttpStatus.CREATED)
   def edit(@AuthenticationPrincipal user: UserDetails,
-           @RequestBody item: C): CompletableFuture[C] = {
+      @RequestBody item: C): CompletableFuture[C] = {
     versionedModelService.update(user.getUsername, item).map {
       case Some(entity) => entity
       case None         => throw notFound()
@@ -109,7 +110,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @GetMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
   def disable(@PathVariable name: String,
-              @PathVariable version: Optional[Int]): CompletableFuture[UpdateResult] = {
+      @PathVariable version: Optional[Int]): CompletableFuture[UpdateResult] = {
     val v = if (version.isPresent) Some(version.get) else None
     versionedModelService.disableVersion(name, v)
   }

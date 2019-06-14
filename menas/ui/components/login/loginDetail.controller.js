@@ -44,6 +44,12 @@ sap.ui.define([
       }, this);
     },
 
+    onAfterRendering: function() {
+      if(!sap.ui.Device.browser.chrome || (sap.ui.Device.browser.chrome && sap.ui.Device.browser.version < 68)) {
+        sap.m.MessageBox.warning("Chrome (version 68 and higher) is currently the only supported browser for menas");
+      }
+    },
+    
     onLoginSubmit: function (oEvent) {
       let oData = {
           username: this.byId(usernameField).getValue(),
@@ -90,6 +96,7 @@ sap.ui.define([
       let fnSuccess = (result, status, xhr) => {
         let csrfToken = xhr.getResponseHeader("X-CSRF-TOKEN");
         localStorage.setItem("csrfToken", csrfToken);
+        GenericService.getOozieInfo();
         Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
           sap.ui.getCore().byId(this._appMasterId).setVisible(true);

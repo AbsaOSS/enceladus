@@ -81,7 +81,7 @@ class WebSecurityConfig {
     override def configure(http: HttpSecurity) {
       http
         .csrf()
-        .ignoringAntMatchers("/api/login", "/api/spnego/login")
+          .ignoringAntMatchers("/api/login")
         .and()
         .exceptionHandling()
 //                .authenticationEntryPoint(spnegoEntryPoint())
@@ -131,7 +131,9 @@ class WebSecurityConfig {
           logger.info("Using Kerberos Menas Authentication")
           beanFactory.getBean(classOf[KerberosMenasAuthentication])
         }
-        case _ => throw new IllegalArgumentException(s"Invalid authentication mechanism - use one of: inmemory, kerberos")
+        case _ => {
+          throw new IllegalArgumentException("Invalid authentication mechanism - use one of: inmemory, kerberos")
+        }
       }
     }
 
