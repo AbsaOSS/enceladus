@@ -15,34 +15,34 @@
 
 package za.co.absa.enceladus.conformance
 
-import java.io.File
+import scala.util.matching.Regex
+
+import org.apache.spark.sql.SparkSession
 
 import scopt.OptionParser
 import za.co.absa.enceladus.menasplugin.MenasCredentials
-
-import scala.util.matching.Regex
-import org.apache.spark.sql.SparkSession
+import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 /**
-  * This is a class for configuration provided by the command line parameters
-  *
-  * Note: scopt requires all fields to have default values.
-  *       Even if a field is mandatory it needs a default value.
-  */
+ * This is a class for configuration provided by the command line parameters
+ *
+ * Note: scopt requires all fields to have default values.
+ *       Even if a field is mandatory it needs a default value.
+ */
 case class CmdConfig(datasetName: String = "",
-                     datasetVersion: Int = 1,
-                     reportDate: String = "",
-                     reportVersion: Int = 1,
-                     menasCredentials: Option[Either[MenasCredentials, CmdConfig.KeytabLocation]] = None,
-                     performanceMetricsFile: Option[String] = None,
-                     publishPathOverride: Option[String] = None,
-                     folderPrefix: Option[String] = None,
-                     experimentalMappingRule: Option[Boolean] = None)
+    datasetVersion: Int = 1,
+    reportDate: String = "",
+    reportVersion: Int = 1,
+    menasCredentials: Option[Either[MenasCredentials, CmdConfig.KeytabLocation]] = None,
+    performanceMetricsFile: Option[String] = None,
+    publishPathOverride: Option[String] = None,
+    folderPrefix: Option[String] = None,
+    experimentalMappingRule: Option[Boolean] = None)
 
 object CmdConfig {
 
-    type KeytabLocation = String
-  
+  type KeytabLocation = String
+
   def getCmdLineArguments(args: Array[String])(implicit spark: SparkSession): CmdConfig = {
     val parser = new CmdParser("spark-submit [spark options] ConformanceBundle.jar")
 
@@ -55,6 +55,8 @@ object CmdConfig {
   }
 
   private class CmdParser(programName: String)(implicit spark: SparkSession) extends OptionParser[CmdConfig](programName) {
+    private val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+    
     head("Dynamic Conformance", "")
 
     opt[String]('D', "dataset-name").required().action((value, config) =>
@@ -72,9 +74,8 @@ object CmdConfig {
       .validate(value =>
         reportDateMatcher.findFirstIn(value) match {
           case None => failure(s"Match error in '$value'. Option --report-date expects a date in 'yyyy-MM-dd' format")
-          case _ => success
-        }
-      )
+          case _    => success
+        })
 
     opt[Int]('r', "report-version").action((value, config) =>
       config.copy(reportVersion = value)).text("Report version")
@@ -90,16 +91,20 @@ object CmdConfig {
       config.copy(menasCredentials = Some(credential))
     }).text("Path to Menas credentials config file.").validate(path =>
       if (keytabFile.isDefined) failure("Only one authentication method is allow at a time")
-      if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
+      else if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
       else failure("Credentials file does not exist. Make sure you are running in client mode"))
 
     opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
       keytabFile = Some(file)
+      if(!fsUtils.localExists(file) && fsUtils.hdfsExists(file)) {
+        config.copy(menasCredentials = Some(Right(fsUtils.hdfsFileToLocalTempFile(file))))
+      } else {
       config.copy(menasCredentials = Some(Right(file)))
-    }).validate({ princ =>
-      if (credsFile.isDefined) {
-        failure("Only one authentication method is allow at a time")
-      } else success
+      }
+    }).validate({ file =>
+      if (credsFile.isDefined) failure("Only one authentication method is allow at a time")
+      else if(!fsUtils.exists(file)) failure("Keytab file doesn't exist")
+      else success
     }).text("Path to keytab file used for authenticating to menas")
 
     opt[String]("performance-file").optional().action((value, config) =>

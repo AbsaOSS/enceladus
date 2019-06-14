@@ -67,7 +67,7 @@ object EnceladusRestDAO extends EnceladusDAO {
     
   def spnegoLogin(keytabLocation: String): Boolean = {
     import scala.collection.JavaConversions._
-
+    
     val principal = getUserFromKeytab(keytabLocation)
     _userName = principal
     

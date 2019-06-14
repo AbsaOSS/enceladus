@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.menas.auth
 
-import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -116,10 +115,10 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
   }
 
   private def kerberosLdapContextSource() = {
-        val contextSource = new KerberosLdapContextSource(adServer)
-        contextSource.setLoginConfig(loginConfig())
-        contextSource.afterPropertiesSet()
-        contextSource
+    val contextSource = new KerberosLdapContextSource(adServer)
+    contextSource.setLoginConfig(loginConfig())
+    contextSource.afterPropertiesSet()
+    contextSource
   }
 
   private def ldapUserDetailsService() = {
@@ -144,7 +143,7 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
       .authenticationProvider(new MenasKerberosAuthenticationProvider(adServer, ldapSearchFilter, ldapSearchBase))
       .authenticationProvider(activeDirectoryLdapAuthenticationProvider())
       .authenticationProvider(kerberosServiceAuthenticationProvider())
-    Logger.getRootLogger.setLevel(Level.DEBUG)
+    Logger.getRootLogger.setLevel(originalLogLevel)
   }
 }
 

@@ -37,7 +37,7 @@ class ConfigSuite extends FunSuite with SparkTestBase {
   private val hdfsPublishPathOverride = "/bigdatahdfs/datalake/publish/system/feed/override"
   private val menasCredentialsFile = "src/test/resources/menas-credentials.conf"
   private val menasCredentials = Some(Left(MenasCredentials.fromFile(menasCredentialsFile)))
-  private val keytabPath = "/a/b/c.keytab"
+  private val keytabPath = "src/test/resources/menas-keytab-dummy.keytab"
   private val menasKeytab = Some(Right(keytabPath))
   private val datasetName = "test-dataset-name"
   private val datasetVersion = 2

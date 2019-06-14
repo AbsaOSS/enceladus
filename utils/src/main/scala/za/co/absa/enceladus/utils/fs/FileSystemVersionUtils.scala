@@ -19,6 +19,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.LogManager
 import java.io.File
 import org.apache.hadoop.conf.Configuration
+import org.apache.commons.io.FileUtils
 
 /**
  * A set of functions to help with the date partitioning and version control
@@ -84,14 +85,27 @@ class FileSystemVersionUtils(conf: Configuration) {
   /**
    * Function which determines whether the file exists on HDFS or local file system
    *
-   * This function uses the protocol to determine that.
    */
   def exists(path: String): Boolean = {
-    if (path.startsWith("hdfs://")) {
-      this.hdfsExists(path)
-    } else {
-      this.localExists(path)
-    }
+    val local = localExists(path) 
+    val hdfs = hdfsExists(path)
+    log.debug(s"File $path Exists: ${local || hdfs} HDFS: $hdfs LOCAL: $local")
+    local || hdfs
+  }
+  
+  /**
+   * Read a file from HDFS and stores in local file system temp file
+   * 
+   * @return The path of the local temp file
+   */
+  def hdfsFileToLocalTempFile(hdfsPath: String): String = {
+    val in = fs.open(new Path(hdfsPath))
+    val content = Array.fill(in.available())(0.toByte)
+    in.readFully(content)
+    val tmpFile = File.createTempFile("enceladusFSUtils", "hdfsFileToLocalTemp")
+    tmpFile.deleteOnExit()
+    FileUtils.writeByteArrayToFile(tmpFile, content)
+    tmpFile.getAbsolutePath
   }
 
   def hdfsRead(path: String): String = {

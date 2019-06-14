@@ -15,19 +15,20 @@
 
 package za.co.absa.enceladus.menas.auth.kerberos
 
+import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.AuthenticationProvider
-import org.springframework.security.core.Authentication
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import javax.security.auth.login.LoginContext
-import javax.security.auth.login.Configuration
-import javax.security.auth.login.AppConfigurationEntry
-import javax.security.auth.Subject
+import org.springframework.security.core.Authentication
 import org.springframework.security.ldap.userdetails.LdapUserDetailsService
-import javax.security.auth.callback.CallbackHandler
+
+import javax.security.auth.Subject
 import javax.security.auth.callback.Callback
+import javax.security.auth.callback.CallbackHandler
 import javax.security.auth.callback.NameCallback
 import javax.security.auth.callback.PasswordCallback
-import org.slf4j.LoggerFactory
+import javax.security.auth.login.AppConfigurationEntry
+import javax.security.auth.login.Configuration
+import javax.security.auth.login.LoginContext
 
 class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String, baseDN: String)
   extends AuthenticationProvider {

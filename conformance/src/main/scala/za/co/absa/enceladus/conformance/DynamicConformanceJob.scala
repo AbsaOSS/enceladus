@@ -33,7 +33,6 @@ import com.typesafe.config.ConfigFactory
 
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
-import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 import za.co.absa.atum.AtumImplicits.StringToPath
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.conformance.datasource.DataSource
@@ -63,12 +62,7 @@ object DynamicConformanceJob {
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-    
-    spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
-    Atum.setAllowUnpersistOldDatasets(true) // Enable control framework performance optimization for pipeline-like jobs
-    MenasPlugin.enableMenas() // Enable Menas
-    import za.co.absa.spline.core.SparkLineageInitializer._ // Enable Spline
-    spark.enableLineageTracking()
+
     implicit val dao: EnceladusDAO = EnceladusRestDAO // use REST DAO
     implicit val enableCF: Boolean = true
 
@@ -91,9 +85,17 @@ object DynamicConformanceJob {
     // die before performing any computation if the output path already exists
     if (fsUtils.hdfsExists(publishPath)) {
       throw new IllegalStateException(
-        s"Path $publishPath already exists. Increment the run version, or delete $publishPath"
-      )
+        s"Path $publishPath already exists. Increment the run version, or delete $publishPath")
     }
+
+    import za.co.absa.spline.core.SparkLineageInitializer._ // Enable Spline
+    spark.enableLineageTracking()
+
+    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
+    spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
+    Atum.setAllowUnpersistOldDatasets(true) // Enable control framework performance optimization for pipeline-like jobs
+    MenasPlugin.enableMenas() // Enable Menas
+
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
     val stdDirSize = fsUtils.getDirectorySize(stdPath)
@@ -139,13 +141,12 @@ object DynamicConformanceJob {
     spark
   }
 
-  private def processResult(result: DataFrame, performance: PerformanceMeasurer, publishPath: String, stdPath: String)
-  						   (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
+  private def processResult(result: DataFrame, performance: PerformanceMeasurer, publishPath: String, stdPath: String)(implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
     val withPartCols = result.withColumn(infoDateColumn, lit(new java.sql.Date(format.parse(cmd.reportDate).getTime)))
       .withColumn(infoVersionColumn, lit(cmd.reportVersion))
 
     val recordCount = result.lastCheckpointRowCount match {
-      case None => withPartCols.count
+      case None    => withPartCols.count
       case Some(p) => p
     }
 
@@ -175,9 +176,9 @@ object DynamicConformanceJob {
   }
 
   def buildPublishPath(infoDateCol: String,
-                       infoVersionCol: String,
-                       cmd: CmdConfig,
-                       ds: Dataset): String = {
+      infoVersionCol: String,
+      cmd: CmdConfig,
+      ds: Dataset): String = {
     (cmd.publishPathOverride, cmd.folderPrefix) match {
       case (None, None) =>
         s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=${cmd.reportVersion}"

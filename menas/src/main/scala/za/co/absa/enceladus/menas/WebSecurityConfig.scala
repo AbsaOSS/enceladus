@@ -72,8 +72,7 @@ class WebSecurityConfig {
 
   @Configuration
   @Order(1)
-  class ApiWebSecurityConfigurationAdapter @Autowired() (restAuthenticationEntyPoint: RestAuthenticationEntryPoint,
-      authenticationSuccessHandler: AuthSuccessHandler,
+  class ApiWebSecurityConfigurationAdapter @Autowired() (authenticationSuccessHandler: AuthSuccessHandler,
       authenticationFailureHandler: AuthenticationFailureHandler,
       logoutSuccessHandler: LogoutSuccessHandler)
     extends WebSecurityConfigurerAdapter {
@@ -84,8 +83,7 @@ class WebSecurityConfig {
           .ignoringAntMatchers("/api/login")
         .and()
         .exceptionHandling()
-//                .authenticationEntryPoint(spnegoEntryPoint())
-        .authenticationEntryPoint(restAuthenticationEntyPoint)
+                .authenticationEntryPoint(spnegoEntryPoint())
         .and()
         .authorizeRequests()
         .antMatchers("/index.html", "/resources/**", "/generic/**",
@@ -140,16 +138,6 @@ class WebSecurityConfig {
     @Bean
     override def authenticationManagerBean() = {
       super.authenticationManagerBean()
-    }
-  }
-
-  @Component
-  class RestAuthenticationEntryPoint extends AuthenticationEntryPoint {
-    override def commence(request: HttpServletRequest,
-        response: HttpServletResponse,
-        authException: AuthenticationException): Unit = {
-      authException.printStackTrace()
-      response.sendError(HttpServletResponse.SC_UNAUTHORIZED, s"Unauthorized ${authException.getMessage}")
     }
   }
 
