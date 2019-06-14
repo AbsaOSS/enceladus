@@ -146,14 +146,6 @@ object EnceladusRestDAO extends EnceladusDAO {
     objectMapper.readValue(json, classOf[Dataset])
   }
 
-  def getDataset(name: String, version: Int, principal: String, keytabLocation: String): Dataset = {
-    val url = s"$restBase/dataset/detail/${encode(name)}/$version"
-    log.info(url)
-    val json = authorizeGetRequest(url, principal, keytabLocation)
-    log.info(json)
-    objectMapper.readValue(json, classOf[Dataset])
-  }
-
   override def getMappingTable(name: String, version: Int): MappingTable = {
     val url = s"$restBase/mappingTable/detail/${encode(name)}/$version"
     log.info(url)
@@ -178,7 +170,7 @@ object EnceladusRestDAO extends EnceladusDAO {
     java.net.URLEncoder.encode(string, "UTF-8").replace("+", "%20")
   }
 
-  private def authorizeGetRequest(url: String, principal: String = null, keytabLocation: String = null): String = {
+  private def authorizeGetRequest(url: String): String = {
     try {
       log.info(s"URL: $url GET")
       val httpClient = HttpClientBuilder.create().build()
