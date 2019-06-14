@@ -32,7 +32,7 @@ package object dataFormats {
     val name: String
     def getArguments: Seq[String]
   }
-  
+
   case class XMLDataFormat(rowTag: String) extends DataFormat {
     val name: String = "xml"
     override def getArguments: Seq[String] = Seq("--row-tag", rowTag)
