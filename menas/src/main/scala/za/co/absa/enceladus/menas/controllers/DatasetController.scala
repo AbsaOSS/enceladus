@@ -28,7 +28,7 @@ import za.co.absa.enceladus.menas.services.DatasetService
 
 @RestController
 @RequestMapping(path = Array("/api/dataset"))
-class DatasetController @Autowired()(datasetService: DatasetService)
+class DatasetController @Autowired() (datasetService: DatasetService)
   extends VersionedModelController(datasetService) {
 
   import za.co.absa.enceladus.menas.utils.implicits._
@@ -38,15 +38,15 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   @PostMapping(Array("/{datasetName}/rule/create"))
   @ResponseStatus(HttpStatus.OK)
   def addConformanceRule(@AuthenticationPrincipal user: UserDetails,
-                         @PathVariable datasetName: String,
-                         @RequestBody rule: ConformanceRule): CompletableFuture[Dataset] = {
+      @PathVariable datasetName: String,
+      @RequestBody rule: ConformanceRule): CompletableFuture[Dataset] = {
     //TODO: we need to figure out how to deal with versioning properly from UX perspective
     for {
       latestVersion <- datasetService.getLatestVersionValue(datasetName)
       res <- latestVersion match {
         case Some(version) => datasetService.addConformanceRule(user.getUsername, datasetName, version, rule).map {
           case Some(ds) => ds
-          case _ => throw notFound()
+          case _        => throw notFound()
         }
         case _ => throw notFound()
       }

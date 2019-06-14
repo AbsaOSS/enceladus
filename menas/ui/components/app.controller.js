@@ -36,8 +36,9 @@ sap.ui.define([
 
       this.getView().setModel(sap.ui.getCore().getModel());
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
-      GenericService.getUserInfo(this);
 
+      GenericService.getUserInfo();
+      
       this._router.getRoute("root").attachMatched((oEvent) => {
         let userInfo = sap.ui.getCore().getModel().getProperty("/userInfo");
         if (typeof userInfo.username === 'undefined') {

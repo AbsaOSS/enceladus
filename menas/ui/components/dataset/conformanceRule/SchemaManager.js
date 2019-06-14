@@ -15,14 +15,21 @@
 
 class SchemaManager {
 
-  static updateTransitiveSchema(schemaFields, rules) {
-    const deferred = $.Deferred();
-    deferred.resolve(schemaFields);
-    rules.map(RuleFactory.createRule).forEach(rule => {
-      return deferred.then(fields => rule.apply(fields));
-    });
-    return deferred.promise();
-  };
+  static getTransitiveSchemas(schemas, rules) {
+    rules.map(RuleFactory.createRule).forEach((rule, index) => {
+      const schema = $.extend(true, [], schemas[index]);
+      rule.apply(schema.fields);
+      schemas.push(schema);
+    })
+  }
+
+  static validateTransitiveSchemas(schemas, rules) {
+    rules.map(RuleFactory.createRule).forEach((rule, index) => {
+      const schema = $.extend(true, [], schemas[index]);
+      rule.validate(schema.fields);
+      schemas.push(schema);
+    })
+  }
 
 }
 
@@ -50,6 +57,24 @@ class RuleFactory {
       default:
         throw new TypeError("Unknown conformance rule type: " + rule._t)
     }
+  }
+}
+
+class UnknownFiledError extends Error {
+
+  constructor(fieldPath, order) {
+    super(`Unable to find field: ${fieldPath}`);
+    Error.captureStackTrace(this, UnknownFiledError);
+    this._fieldPath = fieldPath;
+    this._order = order;
+  }
+
+  get fieldPath() {
+    return this._fieldPath;
+  }
+
+  get order() {
+    return this._order;
   }
 }
 
@@ -83,10 +108,13 @@ class ConformanceRule {
 
   getCol(fields, columnName) {
     const splitPath = columnName.split(".");
-    return splitPath.reduce((acc, path, index) => {
-      const element = acc.find(field => field.name === path);
-      const children = element.children;
-      return (children && children.length > 0 && splitPath.length > index + 1) ? children : element;
+    return splitPath.reduce((fields, path, index) => {
+      const field = fields.find(field => field.name === path);
+      if (field === undefined) {
+        throw new UnknownFiledError(columnName, this.rule.order)
+      }
+      const children = field.children;
+      return (children && children.length > 0 && splitPath.length > index + 1) ? children : field;
     }, fields);
   }
 
@@ -104,6 +132,10 @@ class ConformanceRule {
       }
       return element.children;
     }, fields);
+  }
+
+  validate(fields) {
+    return this.apply(fields);
   }
 
 }
@@ -139,6 +171,7 @@ class ConcatenationConformanceRule extends ConformanceRule {
   getInputCols(fields) {
     return this.rule.inputColumns.map(inputCol => this.getCol(fields, inputCol));
   }
+
 }
 
 class DropConformanceRule extends ConformanceRule {
@@ -152,6 +185,9 @@ class DropConformanceRule extends ConformanceRule {
     splitPath.reduce((acc, path, index) => {
       const elementIndex = acc.findIndex(field => path === field.name);
       const element = acc[elementIndex];
+      if (element === undefined) {
+        throw new UnknownFiledError(this.rule.outputColumn, this.rule.order)
+      }
       const children = element.children;
       if (splitPath.length === index + 1) {
         acc.splice(elementIndex, 1);
@@ -201,6 +237,13 @@ class MappingConformanceRule extends ConformanceRule {
         this.addNewField(fields, newField);
         return fields;
       });
+  }
+
+  validate(fields) {
+    this.rule.joinConditions.forEach(join => {
+      this.getCol(fields, join.datasetField);
+    });
+    return this.apply(fields)
   }
 
 }

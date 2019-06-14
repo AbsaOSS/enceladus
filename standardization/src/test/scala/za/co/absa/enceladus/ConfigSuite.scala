@@ -21,8 +21,10 @@ import org.scalatest.FunSuite
 import za.co.absa.enceladus.menasplugin.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.{CmdConfig, StandardizationJob}
+import org.apache.spark.sql.SparkSession
+import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class ConfigSuite extends FunSuite {
+class ConfigSuite extends FunSuite with SparkTestBase {
 
   private val year = "2018"
   private val month = "12"
@@ -49,7 +51,7 @@ class ConfigSuite extends FunSuite {
   private val reportVersion = 3
   private val rawFormat = "parquet"
   private val folderPrefix = s"year=$year/month=$month/day=$day"
-
+  
   test("folder-prefix parameter") {
     val cmdConfigNoFolderPrefix = CmdConfig.getCmdLineArguments(
       Array(

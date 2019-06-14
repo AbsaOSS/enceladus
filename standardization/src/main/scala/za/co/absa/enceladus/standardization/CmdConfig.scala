@@ -21,6 +21,7 @@ import scopt.OptionParser
 import za.co.absa.enceladus.menasplugin.MenasCredentials
 
 import scala.util.matching.Regex
+import org.apache.spark.sql.SparkSession
 
 /**
   * This is a class for configuration provided by the command line parameters
@@ -44,7 +45,7 @@ case class CmdConfig(datasetName: String = "",
 
 object CmdConfig {
 
-  def getCmdLineArguments(args: Array[String]): CmdConfig = {
+  def getCmdLineArguments(args: Array[String])(implicit spark: SparkSession): CmdConfig = {
     val parser = new CmdParser("spark-submit [spark options] StandardizationBundle.jar")
 
     val optionCmd = parser.parse(args, CmdConfig())
@@ -55,7 +56,7 @@ object CmdConfig {
     optionCmd.get
   }
 
-  private class CmdParser(programName: String) extends OptionParser[CmdConfig](programName) {
+  private class CmdParser(programName: String)(implicit spark: SparkSession) extends OptionParser[CmdConfig](programName) {
     head("\nStandardization", "")
     var rawFormat: Option[String] = None
 
@@ -82,7 +83,7 @@ object CmdConfig {
       config.copy(menasCredentials = MenasCredentials.fromFile(path)))
       .text("Path to Menas credentials config file. Suitable only for client mode")
       .validate(path =>
-        if (new File(MenasCredentials.replaceHome(path)).exists()) success
+        if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
         else failure("Credentials file does not exist. Make sure you are running in client mode")
       )
 

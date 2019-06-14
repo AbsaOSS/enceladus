@@ -172,6 +172,7 @@ class EntityService {
       sap.m.MessageToast.show(this.messageProvider.entityUpdated());
       return oData;
     }).fail(() => {
+      this.publishUpdateFailedEvent();
       sap.m.MessageBox.error(this.messageProvider.failedToUpdateEntity())
     })
   }
@@ -248,6 +249,10 @@ class DatasetService extends EntityService {
   publishUpdatedEvent(oDataset) {
     this.eventBus.publish("datasets", "updated", oDataset);
   }
+  
+  publishUpdateFailedEvent() {
+    this.eventBus.publish("datasets", "updateFailed");
+  }
 
   getList(oControl) {
     return super.getList(oControl, "datasets")
@@ -305,6 +310,10 @@ class SchemaService extends DependentEntityService {
   publishUpdatedEvent(oSchema) {
     this.eventBus.publish("schemas", "updated", oSchema);
   }
+  
+  publishUpdateFailedEvent() {
+    this.eventBus.publish("schemas", "updateFailed");
+  }
 
   getList(oControl) {
     return super.getList(oControl, "schemas")
@@ -359,6 +368,10 @@ class MappingTableService extends DependentEntityService {
 
   publishUpdatedEvent(oMappingTable) {
     this.eventBus.publish("mappingTables", "updated", oMappingTable);
+  }
+  
+  publishUpdateFailedEvent() {
+    this.eventBus.publish("mappingTables", "updateFailed");
   }
 
   getList(oControl) {

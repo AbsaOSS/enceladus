@@ -22,8 +22,37 @@ var model = new sap.ui.model.json.JSONModel({
   currentMappingTable: {},
   newMappingTable: {},
   newSchema: {},
-  menasVersion: "${project.version}"
+  menasVersion: "${project.version}",
+  appInfo: {
+    oozie: {}
+  },
+  newScheduleDefault: {
+    scheduleTiming: {},
+    runtimeParams: {
+      stdNumExecutors: 2,
+      stdExecutorMemory: 2,
+      confNumExecutors: 2,
+      confExecutorMemory: 2,
+      driverCores: 1,
+      driverMemory: 2
+    },
+    rawFormat: {}
+  },
+  supportedDataFormats: [{
+    key: "xml",
+    name: "XML"
+  }, {
+    key: "csv",
+    name: "CSV"
+  }, {
+    key: "parquet",
+    name: "Parquet"
+  }, {
+    key: "fixed-width",
+    name: "Fixed Width"
+  }, ]
 })
+
 model.setSizeLimit(5000)
 
 sap.ui.getCore().setModel(model)

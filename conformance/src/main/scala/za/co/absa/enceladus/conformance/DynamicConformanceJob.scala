@@ -50,8 +50,10 @@ object DynamicConformanceJob {
   private val conf: Config = ConfigFactory.load()
 
   def main(args: Array[String]) {
+    implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-    implicit val spark: SparkSession = obtainSparkSession(cmd) // initialize spark
+    implicit val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+    
     spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
     Atum.setAllowUnpersistOldDatasets(true) // Enable control framework performance optimization for pipeline-like jobs
     MenasPlugin.enableMenas() // Enable Menas
@@ -69,20 +71,20 @@ object DynamicConformanceJob {
     val publishPath: String = buildPublishPath(infoDateColumn, infoVersionColumn, cmd, conformance)
     log.info(s"stdpath = $stdPath, publishPath = $publishPath")
     // die before performing any computation if the output path already exists
-    if (FileSystemVersionUtils.exists(publishPath)) {
+    if (fsUtils.hdfsExists(publishPath)) {
       throw new IllegalStateException(
         s"Path $publishPath already exists. Increment the run version, or delete $publishPath"
       )
     }
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
-    val stdDirSize = FileSystemVersionUtils.getDirectorySize(stdPath)
+    val stdDirSize = fsUtils.getDirectorySize(stdPath)
     performance.startMeasurement(stdDirSize)
     // load data for input and mapping tables
     val inputData = DataSource.getData(stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
     // perform the conformance
     val result: DataFrame = try {
-      DynamicInterpreter.interpret(conformance, inputData, cmd.experimentalMappingRule, enableCF)
+      DynamicInterpreter.interpret(conformance, inputData, isExperimentalRuleEnabled(), enableCF)
     }
     catch {
       case e: ValidationException =>
@@ -97,16 +99,31 @@ object DynamicConformanceJob {
     processResult(result, performance, publishPath, stdPath)
   }
 
-  private def obtainSparkSession(cmd: CmdConfig): SparkSession = {
+  private def isExperimentalRuleEnabled()(implicit cmd: CmdConfig): Boolean = {
+    val configPath = "conformance.mapping.rule.experimental.implementation"
+    val enabled = cmd.experimentalMappingRule match {
+      case Some(b) => b
+      case None =>
+        if (conf.hasPath(configPath)) {
+          conf.getBoolean(configPath)
+        } else {
+          false
+        }
+    }
+    log.info(s"Experimental mapping rule enabled = $enabled")
+    enabled
+  }
+
+  private def obtainSparkSession(): SparkSession = {
     val spark: SparkSession = SparkSession.builder()
-      .appName(s"Dynamic Conformance ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} ${cmd.reportVersion}")
+      .appName("Dynamic Conformance")
       .getOrCreate()
     TimeZoneNormalizer.normalizeAll(Seq(spark))
     spark
   }
 
   private def processResult(result: DataFrame, performance: PerformanceMeasurer, publishPath: String, stdPath: String)
-                           (implicit spark: SparkSession, cmd: CmdConfig): Unit = {
+                           (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
     val withPartCols = result.withColumn(infoDateColumn, lit(new java.sql.Date(format.parse(cmd.reportDate).getTime)))
       .withColumn(infoVersionColumn, lit(cmd.reportVersion))
 
@@ -121,11 +138,11 @@ object DynamicConformanceJob {
       throw new IllegalStateException(errMsg)
     }
     // ensure the whole path but version exists
-    FileSystemVersionUtils.createAllButLastSubDir(publishPath)
+    fsUtils.createAllButLastSubDir(publishPath)
 
     withPartCols.write.parquet(publishPath)
 
-    val publishDirSize = FileSystemVersionUtils.getDirectorySize(publishPath)
+    val publishDirSize = fsUtils.getDirectorySize(publishPath)
     performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "conform",
       stdPath, publishPath, LoggedInUserInfo.getUserName)

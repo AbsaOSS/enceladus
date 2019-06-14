@@ -32,7 +32,7 @@ var GenericService = new function () {
       async: false
     })
   };
-  
+
   this.getLandingPageInfo = function() {
     RestClient.get("api/landing/info").then((oData) => {
       model.setProperty("/landingPageInfo", oData);
@@ -40,6 +40,12 @@ var GenericService = new function () {
       sap.m.MessageBox.error("Failed to load landing page information");
     })
   };
+
+  this.getOozieInfo = function() {
+    Functions.ajax("api/oozie/isEnabled", "GET", {}, oData => {
+      model.setProperty("/appInfo/oozie/isEnabled", oData);
+    });    
+  }
 
   this.clearSession = function (sLogoutMessage) {
     model.setProperty("/userInfo", {});

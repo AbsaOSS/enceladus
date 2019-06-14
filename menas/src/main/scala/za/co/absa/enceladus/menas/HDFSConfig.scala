@@ -19,13 +19,14 @@ import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.security.{SecurityUtil, UserGroupInformation}
 import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod
+import org.springframework.beans.factory.annotation.Autowired
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}
 
 @Configuration
-class HDFSConfig @Autowired()(spark: SparkSession) {
+class HDFSConfig @Autowired() (spark: SparkSession) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   @Value("${za.co.absa.enceladus.menas.hadoop.auth.method}")
@@ -52,6 +53,7 @@ class HDFSConfig @Autowired()(spark: SparkSession) {
     val conf = spark.sparkContext.hadoopConfiguration
     conf.addResource(new Path(hadoopConfDir, "core-site.xml"))
     conf.addResource(new Path(hadoopConfDir, "hdfs-site.xml"))
+    conf.addResource(new Path(hadoopConfDir, "yarn-site.xml"))
     conf
   }
 
@@ -78,7 +80,6 @@ class HDFSConfig @Autowired()(spark: SparkSession) {
     System.setProperty("java.security.krb5.kdc", krb5kdc)
 
     SecurityUtil.setAuthenticationMethod(AuthenticationMethod.KERBEROS, conf)
-    UserGroupInformation.reset()
     UserGroupInformation.setConfiguration(conf)
     UserGroupInformation.loginUserFromKeytab(krb5username, krb5keytab)
     conf
@@ -97,3 +98,4 @@ class HDFSConfig @Autowired()(spark: SparkSession) {
     conf
   }
 }
+
