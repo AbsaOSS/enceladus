@@ -14,10 +14,13 @@
  */
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
-  "sap/ui/core/Fragment"
-], function (Controller, Fragment) {
+  "sap/ui/core/Fragment",
+  "components/types/NonEmptyArrType",
+  "components/validator/Validator",
+  "sap/m/MessageToast"
+], function (Controller, Fragment, NonEmptyArrType, Validator, MessageToast) {
   "use strict";
-
+  
   return Controller.extend("components.dataset.datasetDetail", {
 
     /**
@@ -48,23 +51,63 @@ sap.ui.define([
       });
 
       this._upsertConformanceRuleDialog = this.byId("upsertConformanceRuleDialog");
-
+      this._editScheduleDialog = sap.ui.xmlfragment("components.dataset.schedule.editSchedule", this);
+      sap.ui.getCore().getMessageManager().registerObject(this._editScheduleDialog, true);
+      
       new DatasetDialogFactory(this, Fragment.load).getEdit();
 
       const eventBus = sap.ui.getCore().getEventBus();
       eventBus.subscribe("datasets", "updated", this.onEntityUpdated, this);
+      eventBus.subscribe("datasets", "updateFailed", this.onEntityUpdateFailed, this);
 
+      
       this._datasetService = new DatasetService(this._model, eventBus);
       this._mappingTableService = new MappingTableService(this._model, eventBus);
       this._schemaService = new SchemaService(this._model, eventBus)
       this._schemaTable = new SchemaTable(this)
+      
+      this._validator = new Validator();
+      
+      this.byId("datasetIconTabBar").attachSelect(oEv => {
+        if(oEv.getParameter("selectedKey") === "schedule") {
+          OozieService.getCoordinatorStatus();
+        }
+      });
+      
+      // Cron time picker
+      let cronTemplate = {
+        "minute" : this._generateCronTemplateRange(0, 60),
+        "hour": this._generateCronTemplateRange(0, 24),
+        "dayOfMonth": this._generateCronTemplateRange(1, 32),
+        "month": this._generateCronTemplateRange(1, 13),
+        "dayOfWeek": this._generateCronTemplateRange(0, 7)
+      }
+      
+      this._model.setProperty("/cronFormTemplate", cronTemplate);
+    },
+    
+    _generateCronTemplateRange: function(iStart, iEnd) {
+      return ["*", ...(_.range(iStart, iEnd, 1))].map(n => {
+        return {
+        "key": n.toString(),
+        "name": n.toString()
+        }
+      });
     },
 
     onEntityUpdated: function (sTopic, sEvent, oData) {
       this._model.setProperty("/currentDataset", oData);
+      OozieService.getCoordinatorStatus();
+      this._editScheduleDialog.setBusy(false);
+      this._editScheduleDialog.close();
       this.load();
     },
 
+    onEntityUpdateFailed: function() {
+      this._editScheduleDialog.setBusy(false);
+      this._editScheduleDialog.close();
+    },
+    
     onAddConformanceRulePress: function () {
       this._addRule()
     },
@@ -271,20 +314,21 @@ sap.ui.define([
       this.byId("datasetIconTabBar").setSelectedKey("info");
     },
 
-    load: function () {
+    load: function() {
       let currentDataset = this._model.getProperty("/currentDataset");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentDataset), "dataset");
+      if(currentDataset) {
+      	this._transitiveSchemas = [];
+      	const transitiveSchemas = this._transitiveSchemas;
+      	this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema").then((schema) => {
+        	this._schemaTable.model = schema;
+        	transitiveSchemas.push(schema);
+        	SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
+      	});
 
-      this._transitiveSchemas = [];
-      const transitiveSchemas = this._transitiveSchemas;
-      this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema").then((schema) => {
-        this._schemaTable.model = schema;
-        transitiveSchemas.push(schema);
-        SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
-      });
-
-      const auditTable = this.byId("auditTrailTable");
-      this._datasetService.getAuditTrail(currentDataset.name, auditTable);
+      	const auditTable = this.byId("auditTrailTable");
+      	this._datasetService.getAuditTrail(currentDataset.name, auditTable);
+      }
     },
 
     conformanceRuleFactory: function (sId, oContext) {
@@ -316,6 +360,55 @@ sap.ui.define([
 
       return sap.ui.xmlfragment(sId, sFragmentName, this);
     },
+    
+    onScheduleEditPress: function(oEv) {
+      this._editScheduleDialog.open();
+      this._validator.clearAll(this._editScheduleDialog);
+
+      const oCurrentDataset = this._model.getProperty("/currentDataset");
+      
+      const oAuditModel = this.byId("auditTrailTable").getModel("auditTrail");
+      const aAuditEntries = oAuditModel.getProperty("/entries").map(e => {
+        return {
+          menasRef: e.menasRef
+        };
+      })
+      aAuditEntries.unshift({
+        menasRef: {
+          name: oCurrentDataset.name,
+          description: "Version created by this update",
+          version: oCurrentDataset.version + 1
+        }
+      });
+      
+      this._editScheduleDialog.setModel(new sap.ui.model.json.JSONModel({entries: aAuditEntries}), "versions");
+      
+      const currSchedule = this._model.getProperty("/currentDataset/schedule");
+      if(currSchedule) {
+        this._model.setProperty("/newSchedule", jQuery.extend(true, {}, currSchedule));
+      } else {
+        this._model.setProperty("/newSchedule", jQuery.extend(true, {}, this._model.getProperty("/newScheduleDefault")));
+      }
+    },
+    
+    onScheduleSave: function() {
+      const newSchedule = this._model.getProperty("/newSchedule")
+      if(!this._validator.validate(this._editScheduleDialog)) {
+        MessageToast.show("Please correct highlighted errors");
+      } else {
+        const oSchedule = this._model.getProperty("/newSchedule");
+        let oDataset = this._model.getProperty("/currentDataset");
+        oDataset.schedule = oSchedule;
+        
+        this._datasetService.update(oDataset);
+        
+        this._editScheduleDialog.setBusy(true).setBusyIndicatorDelay(0);
+      }
+    },
+    
+    closeScheduleDialog: function() {
+      this._editScheduleDialog.close();
+    }
 
   });
 });

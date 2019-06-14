@@ -31,6 +31,12 @@ var GenericService = new function () {
       async: false
     })
   };
+  
+  this.getOozieInfo = function() {
+    Functions.ajax("api/oozie/isEnabled", "GET", {}, oData => {
+      model.setProperty("/appInfo/oozie/isEnabled", oData);
+    });    
+  }
 
   this.clearSession = function (sLogoutMessage) {
     model.setProperty("/userInfo", {});

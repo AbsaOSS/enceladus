@@ -12,16 +12,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package za.co.absa.enceladus.menas.services
 
-import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
-import za.co.absa.enceladus.menas.repositories.OozieRepository
+jQuery.sap.require("sap.m.MessageBox");
 
-class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
+var OozieService = new function () {
 
-  override val modelRepository = mock[DatasetMongoRepository]
-  val oozieRepository = mock[OozieRepository]
-  override val service = new DatasetService(modelRepository, oozieRepository)
+  const model = sap.ui.getCore().getModel();
+  const eventBus = sap.ui.getCore().getEventBus();
 
-}
+  this.getCoordinatorStatus = function () {
+    const coordinatorId = model.getProperty("/currentDataset/schedule/activeInstance/coordinatorId")
+    if(coordinatorId) {
+      Functions.ajax(`api/oozie/coordinatorStatus/${coordinatorId}`, "GET", {}, function (oData) {
+        model.setProperty("/currentDataset/schedule/activeInstance/status", oData)
+      }, function () {
+      })      
+    }
+  };
+
+}();

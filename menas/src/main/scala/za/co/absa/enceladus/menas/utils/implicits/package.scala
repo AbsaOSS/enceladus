@@ -33,6 +33,9 @@ import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.user._
 import za.co.absa.enceladus.model.menas._
+import za.co.absa.enceladus.model.menas.scheduler._
+import za.co.absa.enceladus.model.menas.scheduler.dataFormats._
+import za.co.absa.enceladus.model.menas.scheduler.oozie._
 import za.co.absa.enceladus.menas.models.RunSummary
 
 package object implicits {
@@ -45,6 +48,7 @@ package object implicits {
     classOf[ConformanceRule],
     classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
     classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference], classOf[RunSummary],
+    classOf[RuntimeConfig], classOf[OozieSchedule], classOf[OozieScheduleInstance], classOf[ScheduleTiming], classOf[DataFormat],
     classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference]),
     CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
 
