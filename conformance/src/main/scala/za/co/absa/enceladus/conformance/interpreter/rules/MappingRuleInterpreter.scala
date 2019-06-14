@@ -30,7 +30,7 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import org.apache.spark.sql.api.java.UDF1
 import za.co.absa.enceladus.utils.error._
-import za.co.absa.enceladus.model.{Dataset => ConfDataset}
+import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -58,24 +58,16 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     val mapTable = DataSource.getData(mappingTableDef.hdfsPath, progArgs.reportDate, mapPartitioning)
 
     // join & perform projection on the target attribute
-    val joinContidionStr = MappingRuleInterpreter.getJoinCondition(rule).toString
+    val joinConditionStr = MappingRuleInterpreter.getJoinCondition(rule).toString
     log.info("Mapping table: \n" + mapTable.schema.treeString)
     log.info("Rule: " + this.toString)
-    log.info("Join Condition: " + joinContidionStr)
+    log.info("Join Condition: " + joinConditionStr)
 
     // validate the default value against the mapping table schema
-    val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
-    if (defaultMappingValueMap.contains(rule.targetAttribute)) {
-      val mappingTableSchema = dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion)
-      if (mappingTableSchema != null) {
-        MappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, mappingTableSchema, rule.targetAttribute, defaultMappingValueMap(rule.targetAttribute))
-      } else {
-        log.warn("Mapping table schema loading failed")
-      }
-    }
+    val defaultValueOpt = getDefaultValue(mappingTableDef)
 
     // validate join fields existence
-    MappingRuleInterpreter.validateMappingFieldsExist(s"the dataset, join condition = $joinContidionStr", df.schema, mapTable.schema, rule)
+    MappingRuleInterpreter.validateMappingFieldsExist(s"the dataset, join condition = $joinConditionStr", df.schema, mapTable.schema, rule)
 
     var errorsDf = df
 
@@ -96,12 +88,13 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
         when((col(s"`${rule.outputColumn}`") isNull) and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).otherwise(col(ErrorMessage.errorColumnName)))
 
       // see if we need to apply default value
-      val resDf = if (defaultMappingValueMap.contains(rule.targetAttribute)) {
-        ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, when(col(s"`${rule.outputColumn}`") isNotNull, col(s"`${rule.outputColumn}`")).
-          otherwise(expr(defaultMappingValueMap(rule.targetAttribute))))
-      } else ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, col(s"`${rule.outputColumn}`"))
-
-      resDf
+      defaultValueOpt match {
+        case Some(defaultValue) =>
+          ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, when(col(s"`${rule.outputColumn}`") isNotNull, col(s"`${rule.outputColumn}`"))
+            .otherwise(expr(defaultValue)))
+        case None =>
+          ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, col(s"`${rule.outputColumn}`"))
+      }
     }
 
     val errNested = errorsDf.groupBy(idField).agg(collect_list(col(ErrorMessage.errorColumnName)) as ErrorMessage.errorColumnName)
@@ -124,6 +117,31 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
       .join(withErr.as("err"), col(s"conf.$idField") === col(s"err.$idField"), "left_outer").select($"conf.*", col(s"err.${ErrorMessage.errorColumnName}")).drop(idField)
 
     res2
+  }
+
+  private def getDefaultValue(mappingTableDef: MappingTable)
+                             (implicit spark: SparkSession, dao: EnceladusDAO): Option[String] = {
+    val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
+
+    val attributeDefaultValueOpt = defaultMappingValueMap.get(rule.targetAttribute)
+    val genericDefaultValueOpt = defaultMappingValueMap.get("*")
+
+    val defaultValueOpt = attributeDefaultValueOpt match {
+      case Some(_) => attributeDefaultValueOpt
+      case None => genericDefaultValueOpt
+    }
+
+    if (defaultValueOpt.isDefined) {
+      val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
+      mappingTableSchemaOpt match {
+        case Some(schema) =>
+          MappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
+            rule.targetAttribute, defaultMappingValueMap(rule.targetAttribute))
+        case None =>
+          log.warn("Mapping table schema loading failed")
+      }
+    }
+    defaultValueOpt
   }
 
   private def inclErrorNullArr(mappings: Seq[Mapping], schema: StructType) = {

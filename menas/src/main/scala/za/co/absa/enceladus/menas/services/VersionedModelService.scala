@@ -99,7 +99,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   def getUsedIn(name: String, version: Option[Int]): Future[UsedIn]
 
-  private[menas] def getMenasRef(item: C): MenasReference = MenasReference(Some(versionedMongoRepository.collectionName), item.name, item.version)
+  private[menas] def getMenasRef(item: C): MenasReference = MenasReference(Some(versionedMongoRepository.collectionBaseName), item.name, item.version)
 
   private[menas] def create(item: C, username: String): Future[Option[C]] = {
     for {

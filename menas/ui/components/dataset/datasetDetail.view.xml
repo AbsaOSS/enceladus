@@ -13,8 +13,10 @@
   ~ limitations under the License.
   -->
 
-<core:View id="datasetDetailView" xmlns:core="sap.ui.core" xmlns="sap.m" xmlns:form="sap.ui.layout.form" xmlns:table="sap.ui.table" controllerName="components.dataset.datasetDetail"
-    xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+<core:View id="datasetDetailView" xmlns:core="sap.ui.core" xmlns="sap.m"
+           xmlns:form="sap.ui.layout.form" xmlns:table="sap.ui.table"
+           controllerName="components.dataset.datasetDetail"
+           xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Page title="Datasets" enableScrolling="true">
         <customHeader>
             <Bar>
@@ -35,8 +37,14 @@
                     <IconTabFilter id="Schema" icon="sap-icon://tree" key="schemaFields" text="Schema">
                         <core:Fragment type="XML" fragmentName="components.schemaTable" />
                     </IconTabFilter>
-                    <IconTabFilter id="ConformanceRules" icon="sap-icon://list" key="conformanceRules" text="Conformance Rules">
-                        <List headerText="Conformance Rules" items="{path: '/currentDataset/conformance', factory: '.conformanceRuleFactory'}" />
+                    <IconTabFilter id="ConformanceRules" icon="sap-icon://list" key="conformanceRules"
+                                   text="Conformance Rules">
+                        <List id="ConformanceRulesList"
+                              headerText="Conformance Rules"
+                              items="{
+                                        path: '/currentDataset/conformance',
+                                        factory: '.conformanceRuleFactory'
+                                      }"/>
                     </IconTabFilter>
                     <IconTabFilter id="Runs" icon="sap-icon://activities" key="runs" text="Runs">
                         <core:Fragment type="XML" fragmentName="components.dataset.run.runs" />

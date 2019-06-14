@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
   "sap/ui/core/Fragment",
@@ -25,13 +24,14 @@ sap.ui.define([
   return Controller.extend("components.dataset.datasetDetail", {
 
     /**
-     * Called when a controller is instantiated and its View controls (if available) are already created. Can be used to
-     * modify the View before it is displayed, to bind event handlers and do other one-time initialization.
-     * 
+     * Called when a controller is instantiated and its View controls (if
+     * available) are already created. Can be used to modify the View before it
+     * is displayed, to bind event handlers and do other one-time
+     * initialization.
+     *
      * @memberOf components.dataset.datasetDetail
      */
     onInit: function () {
-      
       this._model = sap.ui.getCore().getModel();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
       this._router.getRoute("datasets").attachMatched(function (oEvent) {
@@ -44,7 +44,7 @@ sap.ui.define([
 
       this._upsertConformanceRuleDialog = Fragment.load({
         id: view.getId(),
-        name:"components.dataset.conformanceRule.upsert",
+        name: "components.dataset.conformanceRule.upsert",
         controller: cont
       }).then(function (fragment) {
         view.addDependent(fragment);
@@ -109,59 +109,129 @@ sap.ui.define([
     },
     
     onAddConformanceRulePress: function () {
-      this._model.setProperty("/newRule", {
-        title: "Add",
-        isEdit: false,
-      });
-
-      const rules = this._model.getProperty("/currentDataset/conformance");
-      this._setRuleDialogModel(rules);
-
-      this._upsertConformanceRuleDialog.open();
+      this._addRule()
     },
 
-    _setRuleDialogModel: function(rules) {
-      const currentDataset = this._model.getProperty("/currentDataset");
-      new SchemaRestDAO().getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion)
-        .then(schema => {
-          schema.fields = SchemaManager.updateTransitiveSchema(schema.fields, rules);
-          this._upsertConformanceRuleDialog.setModel(new sap.ui.model.json.JSONModel(schema), "schema");
-        });
+    _setRuleDialogModel: function (rules) {
+      const ruleIndex = rules.length;
+      const schema = this._transitiveSchemas[ruleIndex];
+      const model = new sap.ui.model.json.JSONModel(schema);
+      model.setSizeLimit(5000);
+      this._upsertConformanceRuleDialog.setModel(model, "schema");
     },
 
     onRuleMenuAction: function (oEv) {
       let sAction = oEv.getParameter("item").data("action");
       let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
 
-      if (sAction === "edit") {
-        let old = this._model.getProperty(sBindPath);
-        this._model.setProperty("/newRule", {
-          ...$.extend(true, {}, old),
-          title: "Edit",
-          isEdit: true,
-        });
-
-        const rules = this._model.getProperty("/currentDataset/conformance").slice(0, old.order);
-        this._setRuleDialogModel(rules);
-
-        this._upsertConformanceRuleDialog.open();
-      } else if (sAction === "delete") {
-        sap.m.MessageBox.confirm("Are you sure you want to delete the conformance rule?", {
-          actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
-          onClose: function (oResponse) {
-            if (oResponse === sap.m.MessageBox.Action.YES) {
-              let toks = sBindPath.split("/");
-              let ruleIndex = parseInt(toks[toks.length - 1]);
-              let currentDataset = this._model.getProperty("/currentDataset");
-              let newDataset = RuleService.removeRule(currentDataset, ruleIndex);
-
-              if (newDataset) {
-                this._datasetService.update(newDataset);
-              }
-            }
-          }.bind(this)
-        });
+      switch (sAction) {
+        case "edit":
+          this.editRule(sBindPath);
+          break;
+        case "delete":
+          this.deleteRule(sBindPath);
+          break;
+        case "moveUp":
+          this.moveRuleUp(sBindPath);
+          break;
+        case "moveDown":
+          this.moveRuleDown(sBindPath);
+          break;
+        case "addBefore":
+          this.addRuleBefore(sBindPath);
+          break;
+        case "addAfter":
+          this.addRuleAfter(sBindPath);
+          break;
+        default:
+          break;
       }
+    },
+
+    editRule: function(sBindPath) {
+      let old = this._model.getProperty(sBindPath);
+      this._model.setProperty("/newRule", {
+        ...$.extend(true, {}, old),
+        title: "Edit",
+        isEdit: true,
+      });
+
+      const rules = this._model.getProperty("/currentDataset/conformance").slice(0, old.order);
+      this._setRuleDialogModel(rules);
+      this._upsertConformanceRuleDialog.open();
+    },
+
+    deleteRule: function(sBindPath) {
+      sap.m.MessageBox.confirm("Are you sure you want to delete the conformance rule?", {
+        actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
+        onClose: function (oResponse) {
+          if (oResponse === sap.m.MessageBox.Action.YES) {
+            let ruleIndex = this._getRuleIndex(sBindPath);
+            let currentDataset = this._model.getProperty("/currentDataset");
+            new SchemaRestDAO().getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion).then(schema => {
+              let result = RuleService.removeRule(currentDataset.conformance, schema, ruleIndex);
+
+              if (result.isValid) {
+                const newDataset = {...currentDataset, conformance: result.result};
+                this._datasetService.update(newDataset);
+              } else {
+                sap.m.MessageToast.show(result.errorMessage, {width: "20em"});
+              }
+            });
+          }
+        }.bind(this)
+      });
+    },
+
+    moveRuleUp: function(sBindPath) {
+      this._moveRule(sBindPath, RuleService.moveRuleUp)
+    },
+
+    moveRuleDown: function(sBindPath) {
+      this._moveRule(sBindPath, RuleService.moveRuleDown)
+    },
+
+    _moveRule: function(sBindPath, moveRuleCallback) {
+      const ruleIndex = this._getRuleIndex(sBindPath);
+      const currentDataset = this._model.getProperty("/currentDataset");
+
+      new SchemaRestDAO().getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion).then(schema => {
+        const result = moveRuleCallback(currentDataset.conformance, schema, ruleIndex);
+        if (result.isValid) {
+          const newDataset = {...currentDataset, conformance: result.result};
+          this._datasetService.update(newDataset);
+        } else {
+          sap.m.MessageToast.show(result.errorMessage, { width: "20em" });
+        }
+      });
+    },
+
+    addRuleBefore: function(sBindPath) {
+      const ruleIndex = this._getRuleIndex(sBindPath);
+      this._addRule(ruleIndex);
+    },
+
+    addRuleAfter: function(sBindPath) {
+      const ruleIndex = this._getRuleIndex(sBindPath);
+      this._addRule(ruleIndex + 1);
+    },
+
+    _addRule: function(index) {
+      this._model.setProperty("/newRule", {
+        title: "Add",
+        isEdit: false,
+        order: index
+      });
+
+      const rules = this._model.getProperty("/currentDataset/conformance").slice(0, index);
+      this._upsertConformanceRuleDialog.open();
+
+      this._setRuleDialogModel(rules)
+    },
+
+    _getRuleIndex: function(sBindPath) {
+      let toks = sBindPath.split("/");
+      return parseInt(toks[toks.length - 1]);
     },
 
     auditVersionPress: function (oEv) {
@@ -200,15 +270,6 @@ sap.ui.define([
         version: datasetVersion,
         id: runId
       });
-    },
-
-    fetchSchema: function () {
-      let currentDataset = this._model.getProperty("/currentDataset");
-      if(currentDataset) {
-        this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema").then((schema) => {
-          this._schemaTable.model = schema;
-        });
-      }
     },
 
     fetchRuns: function () {
@@ -256,25 +317,41 @@ sap.ui.define([
     load: function() {
       let currentDataset = this._model.getProperty("/currentDataset");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentDataset), "dataset");
-      this.fetchSchema();
-      const auditTable = this.byId("auditTrailTable");
       if(currentDataset) {
-        this._datasetService.getAuditTrail(currentDataset.name, auditTable);
+      	this._transitiveSchemas = [];
+      	const transitiveSchemas = this._transitiveSchemas;
+      	this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema").then((schema) => {
+        	this._schemaTable.model = schema;
+        	transitiveSchemas.push(schema);
+        	SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
+      	});
+
+      	const auditTable = this.byId("auditTrailTable");
+      	this._datasetService.getAuditTrail(currentDataset.name, auditTable);
       }
     },
 
     conformanceRuleFactory: function (sId, oContext) {
+      const lastIndex = this._model.getProperty("/currentDataset/conformance").length - 1;
+      const currentIndex = oContext.getProperty("order");
+      if (currentIndex === 0) {
+        this._model.setProperty(`/currentDataset/conformance/${currentIndex}/isFirst`, true);
+      }
+      if (currentIndex === lastIndex) {
+        this._model.setProperty(`/currentDataset/conformance/${currentIndex}/isLast`, true);
+      }
+
       let sFragmentName = "components.dataset.conformanceRule." + oContext.getProperty("_t") + ".display";
       if (oContext.getProperty("_t") === "MappingConformanceRule") {
 
         let oAttributeMappings = oContext.getProperty("attributeMappings");
         let aJoinConditions = [];
         for (let key in oAttributeMappings) {
-          let mappingTableName = oContext.getProperty("mappingTable");
-          let datasetName = this._model.getProperty("/currentDataset/name");
           aJoinConditions.push({
-            mappingTableField: mappingTableName + "." + key,
-            datasetField: datasetName + "." + oAttributeMappings[key]
+            mappingTableField: key,
+            datasetField: oAttributeMappings[key],
+            datasetName: this._model.getProperty("/currentDataset/name"),
+            mappingTableName: this._model.getProperty("/currentDataset/name")
           });
         }
 

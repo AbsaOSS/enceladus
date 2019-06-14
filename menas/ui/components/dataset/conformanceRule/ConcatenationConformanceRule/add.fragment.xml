@@ -13,14 +13,21 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core"
+                         xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.commonRuleFields"/>
-    <Button id="addInputColumn" icon="sap-icon://add" press="onAddInputColumn"/>
-    <Label text="Concatenation columns"/>
-    <List mode="Delete" items="{/newRule/inputColumns}" delete="onDeleteInputColumn">
+    <Label text="Add Concatenation Column"/>
+    <Button id="addConcatColumn" icon="sap-icon://add" press=".onAddConcatColumn"/>
+    <Label text="Concatenation Columns"/>
+    <List mode="Delete" items="{/newRule/inputColumns}" delete=".onDeleteConcatColumn">
         <items>
-            <CustomListItem>
-                    <Input type="Text" value="{}"/>
+            <CustomListItem
+                type="Active"
+                press=".onConcatSelect"
+                cust:concatField="{}">
+                <Text
+                    class="sapUiSmallMarginBegin sapUiSmallMarginEnd"
+                    text="{}"/>
             </CustomListItem>
         </items>
     </List>

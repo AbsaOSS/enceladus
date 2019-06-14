@@ -105,7 +105,7 @@ sap.ui.define([
     },
 
     onAfterRendering: function () {
-      component.setBusy(false)
+      component.setBusy(false);
     }
 
   });
