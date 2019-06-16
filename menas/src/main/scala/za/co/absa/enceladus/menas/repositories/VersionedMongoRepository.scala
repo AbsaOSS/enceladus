@@ -38,13 +38,24 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  collection.createIndex(Indexes.compoundIndex(Indexes.text("name"), Indexes.text("description"), 
+      Indexes.text("userCreated"), Indexes.text("userUpdated"))).foreach(res => logger.info(s"Index created for $collectionName $res"))
+  
   private def getParent(oldEntity: C): MenasReference = {
     MenasReference(collection = Some(collectionBaseName), name = oldEntity.name, version = oldEntity.version)
   }
   
-  def getLatestVersions(): Future[Seq[VersionedSummary]] = {
+  def getDistinctNames(): Future[Seq[String]] = {
+    collection.distinct[String]("name").toFuture()
+  }
+
+  def getLatestVersions(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
+    val searchFilter = searchQuery match {
+      case Some(search) => Filters.text(search)
+      case None => Filters.expr(true)
+    }
     val pipeline = Seq(
-      filter(getNotDisabledFilter),
+      filter(Filters.and(searchFilter, getNotDisabledFilter)),
       Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
     )
     collection.aggregate[VersionedSummary](pipeline).toFuture()

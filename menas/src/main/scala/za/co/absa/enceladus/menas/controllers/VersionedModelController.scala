@@ -37,12 +37,19 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  @GetMapping(Array("/list"))
+  @GetMapping(Array("/list", "/list/{searchQuery}"))
   @ResponseStatus(HttpStatus.OK)
-  def getList(): CompletableFuture[Seq[VersionedSummary]] = {
-    versionedModelService.getLatestVersions()
+  def getList(@PathVariable searchQuery: Optional[String]): CompletableFuture[Seq[VersionedSummary]] = {
+    val searchOpt: Option[String] = searchQuery
+    versionedModelService.getLatestVersions(searchQuery)
   }
-
+  
+  @GetMapping(Array("/searchSuggestions"))
+  @ResponseStatus(HttpStatus.OK)
+  def getSearchSuggestions(): CompletableFuture[Seq[String]] = {
+    versionedModelService.getSearchSuggestions()
+  }
+  
   @GetMapping(Array("/detail/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
   def getVersionDetail(@PathVariable name: String,

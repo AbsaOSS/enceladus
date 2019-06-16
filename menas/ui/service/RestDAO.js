@@ -81,8 +81,16 @@ class RestDAO {
     return this._entityType;
   }
 
-  getList() {
-    return RestClient.get(`api/${this.entityType}/list`)
+  getList(searchQuery) {
+    let query = ""
+    if(searchQuery) {
+      query = `/${encodeURI(searchQuery)}`
+    }
+    return RestClient.get(`api/${this.entityType}/list${query}`)
+  }
+  
+  getSearchSuggestions() {
+    return RestClient.get(`api/${this.entityType}/searchSuggestions`)
   }
 
   getAllVersionsByName(name) {

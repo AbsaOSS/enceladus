@@ -31,10 +31,34 @@ sap.ui.define([
       new DatasetDialogFactory(this, Fragment.load).getAdd();
 
       this._datasetService = new DatasetService(this._model, this._eventBus)
+
+      this._datasetService.getSearchSuggestions(this._model, "dataset")
+      this._searchField = this.byId("datasetSearchField")
     },
 
     list: function () {
       this._datasetService.getList(this.byId("masterPage"));
+    },
+
+    onSearch: function(oEv) {
+      this._datasetService.getList(this.byId("masterPage"), oEv.getSource().getValue())
+    },
+
+    _searchFilter: function(sValue) {
+      return [new sap.ui.model.Filter([
+          new sap.ui.model.Filter("name", function(sText) {
+            return (sText || "").toUpperCase().indexOf(sValue.toUpperCase()) > -1;
+          })], false)];
+    },
+
+    onSuggest: function(oEv) {
+      let value = oEv.getParameter("suggestValue");
+      let filters = [];
+      if (value) {
+        filters = this._searchFilter(value)
+      }
+      this._searchField.getBinding("suggestionItems").filter(filters);
+      this._searchField.suggest();
     },
 
     onPressMasterBack: function () {

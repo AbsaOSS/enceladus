@@ -31,10 +31,33 @@ sap.ui.define([
       new MappingTableDialogFactory(this, Fragment.load).getAdd();
 
       this._mappingTableService = new MappingTableService(this._model, this._eventBus)
+      this._mappingTableService.getSearchSuggestions(this._model, "mappingTable")
+      this._searchField = this.byId("mappingTableSearchField")
     },
 
     list: function () {
       this._mappingTableService.getList(this.byId("masterPage"));
+    },
+
+    onSearch: function(oEv) {
+      this._mappingTableService.getList(this.byId("masterPage"), oEv.getSource().getValue())
+    },
+
+    _searchFilter: function(sValue) {
+      return [new sap.ui.model.Filter([
+          new sap.ui.model.Filter("name", function(sText) {
+            return (sText || "").toUpperCase().indexOf(sValue.toUpperCase()) > -1;
+          })], false)];
+    },
+
+    onSuggest: function(oEv) {
+      let value = oEv.getParameter("suggestValue");
+      let filters = [];
+      if (value) {
+        filters = this._searchFilter(value)
+      }
+      this._searchField.getBinding("suggestionItems").filter(filters);
+      this._searchField.suggest();
     },
 
     onPressMasterBack: function () {
