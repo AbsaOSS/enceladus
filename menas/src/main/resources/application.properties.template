@@ -20,6 +20,9 @@ multipart.maxFileSize=16Mb
 # Set the total request size for a multipart/form-data (default 10Mb)
 multipart.maxRequestSize=16Mb
 
+# Number of seconds to cache the static resources for
+spring.resources.cache.cachecontrol.max-age=2678000
+
 # How will users authenticate to menas. Available options: inmemory, kerberos
 za.co.absa.enceladus.menas.auth.mechanism = inmemory
 
