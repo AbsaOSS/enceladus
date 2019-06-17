@@ -54,18 +54,22 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
   
   //noinspection ScalaStyle
   private def login(username: String, password: String): MenasKerberosLoginResult = {
-    val loginContext = new LoginContext("", null, new CallbackHandler(){
+    val loginContext = new LoginContext("", null, getSpringCBHandler(username, password), getLoginConfig)
+    loginContext.login()
+    val loggedInUser = loginContext.getSubject.getPrincipals.iterator.next.toString
+    logger.debug(s"Logged In User: $loggedInUser")
+    MenasKerberosLoginResult(loginContext, loggedInUser)
+  }
+  
+  private def getSpringCBHandler(username: String, password: String) = {
+    new CallbackHandler(){
       def handle(callbacks: Array[Callback]) {
         callbacks.foreach({
             case ncb: NameCallback => ncb.setName(username)
             case pwdcb: PasswordCallback => pwdcb.setPassword(password.toCharArray)
         })
       }
-    }, getLoginConfig)
-    loginContext.login()
-    val loggedInUser = loginContext.getSubject.getPrincipals.iterator.next.toString
-    logger.debug(s"Logged In User: $loggedInUser")
-    MenasKerberosLoginResult(loginContext, loggedInUser)
+    }
   }
   
   private def getUserDetailService(subject: Subject) = {
