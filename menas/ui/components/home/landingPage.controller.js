@@ -11,7 +11,7 @@ sap.ui.controller("components.home.landingPage", {
     this._router.getRoute("home").attachMatched(function(oEvent) {
       const config = oEvent.getParameter("config");
       this._appId = `${config.targetParent}--${config.controlId}`;
-      this._app = sap.ui.getCore().byId(this._appId)
+      this._app = sap.ui.getCore().byId(this._appId);
       GenericService.getLandingPageInfo();
     }, this);
     this._eventBus = sap.ui.getCore().getEventBus();
@@ -21,7 +21,7 @@ sap.ui.controller("components.home.landingPage", {
     const oSrc = oEv.getSource();
     const sTarget = oSrc.data("target");
 
-    let viewBase = `__navigation0---rootView`
+    let viewBase = `__navigation0---rootView`;
 
     if(sTarget === "datasets") {
       viewBase = `${viewBase}--datasetsPage`;
@@ -32,9 +32,9 @@ sap.ui.controller("components.home.landingPage", {
     }
     this._eventBus.publish(sTarget, "list");
 
-    this._app.backToTopMaster()
+    this._app.backToTopMaster();
     this._app.toMaster(viewBase);
-    setTimeout((() => {this._app.showMaster()}).bind(this), 300)
+    setTimeout(this._app.showMaster.bind(this), 300);
   }
 /**
  * Similar to onAfterRendering, but this hook is invoked before the controller's View is re-rendered (NOT before the

@@ -15,28 +15,27 @@
 
 package za.co.absa.enceladus.menas.controllers
 
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.core.userdetails.UserDetails
-import org.springframework.web.bind.annotation._
-import za.co.absa.enceladus.model.user.UserInfo
+import java.util.concurrent.CompletableFuture
+
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+
 import za.co.absa.enceladus.menas.models.LandingPageInformation
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.MappingTableMongoRepository
 import za.co.absa.enceladus.menas.repositories.SchemaMongoRepository
-import java.util.concurrent.CompletableFuture
-import org.springframework.beans.factory.annotation.Autowired
 
-@RestController 
+@RestController
 @RequestMapping(Array("/api/landing"))
-class LandingPageController @Autowired()(datasetRepository: DatasetMongoRepository, 
+class LandingPageController @Autowired() (datasetRepository: DatasetMongoRepository,
     mappingTableRepository: MappingTableMongoRepository,
     schemaRepository: SchemaMongoRepository) extends BaseController {
 
-  import za.co.absa.enceladus.menas.utils.implicits._
   import scala.concurrent.ExecutionContext.Implicits.global
-  
+  import za.co.absa.enceladus.menas.utils.implicits._
+
   @GetMapping(path = Array("/info"))
   def landingPageInfo(): CompletableFuture[LandingPageInformation] = {
     for {
@@ -45,5 +44,4 @@ class LandingPageController @Autowired()(datasetRepository: DatasetMongoReposito
       schemaCount <- schemaRepository.distinctCount()
     } yield LandingPageInformation(dsCount, mtCount, schemaCount)
   }
-
 }

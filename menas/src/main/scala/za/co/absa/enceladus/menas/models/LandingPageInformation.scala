@@ -15,10 +15,9 @@
 
 package za.co.absa.enceladus.menas.models
 
-case class DistinctCount(distinctCount: Int)  
+case class DistinctCount(distinctCount: Int)
 
 case class LandingPageInformation(
   totalNumberDatasets: Int,
   totalNumberMappingTables: Int,
-  totalNumberSchemas: Int
-)
+  totalNumberSchemas: Int)
