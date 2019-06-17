@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.menas.auth.kerberos
 
 import java.security.PrivilegedAction
-import java.util.Hashtable
 
 import org.springframework.security.ldap.DefaultSpringSecurityContextSource
 
@@ -25,7 +24,7 @@ import javax.naming.directory.DirContext
 import javax.security.auth.Subject
 
 class MenasKerberosLdapContextSource(url: String, subject: Subject) extends DefaultSpringSecurityContextSource(url) {
-  override def getDirContextInstance(environment: Hashtable[String, Object]): DirContext = {
+  override def getDirContextInstance(environment: java.util.Hashtable[String, Object]): DirContext = {
     
     environment.put(Context.SECURITY_AUTHENTICATION, "GSSAPI")
     val sup = super.getDirContextInstance _

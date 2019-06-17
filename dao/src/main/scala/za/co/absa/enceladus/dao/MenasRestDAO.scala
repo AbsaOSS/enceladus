@@ -17,20 +17,27 @@ package za.co.absa.enceladus.dao
 
 import java.util.UUID
 
-import com.typesafe.config.ConfigFactory
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost}
-import org.apache.http.entity.{ContentType, StringEntity}
-import org.apache.http.impl.client.HttpClients
-import org.apache.log4j.LogManager
-import za.co.absa.atum.model._
-import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.dao.EnceladusRestDAO.{csrfToken, sessionCookie, userName}
-import za.co.absa.enceladus.model._
-
 import scala.io.Source
 import scala.util.Try
 import scala.util.control.NonFatal
+
 import org.apache.http.HttpStatus
+import org.apache.http.client.methods.CloseableHttpResponse
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.ContentType
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.client.HttpClients
+import org.apache.log4j.LogManager
+
+import com.typesafe.config.ConfigFactory
+
+import za.co.absa.atum.model.Checkpoint
+import za.co.absa.atum.model.ControlMeasure
+import za.co.absa.atum.model.RunStatus
+import za.co.absa.enceladus.dao.EnceladusRestDAO.csrfToken
+import za.co.absa.enceladus.dao.EnceladusRestDAO.sessionCookie
+import za.co.absa.enceladus.model.Run
+import za.co.absa.enceladus.model.SplineReference
 
 /** Implements routines for Menas REST API. */
 object MenasRestDAO extends MenasDAO {

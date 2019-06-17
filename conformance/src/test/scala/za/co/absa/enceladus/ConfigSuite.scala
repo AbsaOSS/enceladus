@@ -17,13 +17,12 @@ package za.co.absa.enceladus
 
 import java.time.ZonedDateTime
 
-import com.typesafe.config.ConfigFactory
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.{CmdConfig, DynamicConformanceJob}
-import za.co.absa.enceladus.menasplugin.MenasCredentials
-import za.co.absa.enceladus.model.Dataset
 
-import scala.util.{Failure, Success, Try}
+import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.DynamicConformanceJob
+import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
+import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class ConfigSuite extends FunSuite with SparkTestBase {

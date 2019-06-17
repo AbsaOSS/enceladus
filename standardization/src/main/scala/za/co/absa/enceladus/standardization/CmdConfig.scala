@@ -15,13 +15,12 @@
 
 package za.co.absa.enceladus.standardization
 
-import java.io.File
+import scala.util.matching.Regex
+
+import org.apache.spark.sql.SparkSession
 
 import scopt.OptionParser
-import za.co.absa.enceladus.menasplugin.MenasCredentials
-
-import scala.util.matching.Regex
-import org.apache.spark.sql.SparkSession
+import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 /**
@@ -99,13 +98,13 @@ object CmdConfig {
       if(!fsUtils.localExists(file) && fsUtils.hdfsExists(file)) {
         config.copy(menasCredentials = Some(Right(fsUtils.hdfsFileToLocalTempFile(file))))
       } else {
-        config.copy(menasCredentials = Some(Right(file)))
+      config.copy(menasCredentials = Some(Right(file)))
       }
-    }).validate({ file =>
-      if (credsFile.isDefined) failure("Only one authentication method is allow at a time")
-      else if (!fsUtils.exists(file)) failure("Keytab file doesn't exist")
-      else success
-    }).text("Path to keytab file used for authenticating to menas")
+    }).text("Path to keytab file used for authenticating to menas").validate({ file =>
+      if (credsFile.isDefined) failure("Only one authentication method is allowed at a time")
+      else if(fsUtils.exists(file)) success
+      else failure("Keytab file doesn't exist")
+    })
 
     opt[Int]('r', "report-version").action((value, config) =>
       config.copy(reportVersion = value)).text("Report version")

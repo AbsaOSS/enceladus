@@ -42,9 +42,9 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
     val loginResult = login(auth.getName, auth.getCredentials.toString)
     val userDetailsService = getUserDetailService(loginResult.loginContext.getSubject)
     val userDetails = userDetailsService.loadUserByUsername(loginResult.verifiedName)
-    loginResult.loginContext.logout()
-    val output = new UsernamePasswordAuthenticationToken(userDetails, auth.getCredentials(), userDetails.getAuthorities());
-		output.setDetails(authentication.getDetails())
+    loginResult.loginContext.logout
+    val output = new UsernamePasswordAuthenticationToken(userDetails, auth.getCredentials, userDetails.getAuthorities);
+		output.setDetails(authentication.getDetails)
 		output
   }
   
@@ -52,17 +52,18 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
     classOf[UsernamePasswordAuthenticationToken].isAssignableFrom(authentication)
   }
   
+  //noinspection ScalaStyle
   private def login(username: String, password: String): MenasKerberosLoginResult = {
     val loginContext = new LoginContext("", null, new CallbackHandler(){
       def handle(callbacks: Array[Callback]) {
         callbacks.foreach({
             case ncb: NameCallback => ncb.setName(username)
-            case pwdcb: PasswordCallback => pwdcb.setPassword(password.toCharArray())
+            case pwdcb: PasswordCallback => pwdcb.setPassword(password.toCharArray)
         })
       }
     }, getLoginConfig)
     loginContext.login()
-    val loggedInUser = loginContext.getSubject().getPrincipals().iterator().next().toString()
+    val loggedInUser = loginContext.getSubject.getPrincipals.iterator.next.toString
     logger.debug(s"Logged In User: $loggedInUser")
     MenasKerberosLoginResult(loginContext, loggedInUser)
   }

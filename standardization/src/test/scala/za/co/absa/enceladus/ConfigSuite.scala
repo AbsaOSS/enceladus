@@ -18,10 +18,11 @@ package za.co.absa.enceladus
 import java.time.ZonedDateTime
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.menasplugin.MenasCredentials
+
+import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.{CmdConfig, StandardizationJob}
-import org.apache.spark.sql.SparkSession
+import za.co.absa.enceladus.standardization.CmdConfig
+import za.co.absa.enceladus.standardization.StandardizationJob
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class ConfigSuite extends FunSuite with SparkTestBase {

@@ -20,7 +20,7 @@ import scala.util.matching.Regex
 import org.apache.spark.sql.SparkSession
 
 import scopt.OptionParser
-import za.co.absa.enceladus.menasplugin.MenasCredentials
+import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 /**
@@ -101,11 +101,11 @@ object CmdConfig {
       } else {
       config.copy(menasCredentials = Some(Right(file)))
       }
-    }).validate({ file =>
-      if (credsFile.isDefined) failure("Only one authentication method is allow at a time")
-      else if(!fsUtils.exists(file)) failure("Keytab file doesn't exist")
-      else success
-    }).text("Path to keytab file used for authenticating to menas")
+    }).text("Path to keytab file used for authenticating to menas").validate({ file =>
+      if (credsFile.isDefined) failure("Only one authentication method is allowed at a time")
+      else if(fsUtils.exists(file)) success
+      else failure("Keytab file doesn't exist")
+    })
 
     opt[String]("performance-file").optional().action((value, config) =>
       config.copy(performanceMetricsFile = Option(value))).text("Produce a performance metrics file at the given location (local filesystem)")

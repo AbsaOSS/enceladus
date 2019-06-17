@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.auth
+package za.co.absa.enceladus.menas.auth.kerberos
 
 import org.apache.log4j.Logger
 import org.slf4j.LoggerFactory
@@ -36,9 +36,7 @@ import org.springframework.stereotype.Component
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-import za.co.absa.enceladus.menas.auth.kerberos.ActiveDirectoryLdapAuthoritiesPopulator
-import za.co.absa.enceladus.menas.auth.kerberos.KerberosLdapUserSearch
-import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthenticationProvider
+import za.co.absa.enceladus.menas.auth.MenasAuthentication
 
 @Component("kerberosMenasAuthentication")
 class KerberosMenasAuthentication() extends MenasAuthentication with InitializingBean {
@@ -79,7 +77,9 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
   }
 
   private def validateParam(param: String, paramName: String) = {
-    if (param.isEmpty()) throw new IllegalArgumentException(s"$paramName has to be configured in order to use kerberos Menas authentication")
+    if (param.isEmpty()) {
+      throw new IllegalArgumentException(s"$paramName has to be configured in order to use kerberos Menas authentication")
+    }
   }
 
   private def validateParams() {
@@ -135,7 +135,7 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
     provider
   }
 
-  override def configure(auth: AuthenticationManagerBuilder) {
+  override def configure(auth: AuthenticationManagerBuilder): Unit = {
     this.validateParams()
     val originalLogLevel = Logger.getRootLogger.getLevel
     //something here changes the log level to WARN
@@ -148,7 +148,7 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
 }
 
 object KerberosMenasAuthentication {
-  def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager) = {
+  def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager): SpnegoAuthenticationProcessingFilter = {
     val filter = new SpnegoAuthenticationProcessingFilter()
     filter.setAuthenticationManager(authenticationManager)
     filter.setSkipIfAlreadyAuthenticated(true)

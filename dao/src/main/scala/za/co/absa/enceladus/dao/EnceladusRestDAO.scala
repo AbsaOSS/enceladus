@@ -29,7 +29,7 @@ import org.apache.http.util.EntityUtils
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructType
-import org.springframework.http.{HttpStatus => SpringHttpStatus}
+import org.springframework.http.{ HttpStatus => SpringHttpStatus }
 import org.springframework.security.kerberos.client.KerberosRestTemplate
 
 import com.fasterxml.jackson.databind.DeserializationFeature
@@ -39,16 +39,17 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.typesafe.config.ConfigFactory
 
+import sun.security.krb5.internal.ktab.KeyTab
+import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.MappingTable
-import sun.security.krb5.internal.ktab.KeyTab
 
 object EnceladusRestDAO extends EnceladusDAO {
   val conf = ConfigFactory.load()
   val restBase = conf.getString("menas.rest.uri")
-  
+
   private var _userName: String = ""
-  def userName = _userName
+  def userName: String = _userName
   var sessionCookie: String = ""
   var csrfToken: String = ""
 
@@ -64,41 +65,49 @@ object EnceladusRestDAO extends EnceladusDAO {
     val keytab = KeyTab.getInstance(keytabLocation)
     keytab.getOneName.getName
   }
-    
+
+  def enceladusLogin(login: Option[Either[MenasCredentials, String]]) = {
+    login match {
+      case Some(creds) => creds match {
+        case Left(userPassCreds: MenasCredentials) => EnceladusRestDAO.postLogin(userPassCreds.username, userPassCreds.password)
+        case Right(keytabLocation: String)         => EnceladusRestDAO.spnegoLogin(keytabLocation)
+      }
+      case None => UnauthorizedException("Menas credentials have to be provided")
+    }
+  }
+
   def spnegoLogin(keytabLocation: String): Boolean = {
     import scala.collection.JavaConversions._
-    
-    val principal = getUserFromKeytab(keytabLocation)
-    _userName = principal
-    
-    val template = new KerberosRestTemplate(keytabLocation, principal)
+
+    _userName = getUserFromKeytab(keytabLocation)
+
+    val template = new KerberosRestTemplate(keytabLocation, _userName)
     val url = s"$restBase/user/info"
 
-    log.info(s"Calling REST with spnego auth $principal $keytabLocation")
+    log.info(s"Calling REST with SPNEGO auth ${_userName} $keytabLocation")
     val response = template.getForEntity(new URI(url), classOf[String])
 
-    val status = response.getStatusCode
-    val ok = status == SpringHttpStatus.OK
-    val unAuthorized = status == SpringHttpStatus.UNAUTHORIZED
-    log.info(response.toString)
-    log.debug(s"OK: $ok")
-    log.debug(s"Unauthorized: $unAuthorized")
-    if (ok) {
-      val headers = response.getHeaders
-      sessionCookie = headers.get("set-cookie").head
-      log.debug(s"Session cookie: $sessionCookie")
-      csrfToken = headers.get("X-CSRF-TOKEN").head
-      log.debug(s"CSRF Token: $csrfToken")
+    response.getStatusCode match {
+      case SpringHttpStatus.OK => {
+        val headers = response.getHeaders
+        sessionCookie = headers.get("set-cookie").head
+        log.debug(s"Session cookie: $sessionCookie")
+        csrfToken = headers.get("X-CSRF-TOKEN").head
+        log.debug(s"CSRF Token: $csrfToken")
 
-      log.info(s"Login Successful")
-      log.info(s"Session Cookie: $sessionCookie")
-      log.info(s"CSRF Token: $csrfToken")
-    } else if (unAuthorized) {
-      throw new UnauthorizedException
-    } else {
-      log.warn(response.toString)
+        log.info(s"Login Successful")
+        log.info(s"Session Cookie: $sessionCookie")
+        log.info(s"CSRF Token: $csrfToken")
+        true
+      }
+      case SpringHttpStatus.UNAUTHORIZED => {
+        throw new UnauthorizedException
+      }
+      case resp => {
+        log.warn(response.toString)
+        false
+      }
     }
-    ok
   }
 
   def postLogin(username: String, password: String) = {

@@ -40,9 +40,7 @@ import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.EnceladusRestDAO
-import za.co.absa.enceladus.dao.UnauthorizedException
-import za.co.absa.enceladus.menasplugin.MenasCredentials
-import za.co.absa.enceladus.menasplugin.MenasPlugin
+import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
@@ -66,14 +64,7 @@ object DynamicConformanceJob {
     implicit val dao: EnceladusDAO = EnceladusRestDAO // use REST DAO
     implicit val enableCF: Boolean = true
 
-    val menasCredentials = cmd.menasCredentials
-    menasCredentials match {
-      case Some(creds) => creds match {
-        case Left(userPassCreds: MenasCredentials) => EnceladusRestDAO.postLogin(userPassCreds.username, userPassCreds.password)
-        case Right(keytabLocation: String)         => EnceladusRestDAO.spnegoLogin(keytabLocation)
-      }
-      case None => UnauthorizedException("Menas credentials have to be provided")
-    }
+    EnceladusRestDAO.enceladusLogin(cmd.menasCredentials)
 
     // get the dataset definition
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
@@ -141,7 +132,8 @@ object DynamicConformanceJob {
     spark
   }
 
-  private def processResult(result: DataFrame, performance: PerformanceMeasurer, publishPath: String, stdPath: String)(implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
+  private def processResult(result: DataFrame, performance: PerformanceMeasurer, publishPath: String, stdPath: String)
+                           (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
     val withPartCols = result.withColumn(infoDateColumn, lit(new java.sql.Date(format.parse(cmd.reportDate).getTime)))
       .withColumn(infoVersionColumn, lit(cmd.reportVersion))
 

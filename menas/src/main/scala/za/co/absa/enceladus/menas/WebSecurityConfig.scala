@@ -28,11 +28,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.AuthenticationException
-import org.springframework.security.web.AuthenticationEntryPoint
+import org.springframework.security.kerberos.web.authentication.SpnegoEntryPoint
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler
 import org.springframework.security.web.csrf.CsrfToken
@@ -41,13 +41,8 @@ import org.springframework.stereotype.Component
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import za.co.absa.enceladus.menas.auth.InMemoryMenasAuthentication
-import za.co.absa.enceladus.menas.auth.KerberosMenasAuthentication
 import za.co.absa.enceladus.menas.auth.MenasAuthentication
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.kerberos.web.authentication.SpnegoAuthenticationProcessingFilter
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-import org.springframework.security.kerberos.web.authentication.SpnegoEntryPoint
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter
+import za.co.absa.enceladus.menas.auth.kerberos.KerberosMenasAuthentication
 
 @EnableWebSecurity
 class WebSecurityConfig {
@@ -83,35 +78,34 @@ class WebSecurityConfig {
           .ignoringAntMatchers("/api/login")
         .and()
         .exceptionHandling()
-                .authenticationEntryPoint(spnegoEntryPoint())
+          .authenticationEntryPoint(spnegoEntryPoint())
         .and()
         .authorizeRequests()
-        .antMatchers("/index.html", "/resources/**", "/generic/**",
-          "/service/**", "/webjars/**", "/css/**", "/components/**")
-        .permitAll()
+          .antMatchers("/index.html", "/resources/**", "/generic/**",
+            "/service/**", "/webjars/**", "/css/**", "/components/**")
+          .permitAll()
         .anyRequest()
-        .authenticated()
+          .authenticated()
         .and()
-        .formLogin()
-        .loginProcessingUrl("/api/login")
-        .successHandler(authenticationSuccessHandler)
-        .failureHandler(authenticationFailureHandler)
-
-        .permitAll()
+          .formLogin()
+          .loginProcessingUrl("/api/login")
+          .successHandler(authenticationSuccessHandler)
+          .failureHandler(authenticationFailureHandler)
+          .permitAll()
         .and()
-        .logout()
-        .logoutUrl("/api/logout")
-        .logoutSuccessHandler(logoutSuccessHandler)
-        .permitAll()
-        .clearAuthentication(true)
-        .deleteCookies("JSESSIONID")
-        .invalidateHttpSession(true)
+          .logout()
+          .logoutUrl("/api/logout")
+          .logoutSuccessHandler(logoutSuccessHandler)
+          .permitAll()
+          .clearAuthentication(true)
+          .deleteCookies("JSESSIONID")
+          .invalidateHttpSession(true)
         .and
         .addFilterBefore(KerberosMenasAuthentication.spnegoAuthenticationProcessingFilter(authenticationManagerBean), classOf[UsernamePasswordAuthenticationFilter])
     }
 
     @Bean
-    def spnegoEntryPoint() = {
+    def spnegoEntryPoint(): SpnegoEntryPoint = {
       new SpnegoEntryPoint("/api/login");
     }
 
