@@ -63,5 +63,5 @@ myTestCheckpoints
 *.keytab
 .DS_Store
 
-package-lock.json
+node_modules/
 Component-preload.js

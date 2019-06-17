@@ -9,7 +9,5 @@
     "grunt": "^0.4.5",
     "grunt-openui5": "^0.15.0"
   },
-  "dependencies": {
-    
-  }
+  "dependencies": {}
 }
