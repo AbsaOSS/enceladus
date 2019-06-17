@@ -398,4 +398,69 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
     assert(actualStored.contains(expected))
   }
 
+  "DatasetMongoRepository::getDistinctNamesEnabled" should {
+    "return an empty Seq" when {
+      "no datasets exist" in {
+        val actual = await(datasetMongoRepository.getDistinctNamesEnabled)
+
+        assert(actual.isEmpty)
+      }
+    }
+    "return distinct list of enabled names" when {
+      "datasets exist" in {
+        val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1,
+          disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
+        datasetFixture.add(dataset1)
+        assert(await(datasetMongoRepository.getDistinctNamesEnabled).isEmpty)
+
+        val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
+        datasetFixture.add(dataset2)
+        val res1 = await(datasetMongoRepository.getDistinctNamesEnabled)
+        assert(res1.toSeq == Seq("dataset2"))
+
+        val dataset3 = DatasetFactory.getDummyDataset(name = "dataset2", version = 2)
+        datasetFixture.add(dataset3)
+        val res2 = await(datasetMongoRepository.getDistinctNamesEnabled)
+        assert(res2.toSeq == Seq("dataset2"))
+
+        val dataset4 = DatasetFactory.getDummyDataset(name = "dataset3", version = 1)
+        datasetFixture.add(dataset4)
+        val res3 = await(datasetMongoRepository.getDistinctNamesEnabled)
+        assert(res3.toSeq.sorted == Seq("dataset2", "dataset3"))
+      }
+    }
+  }
+
+  "DatasetMongoRepository::getLatestVersions" should {
+    "return an empty Seq" when {
+      "no datasets exist and search query is provided" in {
+        val actual = await(datasetMongoRepository.getLatestVersions(Some("abc")))
+
+        assert(actual.isEmpty)
+      }
+    }
+    "return seq of versioned summaries matching the search query" when {
+      "datasets exist and search query is provided" in {
+        val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1,
+          disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
+        datasetFixture.add(dataset1)
+        assert(await(datasetMongoRepository.getLatestVersions(Some("dataset1"))).isEmpty)
+
+        val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
+        datasetFixture.add(dataset2)
+        val res1 = await(datasetMongoRepository.getLatestVersions(Some("dataset2")))
+        assert(res1.size == 1 && res1.head._id == "dataset2")
+
+        val dataset3 = DatasetFactory.getDummyDataset(name = "dataset2", version = 2)
+        datasetFixture.add(dataset3)
+        val res2 = await(datasetMongoRepository.getLatestVersions(Some("tas")))
+        assert(res1.size == 1 && res1.head._id == "dataset2")
+
+        val dataset4 = DatasetFactory.getDummyDataset(name = "dataset3", version = 1)
+        datasetFixture.add(dataset4)
+        val res3 = await(datasetMongoRepository.getLatestVersions(Some("DATAS")))
+        assert(res3.exists(_._id == "dataset2") && res3.exists(_._id == "dataset3"))
+      }
+    }
+  }
 }
