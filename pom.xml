@@ -285,8 +285,5 @@
                 <module>selenium</module>
             </modules>
         </profile>
-        <profile>
-            <id>generateComponentPreload</id>
-        </profile>
     </profiles>
 </project>
