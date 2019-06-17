@@ -45,10 +45,10 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
 
   def distinctCount(): Future[Int] = {
     val pipeline = Seq(filter(getNotDisabledFilter),
-      Aggregates.group("$name", Accumulators.max("max", "$version")),
+      Aggregates.group("$name"),
       Aggregates.count("distinctCount"))
 
-    collection.aggregate[DistinctCount](pipeline).toFuture().map(_.head.distinctCount)
+    collection.aggregate[DistinctCount](pipeline).toFuture().map(count => if(count.isEmpty) 0 else count.head.distinctCount)
   }
 
   def getLatestVersions(): Future[Seq[VersionedSummary]] = {
