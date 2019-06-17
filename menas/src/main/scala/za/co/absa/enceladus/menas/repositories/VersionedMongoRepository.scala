@@ -45,8 +45,8 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     MenasReference(collection = Some(collectionBaseName), name = oldEntity.name, version = oldEntity.version)
   }
   
-  def getDistinctNames(): Future[Seq[String]] = {
-    collection.distinct[String]("name").toFuture()
+  def getDistinctNamesEnabled(): Future[Seq[String]] = {
+    collection.distinct[String]("name", getNotDisabledFilter).toFuture()
   }
 
   def getLatestVersions(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {

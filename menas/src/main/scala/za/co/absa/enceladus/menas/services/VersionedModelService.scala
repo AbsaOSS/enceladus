@@ -41,7 +41,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   }
 
   def getSearchSuggestions(): Future[Seq[String]] = {
-    versionedMongoRepository.getDistinctNames()
+    versionedMongoRepository.getDistinctNamesEnabled()
   }
 
   def getVersion(name: String, version: Int): Future[Option[C]] = {
