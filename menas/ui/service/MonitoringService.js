@@ -17,11 +17,11 @@ jQuery.sap.require("sap.m.MessageBox");
 
 var MonitoringService = new function() {
 
-  var model = sap.ui.getCore().getModel();
+  let model = sap.ui.getCore().getModel();
 
-  var barChartLabels = []; // run info-date + info-version
+  let barChartLabels = []; // run info-date + info-version
 
-  var runStatusAggregator = {
+  let runStatusAggregator = {
     "allSucceeded" : {infoLabel: 8, color: "green", counter: 0},
     "stageSucceeded" : {infoLabel: 5, color: "blue", counter: 0},
     "running" : {infoLabel: 7, color: "teal", counter: 0},
@@ -29,7 +29,7 @@ var MonitoringService = new function() {
     "other" : {infoLabel: 4, color: "magenta", counter: 0}
   };
 
-  var recordsStatusAggregator = {
+  let recordsStatusAggregator = {
     "Conformed" : {color: "green", counter: 0, recordCounts: []},
     "Failed at conformance" : {color: "red", counter: 0, recordCounts: []},
     "Standardized (not conformed)" : {color: "blue", counter: 0, recordCounts: []},
@@ -48,7 +48,7 @@ var MonitoringService = new function() {
 
     // clear recordsStatusAggregator counters and arrays of data
     Object.keys(recordsStatusAggregator).forEach(function(key) {
-      recordsStatusAggregator[key].counter = 0
+      recordsStatusAggregator[key].counter = 0;
       recordsStatusAggregator[key].recordCounts = []
     });
   };
@@ -117,7 +117,7 @@ var MonitoringService = new function() {
     let barChartData = {
       labels: barChartLabels,
       datasets: datasets
-      }
+      };
 
     // set layout properties
 
@@ -148,9 +148,9 @@ var MonitoringService = new function() {
   };
 
   this.conformanceFinishedCorrectly = function(oRun) {
-    return (oRun["raw_recordcount"] != undefined
-      && oRun["std_records_succeeded"] != undefined && oRun["std_records_failed"] != undefined
-      && oRun["conform_records_succeeded"] != undefined && oRun["conform_records_failed"] != undefined
+    return (!isNaN(oRun["raw_recordcount"])
+      && !isNaN(oRun["std_records_succeeded"]) && !isNaN(oRun["std_records_failed"])
+      && !isNaN(oRun["conform_records_succeeded"]) && !isNaN(oRun["conform_records_failed"])
       // sanity checks
       && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["raw_recordcount"])
       && (+oRun["conform_records_succeeded"]) + (+oRun["conform_records_failed"]) == (+oRun["raw_recordcount"])
@@ -159,72 +159,72 @@ var MonitoringService = new function() {
 
 
   this.standardizationFinishedCorrectly = function(oRun) {
-    return (oRun["raw_recordcount"] != undefined
-      && oRun["std_records_succeeded"]  != undefined && oRun["std_records_failed"] != undefined
+    return (!isNaN(oRun["raw_recordcount"]) && !isNaN(oRun["raw_recordcount"])
+      && !isNaN(oRun["std_records_succeeded"]) && !isNaN(oRun["std_records_failed"])
       && oRun["conform_records_succeeded"] == undefined && oRun["conform_records_failed"] == undefined
       //sanity checks
       && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["raw_recordcount"]) )
   };
 
   this.rawRegisteredCorrectly = function(oRun) {
-    return (oRun["raw_recordcount"] != undefined
+    return (!isNaN(oRun["raw_recordcount"]) && !isNaN(oRun["raw_recordcount"])
       && oRun["std_records_succeeded"]  == undefined && oRun["std_records_failed"] == undefined
       && oRun["conform_records_succeeded"]  == undefined && oRun["conform_records_failed"] == undefined)
   };
 
   this.processConformed = function(oRun) {
-    recordsStatusAggregator["Conformed"].recordCounts.push(+oRun["conform_records_succeeded"])
-    recordsStatusAggregator["Failed at conformance"].recordCounts.push(+oRun["conform_records_failed"] - +oRun["std_records_failed"])
-    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0)
-    recordsStatusAggregator["Failed at standardization"].recordCounts.push(+oRun["std_records_failed"])
-    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(0)
-    recordsStatusAggregator["Inconsistent info"].recordCounts.push(0)
+    recordsStatusAggregator["Conformed"].recordCounts.push(+oRun["conform_records_succeeded"]);
+    recordsStatusAggregator["Failed at conformance"].recordCounts.push(+oRun["conform_records_failed"] - +oRun["std_records_failed"]);
+    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0);
+    recordsStatusAggregator["Failed at standardization"].recordCounts.push(+oRun["std_records_failed"]);
+    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(0);
+    recordsStatusAggregator["Inconsistent info"].recordCounts.push(0);
 
-    recordsStatusAggregator["Conformed"].counter += +oRun["conform_records_succeeded"]
-    recordsStatusAggregator["Failed at conformance"].counter += +oRun["conform_records_failed"] - +oRun["std_records_failed"]
+    recordsStatusAggregator["Conformed"].counter += +oRun["conform_records_succeeded"];
+    recordsStatusAggregator["Failed at conformance"].counter += +oRun["conform_records_failed"] - +oRun["std_records_failed"];
     recordsStatusAggregator["Failed at standardization"].counter += +oRun["std_records_failed"]
   };
 
   this.processStandardized = function(oRun) {
-    recordsStatusAggregator["Conformed"].recordCounts.push(0)
-    recordsStatusAggregator["Failed at conformance"].recordCounts.push(0)
-    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(+oRun["std_records_succeeded"])
-    recordsStatusAggregator["Failed at standardization"].recordCounts.push(+oRun["std_records_failed"])
-    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(0)
-    recordsStatusAggregator["Inconsistent info"].recordCounts.push(0)
+    recordsStatusAggregator["Conformed"].recordCounts.push(0);
+    recordsStatusAggregator["Failed at conformance"].recordCounts.push(0);
+    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(+oRun["std_records_succeeded"]);
+    recordsStatusAggregator["Failed at standardization"].recordCounts.push(+oRun["std_records_failed"]);
+    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(0);
+    recordsStatusAggregator["Inconsistent info"].recordCounts.push(0);
 
-    recordsStatusAggregator["Standardized (not conformed)"].counter += +oRun["std_records_succeeded"]
+    recordsStatusAggregator["Standardized (not conformed)"].counter += +oRun["std_records_succeeded"];
     recordsStatusAggregator["Failed at standardization"].counter += +oRun["std_records_failed"]
   };
 
   this.processRaw = function(oRun) {
-    recordsStatusAggregator["Conformed"].recordCounts.push(0)
-    recordsStatusAggregator["Failed at conformance"].recordCounts.push(0)
-    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0)
-    recordsStatusAggregator["Failed at standardization"].recordCounts.push(0)
-    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(+oRun["raw_recordcount"])
-    recordsStatusAggregator["Inconsistent info"].recordCounts.push(0)
+    recordsStatusAggregator["Conformed"].recordCounts.push(0);
+    recordsStatusAggregator["Failed at conformance"].recordCounts.push(0);
+    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0);
+    recordsStatusAggregator["Failed at standardization"].recordCounts.push(0);
+    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(+oRun["raw_recordcount"]);
+    recordsStatusAggregator["Inconsistent info"].recordCounts.push(0);
 
     recordsStatusAggregator["Unprocessed raw"].counter += +oRun["raw_recordcount"]
   };
 
   this.processInconsistent = function(oRun) {
-    recordsStatusAggregator["Conformed"].recordCounts.push(0)
-    recordsStatusAggregator["Failed at conformance"].recordCounts.push(0)
-    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0)
-    recordsStatusAggregator["Failed at standardization"].recordCounts.push(0)
-    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(0)
+    recordsStatusAggregator["Conformed"].recordCounts.push(0);
+    recordsStatusAggregator["Failed at conformance"].recordCounts.push(0);
+    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0);
+    recordsStatusAggregator["Failed at standardization"].recordCounts.push(0);
+    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(0);
 
     // try to estimate number of records involved in this run
-    let estimatedRecordCount = 0
-    if ( oRun["raw_recordcount"] !=  undefined) {
+    let estimatedRecordCount = 0;
+    if (!isNaN(oRun["raw_recordcount"])) {
       estimatedRecordCount = +oRun["raw_recordcount"]
-    } else if (oRun["std_records_succeeded"] !=  undefined && oRun["std_records_failed"] !=  undefined){
+    } else if (!isNaN(oRun["std_records_succeeded"])&& !isNaN(oRun["std_records_failed"])){
       estimatedRecordCount = (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"])
-    } else if (oRun["conform_records_succeeded"] !=  undefined && oRun["conform_records_failed"]  !=  undefined ) {
+    } else if (!isNaN(oRun["conform_records_succeeded"]) && !isNaN(oRun["conform_records_failed"])) {
       estimatedRecordCount = (+oRun["conform_records_succeeded"]) + (+oRun["conform_records_failed"] )
     }
-    recordsStatusAggregator["Inconsistent info"].recordCounts.push(estimatedRecordCount)
+    recordsStatusAggregator["Inconsistent info"].recordCounts.push(estimatedRecordCount);
     recordsStatusAggregator["Inconsistent info"].counter += estimatedRecordCount
   };
 

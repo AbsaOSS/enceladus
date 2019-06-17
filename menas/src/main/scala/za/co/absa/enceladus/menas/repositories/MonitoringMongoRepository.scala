@@ -18,9 +18,8 @@ package za.co.absa.enceladus.menas.repositories
 import org.mongodb.scala.{AggregateObservable, MongoDatabase}
 import org.mongodb.scala.model.Aggregates.{filter, group, limit, sort}
 import org.mongodb.scala.model.Accumulators.first
-import org.mongodb.scala.model.Filters.{equal, gte, lte}
+import org.mongodb.scala.model.Filters.{equal}
 import org.mongodb.scala.model.Sorts.{descending, orderBy}
-import org.mongodb.scala.model.Projections.{slice}
 import org.mongodb.scala.Document
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
@@ -114,28 +113,6 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
           first("std_dir_size", "$controlMeasure.metadata.additionalInfo.std_dir_size"),
           first("raw_dir_size", "$controlMeasure.metadata.additionalInfo.raw_dir_size")
         ),
-        /**Document(""" {$group : {
-                   |          "_id": {informationDateCasted: "$informationDateCasted", reportVersion: "$controlMeasure.metadata.version"},
-                   |          "datasetName": {$first: "$dataset"},
-                   |          "runObjectId" : {$first: "$_id"},
-                   |          "startDateTime" : {$first: "$startDateTimeCasted"},
-                   |          "datasetVersion" : {$first: "$datasetVersion"},
-                   |          informationDate : {$first: "$controlMeasure.metadata.informationDate"},
-                   |          informationDateCasted : {$first: "$informationDateCasted"},
-                   |          reportVersion : {$first: "$controlMeasure.metadata.version"},
-                   |          "runId" : {$first: "$runId"} ,
-                   |          "status" : {$first: "$runStatus.status"},
-                   |          "std_records_succeeded" : {$first: "$controlMeasure.metadata.additionalInfo.std_records_succeeded"},
-                   |          "std_records_failed" : {$first: "$controlMeasure.metadata.additionalInfo.std_records_failed"},
-                   |          "conform_records_succeeded" : {$first: "$controlMeasure.metadata.additionalInfo.conform_records_succeeded"},
-                   |          "conform_records_failed" : {$first: "$controlMeasure.metadata.additionalInfo.conform_records_failed"},
-                   |          raw_recordcount : {$first: "$raw_recordcount_control.controlValue"},
-                   |          latestCheckpoint: {$first: {$slice: ["$controlMeasure.checkpoints", -1]}},
-                   |          "publish_dir_size" : {$first: "$controlMeasure.metadata.additionalInfo.publish_dir_size"},
-                   |          "std_dir_size" : {$first: "$controlMeasure.metadata.additionalInfo.std_dir_size"},
-                   |          "raw_dir_size" : {$first: "$controlMeasure.metadata.additionalInfo.raw_dir_size"}
-                   |
-                   |      }}""".stripMargin), **/
         // sort the final results
         sort(orderBy(
           descending("informationDateCasted"),

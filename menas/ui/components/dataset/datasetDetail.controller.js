@@ -451,7 +451,7 @@ sap.ui.define([
     },
 
     handleWeekNumberSelect: function(oEvent) {
-      var oDateRange = oEvent.getParameter("weekDays");
+      let oDateRange = oEvent.getParameter("weekDays");
       this._updateTimeInterval(oDateRange);
     },
 
@@ -460,8 +460,8 @@ sap.ui.define([
       let oStart = new Date(oEnd.getTime() - 14 * 24 * 60 * 60 * 1000); // Two weeks before today
       let oCalendar = this.byId("calendar");
       oCalendar.removeAllSelectedDates();
-      oCalendar.addSelectedDate(new sap.ui.unified.DateRange({startDate: oStart, endDate: oEnd}))
-      this._model.setProperty("/monitoringDateFrom", Formatters.toStringInfoDate(oStart))
+      oCalendar.addSelectedDate(new sap.ui.unified.DateRange({startDate: oStart, endDate: oEnd}));
+      this._model.setProperty("/monitoringDateFrom", Formatters.toStringInfoDate(oStart));
       this._model.setProperty("/monitoringDateTo", Formatters.toStringInfoDate(oEnd))
     },
 
