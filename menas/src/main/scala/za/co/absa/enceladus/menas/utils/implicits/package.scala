@@ -37,7 +37,6 @@ import za.co.absa.enceladus.model.menas.scheduler._
 import za.co.absa.enceladus.model.menas.scheduler.dataFormats._
 import za.co.absa.enceladus.model.menas.scheduler.oozie._
 import za.co.absa.enceladus.menas.models.RunSummary
-import za.co.absa.enceladus.menas.models.DistinctCount
 
 package object implicits {
   implicit def optJavaScala[C](in: Optional[C]) = if (in.isPresent()) Some(in.get) else None
@@ -50,7 +49,7 @@ package object implicits {
     classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
     classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference], classOf[RunSummary],
     classOf[RuntimeConfig], classOf[OozieSchedule], classOf[OozieScheduleInstance], classOf[ScheduleTiming], classOf[DataFormat],
-    classOf[UserInfo], classOf[DistinctCount], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference]),
+    classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference]),
     CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
 
 }

@@ -18,6 +18,7 @@ package za.co.absa.enceladus.menas.repositories
 import java.time.ZonedDateTime
 
 import org.mongodb.scala._
+import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
@@ -32,7 +33,6 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import za.co.absa.enceladus.menas.exceptions.EntityAlreadyExistsException
 import za.co.absa.enceladus.menas.exceptions.NotFoundException
-import za.co.absa.enceladus.menas.models.DistinctCount
 
 abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatabase)(implicit ct: ClassTag[C])
   extends MongoRepository[C](mongoDb) {
@@ -48,7 +48,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       Aggregates.group("$name"),
       Aggregates.count("distinctCount"))
 
-    collection.aggregate[DistinctCount](pipeline).toFuture().map(count => if(count.isEmpty) 0 else count.head.distinctCount)
+    collection.aggregate[Document](pipeline).toFuture().map(count => if(count.isEmpty) 0 else count.head("distinctCount").asNumber().intValue())
   }
 
   def getLatestVersions(): Future[Seq[VersionedSummary]] = {
