@@ -22,15 +22,14 @@ import scala.util.control.NonFatal
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpPost
 import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructType
 import org.springframework.http.{ HttpStatus => SpringHttpStatus }
 import org.springframework.security.kerberos.client.KerberosRestTemplate
+import org.springframework.web.client.RestTemplate
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -66,26 +65,21 @@ object EnceladusRestDAO extends EnceladusDAO {
     keytab.getOneName.getName
   }
 
-  def enceladusLogin(login: Option[Either[MenasCredentials, String]]) = {
+  def enceladusLogin(login: Option[Either[MenasCredentials, String]]): Boolean = {
     login match {
       case Some(creds) => creds match {
         case Left(userPassCreds: MenasCredentials) => EnceladusRestDAO.postLogin(userPassCreds.username, userPassCreds.password)
         case Right(keytabLocation: String)         => EnceladusRestDAO.spnegoLogin(keytabLocation)
       }
-      case None => UnauthorizedException("Menas credentials have to be provided")
+      case None => throw UnauthorizedException("Menas credentials have to be provided")
     }
   }
 
-  def spnegoLogin(keytabLocation: String): Boolean = {
+  private def restTemplateLogin(restTemplate: RestTemplate, url: String, username: String): Boolean = {
     import scala.collection.JavaConversions._
 
-    _userName = getUserFromKeytab(keytabLocation)
-
-    val template = new KerberosRestTemplate(keytabLocation, _userName)
-    val url = s"$restBase/user/info"
-
-    log.info(s"Calling REST with SPNEGO auth ${_userName} $keytabLocation")
-    val response = template.getForEntity(new URI(url), classOf[String])
+    _userName = username
+    val response = restTemplate.getForEntity(new URI(url), classOf[String])
 
     response.getStatusCode match {
       case SpringHttpStatus.OK => {
@@ -110,41 +104,18 @@ object EnceladusRestDAO extends EnceladusDAO {
     }
   }
 
+  def spnegoLogin(keytabLocation: String): Boolean = {
+    val username = getUserFromKeytab(keytabLocation)
+    val template = new KerberosRestTemplate(keytabLocation, username)
+    val url = s"$restBase/user/info"
+    log.info(s"Calling REST with SPNEGO auth $username $keytabLocation")
+    restTemplateLogin(template, url, username)
+  }
+
   def postLogin(username: String, password: String) = {
-    _userName = username
-    try {
-      val httpClient = HttpClients.createDefault
-      val url = s"$restBase/login?username=${encode(username)}&password=${encode(password)}&submit=Login"
-      val httpPost = new HttpPost(url)
-
-      val response: CloseableHttpResponse = httpClient.execute(httpPost)
-      try {
-        val status = response.getStatusLine.getStatusCode
-        val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
-        val unAuthorized = status == HttpStatus.SC_UNAUTHORIZED
-        if (ok) {
-          val cookieHeader = response.getFirstHeader("set-cookie")
-          sessionCookie = cookieHeader.getValue
-
-          val csrfHeader = response.getFirstHeader("X-CSRF-TOKEN")
-          csrfToken = csrfHeader.getValue
-
-          log.info(response.toString)
-        } else if (unAuthorized) {
-          throw new UnauthorizedException
-        } else {
-          log.warn(response.toString)
-        }
-        ok
-      } finally {
-        response.close()
-      }
-    } catch {
-      case unAuthException: UnauthorizedException => throw unAuthException
-      case NonFatal(e) =>
-        log.error(s"Unable to login to Menas with error: ${e.getMessage}")
-        false
-    }
+    val url = s"$restBase/login?username=${encode(username)}&password=${encode(password)}&submit=Login"
+    val template = new RestTemplate()
+    restTemplateLogin(template, url, username)
   }
 
   override def getDataset(name: String, version: Int): Dataset = {
