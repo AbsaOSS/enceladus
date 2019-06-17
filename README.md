@@ -50,6 +50,7 @@ Ensure the properties there fit your environment.
 - Without tests: `mvn clean package -DskipTests `
 - With unit tests: `mvn clean package`
 - With integration tests: `mvn clean package -Pintegration`
+- With component preload file generated (requires npm):  `mvn clean package -PgenerateComponentPreload`
 
 ## <a name="run"/>How to run
 #### Menas requirements:
@@ -59,6 +60,11 @@ Ensure the properties there fit your environment.
 
 #### Deploying Menas
 Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
+
+#### Speed up initial loading time of menas
+- Build the project with the generateComponentPreload profile. Component preload will greatly reduce the number of HTTP requests required for the initial load of Menas
+- Enable the HTTP compression
+- Configure `spring.resources.cache.cachecontrol.max-age` in `application.properties` of Menas for caching of static resources
 
 #### Standardization and Conformance requirements:
 - **Spark 2.4.3 (Scala 2.11)** installation
