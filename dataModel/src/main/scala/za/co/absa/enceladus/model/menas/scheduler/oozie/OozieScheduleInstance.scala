@@ -12,16 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package za.co.absa.enceladus.menas.services
 
-import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
-import za.co.absa.enceladus.menas.repositories.OozieRepository
+package za.co.absa.enceladus.model.menas.scheduler.oozie
 
-class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
-
-  override val modelRepository = mock[DatasetMongoRepository]
-  val oozieRepository = mock[OozieRepository]
-  override val service = new DatasetService(modelRepository, oozieRepository)
-
-}
+case class OozieScheduleInstance(workflowPath: String,
+    coordinatorPath: String,
+    coordinatorId: String)

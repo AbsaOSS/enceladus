@@ -12,16 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package za.co.absa.enceladus.menas.services
 
-import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
-import za.co.absa.enceladus.menas.repositories.OozieRepository
+package za.co.absa.enceladus.model.menas.jackson
 
-class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.core.JsonParser
 
-  override val modelRepository = mock[DatasetMongoRepository]
-  val oozieRepository = mock[OozieRepository]
-  override val service = new DatasetService(modelRepository, oozieRepository)
-
+class OptCharDeserializer extends StdDeserializer[Option[Char]](classOf[Option[Char]]) {
+  override def deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext): Option[Char] = {
+      Some(jsonParser.getText.head)
+  }
+  
+  override def getNullValue(): Option[Char] = None
+  override def getEmptyValue(): Option[Char] = None
 }

@@ -17,6 +17,14 @@ jQuery.sap.require("sap.ui.core.format.DateFormat");
 jQuery.sap.require("sap.ui.core.Locale");
 
 var Formatters = new function() {
+  
+  this.oozieCoordinatorStatusFormatter = function(sStatus) {
+    if(!sStatus) {
+      return sap.ui.core.ValueState.None;
+    } else if(sStatus === "RUNNING") {
+      return sap.ui.core.ValueState.Success;
+    } else return sap.ui.core.ValueState.Error;
+  }
 
   this.stringDateShortFormatter = function(sDate) {
     if (!sDate)

@@ -13,9 +13,7 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>enceladus-standardization</artifactId>
     <packaging>jar</packaging>
@@ -62,10 +60,6 @@
             <version>${spline.version}</version>
             <exclusions>
                 <exclusion>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-*</artifactId>
-                </exclusion>
-                <exclusion>
                     <groupId>net.jpountz.lz4</groupId>
                     <artifactId>lz4</artifactId>
                 </exclusion>
@@ -76,10 +70,6 @@
             <artifactId>spline-core-spark-adapter-${spark.compat.version}</artifactId>
             <version>${spline.version}</version>
             <exclusions>
-                <exclusion>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-*</artifactId>
-                </exclusion>
                 <exclusion>
                     <groupId>net.jpountz.lz4</groupId>
                     <artifactId>lz4</artifactId>
@@ -92,14 +82,6 @@
             <version>${spline.version}</version>
             <exclusions>
                 <exclusion>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.mongodb</groupId>
-                    <artifactId>mongo-java-driver</artifactId>
-                </exclusion>
-                <exclusion>
                     <groupId>net.jpountz.lz4</groupId>
                     <artifactId>lz4</artifactId>
                 </exclusion>
@@ -110,10 +92,6 @@
             <artifactId>spline-persistence-hdfs</artifactId>
             <version>${spline.version}</version>
             <exclusions>
-                <exclusion>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-*</artifactId>
-                </exclusion>
                 <exclusion>
                     <groupId>net.jpountz.lz4</groupId>
                     <artifactId>lz4</artifactId>
@@ -137,6 +115,51 @@
         <testSourceDirectory>src/test/scala</testSourceDirectory>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${maven.shade.version}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                            <resource>application.conf</resource>
+                        </transformer>
+                    </transformers>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                    <artifactSet>
+                        <includes>
+                            <include>*:*</include>
+                        </includes>
+                        <excludes>
+                            <exclude>com.fasterxml.jackson.*:*</exclude>
+                            <exclude>org.apache.spark:*</exclude>
+                            <exclude>org.apache.hadoop:*</exclude>
+                            <exclude>org.scala-lang:scala-actors</exclude>
+                            <exclude>org.scala-lang:scala-compiler</exclude>
+                            <exclude>org.scala-lang:scala-reflect</exclude>
+                            <exclude>org.scala-lang:scala-library</exclude>
+                            <exclude>net.jpountz.lz4:*</exclude>
+                        </excludes>
+                    </artifactSet>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
                 <version>${maven.scala.version}</version>
@@ -159,12 +182,8 @@
                         <phase>validate</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.basedir}/src/main/resources/application.conf.template"
-                                      tofile="${project.basedir}/src/main/resources/application.conf"
-                                      overwrite="false"/>
-                                <copy file="${project.basedir}/src/main/resources/spline.properties.template"
-                                      tofile="${project.basedir}/src/main/resources/spline.properties"
-                                      overwrite="false"/>
+                                <copy file="${project.basedir}/src/main/resources/application.conf.template" tofile="${project.basedir}/src/main/resources/application.conf" overwrite="false" />
+                                <copy file="${project.basedir}/src/main/resources/spline.properties.template" tofile="${project.basedir}/src/main/resources/spline.properties" overwrite="false" />
                             </target>
                         </configuration>
                         <goals>

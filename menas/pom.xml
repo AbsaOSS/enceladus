@@ -12,8 +12,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>enceladus-menas</artifactId>
     <packaging>war</packaging>
@@ -196,6 +195,11 @@
             <artifactId>webjars-locator-core</artifactId>
             <version>${webjars.locator.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-client</artifactId>
+            <version>${oozie.version}</version>
+        </dependency>
         <!-- Plot -->
         <dependency>
             <groupId>org.webjars.bower</groupId>
@@ -279,9 +283,7 @@
                         <phase>validate</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.basedir}/src/main/resources/application.properties.template"
-                                      tofile="${project.basedir}/src/main/resources/application.properties"
-                                      overwrite="false"/>
+                                <copy file="${project.basedir}/src/main/resources/application.properties.template" tofile="${project.basedir}/src/main/resources/application.properties" overwrite="false" />
                             </target>
                         </configuration>
                         <goals>

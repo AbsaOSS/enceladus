@@ -46,8 +46,10 @@ object StandardizationJob {
   private val conf: Config = ConfigFactory.load()
 
   def main(args: Array[String]) {
+    implicit val spark: SparkSession = obtainSparkSession()
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-    implicit val spark: SparkSession = obtainSparkSession(cmd)
+    implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+
     import spark.implicits._
     implicit val udfLib: UDFLibrary = new UDFLibrary
 
@@ -65,7 +67,7 @@ object StandardizationJob {
       cmd.reportVersion.toString)
     log.info(s"output path: $stdPath")
     // die if the output path exists
-    if (FileSystemVersionUtils.exists(stdPath)) {
+    if (fsUtils.hdfsExists(stdPath)) {
       throw new IllegalStateException(s"Path $stdPath already exists. Increment the run version, or delete $stdPath")
     }
     // init CF
@@ -92,25 +94,24 @@ object StandardizationJob {
     })
   }
 
-  private def obtainSparkSession(cmd: CmdConfig): SparkSession = {
+  private def obtainSparkSession(): SparkSession = {
     val spark = SparkSession.builder()
-      .appName(s"Standardisation ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} ${cmd.reportVersion}")
-      .config("spark.sql.codegen.wholeStage", false) //disable whole stage code gen - the plan is too long
+      .appName("Standardisation")
       .getOrCreate()
     TimeZoneNormalizer.normalizeAll(Seq(spark))
     spark
   }
 
-  private def readerFormatSpecific(dfReader: DataFrameReader, cmd: CmdConfig):DataFrameReader = {
+  private def readerFormatSpecific(dfReader: DataFrameReader, cmd: CmdConfig): DataFrameReader = {
     // applying format specific options
-    val  dfReader4= {
+    val dfReader4 = {
       val dfReader1 = if (cmd.rowTag.isDefined) dfReader.option("rowTag", cmd.rowTag.get) else dfReader
       val dfReader2 = if (cmd.csvDelimiter.isDefined) dfReader1.option("delimiter", cmd.csvDelimiter.get) else dfReader1
       val dfReader3 = if (cmd.csvHeader.isDefined) dfReader2.option("header", cmd.csvHeader.get) else dfReader2
       dfReader3
     }
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
-      val dfReader5=if (cmd.fixedWidthTrimValues.get) dfReader4.option("trimValues", "true") else dfReader4
+      val dfReader5 = if (cmd.fixedWidthTrimValues.get) dfReader4.option("trimValues", "true") else dfReader4
       dfReader5
     } else {
       dfReader4
@@ -118,9 +119,9 @@ object StandardizationJob {
   }
 
   private def prepareDataFrame(schema: StructType, cmd: CmdConfig, path: String)
-                              (implicit spark: SparkSession): DataFrame = {
+                              (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils): DataFrame = {
     val dfReaderConfigured = readerFormatSpecific(spark.read.format(cmd.rawFormat), cmd)
-    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet") ) {
+    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
       dfReaderConfigured.schema(inputSchema)
     } else {
@@ -129,17 +130,19 @@ object StandardizationJob {
     ensureSplittable(dfWithSchema, path, schema)
   }
 
-  private def executeStandardization(performance: PerformanceMeasurer, dfAll: DataFrame, schema: StructType,
-                                     cmd: CmdConfig, path: String, stdPath: String)
-                                    (implicit spark: SparkSession, udfLib: UDFLibrary): Unit = {
-    val rawDirSize: Long = FileSystemVersionUtils.getDirectorySize(path)
+  private def executeStandardization(performance: PerformanceMeasurer,
+      dfAll: DataFrame, 
+      schema: StructType,
+      cmd: CmdConfig, 
+      path: String, 
+      stdPath: String)(implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
+    val rawDirSize: Long = fsUtils.getDirectorySize(path)
     performance.startMeasurement(rawDirSize)
 
     val std = try {
       StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
-    }
-    catch {
-      case e@ValidationException(msg, errors) =>
+    } catch {
+      case e @ ValidationException(msg, errors) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
           errors.mkString("\n")
         }", "")
@@ -158,7 +161,7 @@ object StandardizationJob {
     stdRenameSourceColumns.setCheckpoint("Standardization Finish", persistInDatabase = false)
 
     val recordCount = stdRenameSourceColumns.lastCheckpointRowCount match {
-      case None => std.count
+      case None    => std.count
       case Some(p) => p
     }
     if (recordCount == 0) {
@@ -169,26 +172,28 @@ object StandardizationJob {
     stdRenameSourceColumns.write.parquet(stdPath)
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
-    val stdDirSize = FileSystemVersionUtils.getDirectorySize(stdPath)
+    val stdDirSize = fsUtils.getDirectorySize(stdPath)
     performance.finishMeasurement(stdDirSize, recordCount)
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     if (cmd.csvDelimiter.isDefined) {
       cmd.csvDelimiter.foreach(deLimiter => Atum.setAdditionalInfo("csv_delimiter" -> deLimiter))
     }
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", path, stdPath,
-                                                               LoggedInUserInfo.getUserName)
+      LoggedInUserInfo.getUserName)
     stdRenameSourceColumns.writeInfoFile(stdPath)
   }
 
-  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession) = {
-    if (FileSystemVersionUtils.isNonSplittable(path)) {
+  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)
+                              (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
+    if (fsUtils.isNonSplittable(path)) {
       convertToSplittable(df, path, schema)
     } else {
       df
     }
   }
 
-  private def convertToSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession) = {
+  private def convertToSplittable(df: DataFrame, path: String, schema: StructType)
+                                 (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
     log.warn("Dataset is stored in a non-splittable format. This can have a severe performance impact.")
 
     val tempParquetDir = s"/tmp/nonsplittable-to-parquet-${UUID.randomUUID()}"
@@ -200,7 +205,7 @@ object StandardizationJob {
       renameSourceColumn(df, field, false)
     }: _*).write.parquet(tempParquetDir)
 
-    FileSystemVersionUtils.deleteOnExit(tempParquetDir)
+    fsUtils.deleteOnExit(tempParquetDir)
     // Reload from temp parquet and reverse column renaming above
     val dfTmp = spark.read.parquet(tempParquetDir)
     dfTmp.select(schema.fields.map { field: StructField =>
@@ -236,7 +241,7 @@ object StandardizationJob {
       case None =>
         val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmd.reportVersion}"
         cmd.folderPrefix match {
-          case None => s"${dataset.hdfsPath}$folderSuffix"
+          case None               => s"${dataset.hdfsPath}$folderSuffix"
           case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
         }
       case Some(rawPathOverride) => rawPathOverride

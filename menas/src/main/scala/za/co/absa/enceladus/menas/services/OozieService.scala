@@ -12,16 +12,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package za.co.absa.enceladus.menas.services
 
-import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
+import scala.concurrent.Future
+
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
+
+import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
 import za.co.absa.enceladus.menas.repositories.OozieRepository
 
-class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
-
-  override val modelRepository = mock[DatasetMongoRepository]
-  val oozieRepository = mock[OozieRepository]
-  override val service = new DatasetService(modelRepository, oozieRepository)
-
+@Component
+class OozieService @Autowired() (oozieRepository: OozieRepository) {
+  
+  def isOozieEnabled: Boolean = oozieRepository.isOozieEnabled
+  
+  def getCoordinatorStatus(coordinatorId: String): Future[OozieCoordinatorStatus] = {
+    oozieRepository.getCoordinatorStatus(coordinatorId)
+  }
 }
