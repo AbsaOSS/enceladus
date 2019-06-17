@@ -85,9 +85,7 @@ object EnceladusRestDAO extends EnceladusDAO {
       case SpringHttpStatus.OK => {
         val headers = response.getHeaders
         sessionCookie = headers.get("set-cookie").head
-        log.debug(s"Session cookie: $sessionCookie")
         csrfToken = headers.get("X-CSRF-TOKEN").head
-        log.debug(s"CSRF Token: $csrfToken")
 
         log.info(s"Login Successful")
         log.info(s"Session Cookie: $sessionCookie")
