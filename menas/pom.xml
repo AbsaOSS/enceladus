@@ -200,6 +200,13 @@
             <artifactId>oozie-client</artifactId>
             <version>${oozie.version}</version>
         </dependency>
+        <!-- Plot -->
+        <dependency>
+            <groupId>org.webjars.bower</groupId>
+            <artifactId>chart.js</artifactId>
+            <version>2.7.3</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

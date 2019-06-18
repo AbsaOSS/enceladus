@@ -57,4 +57,14 @@ var Formatters = new function() {
       return res;
     }
   }
+
+
+  this._oFormatYyyymmdd = sap.ui.core.format.DateFormat.getInstance({
+    pattern: "yyyy-MM-dd",
+    calendarType: sap.ui.core.CalendarType.Gregorian
+  });
+
+  this.toStringInfoDate = function(oDate) {
+    return this._oFormatYyyymmdd.format(oDate);
+  }
 }();

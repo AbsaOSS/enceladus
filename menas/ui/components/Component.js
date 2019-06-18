@@ -14,7 +14,7 @@
  */
 
 sap.ui.define([
-    "sap/ui/core/UIComponent"
+  "sap/ui/core/UIComponent"
   ],
   function (UIComponent) {
     "use strict";
@@ -23,8 +23,8 @@ sap.ui.define([
       metadata: {
         rootView : {
           viewName: "components.app",
-          id: "rootView", 
-          type: "XML" 
+          id: "rootView",
+          type: "XML"
         },
         routing: {
           config: {
