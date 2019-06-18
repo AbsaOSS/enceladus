@@ -55,6 +55,9 @@
                     <IconTabFilter id="schedule" icon="sap-icon://fob-watch" key="schedule" text="Scheduling" enabled="{/appInfo/oozie/isEnabled}">
                         <core:Fragment type="XML" fragmentName="components.dataset.schedule.viewSchedule" />
                     </IconTabFilter>
+                    <IconTabFilter id="monitoringTab" icon="sap-icon://vertical-bar-chart-2" key="monitoring" text="Monitoring">
+                        <core:Fragment type="XML" fragmentName="components.dataset.monitoring.monitoring"/>
+                    </IconTabFilter>
                 </items>
             </IconTabBar>
         </content>

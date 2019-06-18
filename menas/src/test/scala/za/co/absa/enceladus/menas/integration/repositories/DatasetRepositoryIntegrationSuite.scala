@@ -381,7 +381,6 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
     }
   }
 
-
   private def testUpdate(conformanceRules: List[ConformanceRule]): Unit = {
     val storedDataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1)
     datasetFixture.add(storedDataset)
@@ -484,6 +483,45 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         datasetFixture.add(dataset2, dataset3, dataset4, dataset5)
         val res3 = await(datasetMongoRepository.getLatestVersions(Some("")))
         assert(res3.exists(_._id == "dataset2") && res3.exists(_._id == "dataset3") && res3.exists(_._id == "abc"))
+      }
+    }
+  }
+
+  "DatasetMongoRepository::distinctCount" should {
+    "return 0" when {
+      "no datasets exists" in {
+        val actual = await(datasetMongoRepository.distinctCount)
+
+        assert(actual == 0)
+      }
+      "only disabled datasets exist" in {
+        val dataset1 = DatasetFactory.getDummyDataset(name = "dataset", version = 1,
+          disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
+        val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2,
+          disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
+        datasetFixture.add(dataset1, dataset2)
+
+        val actual = await(datasetMongoRepository.distinctCount)
+
+        assert(actual == 0)
+      }
+    }
+
+    "return number of distinct enabled datasets" when {
+      "there are datasets" in {
+        val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1,
+          disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
+        val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
+        datasetFixture.add(dataset1, dataset2)
+        assert(await(datasetMongoRepository.distinctCount) == 1)
+
+        val dataset3 = DatasetFactory.getDummyDataset(name = "dataset2", version = 2)
+        datasetFixture.add(dataset3)
+        assert(await(datasetMongoRepository.distinctCount) == 1)
+
+        val dataset4 = DatasetFactory.getDummyDataset(name = "dataset3", version = 1)
+        datasetFixture.add(dataset4)
+        assert(await(datasetMongoRepository.distinctCount) == 2)
       }
     }
   }

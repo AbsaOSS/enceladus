@@ -18,6 +18,7 @@ package za.co.absa.enceladus.menas.repositories
 import java.time.ZonedDateTime
 
 import org.mongodb.scala._
+import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
@@ -40,6 +41,17 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
 
   private def getParent(oldEntity: C): MenasReference = {
     MenasReference(collection = Some(collectionBaseName), name = oldEntity.name, version = oldEntity.version)
+  }
+
+  def distinctCount(): Future[Int] = {
+    val pipeline = Seq(filter(getNotDisabledFilter),
+      Aggregates.group("$name"),
+      Aggregates.count("distinctCount"))
+
+    collection.aggregate[Document](pipeline).toFuture().map({count =>
+      if(count.isEmpty) 0
+      else count.head("distinctCount").asNumber().intValue()
+    })
   }
 
   def getDistinctNamesEnabled(): Future[Seq[String]] = {

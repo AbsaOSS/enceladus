@@ -17,13 +17,12 @@ package za.co.absa.enceladus
 
 import java.time.ZonedDateTime
 
-import com.typesafe.config.ConfigFactory
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.{CmdConfig, DynamicConformanceJob}
-import za.co.absa.enceladus.menasplugin.MenasCredentials
-import za.co.absa.enceladus.model.Dataset
 
-import scala.util.{Failure, Success, Try}
+import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.DynamicConformanceJob
+import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
+import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class ConfigSuite extends FunSuite with SparkTestBase {
@@ -36,7 +35,9 @@ class ConfigSuite extends FunSuite with SparkTestBase {
   private val hdfsPublishPath = "/bigdatahdfs/datalake/publish/system/feed"
   private val hdfsPublishPathOverride = "/bigdatahdfs/datalake/publish/system/feed/override"
   private val menasCredentialsFile = "src/test/resources/menas-credentials.conf"
-  private val menasCredentials = MenasCredentials(username = "user", password = "changeme")
+  private val menasCredentials = Some(Left(MenasCredentials.fromFile(menasCredentialsFile)))
+  private val keytabPath = "src/test/resources/menas-keytab-dummy.keytab"
+  private val menasKeytab = Some(Right(keytabPath))
   private val datasetName = "test-dataset-name"
   private val datasetVersion = 2
   private val description = None
@@ -78,13 +79,13 @@ class ConfigSuite extends FunSuite with SparkTestBase {
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
+        "--menas-auth-keytab", keytabPath,
         "--folder-prefix", folderPrefix))
     assert(cmdConfigFolderPrefix.datasetName === datasetName)
     assert(cmdConfigFolderPrefix.datasetVersion === datasetVersion)
     assert(cmdConfigFolderPrefix.reportDate === reportDate)
     assert(cmdConfigFolderPrefix.reportVersion === reportVersion)
-    assert(cmdConfigNoFolderPrefix.menasCredentials === menasCredentials)
+    assert(cmdConfigFolderPrefix.menasCredentials === menasKeytab)
     assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
     assert(cmdConfigFolderPrefix.folderPrefix.get === folderPrefix)
     assert(cmdConfigFolderPrefix.publishPathOverride.isEmpty)
@@ -95,13 +96,12 @@ class ConfigSuite extends FunSuite with SparkTestBase {
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride))
     assert(cmdConfigPublishPathOverride.datasetName === datasetName)
     assert(cmdConfigPublishPathOverride.datasetVersion === datasetVersion)
     assert(cmdConfigPublishPathOverride.reportDate === reportDate)
     assert(cmdConfigPublishPathOverride.reportVersion === reportVersion)
-    assert(cmdConfigNoFolderPrefix.menasCredentials === menasCredentials)
+    assert(cmdConfigPublishPathOverride.menasCredentials === None)
     assert(cmdConfigPublishPathOverride.folderPrefix.isEmpty)
     assert(cmdConfigPublishPathOverride.publishPathOverride.nonEmpty)
     assert(cmdConfigPublishPathOverride.publishPathOverride.get === hdfsPublishPathOverride)
@@ -119,9 +119,9 @@ class ConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.datasetVersion === datasetVersion)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.reportDate === reportDate)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.reportVersion === reportVersion)
-    assert(cmdConfigNoFolderPrefix.menasCredentials === menasCredentials)
-    assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
-    assert(cmdConfigFolderPrefix.folderPrefix.get === folderPrefix)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.menasCredentials === menasCredentials)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.folderPrefix.nonEmpty)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.folderPrefix.get === folderPrefix)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.publishPathOverride.nonEmpty)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.publishPathOverride.get === hdfsPublishPathOverride)
   }

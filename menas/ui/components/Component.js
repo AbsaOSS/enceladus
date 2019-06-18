@@ -14,7 +14,7 @@
  */
 
 sap.ui.define([
-    "sap/ui/core/UIComponent"
+  "sap/ui/core/UIComponent"
   ],
   function (UIComponent) {
     "use strict";
@@ -23,8 +23,8 @@ sap.ui.define([
       metadata: {
         rootView : {
           viewName: "components.app",
-          id: "rootView", 
-          type: "XML" 
+          id: "rootView",
+          type: "XML"
         },
         routing: {
           config: {
@@ -40,6 +40,11 @@ sap.ui.define([
               // empty hash - normally the start page
               pattern: "",
               target: ""
+            },
+            {
+              name: "home",
+              pattern: "home",
+              target: "home"
             },
             {
               name: "login",
@@ -72,6 +77,11 @@ sap.ui.define([
               viewName: "components.login.loginDetail",
               viewLevel: 0,
               viewId: "loginDetailView"
+            },
+            home: {
+              viewName: "components.home.landingPage",
+              viewLevel: 1,
+              viewId: "landingPage"              
             },
             runs: {
               viewName: "components.run.runDetail",

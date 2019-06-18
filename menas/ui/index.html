@@ -44,6 +44,7 @@
     <script src="service/RestDAO.js"></script>
     <script src="service/EntityService.js"></script>
     <script src="service/GenericService.js"></script>
+    <script src="service/MonitoringService.js"></script>
     <script src="service/RuleService.js"></script>
     <script src="service/OozieService.js"></script>
     <script src="service/RunService.js"></script>
@@ -57,6 +58,13 @@
 
     <script>
         sap.ui.localResources("components");
+        
+        // register TNT icons
+        sap.ui.core.IconPool.registerFont({
+          collectionName: "SAP-icons-TNT",
+          fontFamily: "SAP-icons-TNT", 
+          fontURI: sap.ui.require.toUrl("sap/tnt/themes/base/fonts"),
+          lazy: true});
 
         var component = new sap.ui.core.ComponentContainer("MenasComponent", {
             name: "components",

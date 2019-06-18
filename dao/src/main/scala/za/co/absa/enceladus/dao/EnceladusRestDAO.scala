@@ -15,25 +15,40 @@
 
 package za.co.absa.enceladus.dao
 
-import com.typesafe.config.ConfigFactory
-import org.apache.commons.httpclient.HttpStatus
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
-import org.apache.http.impl.client.HttpClients
-import org.apache.http.util.EntityUtils
-import org.apache.log4j.LogManager
-import org.apache.spark.sql.types.{DataType, StructType}
-import za.co.absa.enceladus.model._
+import java.net.URI
 
 import scala.util.control.NonFatal
-import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
+
+import org.apache.http.HttpStatus
+import org.apache.http.client.methods.CloseableHttpResponse
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.util.EntityUtils
+import org.apache.log4j.LogManager
+import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types.StructType
+import org.springframework.http.{ HttpStatus => SpringHttpStatus }
+import org.springframework.security.kerberos.client.KerberosRestTemplate
+import org.springframework.web.client.RestTemplate
+
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.typesafe.config.ConfigFactory
+
+import sun.security.krb5.internal.ktab.KeyTab
+import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
+import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.MappingTable
 
 object EnceladusRestDAO extends EnceladusDAO {
   val conf = ConfigFactory.load()
   val restBase = conf.getString("menas.rest.uri")
-  private val userName = LoggedInUserInfo.getUserName
 
+  private var _userName: String = ""
+  def userName: String = _userName
   var sessionCookie: String = ""
   var csrfToken: String = ""
 
@@ -45,41 +60,60 @@ object EnceladusRestDAO extends EnceladusDAO {
     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-  def postLogin(username: String, password: String) = {
-    try {
-      val httpClient = HttpClients.createDefault
-      val url = s"$restBase/login?username=${encode(username)}&password=${encode(password)}&submit=Login"
-      val httpPost = new HttpPost(url)
+  private[dao] def getUserFromKeytab(keytabLocation: String): String = {
+    val keytab = KeyTab.getInstance(keytabLocation)
+    keytab.getOneName.getName
+  }
 
-      val response: CloseableHttpResponse = httpClient.execute(httpPost)
-      try {
-        val status = response.getStatusLine.getStatusCode
-        val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
-        val unAuthorized = status == HttpStatus.SC_UNAUTHORIZED
-        if (ok) {
-          val cookieHeader = response.getFirstHeader("set-cookie")
-          sessionCookie = cookieHeader.getValue
+  def enceladusLogin(login: Option[Either[MenasCredentials, String]]): Boolean = {
+    login match {
+      case Some(creds) => creds match {
+        case Left(userPassCreds: MenasCredentials) => EnceladusRestDAO.postLogin(userPassCreds.username, userPassCreds.password)
+        case Right(keytabLocation: String)         => EnceladusRestDAO.spnegoLogin(keytabLocation)
+      }
+      case None => throw UnauthorizedException("Menas credentials have to be provided")
+    }
+  }
 
-          val csrfHeader = response.getFirstHeader("X-CSRF-TOKEN")
-          csrfToken = csrfHeader.getValue
+  private def restTemplateLogin(restTemplate: RestTemplate, url: String, username: String): Boolean = {
+    import scala.collection.JavaConversions._
 
-          log.info(response.toString)
-        } else if (unAuthorized) {
-          throw new UnauthorizedException
-        } else {
-          log.warn(response.toString)
-        }
-        ok
-      } finally {
-        response.close()
+    _userName = username
+    val response = restTemplate.getForEntity(new URI(url), classOf[String])
+
+    response.getStatusCode match {
+      case SpringHttpStatus.OK => {
+        val headers = response.getHeaders
+        sessionCookie = headers.get("set-cookie").head
+        csrfToken = headers.get("X-CSRF-TOKEN").head
+
+        log.info(s"Login Successful")
+        log.info(s"Session Cookie: $sessionCookie")
+        log.info(s"CSRF Token: $csrfToken")
+        true
+      }
+      case SpringHttpStatus.UNAUTHORIZED => {
+        throw new UnauthorizedException
+      }
+      case resp => {
+        log.warn(response.toString)
+        false
       }
     }
-    catch {
-      case unAuthException: UnauthorizedException => throw unAuthException
-      case NonFatal(e) =>
-        log.error(s"Unable to login to Menas with error: ${e.getMessage}")
-        false
-    }
+  }
+
+  def spnegoLogin(keytabLocation: String): Boolean = {
+    val username = getUserFromKeytab(keytabLocation)
+    val template = new KerberosRestTemplate(keytabLocation, username)
+    val url = s"$restBase/user/info"
+    log.info(s"Calling REST with SPNEGO auth $username $keytabLocation")
+    restTemplateLogin(template, url, username)
+  }
+
+  def postLogin(username: String, password: String) = {
+    val url = s"$restBase/login?username=${encode(username)}&password=${encode(password)}&submit=Login"
+    val template = new RestTemplate()
+    restTemplateLogin(template, url, username)
   }
 
   override def getDataset(name: String, version: Int): Dataset = {
@@ -117,12 +151,10 @@ object EnceladusRestDAO extends EnceladusDAO {
   private def authorizeGetRequest(url: String): String = {
     try {
       log.info(s"URL: $url GET")
-      val httpClient = HttpClients.createDefault
+      val httpClient = HttpClientBuilder.create().build()
       val httpGet = new HttpGet(url)
       httpGet.addHeader("cookie", sessionCookie)
-
       val response: CloseableHttpResponse = httpClient.execute(httpGet)
-
       try {
         val status = response.getStatusLine.getStatusCode
         val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
@@ -130,23 +162,19 @@ object EnceladusRestDAO extends EnceladusDAO {
         val content = {
           if (ok) {
             readResponseObject(response)
-          }
-          else if (unAuthorized) {
+          } else if (unAuthorized) {
             throw new UnauthorizedException
-          }
-          else {
+          } else {
             throw new DaoException(s"Server returned HTTP response code: $status for Menas URL:  $url ")
           }
         }
         content.getOrElse("")
-      }
-      finally {
+      } finally {
         response.close()
       }
-    }
-    catch {
+    } catch {
       case unAuthException: UnauthorizedException => throw unAuthException
-      case daoException: DaoException => throw daoException
+      case daoException: DaoException             => throw daoException
       case NonFatal(ex) =>
         log.error(s"Unable to connect to Menas endpoint via $url with error: ${ex.getMessage}")
         throw ex

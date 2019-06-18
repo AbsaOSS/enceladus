@@ -96,11 +96,10 @@ sap.ui.define([
       let fnSuccess = (result, status, xhr) => {
         let csrfToken = xhr.getResponseHeader("X-CSRF-TOKEN");
         localStorage.setItem("csrfToken", csrfToken);
-        GenericService.getOozieInfo();
         Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
           sap.ui.getCore().byId(this._appMasterId).setVisible(true);
-          this._router.navTo("runs");
+          this._router.navTo("home");
           this._eventBus.publish("nav", "login");
         });
       };

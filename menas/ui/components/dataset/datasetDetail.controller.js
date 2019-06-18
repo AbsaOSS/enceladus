@@ -17,10 +17,11 @@ sap.ui.define([
   "sap/ui/core/Fragment",
   "components/types/NonEmptyArrType",
   "components/validator/Validator",
-  "sap/m/MessageToast"
-], function (Controller, Fragment, NonEmptyArrType, Validator, MessageToast) {
+  "sap/m/MessageToast",
+  "./../external/it/designfuture/chartjs/library-preload"
+], function (Controller, Fragment, NonEmptyArrType, Validator, MessageToast, Openui5Chartjs) {
   "use strict";
-  
+
   return Controller.extend("components.dataset.datasetDetail", {
 
     /**
@@ -42,6 +43,8 @@ sap.ui.define([
       let cont = new ConformanceRuleDialog(this);
       let view = this.getView();
 
+      this.setDefaultMonitoringDateInterval();
+
       this._upsertConformanceRuleDialog = Fragment.load({
         id: view.getId(),
         name: "components.dataset.conformanceRule.upsert",
@@ -53,27 +56,26 @@ sap.ui.define([
       this._upsertConformanceRuleDialog = this.byId("upsertConformanceRuleDialog");
       this._editScheduleDialog = sap.ui.xmlfragment("components.dataset.schedule.editSchedule", this);
       sap.ui.getCore().getMessageManager().registerObject(this._editScheduleDialog, true);
-      
+
       new DatasetDialogFactory(this, Fragment.load).getEdit();
 
       const eventBus = sap.ui.getCore().getEventBus();
       eventBus.subscribe("datasets", "updated", this.onEntityUpdated, this);
       eventBus.subscribe("datasets", "updateFailed", this.onEntityUpdateFailed, this);
 
-      
       this._datasetService = new DatasetService(this._model, eventBus);
       this._mappingTableService = new MappingTableService(this._model, eventBus);
       this._schemaService = new SchemaService(this._model, eventBus)
       this._schemaTable = new SchemaTable(this)
-      
+
       this._validator = new Validator();
-      
+
       this.byId("datasetIconTabBar").attachSelect(oEv => {
         if(oEv.getParameter("selectedKey") === "schedule") {
           OozieService.getCoordinatorStatus();
         }
       });
-      
+
       // Cron time picker
       let cronTemplate = {
         "minute" : this._generateCronTemplateRange(0, 60),
@@ -82,10 +84,10 @@ sap.ui.define([
         "month": this._generateCronTemplateRange(1, 13),
         "dayOfWeek": this._generateCronTemplateRange(0, 7)
       }
-      
+
       this._model.setProperty("/cronFormTemplate", cronTemplate);
     },
-    
+
     _generateCronTemplateRange: function(iStart, iEnd) {
       return ["*", ...(_.range(iStart, iEnd, 1))].map(n => {
         return {
@@ -107,7 +109,7 @@ sap.ui.define([
       this._editScheduleDialog.setBusy(false);
       this._editScheduleDialog.close();
     },
-    
+
     onAddConformanceRulePress: function () {
       this._addRule()
     },
@@ -283,8 +285,13 @@ sap.ui.define([
     },
 
     tabSelect: function (oEv) {
-      if (oEv.getParameter("selectedKey") === "runs") {
-        this.fetchRuns();
+      switch (oEv.getParameter("selectedKey")) {
+        case "runs":
+          this.fetchRuns();
+          break;
+        case "monitoring":
+          this.updateMonitoringData();
+          break;
       }
     },
 
@@ -360,13 +367,13 @@ sap.ui.define([
 
       return sap.ui.xmlfragment(sId, sFragmentName, this);
     },
-    
+
     onScheduleEditPress: function(oEv) {
       this._editScheduleDialog.open();
       this._validator.clearAll(this._editScheduleDialog);
 
       const oCurrentDataset = this._model.getProperty("/currentDataset");
-      
+
       const oAuditModel = this.byId("auditTrailTable").getModel("auditTrail");
       const aAuditEntries = oAuditModel.getProperty("/entries").map(e => {
         return {
@@ -380,9 +387,9 @@ sap.ui.define([
           version: oCurrentDataset.version + 1
         }
       });
-      
+
       this._editScheduleDialog.setModel(new sap.ui.model.json.JSONModel({entries: aAuditEntries}), "versions");
-      
+
       const currSchedule = this._model.getProperty("/currentDataset/schedule");
       if(currSchedule) {
         this._model.setProperty("/newSchedule", jQuery.extend(true, {}, currSchedule));
@@ -390,7 +397,7 @@ sap.ui.define([
         this._model.setProperty("/newSchedule", jQuery.extend(true, {}, this._model.getProperty("/newScheduleDefault")));
       }
     },
-    
+
     onScheduleSave: function() {
       const newSchedule = this._model.getProperty("/newSchedule")
       if(!this._validator.validate(this._editScheduleDialog)) {
@@ -399,15 +406,76 @@ sap.ui.define([
         const oSchedule = this._model.getProperty("/newSchedule");
         let oDataset = this._model.getProperty("/currentDataset");
         oDataset.schedule = oSchedule;
-        
+
         this._datasetService.update(oDataset);
-        
+
         this._editScheduleDialog.setBusy(true).setBusyIndicatorDelay(0);
       }
     },
-    
+
     closeScheduleDialog: function() {
       this._editScheduleDialog.close();
+    },
+
+    // Monitoring related part
+
+    handleCalendarSelect: function(oEvent) {
+      var oCalendar = oEvent.getSource();
+      this._updateTimeInterval(oCalendar.getSelectedDates()[0]);
+    },
+
+    _updateTimeInterval: function(oSelectedDates) {
+      let oDate;
+      if (oSelectedDates) {
+        oDate = oSelectedDates.getStartDate();
+        if (oDate) {
+          this._model.setProperty("/monitoringDateFrom", Formatters.toStringInfoDate(oDate))
+        }
+        oDate = oSelectedDates.getEndDate();
+        if (oDate) {
+          this._model.setProperty("/monitoringDateTo", Formatters.toStringInfoDate(oDate))
+        }
+      }
+      this.updateMonitoringData()
+    },
+
+    updateMonitoringData: function () {
+      let monitoringDateFrom = this._model.getProperty("/monitoringDateFrom");
+      let monitoringDateTo = this._model.getProperty("/monitoringDateTo");
+      let datasetName = this._model.getProperty("/currentDataset/name");
+      if (monitoringDateFrom != undefined && monitoringDateTo != undefined && datasetName != undefined) {
+        MonitoringService.getData(datasetName, monitoringDateFrom, monitoringDateTo);
+      } else {
+        MonitoringService.clearMonitoringModel();
+      }
+    },
+
+    handleWeekNumberSelect: function(oEvent) {
+      let oDateRange = oEvent.getParameter("weekDays");
+      this._updateTimeInterval(oDateRange);
+    },
+
+    setDefaultMonitoringDateInterval: function () {
+      let oEnd = new Date();
+      let oStart = new Date(oEnd.getTime() - 14 * 24 * 60 * 60 * 1000); // Two weeks before today
+      let oCalendar = this.byId("calendar");
+      oCalendar.removeAllSelectedDates();
+      oCalendar.addSelectedDate(new sap.ui.unified.DateRange({startDate: oStart, endDate: oEnd}));
+      this._model.setProperty("/monitoringDateFrom", Formatters.toStringInfoDate(oStart));
+      this._model.setProperty("/monitoringDateTo", Formatters.toStringInfoDate(oEnd))
+    },
+
+    monitoringToRun: function (oEv) {
+      let oRow = oEv.getParameter("row");
+      let datasetName = this._model.getProperty("datasetName",oRow.getBindingContext());
+      let datasetVersion = this._model.getProperty("datasetVersion",oRow.getBindingContext());
+      let runId = this._model.getProperty("runId",oRow.getBindingContext());
+
+      this._router.navTo("runs", {
+        dataset: datasetName,
+        version: datasetVersion,
+        id: runId
+      });
     }
 
   });
