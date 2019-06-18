@@ -13,36 +13,40 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.auth
+package za.co.absa.enceladus.menas.auth.kerberos
 
+import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.FileSystemResource
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
+import org.springframework.security.core.AuthenticationException
 import org.springframework.security.kerberos.authentication.KerberosServiceAuthenticationProvider
 import org.springframework.security.kerberos.authentication.sun.SunJaasKerberosTicketValidator
 import org.springframework.security.kerberos.client.config.SunJaasKrb5LoginConfig
 import org.springframework.security.kerberos.client.ldap.KerberosLdapContextSource
 import org.springframework.security.kerberos.web.authentication.SpnegoAuthenticationProcessingFilter
-import org.springframework.security.kerberos.web.authentication.SpnegoEntryPoint
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider
-import org.springframework.security.ldap.search.FilterBasedLdapUserSearch
 import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper
 import org.springframework.security.ldap.userdetails.LdapUserDetailsService
+import org.springframework.security.web.authentication.AuthenticationFailureHandler
 import org.springframework.stereotype.Component
 
-import za.co.absa.enceladus.menas.ActiveDirectoryLdapAuthoritiesPopulator
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
+import za.co.absa.enceladus.menas.auth.MenasAuthentication
 
 @Component("kerberosMenasAuthentication")
-class KerberosMenasAuthentication() extends MenasAuthentication with InitializingBean {
+class MenasKerberosAuthentication extends MenasAuthentication with InitializingBean {
   @Value("${za.co.absa.enceladus.menas.auth.ad.domain:}")
   val adDomain: String = ""
   @Value("${za.co.absa.enceladus.menas.auth.ad.server:}")
   val adServer: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.sysuser.principal:}")
+  @Value("${za.co.absa.enceladus.menas.auth.servicename.principal:}")
   val servicePrincipal: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.sysuser.keytab.location:}")
+  @Value("${za.co.absa.enceladus.menas.auth.servicename.keytab.location:}")
   val keytabLocation: String = ""
   @Value("${za.co.absa.enceladus.menas.auth.ldap.search.base:}")
   val ldapSearchBase: String = ""
@@ -50,17 +54,26 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
   val ldapSearchFilter: String = ""
   @Value("${za.co.absa.enceladus.menas.auth.kerberos.debug:false}")
   val kerberosDebug: Boolean = false
+  @Value("${za.co.absa.enceladus.menas.auth.kerberos.krb5conf:}")
+  val krb5conf: String = ""
 
-  private lazy val requiredParameters = Seq((adDomain, "za.co.absa.enceladus.menas.auth.ad.domain"),
+  val logger = LoggerFactory.getLogger(this.getClass)
+
+  lazy val requiredParameters = Seq((adDomain, "za.co.absa.enceladus.menas.auth.ad.domain"),
     (adServer, "za.co.absa.enceladus.menas.auth.ad.server"),
-    (servicePrincipal, "za.co.absa.enceladus.menas.auth.sysuser.principal"),
-    (keytabLocation, "za.co.absa.enceladus.menas.auth.sysuser.keytab.location"),
+    (servicePrincipal, "za.co.absa.enceladus.menas.auth.servicename.principal"),
+    (keytabLocation, "za.co.absa.enceladus.menas.auth.servicename.keytab.location"),
     (ldapSearchBase, "za.co.absa.enceladus.menas.auth.ldap.search.base"),
     (ldapSearchFilter, "za.co.absa.enceladus.menas.auth.ldap.search.filter"))
 
-  override def afterPropertiesSet() = {
+  override def afterPropertiesSet() {
     System.setProperty("javax.net.debug", kerberosDebug.toString)
     System.setProperty("sun.security.krb5.debug", kerberosDebug.toString)
+
+    if (!krb5conf.isEmpty()) {
+      logger.info(s"Using KRB5 CONF from $krb5conf")
+      System.setProperty("java.security.krb5.conf", krb5conf)
+    }
   }
 
   private def validateParam(param: String, paramName: String) = {
@@ -81,16 +94,6 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
     prov
   }
 
-  private def spnegoEntryPoint() = {
-    new SpnegoEntryPoint("/login")
-  }
-
-  private def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager) = {
-    val filter = new SpnegoAuthenticationProcessingFilter()
-    filter.setAuthenticationManager(authenticationManager)
-    filter
-  }
-
   private def sunJaasKerberosTicketValidator() = {
     val ticketValidator = new SunJaasKerberosTicketValidator()
     ticketValidator.setServicePrincipal(servicePrincipal)
@@ -102,10 +105,11 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
 
   private def loginConfig() = {
     val loginConfig = new SunJaasKrb5LoginConfig()
-    loginConfig.setKeyTabLocation(new FileSystemResource(keytabLocation))
     loginConfig.setServicePrincipal(servicePrincipal)
+    loginConfig.setKeyTabLocation(new FileSystemResource(keytabLocation))
     loginConfig.setDebug(kerberosDebug)
     loginConfig.setIsInitiator(true)
+    loginConfig.setUseTicketCache(false)
     loginConfig.afterPropertiesSet()
     loginConfig
   }
@@ -113,12 +117,12 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
   private def kerberosLdapContextSource() = {
     val contextSource = new KerberosLdapContextSource(adServer)
     contextSource.setLoginConfig(loginConfig())
+    contextSource.afterPropertiesSet()
     contextSource
   }
 
   private def ldapUserDetailsService() = {
-    val userSearch = new FilterBasedLdapUserSearch(ldapSearchBase, ldapSearchFilter, kerberosLdapContextSource());
-
+    val userSearch = new KerberosLdapUserSearch(ldapSearchBase, ldapSearchFilter, kerberosLdapContextSource())
     val service = new LdapUserDetailsService(userSearch, new ActiveDirectoryLdapAuthoritiesPopulator());
     service.setUserDetailsMapper(new LdapUserDetailsMapper())
     service
@@ -131,10 +135,28 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
     provider
   }
 
-  override def configure(auth: AuthenticationManagerBuilder) {
+  override def configure(auth: AuthenticationManagerBuilder): Unit = {
     this.validateParams()
-    auth.authenticationProvider(kerberosServiceAuthenticationProvider())
+    val originalLogLevel = Logger.getRootLogger.getLevel
+    //something here changes the log level to WARN
+    auth
+      .authenticationProvider(new MenasKerberosAuthenticationProvider(adServer, ldapSearchFilter, ldapSearchBase))
       .authenticationProvider(activeDirectoryLdapAuthenticationProvider())
+      .authenticationProvider(kerberosServiceAuthenticationProvider())
+    Logger.getRootLogger.setLevel(originalLogLevel)
   }
+}
 
+object MenasKerberosAuthentication {
+  def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager): SpnegoAuthenticationProcessingFilter = {
+    val filter = new SpnegoAuthenticationProcessingFilter()
+    filter.setAuthenticationManager(authenticationManager)
+    filter.setSkipIfAlreadyAuthenticated(true)
+    filter.setFailureHandler(new AuthenticationFailureHandler {
+      override def onAuthenticationFailure(request: HttpServletRequest, response: HttpServletResponse, exception: AuthenticationException) = {
+        exception.printStackTrace()
+      }
+    })
+    filter
+  }
 }

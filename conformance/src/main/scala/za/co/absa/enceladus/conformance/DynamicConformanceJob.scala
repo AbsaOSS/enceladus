@@ -15,29 +15,36 @@
 
 package za.co.absa.enceladus.conformance
 
-import java.io.{PrintWriter, StringWriter}
-
-import org.apache.log4j.{LogManager, Logger}
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO, LoggedInUserInfo}
-import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
-import za.co.absa.atum.AtumImplicits._
-import com.typesafe.config.{Config, ConfigFactory}
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.text.MessageFormat
-
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import java.text.SimpleDateFormat
 
-import za.co.absa.atum.AtumImplicits
-import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
-
 import scala.util.control.NonFatal
+
+import org.apache.log4j.LogManager
+import org.apache.log4j.Logger
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.lit
+
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
+
+import za.co.absa.atum.AtumImplicits
+import za.co.absa.atum.AtumImplicits.DataSetWrapper
+import za.co.absa.atum.AtumImplicits.StringToPath
+import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.conformance.datasource.DataSource
+import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
-import za.co.absa.enceladus.menasplugin.MenasPlugin
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.EnceladusRestDAO
+import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
+import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object DynamicConformanceJob {
@@ -53,16 +60,12 @@ object DynamicConformanceJob {
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-    
-    spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
-    Atum.setAllowUnpersistOldDatasets(true) // Enable control framework performance optimization for pipeline-like jobs
-    MenasPlugin.enableMenas() // Enable Menas
-    import za.co.absa.spline.core.SparkLineageInitializer._ // Enable Spline
-    spark.enableLineageTracking()
+
     implicit val dao: EnceladusDAO = EnceladusRestDAO // use REST DAO
     implicit val enableCF: Boolean = true
-    val menasCredentials = cmd.menasCredentials
-    EnceladusRestDAO.postLogin(menasCredentials.username, menasCredentials.password)
+
+    EnceladusRestDAO.enceladusLogin(cmd.menasCredentials)
+
     // get the dataset definition
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     val dateTokens = cmd.reportDate.split("-")
@@ -73,9 +76,17 @@ object DynamicConformanceJob {
     // die before performing any computation if the output path already exists
     if (fsUtils.hdfsExists(publishPath)) {
       throw new IllegalStateException(
-        s"Path $publishPath already exists. Increment the run version, or delete $publishPath"
-      )
+        s"Path $publishPath already exists. Increment the run version, or delete $publishPath")
     }
+
+    import za.co.absa.spline.core.SparkLineageInitializer._ // Enable Spline
+    spark.enableLineageTracking()
+
+    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
+    spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
+    Atum.setAllowUnpersistOldDatasets(true) // Enable control framework performance optimization for pipeline-like jobs
+    MenasPlugin.enableMenas() // Enable Menas
+
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
     val stdDirSize = fsUtils.getDirectorySize(stdPath)
@@ -85,8 +96,7 @@ object DynamicConformanceJob {
     // perform the conformance
     val result: DataFrame = try {
       DynamicInterpreter.interpret(conformance, inputData, isExperimentalRuleEnabled(), enableCF)
-    }
-    catch {
+    } catch {
       case e: ValidationException =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, e.techDetails)
         throw e
@@ -128,7 +138,7 @@ object DynamicConformanceJob {
       .withColumn(infoVersionColumn, lit(cmd.reportVersion))
 
     val recordCount = result.lastCheckpointRowCount match {
-      case None => withPartCols.count
+      case None    => withPartCols.count
       case Some(p) => p
     }
 
@@ -145,7 +155,7 @@ object DynamicConformanceJob {
     val publishDirSize = fsUtils.getDirectorySize(publishPath)
     performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "conform",
-      stdPath, publishPath, LoggedInUserInfo.getUserName)
+      stdPath, publishPath, EnceladusRestDAO.userName)
 
     withPartCols.writeInfoFile(publishPath)
     cmd.performanceMetricsFile.foreach(fileName => {
@@ -158,9 +168,9 @@ object DynamicConformanceJob {
   }
 
   def buildPublishPath(infoDateCol: String,
-                       infoVersionCol: String,
-                       cmd: CmdConfig,
-                       ds: Dataset): String = {
+      infoVersionCol: String,
+      cmd: CmdConfig,
+      ds: Dataset): String = {
     (cmd.publishPathOverride, cmd.folderPrefix) match {
       case (None, None) =>
         s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=${cmd.reportVersion}"

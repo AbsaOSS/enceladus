@@ -15,30 +15,41 @@
 
 package za.co.absa.enceladus.standardization
 
-import java.io.{PrintWriter, StringWriter}
-
-import org.apache.spark.sql._
-import org.apache.spark.sql.types.{StructField, StructType}
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.validation.ValidationException
-import za.co.absa.enceladus.utils.error.UDFLibrary
-import za.co.absa.enceladus.dao.{EnceladusRestDAO, LoggedInUserInfo}
-import com.typesafe.config.{Config, ConfigFactory}
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.text.MessageFormat
 import java.util.UUID
 
-import org.apache.log4j.{LogManager, Logger}
-import za.co.absa.atum.AtumImplicits._
-import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
-
 import scala.util.control.NonFatal
+
+import org.apache.log4j.LogManager
+import org.apache.log4j.Logger
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.DataFrameReader
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.StructType
+
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
+
 import za.co.absa.atum.AtumImplicits
-import za.co.absa.enceladus.menasplugin.MenasPlugin
+import za.co.absa.atum.AtumImplicits.DataSetWrapper
+import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.dao.EnceladusRestDAO
+import za.co.absa.enceladus.dao.UnauthorizedException
+import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
+import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
+import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.utils.error.UDFLibrary
+import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
+import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.utils.validation.ValidationException
 
 object StandardizationJob {
 
@@ -50,11 +61,17 @@ object StandardizationJob {
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
 
-    import spark.implicits._
     implicit val udfLib: UDFLibrary = new UDFLibrary
 
     val menasCredentials = cmd.menasCredentials
-    EnceladusRestDAO.postLogin(menasCredentials.username, menasCredentials.password)
+    menasCredentials match {
+      case Some(creds) => creds match {
+        case Left(userPassCreds: MenasCredentials) => EnceladusRestDAO.postLogin(userPassCreds.username, userPassCreds.password)
+        case Right(keytabLocation: String)         => EnceladusRestDAO.spnegoLogin(keytabLocation)
+      }
+      case None => UnauthorizedException("Menas credentials have to be provided")
+    }
+
     val dataset = EnceladusRestDAO.getDataset(cmd.datasetName, cmd.datasetVersion)
     val schema: StructType = EnceladusRestDAO.getSchema(dataset.schemaName, dataset.schemaVersion)
     val dateTokens = cmd.reportDate.split("-")
@@ -70,16 +87,20 @@ object StandardizationJob {
     if (fsUtils.hdfsExists(stdPath)) {
       throw new IllegalStateException(s"Path $stdPath already exists. Increment the run version, or delete $stdPath")
     }
+
+    // init spline
+    import za.co.absa.spline.core.SparkLineageInitializer._
+    spark.enableLineageTracking()
+
     // init CF
-    spark.enableControlMeasuresTracking(s"$path/_INFO")
-      .setControlMeasuresWorkflow("Standardization")
+    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
+    spark.enableControlMeasuresTracking(s"$path/_INFO").setControlMeasuresWorkflow("Standardization")
+    
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true)
-    // init spline
-    import za.co.absa.spline.core.SparkLineageInitializer._
-    spark.enableLineageTracking()
+
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, path)
@@ -118,8 +139,7 @@ object StandardizationJob {
     }
   }
 
-  private def prepareDataFrame(schema: StructType, cmd: CmdConfig, path: String)
-                              (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils): DataFrame = {
+  private def prepareDataFrame(schema: StructType, cmd: CmdConfig, path: String)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils): DataFrame = {
     val dfReaderConfigured = readerFormatSpecific(spark.read.format(cmd.rawFormat), cmd)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
@@ -131,10 +151,10 @@ object StandardizationJob {
   }
 
   private def executeStandardization(performance: PerformanceMeasurer,
-      dfAll: DataFrame, 
+      dfAll: DataFrame,
       schema: StructType,
-      cmd: CmdConfig, 
-      path: String, 
+      cmd: CmdConfig,
+      path: String,
       stdPath: String)(implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
     val rawDirSize: Long = fsUtils.getDirectorySize(path)
     performance.startMeasurement(rawDirSize)
@@ -179,12 +199,11 @@ object StandardizationJob {
       cmd.csvDelimiter.foreach(deLimiter => Atum.setAdditionalInfo("csv_delimiter" -> deLimiter))
     }
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", path, stdPath,
-      LoggedInUserInfo.getUserName)
+      EnceladusRestDAO.userName)
     stdRenameSourceColumns.writeInfoFile(stdPath)
   }
 
-  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)
-                              (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
+  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
     if (fsUtils.isNonSplittable(path)) {
       convertToSplittable(df, path, schema)
     } else {
@@ -192,8 +211,7 @@ object StandardizationJob {
     }
   }
 
-  private def convertToSplittable(df: DataFrame, path: String, schema: StructType)
-                                 (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
+  private def convertToSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
     log.warn("Dataset is stored in a non-splittable format. This can have a severe performance impact.")
 
     val tempParquetDir = s"/tmp/nonsplittable-to-parquet-${UUID.randomUUID()}"

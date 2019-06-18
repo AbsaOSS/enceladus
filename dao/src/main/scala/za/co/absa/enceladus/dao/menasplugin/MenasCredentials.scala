@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menasplugin
+package za.co.absa.enceladus.dao.menasplugin
 
 import java.io.File
 

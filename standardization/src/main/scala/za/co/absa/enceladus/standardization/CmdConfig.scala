@@ -15,35 +15,37 @@
 
 package za.co.absa.enceladus.standardization
 
-import java.io.File
-
-import scopt.OptionParser
-import za.co.absa.enceladus.menasplugin.MenasCredentials
-
 import scala.util.matching.Regex
+
 import org.apache.spark.sql.SparkSession
 
+import scopt.OptionParser
+import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
+import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+
 /**
-  * This is a class for configuration provided by the command line parameters
-  *
-  * Note: scopt requires all fields to have default values.
-  * Even if a field is mandatory it needs a default value.
-  */
+ * This is a class for configuration provided by the command line parameters
+ *
+ * Note: scopt requires all fields to have default values.
+ * Even if a field is mandatory it needs a default value.
+ */
 case class CmdConfig(datasetName: String = "",
-                     datasetVersion: Int = 1,
-                     reportDate: String = "",
-                     reportVersion: Int = 1,
-                     rawFormat: String = "xml",
-                     menasCredentials: MenasCredentials = MenasCredentials("", ""),
-                     rowTag: Option[String] = None,
-                     csvDelimiter: Option[String] = None,
-                     csvHeader: Option[Boolean] = Some(false),
-                     fixedWidthTrimValues: Option[Boolean] = Some(false),
-                     performanceMetricsFile: Option[String] = None,
-                     rawPathOverride: Option[String] = None,
-                     folderPrefix: Option[String] = None)
+    datasetVersion: Int = 1,
+    reportDate: String = "",
+    reportVersion: Int = 1,
+    rawFormat: String = "xml",
+    menasCredentials: Option[Either[MenasCredentials, CmdConfig.KeytabLocation]] = None,
+    rowTag: Option[String] = None,
+    csvDelimiter: Option[String] = None,
+    csvHeader: Option[Boolean] = Some(false),
+    fixedWidthTrimValues: Option[Boolean] = Some(false),
+    performanceMetricsFile: Option[String] = None,
+    rawPathOverride: Option[String] = None,
+    folderPrefix: Option[String] = None)
 
 object CmdConfig {
+
+  type KeytabLocation = String
 
   def getCmdLineArguments(args: Array[String])(implicit spark: SparkSession): CmdConfig = {
     val parser = new CmdParser("spark-submit [spark options] StandardizationBundle.jar")
@@ -57,6 +59,8 @@ object CmdConfig {
   }
 
   private class CmdParser(programName: String)(implicit spark: SparkSession) extends OptionParser[CmdConfig](programName) {
+    private val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+
     head("\nStandardization", "")
     var rawFormat: Option[String] = None
 
@@ -75,17 +79,32 @@ object CmdConfig {
       .validate(value =>
         reportDateMatcher.findFirstIn(value) match {
           case None => failure(s"Match error in '$value'. Option --report-date expects a date in 'yyyy-MM-dd' format")
-          case _ => success
-        }
-      )
+          case _    => success
+        })
 
-    opt[String]("menas-credentials-file").required().action((path, config) =>
-      config.copy(menasCredentials = MenasCredentials.fromFile(path)))
-      .text("Path to Menas credentials config file. Suitable only for client mode")
-      .validate(path =>
-        if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
-        else failure("Credentials file does not exist. Make sure you are running in client mode")
-      )
+    private var credsFile: Option[String] = None
+    private var keytabFile: Option[String] = None
+    opt[String]("menas-credentials-file").hidden.optional().action({ (path, config) =>
+      val credential = Left(MenasCredentials.fromFile(path))
+      credsFile = Some(path)
+      config.copy(menasCredentials = Some(credential))
+    }).text("Path to Menas credentials config file.").validate(path =>
+      if (keytabFile.isDefined) failure("Only one authentication method is allowed at a time")
+      else if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
+      else failure("Credentials file does not exist. Make sure you are running in client mode"))
+
+    opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
+      keytabFile = Some(file)
+      if(!fsUtils.localExists(file) && fsUtils.hdfsExists(file)) {
+        config.copy(menasCredentials = Some(Right(fsUtils.hdfsFileToLocalTempFile(file))))
+      } else {
+      config.copy(menasCredentials = Some(Right(file)))
+      }
+    }).text("Path to keytab file used for authenticating to menas").validate({ file =>
+      if (credsFile.isDefined) failure("Only one authentication method is allowed at a time")
+      else if(fsUtils.exists(file)) success
+      else failure("Keytab file doesn't exist")
+    })
 
     opt[Int]('r', "report-version").action((value, config) =>
       config.copy(reportVersion = value)).text("Report version")
@@ -104,8 +123,7 @@ object CmdConfig {
         if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("xml"))
           success
         else
-          failure("The --row-tag option is supported only for XML raw data format")
-      )
+          failure("The --row-tag option is supported only for XML raw data format"))
 
     opt[String]("delimiter").optional().action((value, config) =>
       config.copy(csvDelimiter = Some(value))).text("use the specific delimiter instead of ',' for CSV format")
@@ -113,8 +131,7 @@ object CmdConfig {
         if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
           success
         else
-          failure("The --delimiter option is supported only for CSV raw data format")
-      )
+          failure("The --delimiter option is supported only for CSV raw data format"))
     // no need for validation for boolean since scopt itself will do
     opt[Boolean]("header").optional().action((value, config) =>
       config.copy(csvHeader = Some(value))).text("use the header option to consider CSV header")
@@ -122,16 +139,14 @@ object CmdConfig {
         if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
           success
         else
-          failure("The --header option is supported only for CSV ")
-      )
+          failure("The --header option is supported only for CSV "))
     opt[Boolean]("trimValues").optional().action((value, config) =>
       config.copy(fixedWidthTrimValues = Some(value))).text("use --trimValues option to trim values in  fixed width file")
       .validate(value =>
         if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("fixed-width"))
           success
         else
-          failure("The --trimValues option is supported only for fixed-width files ")
-      )
+          failure("The --trimValues option is supported only for fixed-width files "))
 
     opt[String]("performance-file").optional().action((value, config) =>
       config.copy(performanceMetricsFile = Some(value))).text("produce a performance metrics file at the given location (local filesystem)")
