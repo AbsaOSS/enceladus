@@ -31,12 +31,12 @@ sap.ui.define([
       new SchemaDialogFactory(this, Fragment.load).getAdd();
 
       this._schemaService = new SchemaService(this._model, this._eventBus)
-      this._schemaService.getSearchSuggestions(this._model, "schema")
       this._searchField = this.byId("schemaSearchField")
     },
 
     list: function () {
       this._schemaService.getList(this.byId("masterPage"));
+      this._schemaService.getSearchSuggestions(this._model, "schema")
     },
 
     onSearch: function(oEv) {

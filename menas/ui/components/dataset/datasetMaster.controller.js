@@ -31,13 +31,12 @@ sap.ui.define([
       new DatasetDialogFactory(this, Fragment.load).getAdd();
 
       this._datasetService = new DatasetService(this._model, this._eventBus)
-
-      this._datasetService.getSearchSuggestions(this._model, "dataset")
       this._searchField = this.byId("datasetSearchField")
     },
 
     list: function () {
       this._datasetService.getList(this.byId("masterPage"));
+      this._datasetService.getSearchSuggestions(this._model, "dataset")
     },
 
     onSearch: function(oEv) {

@@ -31,12 +31,12 @@ sap.ui.define([
       new MappingTableDialogFactory(this, Fragment.load).getAdd();
 
       this._mappingTableService = new MappingTableService(this._model, this._eventBus)
-      this._mappingTableService.getSearchSuggestions(this._model, "mappingTable")
       this._searchField = this.byId("mappingTableSearchField")
     },
 
     list: function () {
-      this._mappingTableService.getList(this.byId("masterPage"));
+      this._mappingTableService.getList(this.byId("masterPage"));      
+      this._mappingTableService.getSearchSuggestions(this._model, "mappingTable")
     },
 
     onSearch: function(oEv) {
