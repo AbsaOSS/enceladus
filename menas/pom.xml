@@ -147,6 +147,12 @@
             <artifactId>spring-security-kerberos-client</artifactId>
             <version>${spring.kerberos.version}</version>
         </dependency>
+        <!-- Hadoop -->
+        <dependency>
+            <groupId>org.apache.htrace</groupId>
+            <artifactId>htrace-core</artifactId>
+            <version>${htrace.version}</version>
+        </dependency>
         <!-- Application -->
         <dependency>
             <groupId>za.co.absa</groupId>
