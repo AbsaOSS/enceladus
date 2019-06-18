@@ -305,29 +305,53 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>com.github.eirslett</groupId>
+                        <artifactId>frontend-maven-plugin</artifactId>
+                        <version>1.7.6</version>
+                        <executions>
+                            <execution>
+                                <id>install node and npm</id>
+                                <goals>
+                                    <goal>install-node-and-npm</goal>
+                                </goals>
+                                <phase>generate-resources</phase>
+                            </execution>
+                            <execution>
+                                <id>install grunt-openui5</id>
+                                <goals>
+                                    <goal>npm</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>install grunt grunt-cli grunt-openui5 --save-dev</arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>generate preload</id>
+                                <goals>
+                                    <goal>grunt</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>openui5_preload</arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <workingDirectory>ui</workingDirectory>
+                            <nodeVersion>v10.16.0</nodeVersion>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
                         <version>${maven.ant.plugin.version}</version>
                         <executions>
                             <execution>
-                                <id>generateComponentPreload</id>
-                                <phase>compile</phase>
+                                <id>Clean up after generating component preload</id>
+                                <phase>generate-resources</phase>
                                 <configuration>
                                     <target>
-                                        <exec dir="${project.basedir}/ui" executable="npm">
-                                            <arg value="install" />
-                                            <arg value="grunt" />
-                                            <arg value="--save-dev" />
-                                        </exec>
-                                        <exec dir="${project.basedir}/ui" executable="npm">
-                                            <arg value="install" />
-                                            <arg value="grunt-openui5" />
-                                            <arg value="--save-dev" />
-                                        </exec>
-                                        <exec dir="${project.basedir}/ui" executable="grunt">
-                                            <arg value="openui5_preload" />
-                                        </exec>
-                                        <delete dir="${project.basedir}/ui/node_modules"/>
+                                        <delete dir="${project.basedir}/ui/node_modules" />
+                                        <delete dir="${project.basedir}/ui/node" />
                                     </target>
                                 </configuration>
                                 <goals>
@@ -340,5 +364,4 @@
             </build>
         </profile>
     </profiles>
-
 </project>
