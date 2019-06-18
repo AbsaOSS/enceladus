@@ -48,7 +48,10 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       Aggregates.group("$name"),
       Aggregates.count("distinctCount"))
 
-    collection.aggregate[Document](pipeline).toFuture().map(count => if(count.isEmpty) 0 else count.head("distinctCount").asNumber().intValue())
+    collection.aggregate[Document](pipeline).toFuture().map({count =>
+      if(count.isEmpty) 0
+      else count.head("distinctCount").asNumber().intValue()
+    })
   }
 
   def getLatestVersions(): Future[Seq[VersionedSummary]] = {
