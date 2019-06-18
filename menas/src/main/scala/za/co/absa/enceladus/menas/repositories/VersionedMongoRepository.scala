@@ -18,6 +18,7 @@ package za.co.absa.enceladus.menas.repositories
 import java.time.ZonedDateTime
 
 import org.mongodb.scala._
+import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
@@ -41,12 +42,21 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
   private def getParent(oldEntity: C): MenasReference = {
     MenasReference(collection = Some(collectionBaseName), name = oldEntity.name, version = oldEntity.version)
   }
-  
+
+  def distinctCount(): Future[Int] = {
+    val pipeline = Seq(filter(getNotDisabledFilter),
+      Aggregates.group("$name"),
+      Aggregates.count("distinctCount"))
+
+    collection.aggregate[Document](pipeline).toFuture().map({count =>
+      if(count.isEmpty) 0
+      else count.head("distinctCount").asNumber().intValue()
+    })
+  }
+
   def getLatestVersions(): Future[Seq[VersionedSummary]] = {
-    val pipeline = Seq(
-      filter(getNotDisabledFilter),
-      Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
-    )
+    val pipeline = Seq(filter(getNotDisabledFilter),
+      Aggregates.group("$name", Accumulators.max("latestVersion", "$version")))
     collection.aggregate[VersionedSummary](pipeline).toFuture()
   }
 
@@ -55,16 +65,14 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
   }
 
   def getLatestVersionValue(name: String): Future[Option[Int]] = {
-    val pipeline = Seq(
-      filter(getNameFilter(name)),
+    val pipeline = Seq(filter(getNameFilter(name)),
       filter(getNotDisabledFilter),
-      Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
-    )
+      Aggregates.group("$name", Accumulators.max("latestVersion", "$version")))
     collection.aggregate[VersionedSummary](pipeline).headOption().map(_.map(_.latestVersion))
   }
 
   def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {
-    val filter = if(inclDisabled) getNameFilter(name) else getNameFilterEnabled(name)
+    val filter = if (inclDisabled) getNameFilter(name) else getNameFilterEnabled(name)
     collection.find(filter).toFuture()
   }
 
@@ -72,25 +80,27 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     super.create(item
       .setCreatedInfo(username)
       .setUpdatedInfo(username)
-      .asInstanceOf[C]
-    )
+      .asInstanceOf[C])
   }
 
   def update(username: String, updated: C): Future[C] = {
     for {
       latestVersion <- getLatestVersionValue(updated.name)
-      newVersion <- if(latestVersion.isEmpty) throw new NotFoundException()
-           else if(latestVersion.get != updated.version) throw new EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.") 
-           else Future.successful(latestVersion.get + 1)
+      newVersion <- if (latestVersion.isEmpty) {
+        throw NotFoundException()
+      } else if (latestVersion.get != updated.version) {
+        throw EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.")
+      } else {
+        Future.successful(latestVersion.get + 1)
+      }
       newInfo <- Future.successful(updated.setUpdatedInfo(username).setVersion(newVersion).setParent(Some(getParent(updated))).asInstanceOf[C])
       res <- collection.insertOne(newInfo).toFuture()
     } yield newInfo
-    
+
   }
 
   def disableVersion(name: String, version: Option[Int], username: String): Future[UpdateResult] = {
-    collection.updateMany(getNameVersionFilter(name, version), combine(
-      set("disabled", true),
+    collection.updateMany(getNameVersionFilter(name, version), combine(set("disabled", true),
       set("dateDisabled", ZonedDateTime.now()),
       set("userDisabled", username))).toFuture()
   }

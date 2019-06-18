@@ -42,6 +42,11 @@ sap.ui.define([
               target: ""
             },
             {
+              name: "home",
+              pattern: "home",
+              target: "home"
+            },
+            {
               name: "login",
               pattern: "login",
               target: "login"
@@ -72,6 +77,11 @@ sap.ui.define([
               viewName: "components.login.loginDetail",
               viewLevel: 0,
               viewId: "loginDetailView"
+            },
+            home: {
+              viewName: "components.home.landingPage",
+              viewLevel: 1,
+              viewId: "landingPage"              
             },
             runs: {
               viewName: "components.run.runDetail",

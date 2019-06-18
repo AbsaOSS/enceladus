@@ -15,6 +15,7 @@
 
 var model = new sap.ui.model.json.JSONModel({
   userInfo: {},
+  landingPageInfo: {},
   schemas: [],
   mappingTables: [],
   currentSchema: {},

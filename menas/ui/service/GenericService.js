@@ -19,7 +19,8 @@ var GenericService = new function () {
   let model = sap.ui.getCore().getModel();
 
   let eventBus = sap.ui.getCore().getEventBus();
-
+  const restClient = new RestClient();
+  
   this.getUserInfo = function () {
     let fnSuccess = (oInfo) => {
       model.setProperty("/userInfo", oInfo)
@@ -31,7 +32,15 @@ var GenericService = new function () {
       async: false
     })
   };
-  
+
+  this.getLandingPageInfo = function() {
+    RestClient.get("api/landing/info").then((oData) => {
+      model.setProperty("/landingPageInfo", oData);
+    }).fail(() => {
+      sap.m.MessageBox.error("Failed to load landing page information");
+    })
+  };
+
   this.getOozieInfo = function() {
     Functions.ajax("api/oozie/isEnabled", "GET", {}, oData => {
       model.setProperty("/appInfo/oozie/isEnabled", oData);

@@ -57,6 +57,13 @@
 
     <script>
         sap.ui.localResources("components");
+        
+        // register TNT icons
+        sap.ui.core.IconPool.registerFont({
+          collectionName: "SAP-icons-TNT",
+          fontFamily: "SAP-icons-TNT", 
+          fontURI: sap.ui.require.toUrl("sap/tnt/themes/base/fonts"),
+          lazy: true});
 
         var component = new sap.ui.core.ComponentContainer("MenasComponent", {
             name: "components",
