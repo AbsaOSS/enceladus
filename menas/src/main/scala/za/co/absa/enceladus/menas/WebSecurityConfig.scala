@@ -42,7 +42,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import za.co.absa.enceladus.menas.auth.InMemoryMenasAuthentication
 import za.co.absa.enceladus.menas.auth.MenasAuthentication
-import za.co.absa.enceladus.menas.auth.kerberos.KerberosMenasAuthentication
+import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication
 
 @EnableWebSecurity
 class WebSecurityConfig {
@@ -101,7 +101,7 @@ class WebSecurityConfig {
           .deleteCookies("JSESSIONID")
           .invalidateHttpSession(true)
         .and
-        .addFilterBefore(KerberosMenasAuthentication.spnegoAuthenticationProcessingFilter(authenticationManagerBean), classOf[UsernamePasswordAuthenticationFilter])
+        .addFilterBefore(MenasKerberosAuthentication.spnegoAuthenticationProcessingFilter(authenticationManagerBean), classOf[UsernamePasswordAuthenticationFilter])
     }
 
     @Bean
@@ -121,7 +121,7 @@ class WebSecurityConfig {
         }
         case "kerberos" => {
           logger.info("Using Kerberos Menas Authentication")
-          beanFactory.getBean(classOf[KerberosMenasAuthentication])
+          beanFactory.getBean(classOf[MenasKerberosAuthentication])
         }
         case _ => {
           throw new IllegalArgumentException("Invalid authentication mechanism - use one of: inmemory, kerberos")

@@ -39,7 +39,7 @@ import javax.servlet.http.HttpServletResponse
 import za.co.absa.enceladus.menas.auth.MenasAuthentication
 
 @Component("kerberosMenasAuthentication")
-class KerberosMenasAuthentication() extends MenasAuthentication with InitializingBean {
+class MenasKerberosAuthentication extends MenasAuthentication with InitializingBean {
   @Value("${za.co.absa.enceladus.menas.auth.ad.domain:}")
   val adDomain: String = ""
   @Value("${za.co.absa.enceladus.menas.auth.ad.server:}")
@@ -147,7 +147,7 @@ class KerberosMenasAuthentication() extends MenasAuthentication with Initializin
   }
 }
 
-object KerberosMenasAuthentication {
+object MenasKerberosAuthentication {
   def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager): SpnegoAuthenticationProcessingFilter = {
     val filter = new SpnegoAuthenticationProcessingFilter()
     filter.setAuthenticationManager(authenticationManager)
