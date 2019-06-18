@@ -89,7 +89,7 @@ object CmdConfig {
       credsFile = Some(path)
       config.copy(menasCredentials = Some(credential))
     }).text("Path to Menas credentials config file.").validate(path =>
-      if (keytabFile.isDefined) failure("Only one authentication method is allow at a time")
+      if (keytabFile.isDefined) failure("Only one authentication method is allowed at a time")
       else if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
       else failure("Credentials file does not exist. Make sure you are running in client mode"))
 

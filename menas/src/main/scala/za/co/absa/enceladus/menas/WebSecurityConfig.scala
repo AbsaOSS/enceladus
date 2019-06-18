@@ -106,7 +106,7 @@ class WebSecurityConfig {
 
     @Bean
     def spnegoEntryPoint(): SpnegoEntryPoint = {
-      new SpnegoEntryPoint("/api/login");
+      new SpnegoEntryPoint("/api/login")
     }
 
     override def configure(auth: AuthenticationManagerBuilder) {
