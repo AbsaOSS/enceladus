@@ -50,7 +50,7 @@ Ensure the properties there fit your environment.
 - Without tests: `mvn clean package -DskipTests `
 - With unit tests: `mvn clean package`
 - With integration tests: `mvn clean package -Pintegration`
-- With component preload file generated (requires npm):  `mvn clean package -PgenerateComponentPreload`
+- With component preload file generated: `mvn clean package -PgenerateComponentPreload`
 
 ## <a name="run"/>How to run
 #### Menas requirements:
