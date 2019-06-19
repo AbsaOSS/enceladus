@@ -19,13 +19,13 @@ class SchemaTable {
     this._oController = oController;
     this._schemaTable = oController.byId("schemaFieldsTreeTable");
     oController.byId("metadataButton").attachPress(this.metadataPress, this);
-    this._oMessageTemplate = new sap.m.MessageItem({
-      title: '{key}',
-      subtitle: '{value}',
-      type: sap.ui.core.MessageType.None
-    });
 
-    this._oMessagePopover = new sap.m.MessagePopover();
+    this._oPopoverTemplate = new sap.m.List({})
+    this._oPopover = new sap.m.Popover({
+      title: "Metadata",
+      content: [this._oPopoverTemplate],
+      placement: sap.m.PlacementType.Left
+    });
   }
 
   get schemaTable() {
@@ -53,16 +53,16 @@ class SchemaTable {
     const model = this.oController.byId("schemaFieldsTreeTable").getModel("schema");
     let arrMeta = Formatters.objToKVArray(model.getProperty(binding));
     model.setProperty(bindingArr, arrMeta);
-    this._oMessagePopover.setModel(model);
-    this._oMessagePopover.bindAggregation("items", {
+    this._oPopoverTemplate.setModel(model);
+    this._oPopoverTemplate.bindItems({
       path: bindingArr,
-      template: this._oMessageTemplate,
+      template: new sap.m.StandardListItem({
+        title: "{key}",
+        info: "{value}"
+      })
     });
-    
-    if(this._oMessagePopover.isOpen()) {
-      this._oMessagePopover.close();
-    }
-    this._oMessagePopover.openBy(oEv.getSource());
+
+    this._oPopover.openBy(oEv.getSource());
   }
 
 }
