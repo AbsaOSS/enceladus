@@ -113,8 +113,9 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     if (prop == null || prop.isEmpty) {
       logger.warn(s"Oozie support disabled. Missing required configuration property $propName")
       false
+    } else {
+      true
     }
-    true
   }
 
   private def initializeJars() {
