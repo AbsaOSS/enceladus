@@ -13,15 +13,24 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas
-
-import org.springframework.context.annotation.Configuration
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
-
-@Configuration
-class MvcConfig extends WebMvcConfigurer {
-  def addViewControllers(registry: ViewControllerRegistry) {
-    registry.addViewController("/login").setViewName("login")
-  }
+module.exports = function(grunt) {
+  // Project configuration.
+  grunt.initConfig({
+    pkg: grunt.file.readJSON('package.json'),
+    openui5_preload: {
+      component: {
+        options: {
+          resources: {
+            cwd: '',
+            prefix: '',
+            src: ['components/**/*.js', 'components/**/*.fragment.xml', 'components/**/*.view.xml']
+          },
+          dest: '',
+          compress: true
+        },
+        components: true
+      }
+    }
+  });
+  grunt.loadNpmTasks('grunt-openui5');
 }
