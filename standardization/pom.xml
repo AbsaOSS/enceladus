@@ -108,6 +108,11 @@
             <artifactId>enceladus-fixedWidth</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>za.co.absa.cobrix</groupId>
+            <artifactId>spark-cobol</artifactId>
+            <version>${cobrix.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

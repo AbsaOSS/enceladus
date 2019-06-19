@@ -129,13 +129,26 @@ object StandardizationJob {
       val dfReader1 = if (cmd.rowTag.isDefined) dfReader.option("rowTag", cmd.rowTag.get) else dfReader
       val dfReader2 = if (cmd.csvDelimiter.isDefined) dfReader1.option("delimiter", cmd.csvDelimiter.get) else dfReader1
       val dfReader3 = if (cmd.csvHeader.isDefined) dfReader2.option("header", cmd.csvHeader.get) else dfReader2
-      dfReader3
+      val dfReader4 = if (cmd.rawFormat.equalsIgnoreCase("cobol")) applyCobolOptions(dfReader3, cmd) else dfReader3
+      dfReader4
     }
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
       val dfReader5 = if (cmd.fixedWidthTrimValues.get) dfReader4.option("trimValues", "true") else dfReader4
       dfReader5
     } else {
       dfReader4
+    }
+  }
+
+  private def applyCobolOptions(dfReader: DataFrameReader, cmd: CmdConfig): DataFrameReader = {
+    cmd.cobolOptions match {
+      case Some(opt) =>
+        dfReader
+          .option("copybook", opt.copybook)
+          .option("is_xcom", opt.isXcom)
+      case None =>
+        throw new IllegalArgumentException("A copybook location is not specified. Please use '--copybook' " +
+          "to specify a copybook location.")
     }
   }
 
