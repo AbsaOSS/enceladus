@@ -38,6 +38,7 @@ sap.ui.define([
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
 
       GenericService.getUserInfo();
+      GenericService.getOozieInfo();
       
       this._router.getRoute("root").attachMatched((oEvent) => {
         let userInfo = sap.ui.getCore().getModel().getProperty("/userInfo");
@@ -60,11 +61,8 @@ sap.ui.define([
         let userInfo = this._model.getProperty("/userInfo");
         if (typeof userInfo.username === 'undefined') {
           this._router.navTo("login");
-        } else {
-          GenericService.getOozieInfo();
         }
       });
-      
     },
 
     handleMenuPress: function (oEv) {

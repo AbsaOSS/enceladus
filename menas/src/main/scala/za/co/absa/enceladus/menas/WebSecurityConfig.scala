@@ -82,7 +82,8 @@ class WebSecurityConfig {
         .and()
         .authorizeRequests()
           .antMatchers("/index.html", "/resources/**", "/generic/**",
-            "/service/**", "/webjars/**", "/css/**", "/components/**")
+            "/service/**", "/webjars/**", "/css/**", "/components/**", 
+            "/api/oozie/isEnabled")
           .permitAll()
         .anyRequest()
           .authenticated()
