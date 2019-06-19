@@ -19,6 +19,13 @@ class SchemaTable {
     this._oController = oController;
     this._schemaTable = oController.byId("schemaFieldsTreeTable");
     oController.byId("metadataButton").attachPress(this.metadataPress, this);
+    this._oMessageTemplate = new sap.m.MessageItem({
+      title: '{key}',
+      subtitle: '{value}',
+      type: sap.ui.core.MessageType.None
+    });
+
+    this._oMessagePopover = new sap.m.MessagePopover();
   }
 
   get schemaTable() {
@@ -46,21 +53,16 @@ class SchemaTable {
     const model = this.oController.byId("schemaFieldsTreeTable").getModel("schema");
     let arrMeta = Formatters.objToKVArray(model.getProperty(binding));
     model.setProperty(bindingArr, arrMeta);
-
-    let oMessageTemplate = new sap.m.MessageItem({
-      title: '{key}',
-      subtitle: '{value}',
-      type: sap.ui.core.MessageType.None
+    this._oMessagePopover.setModel(model);
+    this._oMessagePopover.bindAggregation("items", {
+      path: bindingArr,
+      template: this._oMessageTemplate,
     });
-
-    let oMessagePopover = new sap.m.MessagePopover({
-      items: {
-        path: bindingArr,
-        template: oMessageTemplate
-      }
-    }).setModel(model);
-
-    oMessagePopover.toggle(oEv.getSource());
+    
+    if(this._oMessagePopover.isOpen()) {
+      this._oMessagePopover.close();
+    }
+    this._oMessagePopover.openBy(oEv.getSource());
   }
 
 }
