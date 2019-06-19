@@ -47,22 +47,29 @@ class SchemaTable {
   }
 
   metadataPress(oEv) {
-    let binding = oEv.getSource().getBindingContext("schema").getPath() + "/metadata";
-    let bindingArr = binding + "Arr";
-    //hmm bindAggregation doesn't take formatter :-/
-    const model = this.oController.byId("schemaFieldsTreeTable").getModel("schema");
-    let arrMeta = Formatters.objToKVArray(model.getProperty(binding));
-    model.setProperty(bindingArr, arrMeta);
-    this._oPopoverTemplate.setModel(model);
-    this._oPopoverTemplate.bindItems({
-      path: bindingArr,
-      template: new sap.m.StandardListItem({
-        title: "{key}",
-        info: "{value}"
-      })
-    });
-
-    this._oPopover.openBy(oEv.getSource());
+    const bOpen = this._oPopover.isOpen();
+    const oSrc = oEv.getSource();
+    if(bOpen) {
+      this._oPopover.close();
+    }
+    if(oSrc !== this._lastMetatadaEvSrc) {
+      let binding = oSrc.getBindingContext("schema").getPath() + "/metadata";
+      let bindingArr = binding + "Arr";
+      const model = this.oController.byId("schemaFieldsTreeTable").getModel("schema");
+      let arrMeta = Formatters.objToKVArray(model.getProperty(binding));
+      model.setProperty(bindingArr, arrMeta);
+      this._oPopoverTemplate.setModel(model);
+      this._oPopoverTemplate.bindItems({
+        path: bindingArr,
+        template: new sap.m.StandardListItem({
+          title: "{key}",
+          info: "{value}"
+        })
+      });
+      this._lastMetatadaEvSrc = oSrc;
+      this._oPopover.openBy(oSrc);
+    } else if(!bOpen) {
+      this._oPopover.openBy(oSrc);
+    }
   }
-
 }
