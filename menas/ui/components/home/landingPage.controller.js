@@ -34,6 +34,8 @@ sap.ui.controller("components.home.landingPage", {
 
     this._app.backToTopMaster();
     this._app.toMaster(viewBase);
-    setTimeout(this._app.showMaster.bind(this), 300);
+    if(!this._app.isMasterShown()) {
+      setTimeout(this._app.showMaster, 300);
+    }
   }
 });
