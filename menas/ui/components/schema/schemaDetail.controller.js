@@ -122,6 +122,8 @@ sap.ui.define([
         this._eventBus.publish("schemas", "list");
         // nav back to info
         this.byId("schemaIconTabBar").setSelectedKey("info");
+      } else if (status === 401) {
+        GenericService.clearSession("Session has expired");
       }
     },
 
