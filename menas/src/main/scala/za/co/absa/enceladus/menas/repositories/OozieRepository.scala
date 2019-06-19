@@ -99,26 +99,29 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     this.initializeJars()
   }
 
-  private def validateProperties(): Boolean = {
+  private def validateProperties(logWarnings: Boolean = false): Boolean = {
     Seq((oozieScheduleHDFSPath, "za.co.absa.enceladus.menas.oozie.schedule.hdfs.path"),
       (enceladusJarLocation, "zza.co.absa.enceladus.menas.oozie.enceladusJarLocation"),
       (standardizationJarPath, "za.co.absa.enceladus.menas.oozie.mavenStandardizationJarLocation"),
       (conformanceJarPath, "za.co.absa.enceladus.menas.oozie.mavenConformanceJarLocation"),
       (mavenRepoLocation, "za.co.absa.enceladus.menas.oozie.mavenRepoLocation"),
       (menasApiURL, "za.co.absa.enceladus.menas.oozie.menasApiURL"),
-      (splineMongoURL, "za.co.absa.enceladus.menas.oozie.splineMongoURL")).map(p => validateProperty(p._1, p._2)).reduce(_ && _)
+      (splineMongoURL, "za.co.absa.enceladus.menas.oozie.splineMongoURL")).map(p => validateProperty(p._1, p._2, logWarnings)).reduce(_ && _)
   }
 
-  private def validateProperty(prop: String, propName: String): Boolean = {
+  private def validateProperty(prop: String, propName: String, logWarnings: Boolean = false): Boolean = {
     if (prop == null || prop.isEmpty) {
-      logger.warn(s"Oozie support disabled. Missing required configuration property $propName")
+      if(logWarnings) {
+        logger.warn(s"Oozie support disabled. Missing required configuration property $propName")
+      }
       false
+    } else {
+      true
     }
-    true
   }
 
   private def initializeJars() {
-    if (this.isOozieEnabled) {
+    if (this.isOozieEnabled(true)) {
       val hdfsStdPath = new Path(s"$enceladusJarLocation$standardizationJarPath")
       val hdfsConfPath = new Path(s"$enceladusJarLocation$conformanceJarPath")
       val mavenStdPath = s"$mavenRepoLocation$standardizationJarPath"
@@ -181,7 +184,9 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   /**
    * Whether or not oozie is enabled/configured
    */
-  def isOozieEnabled: Boolean = this.validateProperties() && oozieClientRes.isRight
+  def isOozieEnabled(logWarnings: Boolean = false): Boolean = {
+    this.validateProperties(logWarnings) && oozieClientRes.isRight
+  }
 
   private def getOozieClient[T](fn: (OozieClient => Future[T])): Future[T] = {
     oozieClientRes match {
