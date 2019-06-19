@@ -54,9 +54,19 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     })
   }
 
-  def getLatestVersions(): Future[Seq[VersionedSummary]] = {
-    val pipeline = Seq(filter(getNotDisabledFilter),
-      Aggregates.group("$name", Accumulators.max("latestVersion", "$version")))
+  def getDistinctNamesEnabled(): Future[Seq[String]] = {
+    collection.distinct[String]("name", getNotDisabledFilter).toFuture()
+  }
+
+  def getLatestVersions(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
+    val searchFilter = searchQuery match {
+      case Some(search) => Filters.regex("name", search, "i")
+      case None => Filters.expr(true)
+    }
+    val pipeline = Seq(
+      filter(Filters.and(searchFilter, getNotDisabledFilter)),
+      Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
+    )
     collection.aggregate[VersionedSummary](pipeline).toFuture()
   }
 
@@ -65,14 +75,16 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
   }
 
   def getLatestVersionValue(name: String): Future[Option[Int]] = {
-    val pipeline = Seq(filter(getNameFilter(name)),
+    val pipeline = Seq(
+      filter(getNameFilter(name)),
       filter(getNotDisabledFilter),
-      Aggregates.group("$name", Accumulators.max("latestVersion", "$version")))
+      Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
+    )
     collection.aggregate[VersionedSummary](pipeline).headOption().map(_.map(_.latestVersion))
   }
 
   def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {
-    val filter = if (inclDisabled) getNameFilter(name) else getNameFilterEnabled(name)
+    val filter = if(inclDisabled) getNameFilter(name) else getNameFilterEnabled(name)
     collection.find(filter).toFuture()
   }
 
@@ -80,27 +92,25 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     super.create(item
       .setCreatedInfo(username)
       .setUpdatedInfo(username)
-      .asInstanceOf[C])
+      .asInstanceOf[C]
+    )
   }
 
   def update(username: String, updated: C): Future[C] = {
     for {
       latestVersion <- getLatestVersionValue(updated.name)
-      newVersion <- if (latestVersion.isEmpty) {
-        throw NotFoundException()
-      } else if (latestVersion.get != updated.version) {
-        throw EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.")
-      } else {
-        Future.successful(latestVersion.get + 1)
-      }
+      newVersion <- if(latestVersion.isEmpty) throw new NotFoundException()
+           else if(latestVersion.get != updated.version) throw new EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.") 
+           else Future.successful(latestVersion.get + 1)
       newInfo <- Future.successful(updated.setUpdatedInfo(username).setVersion(newVersion).setParent(Some(getParent(updated))).asInstanceOf[C])
       res <- collection.insertOne(newInfo).toFuture()
     } yield newInfo
-
+    
   }
 
   def disableVersion(name: String, version: Option[Int], username: String): Future[UpdateResult] = {
-    collection.updateMany(getNameVersionFilter(name, version), combine(set("disabled", true),
+    collection.updateMany(getNameVersionFilter(name, version), combine(
+      set("disabled", true),
       set("dateDisabled", ZonedDateTime.now()),
       set("userDisabled", username))).toFuture()
   }

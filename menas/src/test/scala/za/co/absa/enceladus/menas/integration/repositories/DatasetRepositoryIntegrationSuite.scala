@@ -397,6 +397,96 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
     assert(actualStored.contains(expected))
   }
 
+  "DatasetMongoRepository::getDistinctNamesEnabled" should {
+    "return an empty Seq" when {
+      "no datasets exist" in {
+        val actual = await(datasetMongoRepository.getDistinctNamesEnabled)
+        assert(actual.isEmpty)
+      }
+
+      "only disabled datasets exist" in {
+        val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1,
+          disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
+        datasetFixture.add(dataset1)
+        val res = await(datasetMongoRepository.getDistinctNamesEnabled)
+        assert(res.isEmpty)
+      }
+    }
+    "return Seq with a single name" when {
+      "single dataset exists" in {
+        val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
+        datasetFixture.add(dataset2)
+        val res1 = await(datasetMongoRepository.getDistinctNamesEnabled)
+        assert(res1.toSeq == Seq("dataset2"))
+      }
+      "multiple versions of a dataset exist" in {
+        val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
+        val dataset3 = DatasetFactory.getDummyDataset(name = "dataset2", version = 2)
+        datasetFixture.add(dataset2, dataset3)
+        val res2 = await(datasetMongoRepository.getDistinctNamesEnabled)
+        assert(res2.toSeq == Seq("dataset2"))
+      }
+    }
+    "return distinct names" when {
+      "multiple datasets exist" in {
+        val dataset3 = DatasetFactory.getDummyDataset(name = "dataset2", version = 2)
+        val dataset4 = DatasetFactory.getDummyDataset(name = "dataset3", version = 1)
+        datasetFixture.add(dataset3, dataset4)
+        val res3 = await(datasetMongoRepository.getDistinctNamesEnabled)
+        assert(res3.toSeq.sorted == Seq("dataset2", "dataset3"))
+      }
+    }
+  }
+
+  "DatasetMongoRepository::getLatestVersions" should {
+    "return an empty Seq" when {
+      "no datasets exist and search query is provided" in {
+        val actual = await(datasetMongoRepository.getLatestVersions(Some("abc")))
+        assert(actual.isEmpty)
+      }
+      "only disabled dataset exists" in {
+        val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1,
+          disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
+        datasetFixture.add(dataset1)
+        assert(await(datasetMongoRepository.getLatestVersions(Some("dataset1"))).isEmpty)
+      }
+    }
+    "return seq of versioned summaries matching the search query" when {
+      "search query is a perfect match" in {
+        val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
+        val dataset3 = DatasetFactory.getDummyDataset(name = "dataset2", version = 2)
+        val dataset4 = DatasetFactory.getDummyDataset(name = "dataset3", version = 1)
+        val dataset5 = DatasetFactory.getDummyDataset(name = "abc", version = 1)
+
+        datasetFixture.add(dataset2, dataset3, dataset4, dataset5)
+        val res1 = await(datasetMongoRepository.getLatestVersions(Some("dataset2")))
+        assert(res1.size == 1 && res1.head._id == "dataset2")
+      }
+      "search query is a partial match" in {
+        val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
+        val dataset3 = DatasetFactory.getDummyDataset(name = "dataset2", version = 2)
+        val dataset4 = DatasetFactory.getDummyDataset(name = "dataset3", version = 1)
+        val dataset5 = DatasetFactory.getDummyDataset(name = "abc", version = 1)
+
+        datasetFixture.add(dataset2, dataset3, dataset4, dataset5)
+        val res2 = await(datasetMongoRepository.getLatestVersions(Some("tas")))
+        assert(res2.size == 2 && res2.exists(_._id == "dataset2") && res2.exists(_._id == "dataset3"))
+      }
+    }
+    "return all datasets" when {
+      "search query is empty" in { 
+        val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
+        val dataset3 = DatasetFactory.getDummyDataset(name = "dataset2", version = 2)
+        val dataset4 = DatasetFactory.getDummyDataset(name = "dataset3", version = 1)
+        val dataset5 = DatasetFactory.getDummyDataset(name = "abc", version = 1)
+
+        datasetFixture.add(dataset2, dataset3, dataset4, dataset5)
+        val res3 = await(datasetMongoRepository.getLatestVersions(Some("")))
+        assert(res3.exists(_._id == "dataset2") && res3.exists(_._id == "dataset3") && res3.exists(_._id == "abc"))
+      }
+    }
+  }
+
   "DatasetMongoRepository::distinctCount" should {
     "return 0" when {
       "no datasets exists" in {

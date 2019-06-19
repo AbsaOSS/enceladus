@@ -17,6 +17,12 @@
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Page id="masterPage" title="Datasets" showNavButton="true" navButtonPress="onPressMasterBack">
         <content>
+            <SearchField id="datasetSearchField" placeholder="Search..." enableSuggestions="true" search="onSearch"
+                suggest="onSuggest" suggestionItems="{path: '/datasetSearchSuggestions', sorter: { path: 'name' }}">
+                <suggestionItems>
+                    <SuggestionItem text="{name}"/>
+                </suggestionItems>
+            </SearchField>
             <List items="{datasets>/}"
                   mode="SingleSelectMaster"
                   selectionChange="datasetSelected"

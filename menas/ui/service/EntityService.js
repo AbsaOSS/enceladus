@@ -86,12 +86,23 @@ class EntityService {
     return this._modelBinder;
   }
 
-  getList(oControl, sModelName) {
-    return this.restDAO.getList().then((oData) => {
+  getList(oControl, sModelName, sSearchQuery) {
+    return this.restDAO.getList(sSearchQuery).then((oData) => {
       oControl.setModel(new sap.ui.model.json.JSONModel(oData), sModelName);
       return oData
     }).fail(() => {
       sap.m.MessageBox.error(this.messageProvider.failedToGetList())
+    })
+  }
+  
+  getSearchSuggestions(oModel, sEntityType) {
+    return this.restDAO.getSearchSuggestions().then((oData) => {
+      let wrapped = oData.map(s => {
+        return {"name": s}
+      })
+      oModel.setProperty(`/${sEntityType}SearchSuggestions`, wrapped)
+      return wrapped
+    }).fail(() => {
     })
   }
 
@@ -254,8 +265,8 @@ class DatasetService extends EntityService {
     this.eventBus.publish("datasets", "updateFailed");
   }
 
-  getList(oControl) {
-    return super.getList(oControl, "datasets")
+  getList(oControl, sSearchQuery) {
+    return super.getList(oControl, "datasets", sSearchQuery)
   }
 
   getLatestByName(sName) {
@@ -315,8 +326,8 @@ class SchemaService extends DependentEntityService {
     this.eventBus.publish("schemas", "updateFailed");
   }
 
-  getList(oControl) {
-    return super.getList(oControl, "schemas")
+  getList(oControl, sSearchQuery) {
+    return super.getList(oControl, "schemas", sSearchQuery)
   }
 
   getLatestByName(sName) {
@@ -374,8 +385,8 @@ class MappingTableService extends DependentEntityService {
     this.eventBus.publish("mappingTables", "updateFailed");
   }
 
-  getList(oControl) {
-    return super.getList(oControl, "mappingTables")
+  getList(oControl, sSearchQuery) {
+    return super.getList(oControl, "mappingTables", sSearchQuery)
   }
 
   getLatestByName(sName) {

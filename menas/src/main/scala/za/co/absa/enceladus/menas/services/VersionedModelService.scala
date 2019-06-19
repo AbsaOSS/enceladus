@@ -36,8 +36,12 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private[services] val logger = LoggerFactory.getLogger(this.getClass)
 
-  def getLatestVersions(): Future[Seq[VersionedSummary]] = {
-    versionedMongoRepository.getLatestVersions()
+  def getLatestVersions(searchQuery: Option[String]): Future[Seq[VersionedSummary]] = {
+    versionedMongoRepository.getLatestVersions(searchQuery)
+  }
+
+  def getSearchSuggestions(): Future[Seq[String]] = {
+    versionedMongoRepository.getDistinctNamesEnabled()
   }
 
   def getVersion(name: String, version: Int): Future[Option[C]] = {
