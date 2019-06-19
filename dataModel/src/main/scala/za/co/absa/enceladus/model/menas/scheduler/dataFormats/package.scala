@@ -27,7 +27,8 @@ package object dataFormats {
   @JsonSubTypes(Array(new Type(value = classOf[XMLDataFormat], name = "xml"),
     new Type(value = classOf[CSVDataFormat], name = "csv"),
     new Type(value = classOf[ParquetDataFormat], name = "parquet"),
-    new Type(value = classOf[FixedWidthDataFormat], name = "fixed-width")))
+    new Type(value = classOf[FixedWidthDataFormat], name = "fixed-width"),
+    new Type(value = classOf[JSONFormat], name = "json")))
   sealed trait DataFormat {
     val name: String
     def getArguments: Seq[String]
@@ -54,5 +55,10 @@ package object dataFormats {
     val name: String = "fixed-width"
     private val trim = trimValues.map(t => Seq("--trimValues", t.toString)).getOrElse(Seq[String]())
     override def getArguments: Seq[String] = trim
+  }
+
+  case class JSONFormat() extends DataFormat {
+    val name: String = "json"
+    override def getArguments: Seq[String] = Seq()
   }
 }
