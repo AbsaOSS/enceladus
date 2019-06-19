@@ -212,6 +212,12 @@
             <artifactId>chart.js</artifactId>
             <version>2.7.3</version>
         </dependency>
+        <!-- Data formats -->
+        <dependency>
+            <groupId>za.co.absa.cobrix</groupId>
+            <artifactId>spark-cobol</artifactId>
+            <version>${cobrix.version}</version>
+        </dependency>
 
         <!-- Test -->
         <dependency>

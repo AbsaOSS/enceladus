@@ -38,6 +38,7 @@ case class CmdConfig(datasetName: String = "",
     rowTag: Option[String] = None,
     csvDelimiter: Option[String] = None,
     csvHeader: Option[Boolean] = Some(false),
+    cobolOptions: Option[CobolOptions] = None,
     fixedWidthTrimValues: Option[Boolean] = Some(false),
     performanceMetricsFile: Option[String] = None,
     rawPathOverride: Option[String] = None,
@@ -148,6 +149,8 @@ object CmdConfig {
         else
           failure("The --trimValues option is supported only for fixed-width files "))
 
+    processCobolCmdOptions()
+
     opt[String]("performance-file").optional().action((value, config) =>
       config.copy(performanceMetricsFile = Some(value))).text("produce a performance metrics file at the given location (local filesystem)")
 
@@ -158,6 +161,31 @@ object CmdConfig {
       config.copy(folderPrefix = Some(value))).text("Adds a folder prefix before the date tokens")
 
     help("help").text("prints this usage text")
+
+    private def processCobolCmdOptions(): Unit = {
+      var copybookLocation: String = ""
+      var isXcom = false
+      opt[String]("copybook").optional().action((value, config) => {
+        copybookLocation = value
+        config.copy(cobolOptions = Some(CobolOptions(copybookLocation, isXcom)))
+      }).text("Path to a copybook for COBOL data format")
+        .validate(value =>
+          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol"))
+            success
+          else
+            failure("The --copybook option is supported only for COBOL data format")
+        )
+
+      opt[Boolean]("is-xcom").optional().action((value, config) => {
+        isXcom = value
+        config.copy(cobolOptions = Some(CobolOptions(copybookLocation, isXcom)))
+      }).text("Does a mainframe file in COBOL format contain XCOM record headers")
+        .validate(value =>
+          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol"))
+            success
+          else
+            failure("The --is-xcom option is supported only for COBOL data format"))
+    }
   }
 
 }
