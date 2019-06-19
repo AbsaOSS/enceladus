@@ -94,6 +94,7 @@ sap.ui.define([
       if (oControl) oControl.setBusy(true);
 
       let fnSuccess = (result, status, xhr) => {
+        this.byId("password").setValue("");
         let csrfToken = xhr.getResponseHeader("X-CSRF-TOKEN");
         localStorage.setItem("csrfToken", csrfToken);
         Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
