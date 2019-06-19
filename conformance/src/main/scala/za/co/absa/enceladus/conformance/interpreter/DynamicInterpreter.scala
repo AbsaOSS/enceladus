@@ -35,6 +35,9 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 object DynamicInterpreter {
   private val log = LogManager.getLogger("enceladus.conformance.DynamicInterpreter")
 
+  val maxToleratedPlanGenerationPerRuleMs = 100L
+  val initialElapsedTimeBaselineMs = 300L
+
   /**
     * interpret The dynamic conformance interpreter function
     *
@@ -66,6 +69,12 @@ object DynamicInterpreter {
     conformedDf
   }
 
+  /**
+    * Applies conformance rules and corresponding optimizations and workarounds
+    *
+    * @param inputDf The dataset to be conformed
+    * @return The conformed dataframe
+    */
   private def applyConformanceRules(inputDf: DataFrame)
                                    (implicit ictx: InterpreterContext): DataFrame = {
     implicit val spark: SparkSession = ictx.spark
@@ -76,41 +85,34 @@ object DynamicInterpreter {
     var explodeContext = ExplosionContext()
 
     val steps = getConformanceSteps
+    val (dfInputWithId, dfJustId, idField) = createCatalystWorkaroundDataFrames(inputDf)
+    var baselineTimeMs = initialElapsedTimeBaselineMs
 
     // Fold left on rules
-    val conformedDf = steps.foldLeft(inputDf)({
+    var rulesApplied = 0
+    val conformedDf = steps.foldLeft(dfInputWithId)({
       case (df, rule) =>
-        val confd = rule match {
-          case r: DropConformanceRule             => DropRuleInterpreter(r).conform(df)
-          case r: ConcatenationConformanceRule    => ConcatenationRuleInterpreter(r).conform(df)
-          case r: LiteralConformanceRule          => LiteralRuleInterpreter(r).conform(df)
-          case r: SingleColumnConformanceRule     => SingleColumnRuleInterpreter(r).conform(df)
-          case r: SparkSessionConfConformanceRule => SparkSessionConfRuleInterpreter(r).conform(df)
-          case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r).conform(df)
-          case r: CastingConformanceRule          => CastingRuleInterpreter(r).conform(df)
-          case r: NegationConformanceRule         => NegationRuleInterpreter(r).conform(df)
-          case r: CustomConformanceRule           => r.getInterpreter().conform(df)
-          case r: MappingConformanceRule          =>
-            if (ictx.experimentalMappingRule) {
-              MappingRuleInterpreterGroupExplode(r, ictx.conformance, explodeContext).conform(df)
-            } else {
-              MappingRuleInterpreter(r, ictx.conformance).conform(df)
-            }
-          // Array explode and collect pseudo rules apply array explosions for mapping rule groups that operate on
-          // the same arrays
-          case r: ArrayExplodePseudoRule          =>
-            val (dfOut, ctx) = ExplodeTools.explodeAllArraysInPath(r.outputColumn, df, explodeContext)
-            explodeContext = ctx
-            dfOut
-          case _: ArrayCollectPseudoRule          =>
-            val dfOut = ExplodeTools.revertAllExplosions(df, explodeContext, Some(ErrorMessage.errorColumnName))
-            explodeContext = ExplosionContext()
-            dfOut
-          case _ => throw new IllegalStateException(s"Unrecognized rule class: ${rule.getClass.getName}")
+        val (ruleAppliedDf, ec) = applyConformanceRule(df, rule, explodeContext)
+        explodeContext = ec
+
+        val conformedDf = if (explodeContext.explosions.isEmpty &&
+          isCatalystWorkaroundRequired(ruleAppliedDf, rulesApplied, baselineTimeMs)) {
+          // Apply a workaround BEFORE applying the rule so that the execution plan generation still runs fast
+          val (workAroundDf, ec) = applyConformanceRule(
+            applyCatalystWorkAround(df, dfJustId, idField),
+            rule,
+            explodeContext)
+          explodeContext = ec
+          baselineTimeMs = Math.max(baselineTimeMs, getExecutionPlanGenerationTimeMs(workAroundDf))
+          log.info(s"New baseline execution plan optimization time: $baselineTimeMs ms")
+          workAroundDf
+        } else {
+          ruleAppliedDf
         }
-        applyRuleCheckpoint(rule, confd, explodeContext)
+        rulesApplied += 1
+        applyRuleCheckpoint(rule, conformedDf, explodeContext)
     })
-    conformedDf
+    conformedDf.drop(col(idField))
   }
 
   /**
@@ -125,6 +127,48 @@ object DynamicInterpreter {
     } else {
       steps
     }
+  }
+
+  private def applyConformanceRule(df: DataFrame,
+                                   rule: ConformanceRule,
+                                   ec: ExplosionContext)
+                                  (implicit ictx: InterpreterContext): (DataFrame, ExplosionContext) = {
+    implicit val spark: SparkSession = ictx.spark
+    implicit val dao: EnceladusDAO = ictx.dao
+    implicit val progArgs: CmdConfig = ictx.progArgs
+
+    var explodeContext = ec
+
+    val confd = rule match {
+      case r: DropConformanceRule             => DropRuleInterpreter(r).conform(df)
+      case r: ConcatenationConformanceRule    => ConcatenationRuleInterpreter(r).conform(df)
+      case r: LiteralConformanceRule          => LiteralRuleInterpreter(r).conform(df)
+      case r: SingleColumnConformanceRule     => SingleColumnRuleInterpreter(r).conform(df)
+      case r: SparkSessionConfConformanceRule => SparkSessionConfRuleInterpreter(r).conform(df)
+      case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r).conform(df)
+      case r: CastingConformanceRule          => CastingRuleInterpreter(r).conform(df)
+      case r: NegationConformanceRule         => NegationRuleInterpreter(r).conform(df)
+      case r: CustomConformanceRule           => r.getInterpreter().conform(df)
+      case r: MappingConformanceRule          =>
+        if (ictx.experimentalMappingRule) {
+          MappingRuleInterpreterGroupExplode(r, ictx.conformance, explodeContext).conform(df)
+        } else {
+          MappingRuleInterpreter(r, ictx.conformance).conform(df)
+        }
+      // Array explode and collect pseudo rules apply array explosions for mapping rule groups that operate on
+      // the same arrays
+      case r: ArrayExplodePseudoRule          =>
+        val (dfOut, ctx) = ExplodeTools.explodeAllArraysInPath(r.outputColumn, df, explodeContext)
+        explodeContext = ctx
+        dfOut
+      case _: ArrayCollectPseudoRule          =>
+        val dfOut = ExplodeTools.revertAllExplosions(df, explodeContext, Some(ErrorMessage.errorColumnName))
+        explodeContext = ExplosionContext()
+        dfOut
+      case _ => throw new IllegalStateException(s"Unrecognized rule class: ${rule.getClass.getName}")
+    }
+
+    (confd, explodeContext)
   }
 
   /**
@@ -257,6 +301,59 @@ object DynamicInterpreter {
       index += 1
       rule.withUpdatedOrder(index)
     })
+  }
+
+  /**
+    * Reorders a list of conformance rules according to their appearance in the list.
+    *
+    * @param df A dataframe that requires a Catalyst workaround
+    * @return A a pair of dataframes
+    */
+  private def createCatalystWorkaroundDataFrames(df: DataFrame): (DataFrame, DataFrame, String) = {
+    val idField = SchemaUtils.getUniqueName("tmpId", Option(df.schema))
+    val dfWithId = df.withColumn(idField, monotonically_increasing_id)
+    val dfJustId = dfWithId.select(col(idField)).cache()
+    (dfWithId, dfJustId, idField)
+  }
+
+
+  /**
+    * Returns true of a dataframe might require a Catalyst issue workaround.
+    * A workaround is required if execution plan optimization step takes too long
+    *
+    * @param df A dataframe that might require a Catalyst workaround
+    * @return true if a workaround is required
+    */
+  private def isCatalystWorkaroundRequired(df: DataFrame, rulesApplied: Int, baseLineTime: Long): Boolean = {
+    val elapsedTime = getExecutionPlanGenerationTimeMs(df)
+    val tooLong = elapsedTime > baseLineTime + maxToleratedPlanGenerationPerRuleMs * rulesApplied
+    val msg = s"Execution optimization time for $rulesApplied rules: $elapsedTime ms"
+    if (tooLong) {
+      log.warn(s"$msg (Too long!)")
+    } else {
+      log.warn(msg)
+    }
+    tooLong
+  }
+
+  private def getExecutionPlanGenerationTimeMs(df: DataFrame): Long = {
+    val t0 = System.currentTimeMillis()
+    df.queryExecution.toString()
+    val t1 = System.currentTimeMillis()
+    t1 - t0
+  }
+
+  /**
+    * Applies a Catalyst workaround by joining a dataframe with a dataframe containing only unique ids.
+    *
+    * @param dfWithId A dataframe containing a unique id field for which execution plan generation takes too long
+    * @param dfJustId A dataframe that requires a Catalyst workaround
+    * @param idField  A dataframe that requires a Catalyst workaround
+    * @return A new dataframe with Catalyst optimizer issue workaround applied
+    */
+  private def applyCatalystWorkAround(dfWithId: DataFrame, dfJustId: DataFrame, idField: String): DataFrame = {
+    log.warn("A Catalyst optimizer issue workaround is applied.")
+    dfWithId.join(dfJustId, idField)
   }
 
 }

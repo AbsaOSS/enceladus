@@ -51,6 +51,7 @@ _tradeData
 _countryMT
 _currencyMT
 _productMT
+_nestedStructs
 myTestCheckpoints
 
 **/main/resources/application.properties

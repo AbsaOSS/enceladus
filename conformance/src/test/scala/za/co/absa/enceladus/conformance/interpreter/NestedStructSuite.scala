@@ -19,18 +19,44 @@ import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.interpreter.fixtures.NestedStructsFixture
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFixture {
+/**
+  * The purpose of these tests is to ensure Catalyst optimizer issue is handled.
+  *
+  * Without applying a workaround any test in this suite makes Spark freeze.
+  */
+class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFixture{
 
-  test("Test Dynamic Conformance does not hang on many conformance rules"){
-    // Uncommenting this causes the timing test to fail
-    /*val conformed = DynamicInterpreter.interpret(
+  test("Test Dynamic Conformance does not hang on many mixed conformance rules"){
+    val conformed = DynamicInterpreter.interpret(
       nestedStructsDS,
       standardizedDf,
       experimentalMappingRule = false,
       enableControlFramework = false
     )
 
-    assert(conformed.count() == 20)*/
+    assert(conformed.count() == 20)
+  }
+
+  test("Test Dynamic Conformance does not hang on many uppercase conformance rules"){
+    val conformed = DynamicInterpreter.interpret(
+      nestedStructsUpperDS,
+      standardizedDf,
+      experimentalMappingRule = false,
+      enableControlFramework = false
+    )
+
+    assert(conformed.count() == 20)
+  }
+
+  test("Test Dynamic Conformance does not hang on many negation conformance rules"){
+    val conformed = DynamicInterpreter.interpret(
+      nestedStructsNegationDS,
+      standardizedDf,
+      experimentalMappingRule = false,
+      enableControlFramework = false
+    )
+
+    assert(conformed.count() == 20)
   }
 
 }

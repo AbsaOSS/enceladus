@@ -49,6 +49,24 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
   protected val upperRule3 = UppercaseConformanceRule(order = 3, inputColumn = "strings.whitespaces",
     controlCheckpoint = false, outputColumn = "strings.whitespaces_upper")
 
+  protected val upperRule4 = UppercaseConformanceRule(order = 4, inputColumn = "strings.with_new_lines",
+    controlCheckpoint = false, outputColumn = "strings.with_new_lines_upper2")
+
+  protected val upperRule5 = UppercaseConformanceRule(order = 5, inputColumn = "strings.all_random",
+    controlCheckpoint = false, outputColumn = "strings.all_random_upper2")
+
+  protected val upperRule6 = UppercaseConformanceRule(order = 6, inputColumn = "strings.whitespaces",
+    controlCheckpoint = false, outputColumn = "strings.whitespaces_upper2")
+
+  protected val upperRule7 = UppercaseConformanceRule(order = 7, inputColumn = "strings.with_new_lines",
+    controlCheckpoint = false, outputColumn = "strings.with_new_lines_upper3")
+
+  protected val upperRule8 = UppercaseConformanceRule(order = 8, inputColumn = "strings.all_random",
+    controlCheckpoint = false, outputColumn = "strings.all_random_upper3")
+
+  protected val upperRule9 = UppercaseConformanceRule(order = 9, inputColumn = "strings.whitespaces",
+    controlCheckpoint = false, outputColumn = "strings.whitespaces_upper3")
+
   protected val negationRule1 = NegationConformanceRule(order = 4, inputColumn = "numerics.small_positive",
     controlCheckpoint = false, outputColumn = "numerics.small_positive_negated")
 
@@ -61,6 +79,15 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
   protected val negationRule4 = NegationConformanceRule(order = 7, inputColumn = "numerics.big_negative",
     controlCheckpoint = false, outputColumn = "numerics.big_negative_negated")
 
+  protected val negationRule5 = NegationConformanceRule(order = 7, inputColumn = "numerics.small_positive",
+    controlCheckpoint = false, outputColumn = "numerics.small_positive_negated2")
+
+  protected val negationRule6 = NegationConformanceRule(order = 7, inputColumn = "numerics.small_negative",
+    controlCheckpoint = false, outputColumn = "numerics.small_negative_negated2")
+
+  protected val negationRule7 = NegationConformanceRule(order = 7, inputColumn = "numerics.big_positive",
+    controlCheckpoint = false, outputColumn = "numerics.big_positive_negated2")
+
   protected val nestedStructsDS = Dataset(
     name = "Nested Structs Conformance",
     version = 1,
@@ -68,6 +95,26 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
     hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
     schemaName = "NestedStructs", schemaVersion = 0,
     conformance = List(upperRule1, upperRule2, upperRule3, negationRule1, negationRule2, negationRule3, negationRule4)
+  )
+
+  protected val nestedStructsUpperDS = Dataset(
+    name = "Nested Structs Conformance",
+    version = 1,
+    hdfsPath = "src/test/testData/_nestedStructs",
+    hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
+    schemaName = "NestedStructs", schemaVersion = 0,
+    conformance = List(upperRule1, upperRule2, upperRule3, upperRule4, upperRule5, upperRule6, upperRule7, upperRule8,
+      upperRule9)
+  )
+
+  protected val nestedStructsNegationDS = Dataset(
+    name = "Nested Structs Conformance",
+    version = 1,
+    hdfsPath = "src/test/testData/_nestedStructs",
+    hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
+    schemaName = "NestedStructs", schemaVersion = 0,
+    conformance = List(negationRule1, negationRule2, negationRule3, negationRule4, negationRule5, negationRule6,
+      negationRule7)
   )
 
   private val log: Logger = LogManager.getLogger(this.getClass)
