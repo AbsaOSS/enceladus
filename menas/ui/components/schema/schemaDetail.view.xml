@@ -39,6 +39,10 @@
                         <core:Fragment type="XML" fragmentName="components.schemaTable"/>
                     </IconTabFilter>
                     <IconTabFilter id="UploadNew" icon="sap-icon://upload" text="Upload new">
+                        <Select id="schemaFormatSelect" forceSelection="true" selectedKey="{/currentSchema/schemaFormat}">
+                            <core:Item key="struct" text="Spark StructType JSON" />
+                            <core:Item key="copybook" text="COBOL Copybook" />
+               	        </Select>
                         <u:FileUploader id="fileUploader" name="file" uploadUrl="api/schema/upload"
                                         tooltip="Upload new version of the schema" uploadComplete="handleUploadComplete"
                                         sendXHR="true"
@@ -46,6 +50,7 @@
                             <u:parameters>
                                 <u:FileUploaderParameter name="name" value="{/currentSchema/name}"/>
                                 <u:FileUploaderParameter name="version" value="{/currentSchema/version}"/>
+                                <u:FileUploaderParameter name="format" value="{/currentSchema/schemaFormat}"/>
                             </u:parameters>
                         </u:FileUploader>
                         <Button text="Upload File" press="handleUploadPress"/>
