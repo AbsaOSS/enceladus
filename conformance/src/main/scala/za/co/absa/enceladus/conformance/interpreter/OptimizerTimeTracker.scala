@@ -26,10 +26,11 @@ class OptimizerTimeTracker(inputDf: DataFrame) {
   private val maxToleratedPlanGenerationPerRuleMs = 100L
   private val initialElapsedTimeBaselineMs = 300L
   private var baselineTimeMs = initialElapsedTimeBaselineMs
+  private var lastExecutionPlanOptimizatioTime = 0L
 
   private val idField = SchemaUtils.getUniqueName("tmpId", Option(inputDf.schema))
-  private val dfWithId = inputDf.withColumn(idField, monotonically_increasing_id)
-  private val dfJustId = dfWithId.select(col(idField)).cache()
+  private val dfWithId = inputDf.withColumn(idField, monotonically_increasing_id).cache
+  private val dfJustId = dfWithId.select(col(idField))
 
   /**
     * Returns a dataframe prepared to apply the Catalyst workaround
@@ -50,16 +51,35 @@ class OptimizerTimeTracker(inputDf: DataFrame) {
     */
   def isCatalystWorkaroundRequired(df: DataFrame, rulesApplied: Int): Boolean = {
     val elapsedTime = getExecutionPlanGenerationTimeMs(df)
-    val tooLong = elapsedTime > baselineTimeMs + maxToleratedPlanGenerationPerRuleMs * rulesApplied
+
+    val tooBigTimeDifference = if (lastExecutionPlanOptimizatioTime > 0) {
+      elapsedTime / lastExecutionPlanOptimizatioTime > 5
+    } else {
+      false
+    }
+    val tooLong = tooBigTimeDifference ||
+      elapsedTime > baselineTimeMs + maxToleratedPlanGenerationPerRuleMs * rulesApplied
+
     val msg = s"Execution optimization time for $rulesApplied rules: $elapsedTime ms"
     if (tooLong) {
       log.warn(s"$msg (Too long!)")
     } else {
       baselineTimeMs = Math.max(baselineTimeMs, elapsedTime)
+      lastExecutionPlanOptimizatioTime = elapsedTime
       log.info(s"New baseline execution plan optimization time: $baselineTimeMs ms")
       log.warn(msg)
     }
     tooLong
+  }
+
+  /**
+    * Records execution plan optimization time.
+    * This is used after a workarund and a conformance rule are applied to a dataframe.
+    *
+    * @param df A dataframe for measuring execution plan optimization time
+    */
+  def recordExecutionPlanOptimizationTime(df: DataFrame): Unit = {
+    lastExecutionPlanOptimizatioTime = getExecutionPlanGenerationTimeMs(df)
   }
 
   /**
@@ -76,14 +96,13 @@ class OptimizerTimeTracker(inputDf: DataFrame) {
   }
 
   /**
-    * Applies a Catalyst workaround by joining a dataframe with a dataframe containing only unique ids.
+    * Applies a Catalyst workaround by joining a dataframe with the dataframe containing only unique ids.
     *
     * @param dfWithId A dataframe containing a unique id field for which execution plan generation takes too long
     * @return A new dataframe with Catalyst optimizer issue workaround applied
     */
-  def applyCatalystWorkAround(dfWithId: DataFrame): DataFrame = {
+  def applyCatalystWorkaround(dfWithId: DataFrame): DataFrame = {
     log.warn("A Catalyst optimizer issue workaround is applied.")
     dfWithId.join(dfJustId, idField)
   }
-
 }
