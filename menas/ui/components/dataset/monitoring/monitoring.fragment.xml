@@ -21,6 +21,25 @@
                          xmlns:lab="it.designfuture.chartjs"
                          xmlns:form="sap.ui.layout.form"
                          xmlns:tnt="sap.tnt">
+            <Bar>
+                <contentLeft>
+                    <Label text="Info date from:"/>
+                    <DatePicker
+                        id="dateFromPicker"
+                        value="{/monitoringDateFrom}" valueFormat="yyyy-MM-dd" displayFormat="yyyy-MM-dd"
+                        change="handleDateFromChange" width="10rem"/>
+
+                    <Label text="to:"/>
+                    <DatePicker
+                        id="dateToPicker"
+                        value="{/monitoringDateTo}" valueFormat="yyyy-MM-dd" displayFormat="yyyy-MM-dd"
+                        change="handleDateToChange" width="10rem"/>
+
+                    <Button id="FindRunsButton" text="Find runs" icon="sap-icon://search"
+                            press="onFindRunsPress"/>
+                </contentLeft>
+            </Bar>
+
         <layout:BlockLayout id="BlockLayout" background="Dashboard">
             <layout:BlockLayoutRow>
                 <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
