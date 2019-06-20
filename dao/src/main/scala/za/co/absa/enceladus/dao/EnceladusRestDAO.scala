@@ -76,7 +76,8 @@ object EnceladusRestDAO extends EnceladusDAO {
     }
   }
 
-  private def restTemplateLogin(restTemplate: RestTemplate, url: String, username: String, reqBody: Option[LinkedMultiValueMap[String, String]] = None): Boolean = {
+  private def restTemplateLogin(restTemplate: RestTemplate, url: String, username: String,
+      reqBody: Option[LinkedMultiValueMap[String, String]] = None): Boolean = {
     import scala.collection.JavaConversions._
 
     _userName = username
@@ -115,7 +116,7 @@ object EnceladusRestDAO extends EnceladusDAO {
     restTemplateLogin(template, url, username)
   }
 
-  def postLogin(username: String, password: String) = {
+  def postLogin(username: String, password: String): Boolean = {
     val parts = new LinkedMultiValueMap[String, String]
     parts.add("username", username);
     parts.add("password", password);
