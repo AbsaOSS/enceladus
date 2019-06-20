@@ -163,11 +163,8 @@ object CmdConfig {
     help("help").text("prints this usage text")
 
     private def processCobolCmdOptions(): Unit = {
-      var copybookLocation: String = ""
-      var isXcom = false
       opt[String]("copybook").optional().action((value, config) => {
-        copybookLocation = value
-        config.copy(cobolOptions = Some(CobolOptions(copybookLocation, isXcom)))
+        config.copy(cobolOptions = cobolSetCopybook(config.cobolOptions, value))
       }).text("Path to a copybook for COBOL data format")
         .validate(value =>
           if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol"))
@@ -177,14 +174,27 @@ object CmdConfig {
         )
 
       opt[Boolean]("is-xcom").optional().action((value, config) => {
-        isXcom = value
-        config.copy(cobolOptions = Some(CobolOptions(copybookLocation, isXcom)))
+        config.copy(cobolOptions = cobolSetIsXcom(config.cobolOptions, value))
       }).text("Does a mainframe file in COBOL format contain XCOM record headers")
         .validate(value =>
           if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol"))
             success
           else
             failure("The --is-xcom option is supported only for COBOL data format"))
+    }
+
+    private def cobolSetCopybook(cobolOptions: Option[CobolOptions], newCopybook: String): Option[CobolOptions] = {
+      cobolOptions match {
+        case Some(a) => Some(a.copy(copybook = newCopybook))
+        case None => Some(CobolOptions(newCopybook))
+      }
+    }
+
+    private def cobolSetIsXcom(cobolOptions: Option[CobolOptions], newIsXCom: Boolean): Option[CobolOptions] = {
+      cobolOptions match {
+        case Some(a) => Some(a.copy(isXcom = newIsXCom))
+        case None => Some(CobolOptions(isXcom = newIsXCom))
+      }
     }
   }
 

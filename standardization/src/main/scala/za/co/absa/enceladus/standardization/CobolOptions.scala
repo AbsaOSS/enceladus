@@ -18,11 +18,14 @@ package za.co.absa.enceladus.standardization
 /**
   * This is a class for COBOL format loading properties
   *
+  * Note: scopt requires all fields to have default values.
+  * Even if a field is mandatory it needs a default value.
+
   * @param copybook A location of a copybook
   * @param isXcom Does a mainframe file contain XCOM record headers
   */
 case class CobolOptions
 (
-  copybook: String,
-  isXcom: Boolean
+  copybook: String = "",
+  isXcom: Boolean = false
 )
