@@ -88,13 +88,35 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
   protected val negationRule7 = NegationConformanceRule(order = 7, inputColumn = "numerics.big_positive",
     controlCheckpoint = false, outputColumn = "numerics.big_positive_negated2")
 
+  protected val castingRule1 = CastingConformanceRule(order = 1, inputColumn = "numerics.small_positive",
+    controlCheckpoint = false, outputColumn = "numerics.small_positive_casted1", outputDataType = "string")
+
+  protected val castingRule2 = CastingConformanceRule(order = 2, inputColumn = "numerics.small_negative",
+    controlCheckpoint = false, outputColumn = "numerics.small_negative_casted1", outputDataType = "string")
+
+  protected val castingRule3 = CastingConformanceRule(order = 3, inputColumn = "numerics.big_positive",
+    controlCheckpoint = false, outputColumn = "numerics.big_positive_casted1", outputDataType = "string")
+
+  protected val castingRule4 = CastingConformanceRule(order = 4, inputColumn = "numerics.big_negative",
+    controlCheckpoint = false, outputColumn = "numerics.big_negative_casted1", outputDataType = "string")
+
+  protected val castingRule5 = CastingConformanceRule(order = 5, inputColumn = "numerics.small_positive",
+    controlCheckpoint = false, outputColumn = "numerics.small_positive_casted2", outputDataType = "string")
+
+  protected val castingRule6 = CastingConformanceRule(order = 6, inputColumn = "numerics.small_negative",
+    controlCheckpoint = false, outputColumn = "numerics.small_negative_casted2", outputDataType = "string")
+
+  protected val castingRule7 = CastingConformanceRule(order = 7, inputColumn = "numerics.big_positive",
+    controlCheckpoint = false, outputColumn = "numerics.big_positive_casted2", outputDataType = "string")
+
   protected val nestedStructsDS = Dataset(
     name = "Nested Structs Conformance",
     version = 1,
     hdfsPath = "src/test/testData/_nestedStructs",
     hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
     schemaName = "NestedStructs", schemaVersion = 0,
-    conformance = List(upperRule1, upperRule2, upperRule3, negationRule1, negationRule2, negationRule3, negationRule4)
+    conformance = List(upperRule1, upperRule2, upperRule3, negationRule1, negationRule2, negationRule3, negationRule4,
+      castingRule1, castingRule2, castingRule3)
   )
 
   protected val nestedStructsUpperDS = Dataset(
@@ -115,6 +137,16 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
     schemaName = "NestedStructs", schemaVersion = 0,
     conformance = List(negationRule1, negationRule2, negationRule3, negationRule4, negationRule5, negationRule6,
       negationRule7)
+  )
+
+  protected val nestedStructsCastingDS = Dataset(
+    name = "Nested Structs Conformance",
+    version = 1,
+    hdfsPath = "src/test/testData/_nestedStructs",
+    hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
+    schemaName = "NestedStructs", schemaVersion = 0,
+    conformance = List(castingRule1, castingRule2, castingRule3, castingRule4, castingRule5, castingRule6,
+      castingRule7)
   )
 
   private val log: Logger = LogManager.getLogger(this.getClass)
