@@ -96,10 +96,11 @@ object DynamicInterpreter {
           optimizerTimeTracker.isCatalystWorkaroundRequired(ruleAppliedDf, rulesApplied)) {
           // Apply a workaround BEFORE applying the rule so that the execution plan generation still runs fast
           val (workAroundDf, ec) = applyConformanceRule(
-            optimizerTimeTracker.applyCatalystWorkAround(df),
+            optimizerTimeTracker.applyCatalystWorkaround(df),
             rule,
             explodeContext)
           explodeContext = ec
+          optimizerTimeTracker.recordExecutionPlanOptimizationTime(workAroundDf)
           workAroundDf
         } else {
           ruleAppliedDf
