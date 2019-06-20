@@ -23,5 +23,5 @@ case class RuntimeConfig(
     driverCores: Int = 2,
     driverMemory: Int = 2,
     sysUser: String,
-    menasCredentialFile: String
+    menasKeytabFile: String
 )

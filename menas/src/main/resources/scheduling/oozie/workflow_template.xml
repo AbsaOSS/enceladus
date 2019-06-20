@@ -49,8 +49,7 @@
             <arg>1</arg> <!-- TODO: Figure out version increments or extensible versioning logic -->
             <arg>-f</arg>
             <arg>$dataFormat</arg>
-            <arg>--menas-credentials-file</arg>
-            <arg>$menasCredentialsFile</arg>
+            $menasKeytabFile
             $otherDFArguments
         </spark>
         <ok to="conformance" />
@@ -79,8 +78,7 @@
             <arg>${reportDate}</arg>
             <arg>-r</arg>
             <arg>1</arg> <!-- TODO: Figure out version increments or extensible versioning logic -->
-            <arg>--menas-credentials-file</arg>
-            <arg>$menasCredentialsFile</arg>
+            $menasKeytabFile
         </spark>
         <ok to="End" />
         <error to="Kill" />
