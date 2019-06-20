@@ -94,9 +94,11 @@ object TradeConformance {
 
   val expectedConformedGroupExplode: String = IOUtils.toString(this.getClass
     .getResourceAsStream("/interpreter/tradeConformance/expectedConformedGroupExplode.json"), "UTF-8")
+    .replace("\r\n", "\n")
 
   val expectedConformedJson: String = IOUtils.toString(this.getClass
     .getResourceAsStream("/interpreter/tradeConformance/expectedConformed.json"), "UTF-8")
+    .replace("\r\n", "\n")
 
   def createTestDataFiles()(implicit spark: SparkSession): Unit = {
     createTradeData()
