@@ -50,7 +50,10 @@ var model = new sap.ui.model.json.JSONModel({
   }, {
     key: "fixed-width",
     name: "Fixed Width"
-  }, ]
+  },{
+    key: "json",
+    name: "JSON"
+  } ]
 })
 
 model.setSizeLimit(5000)

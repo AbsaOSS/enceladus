@@ -40,8 +40,8 @@
             <table:Column width="10%">
                 <Label text="Metadata"/>
                 <table:template>
-                    <Button id="metadataButton" icon="sap-icon://action"
-                            visible="{path:'schema>metadata', formatter:'Formatters.nonEmptyObject'}"/>
+                    <Button id="metadataButton" icon="sap-icon://message-information" 
+                        visible="{path:'schema>metadata', formatter:'Formatters.nonEmptyObject'}"/>
                 </table:template>
             </table:Column>
         </table:columns>

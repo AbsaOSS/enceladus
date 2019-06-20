@@ -135,17 +135,34 @@ object StandardizationJob {
 
   private def readerFormatSpecific(dfReader: DataFrameReader, cmd: CmdConfig): DataFrameReader = {
     // applying format specific options
-    val dfReader4 = {
-      val dfReader1 = if (cmd.rowTag.isDefined) dfReader.option("rowTag", cmd.rowTag.get) else dfReader
-      val dfReader2 = if (cmd.csvDelimiter.isDefined) dfReader1.option("delimiter", cmd.csvDelimiter.get) else dfReader1
-      val dfReader3 = if (cmd.csvHeader.isDefined) dfReader2.option("header", cmd.csvHeader.get) else dfReader2
-      dfReader3
+    val dfReaderWithOptions = {
+      val dfr1 = if (cmd.rowTag.isDefined) dfReader.option("rowTag", cmd.rowTag.get) else dfReader
+      val dfr2 = if (cmd.csvDelimiter.isDefined) dfr1.option("delimiter", cmd.csvDelimiter.get) else dfr1
+      val dfr3 = if (cmd.csvHeader.isDefined) dfr2.option("header", cmd.csvHeader.get) else dfr2
+      val dfr4 = if (cmd.rawFormat.equalsIgnoreCase("cobol")) applyCobolOptions(dfr3, cmd) else dfr3
+      dfr4
     }
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
-      val dfReader5 = if (cmd.fixedWidthTrimValues.get) dfReader4.option("trimValues", "true") else dfReader4
-      dfReader5
+      val dfWithFixedWithOptions = if (cmd.fixedWidthTrimValues.get) {
+        dfReaderWithOptions.option("trimValues", "true")
+      } else {
+        dfReaderWithOptions
+      }
+      dfWithFixedWithOptions
     } else {
-      dfReader4
+      dfReaderWithOptions
+    }
+  }
+
+  private def applyCobolOptions(dfReader: DataFrameReader, cmd: CmdConfig): DataFrameReader = {
+    cmd.cobolOptions match {
+      case Some(opt) =>
+        dfReader
+          .option("copybook", opt.copybook)
+          .option("is_xcom", opt.isXcom)
+      case None =>
+        throw new IllegalArgumentException("A copybook location is not specified. Please use '--copybook' " +
+          "to specify a copybook location.")
     }
   }
 

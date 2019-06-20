@@ -35,12 +35,14 @@ sap.ui.define([
      */
     onInit: function () {
       this._eventBus = sap.ui.getCore().getEventBus();
-
+      this._model = sap.ui.getCore().getModel();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
       this._router.getRoute("login").attachMatched(function (oEvent) {
         let config = oEvent.getParameter("config");
         this._appMasterId = `${config.targetParent}--${config.controlId}-Master`;
-        sap.ui.getCore().byId(this._appMasterId).setVisible(false);
+        if (typeof this._model.getProperty("/userInfo/username") === 'undefined') {
+          sap.ui.getCore().byId(this._appMasterId).setVisible(false);
+        }
       }, this);
     },
 
