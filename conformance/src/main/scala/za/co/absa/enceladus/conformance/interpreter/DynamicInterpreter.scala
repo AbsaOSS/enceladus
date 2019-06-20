@@ -35,9 +35,6 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 object DynamicInterpreter {
   private val log = LogManager.getLogger("enceladus.conformance.DynamicInterpreter")
 
-  val maxToleratedPlanGenerationPerRuleMs = 100L
-  val initialElapsedTimeBaselineMs = 300L
-
   /**
     * interpret The dynamic conformance interpreter function
     *
@@ -85,8 +82,8 @@ object DynamicInterpreter {
     var explodeContext = ExplosionContext()
 
     val steps = getConformanceSteps
-    val (dfInputWithId, dfJustId, idField) = createCatalystWorkaroundDataFrames(inputDf)
-    var baselineTimeMs = initialElapsedTimeBaselineMs
+    val optimizerTimeTracker = new OptimizerTimeTracker(inputDf)
+    val dfInputWithId = optimizerTimeTracker.getWorkaroundDataframe
 
     // Fold left on rules
     var rulesApplied = 0
@@ -96,15 +93,13 @@ object DynamicInterpreter {
         explodeContext = ec
 
         val conformedDf = if (explodeContext.explosions.isEmpty &&
-          isCatalystWorkaroundRequired(ruleAppliedDf, rulesApplied, baselineTimeMs)) {
+          optimizerTimeTracker.isCatalystWorkaroundRequired(ruleAppliedDf, rulesApplied)) {
           // Apply a workaround BEFORE applying the rule so that the execution plan generation still runs fast
           val (workAroundDf, ec) = applyConformanceRule(
-            applyCatalystWorkAround(df, dfJustId, idField),
+            optimizerTimeTracker.applyCatalystWorkAround(df),
             rule,
             explodeContext)
           explodeContext = ec
-          baselineTimeMs = Math.max(baselineTimeMs, getExecutionPlanGenerationTimeMs(workAroundDf))
-          log.info(s"New baseline execution plan optimization time: $baselineTimeMs ms")
           workAroundDf
         } else {
           ruleAppliedDf
@@ -112,7 +107,7 @@ object DynamicInterpreter {
         rulesApplied += 1
         applyRuleCheckpoint(rule, conformedDf, explodeContext)
     })
-    conformedDf.drop(col(idField))
+    optimizerTimeTracker.cleanupWorkaroundDf(conformedDf)
   }
 
   /**
@@ -302,58 +297,4 @@ object DynamicInterpreter {
       rule.withUpdatedOrder(index)
     })
   }
-
-  /**
-    * Reorders a list of conformance rules according to their appearance in the list.
-    *
-    * @param df A dataframe that requires a Catalyst workaround
-    * @return A a pair of dataframes
-    */
-  private def createCatalystWorkaroundDataFrames(df: DataFrame): (DataFrame, DataFrame, String) = {
-    val idField = SchemaUtils.getUniqueName("tmpId", Option(df.schema))
-    val dfWithId = df.withColumn(idField, monotonically_increasing_id)
-    val dfJustId = dfWithId.select(col(idField)).cache()
-    (dfWithId, dfJustId, idField)
-  }
-
-
-  /**
-    * Returns true of a dataframe might require a Catalyst issue workaround.
-    * A workaround is required if execution plan optimization step takes too long
-    *
-    * @param df A dataframe that might require a Catalyst workaround
-    * @return true if a workaround is required
-    */
-  private def isCatalystWorkaroundRequired(df: DataFrame, rulesApplied: Int, baseLineTime: Long): Boolean = {
-    val elapsedTime = getExecutionPlanGenerationTimeMs(df)
-    val tooLong = elapsedTime > baseLineTime + maxToleratedPlanGenerationPerRuleMs * rulesApplied
-    val msg = s"Execution optimization time for $rulesApplied rules: $elapsedTime ms"
-    if (tooLong) {
-      log.warn(s"$msg (Too long!)")
-    } else {
-      log.warn(msg)
-    }
-    tooLong
-  }
-
-  private def getExecutionPlanGenerationTimeMs(df: DataFrame): Long = {
-    val t0 = System.currentTimeMillis()
-    df.queryExecution.toString()
-    val t1 = System.currentTimeMillis()
-    t1 - t0
-  }
-
-  /**
-    * Applies a Catalyst workaround by joining a dataframe with a dataframe containing only unique ids.
-    *
-    * @param dfWithId A dataframe containing a unique id field for which execution plan generation takes too long
-    * @param dfJustId A dataframe that requires a Catalyst workaround
-    * @param idField  A dataframe that requires a Catalyst workaround
-    * @return A new dataframe with Catalyst optimizer issue workaround applied
-    */
-  private def applyCatalystWorkAround(dfWithId: DataFrame, dfJustId: DataFrame, idField: String): DataFrame = {
-    log.warn("A Catalyst optimizer issue workaround is applied.")
-    dfWithId.join(dfJustId, idField)
-  }
-
 }

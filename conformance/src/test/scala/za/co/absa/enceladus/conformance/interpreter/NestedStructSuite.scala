@@ -59,4 +59,15 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
     assert(conformed.count() == 20)
   }
 
+  test("Test Dynamic Conformance does not hang on many casting conformance rules"){
+    val conformed = DynamicInterpreter.interpret(
+      nestedStructsCastingDS,
+      standardizedDf,
+      experimentalMappingRule = false,
+      enableControlFramework = false
+    )
+
+    assert(conformed.count() == 20)
+  }
+
 }
