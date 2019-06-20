@@ -139,10 +139,15 @@ object TradeConformance {
   }
 
   def deleteTestData(): Unit = {
+    deleteOutputData()
     deleteTradeData()
     deleteCountryMT()
     deleteCurrencyMT()
     deleteProductMT()
+  }
+
+  def deleteOutputData(): Unit = {
+    safeDeleteMappingTableDir("src/test/testData/_testOutput")
   }
 
   def deleteTradeData(): Unit = {

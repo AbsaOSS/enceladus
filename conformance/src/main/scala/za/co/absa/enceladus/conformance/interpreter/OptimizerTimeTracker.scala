@@ -16,11 +16,12 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.apache.log4j.LogManager
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{col, monotonically_increasing_id}
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions.{col, lit}
+import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
-class OptimizerTimeTracker(inputDf: DataFrame) {
+class OptimizerTimeTracker(inputDf: DataFrame)(implicit spark: SparkSession) {
   private val log = LogManager.getLogger(this.getClass)
 
   private val maxToleratedPlanGenerationPerRuleMs = 100L
@@ -28,9 +29,10 @@ class OptimizerTimeTracker(inputDf: DataFrame) {
   private var baselineTimeMs = initialElapsedTimeBaselineMs
   private var lastExecutionPlanOptimizatioTime = 0L
 
-  private val idField = SchemaUtils.getUniqueName("tmpId", Option(inputDf.schema))
-  private val dfWithId = inputDf.withColumn(idField, monotonically_increasing_id).cache
-  private val dfJustId = dfWithId.select(col(idField))
+  private val idField1 = SchemaUtils.getUniqueName("tmpId", Option(inputDf.schema))
+  private val idField2 = s"${idField1}_2"
+  private val dfWithId = inputDf.withColumn(idField1, lit(1))
+  private val dfJustId = JsonUtils.getDataFrameFromJson(spark, Seq(s"""{"$idField2":1}""")).cache
 
   /**
     * Returns a dataframe prepared to apply the Catalyst workaround
@@ -40,7 +42,7 @@ class OptimizerTimeTracker(inputDf: DataFrame) {
   /**
     * Cleans up the additional field used for applying the Catalyst workaround
     */
-  def cleanupWorkaroundDf(df: DataFrame): DataFrame = df.drop(col(idField))
+  def cleanupWorkaroundDf(df: DataFrame): DataFrame = df.drop(col(idField1))
 
   /**
     * Returns true of a dataframe might require a Catalyst issue workaround.
@@ -79,7 +81,9 @@ class OptimizerTimeTracker(inputDf: DataFrame) {
     * @param df A dataframe for measuring execution plan optimization time
     */
   def recordExecutionPlanOptimizationTime(df: DataFrame): Unit = {
-    lastExecutionPlanOptimizatioTime = getExecutionPlanGenerationTimeMs(df)
+    val elapsedTime = getExecutionPlanGenerationTimeMs(df)
+    baselineTimeMs = Math.max(baselineTimeMs, elapsedTime)
+    lastExecutionPlanOptimizatioTime = elapsedTime
   }
 
   /**
@@ -103,6 +107,6 @@ class OptimizerTimeTracker(inputDf: DataFrame) {
     */
   def applyCatalystWorkaround(dfWithId: DataFrame): DataFrame = {
     log.warn("A Catalyst optimizer issue workaround is applied.")
-    dfWithId.join(dfJustId, idField)
+    dfWithId.crossJoin(dfJustId).drop(col(idField2))
   }
 }
