@@ -106,10 +106,10 @@
                                         ></Input>
                                     </form:fields>
                                 </form:FormElement>
-                                <form:FormElement label="Menas Credential File">
+                                <form:FormElement label="Menas Keytab File">
                                     <form:fields>
-                                        <Input id="menasCredFileInput" type="Text" placeholder="Enter HDFS path of a file containing sysuser menas credentials"
-                                            value="{path:'/newSchedule/runtimeParams/menasCredentialFile', type: 'sap.ui.model.type.String', constraints:{search: '^(?!hdfs:\\/\\/)/\\S*'}}"
+                                        <Input id="menasKeytabInput" type="Text" placeholder="Enter HDFS path of the keytab file (e.g: /tmp/a.keytab)"
+                                            value="{path:'/newSchedule/runtimeParams/menasKeytabFile', type: 'sap.ui.model.type.String', constraints:{search: '^(?!hdfs:\\/\\/)\\/(\\S)+\\.((properties)|(keytab))'}}"
                                         ></Input>
                                     </form:fields>
                                 </form:FormElement>

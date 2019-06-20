@@ -55,8 +55,8 @@
         <Text text="{path: '/currentDataset/schedule/runtimeParams/driverMemory', type:'sap.ui.model.type.Integer'} GB" />
         <Label text="System User" />
         <Text text="{/currentDataset/schedule/runtimeParams/sysUser}" />
-        <Label text="Menas Credentials File" />
-        <Text text="{/currentDataset/schedule/runtimeParams/menasCredentialFile}" />
+        <Label text="Menas Keytab File" />
+        <Text text="{/currentDataset/schedule/runtimeParams/menasKeytabFile}" />
         <core:Title text="Schedule Parameters" />
         <Label text="Dataset Version" />
         <Text text="{/currentDataset/schedule/datasetVersion}" />
