@@ -71,14 +71,14 @@ Simply copy the **menas.war** file produced when building the project into Tomca
 - **Hadoop 2.7** installation
 - **Menas** running instance
 - **Menas Credentials File** in your home directory or on HDFS (a configuration file for authenticating the Spark jobs with Menas) 
- - **Use with in-memory authentication**
+   - **Use with in-memory authentication**
 e.g. `~/menas-credential.properties`:
 ```
 username=user
 password=changeme
 ```
 - **Menas Keytab File** in your home directory or on HDFS
- - **Use with kerberos authentication**, see [link](https://kb.iu.edu/d/aumh) for details on creating keytab files
+   - **Use with kerberos authentication**, see [link](https://kb.iu.edu/d/aumh) for details on creating keytab files
  - **Directory structure** for the **RAW** dataset should follow the convention of `<path_to_dataset_in_menas>/<year>/<month>/<day>/v<dataset_version>`. This date is specified with the `--report-date` option when running the **Standardization** and **Conformance** jobs.
  - **_INFO file** must be present along with the **RAW** data on HDFS as per the above directory structure. This is a file tracking control measures via [Atum](https://github.com/AbsaOSS/atum), an example can be found [here](examples/data/input/_INFO).
 
