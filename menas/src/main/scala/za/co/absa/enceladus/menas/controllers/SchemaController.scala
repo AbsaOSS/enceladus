@@ -48,17 +48,18 @@ class SchemaController @Autowired() (
   @ResponseStatus(HttpStatus.CREATED)
   def handleFileUpload(@AuthenticationPrincipal principal: UserDetails,
                        @RequestParam file: MultipartFile,
-                       @RequestParam version: Int, @RequestParam name: String, @RequestParam format: Optional[String]): CompletableFuture[_] = {
+                       @RequestParam version: Int,
+                       @RequestParam name: String,
+                       @RequestParam format: Optional[String]): CompletableFuture[_] = {
     val origFormat: Option[String] = format
     val fileContent = new String(file.getBytes)
 
     val sparkStruct = origFormat match {
       case Some("struct") | Some("") | None => sparkMenasConvertor.convertAnyToStructType(fileContent)
-      case Some("copybook") => {
+      case Some("copybook") =>
         val parsedSchema = CopybookParser.parseTree(fileContent)
         val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
         cobolSchema.getSparkSchema
-      }
       case Some(x) => throw new UnsupportedOperationException(s"$x is not a recognized schema format. Menas currently supports: 'struct' and 'copybook'")
     }
 
