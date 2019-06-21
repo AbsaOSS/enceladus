@@ -42,7 +42,7 @@ html, body {
 }
 
 .monitoringBlockLayoutCell .sapUiBlockCellContent {
-    titleAlignment: Center !important;
+    padding: 1rem !important;
 }
 
 .auditTrailNestedListItem {

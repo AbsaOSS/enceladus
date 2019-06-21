@@ -441,7 +441,7 @@ sap.ui.define([
       let datasetName = this._model.getProperty("/currentDataset/name");
       if (sMonitoringDateFrom != undefined && sMonitoringDateTo != undefined && datasetName != undefined) {
         MonitoringService.getData(datasetName, sMonitoringDateFrom, sMonitoringDateTo)
-          .then(this._checkRunDataOverflow);
+          .then(k => {this._checkRunDataOverflow()});
       } else {
         MonitoringService.clearMonitoringModel();
       }
@@ -450,9 +450,9 @@ sap.ui.define([
     _checkRunDataOverflow: function () {
       if (this._model.getProperty("/numberOfPoints") >= this.MAX_RUNS) {
         sap.m.MessageBox.show("The number of found runs exceeds the display limit of " + this.MAX_RUNS +
-          ". Please, select a smaller date interval and retry.", {
+          ". Some of the runs are not shown. Please, select a smaller date interval and retry.", {
           icon: sap.m.MessageBox.Icon.WARNING,
-          title: "Too many runs found",
+          title: "Too large date interval",
           actions: [sap.m.MessageBox.Action.OK]
         });
       } else {

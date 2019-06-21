@@ -122,7 +122,7 @@ var MonitoringService = new function() {
     // set layout properties
 
     model.setProperty("/numberOfPoints", oData.length);
-    model.setProperty("/barChartHeight", 10 + 2 * barChartLabels.length + "rem");
+    model.setProperty("/barChartHeight", Math.max(15, 2 * barChartLabels.length) + "rem");
 
     // set model
     model.setProperty("/monitoringRunData", oData);
