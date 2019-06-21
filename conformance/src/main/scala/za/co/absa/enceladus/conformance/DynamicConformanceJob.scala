@@ -108,7 +108,7 @@ object DynamicConformanceJob {
     val inputData = DataSource.getData(stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
     // perform the conformance
     val result: DataFrame = try {
-      DynamicInterpreter.interpret(conformance, inputData, isExperimentalRuleEnabled(), enableCF)
+      DynamicInterpreter.interpret(conformance, inputData, isExperimentalRuleEnabled(), isCatalystWorkaroundEnabled(), enableCF)
     } catch {
       case e: ValidationException =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, e.techDetails)
@@ -123,17 +123,44 @@ object DynamicConformanceJob {
   }
 
   private def isExperimentalRuleEnabled()(implicit cmd: CmdConfig): Boolean = {
-    val configPath = "conformance.mapping.rule.experimental.implementation"
-    val enabled = cmd.experimentalMappingRule match {
+    val enabled = getCmdOrConfigBoolean(cmd.experimentalMappingRule,
+      "conformance.mapping.rule.experimental.implementation",
+      defaultValue = false)
+    log.info(s"Experimental mapping rule enabled = $enabled")
+    enabled
+  }
+
+  private def isCatalystWorkaroundEnabled()(implicit cmd: CmdConfig): Boolean = {
+    val enabled = getCmdOrConfigBoolean(cmd.isCatalystWorkaroundEnabled,
+      "conformance.catalyst.workaround",
+      defaultValue = true)
+    log.info(s"Catalyst workaround enabled = $enabled")
+    enabled
+  }
+
+  /**
+    * Returns an effective value of a parameter according to the following priorities:
+    * - Command line argutemts [highest]
+    * - Configuration file (application.conf)
+    * - Global default [lowest]
+    *
+    * @param cmdParameterOpt An optional value retrieved from command line arguments
+    * @param configKey       A key in a configuration file
+    * @param defaultValue    Global default value
+    * @return The effective value of the parameter
+    */
+  private def getCmdOrConfigBoolean(cmdParameterOpt: Option[Boolean],
+                                    configKey: String,
+                                    defaultValue: Boolean): Boolean = {
+    val enabled = cmdParameterOpt match {
       case Some(b) => b
       case None =>
-        if (conf.hasPath(configPath)) {
-          conf.getBoolean(configPath)
+        if (conf.hasPath(configKey)) {
+          conf.getBoolean(configKey)
         } else {
-          false
+          defaultValue
         }
     }
-    log.info(s"Experimental mapping rule enabled = $enabled")
     enabled
   }
 

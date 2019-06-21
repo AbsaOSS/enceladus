@@ -97,10 +97,15 @@ class NegationRuleSuite extends FunSuite with SparkTestBase {
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
     val experimentalMR = true
+    val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
     mockWhen(dao.getDataset("Test Name", 1)) thenReturn enceladusDataset
 
-    val conformed = DynamicInterpreter.interpret(enceladusDataset, inputDf, experimentalMR, enableCF).cache
+    val conformed = DynamicInterpreter.interpret(enceladusDataset,
+      inputDf,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF).cache
 
     val conformedJSON = conformed.toJSON.collect().mkString("\n")
 

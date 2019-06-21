@@ -135,6 +135,7 @@ object CustomRuleSample4 {
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with Menas)
     val experimentalMR= true
+    val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
 
     val dfReader: DataFrameReader = {
@@ -173,7 +174,12 @@ object CustomRuleSample4 {
       )
     )
     // scalastyle:on magic.number
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableControlFramework = enableCF)
+
     outputData.show()
     saveToCsv(outputData, cmd.outPath)
   }

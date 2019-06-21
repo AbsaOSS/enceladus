@@ -28,6 +28,7 @@ case class InterpreterContext (
                                 schema: StructType,
                                 conformance: ConfDataset,
                                 experimentalMappingRule: Boolean,
+                                isCatalystWorkaroundEnabled: Boolean,
                                 enableControlFramework: Boolean,
                                 jobShortName: String,
                                 spark: SparkSession,

@@ -60,6 +60,7 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
   implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here (if not working with menas)
   val experimentalMR = true
+  val isCatalystWorkaroundEnabled = true
   val enableCF: Boolean = false
 
   val inputData: DataFrame = spark.createDataFrame(Seq(Mine(1), Mine(4), Mine(9), Mine(16)))
@@ -80,7 +81,12 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
 
   val expected = Seq(MineConfd(1, 1d, Seq()), MineConfd(4, 2d, Seq()), MineConfd(9, 3d, Seq()), MineConfd(16, 4d, Seq()))
 
-  val actualDf: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+  val actualDf: DataFrame = DynamicInterpreter.interpret(conformanceDef,
+    inputData,
+    experimentalMR,
+    isCatalystWorkaroundEnabled,
+    enableCF)
+
   val actual: Seq[MineConfd] = actualDf.as[MineConfd].collect().toSeq
 
   test("Testing custom rule results") {

@@ -36,6 +36,7 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
   implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
   val experimentalMR = true
+  val isCatalystWorkaroundEnabled = true
   val enableCF: Boolean = false
 
   test("String values") {
@@ -59,7 +60,12 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF)
+
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("~~~Short", "This is long", "~~~~~~~~")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -87,7 +93,12 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF)
+
     val output: Seq[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toSeq
     val expected: Seq[XPadTestOutputRow] = (input zip Seq("007", "042", "100000")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -115,7 +126,12 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF)
+
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("12abcdefgh", "1231231$$$", "1231231231")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -143,7 +159,12 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF)
+
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("A", "AAAAAAAAAAAAAAAAAAAA", "")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -160,6 +181,7 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
   implicit val progArgs: CmdConfig = CmdConfig()
   implicit val dao: EnceladusDAO = EnceladusRestDAO
   val experimentalMR = true
+  val isCatalystWorkaroundEnabled = true
   val enableCF: Boolean = false
 
   test("String values") {
@@ -183,7 +205,12 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF)
+
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("Short...", "This is long", "........")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -211,7 +238,12 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF )
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF)
+
     val output: Seq[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toSeq
     val expected: Seq[XPadTestOutputRow] = (input zip Seq("100", "420", "100000")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -239,7 +271,12 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF)
+
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("abcdefgh12", "$$$1231231", "1231231231")).map(x => XPadTestOutputRow(x._1, x._2))
 
@@ -267,7 +304,12 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF)
+
     val output: List[XPadTestOutputRow] = outputData.as[XPadTestOutputRow].collect().toList
     val expected: List[XPadTestOutputRow] = (input zip List("A", "AAAAAAAAAAAAAAAAAAAA", "")).map(x => XPadTestOutputRow(x._1, x._2))
 

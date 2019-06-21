@@ -52,6 +52,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = Option(useExperimentalMappingRule))
     val enableCF = true
+    val isCatalystWorkaroundEnabled = true
 
     import spark.implicits._
     val mappingTablePattern = "{0}/{1}/{2}"
@@ -64,8 +65,12 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     mockWhen(dao.getMappingTable("role", 0)) thenReturn EmployeeConformance.roleMT
     mockWhen(dao.getSchema("Employee", 0)) thenReturn dfs.schema
 
-    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs,
-      useExperimentalMappingRule, enableCF).cache
+    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS,
+      dfs,
+      useExperimentalMappingRule,
+      isCatalystWorkaroundEnabled,
+      enableControlFramework = enableCF).cache
+
     val data = conformed.as[ConformedEmployee].collect.sortBy(_.employee_id).toList
     val expected = EmployeeConformance.conformedEmployees.sortBy(_.employee_id).toList
 
@@ -101,6 +106,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = Option(useExperimentalMappingRule))
     val enableCF = true
+    val isCatalystWorkaroundEnabled = true
 
     import spark.implicits._
     val mappingTablePattern = "{0}/{1}/{2}"
@@ -113,8 +119,12 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     mockWhen(dao.getMappingTable("product", 0)) thenReturn TradeConformance.productMT
     mockWhen(dao.getSchema("Trade", 0)) thenReturn dfs.schema
 
-    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs,
-      useExperimentalMappingRule, enableCF).cache
+    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS,
+      dfs,
+      useExperimentalMappingRule,
+      isCatalystWorkaroundEnabled,
+      enableControlFramework = enableCF).cache
+
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
 
     // Different results for the original mapping rule interreter algorithm and for the optmized one because of:

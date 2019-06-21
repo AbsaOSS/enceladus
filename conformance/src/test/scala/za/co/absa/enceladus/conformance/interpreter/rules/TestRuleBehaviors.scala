@@ -30,13 +30,18 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase {
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
     val experimentalMR = true
+    val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
 
     mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn inputDataset
     mockWhen(dao.getDataset("Library Conformance", 1)) thenReturn inputDataset
 
     import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(inputDataset, inputDf, experimentalMR, enableCF).cache
+    val conformed = DynamicInterpreter.interpret(inputDataset,
+      inputDf,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF).cache
 
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 

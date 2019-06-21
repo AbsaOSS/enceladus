@@ -47,6 +47,7 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here (if not working with menas)
     val enableCF = false
+    val isCatalystWorkaroundEnabled = true
 
     mockWhen(dao.getMappingTable("myMappingTable", 0)) thenReturn MappingTable(name = "myMappingTable", version = 0, hdfsPath = "myMappingTable", schemaName = "whatev", schemaVersion = 0, defaultMappingValue = List())
 
@@ -65,8 +66,12 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
         MappingConformanceRule(order = 1, controlCheckpoint = false, mappingTable = "myMappingTable", mappingTableVersion = 0,
           attributeMappings = Map("id" -> "toJoin"), targetAttribute = "mappedAttr", outputColumn = "confMapping")))
 
-    val confd = DynamicInterpreter.interpret(conformanceDef, inputDf,
-      useExperimentalMappingRule, enableCF).repartition(2)
+    val confd = DynamicInterpreter.interpret(conformanceDef,
+      inputDf,
+      useExperimentalMappingRule,
+      isCatalystWorkaroundEnabled,
+      enableControlFramework = enableCF)
+      .repartition(2)
 
     confd.show(100, false)
     confd.printSchema()
