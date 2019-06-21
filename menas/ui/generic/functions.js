@@ -29,7 +29,7 @@ var Functions = new function () {
       oFormattedData = oData;
     }
 
-    $.ajax(this.urlBase + sPath, {
+    return $.ajax(this.urlBase + sPath, {
       beforeSend: (oJqXHR, oSettings) => {
         if (sMethod.toLowerCase() !== "get") {
           let csrfToken = localStorage.getItem("csrfToken");

@@ -231,7 +231,7 @@ var MonitoringService = new function() {
 
   this.getData= function(sId, sStartDate, sEndDate) {
     MonitoringService.clearAggregators();
-    Functions.ajax("api/monitoring/data/datasets/"
+    return Functions.ajax("api/monitoring/data/datasets/"
       + encodeURI(sId) + "/"
       + encodeURI(sStartDate) + "/"
       + encodeURI(sEndDate),

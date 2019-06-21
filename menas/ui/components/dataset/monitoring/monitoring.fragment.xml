@@ -44,24 +44,20 @@
                 </contentLeft>
             </Bar>
 
-        <layout:BlockLayout id="BlockLayout" background="Dashboard">
+        <layout:BlockLayout id="BlockLayout">
             <layout:BlockLayoutRow>
 
                 <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
                     <Title class="monitoringTitle" text="Summary"/>
                     <form:SimpleForm id="monitoringSummary">
                         <form:content>
-                            <Label text="Info date FROM"/>
-                            <Text id="monitoringDateFrom" text="{/monitoringDateFrom}"/>
-                            <Label text="Info date TO"/>
-                            <Text id="monitoringDateTo" text="{/monitoringDateTo}"/>
                             <Label text="Total runs"/>
                             <Text id="monitoringTotalRuns" text="{/numberOfPoints}"/>
                         </form:content>
                     </form:SimpleForm>
                 </layout:BlockLayoutCell>
 
-                <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
+                <layout:BlockLayoutCell class="monitoringBlockLayoutCell" >
                     <Title class="monitoringTitle" text="Runs by status"/>
                     <lab:PieChartJS
                         legendPosition="left"

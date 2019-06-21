@@ -37,13 +37,12 @@ html, body {
 }
 
 .monitoringBlockLayoutCell {
-    min-width: 23rem !important;
+    min-width: 20rem !important;
     max-width: 30rem !important;
 }
 
-.monitoringTitle {
-    textAlign: Center;
-    width: 100%;
+.monitoringBlockLayoutCell .sapUiBlockCellContent {
+    titleAlignment: Center !important;
 }
 
 .auditTrailNestedListItem {
