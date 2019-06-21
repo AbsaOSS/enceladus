@@ -102,7 +102,7 @@ password=changeme
 --row-tag <tag>
 ```
 * Here `row-tag` is a specific option for `raw-format` of type `XML`. For more options for different types please see our WIKI.
-* In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `menas-credentials-file`
+* In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
 #### Running Conformance
 ```
@@ -123,7 +123,7 @@ password=changeme
 --report-date <date> \
 --report-version <data_run-version>
 ```
-* In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `menas-credentials-file`
+* In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
 ## <a name="contribute"/>How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
