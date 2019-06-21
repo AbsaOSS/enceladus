@@ -42,14 +42,6 @@
 
         <layout:BlockLayout id="BlockLayout" background="Dashboard">
             <layout:BlockLayoutRow>
-                <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
-                    <Title class="monitoringTitle" text="Select info date interval"/>
-                    <u:Calendar
-                        id="calendar"
-                        select="handleCalendarSelect"
-                        intervalSelection="true"
-                        weekNumberSelect="handleWeekNumberSelect"/>
-            </layout:BlockLayoutCell>
 
                 <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
                     <Title class="monitoringTitle" text="Summary"/>
@@ -64,8 +56,7 @@
                         </form:content>
                     </form:SimpleForm>
                 </layout:BlockLayoutCell>
-            </layout:BlockLayoutRow>
-            <layout:BlockLayoutRow>
+
                 <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
                     <Title class="monitoringTitle" text="Runs by status"/>
                     <lab:PieChartJS

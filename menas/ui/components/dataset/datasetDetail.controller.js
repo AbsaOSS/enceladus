@@ -419,24 +419,20 @@ sap.ui.define([
 
     // Monitoring related part
 
-    handleCalendarSelect: function(oEvent) {
-      var oCalendar = oEvent.getSource();
-      this._updateTimeInterval(oCalendar.getSelectedDates()[0]);
-    },
-
-    _updateTimeInterval: function(oSelectedDates) {
-      let oDate;
-      if (oSelectedDates) {
-        oDate = oSelectedDates.getStartDate();
-        if (oDate) {
-          this._model.setProperty("/monitoringDateFrom", Formatters.toStringInfoDate(oDate))
-        }
-        oDate = oSelectedDates.getEndDate();
-        if (oDate) {
-          this._model.setProperty("/monitoringDateTo", Formatters.toStringInfoDate(oDate))
+    handleDateChange: function(oEvent) {
+      let sId = oEvent.getSource().getId();
+      let sValue = oEvent.getParameter("value");
+      let bValid = oEvent.getParameter("valid");
+      if (bValid) {
+        switch (sId) {
+          case "dateFromPicker":
+            this._model.setProperty("/monitoringDateFrom", sValue);
+            break;
+          case "dateToPicker":
+            this._model.setProperty("/monitoringDateTo", sValue);
+            break;
         }
       }
-      this.updateMonitoringData()
     },
 
     updateMonitoringData: function () {
@@ -450,17 +446,14 @@ sap.ui.define([
       }
     },
 
-    handleWeekNumberSelect: function(oEvent) {
-      let oDateRange = oEvent.getParameter("weekDays");
-      this._updateTimeInterval(oDateRange);
+    onFindRunsPress: function (oEv){
+      // Check selected interval
+      this.updateMonitoringData()
     },
 
     setDefaultMonitoringDateInterval: function () {
       let oEnd = new Date();
       let oStart = new Date(oEnd.getTime() - 14 * 24 * 60 * 60 * 1000); // Two weeks before today
-      let oCalendar = this.byId("calendar");
-      oCalendar.removeAllSelectedDates();
-      oCalendar.addSelectedDate(new sap.ui.unified.DateRange({startDate: oStart, endDate: oEnd}));
       this._model.setProperty("/monitoringDateFrom", Formatters.toStringInfoDate(oStart));
       this._model.setProperty("/monitoringDateTo", Formatters.toStringInfoDate(oEnd))
     },
