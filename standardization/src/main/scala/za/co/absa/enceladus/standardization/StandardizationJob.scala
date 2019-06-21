@@ -81,6 +81,9 @@ object StandardizationJob {
       case None => {
         val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, cmd.reportDate) + 1
         log.warn(s"Report version not provided, inferred report version: $newVersion")
+        log.warn("This is an EXPERIMENTAL feature.")
+        log.warn(" -> It can lead to issues when running multiple jobs on a dataset concurrently.")
+        log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
         newVersion
       }
     }
