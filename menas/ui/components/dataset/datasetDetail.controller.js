@@ -43,6 +43,9 @@ sap.ui.define([
       let cont = new ConformanceRuleDialog(this);
       let view = this.getView();
 
+
+      this.byId("dateFromPicker").setDisplayFormat(Formatters.infoDatePattern);
+      this.byId("dateToPicker").setDisplayFormat(Formatters.infoDatePattern);
       this.setDefaultMonitoringDateInterval();
 
       this._upsertConformanceRuleDialog = Fragment.load({
@@ -421,26 +424,26 @@ sap.ui.define([
 
     handleDateChange: function(oEvent) {
       let sId = oEvent.getSource().getId();
-      let sValue = oEvent.getParameter("value");
+      let oValue = oEvent.getParameter("dateValue");
       let bValid = oEvent.getParameter("valid");
       if (bValid) {
         switch (sId) {
           case "dateFromPicker":
-            this._model.setProperty("/monitoringDateFrom", sValue);
+            this._model.setProperty("/monitoringDateFrom", oValue);
             break;
           case "dateToPicker":
-            this._model.setProperty("/monitoringDateTo", sValue);
+            this._model.setProperty("/monitoringDateTo", oValue);
             break;
         }
       }
     },
 
     updateMonitoringData: function () {
-      let monitoringDateFrom = this._model.getProperty("/monitoringDateFrom");
-      let monitoringDateTo = this._model.getProperty("/monitoringDateTo");
+      let sMonitoringDateFrom = Formatters.toStringInfoDate(this._model.getProperty("/monitoringDateFrom"));
+      let sMonitoringDateTo = Formatters.toStringInfoDate(this._model.getProperty("/monitoringDateTo"));
       let datasetName = this._model.getProperty("/currentDataset/name");
-      if (monitoringDateFrom != undefined && monitoringDateTo != undefined && datasetName != undefined) {
-        MonitoringService.getData(datasetName, monitoringDateFrom, monitoringDateTo);
+      if (sMonitoringDateFrom != undefined && sMonitoringDateTo != undefined && datasetName != undefined) {
+        MonitoringService.getData(datasetName, sMonitoringDateFrom, sMonitoringDateTo);
       } else {
         MonitoringService.clearMonitoringModel();
       }
@@ -454,8 +457,8 @@ sap.ui.define([
     setDefaultMonitoringDateInterval: function () {
       let oEnd = new Date();
       let oStart = new Date(oEnd.getTime() - 14 * 24 * 60 * 60 * 1000); // Two weeks before today
-      this._model.setProperty("/monitoringDateFrom", Formatters.toStringInfoDate(oStart));
-      this._model.setProperty("/monitoringDateTo", Formatters.toStringInfoDate(oEnd))
+      this._model.setProperty("/monitoringDateFrom", oStart);
+      this._model.setProperty("/monitoringDateTo", oEnd)
     },
 
     monitoringToRun: function (oEv) {

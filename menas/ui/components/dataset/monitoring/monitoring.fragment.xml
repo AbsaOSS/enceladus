@@ -26,13 +26,13 @@
                     <Label text="Info date from:"/>
                     <DatePicker
                         id="dateFromPicker"
-                        value="{/monitoringDateFrom}" valueFormat="yyyy-MM-dd" displayFormat="yyyy-MM-dd"
+                        dateValue="{/monitoringDateFrom}"
                         change="handleDateFromChange" width="10rem"/>
 
                     <Label text="to:"/>
                     <DatePicker
                         id="dateToPicker"
-                        value="{/monitoringDateTo}" valueFormat="yyyy-MM-dd" displayFormat="yyyy-MM-dd"
+                        dateValue="{/monitoringDateTo}"
                         change="handleDateToChange" width="10rem"/>
 
                     <Button id="FindRunsButton" text="Find runs" icon="sap-icon://search"
