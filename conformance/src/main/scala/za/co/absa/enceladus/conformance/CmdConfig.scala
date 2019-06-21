@@ -37,7 +37,8 @@ case class CmdConfig(datasetName: String = "",
     performanceMetricsFile: Option[String] = None,
     publishPathOverride: Option[String] = None,
     folderPrefix: Option[String] = None,
-    experimentalMappingRule: Option[Boolean] = None)
+    experimentalMappingRule: Option[Boolean] = None,
+    isCatalystWorkaroundEnabled: Option[Boolean] = None)
 
 object CmdConfig {
 
@@ -56,7 +57,7 @@ object CmdConfig {
 
   private class CmdParser(programName: String)(implicit spark: SparkSession) extends OptionParser[CmdConfig](programName) {
     private val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-    
+
     head("Dynamic Conformance", "")
 
     opt[String]('D', "dataset-name").required().action((value, config) =>
@@ -118,6 +119,9 @@ object CmdConfig {
 
     opt[Boolean]("experimental-mapping-rule").optional().action((value, config) =>
       config.copy(experimentalMappingRule = Option(value))).text("Use experimental optimized mapping conformance rule")
+
+    opt[Boolean]("catalyst-workaround").optional().action((value, config) =>
+      config.copy(isCatalystWorkaroundEnabled = Option(value))).text("Turn on or off Catalyst workaround feature")
 
     help("help").text("prints this usage text")
   }

@@ -34,6 +34,7 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
     val experimentalMR = true
+    val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
 
     mockWhen (dao.getDataset("Orders Conformance", 1)) thenReturn CastingRuleSamples.ordersDS
@@ -41,7 +42,11 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
     val mappingTablePattern = "{0}/{1}/{2}"
 
     import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS, inputDf, experimentalMR, enableCF).cache
+    val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS,
+      inputDf,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableControlFramework = enableCF).cache
 
     val conformedJSON = JsonUtils.prettySparkJSON(conformed.orderBy($"id").toJSON.collect)
 

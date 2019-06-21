@@ -31,6 +31,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       nestedStructsDS,
       standardizedDf,
       experimentalMappingRule = false,
+      isCatalystWorkaroundEnabled = true,
       enableControlFramework = false
     )
 
@@ -42,6 +43,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       nestedStructsUpperDS,
       standardizedDf,
       experimentalMappingRule = false,
+      isCatalystWorkaroundEnabled = true,
       enableControlFramework = false
     )
 
@@ -53,6 +55,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       nestedStructsNegationDS,
       standardizedDf,
       experimentalMappingRule = false,
+      isCatalystWorkaroundEnabled = true,
       enableControlFramework = false
     )
 
@@ -64,6 +67,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       nestedStructsCastingDS,
       standardizedDf,
       experimentalMappingRule = false,
+      isCatalystWorkaroundEnabled = true,
       enableControlFramework = false
     )
 

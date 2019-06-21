@@ -33,6 +33,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   implicit var progArgs: CmdConfig = null
 
   private val enableCF = false
+  private val isCatalystWorkaroundEnabled = true
 
   override def beforeAll(): Unit = {
 
@@ -53,12 +54,22 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
 
-    val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef, df, useExperimentalMappingRule, enableCF).cache()
+    val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef,
+      df,
+      useExperimentalMappingRule,
+      isCatalystWorkaroundEnabled,
+      enableControlFramework = enableCF).cache()
     val expected = ArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[ConformedOuter].collect().sortBy(_.order).toList
     assertResult(expected)(conformed)
 
-    val numOfErrors = conformedDf.select(size(col("errCol")).as("numErrors")).agg(sum(col("numErrors"))).collect()(0)(0).toString.toInt
+    val numOfErrors = conformedDf
+      .select(size(col("errCol"))
+        .as("numErrors"))
+      .agg(sum(col("numErrors")))
+      .collect()(0)(0)
+      .toString
+      .toInt
     assert(numOfErrors == ArraySamples.totalNumberOfErrors)
   }
 
@@ -66,13 +77,24 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     val df = spark.createDataFrame(NullArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
-    val conformedDf = DynamicInterpreter.interpret(NullArraySamples.mappingOnlyConformanceDef, df, useExperimentalMappingRule, enableCF).cache()
+    val conformedDf = DynamicInterpreter.interpret(NullArraySamples.mappingOnlyConformanceDef,
+      df,
+      useExperimentalMappingRule,
+      isCatalystWorkaroundEnabled,
+      enableControlFramework = enableCF).cache()
+
     val expected = NullArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
 
     assertResult(expected)(conformed)
 
-    val numOfErrors = conformedDf.select(size(col("errCol")).as("numErrors")).agg(sum(col("numErrors"))).collect()(0)(0).toString.toInt
+    val numOfErrors = conformedDf
+      .select(size(col("errCol"))
+        .as("numErrors"))
+      .agg(sum(col("numErrors")))
+      .collect()(0)(0)
+      .toString
+      .toInt
 
     assert(numOfErrors == NullArraySamples.totalNumberOfErrors)
   }
@@ -83,13 +105,23 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     val df = spark.createDataFrame(EmtpyArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
 
-    val conformedDf = DynamicInterpreter.interpret(EmtpyArraySamples.mappingOnlyConformanceDef, df, useExperimentalMappingRule, enableCF).cache()
+    val conformedDf = DynamicInterpreter.interpret(EmtpyArraySamples.mappingOnlyConformanceDef,
+      df,
+      useExperimentalMappingRule,
+      isCatalystWorkaroundEnabled,
+      enableControlFramework = enableCF).cache()
     val expected = EmtpyArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
 
     assertResult(expected)(conformed)
 
-    val numOfErrors = conformedDf.select(size(col("errCol")).as("numErrors")).agg(sum(col("numErrors"))).collect()(0)(0).toString.toInt
+    val numOfErrors = conformedDf
+      .select(size(col("errCol"))
+        .as("numErrors"))
+      .agg(sum(col("numErrors")))
+      .collect()(0)(0)
+      .toString
+      .toInt
 
     assert(numOfErrors == EmtpyArraySamples.totalNumberOfErrors)
   }

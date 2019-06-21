@@ -23,5 +23,8 @@ conformance.mappingtable.pattern="reportDate={0}-{1}-{2}"
 # operating on the same array
 conformance.mapping.rule.experimental.implementation=false
 
+# Enable workaround for Catalyst execution plan optimization freeze
+conformance.catalyst.workaround=true
+
 #system-wide time zone
 timezone="UTC"

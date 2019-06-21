@@ -42,6 +42,7 @@ object DynamicInterpreter {
     * @param inputDf                 The dataset to be conformed
     * @param jobShortName            A job name used for checkpoints
     * @param experimentalMappingRule If true the new explode-optimized conformance mapping rule interpreter will be used
+    * @param isCatalystWorkaroundEnabled If true the Catalyst optimizer workaround is enabled
     * @param enableControlFramework  If true sets the checkpoints on the dataset upon conforming
     * @return The conformed dataframe
     *
@@ -49,12 +50,13 @@ object DynamicInterpreter {
   def interpret(conformance: ConfDataset,
                 inputDf: Dataset[Row],
                 experimentalMappingRule: Boolean,
+                isCatalystWorkaroundEnabled: Boolean,
                 enableControlFramework: Boolean,
                 jobShortName: String = "Conformance"
                )(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): DataFrame = {
 
     implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
-      experimentalMappingRule, enableControlFramework, jobShortName, spark, dao, progArgs)
+      experimentalMappingRule, isCatalystWorkaroundEnabled, enableControlFramework, jobShortName, spark, dao, progArgs)
 
     applyCheckpoint(inputDf, "Start")
 
@@ -82,7 +84,7 @@ object DynamicInterpreter {
     var explodeContext = ExplosionContext()
 
     val steps = getConformanceSteps
-    val optimizerTimeTracker = new OptimizerTimeTracker(inputDf)
+    val optimizerTimeTracker = new OptimizerTimeTracker(inputDf, ictx.isCatalystWorkaroundEnabled)
     val dfInputWithId = optimizerTimeTracker.getWorkaroundDataframe
 
     // Fold left on rules

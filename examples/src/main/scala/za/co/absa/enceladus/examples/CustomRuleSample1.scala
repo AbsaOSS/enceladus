@@ -40,6 +40,7 @@ object CustomRuleSample1 {
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     val experimentalMR = true
+    val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
 
     val inputData = spark.createDataFrame(
@@ -67,7 +68,12 @@ object CustomRuleSample1 {
       )
     )
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableControlFramework = enableCF)
+
     outputData.show(false)
     //scalastyleon: magicnumber
   }

@@ -39,6 +39,7 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
   implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
   val experimentalMR = true
+  val isCatalystWorkaroundEnabled = true
   val enableCF: Boolean = false
 
   test("Golden flow") {
@@ -62,7 +63,12 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableControlFramework = enableCF)
+
     val output: Seq[TestOutputRow] = outputData.as[TestOutputRow].collect().toSeq
     val expected: Seq[TestOutputRow] = (input zip Seq("HELLO WORLD", "ONE RING TO RULE THEM ALL", "ALREADY CAPS")).map(x => TestOutputRow(x._1, x._2))
 
@@ -90,7 +96,12 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF)
+
     val output: Seq[TestOutputRow] = outputData.as[TestOutputRow].collect().toSeq
     val expected: Seq[TestOutputRow] = (input zip Seq("1", "4", "9")).map(x => TestOutputRow(x._1, x._2))
 
@@ -118,7 +129,12 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData, experimentalMR, enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
+      inputData,
+      experimentalMR,
+      isCatalystWorkaroundEnabled,
+      enableCF)
+
     val output: List[TestOutputRow] = outputData.as[TestOutputRow].collect().toList
     val expected: List[TestOutputRow] = (input zip Seq("WHAT A BEAUTIFUL PLACE", "ONE RING TO FIND THEM", null)).map(x => TestOutputRow(x._1, x._2)).toList
 

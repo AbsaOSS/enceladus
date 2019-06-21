@@ -21,7 +21,7 @@ import org.apache.spark.sql.functions.{col, lit}
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
-class OptimizerTimeTracker(inputDf: DataFrame)(implicit spark: SparkSession) {
+class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(implicit spark: SparkSession) {
   private val log = LogManager.getLogger(this.getClass)
 
   private val maxToleratedPlanGenerationPerRuleMs = 100L
@@ -37,7 +37,13 @@ class OptimizerTimeTracker(inputDf: DataFrame)(implicit spark: SparkSession) {
   /**
     * Returns a dataframe prepared to apply the Catalyst workaround
     */
-  def getWorkaroundDataframe: DataFrame = dfWithId
+  def getWorkaroundDataframe: DataFrame = {
+    if (isWorkaroundEnabled) {
+      dfWithId
+    } else {
+      inputDf
+    }
+  }
 
   /**
     * Cleans up the additional field used for applying the Catalyst workaround
@@ -52,26 +58,30 @@ class OptimizerTimeTracker(inputDf: DataFrame)(implicit spark: SparkSession) {
     * @return true if a workaround is required
     */
   def isCatalystWorkaroundRequired(df: DataFrame, rulesApplied: Int): Boolean = {
-    val elapsedTime = getExecutionPlanGenerationTimeMs(df)
+    if (isWorkaroundEnabled) {
+      val elapsedTime = getExecutionPlanGenerationTimeMs(df)
 
-    val tooBigTimeDifference = if (lastExecutionPlanOptimizatioTime > 0) {
-      elapsedTime / lastExecutionPlanOptimizatioTime > 5
+      val tooBigTimeDifference = if (lastExecutionPlanOptimizatioTime > 0) {
+        elapsedTime / lastExecutionPlanOptimizatioTime > 5
+      } else {
+        false
+      }
+      val tooLong = tooBigTimeDifference ||
+        elapsedTime > baselineTimeMs + maxToleratedPlanGenerationPerRuleMs * rulesApplied
+
+      val msg = s"Execution optimization time for $rulesApplied rules: $elapsedTime ms"
+      if (tooLong) {
+        log.warn(s"$msg (Too long!)")
+      } else {
+        baselineTimeMs = Math.max(baselineTimeMs, elapsedTime)
+        lastExecutionPlanOptimizatioTime = elapsedTime
+        log.info(s"New baseline execution plan optimization time: $baselineTimeMs ms")
+        log.warn(msg)
+      }
+      tooLong
     } else {
       false
     }
-    val tooLong = tooBigTimeDifference ||
-      elapsedTime > baselineTimeMs + maxToleratedPlanGenerationPerRuleMs * rulesApplied
-
-    val msg = s"Execution optimization time for $rulesApplied rules: $elapsedTime ms"
-    if (tooLong) {
-      log.warn(s"$msg (Too long!)")
-    } else {
-      baselineTimeMs = Math.max(baselineTimeMs, elapsedTime)
-      lastExecutionPlanOptimizatioTime = elapsedTime
-      log.info(s"New baseline execution plan optimization time: $baselineTimeMs ms")
-      log.warn(msg)
-    }
-    tooLong
   }
 
   /**
@@ -106,7 +116,11 @@ class OptimizerTimeTracker(inputDf: DataFrame)(implicit spark: SparkSession) {
     * @return A new dataframe with Catalyst optimizer issue workaround applied
     */
   def applyCatalystWorkaround(dfWithId: DataFrame): DataFrame = {
-    log.warn("A Catalyst optimizer issue workaround is applied.")
-    dfWithId.crossJoin(dfJustId).drop(col(idField2))
+    if (isWorkaroundEnabled) {
+      log.warn("A Catalyst optimizer issue workaround is applied.")
+      dfWithId.crossJoin(dfJustId).drop(col(idField2))
+    } else {
+      dfWithId
+    }
   }
 }
