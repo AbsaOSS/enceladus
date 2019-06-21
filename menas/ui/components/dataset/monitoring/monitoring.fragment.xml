@@ -27,13 +27,17 @@
                     <DatePicker
                         id="dateFromPicker"
                         dateValue="{/monitoringDateFrom}"
-                        change="handleDateFromChange" width="10rem"/>
+                        maxDate="{/monitoringDateTo}"
+                        change="handleDateChange"
+                        width="10rem"/>
 
                     <Label text="to:"/>
                     <DatePicker
                         id="dateToPicker"
                         dateValue="{/monitoringDateTo}"
-                        change="handleDateToChange" width="10rem"/>
+                        minDate="{/monitoringDateFrom}"
+                        change="handleDateChange"
+                        width="10rem"/>
 
                     <Button id="FindRunsButton" text="Find runs" icon="sap-icon://search"
                             press="onFindRunsPress"/>

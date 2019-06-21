@@ -43,6 +43,7 @@ sap.ui.define([
       let cont = new ConformanceRuleDialog(this);
       let view = this.getView();
 
+      // Monitoring
 
       this.byId("dateFromPicker").setDisplayFormat(Formatters.infoDatePattern);
       this.byId("dateToPicker").setDisplayFormat(Formatters.infoDatePattern);
@@ -422,19 +423,14 @@ sap.ui.define([
 
     // Monitoring related part
 
+    // Processes parsing errors
     handleDateChange: function(oEvent) {
-      let sId = oEvent.getSource().getId();
-      let oValue = oEvent.getParameter("dateValue");
+      let oDP = oEvent.getSource();
       let bValid = oEvent.getParameter("valid");
       if (bValid) {
-        switch (sId) {
-          case "dateFromPicker":
-            this._model.setProperty("/monitoringDateFrom", oValue);
-            break;
-          case "dateToPicker":
-            this._model.setProperty("/monitoringDateTo", oValue);
-            break;
-        }
+        oDP.setValueState(sap.ui.core.ValueState.None);
+      } else {
+        oDP.setValueState(sap.ui.core.ValueState.Error);
       }
     },
 
