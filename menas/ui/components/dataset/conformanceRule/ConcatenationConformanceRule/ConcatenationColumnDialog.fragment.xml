@@ -18,7 +18,6 @@
     <Dialog id="concatenationColumnDialog" title="Add Concatenation Column" resizable="true" draggable="true" class="minW20rem">
         <content>
             <VBox class="sapUiSmallMargin">
-                <Title text="Dataset"/>
                 <core:Fragment type="XML" fragmentName="components.schemaFieldSelector"/>
             </VBox>
         </content>

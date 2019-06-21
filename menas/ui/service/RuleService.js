@@ -26,9 +26,8 @@ class RuleService {
       .sort((first, second) => first.order > second.order)
       .map(this.orderByIndex);
 
-    const schemas = [schema];
     try {
-      SchemaManager.validateTransitiveSchemas(schemas, newRules);
+      SchemaManager.validateTransitiveSchemas(schema, newRules);
     } catch (e) {
       const indexOfBrokenRule = e.order + 1; // adding 1 to account for the order being on a schema without the removed rule
       return new InvalidResult(`Unable to remove conformance rule ${ruleIndex + 1} as it would break the dependency on column "${e.fieldPath}" by rule ${indexOfBrokenRule + 1}`)
@@ -65,9 +64,8 @@ class RuleService {
 
     const newRules = conformanceRules.map(this.orderByIndex);
 
-    const schemas = [schema];
     try {
-      SchemaManager.validateTransitiveSchemas(schemas, newRules);
+      SchemaManager.validateTransitiveSchemas(schema, newRules);
     } catch (e) {
       const smallerIndex = Math.min(ruleIndex, otherRuleIndex);
       const largerIndex = Math.max(ruleIndex, otherRuleIndex);
@@ -83,40 +81,12 @@ class RuleService {
 
 }
 
-class Result {
+class RuleUtils {
 
-  constructor(result, isValid, errorMessage) {
-    this._result = result;
-    this._isValid = isValid;
-    this._errorMessage = errorMessage;
-  }
-
-  get result() {
-    return this._result;
-  }
-
-  get isValid() {
-    return this._isValid;
-  }
-
-  get errorMessage() {
-    return this._errorMessage;
-  }
-
-}
-
-class ValidResult extends Result {
-
-  constructor(result) {
-    super(result, true);
-  }
-
-}
-
-class InvalidResult extends Result {
-
-  constructor(errorMessage) {
-    super(null, false, errorMessage);
+  static insertRule(originalRules, newRule) {
+    const conformanceRules = $.extend(true, [], originalRules);
+    conformanceRules.splice(newRule.order, 0, newRule);
+    return conformanceRules.map(RuleService.orderByIndex);
   }
 
 }

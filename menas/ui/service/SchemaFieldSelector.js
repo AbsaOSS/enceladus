@@ -118,25 +118,6 @@ class SchemaFieldSelector {
 
 }
 
-class SimpleSchemaFieldSelector extends SchemaFieldSelector {
-
-  constructor(controller, dialog) {
-    super(controller, dialog, "schema");
-  }
-
-  preselectSchemaFieldSelector(sExpandTo, ruleType) {
-    let oControl = this.controller.byId("schemaFieldSelector");
-    let oScroll = this.controller.byId("fieldSelectScroll");
-    super.preselectSchemaFieldSelector(sExpandTo, oControl, oScroll);
-  }
-
-  reset() {
-    let tree = this.controller.byId("schemaFieldSelector");
-    super.reset(tree);
-  }
-
-}
-
 class ConformanceRuleSchemaFieldSelector extends SchemaFieldSelector {
 
   constructor(controller, dialog) {
@@ -160,65 +141,88 @@ class ConformanceRuleSchemaFieldSelector extends SchemaFieldSelector {
 
 }
 
-class TargetAttributeFieldSelector extends SchemaFieldSelector {
+class StaticSchemaFieldSelector extends SchemaFieldSelector {
+
+  preselectSchemaFieldSelector(sExpandTo) {
+    super.preselectSchemaFieldSelector(sExpandTo, this.selectorControl, this.scrollControl);
+  }
+
+  reset() {
+    this.selectorControl
+      .getItems()
+      .forEach(item => item.setHighlight(sap.ui.core.ValueState.None));
+
+    super.reset(this.selectorControl);
+  }
+
+  setErrorHighlight() {
+    this.selectorControl
+      .getItems()
+      .forEach(item => item.setHighlight(sap.ui.core.ValueState.Error));
+  }
+
+}
+
+class SimpleSchemaFieldSelector extends StaticSchemaFieldSelector {
+
+  constructor(controller, dialog) {
+    super(controller, dialog, "schema");
+  }
+
+  get selectorControl() {
+    return this.controller.byId("schemaFieldSelector");
+  }
+
+  get scrollControl() {
+    return this.controller.byId("fieldSelectScroll");
+  }
+
+}
+
+class TargetAttributeFieldSelector extends StaticSchemaFieldSelector {
 
   constructor(controller, dialog) {
     super(controller, dialog, "mappingTableSchema");
   }
 
-  preselectSchemaFieldSelector(sExpandTo) {
-    let oControl = sap.ui.getCore().byId("MappingConformanceRule--schemaFieldSelector");
-    let oScroll = sap.ui.getCore().byId("MappingConformanceRule--fieldSelectScroll");
-    super.preselectSchemaFieldSelector(sExpandTo, oControl, oScroll);
+  get selectorControl() {
+    return sap.ui.getCore().byId("MappingConformanceRule--schemaFieldSelector");
   }
 
-  reset(form) {
-    const content = form.getContent();
-    content.filter(element => {
-      return element.sId.includes("fieldSelectScroll")
-    }).forEach(scroll => {
-      scroll.getContent().forEach(super.reset)
-    });
+  get scrollControl() {
+    return sap.ui.getCore().byId("MappingConformanceRule--fieldSelectScroll");
   }
 
 }
 
-class JoinConditionDatasetSchemaFieldSelector extends SchemaFieldSelector {
+class JoinConditionDatasetSchemaFieldSelector extends StaticSchemaFieldSelector {
 
   constructor(controller, dialog) {
     super(controller, dialog, "datasetSchema");
   }
 
-  preselectSchemaFieldSelector(sExpandTo) {
-    let oControl = this.controller.byId("datasetSchemaFieldSelector");
-    let oScroll = this.controller.byId("datasetSchemaFieldSelectScroll");
-    super.preselectSchemaFieldSelector(sExpandTo, oControl, oScroll);
+  get selectorControl() {
+    return this.controller.byId("datasetSchemaFieldSelector");
   }
 
-  reset() {
-    let scroll = this.controller.byId("datasetSchemaFieldSelectScroll");
-    scroll.getContent()
-      .forEach(super.reset);
+  get scrollControl() {
+    return this.controller.byId("datasetSchemaFieldSelectScroll");
   }
 
 }
 
-class JoinConditionMappingTableSchemaFieldSelector extends SchemaFieldSelector {
+class JoinConditionMappingTableSchemaFieldSelector extends StaticSchemaFieldSelector {
 
   constructor(controller, dialog) {
     super(controller, dialog, "mappingTableSchema");
   }
 
-  preselectSchemaFieldSelector(sExpandTo) {
-    let oControl = this.controller.byId("mappingTableSchemaFieldSelector");
-    let oScroll = this.controller.byId("mappingTableSchemaFieldSelectScroll");
-    super.preselectSchemaFieldSelector(sExpandTo, oControl, oScroll);
+  get selectorControl() {
+    return this.controller.byId("mappingTableSchemaFieldSelector");
   }
 
-  reset() {
-    let scroll = this.controller.byId("mappingTableSchemaFieldSelectScroll");
-    scroll.getContent()
-      .forEach(super.reset);
+  get scrollControl() {
+    return this.controller.byId("mappingTableSchemaFieldSelectScroll");
   }
 
 }

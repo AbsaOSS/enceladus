@@ -56,6 +56,8 @@ class JoinConditionDialog {
   }
 
   reset() {
+    this.model.setProperty("/datasetField", "");
+    this.model.setProperty("/mappingTableField", "");
     this.datasetSchemaFieldSelector.reset(this.oDialog);
     this.mappingTableSchemaFieldSelector.reset(this.oDialog);
   }
@@ -95,19 +97,46 @@ class JoinConditionDialog {
       "datasetField" : this.model.getProperty("/datasetField"),
       "mappingTableField" : this.model.getProperty("/mappingTableField")
     };
-    const joinConditionsPath = "/newRule/newJoinConditions";
-    if (model.getProperty(joinConditionsPath) === undefined) {
-      model.setProperty(joinConditionsPath, [])
+
+    if (this.isValid(join)) {
+      const joinConditionsPath = "/newRule/newJoinConditions";
+      if (model.getProperty(joinConditionsPath) === undefined) {
+        model.setProperty(joinConditionsPath, [])
+      }
+      const joins = model.getProperty(joinConditionsPath);
+      if (this.editIndex === undefined) {
+        joins.push(join);
+      } else {
+        joins[this.editIndex] = join;
+        this.editIndex = undefined;
+      }
+      model.setProperty(joinConditionsPath, joins);
+      this.onJoinCancel(); // close & clean up
     }
-    const joins = model.getProperty(joinConditionsPath);
-    if (this.editIndex === undefined) {
-      joins.push(join);
-    } else {
-      joins[this.editIndex] = join;
-      this.editIndex = undefined;
+  }
+
+  isValid({datasetField, mappingTableField}) {
+    let isValid = true;
+
+    const isDatasetFieldEmpty = GenericService.isEmpty(datasetField);
+    const isMappingTableFieldEmpty = GenericService.isEmpty(mappingTableField);
+
+    if (isDatasetFieldEmpty && isMappingTableFieldEmpty) {
+      this.datasetSchemaFieldSelector.setErrorHighlight();
+      this.mappingTableSchemaFieldSelector.setErrorHighlight();
+      sap.m.MessageToast.show("No dataset or mapping table field selected.");
+      isValid = false;
+    } else if (isDatasetFieldEmpty) {
+      this.datasetSchemaFieldSelector.setErrorHighlight();
+      sap.m.MessageToast.show("No dataset field selected.");
+      isValid = false;
+    } else if (isMappingTableFieldEmpty) {
+      this.mappingTableSchemaFieldSelector.setErrorHighlight();
+      sap.m.MessageToast.show("No mapping table field selected.");
+      isValid = false;
     }
-    model.setProperty(joinConditionsPath, joins);
-    this.onJoinCancel(); // close & clean up
+
+    return isValid;
   }
 
   onJoinCancel() {

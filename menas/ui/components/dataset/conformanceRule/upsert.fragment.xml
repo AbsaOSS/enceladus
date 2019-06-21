@@ -23,7 +23,7 @@
                     <Select id="newRuleSelect" showSecondaryValues="false" items="{/rules}"
                             selectedKey="{/newRule/_t}" change="onRuleSelect" enabled="{=!${/newRule/isEdit}}">
                         <items>
-                            <core:Item key="{_t}" text="{_t}" />
+                            <core:Item key="{ruleType}" text="{ruleType}" />
                         </items>
                     </Select>
                 </form:content>

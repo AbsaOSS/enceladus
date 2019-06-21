@@ -66,8 +66,16 @@ var GenericService = new function () {
     })
   };
 
+  this.isEmpty = function (str) {
+    return !str || str === "";
+  };
+
   this.hasWhitespace = function (str) {
     return /\W/.test(str);
+  };
+
+  this.isValidColumnName = function (str) {
+    return /^[a-zA-Z0-9._]+$/.test(str);
   };
 
   this.isValidEntityName = function (sName) {
