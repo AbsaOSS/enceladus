@@ -165,11 +165,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>za.co.absa.cobrix</groupId>
-            <artifactId>spark-cobol</artifactId>
-            <version>${cobrix.version}</version>
-        </dependency>
-        <dependency>
             <groupId>za.co.absa</groupId>
             <artifactId>enceladus-utils</artifactId>
             <version>${project.version}</version>
@@ -223,7 +218,6 @@
             <artifactId>spark-cobol</artifactId>
             <version>${cobrix.version}</version>
         </dependency>
-
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
