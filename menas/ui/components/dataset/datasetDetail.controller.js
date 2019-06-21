@@ -325,16 +325,21 @@ sap.ui.define([
       let currentDataset = this._model.getProperty("/currentDataset");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentDataset), "dataset");
       if(currentDataset) {
-      	this._transitiveSchemas = [];
-      	const transitiveSchemas = this._transitiveSchemas;
-      	this._schemaService.getByNameAndVersion(currentDataset.schemaName, currentDataset.schemaVersion, "/currentDataset/schema").then((schema) => {
-        	this._schemaTable.model = schema;
-        	transitiveSchemas.push(schema);
-        	SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
-      	});
+        this._transitiveSchemas = [];
+        const transitiveSchemas = this._transitiveSchemas;
+        new SchemaRestDAO().getByNameAndVersionSync(currentDataset.schemaName, currentDataset.schemaVersion).then((schema) => {
+          this._model.setProperty("/currentDataset/schema", schema)
+          this._schemaTable.model = schema;
+          transitiveSchemas.push(schema);
+          // var millisecondsToWait = 5000;
+          // setTimeout(function() {
+            // Whatever you want to do after the wait
+          SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
+          // }, millisecondsToWait);
+        });
 
-      	const auditTable = this.byId("auditTrailTable");
-      	this._datasetService.getAuditTrail(currentDataset.name, auditTable);
+        const auditTable = this.byId("auditTrailTable");
+        this._datasetService.getAuditTrail(currentDataset.name, auditTable);
       }
     },
 

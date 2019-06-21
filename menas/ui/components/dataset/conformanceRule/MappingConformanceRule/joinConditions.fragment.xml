@@ -19,7 +19,11 @@
     <Label text="Data can have Null values in join conditions"/>
     <CheckBox selected="{/newRule/isNullSafe}"/>
     <Label text="Join Conditions"/>
-    <List mode="Delete" items="{/newRule/newJoinConditions}" delete=".onDeleteJoinCondition">
+    <List id="joinConditions"
+          items="{/newRule/newJoinConditions}"
+          noDataText="No join conditions (1 minimum)"
+          mode="Delete"
+          delete=".onDeleteJoinCondition">
         <items>
             <CustomListItem type="Active"
                               press=".onJoinConditionSelect"

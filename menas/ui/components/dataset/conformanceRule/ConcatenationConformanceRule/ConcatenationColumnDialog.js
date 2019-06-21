@@ -29,10 +29,6 @@ class ConcatenationColumnDialog {
     return this._oDialog;
   }
 
-  get oController() {
-    return this._oController;
-  }
-
   get model() {
     return this._model;
   }
@@ -50,6 +46,7 @@ class ConcatenationColumnDialog {
   }
 
   reset() {
+    this.model.setProperty("/concatColumn", "");
     this.schemaFieldSelector.reset(this.oDialog);
   }
 
@@ -68,19 +65,34 @@ class ConcatenationColumnDialog {
 
   onConcatSubmit() {
     const concatenationColumn = this.model.getProperty("/concatColumn");
-    const inputColumnsPath = "/newRule/inputColumns";
-    if (model.getProperty(inputColumnsPath) === undefined) {
-      model.setProperty(inputColumnsPath, [])
+
+    if (this.isValid(concatenationColumn)) {
+      const inputColumnsPath = "/newRule/inputColumns";
+      if (model.getProperty(inputColumnsPath) === undefined) {
+        model.setProperty(inputColumnsPath, [])
+      }
+      const inputColumns = model.getProperty(inputColumnsPath);
+      if (this.editIndex === undefined) {
+        inputColumns.push(concatenationColumn);
+      } else {
+        inputColumns[this.editIndex] = concatenationColumn;
+        this.editIndex = undefined;
+      }
+      model.setProperty(inputColumnsPath, inputColumns);
+      this.onConcatCancel(); // close & clean up
     }
-    const inputColumns = model.getProperty(inputColumnsPath);
-    if (this.editIndex === undefined) {
-      inputColumns.push(concatenationColumn);
-    } else {
-      inputColumns[this.editIndex] = concatenationColumn;
-      this.editIndex = undefined;
+  }
+
+  isValid(fieldValue) {
+    let isValid = true;
+
+    if (!fieldValue || fieldValue === "") {
+      this.schemaFieldSelector.setErrorHighlight();
+      sap.m.MessageToast.show("No field selected.");
+      isValid = false;
     }
-    model.setProperty(inputColumnsPath, inputColumns);
-    this.onConcatCancel(); // close & clean up
+
+    return isValid;
   }
 
   onConcatCancel() {

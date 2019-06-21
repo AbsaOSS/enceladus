@@ -17,10 +17,6 @@ class ConformanceRuleDialog {
 
   constructor(controller) {
     this._model = sap.ui.getCore().getModel();
-    this.model.setProperty("/rules", this.rules);
-    this.model.setProperty("/dataTypes", this.dataTypes);
-
-    this._formFragments = {};
 
     const eventBus = sap.ui.getCore().getEventBus();
     this._datasetService = new DatasetService(this.model, eventBus);
@@ -28,6 +24,12 @@ class ConformanceRuleDialog {
     this._controller = controller;
     this._addJoinConditionDialog = new JoinConditionDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
     this._addConcatColumnDialog = new ConcatenationColumnDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
+    this._ruleFormFragmentFactory = new ConformanceRuleFormFragmentFactory(this);
+    this._ruleForms = new ConformanceRuleFormRepository(this);
+    this._rules = this._ruleForms.all;
+
+    this.model.setProperty("/rules", this.rules);
+    this.model.setProperty("/dataTypes", this._ruleForms.byType("CastingConformanceRule").dataTypes);
   }
 
   get controller() {
@@ -36,10 +38,6 @@ class ConformanceRuleDialog {
 
   get model() {
     return this._model;
-  }
-
-  get formFragments() {
-    return this._formFragments;
   }
 
   get datasetService() {
@@ -58,62 +56,16 @@ class ConformanceRuleDialog {
     return this._addConcatColumnDialog;
   }
 
-  get rules() {
-    return [
-      {
-        _t: "CastingConformanceRule",
-        schemaFieldSelectorSupportedRule: true
-      },
-      {
-        _t: "ConcatenationConformanceRule",
-        schemaFieldSelectorSupportedRule: false
-      },
-      {
-        _t: "DropConformanceRule",
-        schemaFieldSelectorSupportedRule: true
-      },
-      {
-        _t: "LiteralConformanceRule",
-        schemaFieldSelectorSupportedRule: false
-      },
-      {
-        _t: "MappingConformanceRule",
-        schemaFieldSelectorSupportedRule: true
-      },
-      {
-        _t: "NegationConformanceRule",
-        schemaFieldSelectorSupportedRule: true
-      },
-      {
-        _t: "SingleColumnConformanceRule",
-        schemaFieldSelectorSupportedRule: true
-      },
-      {
-        _t: "SparkSessionConfConformanceRule",
-        schemaFieldSelectorSupportedRule: false
-      },
-      {
-        _t: "UppercaseConformanceRule",
-        schemaFieldSelectorSupportedRule: true
-      }
-    ]
+  get ruleFormFactory() {
+    return this._ruleFormFragmentFactory;
   }
 
-  get dataTypes() {
-    return [
-      {type: "boolean"},
-      {type: "byte"},
-      {type: "short"},
-      {type: "integer"},
-      {type: "long"},
-      {type: "float"},
-      {type: "double"},
-      {type: "decimal(38,18)"},
-      // {type: "char"}, // TODO: First resolve https://github.com/AbsaOSS/enceladus/issues/425
-      {type: "string"},
-      {type: "date"},
-      {type: "timestamp"}
-    ]
+  get ruleForms() {
+    return this._ruleForms;
+  }
+
+  get rules() {
+    return this._rules;
   }
 
   onBeforeOpen() {
@@ -125,17 +77,16 @@ class ConformanceRuleDialog {
     if (this.model.getProperty("/newRule/isEdit")) {
       this.showFormFragment(this.model.getProperty("/newRule/_t"));
     } else {
-      this.model.setProperty("/newRule/_t", this.rules[0]._t);
-      this.showFormFragment(this.rules[0]._t);
+      this.model.setProperty("/newRule/_t", this.rules[0].ruleType);
+      this.showFormFragment(this.rules[0].ruleType);
     }
     this._dialog.setEscapeHandler(() => this.onClosePress());
+    this.resetRuleValidation();
   }
 
   onAfterOpen() {
-    let schemaFieldSelectorSupportedRules =
-      this.rules.filter(rule => rule.schemaFieldSelectorSupportedRule).map(rule => rule._t);
-    let newRule = this.model.getProperty("/newRule");
-    if (newRule.isEdit && schemaFieldSelectorSupportedRules.includes(newRule._t)) {
+    const newRule = this.model.getProperty("/newRule");
+    if (newRule.isEdit && this.ruleForms.byType(newRule._t).hasSchemaFieldSelector) {
       this.preselectSchemaFieldSelector(newRule._t);
     }
   }
@@ -149,12 +100,15 @@ class ConformanceRuleDialog {
     let currentDataset = this.model.getProperty("/currentDataset");
     let newRule = $.extend(true, {}, this.model.getProperty("/newRule"));
     this.beforeSubmitChanges(newRule);
-    if (this.model.getProperty("/newRule/isEdit")) {
-      this.updateRule(currentDataset, newRule);
-    } else {
-      this.addRule(currentDataset, newRule);
+    this.resetRuleValidation();
+    if (this.ruleForms.byType(newRule._t).isValid(newRule, this.controller._transitiveSchemas, currentDataset.conformance)) {
+      if (this.model.getProperty("/newRule/isEdit")) {
+        this.updateRule(currentDataset, newRule);
+      } else {
+        this.addRule(currentDataset, newRule);
+      }
+      this.onClosePress();
     }
-    this.onClosePress();
   }
 
   onAddConcatColumn() {
@@ -220,6 +174,7 @@ class ConformanceRuleDialog {
   onRuleSelect() {
     this.resetRuleForm();
     this.showFormFragment(this.model.getProperty("/newRule/_t"));
+    this.resetRuleValidation();
   }
 
   onDeleteConcatColumn(oEv) {
@@ -262,7 +217,7 @@ class ConformanceRuleDialog {
   onSchemaFieldSelect(oEv) {
     let ruleType = this._model.getProperty("/newRule/_t");
 
-    switch(ruleType) {
+    switch (ruleType) {
       case "MappingConformanceRule":
         this._targetAttributeSelector.onSchemaFieldSelect(oEv, "/newRule/targetAttribute");
         break;
@@ -275,7 +230,7 @@ class ConformanceRuleDialog {
   }
 
   preselectSchemaFieldSelector(ruleType) {
-    switch(ruleType) {
+    switch (ruleType) {
       case "MappingConformanceRule":
         this._targetAttributeSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/targetAttribute"));
         break;
@@ -291,8 +246,8 @@ class ConformanceRuleDialog {
     let currentRule = this.model.getProperty("/newRule");
     let newRule = currentRule;
 
-    if (currentRule._t === "ConcatenationConformanceRule" && !currentRule.isEdit) {
-      newRule.inputColumns = [];
+    if (!newRule.isEdit) {
+      newRule = (({title, isEdit, order, _t}) => ({title, isEdit, order, _t}))(currentRule);
     }
 
     if (currentRule._t === "MappingConformanceRule") {
@@ -314,7 +269,7 @@ class ConformanceRuleDialog {
       this.selectMappingTable(newRule.mappingTable)
     }
 
-    if (!currentRule.isEdit && newRule.order === undefined) {
+    if (!newRule.isEdit && newRule.order === undefined) {
       newRule.order = this.model.getProperty("/currentDataset").conformance.length;
     }
 
@@ -332,9 +287,7 @@ class ConformanceRuleDialog {
   }
 
   addRule(currentDataset, newRule) {
-    const rules = currentDataset.conformance;
-    rules.splice(newRule.order, 0, newRule);
-    currentDataset.conformance = rules.map(RuleService.orderByIndex);
+    currentDataset.conformance = RuleUtils.insertRule(currentDataset.conformance, newRule);
     sap.ui.getCore().getEventBus().publish("conformance", "updated", currentDataset.conformance);
     this.datasetService.update(currentDataset);
   }
@@ -346,28 +299,22 @@ class ConformanceRuleDialog {
   }
 
   showFormFragment(sFragmentName) {
-    let aFragment = this.getFormFragment(sFragmentName);
+    let aFragment = this.ruleFormFactory.getFormFragment(sFragmentName);
+
     aFragment.forEach(oElement =>
       this._ruleForm.addContent(oElement)
     );
     this.beforeShowFragmentChanges();
   }
 
-  getFormFragment(sFragmentName) {
-    let oFormFragment = this.formFragments[sFragmentName];
-    if (oFormFragment) {
-      return oFormFragment;
-    }
-
-    oFormFragment = sap.ui.xmlfragment(sFragmentName, "components.dataset.conformanceRule." + sFragmentName + ".add", this);
-    this.formFragments[sFragmentName] = oFormFragment;
-    return this.formFragments[sFragmentName];
-  }
-
   resetRuleForm() {
-    // workaround for "Cannot read property 'setSelectedIndex' of undefined" error
     this._datasetSchemaFieldSelector.reset(this._ruleForm);
     this._ruleForm.removeAllContent();
+  }
+
+  resetRuleValidation() {
+    const newRule = this.model.getProperty("/newRule");
+    this.ruleForms.byType(newRule._t).reset();
   }
 
 }
