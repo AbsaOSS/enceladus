@@ -42,11 +42,16 @@
                     <Button id="FindRunsButton" text="Find runs" icon="sap-icon://search"
                             press="onFindRunsPress"/>
                 </contentLeft>
+                <contentRight>
+
+                    <CheckBox text="Totals" selected="{/monitoringTotalsVisible}" />
+                    <CheckBox text="Records per run" selected="{/monitoringRecordsVisible}" />
+                    <CheckBox text="Run details" selected="{/monitoringDetailsVisible}" />
+                </contentRight>
             </Bar>
 
-        <layout:BlockLayout id="BlockLayout">
+        <layout:BlockLayout id="mon-totals-BlockLayout" visible="{/monitoringTotalsVisible}">
             <layout:BlockLayoutRow>
-
                 <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
                     <Title class="monitoringTitle" text="Summary"/>
                     <form:SimpleForm id="monitoringSummary">
@@ -87,8 +92,9 @@
             </layout:BlockLayoutRow>
         </layout:BlockLayout>
 
-        <Title class="monitoringTitle" text="Records per run"/>
-        <Panel id="bar-chart-canvas" height="{/barChartHeight}">
+
+    <Title class="monitoringTitle" text="Records per run" visible="{/monitoringRecordsVisible}"/>
+        <Panel id="mon-bar-chart-panel" height="{/barChartHeight}" visible="{/monitoringRecordsVisible}">
             <lab:BarChartJS
                 legendPosition="left"
                 legendLabelBoxWidth="10"
@@ -104,135 +110,138 @@
             </lab:BarChartJS>
         </Panel>
 
-        <Title class="monitoringTitle" text="Run details"/>
-        <table:Table
-            rows="{/monitoringRunData}"
-            selectionMode="None"
-            alternateRowColors="true"
-            showColumnVisibilityMenu="false"
-            visibleRowCountMode="Fixed"
-            visibleRowCount="{/numberOfPoints}"
-            rowActionCount="1"
-            width="100%">
-            <table:columns>
-                <table:Column id="monitoring-multiheader-info" width="6rem" headerSpan="{=[2,1]}">
-                    <table:multiLabels>
-                        <Label text="Info" textAlign="Center" width="100%"/>
-                        <Label text="Date" textAlign="Center" width="100%"/>
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{informationDate}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column width="5rem">
-                    <table:multiLabels>
-                        <Label text="Information"/>
-                        <Label text="Version" textAlign="Center" width="100%"/>
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{reportVersion}" wrapping="false" />
-                    </table:template>
+        <Panel id="mon-run-details-panel" visible="{/monitoringDetailsVisible}">
+            <Title class="monitoringTitle" text="Run details"/>
+            <table:Table
+                rows="{/monitoringRunData}"
+                selectionMode="None"
+                alternateRowColors="true"
+                showColumnVisibilityMenu="false"
+                visibleRowCountMode="Fixed"
+                visibleRowCount="{/numberOfPoints}"
+                rowActionCount="1"
+                width="100%">
 
-                </table:Column>
-                <table:Column width="5rem">
-                    <Label text="Dataset version"  textAlign="Center" width="100%" wrapping="true"/>
-                    <table:template>
-                        <Text text="{datasetVersion}" wrapping="false" />
-                    </table:template>
-                </table:Column>
+                <table:columns>
+                    <table:Column id="monitoring-multiheader-info" width="6rem" headerSpan="{=[2,1]}">
+                        <table:multiLabels>
+                            <Label text="Info" textAlign="Center" width="100%"/>
+                            <Label text="Date" textAlign="Center" width="100%"/>
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{informationDate}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column width="5rem">
+                        <table:multiLabels>
+                            <Label text="Information"/>
+                            <Label text="Version" textAlign="Center" width="100%"/>
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{reportVersion}" wrapping="false" />
+                        </table:template>
 
-                <table:Column width="10rem">
-                    <Label text="Status"  textAlign="Center" width="100%" />
-                    <table:template>
-                        <tnt:InfoLabel
-                            text="{status}"
-                            colorScheme= "{infoLabel}"/>
-                    </table:template>
-                </table:Column>
+                    </table:Column>
+                    <table:Column width="5rem">
+                        <Label text="Dataset version"  textAlign="Center" width="100%" wrapping="true"/>
+                        <table:template>
+                            <Text text="{datasetVersion}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
 
-                <table:Column id="monitoring-multiheader-checkpoint" width="12rem" headerSpan="{=[3,1]}">
-                    <table:multiLabels>
-                        <Label text="Latest checkpoint" textAlign="Center" width="100%"/>
-                        <Label text="End timestamp" textAlign="Center" width="100%"/>
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].processEndTime}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column width="7rem" visible="false">
-                    <table:multiLabels>
-                        <Label text="Latest checkpoint" />
-                        <Label text="Stage" textAlign="Center" width="100%"/>
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].workflowName}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column width="10rem">
-                    <table:multiLabels>
-                        <Label text="Latest checkpoint"/>
-                        <Label text="Name" textAlign="Center" width="100%"/>
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].name}" wrapping="false" />
-                    </table:template>
-                </table:Column>
+                    <table:Column width="10rem">
+                        <Label text="Status"  textAlign="Center" width="100%" />
+                        <table:template>
+                            <tnt:InfoLabel
+                                text="{status}"
+                                colorScheme= "{infoLabel}"/>
+                        </table:template>
+                    </table:Column>
 
-                <table:Column id="monitoring-multiheader-recordcount-raw" width="5rem" headerSpan="{=[5,1,1]}">
-                    <table:multiLabels>
-                        <Label text="Records" textAlign="Center" width="100%" />
-                        <Label text="Raw" textAlign="Center" width="100%" />
-                        <Label text="Total" textAlign="Center" width="100%" />
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{raw_recordcount}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column id="monitoring-multiheader-recordcount-std" width="7rem" headerSpan="{=[0,2,1]}">
-                    <table:multiLabels>
-                        <Label text="Records" />
-                        <Label text="Standardization" textAlign="Center" width="100%" />
-                        <Label text="Succeded" textAlign="Center" width="100%" />
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{std_records_succeeded}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column width="5rem">
-                    <table:multiLabels>
-                        <Label text="Records" />
-                        <Label text="Standardization" />
-                        <Label text="Failed" textAlign="Center" width="100%" />
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{std_records_failed}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column id="monitoring-multiheader-recordcount-cnfrm" width="7rem" headerSpan="{=[0,2,1]}">
-                    <table:multiLabels>
-                        <Label text="Records" />
-                        <Label text="Conformance" textAlign="Center" width="100%" />
-                        <Label text="Succeded" textAlign="Center" width="100%" />
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{conform_records_succeeded}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column width="5rem">
-                    <table:multiLabels>
-                        <Label text="Records" />
-                        <Label text="Conformance" />
-                        <Label text="Failed" textAlign="Center" width="100%" />
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{conform_records_failed}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-            </table:columns>
-            <table:rowActionTemplate>
-                <table:RowAction>
-                    <table:RowActionItem press="monitoringToRun"	type="Navigation" icon="sap-icon://detail-view" />
-                </table:RowAction>
-            </table:rowActionTemplate>
-        </table:Table>
+                    <table:Column id="monitoring-multiheader-checkpoint" width="12rem" headerSpan="{=[3,1]}">
+                        <table:multiLabels>
+                            <Label text="Latest checkpoint" textAlign="Center" width="100%"/>
+                            <Label text="End timestamp" textAlign="Center" width="100%"/>
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].processEndTime}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column width="7rem" visible="false">
+                        <table:multiLabels>
+                            <Label text="Latest checkpoint" />
+                            <Label text="Stage" textAlign="Center" width="100%"/>
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].workflowName}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column width="10rem">
+                        <table:multiLabels>
+                            <Label text="Latest checkpoint"/>
+                            <Label text="Name" textAlign="Center" width="100%"/>
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].name}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+
+                    <table:Column id="monitoring-multiheader-recordcount-raw" width="5rem" headerSpan="{=[5,1,1]}">
+                        <table:multiLabels>
+                            <Label text="Records" textAlign="Center" width="100%" />
+                            <Label text="Raw" textAlign="Center" width="100%" />
+                            <Label text="Total" textAlign="Center" width="100%" />
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{raw_recordcount}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column id="monitoring-multiheader-recordcount-std" width="7rem" headerSpan="{=[0,2,1]}">
+                        <table:multiLabels>
+                            <Label text="Records" />
+                            <Label text="Standardization" textAlign="Center" width="100%" />
+                            <Label text="Succeded" textAlign="Center" width="100%" />
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{std_records_succeeded}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column width="5rem">
+                        <table:multiLabels>
+                            <Label text="Records" />
+                            <Label text="Standardization" />
+                            <Label text="Failed" textAlign="Center" width="100%" />
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{std_records_failed}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column id="monitoring-multiheader-recordcount-cnfrm" width="7rem" headerSpan="{=[0,2,1]}">
+                        <table:multiLabels>
+                            <Label text="Records" />
+                            <Label text="Conformance" textAlign="Center" width="100%" />
+                            <Label text="Succeded" textAlign="Center" width="100%" />
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{conform_records_succeeded}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column width="5rem">
+                        <table:multiLabels>
+                            <Label text="Records" />
+                            <Label text="Conformance" />
+                            <Label text="Failed" textAlign="Center" width="100%" />
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{conform_records_failed}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                </table:columns>
+                <table:rowActionTemplate>
+                    <table:RowAction>
+                        <table:RowActionItem press="monitoringToRun"	type="Navigation" icon="sap-icon://detail-view" />
+                    </table:RowAction>
+                </table:rowActionTemplate>
+            </table:Table>
+        </Panel>
 </core:FragmentDefinition>

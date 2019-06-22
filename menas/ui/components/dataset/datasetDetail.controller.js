@@ -49,6 +49,9 @@ sap.ui.define([
       this.byId("dateFromPicker").setDisplayFormat(Formatters.infoDatePattern);
       this.byId("dateToPicker").setDisplayFormat(Formatters.infoDatePattern);
       this.setDefaultMonitoringDateInterval();
+      this._model.setProperty("/monitoringTotalsVisible", true);
+      this._model.setProperty("/monitoringRecordsVisible", true);
+      this._model.setProperty("/monitoringDetailsVisible", false);
 
       this._upsertConformanceRuleDialog = Fragment.load({
         id: view.getId(),
