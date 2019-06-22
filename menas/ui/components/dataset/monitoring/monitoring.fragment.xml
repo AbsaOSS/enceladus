@@ -43,7 +43,6 @@
                             press="onFindRunsPress"/>
                 </contentLeft>
                 <contentRight>
-
                     <CheckBox text="Totals" selected="{/monitoringTotalsVisible}" />
                     <CheckBox text="Records per run" selected="{/monitoringRecordsVisible}" />
                     <CheckBox text="Run details" selected="{/monitoringDetailsVisible}" />
@@ -193,7 +192,7 @@
                             <Label text="Total" textAlign="Center" width="100%" />
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{raw_recordcount}" wrapping="false" />
+                            <Text text="{=parseInt(${raw_recordcount}).toLocaleString()}" wrapping="false" />
                         </table:template>
                     </table:Column>
                     <table:Column id="monitoring-multiheader-recordcount-std" width="7rem" headerSpan="{=[0,2,1]}">
@@ -203,7 +202,7 @@
                             <Label text="Succeded" textAlign="Center" width="100%" />
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{std_records_succeeded}" wrapping="false" />
+                            <Text text="{=parseInt(${std_records_succeeded}).toLocaleString()}" wrapping="false" />
                         </table:template>
                     </table:Column>
                     <table:Column width="5rem">
@@ -213,7 +212,7 @@
                             <Label text="Failed" textAlign="Center" width="100%" />
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{std_records_failed}" wrapping="false" />
+                            <Text text="{=parseInt(${std_records_failed}).toLocaleString()}" wrapping="false" />
                         </table:template>
                     </table:Column>
                     <table:Column id="monitoring-multiheader-recordcount-cnfrm" width="7rem" headerSpan="{=[0,2,1]}">
@@ -223,7 +222,7 @@
                             <Label text="Succeded" textAlign="Center" width="100%" />
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{conform_records_succeeded}" wrapping="false" />
+                            <Text text="{=parseInt(${conform_records_succeeded}).toLocaleString()}" wrapping="false" />
                         </table:template>
                     </table:Column>
                     <table:Column width="5rem">
@@ -233,7 +232,7 @@
                             <Label text="Failed" textAlign="Center" width="100%" />
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{conform_records_failed}" wrapping="false" />
+                            <Text text="{=parseInt(${conform_records_failed}).toLocaleString()}" wrapping="false" />
                         </table:template>
                     </table:Column>
                 </table:columns>
