@@ -55,8 +55,18 @@
                     <Title class="monitoringTitle" text="Summary"/>
                     <form:SimpleForm id="monitoringSummary">
                         <form:content>
+                            <Label text="Days"/>
+                            <Text id="monitoringIntervalDays" text="{/monitoringIntervalDays}"/>
                             <Label text="Total runs"/>
                             <Text id="monitoringTotalRuns" text="{/numberOfPoints}"/>
+                            <Label text="Records"/>
+                            <Text id="monitoringTotalRecords" text="{=${/monitoringTotals/records}.toLocaleString()}"/>
+                            <Label text="Raw data"/>
+                            <Text id="monitoringTotalRawSize" text="{/monitoringTotals/rawDirSize}"/>
+                            <Label text="Standardized data"/>
+                            <Text id="monitoringTotalStdSize" text="{/monitoringTotals/stdDirSize}"/>
+                            <Label text="Conformed data"/>
+                            <Text id="monitoringTotalPublishSize" text="{/monitoringTotals/publishDirSize}"/>
                         </form:content>
                     </form:SimpleForm>
                 </layout:BlockLayoutCell>

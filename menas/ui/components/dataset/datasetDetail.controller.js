@@ -439,8 +439,13 @@ sap.ui.define([
     },
 
     updateMonitoringData: function () {
-      let sMonitoringDateFrom = Formatters.toStringInfoDate(this._model.getProperty("/monitoringDateFrom"));
-      let sMonitoringDateTo = Formatters.toStringInfoDate(this._model.getProperty("/monitoringDateTo"));
+      let oMonitoringDateFrom = this._model.getProperty("/monitoringDateFrom");
+      let oMonitoringDateTo = this._model.getProperty("/monitoringDateTo");
+      let intervalDays = 1 + Math.floor((oMonitoringDateTo - oMonitoringDateFrom) / (1000 * 60 * 60 * 24));
+      this._model.setProperty("/monitoringIntervalDays", intervalDays);
+
+      let sMonitoringDateFrom = Formatters.toStringInfoDate(oMonitoringDateFrom);
+      let sMonitoringDateTo = Formatters.toStringInfoDate(oMonitoringDateTo);
       let datasetName = this._model.getProperty("/currentDataset/name");
       if (sMonitoringDateFrom != undefined && sMonitoringDateTo != undefined && datasetName != undefined) {
         MonitoringService.getData(datasetName, sMonitoringDateFrom, sMonitoringDateTo)

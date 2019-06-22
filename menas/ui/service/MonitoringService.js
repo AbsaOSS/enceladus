@@ -21,6 +21,13 @@ var MonitoringService = new function() {
 
   let barChartLabels = []; // run info-date + info-version
 
+  let totals = {
+    "records": 0,
+    "rawDirSize": 0,
+    "stdDirSize": 0,
+    "publishDirSize": 0
+  };
+
   let runStatusAggregator = {
     "allSucceeded" : {infoLabel: 8, color: "green", counter: 0},
     "stageSucceeded" : {infoLabel: 5, color: "blue", counter: 0},
@@ -41,9 +48,14 @@ var MonitoringService = new function() {
   this.clearAggregators = function() {
     barChartLabels = [];
 
+    // clear totals
+    Object.keys(totals).forEach(function(key) {
+      totals[key] = 0;
+    });
+
     // clear runStatusAggregator counters
     Object.keys(runStatusAggregator).forEach(function(key) {
-      runStatusAggregator[key].counter = 0
+      runStatusAggregator[key].counter = 0;
     });
 
     // clear recordsStatusAggregator counters and arrays of data
@@ -52,6 +64,15 @@ var MonitoringService = new function() {
       recordsStatusAggregator[key].recordCounts = []
     });
   };
+
+  this.processDirSizes = function(oRun) {
+    let rawDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["raw_dir_size"];
+    let stdDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["std_dir_size"];
+    let publishDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["publish_dir_size"];
+    if (!isNaN(rawDirSize)) {totals["rawDirSize"] += +rawDirSize};
+    if (!isNaN(stdDirSize)) {totals["stdDirSize"] += +stdDirSize};
+    if (!isNaN(publishDirSize)) {totals["publishDirSize"] += +publishDirSize};
+  }
 
   this.processRunStatus = function(oRun) {
     let status = oRun["status"];
@@ -83,6 +104,11 @@ var MonitoringService = new function() {
   };
 
   this.setMonitoringModel = function(oData){
+
+    // prepare total recordcount
+    Object.keys(recordsStatusAggregator).forEach(function(key) {
+      totals["records"] += recordsStatusAggregator[key].counter;
+    });
 
     // prepare data for PIE chart of RUN statuses
     let runStatusLabels = Object.keys(runStatusAggregator);
@@ -129,6 +155,7 @@ var MonitoringService = new function() {
     model.setProperty("/barChartData", barChartData);
     model.setProperty("/pieChartRecordTotals", pieChartRecordTotals);
     model.setProperty("/pieChartStatusTotals", pieChartStatusTotals);
+    model.setProperty("/monitoringTotals", totals);
   };
 
   this.processRecordCounts = function(oRun) {
@@ -240,7 +267,8 @@ var MonitoringService = new function() {
       if (oData.length > 0) {
         for (let oRun of oData) {
           MonitoringService.processRunStatus(oRun);
-          MonitoringService.processRecordCounts(oRun)
+          MonitoringService.processDirSizes(oRun);
+          MonitoringService.processRecordCounts(oRun);
         }
 
         MonitoringService.setMonitoringModel(oData)
