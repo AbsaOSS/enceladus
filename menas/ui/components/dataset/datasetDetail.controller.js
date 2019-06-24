@@ -331,11 +331,7 @@ sap.ui.define([
           this._model.setProperty("/currentDataset/schema", schema)
           this._schemaTable.model = schema;
           transitiveSchemas.push(schema);
-          // var millisecondsToWait = 5000;
-          // setTimeout(function() {
-            // Whatever you want to do after the wait
           SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
-          // }, millisecondsToWait);
         });
 
         const auditTable = this.byId("auditTrailTable");

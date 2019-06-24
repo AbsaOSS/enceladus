@@ -37,7 +37,7 @@ class ConformanceRuleForm {
   }
 
   isValid(rule, schemas, rules) {
-    const hasValidOutputColumn = this.hasValidOutputColumn(rule.outputColumn)
+    const hasValidOutputColumn = this.hasValidOutputColumn(rule.outputColumn, schemas[rule.order])
       && this.hasValidTransitiveSchema(rule, schemas, rules);
     return hasValidOutputColumn & this.isCorrectlyConfigured(rule);
   }
@@ -46,8 +46,20 @@ class ConformanceRuleForm {
     return true;
   }
 
-  hasValidOutputColumn(fieldValue) {
-    return this.hasValidColumn(fieldValue, "Output Column", this.outputColumnControl);
+  hasValidOutputColumn(fieldValue, schema) {
+    let isValid = this.hasValidColumn(fieldValue, "Output Column", this.outputColumnControl);
+
+    if (isValid && fieldValue.includes(".")) {
+      const isPathToStruct = SchemaManager.validatePathOfStructs(fieldValue, schema.fields);
+      if (!isPathToStruct.isValid) {
+        this.outputColumnControl.setValueState(sap.ui.core.ValueState.Error);
+        this.outputColumnControl.setValueStateText(isPathToStruct.error);
+      }
+
+      isValid = isPathToStruct.isValid;
+    }
+
+    return isValid;
   }
 
   hasValidColumn(fieldValue, fieldName, inputControl) {
