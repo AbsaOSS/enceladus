@@ -38,12 +38,13 @@ object DynamicInterpreter {
   /**
     * interpret The dynamic conformance interpreter function
     *
-    * @param conformance             The dataset object - this represents a data conformance workflow
-    * @param inputDf                 The dataset to be conformed
-    * @param jobShortName            A job name used for checkpoints
-    * @param experimentalMappingRule If true the new explode-optimized conformance mapping rule interpreter will be used
+    * @param conformance                 The dataset object - this represents a data conformance workflow
+    * @param inputDf                     The dataset to be conformed
+    * @param jobShortName                A job name used for checkpoints
+    * @param experimentalMappingRule     If true the new explode-optimized conformance mapping rule interpreter will
+    *                                    be used
     * @param isCatalystWorkaroundEnabled If true the Catalyst optimizer workaround is enabled
-    * @param enableControlFramework  If true sets the checkpoints on the dataset upon conforming
+    * @param enableControlFramework      If true sets the checkpoints on the dataset upon conforming
     * @return The conformed dataframe
     *
     */
