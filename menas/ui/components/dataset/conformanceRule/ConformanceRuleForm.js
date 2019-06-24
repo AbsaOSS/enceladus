@@ -74,6 +74,18 @@ class ConformanceRuleForm {
     return isValid;
   }
 
+  hasValidFlatColumn(fieldValue, fieldName, inputControl) {
+    let isValid = this.nonEmptyField(fieldValue, fieldName, inputControl);
+
+    if (isValid && !GenericService.isValidFlatColumnName(fieldValue)) {
+      inputControl.setValueState(sap.ui.core.ValueState.Error);
+      inputControl.setValueStateText(`${fieldName} can only contain alphanumeric characters and underscores`);
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
   nonEmptyField(fieldValue, fieldName, inputControl) {
     let isValid = true;
 
@@ -357,7 +369,7 @@ class SingleColumnConformanceRuleForm extends ConformanceRuleForm {
   }
 
   hasValidInputColumnAlias(fieldValue) {
-    return this.hasValidColumn(fieldValue, "Input Column Alias", this.inputColumnAliasControl)
+    return this.hasValidFlatColumn(fieldValue, "Input Column Alias", this.inputColumnAliasControl)
   }
 
   reset() {
