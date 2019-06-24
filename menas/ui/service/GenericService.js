@@ -45,7 +45,7 @@ var GenericService = new function () {
     Functions.ajax("api/oozie/isEnabled", "GET", {}, oData => {
       model.setProperty("/appInfo/oozie/isEnabled", oData);
     });    
-  }
+  };
 
   this.clearSession = function (sLogoutMessage) {
     model.setProperty("/userInfo", {});
@@ -67,7 +67,7 @@ var GenericService = new function () {
   };
 
   this.isEmpty = function (str) {
-    return !str || str === "";
+    return !str;
   };
 
   this.hasWhitespace = function (str) {
