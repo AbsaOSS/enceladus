@@ -24,7 +24,7 @@ var Formatters = new function() {
     } else if(sStatus === "RUNNING") {
       return sap.ui.core.ValueState.Success;
     } else return sap.ui.core.ValueState.Error;
-  }
+  };
 
   this.stringDateShortFormatter = function(sDate) {
     if (!sDate)
@@ -34,15 +34,15 @@ var Formatters = new function() {
       style : "short"
     }, new sap.ui.core.Locale("en_GB"))
     return oFormat.format(oDate)
-  }
+  };
 
   this.not = function(bSth) {
     return !bSth;
-  }
+  };
 
   this.nonEmptyObject = function(oObj) {
     return (oObj !== null) && (typeof (oObj) !== "undefined") && (Object.keys(oObj).length !== 0)
-  }
+  };
 
   this.objToKVArray = function(oObj) {
     if(oObj === null || typeof(oObj) === "undefined") return []
@@ -56,7 +56,7 @@ var Formatters = new function() {
       }
       return res;
     }
-  }
+  };
 
 
   this.infoDatePattern = "yyyy-MM-dd";
@@ -68,5 +68,5 @@ var Formatters = new function() {
 
   this.toStringInfoDate = function(oDate) {
     return this.infoDateFormat.format(oDate);
-  }
+  };
 }();

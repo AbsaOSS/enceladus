@@ -62,11 +62,29 @@
                             <Label text="Records"/>
                             <Text id="monitoringTotalRecords" text="{=${/monitoringTotals/records}.toLocaleString()}"/>
                             <Label text="Raw data"/>
-                            <Text id="monitoringTotalRawSize" text="{/monitoringTotals/rawDirSize}"/>
+                            <Text id="monitoringTotalRawSize" text="{
+                                    path: '/monitoringTotals/rawDirSize',
+                                    type: 'sap.ui.model.type.FileSize',
+                                    formatOptions: {
+                                        maxFractionDigits: 2
+                                    }
+                                }" />
                             <Label text="Standardized data"/>
-                            <Text id="monitoringTotalStdSize" text="{/monitoringTotals/stdDirSize}"/>
+                            <Text id="monitoringTotalStdSize" text="{
+                                    path: '/monitoringTotals/stdDirSize',
+                                    type: 'sap.ui.model.type.FileSize',
+                                    formatOptions: {
+                                        maxFractionDigits: 2
+                                    }
+                                }" />
                             <Label text="Conformed data"/>
-                            <Text id="monitoringTotalPublishSize" text="{/monitoringTotals/publishDirSize}"/>
+                            <Text id="monitoringTotalPublishSize" text="{
+                                    path: '/monitoringTotals/publishDirSize',
+                                    type: 'sap.ui.model.type.FileSize',
+                                    formatOptions: {
+                                        maxFractionDigits: 2
+                                    }
+                                }" />
                         </form:content>
                     </form:SimpleForm>
                 </layout:BlockLayoutCell>

@@ -18,8 +18,9 @@ sap.ui.define([
   "components/types/NonEmptyArrType",
   "components/validator/Validator",
   "sap/m/MessageToast",
-  "./../external/it/designfuture/chartjs/library-preload"
-], function (Controller, Fragment, NonEmptyArrType, Validator, MessageToast, Openui5Chartjs) {
+  "./../external/it/designfuture/chartjs/library-preload",
+  "sap/ui/core/format/FileSizeFormat"
+], function (Controller, Fragment, NonEmptyArrType, Validator, MessageToast, Openui5Chartjs, FileSizeFormat) {
   "use strict";
 
   return Controller.extend("components.dataset.datasetDetail", {
