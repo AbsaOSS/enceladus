@@ -75,13 +75,26 @@ object StandardizationJob {
     val dataset = EnceladusRestDAO.getDataset(cmd.datasetName, cmd.datasetVersion)
     val schema: StructType = EnceladusRestDAO.getSchema(dataset.schemaName, dataset.schemaVersion)
     val dateTokens = cmd.reportDate.split("-")
-    val path: String = buildRawPath(cmd, dataset, dateTokens)
+
+    val reportVersion = cmd.reportVersion match {
+      case Some(version) => version
+      case None => {
+        val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, cmd.reportDate) + 1
+        log.warn(s"Report version not provided, inferred report version: $newVersion")
+        log.warn("This is an EXPERIMENTAL feature.")
+        log.warn(" -> It can lead to issues when running multiple jobs on a dataset concurrently.")
+        log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
+        newVersion
+      }
+    }
+
+    val path: String = buildRawPath(cmd, dataset, dateTokens, reportVersion)
     log.info(s"input path: $path")
     val stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"),
       cmd.datasetName,
       cmd.datasetVersion.toString,
       cmd.reportDate,
-      cmd.reportVersion.toString)
+      reportVersion.toString)
     log.info(s"output path: $stdPath")
     // die if the output path exists
     if (fsUtils.hdfsExists(stdPath)) {
@@ -271,10 +284,10 @@ object StandardizationJob {
     }
   }
 
-  def buildRawPath(cmd: CmdConfig, dataset: Dataset, dateTokens: Array[String]): String = {
+  def buildRawPath(cmd: CmdConfig, dataset: Dataset, dateTokens: Array[String], reportVersion: Int): String = {
     cmd.rawPathOverride match {
       case None =>
-        val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmd.reportVersion}"
+        val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
         cmd.folderPrefix match {
           case None               => s"${dataset.hdfsPath}$folderSuffix"
           case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"

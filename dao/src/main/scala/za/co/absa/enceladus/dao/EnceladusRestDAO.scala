@@ -42,6 +42,7 @@ import sun.security.krb5.internal.ktab.KeyTab
 import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.MappingTable
+import org.springframework.util.LinkedMultiValueMap
 
 object EnceladusRestDAO extends EnceladusDAO {
   val conf = ConfigFactory.load()
@@ -75,11 +76,16 @@ object EnceladusRestDAO extends EnceladusDAO {
     }
   }
 
-  private def restTemplateLogin(restTemplate: RestTemplate, url: String, username: String): Boolean = {
+  private def restTemplateLogin(restTemplate: RestTemplate, url: String, username: String,
+      reqBody: Option[LinkedMultiValueMap[String, String]] = None): Boolean = {
     import scala.collection.JavaConversions._
 
     _userName = username
-    val response = restTemplate.getForEntity(new URI(url), classOf[String])
+
+    val response = reqBody match {
+      case Some(params) => restTemplate.postForEntity(new URI(url), params, classOf[String])
+      case None => restTemplate.getForEntity(new URI(url), classOf[String])
+    }
 
     response.getStatusCode match {
       case SpringHttpStatus.OK => {
@@ -110,10 +116,14 @@ object EnceladusRestDAO extends EnceladusDAO {
     restTemplateLogin(template, url, username)
   }
 
-  def postLogin(username: String, password: String) = {
-    val url = s"$restBase/login?username=${encode(username)}&password=${encode(password)}&submit=Login"
+  def postLogin(username: String, password: String): Boolean = {
+    val parts = new LinkedMultiValueMap[String, String]
+    parts.add("username", username);
+    parts.add("password", password);
+
+    val url = s"$restBase/login"
     val template = new RestTemplate()
-    restTemplateLogin(template, url, username)
+    restTemplateLogin(template, url, username, Some(parts))
   }
 
   override def getDataset(name: String, version: Int): Dataset = {

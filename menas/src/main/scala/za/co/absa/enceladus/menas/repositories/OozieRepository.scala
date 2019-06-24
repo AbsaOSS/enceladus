@@ -259,9 +259,19 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       .replaceAllLiterally("$confNumExecutors", runtimeParams.confNumExecutors.toString)
       .replaceAllLiterally("$confExecutorMemory", s"${runtimeParams.confExecutorMemory}g")
       .replaceAllLiterally("$driverCores", s"${runtimeParams.driverCores}")
-      .replaceAllLiterally("$menasCredentialsFile", s"$namenode${runtimeParams.menasCredentialFile}")
+      .replaceAllLiterally("$menasKeytabFile", s"${getCredsOrKeytabArgument(runtimeParams.menasKeytabFile, namenode)}")
       .replaceAllLiterally("$sparkConfQuotes", sparkConfQuotes)
       .getBytes("UTF-8")
+  }
+
+  private def getCredsOrKeytabArgument(filename: String, protocol: String): String = {
+    if(filename.toLowerCase.trim.endsWith(".properties")) {
+      s"""<arg>--menas-credentials-file</arg>
+         |<arg>$protocol$filename</arg>""".stripMargin
+    } else {
+      s"""<arg>--menas-auth-keytab</arg>
+         |<arg>$protocol$filename</arg>""".stripMargin
+    }
   }
 
   /**

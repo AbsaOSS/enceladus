@@ -67,7 +67,7 @@ class ConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigNoFolderPrefix.datasetName === datasetName)
     assert(cmdConfigNoFolderPrefix.datasetVersion === datasetVersion)
     assert(cmdConfigNoFolderPrefix.reportDate === reportDate)
-    assert(cmdConfigNoFolderPrefix.reportVersion === reportVersion)
+    assert(cmdConfigNoFolderPrefix.reportVersion.get === reportVersion)
     assert(cmdConfigNoFolderPrefix.menasCredentials === menasCredentials)
     assert(cmdConfigNoFolderPrefix.rawFormat === rawFormat)
     assert(cmdConfigNoFolderPrefix.folderPrefix.isEmpty)
@@ -85,7 +85,7 @@ class ConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigFolderPrefix.datasetName === datasetName)
     assert(cmdConfigFolderPrefix.datasetVersion === datasetVersion)
     assert(cmdConfigFolderPrefix.reportDate === reportDate)
-    assert(cmdConfigFolderPrefix.reportVersion === reportVersion)
+    assert(cmdConfigFolderPrefix.reportVersion.get === reportVersion)
     assert(cmdConfigFolderPrefix.menasCredentials === menasKeytab)
     assert(cmdConfigFolderPrefix.rawFormat === rawFormat)
     assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
@@ -103,7 +103,7 @@ class ConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigRawPathOverride.datasetName === datasetName)
     assert(cmdConfigRawPathOverride.datasetVersion === datasetVersion)
     assert(cmdConfigRawPathOverride.reportDate === reportDate)
-    assert(cmdConfigRawPathOverride.reportVersion === reportVersion)
+    assert(cmdConfigRawPathOverride.reportVersion.get === reportVersion)
     assert(cmdConfigRawPathOverride.menasCredentials === None)
     assert(cmdConfigRawPathOverride.rawFormat === rawFormat)
     assert(cmdConfigRawPathOverride.folderPrefix.isEmpty)
@@ -165,13 +165,19 @@ class ConfigSuite extends FunSuite with SparkTestBase {
         "--folder-prefix", folderPrefix,
         "--debug-set-raw-path", hdfsRawPathOverride,
         "--raw-format", rawFormat))
-    val publishPathNoFolderPrefix = StandardizationJob.buildRawPath(cmdConfigNoFolderPrefix, standardiseDataset, dateTokens)
-    assert(publishPathNoFolderPrefix === s"${standardiseDataset.hdfsPath}/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigNoFolderPrefix.reportVersion}")
-    val publishPathFolderPrefix = StandardizationJob.buildRawPath(cmdConfigFolderPrefix, standardiseDataset, dateTokens)
-    assert(publishPathFolderPrefix === s"${standardiseDataset.hdfsPath}/$folderPrefix/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigFolderPrefix.reportVersion}")
-    val publishPathRawPathOverride = StandardizationJob.buildRawPath(cmdConfigRawPathOverride, standardiseDataset, dateTokens)
+
+
+    val publishPathNoFolderPrefix = StandardizationJob.buildRawPath(cmdConfigNoFolderPrefix, standardiseDataset,
+        dateTokens, cmdConfigNoFolderPrefix.reportVersion.get)
+    assert(publishPathNoFolderPrefix === s"${standardiseDataset.hdfsPath}/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigNoFolderPrefix.reportVersion.get}")
+    val publishPathFolderPrefix = StandardizationJob.buildRawPath(cmdConfigFolderPrefix, standardiseDataset, 
+        dateTokens, cmdConfigFolderPrefix.reportVersion.get)
+    assert(publishPathFolderPrefix === s"${standardiseDataset.hdfsPath}/$folderPrefix/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigFolderPrefix.reportVersion.get}")
+    val publishPathRawPathOverride = StandardizationJob.buildRawPath(cmdConfigRawPathOverride, standardiseDataset,
+        dateTokens, cmdConfigRawPathOverride.reportVersion.get)
     assert(publishPathRawPathOverride === hdfsRawPathOverride)
-    val publishPathRawPathOverrideAndFolderPrefix = StandardizationJob.buildRawPath(cmdConfigRawPathOverrideAndFolderPrefix, standardiseDataset, dateTokens)
+    val publishPathRawPathOverrideAndFolderPrefix = StandardizationJob.buildRawPath(cmdConfigRawPathOverrideAndFolderPrefix, 
+        standardiseDataset, dateTokens, cmdConfigRawPathOverrideAndFolderPrefix.reportVersion.get)
     assert(publishPathRawPathOverrideAndFolderPrefix === hdfsRawPathOverride)
   }
 
