@@ -77,10 +77,6 @@ class ConformanceRule {
 
 class CastingConformanceRule extends ConformanceRule {
 
-  constructor(rule) {
-    super(rule);
-  }
-
   apply(fields) {
     const inputCol = this.getInputCol(fields);
     const newField = new SchemaField(this.outputCol.name, this.outputCol.path, this.rule.outputDataType, inputCol.nullable, []);
@@ -91,10 +87,6 @@ class CastingConformanceRule extends ConformanceRule {
 }
 
 class ConcatenationConformanceRule extends ConformanceRule {
-
-  constructor(rule) {
-    super(rule);
-  }
 
   apply(fields) {
     const isNullable = this.getInputCols(fields).some(field => field.nullable);
@@ -110,10 +102,6 @@ class ConcatenationConformanceRule extends ConformanceRule {
 }
 
 class DropConformanceRule extends ConformanceRule {
-
-  constructor(rule) {
-    super(rule);
-  }
 
   apply(fields) {
     const splitPath = this.rule.outputColumn.split(".");
@@ -136,10 +124,6 @@ class DropConformanceRule extends ConformanceRule {
 
 class LiteralConformanceRule extends ConformanceRule {
 
-  constructor(rule) {
-    super(rule);
-  }
-
   apply(fields) {
     const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
     this.addNewField(fields, newField);
@@ -149,10 +133,6 @@ class LiteralConformanceRule extends ConformanceRule {
 }
 
 class MappingConformanceRule extends ConformanceRule {
-
-  constructor(rule) {
-    super(rule);
-  }
 
   getTargetCol(fields) {
     return super.getCol(fields, this.rule.targetAttribute);
@@ -185,10 +165,6 @@ class MappingConformanceRule extends ConformanceRule {
 
 class NegationConformanceRule extends ConformanceRule {
 
-  constructor(rule) {
-    super(rule);
-  }
-
   apply(fields) {
     const inputCol = this.getInputCol(fields);
     const newField = new SchemaField(this.outputCol.name, this.outputCol.path, inputCol.type, inputCol.nullable, []);
@@ -199,10 +175,6 @@ class NegationConformanceRule extends ConformanceRule {
 }
 
 class SingleColumnConformanceRule extends ConformanceRule {
-
-  constructor(rule) {
-    super(rule);
-  }
 
   apply(fields) {
     const inputCol = this.getInputCol(fields);
@@ -216,10 +188,6 @@ class SingleColumnConformanceRule extends ConformanceRule {
 
 class SparkSessionConfConformanceRule extends ConformanceRule {
 
-  constructor(rule) {
-    super(rule);
-  }
-
   apply(fields) {
     const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
     this.addNewField(fields, newField);
@@ -229,10 +197,6 @@ class SparkSessionConfConformanceRule extends ConformanceRule {
 }
 
 class UppercaseConformanceRule extends ConformanceRule {
-
-  constructor(rule) {
-    super(rule);
-  }
 
   apply(fields) {
     const inputCol = this.getInputCol(fields);

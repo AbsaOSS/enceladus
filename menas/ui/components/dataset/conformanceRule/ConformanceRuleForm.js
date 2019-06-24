@@ -16,6 +16,10 @@
 class ConformanceRuleForm {
 
   constructor(ruleType, schemaFieldSelectorSupportedRule) {
+    if (this.isCorrectlyConfigured === undefined) {
+      throw new TypeError("Abstract function 'isCorrectlyConfigured' not implemented.");
+    }
+
     this._ruleType = ruleType;
     this._schemaFieldSelectorSupportedRule = schemaFieldSelectorSupportedRule;
   }
@@ -40,10 +44,6 @@ class ConformanceRuleForm {
     const hasValidOutputColumn = this.hasValidOutputColumn(rule.outputColumn, schemas[rule.order])
       && this.hasValidTransitiveSchema(rule, schemas, rules);
     return hasValidOutputColumn & this.isCorrectlyConfigured(rule);
-  }
-
-  isCorrectlyConfigured(rule) {
-    return true;
   }
 
   hasValidOutputColumn(fieldValue, schema) {
@@ -238,7 +238,11 @@ class DropConformanceRuleForm extends ConformanceRuleForm {
   }
 
   get outputColumnControl() {
-    return sap.ui.getCore().byId("DropConformanceRule--schemaFieldSelector");
+    return sap.ui.getCore().byId(`${this.ruleType}--schemaFieldSelector`);
+  }
+
+  isCorrectlyConfigured(rule) {
+    return true;
   }
 
   hasValidOutputColumn(fieldValue) {
