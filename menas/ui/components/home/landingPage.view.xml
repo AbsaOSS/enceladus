@@ -1,4 +1,5 @@
-<core:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="components.home.landingPage" xmlns:html="http://www.w3.org/1999/xhtml">
+<core:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="components.home.landingPage" xmlns:html="http://www.w3.org/1999/xhtml"
+    xmlns:lab="it.designfuture.chartjs">
     <Page title="Menas" enableScrolling="false">
         <customHeader>
             <Bar>
@@ -11,40 +12,64 @@
             </Bar>
         </customHeader>
         <content>
-            <FlexBox height="100px" alignItems="Start" justifyContent="Center" class="sapUiResponsiveMargin">
-                <items>
-                    <GenericTile header="Datasets" class="sapUiResponsiveMargin" press="masterNavigate">
-                        <customData>
-                            <core:CustomData key="target" value="datasets"></core:CustomData>
-                        </customData>
-                        <tileContent>
-                            <TileContent>
-                                <NumericContent icon="sap-icon://database" value="{/landingPageInfo/totalNumberDatasets}"></NumericContent>
-                            </TileContent>
-                        </tileContent>
-                    </GenericTile>
-                    <GenericTile header="Schemas" class="sapUiResponsiveMargin" press="masterNavigate">
-                        <customData>
-                            <core:CustomData key="target" value="schemas"></core:CustomData>
-                        </customData>
-                        <tileContent>
-                            <TileContent>
-                                <NumericContent icon="sap-icon://SAP-icons-TNT/constrains" value="{/landingPageInfo/totalNumberSchemas}"></NumericContent>
-                            </TileContent>
-                        </tileContent>
-                    </GenericTile>
-                    <GenericTile header="Mapping Tables" class="sapUiResponsiveMargin" press="masterNavigate">
-                        <customData>
-                            <core:CustomData key="target" value="mappingTables"></core:CustomData>
-                        </customData>
-                        <tileContent>
-                            <TileContent>
-                                <NumericContent icon="sap-icon://SAP-icons-TNT/value-mapping" value="{/landingPageInfo/totalNumberMappingTables}"></NumericContent>
-                            </TileContent>
-                        </tileContent>
-                    </GenericTile>
-                </items>
-            </FlexBox>
+            <Panel width="auto" class="sapUiResponsiveMargin" headerText="Totals" height="20rem">
+                <FlexBox height="100px" alignItems="Start" justifyContent="Center" class="sapUiResponsiveMargin">
+                    <items>
+                        <GenericTile header="Datasets" class="sapUiResponsiveMargin" press="masterNavigate">
+                            <customData>
+                                <core:CustomData key="target" value="datasets"></core:CustomData>
+                            </customData>
+                            <tileContent>
+                                <TileContent>
+                                    <NumericContent icon="sap-icon://database" value="{/landingPageInfo/totalNumberDatasets}"></NumericContent>
+                                </TileContent>
+                            </tileContent>
+                        </GenericTile>
+                        <GenericTile header="Schemas" class="sapUiResponsiveMargin" press="masterNavigate">
+                            <customData>
+                                <core:CustomData key="target" value="schemas"></core:CustomData>
+                            </customData>
+                            <tileContent>
+                                <TileContent>
+                                    <NumericContent icon="sap-icon://SAP-icons-TNT/constrains" value="{/landingPageInfo/totalNumberSchemas}"></NumericContent>
+                                </TileContent>
+                            </tileContent>
+                        </GenericTile>
+                        <GenericTile header="Mapping Tables" class="sapUiResponsiveMargin" press="masterNavigate">
+                            <customData>
+                                <core:CustomData key="target" value="mappingTables"></core:CustomData>
+                            </customData>
+                            <tileContent>
+                                <TileContent>
+                                    <NumericContent icon="sap-icon://SAP-icons-TNT/value-mapping" value="{/landingPageInfo/totalNumberMappingTables}"></NumericContent>
+                                </TileContent>
+                            </tileContent>
+                        </GenericTile>
+                        <GenericTile header="Runs" class="sapUiResponsiveMargin" press="masterNavigate">
+                            <customData>
+                                <core:CustomData key="target" value="runs"></core:CustomData>
+                            </customData>
+                            <tileContent>
+                                <TileContent>
+                                    <NumericContent icon="sap-icon://physical-activity" value="{/landingPageInfo/totalNumberRuns}"></NumericContent>
+                                </TileContent>
+                            </tileContent>
+                        </GenericTile>
+                    </items>
+                </FlexBox>
+            </Panel>
+            <Panel width="auto" class="sapUiResponsiveMargin" headerText="Today's runs ({/landingPageInfo/todaysRunsStatistics/total})">
+            <lab:BarChartJS
+                legendDisplay="false"
+                responsive="true"
+                id="todaysRunsChart"
+                datasets="{/landingPageInfo/todayRunsGraph/datasets}"
+                labels="{/landingPageInfo/todayRunsGraph/labels}"
+                titleDisplay="false"
+                isHorizontal="false"
+                maintainAspectRatio="false">
+            </lab:BarChartJS>
+            </Panel>
         </content>
     </Page>
 </core:View>

@@ -25,6 +25,8 @@ import za.co.absa.enceladus.menas.factories.RunFactory
 import za.co.absa.enceladus.menas.integration.fixtures.RunFixtureService
 import za.co.absa.enceladus.menas.models.RunSummary
 import za.co.absa.enceladus.menas.repositories.RunMongoRepository
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -43,6 +45,8 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
   after {
     runFixture.dropCollection()
   }
+
+  private val today = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
 
   "RunMongoRepository::getAllLatest" should {
     "return only the latest Run for each Dataset asynchronously" when {
@@ -468,6 +472,231 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
         val actual = await(runMongoRepository.updateRunStatus(uniqueId, runStatus))
 
         assert(actual.isEmpty)
+      }
+    }
+  }
+
+  "RunMongoRepository::getTodaysRuns" should {
+    "return 0" when {
+      "there are no runs" in {
+        assert(await(runMongoRepository.getTodaysRuns()) == 0)
+      }
+
+      "there are no runs from today" in {
+        setUpSimpleRun()
+        assert(await(runMongoRepository.getTodaysRuns()) == 0)
+      }
+    }
+    "return number of runs with today's date" when {
+      "there are runs from today" in {
+        setUpSimpleRun()
+        val run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1, startDateTime = today)
+        val run2 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = today)
+        runFixture.add(run1, run2)
+        assert(await(runMongoRepository.getTodaysRuns()) == 2)
+      }
+    }
+  }
+
+  "RunMongoRepository::getTodaysSuccessfulRuns" should {
+    "return 0" when {
+      "there are no runs" in {
+        assert(await(runMongoRepository.getTodaysSuccessfulRuns()) == 0)
+      }
+
+      "there are no runs from today" in {
+        setUpSimpleRun()
+        assert(await(runMongoRepository.getTodaysSuccessfulRuns()) == 0)
+      }
+
+      "there are no successful runs from today" in {
+        setUpSimpleRun()
+        val run1 = RunFactory.getDummyRun(dataset = "dataset",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today,
+            runStatus = RunFactory.getDummyRunStatus(RunState.failed))
+        runFixture.add(run1)
+        assert(await(runMongoRepository.getTodaysSuccessfulRuns()) == 0)
+      }
+    }
+    "return number of runs with today's date" when {
+      "there are successful runs from today" in {
+        setUpSimpleRun()
+        val run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1, startDateTime = today)
+        val run2 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = today)
+        val run3 = RunFactory.getDummyRun(dataset = "dataset3",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today,
+            runStatus = RunFactory.getDummyRunStatus(RunState.running))
+        runFixture.add(run1, run2, run3)
+        assert(await(runMongoRepository.getTodaysSuccessfulRuns()) == 2)
+      }
+    }
+  }
+
+  "RunMongoRepository::getTodaysFailedRuns" should {
+    "return 0" when {
+      "there are no runs" in {
+        assert(await(runMongoRepository.getTodaysFailedRuns()) == 0)
+      }
+
+      "there are no runs from today" in {
+        setUpSimpleRun()
+        assert(await(runMongoRepository.getTodaysFailedRuns()) == 0)
+      }
+
+      "there are no failed runs from today" in {
+        setUpSimpleRun()
+        val run1 = RunFactory.getDummyRun(dataset = "dataset",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today,
+            runStatus = RunFactory.getDummyRunStatus(RunState.running))
+        runFixture.add(run1)
+        assert(await(runMongoRepository.getTodaysFailedRuns()) == 0)
+      }
+    }
+    "return number of runs with today's date" when {
+      "there are failed runs from today" in {
+        setUpSimpleRun()
+        val run1 = RunFactory.getDummyRun(dataset = "dataset",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today,
+            runStatus = RunFactory.getDummyRunStatus(RunState.failed))
+        val run2 = RunFactory.getDummyRun(dataset = "dataset2",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today,
+            runStatus = RunFactory.getDummyRunStatus(RunState.failed))
+        val run3 = RunFactory.getDummyRun(dataset = "dataset3",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today)
+        runFixture.add(run1, run2, run3)
+        assert(await(runMongoRepository.getTodaysFailedRuns()) == 2)
+      }
+    }
+  }
+
+  "RunMongoRepository::getTodaysStdSuccessRuns" should {
+    "return 0" when {
+      "there are no runs" in {
+        assert(await(runMongoRepository.getTodaysStdSuccessRuns()) == 0)
+      }
+
+      "there are no runs from today" in {
+        setUpSimpleRun()
+        assert(await(runMongoRepository.getTodaysStdSuccessRuns()) == 0)
+      }
+
+      "there are no stdSuccessful runs from today" in {
+        setUpSimpleRun()
+        val run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1, startDateTime = today)
+        runFixture.add(run1)
+        assert(await(runMongoRepository.getTodaysStdSuccessRuns()) == 0)
+      }
+    }
+    "return number of runs with today's date" when {
+      "there are stdSuccessful runs from today" in {
+        setUpSimpleRun()
+        val run1 = RunFactory.getDummyRun(dataset = "dataset",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today,
+            runStatus = RunFactory.getDummyRunStatus(RunState.stageSucceeded))
+        val run2 = RunFactory.getDummyRun(dataset = "dataset2",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today,
+            runStatus = RunFactory.getDummyRunStatus(RunState.stageSucceeded))
+        val run3 = RunFactory.getDummyRun(dataset = "dataset3",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today)
+        runFixture.add(run1, run2, run3)
+        assert(await(runMongoRepository.getTodaysStdSuccessRuns()) == 2)
+      }
+    }
+  }
+
+  "RunMongoRepository::getTodaysRunningRuns" should {
+    "return 0" when {
+      "there are no runs" in {
+        assert(await(runMongoRepository.getTodaysRunningRuns()) == 0)
+      }
+
+      "there are no runs from today" in {
+        setUpSimpleRun()
+        assert(await(runMongoRepository.getTodaysRunningRuns()) == 0)
+      }
+
+      "there are no running runs from today" in {
+        setUpSimpleRun()
+        val run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1, startDateTime = today)
+        runFixture.add(run1)
+        assert(await(runMongoRepository.getTodaysRunningRuns()) == 0)
+      }
+    }
+    "return number of runs with today's date" when {
+      "there are running runs from today" in {
+        setUpSimpleRun()
+        val run1 = RunFactory.getDummyRun(dataset = "dataset",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today,
+            runStatus = RunFactory.getDummyRunStatus(RunState.running))
+        val run2 = RunFactory.getDummyRun(dataset = "dataset2",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today,
+            runStatus = RunFactory.getDummyRunStatus(RunState.running))
+        val run3 = RunFactory.getDummyRun(dataset = "dataset3",
+            datasetVersion = 1,
+            runId = 1, 
+            startDateTime = today)
+        runFixture.add(run1, run2, run3)
+        assert(await(runMongoRepository.getTodaysRunningRuns()) == 2)
+      }
+    }
+  }
+
+  "RunMongoRepository::getTodaysSuccessWithErrors" should {
+    "return 0" when {
+      "there are no runs" in {
+        assert(await(runMongoRepository.getTodaysSuccessWithErrors()) == 0)
+      }
+
+      "there are no runs from today" in {
+        setUpSimpleRun()
+        assert(await(runMongoRepository.getTodaysSuccessWithErrors()) == 0)
+      }
+
+      "there are no successfull runs with errors from today" in {
+        setUpSimpleRun()
+        val run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1, startDateTime = today)
+        runFixture.add(run1)
+        assert(await(runMongoRepository.getTodaysSuccessWithErrors()) == 0)
+      }
+    }
+    "return number of runs with today's date" when {
+      "there are successful runs with errors from today" in {
+        setUpSimpleRun()
+        val run1 = RunFactory.getDummyRun(dataset = "dataset",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today,
+            controlMeasure = RunFactory.getDummyControlMeasure(
+                metadata = RunFactory.getDummyMetadata(
+                    additionalInfo = Map("std_errors_count" -> "5"))))
+        val run2 = RunFactory.getDummyRun(dataset = "dataset2",
+            datasetVersion = 1,
+            runId = 1,
+            startDateTime = today)
+        runFixture.add(run1, run2)
+        assert(await(runMongoRepository.getTodaysSuccessWithErrors()) == 1)
       }
     }
   }

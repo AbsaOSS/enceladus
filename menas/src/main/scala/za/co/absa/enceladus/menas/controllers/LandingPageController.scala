@@ -26,12 +26,15 @@ import za.co.absa.enceladus.menas.models.LandingPageInformation
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.MappingTableMongoRepository
 import za.co.absa.enceladus.menas.repositories.SchemaMongoRepository
+import za.co.absa.enceladus.menas.repositories.RunMongoRepository
+import za.co.absa.enceladus.menas.services.RunService
 
 @RestController
 @RequestMapping(Array("/api/landing"))
 class LandingPageController @Autowired() (datasetRepository: DatasetMongoRepository,
     mappingTableRepository: MappingTableMongoRepository,
-    schemaRepository: SchemaMongoRepository) extends BaseController {
+    schemaRepository: SchemaMongoRepository,
+    runsService: RunService) extends BaseController {
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import za.co.absa.enceladus.menas.utils.implicits._
@@ -42,6 +45,8 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
       dsCount <- datasetRepository.distinctCount()
       mtCount <- mappingTableRepository.distinctCount()
       schemaCount <- schemaRepository.distinctCount()
-    } yield LandingPageInformation(dsCount, mtCount, schemaCount)
+      runCount <- runsService.getCount()
+      todaysStats <- runsService.getTodaysRunsStatistics()
+    } yield LandingPageInformation(dsCount, mtCount, schemaCount, runCount, todaysStats)
   }
 }

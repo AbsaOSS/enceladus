@@ -33,9 +33,40 @@ var GenericService = new function () {
     })
   };
 
+  this.runStatusFormatter = function(sStatus) {
+    if(sStatus === "failed") return "Failed";
+    else if(sStatus === "successful") return "Successfull";
+    else if(sStatus === "successfulWithErrors") return "Sucessful with errors";
+    else if(sStatus === "running") return "Running";
+    else if(sStatus === "stdSuccessful") return "Standardization successful";
+    else sStatus;
+  };
+
+  this.runStatusColorFormatter = function(sStatus) {
+    if(sStatus === "failed") return "rgb(153, 0, 0)";
+    else if(sStatus === "successful") return "rgb(0, 204, 0)";
+    else if(sStatus === "successfulWithErrors") return "rgb(255, 255, 102)";
+    else if(sStatus === "running") return "rgb(153, 255, 153)";
+    else if(sStatus === "stdSuccessful") return "rgb(255, 204, 102)";
+    else "rgb(0,0,0)";
+  };
+
   this.getLandingPageInfo = function() {
     RestClient.get("api/landing/info").then((oData) => {
       model.setProperty("/landingPageInfo", oData);
+      const graphData = jQuery.extend({}, oData.todaysRunsStatistics);
+      delete graphData["total"];
+      const keys = Object.keys(graphData).map(this.runStatusFormatter);
+      const vals = Object.values(graphData);
+      const colors = Object.keys(graphData).map(this.runStatusColorFormatter);
+      const graph = {
+          "datasets": [{
+            "data" : vals,
+            "backgroundColor": colors
+          }],
+          "labels": keys
+      };
+      model.setProperty("/landingPageInfo/todayRunsGraph", graph);
     }).fail(() => {
       sap.m.MessageBox.error("Failed to load landing page information");
     })

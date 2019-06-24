@@ -32,6 +32,8 @@ import za.co.absa.enceladus.menas.models.{RunSummary, RunWrapper}
 import za.co.absa.enceladus.model
 
 import scala.concurrent.Future
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 object RunMongoRepository {
   val collectionBaseName = "run"
@@ -52,6 +54,51 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     include("datasetVersion", "runId", "startDateTime"),
     excludeId()
   ))
+
+  private def getTodaysFilter() = {
+    val date = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+    regex("startDateTime", s"^$date")
+  }
+
+  private def getTodayRunsCount(filters: List[Bson]): Future[Int] = {
+    val pipeline = Seq(
+      filter(and((getTodaysFilter :: filters) :_*)),
+      Aggregates.count("count"))
+    collection.aggregate[BsonDocument](pipeline).headOption().map({
+        case Some(doc) => doc.getInt32("count").getValue
+        case None => 0
+    })
+  }
+
+  def getTodaysRuns(): Future[Int] = {
+    getTodayRunsCount(List())
+  }
+
+  def getTodaysSuccessfulRuns(): Future[Int] = {
+    getTodayRunsCount(List(Filters.eq("runStatus.status", "allSucceeded")))
+  }
+
+  def getTodaysFailedRuns(): Future[Int] = {
+    getTodayRunsCount(List(Filters.eq("runStatus.status", "failed")))
+  }
+
+  def getTodaysStdSuccessRuns(): Future[Int] = {
+    getTodayRunsCount(List(Filters.eq("runStatus.status", "stageSucceeded")))
+  }
+
+  def getTodaysRunningRuns(): Future[Int] = {
+    getTodayRunsCount(List(Filters.eq("runStatus.status", "running")))
+  }
+
+  def getTodaysSuccessWithErrors(): Future[Int] = {
+    getTodayRunsCount(List(
+        Filters.eq("runStatus.status", "allSucceeded"),
+        or(
+        and(Filters.exists("controlMeasure.metadata.additionalInfo.std_errors_count"),
+            Filters.notEqual("controlMeasure.metadata.additionalInfo.std_errors_count", "0")),
+        and(Filters.exists("controlMeasure.metadata.additionalInfo.std_errors_count"),
+            Filters.notEqual("controlMeasure.metadata.additionalInfo.conform_errors_count", "0")))))
+  }
 
   def getAllLatest(): Future[Seq[Run]] = {
     getLatestOfEach()

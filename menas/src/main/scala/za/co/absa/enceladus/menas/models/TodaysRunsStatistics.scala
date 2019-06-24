@@ -15,9 +15,10 @@
 
 package za.co.absa.enceladus.menas.models
 
-case class LandingPageInformation(
-  totalNumberDatasets: Int,
-  totalNumberMappingTables: Int,
-  totalNumberSchemas: Int,
-  totalNumberRuns: Long,
-  todaysRunsStatistics: TodaysRunsStatistics)
+case class TodaysRunsStatistics(
+    total: Int,
+    failed: Int,
+    successful: Int,
+    successfulWithErrors: Int,
+    running: Int,
+    stdSuccessful: Int)
