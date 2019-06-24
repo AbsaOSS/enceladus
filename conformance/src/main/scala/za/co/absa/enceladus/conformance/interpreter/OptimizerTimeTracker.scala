@@ -18,21 +18,22 @@ package za.co.absa.enceladus.conformance.interpreter
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{col, lit}
-import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(implicit spark: SparkSession) {
+  import spark.implicits._
+
   private val log = LogManager.getLogger(this.getClass)
 
   private val maxToleratedPlanGenerationPerRuleMs = 100L
   private val initialElapsedTimeBaselineMs = 300L
   private var baselineTimeMs = initialElapsedTimeBaselineMs
-  private var lastExecutionPlanOptimizatioTime = 0L
+  private var lastExecutionPlanOptimizationTime = 0L
 
   private val idField1 = SchemaUtils.getUniqueName("tmpId", Option(inputDf.schema))
   private val idField2 = s"${idField1}_2"
   private val dfWithId = inputDf.withColumn(idField1, lit(1))
-  private val dfJustId = JsonUtils.getDataFrameFromJson(spark, Seq(s"""{"$idField2":1}""")).cache
+  private val dfJustId = Seq(1).toDF(idField2).cache
 
   /**
     * Returns a dataframe prepared to apply the Catalyst workaround
@@ -59,22 +60,33 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
     */
   def isCatalystWorkaroundRequired(df: DataFrame, rulesApplied: Int): Boolean = {
     if (isWorkaroundEnabled) {
-      val elapsedTime = getExecutionPlanGenerationTimeMs(df)
+      val currentExecutionPlanOptimizationTime = getExecutionPlanGenerationTimeMs(df)
 
-      val tooBigTimeDifference = if (lastExecutionPlanOptimizatioTime > 0) {
-        elapsedTime / lastExecutionPlanOptimizatioTime > 5
+      // The algorithm for determining when to apply a workaround is based on 2 triggers.
+      // 1. If it takes 5 times longer to optimize an execution plan now in comparison to the execution plan
+      //    optimization time  before the last conformance rules was applied, then it is too much.
+      val tooBigTimeDifference = if (lastExecutionPlanOptimizationTime > 0) {
+        currentExecutionPlanOptimizationTime / lastExecutionPlanOptimizationTime > 5
       } else {
         false
       }
-      val tooLong = tooBigTimeDifference ||
-        elapsedTime > baselineTimeMs + maxToleratedPlanGenerationPerRuleMs * rulesApplied
 
-      val msg = s"Execution optimization time for $rulesApplied rules: $elapsedTime ms"
+      // 2. If the time it takes to optimize an execution plan grows faster than a linear function of number of applied
+      //    rules, it is also considered too long. Consider a case when after each application of a conformance rule
+      //    it takes twice as much time. The n.1 condition won't be triggered and the execution time will
+      //    grow exponentially. This is a preotection against such a case.
+      val tooLong = tooBigTimeDifference ||
+        currentExecutionPlanOptimizationTime > baselineTimeMs + maxToleratedPlanGenerationPerRuleMs * rulesApplied
+
+      val msg = s"Execution optimization time for $rulesApplied rules: $currentExecutionPlanOptimizationTime ms"
       if (tooLong) {
         log.warn(s"$msg (Too long!)")
       } else {
-        baselineTimeMs = Math.max(baselineTimeMs, elapsedTime)
-        lastExecutionPlanOptimizatioTime = elapsedTime
+        // The last 'approved' execution plan time generation is remembered as a baseline so that the condition n.2 is
+        // not triggered based solely on a long execution plan generation time. It should be triggered on a big
+        // increase of execution plan generation time instead.
+        baselineTimeMs = Math.max(baselineTimeMs, currentExecutionPlanOptimizationTime)
+        lastExecutionPlanOptimizationTime = currentExecutionPlanOptimizationTime
         log.info(s"New baseline execution plan optimization time: $baselineTimeMs ms")
         log.warn(msg)
       }
@@ -86,14 +98,14 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
 
   /**
     * Records execution plan optimization time.
-    * This is used after a workarund and a conformance rule are applied to a dataframe.
+    * This is used after a workaround and a conformance rule are applied to a dataframe.
     *
     * @param df A dataframe for measuring execution plan optimization time
     */
   def recordExecutionPlanOptimizationTime(df: DataFrame): Unit = {
     val elapsedTime = getExecutionPlanGenerationTimeMs(df)
     baselineTimeMs = Math.max(baselineTimeMs, elapsedTime)
-    lastExecutionPlanOptimizatioTime = elapsedTime
+    lastExecutionPlanOptimizationTime = elapsedTime
   }
 
   /**
