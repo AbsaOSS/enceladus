@@ -24,9 +24,9 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
   *
   * Without applying a workaround any test in this suite makes Spark freeze.
   */
-class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFixture{
+class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFixture {
 
-  test("Test Dynamic Conformance does not hang on many mixed conformance rules"){
+  test("Test Dynamic Conformance does not hang on many mixed conformance rules") {
     val conformed = DynamicInterpreter.interpret(
       nestedStructsDS,
       standardizedDf,
@@ -38,7 +38,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
     assert(conformed.count() == 20)
   }
 
-  test("Test Dynamic Conformance does not hang on many uppercase conformance rules"){
+  test("Test Dynamic Conformance does not hang on many uppercase conformance rules") {
     val conformed = DynamicInterpreter.interpret(
       nestedStructsUpperDS,
       standardizedDf,
@@ -50,7 +50,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
     assert(conformed.count() == 20)
   }
 
-  test("Test Dynamic Conformance does not hang on many negation conformance rules"){
+  test("Test Dynamic Conformance does not hang on many negation conformance rules") {
     val conformed = DynamicInterpreter.interpret(
       nestedStructsNegationDS,
       standardizedDf,
@@ -62,7 +62,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
     assert(conformed.count() == 20)
   }
 
-  test("Test Dynamic Conformance does not hang on many casting conformance rules"){
+  test("Test Dynamic Conformance does not hang on many casting conformance rules") {
     val conformed = DynamicInterpreter.interpret(
       nestedStructsCastingDS,
       standardizedDf,
