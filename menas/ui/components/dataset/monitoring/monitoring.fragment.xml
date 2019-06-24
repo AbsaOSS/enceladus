@@ -16,7 +16,6 @@
 <core:FragmentDefinition xmlns="sap.m"
                          xmlns:core="sap.ui.core"
                          xmlns:layout="sap.ui.layout"
-                         xmlns:u="sap.ui.unified"
                          xmlns:table="sap.ui.table"
                          xmlns:lab="it.designfuture.chartjs"
                          xmlns:form="sap.ui.layout.form"
@@ -58,10 +57,24 @@
                             <Label text="Days"/>
                             <Text id="monitoringIntervalDays" text="{/monitoringIntervalDays}"/>
                             <Label text="Total runs"/>
-                            <Text id="monitoringTotalRuns" text="{/numberOfPoints}"/>
+                            <Text id="monitoringTotalRuns" text="{
+                                path: '/numberOfPoints',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true,
+                                    emptyString: '0'
+                                }
+                            }" />
                             <Label text="Records"/>
-                            <Text id="monitoringTotalRecords" text="{=${/monitoringTotals/records}.toLocaleString()}"/>
-                            <Label text="Raw data"/>
+                            <Text id="monitoringTotalRecords" text="{
+                                path: '/monitoringTotals/records',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true,
+                                    emptyString: '0'
+                                }
+                            }" />
+                            <Label text="Raw size"/>
                             <Text id="monitoringTotalRawSize" text="{
                                     path: '/monitoringTotals/rawDirSize',
                                     type: 'sap.ui.model.type.FileSize',
@@ -69,7 +82,7 @@
                                         maxFractionDigits: 2
                                     }
                                 }" />
-                            <Label text="Standardized data"/>
+                            <Label text="Standardized size"/>
                             <Text id="monitoringTotalStdSize" text="{
                                     path: '/monitoringTotals/stdDirSize',
                                     type: 'sap.ui.model.type.FileSize',
@@ -77,7 +90,7 @@
                                         maxFractionDigits: 2
                                     }
                                 }" />
-                            <Label text="Conformed data"/>
+                            <Label text="Conformed size"/>
                             <Text id="monitoringTotalPublishSize" text="{
                                     path: '/monitoringTotals/publishDirSize',
                                     type: 'sap.ui.model.type.FileSize',
@@ -220,7 +233,14 @@
                             <Label text="Total" textAlign="Center" width="100%" />
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{=parseInt(${raw_recordcount}).toLocaleString()}" wrapping="false" />
+                            <Text wrapping="false" text="{
+                                path: 'raw_recordcount',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true,
+                                    emptyString: ''
+                                }
+                            }" />
                         </table:template>
                     </table:Column>
                     <table:Column id="monitoring-multiheader-recordcount-std" width="7rem" headerSpan="{=[0,2,1]}">
@@ -230,7 +250,14 @@
                             <Label text="Succeded" textAlign="Center" width="100%" />
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{=parseInt(${std_records_succeeded}).toLocaleString()}" wrapping="false" />
+                            <Text wrapping="false" text="{
+                                path: 'std_records_succeeded',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true,
+                                    emptyString: ''
+                                }
+                            }" />
                         </table:template>
                     </table:Column>
                     <table:Column width="5rem">
@@ -240,7 +267,14 @@
                             <Label text="Failed" textAlign="Center" width="100%" />
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{=parseInt(${std_records_failed}).toLocaleString()}" wrapping="false" />
+                            <Text wrapping="false" text="{
+                                path: 'std_records_failed',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true,
+                                    emptyString: ''
+                                }
+                            }" />
                         </table:template>
                     </table:Column>
                     <table:Column id="monitoring-multiheader-recordcount-cnfrm" width="7rem" headerSpan="{=[0,2,1]}">
@@ -250,7 +284,14 @@
                             <Label text="Succeded" textAlign="Center" width="100%" />
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{=parseInt(${conform_records_succeeded}).toLocaleString()}" wrapping="false" />
+                            <Text wrapping="false" text="{
+                                path: 'conform_records_succeeded',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true,
+                                    emptyString: ''
+                                }
+                            }" />
                         </table:template>
                     </table:Column>
                     <table:Column width="5rem">
@@ -260,7 +301,14 @@
                             <Label text="Failed" textAlign="Center" width="100%" />
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{=parseInt(${conform_records_failed}).toLocaleString()}" wrapping="false" />
+                            <Text wrapping="false" text="{
+                                path: 'conform_records_failed',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true,
+                                    emptyString: ''
+                                }
+                            }" />
                         </table:template>
                     </table:Column>
                 </table:columns>
