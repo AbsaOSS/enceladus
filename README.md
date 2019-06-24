@@ -70,12 +70,15 @@ Simply copy the **menas.war** file produced when building the project into Tomca
 - **Spark 2.4.3 (Scala 2.11)** installation
 - **Hadoop 2.7** installation
 - **Menas** running instance
-- **Menas Credentials File** in your home directory (a configuration file for authenticating the Spark jobs with Menas) 
+- **Menas Credentials File** in your home directory or on HDFS (a configuration file for authenticating the Spark jobs with Menas) 
+   - **Use with in-memory authentication**
 e.g. `~/menas-credential.properties`:
 ```
 username=user
 password=changeme
 ```
+- **Menas Keytab File** in your home directory or on HDFS
+   - **Use with kerberos authentication**, see [link](https://kb.iu.edu/d/aumh) for details on creating keytab files
  - **Directory structure** for the **RAW** dataset should follow the convention of `<path_to_dataset_in_menas>/<year>/<month>/<day>/v<dataset_version>`. This date is specified with the `--report-date` option when running the **Standardization** and **Conformance** jobs.
  - **_INFO file** must be present along with the **RAW** data on HDFS as per the above directory structure. This is a file tracking control measures via [Atum](https://github.com/AbsaOSS/atum), an example can be found [here](examples/data/input/_INFO).
 
@@ -90,7 +93,7 @@ password=changeme
 --conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
 <standardization_<build_version>.jar> \
---menas-credentials-file <path_to_menas_credentials> \
+--menas-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -99,6 +102,7 @@ password=changeme
 --row-tag <tag>
 ```
 * Here `row-tag` is a specific option for `raw-format` of type `XML`. For more options for different types please see our WIKI.
+* In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
 #### Running Conformance
 ```
@@ -113,12 +117,13 @@ password=changeme
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
 <conformance_<build_version>.jar> \
---menas-credentials-file <path_to_menas_credentials> \
+--menas-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
 --report-version <data_run-version>
 ```
+* In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
 ## <a name="contribute"/>How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
