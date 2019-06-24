@@ -76,17 +76,44 @@ class SchemaManager {
     return {isValid: true};
   }
 
+  static validatePathOfStructs(columnName, fields) {
+    const splitPath = columnName.split(".");
+    let pathIndex = 0;
+
+    const helper = function (fields, pathSection, accumlatedValidation) {
+      const field = fields.find(f => f.name === pathSection);
+      if (field === undefined) {
+        return accumlatedValidation;
+      }
+
+      if (field.type === "struct" || field.elementType === "struct") {
+        return helper(field.children, splitPath[++pathIndex], { isValid: true, value: field });
+      }
+
+      return { isValid: false, error: `"${splitPath.slice(0, pathIndex + 1).join(".")}" is of type "${field.type}", only "struct" types can be nested` };
+    };
+
+    return helper(fields, splitPath[pathIndex]);
+  }
+
   static findColumn(columnName, fields) {
     const splitPath = columnName.split(".");
+    let pathIndex = 0;
 
-    return splitPath.reduce((fields, path, index) => {
-      const field = fields.find(field => field.name === path);
+    const helper = function (fields, pathSection) {
+      const field = fields.find(f => f.name === pathSection);
       if (field === undefined) {
         return { isFound: false }
       }
-      const children = field.children;
-      return (children && children.length > 0 && splitPath.length > index + 1) ? children : { isFound: true, value: field };
-    }, fields);
+
+      if (pathIndex === splitPath.length - 1) {
+        return { isFound: true, value: field };
+      }
+
+      return helper(field.children, splitPath[++pathIndex])
+    };
+
+    return helper(fields, splitPath[pathIndex])
   }
 
   static validateColumnRemoval(rule, schemas, rules) {
