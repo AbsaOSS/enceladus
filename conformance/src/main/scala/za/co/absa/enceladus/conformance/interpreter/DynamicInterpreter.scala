@@ -86,11 +86,11 @@ object DynamicInterpreter {
 
     val steps = getConformanceSteps
     val optimizerTimeTracker = new OptimizerTimeTracker(inputDf, ictx.isCatalystWorkaroundEnabled)
-    val dfInputWithId = optimizerTimeTracker.getWorkaroundDataframe
+    val dfInputWithIdForWorkaround = optimizerTimeTracker.getWorkaroundDataframe
 
     // Fold left on rules
     var rulesApplied = 0
-    val conformedDf = steps.foldLeft(dfInputWithId)({
+    val conformedDf = steps.foldLeft(dfInputWithIdForWorkaround)({
       case (df, rule) =>
         val (ruleAppliedDf, ec) = applyConformanceRule(df, rule, explodeContext)
         explodeContext = ec

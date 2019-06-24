@@ -122,7 +122,8 @@ object CmdConfig {
       config.copy(experimentalMappingRule = Option(value))).text("Use experimental optimized mapping conformance rule")
 
     opt[Boolean]("catalyst-workaround").optional().action((value, config) =>
-      config.copy(isCatalystWorkaroundEnabled = Option(value))).text("Turn on or off Catalyst workaround feature")
+      config.copy(isCatalystWorkaroundEnabled = Option(value))).text("Turn on or off Catalyst workaround feature. " +
+      "This overrides 'conformance.catalyst.workaround' configuration value provided in 'application.conf'.")
 
     help("help").text("prints this usage text")
   }
