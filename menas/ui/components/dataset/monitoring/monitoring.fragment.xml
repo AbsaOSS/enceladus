@@ -62,7 +62,7 @@
                                 type: 'sap.ui.model.type.Integer',
                                 formatOptions: {
                                     groupingEnabled: true,
-                                    emptyString: '0'
+                                    emptyString: 0
                                 }
                             }" />
                             <Label text="Records"/>
@@ -71,7 +71,7 @@
                                 type: 'sap.ui.model.type.Integer',
                                 formatOptions: {
                                     groupingEnabled: true,
-                                    emptyString: '0'
+                                    emptyString: 0
                                 }
                             }" />
                             <Label text="Raw size"/>
@@ -132,7 +132,6 @@
             </layout:BlockLayoutRow>
         </layout:BlockLayout>
 
-
     <Title class="monitoringTitle" text="Records per run" visible="{/monitoringRecordsVisible}"/>
         <Panel id="mon-bar-chart-panel" height="{/barChartHeight}" visible="{/monitoringRecordsVisible}">
             <lab:BarChartJS
@@ -163,7 +162,7 @@
                 width="100%">
 
                 <table:columns>
-                    <table:Column id="monitoring-multiheader-info" width="6rem" headerSpan="{=[2,1]}">
+                    <table:Column id="monitoring-multiheader-info" width="6rem" headerSpan="{=[2,1]}" hAlign="Center">
                         <table:multiLabels>
                             <Label text="Info" textAlign="Center" width="100%"/>
                             <Label text="Date" textAlign="Center" width="100%"/>
@@ -172,7 +171,7 @@
                             <Text text="{informationDate}" wrapping="false" />
                         </table:template>
                     </table:Column>
-                    <table:Column width="5rem">
+                    <table:Column width="5rem" hAlign="Center">
                         <table:multiLabels>
                             <Label text="Information"/>
                             <Label text="Version" textAlign="Center" width="100%"/>
@@ -182,14 +181,14 @@
                         </table:template>
 
                     </table:Column>
-                    <table:Column width="5rem">
+                    <table:Column width="5rem" hAlign="Center">
                         <Label text="Dataset version"  textAlign="Center" width="100%" wrapping="true"/>
                         <table:template>
                             <Text text="{datasetVersion}" wrapping="false" />
                         </table:template>
                     </table:Column>
 
-                    <table:Column width="10rem">
+                    <table:Column width="10rem" hAlign="Center">
                         <Label text="Status"  textAlign="Center" width="100%" />
                         <table:template>
                             <tnt:InfoLabel
@@ -198,7 +197,7 @@
                         </table:template>
                     </table:Column>
 
-                    <table:Column id="monitoring-multiheader-checkpoint" width="12rem" headerSpan="{=[3,1]}">
+                    <table:Column id="monitoring-multiheader-checkpoint" width="12rem" headerSpan="{=[3,1]}" hAlign="Center">
                         <table:multiLabels>
                             <Label text="Latest checkpoint" textAlign="Center" width="100%"/>
                             <Label text="End timestamp" textAlign="Center" width="100%"/>
@@ -207,7 +206,7 @@
                             <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].processEndTime}" wrapping="false" />
                         </table:template>
                     </table:Column>
-                    <table:Column width="7rem" visible="false">
+                    <table:Column width="7rem" visible="false" hAlign="Center">
                         <table:multiLabels>
                             <Label text="Latest checkpoint" />
                             <Label text="Stage" textAlign="Center" width="100%"/>
@@ -216,7 +215,7 @@
                             <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].workflowName}" wrapping="false" />
                         </table:template>
                     </table:Column>
-                    <table:Column width="10rem">
+                    <table:Column width="10rem" hAlign="Center">
                         <table:multiLabels>
                             <Label text="Latest checkpoint"/>
                             <Label text="Name" textAlign="Center" width="100%"/>
@@ -226,7 +225,7 @@
                         </table:template>
                     </table:Column>
 
-                    <table:Column id="monitoring-multiheader-recordcount-raw" width="5rem" headerSpan="{=[5,1,1]}">
+                    <table:Column id="monitoring-multiheader-recordcount-raw" width="5rem" headerSpan="{=[5,1,1]}" hAlign="Right">
                         <table:multiLabels>
                             <Label text="Records" textAlign="Center" width="100%" />
                             <Label text="Raw" textAlign="Center" width="100%" />
@@ -237,13 +236,12 @@
                                 path: 'raw_recordcount',
                                 type: 'sap.ui.model.type.Integer',
                                 formatOptions: {
-                                    groupingEnabled: true,
-                                    emptyString: ''
+                                    groupingEnabled: true
                                 }
                             }" />
                         </table:template>
                     </table:Column>
-                    <table:Column id="monitoring-multiheader-recordcount-std" width="7rem" headerSpan="{=[0,2,1]}">
+                    <table:Column id="monitoring-multiheader-recordcount-std" width="7rem" headerSpan="{=[0,2,1]}" hAlign="Right">
                         <table:multiLabels>
                             <Label text="Records" />
                             <Label text="Standardization" textAlign="Center" width="100%" />
@@ -254,13 +252,12 @@
                                 path: 'std_records_succeeded',
                                 type: 'sap.ui.model.type.Integer',
                                 formatOptions: {
-                                    groupingEnabled: true,
-                                    emptyString: ''
+                                    groupingEnabled: true
                                 }
                             }" />
                         </table:template>
                     </table:Column>
-                    <table:Column width="5rem">
+                    <table:Column width="5rem" hAlign="Right">
                         <table:multiLabels>
                             <Label text="Records" />
                             <Label text="Standardization" />
@@ -271,13 +268,12 @@
                                 path: 'std_records_failed',
                                 type: 'sap.ui.model.type.Integer',
                                 formatOptions: {
-                                    groupingEnabled: true,
-                                    emptyString: ''
+                                    groupingEnabled: true
                                 }
                             }" />
                         </table:template>
                     </table:Column>
-                    <table:Column id="monitoring-multiheader-recordcount-cnfrm" width="7rem" headerSpan="{=[0,2,1]}">
+                    <table:Column id="monitoring-multiheader-recordcount-cnfrm" width="7rem" headerSpan="{=[0,2,1]}" hAlign="Right">
                         <table:multiLabels>
                             <Label text="Records" />
                             <Label text="Conformance" textAlign="Center" width="100%" />
@@ -288,13 +284,12 @@
                                 path: 'conform_records_succeeded',
                                 type: 'sap.ui.model.type.Integer',
                                 formatOptions: {
-                                    groupingEnabled: true,
-                                    emptyString: ''
+                                    groupingEnabled: true
                                 }
                             }" />
                         </table:template>
                     </table:Column>
-                    <table:Column width="5rem">
+                    <table:Column width="5rem" hAlign="Right">
                         <table:multiLabels>
                             <Label text="Records" />
                             <Label text="Conformance" />
@@ -305,8 +300,7 @@
                                 path: 'conform_records_failed',
                                 type: 'sap.ui.model.type.Integer',
                                 formatOptions: {
-                                    groupingEnabled: true,
-                                    emptyString: ''
+                                    groupingEnabled: true
                                 }
                             }" />
                         </table:template>
