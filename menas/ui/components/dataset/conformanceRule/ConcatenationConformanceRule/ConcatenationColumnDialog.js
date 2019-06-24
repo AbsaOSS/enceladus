@@ -86,7 +86,7 @@ class ConcatenationColumnDialog {
   isValid(fieldValue) {
     let isValid = true;
 
-    if (!fieldValue || fieldValue === "") {
+    if (GenericService.isEmpty(fieldValue)) {
       this.schemaFieldSelector.setErrorHighlight();
       sap.m.MessageToast.show("No field selected.");
       isValid = false;

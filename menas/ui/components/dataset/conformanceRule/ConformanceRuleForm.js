@@ -89,7 +89,7 @@ class ConformanceRuleForm {
   nonEmptyField(fieldValue, fieldName, inputControl) {
     let isValid = true;
 
-    if (!fieldValue || fieldValue === "") {
+    if (GenericService.isEmpty(fieldValue)) {
       inputControl.setValueState(sap.ui.core.ValueState.Error);
       inputControl.setValueStateText(`${fieldName} cannot be empty`);
       isValid = false;
@@ -105,7 +105,7 @@ class ConformanceRuleForm {
   hasValidSchemaSelection(fieldValue, inputControl) {
     let isValid = true;
 
-    if (!fieldValue || fieldValue === "" || !GenericService.isValidColumnName(fieldValue)) {
+    if (GenericService.isEmpty(fieldValue) || !GenericService.isValidColumnName(fieldValue)) {
       inputControl
         .getItems()
         .forEach(item => item.setHighlight(sap.ui.core.ValueState.Error));
@@ -184,7 +184,7 @@ class CastingConformanceRuleForm extends ConformanceRuleForm {
     const inputControl = this.outputDataTypeControl;
     let isValid = true;
 
-    if (!fieldValue || fieldValue === "") {
+    if (GenericService.isEmpty(fieldValue)) {
       inputControl.setValueState(sap.ui.core.ValueState.Error);
       inputControl.setValueStateText("Output Data Type cannot be empty");
       isValid = false;
