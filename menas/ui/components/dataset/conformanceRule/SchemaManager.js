@@ -93,7 +93,7 @@ class SchemaManager {
       return { isValid: false, error: `"${splitPath.slice(0, pathIndex + 1).join(".")}" is of type "${field.type}", only "struct" types can be nested` };
     };
 
-    return helper(fields, splitPath[pathIndex]);
+    return helper(fields, splitPath[pathIndex], { isValid: true });
   }
 
   static findColumn(columnName, fields) {
