@@ -69,9 +69,22 @@ object DynamicConformanceJob {
     // get the dataset definition
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     val dateTokens = cmd.reportDate.split("-")
+
+    val reportVersion = cmd.reportVersion match {
+      case Some(version) => version
+      case None => {
+        val newVersion = fsUtils.getLatestVersion(conformance.hdfsPublishPath, cmd.reportDate) + 1
+        log.warn(s"Report version not provided, inferred report version: $newVersion")
+        log.warn("This is an EXPERIMENTAL feature.")
+        log.warn(" -> It can lead to issues when running multiple jobs on a dataset concurrently.")
+        log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
+        newVersion
+      }
+    }
+
     val stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName,
-      cmd.datasetVersion.toString, cmd.reportDate, cmd.reportVersion.toString)
-    val publishPath: String = buildPublishPath(infoDateColumn, infoVersionColumn, cmd, conformance)
+      cmd.datasetVersion.toString, cmd.reportDate, reportVersion.toString)
+    val publishPath: String = buildPublishPath(infoDateColumn, infoVersionColumn, cmd, conformance, reportVersion)
     log.info(s"stdpath = $stdPath, publishPath = $publishPath")
     // die before performing any computation if the output path already exists
     if (fsUtils.hdfsExists(publishPath)) {
@@ -106,7 +119,7 @@ object DynamicConformanceJob {
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, sw.toString)
         throw e
     }
-    processResult(result, performance, publishPath, stdPath)
+    processResult(result, performance, publishPath, stdPath, reportVersion)
   }
 
   private def isExperimentalRuleEnabled()(implicit cmd: CmdConfig): Boolean = {
@@ -132,10 +145,10 @@ object DynamicConformanceJob {
     spark
   }
 
-  private def processResult(result: DataFrame, performance: PerformanceMeasurer, publishPath: String, stdPath: String)
+  private def processResult(result: DataFrame, performance: PerformanceMeasurer, publishPath: String, stdPath: String, reportVersion: Int)
                            (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
     val withPartCols = result.withColumn(infoDateColumn, lit(new java.sql.Date(format.parse(cmd.reportDate).getTime)))
-      .withColumn(infoVersionColumn, lit(cmd.reportVersion))
+      .withColumn(infoVersionColumn, lit(reportVersion))
 
     val recordCount = result.lastCheckpointRowCount match {
       case None    => withPartCols.count
@@ -170,12 +183,13 @@ object DynamicConformanceJob {
   def buildPublishPath(infoDateCol: String,
       infoVersionCol: String,
       cmd: CmdConfig,
-      ds: Dataset): String = {
+      ds: Dataset,
+      reportVersion: Int): String = {
     (cmd.publishPathOverride, cmd.folderPrefix) match {
       case (None, None) =>
-        s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=${cmd.reportVersion}"
+        s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=${reportVersion}"
       case (None, Some(folderPrefix)) =>
-        s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=${cmd.reportVersion}"
+        s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=${reportVersion}"
       case (Some(publishPathOverride), _) =>
         publishPathOverride
     }

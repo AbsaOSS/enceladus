@@ -45,8 +45,6 @@
             <arg>$datasetVersion</arg>
             <arg>-R</arg>
             <arg>${reportDate}</arg>
-            <arg>-r</arg>
-            <arg>1</arg> <!-- TODO: Figure out version increments or extensible versioning logic -->
             <arg>-f</arg>
             <arg>$dataFormat</arg>
             $menasKeytabFile
@@ -76,8 +74,6 @@
             <arg>$datasetVersion</arg>
             <arg>-R</arg>
             <arg>${reportDate}</arg>
-            <arg>-r</arg>
-            <arg>1</arg> <!-- TODO: Figure out version increments or extensible versioning logic -->
             $menasKeytabFile
         </spark>
         <ok to="End" />

@@ -20,6 +20,7 @@ import org.apache.log4j.LogManager
 import java.io.File
 import org.apache.hadoop.conf.Configuration
 import org.apache.commons.io.FileUtils
+import scala.util.Try
 
 /**
  * A set of functions to help with the date partitioning and version control
@@ -151,4 +152,26 @@ class FileSystemVersionUtils(conf: Configuration) {
     fs.deleteOnExit(hdfsPath)
   }
 
+  /**
+   * Finds the latest version given a publish folder
+   * 
+   * @param publishPath The HDFS path to the publish folder containing versions
+   * @param reportDate The string representation of the report date used to infer the latest version
+   * @returns the latest version or 0 in case no versions exist
+   */
+  def getLatestVersion(publishPath: String, reportDate: String): Int = {
+    import scala.collection.JavaConversions._
+    val filesOpt = Try {
+      fs.listStatus(new Path(s"$publishPath/enceladus_info_date=$reportDate"))
+    }.toOption
+    filesOpt match {
+      case Some(files) => {
+        val versions = files.filter(_.isDirectory()).map({
+          file => file.getPath().getName.replace("enceladus_info_version=", "").toInt
+        })
+        if(versions.isEmpty) 0 else versions.max
+      }
+      case None => 0
+    }
+  }
 }

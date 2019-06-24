@@ -32,7 +32,7 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 case class CmdConfig(datasetName: String = "",
     datasetVersion: Int = 1,
     reportDate: String = "",
-    reportVersion: Int = 1,
+    reportVersion: Option[Int] = None,
     menasCredentials: Option[Either[MenasCredentials, CmdConfig.KeytabLocation]] = None,
     performanceMetricsFile: Option[String] = None,
     publishPathOverride: Option[String] = None,
@@ -77,8 +77,9 @@ object CmdConfig {
           case _    => success
         })
 
-    opt[Int]('r', "report-version").action((value, config) =>
-      config.copy(reportVersion = value)).text("Report version")
+    opt[Int]('r', "report-version").optional().action((value, config) =>
+      config.copy(reportVersion = Some(value)))
+      .text("Report version. If not provided, it is inferred based on the publish path (it's an EXPERIMENTAL feature)")
       .validate(value =>
         if (value > 0) success
         else failure("Option --report-version must be >0"))
