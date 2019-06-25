@@ -35,11 +35,11 @@ var GenericService = new function () {
 
   this.runStatusFormatter = function(sStatus) {
     if(sStatus === "failed") return "Failed";
-    else if(sStatus === "successful") return "Successfull";
+    else if(sStatus === "successful") return "Successful";
     else if(sStatus === "successfulWithErrors") return "Sucessful with errors";
     else if(sStatus === "running") return "Running";
     else if(sStatus === "stdSuccessful") return "Standardization successful";
-    else sStatus;
+    else return sStatus;
   };
 
   this.runStatusColorFormatter = function(sStatus) {
@@ -48,7 +48,7 @@ var GenericService = new function () {
     else if(sStatus === "successfulWithErrors") return "rgb(255, 255, 102)";
     else if(sStatus === "running") return "rgb(153, 255, 153)";
     else if(sStatus === "stdSuccessful") return "rgb(255, 204, 102)";
-    else "rgb(0,0,0)";
+    else return "rgb(0,0,0)";
   };
 
   this.getLandingPageInfo = function() {

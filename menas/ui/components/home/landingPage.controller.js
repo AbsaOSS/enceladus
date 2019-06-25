@@ -1,7 +1,8 @@
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
-  "./../external/it/designfuture/chartjs/library-preload"
-  ], function (Controller, Openui5Chartjs) {
+  "./../external/it/designfuture/chartjs/library-preload",
+  "sap/ui/core/format/NumberFormat"
+  ], function (Controller, Openui5Chartjs, NumberFormat) {
   "use strict";
 
   return Controller.extend("components.home.landingPage", {
@@ -15,6 +16,14 @@ sap.ui.define([
         GenericService.getLandingPageInfo();
       }, this);
       this._eventBus = sap.ui.getCore().getEventBus();
+      this._tileNumFormat = NumberFormat.getIntegerInstance({
+        shortLimit: 9999,
+        style: "short"
+      });
+    },
+
+    tileNumberFormatter: function(nNum) {
+      return this._tileNumFormat.format(nNum);
     },
 
     masterNavigate: function(oEv) {

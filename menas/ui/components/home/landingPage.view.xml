@@ -21,7 +21,7 @@
                             </customData>
                             <tileContent>
                                 <TileContent>
-                                    <NumericContent icon="sap-icon://database" value="{/landingPageInfo/totalNumberDatasets}"></NumericContent>
+                                    <NumericContent icon="sap-icon://database" value="{path: '/landingPageInfo/totalNumberDatasets', formatter: '.tileNumberFormatter'}"></NumericContent>
                                 </TileContent>
                             </tileContent>
                         </GenericTile>
@@ -31,7 +31,7 @@
                             </customData>
                             <tileContent>
                                 <TileContent>
-                                    <NumericContent icon="sap-icon://SAP-icons-TNT/constrains" value="{/landingPageInfo/totalNumberSchemas}"></NumericContent>
+                                    <NumericContent icon="sap-icon://SAP-icons-TNT/constrains" value="{path: '/landingPageInfo/totalNumberSchemas', formatter: '.tileNumberFormatter'}"></NumericContent>
                                 </TileContent>
                             </tileContent>
                         </GenericTile>
@@ -41,7 +41,7 @@
                             </customData>
                             <tileContent>
                                 <TileContent>
-                                    <NumericContent icon="sap-icon://SAP-icons-TNT/value-mapping" value="{/landingPageInfo/totalNumberMappingTables}"></NumericContent>
+                                    <NumericContent icon="sap-icon://SAP-icons-TNT/value-mapping" value="{path: '/landingPageInfo/totalNumberMappingTables', formatter: '.tileNumberFormatter'}"></NumericContent>
                                 </TileContent>
                             </tileContent>
                         </GenericTile>
@@ -51,7 +51,7 @@
                             </customData>
                             <tileContent>
                                 <TileContent>
-                                    <NumericContent icon="sap-icon://physical-activity" value="{/landingPageInfo/totalNumberRuns}"></NumericContent>
+                                    <NumericContent icon="sap-icon://physical-activity" value="{path: '/landingPageInfo/totalNumberRuns', formatter: '.tileNumberFormatter'}"></NumericContent>
                                 </TileContent>
                             </tileContent>
                         </GenericTile>
@@ -63,7 +63,7 @@
                 legendDisplay="false"
                 responsive="true"
                 id="todaysRunsChart"
-                datasets="{/landingPageInfo/todayRunsGraph/datasets}"
+                datasets="{path: '/landingPageInfo/todayRunsGraph/datasets', formatter: 'Formatters.nonNullArrFormatter'}"
                 labels="{/landingPageInfo/todayRunsGraph/labels}"
                 titleDisplay="false"
                 isHorizontal="false"
