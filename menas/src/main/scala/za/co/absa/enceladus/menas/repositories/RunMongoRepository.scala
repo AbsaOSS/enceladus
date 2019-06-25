@@ -96,7 +96,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
         or(
         and(Filters.exists("controlMeasure.metadata.additionalInfo.std_errors_count"),
             Filters.notEqual("controlMeasure.metadata.additionalInfo.std_errors_count", "0")),
-        and(Filters.exists("controlMeasure.metadata.additionalInfo.std_errors_count"),
+        and(Filters.exists("controlMeasure.metadata.additionalInfo.conform_errors_count"),
             Filters.notEqual("controlMeasure.metadata.additionalInfo.conform_errors_count", "0")))))
   }
 
