@@ -34,13 +34,38 @@ class SchemaManager {
     return result;
   }
 
-  static validateNameClashes(columnName, schemas, index) {
-    const previousSchemaResult = SchemaManager.validateNameClashInPreviousSchemas(columnName, schemas, index);
-    if (previousSchemaResult.isValid) {
-      return SchemaManager.validateNameClashInFollowingSchemas(columnName, schemas, index);
+  static validateNameClashes(rule, schemas, rules) {
+    const newColumnName = rule.outputColumn;
+    const index = rule.order;
+    if (rule.isEdit) {
+      const oldColumnName = rules[index].outputColumn;
+      if (oldColumnName === newColumnName) {
+        return {isValid: true}
+      }
+
+      try {
+        const newRules = RuleUtils.replaceRule(rules, rule);
+        SchemaManager.validateTransitiveSchemas(schemas[0], newRules);
+        return this.validateColumnNameAvailable(newColumnName, schemas, index);
+      } catch (e) {
+        const error = `Cannot change output column, "${oldColumnName}" is used by rule ${e.order + 1}`;
+        return {isValid: false, index: e.order, error: error};
+      }
     } else {
-      return previousSchemaResult
+      return this.validateColumnNameAvailable(newColumnName, schemas, index);
     }
+  }
+
+  static validateColumnNameAvailable(newColumnName, schemas, index) {
+    let validation = SchemaManager.validateNameClashInPreviousSchemas(newColumnName, schemas, index);
+    if (validation.isValid) {
+      validation = SchemaManager.validateNameClashInFollowingSchemas(newColumnName, schemas, index);
+    }
+
+    if (!validation.isValid) {
+      validation.error = `"${newColumnName}" already exists in the ${validation.index === 0 ? "original schema" : `schema, introduced by rule ${validation.index}`}`;
+    }
+    return validation;
   }
 
   static validateNameClashInPreviousSchemas(columnName, schemas, index) {
@@ -55,7 +80,7 @@ class SchemaManager {
 
   static findLatestIndexOfColumnIntroduction(index, columnName, schemas) {
     let indexOfIntroduction = 0;
-    for (let i = index; i > 0; i--) {
+    for (let i = index; i >= 0; i--) {
       const searchResult = SchemaManager.findColumn(columnName, schemas[i].fields);
       if (searchResult.isFound) {
         indexOfIntroduction = i;

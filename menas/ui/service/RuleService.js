@@ -84,8 +84,16 @@ class RuleService {
 class RuleUtils {
 
   static insertRule(originalRules, newRule) {
+    return RuleUtils.spliceRule(originalRules, newRule, 0)
+  }
+
+  static replaceRule(originalRules, newRule) {
+    return RuleUtils.spliceRule(originalRules, newRule, 1);
+  }
+
+  static spliceRule(originalRules, newRule, deleteCount) {
     const conformanceRules = $.extend(true, [], originalRules);
-    conformanceRules.splice(newRule.order, 0, newRule);
+    conformanceRules.splice(newRule.order, deleteCount, newRule);
     return conformanceRules.map(RuleService.orderByIndex);
   }
 
