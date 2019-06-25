@@ -270,11 +270,10 @@ class DropConformanceRuleForm extends ConformanceRuleForm {
     const validation = SchemaManager.validateColumnRemoval(rule, schemas, rules);
 
     if (!validation.isValid) {
-      const errorMessage = validation.index ? `"${rule.outputColumn}" is used by rule ${validation.index}` : `"${rule.outputColumn}" does not exist in the schema`;
       this.outputColumnControl
         .getItems()
         .forEach(item => item.setHighlight(sap.ui.core.ValueState.None));
-      sap.m.MessageToast.show(errorMessage);
+      sap.m.MessageToast.show(validation.error);
     }
 
     return validation.isValid;

@@ -142,17 +142,26 @@ class SchemaManager {
   }
 
   static validateColumnRemoval(rule, schemas, rules) {
+    const newColumnName = rule.outputColumn;
+    const index = rule.order;
+    if (rule.isEdit) {
+      const oldColumnName = rules[index].outputColumn;
+      if (oldColumnName === newColumnName) {
+        return {isValid: true}
+      }
+    }
+
     const columnInPreviousSchema = SchemaManager.findColumn(rule.outputColumn, schemas[rule.order].fields);
     if (!columnInPreviousSchema.isFound) {
-      return {isValid: false};
+      return {isValid: false, error: `"${rule.outputColumn}" does not exist in the schema`};
     }
 
     try {
-      const newRules = RuleUtils.insertRule(rules, rule);
+      const newRules = rule.isEdit ? RuleUtils.replaceRule(rules, rule) : RuleUtils.insertRule(rules, rule);
       SchemaManager.validateTransitiveSchemas(schemas[0], newRules);
       return {isValid: true};
     } catch (e) {
-      return {isValid: false, index: e.order};
+      return {isValid: false, index: e.order, error: `"${rule.outputColumn}" is used by rule ${e.order + 1}`};
     }
   }
 
