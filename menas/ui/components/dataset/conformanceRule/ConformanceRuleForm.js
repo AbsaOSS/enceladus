@@ -115,13 +115,13 @@ class ConformanceRuleForm {
     return isValid;
   }
 
-  hasValidTransitiveSchema(rule, schemas) {
-    const validation = SchemaManager.validateNameClashes(rule.outputColumn, schemas, rule.order);
+  hasValidTransitiveSchema(rule, schemas, rules) {
+    const validation = SchemaManager.validateNameClashes(rule, schemas, rules);
 
     if (!validation.isValid) {
-      const errorMessage = `"${rule.outputColumn}" already exists in the ${validation.index === 0 ? "original schema" : `schema, introduced by rule ${validation.index}`}`;
+      console.log(validation)
       this.outputColumnControl.setValueState(sap.ui.core.ValueState.Error);
-      this.outputColumnControl.setValueStateText(errorMessage);
+      this.outputColumnControl.setValueStateText(validation.error);
     }
 
     return validation.isValid;
