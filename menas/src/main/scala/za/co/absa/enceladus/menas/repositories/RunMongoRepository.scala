@@ -32,7 +32,7 @@ import za.co.absa.enceladus.menas.models.{RunSummary, RunWrapper}
 import za.co.absa.enceladus.model
 
 import scala.concurrent.Future
-import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 object RunMongoRepository {
@@ -56,7 +56,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
   ))
 
   private def getTodaysFilter() = {
-    val date = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+    val date = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
     regex("startDateTime", s"^$date")
   }
 
