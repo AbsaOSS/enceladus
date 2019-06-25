@@ -28,6 +28,10 @@ import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaService}
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
+import java.util.Optional
+import za.co.absa.cobrix.cobol.parser.CopybookParser
+import za.co.absa.cobrix.spark.cobol.schema.CobolSchema
+import za.co.absa.cobrix.spark.cobol.schema.SchemaRetentionPolicy
 
 @RestController
 @RequestMapping(Array("/api/schema"))
@@ -44,15 +48,27 @@ class SchemaController @Autowired() (
   @ResponseStatus(HttpStatus.CREATED)
   def handleFileUpload(@AuthenticationPrincipal principal: UserDetails,
                        @RequestParam file: MultipartFile,
-                       @RequestParam version: Int, @RequestParam name: String): CompletableFuture[_] = {
+                       @RequestParam version: Int,
+                       @RequestParam name: String,
+                       @RequestParam format: Optional[String]): CompletableFuture[_] = {
+    val origFormat: Option[String] = format
+    val fileContent = new String(file.getBytes)
+
+    val sparkStruct = origFormat match {
+      case Some("struct") | Some("") | None => sparkMenasConvertor.convertAnyToStructType(fileContent)
+      case Some("copybook") =>
+        val parsedSchema = CopybookParser.parseTree(fileContent)
+        val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
+        cobolSchema.getSparkSchema
+      case Some(x) => throw new UnsupportedOperationException(s"$x is not a recognized schema format. Menas currently supports: 'struct' and 'copybook'")
+    }
+
     val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase, refName = name, refVersion = version + 1, attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = file.getOriginalFilename, fileContent = file.getBytes, fileMIMEType = file.getContentType)
 
-    val struct = sparkMenasConvertor.convertAnyToStructType(new String(file.getBytes))
-
     for {
       upload <- attachmentService.uploadAttachment(origFile)
-      update <- schemaService.schemaUpload(principal.getUsername, name, version, struct)
+      update <- schemaService.schemaUpload(principal.getUsername, name, version, sparkStruct)
     } yield update
   }
 

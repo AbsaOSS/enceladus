@@ -111,8 +111,9 @@ sap.ui.define([
       let status = oParams.getParameter("status");
 
       if (status === 500) {
-        MessageBox
-          .error("Failed to upload new schema. Ensure that the file is a valid Spark-SQL JSON schema and try again.")
+        const sSchemaType = this.byId("schemaFormatSelect").getSelectedItem().getText();
+        
+        MessageBox.error(`Failed to upload new schema. Ensure that the file is a valid ${sSchemaType} schema and try again.`)
       } else if (status === 201) {
         this.byId("fileUploader").setValue(undefined);
         MessageToast.show("Schema successfully uploaded.");
