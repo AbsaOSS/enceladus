@@ -34,21 +34,25 @@ var GenericService = new function () {
   };
 
   this.runStatusFormatter = function(sStatus) {
-    if(sStatus === "failed") return "Failed";
-    else if(sStatus === "successful") return "Successful";
-    else if(sStatus === "successfulWithErrors") return "Sucessful with errors";
-    else if(sStatus === "running") return "Running";
-    else if(sStatus === "stdSuccessful") return "Standardization successful";
-    else return sStatus;
+    switch(sStatus) {
+      case "failed":                  return "Failed";
+      case "successful":              return "Successfull";
+      case "successfulWithErrors":    return "Sucessful with errors";
+      case "running":                 return "Running";
+      case "stdSuccessful":           return "Standardization successful";
+      default:                        return sStatus;
+    }
   };
 
   this.runStatusColorFormatter = function(sStatus) {
-    if(sStatus === "failed") return "rgb(153, 0, 0)";
-    else if(sStatus === "successful") return "rgb(0, 204, 0)";
-    else if(sStatus === "successfulWithErrors") return "rgb(255, 255, 102)";
-    else if(sStatus === "running") return "rgb(153, 255, 153)";
-    else if(sStatus === "stdSuccessful") return "rgb(255, 204, 102)";
-    else return "rgb(0,0,0)";
+    switch(sStatus) {
+      case "failed":                  return "rgb(153, 0, 0)";
+      case "successful":              return "rgb(0, 204, 0)";
+      case "successfulWithErrors":    return "rgb(255, 255, 102)";
+      case "running":                 return "rgb(153, 255, 153)";
+      case "stdSuccessful":           return "rgb(255, 204, 102)";
+      default:                        return "rgb(0,0,0)";
+    }
   };
 
   this.getLandingPageInfo = function() {
