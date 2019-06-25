@@ -52,7 +52,9 @@ var GenericService = new function () {
     localStorage.clear();
     eventBus.publish("nav", "logout");
     if (sLogoutMessage) {
-      sap.m.MessageToast.show(sLogoutMessage)
+      sap.m.MessageToast.show(sLogoutMessage, {
+        duration: 15000
+      })
     }
   };
 
