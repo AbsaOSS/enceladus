@@ -64,7 +64,7 @@
                 responsive="true"
                 id="todaysRunsChart"
                 datasets="{path: '/landingPageInfo/todayRunsGraph/datasets', formatter: 'Formatters.nonNullArrFormatter'}"
-                labels="{/landingPageInfo/todayRunsGraph/labels}"
+                labels="{path: '/landingPageInfo/todayRunsGraph/labels', formatter: 'Formatters.nonNullArrFormatter'}"
                 titleDisplay="false"
                 isHorizontal="false"
                 maintainAspectRatio="false">

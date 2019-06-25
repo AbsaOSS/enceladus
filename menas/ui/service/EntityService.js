@@ -97,11 +97,13 @@ class EntityService {
   
   getSearchSuggestions(oModel, sEntityType) {
     return this.restDAO.getSearchSuggestions().then((oData) => {
-      let wrapped = oData.map(s => {
-        return {"name": s}
-      })
-      oModel.setProperty(`/${sEntityType}SearchSuggestions`, wrapped)
-      return wrapped
+      if(Array.isArray(oData)) {
+        let wrapped = oData.map(s => {
+          return {"name": s}
+        })
+        oModel.setProperty(`/${sEntityType}SearchSuggestions`, wrapped)
+        return wrapped
+      }
     }).fail(() => {
     })
   }
