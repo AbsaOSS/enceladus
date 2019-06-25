@@ -164,7 +164,6 @@ class CastingConformanceRuleForm extends ConformanceRuleForm {
       {type: "float"},
       {type: "double"},
       {type: "decimal(38,18)"},
-      // {type: "char"}, // TODO: First resolve https://github.com/AbsaOSS/enceladus/issues/425
       {type: "string"},
       {type: "date"},
       {type: "timestamp"}
