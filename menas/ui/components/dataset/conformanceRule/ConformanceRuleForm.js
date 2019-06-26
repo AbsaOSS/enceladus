@@ -119,7 +119,6 @@ class ConformanceRuleForm {
     const validation = SchemaManager.validateNameClashes(rule, schemas, rules);
 
     if (!validation.isValid) {
-      console.log(validation)
       this.outputColumnControl.setValueState(sap.ui.core.ValueState.Error);
       this.outputColumnControl.setValueStateText(validation.error);
     }
