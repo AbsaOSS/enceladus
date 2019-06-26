@@ -39,6 +39,7 @@ sap.ui.define([
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
       this._router.getRoute("login").attachMatched(function (oEvent) {
         let config = oEvent.getParameter("config");
+        this._appId = `${config.targetParent}--${config.controlId}`;
         this._appMasterId = `${config.targetParent}--${config.controlId}-Master`;
         if (typeof this._model.getProperty("/userInfo/username") === 'undefined') {
           sap.ui.getCore().byId(this._appMasterId).setVisible(false);
@@ -101,6 +102,7 @@ sap.ui.define([
         localStorage.setItem("csrfToken", csrfToken);
         Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
+          sap.ui.getCore().byId(this._appId).backToTopMaster();
           sap.ui.getCore().byId(this._appMasterId).setVisible(true);
           this._router.navTo("home");
           this._eventBus.publish("nav", "login");

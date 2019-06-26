@@ -19,16 +19,12 @@
             <Page id="navPage" showHeader="true" title="Navigation">
                 <List>
                     <items>
-                        <StandardListItem id="Home" title="Home" type="Navigation" press="onHomePress" icon="sap-icon://home"
-                                        visible="{= ${/userInfo/username} !== undefined}"/>
-                        <StandardListItem id="Runs" title="Runs" type="Navigation" press="onRunsPress" icon="sap-icon://physical-activity"
-                                        visible="{= ${/userInfo/username} !== undefined}"/>
-                        <StandardListItem id="Schemas" title="Schemas" type="Navigation" press="onSchemasPress" icon="sap-icon://SAP-icons-TNT/constrains"
-                                        visible="{= ${/userInfo/username} !== undefined}"/>
-                        <StandardListItem id="Datasets" title="Datasets" type="Navigation" press="onDatasetPress" icon="sap-icon://database"
-                                        visible="{= ${/userInfo/username} !== undefined}"/>
+                        <StandardListItem id="Home" title="Home" type="Navigation" press="onHomePress" icon="sap-icon://home" />
+                        <StandardListItem id="Runs" title="Runs" type="Navigation" press="onRunsPress" icon="sap-icon://physical-activity" />
+                        <StandardListItem id="Schemas" title="Schemas" type="Navigation" press="onSchemasPress" icon="sap-icon://SAP-icons-TNT/constrains" />
+                        <StandardListItem id="Datasets" title="Datasets" type="Navigation" press="onDatasetPress" icon="sap-icon://database" />
                         <StandardListItem id="MappingTables" title="Mapping Tables" type="Navigation" icon="sap-icon://SAP-icons-TNT/value-mapping"
-                                        press="onMappingPress" visible="{= ${/userInfo/username} !== undefined}"/>
+                                        press="onMappingPress" />
                     </items>
                 </List>
                 <footer>
