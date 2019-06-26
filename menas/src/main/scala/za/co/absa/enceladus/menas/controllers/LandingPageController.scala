@@ -26,7 +26,6 @@ import za.co.absa.enceladus.menas.models.LandingPageInformation
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.MappingTableMongoRepository
 import za.co.absa.enceladus.menas.repositories.SchemaMongoRepository
-import za.co.absa.enceladus.menas.repositories.RunMongoRepository
 import za.co.absa.enceladus.menas.services.RunService
 
 @RestController
