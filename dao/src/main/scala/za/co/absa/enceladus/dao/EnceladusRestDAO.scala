@@ -18,26 +18,23 @@ package za.co.absa.enceladus.dao
 import java.net.URI
 
 import scala.util.control.NonFatal
-
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructType
-import org.springframework.http.{ HttpStatus => SpringHttpStatus }
+import org.springframework.http.{HttpStatus => SpringHttpStatus}
 import org.springframework.security.kerberos.client.KerberosRestTemplate
 import org.springframework.web.client.RestTemplate
-
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.typesafe.config.ConfigFactory
-
 import sun.security.krb5.internal.ktab.KeyTab
 import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
@@ -45,14 +42,16 @@ import za.co.absa.enceladus.model.MappingTable
 import org.springframework.util.LinkedMultiValueMap
 
 object EnceladusRestDAO extends EnceladusDAO {
-  private val log = LogManager.getLogger("enceladus.conformance.EnceladusRestDAO")
+  private val log = LogManager.getLogger(this.getClass)
 
   private val conf = ConfigFactory.load()
   private val restBase = conf.getString("menas.rest.uri")
 
+  val maxRetries = 3
+  val httpClient = HttpClients.createDefault
+
   private var _userName: String = ""
   def userName: String = _userName
-
 
   private var _sessionCookie: String = ""
   def sessionCookie: String = _sessionCookie
@@ -106,7 +105,7 @@ object EnceladusRestDAO extends EnceladusDAO {
         true
       }
       case SpringHttpStatus.UNAUTHORIZED => {
-        throw new UnauthorizedException
+        throw UnauthorizedException()
       }
       case resp => {
         log.warn(response.toString)
@@ -165,10 +164,9 @@ object EnceladusRestDAO extends EnceladusDAO {
     java.net.URLEncoder.encode(string, "UTF-8").replace("+", "%20")
   }
 
-  private def sendGet(url: String): String = {
+  private def sendGet(url: String, retryCount: Int = 1): String = {
     try {
       log.info(s"URL: $url GET")
-      val httpClient = HttpClientBuilder.create().build()
       val httpGet = new HttpGet(url)
       httpGet.addHeader("cookie", sessionCookie)
       val response: CloseableHttpResponse = httpClient.execute(httpGet)
@@ -180,9 +178,15 @@ object EnceladusRestDAO extends EnceladusDAO {
         if (unAuthorized) {
           log.warn(s"Unauthorized GET request for Menas URL: $url")
           log.warn(s"Expired session, reauthenticating")
-          enceladusLogin()
-          log.info(s"Retrying GET request for Menas URL: $url")
-          sendGet(url)
+          if (enceladusLogin()) {
+            if (retryCount > maxRetries) {
+              throw UnauthorizedException(s"Unable to reauthenticate after $maxRetries tries")
+            }
+            log.info(s"Retrying GET request for Menas URL: $url")
+            sendGet(url, retryCount + 1)
+          } else {
+            throw UnauthorizedException()
+          }
         } else {
           val content = {
             if (ok) {
