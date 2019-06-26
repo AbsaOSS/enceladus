@@ -29,15 +29,15 @@ var GenericService = new function () {
     $.ajax("api/user/info", {
       method: "GET",
       success: fnSuccess,
-      async: false
+      async: false 
     })
   };
 
   this.runStatusFormatter = function(sStatus) {
     switch(sStatus) {
       case "failed":                  return "Failed";
-      case "successful":              return "Successfull";
-      case "successfulWithErrors":    return "Sucessful with errors";
+      case "successful":              return "Successful";
+      case "successfulWithErrors":    return "Successful with errors";
       case "running":                 return "Running";
       case "stdSuccessful":           return "Standardization successful";
       default:                        return sStatus;
