@@ -158,6 +158,10 @@ class SchemaRestDAO extends DependentRestDAO {
     super("schema")
   }
 
+  downloadSchema(name, version) {
+    return RestClient.get(`api/${this.entityType}/export/${name}/${version}`)
+  }
+
 }
 
 class MappingTableRestDAO extends DependentRestDAO {

@@ -15,17 +15,48 @@
 
 package za.co.absa.enceladus.menas.repositories
 
-import org.mongodb.scala.{Completed, MongoDatabase, SingleObservable}
+import org.mongodb.scala.MongoDatabase
+import org.mongodb.scala.bson.collection.immutable.Document
+import org.mongodb.scala.model.Aggregates._
+import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.model.Sorts
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
+import za.co.absa.enceladus.model
 import za.co.absa.enceladus.model.menas.MenasAttachment
 
+import scala.concurrent.Future
 import scala.reflect.ClassTag
+
+object AttachmentMongoRepository {
+  val collectionBaseName: String = "attachment"
+  val collectionName: String = collectionBaseName + model.CollectionSuffix
+}
 
 @Repository
 class AttachmentMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends MongoRepository[MenasAttachment](mongoDb)(ClassTag(classOf[MenasAttachment])) {
 
-  private[menas] override def collectionBaseName = "attachment"
+  private[menas] override def collectionBaseName: String = AttachmentMongoRepository.collectionBaseName
+
+  def getSchemaByNameAndVersion(name: String, version: Int): Future[Option[MenasAttachment]] = {
+    getByCollectionAndNameAndVersion(RefCollection.SCHEMA.name().toLowerCase(), name, version)
+  }
+
+  private def getByCollectionAndNameAndVersion(refCollection: String,
+                                               name: String,
+                                               version: Int): Future[Option[MenasAttachment]] = {
+
+    val pipeline = Seq(
+      filter(equal("refCollection", refCollection)),
+      filter(equal("refName", name)),
+      project(Document(s"{diff: {$$subtract: [$version, '$$refVersion']}, doc: '$$$$ROOT'}")),
+      filter(gte("diff", 0)),
+      sort(Sorts.ascending("diff")),
+      replaceRoot("$doc"),
+      limit(1)
+    )
+    collection.aggregate(pipeline).headOption()
+  }
 
 }

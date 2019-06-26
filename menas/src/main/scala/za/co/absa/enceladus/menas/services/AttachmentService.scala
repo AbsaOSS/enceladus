@@ -25,22 +25,29 @@ import scala.concurrent.Future
 import za.co.absa.enceladus.menas.exceptions.NotFoundException
 
 @Service
-class AttachmentService @Autowired() (attachmentMongoRepository: AttachmentMongoRepository,
-    schemaMongoRepository: SchemaMongoRepository,
-    datasetMongoRepository: DatasetMongoRepository,
-    mappingTableMongoRepository: MappingTableMongoRepository)
+class AttachmentService @Autowired()(attachmentMongoRepository: AttachmentMongoRepository,
+                                     schemaMongoRepository: SchemaMongoRepository,
+                                     datasetMongoRepository: DatasetMongoRepository,
+                                     mappingTableMongoRepository: MappingTableMongoRepository)
   extends ModelService(attachmentMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def uploadAttachment(attachment: MenasAttachment): Future[Completed] = {
-    chooseRepository(attachment.refCollection).getLatestVersionValue(attachment.refName).flatMap({
-      case Some(version) => {
+    chooseRepository(attachment.refCollection).getLatestVersionValue(attachment.refName).flatMap {
+      case Some(version) =>
         val updated = attachment.copy(refVersion = version + 1)
         attachmentMongoRepository.create(updated)
-      }
-      case _ => throw new NotFoundException
-    })
+      case _ =>
+        throw NotFoundException()
+    }
+  }
+
+  def getSchemaByNameAndVersion(name: String, version: Int): Future[MenasAttachment] = {
+    attachmentMongoRepository.getSchemaByNameAndVersion(name, version).map {
+      case Some(attachment) => attachment
+      case None             => throw NotFoundException()
+    }
   }
 
   private def chooseRepository(refCollection: String): VersionedMongoRepository[_] = {
