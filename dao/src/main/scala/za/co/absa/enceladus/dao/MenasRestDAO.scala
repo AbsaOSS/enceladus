@@ -113,7 +113,7 @@ object MenasRestDAO extends MenasDAO {
     sendPostJson(url, json)
   }
 
-  private def sendPostJson(url: String, json: String, retryCount: Int = 1): Boolean = {
+  private def sendPostJson(url: String, json: String, retriesLeft: Int = 1): Boolean = {
     try {
       log.info(s"URL: $url POST: $json")
       val httpPost = new HttpPost(url)
@@ -132,11 +132,12 @@ object MenasRestDAO extends MenasDAO {
           log.warn(s"Unauthorized POST request for Menas URL: $url")
           log.warn(s"Expired session, reauthenticating")
           if (enceladusLogin()) {
-            if (retryCount > maxRetries) {
-              throw UnauthorizedException(s"Unable to reauthenticate after $maxRetries tries")
+            if (retriesLeft > 0) {
+              throw UnauthorizedException(s"Unable to reauthenticate after retries")
             }
-            log.info(s"Retry $retryCount POST request for Menas URL: $url")
-            sendPostJson(url, json, retryCount + 1)
+            log.info(s"Retrying POST request for Menas URL: $url")
+            log.info(s"Retries left: $retriesLeft")
+            sendPostJson(url, json, retriesLeft - 1)
           } else {
             throw UnauthorizedException()
           }
