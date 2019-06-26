@@ -72,6 +72,14 @@ class SchemaController @Autowired() (
     } yield update
   }
 
+  @GetMapping(path = Array("/export/{name}/{version}"))
+  @ResponseStatus(HttpStatus.OK)
+  def exportSchema(@AuthenticationPrincipal principal: UserDetails,
+                   @PathVariable name: String,
+                   @PathVariable version: Int): CompletableFuture[Array[Byte]] = {
+    attachmentService.getSchemaByNameAndVersion(name, version).map(_.fileContent)
+  }
+
   @GetMapping(Array("/json/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
   def getJson(@PathVariable name: String,

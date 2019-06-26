@@ -84,6 +84,30 @@ sap.ui.define([
       });
     },
 
+    onExportPress: function (oEv) {
+      const schema = this._model.getProperty("/currentSchema");
+      new SchemaRestDAO().downloadSchema(schema.name, schema.version)
+        .then(data => {
+          const blob = new Blob([data], {type: 'text/json'});
+          const filename = `${schema.name}-v${schema.version}.json`;
+          if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, filename);
+          } else {
+            const event = document.createEvent('MouseEvents'),
+              element = document.createElement('a');
+
+            element.download = filename;
+            element.href = window.URL.createObjectURL(blob);
+            element.dataset.downloadurl = ['text/json', element.download, element.href].join(':');
+            event.initEvent('click', true, false);
+            element.dispatchEvent(event);
+          }
+        })
+        .fail(() => {
+          sap.m.MessageToast.show(`No file uploaded for schema: "${schema.name}", version: ${schema.version}`)
+        })
+    },
+
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "id") === undefined) {
         this._schemaService.getTop().then(() => this.load())
@@ -112,7 +136,7 @@ sap.ui.define([
 
       if (status === 500) {
         const sSchemaType = this.byId("schemaFormatSelect").getSelectedItem().getText();
-        
+
         MessageBox.error(`Failed to upload new schema. Ensure that the file is a valid ${sSchemaType} schema and try again.`)
       } else if (status === 201) {
         this.byId("fileUploader").setValue(undefined);
