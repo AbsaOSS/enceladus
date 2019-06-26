@@ -38,8 +38,6 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.dao.EnceladusRestDAO
-import za.co.absa.enceladus.dao.UnauthorizedException
-import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
@@ -63,14 +61,8 @@ object StandardizationJob {
 
     implicit val udfLib: UDFLibrary = new UDFLibrary
 
-    val menasCredentials = cmd.menasCredentials
-    menasCredentials match {
-      case Some(creds) => creds match {
-        case Left(userPassCreds: MenasCredentials) => EnceladusRestDAO.postLogin(userPassCreds.username, userPassCreds.password)
-        case Right(keytabLocation: String)         => EnceladusRestDAO.spnegoLogin(keytabLocation)
-      }
-      case None => UnauthorizedException("Menas credentials have to be provided")
-    }
+    EnceladusRestDAO.login = cmd.menasCredentials
+    EnceladusRestDAO.enceladusLogin()
 
     val dataset = EnceladusRestDAO.getDataset(cmd.datasetName, cmd.datasetVersion)
     val schema: StructType = EnceladusRestDAO.getSchema(dataset.schemaName, dataset.schemaVersion)
