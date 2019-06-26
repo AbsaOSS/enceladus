@@ -32,7 +32,7 @@ import scala.util.control.NonFatal
 /** Implements routines for Menas REST API. */
 object MenasRestDAO extends MenasDAO {
 
-  import za.co.absa.enceladus.dao.EnceladusRestDAO.{csrfToken, enceladusLogin, httpClient, maxRetries, sessionCookie}
+  import za.co.absa.enceladus.dao.EnceladusRestDAO.{csrfToken, enceladusLogin, httpClient, sessionCookie}
 
   private val conf = ConfigFactory.load()
   private val restBase = conf.getString("menas.rest.uri")
