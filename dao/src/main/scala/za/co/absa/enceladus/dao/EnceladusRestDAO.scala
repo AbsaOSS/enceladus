@@ -45,15 +45,22 @@ import za.co.absa.enceladus.model.MappingTable
 import org.springframework.util.LinkedMultiValueMap
 
 object EnceladusRestDAO extends EnceladusDAO {
-  val conf = ConfigFactory.load()
-  val restBase = conf.getString("menas.rest.uri")
+  private val log = LogManager.getLogger("enceladus.conformance.EnceladusRestDAO")
+
+  private val conf = ConfigFactory.load()
+  private val restBase = conf.getString("menas.rest.uri")
 
   private var _userName: String = ""
   def userName: String = _userName
-  var sessionCookie: String = ""
-  var csrfToken: String = ""
 
-  private val log = LogManager.getLogger("enceladus.conformance.EnceladusRestDAO")
+
+  private var _sessionCookie: String = ""
+  def sessionCookie: String = _sessionCookie
+
+  private var _csrfToken: String = ""
+  def csrfToken: String = _csrfToken
+
+  var login: Option[Either[MenasCredentials, String]] = None
 
   val objectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
@@ -66,7 +73,7 @@ object EnceladusRestDAO extends EnceladusDAO {
     keytab.getOneName.getName
   }
 
-  def enceladusLogin(login: Option[Either[MenasCredentials, String]]): Boolean = {
+  def enceladusLogin(): Boolean = {
     login match {
       case Some(creds) => creds match {
         case Left(userPassCreds: MenasCredentials) => EnceladusRestDAO.postLogin(userPassCreds.username, userPassCreds.password)
@@ -90,8 +97,8 @@ object EnceladusRestDAO extends EnceladusDAO {
     response.getStatusCode match {
       case SpringHttpStatus.OK => {
         val headers = response.getHeaders
-        sessionCookie = headers.get("set-cookie").head
-        csrfToken = headers.get("X-CSRF-TOKEN").head
+        _sessionCookie = headers.get("set-cookie").head
+        _csrfToken = headers.get("X-CSRF-TOKEN").head
 
         log.info(s"Login Successful")
         log.info(s"Session Cookie: $sessionCookie")
@@ -108,7 +115,7 @@ object EnceladusRestDAO extends EnceladusDAO {
     }
   }
 
-  def spnegoLogin(keytabLocation: String): Boolean = {
+  private def spnegoLogin(keytabLocation: String): Boolean = {
     val username = getUserFromKeytab(keytabLocation)
     val template = new KerberosRestTemplate(keytabLocation, username)
     val url = s"$restBase/user/info"
@@ -116,10 +123,10 @@ object EnceladusRestDAO extends EnceladusDAO {
     restTemplateLogin(template, url, username)
   }
 
-  def postLogin(username: String, password: String): Boolean = {
+  private def postLogin(username: String, password: String): Boolean = {
     val parts = new LinkedMultiValueMap[String, String]
-    parts.add("username", username);
-    parts.add("password", password);
+    parts.add("username", username)
+    parts.add("password", password)
 
     val url = s"$restBase/login"
     val template = new RestTemplate()
@@ -129,7 +136,7 @@ object EnceladusRestDAO extends EnceladusDAO {
   override def getDataset(name: String, version: Int): Dataset = {
     val url = s"$restBase/dataset/detail/${encode(name)}/$version"
     log.info(url)
-    val json = authorizeGetRequest(url)
+    val json = sendGet(url)
     log.info(json)
     objectMapper.readValue(json, classOf[Dataset])
   }
@@ -137,7 +144,7 @@ object EnceladusRestDAO extends EnceladusDAO {
   override def getMappingTable(name: String, version: Int): MappingTable = {
     val url = s"$restBase/mappingTable/detail/${encode(name)}/$version"
     log.info(url)
-    val json = authorizeGetRequest(url)
+    val json = sendGet(url)
     log.info(json)
     objectMapper.readValue(json, classOf[MappingTable])
   }
@@ -145,7 +152,7 @@ object EnceladusRestDAO extends EnceladusDAO {
   override def getSchema(name: String, version: Int): StructType = {
     val url = s"$restBase/schema/json/${encode(name)}/$version"
     log.info(url)
-    val json = authorizeGetRequest(url)
+    val json = sendGet(url)
     log.info(json)
     DataType.fromJson(json).asInstanceOf[StructType]
   }
@@ -158,7 +165,7 @@ object EnceladusRestDAO extends EnceladusDAO {
     java.net.URLEncoder.encode(string, "UTF-8").replace("+", "%20")
   }
 
-  private def authorizeGetRequest(url: String): String = {
+  private def sendGet(url: String): String = {
     try {
       log.info(s"URL: $url GET")
       val httpClient = HttpClientBuilder.create().build()
@@ -169,16 +176,23 @@ object EnceladusRestDAO extends EnceladusDAO {
         val status = response.getStatusLine.getStatusCode
         val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
         val unAuthorized = status == HttpStatus.SC_UNAUTHORIZED
-        val content = {
-          if (ok) {
-            readResponseObject(response)
-          } else if (unAuthorized) {
-            throw new UnauthorizedException
-          } else {
-            throw new DaoException(s"Server returned HTTP response code: $status for Menas URL:  $url ")
+
+        if (unAuthorized) {
+          log.warn(s"Unauthorized GET request for Menas URL: $url")
+          log.warn(s"Expired session, reauthenticating")
+          enceladusLogin()
+          log.info(s"Retrying GET request for Menas URL: $url")
+          sendGet(url)
+        } else {
+          val content = {
+            if (ok) {
+              readResponseObject(response)
+            } else {
+              throw DaoException(s"Server returned HTTP response code: $status for Menas URL: $url")
+            }
           }
+          content.getOrElse("")
         }
-        content.getOrElse("")
       } finally {
         response.close()
       }
