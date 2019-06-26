@@ -46,14 +46,13 @@ class SchemaManager {
       try {
         const newRules = RuleUtils.replaceRule(rules, rule);
         SchemaManager.validateTransitiveSchemas(schemas[0], newRules);
-        return this.validateColumnNameAvailable(newColumnName, schemas, index);
       } catch (e) {
         const error = `Cannot change output column, "${oldColumnName}" is used by rule ${e.order + 1}`;
         return {isValid: false, index: e.order, error: error};
       }
-    } else {
-      return this.validateColumnNameAvailable(newColumnName, schemas, index);
     }
+
+    return this.validateColumnNameAvailable(newColumnName, schemas, index);
   }
 
   static validateColumnNameAvailable(newColumnName, schemas, index) {
@@ -112,13 +111,16 @@ class SchemaManager {
       }
 
       if (field.type === "struct" || field.elementType === "struct") {
-        return helper(field.children, splitPath[++pathIndex], { isValid: true, value: field });
+        return helper(field.children, splitPath[++pathIndex], {isValid: true, value: field});
       }
 
-      return { isValid: false, error: `"${splitPath.slice(0, pathIndex + 1).join(".")}" is of type "${field.type}", only "struct" types can be nested` };
+      return {
+        isValid: false,
+        error: `"${splitPath.slice(0, pathIndex + 1).join(".")}" is of type "${field.type}", only "struct" types can be nested`
+      };
     };
 
-    return helper(fields, splitPath[pathIndex], { isValid: true });
+    return helper(fields, splitPath[pathIndex], {isValid: true});
   }
 
   static findColumn(columnName, fields) {
@@ -128,11 +130,11 @@ class SchemaManager {
     const helper = function (fields, pathSection) {
       const field = fields.find(f => f.name === pathSection);
       if (field === undefined) {
-        return { isFound: false }
+        return {isFound: false}
       }
 
       if (pathIndex === splitPath.length - 1) {
-        return { isFound: true, value: field };
+        return {isFound: true, value: field};
       }
 
       return helper(field.children, splitPath[++pathIndex])
