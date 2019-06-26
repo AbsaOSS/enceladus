@@ -17,29 +17,26 @@ package za.co.absa.enceladus.dao
 
 import java.util.UUID
 
+import com.typesafe.config.ConfigFactory
+import org.apache.http.HttpStatus
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost}
+import org.apache.http.entity.{ContentType, StringEntity}
+import org.apache.log4j.LogManager
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
+import za.co.absa.enceladus.model.{Run, SplineReference}
+
 import scala.io.Source
 import scala.util.Try
 import scala.util.control.NonFatal
-import org.apache.http.HttpStatus
-import org.apache.http.client.methods.CloseableHttpResponse
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.entity.ContentType
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.HttpClients
-import org.apache.log4j.LogManager
-import com.typesafe.config.ConfigFactory
-import za.co.absa.atum.model.Checkpoint
-import za.co.absa.atum.model.ControlMeasure
-import za.co.absa.atum.model.RunStatus
-import za.co.absa.enceladus.dao.EnceladusRestDAO.{csrfToken, enceladusLogin, log, sendGet, sessionCookie}
-import za.co.absa.enceladus.model.Run
-import za.co.absa.enceladus.model.SplineReference
 
 /** Implements routines for Menas REST API. */
 object MenasRestDAO extends MenasDAO {
+
+  import za.co.absa.enceladus.dao.EnceladusRestDAO.{csrfToken, enceladusLogin, httpClient, maxRetries, sessionCookie}
+
   private val conf = ConfigFactory.load()
   private val restBase = conf.getString("menas.rest.uri")
-  private val log = LogManager.getLogger("ControlFrameworkREST")
+  private val log = LogManager.getLogger(this.getClass)
 
   /**
     * Stores a new Run object in the database by sending REST request to Menas
@@ -116,10 +113,9 @@ object MenasRestDAO extends MenasDAO {
     sendPostJson(url, json)
   }
 
-  private def sendPostJson(url: String, json: String): Boolean = {
+  private def sendPostJson(url: String, json: String, retryCount: Int = 1): Boolean = {
     try {
       log.info(s"URL: $url POST: $json")
-      val httpClient = HttpClients.createDefault
       val httpPost = new HttpPost(url)
       httpPost.addHeader("cookie", sessionCookie)
       httpPost.addHeader("X-CSRF-TOKEN", csrfToken)
@@ -135,18 +131,22 @@ object MenasRestDAO extends MenasDAO {
         if (unAuthorized) {
           log.warn(s"Unauthorized POST request for Menas URL: $url")
           log.warn(s"Expired session, reauthenticating")
-          enceladusLogin()
-          log.info(s"Retrying POST request for Menas URL: $url")
-          sendPostJson(url, json)
-        } else {
-          if (ok) {
-            log.info(response.toString)
+          if (enceladusLogin()) {
+            if (retryCount > maxRetries) {
+              throw UnauthorizedException(s"Unable to reauthenticate after $maxRetries tries")
+            }
+            log.info(s"Retry $retryCount POST request for Menas URL: $url")
+            sendPostJson(url, json, retryCount + 1)
           } else {
-            val responseBody = getResponseBody(response)
-            log.error(s"RESPONSE: ${response.getStatusLine} - $responseBody")
+            throw UnauthorizedException()
           }
-          ok
+        } else if (ok) {
+          log.info(response.toString)
+        } else {
+          val responseBody = getResponseBody(response)
+          log.error(s"RESPONSE: ${response.getStatusLine} - $responseBody")
         }
+        ok
       }
       finally {
         response.close()
