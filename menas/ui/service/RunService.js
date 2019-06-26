@@ -105,13 +105,20 @@ var RunService = new function () {
     oControl.setModel(new sap.ui.model.json.JSONModel(oRunSummaries), "runs");
   };
 
+  this._nameExists = function(aCheckpoints, sName) {
+    const aRes = aCheckpoints.find((el) => {return el.name === sName})
+    return typeof(aRes) !== "undefined";
+  }
+
   this._preprocessRun = function (oRun, aCheckpoints) {
     let info = oRun.controlMeasure.metadata.additionalInfo;
     oRun.controlMeasure.metadata.additionalInfo = this._mapAdditionalInfo(info);
 
     oRun.status = this._normalizeStatus(oRun.runStatus.status.value);
 
-    oRun.stdTime = this._getTimeSummary(aCheckpoints, "Standardization Finish", "Standardization Finish");
+    const sStdName = this._nameExists(aCheckpoints, "Standardization Finish") ? "Standardization Finish" : "Standardization - End";
+
+    oRun.stdTime = this._getTimeSummary(aCheckpoints, sStdName, sStdName);
     oRun.cfmTime = this._getTimeSummary(aCheckpoints, "Conformance - Start", "Conformance - End");
   };
 

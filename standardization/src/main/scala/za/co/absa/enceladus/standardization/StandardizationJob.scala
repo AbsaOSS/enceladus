@@ -208,7 +208,7 @@ object StandardizationJob {
       renameSourceColumn(std, field, true)
     }: _*)
 
-    stdRenameSourceColumns.setCheckpoint("Standardization Finish", persistInDatabase = false)
+    stdRenameSourceColumns.setCheckpoint("Standardization - End", persistInDatabase = false)
 
     val recordCount = stdRenameSourceColumns.lastCheckpointRowCount match {
       case None    => std.count
