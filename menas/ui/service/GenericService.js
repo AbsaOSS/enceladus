@@ -59,12 +59,8 @@ var GenericService = new function () {
   };
 
   this.logout = function (sLogoutMessage) {
-    Functions.ajax("api/logout", "POST", {}, function () {
-      // this is a dummy callback, returns 200 OK, but because ajax dataType is 'json' goes into error
-    }, (xhr) => {
-      if (xhr.status !== 403) {
-        this.clearSession(sLogoutMessage);
-      }
+    RestClient.post("api/logout", {}).always(() => {
+      this.clearSession(sLogoutMessage);
     })
   };
 
