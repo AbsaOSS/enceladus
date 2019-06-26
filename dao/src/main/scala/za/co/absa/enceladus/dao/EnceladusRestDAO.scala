@@ -47,7 +47,6 @@ object EnceladusRestDAO extends EnceladusDAO {
   private val conf = ConfigFactory.load()
   private val restBase = conf.getString("menas.rest.uri")
 
-  val maxRetries = 3
   val httpClient = HttpClients.createDefault
 
   private var _userName: String = ""
@@ -164,7 +163,7 @@ object EnceladusRestDAO extends EnceladusDAO {
     java.net.URLEncoder.encode(string, "UTF-8").replace("+", "%20")
   }
 
-  private def sendGet(url: String, retryCount: Int = 1): String = {
+  private def sendGet(url: String, retriesLeft: Int = 1): String = {
     try {
       log.info(s"URL: $url GET")
       val httpGet = new HttpGet(url)
@@ -179,11 +178,12 @@ object EnceladusRestDAO extends EnceladusDAO {
           log.warn(s"Unauthorized GET request for Menas URL: $url")
           log.warn(s"Expired session, reauthenticating")
           if (enceladusLogin()) {
-            if (retryCount > maxRetries) {
-              throw UnauthorizedException(s"Unable to reauthenticate after $maxRetries tries")
+            if (retriesLeft > 0) {
+              throw UnauthorizedException(s"Unable to reauthenticate after retries")
             }
             log.info(s"Retrying GET request for Menas URL: $url")
-            sendGet(url, retryCount + 1)
+            log.info(s"Retries left: $retriesLeft")
+            sendGet(url, retriesLeft - 1)
           } else {
             throw UnauthorizedException()
           }
