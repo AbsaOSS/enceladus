@@ -29,6 +29,8 @@ import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaService}
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import java.util.Optional
+
+import javax.servlet.http.HttpServletResponse
 import za.co.absa.cobrix.cobol.parser.CopybookParser
 import za.co.absa.cobrix.spark.cobol.schema.CobolSchema
 import za.co.absa.cobrix.spark.cobol.schema.SchemaRetentionPolicy
@@ -76,8 +78,13 @@ class SchemaController @Autowired() (
   @ResponseStatus(HttpStatus.OK)
   def exportSchema(@AuthenticationPrincipal principal: UserDetails,
                    @PathVariable name: String,
-                   @PathVariable version: Int): CompletableFuture[Array[Byte]] = {
-    attachmentService.getSchemaByNameAndVersion(name, version).map(_.fileContent)
+                   @PathVariable version: Int,
+                   response: HttpServletResponse): CompletableFuture[Array[Byte]] = {
+    attachmentService.getSchemaByNameAndVersion(name, version).map { attachment =>
+      response.addHeader("filename", attachment.filename)
+      response.setContentType(attachment.fileMIMEType)
+      attachment.fileContent
+    }
   }
 
   @GetMapping(Array("/json/{name}/{version}"))

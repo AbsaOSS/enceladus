@@ -87,9 +87,10 @@ sap.ui.define([
     onExportPress: function (oEv) {
       const schema = this._model.getProperty("/currentSchema");
       new SchemaRestDAO().downloadSchema(schema.name, schema.version)
-        .then(data => {
-          const blob = new Blob([data], {type: 'text/json'});
-          const filename = `${schema.name}-v${schema.version}.json`;
+        .then((data, status, request) => {
+          const contnetType = request.getResponseHeader("Content-Type");
+          const blob = new Blob([data], {type: contnetType});
+          const filename = request.getResponseHeader("filename");
           if (window.navigator && window.navigator.msSaveOrOpenBlob) {
             window.navigator.msSaveOrOpenBlob(blob, filename);
           } else {
@@ -98,7 +99,7 @@ sap.ui.define([
 
             element.download = filename;
             element.href = window.URL.createObjectURL(blob);
-            element.dataset.downloadurl = ['text/json', element.download, element.href].join(':');
+            element.dataset.downloadurl = [contnetType, element.download, element.href].join(':');
             event.initEvent('click', true, false);
             element.dispatchEvent(event);
           }
