@@ -41,32 +41,15 @@
                     <List id="auditChangesList" items="{path: 'auditTrail>changes', templateShareable: false}"
                           noDataText="No changes detected" class="auditTrailNestedList">
                         <CustomListItem id="auditChangesListItem" class="auditTrailNestedListItem">
-                            <Panel expanded="false" expandable="true">
-                                <headerToolbar>
-                                    <Toolbar>
-                                        <Text width="100%" text="{auditTrail>message}" wrapping="true"
-                                            wrappingType="Hyphenated"/>
-                                    </Toolbar>
-                                </headerToolbar>
-                                <content>
-                                    <form:SimpleForm layout="GridLayout" class="mt10">
-                                        <form:content>
-                                            <Label
-                                                visible="{path:'auditTrail>newValue', formatter:'Formatters.nonEmptyObject'}"
-                                                text="New Value"/>
-                                            <Text
-                                                visible="{path:'auditTrail>newValue', formatter:'Formatters.nonEmptyObject'}"
-                                                text="{auditTrail>newValue}"/>
-                                            <Label
-                                                visible="{path:'auditTrail>oldValue', formatter:'Formatters.nonEmptyObject'}"
-                                                text="Old Value"/>
-                                            <Text
-                                                visible="{path:'auditTrail>oldValue', formatter:'Formatters.nonEmptyObject'}"
-                                                text="{oldValue}"/>
-                                        </form:content>
-                                    </form:SimpleForm>
-                                </content>
-                            </Panel>
+                            <Text width="100%" text="{auditTrail>message}" wrapping="true" wrappingType="Hyphenated"/>
+                            <form:SimpleForm layout="GridLayout" class="mt10">
+                                <form:content>
+                                    <Label visible="{path:'auditTrail>newValue', formatter:'Formatters.nonEmptyObject'}" text="New Value"/>
+                                    <Text visible="{path:'auditTrail>newValue', formatter:'Formatters.nonEmptyObject'}" text="{auditTrail>newValue}"/>
+                                    <Label visible="{path:'auditTrail>oldValue', formatter:'Formatters.nonEmptyObject'}" text="Old Value"/>
+                                    <Text visible="{path:'auditTrail>oldValue', formatter:'Formatters.nonEmptyObject'}" text="{oldValue}"/>
+                                </form:content>
+                            </form:SimpleForm>
                         </CustomListItem>
                     </List>
                 </cells>
