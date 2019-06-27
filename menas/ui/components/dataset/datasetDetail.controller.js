@@ -18,8 +18,9 @@ sap.ui.define([
   "components/types/NonEmptyArrType",
   "components/validator/Validator",
   "sap/m/MessageToast",
-  "./../external/it/designfuture/chartjs/library-preload"
-], function (Controller, Fragment, NonEmptyArrType, Validator, MessageToast, Openui5Chartjs) {
+  "./../external/it/designfuture/chartjs/library-preload",
+  "components/tables/TableUtils"
+], function (Controller, Fragment, NonEmptyArrType, Validator, MessageToast, Openui5Chartjs, TableUtils) {
   "use strict";
 
   return Controller.extend("components.dataset.datasetDetail", {
@@ -86,6 +87,12 @@ sap.ui.define([
       }
 
       this._model.setProperty("/cronFormTemplate", cronTemplate);
+      
+      const auditTable = this.byId("auditTrailTable");
+      const auditTableUtils = new TableUtils(auditTable, "Audit Trail");
+      auditTableUtils.makeSortable(["Change Time", "Author", "Version"], 
+          ["updated", "updatedBy", "menasRef/version"]);
+      auditTableUtils.makeGroupable(["Author"], ["updatedBy"]);
     },
 
     _generateCronTemplateRange: function(iStart, iEnd) {

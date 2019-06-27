@@ -16,8 +16,9 @@
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
   "sap/ui/core/Fragment",
-  "sap/m/MessageToast"
-], function (Controller, Fragment, MessageToast) {
+  "sap/m/MessageToast",
+  "sap/base/i18n/ResourceBundle"
+], function (Controller, Fragment, MessageToast, ResourceBundle) {
   "use strict";
 
   return Controller.extend("components.app", {
@@ -62,6 +63,14 @@ sap.ui.define([
         if (typeof userInfo.username === 'undefined') {
           this._router.navTo("login");
         }
+      });
+
+      //We want to override some of the default i18n texts
+      const sapMRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+      const overrideRb = ResourceBundle.create({url: "components/i18n/message.properties"});
+      const newRb = new sap.ui.model.resource.ResourceModel({
+        bundle: sapMRb,
+        enhanceWith: [overrideRb]
       });
     },
 
