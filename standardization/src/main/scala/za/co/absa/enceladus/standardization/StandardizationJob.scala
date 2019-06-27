@@ -108,7 +108,7 @@ object StandardizationJob {
 
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
-    val dfAll: DataFrame = prepareDataFrame(schema, cmd, path)
+    val dfAll: DataFrame = prepareDataFrame(schema, cmd, path, dataset)
 
     executeStandardization(performance, dfAll, schema, cmd, path, stdPath)
     cmd.performanceMetricsFile.foreach(fileName => {
@@ -128,13 +128,13 @@ object StandardizationJob {
     spark
   }
 
-  private def readerFormatSpecific(dfReader: DataFrameReader, cmd: CmdConfig): DataFrameReader = {
+  private def readerFormatSpecific(dfReader: DataFrameReader, cmd: CmdConfig, dataset: Dataset): DataFrameReader = {
     // applying format specific options
     val dfReaderWithOptions = {
       val dfr1 = if (cmd.rowTag.isDefined) dfReader.option("rowTag", cmd.rowTag.get) else dfReader
       val dfr2 = if (cmd.csvDelimiter.isDefined) dfr1.option("delimiter", cmd.csvDelimiter.get) else dfr1
       val dfr3 = if (cmd.csvHeader.isDefined) dfr2.option("header", cmd.csvHeader.get) else dfr2
-      val dfr4 = if (cmd.rawFormat.equalsIgnoreCase("cobol")) applyCobolOptions(dfr3, cmd) else dfr3
+      val dfr4 = if (cmd.rawFormat.equalsIgnoreCase("cobol")) applyCobolOptions(dfr3, cmd, dataset) else dfr3
       dfr4
     }
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
@@ -149,23 +149,36 @@ object StandardizationJob {
     }
   }
 
-  private def applyCobolOptions(dfReader: DataFrameReader, cmd: CmdConfig): DataFrameReader = {
-    cmd.cobolOptions match {
-      case Some(opt) =>
-        dfReader
-          .option("copybook", opt.copybook)
-          .option("is_xcom", opt.isXcom)
-          .option("schema_retention_policy", "collapse_root")
-          // This is a temporary option before https://github.com/AbsaOSS/cobrix/issues/115 is fixed
-          .option("debug_ignore_file_size", "true")
-      case None =>
-        throw new IllegalArgumentException("A copybook location is not specified. Please use '--copybook' " +
-          "to specify a copybook location.")
+  private def applyCobolOptions(dfReader: DataFrameReader,
+                                cmd: CmdConfig,
+                                dataset: Dataset): DataFrameReader = {
+    val isXcom = cmd.cobolOptions.map(_.isXcom).getOrElse(false)
+    val copybook = cmd.cobolOptions.map(_.copybook).getOrElse("")
+
+    val reader = dfReader
+      .option("is_xcom", isXcom)
+      .option("schema_retention_policy", "collapse_root")
+      // This is a temporary option before https://github.com/AbsaOSS/cobrix/issues/115 is fixed
+      .option("debug_ignore_file_size", "true")
+
+    if (copybook.isEmpty) {
+      log.info("Copybook location is not provided via command line - fetching the copybook attached to the schema...")
+      val copybookContents = EnceladusRestDAO.getSchemaAttachment(dataset.schemaName, dataset.schemaVersion)
+      log.info(s"Applying the following copybook:\n$copybookContents")
+      reader.option("copybook_contents", copybookContents)
+    } else {
+      log.info(s"Use copybook at $copybook")
+      reader.option("copybook", copybook)
     }
   }
 
-  private def prepareDataFrame(schema: StructType, cmd: CmdConfig, path: String)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils): DataFrame = {
-    val dfReaderConfigured = readerFormatSpecific(spark.read.format(cmd.rawFormat), cmd)
+  private def prepareDataFrame(schema: StructType,
+                               cmd: CmdConfig,
+                               path: String,
+                               dataset: Dataset)
+                              (implicit spark: SparkSession,
+                               fsUtils: FileSystemVersionUtils): DataFrame = {
+    val dfReaderConfigured = readerFormatSpecific(spark.read.format(cmd.rawFormat), cmd, dataset)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
       dfReaderConfigured.schema(inputSchema)
