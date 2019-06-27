@@ -155,6 +155,12 @@ object EnceladusRestDAO extends EnceladusDAO {
     DataType.fromJson(json).asInstanceOf[StructType]
   }
 
+  override def getSchemaAttachment(name: String, version: Int): String = {
+    val url = s"$restBase/schema/export/${encode(name)}/$version"
+    log.info(url)
+    sendGet(url)
+  }
+
   /* The URLEncoder implements the HTML Specifications
    * so have to replace '+' with %20
    * https://stackoverflow.com/questions/4737841/urlencoder-not-able-to-translate-space-character

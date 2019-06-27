@@ -23,4 +23,5 @@ trait EnceladusDAO {
   def getDataset(name: String, version: Int) : Dataset
   def getMappingTable(name: String, version: Int): MappingTable
   def getSchema(name: String, version: Int): StructType
+  def getSchemaAttachment(name: String, version: Int): String
 }
