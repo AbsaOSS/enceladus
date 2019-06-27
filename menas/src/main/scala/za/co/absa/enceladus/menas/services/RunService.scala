@@ -28,6 +28,7 @@ import za.co.absa.enceladus.menas.repositories.RunMongoRepository
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
+import za.co.absa.enceladus.menas.models.TodaysRunsStatistics
 
 @Service
 class RunService @Autowired()(runMongoRepository: RunMongoRepository)
@@ -40,6 +41,21 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
 
   def getAllLatest(): Future[Seq[Run]] = {
     runMongoRepository.getAllLatest()
+  }
+
+  def getCount(): Future[Long] = {
+    runMongoRepository.count()
+  }
+
+  def getTodaysRunsStatistics() = {
+    for {
+      total <- runMongoRepository.getTodaysRuns()
+      successfulWithErrors <- runMongoRepository.getTodaysSuccessWithErrors()
+      successfulAll <- runMongoRepository.getTodaysSuccessfulRuns()
+      running <- runMongoRepository.getTodaysRunningRuns()
+      stdSuccessful <- runMongoRepository.getTodaysStdSuccessRuns()
+      failed <- runMongoRepository.getTodaysFailedRuns()
+    } yield TodaysRunsStatistics(total, failed, successfulAll - successfulWithErrors, successfulWithErrors, running, stdSuccessful)
   }
 
   def getByStartDate(startDate: String): Future[Seq[Run]] = {

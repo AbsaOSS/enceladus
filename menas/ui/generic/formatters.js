@@ -26,6 +26,11 @@ var Formatters = new function() {
     } else return sap.ui.core.ValueState.Error;
   }
 
+  this.nonNullArrFormatter = function(aArr) {
+    if(!aArr) return [];
+    return aArr;
+  }
+
   this.stringDateShortFormatter = function(sDate) {
     if (!sDate)
       return "";
