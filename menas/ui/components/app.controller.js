@@ -65,10 +65,6 @@ sap.ui.define([
       });
     },
 
-    handleMenuPress: function (oEv) {
-      this._app.hideMaster();
-    },
-
     onPressMasterBack: function () {
       this._app.backMaster();
     },
@@ -106,7 +102,6 @@ sap.ui.define([
     },
 
     onLogout: function () {
-      this._app.backToTopMaster();
       this._router.navTo("root");
     },
 
