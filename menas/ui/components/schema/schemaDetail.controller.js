@@ -32,12 +32,6 @@ sap.ui.define([
         this.routeMatched(args);
       }, this);
 
-      // include CSRF token
-      this.byId("fileUploader").addHeaderParameter(new sap.ui.unified.FileUploaderParameter({
-        name: "X-CSRF-TOKEN",
-        value: localStorage.getItem("csrfToken")
-      }));
-
       new SchemaDialogFactory(this, Fragment.load).getEdit();
 
       this._eventBus = sap.ui.getCore().getEventBus();
@@ -97,8 +91,15 @@ sap.ui.define([
 
     handleUploadPress: function (oParams) {
       if (this.validateSchemaFileUplaod()) {
+        const oFileUpload = this.byId("fileUploader");
         sap.ui.core.BusyIndicator.show();
-        this.byId("fileUploader").upload();
+        // include CSRF token here - it may have changed between sessions
+        oFileUpload.removeAllHeaderParameters();
+        oFileUpload.addHeaderParameter(new sap.ui.unified.FileUploaderParameter({
+          name: "X-CSRF-TOKEN",
+          value: localStorage.getItem("csrfToken")
+        }));
+        oFileUpload.upload();
       }
     },
 
