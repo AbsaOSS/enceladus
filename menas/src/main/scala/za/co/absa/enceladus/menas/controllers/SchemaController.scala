@@ -81,8 +81,7 @@ class SchemaController @Autowired() (
                    @PathVariable version: Int,
                    response: HttpServletResponse): CompletableFuture[Array[Byte]] = {
     attachmentService.getSchemaByNameAndVersion(name, version).map { attachment =>
-      response.addHeader("filename", attachment.filename)
-      response.setContentType(attachment.fileMIMEType)
+      response.addHeader("mime-type", attachment.fileMIMEType)
       attachment.fileContent
     }
   }
