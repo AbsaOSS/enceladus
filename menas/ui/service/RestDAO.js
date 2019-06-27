@@ -16,50 +16,55 @@
 class RestClient {
 
   static get(url) {
-    return $.get(url)
-      .then(this.identity, this.handleExpiredSession)
+    const jqXHR = $.get(url);
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
   }
+
   static getSync(url) {
-    return $.get({
+    const jqXHR = $.get({
       url: url,
       async: false
-    })
-      .then(this.identity, this.handleExpiredSession)
+    });
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
+
   }
 
   static post(url, data) {
-    return $.post({
+    const jqXHR = $.post({
       url: url,
       data: JSON.stringify(data),
       contentType: "application/json",
       headers: {
         "X-CSRF-TOKEN" : localStorage.getItem("csrfToken")
       }
-    }).then(this.identity, this.handleExpiredSession)
+    });
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
   }
 
   static put(url, data) {
-    return $.put({
+    const jqXHR = $.put({
       url: url,
       data: JSON.stringify(data),
       contentType: "application/json",
       headers: {
         "X-CSRF-TOKEN" : localStorage.getItem("csrfToken")
       }
-    }).then(this.identity, this.handleExpiredSession)
+    });
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
   }
 
   static delete(url) {
-    return $.delete({
+    const jqXHR = $.delete({
       url: url,
       headers: {
         "X-CSRF-TOKEN" : localStorage.getItem("csrfToken")
       }
-    }).then(this.identity, this.handleExpiredSession)
+    });
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
   }
 
-  static identity(result) {
-    return result;
+  static identity(jqXHR) {
+    return jqXHR;
   }
 
   static handleExpiredSession({status}) {
