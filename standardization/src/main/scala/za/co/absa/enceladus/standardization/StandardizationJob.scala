@@ -155,6 +155,9 @@ object StandardizationJob {
         dfReader
           .option("copybook", opt.copybook)
           .option("is_xcom", opt.isXcom)
+          .option("schema_retention_policy", "collapse_root")
+          // This is a temporary option before https://github.com/AbsaOSS/cobrix/issues/115 is fixed
+          .option("debug_ignore_file_size", "true")
       case None =>
         throw new IllegalArgumentException("A copybook location is not specified. Please use '--copybook' " +
           "to specify a copybook location.")
