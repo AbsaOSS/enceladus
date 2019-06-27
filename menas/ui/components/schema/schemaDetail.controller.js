@@ -82,9 +82,10 @@ sap.ui.define([
       const schema = this._model.getProperty("/currentSchema");
       new SchemaRestDAO().downloadSchema(schema.name, schema.version)
         .then((data, status, request) => {
-          const contnetType = request.getResponseHeader("Content-Type");
-          const blob = new Blob([data], {type: contnetType});
-          const filename = request.getResponseHeader("filename");
+          const mimeType = request.getResponseHeader("mime-type");
+          const blob = new Blob([data], {type: mimeType});
+          const extension = this._getFileExtension(mimeType);
+          const filename = `${schema.name}-v${schema.version}.${extension}`;
           if (window.navigator && window.navigator.msSaveOrOpenBlob) {
             window.navigator.msSaveOrOpenBlob(blob, filename);
           } else {
@@ -93,7 +94,7 @@ sap.ui.define([
 
             element.download = filename;
             element.href = window.URL.createObjectURL(blob);
-            element.dataset.downloadurl = [contnetType, element.download, element.href].join(':');
+            element.dataset.downloadurl = [mimeType, element.download, element.href].join(':');
             event.initEvent('click', true, false);
             element.dispatchEvent(event);
           }
@@ -101,6 +102,17 @@ sap.ui.define([
         .fail(() => {
           sap.m.MessageToast.show(`No file uploaded for schema: "${schema.name}", version: ${schema.version}`)
         })
+    },
+
+    _getFileExtension: function (mimeType) {
+      switch (mimeType) {
+        case "application/json":
+          return "json";
+        case "application/octet-stream":
+          return "cob"; //copybook
+        default:
+          return "";
+      }
     },
 
     routeMatched: function (oParams) {
