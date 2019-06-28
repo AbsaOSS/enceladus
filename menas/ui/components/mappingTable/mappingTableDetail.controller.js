@@ -72,7 +72,7 @@ sap.ui.define([
     },
 
     auditVersionPress: function (oEv) {
-      let oSrc = oEv.getParameter("listItem");
+      let oSrc = oEv.getSource();
       let oRef = oSrc.data("menasRef");
       this._router.navTo("mappingTables", {
         id: oRef.name,
