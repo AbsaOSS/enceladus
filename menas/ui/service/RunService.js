@@ -95,6 +95,8 @@ var RunService = new function () {
 
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun), "run");
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun.controlMeasure.metadata), "metadata");
+    //the core:HTML data binding doesn't update properly for iframe for some reason, we try to update manually therefore
+    this._updateLineageIframeSrc(oRun.splineUrl)
   };
 
   this._bindRunSummaries = function(oRunSummaries, oControl) {
@@ -238,6 +240,15 @@ var RunService = new function () {
 
     let duration = this._getDuration(startStr, endStr);
     return this._durationAsString(duration);
+  };
+
+  this._updateLineageIframeSrc = function (sNewUrl) {
+    let iframe = document.getElementById("lineage_iframe");
+    if (iframe) {
+      // the iframe doesn't necessary exists yet
+      // (but if it doesn't it will be created, and initial data binding actually works)
+      iframe.src = sNewUrl;
+    }
   };
 
 }();
