@@ -13,7 +13,8 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>za.co.absa</groupId>
     <artifactId>enceladus-parent</artifactId>
@@ -378,6 +379,31 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.amashchenko.maven.plugin</groupId>
+                <artifactId>gitflow-maven-plugin</artifactId>
+                <version>1.12.0</version>
+                <configuration>
+                    <installProject>true</installProject>
+                    <verbose>true</verbose>
+
+                    <gitFlowConfig>
+                        <productionBranch>master</productionBranch>
+                        <developmentBranch>develop</developmentBranch>
+                        <featureBranchPrefix>feature/</featureBranchPrefix>
+                        <releaseBranchPrefix>release/v</releaseBranchPrefix>
+                        <hotfixBranchPrefix>hotfix/</hotfixBranchPrefix>
+                        <versionTagPrefix>v</versionTagPrefix>
+                        <origin>origin</origin>
+                    </gitFlowConfig>
+                    <commitDevelopmentVersionAtStart>true</commitDevelopmentVersionAtStart>
+
+                    <commitMessages>
+                        <releaseStartMessage>Update versions for release v@{version}</releaseStartMessage>
+                        <releaseFinishMessage>Update for next development version @{version}</releaseFinishMessage>
+                    </commitMessages>
+                </configuration>
             </plugin>
         </plugins>
     </build>
