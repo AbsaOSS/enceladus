@@ -422,6 +422,7 @@
                                 <exclude>**/*.parquet</exclude>
                                 <exclude>**/_SUCCESS</exclude>
                                 <exclude>**/_INFO</exclude>
+                                <exclude>**/json_output</exclude>
                                 <exclude>.editorconfig</exclude>
                                 <exclude>dependency-reduced-pom.xml</exclude>
                             </excludes>
