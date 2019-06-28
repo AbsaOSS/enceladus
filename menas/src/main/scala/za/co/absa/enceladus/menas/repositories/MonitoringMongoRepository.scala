@@ -18,10 +18,10 @@ package za.co.absa.enceladus.menas.repositories
 import org.mongodb.scala.{AggregateObservable, MongoDatabase}
 import org.mongodb.scala.model.Aggregates.{filter, group, limit, sort}
 import org.mongodb.scala.model.Accumulators.first
-import org.mongodb.scala.model.Filters.{equal}
+import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.Sorts.{descending, orderBy}
 import org.mongodb.scala.Document
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.model.Run
 
@@ -36,6 +36,9 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends MongoRepository[Run](mongoDb) {
 
   private[menas] override def collectionBaseName: String = MonitoringMongoRepository.collectionBaseName
+
+  @Value("${za.co.absa.enceladus.menas.monitoring.fetch.limit}")
+  private val fetchLimit: Integer = null;
 
 
   def getMonitoringDataPoints(datasetName: String, startDate: String, endDate: String): Future[Seq[String]] = {
@@ -118,7 +121,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
           descending("informationDateCasted"),
           descending("reportVersion")
         )),
-        limit(500)
+        limit(this.fetchLimit)
       ))
     observable.map(doc => doc.toJson).toFuture()
   }

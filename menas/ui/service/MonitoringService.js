@@ -66,9 +66,9 @@ var MonitoringService = new function() {
   };
 
   this.processDirSizes = function(oRun) {
-    let rawDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["raw_dir_size"];
-    let stdDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["std_dir_size"];
-    let publishDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["publish_dir_size"];
+    let rawDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["std_input_dir_size"];
+    let stdDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["std_output_dir_size"];
+    let publishDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["conform_output_dir_size"];
     if (!isNaN(rawDirSize)) {totals["rawDirSize"] += +rawDirSize};
     if (!isNaN(stdDirSize)) {totals["stdDirSize"] += +stdDirSize};
     if (!isNaN(publishDirSize)) {totals["publishDirSize"] += +publishDirSize};

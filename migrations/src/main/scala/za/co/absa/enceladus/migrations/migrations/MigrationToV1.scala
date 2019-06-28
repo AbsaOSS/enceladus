@@ -21,7 +21,6 @@ import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.migrations.framework.migration._
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 import za.co.absa.enceladus.migrations.migrations.model1.{DefaultValue, Serializer1}
-
 import scala.util.control.NonFatal
 
 /**
@@ -35,6 +34,49 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
   override val targetVersion: Int = 1
 
   createCollection("attachment")
+
+  // rename and add dir sizes in additionalInfo
+  runCommand("run") (versionedCollectionName => {
+    s"""{
+       |update: "$versionedCollectionName",
+       |updates: [
+       |  {
+       |    q: {"controlMeasure.metadata.additionalInfo.raw_dir_size": {$$exists: true}},
+       |    u:  { $$rename: {
+       |      "controlMeasure.metadata.additionalInfo.raw_dir_size":
+       |      "controlMeasure.metadata.additionalInfo.std_input_dir_size"
+       |    } },
+       |    upsert: false,
+       |    multi: true
+       |  },{
+       |    q: {"controlMeasure.metadata.additionalInfo.std_dir_size": {$$exists: true}},
+       |    u:  { $$addFields: [
+       |        {"controlMeasure.metadata.additionalInfo.conform_input_dir_size":
+       |        "$$controlMeasure.metadata.additionalInfo.std_dir_size"}
+       |      ] },
+       |    upsert: false,
+       |    multi: true
+       |  },{
+       |    q: {"controlMeasure.metadata.additionalInfo.std_dir_size": {$$exists: true}},
+       |    u:  { $$rename: {
+       |      "controlMeasure.metadata.additionalInfo.std_dir_size":
+       |      "controlMeasure.metadata.additionalInfo.std_output_dir_size"
+       |    } },
+       |    upsert: false,
+       |    multi: true
+       |  },{
+       |    q: {"controlMeasure.metadata.additionalInfo.publish_dir_size": {$$exists: true}},
+       |    u:  { $$rename: {
+       |      "controlMeasure.metadata.additionalInfo.publish_dir_size":
+       |      "controlMeasure.metadata.additionalInfo.conform_output_dir_size"
+       |    } },
+       |    upsert: false,
+       |    multi: true
+       |  }
+       |],
+       |ordered: false,
+       |}""".stripMargin
+  })
 
   transformJSON("schema")(model0Json => {
     try {

@@ -463,8 +463,6 @@ sap.ui.define([
           title: "Too large date interval",
           actions: [sap.m.MessageBox.Action.OK]
         });
-      } else {
-
       }
     },
 

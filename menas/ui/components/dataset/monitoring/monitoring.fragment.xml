@@ -51,12 +51,11 @@
         <layout:BlockLayout id="mon-totals-BlockLayout" visible="{/monitoringTotalsVisible}">
             <layout:BlockLayoutRow>
                 <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
-                    <Title class="monitoringTitle" text="Summary"/>
-                    <form:SimpleForm id="monitoringSummary">
+                    <form:SimpleForm id="monitoringSummary" singleContainerFullSize="false" >
                         <form:content>
-                            <Label text="Days"/>
+                            <Label text="Days selected"/>
                             <Text id="monitoringIntervalDays" text="{/monitoringIntervalDays}"/>
-                            <Label text="Total runs"/>
+                            <Label text="Runs found (unique by info date and version)"/>
                             <Text id="monitoringTotalRuns" text="{
                                 path: '/numberOfPoints',
                                 type: 'sap.ui.model.type.Integer',
@@ -65,7 +64,7 @@
                                     emptyString: 0
                                 }
                             }" />
-                            <Label text="Records"/>
+                            <Label text="Total records"/>
                             <Text id="monitoringTotalRecords" text="{
                                 path: '/monitoringTotals/records',
                                 type: 'sap.ui.model.type.Integer',
@@ -74,7 +73,7 @@
                                     emptyString: 0
                                 }
                             }" />
-                            <Label text="Raw size"/>
+                            <Label text="Total raw size"/>
                             <Text id="monitoringTotalRawSize" text="{
                                     path: '/monitoringTotals/rawDirSize',
                                     type: 'sap.ui.model.type.FileSize',
@@ -82,7 +81,7 @@
                                         maxFractionDigits: 2
                                     }
                                 }" />
-                            <Label text="Standardized size"/>
+                            <Label text="Total standardized size"/>
                             <Text id="monitoringTotalStdSize" text="{
                                     path: '/monitoringTotals/stdDirSize',
                                     type: 'sap.ui.model.type.FileSize',
@@ -90,7 +89,7 @@
                                         maxFractionDigits: 2
                                     }
                                 }" />
-                            <Label text="Conformed size"/>
+                            <Label text="Total conformed size"/>
                             <Text id="monitoringTotalPublishSize" text="{
                                     path: '/monitoringTotals/publishDirSize',
                                     type: 'sap.ui.model.type.FileSize',
@@ -138,14 +137,15 @@
                 legendPosition="left"
                 legendLabelBoxWidth="10"
                 responsive="true"
-                id="bar_chart"
+                id="recodrs_bar_chart"
                 datasets="{/barChartData/datasets}"
                 labels="{/barChartData/labels}"
                 titleDisplay="false"
                 titleText="Records per run"
                 tooltipEnabled="true"
                 isHorizontal="true"
-                maintainAspectRatio="false">
+                maintainAspectRatio="false"
+                onClick="onRecordsBarClick">
             </lab:BarChartJS>
         </Panel>
 
