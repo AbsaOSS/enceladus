@@ -13,11 +13,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.menasplugin
+package za.co.absa.enceladus.menasplugin
 
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class MenasCredentialsSuite extends FunSuite {
+class MenasCredentialsSuite extends FunSuite with SparkTestBase {
 
   test("MenasCredentials should be read from *.conf") {
     val credentials = MenasCredentials.fromFile("src/test/resources/menas-credentials.conf")
