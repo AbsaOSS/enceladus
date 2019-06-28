@@ -20,6 +20,81 @@
     <version>0.99.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <name>Enceladus</name>
+    <description>Enceladus is a Dynamic Conformance Engine which allows data from different formats to be standardized to parquet and conformed to group-accepted common reference.</description>
+    <url>https://github.com/AbsaOSS/enceladus</url>
+    <inceptionYear>2018</inceptionYear>
+
+    <scm>
+        <connection>scm:git:git://github.com/AbsaOSS/enceladus.git</connection>
+        <developerConnection>scm:git:ssh://github.com:AbsaOSS/enceladus.git</developerConnection>
+        <url>http://github.com/AbsaOSS/enceladus/tree/master</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <organization>
+        <name>ABSA Group Limited</name>
+        <url>https://www.absa.africa</url>
+    </organization>
+
+    <developers>
+        <developer>
+            <id>lokm01</id>
+            <name>Jan Scherbaum</name>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/lokm01</url>
+        </developer>
+        <developer>
+            <id>GeorgiChochov</id>
+            <name>Georgi Chochov</name>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/GeorgiChochov</url>
+        </developer>
+        <developer>
+            <id>Zejnilovic</id>
+            <name>Saša Zejnilović</name>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/Zejnilovic</url>
+        </developer>
+        <developer>
+            <id>benedeki</id>
+            <name>David Benedeki</name>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/benedeki</url>
+        </developer>
+        <developer>
+            <id>DzMakatun</id>
+            <name>Dzmitry Makatun</name>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/DzMakatun</url>
+        </developer>
+        <developer>
+            <id>yruslan</id>
+            <name>Ruslan Iushchenko</name>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/yruslan</url>
+        </developer>
+    </developers>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
     <repositories>
         <repository>
             <id>mongo-absa</id>
@@ -55,8 +130,10 @@
         <maven.surefire.version>2.18.1</maven.surefire.version>
         <maven.scala.version>3.2.0</maven.scala.version>
         <maven.shade.version>2.3</maven.shade.version>
+        <maven.sources.version>3.0.1</maven.sources.version>
         <maven.war.version>2.2</maven.war.version>
         <maven.ant.plugin.version>1.8</maven.ant.plugin.version>
+        <gpg.plugin.version>1.6</gpg.plugin.version>
         <!--dependency versions-->
         <atum.version>0.2.2</atum.version>
         <junit.version>4.11</junit.version>
@@ -316,6 +393,53 @@
             <modules>
                 <module>selenium</module>
             </modules>
+        </profile>
+        <profile>
+            <id>public</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${maven.sources.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <version>${maven.scala.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>doc-jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${gpg.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>
