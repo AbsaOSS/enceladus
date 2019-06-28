@@ -17,7 +17,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>za.co.absa</groupId>
     <artifactId>enceladus-parent</artifactId>
-    <version>1.0.0-RC0</version>
+    <version>1.0.0-RC1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Enceladus</name>
