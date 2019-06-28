@@ -192,7 +192,7 @@
                         <Label text="Status"  textAlign="Center" width="100%" />
                         <table:template>
                             <tnt:InfoLabel
-                                text="{status}"
+                                text="{prettyStatus}"
                                 colorScheme= "{infoLabel}"/>
                         </table:template>
                     </table:Column>

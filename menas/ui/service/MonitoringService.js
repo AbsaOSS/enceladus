@@ -76,6 +76,7 @@ var MonitoringService = new function() {
 
   this.processRunStatus = function(oRun) {
     let status = oRun["status"];
+    oRun["prettyStatus"] = Formatters.statusToPrettyString(status)
     if (runStatusAggregator.hasOwnProperty(status)) {
       runStatusAggregator[status].counter += 1;
       oRun["infoLabel"] = runStatusAggregator[status].infoLabel
