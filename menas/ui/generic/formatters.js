@@ -69,4 +69,20 @@ var Formatters = new function() {
   this.toStringInfoDate = function(oDate) {
     return this.infoDateFormat.format(oDate);
   };
+
+  this.statusToPrettyString = function(sStatus) {
+    switch(sStatus) {
+      case "failed" :
+        return "Failed";
+      case "running" :
+        return "Running";
+      case "stageSucceeded" :
+        return "Stage Succeeded";
+      case "allSucceeded" :
+        return "All Succeeded";
+      default:
+        return "Other"
+    }
+  };
+
 }();

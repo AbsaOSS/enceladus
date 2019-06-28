@@ -111,13 +111,14 @@ var MonitoringService = new function() {
     });
 
     // prepare data for PIE chart of RUN statuses
-    let runStatusLabels = Object.keys(runStatusAggregator);
+    let runStatusKeys = Object.keys(runStatusAggregator);
+    let runStatusLabels = runStatusKeys.map(sStatus => Formatters.statusToPrettyString(sStatus));
     let pieChartStatusTotals = {
       labels: runStatusLabels,
       datasets: [
         {
-          data: runStatusLabels.map(x => runStatusAggregator[x].counter),
-          backgroundColor: runStatusLabels.map(x => runStatusAggregator[x].color)
+          data: runStatusKeys.map(x => runStatusAggregator[x].counter),
+          backgroundColor: runStatusKeys.map(x => runStatusAggregator[x].color)
         }]
     };
 
