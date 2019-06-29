@@ -33,7 +33,7 @@ var MonitoringService = new function() {
     "stageSucceeded" : {infoLabel: 5, color: "blue", counter: 0},
     "running" : {infoLabel: 7, color: "teal", counter: 0},
     "failed" : {infoLabel: 3, color: "red", counter: 0},
-    "other" : {infoLabel: 4, color: "magenta", counter: 0}
+    "Оther" : {infoLabel: 4, color: "magenta", counter: 0}
   };
 
   let recordsStatusAggregator = {
@@ -81,8 +81,8 @@ var MonitoringService = new function() {
       runStatusAggregator[status].counter += 1;
       oRun["infoLabel"] = runStatusAggregator[status].infoLabel
     } else {
-      runStatusAggregator["other"].counter += 1;
-      oRun["infoLabel"] = runStatusAggregator["other"].infoLabel
+      runStatusAggregator["Оther"].counter += 1;
+      oRun["infoLabel"] = runStatusAggregator["Оther"].infoLabel
     }
   };
 

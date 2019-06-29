@@ -81,7 +81,7 @@ var Formatters = new function() {
       case "allSucceeded" :
         return "All Succeeded";
       default:
-        return "Other"
+        return sStatus
     }
   };
 
