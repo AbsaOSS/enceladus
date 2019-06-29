@@ -168,7 +168,7 @@
                             <Label text="Date" textAlign="Center" width="100%"/>
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{informationDate}" wrapping="false" />
+                            <Text text="{infoDateString}" wrapping="false" />
                         </table:template>
                     </table:Column>
                     <table:Column width="5rem" hAlign="Center">

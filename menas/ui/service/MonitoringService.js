@@ -161,7 +161,7 @@ var MonitoringService = new function() {
   };
 
   this.processRecordCounts = function(oRun) {
-    barChartLabels.push(oRun["informationDate"] + " v" + oRun["reportVersion"]);
+    barChartLabels.push(oRun["infoDateString"] + " v" + oRun["reportVersion"]);
     if (MonitoringService.conformanceFinishedCorrectly(oRun)) {
       MonitoringService.processConformed(oRun);
       return;
@@ -270,9 +270,11 @@ var MonitoringService = new function() {
         if ( !(Formatters.nonEmptyObject(aControls) && aControls.length > 0)) { continue; }
 
         for (let oControl of aControls) {
-          if (oControl["controlType"].toLowerCase() == "controltype.count" && !isNaN(oControl["controlValue"])) {
-            oRun["rawRecordcount"] = +oControl["controlValue"];
-            return;
+          if (oControl["controlType"].toLowerCase() == "controltype.count"
+            && !isNaN(oControl["controlValue"])
+            && +oControl["controlValue"] >= 0) {
+              oRun["rawRecordcount"] = +oControl["controlValue"];
+              return;
           }
         }
 
@@ -306,6 +308,8 @@ var MonitoringService = new function() {
 
       if (oData.length > 0) {
         for (let oRun of oData) {
+          oRun["infoDate"] = new Date(oRun["informationDateCasted"]["$date"]); // milliseconds to date
+          oRun["infoDateString"] = Formatters.infoDateToString(oRun["infoDate"]);
           MonitoringService.processLatestCheckpoint(oRun);
           MonitoringService.processRunStatus(oRun);
           MonitoringService.processDirSizes(oRun);
