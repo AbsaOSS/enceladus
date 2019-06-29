@@ -281,6 +281,20 @@ var MonitoringService = new function() {
 
   };
 
+  this.processLatestCheckpoint = function (oRun) {
+    let aCheckpoints = oRun["controlMeasure"]["checkpoints"];
+    if ( !(Formatters.nonEmptyObject(aCheckpoints) && aCheckpoints.length > 0)) { return; }
+    let original = aCheckpoints[aCheckpoints.length -1];
+    let latestCheckpoint = {
+      name: original["name"],
+      order: original["order"],
+      workflowName: original["workflowName"],
+      startDate: moment(original["processStartTime"], "DD-MM-YYYY HH:mm:ss").toDate(),
+      endDate: moment(original["processEndTime"], "DD-MM-YYYY HH:mm:ss").toDate()
+    };
+    oRun["latestCheckpoint"] = latestCheckpoint;
+  };
+
 
   this.getData = function(sId, sStartDate, sEndDate) {
     MonitoringService.clearAggregators();
@@ -292,6 +306,7 @@ var MonitoringService = new function() {
 
       if (oData.length > 0) {
         for (let oRun of oData) {
+          MonitoringService.processLatestCheckpoint(oRun);
           MonitoringService.processRunStatus(oRun);
           MonitoringService.processDirSizes(oRun);
           MonitoringService.processCheckpoints(oRun);

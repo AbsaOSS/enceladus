@@ -197,22 +197,23 @@
                         </table:template>
                     </table:Column>
 
-                    <table:Column id="monitoring-multiheader-checkpoint" width="12rem" headerSpan="{=[3,1]}" hAlign="Center">
+                    <table:Column id="monitoring-multiheader-checkpoint" width="10rem" headerSpan="{=[3,1]}" hAlign="Center">
                         <table:multiLabels>
                             <Label text="Latest checkpoint" textAlign="Center" width="100%"/>
-                            <Label text="End timestamp" textAlign="Center" width="100%"/>
+                            <Label text="End time" textAlign="Center" width="100%"/>
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].processEndTime}" wrapping="false" />
+                            <Text text="{path: 'latestCheckpoint/endDate',
+                                formatter: 'Formatters.dateShortFormatter'}" wrapping="false" />
                         </table:template>
                     </table:Column>
                     <table:Column width="7rem" visible="false" hAlign="Center">
                         <table:multiLabels>
                             <Label text="Latest checkpoint" />
-                            <Label text="Stage" textAlign="Center" width="100%"/>
+                            <Label text="Workflow" textAlign="Center" width="100%"/>
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].workflowName}" wrapping="false" />
+                            <Text text="{latestCheckpoint/workflowName}" wrapping="false" />
                         </table:template>
                     </table:Column>
                     <table:Column width="10rem" hAlign="Center">
@@ -221,7 +222,7 @@
                             <Label text="Name" textAlign="Center" width="100%"/>
                         </table:multiLabels>
                         <table:template>
-                            <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].name}" wrapping="false" />
+                            <Text text="{latestCheckpoint/name}" wrapping="false" />
                         </table:template>
                     </table:Column>
 

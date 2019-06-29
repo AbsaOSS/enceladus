@@ -17,7 +17,7 @@ jQuery.sap.require("sap.ui.core.format.DateFormat");
 jQuery.sap.require("sap.ui.core.Locale");
 
 var Formatters = new function() {
-  
+
   this.oozieCoordinatorStatusFormatter = function(sStatus) {
     if(!sStatus) {
       return sap.ui.core.ValueState.None;
@@ -26,14 +26,21 @@ var Formatters = new function() {
     } else return sap.ui.core.ValueState.Error;
   };
 
+   let defaultDateFormat = sap.ui.core.format.DateFormat.getDateTimeInstance({
+    style : "short"
+  }, new sap.ui.core.Locale("en_GB"));
+
+  this.dateShortFormatter = function(oDate) {
+    if (!oDate)
+      return "";
+    return defaultDateFormat.format(oDate)
+  };
+
   this.stringDateShortFormatter = function(sDate) {
     if (!sDate)
       return "";
     var oDate = new Date(sDate);
-    var oFormat = sap.ui.core.format.DateFormat.getDateTimeInstance({
-      style : "short"
-    }, new sap.ui.core.Locale("en_GB"))
-    return oFormat.format(oDate)
+    return defaultDateFormat.format(oDate)
   };
 
   this.not = function(bSth) {
