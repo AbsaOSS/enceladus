@@ -233,7 +233,7 @@
                         </table:multiLabels>
                         <table:template>
                             <Text wrapping="false" text="{
-                                path: 'raw_recordcount',
+                                path: 'rawRecordcount',
                                 type: 'sap.ui.model.type.Integer',
                                 formatOptions: {
                                     groupingEnabled: true

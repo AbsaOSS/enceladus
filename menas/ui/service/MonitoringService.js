@@ -177,26 +177,26 @@ var MonitoringService = new function() {
   };
 
   this.conformanceFinishedCorrectly = function(oRun) {
-    return (!isNaN(oRun["raw_recordcount"])
+    return (!isNaN(oRun["rawRecordcount"])
       && !isNaN(oRun["std_records_succeeded"]) && !isNaN(oRun["std_records_failed"])
       && !isNaN(oRun["conform_records_succeeded"]) && !isNaN(oRun["conform_records_failed"])
       // sanity checks
-      && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["raw_recordcount"])
-      && (+oRun["conform_records_succeeded"]) + (+oRun["conform_records_failed"]) == (+oRun["raw_recordcount"])
+      && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["rawRecordcount"])
+      && (+oRun["conform_records_succeeded"]) + (+oRun["conform_records_failed"]) == (+oRun["rawRecordcount"])
       && (+oRun["std_records_succeeded"]) >= (+oRun["conform_records_succeeded"] ))
   };
 
 
   this.standardizationFinishedCorrectly = function(oRun) {
-    return (!isNaN(oRun["raw_recordcount"]) && !isNaN(oRun["raw_recordcount"])
+    return (!isNaN(oRun["rawRecordcount"]) && !isNaN(oRun["rawRecordcount"])
       && !isNaN(oRun["std_records_succeeded"]) && !isNaN(oRun["std_records_failed"])
       && oRun["conform_records_succeeded"] == undefined && oRun["conform_records_failed"] == undefined
       //sanity checks
-      && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["raw_recordcount"]) )
+      && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["rawRecordcount"]) )
   };
 
   this.rawRegisteredCorrectly = function(oRun) {
-    return (!isNaN(oRun["raw_recordcount"]) && !isNaN(oRun["raw_recordcount"])
+    return (!isNaN(oRun["rawRecordcount"]) && !isNaN(oRun["rawRecordcount"])
       && oRun["std_records_succeeded"]  == undefined && oRun["std_records_failed"] == undefined
       && oRun["conform_records_succeeded"]  == undefined && oRun["conform_records_failed"] == undefined)
   };
@@ -231,10 +231,10 @@ var MonitoringService = new function() {
     recordsStatusAggregator["Failed at conformance"].recordCounts.push(0);
     recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0);
     recordsStatusAggregator["Failed at standardization"].recordCounts.push(0);
-    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(+oRun["raw_recordcount"]);
+    recordsStatusAggregator["Unprocessed raw"].recordCounts.push(+oRun["rawRecordcount"]);
     recordsStatusAggregator["Inconsistent info"].recordCounts.push(0);
 
-    recordsStatusAggregator["Unprocessed raw"].counter += +oRun["raw_recordcount"]
+    recordsStatusAggregator["Unprocessed raw"].counter += +oRun["rawRecordcount"]
   };
 
   this.processInconsistent = function(oRun) {
@@ -246,8 +246,8 @@ var MonitoringService = new function() {
 
     // try to estimate number of records involved in this run
     let estimatedRecordCount = 0;
-    if (!isNaN(oRun["raw_recordcount"])) {
-      estimatedRecordCount = +oRun["raw_recordcount"]
+    if (!isNaN(oRun["rawRecordcount"])) {
+      estimatedRecordCount = +oRun["rawRecordcount"]
     } else if (!isNaN(oRun["std_records_succeeded"])&& !isNaN(oRun["std_records_failed"])){
       estimatedRecordCount = (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"])
     } else if (!isNaN(oRun["conform_records_succeeded"]) && !isNaN(oRun["conform_records_failed"])) {
@@ -257,8 +257,32 @@ var MonitoringService = new function() {
     recordsStatusAggregator["Inconsistent info"].counter += estimatedRecordCount
   };
 
+  // find raw recordcount
+  // TODO: Compare controlls across all checkpoints
+  this.processCheckpoints = function(oRun) {
+    let aCheckpoints = oRun["controlMeasure"]["checkpoints"];
+    if ( !(Formatters.nonEmptyObject(aCheckpoints) && aCheckpoints.length > 0)) { return; }
 
-  this.getData= function(sId, sStartDate, sEndDate) {
+    for (let oCheckpoint of aCheckpoints) {
+      let controlNameLowerCase = oCheckpoint["name"].toLowerCase();
+      if (controlNameLowerCase == "source" || controlNameLowerCase == "raw" ) {
+        let aControls = oCheckpoint["controls"];
+        if ( !(Formatters.nonEmptyObject(aControls) && aControls.length > 0)) { continue; }
+
+        for (let oControl of aControls) {
+          if (oControl["controlType"].toLowerCase() == "controltype.count" && !isNaN(oControl["controlValue"])) {
+            oRun["rawRecordcount"] = +oControl["controlValue"];
+            return;
+          }
+        }
+
+      }
+    }
+
+  };
+
+
+  this.getData = function(sId, sStartDate, sEndDate) {
     MonitoringService.clearAggregators();
     return Functions.ajax("api/monitoring/data/datasets/"
       + encodeURI(sId) + "/"
@@ -270,6 +294,7 @@ var MonitoringService = new function() {
         for (let oRun of oData) {
           MonitoringService.processRunStatus(oRun);
           MonitoringService.processDirSizes(oRun);
+          MonitoringService.processCheckpoints(oRun);
           MonitoringService.processRecordCounts(oRun);
         }
 

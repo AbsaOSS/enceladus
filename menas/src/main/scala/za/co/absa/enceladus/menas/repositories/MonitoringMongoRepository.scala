@@ -69,24 +69,6 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
              |    informationDateCasted: {$$gte: ISODate("${startDate}T00:00:00.0Z"),
              |      $$lte: ISODate("${endDate}T00:00:00.0Z") }
              |}},""".stripMargin),
-        // bring the raw checkpoint to root for further access
-        Document("""{$addFields: {
-                   |  raw_checkpoint : {
-                   |    $arrayElemAt: ["$controlMeasure.checkpoints", 0]
-                   |  }
-                   |}}""".stripMargin),
-        // add the raw recordcount
-        Document("""{$addFields: {
-                   |  raw_recordcount_control : {
-                   |    $arrayElemAt : [ {
-                   |      $filter : {
-                   |        input : "$raw_checkpoint.controls",
-                   |        as : "control",
-                   |        cond : {$eq : [ { $toLower: "$$control.controlName"}, "recordcount"]}
-                   |      }
-                   |    }, 0 ]
-                   |  }
-                   |}}""".stripMargin),
         // sort intermidiate results before further grouping (needed as we use $first to keep the latest run only)
         sort(orderBy(
           descending("informationDateCasted"),
@@ -110,11 +92,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
           first("std_records_failed", "$controlMeasure.metadata.additionalInfo.std_records_failed"),
           first("conform_records_succeeded", "$controlMeasure.metadata.additionalInfo.conform_records_succeeded"),
           first("conform_records_failed", "$controlMeasure.metadata.additionalInfo.conform_records_failed"),
-          first("raw_recordcount", "$raw_recordcount_control.controlValue"),
-          first("controlMeasure", "$controlMeasure"),
-          first("publish_dir_size", "$controlMeasure.metadata.additionalInfo.publish_dir_size"),
-          first("std_dir_size", "$controlMeasure.metadata.additionalInfo.std_dir_size"),
-          first("raw_dir_size", "$controlMeasure.metadata.additionalInfo.raw_dir_size")
+          first("controlMeasure", "$controlMeasure")
         ),
         // sort the final results
         sort(orderBy(
