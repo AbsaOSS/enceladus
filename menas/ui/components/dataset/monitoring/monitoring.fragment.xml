@@ -40,12 +40,11 @@
 
                     <Button id="FindRunsButton" text="Find runs" icon="sap-icon://search"
                             press="onFindRunsPress"/>
-                </contentLeft>
-                <contentRight>
+
                     <CheckBox text="Totals" selected="{/monitoringTotalsVisible}" />
                     <CheckBox text="Records per run" selected="{/monitoringRecordsVisible}" />
                     <CheckBox text="Run details" selected="{/monitoringDetailsVisible}" />
-                </contentRight>
+                </contentLeft>
             </Bar>
 
         <layout:BlockLayout id="mon-totals-BlockLayout" visible="{/monitoringTotalsVisible}">

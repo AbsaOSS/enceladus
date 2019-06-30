@@ -307,7 +307,7 @@ var MonitoringService = new function() {
         if ( !(Formatters.nonEmptyObject(aControls) && aControls.length > 0)) { continue; }
 
         for (let oControl of aControls) {
-          if (oControl["controlType"].toLowerCase() == "controltype.count"
+          if (oControl["controlName"].toLowerCase() == "recordcount"
             && !isNaN(oControl["controlValue"])
             && +oControl["controlValue"] >= 0) {
               oRun["rawRecordcount"] = +oControl["controlValue"];
