@@ -213,7 +213,7 @@
                         </table:template>
                     </table:Column>
 
-                    <table:Column id="monitoring-multiheader-checkpoint" width="10rem" visible="false" headerSpan="{=[3,1]}" hAlign="Center">
+                    <table:Column id="monitoring-multiheader-checkpoint" width="10rem" visible="true" headerSpan="{=[3,1]}" hAlign="Center">
                         <table:multiLabels>
                             <Label text="Latest checkpoint" textAlign="Center" width="100%"/>
                             <Label text="End time" textAlign="Center" width="100%"/>
@@ -232,7 +232,7 @@
                             <Text text="{latestCheckpoint/workflowName}" wrapping="false" />
                         </table:template>
                     </table:Column>
-                    <table:Column width="10rem" hAlign="Center" visible="false">
+                    <table:Column width="10rem" hAlign="Center" visible="true">
                         <table:multiLabels>
                             <Label text="Latest checkpoint"/>
                             <Label text="Name" textAlign="Center" width="100%"/>

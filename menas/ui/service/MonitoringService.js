@@ -298,13 +298,13 @@ var MonitoringService = new function() {
   // TODO: Compare controlls across all checkpoints
   this.processCheckpoints = function(oRun) {
     let aCheckpoints = oRun["controlMeasure"]["checkpoints"];
-    if ( !(Formatters.nonEmptyObject(aCheckpoints) && aCheckpoints.length > 0)) { return; }
+    if ( !Array.isArray(aCheckpoints)) { return; }
 
     for (let oCheckpoint of aCheckpoints) {
       let controlNameLowerCase = oCheckpoint["name"].toLowerCase();
       if (controlNameLowerCase == "source" || controlNameLowerCase == "raw" ) {
         let aControls = oCheckpoint["controls"];
-        if ( !(Formatters.nonEmptyObject(aControls) && aControls.length > 0)) { continue; }
+        if ( !Array.isArray(aControls)) { continue; }
 
         for (let oControl of aControls) {
           if (oControl["controlName"].toLowerCase() == "recordcount"
@@ -322,7 +322,7 @@ var MonitoringService = new function() {
 
   this.processLatestCheckpoint = function (oRun) {
     let aCheckpoints = oRun["controlMeasure"]["checkpoints"];
-    if ( !(Formatters.nonEmptyObject(aCheckpoints) && aCheckpoints.length > 0)) { return; }
+    if ( !Array.isArray(aCheckpoints)) { return; }
     let original = aCheckpoints[aCheckpoints.length -1];
     let latestCheckpoint = {
       name: original["name"],
