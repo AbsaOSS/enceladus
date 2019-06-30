@@ -159,7 +159,7 @@
                 visibleRowCountMode="Fixed"
                 visibleRowCount="{/numberOfPoints}"
                 rowActionCount="1"
-                width="100%">
+                width="auto">
 
                 <table:columns>
                     <table:Column id="monitoring-multiheader-info" width="6rem" headerSpan="{=[2,1]}" hAlign="Center">
@@ -179,8 +179,8 @@
                         <table:template>
                             <Text text="{reportVersion}" wrapping="false" />
                         </table:template>
-
                     </table:Column>
+
                     <table:Column width="5rem" hAlign="Center">
                         <Label text="Dataset version"  textAlign="Center" width="100%" wrapping="true"/>
                         <table:template>
@@ -197,7 +197,24 @@
                         </table:template>
                     </table:Column>
 
-                    <table:Column id="monitoring-multiheader-checkpoint" width="10rem" headerSpan="{=[3,1]}" hAlign="Center">
+                    <table:Column width="12rem" hAlign="Left">
+                        <Label text="Warnings"  textAlign="Center" width="100%" wrapping="true"/>
+                        <table:template>
+                            <List showNoData="false" width="auto" backgroundDesign="Transparent" showSeparators="None"
+                                items="{path:'warnings', templateShareable:false}" >
+                                <items>
+                                    <CustomListItem>
+                                        <ObjectStatus
+                                            text="{text}"
+                                            icon="{icon}"
+                                            state="{state}" />
+                                    </CustomListItem>
+                                </items>
+                            </List>
+                        </table:template>
+                    </table:Column>
+
+                    <table:Column id="monitoring-multiheader-checkpoint" width="10rem" visible="false" headerSpan="{=[3,1]}" hAlign="Center">
                         <table:multiLabels>
                             <Label text="Latest checkpoint" textAlign="Center" width="100%"/>
                             <Label text="End time" textAlign="Center" width="100%"/>
@@ -216,7 +233,7 @@
                             <Text text="{latestCheckpoint/workflowName}" wrapping="false" />
                         </table:template>
                     </table:Column>
-                    <table:Column width="10rem" hAlign="Center">
+                    <table:Column width="10rem" hAlign="Center" visible="false">
                         <table:multiLabels>
                             <Label text="Latest checkpoint"/>
                             <Label text="Name" textAlign="Center" width="100%"/>

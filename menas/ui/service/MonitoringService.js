@@ -21,6 +21,17 @@ var MonitoringService = new function() {
 
   let barChartLabels = []; // run info-date + info-version
 
+  // time in milliseconds since last checkpoint to detect zombie
+  let runningJobExpirationThreshold = 1000 * 60 * 60 * 24;
+
+  let warningTypes = {
+    inconsistentInfo: {infoLabel: 4, state: "None", icon: "sap-icon://question-mark", text: "Inconsistent run info"},
+    zombie: {infoLabel: 9, state: "None", icon: "sap-icon://lateness", text: "Zombie job"},
+    stdErrors: {infoLabel: 1, state: "Warning", icon: "sap-icon://message-warning", text: "Errors at standardization"},
+    cnfrmErrors: {infoLabel: 3, state: "Error", icon: "sap-icon://message-warning", text: "Errors at conformance"},
+    noSucceded: {infoLabel: 3, state: "Error", icon: "sap-icon://alert", text: "No records succeeded"}
+  };
+
   let totals = {
     "records": 0,
     "rawDirSize": 0,
@@ -69,20 +80,28 @@ var MonitoringService = new function() {
     let rawDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["std_input_dir_size"];
     let stdDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["std_output_dir_size"];
     let publishDirSize = oRun["controlMeasure"]["metadata"]["additionalInfo"]["conform_output_dir_size"];
-    if (!isNaN(rawDirSize)) {totals["rawDirSize"] += +rawDirSize};
-    if (!isNaN(stdDirSize)) {totals["stdDirSize"] += +stdDirSize};
-    if (!isNaN(publishDirSize)) {totals["publishDirSize"] += +publishDirSize};
+    if (!isNaN(rawDirSize)) {totals["rawDirSize"] += +rawDirSize}
+    if (!isNaN(stdDirSize)) {totals["stdDirSize"] += +stdDirSize}
+    if (!isNaN(publishDirSize)) {totals["publishDirSize"] += +publishDirSize}
   }
 
   this.processRunStatus = function(oRun) {
     let status = oRun["status"];
-    oRun["prettyStatus"] = Formatters.statusToPrettyString(status)
+    oRun["prettyStatus"] = Formatters.statusToPrettyString(status);
     if (runStatusAggregator.hasOwnProperty(status)) {
       runStatusAggregator[status].counter += 1;
-      oRun["infoLabel"] = runStatusAggregator[status].infoLabel
+      oRun["infoLabel"] = runStatusAggregator[status].infoLabel;
+      MonitoringService.checkZombieJob(oRun);
     } else {
       runStatusAggregator["Оther"].counter += 1;
       oRun["infoLabel"] = runStatusAggregator["Оther"].infoLabel
+    }
+  };
+
+  this.checkZombieJob = function(oRun) {
+    if (oRun["status"] == "running"
+        && (new Date() - oRun["latestCheckpoint"]["endDate"]) > runningJobExpirationThreshold ){
+      oRun["warnings"].push(warningTypes.zombie);
     }
   };
 
@@ -177,35 +196,45 @@ var MonitoringService = new function() {
   };
 
   this.conformanceFinishedCorrectly = function(oRun) {
-    return (!isNaN(oRun["rawRecordcount"])
-      && !isNaN(oRun["std_records_succeeded"]) && !isNaN(oRun["std_records_failed"])
-      && !isNaN(oRun["conform_records_succeeded"]) && !isNaN(oRun["conform_records_failed"])
+    return !isNaN(oRun["rawRecordcount"])
+      && oRun["std_records_succeeded"] != null && oRun["std_records_failed"] != null
+      && oRun["conform_records_succeeded"] != null && oRun["conform_records_failed"] != null
       // sanity checks
       && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["rawRecordcount"])
       && (+oRun["conform_records_succeeded"]) + (+oRun["conform_records_failed"]) == (+oRun["rawRecordcount"])
-      && (+oRun["std_records_succeeded"]) >= (+oRun["conform_records_succeeded"] ))
+      && (+oRun["std_records_succeeded"]) >= (+oRun["conform_records_succeeded"] )
   };
 
 
   this.standardizationFinishedCorrectly = function(oRun) {
-    return (!isNaN(oRun["rawRecordcount"]) && !isNaN(oRun["rawRecordcount"])
-      && !isNaN(oRun["std_records_succeeded"]) && !isNaN(oRun["std_records_failed"])
-      && oRun["conform_records_succeeded"] == undefined && oRun["conform_records_failed"] == undefined
+    return !isNaN(oRun["rawRecordcount"])
+      && oRun["std_records_succeeded"] != null && oRun["std_records_failed"] != null
+      && oRun["conform_records_succeeded"] == null && oRun["conform_records_failed"] == null
       //sanity checks
-      && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["rawRecordcount"]) )
+      && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["rawRecordcount"])
   };
 
   this.rawRegisteredCorrectly = function(oRun) {
-    return (!isNaN(oRun["rawRecordcount"]) && !isNaN(oRun["rawRecordcount"])
-      && oRun["std_records_succeeded"]  == undefined && oRun["std_records_failed"] == undefined
-      && oRun["conform_records_succeeded"]  == undefined && oRun["conform_records_failed"] == undefined)
+    return !isNaN(oRun["rawRecordcount"])
+      && oRun["std_records_succeeded"]  == null && oRun["std_records_failed"] == null
+      && oRun["conform_records_succeeded"]  == null && oRun["conform_records_failed"] == null
   };
 
   this.processConformed = function(oRun) {
-    recordsStatusAggregator["Conformed"].recordCounts.push(+oRun["conform_records_succeeded"]);
-    recordsStatusAggregator["Failed at conformance"].recordCounts.push(+oRun["conform_records_failed"] - +oRun["std_records_failed"]);
+    let succeeded = +oRun["conform_records_succeeded"];
+    recordsStatusAggregator["Conformed"].recordCounts.push(succeeded);
+    if (succeeded == 0) {oRun["warnings"].push(warningTypes.noSucceded)};
+
+    let failedAtConformance = +oRun["conform_records_failed"] - +oRun["std_records_failed"]
+    recordsStatusAggregator["Failed at conformance"].recordCounts.push(failedAtConformance);
+    if (failedAtConformance > 0) {oRun["warnings"].push(warningTypes.cnfrmErrors)};
+
     recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0);
-    recordsStatusAggregator["Failed at standardization"].recordCounts.push(+oRun["std_records_failed"]);
+
+    let failedAtStd = +oRun["std_records_failed"]
+    recordsStatusAggregator["Failed at standardization"].recordCounts.push(failedAtStd);
+    if (failedAtStd > 0) {oRun["warnings"].push(warningTypes.stdErrors)};
+
     recordsStatusAggregator["Unprocessed raw"].recordCounts.push(0);
     recordsStatusAggregator["Inconsistent info"].recordCounts.push(0);
 
@@ -217,8 +246,15 @@ var MonitoringService = new function() {
   this.processStandardized = function(oRun) {
     recordsStatusAggregator["Conformed"].recordCounts.push(0);
     recordsStatusAggregator["Failed at conformance"].recordCounts.push(0);
-    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(+oRun["std_records_succeeded"]);
-    recordsStatusAggregator["Failed at standardization"].recordCounts.push(+oRun["std_records_failed"]);
+
+    let succeeded = +oRun["std_records_succeeded"];
+    recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(succeeded);
+    if (succeeded == 0) {oRun["warnings"].push(warningTypes.noSucceded)};
+
+    let failedAtStd = +oRun["std_records_failed"]
+    recordsStatusAggregator["Failed at standardization"].recordCounts.push(failedAtStd);
+    if (failedAtStd > 0) {oRun["warnings"].push(warningTypes.stdErrors)};
+
     recordsStatusAggregator["Unprocessed raw"].recordCounts.push(0);
     recordsStatusAggregator["Inconsistent info"].recordCounts.push(0);
 
@@ -238,6 +274,7 @@ var MonitoringService = new function() {
   };
 
   this.processInconsistent = function(oRun) {
+    oRun["warnings"].push(warningTypes.inconsistentInfo);
     recordsStatusAggregator["Conformed"].recordCounts.push(0);
     recordsStatusAggregator["Failed at conformance"].recordCounts.push(0);
     recordsStatusAggregator["Standardized (not conformed)"].recordCounts.push(0);
@@ -246,11 +283,11 @@ var MonitoringService = new function() {
 
     // try to estimate number of records involved in this run
     let estimatedRecordCount = 0;
-    if (!isNaN(oRun["rawRecordcount"])) {
+    if (!isNaN(oRun["rawRecordcount"] && +oRun["rawRecordcount"] > 0 )) {
       estimatedRecordCount = +oRun["rawRecordcount"]
-    } else if (!isNaN(oRun["std_records_succeeded"])&& !isNaN(oRun["std_records_failed"])){
+    } else if (oRun["std_records_succeeded"] != null && oRun["std_records_failed"] != null){
       estimatedRecordCount = (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"])
-    } else if (!isNaN(oRun["conform_records_succeeded"]) && !isNaN(oRun["conform_records_failed"])) {
+    } else if (oRun["conform_records_succeeded"] != null && oRun["conform_records_failed"] != null) {
       estimatedRecordCount = (+oRun["conform_records_succeeded"]) + (+oRun["conform_records_failed"] )
     }
     recordsStatusAggregator["Inconsistent info"].recordCounts.push(estimatedRecordCount);
@@ -291,7 +328,7 @@ var MonitoringService = new function() {
       name: original["name"],
       order: original["order"],
       workflowName: original["workflowName"],
-      startDate: moment(original["processStartTime"], "DD-MM-YYYY HH:mm:ss").toDate(),
+      //startDate: moment(original["processStartTime"], "DD-MM-YYYY HH:mm:ss").toDate(),
       endDate: moment(original["processEndTime"], "DD-MM-YYYY HH:mm:ss").toDate()
     };
     oRun["latestCheckpoint"] = latestCheckpoint;
@@ -310,6 +347,8 @@ var MonitoringService = new function() {
         for (let oRun of oData) {
           oRun["infoDate"] = new Date(oRun["informationDateCasted"]["$date"]); // milliseconds to date
           oRun["infoDateString"] = Formatters.infoDateToString(oRun["infoDate"]);
+          oRun["warnings"] = [];
+
           MonitoringService.processLatestCheckpoint(oRun);
           MonitoringService.processRunStatus(oRun);
           MonitoringService.processDirSizes(oRun);
