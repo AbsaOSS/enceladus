@@ -54,9 +54,13 @@ Ensure the properties there fit your environment.
 
 ## <a name="run"/>How to run
 #### Menas requirements:
-- **Tomcat 8.5/9.0** installation
-- **MongoDB 4.0** installation
+- [**Tomcat 8.5/9.0** installation](https://tomcat.apache.org/download-90.cgi)
+- [**MongoDB 4.0** installation](https://docs.mongodb.com/manual/administration/install-community/)
+- [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.8/spline-web-0.3.8.war)
+ in your Tomcat webapps directory (rename after downloading to _spline.war_); NB! don't forget to set up the `spline.mongodb.url` configuration for the _war_
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
+
+The _Spline UI_ can be omitted; in such case the **Menas** `za.co.absa.enceladus.spline.urlTemplate` setting should be set to empty string. 
 
 #### Deploying Menas
 Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
@@ -67,8 +71,8 @@ Simply copy the **menas.war** file produced when building the project into Tomca
 - Configure `spring.resources.cache.cachecontrol.max-age` in `application.properties` of Menas for caching of static resources
 
 #### Standardization and Conformance requirements:
-- **Spark 2.4.3 (Scala 2.11)** installation
-- **Hadoop 2.7** installation
+- [**Spark 2.4.3 (Scala 2.11)** installation](https://spark.apache.org/downloads.html)
+- [**Hadoop 2.7** installation](https://hadoop.apache.org/releases.html)
 - **Menas** running instance
 - **Menas Credentials File** in your home directory or on HDFS (a configuration file for authenticating the Spark jobs with Menas) 
    - **Use with in-memory authentication**
@@ -87,7 +91,8 @@ password=changeme
 <spark home>/spark-submit \
 --num-executors <num> \
 --executor-memory <num>G \
---master yarn --deploy-mode <client/cluster> \
+--master yarn \
+--deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
 --conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
@@ -109,7 +114,8 @@ password=changeme
 <spark home>/spark-submit \
 --num-executors <num> \
 --executor-memory <num>G \
---master yarn --deploy-mode <client/cluster> \
+--master yarn \
+--deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
 --conf 'spark.ui.port=29000' \

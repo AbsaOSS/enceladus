@@ -13,8 +13,10 @@
   ~ limitations under the License.
   -->
 
-<core:View id="runDetailView" xmlns:core="sap.ui.core" xmlns="sap.m"
+<core:View id="runDetailView"
            controllerName="components.run.runDetail"
+           xmlns:core="sap.ui.core"
+           xmlns="sap.m"
            xmlns:form="sap.ui.layout.form"
            xmlns:table="sap.ui.table"
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
@@ -133,6 +135,9 @@
                                 </ColumnListItem>
                             </items>
                         </Table>
+                    </IconTabFilter>
+                    <IconTabFilter id="Lineage" icon="sap-icon://org-chart" key="lineage" text="Lineage" visible="{= ${run>/splineUrl} !== ''}">
+                        <core:HTML content="&lt;iframe  id=&quot;lineage_iframe&quot; height=&quot;800&quot; width=&quot;100%&quot; style=&quot;border: Ridge;&quot; src=&quot;{run>/splineUrl}&quot;&gt;&lt;/iframe&gt;" />
                     </IconTabFilter>
                 </items>
             </IconTabBar>
