@@ -44,7 +44,15 @@ sap.ui.define([
       let cont = new ConformanceRuleDialog(this);
       let view = this.getView();
 
+      // Monitoring
+
+      this.MAX_RUNS = 500;
+      this.byId("dateFromPicker").setDisplayFormat(Formatters.infoDatePattern);
+      this.byId("dateToPicker").setDisplayFormat(Formatters.infoDatePattern);
       this.setDefaultMonitoringDateInterval();
+      this._model.setProperty("/monitoringTotalsVisible", true);
+      this._model.setProperty("/monitoringRecordsVisible", true);
+      this._model.setProperty("/monitoringDetailsVisible", false);
 
       this._upsertConformanceRuleDialog = Fragment.load({
         id: view.getId(),
@@ -427,50 +435,55 @@ sap.ui.define([
 
     // Monitoring related part
 
-    handleCalendarSelect: function(oEvent) {
-      var oCalendar = oEvent.getSource();
-      this._updateTimeInterval(oCalendar.getSelectedDates()[0]);
-    },
-
-    _updateTimeInterval: function(oSelectedDates) {
-      let oDate;
-      if (oSelectedDates) {
-        oDate = oSelectedDates.getStartDate();
-        if (oDate) {
-          this._model.setProperty("/monitoringDateFrom", Formatters.toStringInfoDate(oDate))
-        }
-        oDate = oSelectedDates.getEndDate();
-        if (oDate) {
-          this._model.setProperty("/monitoringDateTo", Formatters.toStringInfoDate(oDate))
-        }
+    // Processes parsing errors
+    handleDateChange: function(oEvent) {
+      let oDP = oEvent.getSource();
+      let bValid = oEvent.getParameter("valid");
+      if (bValid) {
+        oDP.setValueState(sap.ui.core.ValueState.None);
+      } else {
+        oDP.setValueState(sap.ui.core.ValueState.Error);
       }
-      this.updateMonitoringData()
     },
 
     updateMonitoringData: function () {
-      let monitoringDateFrom = this._model.getProperty("/monitoringDateFrom");
-      let monitoringDateTo = this._model.getProperty("/monitoringDateTo");
+      let oMonitoringDateFrom = this._model.getProperty("/monitoringDateFrom");
+      let oMonitoringDateTo = this._model.getProperty("/monitoringDateTo");
+      let intervalDays = 1 + Math.floor((oMonitoringDateTo - oMonitoringDateFrom) / (1000 * 60 * 60 * 24));
+      this._model.setProperty("/monitoringIntervalDays", intervalDays);
+
+      let sMonitoringDateFrom = Formatters.toStringInfoDate(oMonitoringDateFrom);
+      let sMonitoringDateTo = Formatters.toStringInfoDate(oMonitoringDateTo);
       let datasetName = this._model.getProperty("/currentDataset/name");
-      if (monitoringDateFrom != undefined && monitoringDateTo != undefined && datasetName != undefined) {
-        MonitoringService.getData(datasetName, monitoringDateFrom, monitoringDateTo);
+      if (sMonitoringDateFrom != undefined && sMonitoringDateTo != undefined && datasetName != undefined) {
+        MonitoringService.getData(datasetName, sMonitoringDateFrom, sMonitoringDateTo)
+          .then(k => {this._checkRunDataOverflow()});
       } else {
         MonitoringService.clearMonitoringModel();
       }
     },
 
-    handleWeekNumberSelect: function(oEvent) {
-      let oDateRange = oEvent.getParameter("weekDays");
-      this._updateTimeInterval(oDateRange);
+    _checkRunDataOverflow: function () {
+      if (this._model.getProperty("/numberOfPoints") >= this.MAX_RUNS) {
+        sap.m.MessageBox.show("The number of found runs exceeds the display limit of " + this.MAX_RUNS +
+          ". Some of the runs are not shown. Please, select a smaller date interval and retry.", {
+          icon: sap.m.MessageBox.Icon.WARNING,
+          title: "Too large date interval",
+          actions: [sap.m.MessageBox.Action.OK]
+        });
+      }
+    },
+
+    onFindRunsPress: function (oEv){
+      // Check selected interval
+      this.updateMonitoringData()
     },
 
     setDefaultMonitoringDateInterval: function () {
       let oEnd = new Date();
       let oStart = new Date(oEnd.getTime() - 14 * 24 * 60 * 60 * 1000); // Two weeks before today
-      let oCalendar = this.byId("calendar");
-      oCalendar.removeAllSelectedDates();
-      oCalendar.addSelectedDate(new sap.ui.unified.DateRange({startDate: oStart, endDate: oEnd}));
-      this._model.setProperty("/monitoringDateFrom", Formatters.toStringInfoDate(oStart));
-      this._model.setProperty("/monitoringDateTo", Formatters.toStringInfoDate(oEnd))
+      this._model.setProperty("/monitoringDateFrom", oStart);
+      this._model.setProperty("/monitoringDateTo", oEnd)
     },
 
     monitoringToRun: function (oEv) {

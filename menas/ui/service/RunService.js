@@ -101,7 +101,7 @@ var RunService = new function () {
 
   this._bindRunSummaries = function(oRunSummaries, oControl) {
     oRunSummaries.forEach(run => {
-      run.status = this._normalizeStatus(run.status)
+      run.status = Formatters.statusToPrettyString(run.status)
     });
     oRunSummaries.sort((a, b) => b.runId - a.runId);
     oControl.setModel(new sap.ui.model.json.JSONModel(oRunSummaries), "runs");
@@ -116,7 +116,7 @@ var RunService = new function () {
     let info = oRun.controlMeasure.metadata.additionalInfo;
     oRun.controlMeasure.metadata.additionalInfo = this._mapAdditionalInfo(info);
 
-    oRun.status = this._normalizeStatus(oRun.runStatus.status.value);
+    oRun.status = Formatters.statusToPrettyString(oRun.runStatus.status.value);
 
     const sStdName = this._nameExists(aCheckpoints, "Standardization Finish") ? "Standardization Finish" : "Standardization - End";
 
@@ -138,19 +138,6 @@ var RunService = new function () {
 
       return 0;
     })
-  };
-
-  this._normalizeStatus = function(sStatus) {
-    switch(sStatus) {
-      case "failed" :
-        return "Failed";
-      case "running" :
-        return "Running";
-      case "stageSucceeded" :
-        return "Stage Succeeded";
-      case "allSucceeded" :
-        return "All Succeeded";
-    }
   };
 
   this._getTimeSummary = function (aCheckpoints, sStartCheckpoint, sEndCheckpoint) {

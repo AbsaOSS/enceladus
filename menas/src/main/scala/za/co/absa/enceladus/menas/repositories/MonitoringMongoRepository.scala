@@ -18,10 +18,10 @@ package za.co.absa.enceladus.menas.repositories
 import org.mongodb.scala.{AggregateObservable, MongoDatabase}
 import org.mongodb.scala.model.Aggregates.{filter, group, limit, sort}
 import org.mongodb.scala.model.Accumulators.first
-import org.mongodb.scala.model.Filters.{equal}
+import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.Sorts.{descending, orderBy}
 import org.mongodb.scala.Document
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.model.Run
 
@@ -36,6 +36,9 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends MongoRepository[Run](mongoDb) {
 
   private[menas] override def collectionBaseName: String = MonitoringMongoRepository.collectionBaseName
+
+  @Value("${za.co.absa.enceladus.menas.monitoring.fetch.limit}")
+  private val fetchLimit: Integer = null;
 
 
   def getMonitoringDataPoints(datasetName: String, startDate: String, endDate: String): Future[Seq[String]] = {
@@ -66,24 +69,6 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
              |    informationDateCasted: {$$gte: ISODate("${startDate}T00:00:00.0Z"),
              |      $$lte: ISODate("${endDate}T00:00:00.0Z") }
              |}},""".stripMargin),
-        // bring the raw checkpoint to root for further access
-        Document("""{$addFields: {
-                   |  raw_checkpoint : {
-                   |    $arrayElemAt: ["$controlMeasure.checkpoints", 0]
-                   |  }
-                   |}}""".stripMargin),
-        // add the raw recordcount
-        Document("""{$addFields: {
-                   |  raw_recordcount_control : {
-                   |    $arrayElemAt : [ {
-                   |      $filter : {
-                   |        input : "$raw_checkpoint.controls",
-                   |        as : "control",
-                   |        cond : {$eq : [ { $toLower: "$$control.controlName"}, "recordcount"]}
-                   |      }
-                   |    }, 0 ]
-                   |  }
-                   |}}""".stripMargin),
         // sort intermidiate results before further grouping (needed as we use $first to keep the latest run only)
         sort(orderBy(
           descending("informationDateCasted"),
@@ -107,18 +92,14 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
           first("std_records_failed", "$controlMeasure.metadata.additionalInfo.std_records_failed"),
           first("conform_records_succeeded", "$controlMeasure.metadata.additionalInfo.conform_records_succeeded"),
           first("conform_records_failed", "$controlMeasure.metadata.additionalInfo.conform_records_failed"),
-          first("raw_recordcount", "$raw_recordcount_control.controlValue"),
-          first("controlMeasure", "$controlMeasure"),
-          first("publish_dir_size", "$controlMeasure.metadata.additionalInfo.publish_dir_size"),
-          first("std_dir_size", "$controlMeasure.metadata.additionalInfo.std_dir_size"),
-          first("raw_dir_size", "$controlMeasure.metadata.additionalInfo.raw_dir_size")
+          first("controlMeasure", "$controlMeasure")
         ),
         // sort the final results
         sort(orderBy(
           descending("informationDateCasted"),
           descending("reportVersion")
         )),
-        limit(500)
+        limit(this.fetchLimit)
       ))
     observable.map(doc => doc.toJson).toFuture()
   }

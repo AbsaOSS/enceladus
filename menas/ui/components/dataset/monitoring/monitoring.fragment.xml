@@ -16,38 +16,91 @@
 <core:FragmentDefinition xmlns="sap.m"
                          xmlns:core="sap.ui.core"
                          xmlns:layout="sap.ui.layout"
-                         xmlns:u="sap.ui.unified"
                          xmlns:table="sap.ui.table"
                          xmlns:lab="it.designfuture.chartjs"
                          xmlns:form="sap.ui.layout.form"
                          xmlns:tnt="sap.tnt">
-        <layout:BlockLayout id="BlockLayout" background="Dashboard">
+            <Bar>
+                <contentLeft>
+                    <Label text="Info date from:"/>
+                    <DatePicker
+                        id="dateFromPicker"
+                        dateValue="{/monitoringDateFrom}"
+                        maxDate="{/monitoringDateTo}"
+                        change="handleDateChange"
+                        width="10rem"/>
+
+                    <Label text="to:"/>
+                    <DatePicker
+                        id="dateToPicker"
+                        dateValue="{/monitoringDateTo}"
+                        minDate="{/monitoringDateFrom}"
+                        change="handleDateChange"
+                        width="10rem"/>
+
+                    <Button id="FindRunsButton" text="Find runs" icon="sap-icon://search"
+                            press="onFindRunsPress"/>
+
+                    <CheckBox text="Totals" selected="{/monitoringTotalsVisible}" />
+                    <CheckBox text="Records per run" selected="{/monitoringRecordsVisible}" />
+                    <CheckBox text="Run details" selected="{/monitoringDetailsVisible}" />
+                </contentLeft>
+            </Bar>
+
+        <layout:BlockLayout id="mon-totals-BlockLayout" visible="{/monitoringTotalsVisible}">
             <layout:BlockLayoutRow>
                 <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
-                    <Title class="monitoringTitle" text="Select info date interval"/>
-                    <u:Calendar
-                        id="calendar"
-                        select="handleCalendarSelect"
-                        intervalSelection="true"
-                        weekNumberSelect="handleWeekNumberSelect"/>
-            </layout:BlockLayoutCell>
-
-                <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
-                    <Title class="monitoringTitle" text="Summary"/>
-                    <form:SimpleForm id="monitoringSummary">
+                    <form:SimpleForm id="monitoringSummary" singleContainerFullSize="false" >
                         <form:content>
-                            <Label text="Info date FROM"/>
-                            <Text id="monitoringDateFrom" text="{/monitoringDateFrom}"/>
-                            <Label text="Info date TO"/>
-                            <Text id="monitoringDateTo" text="{/monitoringDateTo}"/>
-                            <Label text="Total runs"/>
-                            <Text id="monitoringTotalRuns" text="{/numberOfPoints}"/>
+                            <Label text="Days selected"/>
+                            <Text id="monitoringIntervalDays" text="{/monitoringIntervalDays}"/>
+                            <Label text="Runs found (unique by info date and version)"/>
+                            <Text id="monitoringTotalRuns" text="{
+                                path: '/numberOfPoints',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true,
+                                    emptyString: 0
+                                }
+                            }" />
+                            <Label text="Total records"/>
+                            <Text id="monitoringTotalRecords" text="{
+                                path: '/monitoringTotals/records',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true,
+                                    emptyString: 0
+                                }
+                            }" />
+                            <Label text="Total raw size"/>
+                            <Text id="monitoringTotalRawSize" text="{
+                                    path: '/monitoringTotals/rawDirSize',
+                                    type: 'sap.ui.model.type.FileSize',
+                                    formatOptions: {
+                                        maxFractionDigits: 2
+                                    }
+                                }" />
+                            <Label text="Total standardized size"/>
+                            <Text id="monitoringTotalStdSize" text="{
+                                    path: '/monitoringTotals/stdDirSize',
+                                    type: 'sap.ui.model.type.FileSize',
+                                    formatOptions: {
+                                        maxFractionDigits: 2
+                                    }
+                                }" />
+                            <Label text="Total conformed size"/>
+                            <Text id="monitoringTotalPublishSize" text="{
+                                    path: '/monitoringTotals/publishDirSize',
+                                    type: 'sap.ui.model.type.FileSize',
+                                    formatOptions: {
+                                        maxFractionDigits: 2
+                                    }
+                                }" />
                         </form:content>
                     </form:SimpleForm>
                 </layout:BlockLayoutCell>
-            </layout:BlockLayoutRow>
-            <layout:BlockLayoutRow>
-                <layout:BlockLayoutCell class="monitoringBlockLayoutCell">
+
+                <layout:BlockLayoutCell class="monitoringBlockLayoutCell" >
                     <Title class="monitoringTitle" text="Runs by status"/>
                     <lab:PieChartJS
                         legendPosition="left"
@@ -77,152 +130,204 @@
             </layout:BlockLayoutRow>
         </layout:BlockLayout>
 
-        <Title class="monitoringTitle" text="Records per run"/>
-        <Panel id="bar-chart-canvas" height="{/barChartHeight}">
+    <Title class="monitoringTitle" text="Records per run" visible="{/monitoringRecordsVisible}"/>
+        <Panel id="mon-bar-chart-panel" height="{/barChartHeight}" visible="{/monitoringRecordsVisible}">
             <lab:BarChartJS
                 legendPosition="left"
                 legendLabelBoxWidth="10"
                 responsive="true"
-                id="bar_chart"
+                id="recodrs_bar_chart"
                 datasets="{/barChartData/datasets}"
                 labels="{/barChartData/labels}"
                 titleDisplay="false"
                 titleText="Records per run"
                 tooltipEnabled="true"
                 isHorizontal="true"
-                maintainAspectRatio="false">
+                maintainAspectRatio="false"
+                onClick="onRecordsBarClick">
             </lab:BarChartJS>
         </Panel>
 
-        <Title class="monitoringTitle" text="Run details"/>
-        <table:Table
-            rows="{/monitoringRunData}"
-            selectionMode="None"
-            alternateRowColors="true"
-            showColumnVisibilityMenu="false"
-            visibleRowCountMode="Fixed"
-            visibleRowCount="{/numberOfPoints}"
-            rowActionCount="1"
-            width="100%">
-            <table:columns>
-                <table:Column id="monitoring-multiheader-info" width="6rem" headerSpan="{=[2,1]}">
-                    <table:multiLabels>
-                        <Label text="Info" textAlign="Center" width="100%"/>
-                        <Label text="Date" textAlign="Center" width="100%"/>
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{informationDate}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column width="5rem">
-                    <table:multiLabels>
-                        <Label text="Information"/>
-                        <Label text="Version" textAlign="Center" width="100%"/>
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{reportVersion}" wrapping="false" />
-                    </table:template>
+        <Panel id="mon-run-details-panel" visible="{/monitoringDetailsVisible}">
+            <Title class="monitoringTitle" text="Run details"/>
+            <table:Table
+                rows="{/monitoringRunData}"
+                selectionMode="None"
+                alternateRowColors="true"
+                showColumnVisibilityMenu="false"
+                visibleRowCountMode="Fixed"
+                visibleRowCount="{/numberOfPoints}"
+                rowActionCount="1"
+                width="auto">
 
-                </table:Column>
-                <table:Column width="5rem">
-                    <Label text="Dataset version"  textAlign="Center" width="100%" wrapping="true"/>
-                    <table:template>
-                        <Text text="{datasetVersion}" wrapping="false" />
-                    </table:template>
-                </table:Column>
+                <table:columns>
+                    <table:Column id="monitoring-multiheader-info" width="6rem" headerSpan="{=[2,1]}" hAlign="Center">
+                        <table:multiLabels>
+                            <Label text="Info" textAlign="Center" width="100%"/>
+                            <Label text="Date" textAlign="Center" width="100%"/>
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{infoDateString}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column width="5rem" hAlign="Center">
+                        <table:multiLabels>
+                            <Label text="Information"/>
+                            <Label text="Version" textAlign="Center" width="100%"/>
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{reportVersion}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
 
-                <table:Column width="10rem">
-                    <Label text="Status"  textAlign="Center" width="100%" />
-                    <table:template>
-                        <tnt:InfoLabel
-                            text="{status}"
-                            colorScheme= "{infoLabel}"/>
-                    </table:template>
-                </table:Column>
+                    <table:Column width="5rem" hAlign="Center">
+                        <Label text="Dataset version"  textAlign="Center" width="100%" wrapping="true"/>
+                        <table:template>
+                            <Text text="{datasetVersion}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
 
-                <table:Column id="monitoring-multiheader-checkpoint" width="12rem" headerSpan="{=[3,1]}">
-                    <table:multiLabels>
-                        <Label text="Latest checkpoint" textAlign="Center" width="100%"/>
-                        <Label text="End timestamp" textAlign="Center" width="100%"/>
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].processEndTime}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column width="7rem" visible="false">
-                    <table:multiLabels>
-                        <Label text="Latest checkpoint" />
-                        <Label text="Stage" textAlign="Center" width="100%"/>
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].workflowName}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column width="10rem">
-                    <table:multiLabels>
-                        <Label text="Latest checkpoint"/>
-                        <Label text="Name" textAlign="Center" width="100%"/>
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{=${controlMeasure/checkpoints}.slice(-1)[0].name}" wrapping="false" />
-                    </table:template>
-                </table:Column>
+                    <table:Column width="10rem" hAlign="Center">
+                        <Label text="Status"  textAlign="Center" width="100%" />
+                        <table:template>
+                            <tnt:InfoLabel
+                                text="{prettyStatus}"
+                                colorScheme= "{infoLabel}"/>
+                        </table:template>
+                    </table:Column>
 
-                <table:Column id="monitoring-multiheader-recordcount-raw" width="5rem" headerSpan="{=[5,1,1]}">
-                    <table:multiLabels>
-                        <Label text="Records" textAlign="Center" width="100%" />
-                        <Label text="Raw" textAlign="Center" width="100%" />
-                        <Label text="Total" textAlign="Center" width="100%" />
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{raw_recordcount}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column id="monitoring-multiheader-recordcount-std" width="7rem" headerSpan="{=[0,2,1]}">
-                    <table:multiLabels>
-                        <Label text="Records" />
-                        <Label text="Standardization" textAlign="Center" width="100%" />
-                        <Label text="Succeded" textAlign="Center" width="100%" />
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{std_records_succeeded}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column width="5rem">
-                    <table:multiLabels>
-                        <Label text="Records" />
-                        <Label text="Standardization" />
-                        <Label text="Failed" textAlign="Center" width="100%" />
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{std_records_failed}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column id="monitoring-multiheader-recordcount-cnfrm" width="7rem" headerSpan="{=[0,2,1]}">
-                    <table:multiLabels>
-                        <Label text="Records" />
-                        <Label text="Conformance" textAlign="Center" width="100%" />
-                        <Label text="Succeded" textAlign="Center" width="100%" />
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{conform_records_succeeded}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-                <table:Column width="5rem">
-                    <table:multiLabels>
-                        <Label text="Records" />
-                        <Label text="Conformance" />
-                        <Label text="Failed" textAlign="Center" width="100%" />
-                    </table:multiLabels>
-                    <table:template>
-                        <Text text="{conform_records_failed}" wrapping="false" />
-                    </table:template>
-                </table:Column>
-            </table:columns>
-            <table:rowActionTemplate>
-                <table:RowAction>
-                    <table:RowActionItem press="monitoringToRun"	type="Navigation" icon="sap-icon://detail-view" />
-                </table:RowAction>
-            </table:rowActionTemplate>
-        </table:Table>
+                    <table:Column width="12rem" hAlign="Left">
+                        <Label text="Warnings"  textAlign="Center" width="100%" wrapping="true"/>
+                        <table:template>
+                            <List showNoData="false" width="auto" backgroundDesign="Transparent" showSeparators="None"
+                                items="{path:'warnings', templateShareable:false}" >
+                                <items>
+                                    <CustomListItem>
+                                        <ObjectStatus
+                                            text="{text}"
+                                            icon="{icon}"
+                                            state="{state}" />
+                                    </CustomListItem>
+                                </items>
+                            </List>
+                        </table:template>
+                    </table:Column>
+
+                    <table:Column id="monitoring-multiheader-checkpoint" width="10rem" visible="true" headerSpan="{=[3,1]}" hAlign="Center">
+                        <table:multiLabels>
+                            <Label text="Latest checkpoint" textAlign="Center" width="100%"/>
+                            <Label text="End time" textAlign="Center" width="100%"/>
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{path: 'latestCheckpoint/endDate',
+                                formatter: 'Formatters.dateShortFormatter'}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column width="7rem" visible="false" hAlign="Center">
+                        <table:multiLabels>
+                            <Label text="Latest checkpoint" />
+                            <Label text="Workflow" textAlign="Center" width="100%"/>
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{latestCheckpoint/workflowName}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column width="10rem" hAlign="Center" visible="true">
+                        <table:multiLabels>
+                            <Label text="Latest checkpoint"/>
+                            <Label text="Name" textAlign="Center" width="100%"/>
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{latestCheckpoint/name}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+
+                    <table:Column id="monitoring-multiheader-recordcount-raw" width="5rem" headerSpan="{=[5,1,1]}" hAlign="Right">
+                        <table:multiLabels>
+                            <Label text="Records" textAlign="Center" width="100%" />
+                            <Label text="Raw" textAlign="Center" width="100%" />
+                            <Label text="Total" textAlign="Center" width="100%" />
+                        </table:multiLabels>
+                        <table:template>
+                            <Text wrapping="false" text="{
+                                path: 'rawRecordcount',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true
+                                }
+                            }" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column id="monitoring-multiheader-recordcount-std" width="7rem" headerSpan="{=[0,2,1]}" hAlign="Right">
+                        <table:multiLabels>
+                            <Label text="Records" />
+                            <Label text="Standardization" textAlign="Center" width="100%" />
+                            <Label text="Succeded" textAlign="Center" width="100%" />
+                        </table:multiLabels>
+                        <table:template>
+                            <Text wrapping="false" text="{
+                                path: 'std_records_succeeded',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true
+                                }
+                            }" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column width="5rem" hAlign="Right">
+                        <table:multiLabels>
+                            <Label text="Records" />
+                            <Label text="Standardization" />
+                            <Label text="Failed" textAlign="Center" width="100%" />
+                        </table:multiLabels>
+                        <table:template>
+                            <Text wrapping="false" text="{
+                                path: 'std_records_failed',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true
+                                }
+                            }" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column id="monitoring-multiheader-recordcount-cnfrm" width="7rem" headerSpan="{=[0,2,1]}" hAlign="Right">
+                        <table:multiLabels>
+                            <Label text="Records" />
+                            <Label text="Conformance" textAlign="Center" width="100%" />
+                            <Label text="Succeded" textAlign="Center" width="100%" />
+                        </table:multiLabels>
+                        <table:template>
+                            <Text wrapping="false" text="{
+                                path: 'conform_records_succeeded',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true
+                                }
+                            }" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column width="5rem" hAlign="Right">
+                        <table:multiLabels>
+                            <Label text="Records" />
+                            <Label text="Conformance" />
+                            <Label text="Failed" textAlign="Center" width="100%" />
+                        </table:multiLabels>
+                        <table:template>
+                            <Text wrapping="false" text="{
+                                path: 'conform_records_failed',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true
+                                }
+                            }" />
+                        </table:template>
+                    </table:Column>
+                </table:columns>
+                <table:rowActionTemplate>
+                    <table:RowAction>
+                        <table:RowActionItem press="monitoringToRun"	type="Navigation" icon="sap-icon://detail-view" />
+                    </table:RowAction>
+                </table:rowActionTemplate>
+            </table:Table>
+        </Panel>
 </core:FragmentDefinition>

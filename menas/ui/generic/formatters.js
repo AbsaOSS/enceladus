@@ -17,14 +17,24 @@ jQuery.sap.require("sap.ui.core.format.DateFormat");
 jQuery.sap.require("sap.ui.core.Locale");
 
 var Formatters = new function() {
-  
+
   this.oozieCoordinatorStatusFormatter = function(sStatus) {
     if(!sStatus) {
       return sap.ui.core.ValueState.None;
     } else if(sStatus === "RUNNING") {
       return sap.ui.core.ValueState.Success;
     } else return sap.ui.core.ValueState.Error;
-  }
+  };
+
+   let defaultDateFormat = sap.ui.core.format.DateFormat.getDateTimeInstance({
+    style : "short"
+  }, new sap.ui.core.Locale("en_GB"));
+
+  this.dateShortFormatter = function(oDate) {
+    if (!oDate)
+      return "";
+    return defaultDateFormat.format(oDate)
+  };
 
   this.nonNullArrFormatter = function(aArr) {
     if(!aArr) return [];
@@ -35,19 +45,16 @@ var Formatters = new function() {
     if (!sDate)
       return "";
     var oDate = new Date(sDate);
-    var oFormat = sap.ui.core.format.DateFormat.getDateTimeInstance({
-      style : "short"
-    }, new sap.ui.core.Locale("en_GB"))
-    return oFormat.format(oDate)
-  }
+    return defaultDateFormat.format(oDate)
+  };
 
   this.not = function(bSth) {
     return !bSth;
-  }
+  };
 
   this.nonEmptyObject = function(oObj) {
     return (oObj !== null) && (typeof (oObj) !== "undefined") && (Object.keys(oObj).length !== 0)
-  }
+  };
 
   this.objToKVArray = function(oObj) {
     if(oObj === null || typeof(oObj) === "undefined") return []
@@ -61,15 +68,39 @@ var Formatters = new function() {
       }
       return res;
     }
-  }
+  };
 
 
-  this._oFormatYyyymmdd = sap.ui.core.format.DateFormat.getInstance({
-    pattern: "yyyy-MM-dd",
+  this.infoDatePattern = "yyyy-MM-dd";
+
+  this.infoDateFormat = sap.ui.core.format.DateFormat.getInstance({
+    pattern: this.infoDatePattern,
     calendarType: sap.ui.core.CalendarType.Gregorian
   });
 
-  this.toStringInfoDate = function(oDate) {
-    return this._oFormatYyyymmdd.format(oDate);
+  this.infoDateToString = function (oDate) {
+    if (!oDate)
+      return "";
+    return this.infoDateFormat.format(oDate)
   }
+
+  this.toStringInfoDate = function(oDate) {
+    return this.infoDateFormat.format(oDate);
+  };
+
+  this.statusToPrettyString = function(sStatus) {
+    switch(sStatus) {
+      case "failed" :
+        return "Failed";
+      case "running" :
+        return "Running";
+      case "stageSucceeded" :
+        return "Stage Succeeded";
+      case "allSucceeded" :
+        return "All Succeeded";
+      default:
+        return sStatus
+    }
+  };
+
 }();
