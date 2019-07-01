@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2018 ABSA Group Limited
+  ~ Copyright 2018-2019 ABSA Group Limited
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -14,16 +14,18 @@
   -->
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
-	<Dialog id="addSchemaDialog" title="New Schema" stretchOnPhone="true">
-		<content>
-			<VBox>
-				<Input id="newSchemaName" type="text" placeholder="Schema name*" width="100%" value="{/newSchema/name}"></Input>
-				<Input id="newSchemaDescription" type="text" placeholder="Description" width="100%" value="{/newSchema/description}"></Input>
-			</VBox>
-		</content>
-		<buttons>
-			<Button id="newSchemaAddButton" text="Add" icon="sap-icon://accept"></Button>
-			<Button id="newSchemaCancelButton" text="Cancel" icon="sap-icon://cancel"></Button>
-		</buttons>
-	</Dialog>
+    <Dialog id="addSchemaDialog" title="{entity>/title} Schema" stretchOnPhone="true">
+        <content>
+            <VBox>
+                <Input id="newSchemaName" type="Text" placeholder="Schema name*" width="100%" value="{entity>/name}"
+                       enabled="{path:'entity>/isEdit', formatter:'Formatters.not'}"/>
+                <Input id="newSchemaDescription" type="Text" placeholder="Description" width="100%"
+                       value="{entity>/description}"/>
+            </VBox>
+        </content>
+        <buttons>
+            <Button id="newSchemaAddButton" text="Save" icon="sap-icon://accept"/>
+            <Button id="newSchemaCancelButton" text="Cancel" icon="sap-icon://cancel"/>
+        </buttons>
+    </Dialog>
 </core:FragmentDefinition>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,4 +23,5 @@ trait EnceladusDAO {
   def getDataset(name: String, version: Int) : Dataset
   def getMappingTable(name: String, version: Int): MappingTable
   def getSchema(name: String, version: Int): StructType
+  def getSchemaAttachment(name: String, version: Int): String
 }

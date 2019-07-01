@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 package za.co.absa.enceladus.utils.types
 
 import java.sql.{Date, Timestamp}
+import java.util.TimeZone
 
 import org.apache.spark.sql.types.{DateType, Metadata, StructField, TimestampType}
 import org.scalatest.FunSuite
 
 class DefaultsSuite extends FunSuite {
+  TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
   test("Timestamp with default value and pattern - should parse the given default based on the pattern and return a Timestamp with it.") {
     val timestamp = Defaults.getDefaultValue(StructField("timestamp", TimestampType, metadata = Metadata.fromJson("""{"default": "20250101.142626", "pattern": "yyyyMMdd.HHmmss"}""")))

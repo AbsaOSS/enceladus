@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ case class SchemaField
   path: String,  // path up to this field
   
   // These fields are optional when the type of the field is "array".
-  elementType: Option[String],
-  containsNull: Option[Boolean],
+  elementType: Option[String] = None,
+  containsNull: Option[Boolean] = None,
 
   nullable: Boolean,
   metadata: Map[String, String],

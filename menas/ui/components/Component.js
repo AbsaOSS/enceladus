@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,67 +13,106 @@
  * limitations under the License.
  */
 
-sap.ui.define( ["sap/ui/core/UIComponent"], function (UIComponent) {
-	"use strict";
-	return UIComponent.extend("navigation", {
+sap.ui.define([
+  "sap/ui/core/UIComponent"
+  ],
+  function (UIComponent) {
+    "use strict";
 
-		metadata: {
-			rootView: "components.app",
-			routing: {
-				config: {
-					routerClass: "sap.m.routing.Router",
-					viewPath: "",
-					controlId: "menasApp",
-					controlAggregation: "detailPages",
-					viewType: "XML",
-				},
-				routes: [
-					{
-						name: "root",
-						// empty hash - normally the start page
-						pattern: "",
-						target: ""
-					},
-					{
-						name: "schemas",
-						pattern: "schema/:id:/:version:", //here id and version are optional
-						target: "schemas"
-					},
-					{
-						name: "datasets",
-						pattern: "dataset/:id:/:version:",
-						target: "dataset"
-					},
-					{
-						name: "mappingTables",
-						pattern: "mapping/:id:/:version:",
-						target: "mappingTable"
-					}
-				],
-				targets: {
-					schemas: {
-						viewName: "components.schema.schemaMain",
-						viewLevel: 0,
-						viewId: "schemaMainView"
-					},
-					dataset: {
-						viewName: "components.dataset.datasetMain",
-						viewLevel: 0
-					},
-					mappingTable: {
-						viewName: "components.mappingTable.mappingTableMain",
-						viewLevel: 0
-					}
-				}
-			}
-		},
+    return UIComponent.extend("navigation", {
+      metadata: {
+        rootView : {
+          viewName: "components.app",
+          id: "rootView",
+          type: "XML"
+        },
+        routing: {
+          config: {
+            routerClass: "sap.m.routing.Router",
+            viewPath: "",
+            controlId: "menasApp",
+            controlAggregation: "detailPages",
+            viewType: "XML"
+          },
+          routes: [
+            {
+              name: "root",
+              // empty hash - normally the start page
+              pattern: "",
+              target: ""
+            },
+            {
+              name: "home",
+              pattern: "home",
+              target: "home"
+            },
+            {
+              name: "login",
+              pattern: "login",
+              target: "login"
+            },
+            {
+              name: "runs",
+              pattern: "runs/:dataset:/:version:/:id:",
+              target: "runs"
+            },
+            {
+              name: "schemas",
+              pattern: "schema/:id:/:version:", // here id and version are optional
+              target: "schemas"
+            },
+            {
+              name: "datasets",
+              pattern: "dataset/:id:/:version:",
+              target: "dataset"
+            },
+            {
+              name: "mappingTables",
+              pattern: "mapping/:id:/:version:",
+              target: "mappingTable"
+            }
+          ],
+          targets: {
+            login: {
+              viewName: "components.login.loginDetail",
+              viewLevel: 0,
+              viewId: "loginDetailView"
+            },
+            home: {
+              viewName: "components.home.landingPage",
+              viewLevel: 1,
+              viewId: "landingPage"              
+            },
+            runs: {
+              viewName: "components.run.runDetail",
+              viewLevel: 1,
+              viewId: "runDetailView"
+            },
+            schemas: {
+              viewName: "components.schema.schemaDetail",
+              viewLevel: 1,
+              viewId: "schemaDetailView"
+            },
+            dataset: {
+              viewName: "components.dataset.datasetDetail",
+              viewLevel: 1,
+              viewId: "datasetDetailView"
+            },
+            mappingTable: {
+              viewName: "components.mappingTable.mappingTableDetail",
+              viewLevel: 1,
+              viewId: "mappingTableDetailView"
+            }
+          }
+        }
+      },
 
-		init : function () {
-			UIComponent.prototype.init.apply(this, arguments);
+      init: function () {
+        UIComponent.prototype.init.apply(this, arguments);
 
-			// Parse the current url and display the targets of the route that matches the hash
-			this.getRouter().initialize();
-		},
-		busyIndicatorDelay: 0
-	});
-}, /* bExport= */ true);
+        // Parse the current url and display the targets of the route that matches the hash
+        this.getRouter().initialize();
+      },
+      busyIndicatorDelay: 0
+    });
+  }, /* bExport= */ true);

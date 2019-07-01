@@ -1,0 +1,83 @@
+<!--
+  ~ Copyright 2018-2019 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+  
+<workflow-app name="$stdAppName" xmlns="uri:oozie:workflow:0.4">
+    <parameters>
+        <property>
+            <name>oozie.action.sharelib.for.spark</name>
+            <value>$sharelibForSpark</value>
+        </property>
+    </parameters>
+    <start to="standardization" />
+    <kill name="Kill">
+        <message>Action failed</message>
+    </kill>
+    <action name="standardization">
+        <spark xmlns="uri:oozie:spark-action:0.2">
+            <job-tracker>$jobTracker</job-tracker>
+            <name-node>$nameNode</name-node>
+            <master>yarn</master>
+            <mode>cluster</mode>
+            <name>$stdAppName</name>
+            <class>za.co.absa.enceladus.standardization.StandardizationJob</class>
+            <jar>$stdJarPath</jar>
+            <spark-opts>
+                --num-executors $stdNumExecutors 
+                --executor-memory $stdExecutorMemory 
+                --driver-cores $driverCores
+                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties'$sparkConfQuotes
+            </spark-opts>
+            <arg>-D</arg>
+            <arg>$datasetName</arg>
+            <arg>-d</arg>
+            <arg>$datasetVersion</arg>
+            <arg>-R</arg>
+            <arg>${reportDate}</arg>
+            <arg>-f</arg>
+            <arg>$dataFormat</arg>
+            $menasKeytabFile
+            $otherDFArguments
+        </spark>
+        <ok to="conformance" />
+        <error to="Kill" />
+    </action>
+    <action name="conformance">
+        <spark xmlns="uri:oozie:spark-action:0.2">
+            <job-tracker>$jobTracker</job-tracker>
+            <name-node>$nameNode</name-node>
+            <master>yarn</master>
+            <mode>cluster</mode>
+            <name>$confAppName</name>
+            <class>za.co.absa.enceladus.conformance.DynamicConformanceJob</class>
+            <jar>$confJarPath</jar>
+            <spark-opts>
+                --num-executors $confNumExecutors 
+                --executor-memory $confExecutorMemory 
+                --driver-cores $driverCores
+                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties' -Dconformance.mappingtable.pattern='$mappingTablePattern'$sparkConfQuotes
+            </spark-opts>
+            <arg>-D</arg>
+            <arg>$datasetName</arg>
+            <arg>-d</arg>
+            <arg>$datasetVersion</arg>
+            <arg>-R</arg>
+            <arg>${reportDate}</arg>
+            $menasKeytabFile
+        </spark>
+        <ok to="End" />
+        <error to="Kill" />
+    </action>
+    <end name="End" />
+</workflow-app>

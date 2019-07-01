@@ -1,0 +1,48 @@
+<!--
+  ~ Copyright 2018-2019 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<core:View id="mappingTablesMasterView" xmlns:core="sap.ui.core" xmlns="sap.m"
+           controllerName="components.mappingTable.mappingTableMaster"
+           xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+    <Page id="masterPage" title="Mapping Tables" showNavButton="true" navButtonPress="onPressMasterBack">
+        <content>
+            <SearchField id="mappingTableSearchField" placeholder="Search..." enableSuggestions="true" search="onSearch"
+                suggest="onSuggest" suggestionItems="{path: '/mappingTableSearchSuggestions', sorter: { path: 'name' }}">
+                <suggestionItems>
+                    <SuggestionItem text="{name}"/>
+                </suggestionItems>
+            </SearchField>
+            <List items="{mappingTables>/}"
+                  mode="SingleSelectMaster"
+                  selectionChange="mappingTableSelected"
+                  growing="true"
+                  noDataText="No Mapping Tables">
+                <StandardListItem title="{mappingTables>_id}"
+                                  description="latest version: {mappingTables>latestVersion}"
+                                  cust:id="{mappingTables>_id}"
+                                  type="Active"/>
+            </List>
+        </content>
+        <footer>
+            <Bar>
+                <contentRight>
+                    <Button id="Add"
+                            text="New Mapping Table"
+                            icon="sap-icon://add"
+                            press="onAddPress"/>
+                </contentRight>
+            </Bar>
+        </footer>
+    </Page>
+</core:View>

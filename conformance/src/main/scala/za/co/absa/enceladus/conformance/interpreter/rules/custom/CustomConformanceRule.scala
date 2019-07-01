@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules.custom
 
-import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
+import za.co.absa.enceladus.model.conformanceRule.ExtensibleConformanceRule
 
-trait CustomConformanceRule extends ConformanceRule {
+trait CustomConformanceRule extends ExtensibleConformanceRule {
+
   def getInterpreter(): RuleInterpreter
 }

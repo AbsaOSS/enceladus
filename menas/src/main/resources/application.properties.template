@@ -15,21 +15,89 @@
 
 # Set the file size limit (default 1Mb). If you want to specify that files be
 # unlimited set the multipart.maxFileSize property to -1.
-multipart.maxFileSize = 16Mb
+multipart.maxFileSize=16Mb
 
 # Set the total request size for a multipart/form-data (default 10Mb)
-multipart.maxRequestSize = 16Mb
+multipart.maxRequestSize=16Mb
 
-za.co.absa.enceladus.menas.auth.ad.domain = ad.domain.com
-za.co.absa.enceladus.menas.auth.ad.server = ldap://ad.domain.com
-za.co.absa.enceladus.menas.auth.sysuser.principal = sysuser@ad.domain.com
-za.co.absa.enceladus.menas.auth.sysuser.keytab.location = /path/to/sysuser.keytab
-za.co.absa.enceladus.menas.auth.ldap.search.base = DC=AD,DC=DOMAIN,DC=com
-za.co.absa.enceladus.menas.auth.ldap.search.filter = (&(samAccountName={0}))
+# Number of seconds to cache the static resources for
+spring.resources.cache.cachecontrol.max-age=2678000
 
-za.co.absa.enceladus.menas.mongo.connection.string = mongodb://localhost:27017
-za.co.absa.enceladus.menas.mongo.connection.database = menas
+# How will users authenticate to menas. Available options: inmemory, kerberos
+za.co.absa.enceladus.menas.auth.mechanism = inmemory
+
+#za.co.absa.enceladus.menas.auth.kerberos.debug=false
+#za.co.absa.enceladus.menas.auth.kerberos.krb5conf=/etc/krb5.conf
+#za.co.absa.enceladus.menas.auth.ad.domain=ad.domain.com
+#za.co.absa.enceladus.menas.auth.ad.server=ldap://ad.domain.com
+#za.co.absa.enceladus.menas.auth.servicename.principal=HTTP/host@AD.DOMAIN.COM
+#za.co.absa.enceladus.menas.auth.servicename.keytab.location=/path/to/sysuser.keytab
+#za.co.absa.enceladus.menas.auth.ldap.search.base=DC=AD,DC=DOMAIN,DC=com
+#za.co.absa.enceladus.menas.auth.ldap.search.filter=(&(objectClass=top)(sAMAccountName={0}))
+
+za.co.absa.enceladus.menas.auth.inmemory.user=user
+za.co.absa.enceladus.menas.auth.inmemory.password=changeme
+
+# Define how menas authenticates to Hadoop. Supported options are:
+#  "default" -> will use the default authentication or kerberos ticket from the system
+#  "simple" -> will use authentication by a user name
+#  "krb5" -> menas will use specified kerberos configurations to authenticate via kerberos using specified username & keytab
+za.co.absa.enceladus.menas.hadoop.auth.method=default
+za.co.absa.enceladus.menas.hadoop.auth.user=hdfs
+za.co.absa.enceladus.menas.hadoop.auth.krb5.debug=true
+za.co.absa.enceladus.menas.hadoop.auth.krb5.realm=EXAMPLE.COM
+za.co.absa.enceladus.menas.hadoop.auth.krb5.kdc=localhost
+za.co.absa.enceladus.menas.hadoop.auth.krb5.username=hdfs@EXAMPLE.COM
+za.co.absa.enceladus.menas.hadoop.auth.krb5.keytab=hdfs.keytab
+
+za.co.absa.enceladus.menas.mongo.connection.string=mongodb://localhost:27017
+za.co.absa.enceladus.menas.mongo.connection.database=menas
+
+# Timeout (in seconds) for MongoDB migration queries
+za.co.absa.enceladus.migration.mongo.query.timeout.seconds=300
 
 za.co.absa.enceladus.menas.version=@project.version@
 
-za.co.absa.enceladus.migrations.dump.filepath = /path/to/backups/menas
+za.co.absa.enceladus.migrations.dump.filepath=/path/to/backups/menas
+
+za.co.absa.enceladus.menas.spark.master=local[1]
+
+za.co.absa.enceladus.spline.urlTemplate=http://localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s
+
+#system-wide time zone
+timezone="UTC"
+
+#---------- Monitoring
+# Limit on the number of documents to be fetch in a single mongodb query and shown in UI
+za.co.absa.enceladus.menas.monitoring.fetch.limit=500
+
+#--------Oozie
+#za.co.absa.enceladus.menas.oozie.oozieUrl=http://localhost:11000/oozie/
+
+#Path where oozie coordinators and workflows are stored on HDFS
+#za.co.absa.enceladus.menas.oozie.schedule.hdfs.path=/tmp
+#za.co.absa.enceladus.menas.oozie.timeZone=Africa/Ceuta
+
+#This is passed into oozie.action.sharelib.for.spark
+#This ensures that schedules are run with correct version of spark without updating oozie sharelibs globally
+za.co.absa.enceladus.menas.oozie.sharelibForSpark=spark-menas
+
+#Enceladus jars are going to be loaded into this location
+za.co.absa.enceladus.menas.oozie.enceladusJarLocation=hdfs:///tmp/enceladus-jars
+
+#Maven repo from which to resolve enceladus jars.. Can be local repo, maven central, nexus
+za.co.absa.enceladus.menas.oozie.mavenRepoLocation=https://repo.maven.apache.org/maven2/
+
+#standardization and conformance path in the repo
+za.co.absa.enceladus.menas.oozie.mavenStandardizationJarLocation=/za/co/absa/enceladus-standardization/@project.version@/enceladus-standardization-@project.version@.jar
+za.co.absa.enceladus.menas.oozie.mavenConformanceJarLocation=/za/co/absa/enceladus-conformance/@project.version@/enceladus-conformance-@project.version@.jar
+
+#Menas URL for submitted std and conf jobs
+za.co.absa.enceladus.menas.oozie.menasApiURL=http://menasHostname:8080/menas/api
+
+#Mongo address for spline for the submitted jobs
+za.co.absa.enceladus.menas.oozie.splineMongoURL=mongodb://localhost:27017
+
+#In some cases extra driver options need to be surrounded by double quotes
+#This seems to depend of the version of oozie
+#za.co.absa.enceladus.menas.oozie.sparkConf.surroundingQuoteChar="

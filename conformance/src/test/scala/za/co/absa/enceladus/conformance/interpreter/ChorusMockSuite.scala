@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ case class MyDataConfd(id: Int, toJoin: Int, confMapping: MyMappingTableInner)
 
 class ChorusMockSuite extends FunSuite with SparkTestBase {
 
-  test("") {
+  def testChorusMockData(useExperimentalMappingRule: Boolean): Unit = {
     val d = Seq(
       MyData(0, 0),
       MyData(1, 1), MyData(2, 2))
@@ -44,15 +44,16 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
     val inputDf = spark.createDataFrame(d)
     val mappingDf = spark.createDataFrame(mapping)
 
-    implicit val progArgs = CmdConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
-    implicit val dao = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here (if not working with menas)
-    implicit val enableCF = false
+    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
+    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here (if not working with menas)
+    val enableCF = false
+    val isCatalystWorkaroundEnabled = true
 
     mockWhen(dao.getMappingTable("myMappingTable", 0)) thenReturn MappingTable(name = "myMappingTable", version = 0, hdfsPath = "myMappingTable", schemaName = "whatev", schemaVersion = 0, defaultMappingValue = List())
 
     DataSource.setData("myMappingTable", mappingDf)
 
-    val conformanceDef = new ConfDataset(
+    val conformanceDef = ConfDataset(
       name = "My dummy conformance workflow", // whatev here
       version = 0, // whatev here
       hdfsPath = "/a/b/c",
@@ -65,7 +66,12 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
         MappingConformanceRule(order = 1, controlCheckpoint = false, mappingTable = "myMappingTable", mappingTableVersion = 0,
           attributeMappings = Map("id" -> "toJoin"), targetAttribute = "mappedAttr", outputColumn = "confMapping")))
 
-    val confd = DynamicInterpreter.interpret(conformanceDef, inputDf).repartition(2)
+    val confd = DynamicInterpreter.interpret(conformanceDef,
+      inputDf,
+      useExperimentalMappingRule,
+      isCatalystWorkaroundEnabled,
+      enableControlFramework = enableCF)
+      .repartition(2)
 
     confd.show(100, false)
     confd.printSchema()
@@ -76,5 +82,13 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
 
     assert(readAgain.show.isInstanceOf[Unit])
     assert(readAgain.count === 3)
+  }
+
+  test("Test conformance of Chorus mock data") {
+    testChorusMockData(useExperimentalMappingRule = false)
+  }
+
+  test("Test conformance of Chorus mock data (experimental optimized mapping rule)") {
+    testChorusMockData(useExperimentalMappingRule = true)
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,94 +14,118 @@
  */
 
 jQuery.sap.require("sap.m.MessageBox");
-var GenericService = new function() {
+var GenericService = new function () {
 
-    var model = sap.ui.getCore().getModel();
+  let model = sap.ui.getCore().getModel();
 
-    this.getUserInfo = function() {
-	Functions.ajax("api/user/info", "GET", {}, function(oInfo) {
-	    model.setProperty("/userInfo", oInfo)
-	})
+  let eventBus = sap.ui.getCore().getEventBus();
+  const restClient = new RestClient();
+  
+  this.getUserInfo = function () {
+    let fnSuccess = (oInfo) => {
+      model.setProperty("/userInfo", oInfo)
     };
 
-    this.logout = function() {
-	Functions.ajax("logout", "POST", {}, function() {
-	    // this is dummy, spring does a redirect
-	}, function() {
-	    window.location.href = "./"
-	})
-    };
+    $.ajax("api/user/info", {
+      method: "GET",
+      success: fnSuccess,
+      async: false 
+    })
+  };
 
-    this.hdfsList = function(sPath, sModelPath, oControl, fnSuccCallback) {
-	Functions.ajax("api/hdfs/list", "POST", sPath, function(oData) {
-	    var tmp = oData;
-	    if (sPath === "/") {
-		tmp = [ tmp ]; // root should be wrapped.. it expects a list of items
-		tmp[0].name = "/";
-	    }
-	    model.setProperty(sModelPath, tmp)
-	    if (typeof (fnSuccCallback) !== "undefined")
-		fnSuccCallback();
-	}, function(jqXHR, textStatus, errorThrown) {
-	    sap.m.MessageBox.error("Failed to retreive the HDFS folder contents for " + sPath + ", please try again later.")
-	    console.log(errorThrown)
-	}, oControl)
-    };
+  this.runStatusFormatter = function(sStatus) {
+    switch(sStatus) {
+      case "failed":                  return "Failed";
+      case "successful":              return "Successful";
+      case "successfulWithErrors":    return "Successful with errors";
+      case "running":                 return "Running";
+      case "stdSuccessful":           return "Standardization successful";
+      default:                        return sStatus;
+    }
+  };
 
-    this.treeNavigateTo = function(sPath, sModelAcc, sHdfsSelector, that) {
-        var paths = sPath.split("/")
-        var fnHelper = function(sPathAcc, sModelAcc, aPathToks) {
+  this.runStatusColorFormatter = function(sStatus) {
+    switch(sStatus) {
+      case "failed":                  return "rgb(153, 0, 0)";
+      case "successful":              return "rgb(0, 204, 0)";
+      case "successfulWithErrors":    return "rgb(255, 255, 102)";
+      case "running":                 return "rgb(153, 255, 153)";
+      case "stdSuccessful":           return "rgb(255, 204, 102)";
+      default:                        return "rgb(0,0,0)";
+    }
+  };
 
-            if (aPathToks.length === 0) {
-                return;
-            }
+  this.getLandingPageInfo = function() {
+    RestClient.get("api/landing/info").then((oData) => {
+      model.setProperty("/landingPageInfo", oData);
+      const graphData = jQuery.extend({}, oData.todaysRunsStatistics);
+      delete graphData["total"];
+      const keys = Object.keys(graphData).map(this.runStatusFormatter);
+      const vals = Object.values(graphData);
+      const colors = Object.keys(graphData).map(this.runStatusColorFormatter);
+      const graph = {
+          "datasets": [{
+            "data" : vals,
+            "backgroundColor": colors
+          }],
+          "labels": keys
+      };
+      model.setProperty("/landingPageInfo/todayRunsGraph", graph);
+    }).fail(() => {
+      sap.m.MessageBox.error("Failed to load landing page information");
+    })
+  };
 
-            var rev = aPathToks.reverse() // we will be popping off the end
-            var tok = rev.pop()
-            var sNewPath = sPathAcc + "/" + tok
-            var sModelPath = sModelAcc
+  this.getOozieInfo = function() {
+    Functions.ajax("api/oozie/isEnabled", "GET", {}, oData => {
+      model.setProperty("/appInfo/oozie/isEnabled", oData);
+    });    
+  };
 
-            if (sPathAcc === "") {
-                sNewPath = tok;
-            } else if (sPathAcc === "/") {
-                sNewPath = sPathAcc + tok;
-                sModelPath += "/0"; // the service wraps the root in an array
-            }
+  this.clearSession = function (sLogoutMessage) {
+    model.setProperty("/userInfo", {});
+    localStorage.clear();
+    eventBus.publish("nav", "logout");
+    if (sLogoutMessage) {
+      sap.m.MessageToast.show(sLogoutMessage, {
+        duration: 15000
+      })
+    }
+  };
 
-            if (sNewPath !== "/") {
-                oCurr = sap.ui.getCore().getModel().getProperty(sModelPath)
-                for ( var i in oCurr.children) {
-                    if (oCurr.children[i].name === tok) {
-                        sModelPath += "/children/" + i;
-                        break;
-                    }
-                }
-            }
+  this.logout = function (sLogoutMessage) {
+    RestClient.post("api/logout", {}).always(() => {
+      this.clearSession(sLogoutMessage);
+    })
+  };
 
-            // TODO: figure out why bind doesn't work on the handler - use
-            // `that` trick for busy state for now
-            GenericService.hdfsList(sNewPath, sModelPath, that._addDialog, function() {
-                // expand to right level
-                var control = sap.ui.getCore().byId(sHdfsSelector);
-                var items = control.getItems();
-                for ( var i in items) {
-                    var bindingPath = items[i].getBindingContext().getPath();
-                    var hdfsPath = that._model.getProperty(bindingPath).path
-                    if (hdfsPath === sNewPath) {
-                        control.expand(parseInt(i))
-                    }
-                    if (hdfsPath === sPath) {
-                        items[i].setSelected(true);
-                    }
-                }
+  this.isEmpty = function (str) {
+    return !str;
+  };
 
-                fnHelper(sNewPath, sModelPath, rev.reverse());
-            })
-        }
+  this.hasWhitespace = function (str) {
+    return /\W/.test(str);
+  };
 
-        if (paths[0] === "")
-            paths[0] = "/"
+  this.isValidColumnName = function (str) {
+    return /^[a-zA-Z0-9._]+$/.test(str);
+  };
 
-        fnHelper("", sModelAcc, paths)
-    };
+  this.isValidFlatColumnName = function (str) {
+    return /^[a-zA-Z0-9_]+$/.test(str);
+  };
+
+  this.isValidEntityName = function (sName) {
+    return sName && sName !== "" && !this.hasWhitespace(sName);
+  };
+
+  this.isNameUnique = function(sName, oModel, sEntityType) {
+    oModel.setProperty("/nameUsed", undefined);
+    Functions.ajax("api/" + sEntityType + "/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
+      oModel.setProperty("/nameUnique", oData)
+    }, function() {
+      sap.m.MessageBox.error("Failed to retrieve isUniqueName. Please try again later.")
+    })
+  };
+
 }();

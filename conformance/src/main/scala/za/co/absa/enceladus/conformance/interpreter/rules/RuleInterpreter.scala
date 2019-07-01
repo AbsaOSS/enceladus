@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ trait RuleInterpreter {
    *
    *  @param targetColumn The column which is to be conformed and needs to be transformed
    *  @param df The original (intermediate) dataset
-   * 	@param fn The transformer taking flattened dataset and returning a transformed dataset
+   *  @param fn The transformer taking flattened dataset and returning a transformed dataset
    *  @return Dataset, which has been transformed, supporting nested arrays and preserving the original array elements order
    */
   def handleArrays(targetColumn: String, df: Dataset[Row])(fn: Dataset[Row] => Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = ArrayTransformations.handleArrays(targetColumn, df)(fn)

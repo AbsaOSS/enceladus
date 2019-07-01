@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.model
 
 import za.co.absa.atum.model.{ControlMeasure, RunStatus}
+import com.typesafe.config.{Config, ConfigFactory}
 
 case class Run
 (
@@ -27,4 +28,28 @@ case class Run
   startDateTime: String,
   runStatus: RunStatus,
   controlMeasure: ControlMeasure
-)
+) {
+  val splineUrl: String = Run.splineUrl(splineRef)
+}
+
+
+object Run {
+  private val splineUrlTemplate: String = getConf("za.co.absa.enceladus.spline.urlTemplate", "")
+
+  private def getConf(path: String, default: String): String = {
+    val config: Config = ConfigFactory.load()
+    if (config.hasPath(path)) {
+      config.getString(path)
+    } else {
+      default
+    }
+  }
+
+  def splineUrl(splineReference: SplineReference): String = {
+    if (splineUrlTemplate.nonEmpty) {
+      String.format(Run.splineUrlTemplate, splineReference.outputPath, splineReference.sparkApplicationId)
+    } else {
+      ""
+    }
+  }
+}

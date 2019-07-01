@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,58 +15,61 @@
 
 package za.co.absa.enceladus.utils.validation.field
 
-import org.apache.spark.sql.types.StructField
+import java.util.Date
+
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{StructField, TimestampType}
+import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser}
+import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.utils.validation._
 
-import scala.collection.mutable.ListBuffer
+object FieldValidatorTimestamp extends FieldValidatorDateTime {
+  import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
 
-class FieldValidatorTimestamp extends FieldValidator {
-  override def validateStructField(field: StructField): Seq[ValidationIssue] = {
-    val issues = new ListBuffer[ValidationIssue]
-    if (field.metadata contains "pattern") {
-      val pattern = field.metadata.getString("pattern")
-      val default = if (field.metadata contains "default") Some(field.metadata.getString("default")) else None
-      val patternError = DateTimeValidators.isDateTimePatternValid(pattern, default)
-      if (patternError.nonEmpty) {
-        issues += patternError.get
-      }
-      else {
-        val logicalErrors = isTimestampPatternGood(pattern)
-        issues ++= logicalErrors
-      }
+  override protected def patternAnalysisIssues(pattern: DateTimePattern,
+                                               defaultValue: Option[String],
+                                               defaultTimeZone: Option[String]): Seq[ValidationIssue] = {
+
+    val doubleTimeZoneIssue: Seq[ValidationIssue] = if (pattern.timeZoneInPattern && defaultTimeZone.nonEmpty) {
+      Seq(ValidationWarning(
+        "Pattern includes time zone placeholder and default time zone is also defined (will never be used)"
+      ))
+    } else {
+      Nil
     }
-    issues
+
+    val patternIssues: Seq[ValidationIssue] = if (!pattern.isEpoch) {
+      val placeholders = Set('y', 'M', 'd', 'H', 'm', 's', 'D', 'K', 'h', 'a', 'k')
+      val patternChars = pattern.pattern.countUnquoted(placeholders, Set('''))
+      patternChars.foldLeft(List.empty[ValidationIssue]) {(acc, item) => item match {
+        case ('y', 0) => ValidationWarning("No year placeholder 'yyyy' found.")::acc
+        case ('M', 0) => ValidationWarning("No month placeholder 'MM' found.")::acc
+        case ('d', 0) => ValidationWarning("No day placeholder 'dd' found.")::acc
+        case ('H', 0) if patternChars('k') + patternChars('K') + patternChars('h') == 0 =>
+          ValidationWarning("No hour placeholder 'HH' found.")::acc
+        case ('m', 0) => ValidationWarning("No minute placeholder 'mm' found.")::acc
+        case ('s', 0) => ValidationWarning("No second placeholder 'ss' found.")::acc
+        case ('D', x) if x > 0 && patternChars('d') == 0 =>
+          ValidationWarning("Rarely used DayOfYear placeholder 'D' found. Possibly DayOfMonth 'd' intended.")::acc
+        case ('h', x) if x > 0 && patternChars('a') == 0 =>
+          ValidationWarning(
+            "Placeholder for hour 1-12 'h' found, but no am/pm 'a' placeholder. Possibly 0-23 'H' intended."
+          )::acc
+        case ('K', x) if x > 0 && patternChars('a') == 0 =>
+          ValidationWarning(
+            "Placeholder for hour 0-11 'K' found, but no am/pm 'a' placeholder. Possibly 1-24 'k' intended."
+          )::acc
+        case _ => acc
+      }}
+    } else {
+      Nil
+    }
+    doubleTimeZoneIssue ++ patternIssues
   }
 
-  /**
-    * Checks if a timestamp pattern is good, i.e., no required fields are missing
-    *
-    * @param pattern A timestamp pattern
-    * @return None if no validation errors or Some(String) an error message
-    */
-  def isTimestampPatternGood(pattern: String): Seq[ValidationIssue] = {
-    if (".*[Hms].*".r.findFirstIn(pattern).isEmpty)
-      return List(ValidationError("Placeholders for hour, minute and second (H,m,s) not found. Possibly 'Date' type intended."))
-
-    val issues = new ListBuffer[ValidationIssue]
-    if (!pattern.contains('y'))
-      issues += ValidationWarning("No year placeholder 'yyyy' found.")
-    if (!pattern.contains('M'))
-      issues += ValidationWarning("No month placeholder 'MM' found.")
-    if (!pattern.contains('d'))
-      issues += ValidationWarning("No day placeholder 'dd' found.")
-
-    if (!pattern.contains('H'))
-      issues += ValidationWarning("No hour placeholder 'HH' found.")
-    if (!pattern.contains('m'))
-      issues += ValidationWarning("No minute placeholder 'mm' found.")
-    if (!pattern.contains('s'))
-      issues += ValidationWarning("No second placeholder 'ss' found.")
-
-    if (pattern.contains('D'))
-      issues += ValidationWarning("Rarely used DayOfYear placeholder 'D' found. Possibly DayOfMonth 'd' intended.")
-
-    issues.toList
+  override def verifyStringDateTime(dateTime: String)(implicit parser: EnceladusDateTimeParser): Date = {
+    parser.parseTimestamp(dateTime)
   }
 
 }

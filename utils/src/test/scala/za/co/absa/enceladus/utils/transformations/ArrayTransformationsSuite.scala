@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,13 +71,16 @@ class ArrayTransformationsSuite extends FunSuite with SparkTestBase {
 
     val t = ArrayTransformations.arrayTransform(df, "vals")({
       case (d) =>
-        d.repartition(5).withColumn("vals.a", $"vals.a" * 2).withColumn("vals.a", $"vals.a" / 2)
+        val tmpCol = d.withColumn("tmp", $"vals.a" * 2)
+        val dropped = ArrayTransformations.nestedDrop(tmpCol, "vals.a")
+        val renamed = ArrayTransformations.nestedWithColumn(dropped)("vals.a", $"tmp")
+        renamed.repartition(10)
     })
 
-    val orig = inputDataOrig.sortBy(_.id)
+    val exp = OuterStruct(-1, null) :: inputData.map({ case (x, vals) => OuterStruct(x, vals.map(v => InnerStruct(v * 2))) })
     val res = t.as[OuterStruct].collect.sortBy(_.id)
 
-    assertResult(orig)(res)
+    assertResult(exp)(res)
   }
 
   test("Testing nested arrays") {

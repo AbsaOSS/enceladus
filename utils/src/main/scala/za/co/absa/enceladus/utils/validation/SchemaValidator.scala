@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,12 +53,12 @@ object SchemaValidator {
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
   private def validateColumnName(columnName: String, structPath: String = "") : Seq[ValidationIssue] = {
-    val structMsg = if (structPath.isEmpty) "" else s" of the struct '$structPath'"
     if (columnName contains '.') {
+      val structMsg = if (structPath.isEmpty) "" else s" of the struct '$structPath'"
       Seq(ValidationError(s"Column name '$columnName'$structMsg contains an illegal character: '.'"))
-    }
-    else
+    } else {
       Nil
+    }
   }
 
   /**

@@ -1,0 +1,75 @@
+<!--
+  ~ Copyright 2018-2019 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<core:View id="datasetDetailView" xmlns:core="sap.ui.core" xmlns="sap.m"
+           xmlns:form="sap.ui.layout.form" xmlns:table="sap.ui.table"
+           controllerName="components.dataset.datasetDetail"
+           xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+    <Page title="Datasets" enableScrolling="true">
+        <customHeader>
+            <Bar>
+                <contentMiddle>
+                    <Title text="Dataset: {/currentDataset/name} (v{/currentDataset/version})" />
+                </contentMiddle>
+                <contentRight>
+                    <core:Fragment type="XML" fragmentName="components.userInfo" />
+                </contentRight>
+            </Bar>
+        </customHeader>
+        <content>
+            <IconTabBar id="datasetIconTabBar" select="tabSelect">
+                <items>
+                    <IconTabFilter id="BasicInfo" icon="sap-icon://hint" key="info" text="Basic Info">
+                        <core:Fragment type="XML" fragmentName="components.dataset.datasetInfo" />
+                    </IconTabFilter>
+                    <IconTabFilter id="Schema" icon="sap-icon://tree" key="schemaFields" text="Schema">
+                        <core:Fragment type="XML" fragmentName="components.schemaTable" />
+                    </IconTabFilter>
+                    <IconTabFilter id="ConformanceRules" icon="sap-icon://list" key="conformanceRules"
+                                   text="Conformance Rules">
+                        <List id="ConformanceRulesList"
+                              headerText="Conformance Rules"
+                              items="{
+                                        path: '/currentDataset/conformance',
+                                        factory: '.conformanceRuleFactory'
+                                      }"/>
+                    </IconTabFilter>
+                    <IconTabFilter id="Runs" icon="sap-icon://activities" key="runs" text="Runs">
+                        <core:Fragment type="XML" fragmentName="components.dataset.run.runs" />
+                    </IconTabFilter>
+                    <IconTabFilter id="auditTrail" icon="sap-icon://history" key="auditTrail" text="Audit Trail">
+                        <core:Fragment type="XML" fragmentName="components.auditTrail" />
+                    </IconTabFilter>
+                    <IconTabFilter id="schedule" icon="sap-icon://fob-watch" key="schedule" text="Scheduling" enabled="{/appInfo/oozie/isEnabled}">
+                        <core:Fragment type="XML" fragmentName="components.dataset.schedule.viewSchedule" />
+                    </IconTabFilter>
+                    <IconTabFilter id="monitoringTab" icon="sap-icon://vertical-bar-chart-2" key="monitoring" text="Monitoring">
+                        <core:Fragment type="XML" fragmentName="components.dataset.monitoring.monitoring"/>
+                    </IconTabFilter>
+                </items>
+            </IconTabBar>
+        </content>
+        <footer>
+            <Bar>
+                <contentRight>
+                    <Button id="Delete" text="Delete" icon="sap-icon://delete" press="onRemovePress" />
+                    <Button id="AddRule" text="Add Conformance Rule" icon="sap-icon://add-equipment" press="onAddConformanceRulePress"></Button>
+                    <Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress" />
+                    <Button id="editSchedule" text="Edit Schedule" icon="sap-icon://provision" press="onScheduleEditPress" enabled="{/appInfo/oozie/isEnabled}" />
+                </contentRight>
+            </Bar>
+        </footer>
+    </Page>
+</core:View>

@@ -1,0 +1,4 @@
+id,name,methodString,contentType,url,payload,expectedOutput,expectedStatusCode
+001,GenericName1,Post,json,https://httpbin.org/post,"{\"a\" : \"b\"}",{},200
+002,GenericName2,Post,json,https://httpbin.org/post,{},{},200
+003,GenericName3,Get,json,https://httpbin.org/post,{},{},201

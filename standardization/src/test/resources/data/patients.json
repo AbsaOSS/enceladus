@@ -1,0 +1,59 @@
+[
+  {
+    "first name": "Jane",
+    "last name": "Goodall",
+    "body stats": {
+      "height": 164,
+      "weight": 61,
+      "miscellaneous": {
+        "eye color": "green",
+        "glasses": true
+      },
+      "temperature measurements": [
+        36.6,
+        36.7,
+        37,
+        36.6
+      ]
+    }
+  },
+  {
+    "first name": "Scott",
+    "last name": "Lang",
+    "body stats": {
+      "height": "various",
+      "weight": 83,
+      "miscellaneous": {
+        "eye color": "blue",
+        "glasses": false
+      },
+      "temperature measurements": [
+        36.6,
+        36.7,
+        37,
+        36.6
+      ]
+    }
+  },
+  {
+    "first name": "Aldrich",
+    "last name": "Killian",
+    "body stats": {
+      "height": 181,
+      "weight": 90,
+      "miscellaneous": {
+        "eye color": "brown or orange",
+        "glasses": "not any more"
+      },
+      "temperature measurements": [
+        36.7,
+        36.5,
+        38,
+        48,
+        152,
+        831,
+        "exploded"
+      ]
+    }
+  }
+]

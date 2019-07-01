@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package za.co.absa.enceladus.utils.schema
 
 import org.scalatest.FunSuite
 import org.apache.spark.sql.types._
+import za.co.absa.enceladus.utils.schema.SchemaUtils._
 
 class SchemaUtilsSuite extends FunSuite {
+  // scalastyle:off magic.number
 
   val schema = StructType(Seq(
     StructField("a", IntegerType, false),
@@ -44,14 +46,14 @@ class SchemaUtilsSuite extends FunSuite {
 
   test("Testing getFieldType") {
 
-    val a = SchemaUtils.getFieldType("a", schema)
-    val b = SchemaUtils.getFieldType("b", schema)
-    val c = SchemaUtils.getFieldType("b.c", schema)
-    val d = SchemaUtils.getFieldType("b.d", schema)
-    val e = SchemaUtils.getFieldType("b.d.e", schema)
-    val f = SchemaUtils.getFieldType("f", schema)
-    val g = SchemaUtils.getFieldType("f.g", schema)
-    val h = SchemaUtils.getFieldType("f.g.h", schema)
+    val a = getFieldType("a", schema)
+    val b = getFieldType("b", schema)
+    val c = getFieldType("b.c", schema)
+    val d = getFieldType("b.d", schema)
+    val e = getFieldType("b.d.e", schema)
+    val f = getFieldType("f", schema)
+    val g = getFieldType("f.g", schema)
+    val h = getFieldType("f.g.h", schema)
 
     assert(a.get.isInstanceOf[IntegerType])
     assert(b.get.isInstanceOf[StructType])
@@ -61,36 +63,241 @@ class SchemaUtilsSuite extends FunSuite {
     assert(f.get.isInstanceOf[StructType])
     assert(g.get.isInstanceOf[ArrayType])
     assert(h.get.isInstanceOf[IntegerType])
-    assert(SchemaUtils.getFieldType("z", schema).isEmpty)
-    assert(SchemaUtils.getFieldType("x.y.z", schema).isEmpty)
-    assert(SchemaUtils.getFieldType("f.g.h.a", schema).isEmpty)
+    assert(getFieldType("z", schema).isEmpty)
+    assert(getFieldType("x.y.z", schema).isEmpty)
+    assert(getFieldType("f.g.h.a", schema).isEmpty)
+  }
+
+  test ("Test isColumnArrayOfStruct") {
+    assert(!isColumnArrayOfStruct("a", schema))
+    assert(!isColumnArrayOfStruct("b", schema))
+    assert(!isColumnArrayOfStruct("b.c", schema))
+    assert(!isColumnArrayOfStruct("b.d", schema))
+    assert(!isColumnArrayOfStruct("b.d.e", schema))
+    assert(!isColumnArrayOfStruct("f", schema))
+    assert(isColumnArrayOfStruct("f.g", schema))
+    assert(!isColumnArrayOfStruct("f.g.h", schema))
+    assert(!isColumnArrayOfStruct("a", nestedSchema))
+    assert(isColumnArrayOfStruct("b", nestedSchema))
+    assert(isColumnArrayOfStruct("b.c.d", nestedSchema))
   }
 
   test("Testing getFirstArrayPath") {
-    assertResult("f.g")(SchemaUtils.getFirstArrayPath("f.g.h", schema))
-    assertResult("f.g")(SchemaUtils.getFirstArrayPath("f.g", schema))
-    assertResult("")(SchemaUtils.getFirstArrayPath("z.x.y", schema))
-    assertResult("")(SchemaUtils.getFirstArrayPath("b.c.d.e", schema))
+    assertResult("f.g")(getFirstArrayPath("f.g.h", schema))
+    assertResult("f.g")(getFirstArrayPath("f.g", schema))
+    assertResult("")(getFirstArrayPath("z.x.y", schema))
+    assertResult("")(getFirstArrayPath("b.c.d.e", schema))
   }
 
   test("Testing getAllArrayPaths") {
-    assertResult(Seq("f.g"))(SchemaUtils.getAllArrayPaths(schema))
-    assertResult(Seq())(SchemaUtils.getAllArrayPaths(schema("b").dataType.asInstanceOf[StructType]))
+    assertResult(Seq("f.g"))(getAllArrayPaths(schema))
+    assertResult(Seq())(getAllArrayPaths(schema("b").dataType.asInstanceOf[StructType]))
   }
 
   test("Testing getAllArraysInPath") {
-    assertResult(Seq("b", "b.c.d"))(SchemaUtils.getAllArraysInPath("b.c.d.e", nestedSchema))
+    assertResult(Seq("b", "b.c.d"))(getAllArraysInPath("b.c.d.e", nestedSchema))
   }
 
   test("Testing getFieldNameOverriddenByMetadata") {
-    assertResult("a")(SchemaUtils.getFieldNameOverriddenByMetadata(structFieldNoMetadata))
-    assertResult("a")(SchemaUtils.getFieldNameOverriddenByMetadata(structFieldWithMetadataNotSourceColumn))
-    assertResult("override_a")(SchemaUtils.getFieldNameOverriddenByMetadata(structFieldWithMetadataSourceColumn))
+    assertResult("a")(getFieldNameOverriddenByMetadata(structFieldNoMetadata))
+    assertResult("a")(getFieldNameOverriddenByMetadata(structFieldWithMetadataNotSourceColumn))
+    assertResult("override_a")(getFieldNameOverriddenByMetadata(structFieldWithMetadataSourceColumn))
   }
 
   test("Testing getFieldNullability") {
-    assert(!SchemaUtils.getFieldNullability("a", schema).get)
-    assert(SchemaUtils.getFieldNullability("b.d", schema).get)
-    assert(SchemaUtils.getFieldNullability("x.y.z", schema).isEmpty)
+    assert(!getFieldNullability("a", schema).get)
+    assert(getFieldNullability("b.d", schema).get)
+    assert(getFieldNullability("x.y.z", schema).isEmpty)
   }
+
+  test ("Test isCastAlwaysSucceeds()") {
+    assert(!isCastAlwaysSucceeds(StructType(Seq()), StringType))
+    assert(!isCastAlwaysSucceeds(ArrayType(StringType), StringType))
+    assert(!isCastAlwaysSucceeds(StringType, ByteType))
+    assert(!isCastAlwaysSucceeds(StringType, ShortType))
+    assert(!isCastAlwaysSucceeds(StringType, IntegerType))
+    assert(!isCastAlwaysSucceeds(StringType, LongType))
+    assert(!isCastAlwaysSucceeds(StringType, DecimalType(10,10)))
+    assert(!isCastAlwaysSucceeds(StringType, DateType))
+    assert(!isCastAlwaysSucceeds(StringType, TimestampType))
+    assert(!isCastAlwaysSucceeds(StructType(Seq()), StructType(Seq())))
+    assert(!isCastAlwaysSucceeds(ArrayType(StringType), ArrayType(StringType)))
+
+    assert(!isCastAlwaysSucceeds(ShortType, ByteType))
+    assert(!isCastAlwaysSucceeds(IntegerType, ByteType))
+    assert(!isCastAlwaysSucceeds(IntegerType, ShortType))
+    assert(!isCastAlwaysSucceeds(LongType, ByteType))
+    assert(!isCastAlwaysSucceeds(LongType, ShortType))
+    assert(!isCastAlwaysSucceeds(LongType, IntegerType))
+
+    assert(isCastAlwaysSucceeds(StringType, StringType))
+    assert(isCastAlwaysSucceeds(ByteType, StringType))
+    assert(isCastAlwaysSucceeds(ShortType, StringType))
+    assert(isCastAlwaysSucceeds(IntegerType, StringType))
+    assert(isCastAlwaysSucceeds(LongType, StringType))
+    assert(isCastAlwaysSucceeds(DecimalType(10,10), StringType))
+    assert(isCastAlwaysSucceeds(DateType, StringType))
+    assert(isCastAlwaysSucceeds(TimestampType, StringType))
+    assert(isCastAlwaysSucceeds(StringType, StringType))
+
+    assert(isCastAlwaysSucceeds(ByteType, ByteType))
+    assert(isCastAlwaysSucceeds(ByteType, ShortType))
+    assert(isCastAlwaysSucceeds(ByteType, IntegerType))
+    assert(isCastAlwaysSucceeds(ByteType, LongType))
+    assert(isCastAlwaysSucceeds(ShortType, ShortType))
+    assert(isCastAlwaysSucceeds(ShortType, IntegerType))
+    assert(isCastAlwaysSucceeds(ShortType, LongType))
+    assert(isCastAlwaysSucceeds(IntegerType, IntegerType))
+    assert(isCastAlwaysSucceeds(IntegerType, LongType))
+    assert(isCastAlwaysSucceeds(LongType, LongType))
+    assert(isCastAlwaysSucceeds(DateType, TimestampType))
+  }
+
+  test("Test isCommonSubPath()") {
+    assert (isCommonSubPath())
+    assert (isCommonSubPath("a"))
+    assert (isCommonSubPath("a.b.c.d.e.f", "a.b.c.d", "a.b.c", "a.b", "a"))
+    assert (!isCommonSubPath("a.b.c.d.e.f", "a.b.c.x", "a.b.c", "a.b", "a"))
+  }
+
+  test("Test getDeepestCommonArrayPath() for a path without an array") {
+    val schema = StructType(Seq[StructField](
+      StructField("a",
+        StructType(Seq[StructField](
+          StructField("b", StringType))
+        ))))
+
+    assert (getDeepestCommonArrayPath(schema, Seq("a", "a.b")).isEmpty)
+  }
+
+  test("Test getDeepestCommonArrayPath() for a path with a single array at top level") {
+    val schema = StructType(Seq[StructField](
+      StructField("a", ArrayType(StructType(Seq[StructField](
+          StructField("b", StringType)))
+        ))))
+
+    val deepestPath = getDeepestCommonArrayPath(schema, Seq("a", "a.b"))
+
+    assert (deepestPath.nonEmpty)
+    assert (deepestPath.get == "a")
+  }
+
+  test("Test getDeepestCommonArrayPath() for a path with a single array at nested level") {
+    val schema = StructType(Seq[StructField](
+      StructField("a", StructType(Seq[StructField](
+          StructField("b", ArrayType(StringType))))
+        )))
+
+    val deepestPath = getDeepestCommonArrayPath(schema, Seq("a", "a.b"))
+
+    assert (deepestPath.nonEmpty)
+    assert (deepestPath.get == "a.b")
+  }
+
+  test("Test getDeepestCommonArrayPath() for a path with several nested arrays of struct") {
+    val schema = StructType(Seq[StructField](
+      StructField("a", ArrayType(StructType(Seq[StructField](
+        StructField("b", StructType(Seq[StructField](
+          StructField("c", ArrayType(StructType(Seq[StructField](
+            StructField("d", StructType(Seq[StructField](
+              StructField("e", StringType))
+            )))
+          ))))
+        )))
+      )))))
+
+    val deepestPath = getDeepestCommonArrayPath(schema, Seq("a", "a.b", "a.b.c.d.e", "a.b.c.d"))
+
+    assert (deepestPath.nonEmpty)
+    assert (deepestPath.get == "a.b.c")
+  }
+
+  test("Test getDeepestArrayPath() for a path without an array") {
+    val schema = StructType(Seq[StructField](
+      StructField("a",
+        StructType(Seq[StructField](
+          StructField("b", StringType))
+        ))))
+
+    assert (getDeepestArrayPath(schema, "a.b").isEmpty)
+  }
+
+  test("Test getDeepestArrayPath() for a path with a single array at top level") {
+    val schema = StructType(Seq[StructField](
+      StructField("a", ArrayType(StructType(Seq[StructField](
+        StructField("b", StringType)))
+      ))))
+
+    val deepestPath = getDeepestArrayPath(schema, "a.b")
+
+    assert (deepestPath.nonEmpty)
+    assert (deepestPath.get == "a")
+  }
+
+  test("Test getDeepestArrayPath() for a path with a single array at nested level") {
+    val schema = StructType(Seq[StructField](
+      StructField("a", StructType(Seq[StructField](
+        StructField("b", ArrayType(StringType))))
+      )))
+
+    val deepestPath = getDeepestArrayPath(schema, "a.b")
+    val deepestPath2 = getDeepestArrayPath(schema, "a")
+
+    assert (deepestPath.nonEmpty)
+    assert (deepestPath.get == "a.b")
+    assert (deepestPath2.isEmpty)
+  }
+
+  test("Test getDeepestArrayPath() for a path with several nested arrays of struct") {
+    val schema = StructType(Seq[StructField](
+      StructField("a", ArrayType(StructType(Seq[StructField](
+        StructField("b", StructType(Seq[StructField](
+          StructField("c", ArrayType(StructType(Seq[StructField](
+            StructField("d", StructType(Seq[StructField](
+              StructField("e", StringType))
+            )))
+          ))))
+        )))
+      )))))
+
+    val deepestPath = getDeepestArrayPath(schema, "a.b.c.d.e")
+
+    assert (deepestPath.nonEmpty)
+    assert (deepestPath.get == "a.b.c")
+  }
+
+
+  test("Test getClosestUniqueName() is working properly") {
+    val schema = StructType(Seq[StructField](
+      StructField("value", StringType)))
+
+    // A column name that does not exist
+    val name1 = SchemaUtils.getClosestUniqueName("v", schema)
+    // A column that exists
+    val name2 = SchemaUtils.getClosestUniqueName("value", schema)
+
+    assert(name1 == "v")
+    assert(name2 == "value_1")
+  }
+
+  test("Test isOnlyField()") {
+    val schema = StructType(Seq[StructField](
+      StructField("a", StringType),
+      StructField("b", StructType(Seq[StructField](
+        StructField("e", StringType),
+        StructField("f", StringType)
+      ))),
+      StructField("c", StructType(Seq[StructField](
+        StructField("d", StringType)
+      )))
+    ))
+
+    assert(!isOnlyField(schema, "a"))
+    assert(!isOnlyField(schema, "a"))
+    assert(!isOnlyField(schema, "a"))
+    assert(!isOnlyField(schema, "b.e"))
+    assert(!isOnlyField(schema, "b.f"))
+    assert(isOnlyField(schema, "c.d"))
+  }
+
 }

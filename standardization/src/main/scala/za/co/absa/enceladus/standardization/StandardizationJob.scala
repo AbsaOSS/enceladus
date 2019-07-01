@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,160 +15,192 @@
 
 package za.co.absa.enceladus.standardization
 
-import java.io.{PrintWriter, StringWriter}
-
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.apache.spark.sql.types.{StructType, StructField}
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.validation.ValidationException
-import za.co.absa.enceladus.utils.error.UDFLibrary
-import za.co.absa.enceladus.dao.{EnceladusRestDAO, LoggedInUserInfo}
-import com.typesafe.config.{Config, ConfigFactory}
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.text.MessageFormat
 import java.util.UUID
 
-import org.apache.log4j.{LogManager, Logger}
-import org.apache.spark.sql
-import za.co.absa.atum.AtumImplicits._
+import scala.util.control.NonFatal
+
+import org.apache.log4j.LogManager
+import org.apache.log4j.Logger
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.DataFrameReader
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.StructType
+
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
+
+import za.co.absa.atum.AtumImplicits
+import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.dao.EnceladusRestDAO
+import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
+import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
+import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
-
-import scala.util.control.NonFatal
-import org.apache.spark.sql.functions.{size, sum}
-import za.co.absa.atum.AtumImplicits
-import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.menas.MenasPlugin
+import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.utils.validation.ValidationException
 
 object StandardizationJob {
 
-  val log: Logger = LogManager.getLogger("enceladus.standardization.StandardizationJob")
-  val conf: Config = ConfigFactory.load()
-
-  /** This method adds performance metrics to the _INFO file metadata **/
-  def addPerformanceMetadata(spark: SparkSession, rawDirSize: Long, stdDirSize: Long, outputPath: String): Unit = {
-    // Enceladus version
-    val enceladusVersion = conf.getString("enceladus.version")
-    Atum.setAdditionalInfo("std_enceladus_version" -> enceladusVersion)
-
-    // Spark job configuration
-    val sc = spark.sparkContext
-    sc.getConf.getAll.mkString("\n")
-    // The number of executors minus the driver
-    val numberOfExecutrs = sc.getExecutorMemoryStatus.keys.size - 1
-    val executorMemory = spark.sparkContext.getConf.get("spark.executor.memory")
-    Atum.setAdditionalInfo("std_application_id" -> spark.sparkContext.applicationId)
-    Atum.setAdditionalInfo("std_executors_num" -> s"$numberOfExecutrs")
-    Atum.setAdditionalInfo("std_executors_memory" -> s"$executorMemory")
-
-    // Directory sizes
-    if (rawDirSize > 0) {
-      val percent = (stdDirSize.toDouble / rawDirSize.toDouble) * 100
-      val percentFormatted = f"$percent%3.2f"
-      Atum.setAdditionalInfo("std_size_ratio" -> s"$percentFormatted %")
-    }
-    Atum.setAdditionalInfo("raw_dir_size" -> rawDirSize.toString)
-    Atum.setAdditionalInfo("std_dir_size" -> stdDirSize.toString)
-
-    // Calculate the number of errors
-    import spark.implicits._
-
-    val df = spark.read.parquet(outputPath)
-    val numRecordsFailed = df
-      .filter(size($"errCol") > 0).count
-    val numRecordsSuccessful = df
-      .filter(size($"errCol") === 0).count
-    val numOfErrors = df
-      .withColumn("enceladus_error_count", size($"errCol")).agg(sum($"enceladus_error_count"))
-      .take(1)(0)(0).toString.toLong
-
-    Atum.setAdditionalInfo("std_records_succeeded" -> numRecordsSuccessful.toString)
-    Atum.setAdditionalInfo("std_records_failed" -> numRecordsFailed.toString)
-    Atum.setAdditionalInfo("std_errors_count" -> numOfErrors.toString)
-    Atum.setAdditionalInfo("std_username" -> LoggedInUserInfo.getUserName)
-
-    if (numRecordsSuccessful == 0) {
-      log.error("No successful records after running Standardization. Possibly the schema is incorrectly defined for the dataset.")
-    }
-  }
+  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val conf: Config = ConfigFactory.load()
 
   def main(args: Array[String]) {
+    implicit val spark: SparkSession = obtainSparkSession()
+    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+    implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
 
-    val cmd = CmdConfig.getCmdLineArguments(args)
+    implicit val udfLib: UDFLibrary = new UDFLibrary
 
-    implicit val spark = SparkSession.builder()
-      .appName(s"Standardisation ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} ${cmd.reportVersion}")
-      .config("spark.sql.codegen.wholeStage", false) //disable whole stage code gen - the plan is too long
-      .getOrCreate()
-
-    import spark.implicits._
-
-    implicit val udfLib = new UDFLibrary
+    EnceladusRestDAO.login = cmd.menasCredentials
+    EnceladusRestDAO.enceladusLogin()
 
     val dataset = EnceladusRestDAO.getDataset(cmd.datasetName, cmd.datasetVersion)
-
-    val schema = EnceladusRestDAO.getSchema(dataset.schemaName, dataset.schemaVersion)
-    val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
+    val schema: StructType = EnceladusRestDAO.getSchema(dataset.schemaName, dataset.schemaVersion)
     val dateTokens = cmd.reportDate.split("-")
-    val path: String = buildRawPath(cmd, dataset, dateTokens)
-    println(s"input path: $path")
-    val stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName, cmd.datasetVersion.toString, cmd.reportDate, cmd
-      .reportVersion.toString)
-    println(s"output path: $stdPath")
 
+    val reportVersion = cmd.reportVersion match {
+      case Some(version) => version
+      case None => {
+        val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, cmd.reportDate) + 1
+        log.warn(s"Report version not provided, inferred report version: $newVersion")
+        log.warn("This is an EXPERIMENTAL feature.")
+        log.warn(" -> It can lead to issues when running multiple jobs on a dataset concurrently.")
+        log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
+        newVersion
+      }
+    }
+
+    val path: String = buildRawPath(cmd, dataset, dateTokens, reportVersion)
+    log.info(s"input path: $path")
+    val stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"),
+      cmd.datasetName,
+      cmd.datasetVersion.toString,
+      cmd.reportDate,
+      reportVersion.toString)
+    log.info(s"output path: $stdPath")
     // die if the output path exists
-    if (FileSystemVersionUtils.exists(stdPath)) throw new IllegalStateException(s"Path $stdPath already exists. Increment the run version, or " +
-      s"delete $stdPath")
-
-    // init CF
-    spark.enableControlMeasuresTracking(s"$path/_INFO")
-      .setControlMeasuresWorkflow("Standardization")
-
-    // Enable control framework performance optimization for pipeline-like jobs
-    Atum.setAllowUnpersistOldDatasets(true)
-
-    // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true)
+    if (fsUtils.hdfsExists(stdPath)) {
+      throw new IllegalStateException(s"Path $stdPath already exists. Increment the run version, or delete $stdPath")
+    }
 
     // init spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
 
+    // init CF
+    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
+    spark.enableControlMeasuresTracking(s"$path/_INFO").setControlMeasuresWorkflow("Standardization")
+    
+    // Enable control framework performance optimization for pipeline-like jobs
+    Atum.setAllowUnpersistOldDatasets(true)
+    // Enable Menas plugin for Control Framework
+    MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true)
+
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
+    val dfAll: DataFrame = prepareDataFrame(schema, cmd, path, dataset)
 
-    val dfReader = spark.read.format(cmd.rawFormat)
+    executeStandardization(performance, dfAll, schema, cmd, path, stdPath)
+    cmd.performanceMetricsFile.foreach(fileName => {
+      try {
+        performance.writeMetricsToFile(fileName)
+      } catch {
+        case NonFatal(e) => log.error(s"Unable to write performance metrics to file '$fileName': ${e.getMessage}")
+      }
+    })
+  }
 
+  private def obtainSparkSession(): SparkSession = {
+    val spark = SparkSession.builder()
+      .appName("Standardisation")
+      .getOrCreate()
+    TimeZoneNormalizer.normalizeAll(Seq(spark))
+    spark
+  }
+
+  private def readerFormatSpecific(dfReader: DataFrameReader, cmd: CmdConfig, dataset: Dataset): DataFrameReader = {
     // applying format specific options
-    val  dfReader4= {
-      val dfReader1 = if (cmd.rowTag.isDefined) dfReader.option("rowTag", cmd.rowTag.get) else dfReader
-      val dfReader2 = if (cmd.csvDelimiter.isDefined) dfReader1.option("delimiter", cmd.csvDelimiter.get) else dfReader1
-      val dfReader3 = if (cmd.csvHeader.isDefined) dfReader2.option("header", cmd.csvHeader.get) else dfReader2
-      dfReader3
+    val dfReaderWithOptions = {
+      val dfr1 = if (cmd.rowTag.isDefined) dfReader.option("rowTag", cmd.rowTag.get) else dfReader
+      val dfr2 = if (cmd.csvDelimiter.isDefined) dfr1.option("delimiter", cmd.csvDelimiter.get) else dfr1
+      val dfr3 = if (cmd.csvHeader.isDefined) dfr2.option("header", cmd.csvHeader.get) else dfr2
+      val dfr4 = if (cmd.rawFormat.equalsIgnoreCase("cobol")) applyCobolOptions(dfr3, cmd, dataset) else dfr3
+      dfr4
     }
-    val dfReaderConfigured= if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
-      val dfReader5=if (cmd.fixedWidthTrimValues.get) dfReader4.option("trimValues", "true") else dfReader4
-      dfReader5
-    } else dfReader4
+    if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
+      val dfWithFixedWithOptions = if (cmd.fixedWidthTrimValues.get) {
+        dfReaderWithOptions.option("trimValues", "true")
+      } else {
+        dfReaderWithOptions
+      }
+      dfWithFixedWithOptions
+    } else {
+      dfReaderWithOptions
+    }
+  }
 
-    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet") ) {
+  private def applyCobolOptions(dfReader: DataFrameReader,
+                                cmd: CmdConfig,
+                                dataset: Dataset): DataFrameReader = {
+    val isXcom = cmd.cobolOptions.map(_.isXcom).getOrElse(false)
+    val copybook = cmd.cobolOptions.map(_.copybook).getOrElse("")
+
+    val reader = dfReader
+      .option("is_xcom", isXcom)
+      .option("schema_retention_policy", "collapse_root")
+      // This is a temporary option before https://github.com/AbsaOSS/cobrix/issues/115 is fixed
+      .option("debug_ignore_file_size", "true")
+
+    if (copybook.isEmpty) {
+      log.info("Copybook location is not provided via command line - fetching the copybook attached to the schema...")
+      val copybookContents = EnceladusRestDAO.getSchemaAttachment(dataset.schemaName, dataset.schemaVersion)
+      log.info(s"Applying the following copybook:\n$copybookContents")
+      reader.option("copybook_contents", copybookContents)
+    } else {
+      log.info(s"Use copybook at $copybook")
+      reader.option("copybook", copybook)
+    }
+  }
+
+  private def prepareDataFrame(schema: StructType,
+                               cmd: CmdConfig,
+                               path: String,
+                               dataset: Dataset)
+                              (implicit spark: SparkSession,
+                               fsUtils: FileSystemVersionUtils): DataFrame = {
+    val dfReaderConfigured = readerFormatSpecific(spark.read.format(cmd.rawFormat), cmd, dataset)
+    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
+      val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
       dfReaderConfigured.schema(inputSchema)
     } else {
       dfReaderConfigured
     }).load(s"$path/*")
+    ensureSplittable(dfWithSchema, path, schema)
+  }
 
-    val dfAll = ensureSplittable(dfWithSchema, path, schema)
-
-    val rawDirSize = FileSystemVersionUtils.getDirectorySize(path)
-
+  private def executeStandardization(performance: PerformanceMeasurer,
+      dfAll: DataFrame,
+      schema: StructType,
+      cmd: CmdConfig,
+      path: String,
+      stdPath: String)(implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
+    val rawDirSize: Long = fsUtils.getDirectorySize(path)
     performance.startMeasurement(rawDirSize)
 
     val std = try {
       StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
-    }
-    catch {
-      case e@ValidationException(msg, errors) =>
+    } catch {
+      case e @ ValidationException(msg, errors) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
           errors.mkString("\n")
         }", "")
@@ -179,89 +211,95 @@ object StandardizationJob {
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", e.getMessage, sw.toString)
         throw e
     }
-
     // If the meta data value sourcecolumn is set override source data column name with the field name
-    val stdRenameSourceColumns = schema.foldLeft(std)((std, field) => renameSourceColumns(std, field, true))
+    val stdRenameSourceColumns: DataFrame = std.select(std.schema.fields.map { field: StructField =>
+      renameSourceColumn(std, field, true)
+    }: _*)
 
-    stdRenameSourceColumns.setCheckpoint("Standardization Finish", persistInDatabase = false)
+    stdRenameSourceColumns.setCheckpoint("Standardization - End", persistInDatabase = false)
 
     val recordCount = stdRenameSourceColumns.lastCheckpointRowCount match {
-      case None => std.count
+      case None    => std.count
       case Some(p) => p
     }
-
     if (recordCount == 0) {
       val errMsg = "Empty output after running Standardization."
       AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", errMsg, "")
       throw new IllegalStateException(errMsg)
     }
     stdRenameSourceColumns.write.parquet(stdPath)
-
-    // Store performance metrics (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
-    val stdDirSize = FileSystemVersionUtils.getDirectorySize(stdPath)
+    // Store performance metrics
+    // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
+    val stdDirSize = fsUtils.getDirectorySize(stdPath)
     performance.finishMeasurement(stdDirSize, recordCount)
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
-    if (cmd.csvDelimiter.isDefined) cmd.csvDelimiter.foreach(deLimiter => Atum.setAdditionalInfo("csv_delimiter" -> deLimiter))
-    addPerformanceMetadata(spark, rawDirSize, stdDirSize, stdPath)
-    cmd.performanceMetricsFile.foreach(fileName => {
-      try {
-        performance.writeMetricsToFile(fileName)
-      } catch {
-        case NonFatal(_) => log.error(s"Unable to write performance metrics to file '$fileName'")
-      }
-    })
+    if (cmd.csvDelimiter.isDefined) {
+      cmd.csvDelimiter.foreach(deLimiter => Atum.setAdditionalInfo("csv_delimiter" -> deLimiter))
+    }
+    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", path, stdPath,
+      EnceladusRestDAO.userName)
+    stdRenameSourceColumns.writeInfoFile(stdPath)
   }
 
-  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession) = {
-    if (FileSystemVersionUtils.isNonSplittable(path)) {
+  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
+    if (fsUtils.isNonSplittable(path)) {
       convertToSplittable(df, path, schema)
     } else {
       df
     }
   }
 
-  private def convertToSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession) = {
+  private def convertToSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
     log.warn("Dataset is stored in a non-splittable format. This can have a severe performance impact.")
 
     val tempParquetDir = s"/tmp/nonsplittable-to-parquet-${UUID.randomUUID()}"
     log.warn(s"Converting to Parquet in temporary dir: $tempParquetDir")
 
-    // Handle renaming of source columns in case there are columns that will break because of issues in column names like spaces
-    schema.foldLeft(df)((df, field) => renameSourceColumns(df, field, false)).write.parquet(tempParquetDir)
+    // Handle renaming of source columns in case there are columns
+    // that will break because of issues in column names like spaces
+    df.select(schema.fields.map { field: StructField =>
+      renameSourceColumn(df, field, false)
+    }: _*).write.parquet(tempParquetDir)
 
-    FileSystemVersionUtils.deleteOnExit(tempParquetDir)
+    fsUtils.deleteOnExit(tempParquetDir)
     // Reload from temp parquet and reverse column renaming above
-    schema.foldLeft(spark.read.parquet(tempParquetDir))(reverseRenameSourceColumns)
+    val dfTmp = spark.read.parquet(tempParquetDir)
+    dfTmp.select(schema.fields.map { field: StructField =>
+      reverseRenameSourceColumn(dfTmp, field)
+    }: _*)
   }
 
-  private def renameSourceColumns(df: DataFrame, field: StructField, registerWithATUM: Boolean): DataFrame = {
-    val renameDf = if (field.metadata.contains("sourcecolumn")) {
-      log.info(s"schema field : ${field.name} : rename : ${field.metadata.getString("sourcecolumn")}")
-      df.withColumnRenamed(field.metadata.getString("sourcecolumn"), field.name) //rename column in DF
-    } else df
-
-    if (registerWithATUM && field.metadata.contains("sourcecolumn"))
-      renameDf.registerColumnRename(field.metadata.getString("sourcecolumn"), field.name) // register rename with ATUM
-        // Re-add meta data
-        .withColumn(field.name, renameDf.col(field.name).as("", field.metadata))
-    else renameDf
-  }
-
-  private def reverseRenameSourceColumns(df: DataFrame, field: StructField): DataFrame = {
+  private def renameSourceColumn(df: DataFrame, field: StructField, registerWithATUM: Boolean): Column = {
     if (field.metadata.contains("sourcecolumn")) {
-      log.info(s"schema field : ${field.metadata.getString("sourcecolumn")} : reverse rename : ${field.name}")
-      df.withColumnRenamed(field.name, field.metadata.getString("sourcecolumn")) // reverse rename column in DF
+      val sourceColumnName = field.metadata.getString("sourcecolumn")
+      log.info(s"schema field : ${field.name} : rename : $sourceColumnName")
+      if (registerWithATUM) {
+        df.registerColumnRename(sourceColumnName, field.name) //register rename with ATUM
+      }
+      df.col(sourceColumnName).as(field.name, field.metadata)
     } else {
-      df
+      df.col(field.name)
     }
   }
 
-  def buildRawPath(cmd: CmdConfig, dataset: Dataset, dateTokens: Array[String]): String = {
+  private def reverseRenameSourceColumn(df: DataFrame, field: StructField): Column = {
+    if (field.metadata.contains("sourcecolumn")) {
+      val sourceColumnName = field.metadata.getString("sourcecolumn")
+      log.info(s"schema field : $sourceColumnName : reverse rename : ${field.name}")
+      df.col(field.name).as(sourceColumnName)
+    } else {
+      df.col(field.name)
+    }
+  }
+
+  def buildRawPath(cmd: CmdConfig, dataset: Dataset, dateTokens: Array[String], reportVersion: Int): String = {
     cmd.rawPathOverride match {
-      case None => cmd.folderPrefix match {
-        case None => s"${dataset.hdfsPath}/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmd.reportVersion}"
-        case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmd.reportVersion}"
-      }
+      case None =>
+        val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
+        cmd.folderPrefix match {
+          case None               => s"${dataset.hdfsPath}$folderSuffix"
+          case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
+        }
       case Some(rawPathOverride) => rawPathOverride
     }
   }

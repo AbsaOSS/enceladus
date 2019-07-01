@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2018 ABSA Group Limited
+  ~ Copyright 2018-2019 ABSA Group Limited
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -13,55 +13,43 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
-	<Dialog id="addDatasetDialog" title="New Dataset" stretchOnPhone="true">
-		<content>
-			<VBox class="sapUiSmallMargin">
-				<form:SimpleForm adjustLabelSpan="true" editable="true">
-					<form:content>
-						<Label text="Dataset Name"/>
-						<Input id="newDatasetName" enabled="{path:'/newDataset/isEdit', formatter:'Formatters.not'}"
-							   type="text" placeholder="Dataset name*" width="100%" value="{/newDataset/name}"/>
-						<Label text="Dataset Description"/>
-						<Input id="newDatasetDescription" type="text" placeholder="Description" width="100%" value="{/newDataset/description}"/>
-						<Label text="Schema Name"/>
-						<Select id="newDatasetSchemaNameSelect" showSecondaryValues="true" items="{/schemas}" placeholder="Select from the list of schemas"
-								selectedKey="{/newDataset/schemaName}">
-							<core:ListItem key="{_id}" text="{_id}" additionalText="Latest version: {latestVersion}"/>
-						</Select>
-						<Label text="Schema Version"/>
-						<FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">
-							<Select id="newDatasetSchemaVersionSelect" class="menasAddMappingSelect" items="{/currentSchemaVersions}"
-									showSecondaryValues="true" width="auto" selectedKey="{/newDataset/schemaVersion}" placeholder="Select Schema Version">
-								<core:ListItem key="{version}" text="{version}"
-											   additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
-							</Select>
-							<Button icon="sap-icon://action">
-							</Button>
-						</FlexBox>
-						<Label text="HDFS raw data folder path"/>
-						<ScrollContainer height="300px" vertical="true" horizontal="true" width="100%">
-							<Tree id="newDatasetHdfsRawSelector" mode="SingleSelect"
-								  items="{path: '/newDataset/HDFSRaw', parameters:{arrayNames:['children']}}" enableBusyIndicator="true"
-								  setBusyIndicatorDelay="0">
-								<StandardTreeItem title="{name}" type="active"/>
-							</Tree>
-						</ScrollContainer>
-						<Label text="HDFS conformed data publish folder path"/>
-						<ScrollContainer height="300px" vertical="true" horizontal="true" width="100%">
-							<Tree id="newDatasetHdfsPublishSelector" mode="SingleSelect"
-								  items="{path: '/newDataset/HDFSPublish', parameters:{arrayNames:['children']}}" enableBusyIndicator="true"
-								  setBusyIndicatorDelay="0">
-								<StandardTreeItem title="{name}" type="active"/>
-							</Tree>
-						</ScrollContainer>
-					</form:content>
-				</form:SimpleForm>
-			</VBox>
-		</content>
-		<buttons>
-			<Button id="newDatasetAddButton" text="Add" icon="sap-icon://accept"/>
-			<Button id="newDatasetCancelButton" text="Cancel" icon="sap-icon://cancel"/>
-		</buttons>
-	</Dialog>
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
+                         xmlns:hdfs="components.hdfs">
+    <Dialog id="addDatasetDialog" title="{entity>/title} Dataset" stretchOnPhone="true" class="minW40rem">
+        <content>
+            <VBox class="sapUiSmallMargin">
+                <form:SimpleForm adjustLabelSpan="true" editable="true">
+                    <form:content>
+                        <Label text="Dataset Name"/>
+                        <Input id="newDatasetName" enabled="{path:'entity>/isEdit', formatter:'Formatters.not'}"
+                               type="Text" placeholder="Dataset name*" width="100%" value="{entity>/name}"/>
+                        <Label text="Dataset Description"/>
+                        <Input id="newDatasetDescription" type="Text" placeholder="Description" width="100%"
+                               value="{entity>/description}"/>
+                        <core:Fragment type="XML" fragmentName="components.schemaSelector"/>
+                        <Label text="HDFS raw data folder path"/>
+                        <VBox>
+                        	<Input type="Text" id="selectedRawHDFSPathLabel"/>
+                            <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%"
+                                          busyControl="addDatasetDialog"
+                                          pathInput ="selectedRawHDFSPathLabel" restURI="api/hdfs/list"
+                                          HDFSPath="{entity>/hdfsPath}"/>                       
+                        </VBox>
+                        <Label text="HDFS conformed data publish folder path"/>
+                        <VBox>
+                            <Input type="Text" id="selectedPublishHDFSPathLabel"/>
+                            <hdfs:HDFSBrowser id="newDatasetPublishHDFSBrowser" height="300px" width="100%"
+                                          busyControl="addDatasetDialog"
+                                          pathInput="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
+                                          HDFSPath="{entity>/hdfsPublishPath}"/>                            
+                        </VBox>
+                    </form:content>
+                </form:SimpleForm>
+            </VBox>
+        </content>
+        <buttons>
+            <Button id="newDatasetAddButton" text="Save" icon="sap-icon://accept"/>
+            <Button id="newDatasetCancelButton" text="Cancel" icon="sap-icon://cancel"/>
+        </buttons>
+    </Dialog>
 </core:FragmentDefinition>

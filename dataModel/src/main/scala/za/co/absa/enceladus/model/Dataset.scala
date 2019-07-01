@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,14 @@ import java.time.ZonedDateTime
 
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
+import za.co.absa.enceladus.model.menas.audit._
+import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
 
 case class Dataset(
   name:    String,
-  version: Int,
-  description: Option[String]= None,
+  version: Int = 1,
+  description: Option[String] = None,
   
   hdfsPath:        String,
   hdfsPublishPath: String,
@@ -40,8 +43,10 @@ case class Dataset(
   disabled:     Boolean               = false,
   dateDisabled: Option[ZonedDateTime] = None,
   userDisabled: Option[String]        = None,
-  conformance:  List[ConformanceRule]) extends VersionedModel {
-
+  conformance:  List[ConformanceRule],
+  parent:       Option[MenasReference] = None,
+  schedule:     Option[OozieSchedule] = None) extends VersionedModel with Auditable[Dataset] {
+    
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
   override def setLastUpdated(time: ZonedDateTime): VersionedModel = this.copy(lastUpdated = time)
@@ -49,11 +54,14 @@ case class Dataset(
   override def setDescription(desc: Option[String]): VersionedModel = this.copy(description = desc)
   override def setDateCreated(time: ZonedDateTime): VersionedModel = this.copy(dateCreated = time)
   override def setUserCreated(user: String): VersionedModel = this.copy(userCreated = user)
-  def setSchemaName(newName: String) = this.copy(schemaName = newName)
-  def setSchemaVersion(newVersion: Int) = this.copy(schemaVersion = newVersion)
-  def setHDFSPath(newPath: String) = this.copy(hdfsPath = newPath)
-  def setHDFSPublishPath(newPublishPath: String) = this.copy(hdfsPublishPath = newPublishPath)
-
+  def setSchemaName(newName: String): Dataset = this.copy(schemaName = newName)
+  def setSchemaVersion(newVersion: Int): Dataset = this.copy(schemaVersion = newVersion)
+  def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
+  def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
+  def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
+  def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
+  override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
+  
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the dots are
    *         <MappingConformanceRule.DOT_REPLACEMENT_SYMBOL>
@@ -66,6 +74,10 @@ case class Dataset(
    */
   def decode: Dataset = substituteMappingConformanceRuleCharacter(this, MappingConformanceRule.DOT_REPLACEMENT_SYMBOL, '.')
 
+  override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
+    updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
+    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset ${name} created.")))
+
   private def substituteMappingConformanceRuleCharacter(dataset: Dataset, from: Char, to: Char): Dataset = {
     val conformanceRules = dataset.conformance.map {
       case m: MappingConformanceRule => {
@@ -77,5 +89,19 @@ case class Dataset(
     }
 
     dataset.copy(conformance = conformanceRules)
+  }
+
+  override def getAuditMessages(newRecord: Dataset): AuditTrailEntry = {
+    AuditTrailEntry(menasRef = MenasReference(collection = None, name = newRecord.name, version = newRecord.version),
+      updated = newRecord.lastUpdated,
+      updatedBy = newRecord.userUpdated,
+      changes = super.getPrimitiveFieldsAudit(newRecord,
+        Seq(AuditFieldName("description", "Description"),
+          AuditFieldName("hdfsPath", "HDFS Path"),
+          AuditFieldName("hdfsPublishPath", "HDFS Publish Path"),
+          AuditFieldName("schemaName", "Schema Name"),
+          AuditFieldName("schemaVersion", "Schema Version"),
+          AuditFieldName("schedule", "Schedule"))) ++
+        super.getSeqFieldsAudit(newRecord, AuditFieldName("conformance", "Conformance rule")))
   }
 }

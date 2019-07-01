@@ -1,0 +1,45 @@
+/*
+ * Copyright 2018-2019 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package za.co.absa.enceladus.selenium.models;
+
+import java.time.LocalDateTime;
+
+public class Dataset extends BaseModel {
+  private String rawPath;
+  private String publishPath;
+  private String schema;
+
+  public Dataset(String name, String description, int version, String createdBy,
+                 String updatedBy, LocalDateTime creationDate, LocalDateTime updateDate,
+                 String rawPath, String publishPath, String schema) {
+    super(name, description, version, createdBy, updatedBy, creationDate, updateDate);
+    this.rawPath = rawPath;
+    this.publishPath = publishPath;
+    this.schema = schema;
+  }
+
+  public String getRawPath() {
+    return rawPath;
+  }
+
+  public String getPublishPath() {
+    return publishPath;
+  }
+
+  public String getSchema() {
+    return schema;
+  }
+}

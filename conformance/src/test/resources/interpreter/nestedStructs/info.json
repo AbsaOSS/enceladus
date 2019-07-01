@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "sourceApplication": "TestDataMadeByHand",
+    "country": "CZ",
+    "historyType": "Snapshot",
+    "dataFilename": "TestData.json",
+    "sourceType": "Golden",
+    "version": 1,
+    "informationDate": "25-02-2019",
+    "additionalInfo": { }
+  },
+  "checkpoints": [
+    {
+      "name": "Source",
+      "processStartTime": "25-02-2019 08:00:00",
+      "processEndTime": "25-02-2019 08:00:00",
+      "workflowName": "Source",
+      "order": 1,
+      "controls": [
+        {
+          "controlName": "recordCount",
+          "controlType": "controlType.Count",
+          "controlCol": "id",
+          "controlValue": 4964
+        }
+      ]
+    },
+    {
+      "name": "Raw",
+      "processStartTime": "25-02-2019 08:00:00",
+      "processEndTime": "25-02-2019 08:00:00",
+      "workflowName": "Raw",
+      "order": 2,
+      "controls": [
+        {
+          "controlName": "recordCount",
+          "controlType": "controlType.Count",
+          "controlCol": "*",
+          "controlValue": 4964
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,6 @@ case class UsedIn(
 
   def nonEmpty: Boolean = {
     datasets.exists(_.nonEmpty) || mappingTables.exists(_.nonEmpty)
-  }
-
-  def toSeq: Seq[MenasReference] = {
-    (datasets ++ mappingTables).flatten.toSeq
   }
 
 }

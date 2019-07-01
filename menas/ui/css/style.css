@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,50 @@
  */
 
 html, body {
-	height: 100%;
-	overflow: hidden !important;
+  height: 100%;
+  overflow: hidden !important;
 }
 
-#__navigation0---schemaMainView--schemaIconTabBar-content {
-	height: calc(100% - 112px);
+#__navigation0---schemaDetailView--schemaIconTabBar-content {
+  height: calc(100% - 112px);
 }
 
 .minW40rem {
-	min-width: 40rem !important;
+  min-width: 40rem !important;
+}
+
+.mt10 {
+	margin-top: 10px;
 }
 
 .menasAddMappingFlex {
-	div {
-		width: calc(100% - 38px);
-	}	
+  div {
+    width: calc(100% - 38px);
+  }
+}
+
+.monitoringBlockLayoutCell {
+    min-width: 20rem !important;
+    max-width: 30rem !important;
+}
+
+.monitoringBlockLayoutCell .sapUiBlockCellContent {
+    padding: 1rem !important;
+}
+
+.auditTrailNestedListItem {
+	max-width: 100%;
+	background-color: inherit !important;
+	border-bottom: 0px !important;
+}
+
+.auditTrailNestedList > ul > .sapMListNoData {
+    background-color: inherit !important;
+    border-bottom: 0px !important;
+    padding-left: 0px !important;
+}
+
+.auditTrailNestedList > ul > li {
+    width: 100%;
+    display: inline-block !important;
 }

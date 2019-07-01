@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.dao.EnceladusDAO
-import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
-import za.co.absa.enceladus.model.{Dataset => ConfDataset}
+import za.co.absa.enceladus.model.{conformanceRule, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
@@ -32,8 +31,10 @@ case class MyCustomRule(
   order:             Int,
   outputColumn:      String,
   controlCheckpoint: Boolean, // this requires manual instantiation of control framework
-  myCustomField:     String) extends CustomConformanceRule with ConformanceRule {
+  myCustomField:     String) extends CustomConformanceRule {
   def getInterpreter() = MyCustomRuleInterpreter(this)
+
+  override def withUpdatedOrder(newOrder: Int): conformanceRule.ConformanceRule = copy(order = newOrder)
 }
 
 case class MyCustomRuleInterpreter(rule: MyCustomRule) extends RuleInterpreter {
@@ -56,15 +57,17 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
 
   // we may WANT to enable control framework & spline here
 
-  implicit val progArgs = CmdConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here (if not working with menas)
-  implicit val enableCF = false
+  implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
+  implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here (if not working with menas)
+  val experimentalMR = true
+  val isCatalystWorkaroundEnabled = true
+  val enableCF: Boolean = false
 
-  val inputData = spark.createDataFrame(Seq(Mine(1), Mine(4), Mine(9), Mine(16)))
+  val inputData: DataFrame = spark.createDataFrame(Seq(Mine(1), Mine(4), Mine(9), Mine(16)))
 
-  val conformanceDef = new ConfDataset(
-    name = "My dummy conformance workflow", // whatev here
-    version = 0, //whatev here
+  val conformanceDef = ConfDataset(
+    name = "My dummy conformance workflow", // whatever here
+    version = 0, //whatever here
     hdfsPath = "/a/b/c",
     hdfsPublishPath = "/publish/a/b/c",
 
@@ -72,14 +75,19 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
     schemaVersion = 9999, //also not used
 
     conformance = List(
-      new MyCustomRule(order = 0, outputColumn = "myOutputCol", controlCheckpoint = false, myCustomField = "id")
+      MyCustomRule(order = 0, outputColumn = "myOutputCol", controlCheckpoint = false, myCustomField = "id")
     )
   )
 
   val expected = Seq(MineConfd(1, 1d, Seq()), MineConfd(4, 2d, Seq()), MineConfd(9, 3d, Seq()), MineConfd(16, 4d, Seq()))
 
-  val actualDf = DynamicInterpreter.interpret(conformanceDef, inputData)
-  val actual = actualDf.as[MineConfd].collect().toSeq
+  val actualDf: DataFrame = DynamicInterpreter.interpret(conformanceDef,
+    inputData,
+    experimentalMR,
+    isCatalystWorkaroundEnabled,
+    enableCF)
+
+  val actual: Seq[MineConfd] = actualDf.as[MineConfd].collect().toSeq
 
   test("Testing custom rule results") {
     assertResult(expected)(actual)

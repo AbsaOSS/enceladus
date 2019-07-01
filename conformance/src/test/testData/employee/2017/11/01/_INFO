@@ -24,13 +24,13 @@
           "controlName": "deptTotal",
           "controlType": "controlType.aggregatedTotal",
           "controlCol": "dept",
-          "controlValue": 8
+          "controlValue": "8"
         },
         {
           "controlName": "recordCount",
           "controlType": "controlType.Count",
           "controlCol": "employee_id",
-          "controlValue": 6
+          "controlValue": "6"
         }
       ]
     },
@@ -45,13 +45,13 @@
           "controlName": "deptTotal",
           "controlType": "controlType.aggregatedTotal",
           "controlCol": "dept",
-          "controlValue": 8
+          "controlValue": "8"
         },
         {
           "controlName": "recordCount",
           "controlType": "controlType.Count",
           "controlCol": "employee_id",
-          "controlValue": 6
+          "controlValue": "6"
         }
       ]
     }

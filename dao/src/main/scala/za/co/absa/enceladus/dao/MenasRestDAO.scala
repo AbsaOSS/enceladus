@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ABSA Group Limited
+ * Copyright 2018-2019 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,25 @@ package za.co.absa.enceladus.dao
 import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
-
-import org.apache.commons.httpclient.HttpStatus
+import org.apache.http.HttpStatus
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost}
 import org.apache.http.entity.{ContentType, StringEntity}
-import org.apache.http.impl.client.HttpClients
 import org.apache.log4j.LogManager
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
+import za.co.absa.enceladus.model.{Run, SplineReference}
 
-import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.atum.model._
-import za.co.absa.enceladus.model._
-
+import scala.io.Source
 import scala.util.Try
 import scala.util.control.NonFatal
 
 /** Implements routines for Menas REST API. */
 object MenasRestDAO extends MenasDAO {
-  private val userName = LoggedInUserInfo.getUserName
+
+  import za.co.absa.enceladus.dao.EnceladusRestDAO.{csrfToken, enceladusLogin, httpClient, sessionCookie}
+
   private val conf = ConfigFactory.load()
   private val restBase = conf.getString("menas.rest.uri")
-  private val log = LogManager.getLogger("ControlFrameworkREST")
+  private val log = LogManager.getLogger(this.getClass)
 
   /**
     * Stores a new Run object in the database by sending REST request to Menas
@@ -48,8 +47,8 @@ object MenasRestDAO extends MenasDAO {
   def storeNewRunObject(run: Run): Try[String] = {
     Try({
       val runToSave = if (run.uniqueId.isEmpty) run.copy(uniqueId = Some(UUID.randomUUID().toString)) else run
-      val json = ControlUtils.asJson(runToSave)
-      val url = s"$restBase/runs?uname=$userName"
+      val json = EnceladusRestDAO.objectMapper.writeValueAsString(runToSave)
+      val url = s"$restBase/runs"
 
       if (sendPostJson(url, json)) {
         runToSave.uniqueId.get
@@ -69,16 +68,16 @@ object MenasRestDAO extends MenasDAO {
     */
   def updateControlMeasure(uniqueId: String,
                            controlMeasure: ControlMeasure): Boolean = {
-    val url = s"$restBase/runs/updateControlMeasure/$uniqueId?uname=$userName"
-    val json = ControlUtils.asJson(controlMeasure)
+    val url = s"$restBase/runs/updateControlMeasure/$uniqueId"
+    val json = EnceladusRestDAO.objectMapper.writeValueAsString(controlMeasure)
 
     sendPostJson(url, json)
   }
 
   def updateRunStatus(uniqueId: String,
                       runStatus: RunStatus): Boolean = {
-    val url = s"$restBase/runs/updateRunStatus/$uniqueId?uname=$userName"
-    val json = ControlUtils.asJson(runStatus)
+    val url = s"$restBase/runs/updateRunStatus/$uniqueId"
+    val json = EnceladusRestDAO.objectMapper.writeValueAsString(runStatus)
 
     sendPostJson(url, json)
   }
@@ -92,8 +91,8 @@ object MenasRestDAO extends MenasDAO {
     */
   def updateSplineReference(uniqueId: String,
                             splineRef: SplineReference): Boolean = {
-    val url = s"$restBase/runs/updateSplineReference/$uniqueId?uname=$userName"
-    val json = ControlUtils.asJson(splineRef)
+    val url = s"$restBase/runs/updateSplineReference/$uniqueId"
+    val json = EnceladusRestDAO.objectMapper.writeValueAsString(splineRef)
 
     sendPostJson(url, json)
   }
@@ -108,17 +107,19 @@ object MenasRestDAO extends MenasDAO {
     */
   def appendCheckpointMeasure(uniqueId: String,
                               checkpoint: Checkpoint): Boolean = {
-    val url = s"$restBase/runs/addCheckpoint/$uniqueId?uname=$userName"
-    val json = ControlUtils.asJson(checkpoint)
+    val url = s"$restBase/runs/addCheckpoint/$uniqueId"
+    val json = EnceladusRestDAO.objectMapper.writeValueAsString(checkpoint)
 
     sendPostJson(url, json)
   }
 
-  private def sendPostJson(url: String, json: String): Boolean = {
+  private def sendPostJson(url: String, json: String, retriesLeft: Int = 1): Boolean = {
     try {
       log.info(s"URL: $url POST: $json")
-      val httpClient = HttpClients.createDefault
       val httpPost = new HttpPost(url)
+      httpPost.addHeader("cookie", sessionCookie)
+      httpPost.addHeader("X-CSRF-TOKEN", csrfToken)
+      httpPost.addHeader("content-type", "application/json")
 
       httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON))
 
@@ -127,14 +128,24 @@ object MenasRestDAO extends MenasDAO {
         val status = response.getStatusLine.getStatusCode
         val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
         val unAuthorized = status == HttpStatus.SC_UNAUTHORIZED
-        if (ok) {
+        if (unAuthorized) {
+          log.warn(s"Unauthorized POST request for Menas URL: $url")
+          log.warn(s"Expired session, reauthenticating")
+          if (enceladusLogin()) {
+            if (retriesLeft > 0) {
+              throw UnauthorizedException(s"Unable to reauthenticate after retries")
+            }
+            log.info(s"Retrying POST request for Menas URL: $url")
+            log.info(s"Retries left: $retriesLeft")
+            sendPostJson(url, json, retriesLeft - 1)
+          } else {
+            throw UnauthorizedException()
+          }
+        } else if (ok) {
           log.info(response.toString)
-        }
-        else if (unAuthorized) {
-          throw new UnauthorizedException
-        }
-        else {
-          log.warn(response.toString)
+        } else {
+          val responseBody = getResponseBody(response)
+          log.error(s"RESPONSE: ${response.getStatusLine} - $responseBody")
         }
         ok
       }
@@ -149,6 +160,9 @@ object MenasRestDAO extends MenasDAO {
         false
     }
   }
+
+  private def getResponseBody(response: CloseableHttpResponse): String = {
+    Source.fromInputStream(response.getEntity.getContent).mkString
+  }
+
 }
-
-

@@ -1,0 +1,86 @@
+<!--
+  ~ Copyright 2018-2019 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!DOCTYPE HTML>
+
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv='Content-Type' content='text/html;charset=UTF-8'/>
+
+    <link type="text/css" href="css/style.css" rel="stylesheet"/>
+
+    <script src="webjars/openui5/sap-ui-core.js" id="sap-ui-bootstrap"
+            data-sap-ui-compatVersion="edge"
+            data-sap-ui-libs="sap.m,sap.ui.table,sap.ui.layout"
+            data-sap-ui-bindingSyntax="complex"
+            data-sap-ui-theme='sap_belize'>
+    </script>
+    <script src="webjars/momentjs/min/moment.min.js"></script>
+    <script src="webjars/lodash/lodash.js"></script>
+    <script src="generic/model.js"></script>
+    <script src="generic/prop.js"></script>
+    <script src="generic/functions.js"></script>
+    <script src="generic/formatters.js"></script>
+    <script src="service/ValidationResult.js"></script>
+    <script src="components/dataset/conformanceRule/ConformanceRule.js"></script>
+    <script src="components/dataset/conformanceRule/SchemaManager.js"></script>
+    <script src="components/dataset/conformanceRule/MappingConformanceRule/JoinConditionDialog.js"></script>
+    <script src="components/dataset/conformanceRule/MappingConformanceRule/JoinConditionDialogFactory.js"></script>
+    <script src="components/dataset/conformanceRule/ConcatenationConformanceRule/ConcatenationColumnDialog.js"></script>
+    <script src="components/dataset/conformanceRule/ConcatenationConformanceRule/ConcatenationColumnDialogFactory.js"></script>
+    <script src="components/SchemaTable.js"></script>
+    <script src="service/MessageProvider.js"></script>
+    <script src="service/RestDAO.js"></script>
+    <script src="service/EntityService.js"></script>
+    <script src="service/GenericService.js"></script>
+    <script src="service/MonitoringService.js"></script>
+    <script src="service/RuleService.js"></script>
+    <script src="service/OozieService.js"></script>
+    <script src="service/RunService.js"></script>
+    <script src="service/EntityDialog.js"></script>
+    <script src="service/DialogFactory.js"></script>
+    <script src="service/EntityValidationService.js"></script>
+    <script src="service/SchemaFieldSelector.js"></script>
+    <script src="components/dataset/conformanceRule/ConformanceRuleDialog.js"></script>
+    <script src="components/dataset/conformanceRule/ConformanceRuleForm.js"></script>
+    <script src="components/dataset/conformanceRule/ConformanceRuleFormFactory.js"></script>
+
+    <!-- only load the mobile lib "sap.m" and the "sap_bluecrystal" theme -->
+
+    <script>
+        sap.ui.localResources("components");
+        
+        // register TNT icons
+        sap.ui.core.IconPool.registerFont({
+          collectionName: "SAP-icons-TNT",
+          fontFamily: "SAP-icons-TNT", 
+          fontURI: sap.ui.require.toUrl("sap/tnt/themes/base/fonts"),
+          lazy: true});
+
+        var component = new sap.ui.core.ComponentContainer("MenasComponent", {
+            name: "components",
+        });
+
+        component.placeAt("content");
+
+        component.setBusy(true);
+    </script>
+
+</head>
+<body class="sapUiBody" role="application">
+    <div id="content"></div>
+</body>
+</html>
