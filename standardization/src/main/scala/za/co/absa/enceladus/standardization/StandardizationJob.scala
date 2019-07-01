@@ -103,7 +103,7 @@ object StandardizationJob {
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true)
 
-    // Add report date and version (aka Enceladus info data and version) to Atum's metadata
+    // Add report date and version (aka Enceladus info date and version) to Atum's metadata
     Atum.setAdditionalInfo(s"enceladus_info_date" -> cmd.reportDate)
     Atum.setAdditionalInfo(s"enceladus_info_version" -> reportVersion.toString)
 
@@ -324,7 +324,6 @@ object StandardizationJob {
     Atum.setAdditionalInfo(s"raw_record_count" -> rawRecordCount.toString)
   }
 
-
   /**
     * Gets the number of records in raw data by traversing Atum's checkpoints.
     *
@@ -348,6 +347,5 @@ object StandardizationJob {
       }
     )
   }
-
 
 }
