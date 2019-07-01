@@ -60,7 +60,7 @@ object PerformanceMetricTools {
     val inputDirSize = fsUtils.getDirectorySize(inputPath)
     val outputDirSize = fsUtils.getDirectorySize(outputPath)
 
-    val (numRecordsFailed, numRecordsSuccessful, numOfErrors) = getNumberOfErrors(spark, outputPath)
+    val (numRecrdTotal, numRecordsFailed, numRecordsSuccessful, numOfErrors) = getNumberOfErrors(spark, outputPath)
 
     if (doesSizeRatioMakesSense(inputDirSize, numRecordsFailed + numRecordsSuccessful)) {
       val percent = (outputDirSize.toDouble / inputDirSize.toDouble) * 100
@@ -74,6 +74,7 @@ object PerformanceMetricTools {
     Atum.setAdditionalInfo(s"${optionPrefix}_application_id" -> spark.sparkContext.applicationId)
     Atum.setAdditionalInfo(s"${optionPrefix}_username" -> loginUserName)
     Atum.setAdditionalInfo(s"${optionPrefix}_executors_num" -> s"$numberOfExecutrs")
+    Atum.setAdditionalInfo(s"${optionPrefix}_record_count" -> numRecrdTotal.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_records_succeeded" -> numRecordsSuccessful.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_records_failed" -> numRecordsFailed.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_errors_count" -> numOfErrors.toString)
@@ -94,12 +95,13 @@ object PerformanceMetricTools {
 
   /** Returns the number of records failed, the number of records succeeded and the total number of errors encountered
     * when running a Standardization or a Dynamic Conformance job. */
-  private def getNumberOfErrors(spark: SparkSession, outputPath: String): (Long, Long, Long) = {
+  private def getNumberOfErrors(spark: SparkSession, outputPath: String): (Long, Long, Long, Long) = {
     val df = spark.read.parquet(outputPath)
     val errorCountColumn = SchemaUtils.getClosestUniqueName("enceladus_error_count", df.schema)
     val errCol = col(ErrorMessage.errorColumnName)
     val numRecordsFailed = df.filter(size(errCol) > 0).count
     val numRecordsSuccessful = df.filter(size(errCol) === 0).count
+    val numTotal = df.count
 
     val numOfErrors = if (numRecordsFailed + numRecordsSuccessful > 0) {
       df.withColumn(errorCountColumn, size(errCol)).agg(sum(col(errorCountColumn)))
@@ -109,6 +111,6 @@ object PerformanceMetricTools {
       0
     }
 
-    (numRecordsFailed, numRecordsSuccessful, numOfErrors)
+    (numTotal, numRecordsFailed, numRecordsSuccessful, numOfErrors)
   }
 }

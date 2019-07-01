@@ -21,7 +21,6 @@ import java.text.MessageFormat
 import java.util.UUID
 
 import scala.util.control.NonFatal
-
 import org.apache.log4j.LogManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.Column
@@ -30,13 +29,11 @@ import org.apache.spark.sql.DataFrameReader
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
-import za.co.absa.atum.core.Atum
+import za.co.absa.atum.core.{Atum, Constants}
 import za.co.absa.enceladus.dao.EnceladusRestDAO
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
@@ -105,6 +102,10 @@ object StandardizationJob {
     Atum.setAllowUnpersistOldDatasets(true)
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true)
+
+    // Add report date and version (aka Enceladus info data and version) to Atum's metadata
+    Atum.setAdditionalInfo(s"enceladus_info_date" -> cmd.reportDate)
+    Atum.setAdditionalInfo(s"enceladus_info_version" -> reportVersion.toString)
 
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
@@ -196,6 +197,8 @@ object StandardizationJob {
       stdPath: String)(implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
     val rawDirSize: Long = fsUtils.getDirectorySize(path)
     performance.startMeasurement(rawDirSize)
+
+    addRawRecordCountToMetadata(dfAll)
 
     val std = try {
       StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
@@ -303,4 +306,48 @@ object StandardizationJob {
       case Some(rawPathOverride) => rawPathOverride
     }
   }
+
+  /**
+    * Adds metadata about the number of records in raw data by checking Atum's checkpoints first.
+    * If raw record count is not available in checkpoints the method will calculate that count
+    * based on the provided raw dataframe.
+    *
+    * @return The number of records in a checkpoint corresponding to raw data (if available)
+    */
+  private def addRawRecordCountToMetadata(df: DataFrame): Unit = {
+    val checkpointRawRecordCount = getRawRecordCountFromCheckpoints
+
+    val rawRecordCount = checkpointRawRecordCount match {
+      case Some(num) => num
+      case None      => df.count
+    }
+    Atum.setAdditionalInfo(s"raw_record_count" -> rawRecordCount.toString)
+  }
+
+
+  /**
+    * Gets the number of records in raw data by traversing Atum's checkpoints.
+    *
+    * @return The number of records in a checkpoint corresponding to raw data (if available)
+    */
+  private def getRawRecordCountFromCheckpoints: Option[Long] = {
+    val controlMeasure = Atum.getControMeasure
+
+    val rawCheckpoint = controlMeasure
+      .checkpoints
+      .find(c => c.name.equalsIgnoreCase("raw") || c.workflowName.equalsIgnoreCase("raw"))
+
+    val measurement = rawCheckpoint.flatMap(chk => {
+      chk.controls.find(m => m.controlType.equalsIgnoreCase(Constants.controlTypeRecordCount))
+    })
+
+    measurement.flatMap(m =>
+      try Some(m.controlValue.toString.toLong)
+      catch {
+        case NonFatal(_) => None
+      }
+    )
+  }
+
+
 }
