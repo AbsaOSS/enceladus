@@ -93,6 +93,7 @@ sap.ui.define([
       auditTableUtils.makeSortable(["Change Time", "Author", "Version"], 
           ["updated", "updatedBy", "menasRef/version"]);
       auditTableUtils.makeGroupable(["Author"], ["updatedBy"]);
+      auditTableUtils.makeSearchable(["updatedBy", "changes"]);
     },
 
     _generateCronTemplateRange: function(iStart, iEnd) {
