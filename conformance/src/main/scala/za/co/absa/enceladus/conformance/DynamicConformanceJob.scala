@@ -88,7 +88,7 @@ object DynamicConformanceJob {
     // load data for input and mapping tables
     val inputData = DataSource.getData(stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
 
-    val result = performTheConformance(conformance, inputData, enableCF)
+    val result = conform(conformance, inputData, enableCF)
 
     processResult(result, performance, publishPath, stdPath, reportVersion)
   }
@@ -172,8 +172,8 @@ object DynamicConformanceJob {
     performance
   }
 
-  private def performTheConformance(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean)
-                                   (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils, dao: EnceladusDAO): DataFrame = {
+  private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean)
+                     (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils, dao: EnceladusDAO): DataFrame = {
     try {
       DynamicInterpreter.interpret(conformance, inputData, isExperimentalRuleEnabled(), isCatalystWorkaroundEnabled(), enableCF)
     } catch {

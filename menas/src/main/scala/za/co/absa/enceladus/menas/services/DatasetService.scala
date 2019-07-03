@@ -31,7 +31,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
-      super.updateFuture(username, dataset.name, dataset.version) { latest =>
+    super.updateFuture(username, dataset.name, dataset.version) { latest =>
       updateSchedule(dataset, latest).map({ withSchedule =>
         withSchedule
           .setSchemaName(dataset.schemaName)
@@ -40,8 +40,9 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
           .setHDFSPublishPath(dataset.hdfsPublishPath)
           .setConformance(dataset.conformance)
           .setDescription(dataset.description).asInstanceOf[Dataset]
-        })
-      }
+        }
+      )
+    }
   }
 
   private def updateSchedule(newDataset: Dataset, latest: Dataset): Future[Dataset] = {

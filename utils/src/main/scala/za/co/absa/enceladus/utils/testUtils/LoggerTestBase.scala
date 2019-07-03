@@ -19,23 +19,23 @@ import java.io.ByteArrayOutputStream
 
 import org.apache.spark.sql.DataFrame
 import org.slf4j.{Logger, LoggerFactory}
+import LogLevel._
 
 trait LoggerTestBase {
-  import LoggerTestBase.LogLevel._
 
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   def logLevelToLogFunction(logLevel: LogLevel): String => Unit = {
     logLevel match {
-      case TRACE => logger.trace
-      case DEBUG => logger.debug
-      case INFO  => logger.info
-      case WARN  => logger.warn
-      case _     => logger.error
+      case Trace => logger.trace
+      case Debug => logger.debug
+      case Info  => logger.info
+      case Warn  => logger.warn
+      case Error => logger.error
     }
   }
 
-  protected def logDataFrameContent(df: DataFrame, logLevel: LogLevel = DEBUG): Unit = {
+  protected def logDataFrameContent(df: DataFrame, logLevel: LogLevel = Debug): Unit = {
     val logFnc = logLevelToLogFunction(logLevel)
     logFnc(df.schema.treeString)
 
@@ -48,9 +48,12 @@ trait LoggerTestBase {
   }
 }
 
-object LoggerTestBase {
-  object LogLevel extends Enumeration {
-    type LogLevel = Value
-    val TRACE, DEBUG, INFO, WARN, ERROR = Value
-  }
+sealed trait LogLevel
+
+object LogLevel {
+  case object Trace extends LogLevel
+  case object Debug extends LogLevel
+  case object Info extends LogLevel
+  case object Warn extends LogLevel
+  case object Error extends LogLevel
 }

@@ -44,6 +44,14 @@ import za.co.absa.enceladus.menas.exceptions.EntityAlreadyExistsException
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import OozieRepository._
 
+
+object OozieRepository {
+  private lazy val dateFormat = {
+    TimeZoneNormalizer.normalizeJVMTimeZone() //ensure time zone normalization before SimpleDateFormat creation
+    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
+  }
+}
+
 @Repository
 class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationException, OozieClient],
     datasetMongoRepository: DatasetMongoRepository,
@@ -359,12 +367,5 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     val coordPath = s"$namenode$oozieScheduleHDFSPath/menas-oozie-schedule-coord-${dataset.name}-${dataset.version + 1}/coordinator.xml"
     val content = getCoordinatorFromTemplate(dataset, wfPath)
     this.writeScheduleData(coordPath, content)
-  }
-}
-
-object OozieRepository {
-  private lazy val dateFormat = {
-    TimeZoneNormalizer.normalizeJVMTimeZone() //ensure time zone normalization before SimpleDateFormat creation
-    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
   }
 }

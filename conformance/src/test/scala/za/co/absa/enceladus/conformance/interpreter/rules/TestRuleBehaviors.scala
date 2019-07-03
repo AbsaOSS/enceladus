@@ -24,7 +24,7 @@ import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.testUtils.LoggerTestBase
-import za.co.absa.enceladus.utils.testUtils.LoggerTestBase.LogLevel._
+import za.co.absa.enceladus.utils.testUtils.LogLevel
 
 trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase {
 
@@ -53,9 +53,9 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
       logger.error("ACTUAL:")
       logger.error(conformedJSON)
       logger.error("DETAILS (Input):")
-      logDataFrameContent(inputDf, ERROR)
+      logDataFrameContent(inputDf, LogLevel.Error)
       println("DETAILS (Conformed):")
-      logDataFrameContent(conformed, ERROR)
+      logDataFrameContent(conformed, LogLevel.Error)
       fail("Actual conformed dataset JSON does not match the expected JSON (see log).")
     }
 
