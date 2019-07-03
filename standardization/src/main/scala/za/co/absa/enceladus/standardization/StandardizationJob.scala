@@ -341,7 +341,15 @@ object StandardizationJob {
     })
 
     measurement.flatMap(m =>
-      try Some(m.controlValue.toString.toLong)
+      try {
+        val rawCount = m.controlValue.toString.toLong
+        // Basic sanity check
+        if (rawCount >=0 ) {
+          Some(rawCount)
+        } else {
+          None
+        }
+      }
       catch {
         case NonFatal(_) => None
       }
