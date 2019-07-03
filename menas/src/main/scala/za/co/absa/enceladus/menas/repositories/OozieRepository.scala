@@ -23,9 +23,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Properties
 import java.util.TimeZone
-
 import scala.concurrent.Future
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
@@ -38,12 +36,13 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Repository
-
 import za.co.absa.enceladus.menas.exceptions.OozieConfigurationException
 import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
 import za.co.absa.enceladus.menas.exceptions.EntityAlreadyExistsException
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import OozieRepository._
 
 @Repository
 class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationException, OozieClient],
@@ -83,12 +82,11 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   @Value("${za.co.absa.enceladus.menas.oozie.sparkConf.surroundingQuoteChar:}")
   val sparkConfQuotes: String = ""
 
-  private val classLoader = Thread.currentThread().getContextClassLoader()
+  private val classLoader = Thread.currentThread().getContextClassLoader
   private val workflowTemplate = getTemplateFile("scheduling/oozie/workflow_template.xml")
   private val coordinatorTemplate = getTemplateFile("scheduling/oozie/coordinator_template.xml")
   private val namenode = hadoopConf.get("fs.defaultFS")
   private val resourceManager = hadoopConf.get("yarn.resourcemanager.address")
-  private val dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   override def afterPropertiesSet() {
@@ -132,7 +130,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
         case _ => logger.info(s"Standardization jar loaded to $hdfsStdPath")
       }
       resFutureStd.onFailure {
-        case (err: Throwable) =>
+        case err: Throwable =>
           hadoopFS.delete(hdfsStdPath, true)
       }
 
@@ -141,7 +139,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
         case _ => logger.info(s"Conformance jar loaded to $hdfsConfPath")
       }
       resFutureConf.onFailure {
-        case (err: Throwable) =>
+        case err: Throwable =>
           hadoopFS.delete(hdfsConfPath, true)
       }
 
@@ -188,14 +186,14 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     this.validateProperties(logWarnings) && oozieClientRes.isRight
   }
 
-  private def getOozieClient[T](fn: (OozieClient => Future[T])): Future[T] = {
+  private def getOozieClient[T](fn: OozieClient => Future[T]): Future[T] = {
     oozieClientRes match {
       case Right(client) => fn(client)
       case Left(ex)      => Future.failed(ex)
     }
   }
 
-  private def getOozieClientWrap[T](fn: (OozieClient => T)): Future[T] = {
+  private def getOozieClientWrap[T](fn: OozieClient => T): Future[T] = {
     getOozieClient({ cl: OozieClient =>
       Future(fn(cl))
     })
@@ -361,5 +359,12 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     val coordPath = s"$namenode$oozieScheduleHDFSPath/menas-oozie-schedule-coord-${dataset.name}-${dataset.version + 1}/coordinator.xml"
     val content = getCoordinatorFromTemplate(dataset, wfPath)
     this.writeScheduleData(coordPath, content)
+  }
+}
+
+object OozieRepository {
+  private lazy val dateFormat = {
+    TimeZoneNormalizer.normalizeJVMTimeZone() //ensure time zone normalization before SimpleDateFormat creation
+    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
   }
 }

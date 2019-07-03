@@ -18,19 +18,15 @@ package za.co.absa.enceladus.conformance
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.text.MessageFormat
-import java.text.SimpleDateFormat
 
 import scala.util.control.NonFatal
-
 import org.apache.log4j.LogManager
 import org.apache.log4j.Logger
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.lit
-
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.functions.{lit, to_date}
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-
+import org.apache.spark.sql
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.AtumImplicits.StringToPath
@@ -49,8 +45,8 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object DynamicConformanceJob {
 
-  private val format = new SimpleDateFormat("yyyy-MM-dd")
   private val infoDateColumn = "enceladus_info_date"
+  private val reportDateFormat = "yyyy-MM-dd"
   private val infoVersionColumn = "enceladus_info_version"
 
   private val log: Logger = LogManager.getLogger(this.getClass)
@@ -59,10 +55,10 @@ object DynamicConformanceJob {
   def main(args: Array[String]) {
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-    implicit val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-
+    implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // use REST DAO
-    implicit val enableCF: Boolean = true
+
+    val enableCF: Boolean = true
 
     EnceladusRestDAO.login = cmd.menasCredentials
     EnceladusRestDAO.enceladusLogin()
@@ -73,14 +69,7 @@ object DynamicConformanceJob {
 
     val reportVersion = cmd.reportVersion match {
       case Some(version) => version
-      case None => {
-        val newVersion = fsUtils.getLatestVersion(conformance.hdfsPublishPath, cmd.reportDate) + 1
-        log.warn(s"Report version not provided, inferred report version: $newVersion")
-        log.warn("This is an EXPERIMENTAL feature.")
-        log.warn(" -> It can lead to issues when running multiple jobs on a dataset concurrently.")
-        log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
-        newVersion
-      }
+      case None => inferVersion(conformance.hdfsPublishPath, cmd.reportDate)
     }
 
     val stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName,
@@ -93,33 +82,14 @@ object DynamicConformanceJob {
         s"Path $publishPath already exists. Increment the run version, or delete $publishPath")
     }
 
-    import za.co.absa.spline.core.SparkLineageInitializer._ // Enable Spline
-    spark.enableLineageTracking()
+    initFunctionalExtensions()
+    val performance = initPerformanceMeasurer(stdPath)
 
-    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
-    Atum.setAllowUnpersistOldDatasets(true) // Enable control framework performance optimization for pipeline-like jobs
-    MenasPlugin.enableMenas() // Enable Menas
-
-    // init performance measurer
-    val performance = new PerformanceMeasurer(spark.sparkContext.appName)
-    val stdDirSize = fsUtils.getDirectorySize(stdPath)
-    performance.startMeasurement(stdDirSize)
     // load data for input and mapping tables
     val inputData = DataSource.getData(stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
-    // perform the conformance
-    val result: DataFrame = try {
-      DynamicInterpreter.interpret(conformance, inputData, isExperimentalRuleEnabled(), isCatalystWorkaroundEnabled(), enableCF)
-    } catch {
-      case e: ValidationException =>
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, e.techDetails)
-        throw e
-      case NonFatal(e) =>
-        val sw = new StringWriter
-        e.printStackTrace(new PrintWriter(sw))
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, sw.toString)
-        throw e
-    }
+
+    val result = performTheConformance(conformance, inputData, enableCF)
+
     processResult(result, performance, publishPath, stdPath, reportVersion)
   }
 
@@ -141,7 +111,7 @@ object DynamicConformanceJob {
 
   /**
     * Returns an effective value of a parameter according to the following priorities:
-    * - Command line argutemts [highest]
+    * - Command line arguments [highest]
     * - Configuration file (application.conf)
     * - Global default [lowest]
     *
@@ -173,9 +143,55 @@ object DynamicConformanceJob {
     spark
   }
 
+  private def inferVersion(hdfsPublishPath: String, reportDate: String)
+                          (implicit fsUtils: FileSystemVersionUtils):Int = {
+    val newVersion = fsUtils.getLatestVersion(hdfsPublishPath, reportDate) + 1
+    log.warn(s"Report version not provided, inferred report version: $newVersion")
+    log.warn("This is an EXPERIMENTAL feature.")
+    log.warn(" -> It can lead to issues when running multiple jobs on a dataset concurrently.")
+    log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
+    newVersion
+  }
+
+  private def initFunctionalExtensions()(implicit spark: SparkSession): Unit = {
+    import za.co.absa.spline.core.SparkLineageInitializer._ // Enable Spline
+    spark.enableLineageTracking()
+
+    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
+    spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
+    Atum.setAllowUnpersistOldDatasets(true) // Enable control framework performance optimization for pipeline-like jobs
+    MenasPlugin.enableMenas() // Enable Menas
+  }
+
+  private def initPerformanceMeasurer(stdPath: String)
+                                     (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils): PerformanceMeasurer = {
+    // init performance measurer
+    val performance = new PerformanceMeasurer(spark.sparkContext.appName)
+    val stdDirSize = fsUtils.getDirectorySize(stdPath)
+    performance.startMeasurement(stdDirSize)
+    performance
+  }
+
+  private def performTheConformance(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean)
+                                   (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils, dao: EnceladusDAO): DataFrame = {
+    try {
+      DynamicInterpreter.interpret(conformance, inputData, isExperimentalRuleEnabled(), isCatalystWorkaroundEnabled(), enableCF)
+    } catch {
+      case e: ValidationException =>
+        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, e.techDetails)
+        throw e
+      case NonFatal(e) =>
+        val sw = new StringWriter
+        e.printStackTrace(new PrintWriter(sw))
+        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, sw.toString)
+        throw e
+    }
+  }
+
   private def processResult(result: DataFrame, performance: PerformanceMeasurer, publishPath: String, stdPath: String, reportVersion: Int)
                            (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
-    val withPartCols = result.withColumn(infoDateColumn, lit(new java.sql.Date(format.parse(cmd.reportDate).getTime)))
+    val withPartCols = result
+      .withColumn(infoDateColumn, to_date(lit(cmd.reportDate), reportDateFormat))
       .withColumn(infoVersionColumn, lit(reportVersion))
 
     val recordCount = result.lastCheckpointRowCount match {
@@ -215,9 +231,9 @@ object DynamicConformanceJob {
       reportVersion: Int): String = {
     (cmd.publishPathOverride, cmd.folderPrefix) match {
       case (None, None) =>
-        s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=${reportVersion}"
+        s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
       case (None, Some(folderPrefix)) =>
-        s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=${reportVersion}"
+        s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
       case (Some(publishPathOverride), _) =>
         publishPathOverride
     }
