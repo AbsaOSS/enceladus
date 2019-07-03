@@ -93,13 +93,22 @@ class FileSystemVersionUtils(conf: Configuration) {
     } catch {
       case e: IllegalArgumentException => false
     }
-    val hdfs = try {
-      hdfsExists(path)
-    } catch {
-      case e: IllegalArgumentException => false
+    if (local) {
+      log.debug(s"LOCAL file $path exists.")
+      true
+    } else {
+      val hdfs = try {
+        hdfsExists(path)
+      } catch {
+        case e: IllegalArgumentException => false
+      }
+      if (hdfs) {
+        log.debug(s"HDFS file $path exists")
+      } else {
+        log.debug(s"File $path does not exist, nor LOCAL nor HDFS")
+      }
+      hdfs
     }
-    log.debug(s"File $path Exists: ${local || hdfs} HDFS: $hdfs LOCAL: $local")
-    local || hdfs
   }
 
   /**
