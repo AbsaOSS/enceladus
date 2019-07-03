@@ -88,15 +88,23 @@ class FileSystemVersionUtils(conf: Configuration) {
    *
    */
   def exists(path: String): Boolean = {
-    val local = localExists(path) 
-    val hdfs = hdfsExists(path)
+    val local = try {
+      localExists(path)
+    } catch {
+      case e: IllegalArgumentException => false
+    }
+    val hdfs = try {
+      hdfsExists(path)
+    } catch {
+      case e: IllegalArgumentException => false
+    }
     log.debug(s"File $path Exists: ${local || hdfs} HDFS: $hdfs LOCAL: $local")
     local || hdfs
   }
-  
+
   /**
    * Read a file from HDFS and stores in local file system temp file
-   * 
+   *
    * @return The path of the local temp file
    */
   def hdfsFileToLocalTempFile(hdfsPath: String): String = {
@@ -154,7 +162,7 @@ class FileSystemVersionUtils(conf: Configuration) {
 
   /**
    * Finds the latest version given a publish folder
-   * 
+   *
    * @param publishPath The HDFS path to the publish folder containing versions
    * @param reportDate The string representation of the report date used to infer the latest version
    * @returns the latest version or 0 in case no versions exist
