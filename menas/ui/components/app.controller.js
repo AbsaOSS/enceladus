@@ -72,6 +72,7 @@ sap.ui.define([
         bundle: sapMRb,
         enhanceWith: [overrideRb]
       });
+      sap.ui.getCore().setModel(newRb, "i18n");
     },
 
     onPressMasterBack: function () {

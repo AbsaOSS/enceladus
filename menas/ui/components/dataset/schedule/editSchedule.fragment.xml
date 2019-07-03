@@ -27,37 +27,47 @@
                                 <core:Title text="Scheduling Timing (in UTC)"></core:Title>
                             </form:title>
                             <form:formElements>
+                                <form:FormElement label="Will run">
+                                    <form:fields>
+                                        <Text text="{parts: ['/newSchedule/scheduleTiming/minute',
+                                                            '/newSchedule/scheduleTiming/hour',
+                                                            '/newSchedule/scheduleTiming/dayOfMonth',
+                                                            '/newSchedule/scheduleTiming/month',
+                                                            '/newSchedule/scheduleTiming/dayOfWeek'], 
+                                            formatter: 'Formatters.cronScheduleTimingFormatter'}" />
+                                    </form:fields>
+                                </form:FormElement>
                                 <form:FormElement label="Minute">
                                     <form:fields>
-                                        <MultiComboBox items="{/cronFormTemplate/minute}" selectedKeys="{path: '/newSchedule/scheduleTiming/minute', type:'components.types.NonEmptyArrType'}">
+                                        <MultiComboBox items="{/cronFormTemplate/minute}" selectedKeys="{path: '/newSchedule/scheduleTiming/minute', type:'components.types.CronEntryType'}">
                                             <core:Item key="{key}" text="{name}" />
                                         </MultiComboBox>
                                     </form:fields>
                                 </form:FormElement>
                                 <form:FormElement label="Hour">
                                     <form:fields>
-                                        <MultiComboBox items="{/cronFormTemplate/hour}" selectedKeys="{path: '/newSchedule/scheduleTiming/hour', type:'components.types.NonEmptyArrType'}">
+                                        <MultiComboBox items="{/cronFormTemplate/hour}" selectedKeys="{path: '/newSchedule/scheduleTiming/hour', type:'components.types.CronEntryType'}">
                                             <core:Item key="{key}" text="{name}" />
                                         </MultiComboBox>
                                     </form:fields>
                                 </form:FormElement>
                                 <form:FormElement label="Day of Month">
                                     <form:fields>
-                                        <MultiComboBox items="{/cronFormTemplate/dayOfMonth}" selectedKeys="{path: '/newSchedule/scheduleTiming/dayOfMonth', type:'components.types.NonEmptyArrType'}">
+                                        <MultiComboBox items="{/cronFormTemplate/dayOfMonth}" selectedKeys="{path: '/newSchedule/scheduleTiming/dayOfMonth', type:'components.types.CronEntryType'}">
                                             <core:Item key="{key}" text="{name}" />
                                         </MultiComboBox>
                                     </form:fields>
                                 </form:FormElement>
                                 <form:FormElement label="Month">
                                     <form:fields>
-                                        <MultiComboBox items="{/cronFormTemplate/month}" selectedKeys="{path: '/newSchedule/scheduleTiming/month', type:'components.types.NonEmptyArrType'}">
+                                        <MultiComboBox items="{/cronFormTemplate/month}" selectedKeys="{path: '/newSchedule/scheduleTiming/month', type:'components.types.CronEntryType'}">
                                             <core:Item key="{key}" text="{name}" />
                                         </MultiComboBox>
                                     </form:fields>
                                 </form:FormElement>
                                 <form:FormElement label="Day of Week">
                                     <form:fields>
-                                        <MultiComboBox items="{/cronFormTemplate/dayOfWeek}" selectedKeys="{path: '/newSchedule/scheduleTiming/dayOfWeek', type:'components.types.NonEmptyArrType'}">
+                                        <MultiComboBox items="{/cronFormTemplate/dayOfWeek}" selectedKeys="{path: '/newSchedule/scheduleTiming/dayOfWeek', type:'components.types.CronEntryType'}">
                                             <core:Item key="{key}" text="{name}" />
                                         </MultiComboBox>
                                     </form:fields>
