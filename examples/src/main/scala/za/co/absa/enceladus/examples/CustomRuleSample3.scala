@@ -33,7 +33,7 @@ object CustomRuleSample3 {
   spark.sparkContext.setLogLevel("WARN")
 
   def main(args: Array[String]): Unit = {
-    TimeZoneNormalizer.normalizeAll(Seq(spark))
+    TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     val experimentalMR = true

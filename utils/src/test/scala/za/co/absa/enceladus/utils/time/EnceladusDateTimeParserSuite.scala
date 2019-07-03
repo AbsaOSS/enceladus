@@ -23,7 +23,7 @@ import java.util.TimeZone
 case class TestInputRow(id: Int, stringField: String)
 
 class EnceladusDateTimeParserSuite extends FunSuite{
-  TimeZoneNormalizer.normalizeJVMTimeZone()
+  TimeZoneNormalizer.activate()
 
   test("EnceladusDateParser class epoch") {
     val parser = EnceladusDateTimeParser("epoch")

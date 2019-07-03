@@ -100,7 +100,7 @@ object StandardizationJob {
     // init CF
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
     spark.enableControlMeasuresTracking(s"$path/_INFO").setControlMeasuresWorkflow("Standardization")
-    
+
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
     // Enable Menas plugin for Control Framework
@@ -124,7 +124,7 @@ object StandardizationJob {
     val spark = SparkSession.builder()
       .appName("Standardisation")
       .getOrCreate()
-    TimeZoneNormalizer.normalizeAll(Seq(spark))
+    TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
   }
 

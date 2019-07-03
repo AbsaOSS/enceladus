@@ -63,7 +63,7 @@ trait SparkTestBase { self =>
       .getOrCreate()
   }
 
-  TimeZoneNormalizer.normalizeAll(Seq(spark))
+  TimeZoneNormalizer.normalizeSessionTimeZone(spark)
 
   // Do not display INFO entries for tests
   Logger.getLogger("org").setLevel(Level.WARN)

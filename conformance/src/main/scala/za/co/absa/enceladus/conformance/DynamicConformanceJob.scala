@@ -169,7 +169,7 @@ object DynamicConformanceJob {
     val spark: SparkSession = SparkSession.builder()
       .appName("Dynamic Conformance")
       .getOrCreate()
-    TimeZoneNormalizer.normalizeAll(Seq(spark))
+    TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
   }
 

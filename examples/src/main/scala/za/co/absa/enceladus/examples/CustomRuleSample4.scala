@@ -123,7 +123,7 @@ object CustomRuleSample4 {
       .appName("CustomRuleSample4")
       .config("spark.sql.codegen.wholeStage", value = false)
       .getOrCreate()
-    TimeZoneNormalizer.normalizeAll(Seq(result))
+    TimeZoneNormalizer.normalizeSessionTimeZone(result)
     result
   }
 

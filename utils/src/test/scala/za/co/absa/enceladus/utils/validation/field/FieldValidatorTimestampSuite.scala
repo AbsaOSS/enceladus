@@ -21,7 +21,7 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue, ValidationWarning}
 
 class FieldValidatorTimestampSuite extends FunSuite  {
-  TimeZoneNormalizer.normalizeJVMTimeZone()
+  TimeZoneNormalizer.activate()
 
   private def field(pattern: String, defaultValue: Option[String] = None, defaultTimeZone: Option[String] = None): StructField = {
     val builder = new MetadataBuilder().putString("pattern",pattern)
