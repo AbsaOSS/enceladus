@@ -42,4 +42,3 @@ sap.ui.define(['components/types/NonEmptyArrType', 'sap/ui/model/FormatException
   return CronEntryType;
 
 });
-
