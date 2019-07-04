@@ -36,7 +36,7 @@ sap.ui.define(['components/types/NonEmptyArrType', 'sap/ui/model/FormatException
     NonEmptyArrType.prototype.validateValue(oValue);
     const bHasAny = oValue.find((el) => {return el === "*"})
     if(bHasAny && oValue.length > 1) {
-      throw new sap.ui.model.ValidateException("Either select * (Any) or one/more specific entries, but not both!");
+      throw new sap.ui.model.ValidateException("Either select 'Any' or 1..n specific entries, but not both!");
     }
   };
   return CronEntryType;
