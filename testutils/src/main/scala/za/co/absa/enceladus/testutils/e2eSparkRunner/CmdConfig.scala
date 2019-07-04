@@ -179,7 +179,7 @@ object CmdConfig {
     }).text("Path to Menas credentials config file. Suitable only for client mode")
       .validate(path =>
         if (new File(path).isFile) success
-        else failure("Credentials file does not exist. Make sure you are running in client mode")
+        else failure("Credentials file not found.")
       )
 
     opt[String]("dataset-name").required.action((value, config) => {
