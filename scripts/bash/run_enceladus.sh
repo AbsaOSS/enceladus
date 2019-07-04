@@ -110,7 +110,7 @@ case $key in
     -f|--raw-format)
     RAW_FORMAT="$2"
     shift 2 # past argument and value
-    ;;  
+    ;;
     --rowtag)
     ROWTAG="$2"
     shift 2 # past argument and value
@@ -205,6 +205,8 @@ add_to_cmd_line "--driver-memory" ${DRIVER_MEMORY}
 CMD_LINE="$CMD_LINE --conf \"$CONF\" --class $CLASS $JAR"
 
 # Adding command line parameters that go AFTER the jar file
+add_to_cmd_line "--menas-auth-keytab"  ${MENAS_AUTH_KEYTAB}
+add_to_cmd_line "--menas-credentials-file" ${MENAS_CREDENTIALS_FILE}
 add_to_cmd_line "--dataset-name" ${DATASET_NAME}
 add_to_cmd_line "--dataset-version" ${DATASET_VERSION}
 add_to_cmd_line "--report-date" ${REPORT_DATE}
