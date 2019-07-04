@@ -36,7 +36,7 @@ ROWTAG=""
 DELIMITER=""
 HEADER=""
 TRIM_VALUES=""
-MAPPING_TABLE_PATTERN="''"
+MAPPING_TABLE_PATTERN=""
 FOLDER_PREFIX=""
 
 # Security command line defaults
@@ -181,9 +181,15 @@ add_to_cmd_line() {
 
 # Constructing the grand command line
 # Configuration passed to JVM
+
+MT_PATTERN=""
+if [ ! -z "$MAPPING_TABLE_PATTERN" ]; then
+    MT_PATTERN="-Dconformance.mappingtable.pattern=$MAPPING_TABLE_PATTERN"
+fi
+
 CONF="spark.driver.extraJavaOptions=-Dmenas.rest.uri=$MENAS_URI -Dstandardized.hdfs.path=$STD_HDFS_PATH \
 -Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=2.7.3 \
--Dconformance.mappingtable.pattern=$MAPPING_TABLE_PATTERN"
+$MT_PATTERN"
 
 CMD_LINE="$SPARK_SUBMIT"
 
