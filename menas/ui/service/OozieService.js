@@ -13,21 +13,29 @@
  * limitations under the License.
  */
 
-jQuery.sap.require("sap.m.MessageBox");
+jQuery.sap.require("sap.m.MessageToast");
 
-var OozieService = new function () {
+var OozieService = new function() {
 
   const model = sap.ui.getCore().getModel();
   const eventBus = sap.ui.getCore().getEventBus();
-
-  this.getCoordinatorStatus = function () {
+  
+  this.getCoordinatorStatus = function() {
     const coordinatorId = model.getProperty("/currentDataset/schedule/activeInstance/coordinatorId")
     if(coordinatorId) {
-      Functions.ajax(`api/oozie/coordinatorStatus/${coordinatorId}`, "GET", {}, function (oData) {
-        model.setProperty("/currentDataset/schedule/activeInstance/status", oData)
-      }, function () {
-      })      
+      RestClient.get(`api/oozie/coordinatorStatus/${coordinatorId}`).then((oData) => {
+        model.setProperty("/currentDataset/schedule/activeInstance/status", oData);
+      })
     }
   };
 
+  this.runNow = function() {
+    const oSchedule = model.getProperty("/currentDataset/schedule")
+    if(oSchedule) {
+      RestClient.post("api/oozie/runNow", oSchedule).then((oData) => {
+        MessageToast.show(`Schedule has been submitted with ID: ${oData}`, {duration: 10000});
+      })
+    }
+  };
+  
 }();

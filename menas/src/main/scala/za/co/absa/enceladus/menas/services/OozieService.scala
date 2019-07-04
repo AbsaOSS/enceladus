@@ -22,13 +22,30 @@ import org.springframework.stereotype.Component
 
 import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
 import za.co.absa.enceladus.menas.repositories.OozieRepository
+import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
 
 @Component
 class OozieService @Autowired() (oozieRepository: OozieRepository) {
-  
+
   def isOozieEnabled: Boolean = oozieRepository.isOozieEnabled()
-  
+
   def getCoordinatorStatus(coordinatorId: String): Future[OozieCoordinatorStatus] = {
     oozieRepository.getCoordinatorStatus(coordinatorId)
+  }
+
+  def runNow(oozieSchedule: OozieSchedule): Future[String] = {
+    val wfPath = oozieSchedule.activeInstance match {
+      case Some(instance) => instance.workflowPath
+      case None           => throw new IllegalArgumentException("Cannot run a non-active schedule.")
+    }
+    oozieRepository.runWorkflow(wfPath, oozieSchedule.runtimeParams)
+  }
+
+  def suspend(coordinatorId: String): Future[Unit] = {
+    oozieRepository.suspend(coordinatorId)
+  }
+
+  def resume(coordinatorId: String): Future[Unit] = {
+    oozieRepository.resume(coordinatorId)
   }
 }

@@ -16,6 +16,15 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
     <form:SimpleForm id="scheduleDisplayForm" editable="false">
         <core:Title text="Active Schedule" />
+        <Label text="Actions" />
+        <HBox>
+            <Button class="scheduleActionButton sapUiSmallMarginEnd" type="Transparent" icon="sap-icon://open-command-field" 
+                tooltip="Run now!" press="scheduleRunNow" />
+            <Button class="scheduleActionButton sapUiSmallMarginEnd orangeButton" type="Transparent" icon="sap-icon://pause"  press="scheduleSuspend"
+                tooltip="Pause the schedule" visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' }" />
+            <Button class="scheduleActionButton greenButton" type="Transparent" icon="sap-icon://play" press="scheduleResume"
+                tooltip="Resume the schedule" visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'SUSPENDED' }" />
+        </HBox>
         <Label text="Coordinator ID" />
         <Text text="{/currentDataset/schedule/activeInstance/coordinatorId}" />
         <Label text="Coordinator Path" />

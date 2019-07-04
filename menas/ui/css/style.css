@@ -41,14 +41,22 @@ html, body {
     max-width: 30rem !important;
 }
 
+.greenButton > span > .sapMBtnIcon {
+  color: #0c6b20 !important;
+}
+
+.orangeButton > span > .sapMBtnIcon {
+  color: #a3850d !important;
+}
+
 .monitoringBlockLayoutCell .sapUiBlockCellContent {
     padding: 1rem !important;
 }
 
 .auditTrailNestedListItem {
-	max-width: 100%;
-	background-color: inherit !important;
-	border-bottom: 0px !important;
+  max-width: 100%;
+  background-color: inherit !important;
+  border-bottom: 0px !important;
 }
 
 .auditTrailNestedList > ul > .sapMListNoData {
@@ -60,4 +68,22 @@ html, body {
 .auditTrailNestedList > ul > li {
     width: 100%;
     display: inline-block !important;
+}
+
+.scheduleActionButton {
+  padding: 0px !important;
+  height: 1.25rem !important;
+}
+
+.scheduleActionButton > .sapMBtnInner {
+  height: 1.25rem !important;
+  font-size: 0.9rem !important;
+  line-height: 1rem !important;
+}
+
+.scheduleActionButton > .sapMBtnInner > .sapMBtnIcon {
+  height: 1.25rem !important;
+  font-size: 0.9rem !important;
+  line-height: 1rem !important;
+  padding-top: 0.1rem !important;
 }

@@ -21,6 +21,7 @@ import za.co.absa.enceladus.menas.services.OozieService
 import java.util.concurrent.CompletableFuture
 import org.springframework.http.HttpStatus
 import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
+import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
 
 @RestController
 @RequestMapping(Array("/api/oozie"))
@@ -32,6 +33,22 @@ class OozieController @Autowired() (oozieService: OozieService) extends BaseCont
   def isOozieEnabled: Boolean = oozieService.isOozieEnabled
 
   @GetMapping(path = Array("/coordinatorStatus/{id}"))
-  def getCoordinatorStatus(@PathVariable id: String): CompletableFuture[OozieCoordinatorStatus] = oozieService.getCoordinatorStatus(id)  
-  
+  def getCoordinatorStatus(@PathVariable id: String): CompletableFuture[OozieCoordinatorStatus] = {
+    oozieService.getCoordinatorStatus(id)
+  }
+
+  @PostMapping(path = Array("/runNow"))
+  def runNow(@RequestBody schedule: OozieSchedule): CompletableFuture[String] = {
+    oozieService.runNow(schedule)
+  }
+
+  @PostMapping(path = Array("/suspend"))
+  def suspend(@RequestParam coordId: String): CompletableFuture[Unit] = {
+    oozieService.suspend(coordId)
+  }
+
+  @PostMapping(path = Array("/resume"))
+  def resume(@RequestParam coordId: String): CompletableFuture[Unit] = {
+    oozieService.resume(coordId)
+  }
 }

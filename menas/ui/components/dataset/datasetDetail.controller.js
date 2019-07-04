@@ -433,6 +433,18 @@ sap.ui.define([
       this._editScheduleDialog.close();
     },
 
+    scheduleRunNow: function() {
+      OozieService.runNow();
+    },
+
+    scheduleSuspend: function() {
+      
+    },
+
+    scheduleResume: function() {
+      
+    },
+
     // Monitoring related part
 
     // Processes parsing errors

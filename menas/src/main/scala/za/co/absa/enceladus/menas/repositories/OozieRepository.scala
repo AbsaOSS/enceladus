@@ -316,8 +316,36 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     getOozieClientWrap { oozieClient: OozieClient =>
       val conf = getOozieConf(oozieClient, runtimeParams)
       conf.setProperty(OozieClient.COORDINATOR_APP_PATH, s"$coordPath");
-      // submit and start the workflow job
       oozieClient.submit(conf)
+    }
+  }
+
+  /**
+   * Run a workflow now
+   */
+  def runWorkflow(wfPath: String, runtimeParams: RuntimeConfig): Future[String] = {
+    getOozieClientWrap { oozieClient: OozieClient =>
+      val conf = getOozieConf(oozieClient, runtimeParams)
+      conf.setProperty(OozieClient.APP_PATH, s"$wfPath");
+      oozieClient.submit(conf)
+    }
+  }
+
+  /**
+   * Suspend a coordinator
+   */
+  def suspend(coordId: String): Future[Unit] = {
+    getOozieClientWrap { oozieClient: OozieClient =>
+      oozieClient.suspend(coordId)
+    }
+  }
+
+  /**
+   * Resume a coordinator
+   */
+  def resume(coordId: String): Future[Unit] = {
+    getOozieClientWrap { oozieClient: OozieClient =>
+      oozieClient.resume(coordId)
     }
   }
 
