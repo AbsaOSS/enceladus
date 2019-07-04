@@ -13,6 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Command line for the script itself
+
+# Show spark-submit command line without actually running it (--dry-run)
+DRY_RUN=""
+
 # Command line defaults for 'spark-submit'
 NUM_EXECUTORS=""
 EXECUTOR_MEMORY="4G"
@@ -43,6 +48,10 @@ do
 key="$1"
 
 case $key in
+    --dry-run)
+    DRY_RUN="1"
+    shift # past argument
+    ;;
     --num-executors)
     NUM_EXECUTORS="$2"
     shift # past argument
@@ -201,4 +210,7 @@ add_to_cmd_line "--trimValues" ${TRIM_VALUES}
 
 echo "Command line:"
 echo "$CMD_LINE"
-bash -c "$CMD_LINE"
+
+if [ -z "$DRY_RUN" ]; then
+  bash -c "$CMD_LINE"
+fi
