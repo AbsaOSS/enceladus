@@ -102,7 +102,7 @@ password=changeme
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
---report-version <data_run-version> \
+--report-version <data_run_version> \
 --raw-format <data_format> \
 --row-tag <tag>
 ```
@@ -127,7 +127,7 @@ password=changeme
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
---report-version <data_run-version>
+--report-version <data_run_version>
 ```
 * In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
@@ -154,7 +154,7 @@ The basic command to run Standardization becomes:
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
---report-version <data_run-version> \
+--report-version <data_run_version> \
 --raw-format <data_format> \
 --row-tag <tag>
 ```
@@ -168,7 +168,7 @@ The basic command to run Conformance becomes:
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
---report-version <data_run-version>
+--report-version <data_run_version>
 ```
 
 ## <a name="contribute"/>How to contribute
