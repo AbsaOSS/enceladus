@@ -18,8 +18,10 @@ package za.co.absa.enceladus.utils.fs
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.LogManager
 import java.io.File
+import java.net.ConnectException
 import org.apache.hadoop.conf.Configuration
 import org.apache.commons.io.FileUtils
+
 import scala.util.Try
 
 /**
@@ -40,7 +42,7 @@ class FileSystemVersionUtils(conf: Configuration) {
     val uri = path.toUri
     val scheme = uri.getScheme
     val authority = uri.getAuthority
-    val prefix = if (scheme == null || authority == null) "" else scheme+"://"+authority
+    val prefix = if (scheme == null || authority == null) "" else scheme + "://"+authority
     val rawPath = uri.getRawPath
     (prefix, rawPath)
   }
@@ -59,7 +61,7 @@ class FileSystemVersionUtils(conf: Configuration) {
 
     var currPath = prefix
     tokens.foreach({ dir =>
-      currPath = currPath+"/"+dir
+      currPath = currPath + "/"+dir
       val p = new Path(currPath)
       log.info(s"Checking path: ${p.toUri.toString}")
       if (!fs.exists(p)) {
@@ -101,6 +103,7 @@ class FileSystemVersionUtils(conf: Configuration) {
         hdfsExists(path)
       } catch {
         case e: IllegalArgumentException => false
+        case e: ConnectException  => false
       }
       if (hdfs) {
         log.debug(s"HDFS file $path exists")
@@ -174,20 +177,18 @@ class FileSystemVersionUtils(conf: Configuration) {
    *
    * @param publishPath The HDFS path to the publish folder containing versions
    * @param reportDate The string representation of the report date used to infer the latest version
-   * @returns the latest version or 0 in case no versions exist
+   * @return the latest version or 0 in case no versions exist
    */
   def getLatestVersion(publishPath: String, reportDate: String): Int = {
-    import scala.collection.JavaConversions._
     val filesOpt = Try {
       fs.listStatus(new Path(s"$publishPath/enceladus_info_date=$reportDate"))
     }.toOption
     filesOpt match {
-      case Some(files) => {
+      case Some(files) =>
         val versions = files.filter(_.isDirectory()).map({
-          file => file.getPath().getName.replace("enceladus_info_version=", "").toInt
+          file => file.getPath.getName.replace("enceladus_info_version=", "").toInt
         })
         if(versions.isEmpty) 0 else versions.max
-      }
       case None => 0
     }
   }
