@@ -19,41 +19,30 @@ import java.io.ByteArrayOutputStream
 
 import org.apache.spark.sql.DataFrame
 import org.slf4j.{Logger, LoggerFactory}
-import LogLevel._
+import org.slf4j.event.Level
+import org.slf4j.event.Level._
 
 trait LoggerTestBase {
 
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  def logLevelToLogFunction(logLevel: LogLevel): String => Unit = {
+  def logLevelToLogFunction(logLevel: Level): String => Unit = {
     logLevel match {
-      case Trace => logger.trace
-      case Debug => logger.debug
-      case Info  => logger.info
-      case Warn  => logger.warn
-      case Error => logger.error
+      case TRACE => logger.trace
+      case DEBUG => logger.debug
+      case INFO  => logger.info
+      case WARN  => logger.warn
+      case ERROR => logger.error
     }
   }
 
-  protected def logDataFrameContent(df: DataFrame, logLevel: LogLevel = Debug): Unit = {
+  protected def logDataFrameContent(df: DataFrame, logLevel: Level = DEBUG): Unit = {
+    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+
     val logFnc = logLevelToLogFunction(logLevel)
     logFnc(df.schema.treeString)
 
-    val outCapture = new ByteArrayOutputStream
-    Console.withOut(outCapture) {
-      df.show(truncate = false)
-    }
-    val dfData = new String(outCapture.toByteArray).replace("\r\n", "\n")
+    val dfData = df.dataAsString(false)
     logFnc(dfData)
   }
-}
-
-sealed trait LogLevel
-
-object LogLevel {
-  case object Trace extends LogLevel
-  case object Debug extends LogLevel
-  case object Info extends LogLevel
-  case object Warn extends LogLevel
-  case object Error extends LogLevel
 }
