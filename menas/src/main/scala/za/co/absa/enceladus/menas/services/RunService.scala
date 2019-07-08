@@ -36,6 +36,9 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  @Value("${za.co.absa.enceladus.spline.urlTemplate}")
+  val splineUrlTemplate: String = ""
+
   def getAllLatest(): Future[Seq[Run]] = {
     runMongoRepository.getAllLatest()
   }
@@ -44,7 +47,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
     runMongoRepository.count()
   }
 
-  def getTodaysRunsStatistics() = {
+  def getTodaysRunsStatistics(): Future[TodaysRunsStatistics] = {
     for {
       total <- runMongoRepository.getTodaysRuns()
       successfulWithErrors <- runMongoRepository.getTodaysSuccessWithErrors()
@@ -91,7 +94,14 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   }
 
   def getSplineUrl(datasetName: String, datasetVersion: Int, runId: Int): Future[String] = {
-    getRun(datasetName, datasetVersion, runId).map(_.splineUrl)
+    getRun(datasetName, datasetVersion, runId).map { run =>
+      val splineRef = run.splineRef
+      String.format(splineUrlTemplate, splineRef.outputPath, splineRef.sparkApplicationId)
+    }
+  }
+
+  def getSplineUrlTemplate(): Future[String] = {
+    Future.successful(splineUrlTemplate)
   }
 
   def create(newRun: Run, username: String): Future[Run] = {
