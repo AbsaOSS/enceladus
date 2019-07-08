@@ -62,7 +62,9 @@ za.co.absa.enceladus.migrations.dump.filepath=/path/to/backups/menas
 
 za.co.absa.enceladus.menas.spark.master=local[1]
 
-za.co.absa.enceladus.spline.urlTemplate=http://localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s
+# The template for Lineage (Spline) display. If empty Lineage button is not shown.
+# Avoiding the http(s) protocol will cause that the same protocol will be used as for Menas itself, avoiding issues
+za.co.absa.enceladus.spline.urlTemplate=//localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s
 
 #system-wide time zone
 timezone="UTC"
