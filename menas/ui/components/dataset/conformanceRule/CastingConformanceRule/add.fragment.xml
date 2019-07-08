@@ -18,6 +18,6 @@
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.inputColumn"/>
     <Label text="Output Data Type"/>
     <Select id="outputDataType" selectedKey="{/newRule/outputDataType}" items="{/dataTypes}" forceSelection="false">
-        <core:ListItem key="{type}" text="{type}"/>
+        <core:Item key="{type}" text="{type}"/>
     </Select>
 </core:FragmentDefinition>

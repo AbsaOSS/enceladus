@@ -16,17 +16,16 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core"
                          xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Label text="Schema Name"/>
-    <Select id="schemaNameSelect" showSecondaryValues="true" items="{schemas>/}"
+    <Select id="schemaNameSelect" items="{schemas>/}"
             selectedKey="{entity>/schemaName}" change="onSchemaSelect">
-        <core:ListItem key="{schemas>_id}" text="{schemas>_id}" additionalText="Latest version: {schemas>latestVersion}"/>
+        <core:Item key="{schemas>_id}" text="{schemas>_id}"/>
     </Select>
     <Label text="Schema Version"/>
     <FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">
         <Select id="schemaVersionSelect" class="menasAddMappingSelect"
                 items="{/currentSchemaVersions}"
-                showSecondaryValues="true" width="auto" selectedKey="{entity>/schemaVersion}">
-            <core:ListItem key="{version}" text="{version}"
-                           additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
+                width="auto" selectedKey="{entity>/schemaVersion}">
+            <core:Item key="{version}" text="{version} ({path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'})"/>
         </Select>
     </FlexBox>
 </core:FragmentDefinition>
