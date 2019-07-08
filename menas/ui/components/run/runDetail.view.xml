@@ -136,7 +136,7 @@
                             </items>
                         </Table>
                     </IconTabFilter>
-                    <IconTabFilter class="h100p" id="Lineage" icon="sap-icon://org-chart" key="lineage" text="Lineage" visible="{= ${run>/splineUrl} !== ''}">
+                    <IconTabFilter id="Lineage" icon="sap-icon://org-chart" key="lineage" text="Lineage" visible="{= ${run>/splineUrl} !== ''}">
                         <core:HTML content="&lt;iframe  id=&quot;lineage_iframe&quot; height=&quot;100%&quot; width=&quot;100%&quot; style=&quot;border: Ridge;&quot; src=&quot;{run>/splineUrl}&quot;&gt;&lt;/iframe&gt;" />
                     </IconTabFilter>
                 </items>
