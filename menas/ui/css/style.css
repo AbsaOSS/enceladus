@@ -57,6 +57,11 @@ html, body {
     padding-left: 0px !important;
 }
 
+.lineageIframe {
+  border: none !important;
+  height: 100% !important;
+}
+
 .auditTrailNestedList > ul > li {
     width: 100%;
     display: inline-block !important;

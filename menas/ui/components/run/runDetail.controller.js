@@ -35,6 +35,17 @@ sap.ui.define([
 
       this._detail = this.byId("detailPage");
       this._checkpointsTable = this.byId("Checkpoints");
+
+      this.byId("runIconTabBar").attachSelect(function(oSelectEv) {
+        if(oSelectEv.getParameter("selectedKey") === "lineage") {
+          const oFrame = $("#lineage_iframe");
+          oFrame.removeClass("lineageIframe");
+          setTimeout(function() {
+            //force re-render
+            oFrame.addClass("lineageIframe");
+          }.bind(this), 200);
+        }
+      }.bind(this));
     },
 
     toDataset : function(oEv) {
