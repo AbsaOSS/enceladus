@@ -117,11 +117,27 @@ var RunService = new function () {
     oRun.controlMeasure.metadata.additionalInfo = this._mapAdditionalInfo(info);
 
     oRun.status = Formatters.statusToPrettyString(oRun.runStatus.status);
+    oRun.splineUrl = this._buildSplineUrl(oRun.splineRef.outputPath, oRun.splineRef.sparkApplicationId);
 
     const sStdName = this._nameExists(aCheckpoints, "Standardization Finish") ? "Standardization Finish" : "Standardization - End";
 
     oRun.stdTime = this._getTimeSummary(aCheckpoints, sStdName, sStdName);
     oRun.cfmTime = this._getTimeSummary(aCheckpoints, "Conformance - Start", "Conformance - End");
+  };
+
+  this._buildSplineUrl = function(outputPath, applicationId) {
+    return this._getSplineUrlTemplate()
+      .replace("%s", outputPath)
+      .replace("%s", applicationId)
+  };
+
+  this._getSplineUrlTemplate = function() {
+    if (!this.splineUrlTemplate) {
+      const runRestDAO = new RunRestDAO();
+      runRestDAO.getSplineUrlTemplate()
+        .then(urlTemplate => this.splineUrlTemplate = urlTemplate)
+    }
+    return this.splineUrlTemplate
   };
 
   this._mapAdditionalInfo = function (info) {

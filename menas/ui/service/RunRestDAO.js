@@ -13,19 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model
+class RunRestDAO {
 
-import za.co.absa.atum.model.{ControlMeasure, RunStatus}
-import com.typesafe.config.{Config, ConfigFactory}
+  getSplineUrlTemplate() {
+    return RestClient.getSync(`api/runs/splineUrlTemplate`)
+  }
 
-case class Run
-(
-  uniqueId: Option[String],
-  runId: Int,
-  dataset: String,
-  datasetVersion: Int,
-  splineRef: SplineReference,
-  startDateTime: String,
-  runStatus: RunStatus,
-  controlMeasure: ControlMeasure
-)
+}
