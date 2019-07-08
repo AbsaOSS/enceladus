@@ -32,12 +32,13 @@ DATASET_VERSION=""
 REPORT_DATE=""
 REPORT_VERSION=""
 RAW_FORMAT=""
-ROWTAG=""
+ROW_TAG=""
 DELIMITER=""
 HEADER=""
 TRIM_VALUES=""
 MAPPING_TABLE_PATTERN=""
 FOLDER_PREFIX=""
+DEBUG_SET_RAW_PATH=""
 
 # Security command line defaults
 MENAS_CREDENTIALS_FILE=""
@@ -111,8 +112,8 @@ case $key in
     RAW_FORMAT="$2"
     shift 2 # past argument and value
     ;;
-    --rowtag)
-    ROWTAG="$2"
+    --row-tag)
+    ROW_TAG="$2"
     shift 2 # past argument and value
     ;;
     --delimiter)
@@ -129,6 +130,10 @@ case $key in
     ;;
     --mapping-table-pattern)
     MAPPING_TABLE_PATTERN="$2"
+    shift 2 # past argument and value
+    ;;
+    --debug-set-raw-path)
+    DEBUG_SET_RAW_PATH="$2"
     shift 2 # past argument and value
     ;;
 
@@ -164,7 +169,6 @@ validate "$NUM_EXECUTORS" "--num-executors"
 validate "$DATASET_NAME" "--dataset-name"
 validate "$DATASET_VERSION" "--dataset-version"
 validate "$REPORT_DATE" "--report-date"
-validate "$RAW_FORMAT" "--raw-format"
 
 # Validation failure check
 if [ "$VALID" == "0" ]; then
@@ -205,18 +209,19 @@ add_to_cmd_line "--driver-memory" ${DRIVER_MEMORY}
 CMD_LINE="$CMD_LINE --conf \"$CONF\" --class $CLASS $JAR"
 
 # Adding command line parameters that go AFTER the jar file
-add_to_cmd_line "--menas-auth-keytab"  ${MENAS_AUTH_KEYTAB}
+add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
 add_to_cmd_line "--menas-credentials-file" ${MENAS_CREDENTIALS_FILE}
 add_to_cmd_line "--dataset-name" ${DATASET_NAME}
 add_to_cmd_line "--dataset-version" ${DATASET_VERSION}
 add_to_cmd_line "--report-date" ${REPORT_DATE}
 add_to_cmd_line "--report-version" ${REPORT_VERSION}
 add_to_cmd_line "--raw-format" ${RAW_FORMAT}
-add_to_cmd_line "--rowtag" ${ROWTAG}
+add_to_cmd_line "--row-tag" ${ROW_TAG}
 add_to_cmd_line "--delimiter" ${DELIMITER}
 add_to_cmd_line "--header" ${HEADER}
 add_to_cmd_line "--trimValues" ${TRIM_VALUES}
 add_to_cmd_line "--folder-prefix" ${FOLDER_PREFIX}
+add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
 
 echo "Command line:"
 echo "$CMD_LINE"

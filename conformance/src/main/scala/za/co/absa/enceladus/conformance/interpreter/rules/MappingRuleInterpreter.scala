@@ -136,7 +136,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
       mappingTableSchemaOpt match {
         case Some(schema) =>
           MappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
-            rule.targetAttribute, defaultMappingValueMap(rule.targetAttribute))
+            rule.targetAttribute, defaultValueOpt.get)
         case None =>
           log.warn("Mapping table schema loading failed")
       }

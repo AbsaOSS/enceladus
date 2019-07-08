@@ -16,6 +16,9 @@
 # Environment configuration
 MENAS_URI="http://localhost:8080/menas/api"
 STD_HDFS_PATH="/bigdata/std/std-{0}-{1}-{2}-{3}"
+
+# MongoDB connection configuration for Spline
+# Important! Special characters should be escaped using triple backslashes (\\\)
 SPLINE_MONGODB_URL="mongodb://localhost:27017"
 SPLINE_MONGODB_NAME="spline"
 
