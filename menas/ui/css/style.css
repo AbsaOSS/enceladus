@@ -61,3 +61,7 @@ html, body {
     width: 100%;
     display: inline-block !important;
 }
+
+.sapMPopoverScroll > .sapUiSimpleFixFlex > .sapUiSimpleFixFlexFlexContentContainer {
+    overflow-y: auto !important;
+}

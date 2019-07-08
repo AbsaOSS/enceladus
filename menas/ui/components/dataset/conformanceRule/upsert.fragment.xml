@@ -20,9 +20,11 @@
             <form:SimpleForm id="addConformanceRuleForm" adjustLabelSpan="false" editable="true">
                 <form:content>
                     <Label text="Conformance Rule"/>
-                    <Select id="newRuleSelect" items="{/rules}"
+                    <Select id="newRuleSelect" showSecondaryValues="false" items="{/rules}"
                             selectedKey="{/newRule/_t}" change="onRuleSelect" enabled="{=!${/newRule/isEdit}}">
-                        <core:Item key="{ruleType}" text="{ruleType}" />
+                        <items>
+                            <core:Item key="{ruleType}" text="{ruleType}" />
+                        </items>
                     </Select>
                 </form:content>
             </form:SimpleForm>

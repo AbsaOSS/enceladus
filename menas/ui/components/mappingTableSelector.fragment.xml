@@ -15,15 +15,16 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
     <Label text="Mapping Table Name"/>
-    <Select id="mappingTableNameSelect" items="{mappingTables>/}"
+    <Select id="mappingTableNameSelect" showSecondaryValues="true" items="{mappingTables>/}"
             selectedKey="{/newRule/mappingTable}" change="onMappingTableSelect">
-        <core:Item key="{mappingTables>_id}" text="{mappingTables>_id}"/>
+        <core:ListItem key="{mappingTables>_id}" text="{mappingTables>_id}" additionalText="Latest version: {mappingTables>latestVersion}"/>
     </Select>
     <Label text="Mapping Table Version"/>
     <FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">
         <Select id="mappingTableVersionSelect" class="menasAddMappingSelect" items="{/currentMappingTableVersions}"
-                width="auto" selectedKey="{/newRule/mappingTableVersion}" change="onMTVersionSelect">
-            <core:Item key="{version}" text="{version} ({path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'})"/>
+                showSecondaryValues="true" width="auto" selectedKey="{/newRule/mappingTableVersion}" change="onMTVersionSelect">
+            <core:ListItem key="{version}" text="{version}"
+                           additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
         </Select>
     </FlexBox>
 </core:FragmentDefinition>
