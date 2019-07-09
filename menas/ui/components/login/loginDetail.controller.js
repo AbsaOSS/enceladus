@@ -41,10 +41,25 @@ sap.ui.define([
         let config = oEvent.getParameter("config");
         this._appId = `${config.targetParent}--${config.controlId}`;
         this._appMasterId = `${config.targetParent}--${config.controlId}-Master`;
-        if (typeof this._model.getProperty("/userInfo/username") === 'undefined') {
-          sap.ui.getCore().byId(this._appMasterId).setVisible(false);
-        }
+        this._appMasterBtnId = `${this._appMasterId}Btn`;
+        this.handleMaster();
       }, this);
+      
+      this._eventBus.subscribe("menas", "resize", this.handleMaster, this);
+    },
+
+    handleMaster: function() {
+      const oCore = sap.ui.getCore();
+      const oMaster = oCore.byId(this._appMasterId);
+      const oMasterBtn = oCore.byId(this._appMasterBtnId);
+      
+      if (typeof this._model.getProperty("/userInfo/username") === 'undefined') {
+        if(oMaster) oMaster.setVisible(false);
+        if(oMasterBtn) oMasterBtn.setVisible(false);
+      } else {
+        if(oMaster) oMaster.setVisible(true);
+        if(oMasterBtn) oMasterBtn.setVisible(true);
+      }
     },
 
     onAfterRendering: function() {
@@ -103,7 +118,7 @@ sap.ui.define([
         Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
           sap.ui.getCore().byId(this._appId).backToTopMaster();
-          sap.ui.getCore().byId(this._appMasterId).setVisible(true);
+          this.handleMaster();
           this._router.navTo("home");
           this._eventBus.publish("nav", "login");
         });

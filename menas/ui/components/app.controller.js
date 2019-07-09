@@ -73,6 +73,11 @@ sap.ui.define([
         enhanceWith: [overrideRb]
       });
       sap.ui.getCore().setModel(newRb, "i18n");
+
+      window.addEventListener('resize', function(oEv) {
+        this._eventBus.publish("menas", "resize", oEv);
+      }.bind(this));
+
     },
 
     onPressMasterBack: function () {
