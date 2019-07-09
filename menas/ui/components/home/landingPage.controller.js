@@ -42,7 +42,6 @@ sap.ui.define([
     },
 
     reShowMaster: function() {
-      
       if(this._app._bMasterClosing) {
         setTimeout(function() {
           this.reShowMaster()
