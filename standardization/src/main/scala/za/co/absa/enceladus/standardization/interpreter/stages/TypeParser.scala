@@ -24,10 +24,12 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils.appendPath
 import za.co.absa.enceladus.utils.types.Defaults
 import org.apache.spark.sql.functions._
+import shapeless.ops.tuple.Length
 import za.co.absa.enceladus.standardization.StandardizationCommon
 import za.co.absa.spark.hofs.transform
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.time.DateTimePattern
+import za.co.absa.enceladus.utils.time.DateTimePattern.Section
 
 import scala.util.Random
 
@@ -413,11 +415,48 @@ object TypeParser extends StandardizationCommon {
                                            path: String,
                                            origSchema: StructType,
                                            parent: Option[Parent]) extends DateTimeParser {
+
+    private def applyPatternToStringColumn(column: Column, pattern: String, defaultTimeZone: Option[String]): Column = {
+      val interim: Column = to_timestamp(column, pattern)
+      defaultTimeZone.map(to_utc_timestamp(interim, _)).getOrElse(interim)
+    }
+
+    private def mainParts(length: Int, r1: Option[Section], r2: Option[Section], r3: Option[Section]): Seq[(Int, Int)] = {
+      val substrIndexes: List[Int] = 0 :: (
+        r1.map(x => List(x._1, x._2)).getOrElse(List.empty) ++
+        r2.map(x => List(x._1, x._2)).getOrElse(List.empty) ++
+        r3.map(x => List(x._1, x._2)).getOrElse(List.empty)
+        ).sorted ++
+        Seq(length - 1)
+
+      substrIndexes.sliding(2, 2).toList // turn into List of Lists of length 2
+        .map(x => (x.head, x.tail.head)) // Lists(2) into pairs
+        .filter(x => x._1 != x._2)       // remove pairs of same numbers (touching segments)
+        .map(x => (x._1, x._2 - x._1))   // change into substring arguments (index, length)
+    }
+
+    private def composeColumnWithouSecondFractions(srcColumn: Column, parts: Seq[(Int, Int)]): Column = {
+      parts match {
+        case Nil => srcColumn
+        case head :: Nil => substring(srcColumn, head._1, head._2)
+        case _ =>
+          val substringCols = parts.foldLeft(List.empty[Column]) {(acc, item) =>
+            val (index, length) = item
+            substring(srcColumn, index, length) :: acc
+          }
+          concat(substringCols.reverse: _*) // need to reverse, as on processing we add later columns to front of the list
+      }
+    }
+
     protected val basicCastFunction: (Column, String) => Column = to_timestamp //for epoch casting
 
     override protected def castStringColumn(stringColumn: Column): Column = {
-      val interim: Column = to_timestamp(stringColumn, pattern)
-      pattern.defaultTimeZone.map(to_utc_timestamp(interim, _)).getOrElse(interim)
+      if (pattern.containsSecondFraction) {
+        applyPatternToStringColumn(stringColumn, pattern, pattern.defaultTimeZone)
+
+      } else {
+        applyPatternToStringColumn(stringColumn, pattern, pattern.defaultTimeZone)
+      }
     }
 
     override protected def castDateColumn(dateColumn: Column): Column = {

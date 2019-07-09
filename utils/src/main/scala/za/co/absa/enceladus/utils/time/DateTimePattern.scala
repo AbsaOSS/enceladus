@@ -19,6 +19,7 @@ import java.security.InvalidParameterException
 
 import org.apache.spark.sql.types.{DateType, StructField, TimestampType}
 import za.co.absa.enceladus.utils.types.TypePattern
+import DateTimePattern.Section
 
 /**
   * Class to carry enhanced information about date/time formatting pattern in conversion from/to string
@@ -35,6 +36,11 @@ abstract sealed class DateTimePattern(pattern: String, isDefault: Boolean = fals
   val timeZoneInPattern: Boolean
   val defaultTimeZone: Option[String]
   val isTimeZoned: Boolean
+  val millisecondsPosition: Option[Section]
+  val microsecondsPosition: Option[Section]
+  val nanosecondsPosition: Option[Section]
+  val containsSecondFraction: Boolean
+  val patternWithoutSecondFractions: String
 
   override def toString: String = {
     val q = "\""
@@ -47,12 +53,16 @@ object DateTimePattern {
   import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
   import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.{StructFieldEnhancements, PatternInfo}
 
+  type Section = (Int, Int)
   val EpochKeyword = "epoch"
   val EpochMilliKeyword = "epochmilli"
 
   private val epochUnitFactor = 1
   private val epochThousandFactor = 1000
   private val patternTimeZoneChars = Set('X','z','Z')
+  private val patternMilliSecondChar = 'S'
+  private val patternMicroSecondChar = 'i'
+  private val patternNanoSecondChat = 'n'
 
   private final case class EpochDTPattern(override val pattern: String,
                                           override val isDefault: Boolean = false)
@@ -65,6 +75,8 @@ object DateTimePattern {
     override val timeZoneInPattern: Boolean = true
     override val defaultTimeZone: Option[String] = None
     override val isTimeZoned: Boolean = true
+    override val containsSecondFraction: Boolean = pattern != EpochKeyword //not really used here, but for consistency
+    override val patternWithoutSecondFractions: String = EpochKeyword
   }
 
   private final case class StandardDTPattern(override val pattern: String,
@@ -79,6 +91,23 @@ object DateTimePattern {
     override val timeZoneInPattern: Boolean = DateTimePattern.timeZoneInPattern(pattern)
     override val defaultTimeZone: Option[String] = assignedDefaultTimeZone.filterNot(_ => timeZoneInPattern)
     override val isTimeZoned: Boolean = timeZoneInPattern || defaultTimeZone.nonEmpty
+    override val millisecondsPosition: Option[Section] = scanForPlaceholder(pattern, patternMilliSecondChar)
+    override val microsecondsPosition: Option[Section] = scanForPlaceholder(pattern, patternMicroSecondChar)
+    override val nanosecondsPosition: Option[Section] = scanForPlaceholder(pattern, patternNanoSecondChat)
+    override val containsSecondFraction: Boolean = microsecondsPosition.nonEmpty || millisecondsPosition.nonEmpty || nanosecondsPosition.nonEmpty
+  }
+
+  private def findSectionEnd(pattern: String, placeHolder: Char, fromIndex: Int): Int = {
+    var res = fromIndex
+    while ((res < pattern.length) && (pattern(res) == placeHolder)) {
+      res += 1
+    }
+    res - 1
+  }
+
+  private def scanForPlaceholder(pattern: String, placeHolder: Char): Option[Section] = {
+    val start = pattern.findFirstUnquoted(Set(placeHolder), Set('''))
+    start.map(index => (index, findSectionEnd(pattern, placeHolder, index)))
   }
 
   private def create(pattern: String, assignedDefaultTimeZone: Option[String], isDefault: Boolean): DateTimePattern = {
