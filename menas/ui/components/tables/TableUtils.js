@@ -168,7 +168,11 @@ sap.ui.define(["sap/m/ListBase",
     this._oSearchBtn = new Button({
       icon: "sap-icon://search",
       press: () => {
-        this._oSearchDialog.openBy(this._oSearchBtn);
+        if(this._oSearchDialog.isOpen()) {
+          this._oSearchDialog.close();
+        } else {
+          this._oSearchDialog.openBy(this._oSearchBtn);
+        }
       }
     });
     this._aSearchKeys = aSearchKeys;
