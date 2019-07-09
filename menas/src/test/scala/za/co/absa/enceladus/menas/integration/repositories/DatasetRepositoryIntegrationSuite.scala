@@ -214,7 +214,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
       assert(actual == expected)
     }
 
-    "order the results by version " in {
+    "order the results by version (ASC)" in {
       val dataset4 = DatasetFactory.getDummyDataset(name = "dataset", version = 4)
       datasetFixture.add(dataset4)
       val dataset3 = DatasetFactory.getDummyDataset(name = "dataset", version = 3)
@@ -466,7 +466,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
       }
     }
 
-    "order the results by name" in {
+    "order the results by name (ASC)" in {
       val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2")
       datasetFixture.add(dataset2)
       val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1")
@@ -503,7 +503,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         datasetFixture.add(dataset2, dataset3, dataset4, dataset5)
         val actual = await(datasetMongoRepository.getLatestVersions(Some("dataset2")))
 
-        val expected = Seq(dataset3).map(DatasetFactory.getSummary)
+        val expected = Seq(dataset3).map(DatasetFactory.toSummary)
         assert(actual == expected)
       }
       "search query is a partial match" in {
@@ -515,7 +515,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         datasetFixture.add(dataset2, dataset3, dataset4, dataset5)
         val actual = await(datasetMongoRepository.getLatestVersions(Some("tas")))
 
-        val expected = Seq(dataset3, dataset4).map(DatasetFactory.getSummary)
+        val expected = Seq(dataset3, dataset4).map(DatasetFactory.toSummary)
         assert(actual == expected)
       }
     }
@@ -530,12 +530,12 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         datasetFixture.add(dataset1ver1, dataset1ver2, dataset2ver1, abc1)
         val actual = await(datasetMongoRepository.getLatestVersions(Some("")))
 
-        val expected = Seq(abc1, dataset1ver2, dataset2ver1).map(DatasetFactory.getSummary)
+        val expected = Seq(abc1, dataset1ver2, dataset2ver1).map(DatasetFactory.toSummary)
         assert(actual == expected)
       }
     }
 
-    "order the results by name" in {
+    "order the results by name (ASC)" in {
       val dataset2ver1 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
       datasetFixture.add(dataset2ver1)
       val dataset1ver1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1)
@@ -547,7 +547,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
 
       val actual = await(datasetMongoRepository.getLatestVersions(None))
 
-      val expected = Seq(dataset1ver2, dataset2ver2).map(DatasetFactory.getSummary)
+      val expected = Seq(dataset1ver2, dataset2ver2).map(DatasetFactory.toSummary)
       assert(actual == expected)
     }
   }

@@ -49,17 +49,19 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
   private val today = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
 
   "RunMongoRepository::getAllLatest" should {
-    "return only the latest Run for each Dataset asynchronously" when {
+    "return only the latest Run for each Dataset's latest version asynchronously" when {
       "there are Runs" in {
-        val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset1", runId = 1)
-        val dataset1run2 = RunFactory.getDummyRun(dataset = "dataset1", runId = 2)
-        runFixture.add(dataset1run1, dataset1run2)
-        val dataset2run1 = RunFactory.getDummyRun(dataset = "dataset2", runId = 1)
-        runFixture.add(dataset2run1)
+        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
+        val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
+        runFixture.add(dataset1ver1run1, dataset1ver1run2)
+        val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1)
+        runFixture.add(dataset1ver2run1)
+        val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1)
+        runFixture.add(dataset2ver1run1)
 
         val actual = await(runMongoRepository.getAllLatest())
 
-        val expected = List(dataset1run2, dataset2run1)
+        val expected = List(dataset1ver2run1, dataset2ver1run1)
         assert(actual == expected)
       }
     }
@@ -71,24 +73,41 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
         assert(actual.isEmpty)
       }
     }
+
+    "order the results by dataset name (ASC)" in {
+      val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1)
+      runFixture.add(dataset2ver1run1)
+      val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1)
+      runFixture.add(dataset1ver2run1)
+      val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
+      val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
+      runFixture.add(dataset1ver1run1, dataset1ver1run2)
+
+      val actual = await(runMongoRepository.getAllLatest())
+
+      val expected = List(dataset1ver2run1, dataset2ver1run1)
+      assert(actual == expected)
+    }
   }
 
   "RunMongoRepository::getByStartDate" should {
     val startDate = "28-01-2019"
 
-    "return only the latest run for each dataset on that startDate asynchronously" when {
+    "return only the latest run for each dataset's latest version on that startDate asynchronously" when {
       "there are Runs on the specified startDate" in {
-        val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset1", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
-        val dataset1run2 = RunFactory.getDummyRun(dataset = "dataset1", runId = 2, startDateTime = s"$startDate 14:01:12 +0200")
-        runFixture.add(dataset1run1, dataset1run2)
-        val dataset2run1 = RunFactory.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
-        runFixture.add(dataset2run1)
-        val dataset3run1 = RunFactory.getDummyRun(dataset = "dataset3", runId = 1, startDateTime = "29-01-2019 13:01:12 +0200")
-        runFixture.add(dataset3run1)
+        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
+        val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = s"$startDate 14:01:12 +0200")
+        runFixture.add(dataset1ver1run1, dataset1ver1run2)
+        val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = s"$startDate 15:01:12 +0200")
+        runFixture.add(dataset1ver2run1)
+        val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
+        runFixture.add(dataset2ver1run1)
+        val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1,startDateTime = "29-01-2019 13:01:12 +0200")
+        runFixture.add(dataset3ver1run1)
 
         val actual = await(runMongoRepository.getByStartDate(startDate))
 
-        val expected = List(dataset1run2, dataset2run1)
+        val expected = List(dataset1ver2run1, dataset2ver1run1)
         assert(actual == expected)
       }
     }
@@ -112,38 +131,63 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
         assert(actual.isEmpty)
       }
     }
+
+    "order the results by dataset name (ASC)" in {
+      val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "29-01-2019 13:01:12 +0200")
+      runFixture.add(dataset3ver1run1)
+      val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
+      runFixture.add(dataset2ver1run1)
+      val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = s"$startDate 15:01:12 +0200")
+      runFixture.add(dataset1ver2run1)
+      val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
+      val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = s"$startDate 14:01:12 +0200")
+      runFixture.add(dataset1ver1run1, dataset1ver1run2)
+
+      val actual = await(runMongoRepository.getByStartDate(startDate))
+
+      val expected = List(dataset1ver2run1, dataset2ver1run1)
+      assert(actual == expected)
+    }
   }
 
   "RunMongoRepository::getAllSummaries" should {
     "return all RunSummaries" when {
       "there are Runs in the database" in {
-        val startDateTime1 = "29-01-2019 13:01:12 +0200"
-        val startDateTime2 = "29-03-2019 13:01:12 +0200"
-
         val dataset1v1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1,
-          runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())), startDateTime = startDateTime1)
+          runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())))
         val dataset1v1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2,
-          runStatus = RunStatus(RunState.running, None), startDateTime = startDateTime2)
+          runStatus = RunStatus(RunState.running, None))
         val dataset1v2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1,
-          runStatus = RunStatus(RunState.stageSucceeded, None), startDateTime = startDateTime1)
-        val dataset2v1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1,runId = 1,
-          runStatus = RunStatus(RunState.allSucceeded, None), startDateTime = startDateTime2)
+          runStatus = RunStatus(RunState.stageSucceeded, None))
+        val dataset2v1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1,
+          runStatus = RunStatus(RunState.allSucceeded, None))
         runFixture.add(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1)
 
         val actual = await(runMongoRepository.getAllSummaries())
 
-        val dataset1v1run1summary = RunSummary(datasetName = "dataset1", datasetVersion = 1, runId = 1,
-          status = "failed", startDateTime = startDateTime1)
-        val dataset1v1run2summary = RunSummary(datasetName = "dataset1", datasetVersion = 1, runId = 2,
-          status = "running", startDateTime = startDateTime2)
-        val dataset1v2run1summary = RunSummary(datasetName = "dataset1", datasetVersion = 2, runId = 1,
-          status = "stageSucceeded", startDateTime = startDateTime1)
-        val dataset2v1run1summary = RunSummary(datasetName = "dataset2", datasetVersion = 1, runId = 1,
-          status = "allSucceeded", startDateTime = startDateTime2)
-        val expected = List(dataset1v1run1summary, dataset1v1run2summary, dataset1v2run1summary, dataset2v1run1summary)
-
+        val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1).map(RunFactory.toSummary)
         assert(actual == expected)
       }
+    }
+
+    "order RunSummaries by Dataset Name (ASC), Dataset Version (ASC), Run ID (ASC)" in {
+      val dataset2v1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1,
+        runStatus = RunStatus(RunState.allSucceeded, None))
+      runFixture.add(dataset2v1run1)
+      val dataset1v2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1,
+        runStatus = RunStatus(RunState.stageSucceeded, None))
+      runFixture.add(dataset1v2run1)
+      val dataset1v1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2,
+        runStatus = RunStatus(RunState.running, None))
+      runFixture.add(dataset1v1run2)
+      val dataset1v1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1,
+        runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())))
+      runFixture.add(dataset1v1run1)
+
+      val actual = await(runMongoRepository.getAllSummaries())
+
+      val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1).map(RunFactory.toSummary)
+      assert(actual == expected)
     }
 
     "return an empty collection asynchronously" when {
@@ -156,43 +200,50 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
   }
 
   "RunMongoRepository::getSummariesByDatasetName" should {
-    val startDateTime1 = "29-01-2019 13:01:12 +0200"
-    val startDateTime2 = "29-03-2019 13:01:12 +0200"
-
     val queriedDatasetName = "dataset1"
     val wrongDatasetName = "dataset2"
 
-    "return only the latest run for each dataset on that startDate asynchronously" when {
+    "return all RunSummaries for the specified Dataset Name asynchronously" when {
       "there are Runs with the specified Dataset Name" in {
         val dataset1v1run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 1, runId = 1,
-          runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())), startDateTime = startDateTime1)
+          runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())))
         val dataset1v1run2 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 1, runId = 2,
-          runStatus = RunStatus(RunState.running, None), startDateTime = startDateTime2)
+          runStatus = RunStatus(RunState.running, None))
         val dataset1v2run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 2, runId = 1,
-          runStatus = RunStatus(RunState.stageSucceeded, None), startDateTime = startDateTime1)
+          runStatus = RunStatus(RunState.stageSucceeded, None))
 
-        val dataset2v1run1 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = 1,runId = 1,
-          runStatus = RunStatus(RunState.allSucceeded, None), startDateTime = startDateTime2)
+        val dataset2v1run1 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = 1, runId = 1,
+          runStatus = RunStatus(RunState.allSucceeded, None))
         runFixture.add(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1)
 
         val actual = await(runMongoRepository.getSummariesByDatasetName(queriedDatasetName))
 
-        val dataset1v1run1summary = RunSummary(datasetName = queriedDatasetName, datasetVersion = 1, runId = 1,
-          status = "failed", startDateTime = startDateTime1)
-        val dataset1v1run2summary = RunSummary(datasetName = queriedDatasetName, datasetVersion = 1, runId = 2,
-          status = "running", startDateTime = startDateTime2)
-        val dataset1v2run1summary = RunSummary(datasetName = queriedDatasetName, datasetVersion = 2, runId = 1,
-          status = "stageSucceeded", startDateTime = startDateTime1)
-        val expected = List(dataset1v1run1summary, dataset1v1run2summary, dataset1v2run1summary)
-
+        val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1).map(RunFactory.toSummary)
         assert(actual == expected)
       }
     }
 
+    "order RunSummaries by Dataset Version (ASC), Run ID (ASC)" in {
+      val dataset1v2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1,
+        runStatus = RunStatus(RunState.stageSucceeded, None))
+      runFixture.add(dataset1v2run1)
+      val dataset1v1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2,
+        runStatus = RunStatus(RunState.running, None))
+      runFixture.add(dataset1v1run2)
+      val dataset1v1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1,
+        runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())))
+      runFixture.add(dataset1v1run1)
+
+      val actual = await(runMongoRepository.getSummariesByDatasetName(queriedDatasetName))
+
+      val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1).map(RunFactory.toSummary)
+      assert(actual == expected)
+    }
+
     "return an empty collection asynchronously" when {
       "there are no Runs with the specified Dataset Name" in {
-        val run = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = 1,runId = 1,
-          runStatus = RunStatus(RunState.allSucceeded, None), startDateTime = startDateTime2)
+        val run = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = 1, runId = 1,
+          runStatus = RunStatus(RunState.allSucceeded, None))
         runFixture.add(run)
 
         val actual = await(runMongoRepository.getByStartDate(queriedDatasetName))
@@ -203,46 +254,52 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
   }
 
   "RunMongoRepository::getSummariesByDatasetNameAndVersion" should {
-    val startDateTime1 = "29-01-2019 13:01:12 +0200"
-    val startDateTime2 = "29-03-2019 13:01:12 +0200"
-
     val queriedDatasetName = "dataset1"
     val wrongDatasetName = "dataset2"
 
     val queriedDatasetVersion = 1
     val wrongDatasetVersion = 2
 
-    "return only the latest run for each dataset on that startDate asynchronously" when {
+    "return all RunSummaries for a specific Dataset Name and Version asynchronously" when {
       "there are Runs with the specified Dataset Name and version" in {
         val dataset1v1run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = queriedDatasetVersion, runId = 1,
-          runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())), startDateTime = startDateTime1)
+          runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())))
         val dataset1v1run2 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = queriedDatasetVersion, runId = 2,
-          runStatus = RunStatus(RunState.running, None), startDateTime = startDateTime2)
+          runStatus = RunStatus(RunState.running, None))
 
         val dataset1v2run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = wrongDatasetVersion, runId = 1,
-          runStatus = RunStatus(RunState.stageSucceeded, None), startDateTime = startDateTime1)
-        val dataset2v1run1 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = queriedDatasetVersion,runId = 1,
-          runStatus = RunStatus(RunState.allSucceeded, None), startDateTime = startDateTime2)
+          runStatus = RunStatus(RunState.stageSucceeded, None))
+        val dataset2v1run1 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = queriedDatasetVersion, runId = 1,
+          runStatus = RunStatus(RunState.allSucceeded, None))
         runFixture.add(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1)
 
         val actual = await(runMongoRepository.getSummariesByDatasetNameAndVersion(queriedDatasetName, queriedDatasetVersion))
 
-        val dataset1v1run1summary = RunSummary(datasetName = queriedDatasetName, datasetVersion = 1, runId = 1,
-          status = "failed", startDateTime = startDateTime1)
-        val dataset1v1run2summary = RunSummary(datasetName = queriedDatasetName, datasetVersion = 1, runId = 2,
-          status = "running", startDateTime = startDateTime2)
-        val expected = List(dataset1v1run1summary, dataset1v1run2summary)
-
+        val expected = List(dataset1v1run1, dataset1v1run2).map(RunFactory.toSummary)
         assert(actual == expected)
       }
+    }
+
+    "order RunSummaries by Run ID (ASC)" in {
+      val dataset1v1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2,
+        runStatus = RunStatus(RunState.running, None))
+      runFixture.add(dataset1v1run2)
+      val dataset1v1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1,
+        runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())))
+      runFixture.add(dataset1v1run1)
+
+      val actual = await(runMongoRepository.getSummariesByDatasetNameAndVersion(queriedDatasetName, queriedDatasetVersion))
+
+      val expected = List(dataset1v1run1, dataset1v1run2).map(RunFactory.toSummary)
+      assert(actual == expected)
     }
 
     "return an empty collection asynchronously" when {
       "there are no Runs with the specified Dataset Name and Version" in {
         val dataset1v2run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = wrongDatasetVersion, runId = 1,
-          runStatus = RunStatus(RunState.stageSucceeded, None), startDateTime = startDateTime1)
-        val dataset2v1run1 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = queriedDatasetVersion,runId = 1,
-          runStatus = RunStatus(RunState.allSucceeded, None), startDateTime = startDateTime2)
+          runStatus = RunStatus(RunState.stageSucceeded, None))
+        val dataset2v1run1 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = queriedDatasetVersion, runId = 1,
+          runStatus = RunStatus(RunState.allSucceeded, None))
         runFixture.add(dataset1v2run1, dataset2v1run1)
 
         val actual = await(runMongoRepository.getSummariesByDatasetNameAndVersion(queriedDatasetName, queriedDatasetVersion))
