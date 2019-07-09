@@ -41,6 +41,17 @@ sap.ui.define([
       return this._tileNumFormat.format(nNum);
     },
 
+    reShowMaster: function() {
+      
+      if(this._app._bMasterClosing) {
+        setTimeout(function() {
+          this.reShowMaster()
+        }.bind(this), 100);
+      } else {
+        this._app.showMaster();
+      }
+    },
+
     masterNavigate: function(oEv) {
       const oSrc = oEv.getSource();
       const sTarget = oSrc.data("target");
@@ -60,9 +71,13 @@ sap.ui.define([
 
       this._app.backToTopMaster();
       this._app.toMaster(viewBase);
-      if(!this._app.isMasterShown()) {
-        setTimeout(this._app.showMaster, 300);
-      }
+
+      this._app.showMaster();
+      //it will auto-close when the window size is small enough
+      setTimeout(function() {
+        this.reShowMaster();
+      }.bind(this), 100);
+
     }
 
   })
