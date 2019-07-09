@@ -53,13 +53,16 @@ sap.ui.define([
       const oMaster = oCore.byId(this._appMasterId);
       const oMasterBtn = oCore.byId(this._appMasterBtnId);
       
-      if (typeof this._model.getProperty("/userInfo/username") === 'undefined') {
-        if(oMaster) oMaster.setVisible(false);
-        if(oMasterBtn) oMasterBtn.setVisible(false);
-      } else {
-        if(oMaster) oMaster.setVisible(true);
-        if(oMasterBtn) oMasterBtn.setVisible(true);
-      }
+      setTimeout(function() {
+        if (typeof this._model.getProperty("/userInfo/username") === 'undefined') {
+          if(oMaster) oMaster.setVisible(false);
+          if(oMasterBtn) oMasterBtn.setVisible(false);
+        } else {
+          if(oMaster) oMaster.setVisible(true);
+          if(oMasterBtn) oMasterBtn.setVisible(true);
+        }
+      }.bind(this), 50);
+
     },
 
     onAfterRendering: function() {
