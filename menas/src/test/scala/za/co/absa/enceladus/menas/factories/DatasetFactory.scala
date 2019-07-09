@@ -127,7 +127,7 @@ object DatasetFactory {
     MenasReference(collection, name, version)
   }
 
-  def getSummary(dataset: Dataset): VersionedSummary = {
+  def toSummary(dataset: Dataset): VersionedSummary = {
     VersionedSummary(dataset.name, dataset.version)
   }
 
