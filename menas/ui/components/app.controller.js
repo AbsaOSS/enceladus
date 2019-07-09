@@ -72,6 +72,11 @@ sap.ui.define([
         bundle: sapMRb,
         enhanceWith: [overrideRb]
       });
+
+      window.addEventListener('resize', function(oEv) {
+       this._eventBus.publish("menas", "resize", oEv);
+     }.bind(this));
+
     },
 
     onPressMasterBack: function () {
