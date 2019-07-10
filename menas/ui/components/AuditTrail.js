@@ -17,13 +17,13 @@ sap.ui.define(["components/tables/TableUtils"],
     function(TableUtils) {
 
   const AuditTrail = sap.ui.base.Object.extend("components.AuditTrail", {
-    constructor: function(oControl) {
-      this._oControl = oControl;
+    constructor: function(oAuditTable) {
+      this._oAuditTable = oAuditTable;
     }
   });
   
   AuditTrail.prototype.applyTableUtils = function() {
-    const auditTableUtils = new TableUtils(this._oControl, "Audit Trail");
+    const auditTableUtils = new TableUtils(this._oAuditTable, "Audit Trail");
     auditTableUtils.makeSortable(["Change Time", "Author", "Version"], 
         ["updated", "updatedBy", "menasRef/version"]);
     auditTableUtils.makeGroupable(["Author"], ["updatedBy"]);
