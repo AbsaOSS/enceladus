@@ -177,6 +177,7 @@
         <oozie.version>4.3.0</oozie.version>
         <htrace.version>3.1.0-incubating</htrace.version>
         <cobrix.version>0.5.1</cobrix.version>
+        <cronstrue.version>1.79.0</cronstrue.version>
         <!--other properties-->
         <skip.integration.tests>true</skip.integration.tests>
         <scalastyle.configLocation>${project.basedir}/scalastyle-config.xml</scalastyle.configLocation>

@@ -15,12 +15,12 @@
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
   "sap/ui/core/Fragment",
-  "components/types/NonEmptyArrType",
+  "components/types/CronEntryType",
   "components/validator/Validator",
   "sap/m/MessageToast",
   "./../external/it/designfuture/chartjs/library-preload",
   "components/tables/TableUtils"
-], function (Controller, Fragment, NonEmptyArrType, Validator, MessageToast, Openui5Chartjs, TableUtils) {
+], function (Controller, Fragment, CronEntryType, Validator, MessageToast, Openui5Chartjs, TableUtils) {
   "use strict";
 
   return Controller.extend("components.dataset.datasetDetail", {
@@ -85,15 +85,16 @@ sap.ui.define([
         }
       });
 
+      this._rb = sap.ui.getCore().getModel("i18n").getResourceBundle();
+
       // Cron time picker
       let cronTemplate = {
-        "minute" : this._generateCronTemplateRange(0, 60),
-        "hour": this._generateCronTemplateRange(0, 24),
-        "dayOfMonth": this._generateCronTemplateRange(1, 32),
-        "month": this._generateCronTemplateRange(1, 13),
-        "dayOfWeek": this._generateCronTemplateRange(0, 7)
+        "minute" : this._generateCronTemplateRange(0, 60, this._rb),
+        "hour": this._generateCronTemplateRange(0, 24, this._rb),
+        "dayOfMonth": this._generateCronTemplateRange(1, 32, this._rb),
+        "month": this._generateCronTemplateRange(1, 13, this._rb, "MENAS_SCHEDULE_MONTH"),
+        "dayOfWeek": this._generateCronTemplateRange(0, 7, this._rb, "MENAS_SCHEDULE_DAY")
       }
-
       this._model.setProperty("/cronFormTemplate", cronTemplate);
       
       const auditTable = this.byId("auditTrailTable");
@@ -101,13 +102,20 @@ sap.ui.define([
       auditTableUtils.makeSortable(["Change Time", "Author", "Version"], 
           ["updated", "updatedBy", "menasRef/version"]);
       auditTableUtils.makeGroupable(["Author"], ["updatedBy"]);
+      auditTableUtils.makeSearchable(["updatedBy", "changes"]);
     },
 
-    _generateCronTemplateRange: function(iStart, iEnd) {
+    _generateCronTemplateRange: function(iStart, iEnd, oRb, oRbProperty) {
       return ["*", ...(_.range(iStart, iEnd, 1))].map(n => {
+        let description = n.toString();
+        if(oRbProperty) {
+          description = oRb.getText(`${oRbProperty}[${n}]`);
+        } else if(n === "*") {
+          description = oRb.getText("MENAS_SCHEDULE_ANY");
+        }
         return {
         "key": n.toString(),
-        "name": n.toString()
+        "name": description
         }
       });
     },

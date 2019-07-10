@@ -30,6 +30,8 @@
             text="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' ? 'Active' : ${/currentDataset/schedule/activeInstance/status/status} }"
             state="{path:'/currentDataset/schedule/activeInstance/status/status', formatter:'Formatters.oozieCoordinatorStatusFormatter'}" />
         <core:Title text="Schedule Timing (in UTC)" />
+        <Label text="Will run" />
+        <Text text="{path: '/currentDataset/schedule/scheduleTiming/cronSchedule', formatter: 'Formatters.cronExpressionFormatter'}" />
         <Label text="Minute" />
         <Text text="{path: '/currentDataset/schedule/scheduleTiming/minute', type:'components.types.NonEmptyArrType'}" />
         <Label text="Hour" />
