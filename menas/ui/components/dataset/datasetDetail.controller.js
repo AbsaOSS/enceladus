@@ -475,10 +475,8 @@ sap.ui.define([
     },
 
     onFindRunsPress: function (oEv){
-      // Check selected interval
       this.updateMonitoringData()
     },
-
     setDefaultMonitoringDateInterval: function () {
       let oEnd = new Date();
       let oStart = new Date(oEnd.getTime() - 14 * 24 * 60 * 60 * 1000); // Two weeks before today
@@ -496,6 +494,40 @@ sap.ui.define([
         dataset: datasetName,
         version: datasetVersion,
         id: runId
+      });
+    },
+
+    // Bar chart popover
+    onExit : function () {
+      if (this._oPopover) {
+        this._oPopover.close();
+      }
+    },
+
+    onRecordsBarClick: function (oEvent) {
+      let oChart = oEvent.getSource().__chart;
+      let oActiveElement = oChart.getElementsAtEvent(oEvent.getParameters().event)[0];
+      if (!oActiveElement) return;
+      let runIndex = oActiveElement._index;
+      console.log(oEvent.getSource())
+      console.log(oActiveElement)
+
+      // create popover
+      if (!this._oPopover) {
+        this._oPopover = sap.ui.xmlfragment("components.dataset.monitoring.barChartPopover", this);
+        this.getView().addDependent(this._oPopover);
+      }
+      this._oPopover.bindElement("/monitoringRunData/" + runIndex);
+      this._oPopover.openBy(oEvent.getSource(), false);
+    },
+
+    popoverToRun: function (oEvent) {
+      let sPath = this._oPopover.getElementBinding()["sPath"];
+      let oRun = this._model.getProperty(sPath);
+      this._router.navTo("runs", {
+        dataset: oRun["datasetName"],
+        version: oRun["datasetVersion"],
+        id: oRun["runId"]
       });
     }
 

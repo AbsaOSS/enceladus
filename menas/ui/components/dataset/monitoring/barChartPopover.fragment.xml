@@ -1,0 +1,133 @@
+<!--
+  ~ Copyright 2018-2019 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:tnt="sap.tnt"
+    xmlns:form="sap.ui.layout.form"
+    xmlns:layout="sap.ui.layout">
+    <Popover
+        class="monitoringRecordspopover"
+        title="{=${infoDateString} + ' v' + ${controlMeasure/metadata/version}}"
+        showHeader="true"
+        placement="PreferredTopOrFlip"
+        showArrow="false"
+        initialFocus="runDetailsPopoverButton"
+        resizable="false"
+        contentWidth="36rem">
+        <form:SimpleForm id="monitoringSummary" >
+            <form:content>
+                <Label text="Attempt number"/>
+                <Text text="{runAttempts}"/>
+                <Label text="Run start"/>
+                <Text text="{path: 'startDateTime',
+                                    formatter: 'Formatters.dateShortFormatter'}"/>
+                <Label text="Run status"/>
+                <tnt:InfoLabel
+                    text="{prettyStatus}"
+                    colorScheme= "{infoLabel}"/>
+                <Label text="Used dataset version"/>
+                <Text text="{datasetVersion}"/>
+                <Label text="Latest checkpoint"/>
+                <layout:HorizontalLayout>
+                    <Text class="sapUiSmallMarginEnd" text="{path: 'latestCheckpoint/endDate',
+                                        formatter: 'Formatters.dateShortFormatter'}" wrapping="false" />
+
+                    <Text text="{latestCheckpoint/name}" wrapping="false"/>
+                </layout:HorizontalLayout>
+                <Label text="Warnings"/>
+                <List showNoData="false" width="auto" backgroundDesign="Transparent" showSeparators="None"
+                      items="{path:'warnings', templateShareable:false}" >
+                    <items>
+                        <CustomListItem>
+                            <ObjectStatus
+                                text="{text}"
+                                icon="{icon}"
+                                state="{state}" />
+                        </CustomListItem>
+                    </items>
+                </List>
+                <Label text="Raw records"/>
+                <Text wrapping="false" text="{
+                                path: 'rawRecordcount',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true
+                                }
+                            }" />
+            </form:content>
+        </form:SimpleForm>
+        <Table width="100%">
+            <columns>
+                <Column><Text text="Records" /> </Column>
+                <Column hAlign="Right"><Text text="Succeeded" /> </Column>
+                <Column hAlign="Right"><Text text="Failed" /> </Column>
+            </columns>
+            <items>
+                <ColumnListItem>
+                    <cells>
+                        <Text text="Standardization" />
+                        <Text textAlign="Center" wrapping="false" text="{
+                                path: 'std_records_succeeded',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true
+                                }
+                            }" />
+                        <Text textAlign="Center" wrapping="false" text="{
+                                path: 'std_records_failed',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true
+                                }
+                            }" />
+                    </cells>
+                </ColumnListItem>
+            </items>
+            <items>
+                <ColumnListItem>
+                    <cells>
+                        <Text text="Conformance" />
+                        <Text textAlign="Center" wrapping="false" text="{
+                                path: 'conform_records_succeeded',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true
+                                }
+                            }" />
+                        <Text textAlign="Center" wrapping="false" text="{
+                                path: 'conform_records_failed',
+                                type: 'sap.ui.model.type.Integer',
+                                formatOptions: {
+                                    groupingEnabled: true
+                                }
+                            }" />
+                    </cells>
+                </ColumnListItem>
+            </items>
+        </Table>
+        <footer>
+            <Toolbar>
+                <ToolbarSpacer/>
+                <Button
+                    icon="sap-icon://activities"
+                    id="runDetailsPopoverButton"
+                    text="Run details"
+                    press="popoverToRun" />
+            </Toolbar>
+        </footer>
+
+    </Popover>
+</core:FragmentDefinition>

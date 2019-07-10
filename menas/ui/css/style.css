@@ -45,6 +45,10 @@ html, body {
     padding: 1rem !important;
 }
 
+.monitoringRecordspopover {
+    left: calc(50% - 18rem)  !important;
+}
+
 .auditTrailNestedListItem {
 	max-width: 100%;
 	background-color: inherit !important;
