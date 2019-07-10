@@ -44,4 +44,8 @@ class UserInfoController extends BaseController {
     UserInfo(principal.getUsername, groups, menasVersion)
   }
 
+  @GetMapping(path = Array("/version"))
+  def getVersion(): String = {
+    menasVersion
+  }
 }
