@@ -19,8 +19,9 @@ sap.ui.define([
   "components/validator/Validator",
   "sap/m/MessageToast",
   "./../external/it/designfuture/chartjs/library-preload",
-  "components/tables/TableUtils"
-], function (Controller, Fragment, CronEntryType, Validator, MessageToast, Openui5Chartjs, TableUtils) {
+  "components/tables/TableUtils",
+  "components/AuditTrail"
+], function (Controller, Fragment, CronEntryType, Validator, MessageToast, Openui5Chartjs, TableUtils, AuditTrail) {
   "use strict";
 
   return Controller.extend("components.dataset.datasetDetail", {
@@ -98,11 +99,8 @@ sap.ui.define([
       this._model.setProperty("/cronFormTemplate", cronTemplate);
       
       const auditTable = this.byId("auditTrailTable");
-      const auditTableUtils = new TableUtils(auditTable, "Audit Trail");
-      auditTableUtils.makeSortable(["Change Time", "Author", "Version"], 
-          ["updated", "updatedBy", "menasRef/version"]);
-      auditTableUtils.makeGroupable(["Author"], ["updatedBy"]);
-      auditTableUtils.makeSearchable(["updatedBy", "changes"]);
+      const auditUtils = new AuditTrail(auditTable);
+      auditUtils.applyTableUtils();
     },
 
     _generateCronTemplateRange: function(iStart, iEnd, oRb, oRbProperty) {
