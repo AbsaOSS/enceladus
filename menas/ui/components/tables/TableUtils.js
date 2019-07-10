@@ -115,7 +115,10 @@ sap.ui.define(["sap/m/ListBase",
   };
 
   TableUtils.prototype._initSortDialog = function(aCols, aSortKeys) {
-    Fragment.load({name: "components.tables.sortDialog"}).then((dialog) => {
+    Fragment.load({
+        name: "components.tables.sortDialog",
+        id: this._oControl.getId()
+    }).then((dialog) => {
       this._oSortDialog = dialog;
       const sortItems = this._wrapCols(aCols, aSortKeys, "sortKey")
       this._oSortDialog.setModel(new JSONModel({cols: sortItems}), "sort");
@@ -127,7 +130,10 @@ sap.ui.define(["sap/m/ListBase",
   };
 
   TableUtils.prototype._initGroupDialog = function(aCols, aGroupKeys) {
-    Fragment.load({name: "components.tables.groupDialog"}).then((dialog) => {
+    Fragment.load({
+      name: "components.tables.groupDialog",
+      id: this._oControl.getId()
+    }).then((dialog) => {
       this._oGroupDialog = dialog;
       const groupItems = this._wrapCols(aCols, aGroupKeys, "groupKey");
       this._oGroupDialog.setModel(new JSONModel({cols: groupItems}), "group");
@@ -136,7 +142,10 @@ sap.ui.define(["sap/m/ListBase",
   };
 
   TableUtils.prototype._initSearchDialog = function() {
-    Fragment.load({name: "components.tables.searchDialog"}).then((dialog) => {
+    Fragment.load({
+      name: "components.tables.searchDialog",
+      id: this._oControl.getId()
+    }).then((dialog) => {
       this._oSearchDialog = dialog;
       dialog.getContent()[0].attachSearch(this._onSearch.bind(this));
     });

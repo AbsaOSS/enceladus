@@ -18,8 +18,9 @@ sap.ui.define([
   "sap/ui/core/Fragment",
   "sap/m/MessageToast",
   "sap/m/MessageItem",
-  "sap/m/MessageBox"
-], function (Controller, Fragment, MessageToast, MessageItem, MessageBox) {
+  "sap/m/MessageBox",
+  "components/AuditTrail"
+], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, AuditTrail) {
   "use strict";
 
   return Controller.extend("components.schema.schemaDetail", {
@@ -39,6 +40,10 @@ sap.ui.define([
 
       this._schemaService = new SchemaService(this._model, this._eventBus);
       this._schemaTable = new SchemaTable(this);
+
+      const auditTable = this.byId("auditTrailTable");
+      const auditUtils = new AuditTrail(auditTable);
+      auditUtils.applyTableUtils();
     },
 
     onEntityUpdated: function (sTopic, sEvent, oData) {
