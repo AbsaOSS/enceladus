@@ -22,6 +22,9 @@ spring.servlet.multipart.max-request-size=16MB
 
 # Number of seconds to cache the static resources for
 spring.resources.cache.cachecontrol.max-age=2678000
+spring.resources.chain.strategy.fixed.enabled=true
+spring.resources.chain.strategy.fixed.paths=/components/**,/css/**,/generic/**,/service/**
+spring.resources.chain.strategy.fixed.version=@project.version@
 
 # How will users authenticate to menas. Available options: inmemory, kerberos
 za.co.absa.enceladus.menas.auth.mechanism = inmemory

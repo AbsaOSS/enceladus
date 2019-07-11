@@ -33,6 +33,13 @@ sap.ui.define([
 
       this._app = this.byId("menasApp");
 
+      // register TNT icons
+      sap.ui.core.IconPool.registerFont({
+        collectionName: "SAP-icons-TNT",
+        fontFamily: "SAP-icons-TNT", 
+        fontURI: sap.ui.require.toUrl("sap/tnt/themes/base/fonts"),
+        lazy: true});
+
       this._model = sap.ui.getCore().getModel();
 
       this.getView().setModel(sap.ui.getCore().getModel());
@@ -118,10 +125,6 @@ sap.ui.define([
 
     onLogout: function () {
       this._router.navTo("root");
-    },
-
-    onAfterRendering: function () {
-      component.setBusy(false);
     }
 
   });

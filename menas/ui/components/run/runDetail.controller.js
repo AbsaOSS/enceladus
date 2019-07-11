@@ -78,15 +78,6 @@ sap.ui.define([
       } else {
         RunService.getRun(this._detail, this._checkpointsTable, oParams.dataset, oParams.version, oParams.id)
       }
-    },
-
-    /**
-     * Called when the View has been rendered (so its HTML is part of the document). Post-rendering manipulations of the HTML could be done here.
-     * This hook is the same one that SAPUI5 controls get after being rendered.
-     * @memberOf menas.main
-     */
-    onAfterRendering: function () {
-      component.setBusy(false)
     }
 
   });
