@@ -126,8 +126,11 @@
                     id="runDetailsPopoverButton"
                     text="Run details"
                     press="popoverToRun" />
+                <Button
+                    icon="sap-icon://decline"
+                    text="Close"
+                    press="popoverClose" />
             </Toolbar>
         </footer>
-
     </Popover>
 </core:FragmentDefinition>

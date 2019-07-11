@@ -46,7 +46,8 @@ html, body {
 }
 
 .monitoringRecordspopover {
-    left: calc(50% - 18rem)  !important;
+    top: 5rem !important;
+    left: calc(50% - 18rem) !important;
 }
 
 .auditTrailNestedListItem {

@@ -509,8 +509,6 @@ sap.ui.define([
       let oActiveElement = oChart.getElementsAtEvent(oEvent.getParameters().event)[0];
       if (!oActiveElement) return;
       let runIndex = oActiveElement._index;
-      console.log(oEvent.getSource())
-      console.log(oActiveElement)
 
       // create popover
       if (!this._oPopover) {
@@ -529,6 +527,11 @@ sap.ui.define([
         version: oRun["datasetVersion"],
         id: oRun["runId"]
       });
+    },
+
+    popoverClose: function (oEvent) {
+      if (!this._oPopover) return;
+      this._oPopover.close();
     }
 
   });
