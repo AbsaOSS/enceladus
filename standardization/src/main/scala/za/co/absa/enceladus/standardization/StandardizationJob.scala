@@ -67,14 +67,13 @@ object StandardizationJob {
 
     val reportVersion = cmd.reportVersion match {
       case Some(version) => version
-      case None => {
+      case None =>
         val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, cmd.reportDate) + 1
         log.warn(s"Report version not provided, inferred report version: $newVersion")
         log.warn("This is an EXPERIMENTAL feature.")
         log.warn(" -> It can lead to issues when running multiple jobs on a dataset concurrently.")
         log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
         newVersion
-      }
     }
 
     val path: String = buildRawPath(cmd, dataset, dateTokens, reportVersion)
@@ -97,7 +96,7 @@ object StandardizationJob {
     // init CF
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
     spark.enableControlMeasuresTracking(s"$path/_INFO").setControlMeasuresWorkflow("Standardization")
-    
+
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
     // Enable Menas plugin for Control Framework
@@ -153,7 +152,7 @@ object StandardizationJob {
   private def applyCobolOptions(dfReader: DataFrameReader,
                                 cmd: CmdConfig,
                                 dataset: Dataset): DataFrameReader = {
-    val isXcom = cmd.cobolOptions.map(_.isXcom).getOrElse(false)
+    val isXcom = cmd.cobolOptions.exists(_.isXcom)
     val copybook = cmd.cobolOptions.map(_.copybook).getOrElse("")
 
     val reader = dfReader

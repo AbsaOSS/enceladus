@@ -19,18 +19,30 @@ import java.io.ByteArrayOutputStream
 
 import org.apache.spark.sql.DataFrame
 import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.event.Level
+import org.slf4j.event.Level._
 
 trait LoggerTestBase {
+
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  protected def logDataFrameContent(df: DataFrame): Unit = {
-    logger.debug(df.schema.treeString)
-
-    val outCapture = new ByteArrayOutputStream
-    Console.withOut(outCapture) {
-      df.show(truncate = false)
+  def logLevelToLogFunction(logLevel: Level): String => Unit = {
+    logLevel match {
+      case TRACE => logger.trace
+      case DEBUG => logger.debug
+      case INFO  => logger.info
+      case WARN  => logger.warn
+      case ERROR => logger.error
     }
-    val dfData = new String(outCapture.toByteArray).replace("\r\n", "\n")
-    logger.debug(dfData)
+  }
+
+  protected def logDataFrameContent(df: DataFrame, logLevel: Level = DEBUG): Unit = {
+    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+
+    val logFnc = logLevelToLogFunction(logLevel)
+    logFnc(df.schema.treeString)
+
+    val dfData = df.dataAsString(false)
+    logFnc(dfData)
   }
 }
