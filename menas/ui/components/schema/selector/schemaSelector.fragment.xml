@@ -16,10 +16,8 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core"
                          xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Label text="Schema Name"/>
-    <Select id="schemaNameSelect" showSecondaryValues="true" items="{schemas>/}"
-            selectedKey="{entity>/schemaName}" change="onSchemaSelect">
-        <core:ListItem key="{schemas>_id}" text="{schemas>_id}" additionalText="Latest version: {schemas>latestVersion}"/>
-    </Select>
+    <Button id="schemaSelectButton" text="{= ${entity>/schemaName} ? ${entity>/schemaName} : 'Click to select a schema'}" icon="sap-icon://value-help"
+        press="components.schema.selector.SchemaSelectorUtils.onOpenSelectDialog" type="{= ${entity>/schemaName} ? 'Default' : 'Reject'}" tooltip="Click to select schema" />
     <Label text="Schema Version"/>
     <FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">
         <Select id="schemaVersionSelect" class="menasAddMappingSelect"
