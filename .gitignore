@@ -60,6 +60,7 @@ myTestCheckpoints
 **/main/resources/application.yml
 **/main/resources/spline.properties
 **/main/resources/kafka.properties
+**/enceladus_env.sh
 *.config
 *.keytab
 .DS_Store

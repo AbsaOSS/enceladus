@@ -74,6 +74,7 @@ object PerformanceMetricTools {
     Atum.setAdditionalInfo(s"${optionPrefix}_application_id" -> spark.sparkContext.applicationId)
     Atum.setAdditionalInfo(s"${optionPrefix}_username" -> loginUserName)
     Atum.setAdditionalInfo(s"${optionPrefix}_executors_num" -> s"$numberOfExecutrs")
+    Atum.setAdditionalInfo(s"${optionPrefix}_record_count" -> (numRecordsSuccessful + numRecordsFailed).toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_records_succeeded" -> numRecordsSuccessful.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_records_failed" -> numRecordsFailed.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_errors_count" -> numOfErrors.toString)

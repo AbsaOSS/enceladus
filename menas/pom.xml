@@ -20,7 +20,7 @@
     <parent>
         <groupId>za.co.absa</groupId>
         <artifactId>enceladus-parent</artifactId>
-        <version>1.0.0-RC1</version>
+        <version>1.0.0-RC2</version>
     </parent>
 
     <properties>
@@ -185,6 +185,11 @@
             <groupId>africa.absa</groupId>
             <artifactId>openui5</artifactId>
             <version>${openui5.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>africa.absa</groupId>
+            <artifactId>cronstrue-webjar</artifactId>
+            <version>${cronstrue.version}</version>
         </dependency>
         <dependency>
             <groupId>org.webjars.bower</groupId>

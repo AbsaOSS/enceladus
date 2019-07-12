@@ -165,7 +165,7 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
   private def convertConformanceRule(rule: model0.conformanceRule.ConformanceRule): model1.conformanceRule.ConformanceRule = {
     rule match {
       case model0.conformanceRule.CastingConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, outputDataType) =>
-        model1.conformanceRule.CastingConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, outputColumn, "CastingConformanceRule")
+        model1.conformanceRule.CastingConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, outputDataType, "CastingConformanceRule")
 
       case model0.conformanceRule.ConcatenationConformanceRule(order, outputColumn, controlCheckpoint, inputColumns) =>
         model1.conformanceRule.ConcatenationConformanceRule(order, outputColumn, controlCheckpoint, inputColumns, "ConcatenationConformanceRule")

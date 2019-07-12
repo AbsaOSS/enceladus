@@ -26,6 +26,7 @@ sap.ui.define([
      * @memberOf menas.main
      */
     onInit: function (oEv) {
+      this._eventBus = sap.ui.getCore().getEventBus();
       this._model = sap.ui.getCore().getModel();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
       this._router.getRoute("runs").attachMatched(function (oEvent) {
@@ -35,6 +36,28 @@ sap.ui.define([
 
       this._detail = this.byId("detailPage");
       this._checkpointsTable = this.byId("Checkpoints");
+
+      this._eventBus.subscribe("menas", "resize", this.iframeHack, this);
+
+      this.byId("runIconTabBar").attachSelect(function(oSelectEv) {
+        if(oSelectEv.getParameter("selectedKey") === "lineage") {
+          this.iframeHack();
+        }
+      }.bind(this));
+    },
+
+    /**
+     * For some reason the iframe isn't being displayed properly even though rendered fine into the DOM.
+     * 
+     * This function re-applies a style class, forcing the frame to be rerendered (works on chrome)
+     */
+    iframeHack: function() {
+      const oFrame = $("#lineage_iframe");
+      oFrame.removeClass("lineageIframe");
+      setTimeout(function() {
+        //force re-render
+        oFrame.addClass("lineageIframe");
+      }.bind(this), 200);
     },
 
     toDataset : function(oEv) {
@@ -55,15 +78,6 @@ sap.ui.define([
       } else {
         RunService.getRun(this._detail, this._checkpointsTable, oParams.dataset, oParams.version, oParams.id)
       }
-    },
-
-    /**
-     * Called when the View has been rendered (so its HTML is part of the document). Post-rendering manipulations of the HTML could be done here.
-     * This hook is the same one that SAPUI5 controls get after being rendered.
-     * @memberOf menas.main
-     */
-    onAfterRendering: function () {
-      component.setBusy(false)
     }
 
   });

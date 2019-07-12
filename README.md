@@ -102,7 +102,7 @@ password=changeme
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
---report-version <data_run-version> \
+--report-version <data_run_version> \
 --raw-format <data_format> \
 --row-tag <tag>
 ```
@@ -127,9 +127,49 @@ password=changeme
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
---report-version <data_run-version>
+--report-version <data_run_version>
 ```
 * In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
+
+#### Helper scripts for running Standardization and Conformance
+
+The Scripts in `scripts` folder can be used to simplify command lines for running Standardization and Conformance jobs.
+
+Steps to configure the scripts are as follows:
+* Copy all the scripts in `scripts` directory to a location in your environment.
+* Copy `enceladus_env.template.sh` to `enceladus_env.sh`.
+* Change `enceladus_env.sh` according to your environment settings.
+* Use `run_standardization.sh` and `run_conformance.sh` scripts instead of directly invoking `spark-submit` to run your jobs.
+
+The syntax for running Standardization and Conformance is similar to running them using `spark-submit`. The only difference is that
+you don't have to provide environment-specific settings. Several resource options, like driver memory and driver cores also have
+default values and can be omitted. The number of executors is still a mandatory parameter.
+
+The basic command to run Standardization becomes:
+```
+<path to scripts>/run_standardization.sh \
+--num-executors <num> \
+--deploy-mode <client/cluster> \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <date> \
+--report-version <data_run_version> \
+--raw-format <data_format> \
+--row-tag <tag>
+```
+
+The basic command to run Conformance becomes:
+```
+<path to scripts>/run_conformance.sh \
+--num-executors <num> \
+--deploy-mode <client/cluster> \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <date> \
+--report-version <data_run_version>
+```
 
 ## <a name="contribute"/>How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).

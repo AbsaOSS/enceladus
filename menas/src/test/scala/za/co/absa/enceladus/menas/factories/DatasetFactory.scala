@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.versionedModel.VersionedSummary
 
 object DatasetFactory {
 
@@ -124,6 +125,10 @@ object DatasetFactory {
                             name: String = "dataset",
                             version: Int = 1): MenasReference = {
     MenasReference(collection, name, version)
+  }
+
+  def toSummary(dataset: Dataset): VersionedSummary = {
+    VersionedSummary(dataset.name, dataset.version)
   }
 
 }

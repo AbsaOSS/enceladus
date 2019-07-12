@@ -23,8 +23,11 @@ import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.LoggerTestBase
+import org.slf4j.event.Level._
 
-trait TestRuleBehaviors  extends FunSuite with SparkTestBase {
+
+trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase {
 
   def conformanceRuleShouldMatchExpected(inputDf: DataFrame, inputDataset: Dataset, expectedJSON: String) {
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
@@ -46,19 +49,15 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase {
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 
     if (conformedJSON != expectedJSON) {
-      conformed.printSchema()
-      conformed.show
-      println("EXPECTED:")
-      println(expectedJSON)
-      println("ACTUAL:")
-      println(conformedJSON)
-      println("DETAILS (Input):")
-      inputDf.printSchema()
-      inputDf.show
+      logger.error("EXPECTED:")
+      logger.error(expectedJSON)
+      logger.error("ACTUAL:")
+      logger.error(conformedJSON)
+      logger.error("DETAILS (Input):")
+      logDataFrameContent(inputDf, ERROR)
       println("DETAILS (Conformed):")
-      conformed.printSchema()
-      conformed.show
-      fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
+      logDataFrameContent(conformed, ERROR)
+      fail("Actual conformed dataset JSON does not match the expected JSON (see log).")
     }
 
   }

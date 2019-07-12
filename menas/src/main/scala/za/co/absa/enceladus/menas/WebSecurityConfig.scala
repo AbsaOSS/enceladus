@@ -50,6 +50,9 @@ class WebSecurityConfig {
   @Value("${za.co.absa.enceladus.menas.auth.mechanism:}")
   val authMechanism: String = ""
 
+  @Value("${za.co.absa.enceladus.menas.version}")
+  val menasVersion: String = ""
+
   @Autowired
   val beanFactory: BeanFactory = null
 
@@ -83,7 +86,7 @@ class WebSecurityConfig {
         .authorizeRequests()
           .antMatchers("/index.html", "/resources/**", "/generic/**",
             "/service/**", "/webjars/**", "/css/**", "/components/**", 
-            "/api/oozie/isEnabled")
+            "/api/oozie/isEnabled", "/api/user/version", s"/$menasVersion/**")
           .permitAll()
         .anyRequest()
           .authenticated()

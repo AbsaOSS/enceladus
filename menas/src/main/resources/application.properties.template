@@ -14,14 +14,17 @@
 #
 
 # Set the file size limit (default 1Mb). If you want to specify that files be
-# unlimited set the multipart.maxFileSize property to -1.
-multipart.maxFileSize=16Mb
+# unlimited set the property to -1.
+spring.servlet.multipart.max-file-size=16MB
 
 # Set the total request size for a multipart/form-data (default 10Mb)
-multipart.maxRequestSize=16Mb
+spring.servlet.multipart.max-request-size=16MB
 
 # Number of seconds to cache the static resources for
 spring.resources.cache.cachecontrol.max-age=2678000
+spring.resources.chain.strategy.fixed.enabled=true
+spring.resources.chain.strategy.fixed.paths=/components/**,/css/**,/generic/**,/service/**
+spring.resources.chain.strategy.fixed.version=@project.version@
 
 # How will users authenticate to menas. Available options: inmemory, kerberos
 za.co.absa.enceladus.menas.auth.mechanism = inmemory
@@ -62,7 +65,9 @@ za.co.absa.enceladus.migrations.dump.filepath=/path/to/backups/menas
 
 za.co.absa.enceladus.menas.spark.master=local[1]
 
-za.co.absa.enceladus.spline.urlTemplate=http://localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s
+# The template for Lineage (Spline) display. If empty Lineage button is not shown.
+# Avoiding the http(s) protocol will cause that the same protocol will be used as for Menas itself, avoiding issues
+za.co.absa.enceladus.spline.urlTemplate=//localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s
 
 #system-wide time zone
 timezone="UTC"

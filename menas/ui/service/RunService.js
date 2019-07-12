@@ -18,7 +18,7 @@ jQuery.sap.require("sap.m.MessageBox");
 var RunService = new function () {
 
   this.getRuns = function (oMasterPage) {
-    Functions.ajax("api/runs", "GET", {},
+    Functions.ajax("api/runs/summaries", "GET", {},
       oData => {
         this._bindRunSummaries(oData, oMasterPage);
       },
@@ -29,7 +29,7 @@ var RunService = new function () {
   };
 
   this.getFirstRun = function(oControl, oTable) {
-    Functions.ajax("api/runs", "GET", {},
+    Functions.ajax("api/runs/summaries", "GET", {},
       oData => {
         if (oData.length > 0 && oControl) {
           let firstDataset = oData[0];
@@ -66,7 +66,7 @@ var RunService = new function () {
   };
 
   this.getLatestRun = function (oControl, oTable, sDatasetName, sDatasetVersion) {
-    Functions.ajax("api/runs/" + encodeURI(sDatasetName) + "/" + encodeURI(sDatasetVersion) + "/latest", "GET", {},
+    Functions.ajax("api/runs/" + encodeURI(sDatasetName) + "/" + encodeURI(sDatasetVersion) + "/latestrun", "GET", {},
       oData => {
         this.setCurrentRun(oControl, oTable, oData);
       },
@@ -77,7 +77,7 @@ var RunService = new function () {
   };
 
   this.getLatestRunForLatestVersion = function (oControl, oTable, datasetName) {
-    Functions.ajax("api/runs/" + encodeURI(datasetName) + "/latest", "GET", {},
+    Functions.ajax("api/runs/" + encodeURI(datasetName) + "/latestrun", "GET", {},
       oData => {
         this.setCurrentRun(oControl, oTable, oData);
       },
@@ -116,12 +116,28 @@ var RunService = new function () {
     let info = oRun.controlMeasure.metadata.additionalInfo;
     oRun.controlMeasure.metadata.additionalInfo = this._mapAdditionalInfo(info);
 
-    oRun.status = Formatters.statusToPrettyString(oRun.runStatus.status.value);
+    oRun.status = Formatters.statusToPrettyString(oRun.runStatus.status);
+    oRun.splineUrl = this._buildSplineUrl(oRun.splineRef.outputPath, oRun.splineRef.sparkApplicationId);
 
     const sStdName = this._nameExists(aCheckpoints, "Standardization Finish") ? "Standardization Finish" : "Standardization - End";
 
     oRun.stdTime = this._getTimeSummary(aCheckpoints, sStdName, sStdName);
     oRun.cfmTime = this._getTimeSummary(aCheckpoints, "Conformance - Start", "Conformance - End");
+  };
+
+  this._buildSplineUrl = function(outputPath, applicationId) {
+    return this._getSplineUrlTemplate()
+      .replace("%s", outputPath)
+      .replace("%s", applicationId)
+  };
+
+  this._getSplineUrlTemplate = function() {
+    if (!this.splineUrlTemplate) {
+      const runRestDAO = new RunRestDAO();
+      runRestDAO.getSplineUrlTemplate()
+        .then(urlTemplate => this.splineUrlTemplate = urlTemplate)
+    }
+    return this.splineUrlTemplate
   };
 
   this._mapAdditionalInfo = function (info) {

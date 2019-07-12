@@ -18,7 +18,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>za.co.absa</groupId>
     <artifactId>enceladus-parent</artifactId>
-    <version>1.0.0-RC1</version>
+    <version>1.0.0-RC2</version>
     <packaging>pom</packaging>
 
     <name>Enceladus</name>
@@ -137,7 +137,7 @@
         <maven.rat.plugin.version>0.12</maven.rat.plugin.version>
         <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
         <!--dependency versions-->
-        <atum.version>0.2.2</atum.version>
+        <atum.version>0.2.3</atum.version>
         <junit.version>4.11</junit.version>
         <specs.version>2.4.16</specs.version>
         <scalatest.version>3.0.5</scalatest.version>
@@ -177,6 +177,7 @@
         <oozie.version>4.3.0</oozie.version>
         <htrace.version>3.1.0-incubating</htrace.version>
         <cobrix.version>0.5.1</cobrix.version>
+        <cronstrue.version>1.79.0</cronstrue.version>
         <!--other properties-->
         <skip.integration.tests>true</skip.integration.tests>
         <scalastyle.configLocation>${project.basedir}/scalastyle-config.xml</scalastyle.configLocation>

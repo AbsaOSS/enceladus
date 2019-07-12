@@ -21,31 +21,29 @@ import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{Dataset, UsedIn}
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import scala.concurrent.Future
-import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.menas.repositories.OozieRepository
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 
 @Service
 class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepository, oozieRepository: OozieRepository)
   extends VersionedModelService(datasetMongoRepository) {
 
-	import scala.concurrent.ExecutionContext.Implicits.global
+  import scala.concurrent.ExecutionContext.Implicits.global
 
-	override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
-			super.updateFuture(username, dataset.name, dataset.version) { latest =>
-			this.updateSchedule(dataset, latest).map({ withSchedule =>
-			withSchedule
-			.setSchemaName(dataset.schemaName)
-			.setSchemaVersion(dataset.schemaVersion)
-			.setHDFSPath(dataset.hdfsPath)
-			.setHDFSPublishPath(dataset.hdfsPublishPath)
-			.setConformance(dataset.conformance)
-			.setDescription(dataset.description).asInstanceOf[Dataset]
-			})
-			}
-	}
+  override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
+    super.updateFuture(username, dataset.name, dataset.version) { latest =>
+      updateSchedule(dataset, latest).map({ withSchedule =>
+        withSchedule
+          .setSchemaName(dataset.schemaName)
+          .setSchemaVersion(dataset.schemaVersion)
+          .setHDFSPath(dataset.hdfsPath)
+          .setHDFSPublishPath(dataset.hdfsPublishPath)
+          .setConformance(dataset.conformance)
+          .setDescription(dataset.description).asInstanceOf[Dataset]
+        }
+      )
+    }
+  }
 
   private def updateSchedule(newDataset: Dataset, latest: Dataset): Future[Dataset] = {
     if (newDataset.schedule == latest.schedule) {

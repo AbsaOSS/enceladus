@@ -67,10 +67,12 @@ class RestClient {
     return jqXHR;
   }
 
-  static handleExpiredSession({status}) {
-    if (status === 401) {
+  static handleExpiredSession(jqXHR) {
+    if (jqXHR.status === 401) {
       GenericService.clearSession("Session has expired");
       return $.Deferred().resolve({}).promise();
+    } else {
+      return jqXHR
     }
   }
 

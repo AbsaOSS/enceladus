@@ -48,14 +48,17 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       Aggregates.group("$name"),
       Aggregates.count("distinctCount"))
 
-    collection.aggregate[Document](pipeline).toFuture().map({count =>
-      if(count.isEmpty) 0
-      else count.head("distinctCount").asNumber().intValue()
-    })
+    collection.aggregate[Document](pipeline).toFuture().map { count =>
+      if (count.isEmpty) {
+        0
+      } else {
+        count.head("distinctCount").asNumber().intValue()
+      }
+    }
   }
 
   def getDistinctNamesEnabled(): Future[Seq[String]] = {
-    collection.distinct[String]("name", getNotDisabledFilter).toFuture()
+    collection.distinct[String]("name", getNotDisabledFilter).toFuture().map(_.sorted)
   }
 
   def getLatestVersions(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
@@ -65,7 +68,8 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     }
     val pipeline = Seq(
       filter(Filters.and(searchFilter, getNotDisabledFilter)),
-      Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
+      Aggregates.group("$name", Accumulators.max("latestVersion", "$version")),
+      sort(Sorts.ascending("_id"))
     )
     collection.aggregate[VersionedSummary](pipeline).toFuture()
   }
@@ -85,7 +89,10 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
 
   def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {
     val filter = if(inclDisabled) getNameFilter(name) else getNameFilterEnabled(name)
-    collection.find(filter).toFuture()
+    collection
+      .find(filter)
+      .sort(Sorts.ascending("name", "version"))
+      .toFuture()
   }
 
   def create(item: C, username: String): Future[Completed] = {
