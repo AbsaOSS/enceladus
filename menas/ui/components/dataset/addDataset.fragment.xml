@@ -26,7 +26,7 @@
                         <Label text="Dataset Description"/>
                         <Input id="newDatasetDescription" type="Text" placeholder="Description" width="100%"
                                value="{entity>/description}"/>
-                        <core:Fragment type="XML" fragmentName="components.schemaSelector"/>
+                        <core:Fragment type="XML" fragmentName="components.schema.selector.schemaSelector"/>
                         <Label text="HDFS raw data folder path"/>
                         <VBox>
                         	<Input type="Text" id="selectedRawHDFSPathLabel"/>

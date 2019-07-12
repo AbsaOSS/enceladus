@@ -15,8 +15,9 @@
 
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
-  "sap/ui/core/Fragment"
-], function (Controller, Fragment) {
+  "sap/ui/core/Fragment",
+  "components/schema/selector/SchemaSelectorUtils"
+], function (Controller, Fragment, SchemaSelectorUtils) {
   "use strict";
 
   return Controller.extend("components.dataset.datasetMaster", {
