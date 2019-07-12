@@ -100,6 +100,7 @@ var MonitoringService = new function() {
 
   this.checkZombieJob = function(oRun) {
     if (oRun["status"] == "running"
+        && (new Date() - oRun["startDateTime"]) > runningJobExpirationThreshold
         && (new Date() - oRun["latestCheckpoint"]["endDate"]) > runningJobExpirationThreshold ){
       oRun["warnings"].push(warningTypes.zombie);
     }
@@ -347,6 +348,7 @@ var MonitoringService = new function() {
         for (let oRun of oData) {
           oRun["infoDate"] = new Date(oRun["informationDateCasted"]["$date"]); // milliseconds to date
           oRun["infoDateString"] = Formatters.infoDateToString(oRun["infoDate"]);
+          oRun["startDateTime"] = new Date(oRun["startDateTimeCasted"]["$date"]); // milliseconds to date
           oRun["warnings"] = [];
 
           MonitoringService.processLatestCheckpoint(oRun);

@@ -17,7 +17,7 @@ package za.co.absa.enceladus.menas.repositories
 
 import org.mongodb.scala.{AggregateObservable, MongoDatabase}
 import org.mongodb.scala.model.Aggregates.{filter, group, limit, sort}
-import org.mongodb.scala.model.Accumulators.first
+import org.mongodb.scala.model.Accumulators.{first, sum}
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.Sorts.{descending, orderBy}
 import org.mongodb.scala.Document
@@ -81,7 +81,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
             | reportVersion: "$controlMeasure.metadata.version"}""".stripMargin),
           first("datasetName", "$dataset" ),
           first("runObjectId", "$_id"),
-          first("startDateTime", "$startDateTimeCasted"),
+          first("startDateTimeCasted", "$startDateTimeCasted"),
           first("datasetVersion", "$datasetVersion"),
           first("informationDate", "$controlMeasure.metadata.informationDate"),
           first("informationDateCasted", "$informationDateCasted"),
@@ -92,7 +92,8 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
           first("std_records_failed", "$controlMeasure.metadata.additionalInfo.std_records_failed"),
           first("conform_records_succeeded", "$controlMeasure.metadata.additionalInfo.conform_records_succeeded"),
           first("conform_records_failed", "$controlMeasure.metadata.additionalInfo.conform_records_failed"),
-          first("controlMeasure", "$controlMeasure")
+          first("controlMeasure", "$controlMeasure"),
+          sum("runAttempts", 1)
         ),
         // sort the final results
         sort(orderBy(
