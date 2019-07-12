@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-sap.ui.define(["sap/ui/core/Fragment", "sap/m/StandardListItem"], function(Fragment, StandardListItem) {
+sap.ui.define(["sap/ui/core/Fragment"], function(Fragment) {
 
   const SchemaSelectorUtils = sap.ui.base.Object.extend("components.schema.selector.SchemaSelectorUtils", { });
 
