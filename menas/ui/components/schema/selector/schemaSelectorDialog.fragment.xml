@@ -15,7 +15,7 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:tnt="sap.tnt"
     xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <SelectDialog class="hAuto maxH1000 minW30rem" id="schemaSelectorSelectDialog" noDataText="No schemas found" title="Select Schema" search="components.schema.selector.SchemaSelectorUtils.onSearch"
+    <SelectDialog class="hAuto maxH90pc minW30rem" id="schemaSelectorSelectDialog" noDataText="No schemas found" title="Select Schema" search="components.schema.selector.SchemaSelectorUtils.onSearch"
         confirm="components.schema.selector.SchemaSelectorUtils.onAccept" cancel="components.schema.selector.SchemaSelectorUtils.onCancel" items="{schemas>/}" >
         <StandardListItem title="{schemas>_id}" info="Latest version: {schemas>latestVersion}" type="Active" />
     </SelectDialog>

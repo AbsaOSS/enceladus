@@ -110,6 +110,11 @@ class DatasetDialog extends EntityDialog {
       this.oDialog.getModel("entity"), "/schemaVersion");
   }
 
+  cancel() {
+    sap.ui.getCore().getModel().setProperty("/currentSchemaVersions", undefined);
+    super.cancel();
+  }
+
 }
 
 class AddDatasetDialog extends DatasetDialog {
