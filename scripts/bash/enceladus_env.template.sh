@@ -30,3 +30,5 @@ STD_JAR="enceladus-standardization.jar"
 
 CONF_CLASS="za.co.absa.enceladus.conformance.DynamicConformanceJob"
 CONF_JAR="enceladus-conformance.jar"
+
+LOG_DIR="/tmp"

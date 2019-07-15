@@ -226,6 +226,17 @@ add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
 echo "Command line:"
 echo "$CMD_LINE"
 
-if [ -z "$DRY_RUN" ]; then
-  bash -c "$CMD_LINE"
+if [[ -z "$DRY_RUN" ]]; then
+  if [[ "$DEPLOY_MODE" == "client" ]]; then
+    DATE=`date +%Y_%m_%d-%H_%M_%S`
+    NAME=`sed -e 's#.*\.\(\)#\1#' <<< $CLASS`
+    TMP_PATH_NAME="$LOG_DIR/enceladus_${NAME}_${DATE}.log"
+    echo "$CMD_LINE" >> "$TMP_PATH_NAME"
+    echo "The log will be saved to $TMP_PATH_NAME"
+    bash -c "$CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
+    echo
+    echo "Job has finished. The logs are saved to $TMP_PATH_NAME"
+  else
+    bash -c "$CMD_LINE"
+  fi
 fi
