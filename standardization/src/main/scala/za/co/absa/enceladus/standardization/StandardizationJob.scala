@@ -158,8 +158,6 @@ object StandardizationJob {
     val reader = dfReader
       .option("is_xcom", isXcom)
       .option("schema_retention_policy", "collapse_root")
-      // This is a temporary option before https://github.com/AbsaOSS/cobrix/issues/115 is fixed
-      .option("debug_ignore_file_size", "true")
 
     if (copybook.isEmpty) {
       log.info("Copybook location is not provided via command line - fetching the copybook attached to the schema...")
