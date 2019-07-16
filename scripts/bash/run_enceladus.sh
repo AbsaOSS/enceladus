@@ -132,6 +132,10 @@ case $key in
     MAPPING_TABLE_PATTERN="$2"
     shift 2 # past argument and value
     ;;
+    --std-hdfs-path)
+    STD_HDFS_PATH="$2"
+    shift 2 # past argument and value
+    ;;
     --debug-set-raw-path)
     DEBUG_SET_RAW_PATH="$2"
     shift 2 # past argument and value
@@ -169,6 +173,11 @@ validate "$NUM_EXECUTORS" "--num-executors"
 validate "$DATASET_NAME" "--dataset-name"
 validate "$DATASET_VERSION" "--dataset-version"
 validate "$REPORT_DATE" "--report-date"
+
+if [[ "$MASTER" != "yarn" ]]; then
+  echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
+  VALID="0"
+fi
 
 # Validation failure check
 if [ "$VALID" == "0" ]; then
