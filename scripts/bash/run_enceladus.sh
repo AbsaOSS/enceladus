@@ -231,9 +231,26 @@ if [[ -z "$DRY_RUN" ]]; then
     DATE=`date +%Y_%m_%d-%H_%M_%S`
     NAME=`sed -e 's#.*\.\(\)#\1#' <<< $CLASS`
     TMP_PATH_NAME="$LOG_DIR/enceladus_${NAME}_${DATE}.log"
+
+    # Initializing Kerberos ticket
+    if [[ ! -z "$MENAS_AUTH_KEYTAB" ]]; then
+      # Get principle stored in the keyfile
+      PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1`
+      if [[ ! -z "$PR" ]]; then
+        # Initialize a ticket
+        kinit -k -t "$MENAS_AUTH_KEYTAB" "$PR"
+        klist 2>&1 | tee -a "$TMP_PATH_NAME"
+      fi
+    fi
+
+    # Log the log location
     echo "$CMD_LINE" >> "$TMP_PATH_NAME"
     echo "The log will be saved to $TMP_PATH_NAME"
+
+    # Run the job
     bash -c "$CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
+
+    # Report the log location
     echo
     echo "Job has finished. The logs are saved to $TMP_PATH_NAME"
   else
