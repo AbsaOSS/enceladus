@@ -39,7 +39,19 @@ class FieldValidatorTimestampSuite extends FunSuite  {
   test("epochmilli pattern") {
     assert(FieldValidatorTimestamp.validateStructField(field("epochmilli")).isEmpty)
     //with default
-    assert(FieldValidatorTimestamp.validateStructField(field("epochmilli", Option("55455560000"))).isEmpty)
+    assert(FieldValidatorTimestamp.validateStructField(field("epochmilli", Option("5545556000"))).isEmpty)
+  }
+
+  test("epochmicro pattern") {
+    assert(FieldValidatorDate.validateStructField(field("epochmicro")).isEmpty)
+    //with default
+    assert(FieldValidatorDate.validateStructField(field("epochmicro", Option("5545556000111"))).isEmpty)
+  }
+
+  test("epochnano pattern") {
+    assert(FieldValidatorDate.validateStructField(field("epochnano")).isEmpty)
+    //with default
+    assert(FieldValidatorDate.validateStructField(field("epochmilli", Option("5545556000111222"))).isEmpty)
   }
 
   test("timestamp pattern") {
@@ -206,5 +218,18 @@ class FieldValidatorTimestampSuite extends FunSuite  {
 
   test("all placeholders") {
     assert(FieldValidatorTimestamp.validateStructField(field("X GG yyyy MM ww W DDD dd F E a HH kk KK hh mm ss SSS ZZ zzz")).isEmpty)
+  }
+
+  test("nano seconds precision lost") {
+    val expected1 = Set(
+      ValidationWarning("Pattern 'epochnano'. While supported it comes with possible loss of precision beyond microseconds.")
+    )
+    assert(FieldValidatorTimestamp.validateStructField(field("epochnano")).toSet == expected1)
+
+    val expected2 = Set(
+      ValidationWarning("Placeholder 'n' for nanoseconds recognized. While supported it brings possible loss of precision.")
+    )
+    assert(FieldValidatorTimestamp.validateStructField(field("yyyy-MM-dd HH:mm:ss.nnnnnnnnn")).toSet == expected2)
+
   }
 }
