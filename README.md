@@ -223,8 +223,8 @@ To enable processing of time entries from other systems **Standardization** offe
 string and even numeric values to timestamp or date types. It's done using Spark's ability to convert strings to 
 timestamp/date with some enhancements. The pattern placeholders and usage is described in Java's 
 [`SimpleDateFormat` class description](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html) with 
-the addition of recognizing two keywords `epoch` and `milliepoch` (case insensitive) to denote the number of 
-seconds/milliseconds since epoch (1970/01/01 00:00:00.000 UTC).
+the addition of recognizing some keywords (like `epoch` and `milliepoch` (case insensitive)) to denote the number of 
+seconds/milliseconds since epoch (1970/01/01 00:00:00.000 UTC) and some additional placeholders.
 It should be noted explicitly that `epoch` and `milliepoch` are considered a pattern including time zone.
  
 Summary:
@@ -254,13 +254,21 @@ Summary:
 | z | General time zone | Pacific Standard Time; PST; GMT-08:00 |
 | Z | RFC 822 time zone | -0800 |
 | X | ISO 8601 time zone | -08; -0800; -08:00 |
-| _epoch_ | Seconds since 1970/01/01 00:00:00 | 1557136493|
-| _milliepoch_ | Milliseconds since 1970/01/01 00:00:00.0000| 15571364938124 |
+| _epoch_ | Seconds since 1970/01/01 00:00:00 | 1557136493, 1557136493.136|
+| _epochmilli_ | Milliseconds since 1970/01/01 00:00:00.0000| 15571364938124, 15571364938124.001 |
+| _epochmicro_ | Milliseconds since 1970/01/01 00:00:00.0000| 15571364938124789, 15571364938124789.999 |
+| _epochnano_ | Milliseconds since 1970/01/01 00:00:00.0000| 15571364938124789101 |
+| i | Microsecond | 111, 321001 |
+| n | Nanosecond | 999, 542113879 |
+
 
 **NB!** Spark uses US Locale and because on-the-fly conversion would be complicated, at the moment we stick to this 
 hardcoded locale as well. E.g. `am/pm` for `a` placeholder, English names of days and months etc.
 
 **NB!** The keywords are case **insensitive**. Therefore, there is no difference between `epoch` and `EpoCH`.
+
+**NB!** While _nanoseconds_ designation is supported on input, it's not supported in storage or further usage. So any
+value behind microseconds precision will be truncated.
    
 ##### Time Zone support
 As it has been mentioned, it's highly recommended to use timestamps with the time zone. But it's not unlikely that the 
