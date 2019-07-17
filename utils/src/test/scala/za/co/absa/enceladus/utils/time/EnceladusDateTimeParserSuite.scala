@@ -18,7 +18,6 @@ package za.co.absa.enceladus.utils.time
 import org.scalatest.FunSuite
 import java.sql.Date
 import java.sql.Timestamp
-import java.util.TimeZone
 
 case class TestInputRow(id: Int, stringField: String)
 
@@ -30,11 +29,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
 
     val value: String = "1547553153"
     val resultDate: Date = parser.parseDate(value)
-    val expectedDate: Date = new Date(119, 0, 15) //2019-01-15
+    val expectedDate: Date = Date.valueOf("2019-01-15")
     assert(resultDate.toString == expectedDate.toString)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
-    val expectedTimestamp: Timestamp = new Timestamp(119, 0, 15, 11,52 , 33, 0 ) //2019-01-15 11:52:33
+    val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33")
     assert(resultTimestamp.toString == expectedTimestamp.toString)
   }
 
@@ -43,11 +42,37 @@ class EnceladusDateTimeParserSuite extends FunSuite{
 
     val value: String = "1547553153198"
     val resultDate: Date = parser.parseDate(value)
-    val expectedDate: Date = new Date(119, 0, 15) //2019-01-15
+    val expectedDate: Date = Date.valueOf("2019-01-15")
     assert(resultDate.toString == expectedDate.toString)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
-    val expectedTimestamp: Timestamp = new Timestamp(119, 0, 15, 11,52 , 33, 198000000 ) //2019-01-15 11:52:33
+    val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33.198")
+    assert(resultTimestamp.toString == expectedTimestamp.toString)
+  }
+
+  test("EnceladusDateParser class epochmicro") {
+    val parser = EnceladusDateTimeParser("epochmicro")
+
+    val value: String = "1547553153198765"
+    val resultDate: Date = parser.parseDate(value)
+    val expectedDate: Date = Date.valueOf("2019-01-15")
+    assert(resultDate.toString == expectedDate.toString)
+
+    val resultTimestamp: Timestamp = parser.parseTimestamp(value)
+    val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33.198765")
+    assert(resultTimestamp.toString == expectedTimestamp.toString)
+  }
+
+  test("EnceladusDateParser class epochnano") {
+    val parser = EnceladusDateTimeParser("epochnano")
+
+    val value: String = "1547553153198765432"
+    val resultDate: Date = parser.parseDate(value)
+    val expectedDate: Date = Date.valueOf("2019-01-15")
+    assert(resultDate.toString == expectedDate.toString)
+
+    val resultTimestamp: Timestamp = parser.parseTimestamp(value)
+    val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33.198765432")
     assert(resultTimestamp.toString == expectedTimestamp.toString)
   }
 
@@ -56,11 +81,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
 
     val value: String = "2019_01_15:11.52.33"
     val resultDate: Date = parser.parseDate(value)
-    val expectedDate: Date = new Date(119, 0, 15) //2019-01-15
+    val expectedDate: Date = Date.valueOf("2019-01-15")
     assert(resultDate.toString == expectedDate.toString)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
-    val expectedTimestamp: Timestamp = new Timestamp(119, 0, 15, 11,52 , 33, 0 ) //2019-01-15 11:52:33
+    val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33")
     assert(resultTimestamp.toString == expectedTimestamp.toString)
   }
 
@@ -69,11 +94,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
 
     val value: String = "2011-01-31-22-52-33-EST"
     val resultDate: Date = parser.parseDate(value)
-    val expectedDate: Date = new Date(111, 1, 1) //2011-02-01
+    val expectedDate: Date = Date.valueOf("2011-02-01")
     assert(resultDate.toString == expectedDate.toString)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
-    val expectedTimestamp: Timestamp = new Timestamp(111, 1, 1, 3,52 , 33, 0 ) //2011-02-01 11:52:33
+    val expectedTimestamp: Timestamp = Timestamp.valueOf("2011-02-01 03:52:33")
     assert(resultTimestamp.toString == expectedTimestamp.toString)
   }
 
@@ -82,22 +107,82 @@ class EnceladusDateTimeParserSuite extends FunSuite{
 
     val value: String = "1990/01/31 22:52:33+01:00"
     val resultDate: Date = parser.parseDate(value)
-    val expectedDate: Date = new Date(90, 0, 31) //1990-01-31
+    val expectedDate: Date = Date.valueOf("1990-01-31")
     assert(resultDate.toString == expectedDate.toString)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
-    val expectedTimestamp: Timestamp = new Timestamp(90, 0, 31, 21,52 , 33, 0 ) //1990-01-31 21:52:33
+    val expectedTimestamp: Timestamp = Timestamp.valueOf("1990-01-31 21:52:33")
+    assert(resultTimestamp.toString == expectedTimestamp.toString)
+  }
+
+  test("EnceladusDateParser class actual pattern without time zone with milliseconds") {
+    val parser = EnceladusDateTimeParser("SSS|yyyy_MM_dd:HH.mm.ss")
+
+    val value: String = "123|2019_01_15:11.52.33"
+    val resultDate: Date = parser.parseDate(value)
+    val expectedDate: Date = Date.valueOf("2019-01-15")
+    assert(resultDate.toString == expectedDate.toString)
+
+    val resultTimestamp: Timestamp = parser.parseTimestamp(value)
+    val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33.123")
+    assert(resultTimestamp.toString == expectedTimestamp.toString)
+  }
+
+  test("EnceladusDateParser class actual pattern without time zone and microseconds") {
+    val parser = EnceladusDateTimeParser("yyyy_MM_dd:HH.mm.ss.iiiiii")
+
+    val value: String = "2019_01_15:11.52.33.123456"
+    val resultDate: Date = parser.parseDate(value)
+    val expectedDate: Date = Date.valueOf("2019-01-15")
+    assert(resultDate.toString == expectedDate.toString)
+
+    val resultTimestamp: Timestamp = parser.parseTimestamp(value)
+    val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33.123456")
+    assert(resultTimestamp.toString == expectedTimestamp.toString)
+  }
+
+  test("EnceladusDateParser class actual pattern with standard time zone and nanoseconds") {
+    val parser = EnceladusDateTimeParser("yyyy-MM-dd-HH-mm-ss.nnnnnnnnn-zz")
+
+    val value: String = "2011-01-31-22-52-33.123456789-EST"
+    val resultDate: Date = parser.parseDate(value)
+    val expectedDate: Date = Date.valueOf("2011-02-01")
+    assert(resultDate.toString == expectedDate.toString)
+
+    val resultTimestamp: Timestamp = parser.parseTimestamp(value)
+    val expectedTimestamp: Timestamp = Timestamp.valueOf("2011-02-01 03:52:33.123456789")
+    assert(resultTimestamp.toString == expectedTimestamp.toString)
+  }
+
+  test("EnceladusDateParser class actual pattern with offset time zone and all second fractions") {
+    val parser = EnceladusDateTimeParser("nnnSSSyyyy/MM/dd iii HH:mm:ssXXX")
+
+    val value: String = "1234561990/01/31 789 22:52:33+01:00"
+    val resultDate: Date = parser.parseDate(value)
+    val expectedDate: Date = Date.valueOf("1990-01-31")
+    assert(resultDate.toString == expectedDate.toString)
+
+    val resultTimestamp: Timestamp = parser.parseTimestamp(value)
+    val expectedTimestamp: Timestamp = Timestamp.valueOf("1990-01-31 21:52:33.456789123")
     assert(resultTimestamp.toString == expectedTimestamp.toString)
   }
 
   test("format") {
-    val t = new Timestamp(70, 0, 2, 1, 0, 0, 0) //25 hours to epoch
+    val t: Timestamp = Timestamp.valueOf("1970-01-02 01:00:00.123456789") //25 hours to epoch with some second fractions
     val parser1 = EnceladusDateTimeParser("yyyy-MM-dd HH:mm:ss")
     assert(parser1.format(t) == "1970-01-02 01:00:00")
     val parser2 = EnceladusDateTimeParser("epoch")
     assert(parser2.format(t) == "90000")
     val parser3 = EnceladusDateTimeParser("epochmilli")
-    assert(parser3.format(t) == "90000000")
+    assert(parser3.format(t) == "90000123")
+    val parser4 = EnceladusDateTimeParser("epochmicro")
+    assert(parser4.format(t) == "90000123456")
+    val parser5 = EnceladusDateTimeParser("epochnano")
+    assert(parser5.format(t) == "90000123456789")
+    val parser6 = EnceladusDateTimeParser("yyyy-MM-dd HH:mm:ss.iiiiii")
+    assert(parser6.format(t) == "1970-01-02 01:00:00.123456")
+    val parser7 = EnceladusDateTimeParser("(nnn) yyyy-MM-dd (SSS) HH:mm:ss (iii)")
+    assert(parser7.format(t) == "(789) 1970-01-02 (123) 01:00:00 (456)")
   }
 
 }
