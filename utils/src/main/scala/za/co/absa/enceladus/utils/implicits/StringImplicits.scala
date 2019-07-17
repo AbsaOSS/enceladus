@@ -22,6 +22,21 @@ import scala.annotation.tailrec
 object StringImplicits {
   implicit class StringEnhancements(string: String) {
 
+    def injectWith(what: String, where: Int): String = {
+      val index = if (where >= 0) {
+        where
+      } else {
+        string.length + where
+      }
+      if (index <=0) {
+        what + string
+      } else if (index >= string.length) {
+        string + what
+      } else {
+        string.substring(0, index) + what + string.substring(index)
+      }
+    }
+
     /**
       * Function to find the first occurrence of any of the characters from the charsToFind in the string. The
       * occurrence is not considered if the character is part of a sequence within a pair of quote characters specified
@@ -150,6 +165,5 @@ object StringImplicits {
         case   _ => Option(None, false)
       }
     }
-
   }
 }
