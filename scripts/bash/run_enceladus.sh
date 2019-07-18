@@ -192,6 +192,10 @@ add_to_cmd_line() {
     fi
 }
 
+echoerr() {
+    echo "$@" 1>&2;
+}
+
 # Constructing the grand command line
 # Configuration passed to JVM
 
@@ -243,12 +247,19 @@ if [[ -z "$DRY_RUN" ]]; then
 
     # Initializing Kerberos ticket
     if [[ ! -z "$MENAS_AUTH_KEYTAB" ]]; then
-      # Get principle stored in the keyfile
-      PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1`
+      # Get principle stored in the keyfile (Thanks @Zejnilovic)
+      PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9]*?(?=@)" | head -1`
+      # Alternative way, might be less reliable
+      # PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1`
       if [[ ! -z "$PR" ]]; then
         # Initialize a ticket
         kinit -k -t "$MENAS_AUTH_KEYTAB" "$PR"
         klist 2>&1 | tee -a "$TMP_PATH_NAME"
+      else
+        echoerr "WARNING!"
+        echoerr "Unable to determine principle from the keytab file $MENAS_AUTH_KEYTAB."
+        echoerr "Please make sure Kerberos ticket is initialized by running 'kinit' manually."
+        sleep 10
       fi
     fi
 
