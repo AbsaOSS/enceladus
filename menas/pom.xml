@@ -267,7 +267,7 @@
                         <resource>
                             <directory>ui</directory>
                             <targetPath>/</targetPath>
-                            <filtering>true</filtering>
+                            <filtering>false</filtering>
                         </resource>
                     </webResources>
                     <packagingExcludes>META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA</packagingExcludes>
