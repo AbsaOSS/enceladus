@@ -18,6 +18,7 @@ package za.co.absa.enceladus.migrations.framework.migration
 import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
+import za.co.absa.enceladus.migrations.framework.migration.{Index, IndexField}
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -46,9 +47,6 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
   * }}}
   */
 trait CollectionMigration extends Migration {
-
-  // Index is a pair of a collection name and a list of key fields
-  type Index = (String, Seq[String])
 
   private val log: Logger = LogManager.getLogger(this.getClass)
 
@@ -116,12 +114,12 @@ trait CollectionMigration extends Migration {
     * @param collectionName A collection for setting up an index
     * @param fields         A list of fields that the index should contain
     */
-  def createIndex(collectionName: String, fields: Seq[String]): Unit = {
+  def createIndex(collectionName: String, fields: Seq[IndexField]): Unit = {
     if (collectionsToDrop.contains(collectionName)) {
       throw new IllegalArgumentException(s"Collection '$collectionName' is in the removal list. " +
         s"Cannot create an index on it.")
     }
-    indexesToCreate.append((collectionName, fields))
+    indexesToCreate.append(Index(collectionName, fields))
   }
 
   /**
@@ -130,12 +128,12 @@ trait CollectionMigration extends Migration {
     * @param collectionName A collection for dropping up an index
     * @param fields         A list of fields that the index should contain
     */
-  def dropIndex(collectionName: String, fields: Seq[String]): Unit = {
+  def dropIndex(collectionName: String, fields: Seq[IndexField]): Unit = {
     if (collectionsToDrop.contains(collectionName)) {
       throw new IllegalArgumentException(s"Collection '$collectionName' is in the removal list. " +
         s"No need to explicitly drop indexes.")
     }
-    indexesToDrop.append((collectionName, fields))
+    indexesToDrop.append(Index(collectionName, fields))
   }
 
   /** Returns a list of collections to be added during the migration */
@@ -234,7 +232,7 @@ trait CollectionMigration extends Migration {
     */
   private def applyIndexCreate(db: DocumentDb): Unit = {
     indexesToCreate.foreach {
-      case (collectionName, keys) =>
+      case Index(collectionName, keys) =>
         val collection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
         log.info(s"Creating index '${keys.mkString(", ")}' in '$collection'")
         db.createIndex(collection, keys)
@@ -246,7 +244,7 @@ trait CollectionMigration extends Migration {
     */
   private def applyIndexDrop(db: DocumentDb): Unit = {
     indexesToDrop.foreach {
-      case (collectionName, keys) =>
+      case Index(collectionName, keys) =>
         val collection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
         log.info(s"Removing index '${keys.mkString(", ")}' from '$collection'")
         db.dropIndex(collection, keys)

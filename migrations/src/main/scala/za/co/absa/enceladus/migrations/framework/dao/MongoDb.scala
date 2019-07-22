@@ -26,6 +26,7 @@ import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.{MongoCollection, MongoDatabase, MongoNamespace}
 import za.co.absa.enceladus.migrations.framework.model.DbVersion
 import za.co.absa.enceladus.migrations.framework.Configuration.DatabaseVersionCollectionName
+import za.co.absa.enceladus.migrations.framework.migration.IndexField
 
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
@@ -168,7 +169,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
   /**
     * Creates an index for a given list of fields.
     */
-  override def createIndex(collectionName: String, keys: Seq[String], unique: Boolean = false): Unit = {
+  override def createIndex(collectionName: String, keys: Seq[IndexField], unique: Boolean = false): Unit = {
     log.info(s"Creating an index for $collectionName, unique: $unique, keys: ${keys.mkString(", ")}...")
     val collection = getCollection(collectionName)
     try {
@@ -183,7 +184,7 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
   /**
     * Drops an index for a given list of fields.
     */
-  override def dropIndex(collectionName: String, keys: Seq[String]): Unit = {
+  override def dropIndex(collectionName: String, keys: Seq[IndexField]): Unit = {
     log.info(s"Dropping an index for $collectionName, keys: ${keys.mkString(", ")}...")
     val collection = getCollection(collectionName)
     try {
@@ -285,10 +286,8 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
   /**
     * Returns a Bson document from the list of index key fields
     */
-  private def fieldsToBsonKeys(keys: Seq[String]): Document = {
-    Document(keys.zipWithIndex.map {
-      case (field, num) => field -> (num + 1)
-    })
+  private def fieldsToBsonKeys(keys: Seq[IndexField]): Document = {
+    Document(keys.map(_.toPair))
   }
 
   /**
