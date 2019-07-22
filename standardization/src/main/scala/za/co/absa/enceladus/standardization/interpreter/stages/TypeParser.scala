@@ -443,7 +443,7 @@ object TypeParser extends StandardizationCommon {
 
     override protected def castStringColumn(stringColumn: Column): Column = {
       if (pattern.containsSecondFractions) {
-        //this is a trick how to enforce fractions of seconds into teh timestamp
+        //this is a trick how to enforce fractions of seconds into the timestamp
         // - turn into timestamp up to seconds precision and that into unix_timestamp,
         // - the second fractions turn into numeric fractions
         // - add both together and convert to timestamp

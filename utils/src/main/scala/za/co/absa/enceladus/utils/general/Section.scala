@@ -55,9 +55,9 @@ case class Section(start: Int, length: Int) extends Ordered[Section] {
   }
 
   /**
-    * Converts the Section to actual indexes representing the section on the given string if used in the substring function
-    * for example, e.g. first item of the tuple inclusive, second exclusive
-    * The result respects the boundaries of the string, the indexes not to cause OutOfBound exception
+    * Converts the Section to actual indexes representing the section on the given string, if used in the substring
+    * function. The result respects the boundaries of the string, the indexes in the result not to cause OutOfBound exception
+    * For example Section(2,3) for string "Hello!" gives (2,5), for "abc" (2,3)
     * @param forString  the string which the section would be applied to
     * @return           tuple representing the beginIndex and endIndex parameters for the substring function
     */
@@ -87,7 +87,7 @@ case class Section(start: Int, length: Int) extends Ordered[Section] {
   }
 
   /**
-    * Creates a string that is the remainder if the substring represented by this section is removed frm the provided string
+    * Creates a string that is the remainder if the substring represented by this section is removed from the provided string
     * Complementary to `extract`
     * @param fromString the string to apply the section to
     * @return concatenation of the string before and after the Section
@@ -105,14 +105,14 @@ case class Section(start: Int, length: Int) extends Ordered[Section] {
     */
   def inject(into: String, what: String): String = {
 
-    def invalidParameterExceptionMessage: String = {
+    def fail(): String = {
       throw new InvalidParameterException(
         s"The length of the string to inject (${what.length}) doesn't match Section($start, $length) for string of length ${into.length}."
       )
     }
 
     if (what.length > length) {
-      throw new InvalidParameterException(invalidParameterExceptionMessage)
+      fail()
     }
     if ((what == "") && ((length == 0) || (start > into.length) || (start + into.length + length < 0))) {
       // injecting empty string is easy if valid; which is either if the section length = 0, or the index to inject to
@@ -121,7 +121,7 @@ case class Section(start: Int, length: Int) extends Ordered[Section] {
     } else if (start >= 0) {
       if (start > into.length) {
         // beyond the into string
-        throw new InvalidParameterException(invalidParameterExceptionMessage)
+        fail()
       } else if (start == into.length) {
         // at the end of the into string
         into + what
@@ -130,7 +130,7 @@ case class Section(start: Int, length: Int) extends Ordered[Section] {
         into.substring(0, start) + what + into.substring(start)
       } else {
         // wrong size of injection
-        throw new InvalidParameterException(invalidParameterExceptionMessage)
+        fail()
       }
     } else {
       val index = into.length + start + what.length
@@ -146,7 +146,7 @@ case class Section(start: Int, length: Int) extends Ordered[Section] {
         case (`whatLengthDeficit`, `index`) =>
           // at the beginning of the into string, maybe appropriately shorter if to be place "before" 0 index
           what + into
-        case _ => throw new InvalidParameterException(invalidParameterExceptionMessage)
+        case _ => fail()
       }
     }
   }
@@ -257,7 +257,7 @@ object Section {
   def mergeSections(sections: Seq[Section]): Seq[Section] = {
     def fuse(into: Section, what: Section): Section = {
       if (into.start + into.length >= what.start + what.length) {
-        //what is within into
+        //as the sequence where the sections are coming from is sorter, this condition is enough to check that `what` is within `into`
         into
       } else {
         //actual fusion

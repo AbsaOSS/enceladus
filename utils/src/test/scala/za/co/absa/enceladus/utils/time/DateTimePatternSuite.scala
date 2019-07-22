@@ -41,7 +41,7 @@ class DateTimePatternSuite extends FunSuite {
     assert(dateTimePattern.epochFactor == 0)
   }
 
-  test("DateTimePattern.isEpoch returns expected values.") {
+  test("DateTimePattern.isEpoch should return true for known keywords, regardless of case") {
     val result1 = DateTimePattern.isEpoch("epoch")
     assert(result1)
     val result2 = DateTimePattern.isEpoch("epochmilli")
@@ -58,7 +58,7 @@ class DateTimePatternSuite extends FunSuite {
     assert(result7)
   }
 
-  test("DateTimePattern.epochFactor/epochMilliFactor returns expected values.") {
+  test("DateTimePattern.epochFactor returns appropriate power of ten corresponding the keyword") {
     var result = DateTimePattern.epochFactor("Epoch")
     assert(result == 1L)
     result = DateTimePattern.epochFactor("EpOcHmIlLi")

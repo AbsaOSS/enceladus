@@ -51,7 +51,7 @@ class FieldValidatorTimestampSuite extends FunSuite  {
   test("epochnano pattern") {
     assert(FieldValidatorDate.validateStructField(field("epochnano")).isEmpty)
     //with default
-    assert(FieldValidatorDate.validateStructField(field("epochmilli", Option("5545556000111222"))).isEmpty)
+    assert(FieldValidatorDate.validateStructField(field("epochnano", Option("5545556000111222"))).isEmpty)
   }
 
   test("timestamp pattern") {
@@ -227,7 +227,7 @@ class FieldValidatorTimestampSuite extends FunSuite  {
     assert(FieldValidatorTimestamp.validateStructField(field("epochnano")).toSet == expected1)
 
     val expected2 = Set(
-      ValidationWarning("Placeholder 'n' for nanoseconds recognized. While supported it brings possible loss of precision.")
+      ValidationWarning("Placeholder 'n' for nanoseconds recognized. While supported, it brings possible loss of precision.")
     )
     assert(FieldValidatorTimestamp.validateStructField(field("yyyy-MM-dd HH:mm:ss.nnnnnnnnn")).toSet == expected2)
 

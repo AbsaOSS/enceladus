@@ -51,7 +51,7 @@ class FieldValidatorDateSuite extends FunSuite  {
   test("epochnano pattern") {
     assert(FieldValidatorDate.validateStructField(field("epochnano")).isEmpty)
     //with default
-    assert(FieldValidatorDate.validateStructField(field("epochmilli", Option("5545556000111222"))).isEmpty)
+    assert(FieldValidatorDate.validateStructField(field("epochnano", Option("5545556000111222"))).isEmpty)
   }
 
   test("date pattern") {

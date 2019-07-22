@@ -66,7 +66,7 @@ object FieldValidatorTimestamp extends FieldValidatorDateTime {
               "Placeholder for hour 0-11 'K' found, but no am/pm 'a' placeholder. Possibly 1-24 'k' intended."
             )::acc
           case ('n', x) if x > 0 => ValidationWarning(
-            "Placeholder 'n' for nanoseconds recognized. While supported it brings possible loss of precision."
+            "Placeholder 'n' for nanoseconds recognized. While supported, it brings possible loss of precision."
           )::acc
           case _ => acc
         }}

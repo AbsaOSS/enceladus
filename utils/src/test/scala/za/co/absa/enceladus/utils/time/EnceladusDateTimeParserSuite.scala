@@ -30,11 +30,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     val value: String = "1547553153"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = Date.valueOf("2019-01-15")
-    assert(resultDate.toString == expectedDate.toString)
+    assert(resultDate == expectedDate)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
     val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33")
-    assert(resultTimestamp.toString == expectedTimestamp.toString)
+    assert(resultTimestamp == expectedTimestamp)
   }
 
   test("EnceladusDateParser class epochmilli") {
@@ -43,11 +43,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     val value: String = "1547553153198"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = Date.valueOf("2019-01-15")
-    assert(resultDate.toString == expectedDate.toString)
+    assert(resultDate == expectedDate)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
     val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33.198")
-    assert(resultTimestamp.toString == expectedTimestamp.toString)
+    assert(resultTimestamp == expectedTimestamp)
   }
 
   test("EnceladusDateParser class epochmicro") {
@@ -56,11 +56,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     val value: String = "1547553153198765"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = Date.valueOf("2019-01-15")
-    assert(resultDate.toString == expectedDate.toString)
+    assert(resultDate == expectedDate)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
     val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33.198765")
-    assert(resultTimestamp.toString == expectedTimestamp.toString)
+    assert(resultTimestamp == expectedTimestamp)
   }
 
   test("EnceladusDateParser class epochnano") {
@@ -69,11 +69,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     val value: String = "1547553153198765432"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = Date.valueOf("2019-01-15")
-    assert(resultDate.toString == expectedDate.toString)
+    assert(resultDate == expectedDate)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
     val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33.198765432")
-    assert(resultTimestamp.toString == expectedTimestamp.toString)
+    assert(resultTimestamp == expectedTimestamp)
   }
 
   test("EnceladusDateParser class actual pattern without time zone") {
@@ -82,11 +82,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     val value: String = "2019_01_15:11.52.33"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = Date.valueOf("2019-01-15")
-    assert(resultDate.toString == expectedDate.toString)
+    assert(resultDate == expectedDate)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
     val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33")
-    assert(resultTimestamp.toString == expectedTimestamp.toString)
+    assert(resultTimestamp == expectedTimestamp)
   }
 
   test("EnceladusDateParser class actual pattern with standard time zone") {
@@ -95,11 +95,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     val value: String = "2011-01-31-22-52-33-EST"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = Date.valueOf("2011-02-01")
-    assert(resultDate.toString == expectedDate.toString)
+    assert(resultDate == expectedDate)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
     val expectedTimestamp: Timestamp = Timestamp.valueOf("2011-02-01 03:52:33")
-    assert(resultTimestamp.toString == expectedTimestamp.toString)
+    assert(resultTimestamp == expectedTimestamp)
   }
 
   test("EnceladusDateParser class actual pattern with offset time zone") {
@@ -108,11 +108,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     val value: String = "1990/01/31 22:52:33+01:00"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = Date.valueOf("1990-01-31")
-    assert(resultDate.toString == expectedDate.toString)
+    assert(resultDate == expectedDate)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
     val expectedTimestamp: Timestamp = Timestamp.valueOf("1990-01-31 21:52:33")
-    assert(resultTimestamp.toString == expectedTimestamp.toString)
+    assert(resultTimestamp == expectedTimestamp)
   }
 
   test("EnceladusDateParser class actual pattern without time zone with milliseconds") {
@@ -121,11 +121,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     val value: String = "123|2019_01_15:11.52.33"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = Date.valueOf("2019-01-15")
-    assert(resultDate.toString == expectedDate.toString)
+    assert(resultDate == expectedDate)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
     val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33.123")
-    assert(resultTimestamp.toString == expectedTimestamp.toString)
+    assert(resultTimestamp == expectedTimestamp)
   }
 
   test("EnceladusDateParser class actual pattern without time zone and microseconds") {
@@ -134,11 +134,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     val value: String = "2019_01_15:11.52.33.123456"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = Date.valueOf("2019-01-15")
-    assert(resultDate.toString == expectedDate.toString)
+    assert(resultDate == expectedDate)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
     val expectedTimestamp: Timestamp = Timestamp.valueOf("2019-01-15 11:52:33.123456")
-    assert(resultTimestamp.toString == expectedTimestamp.toString)
+    assert(resultTimestamp == expectedTimestamp)
   }
 
   test("EnceladusDateParser class actual pattern with standard time zone and nanoseconds") {
@@ -147,11 +147,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     val value: String = "2011-01-31-22-52-33.123456789-EST"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = Date.valueOf("2011-02-01")
-    assert(resultDate.toString == expectedDate.toString)
+    assert(resultDate == expectedDate)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
     val expectedTimestamp: Timestamp = Timestamp.valueOf("2011-02-01 03:52:33.123456789")
-    assert(resultTimestamp.toString == expectedTimestamp.toString)
+    assert(resultTimestamp == expectedTimestamp)
   }
 
   test("EnceladusDateParser class actual pattern with offset time zone and all second fractions") {
@@ -160,11 +160,11 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     val value: String = "1234561990/01/31 789 22:52:33+01:00"
     val resultDate: Date = parser.parseDate(value)
     val expectedDate: Date = Date.valueOf("1990-01-31")
-    assert(resultDate.toString == expectedDate.toString)
+    assert(resultDate == expectedDate)
 
     val resultTimestamp: Timestamp = parser.parseTimestamp(value)
     val expectedTimestamp: Timestamp = Timestamp.valueOf("1990-01-31 21:52:33.456789123")
-    assert(resultTimestamp.toString == expectedTimestamp.toString)
+    assert(resultTimestamp == expectedTimestamp)
   }
 
   test("format") {

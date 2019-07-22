@@ -21,39 +21,6 @@ import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
 
 class StringImplicitsSuite extends FunSuite {
-  test("StringImprovements.injectInto - positive where") {
-    val r0 = "abc".injectWith("xxx", 0)
-    val r1 = "abc".injectWith("xxx", 1)
-    val r2 = "abc".injectWith("xxx", 2)
-    val r3 = "abc".injectWith("xxx", 3)
-    val r4 = "abc".injectWith("xxx", 4)
-    assert(r0 == "xxxabc")
-    assert(r1 == "axxxbc")
-    assert(r2 == "abxxxc")
-    assert(r3 == "abcxxx")
-    assert(r4 == "abcxxx")
-  }
-
-  test("StringImprovements.injectInto - negative where") {
-    val r1 = "abc".injectWith("xxx", -1)
-    val r2 = "abc".injectWith("xxx", -2)
-    val r3 = "abc".injectWith("xxx", -3)
-    val r4 = "abc".injectWith("xxx", -4)
-    assert(r1 == "abxxxc")
-    assert(r2 == "axxxbc")
-    assert(r3 == "xxxabc")
-    assert(r4 == "xxxabc")
-  }
-
-  test("StringImprovements.injectInto - empty string") {
-    val r1 = "".injectWith("+", -1)
-    val r2 = "".injectWith("+", 0)
-    val r3 = "".injectWith("+", 1)
-    assert(r1 == "+")
-    assert(r2 == "+")
-    assert(r3 == "+")
-  }
-
   test("StringImprovements.findFirstUnquoted - empty string") {
     var result = "".findFirstUnquoted(Set.empty, Set.empty)
     assert(result.isEmpty)

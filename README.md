@@ -229,37 +229,37 @@ It should be noted explicitly that `epoch` and `milliepoch` are considered a pat
  
 Summary:
 
-| placeholder | Description | Example |
-| --- | --- | --- |
-| G | Era designator | AD |
-| y | Year | 1996; 96 |
-| Y | Week year | 2009; 09 |
-| M | Month in year (context sensitive) |  July; Jul; 07 |
-| L | Month in year (standalone form) | July; Jul; 07 |
-| w | Week in year | 27 |
-| W | Week in month | 2 |
-| D | Day in year | 189 |
-| d | Day in month |  10 |
-| F | Day of week in month | 2 |
-| E | Day name in week | Tuesday; Tue |
-| u | Day number of week (1 = Monday, ..., 7 = Sunday) | 1 |
-| a | Am/pm marker | PM |
-| H | Hour in day (0-23) | 0 |
-| k | Hour in day (1-24) | 24 |
-| K | Hour in am/pm (0-11) |  0 |
-| h | Hour in am/pm (1-12) | 12 |
-| m | Minute in hour | 30 |
-| s | Second in minute | 55 |
-| S | Millisecond | 978 |
-| z | General time zone | Pacific Standard Time; PST; GMT-08:00 |
-| Z | RFC 822 time zone | -0800 |
-| X | ISO 8601 time zone | -08; -0800; -08:00 |
-| _epoch_ | Seconds since 1970/01/01 00:00:00 | 1557136493, 1557136493.136|
-| _epochmilli_ | Milliseconds since 1970/01/01 00:00:00.0000| 15571364938124, 15571364938124.001 |
-| _epochmicro_ | Milliseconds since 1970/01/01 00:00:00.0000| 15571364938124789, 15571364938124789.999 |
-| _epochnano_ | Milliseconds since 1970/01/01 00:00:00.0000| 15571364938124789101 |
-| i | Microsecond | 111, 321001 |
-| n | Nanosecond | 999, 542113879 |
+| placeholder | Description | Example | Note |
+| --- | --- | --- | --- |
+| G | Era designator | AD | |
+| y | Year | 1996; 96 | |
+| Y | Week year | 2009; 09 | |
+| M | Month in year (context sensitive) |  July; Jul; 07 | |
+| L | Month in year (standalone form) | July; Jul; 07 | |
+| w | Week in year | 27 | |
+| W | Week in month | 2 | |
+| D | Day in year | 189 | |
+| d | Day in month |  10 | |
+| F | Day of week in month | 2 | |
+| E | Day name in week | Tuesday; Tue | |
+| u | Day number of week (1 = Monday, ..., 7 = Sunday) | 1 | |
+| a | Am/pm marker | PM | |
+| H | Hour in day (0-23) | 0 | |
+| k | Hour in day (1-24) | 24 | |
+| K | Hour in am/pm (0-11) |  0 | |
+| h | Hour in am/pm (1-12) | 12 | |
+| m | Minute in hour | 30 | |
+| s | Second in minute | 55 | |
+| S | Millisecond | 978 | |
+| z | General time zone | Pacific Standard Time; PST; GMT-08:00 | |
+| Z | RFC 822 time zone | -0800 | |
+| X | ISO 8601 time zone | -08; -0800; -08:00 | |
+| _epoch_ | Seconds since 1970/01/01 00:00:00 | 1557136493, 1557136493.136| |
+| _epochmilli_ | Milliseconds since 1970/01/01 00:00:00.0000| 1557136493128, 1557136493128.001 | |
+| _epochmicro_ | Microseconds since 1970/01/01 00:00:00.0000| 1557136493128789, 1557136493128789.999 | |
+| _epochnano_ | Nanoseconds since 1970/01/01 00:00:00.0000| 1557136493128789101 | Seen the remark bellow regarding the loss of precision in _nanoseconds_ |
+| i | Microsecond | 111, 321001 | |
+| n | Nanosecond | 999, 542113879 | Seen the remark bellow regarding the loss of precision in _nanoseconds_ |
 
 
 **NB!** Spark uses US Locale and because on-the-fly conversion would be complicated, at the moment we stick to this 

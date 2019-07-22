@@ -42,10 +42,12 @@ class StandardizationInterpreter_TimestampSuite extends FunSuite with SparkTestB
 
   test("epochmilli") {
     val seq  = Seq(
-      0.0,
-      86400000.5,
-      978307199999.05,
-      1563288103123.005
+      "0.0",
+      "86400000.5",
+      "978307199999.05",
+      "1563288103123.005",
+      "-86400000",
+      "Fail"
     )
     val desiredSchema = StructType(Seq(
       StructField(fieldName, TimestampType, nullable = false,
@@ -55,7 +57,9 @@ class StandardizationInterpreter_TimestampSuite extends FunSuite with SparkTestB
       TimestampRow(Timestamp.valueOf("1970-01-01 00:00:00")),
       TimestampRow(Timestamp.valueOf("1970-01-02 00:00:00.0005")),
       TimestampRow(Timestamp.valueOf("2000-12-31 23:59:59.99905")),
-      TimestampRow(Timestamp.valueOf("2019-07-16 14:41:43.123005"))
+      TimestampRow(Timestamp.valueOf("2019-07-16 14:41:43.123005")),
+      TimestampRow(Timestamp.valueOf("1969-12-31 00:00:00")),
+      TimestampRow(Timestamp.valueOf("1970-01-01 00:00:00"), Seq(ErrorMessage.stdCastErr(fieldName, "Fail")))
     )
 
     val src = seq.toDF(fieldName)

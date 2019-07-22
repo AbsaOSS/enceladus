@@ -33,35 +33,9 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
     Some(new SimpleDateFormat(pattern.patternWithoutSecondFractions, Locale.US)) // locale here is hardcoded to the same value as Spark uses
   }
 
-  private def makePreciseTimestamp(seconds: Long, nanoseconds: Int): Timestamp = {
-    val result = new Timestamp(seconds * MillisecondsInSecond)
-    if (nanoseconds > 0) {
-    result.setNanos(nanoseconds)
-    }
-    result
-  }
-
-  private def extractSeconds(value: String): Long = {
-    val valueToParse = if (pattern.containsSecondFractions) {
-      Section.removeMultiple(value, pattern.secondFractionsSections)
-    } else {
-      value
-    }
-    formatter.map(_.parse(valueToParse).getTime / MillisecondsInSecond).getOrElse(
-      valueToParse.toLong
-    )
-  }
-
-  private def extractNanoseconds(value: String): Int = {
-    var result = 0
-    pattern.millisecondsPosition.foreach(result += _.extract(value).toInt * NanosecondsInMillisecond)
-    pattern.microsecondsPosition.foreach(result += _.extract(value).toInt * NanosecondsInMicrosecond)
-    pattern.nanosecondsPosition.foreach(result += _.extract(value).toInt)
-    result
-  }
-
   def parseDate(dateValue: String): Date = {
-    new Date(extractSeconds(dateValue) * 1000)
+    val seconds = extractSeconds(dateValue)
+    new Date((seconds - (seconds % SecondsPerDay)) * MillisecondsInSecond)
   }
 
   def parseTimestamp(timestampValue: String): Timestamp = {
@@ -71,8 +45,6 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
   }
 
   def format(time: java.util.Date): String = {
-
-
     //up to milliseconds it's easy with the formatter
     val preliminaryResult = formatter.map(_.format(time)).getOrElse(
       (time.getTime / MillisecondsInSecond).toString
@@ -98,8 +70,8 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
         pattern.nanosecondsPosition
       ).flatten.sorted
 
-      sections.foldLeft(preliminaryResult) ((result, item) =>
-        item.inject(result, injections(item))
+      sections.foldLeft(preliminaryResult) ((result, section) =>
+        section.inject(result, injections(section))
       )
       // scalastyle:on magic.number
     } else {
@@ -107,9 +79,37 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
       preliminaryResult
     }
   }
+
+  private def makePreciseTimestamp(seconds: Long, nanoseconds: Int): Timestamp = {
+    val result = new Timestamp(seconds * MillisecondsInSecond)
+    if (nanoseconds > 0) {
+      result.setNanos(nanoseconds)
+    }
+    result
+  }
+
+  private def extractSeconds(value: String): Long = {
+    val valueToParse = if (pattern.containsSecondFractions) {
+      Section.removeMultiple(value, pattern.secondFractionsSections)
+    } else {
+      value
+    }
+    formatter.map(_.parse(valueToParse).getTime / MillisecondsInSecond).getOrElse(
+      valueToParse.toLong
+    )
+  }
+
+  private def extractNanoseconds(value: String): Int = {
+    var result = 0
+    pattern.millisecondsPosition.foreach(result += _.extract(value).toInt * NanosecondsInMillisecond)
+    pattern.microsecondsPosition.foreach(result += _.extract(value).toInt * NanosecondsInMicrosecond)
+    pattern.nanosecondsPosition.foreach(result += _.extract(value).toInt)
+    result
+  }
 }
 
 object EnceladusDateTimeParser {
+  private val SecondsPerDay = 24*60*60
   private val MillisecondsInSecond = 1000
   private val NanosecondsInMillisecond = 1000000
   private val NanosecondsInMicrosecond = 1000
