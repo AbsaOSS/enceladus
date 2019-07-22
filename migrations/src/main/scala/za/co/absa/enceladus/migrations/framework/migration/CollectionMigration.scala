@@ -18,7 +18,6 @@ package za.co.absa.enceladus.migrations.framework.migration
 import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
-import za.co.absa.enceladus.migrations.framework.migration.{Index, IndexField}
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -41,8 +40,8 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
   *
   *     renameCollection("collection7_name", "collection8_name")
   *
-  *     createIndex("collection1_name", "foo1" :: "bar1" :: Nil)
-  *     dropIndex("collection2_name", "foo2" :: "bar2" :: Nil)
+  *     createIndex("collection1_name", IndexField("foo1", ASC) :: IndexField("bar1", DESC) :: Nil, unique = true)
+  *     dropIndex("collection2_name", IndexField("foo2", ASC) :: IndexField("bar2", ASC) :: Nil)
   *   }
   * }}}
   */
@@ -113,6 +112,7 @@ trait CollectionMigration extends Migration {
     *
     * @param collectionName A collection for setting up an index
     * @param fields         A list of fields that the index should contain
+    * @param unique         A boolean specifying whether the index should enforce uniqueness
     */
   def createIndex(collectionName: String, fields: Seq[IndexField], unique: Boolean = false): Unit = {
     if (collectionsToDrop.contains(collectionName)) {
