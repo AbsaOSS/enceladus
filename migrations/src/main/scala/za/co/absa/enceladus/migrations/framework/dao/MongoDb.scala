@@ -22,6 +22,7 @@ import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistr
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.collection.immutable.Document
+import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.{MongoCollection, MongoDatabase, MongoNamespace}
 import za.co.absa.enceladus.migrations.framework.model.DbVersion
 import za.co.absa.enceladus.migrations.framework.Configuration.DatabaseVersionCollectionName
@@ -167,11 +168,11 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
   /**
     * Creates an index for a given list of fields.
     */
-  override def createIndex(collectionName: String, keys: Seq[String]): Unit = {
-    log.info(s"Creating an index for $collectionName, keys: ${keys.mkString(", ")}...")
+  override def createIndex(collectionName: String, keys: Seq[String], unique: Boolean = false): Unit = {
+    log.info(s"Creating an index for $collectionName, unique: $unique, keys: ${keys.mkString(", ")}...")
     val collection = getCollection(collectionName)
     try {
-      collection.createIndex(fieldsToBsonKeys(keys))
+      collection.createIndex(fieldsToBsonKeys(keys), IndexOptions().unique(unique))
         .execute()
     } catch {
       case NonFatal(e) => log.warn(s"Unable to create an index for $collectionName, keys: ${keys.mkString(", ")}: "
@@ -298,8 +299,13 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     indexes.foreach(idxBson => {
       val indexDocument = idxBson("key").asDocument()
       if (!indexDocument.containsKey("_id")) {
+        val indexOptions = idxBson.get("unique") match {
+          case None         => IndexOptions()
+          case Some(unique) => IndexOptions().unique(unique.asBoolean().getValue)
+        }
+
         db.getCollection(collectionTo)
-          .createIndex(indexDocument)
+          .createIndex(indexDocument, indexOptions)
           .execute()
       }
     })
