@@ -66,8 +66,8 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     collections.foreach(c => db.createCollection(MigrationUtils.getVersionedCollectionName(c, targetDbVersion)))
 
     val indexes = getIndexes(targetDbVersion)
-    indexes.foreach { case Index(c, keys) =>
-      db.createIndex(MigrationUtils.getVersionedCollectionName(c, targetDbVersion), keys)
+    indexes.foreach { case Index(c, keys, unique) =>
+      db.createIndex(MigrationUtils.getVersionedCollectionName(c, targetDbVersion), keys, unique)
     }
 
     db.setVersion(targetDbVersion)

@@ -114,12 +114,12 @@ trait CollectionMigration extends Migration {
     * @param collectionName A collection for setting up an index
     * @param fields         A list of fields that the index should contain
     */
-  def createIndex(collectionName: String, fields: Seq[IndexField]): Unit = {
+  def createIndex(collectionName: String, fields: Seq[IndexField], unique: Boolean = false): Unit = {
     if (collectionsToDrop.contains(collectionName)) {
       throw new IllegalArgumentException(s"Collection '$collectionName' is in the removal list. " +
         s"Cannot create an index on it.")
     }
-    indexesToCreate.append(Index(collectionName, fields))
+    indexesToCreate.append(Index(collectionName, fields, unique))
   }
 
   /**
@@ -232,10 +232,10 @@ trait CollectionMigration extends Migration {
     */
   private def applyIndexCreate(db: DocumentDb): Unit = {
     indexesToCreate.foreach {
-      case Index(collectionName, keys) =>
+      case Index(collectionName, keys, unique) =>
         val collection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
         log.info(s"Creating index '${keys.mkString(", ")}' in '$collection'")
-        db.createIndex(collection, keys)
+        db.createIndex(collection, keys, unique)
     }
   }
 
@@ -244,7 +244,7 @@ trait CollectionMigration extends Migration {
     */
   private def applyIndexDrop(db: DocumentDb): Unit = {
     indexesToDrop.foreach {
-      case Index(collectionName, keys) =>
+      case Index(collectionName, keys, _) =>
         val collection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
         log.info(s"Removing index '${keys.mkString(", ")}' from '$collection'")
         db.dropIndex(collection, keys)
