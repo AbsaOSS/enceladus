@@ -64,7 +64,7 @@ abstract class DocumentDb {
   /**
     * Creates an index for a given list of keys.
     */
-  def createIndex(collectionName: String, keys: Seq[String]): Unit
+  def createIndex(collectionName: String, keys: Seq[String], unique: Boolean = false): Unit
 
   /**
     * Drop an index for a given list of keys.

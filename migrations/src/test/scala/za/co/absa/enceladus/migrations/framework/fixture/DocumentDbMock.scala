@@ -84,11 +84,11 @@ class DocumentDbMock extends DocumentDb {
     actionsExecuted += s"clone($collectionName,$newCollectionName)"
   }
 
-  override def createIndex(collectionName: String, fieldsList: Seq[String]): Unit = {
+  override def createIndex(collectionName: String, fieldsList: Seq[String], unique: Boolean = false): Unit = {
     if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
-    actionsExecuted += s"createIndex($collectionName,List(${fieldsList.mkString(",")}))"
+    actionsExecuted += s"createIndex($collectionName,List(${fieldsList.mkString(",")}),$unique)"
   }
 
   override def dropIndex(collectionName: String, fieldsList: Seq[String]): Unit = {
