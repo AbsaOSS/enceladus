@@ -32,7 +32,7 @@ class UseCaseTestData {
     createCollection("schema")
     createCollection("mappingtable")
     createCollection("foo")
-    createIndex("dataset", IndexField("name", ASC) :: Nil)
+    createIndex("dataset", IndexField("name", ASC) :: Nil, unique = true)
   }
 
   object Migration1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration  {
@@ -42,7 +42,7 @@ class UseCaseTestData {
     dropCollection("foo")
     createCollection("attachment")
     createIndex("dataset", IndexField("order", ASC) :: Nil)
-    createIndex("dataset", IndexField("version", ASC) :: Nil)
+    createIndex("dataset", IndexField("version", DESC) :: Nil)
 
     transformJSON("schema")(jsonIn => {
       jsonIn.replace(" ","")
@@ -89,34 +89,34 @@ class UseCaseTestData {
 
     db.insertDocument("schema",
       """{
-        |	"type": "struct",
-        |	"fields": [
-        |		{
-        |			"name": "field1",
-        |			"type": "string",
-        |			"nullable": true,
-        |			"metadata": {}
-        |		},
-        |		{
-        |			"name": "field2",
-        |			"type": "integer",
-        |			"nullable": true,
-        |			"metadata": {}
-        |		},
-        |		{
-        |			"name": "field3",
-        |			"type": "date",
-        |			"nullable": true,
-        |			"metadata": {
-        |				"pattern": "yyyy-MM-dd"
-        |			}
-        |		},
-        |		{
-        |			"name": "field4",
-        |			"type": "string",
-        |			"nullable": true,
-        |			"metadata": {}
-        |		}
+        | "type": "struct",
+        | "fields": [
+        |   {
+        |     "name": "field1",
+        |     "type": "string",
+        |     "nullable": true,
+        |     "metadata": {}
+        |   },
+        |   {
+        |     "name": "field2",
+        |     "type": "integer",
+        |     "nullable": true,
+        |     "metadata": {}
+        |   },
+        |   {
+        |     "name": "field3",
+        |     "type": "date",
+        |     "nullable": true,
+        |     "metadata": {
+        |       "pattern": "yyyy-MM-dd"
+        |     }
+        |   },
+        |   {
+        |     "name": "field4",
+        |     "type": "string",
+        |     "nullable": true,
+        |     "metadata": {}
+        |   }
         |    ]
         |}""".stripMargin)
 

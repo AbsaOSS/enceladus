@@ -33,7 +33,7 @@ class IntegrationTestData {
     renameCollection("foo2", "bar2")
     dropCollection("foo3")
     createCollection("bar1")
-    createIndex("foo1", IndexField("name", ASC) :: Nil)
+    createIndex("foo1", IndexField("name", ASC) :: Nil, unique = true)
     dropIndex("foo1", IndexField("date", ASC) :: Nil)
 
     transformJSON("foo1")(jsonIn => {

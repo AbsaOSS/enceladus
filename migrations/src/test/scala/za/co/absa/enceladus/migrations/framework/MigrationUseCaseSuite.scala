@@ -38,8 +38,8 @@ class MigrationUseCaseSuite extends FunSuite {
         "create(schema_v2)" ::
         "create(mapping_table_v2)" ::
         "create(attachment_v2)" ::
-        "createIndex(dataset_v2,List((name: ASC)),false)" ::
-        "createIndex(dataset_v2,List((version: ASC)),false)" ::
+        "createIndex(dataset_v2,List((name: ASC)),true)" ::
+        "createIndex(dataset_v2,List((version: DESC)),false)" ::
         "setDbVersion(2)" ::
         Nil
 
@@ -79,7 +79,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "drop(foo_v1)" ::
         "rename(mappingtable_v1,mapping_table_v1)" ::
         "createIndex(dataset_v1,List((order: ASC)),false)" ::
-        "createIndex(dataset_v1,List((version: ASC)),false)" ::
+        "createIndex(dataset_v1,List((version: DESC)),false)" ::
         "empty(schema_v1)" ::
         "getDocuments(schema)" ::
         "insertTo(schema_v1)" ::
@@ -126,7 +126,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "drop(foo_v1)" ::
         "rename(mappingtable_v1,mapping_table_v1)" ::
         "createIndex(dataset_v1,List((order: ASC)),false)" ::
-        "createIndex(dataset_v1,List((version: ASC)),false)" ::
+        "createIndex(dataset_v1,List((version: DESC)),false)" ::
         "empty(schema_v1)" ::
         "getDocuments(schema)" ::
         "insertTo(schema_v1)" ::
