@@ -133,6 +133,41 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
     db.dropCollection("bar6")
   }
 
+  test("Test dropping an index with the wrong sort order") {
+    db.createCollection("bar6")
+    db.insertDocument("bar6", "{\"item\": \"1\"}")
+    db.insertDocument("bar6", "{\"item\": \"2\"}")
+    db.insertDocument("bar6", "{\"item\": \"3\"}")
+    db.createIndex("bar6", IndexField("item", ASC) :: Nil)
+
+    val idx1 = dbRaw.getCollection("bar6").listIndexes().execute()
+    assert(idx1.size == 2)
+    assert(idx1.contains(Document(
+      """{
+        |  "v": 2,
+        |  "key": {
+        |    "item": 1
+        |  },
+        |  "name": "item_1",
+        |  "ns": "migrations_integration.bar6"
+        |}""".stripMargin)))
+
+    db.dropIndex("bar6", IndexField("item", DESC) :: Nil)
+    val idx2 = dbRaw.getCollection("bar6").listIndexes().execute()
+    assert(idx2.size == 2)
+    assert(idx2.contains(Document(
+      """{
+        |  "v": 2,
+        |  "key": {
+        |    "item": 1
+        |  },
+        |  "name": "item_1",
+        |  "ns": "migrations_integration.bar6"
+        |}""".stripMargin)))
+
+    db.dropCollection("bar6")
+  }
+
   test("Test index copying on clone") {
     db.createCollection("bar7")
     db.insertDocument("bar7", "{\"name\": \"Apple\", \"type\": \"Fruit\"}")
