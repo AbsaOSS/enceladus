@@ -25,9 +25,6 @@ import scala.collection.mutable.ArrayBuffer
 
 class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
 
-  // Index is a pair of a collection name and a list of key fields
-  type Index = (String, Seq[String])
-
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   def getCollectionMigrations: Seq[CollectionMigration] = migrations.collect({ case m: CollectionMigration => m })
@@ -69,7 +66,7 @@ class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
     collections.foreach(c => db.createCollection(MigrationUtils.getVersionedCollectionName(c, targetDbVersion)))
 
     val indexes = getIndexes(targetDbVersion)
-    indexes.foreach { case (c, keys) =>
+    indexes.foreach { case Index(c, keys) =>
       db.createIndex(MigrationUtils.getVersionedCollectionName(c, targetDbVersion), keys)
     }
 

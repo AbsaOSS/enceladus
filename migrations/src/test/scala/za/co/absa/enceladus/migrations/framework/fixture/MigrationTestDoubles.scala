@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.migrations.framework.fixture
 
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
+import za.co.absa.enceladus.migrations.framework.migration.IndexField
 
 object MigrationTestDoubles {
 
@@ -28,8 +29,8 @@ object MigrationTestDoubles {
     override def doesCollectionExists(collectionName: String): Boolean = true
     override def createCollection(collectionName: String): Unit = {}
     override def cloneCollection(collectionName: String, newCollectionName: String): Unit = {}
-    override def createIndex(collectionName: String, keys: Seq[String], unique: Boolean = false): Unit = {}
-    override def dropIndex(collectionName: String, keys: Seq[String]): Unit = {}
+    override def createIndex(collectionName: String, keys: Seq[IndexField], unique: Boolean = false): Unit = {}
+    override def dropIndex(collectionName: String, keys: Seq[IndexField]): Unit = {}
     override def getDocumentsCount(collectionName: String): Long = 0
     override def insertDocument(collectionName: String, document: String): Unit = {}
     override def executeCommand(query: String): Unit = {}

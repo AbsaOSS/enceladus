@@ -18,6 +18,7 @@ package za.co.absa.enceladus.migrations.framework.integration
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.migrations.framework.integration.fixture.MongoDbFixture
+import za.co.absa.enceladus.migrations.framework.migration.{ASC, DESC, IndexField}
 
 class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
   import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits._
@@ -84,7 +85,7 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
     db.insertDocument("bar6", "{\"item\": \"1\"}")
     db.insertDocument("bar6", "{\"item\": \"2\"}")
     db.insertDocument("bar6", "{\"item\": \"3\"}")
-    db.createIndex("bar6", "item" :: Nil)
+    db.createIndex("bar6", IndexField("item", ASC) :: Nil)
 
     val idx1 = dbRaw.getCollection("bar6").listIndexes().execute()
     assert(idx1.size == 2)
@@ -98,7 +99,7 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
         |  "ns": "migrations_integration.bar6"
         |}""".stripMargin)))
 
-    db.dropIndex("bar6", "item" :: Nil)
+    db.dropIndex("bar6", IndexField("item", ASC) :: Nil)
     val idx2 = dbRaw.getCollection("bar6").listIndexes().execute()
     assert(idx2.size == 1)
 
@@ -110,7 +111,7 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
     db.insertDocument("bar6", "{\"item\": \"1\"}")
     db.insertDocument("bar6", "{\"item\": \"2\"}")
     db.insertDocument("bar6", "{\"item\": \"3\"}")
-    db.createIndex("bar6", "item" :: Nil, unique = true)
+    db.createIndex("bar6", IndexField("item", ASC) :: Nil, unique = true)
 
     val idx1 = dbRaw.getCollection("bar6").listIndexes().execute()
     assert(idx1.size == 2)
@@ -125,7 +126,7 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
         |  "ns": "migrations_integration.bar6"
         |}""".stripMargin)))
 
-    db.dropIndex("bar6", "item" :: Nil)
+    db.dropIndex("bar6", IndexField("item", ASC) :: Nil)
     val idx2 = dbRaw.getCollection("bar6").listIndexes().execute()
     assert(idx2.size == 1)
 
@@ -137,19 +138,35 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
     db.insertDocument("bar7", "{\"name\": \"Apple\", \"type\": \"Fruit\"}")
     db.insertDocument("bar7", "{\"name\": \"Pear\", \"type\": \"Fruit\"}")
     db.insertDocument("bar7", "{\"name\": \"Orange\", \"type\": \"Fruit\"}")
-    db.createIndex("bar7", "name" :: "type" :: Nil)
+    db.createIndex("bar7", IndexField("name", ASC) :: IndexField("type", DESC) :: Nil)
 
     val idx1 = dbRaw.getCollection("bar7").listIndexes().execute()
     assert(idx1.size == 2)
+    assert(idx1.contains(Document(
+      """{
+        |  "v": 2,
+        |  "key": {
+        |    "name": 1,
+        |    "type": -1
+        |  },
+        |  "name": "name_1_type_-1",
+        |  "ns": "migrations_integration.bar7"
+        |}""".stripMargin)))
 
     db.cloneCollection("bar7", "bar8")
 
     val idx2 = dbRaw.getCollection("bar8").listIndexes().execute()
-    assert(idx1.size == 2)
-
-    // Check if the second index contains 2 keys
-    val indexDocs = idx2.toIndexedSeq.map(idx => idx("key").asDocument())
-    assert(indexDocs(1).size == 2)
+    assert(idx2.size == 2)
+    assert(idx2.contains(Document(
+      """{
+        |  "v": 2,
+        |  "key": {
+        |    "name": 1,
+        |    "type": -1
+        |  },
+        |  "name": "name_1_type_-1",
+        |  "ns": "migrations_integration.bar8"
+        |}""".stripMargin)))
 
     db.dropCollection("bar7")
     db.dropCollection("bar8")
@@ -160,7 +177,7 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
     db.insertDocument("bar7", "{\"name\": \"Apple\", \"type\": \"Fruit\"}")
     db.insertDocument("bar7", "{\"name\": \"Pear\", \"type\": \"Fruit\"}")
     db.insertDocument("bar7", "{\"name\": \"Orange\", \"type\": \"Fruit\"}")
-    db.createIndex("bar7", "name" :: "type" :: Nil, unique = true)
+    db.createIndex("bar7", IndexField("name", ASC) :: IndexField("type", ASC) :: Nil, unique = true)
 
     val idx1 = dbRaw.getCollection("bar7").listIndexes().execute()
     assert(idx1.size == 2)
@@ -170,9 +187,9 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
         |  "unique": true,
         |  "key": {
         |    "name": 1,
-        |    "type": 2
+        |    "type": 1
         |  },
-        |  "name": "name_1_type_2",
+        |  "name": "name_1_type_1",
         |  "ns": "migrations_integration.bar7"
         |}""".stripMargin)))
 
@@ -186,15 +203,11 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
         |  "unique": true,
         |  "key": {
         |    "name": 1,
-        |    "type": 2
+        |    "type": 1
         |  },
-        |  "name": "name_1_type_2",
+        |  "name": "name_1_type_1",
         |  "ns": "migrations_integration.bar8"
         |}""".stripMargin)))
-
-    // Check if the second index contains 2 keys
-    val indexDocs = idx2.toIndexedSeq.map(idx => idx("key").asDocument())
-    assert(indexDocs(1).size == 2)
 
     db.dropCollection("bar7")
     db.dropCollection("bar8")
