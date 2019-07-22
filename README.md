@@ -180,6 +180,7 @@ The list of options for configuring Spark deployment mode in Yarn and resource s
 | --executor-memory **mem**  | Specifies an amount of memory to request for each executor. See memory specification syntax in Spark. Examples: `4g`, `8g`. |
 | --driver-cores **n**       | Specifies a number of CPU cores to allocate for the driver process. |
 | --driver-memory **mem**    | Specifies an amount of memory to request for the driver process. See memory specification syntax in Spark. Examples: `4g`, `8g`. |
+
 For more information on these options see the official documentation on running Spark on Yarn: 
 [https://spark.apache.org/docs/latest/running-on-yarn.html](https://spark.apache.org/docs/latest/running-on-yarn.html)
 
@@ -187,8 +188,8 @@ The list of all options for running both Standardization and Conformance:
 
 |            Option          |                           Description |
 | -------------------------- |:----------------------------------------------------------------------------- |
-| --menas-auth-keytab **filename** | A keytab file used for Kerberized authentication to Menas |
-| --menas-credentials-file **filename** | A credentials file containing a login and a password used to authenticate to Menas.  |
+| --menas-auth-keytab **filename** | A keytab file used for Kerberized authentication to Menas. Cannot be used together with `--menas-credentials-file`. |
+| --menas-credentials-file **filename** | A credentials file containing a login and a password used to authenticate to Menas. Cannot be used together with `--menas-auth-keytab`. |
 | --dataset-name **name** | A dataset name to be standardized or conformed. |
 | --dataset-version **version** | A version of a dataset to be standardized or conformed. |
 | --report-date **YYYY-mm-dd** | A date specifying a day for which a raw data is landed. |
