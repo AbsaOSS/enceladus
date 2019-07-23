@@ -171,6 +171,48 @@ The basic command to run Conformance becomes:
 --report-version <data_run_version>
 ```
 
+The list of options for configuring Spark deployment mode in Yarn and resource specification:
+
+|            Option          |                           Description |
+| -------------------------- |:----------------------------------------------------------------------------- |
+| --deploy-mode **cluster/client**  | Specifies a Spark Application deployment mode when Spark runs on Yarn. Can be either `client` or `cluster`. |
+| --num-executors **n**      | Specifies the number of executors to use. |
+| --executor-memory **mem**  | Specifies an amount of memory to request for each executor. See memory specification syntax in Spark. Examples: `4g`, `8g`. |
+| --driver-cores **n**       | Specifies a number of CPU cores to allocate for the driver process. |
+| --driver-memory **mem**    | Specifies an amount of memory to request for the driver process. See memory specification syntax in Spark. Examples: `4g`, `8g`. |
+
+For more information on these options see the official documentation on running Spark on Yarn: 
+[https://spark.apache.org/docs/latest/running-on-yarn.html](https://spark.apache.org/docs/latest/running-on-yarn.html)
+
+The list of all options for running both Standardization and Conformance:
+
+|            Option          |                           Description |
+| -------------------------- |:----------------------------------------------------------------------------- |
+| --menas-auth-keytab **filename** | A keytab file used for Kerberized authentication to Menas. Cannot be used together with `--menas-credentials-file`. |
+| --menas-credentials-file **filename** | A credentials file containing a login and a password used to authenticate to Menas. Cannot be used together with `--menas-auth-keytab`. |
+| --dataset-name **name** | A dataset name to be standardized or conformed. |
+| --dataset-version **version** | A version of a dataset to be standardized or conformed. |
+| --report-date **YYYY-mm-dd** | A date specifying a day for which a raw data is landed. |
+| --report-version **version** | A version of the data for a particular day. |
+| --std-hdfs-path **path**   | A path pattern where to put standardized data. The following tokens are expending in the pattern: `{0}` - dataset name, `{1}` - dataset verrsion, `{2}`- report date, `{3}`- report version. |
+
+The list of additional options available for running Standardization:
+
+|            Option          |                           Description |
+| -------------------------- |:----------------------------------------------------------------------------- |
+| --raw-format **format**    | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`. |
+| --row-tag **tag**          | A row tag if the input format is `xml`.                                       |
+| --header **true/false**    | Indicates if in the input CSV data has headers as the first row of each file. |
+| --trimValues **true/false** | Indicates if string fields of fixed with text data should be trimmed.        |
+| --folder-prefix **prefix** | Adds a folder prefix before the date tokens.                                  |
+| --debug-set-raw-path **path** | Override the path of the raw data (used for testing purposes).             |
+
+The list of additional options available for running Conformance:
+
+|            Option          |                           Description |
+| -------------------------- |:----------------------------------------------------------------------------- |
+| --mapping-table-pattern **pattern** | A pattern to look for mapping table for the specified date.<br>The list of possible substitutions: `{0}` - year, `{1}` - month, `{2}` - day of month. By default the pattern is `reportDate={0}-{1}-{2}`. Special symbols in the pattern need to be escaped. For example, an empty pattern can be be specified as `\'\'` (single quotes are escaped using a backslash character).|
+
 ## <a name="contribute"/>How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
 

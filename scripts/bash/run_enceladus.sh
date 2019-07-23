@@ -132,6 +132,10 @@ case $key in
     MAPPING_TABLE_PATTERN="$2"
     shift 2 # past argument and value
     ;;
+    --std-hdfs-path)
+    STD_HDFS_PATH="$2"
+    shift 2 # past argument and value
+    ;;
     --debug-set-raw-path)
     DEBUG_SET_RAW_PATH="$2"
     shift 2 # past argument and value
@@ -170,6 +174,11 @@ validate "$DATASET_NAME" "--dataset-name"
 validate "$DATASET_VERSION" "--dataset-version"
 validate "$REPORT_DATE" "--report-date"
 
+if [[ "$MASTER" != "yarn" ]]; then
+  echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
+  VALID="0"
+fi
+
 # Validation failure check
 if [ "$VALID" == "0" ]; then
     exit 1
@@ -181,6 +190,10 @@ add_to_cmd_line() {
     if [ ! -z "$2" ]; then
         CMD_LINE="$CMD_LINE $1 $2"
     fi
+}
+
+echoerr() {
+    echo "$@" 1>&2;
 }
 
 # Constructing the grand command line
@@ -226,6 +239,41 @@ add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
 echo "Command line:"
 echo "$CMD_LINE"
 
-if [ -z "$DRY_RUN" ]; then
-  bash -c "$CMD_LINE"
+if [[ -z "$DRY_RUN" ]]; then
+  if [[ "$DEPLOY_MODE" == "client" ]]; then
+    DATE=`date +%Y_%m_%d-%H_%M_%S`
+    NAME=`sed -e 's#.*\.\(\)#\1#' <<< $CLASS`
+    TMP_PATH_NAME="$LOG_DIR/enceladus_${NAME}_${DATE}.log"
+
+    # Initializing Kerberos ticket
+    if [[ ! -z "$MENAS_AUTH_KEYTAB" ]]; then
+      # Get principle stored in the keyfile (Thanks @Zejnilovic)
+      PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9]*?(?=@)" | head -1`
+      # Alternative way, might be less reliable
+      # PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1`
+      if [[ ! -z "$PR" ]]; then
+        # Initialize a ticket
+        kinit -k -t "$MENAS_AUTH_KEYTAB" "$PR"
+        klist 2>&1 | tee -a "$TMP_PATH_NAME"
+      else
+        echoerr "WARNING!"
+        echoerr "Unable to determine principle from the keytab file $MENAS_AUTH_KEYTAB."
+        echoerr "Please make sure Kerberos ticket is initialized by running 'kinit' manually."
+        sleep 10
+      fi
+    fi
+
+    # Log the log location
+    echo "$CMD_LINE" >> "$TMP_PATH_NAME"
+    echo "The log will be saved to $TMP_PATH_NAME"
+
+    # Run the job
+    bash -c "$CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
+
+    # Report the log location
+    echo
+    echo "Job has finished. The logs are saved to $TMP_PATH_NAME"
+  else
+    bash -c "$CMD_LINE"
+  fi
 fi

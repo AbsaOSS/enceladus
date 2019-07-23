@@ -13,8 +13,24 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.migrations.exceptions
+package za.co.absa.enceladus.migrations.framework.migration
 
-class BackupException(message:String, cause: Throwable = null) extends Exception(message, cause) {
+case class Index(collection: String, key: Seq[IndexField], unique: Boolean = false)
 
+case class IndexField(field: String, sort: Sort) {
+
+  def toPair: (String, Int) = field -> sort.order
+
+  override def toString: String = s"($field: $sort)"
+
+}
+
+sealed abstract class Sort(val order: Int)
+
+case object ASC extends Sort(1) {
+  override def toString: String = "ASC"
+}
+
+case object DESC extends Sort(-1) {
+  override def toString: String = "DESC"
 }

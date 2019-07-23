@@ -131,21 +131,24 @@ class ConformanceRuleDialog {
 
   selectMappingTable(sMappingTableId) {
     this.mappingTableService
-      .getAllVersions(sMappingTableId, sap.ui.getCore().byId("mappingTableVersionSelect"), this.model, "/newRule/mappingTableVersion")
-      .then(() => this.selectMappingTableVersion());
+      .getAllVersions(sMappingTableId, sap.ui.getCore().byId("mappingTableVersionSelect"))
+      .then(data => {
+        const latestVersion = data[data.length - 1].version;
+        this.model.setProperty("/newRule/mappingTableVersion", latestVersion);
+        this.selectMappingTableVersion(sMappingTableId, latestVersion)
+      });
   }
 
   onMTVersionSelect(oEv) {
     this.resetTargetAttribute();
     this.resetJoinConditions();
 
-    this.selectMappingTableVersion();
-  }
-
-  selectMappingTableVersion() {
     let mappingTableId = this.model.getProperty("/newRule/mappingTable");
     let mappingTableVersion = this.model.getProperty("/newRule/mappingTableVersion");
+    this.selectMappingTableVersion(mappingTableId, mappingTableVersion);
+  }
 
+  selectMappingTableVersion(mappingTableId, mappingTableVersion) {
     new MappingTableRestDAO().getByNameAndVersionSync(mappingTableId, mappingTableVersion).then(mappingTable => {
       const schemaRestDAO = new SchemaRestDAO();
       schemaRestDAO.getByNameAndVersionSync(mappingTable.schemaName, mappingTable.schemaVersion).then(mappingTableSchema => {
@@ -266,7 +269,8 @@ class ConformanceRuleDialog {
         }
         newRule.newJoinConditions = aNewJoinConditions;
       }
-      this.selectMappingTable(newRule.mappingTable)
+      this.mappingTableService.getAllVersions(newRule.mappingTable, sap.ui.getCore().byId("mappingTableVersionSelect"));
+      this.selectMappingTableVersion(newRule.mappingTable, newRule.mappingTableVersion);
     }
 
     if (!newRule.isEdit && newRule.order === undefined) {

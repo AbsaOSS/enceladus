@@ -26,6 +26,18 @@ html, body {
   min-width: 40rem !important;
 }
 
+.minW30rem {
+  min-width: 30rem !important;
+}
+
+.maxH90pc {
+  max-height: 90% !important;
+}
+
+.hAuto {
+  height: auto !important;
+}
+
 .mt10 {
   margin-top: 10px;
 }

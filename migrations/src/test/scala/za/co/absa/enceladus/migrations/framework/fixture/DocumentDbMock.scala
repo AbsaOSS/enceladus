@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.migrations.framework.fixture
 
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
+import za.co.absa.enceladus.migrations.framework.migration.IndexField
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -84,14 +85,14 @@ class DocumentDbMock extends DocumentDb {
     actionsExecuted += s"clone($collectionName,$newCollectionName)"
   }
 
-  override def createIndex(collectionName: String, fieldsList: Seq[String]): Unit = {
+  override def createIndex(collectionName: String, fieldsList: Seq[IndexField], unique: Boolean = false): Unit = {
     if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }
-    actionsExecuted += s"createIndex($collectionName,List(${fieldsList.mkString(",")}))"
+    actionsExecuted += s"createIndex($collectionName,List(${fieldsList.mkString(",")}),$unique)"
   }
 
-  override def dropIndex(collectionName: String, fieldsList: Seq[String]): Unit = {
+  override def dropIndex(collectionName: String, fieldsList: Seq[IndexField]): Unit = {
     if (!doesCollectionExists(collectionName)) {
       throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
     }

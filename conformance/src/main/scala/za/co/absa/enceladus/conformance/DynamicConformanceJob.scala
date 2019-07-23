@@ -46,6 +46,7 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 object DynamicConformanceJob {
 
   private val infoDateColumn = "enceladus_info_date"
+  private val infoDateColumnString = s"${infoDateColumn}_string"
   private val reportDateFormat = "yyyy-MM-dd"
   private val infoVersionColumn = "enceladus_info_version"
 
@@ -192,6 +193,7 @@ object DynamicConformanceJob {
                            (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
     val withPartCols = result
       .withColumn(infoDateColumn, to_date(lit(cmd.reportDate), reportDateFormat))
+      .withColumn(infoDateColumnString, lit(cmd.reportDate))
       .withColumn(infoVersionColumn, lit(reportVersion))
 
     val recordCount = result.lastCheckpointRowCount match {

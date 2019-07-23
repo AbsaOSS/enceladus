@@ -23,7 +23,8 @@ var GenericService = new function () {
   
   this.getUserInfo = function () {
     let fnSuccess = (oInfo) => {
-      model.setProperty("/userInfo", oInfo)
+      model.setProperty("/userInfo", oInfo);
+      model.setProperty("/menasVersion", oInfo.menasVersion);
     };
 
     $.ajax("api/user/info", {
