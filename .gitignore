@@ -1,0 +1,18 @@
+# Jekyll auto
+_site
+.sass-cache
+.jekyll-metadata
+
+# eclipse conf file
+.settings
+.classpath
+.project
+.manager
+.scala_dependencies
+
+# idea
+.idea
+*.iml
+
+# vs code
+.vscode
