@@ -35,9 +35,12 @@ case class CmdConfig(datasetName: String = "",
     reportVersion: Option[Int] = None,
     rawFormat: String = "xml",
     menasCredentials: Option[Either[MenasCredentials, CmdConfig.KeytabLocation]] = None,
+    charset: Option[String] = None,
     rowTag: Option[String] = None,
     csvDelimiter: Option[String] = None,
     csvHeader: Option[Boolean] = Some(false),
+    csvQuote: Option[String] = None,
+    csvEscape: Option[String] = None,
     cobolOptions: Option[CobolOptions] = None,
     fixedWidthTrimValues: Option[Boolean] = Some(false),
     performanceMetricsFile: Option[String] = None,
@@ -119,6 +122,16 @@ object CmdConfig {
       config.copy(rawFormat = value)
     }).text("format of the raw data (csv, xml, parquet,fixed-width, etc.)")
 
+    opt[String]("charset").optional().action((value, config) =>
+      config.copy(charset = Some(value))).text("use the specific charset (default is UTF-8)")
+      .validate(value =>
+        if (rawFormat.isDefined &&
+          (rawFormat.get.equalsIgnoreCase("xml") ||
+          rawFormat.get.equalsIgnoreCase("csv")))
+          success
+        else
+          failure("The --charset option is supported only for CSV and XML"))
+
     opt[String]("row-tag").optional().action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")
       .validate(value =>
@@ -134,6 +147,25 @@ object CmdConfig {
           success
         else
           failure("The --delimiter option is supported only for CSV raw data format"))
+
+    opt[String]("csv-quote").optional().action((value, config) =>
+      config.copy(csvQuote = Some(value)))
+      .text("use the specific quote character for creating CSV fields that may contain delimiter character(s) (default is '\"')")
+      .validate(value =>
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
+          success
+        else
+          failure("The --csv-quote option is supported only for CSV raw data format"))
+
+    opt[String]("csv-escape").optional().action((value, config) =>
+      config.copy(csvEscape = Some(value)))
+      .text("use the specific escape character for CSV fields (default is '\\')")
+      .validate(value =>
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
+          success
+        else
+          failure("The --csv-escape option is supported only for CSV raw data format"))
+
     // no need for validation for boolean since scopt itself will do
     opt[Boolean]("header").optional().action((value, config) =>
       config.copy(csvHeader = Some(value))).text("use the header option to consider CSV header")
@@ -142,6 +174,7 @@ object CmdConfig {
           success
         else
           failure("The --header option is supported only for CSV "))
+
     opt[Boolean]("trimValues").optional().action((value, config) =>
       config.copy(fixedWidthTrimValues = Some(value))).text("use --trimValues option to trim values in  fixed width file")
       .validate(value =>
