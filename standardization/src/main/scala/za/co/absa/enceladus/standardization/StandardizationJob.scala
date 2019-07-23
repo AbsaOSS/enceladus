@@ -46,6 +46,8 @@ import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 
+import scala.collection.immutable.HashMap
+
 object StandardizationJob {
 
   private val log: Logger = LogManager.getLogger(this.getClass)
@@ -128,45 +130,85 @@ object StandardizationJob {
     spark
   }
 
-  private def readerFormatSpecific(dfReader: DataFrameReader, cmd: CmdConfig, dataset: Dataset): DataFrameReader = {
+  def getFormatSpecificReader(dfReader: DataFrameReader, cmd: CmdConfig, dataset: Dataset): DataFrameReader = {
     // applying format specific options
-    val dfReaderWithOptions = {
-      val dfr1 = if (cmd.rowTag.isDefined) dfReader.option("rowTag", cmd.rowTag.get) else dfReader
-      val dfr2 = if (cmd.csvDelimiter.isDefined) dfr1.option("delimiter", cmd.csvDelimiter.get) else dfr1
-      val dfr3 = if (cmd.csvHeader.isDefined) dfr2.option("header", cmd.csvHeader.get) else dfr2
-      val dfr4 = if (cmd.rawFormat.equalsIgnoreCase("cobol")) applyCobolOptions(dfr3, cmd, dataset) else dfr3
-      dfr4
-    }
-    if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
-      val dfWithFixedWithOptions = if (cmd.fixedWidthTrimValues.get) {
-        dfReaderWithOptions.option("trimValues", "true")
-      } else {
-        dfReaderWithOptions
+    val options = getCobolOptions(cmd, dataset) ++
+      getGenericOptions(cmd) ++
+      getXmlOptions(cmd) ++
+      getCsvOptions(cmd) ++
+      getFixedWidthOptions(cmd)
+
+    // Applying all the options
+    options.foldLeft(dfReader) { (df, optionPair) =>
+      optionPair match {
+        case (key, Some(value)) =>
+          value match {
+            case s: String => df.option(key, s)
+            case b: Boolean => df.option(key, b)
+            case l: Long => df.option(key, l)
+            case d: Double => df.option(key, d)
+          }
+        case (_, None) => df
       }
-      dfWithFixedWithOptions
-    } else {
-      dfReaderWithOptions
     }
   }
 
-  private def applyCobolOptions(dfReader: DataFrameReader,
-                                cmd: CmdConfig,
-                                dataset: Dataset): DataFrameReader = {
-    val isXcom = cmd.cobolOptions.exists(_.isXcom)
-    val copybook = cmd.cobolOptions.map(_.copybook).getOrElse("")
+  private def getGenericOptions(cmd: CmdConfig): HashMap[String,Option[Any]] = {
+    HashMap("charset" -> cmd.charset)
+  }
 
-    val reader = dfReader
-      .option("is_xcom", isXcom)
-      .option("schema_retention_policy", "collapse_root")
+  private def getXmlOptions(cmd: CmdConfig): HashMap[String,Option[Any]] = {
+    if (cmd.rawFormat.equalsIgnoreCase("xml")) {
+      HashMap("rowtag" -> cmd.rowTag)
+    } else {
+      HashMap()
+    }
+  }
 
+  private def getCsvOptions(cmd: CmdConfig): HashMap[String,Option[Any]] = {
+    if (cmd.rawFormat.equalsIgnoreCase("csv")) {
+      HashMap(
+        "delimiter" -> cmd.csvDelimiter,
+        "header" -> cmd.csvHeader,
+        "quote" -> cmd.csvQuote,
+        "escape" -> cmd.csvEscape
+      )
+    } else {
+      HashMap()
+    }
+  }
+
+  private def getFixedWidthOptions(cmd: CmdConfig): HashMap[String,Option[Any]] = {
+    if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
+      HashMap("trimValues" -> cmd.fixedWidthTrimValues)
+    } else {
+      HashMap()
+    }
+  }
+
+  private def getCobolOptions(cmd: CmdConfig, dataset: Dataset): HashMap[String,Option[Any]] = {
+    cmd.cobolOptions match {
+      case Some(opts) =>
+        HashMap(
+        getCopybookOption(opts, dataset),
+          "is_xcom" -> Option(opts.isXcom),
+          "schema_retention_policy" -> Some("collapse_root")
+        )
+      case None =>
+        HashMap()
+    }
+  }
+
+  private def getCopybookOption(opts: CobolOptions, dataset: Dataset): (String, Option[String]) = {
+    val copybook = opts.copybook
     if (copybook.isEmpty) {
       log.info("Copybook location is not provided via command line - fetching the copybook attached to the schema...")
       val copybookContents = EnceladusRestDAO.getSchemaAttachment(dataset.schemaName, dataset.schemaVersion)
       log.info(s"Applying the following copybook:\n$copybookContents")
-      reader.option("copybook_contents", copybookContents)
+      ("copybook_contents", Option(copybookContents))
     } else {
       log.info(s"Use copybook at $copybook")
-      reader.option("copybook", copybook)
+      ("copybook", Option(copybook))
     }
   }
 
@@ -176,7 +218,7 @@ object StandardizationJob {
                                dataset: Dataset)
                               (implicit spark: SparkSession,
                                fsUtils: FileSystemVersionUtils): DataFrame = {
-    val dfReaderConfigured = readerFormatSpecific(spark.read.format(cmd.rawFormat), cmd, dataset)
+    val dfReaderConfigured = getFormatSpecificReader(spark.read.format(cmd.rawFormat), cmd, dataset)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
       dfReaderConfigured.schema(inputSchema)
