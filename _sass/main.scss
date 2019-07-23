@@ -1,0 +1,39 @@
+html, body {
+  height: 100%;
+}
+
+header {
+  padding-bottom: 1rem;
+}
+
+/* Set black background color, white text and some padding */
+footer {
+  position: relative;
+  background-color: #555;
+  color: white;
+  padding: 15px;
+}
+
+.bordered-header {
+  border-bottom-style: bottom;
+  border-bottom :2px solid rgb(182, 1, 36);
+}
+
+.nav {
+  padding-bottom: 1rem
+}
+
+.nav-pills {
+  .nav-link {
+    color: rgb(182, 1, 36)!important;
+  }
+
+  .nav-link.active {
+    color: white!important;
+    background-color: rgb(182, 1, 36)!important;
+  }
+}
+
+i {
+  color: rgb(182, 1, 36)!important;
+}
