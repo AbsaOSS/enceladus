@@ -276,7 +276,7 @@ object StandardizationJob {
     performance.finishMeasurement(stdDirSize, recordCount)
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     if (cmd.csvDelimiter.isDefined) {
-      cmd.csvDelimiter.foreach(deLimiter => Atum.setAdditionalInfo("csv_delimiter" -> deLimiter))
+      cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
     }
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", path, stdPath,
       EnceladusRestDAO.userName)
