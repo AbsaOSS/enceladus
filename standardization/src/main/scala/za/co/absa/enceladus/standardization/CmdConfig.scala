@@ -127,10 +127,11 @@ object CmdConfig {
       .validate(value =>
         if (rawFormat.isDefined &&
           (rawFormat.get.equalsIgnoreCase("xml") ||
-          rawFormat.get.equalsIgnoreCase("csv")))
+          rawFormat.get.equalsIgnoreCase("csv") ||
+          rawFormat.get.equalsIgnoreCase("json")))
           success
         else
-          failure("The --charset option is supported only for CSV and XML"))
+          failure("The --charset option is supported only for CSV, JSON and XML"))
 
     opt[String]("row-tag").optional().action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")

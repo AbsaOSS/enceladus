@@ -122,7 +122,7 @@ class StandardizationCsvSuite extends FunSuite with SparkTestBase with CsvSpecia
 
   test("Test standardizing a CSV file if a quote character is not specified") {
     // This is a case where correct encoding and delimiter are specified.
-    // But one fields might contain an opening double quote character without a closing one.
+    // But one field contains an opening double quote character without a closing one.
     val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
       "--report-version 1 --raw-format csv --header false " +
       "--charset ISO-8859-1 --delimiter ¡").split(" ")
