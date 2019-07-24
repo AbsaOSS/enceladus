@@ -128,7 +128,7 @@ object DateTimePattern {
 
     val (millisecondsPosition, microsecondsPosition, nanosecondsPosition) = analyzeSecondFractionsPositions(pattern)
     override val secondFractionsSections: Seq[Section] = Section.mergeSections(Seq(millisecondsPosition, microsecondsPosition, nanosecondsPosition).flatten)
-    override val patternWithoutSecondFractions: String = Section.removeMultiple(pattern, secondFractionsSections)
+    override val patternWithoutSecondFractions: String = Section.removeMultipleFrom(pattern, secondFractionsSections)
 
     private def scanForPlaceholder(withinString: String, placeHolder: Char): Option[Section] = {
       val start = withinString.findFirstUnquoted(Set(placeHolder), Set('''))

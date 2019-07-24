@@ -22,16 +22,16 @@ import org.scalatest.FunSuite
 class SectionSuite extends FunSuite {
 
   private def check(section: Section, fullString: String, remainder: String, extracted: String): Unit = {
-    assert(section.remove(fullString) == remainder)
-    assert(section.extract(fullString) == extracted)
-    assert(section.inject(remainder, extracted) == fullString)
+    assert(section.removeFrom(fullString) == remainder)
+    assert(section.extractFrom(fullString) == extracted)
+    assert(section.injectInto(remainder, extracted) == fullString)
   }
 
   def circularCheck(start: Integer, length: Int, string: String): Unit = {
     val section = Section(start, length)
-    val removeResult = section.remove(string)
-    val extractResult = section.extract(string)
-    val injectResult = section.inject(removeResult, extractResult)
+    val removeResult = section.removeFrom(string)
+    val extractResult = section.extractFrom(string)
+    val injectResult = section.injectInto(removeResult, extractResult)
     assert(injectResult == string)
   }
 
@@ -39,7 +39,7 @@ class SectionSuite extends FunSuite {
     "The length of the string to inject (%d) doesn't match Section(%d, %d) for string of length %d."
 
 
-  test("Negative length = exception") {
+  test("Negative length causes exception") {
     val value = -1
     val message = s"'length; cannot be negative, $value given"
     val caught = intercept[InvalidParameterException] {
@@ -49,7 +49,7 @@ class SectionSuite extends FunSuite {
     assert(caught.getMessage == message)
   }
 
-  test("Overflow exception") {
+  test("Section end would overflow integer causes exception") {
     val value = -1
     val message = s"start and length combination are grater then ${Int.MaxValue}"
     val caught = intercept[IndexOutOfBoundsException] {
@@ -88,7 +88,7 @@ class SectionSuite extends FunSuite {
   }
 
   //toSubstringParameters
-  test("toSubstringParameters: standard positive") {
+  test("toSubstringParameters: simple case with positive value of Start") {
     val start = 3
     val length = 5
     val after = 8
@@ -101,7 +101,7 @@ class SectionSuite extends FunSuite {
     assert(result2 == (0, 0))
   }
 
-  test("toSubstringParameters: negative within bounds") {
+  test("toSubstringParameters: with negative value of Start, within bounds of the string") {
     val start = -6
     val length = 3
 
@@ -111,7 +111,7 @@ class SectionSuite extends FunSuite {
     assert(result == (5, 8))
   }
 
-  test("toSubstringParameters: negative on short string") {
+  test("toSubstringParameters: with negative value of Start, on a too short string") {
     val start = -5
     val length = 3
 
@@ -122,7 +122,7 @@ class SectionSuite extends FunSuite {
   }
 
   //extract, remove, inject
-  test("extract, remove, inject: positive within") {
+  test("extractFrom, removeFrom, injectInto: with positive value of Start within the input string") {
     val section = Section(2,4)
     val fullString = "abcdefghi"
     val remainder = "abghi"
@@ -130,7 +130,7 @@ class SectionSuite extends FunSuite {
     check(section, fullString, remainder, extracted)
   }
 
-  test("extract, remove, inject: positive till the end") {
+  test("extractFrom, removeFrom, injectInto: with positive value of Start till the end of the input string") {
     val section = Section(4,2)
     val fullString = "abcdef"
     val remainder = "abcd"
@@ -138,7 +138,7 @@ class SectionSuite extends FunSuite {
     check(section, fullString, remainder, extracted)
   }
 
-  test("extract, remove, inject: positive over the end") {
+  test("extractFrom, removeFrom, injectInto: with positive value of Start, extending over the end of the input string") {
     val section = Section(4,4)
     val fullString = "abcdef"
     val remainder = "abcd"
@@ -146,7 +146,7 @@ class SectionSuite extends FunSuite {
     check(section, fullString, remainder, extracted)
   }
 
-  test("extract, remove, inject: positive beyond") {
+  test("extractFrom, removeFrom, injectInto: with positive value of Start, Start beyond the end of input string") {
     val section = Section(10,7)
     val fullString = "abcdef"
     val remainder = "abcdef"
@@ -154,7 +154,7 @@ class SectionSuite extends FunSuite {
     check(section, fullString, remainder, extracted)
   }
 
-  test("extract, remove, inject: negative within") {
+  test("extractFrom, removeFrom, injectInto: with negative value of Start, within the input string") {
     val section = Section (-4,2)
     val fullString = "abcdef"
     val remainder = "abef"
@@ -162,7 +162,7 @@ class SectionSuite extends FunSuite {
     check(section, fullString, remainder, extracted)
   }
 
-  test("extract, remove, inject: negative before begin") {
+  test("extractFrom, removeFrom, injectInto: with negative value of Start, before beginning of the input string") {
     val section = Section (-8,5)
     val fullString = "abcdef"
     val remainder = "def"
@@ -170,7 +170,7 @@ class SectionSuite extends FunSuite {
     check(section, fullString, remainder, extracted)
   }
 
-  test("extract, remove, inject: negative before begin, far") {
+  test("extractFrom, removeFrom, injectInto: with negative value of Start, far before beginning of the input string") {
     val section = Section (-10,3)
     val fullString = "abcdef"
     val remainder = "abcdef"
@@ -178,7 +178,7 @@ class SectionSuite extends FunSuite {
     check(section, fullString, remainder, extracted)
   }
 
-  test("extract, remove, inject: negative over end") {
+  test("extractFrom, removeFrom, injectInto: with negative value of Start, extending over end of the input string") {
     val section = Section (-2,4)
     val fullString = "abcdef"
     val remainder = "abcd"
@@ -186,7 +186,7 @@ class SectionSuite extends FunSuite {
     check(section, fullString, remainder, extracted)
   }
 
-  test("extract, remove, inject: zero length") {
+  test("extractFrom, removeFrom, injectInto: zero length sections") {
     val section1 = Section (2,0)
     val section2 = Section (0,0)
     val section3 = Section (-2,0)
@@ -202,7 +202,7 @@ class SectionSuite extends FunSuite {
     check(section5, fullString, remainder, extracted)
   }
 
-  test("extract, remove, inject: whole spectrum automated, length 0") {
+  test("extractFrom, removeFrom, injectInto (automated): whole spectrum of Start, length 0") {
     val playString = "abcdefghij"
     val length = 0
     for (i <- -15 to 15) {
@@ -210,7 +210,7 @@ class SectionSuite extends FunSuite {
     }
   }
 
-  test("extract, remove, inject: whole spectrum automated, length 3") {
+  test("extractFrom, removeFrom, injectInto (automated): whole spectrum of STart, length 3") {
     val playString = "abcdefghij"
     val length = 3
     for (i <- -15 to 15) {
@@ -218,7 +218,7 @@ class SectionSuite extends FunSuite {
     }
   }
   //inject
-  test("inject(into, what): too long") {
+  test("injectInto: injected string too long compared to Section") {
     val what = "what"
     val into = "This is long enough"
     val sec1 = Section(0, 3)
@@ -226,147 +226,147 @@ class SectionSuite extends FunSuite {
     val sec3 =  Section(-4, 3)
 
     val caught1 = intercept[InvalidParameterException] {
-      sec1.inject(into, what)
+      sec1.injectInto(into, what)
     }
     assert(caught1.getMessage == invalidParameterExceptionMessageTemplate.format(4, 0, 3, 19))
     val caught2 = intercept[InvalidParameterException] {
-      sec2.inject(into, what)
+      sec2.injectInto(into, what)
     }
     assert(caught2.getMessage == invalidParameterExceptionMessageTemplate.format(4, 2, 3, 19))
     val caught3 = intercept[InvalidParameterException] {
-      sec3.inject(into, what)
+      sec3.injectInto(into, what)
     }
     assert(caught3.getMessage == invalidParameterExceptionMessageTemplate.format(4, -4, 3, 19))
   }
 
-  test("inject(into, what): too short") {
+  test("injectInto: injected string too short compared to Section length") {
     val into = "abcdef"
 
     //within but short
     val section1 = Section(3, 3)
     val caught1 = intercept[InvalidParameterException] {
-      section1.inject(into, "xx")
+      section1.injectInto(into, "xx")
     }
     assert(caught1.getMessage == invalidParameterExceptionMessageTemplate.format(2, 3, 3, 6))
     //within from behind, but short
     val section2 = Section(-5, 3)
     val caught2 = intercept[InvalidParameterException] {
-      section2.inject(into, "xx")
+      section2.injectInto(into, "xx")
     }
     assert(caught2.getMessage == invalidParameterExceptionMessageTemplate.format(2, -5, 3, 6))
     //too far behind
     val section3 = Section(10, 3)
     val caught3 = intercept[InvalidParameterException] {
-      section3.inject(into, "xx")
+      section3.injectInto(into, "xx")
     }
     assert(caught3.getMessage == invalidParameterExceptionMessageTemplate.format(2, 10, 3, 6))
     //too far ahead
     val section4 = Section(-7, 3)
     val caught4 = intercept[InvalidParameterException] {
-      section4.inject(into, "xx")
+      section4.injectInto(into, "xx")
     }
     assert(caught4.getMessage == invalidParameterExceptionMessageTemplate.format(2, -7, 3, 6))
   }
 
-  test("inject: empty string") {
+  test("injectInto: empty string") {
     val into = "abcdef"
     val what = ""
     // ok for section length 0
-    assert(Section(3, 0).inject(into, what) == into)
+    assert(Section(3, 0).injectInto(into, what) == into)
     // ok for section behind
-    assert(Section(6, 3).inject(into, what) == into)
+    assert(Section(6, 3).injectInto(into, what) == into)
     // ok for section far enough ahead
-    assert(Section(-8, 2).inject(into, what) == into)
+    assert(Section(-8, 2).injectInto(into, what) == into)
     // fails otherwise
     val section1 = Section(2, 2)
     val caught1 = intercept[InvalidParameterException] {
-      section1.inject(into, what)
+      section1.injectInto(into, what)
     }
     assert(caught1.getMessage == invalidParameterExceptionMessageTemplate.format(0, 2, 2, 6))
   }
 
-  test("inject: Special fail on seemingly correct input, but not if considered as reverse to remove and except") {
+  test("injectInto: Special fail on seemingly correct input, but not if considered as reverse to remove and except") {
     val into = "abcdef"
     val what = "xxx"
     val section = Section(-2, 3)
     val caught = intercept[InvalidParameterException] {
-      section.inject(into, what)
+      section.injectInto(into, what)
     }
     assert(caught.getMessage == invalidParameterExceptionMessageTemplate.format(3, -2, 3, 6))
   }
 
   //distance
-  test("distance: negative and positive start") {
+  test("distance: two Sections with one negative and other positive value of Start") {
     val a = Section(-1, 12)
     val b = Section(3, 2)
     assert((a distance b) == (b distance a))
     assert((a distance b).isEmpty)
   }
 
-  test("distance: positive same") {
+  test("distance: two Sections with same positive values of Start") {
     val a = Section(5, 3)
     val b = Section(5, 3)
     assert((a distance b) == (b distance a))
     assert((a distance b).contains(-3))
   }
 
-  test("distance: positive standard") {
+  test("distance: two Sections with positive value of Start, gap between them") {
     val a = Section(3, 2)
     val b = Section(6, 2)
     assert((a distance b) == (b distance a))
     assert((a distance b).contains(1))
   }
 
-  test("distance: positive touching") {
+  test("distance: two Sections with positive value of Start, adjacent to each other") {
     val a = Section(3, 2)
     val b = Section(5, 2)
     assert((a distance b) == (b distance a))
     assert((a distance b).contains(0))
   }
 
-  test("distance: positive overlapping") {
+  test("distance: two Sections with positive value of Start, overlapping") {
     val a = Section(3, 4)
     val b = Section(5, 3)
     assert((a distance b) == (b distance a))
     assert((a distance b).contains(-2))
   }
 
-  test("distance: positive one within other") {
+  test("distance: two Sections with positive value of Start, one within other") {
     val a = Section(3, 3)
     val b = Section(4, 1)
     assert((a distance b) == (b distance a))
     assert((a distance b).contains(-2))
   }
 
-  test("distance: negative same") {
+  test("distance: two Sections with same negative values of Start") {
     val a = Section(-5, 3)
     val b = Section(-5, 3)
     assert((a distance b) == (b distance a))
     assert((a distance b).contains(-3))
   }
 
-  test("distance: negative standard") {
+  test("distance: two Sections with negative value of Start, gap between them") {
     val a = Section(-3, 2)
     val b = Section(-6, 2)
     assert((a distance b) == (b distance a))
     assert((a distance b).contains(1))
   }
 
-  test("distance: negative touching") {
+  test("distance: two Sections with negative value of Start, adjacent to each other") {
     val a = Section(-3, 2)
     val b = Section(-5, 2)
     assert((a distance b) == (b distance a))
     assert((a distance b).contains(0))
   }
 
-  test("distance: negative overlapping") {
+  test("distance: two Sections with negative value of Start, overlapping") {
     val a = Section(-3, 4)
     val b = Section(-5, 3)
     assert((a distance b) == (b distance a))
     assert((a distance b).contains(-1))
   }
 
-  test("distance: negative one within other") {
+  test("distance: two Sections with negative value of Start, one within other") {
     val a = Section(-5, 3)
     val b = Section(-4, 1)
     assert((a distance b) == (b distance a))
@@ -374,49 +374,49 @@ class SectionSuite extends FunSuite {
   }
 
   //overlaps
-  test("overlaps: no overlap - positive") {
+  test("overlaps: no overlap - with positive values of Start") {
     val a = Section(1, 2)
     val b = Section(4, 2)
     assert((a overlaps  b) == (b overlaps a))
     assert(!(a overlaps  b))
   }
 
-  test("overlaps: touching - positive") {
+  test("overlaps: touching - with positive values of Start") {
     val a = Section(1, 2)
     val b = Section(3, 2)
     assert((a overlaps  b) == (b overlaps a))
     assert(!(a overlaps  b))
   }
 
-  test("overlaps: overlap - positive") {
+  test("overlaps: overlap - with positive values of Start") {
     val a = Section(1, 3)
     val b = Section(3, 3)
     assert((a overlaps  b) == (b overlaps a))
     assert(a overlaps  b)
   }
 
-  test("overlaps: no overlap - negative") {
+  test("overlaps: no overlap - with negative values of Start") {
     val a = Section(-3, 2)
     val b = Section(-6, 2)
     assert((a overlaps  b) == (b overlaps a))
     assert(!(a overlaps  b))
   }
 
-  test("overlaps: touching - negative") {
+  test("overlaps: touching - with negative values of Start") {
     val a = Section(-3, 2)
     val b = Section(-6, 3)
     assert((a overlaps  b) == (b overlaps a))
     assert(!(a overlaps  b))
   }
 
-  test("overlaps: overlap - negative") {
+  test("overlaps: overlap - with negative values of Start") {
     val a = Section(-3, 2)
     val b = Section(-6, 4)
     assert((a overlaps  b) == (b overlaps a))
     assert(a overlaps  b)
   }
 
-  test("overlaps: overlap - negative abd positive") {
+  test("overlaps: overlap - one with negative value of Start and one with positive value of Start") {
     val a = Section(-1, 2)
     val b = Section(4, 2)
     assert((a overlaps b) == (b overlaps a))
@@ -424,49 +424,49 @@ class SectionSuite extends FunSuite {
   }
 
   //touches
-  test("touches: no overlap - positive") {
+  test("touches: no overlap - with positive values of Start") {
     val a = Section(1, 2)
     val b = Section(4, 2)
     assert((a touches  b) == (b touches a))
     assert(!(a touches  b))
   }
 
-  test("touches: touching - positive") {
+  test("touches: touching - with positive values of Start") {
     val a = Section(1, 2)
     val b = Section(3, 2)
     assert((a touches  b) == (b touches a))
     assert(a touches  b)
   }
 
-  test("touches: overlap - positive") {
+  test("touches: overlap - with positive values of Start") {
     val a = Section(1, 3)
     val b = Section(3, 3)
     assert((a touches  b) == (b touches a))
     assert(a touches  b)
   }
 
-  test("touches: no overlap - negative") {
+  test("touches: no overlap - with negative values of Start") {
     val a = Section(-3, 2)
     val b = Section(-6, 2)
     assert((a touches  b) == (b touches a))
     assert(!(a touches  b))
   }
 
-  test("touches: touching - negative") {
+  test("touches: touching - with negative values of Start") {
     val a = Section(-3, 2)
     val b = Section(-6, 3)
     assert((a touches  b) == (b touches a))
     assert(a touches  b)
   }
 
-  test("touches: overlap - negative") {
+  test("touches: overlap - with negative values of Start") {
     val a = Section(-3, 2)
     val b = Section(-6, 4)
     assert((a touches  b) == (b touches a))
     assert(a touches  b)
   }
 
-  test("touches: overlap - negative abd positive") {
+  test("touches: overlap - one with negative value of Start and one with positive value of Start") {
     val a = Section(-1, 2)
     val b = Section(4, 2)
     assert((a touches b) == (b touches a))
@@ -486,25 +486,25 @@ class SectionSuite extends FunSuite {
     assert(section == expected)
   }
 
-  test("ofSameChars: more characters, fromIndex start within") {
+  test("ofSameChars: more characters, fromIndex start within the sequence of same chars") {
     val section = Section.ofSameChars("aabbbbbccccddddd", 4)
     val expected = Section(4, 3)
     assert(section == expected)
   }
 
-  test("ofSameChars: out of range") {
+  test("ofSameChars: start  out of input string range") {
     val section = Section.ofSameChars("xxxxyyyzz", 20)
     val expected = Section(20, 0)
     assert(section == expected)
   }
 
-  test("ofSameChars: negative fromIndex") {
+  test("ofSameChars: with negative value of Start") {
     val section = Section.ofSameChars("xxxxyyyzz", -5)
     val expected = Section(-5, 3)
     assert(section == expected)
   }
 
-  test("ofSameChars: negative fromIndex far ahead") {
+  test("ofSameChars: with negative value of Start, 'in front' of input string") {
     val section = Section.ofSameChars("xxxxyyyzz", -15)
     val expected = Section(-15, 0)
     assert(section == expected)
@@ -513,142 +513,142 @@ class SectionSuite extends FunSuite {
   //removeMultiple
   test("removeMultiple: two Sections") {
     val sections = Seq(Section(2, 2), Section(6, 3))
-    val result = Section.removeMultiple("abcdefghijkl", sections)
+    val result = Section.removeMultipleFrom("abcdefghijkl", sections)
     val expected = "abefjkl"
     assert(result == expected)
   }
 
   test("removeMultiple: three Sections, unordered") {
     val sections = Seq(Section(6, 3), Section(2, 2), Section(11, 2))
-    val result = Section.removeMultiple("abcdefghijklmnop", sections)
+    val result = Section.removeMultipleFrom("abcdefghijklmnop", sections)
     val expected = "abefjknop"
     assert(result == expected)
   }
 
-  test("removeMultiple: adjacent") {
+  test("removeMultiple: adjacent Sections") {
     val sections = Seq(Section(2, 2), Section(11, 2), Section(6, 5))
-    val result = Section.removeMultiple("abcdefghijklmnop", sections)
+    val result = Section.removeMultipleFrom("abcdefghijklmnop", sections)
     val expected = "abefnop"
     assert(result == expected)
   }
 
-  test("removeMultiple: overlapping") {
+  test("removeMultiple: overlapping Sections") {
     val sections = Seq(Section(2, 2), Section(10, 3), Section(6, 5))
-    val result = Section.removeMultiple("abcdefghijklmnop", sections)
+    val result = Section.removeMultipleFrom("abcdefghijklmnop", sections)
     val expected = "abefnop"
     assert(result == expected)
   }
 
-  test("removeMultiple: negative") {
+  test("removeMultiple: one with negative value of Start, other positive") {
     val sections = Seq(Section(1, 1), Section(-2, 1))
-    val result = Section.removeMultiple("abcdefghijklmnop", sections)
+    val result = Section.removeMultipleFrom("abcdefghijklmnop", sections)
     val expected = "acdefghijklmnp"
     assert(result == expected)
   }
 
-  test("removeMultiple: negative overlapping") {
+  test("removeMultiple: two Sections with negative value of Start, overlapping") {
     val sections = Seq(Section(-3, 3), Section(-5, 3))
-    val result = Section.removeMultiple("abcdefghijklmnop", sections)
+    val result = Section.removeMultipleFrom("abcdefghijklmnop", sections)
     val expected = "abcdefghijk"
     assert(result == expected)
   }
 
-  test("removeMultiple: running out of bounds ") {
+  test("removeMultiple: two Sections running out of bounds of input string") {
     val sections = Seq(Section(-6, 2), Section(4, 2))
-    val result = Section.removeMultiple("abcde", sections)
+    val result = Section.removeMultipleFrom("abcde", sections)
     val expected = "bcd"
     assert(result == expected)
   }
 
-  test("removeMultiple: totally out of bounds ") {
+  test("removeMultiple: two Sections totally out of bounds of input string") {
     val sections = Seq(Section(-10, 2), Section(10, 2))
-    val result = Section.removeMultiple("abcde", sections)
+    val result = Section.removeMultipleFrom("abcde", sections)
     val expected = "abcde"
     assert(result == expected)
   }
 
   test("removeMultiple: zero length") {
     val sections = Seq(Section(1, 0), Section(-2, 0))
-    val result = Section.removeMultiple("abcdefghijklmnop", sections)
+    val result = Section.removeMultipleFrom("abcdefghijklmnop", sections)
     val expected = "abcdefghijklmnop"
     assert(result == expected)
   }
 
   //mergeSections
-  test("mergeSections: empty") {
+  test("mergeSections: empty sequence of sections") {
     val sections = Seq.empty[Section]
     val result = Section.mergeSections(sections)
     assert(result.isEmpty)
   }
 
-  test("mergeSections: one item") {
+  test("mergeSections: one item in input sequence") {
     val sections = Seq(Section(42, 7))
     val result = Section.mergeSections(sections)
     assert(result == sections)
   }
 
-  test("mergeSections: touching") {
+  test("mergeSections: two pairs of touching sections, ordering checked too") {
     val sections = Seq(
-      Section( 1, 1),
-      Section( 3, 2),
-      Section(-4, 2),
-      Section( 5, 1),
-      Section(-7, 3),
-      Section(-1, 1)
+      Section( 1, 1), //D
+      Section( 3, 2), //B1
+      Section(-4, 2), //A2
+      Section( 5, 1), //B2
+      Section(-7, 3), //A1
+      Section(-1, 1)  //B
     )
     val expected = Seq(
-      Section(-7, 5),
-      Section(-1, 1),
-      Section( 3, 3),
-      Section( 1, 1)
+      Section(-7, 5), //->A
+      Section(-1, 1), //->B
+      Section( 3, 3), //->C
+      Section( 1, 1)  //->D
     )
     val result = Section.mergeSections(sections)
     assert(result == expected)
   }
 
-  test("mergeSections: overlapping") {
-    val sections = Seq(
-      //overlapping
-      Section( 11, 4),
-      Section(-20, 6),
-      Section( 12, 5),
-      Section(-23, 6),
-      Section( -1, 1),
-      Section(  1, 1)
-    )
-
-    val expected = Seq(
-      Section(-23, 9),
-      Section( -1, 1),
-      Section( 11, 6),
-      Section(  1, 1)
-    )
-    val result = Section.mergeSections(sections)
-    assert(result == expected)
-  }
-
-  test("mergeSections: two same") {
+  test("mergeSections: two pairs of overlapping sections, ordering checked too") {
     val sections = Seq(
       //overlapping
-      Section( 7, 5),
-      Section(-7, 5),
-      Section( 7, 5),
-      Section(-7, 5),
-      Section(-1, 1),
-      Section( 1, 1)
+      Section( 11, 4), //B1
+      Section(-20, 6), //A2
+      Section( 12, 5), //B2
+      Section(-23, 6), //A1
+      Section( -1, 1), //B
+      Section(  1, 1)  //D
     )
 
     val expected = Seq(
-      Section(-7, 5),
-      Section(-1, 1),
-      Section( 7, 5),
-      Section( 1, 1)
+      Section(-23, 9), //->A
+      Section( -1, 1), //->B
+      Section( 11, 6), //->C
+      Section(  1, 1)  //->D
     )
     val result = Section.mergeSections(sections)
     assert(result == expected)
   }
 
-  test("mergeSections: one withing other") {
+  test("mergeSections: two pairs of same sections") {
+    val sections = Seq(
+      //overlapping
+      Section( 7, 5), //C
+      Section(-7, 5), //A
+      Section( 7, 5), //C
+      Section(-7, 5), //A
+      Section(-1, 1), //B
+      Section( 1, 1)  //D
+    )
+
+    val expected = Seq(
+      Section(-7, 5), //->A
+      Section(-1, 1), //->B
+      Section( 7, 5), //->C
+      Section( 1, 1)  //->D
+    )
+    val result = Section.mergeSections(sections)
+    assert(result == expected)
+  }
+
+  test("mergeSections: one section withing other") {
     val sections = Seq(
       //overlapping
       Section( 12, 1), // E
@@ -664,35 +664,35 @@ class SectionSuite extends FunSuite {
     )
 
     val expected = Seq(
-      Section(-30, 9), // A
-      Section(-20, 6), // B
-      Section( -1, 1), // C
-      Section( 20, 5), // D
-      Section( 12, 5), // E
-      Section(  1, 1)  // F
+      Section(-30, 9), // ->A
+      Section(-20, 6), // ->B
+      Section( -1, 1), // ->C
+      Section( 20, 5), // ->D
+      Section( 12, 5), // ->E
+      Section(  1, 1)  // ->F
     )
     val result = Section.mergeSections(sections)
     assert(result == expected)
   }
 
-  test("mergeSections: sequence of 3") {
+  test("mergeSections: sequence of 3 sections") {
     val sections = Seq(
       //overlapping
-      Section( 22, 10),
-      Section(-42, 10),
-      Section( 10, 10),
-      Section(-35, 10),
-      Section( 15, 10),
-      Section(-30, 10),
-      Section( -1, 1),
-      Section(  1, 1)
+      Section( 22, 10), //C3
+      Section(-42, 10), //A1
+      Section( 10, 10), //C1
+      Section(-35, 10), //A2
+      Section( 15, 10), //C2
+      Section(-30, 10), //A3
+      Section( -1, 1),  //B
+      Section(  1, 1)   //D
     )
 
     val expected = Seq(
-      Section(-42, 22),
-      Section( -1, 1),
-      Section( 10, 22),
-      Section(  1, 1)
+      Section(-42, 22), //->A
+      Section( -1, 1),  //->B
+      Section( 10, 22), //->C
+      Section(  1, 1)   //->D
     )
     val result = Section.mergeSections(sections)
     assert(result == expected)

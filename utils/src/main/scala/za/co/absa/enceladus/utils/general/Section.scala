@@ -66,117 +66,118 @@ case class Section(start: Int, length: Int) extends Ordered[Section] {
         (start min forString.length, start + length)
       } else {
         val startIndex = forString.length + start
-        if (startIndex >= 0) { //
+        if (startIndex >= 0) {
           (startIndex, startIndex + length)
         } else { // the distance from end is longer than the string itself
-          (0, length + startIndex max 0)
+          (0, Math.max(length + startIndex, 0))
         }
       }
-    (realStart, after min forString.length)
+    (realStart, Math.min(after, forString.length))
   }
 
   /**
     * The substring represented by this Section within the provided string
     * Complementary to `remove`
-    * @param fromString the string to apply the section to
-    * @return           substring defined by this section
+    * @param string the string to apply the section to
+    * @return       substring defined by this section
     */
-  def extract(fromString: String): String = {
-    val (realStart, after) = toSubstringParameters(fromString)
-    fromString.substring(realStart, after)
+  def extractFrom(string: String): String = {
+    val (realStart, after) = toSubstringParameters(string)
+    string.substring(realStart, after)
   }
 
   /**
     * Creates a string that is the remainder if the substring represented by this section is removed from the provided string
     * Complementary to `extract`
-    * @param fromString the string to apply the section to
-    * @return concatenation of the string before and after the Section
+    * @param string the string to apply the section to
+    * @return       concatenation of the string before and after the Section
     */
-  def remove(fromString: String): String = {
-    val (realStart, after) = toSubstringParameters(fromString)
-    fromString.substring(0, realStart) + fromString.substring(after)
+  def removeFrom(string: String): String = {
+    val (realStart, after) = toSubstringParameters(string)
+    string.substring(0, realStart) + string.substring(after)
   }
 
   /**
     * Inverse function for `remove`, inserts the `what` string into the `into` string as defined by the `section`
-    * @param into the string to inject into
-    * @param what the string to inject
-    * @return     the newly created string
+    * @param string the string to inject into
+    * @param what   the string to inject
+    * @return       the newly created string
     */
-  def inject(into: String, what: String): String = {
+  def injectInto(string: String, what: String): String = {
 
     def fail(): String = {
       throw new InvalidParameterException(
-        s"The length of the string to inject (${what.length}) doesn't match Section($start, $length) for string of length ${into.length}."
+        s"The length of the string to inject (${what.length}) doesn't match Section($start, $length) for string of length ${string.length}."
       )
     }
 
     if (what.length > length) {
       fail()
     }
-    if ((what == "") && ((length == 0) || (start > into.length) || (start + into.length + length < 0))) {
+    if ((what == "") && ((length == 0) || (start > string.length) || (start + string.length + length < 0))) {
       // injecting empty string is easy if valid; which is either if the section length = 0, or the index to inject to
       // is beyond the limits of the final string
-      into
+      string
     } else if (start >= 0) {
-      if (start > into.length) {
+      if (start > string.length) {
         // beyond the into string
         fail()
-      } else if (start == into.length) {
+      } else if (start == string.length) {
         // at the end of the into string
-        into + what
+        string + what
       } else if (what.length == length) {
         // injection in the middle (or beginning)
-        into.substring(0, start) + what + into.substring(start)
+        string.substring(0, start) + what + string.substring(start)
       } else {
         // wrong size of injection
         fail()
       }
     } else {
-      val index = into.length + start + what.length
+      val index = string.length + start + what.length
       val whatLengthDeficit = what.length - length
-      val intoLength = into.length
+      val intoLength = string.length
       (index,  whatLengthDeficit) match {
         case (`intoLength`, _) =>
           // at the end of the into string
-          into + what
-        case (x, 0) if (x > 0) && (x < into.length) =>
+          string + what
+        case (x, 0) if (x > 0) && (x < string.length) =>
           // somewhere withing the into string
-          into.substring(0, x) + what + into.substring(x)
+          string.substring(0, x) + what + string.substring(x)
         case (`whatLengthDeficit`, `index`) =>
           // at the beginning of the into string, maybe appropriately shorter if to be place "before" 0 index
-          what + into
+          what + string
         case _ => fail()
       }
     }
   }
 
   /**
-    * Metrics defined on Section
-    * @param that the Section to compute the distance from/to
-    * @return     None - if one Section has a negative start and the other positive or zero
-    *             The end of the smaller section subtracted from the start of the greater one (see comparison), e.g. can be negative
+    * Metrics defined on Section, it equals the number of positions (characters) between two sections
+    * @param secondSection  the Section to compute the distance from/to
+    * @return               None - if one Section has a negative start and the other positive or zero
+    *                       The end of the smaller section subtracted from the start of the greater one (see comparison),
+    *                       can be negative
     */
-  def distance(that: Section): Option[Int] = {
-    def subtractLike(from: Section, what: Section): Int = {
-      from.start - what.start - what.length
+  def distance(secondSection: Section): Option[Int] = {
+    def calculateDistance(first: Section, second: Section) = {
+      second.start - first.start - first.length
     }
 
-    (start >= 0, that.start >= 0) match {
+    (start >= 0, secondSection.start >= 0) match {
       case (false, true) | (true, false) =>
         // two sections of differently signed starts don't have a distance defined
         None
       case (true, true) =>
-        if (this <= that) {
-          Option(subtractLike(that, this))
+        if (this <= secondSection) {
+          Option(calculateDistance(this, secondSection))
         } else {
-          Option(subtractLike(this, that))
+          Option(calculateDistance(secondSection, this))
         }
       case (false, false) =>
-        if (this <= that) {
-          Option(subtractLike(this, that))
+        if (this <= secondSection) {
+          Option(calculateDistance(secondSection, this))
         } else {
-          Option(subtractLike(that, this))
+          Option(calculateDistance(this, secondSection))
         }
     }
   }
@@ -203,47 +204,66 @@ case class Section(start: Int, length: Int) extends Ordered[Section] {
 }
 
 object Section {
+  /**
+    * Alternative constructor to create a section from starting and ending indexes
+    * If start is bigger then end, they will be swapped for the Section creation
+    * @param start  start of the section, inclusive
+    * @param end    end of the section, inclusive
+    * @return       the new Section object
+    */
   def fromIndexes(start: Int, end: Int): Section = {
-    Section(start, end - start + 1)
+    val realStart = Math.min(start, end)
+    val realEnd = Math.max(start, end)
+    Section(realStart, realEnd - start + 1)
   }
 
-  def ofSameChars(fromString: String, fromIndex: Int): Section = {
-    val realFromIndex = if (fromIndex >= 0) {
-      fromIndex
+  /**
+    * Alternative constructor to create a Section based on the repeated character within the provided string
+    * The Section will start per the `start` provided, and the length will be determined by the number of same characters
+    * in row, as the character on the `start` index
+    * E.g. ofSameChars("abbccccdef", 3) -> Section(3, 4)
+    * @param inputString  the string which to scan
+    * @param start        start of the Section, and also the index of the character whose repetition will determine the
+    *                     length of the Section; if negative, index is counted from the end of the string
+    * @return             the new Section object
+    */
+  def ofSameChars(inputString: String, start: Int): Section = {
+    val index = if (start >= 0) {
+      start
     } else {
-      fromString.length + fromIndex
+      inputString.length + start
     }
-    if ((realFromIndex >= fromString.length) || (realFromIndex < 0)) {
-      Section(fromIndex, 0)
+    if ((index >= inputString.length) || (index < 0)) {
+      Section(start, 0)
     } else {
-      val char = fromString(realFromIndex)
-      var res = realFromIndex
-      while ((res < fromString.length) && (fromString(res) == char)) {
+      val char = inputString(index)
+      var res = index
+      while ((res < inputString.length) && (inputString(res) == char)) {
         res += 1
       }
-      Section(fromIndex, res - realFromIndex)
+      Section(start, res - index)
     }
   }
 
   /**
     * Removes sections of the string in a way, that string is considered intact until all removals are executed. In
     * other words the indexes are not shifted.
-    * @param fromString the string to operate upon
-    * @param sections   sections to apply
-    * @return           the string as a result if all the sections would be removed "at once"
+    * @param string   the string to operate upon
+    * @param sections sections to apply
+    * @return         the string as a result if all the sections would be removed "at once"
     */
-  def removeMultiple(fromString: String, sections: Seq[Section]): String = {
+  def removeMultipleFrom(string: String, sections: Seq[Section]): String = {
     if (sections.isEmpty) {
-      fromString
+      string
     } else {
-      val charsPresent = Array.fill(fromString.length)(true)
+      val charsPresent = Array.fill(string.length)(true)
       sections.foreach{section =>
-        val (realStart, after) = section.toSubstringParameters(fromString)
+        val (realStart, after) = section.toSubstringParameters(string)
         for (i <- realStart until after) {
           charsPresent(i) = false
         }
       }
-      val paring: Seq[(Char, Boolean)] = fromString.toSeq.zip(charsPresent)
+      val paring: Seq[(Char, Boolean)] = string.toSeq.zip(charsPresent)
 
       paring.collect{case (c, true) => c}.mkString
     }

@@ -59,9 +59,9 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
       }
 
       val injections: Map[Section, String] = Seq(
-        pattern.millisecondsPosition.map(x => (x, Section(-x.length, x.length).extract(nanoString.substring(0, 3)))),
-        pattern.microsecondsPosition.map(x => (x, Section(-x.length, x.length).extract(nanoString.substring(0, 6)))),
-        pattern.nanosecondsPosition.map(x => (x, Section(-x.length, x.length).extract(nanoString)))
+        pattern.millisecondsPosition.map(x => (x, Section(-x.length, x.length).extractFrom(nanoString.substring(0, 3)))),
+        pattern.microsecondsPosition.map(x => (x, Section(-x.length, x.length).extractFrom(nanoString.substring(0, 6)))),
+        pattern.nanosecondsPosition.map(x => (x, Section(-x.length, x.length).extractFrom(nanoString)))
       ).flatten.toMap
 
       val sections: Seq[Section] = Seq(
@@ -71,7 +71,7 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
       ).flatten.sorted
 
       sections.foldLeft(preliminaryResult) ((result, section) =>
-        section.inject(result, injections(section))
+        section.injectInto(result, injections(section))
       )
       // scalastyle:on magic.number
     } else {
@@ -90,7 +90,7 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
 
   private def extractSeconds(value: String): Long = {
     val valueToParse = if (pattern.containsSecondFractions) {
-      Section.removeMultiple(value, pattern.secondFractionsSections)
+      Section.removeMultipleFrom(value, pattern.secondFractionsSections)
     } else {
       value
     }
@@ -101,9 +101,9 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
 
   private def extractNanoseconds(value: String): Int = {
     var result = 0
-    pattern.millisecondsPosition.foreach(result += _.extract(value).toInt * NanosecondsInMillisecond)
-    pattern.microsecondsPosition.foreach(result += _.extract(value).toInt * NanosecondsInMicrosecond)
-    pattern.nanosecondsPosition.foreach(result += _.extract(value).toInt)
+    pattern.millisecondsPosition.foreach(result += _.extractFrom(value).toInt * NanosecondsInMillisecond)
+    pattern.microsecondsPosition.foreach(result += _.extractFrom(value).toInt * NanosecondsInMicrosecond)
+    pattern.nanosecondsPosition.foreach(result += _.extractFrom(value).toInt)
     result
   }
 }
