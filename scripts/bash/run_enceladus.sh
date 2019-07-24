@@ -32,9 +32,12 @@ DATASET_VERSION=""
 REPORT_DATE=""
 REPORT_VERSION=""
 RAW_FORMAT=""
+CHARSET=""
 ROW_TAG=""
 DELIMITER=""
 HEADER=""
+CSV_QUOTE=""
+CSV_ESCAPE=""
 TRIM_VALUES=""
 MAPPING_TABLE_PATTERN=""
 FOLDER_PREFIX=""
@@ -112,6 +115,10 @@ case $key in
     RAW_FORMAT="$2"
     shift 2 # past argument and value
     ;;
+    --charset)
+    CHARSET="$2"
+    shift 2 # past argument and value
+    ;;
     --row-tag)
     ROW_TAG="$2"
     shift 2 # past argument and value
@@ -122,6 +129,14 @@ case $key in
     ;;
     --header)
     HEADER="$2"
+    shift 2 # past argument and value
+    ;;
+    --csv-quote)
+    CSV_QUOTE="$2"
+    shift 2 # past argument and value
+    ;;
+    --csv-escape)
+    CSV_ESCAPE="$2"
     shift 2 # past argument and value
     ;;
     --trimValues)
@@ -229,9 +244,12 @@ add_to_cmd_line "--dataset-version" ${DATASET_VERSION}
 add_to_cmd_line "--report-date" ${REPORT_DATE}
 add_to_cmd_line "--report-version" ${REPORT_VERSION}
 add_to_cmd_line "--raw-format" ${RAW_FORMAT}
+add_to_cmd_line "--charset" ${CHARSET}
 add_to_cmd_line "--row-tag" ${ROW_TAG}
 add_to_cmd_line "--delimiter" ${DELIMITER}
 add_to_cmd_line "--header" ${HEADER}
+add_to_cmd_line "--csv-quote" ${CSV_QUOTE}
+add_to_cmd_line "--csv-escape" ${CSV_ESCAPE}
 add_to_cmd_line "--trimValues" ${TRIM_VALUES}
 add_to_cmd_line "--folder-prefix" ${FOLDER_PREFIX}
 add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
