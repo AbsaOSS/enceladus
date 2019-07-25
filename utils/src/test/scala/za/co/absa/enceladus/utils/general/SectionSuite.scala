@@ -19,44 +19,47 @@ import java.security.InvalidParameterException
 
 import org.scalatest.FunSuite
 
+import scala.util.{Failure, Try}
+
 class SectionSuite extends FunSuite {
 
-  private def check(section: Section, fullString: String, remainder: String, extracted: String): Unit = {
+  private def checkSectionRemoveExtractInject(
+                                               section: Section,
+                                               fullString: String,
+                                               remainder: String,
+                                               extracted: String
+                                             ): Boolean = {
     assert(section.removeFrom(fullString) == remainder)
     assert(section.extractFrom(fullString) == extracted)
-    assert(section.injectInto(remainder, extracted) == fullString)
+    section.injectInto(remainder, extracted).toOption.contains(fullString)
   }
 
-  def circularCheck(start: Integer, length: Int, string: String): Unit = {
+  private def circularCheck(start: Integer, length: Int, string: String): Boolean = {
     val section = Section(start, length)
     val removeResult = section.removeFrom(string)
     val extractResult = section.extractFrom(string)
     val injectResult = section.injectInto(removeResult, extractResult)
-    assert(injectResult == string)
+    injectResult.toOption.contains(string)
+  }
+
+  private def checkTryOnFailure(result: Try[String], failureMessage: String): Boolean = {
+    result match {
+      case Failure(e: InvalidParameterException) => e.getMessage == failureMessage
+      case _ => false
+    }
   }
 
   private val invalidParameterExceptionMessageTemplate =
     "The length of the string to inject (%d) doesn't match Section(%d, %d) for string of length %d."
 
 
-  test("Negative length causes exception") {
-    val value = -1
-    val message = s"'length; cannot be negative, $value given"
-    val caught = intercept[InvalidParameterException] {
-      Section(3, -1)
-    }
-
-    assert(caught.getMessage == message)
+  test("Negative length is turned into length 0") {
+    assert(Section(3, -1) == Section(3, 0))
   }
 
-  test("Section end would overflow integer causes exception") {
-    val value = -1
-    val message = s"start and length combination are grater then ${Int.MaxValue}"
-    val caught = intercept[IndexOutOfBoundsException] {
-      Section(Int.MaxValue - 2, 3)
-    }
-
-    assert(caught.getMessage == message)
+  test("Section end doesn't overflow integer") {
+    val start = Int.MaxValue - 2
+    assert(Section(start, 3) == Section(start, 2))
   }
 
   //sorting
@@ -127,7 +130,7 @@ class SectionSuite extends FunSuite {
     val fullString = "abcdefghi"
     val remainder = "abghi"
     val extracted = "cdef"
-    check(section, fullString, remainder, extracted)
+    assert(checkSectionRemoveExtractInject(section, fullString, remainder, extracted))
   }
 
   test("extractFrom, removeFrom, injectInto: with positive value of Start till the end of the input string") {
@@ -135,7 +138,7 @@ class SectionSuite extends FunSuite {
     val fullString = "abcdef"
     val remainder = "abcd"
     val extracted = "ef"
-    check(section, fullString, remainder, extracted)
+    assert(checkSectionRemoveExtractInject(section, fullString, remainder, extracted))
   }
 
   test("extractFrom, removeFrom, injectInto: with positive value of Start, extending over the end of the input string") {
@@ -143,7 +146,7 @@ class SectionSuite extends FunSuite {
     val fullString = "abcdef"
     val remainder = "abcd"
     val extracted = "ef"
-    check(section, fullString, remainder, extracted)
+    assert(checkSectionRemoveExtractInject(section, fullString, remainder, extracted))
   }
 
   test("extractFrom, removeFrom, injectInto: with positive value of Start, Start beyond the end of input string") {
@@ -151,7 +154,7 @@ class SectionSuite extends FunSuite {
     val fullString = "abcdef"
     val remainder = "abcdef"
     val extracted = ""
-    check(section, fullString, remainder, extracted)
+    assert(checkSectionRemoveExtractInject(section, fullString, remainder, extracted))
   }
 
   test("extractFrom, removeFrom, injectInto: with negative value of Start, within the input string") {
@@ -159,7 +162,7 @@ class SectionSuite extends FunSuite {
     val fullString = "abcdef"
     val remainder = "abef"
     val extracted = "cd"
-    check(section, fullString, remainder, extracted)
+    assert(checkSectionRemoveExtractInject(section, fullString, remainder, extracted))
   }
 
   test("extractFrom, removeFrom, injectInto: with negative value of Start, before beginning of the input string") {
@@ -167,7 +170,7 @@ class SectionSuite extends FunSuite {
     val fullString = "abcdef"
     val remainder = "def"
     val extracted = "abc"
-    check(section, fullString, remainder, extracted)
+    assert(checkSectionRemoveExtractInject(section, fullString, remainder, extracted))
   }
 
   test("extractFrom, removeFrom, injectInto: with negative value of Start, far before beginning of the input string") {
@@ -175,7 +178,7 @@ class SectionSuite extends FunSuite {
     val fullString = "abcdef"
     val remainder = "abcdef"
     val extracted = ""
-    check(section, fullString, remainder, extracted)
+    assert(checkSectionRemoveExtractInject(section, fullString, remainder, extracted))
   }
 
   test("extractFrom, removeFrom, injectInto: with negative value of Start, extending over end of the input string") {
@@ -183,7 +186,7 @@ class SectionSuite extends FunSuite {
     val fullString = "abcdef"
     val remainder = "abcd"
     val extracted = "ef"
-    check(section, fullString, remainder, extracted)
+    assert(checkSectionRemoveExtractInject(section, fullString, remainder, extracted))
   }
 
   test("extractFrom, removeFrom, injectInto: zero length sections") {
@@ -195,18 +198,18 @@ class SectionSuite extends FunSuite {
     val fullString = "abcdef"
     val remainder = "abcdef"
     val extracted = ""
-    check(section1, fullString, remainder, extracted)
-    check(section2, fullString, remainder, extracted)
-    check(section3, fullString, remainder, extracted)
-    check(section4, fullString, remainder, extracted)
-    check(section5, fullString, remainder, extracted)
+    assert(checkSectionRemoveExtractInject(section1, fullString, remainder, extracted))
+    assert(checkSectionRemoveExtractInject(section2, fullString, remainder, extracted))
+    assert(checkSectionRemoveExtractInject(section3, fullString, remainder, extracted))
+    assert(checkSectionRemoveExtractInject(section4, fullString, remainder, extracted))
+    assert(checkSectionRemoveExtractInject(section5, fullString, remainder, extracted))
   }
 
   test("extractFrom, removeFrom, injectInto (automated): whole spectrum of Start, length 0") {
     val playString = "abcdefghij"
     val length = 0
     for (i <- -15 to 15) {
-      circularCheck(i, length, playString)
+      assert(circularCheck(i, length, playString))
     }
   }
 
@@ -214,7 +217,7 @@ class SectionSuite extends FunSuite {
     val playString = "abcdefghij"
     val length = 3
     for (i <- -15 to 15) {
-      circularCheck(i, length, playString)
+      assert(circularCheck(i, length, playString))
     }
   }
   //inject
@@ -225,18 +228,12 @@ class SectionSuite extends FunSuite {
     val sec2 = Section(2,3)
     val sec3 =  Section(-4, 3)
 
-    val caught1 = intercept[InvalidParameterException] {
-      sec1.injectInto(into, what)
-    }
-    assert(caught1.getMessage == invalidParameterExceptionMessageTemplate.format(4, 0, 3, 19))
-    val caught2 = intercept[InvalidParameterException] {
-      sec2.injectInto(into, what)
-    }
-    assert(caught2.getMessage == invalidParameterExceptionMessageTemplate.format(4, 2, 3, 19))
-    val caught3 = intercept[InvalidParameterException] {
-      sec3.injectInto(into, what)
-    }
-    assert(caught3.getMessage == invalidParameterExceptionMessageTemplate.format(4, -4, 3, 19))
+    var result = sec1.injectInto(into, what)
+    assert(checkTryOnFailure(result, invalidParameterExceptionMessageTemplate.format(4, 0, 3, 19)))
+    result = sec2.injectInto(into, what)
+    assert(checkTryOnFailure(result, invalidParameterExceptionMessageTemplate.format(4, 2, 3, 19)))
+    result = sec3.injectInto(into, what)
+    assert(checkTryOnFailure(result, invalidParameterExceptionMessageTemplate.format(4, -4, 3, 19)))
   }
 
   test("injectInto: injected string too short compared to Section length") {
@@ -244,55 +241,43 @@ class SectionSuite extends FunSuite {
 
     //within but short
     val section1 = Section(3, 3)
-    val caught1 = intercept[InvalidParameterException] {
-      section1.injectInto(into, "xx")
-    }
-    assert(caught1.getMessage == invalidParameterExceptionMessageTemplate.format(2, 3, 3, 6))
+    var result1= section1.injectInto(into, "xx")
+    assert(checkTryOnFailure(result1, invalidParameterExceptionMessageTemplate.format(2, 3, 3, 6)))
     //within from behind, but short
     val section2 = Section(-5, 3)
-    val caught2 = intercept[InvalidParameterException] {
-      section2.injectInto(into, "xx")
-    }
-    assert(caught2.getMessage == invalidParameterExceptionMessageTemplate.format(2, -5, 3, 6))
+    val result2 = section2.injectInto(into, "xx")
+    assert(checkTryOnFailure(result2, invalidParameterExceptionMessageTemplate.format(2, -5, 3, 6)))
     //too far behind
     val section3 = Section(10, 3)
-    val caught3 = intercept[InvalidParameterException] {
-      section3.injectInto(into, "xx")
-    }
-    assert(caught3.getMessage == invalidParameterExceptionMessageTemplate.format(2, 10, 3, 6))
+    val result3 = section3.injectInto(into, "xx")
+    assert(checkTryOnFailure(result3, invalidParameterExceptionMessageTemplate.format(2, 10, 3, 6)))
     //too far ahead
     val section4 = Section(-7, 3)
-    val caught4 = intercept[InvalidParameterException] {
-      section4.injectInto(into, "xx")
-    }
-    assert(caught4.getMessage == invalidParameterExceptionMessageTemplate.format(2, -7, 3, 6))
+    val result4 = section4.injectInto(into, "xx")
+    assert(checkTryOnFailure(result4, invalidParameterExceptionMessageTemplate.format(2, -7, 3, 6)))
   }
 
   test("injectInto: empty string") {
     val into = "abcdef"
     val what = ""
     // ok for section length 0
-    assert(Section(3, 0).injectInto(into, what) == into)
+    assert(Section(3, 0).injectInto(into, what).toOption.contains(into))
     // ok for section behind
-    assert(Section(6, 3).injectInto(into, what) == into)
+    assert(Section(6, 3).injectInto(into, what).toOption.contains(into))
     // ok for section far enough ahead
-    assert(Section(-8, 2).injectInto(into, what) == into)
+    assert(Section(-8, 2).injectInto(into, what).toOption.contains(into))
     // fails otherwise
     val section1 = Section(2, 2)
-    val caught1 = intercept[InvalidParameterException] {
-      section1.injectInto(into, what)
-    }
-    assert(caught1.getMessage == invalidParameterExceptionMessageTemplate.format(0, 2, 2, 6))
+    val result = section1.injectInto(into, what)
+    assert(checkTryOnFailure(result, invalidParameterExceptionMessageTemplate.format(0, 2, 2, 6)))
   }
 
   test("injectInto: Special fail on seemingly correct input, but not if considered as reverse to remove and except") {
     val into = "abcdef"
     val what = "xxx"
     val section = Section(-2, 3)
-    val caught = intercept[InvalidParameterException] {
-      section.injectInto(into, what)
-    }
-    assert(caught.getMessage == invalidParameterExceptionMessageTemplate.format(3, -2, 3, 6))
+    val result = section.injectInto(into, what)
+    assert(checkTryOnFailure(result, invalidParameterExceptionMessageTemplate.format(3, -2, 3, 6)))
   }
 
   //distance
@@ -574,20 +559,34 @@ class SectionSuite extends FunSuite {
     assert(result == expected)
   }
 
-  //mergeSections
-  test("mergeSections: empty sequence of sections") {
+  //mergeTouchingSectionsAndSort
+  test("mergeTouchingSectionsAndSort: empty sequence of sections") {
     val sections = Seq.empty[Section]
-    val result = Section.mergeSections(sections)
+    val result = Section.mergeTouchingSectionsAndSort(sections)
     assert(result.isEmpty)
   }
 
-  test("mergeSections: one item in input sequence") {
+  test("mergeTouchingSectionsAndSort: one item in input sequence") {
     val sections = Seq(Section(42, 7))
-    val result = Section.mergeSections(sections)
+    val result = Section.mergeTouchingSectionsAndSort(sections)
     assert(result == sections)
   }
 
-  test("mergeSections: two pairs of touching sections, ordering checked too") {
+   /* For a string:
+    * 01234567890ACDFEFGHIJKLMNOPQUSTUVWXYZ
+    *  ^ ^^^                        ^-^^^ ^
+    *  | | |                        |  |  |
+    *  | | Section(5,1)             |  |  Section(-1,1)
+    *  | Section(3,2)               |  Section(-4,2)
+    *  Section(1,1)                 Section(-7,3)
+    * Output of the merge:
+    * 01234567890ACDFEFGHIJKLMNOPQUSTUVWXYZ
+    *  ^ ^-^                        ^---^ ^
+    *  | |                          |     |
+    *  | Section(3,3)               |     Section(-1,1)
+    *  Section(1,1)                 Section(-7,5)
+    */
+  test("mergeTouchingSectionsAndSort: two pairs of touching sections, ordering checked too") {
     val sections = Seq(
       Section( 1, 1), //D
       Section( 3, 2), //B1
@@ -602,11 +601,11 @@ class SectionSuite extends FunSuite {
       Section( 3, 3), //->C
       Section( 1, 1)  //->D
     )
-    val result = Section.mergeSections(sections)
+    val result = Section.mergeTouchingSectionsAndSort(sections)
     assert(result == expected)
   }
 
-  test("mergeSections: two pairs of overlapping sections, ordering checked too") {
+  test("mergeTouchingSectionsAndSort: two pairs of overlapping sections, ordering checked too") {
     val sections = Seq(
       //overlapping
       Section( 11, 4), //B1
@@ -623,11 +622,11 @@ class SectionSuite extends FunSuite {
       Section( 11, 6), //->C
       Section(  1, 1)  //->D
     )
-    val result = Section.mergeSections(sections)
+    val result = Section.mergeTouchingSectionsAndSort(sections)
     assert(result == expected)
   }
 
-  test("mergeSections: two pairs of same sections") {
+  test("mergeTouchingSectionsAndSort: two pairs of same sections") {
     val sections = Seq(
       //overlapping
       Section( 7, 5), //C
@@ -644,11 +643,11 @@ class SectionSuite extends FunSuite {
       Section( 7, 5), //->C
       Section( 1, 1)  //->D
     )
-    val result = Section.mergeSections(sections)
+    val result = Section.mergeTouchingSectionsAndSort(sections)
     assert(result == expected)
   }
 
-  test("mergeSections: one section withing other") {
+  test("mergeTouchingSectionsAndSort: one section withing other") {
     val sections = Seq(
       //overlapping
       Section( 12, 1), // E
@@ -671,11 +670,11 @@ class SectionSuite extends FunSuite {
       Section( 12, 5), // ->E
       Section(  1, 1)  // ->F
     )
-    val result = Section.mergeSections(sections)
+    val result = Section.mergeTouchingSectionsAndSort(sections)
     assert(result == expected)
   }
 
-  test("mergeSections: sequence of 3 sections") {
+  test("mergeTouchingSectionsAndSort: sequence of 3 sections") {
     val sections = Seq(
       //overlapping
       Section( 22, 10), //C3
@@ -694,7 +693,20 @@ class SectionSuite extends FunSuite {
       Section( 10, 22), //->C
       Section(  1, 1)   //->D
     )
-    val result = Section.mergeSections(sections)
+    val result = Section.mergeTouchingSectionsAndSort(sections)
     assert(result == expected)
   }
+
+  test("copy: change start") {
+    val s1 = Section(1, 3)
+    val s2 = s1.copy(start = 3)
+    assert(s2 == Section(3, 3))
+  }
+
+  test("copy: change length") {
+    val s1 = Section(-4, 3)
+    val s2 = s1.copy(length = 2)
+    assert(s2 == Section(-4, 2))
+  }
+
 }

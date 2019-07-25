@@ -91,7 +91,7 @@ object ColumnImplicits {
       * @return         Column with the remainders of the string concatenated
       */
     def removeSections(sections: Seq[Section]): Column = {
-      val mergedSections = Section.mergeSections(sections)
+      val mergedSections = Section.mergeTouchingSectionsAndSort(sections)
       mergedSections.foldLeft(column) ((columnAcc, item) => columnAcc.removeSection(item)) //TODO try more effectively #678
     }
 

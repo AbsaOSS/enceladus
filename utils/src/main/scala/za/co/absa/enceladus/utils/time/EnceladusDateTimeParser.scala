@@ -71,7 +71,7 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
       ).flatten.sorted
 
       sections.foldLeft(preliminaryResult) ((result, section) =>
-        section.injectInto(result, injections(section))
+        section.injectInto(result, injections(section)).getOrElse(result)
       )
       // scalastyle:on magic.number
     } else {

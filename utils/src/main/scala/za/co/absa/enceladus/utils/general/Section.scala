@@ -17,9 +17,14 @@ package za.co.absa.enceladus.utils.general
 
 import java.security.InvalidParameterException
 
+import org.apache.spark.sql.catalyst.expressions.Length
+
+import scala.util.{Failure, Try}
+
 /**
   * Represents a section of a string defined by its starting index and length of the section.
   * It supports negative indexes for start, denoting a position counted from end
+  * The class is marked as `sealed abstract` to limit the constructors to only the apply method within the companion object
   * _Comparison_
   * The class implements the `Ordered` trait
   * Sections with negative start are BIGGER then the ones with positive start
@@ -27,18 +32,10 @@ import java.security.InvalidParameterException
   * smaller
   * NB! Interesting consequence of the ordering is, that if the sections are not overlapping and removal applied on
   *  string from greatest to smallest one by one, the result is the same as removing all sections "at once"
-  * @param start the start position of the section, if negative the position is counted from the end
+  * @param start  the start position of the section, if negative the position is counted from the end
   * @param length length of the section, cannot be negative
   */
-case class Section(start: Int, length: Int) extends Ordered[Section] {
-
-  if (length < 0) {
-    throw new InvalidParameterException(s"'length; cannot be negative, $length given")
-  }
-
-  if ((start >= 0) && (start.toLong + length.toLong > Int.MaxValue)) {
-    throw new IndexOutOfBoundsException(s"start and length combination are grater then ${Int.MaxValue}")
-  }
+sealed abstract case class Section(start: Int, length: Int) extends Ordered[Section] {
 
   override def compare(that: Section): Int = {
     if (start == that.start) {
@@ -52,6 +49,10 @@ case class Section(start: Int, length: Int) extends Ordered[Section] {
     } else {
       1
     }
+  }
+
+  def copy(start: Int = this.start, length: Int = this.length): Section = {
+    Section(start, length)
   }
 
   /**
@@ -99,56 +100,56 @@ case class Section(start: Int, length: Int) extends Ordered[Section] {
 
   /**
     * Inverse function for `remove`, inserts the `what` string into the `into` string as defined by the `section`
+    * The `what` string needs to have the same length as the section; unless the placement of the `what` is outside
+    * (beyond or before) of `string` in which case it can be shorter
     * @param string the string to inject into
     * @param what   the string to inject
     * @return       the newly created string
     */
-  def injectInto(string: String, what: String): String = {
+  def injectInto(string: String, what: String): Try[String] = {
 
-    def fail(): String = {
-      throw new InvalidParameterException(
+    def fail(): Try[String] = {
+      Failure(new InvalidParameterException(
         s"The length of the string to inject (${what.length}) doesn't match Section($start, $length) for string of length ${string.length}."
-      )
+      ))
     }
 
     if (what.length > length) {
       fail()
-    }
-    if ((what == "") && ((length == 0) || (start > string.length) || (start + string.length + length < 0))) {
+    } else if ((what == "") && ((length == 0) || (start > string.length) || (start + string.length + length < 0))) {
       // injecting empty string is easy if valid; which is either if the section length = 0, or the index to inject to
       // is beyond the limits of the final string
-      string
+      Try(string)
     } else if (start >= 0) {
       if (start > string.length) {
         // beyond the into string
         fail()
       } else if (start == string.length) {
         // at the end of the into string
-        string + what
+        Try(string + what)
       } else if (what.length == length) {
         // injection in the middle (or beginning)
-        string.substring(0, start) + what + string.substring(start)
+        Try(string.substring(0, start) + what + string.substring(start))
       } else {
         // wrong size of injection
         fail()
       }
     } else {
-      val index = string.length + start + what.length
-      val whatLengthDeficit = what.length - length
-      val intoLength = string.length
-      (index,  whatLengthDeficit) match {
-        case (`intoLength`, _) =>
+        val index = string.length + start + what.length
+        val whatLengthDeficit = what.length - length
+        if (index == string.length) {
           // at the end of the into string
-          string + what
-        case (x, 0) if (x > 0) && (x < string.length) =>
+          Try(string + what)
+        } else if (index == whatLengthDeficit) {
           // somewhere withing the into string
-          string.substring(0, x) + what + string.substring(x)
-        case (`whatLengthDeficit`, `index`) =>
+          Try(what + string)
+        } else if (whatLengthDeficit == 0 && index > 0 && index < string.length) {
           // at the beginning of the into string, maybe appropriately shorter if to be place "before" 0 index
-          what + string
-        case _ => fail()
+          Try(string.substring(0, index) + what + string.substring(index))
+        } else {
+          fail()
+        }
       }
-    }
   }
 
   /**
@@ -204,6 +205,23 @@ case class Section(start: Int, length: Int) extends Ordered[Section] {
 }
 
 object Section {
+  /**
+    * The only possible constructor for Section class. It ensures that the input values for the created object are within bounds
+    * @param start  the start position of the section, if negative the position is counted from the end
+    * @param length length of the section, cannot be negative
+    * @return       the new Section object
+    */
+  def apply(start: Int, length: Int): Section = {
+    val realLength = if (length < 0) {
+      0
+    } else if ((start >= 0) && (start.toLong + length.toLong > Int.MaxValue)) {
+      Int.MaxValue - start
+    } else {
+      length
+    }
+    new Section(start, realLength) {}
+  }
+
   /**
     * Alternative constructor to create a section from starting and ending indexes
     * If start is bigger then end, they will be swapped for the Section creation
@@ -270,11 +288,27 @@ object Section {
   }
 
   /**
-    * Merges all touching (that includes overlaps too) sections and sort them
+    * Merges all touching (that includes overlaps too) sections. Sections that are not touching are left as they were.
+    * The resulting section is sorted
+    * Example:
+    * For a string:
+    * 01234567890ACDFEFGHIJKLMNOPQUSTUVWXYZ
+    *  ^ ^^^                    ^-^=^--^  ^
+    *  | | |                    | |       |
+    *  | | Section(5,1)         | |       Section(-1,1)
+    *  | Section(3,2)           | Section(-9,6)
+    *  Section(1,1)             Section(-11,5)
+    * Output of the merge:
+    * 01234567890ACDFEFGHIJKLMNOPQUSTUVWXYZ
+    *  ^ ^-^                    ^------^  ^
+    *  | |                      |         |
+    *  | Section(3,3)           |         Section(-1,1)
+    *  Section(1,1)             Section(-11,8)
+    *
     * @param sections the sections to merge
     * @return         an ordered from greater to smaller sequence of distinct sections (their distance is at least 1 or undefined)
     */
-  def mergeSections(sections: Seq[Section]): Seq[Section] = {
+  def mergeTouchingSectionsAndSort(sections: Seq[Section]): Seq[Section] = {
     def fuse(into: Section, what: Section): Section = {
       if (into.start + into.length >= what.start + what.length) {
         //as the sequence where the sections are coming from is sorter, this condition is enough to check that `what` is within `into`

@@ -127,7 +127,7 @@ object DateTimePattern {
     override val isTimeZoned: Boolean = timeZoneInPattern || defaultTimeZone.nonEmpty
 
     val (millisecondsPosition, microsecondsPosition, nanosecondsPosition) = analyzeSecondFractionsPositions(pattern)
-    override val secondFractionsSections: Seq[Section] = Section.mergeSections(Seq(millisecondsPosition, microsecondsPosition, nanosecondsPosition).flatten)
+    override val secondFractionsSections: Seq[Section] = Section.mergeTouchingSectionsAndSort(Seq(millisecondsPosition, microsecondsPosition, nanosecondsPosition).flatten)
     override val patternWithoutSecondFractions: String = Section.removeMultipleFrom(pattern, secondFractionsSections)
 
     private def scanForPlaceholder(withinString: String, placeHolder: Char): Option[Section] = {
