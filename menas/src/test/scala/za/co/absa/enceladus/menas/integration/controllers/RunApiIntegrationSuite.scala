@@ -22,9 +22,12 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.menas.factories.RunFactory
-import za.co.absa.enceladus.menas.integration.fixtures.RunFixtureService
+import za.co.absa.enceladus.menas.integration.fixtures.{FixtureService, RunFixtureService}
 import za.co.absa.enceladus.menas.models.{RunSummary, Validation}
 import za.co.absa.enceladus.model.{Run, SplineReference}
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -33,15 +36,9 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
   @Autowired
   private val runFixture: RunFixtureService = null
 
+  override def fixtures: List[FixtureService[_]] = List(runFixture)
+
   private val apiUrl = "/runs"
-
-  before {
-    runFixture.createCollection()
-  }
-
-  after {
-    runFixture.dropCollection()
-  }
 
   s"GET $apiUrl" can {
     "return 200" when {
@@ -176,7 +173,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
             uniqueId = Some("6e4a3573-1ee3-42bc-8fe1-391d9b61bf57"),
             controlMeasure = RunFactory.getDummyControlMeasure(runUniqueId = Some("534241a6-2bea-468d-8c9c-8d2601055f28")))
           runFixture.add(dataset2run1)
-          val dataset3run1 = RunFactory.getDummyRun(dataset = "dataset2", runId = 1, startDateTime = "29-01-2019 13:01:12 +0200")
+          val dataset3run1 = RunFactory.getDummyRun(dataset = "dataset3", runId = 1, startDateTime = "29-01-2019 13:01:12 +0200")
           runFixture.add(dataset3run1)
 
 
@@ -684,6 +681,25 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
             val body = response.getBody
             assert(body == run)
           }
+          "handles two runs being started simultaneously" in {
+            val run1 = RunFactory.getDummyRun()
+            val run2 = RunFactory.getDummyRun()
+
+            val eventualResponse1 = sendPostAsync[Run, Run](endpointBase, bodyOpt = Option(run1))
+            val eventualResponse2 = sendPostAsync[Run, Run](endpointBase, bodyOpt = Option(run2))
+
+            val response1 = await(eventualResponse1)
+            val response2 = await(eventualResponse2)
+
+            assertCreated(response1)
+            assertCreated(response2)
+
+            val body1 = response1.getBody
+            val body2 = response2.getBody
+            assert(body1 == run1.copy(runId = body1.runId))
+            assert(body2 == run2.copy(runId = body2.runId))
+            assert(Array(body1.runId, body2.runId).sorted.sameElements(Array(1, 2)))
+          }
         }
       }
     }
@@ -701,7 +717,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
 
         val body = response.getBody
         assert(!body.isValid)
-        assert(body == Validation().withError("uniqueId", s"run with this id already exists: $uniqueId"))
+        assert(body == Validation().withError("uniqueId", s"run with this uniqueId already exists: $uniqueId"))
       }
     }
   }

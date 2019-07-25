@@ -19,16 +19,23 @@ import java.util.concurrent.TimeUnit
 
 import org.scalatest.{BeforeAndAfter, WordSpec}
 import za.co.absa.enceladus.menas.integration.TestContextManagement
+import za.co.absa.enceladus.menas.integration.fixtures.FixtureService
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 
-class BaseRepositoryTest extends WordSpec with TestContextManagement with BeforeAndAfter {
+abstract class BaseRepositoryTest extends WordSpec with TestContextManagement with BeforeAndAfter {
 
   val awaitDuration: Duration = Duration(200, TimeUnit.MILLISECONDS)
 
+  def fixtures: List[FixtureService[_]]
+
   def await[T](future: Future[T]): T = {
     Await.result(future, awaitDuration)
+  }
+
+  after {
+    fixtures.foreach(_.clearCollection())
   }
 
 }

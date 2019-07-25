@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.factories.AttachmentFactory
-import za.co.absa.enceladus.menas.integration.fixtures.AttachmentFixtureService
+import za.co.absa.enceladus.menas.integration.fixtures.{AttachmentFixtureService, FixtureService}
 import za.co.absa.enceladus.menas.repositories.RefCollection
 
 @RunWith(classOf[SpringRunner])
@@ -33,13 +33,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
   private val apiUrl = "/schema"
   private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
 
-  before {
-    attachmentFixture.createCollection()
-  }
-
-  after {
-    attachmentFixture.dropCollection()
-  }
+  override def fixtures: List[FixtureService[_]] = List(attachmentFixture)
 
   s"GET $apiUrl/export/{name}/{version}" should {
     "return 404" when {

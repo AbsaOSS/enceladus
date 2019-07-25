@@ -15,13 +15,18 @@
 
 package za.co.absa.enceladus.menas.services
 
+import com.mongodb.{MongoWriteException, ServerAddress, WriteError}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
+import org.mongodb.scala.Completed
+import org.mongodb.scala.bson.BsonDocument
+import za.co.absa.enceladus.menas.exceptions.ValidationException
 import za.co.absa.enceladus.menas.factories.RunFactory
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.RunMongoRepository
+import za.co.absa.enceladus.model.Run
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 class RunServiceTest extends BaseServiceTest {
 
@@ -38,16 +43,16 @@ class RunServiceTest extends BaseServiceTest {
     val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
     Mockito.when(runRepository.existsId(uniqueId)).thenReturn(Future.successful(true))
 
-    val validation = Await.result(runService.validate(run), Duration.Inf)
+    val validation = await(runService.validate(run))
 
     assert(!validation.isValid())
-    assert(validation == Validation().withError("uniqueId", s"run with this id already exists: $uniqueId"))
+    assert(validation == Validation().withError("uniqueId", s"run with this uniqueId already exists: $uniqueId"))
   }
 
   test("validate Run without unique ID") {
     val run = RunFactory.getDummyRun(uniqueId = None)
 
-    val validation = Await.result(runService.validate(run), Duration.Inf)
+    val validation = await(runService.validate(run))
 
     assert(!validation.isValid())
     assert(validation == Validation().withError("uniqueId", "not specified"))
@@ -57,9 +62,47 @@ class RunServiceTest extends BaseServiceTest {
     val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
     Mockito.when(runRepository.existsId(uniqueId)).thenReturn(Future.successful(false))
 
-    val validation = Await.result(runService.validate(run), Duration.Inf)
+    val validation = await(runService.validate(run))
 
     assert(validation.isValid())
+  }
+
+  test("create multiple runs concurrently successfully") {
+    val run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+    val run2 = run1.copy(runId = 2)
+    val writeException = new MongoWriteException(new WriteError(1, "", new BsonDocument()), new ServerAddress())
+
+    Mockito.when(runRepository.getLatestRun("dataset", 1)).thenReturn(
+      Future.successful(None),
+      Future.successful(Some(run1)))
+    Mockito.when(runRepository.existsId(any[String]())).thenReturn(Future.successful(false))
+    Mockito.when(runRepository.create(any[Run]())).thenReturn(
+      Future.failed(writeException),
+      Future.successful(Completed()))
+
+    val res = await(runService.create(run1, "user"))
+    assert(res == run2)
+  }
+
+  test("create multiple runs concurrently successfully with a limited number of retires") {
+    val run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+    val run2 = run1.copy(runId = 2)
+    val writeException = new MongoWriteException(new WriteError(1, "", new BsonDocument()), new ServerAddress())
+
+    Mockito.when(runRepository.getLatestRun("dataset", 1)).thenReturn(
+      Future.successful(None),
+      Future.successful(Some(run1)),
+      Future.successful(Some(run2)))
+    Mockito.when(runRepository.existsId(any[String]())).thenReturn(Future.successful(false))
+    Mockito.when(runRepository.create(any[Run]())).thenReturn(
+      Future.failed(writeException),
+      Future.failed(writeException),
+      Future.successful(Completed()))
+
+    val result = intercept[ValidationException] {
+      await(runService.create(run1, "user", 1))
+    }
+    assert(result.validation == Validation().withError("runId", s"run with this runId already exists: ${run2.runId}"))
   }
 
 }

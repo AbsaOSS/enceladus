@@ -16,27 +16,26 @@
 package za.co.absa.enceladus.menas.integration.fixtures
 
 import com.mongodb.MongoBulkWriteException
-import org.mongodb.scala.MongoDatabase
 import org.mongodb.scala.bson.BsonDocument
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
-import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.menas.repositories.RunMongoRepository
-import za.co.absa.enceladus.model.Run
+import org.mongodb.scala.{MongoCollection, MongoDatabase}
+import org.scalatest.Assertions
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.reflect.ClassTag
 
-@Component
-class RunFixtureService @Autowired()(mongoDb: MongoDatabase)
-  extends FixtureService[Run](mongoDb, RunMongoRepository.collectionName) {
+abstract class FixtureService[T](mongoDb: MongoDatabase, collectionName: String)(implicit ct: ClassTag[T])
+  extends Assertions {
 
-  override def add(runs: Run*): Unit = {
-    val bsonRuns = runs.map { run =>
-      BsonDocument(ControlUtils.asJson(run))
-    }
+  protected val collection: MongoCollection[T] = mongoDb.getCollection[T](collectionName)
+
+  def clearCollection(): Unit = {
+    Await.ready(collection.deleteMany(new BsonDocument()).toFuture(), Duration.Inf)
+  }
+
+  def add(entities: T*): Unit = {
     try {
-      Await.result(collection.withDocumentClass[BsonDocument].insertMany(bsonRuns).toFuture(), Duration.Inf)
+      Await.result(collection.insertMany(entities).toFuture(), Duration.Inf)
     } catch {
       case exception: MongoBulkWriteException =>
         fail(s"""${this.getClass.getSimpleName} failed to set up database:
