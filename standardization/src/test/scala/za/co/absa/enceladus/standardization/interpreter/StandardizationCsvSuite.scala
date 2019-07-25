@@ -15,142 +15,186 @@
 
 package za.co.absa.enceladus.standardization.interpreter
 
+import java.nio.charset.StandardCharsets
+
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.{CmdConfig, StandardizationJob}
-import za.co.absa.enceladus.standardization.fixtures.CsvSpecialCharsFixture
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class StandardizationCsvSuite extends FunSuite with SparkTestBase with CsvSpecialCharsFixture {
+class StandardizationCsvSuite extends FunSuite with SparkTestBase with TempFileFixture {
+
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
+  private val tmpFilePrefix = "csv-special-chars-"
+  private val tmpFileSuffix = ".csv"
+
+  private val csvContent: String =
+    """1¡2¡3¡4¡5
+      |Text1¡Text2¡Text3¡10¡11
+      |Text5¡Text6¡Text7¡-99999¡99999
+      |Text10"Add¡Text11¡Text12¡100¡200
+      |"Text15¡Text16¡Text17¡1000¡2000"""
+      .stripMargin
+
+  private val csvCharset = StandardCharsets.ISO_8859_1
+
+  val schema: StructType = StructType(Seq(
+    StructField("A1", StringType, nullable = true),
+    StructField("A2", StringType, nullable = true),
+    StructField("A3", StringType, nullable = true),
+    StructField("A4", IntegerType, nullable = true),
+    StructField("A5", IntegerType, nullable = true)
+  ))
+
+  private val dataSet = Dataset("SpecialChars", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
+
   test("Test standardizing a CSV file with format-specific options") {
-    // The delimiter used is '¡'
-    // A quote character should be any character that cannot be encounteres in the CSV
-    // For this case it is '$'
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false " +
-      "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
+    withTempFile(tmpFilePrefix, tmpFileSuffix, csvCharset, csvContent) { tmpFileName =>
+      val ds = dataSet.copy(hdfsPath = tmpFileName)
 
-    val expected =
-      """+----------+------+------+------+-----+
-        ||A1        |A2    |A3    |A4    |A5   |
-        |+----------+------+------+------+-----+
-        ||1         |2     |3     |4     |5    |
-        ||Text1     |Text2 |Text3 |10    |11   |
-        ||Text5     |Text6 |Text7 |-99999|99999|
-        ||Text10"Add|Text11|Text12|100   |200  |
-        ||"Text15   |Text16|Text17|1000  |2000 |
-        |+----------+------+------+------+-----+
-        |
-        |""".stripMargin
+      // The delimiter used is '¡'
+      // A quote character should be any character that cannot be encounteres in the CSV
+      // For this case it is '$'
+      val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
+        "--report-version 1 --raw-format csv --header false " +
+        "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
 
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+      val expected =
+        """+----------+------+------+------+-----+
+          ||A1        |A2    |A3    |A4    |A5   |
+          |+----------+------+------+------+-----+
+          ||1         |2     |3     |4     |5    |
+          ||Text1     |Text2 |Text3 |10    |11   |
+          ||Text5     |Text6 |Text7 |-99999|99999|
+          ||Text10"Add|Text11|Text12|100   |200  |
+          ||"Text15   |Text16|Text17|1000  |2000 |
+          |+----------+------+------+------+-----+
+          |
+          |""".stripMargin
 
-    val dfReader = StandardizationJob
-      .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
-      .schema(schema)
+      val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
 
-    val df = dfReader.load(inputFileName)
+      val dfReader = StandardizationJob
+        .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
+        .schema(schema)
 
-    val actual = df.dataAsString(truncate = false)
+      val df = dfReader.load(tmpFileName)
 
-    assert(actual == expected)
+      val actual = df.dataAsString(truncate = false)
+
+      assert(actual == expected)
+    }
   }
 
   test("Test standardizing a CSV file if a charset is not specified") {
-    // When reading a different encoding invalid UTF-8 characters will be translated as unrecognized
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false ").split(" ")
+    withTempFile(tmpFilePrefix, tmpFileSuffix, csvCharset, csvContent) { tmpFileName =>
+      val ds = dataSet.copy(hdfsPath = tmpFileName)
 
-    val expected =
-      """+--------------------------------+----+----+----+----+
-        ||A1                              |A2  |A3  |A4  |A5  |
-        |+--------------------------------+----+----+----+----+
-        ||1�2�3�4�5                       |null|null|null|null|
-        ||Text1�Text2�Text3�10�11         |null|null|null|null|
-        ||Text5�Text6�Text7�-99999�99999  |null|null|null|null|
-        ||Text10"Add�Text11�Text12�100�200|null|null|null|null|
-        ||Text15�Text16�Text17�1000�2000  |null|null|null|null|
-        |+--------------------------------+----+----+----+----+
-        |
-        |""".stripMargin
+      // When reading a different encoding invalid UTF-8 characters will be translated as unrecognized
+      val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
+        "--report-version 1 --raw-format csv --header false ").split(" ")
 
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+      val expected =
+        """+--------------------------------+----+----+----+----+
+          ||A1                              |A2  |A3  |A4  |A5  |
+          |+--------------------------------+----+----+----+----+
+          ||1�2�3�4�5                       |null|null|null|null|
+          ||Text1�Text2�Text3�10�11         |null|null|null|null|
+          ||Text5�Text6�Text7�-99999�99999  |null|null|null|null|
+          ||Text10"Add�Text11�Text12�100�200|null|null|null|null|
+          ||Text15�Text16�Text17�1000�2000  |null|null|null|null|
+          |+--------------------------------+----+----+----+----+
+          |
+          |""".stripMargin
 
-    val dfReader = StandardizationJob
-      .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
-      .schema(schema)
+      val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
 
-    val df = dfReader.load(inputFileName)
+      val dfReader = StandardizationJob
+        .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
+        .schema(schema)
 
-    val actual = df.dataAsString(truncate = false)
+      val df = dfReader.load(tmpFileName)
 
-    assert(actual == expected)
+      val actual = df.dataAsString(truncate = false)
+
+      assert(actual == expected)
+    }
   }
 
   test("Test standardizing a CSV file if a delimiter is not specified") {
-    // This is a case where correct encoding is specified, but the delimiter is the default one.
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false " +
-      "--charset ISO-8859-1").split(" ")
+    withTempFile(tmpFilePrefix, tmpFileSuffix, csvCharset, csvContent) { tmpFileName =>
+      val ds = dataSet.copy(hdfsPath = tmpFileName)
 
-    val expected =
-      """+--------------------------------+----+----+----+----+
-        ||A1                              |A2  |A3  |A4  |A5  |
-        |+--------------------------------+----+----+----+----+
-        ||1¡2¡3¡4¡5                       |null|null|null|null|
-        ||Text1¡Text2¡Text3¡10¡11         |null|null|null|null|
-        ||Text5¡Text6¡Text7¡-99999¡99999  |null|null|null|null|
-        ||Text10"Add¡Text11¡Text12¡100¡200|null|null|null|null|
-        ||Text15¡Text16¡Text17¡1000¡2000  |null|null|null|null|
-        |+--------------------------------+----+----+----+----+
-        |
-        |""".stripMargin
+      // This is a case where correct encoding is specified, but the delimiter is the default one.
+      val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
+        "--report-version 1 --raw-format csv --header false " +
+        "--charset ISO-8859-1").split(" ")
 
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+      val expected =
+        """+--------------------------------+----+----+----+----+
+          ||A1                              |A2  |A3  |A4  |A5  |
+          |+--------------------------------+----+----+----+----+
+          ||1¡2¡3¡4¡5                       |null|null|null|null|
+          ||Text1¡Text2¡Text3¡10¡11         |null|null|null|null|
+          ||Text5¡Text6¡Text7¡-99999¡99999  |null|null|null|null|
+          ||Text10"Add¡Text11¡Text12¡100¡200|null|null|null|null|
+          ||Text15¡Text16¡Text17¡1000¡2000  |null|null|null|null|
+          |+--------------------------------+----+----+----+----+
+          |
+          |""".stripMargin
 
-    val dfReader = StandardizationJob
-      .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
-      .schema(schema)
+      val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
 
-    val df = dfReader.load(inputFileName)
+      val dfReader = StandardizationJob
+        .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
+        .schema(schema)
 
-    val actual = df.dataAsString(truncate = false)
+      val df = dfReader.load(tmpFileName)
 
-    assert(actual == expected)
+      val actual = df.dataAsString(truncate = false)
+
+      assert(actual == expected)
+    }
   }
 
   test("Test standardizing a CSV file if a quote character is not specified") {
-    // This is a case where correct encoding and delimiter are specified.
-    // But one field contains an opening double quote character without a closing one.
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false " +
-      "--charset ISO-8859-1 --delimiter ¡").split(" ")
+    withTempFile(tmpFilePrefix, tmpFileSuffix, csvCharset, csvContent) { tmpFileName =>
+      val ds = dataSet.copy(hdfsPath = tmpFileName)
 
-    val expected =
-      """+------------------------------+------+------+------+-----+
-        ||A1                            |A2    |A3    |A4    |A5   |
-        |+------------------------------+------+------+------+-----+
-        ||1                             |2     |3     |4     |5    |
-        ||Text1                         |Text2 |Text3 |10    |11   |
-        ||Text5                         |Text6 |Text7 |-99999|99999|
-        ||Text10"Add                    |Text11|Text12|100   |200  |
-        ||Text15¡Text16¡Text17¡1000¡2000|null  |null  |null  |null |
-        |+------------------------------+------+------+------+-----+
-        |
-        |""".stripMargin
+      // This is a case where correct encoding and delimiter are specified.
+      // But one field contains an opening double quote character without a closing one.
+      val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
+        "--report-version 1 --raw-format csv --header false " +
+        "--charset ISO-8859-1 --delimiter ¡").split(" ")
 
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+      val expected =
+        """+------------------------------+------+------+------+-----+
+          ||A1                            |A2    |A3    |A4    |A5   |
+          |+------------------------------+------+------+------+-----+
+          ||1                             |2     |3     |4     |5    |
+          ||Text1                         |Text2 |Text3 |10    |11   |
+          ||Text5                         |Text6 |Text7 |-99999|99999|
+          ||Text10"Add                    |Text11|Text12|100   |200  |
+          ||Text15¡Text16¡Text17¡1000¡2000|null  |null  |null  |null |
+          |+------------------------------+------+------+------+-----+
+          |
+          |""".stripMargin
 
-    val dfReader = StandardizationJob
-      .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
-      .schema(schema)
+      val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
 
-    val df = dfReader.load(inputFileName)
+      val dfReader = StandardizationJob
+        .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
+        .schema(schema)
 
-    val actual = df.dataAsString(truncate = false)
+      val df = dfReader.load(tmpFileName)
 
-    assert(actual == expected)
+      val actual = df.dataAsString(truncate = false)
+
+      assert(actual == expected)
+    }
   }
 
 }
