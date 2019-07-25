@@ -22,7 +22,6 @@ import java.nio.charset.{Charset, StandardCharsets}
   * This fixture adds ability for a unit test to create temporary files for using them in the tests.
   */
 trait TempFileFixture {
-
   /**
     * Creates a temporary text file and returns the full path to it
     *
@@ -34,15 +33,12 @@ trait TempFileFixture {
     * @param content A contents to put to the file
     * @return The full path to the temporary file
     */
-  def withTempFile(prefix: String, suffix: String, charset: Charset, content: String)(f: String => Unit): Unit = {
+  def createTempFile(prefix: String, suffix: String, charset: Charset, content: String): File = {
     val tempFile = File.createTempFile(prefix, suffix)
     val ostream = new DataOutputStream(new FileOutputStream(tempFile))
-    ostream.write(content.getBytes(StandardCharsets.ISO_8859_1))
+    ostream.write(content.getBytes(charset))
     ostream.close()
-
-    f(tempFile.getAbsolutePath)
-
-    tempFile.delete
+    tempFile
   }
 
 }
