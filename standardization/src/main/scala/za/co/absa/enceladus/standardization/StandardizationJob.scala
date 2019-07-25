@@ -143,6 +143,7 @@ object StandardizationJob {
       optionPair match {
         case (key, Some(value)) =>
           value match {
+            // Handle all .option() overloads
             case s: String => df.option(key, s)
             case b: Boolean => df.option(key, b)
             case l: Long => df.option(key, l)
