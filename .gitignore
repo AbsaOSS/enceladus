@@ -67,3 +67,8 @@ myTestCheckpoints
 
 node_modules/
 Component-preload.js
+
+# Jekyll auto
+_site
+.sass-cache
+.jekyll-metadata
