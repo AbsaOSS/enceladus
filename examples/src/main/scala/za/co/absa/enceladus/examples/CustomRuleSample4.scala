@@ -26,7 +26,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object CustomRuleSample4 {
-  TimeZoneNormalizer.normalizeJVMTimeZone()
+  TimeZoneNormalizer.normalizeJVMTimeZone() //normalize JVM time zone as soon as possible
 
   /**
     * This is a class for configuration provided by the command line parameters
@@ -124,6 +124,7 @@ object CustomRuleSample4 {
       .appName("CustomRuleSample4")
       .config("spark.sql.codegen.wholeStage", value = false)
       .getOrCreate()
+    //normalize the spark session timezone, the JVM has been done on the CustomRuleSample4 object creation above
     TimeZoneNormalizer.normalizeSessionTimeZone(result)
     result
   }

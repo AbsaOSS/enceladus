@@ -53,4 +53,8 @@ object TimeZoneNormalizer {
     sparks.foreach(normalizeSessionTimeZone)
   }
 
+  def normalizeAll(spark: SparkSession): Unit = normalizeAll(Seq(spark))
+
+  def normalizeAll(): Unit = normalizeAll(Seq.empty)
+
 }

@@ -33,7 +33,7 @@ object CustomRuleSample1 {
     .appName("CustomRuleSample1")
     .config("spark.sql.codegen.wholeStage", value = false)
     .getOrCreate()
-  TimeZoneNormalizer.normalizeAll(Seq(spark))
+  TimeZoneNormalizer.normalizeAll(spark) //normalize the timezone of JVM and the spark session
 
   def main(args: Array[String]) {
     // scalastyle:off magic.number
