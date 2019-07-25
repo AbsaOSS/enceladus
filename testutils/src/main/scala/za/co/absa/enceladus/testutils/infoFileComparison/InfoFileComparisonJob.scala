@@ -27,11 +27,14 @@ import za.co.absa.atum.persistence.ControlMeasuresParser
 import za.co.absa.atum.utils.ARMImplicits
 import za.co.absa.enceladus.testutils.exceptions.InfoFilesDifferException
 import za.co.absa.enceladus.testutils.infoFileComparison.AtumModelUtils._
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 import scala.collection.JavaConverters._
 import scala.reflect.io.File
 
 object InfoFileComparisonJob {
+  TimeZoneNormalizer.normalizeJVMTimeZone()
+
   private val log: Logger = LogManager.getLogger(this.getClass)
   private lazy val hadoopConfiguration = getHadoopConfiguration
 

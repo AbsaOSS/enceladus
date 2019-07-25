@@ -29,11 +29,9 @@ object CustomRuleSample3 {
     .appName("CustomRuleSample3")
     .config("spark.sql.codegen.wholeStage", value = false)
     .getOrCreate()
-
-  spark.sparkContext.setLogLevel("WARN")
+  TimeZoneNormalizer.normalizeAll(Seq(spark))
 
   def main(args: Array[String]): Unit = {
-    TimeZoneNormalizer.normalizeAll(Seq(spark))
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     val experimentalMR = true

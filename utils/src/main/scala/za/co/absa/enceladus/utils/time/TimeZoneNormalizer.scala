@@ -26,7 +26,7 @@ import org.apache.spark.sql.SparkSession
    */
 object TimeZoneNormalizer {
   private val log: Logger = LogManager.getLogger(this.getClass)
-  private lazy val timeZone: String = getConf("timezone", "UTC")
+  private val timeZone: String = getConf("timezone", "UTC")
 
   private def getConf(path: String, default: String): String = {
     val config: Config = ConfigFactory.load()
@@ -48,9 +48,9 @@ object TimeZoneNormalizer {
     log.debug(s"Spark session ${spark.sparkContext.applicationId} time zone of name ${spark.sparkContext.appName} set to $timeZone")
   }
 
-  def normalizeAll(spars: Seq[SparkSession]): Unit = {
+  def normalizeAll(sparks: Seq[SparkSession]): Unit = {
     normalizeJVMTimeZone()
-    spars.foreach(normalizeSessionTimeZone)
+    sparks.foreach(normalizeSessionTimeZone)
   }
 
 }

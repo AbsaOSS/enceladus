@@ -47,6 +47,7 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 
 object StandardizationJob {
+  TimeZoneNormalizer.normalizeJVMTimeZone()
 
   private val log: Logger = LogManager.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
@@ -124,7 +125,7 @@ object StandardizationJob {
     val spark = SparkSession.builder()
       .appName("Standardisation")
       .getOrCreate()
-    TimeZoneNormalizer.normalizeAll(Seq(spark))
+    TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
   }
 

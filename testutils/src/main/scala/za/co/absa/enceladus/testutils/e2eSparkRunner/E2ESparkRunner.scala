@@ -17,10 +17,13 @@ package za.co.absa.enceladus.testutils.e2eSparkRunner
 
 import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.testutils.HelperFunctions
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 import sys.process._
 
 object E2ESparkRunner {
+  TimeZoneNormalizer.normalizeJVMTimeZone()
+
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   private val stdJarPath: String = "$DCE_JAR_PATH/$DCE_STD_SPT_JAR"

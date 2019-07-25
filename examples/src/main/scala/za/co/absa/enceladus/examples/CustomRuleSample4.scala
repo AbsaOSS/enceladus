@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.examples
 
-import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.functions.{col, concat, concat_ws, lit}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, SparkSession}
 import scopt.OptionParser
@@ -27,6 +26,8 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object CustomRuleSample4 {
+  TimeZoneNormalizer.normalizeJVMTimeZone()
+
   /**
     * This is a class for configuration provided by the command line parameters
     *
@@ -123,7 +124,7 @@ object CustomRuleSample4 {
       .appName("CustomRuleSample4")
       .config("spark.sql.codegen.wholeStage", value = false)
       .getOrCreate()
-    TimeZoneNormalizer.normalizeAll(Seq(result))
+    TimeZoneNormalizer.normalizeSessionTimeZone(result)
     result
   }
 
