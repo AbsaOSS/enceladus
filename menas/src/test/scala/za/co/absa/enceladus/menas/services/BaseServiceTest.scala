@@ -17,10 +17,18 @@ package za.co.absa.enceladus.menas.services
 
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatest.mock.MockitoSugar
+
 import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
+
+import scala.concurrent.{Await, Future}
 
 abstract class BaseServiceTest extends FunSuite with MockitoSugar with BeforeAndAfter {
   val shortTimeout = Duration(100, TimeUnit.MILLISECONDS)
   val longTimeout = Duration(500, TimeUnit.MILLISECONDS)
+
+  def await[T](future: Future[T], awaitDuration: Duration = shortTimeout): T = {
+    Await.result(future, awaitDuration)
+  }
+
 }

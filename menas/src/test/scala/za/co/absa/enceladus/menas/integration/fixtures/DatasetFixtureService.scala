@@ -18,32 +18,9 @@ package za.co.absa.enceladus.menas.integration.fixtures
 import org.mongodb.scala.MongoDatabase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
-
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import za.co.absa.enceladus.model.Dataset
 
 @Component
-class DatasetFixtureService @Autowired()(mongoDb: MongoDatabase) {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
-
-  private val collection = mongoDb.getCollection[Dataset](DatasetMongoRepository.collectionName)
-
-  def createCollection(): Unit = {
-    Await.ready(mongoDb.createCollection(DatasetMongoRepository.collectionName).toFuture(), Duration.Inf)
-  }
-
-  def add(Datasets: Dataset*): Unit = {
-    val futureDatasets = Datasets.map { dataset =>
-      collection.insertOne(dataset).head()
-    }
-    Await.ready(Future.sequence(futureDatasets), Duration.Inf)
-  }
-
-  def dropCollection(): Unit = {
-    Await.ready(mongoDb.getCollection(DatasetMongoRepository.collectionName).drop().toFuture(), Duration.Inf)
-  }
-
-}
+class DatasetFixtureService @Autowired()(mongoDb: MongoDatabase)
+  extends FixtureService[Dataset](mongoDb, DatasetMongoRepository.collectionName)

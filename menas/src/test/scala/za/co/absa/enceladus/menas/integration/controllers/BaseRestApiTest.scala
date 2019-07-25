@@ -18,7 +18,6 @@ package za.co.absa.enceladus.menas.integration.controllers
 import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.scalatest.{BeforeAndAfter, WordSpec}
 import org.slf4j.{Logger, LoggerFactory}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -27,11 +26,14 @@ import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.context.annotation.Bean
 import org.springframework.http._
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
-import za.co.absa.enceladus.menas.integration.TestContextManagement
+import za.co.absa.enceladus.menas.integration.repositories.BaseRepositoryTest
 
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 
-class BaseRestApiTest extends WordSpec with TestContextManagement with BeforeAndAfter {
+abstract class BaseRestApiTest extends BaseRepositoryTest {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
@@ -80,9 +82,19 @@ class BaseRestApiTest extends WordSpec with TestContextManagement with BeforeAnd
     send(HttpMethod.GET, urlPath, headers)
   }
 
+  def sendGetAsync[T](urlPath: String, headers: HttpHeaders = new HttpHeaders())
+                (implicit ct: ClassTag[T]): Future[ResponseEntity[T]] = {
+    sendAsync(HttpMethod.GET, urlPath, headers)
+  }
+
   def sendPost[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
     send(HttpMethod.POST, urlPath, headers, bodyOpt)
+  }
+
+  def sendPostAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
+                 bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): Future[ResponseEntity[T]] = {
+    sendAsync(HttpMethod.POST, urlPath, headers, bodyOpt)
   }
 
   def sendPut[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
@@ -90,9 +102,24 @@ class BaseRestApiTest extends WordSpec with TestContextManagement with BeforeAnd
     send(HttpMethod.PUT, urlPath, headers, bodyOpt)
   }
 
+  def sendPutAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
+                 bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): Future[ResponseEntity[T]] = {
+    sendAsync(HttpMethod.PUT, urlPath, headers, bodyOpt)
+  }
+
   def sendDelete[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
     send(HttpMethod.DELETE, urlPath, headers)
+  }
+
+  def sendDeleteAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
+                 bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): Future[ResponseEntity[T]] = {
+    sendAsync(HttpMethod.DELETE, urlPath, headers)
+  }
+
+  def sendAsync[B, T](method: HttpMethod, urlPath: String, headers: HttpHeaders = HttpHeaders.EMPTY,
+                 bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): Future[ResponseEntity[T]] = {
+    Future { send(method, urlPath, headers, bodyOpt) }
   }
 
   def send[B, T](method: HttpMethod, urlPath: String, headers: HttpHeaders = HttpHeaders.EMPTY,
