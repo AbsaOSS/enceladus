@@ -130,6 +130,14 @@ object StandardizationJob {
     spark
   }
 
+  /**
+    * Applies all format-specific options provided by command line parameters to a dataframe reader.
+    *
+    * @param dfReader An input dataframe reader
+    * @param cmd      Command line parameters containing format-specific options
+    * @param dataset  A dataset definition
+    * @return The updated dataframe reader
+    */
   def getFormatSpecificReader(dfReader: DataFrameReader, cmd: CmdConfig, dataset: Dataset): DataFrameReader = {
     // applying format specific options
     val options = getCobolOptions(cmd, dataset) ++
