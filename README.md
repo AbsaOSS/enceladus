@@ -56,7 +56,7 @@ Ensure the properties there fit your environment.
 #### Menas requirements:
 - [**Tomcat 8.5/9.0** installation](https://tomcat.apache.org/download-90.cgi)
 - [**MongoDB 4.0** installation](https://docs.mongodb.com/manual/administration/install-community/)
-- [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.8/spline-web-0.3.8.war)
+- [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.9/spline-web-0.3.9.war)
  in your Tomcat webapps directory (rename after downloading to _spline.war_); NB! don't forget to set up the `spline.mongodb.url` configuration for the _war_
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
