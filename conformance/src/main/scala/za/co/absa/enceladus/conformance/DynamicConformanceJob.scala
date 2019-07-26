@@ -44,6 +44,7 @@ import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object DynamicConformanceJob {
+  TimeZoneNormalizer.normalizeJVMTimeZone()
 
   private val infoDateColumn = "enceladus_info_date"
   private val infoDateColumnString = s"${infoDateColumn}_string"
@@ -140,7 +141,8 @@ object DynamicConformanceJob {
     val spark: SparkSession = SparkSession.builder()
       .appName("Dynamic Conformance")
       .getOrCreate()
-    TimeZoneNormalizer.normalizeAll(Seq(spark))
+
+    TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
   }
 

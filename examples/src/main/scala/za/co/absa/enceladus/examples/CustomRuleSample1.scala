@@ -33,10 +33,10 @@ object CustomRuleSample1 {
     .appName("CustomRuleSample1")
     .config("spark.sql.codegen.wholeStage", value = false)
     .getOrCreate()
+  TimeZoneNormalizer.normalizeAll(spark) //normalize the timezone of JVM and the spark session
 
   def main(args: Array[String]) {
     // scalastyle:off magic.number
-    TimeZoneNormalizer.normalizeAll(Seq(spark))
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     val experimentalMR = true

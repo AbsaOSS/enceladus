@@ -24,6 +24,8 @@ import za.co.absa.enceladus.testutils.{DataframeReader, DataframeReaderOptions, 
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object ComparisonJob {
+  TimeZoneNormalizer.normalizeJVMTimeZone()
+
   private val log: Logger = LogManager.getLogger(this.getClass)
   private val errorColumnName: String = "errCol"
   private val tmpColumnName: String = "tmp"
@@ -41,7 +43,7 @@ object ComparisonJob {
       .appName(s"Dataset comparison - '${cmd.newPath}' and '${cmd.refPath}'")
       .config("spark.sql.codegen.wholeStage", enableWholeStage)
       .getOrCreate()
-    TimeZoneNormalizer.normalizeAll(Seq(sparkSession))
+    TimeZoneNormalizer.normalizeSessionTimeZone(sparkSession)
 
     implicit val sc: SparkContext = sparkSession.sparkContext
 

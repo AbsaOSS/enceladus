@@ -42,6 +42,7 @@ import scala.collection.immutable.HashMap
 import scala.util.control.NonFatal
 
 object StandardizationJob {
+  TimeZoneNormalizer.normalizeJVMTimeZone()
 
   private val log: Logger = LogManager.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
@@ -119,7 +120,7 @@ object StandardizationJob {
     val spark = SparkSession.builder()
       .appName("Standardisation")
       .getOrCreate()
-    TimeZoneNormalizer.normalizeAll(Seq(spark))
+    TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
   }
 
