@@ -201,7 +201,7 @@ The list of additional options available for running Standardization:
 |            Option          |                           Description |
 | -------------------------- |:----------------------------------------------------------------------------- |
 | --raw-format **format**    | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`. |
-| --charset **charset**      | Specifies a charset to use for `csv`, `json` on `xml`. Default is `UTF-8`.    |
+| --charset **charset**      | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.    |
 | --row-tag **tag**          | A row tag if the input format is `xml`.                                       |
 | --header **true/false**    | Indicates if in the input CSV data has headers as the first row of each file. |
 | --delimiter **character**  | Specifies a delmiter character to use for CSV format. By default `,` is used. |
