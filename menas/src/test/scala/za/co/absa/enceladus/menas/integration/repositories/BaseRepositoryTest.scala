@@ -17,12 +17,15 @@ package za.co.absa.enceladus.menas.integration.repositories
 
 import java.util.concurrent.TimeUnit
 
+import org.mongodb.scala.{Completed, MongoDatabase}
 import org.scalatest.{BeforeAndAfter, WordSpec}
+import org.springframework.beans.factory.annotation.Autowired
 import za.co.absa.enceladus.menas.integration.TestContextManagement
 import za.co.absa.enceladus.menas.integration.fixtures.FixtureService
+import za.co.absa.enceladus.menas.services.MigrationService
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 abstract class BaseRepositoryTest extends WordSpec with TestContextManagement with BeforeAndAfter {
 
@@ -32,6 +35,22 @@ abstract class BaseRepositoryTest extends WordSpec with TestContextManagement wi
 
   def await[T](future: Future[T]): T = {
     Await.result(future, awaitDuration)
+  }
+
+  @Autowired
+  val migrator: MigrationService = null
+
+  @Autowired
+  val mongoDb: MongoDatabase = null
+
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    migrator.init()
+  }
+
+  override def afterAll(): Unit = {
+    super.afterAll()
+    await[Completed](mongoDb.drop().toFuture())
   }
 
   after {
