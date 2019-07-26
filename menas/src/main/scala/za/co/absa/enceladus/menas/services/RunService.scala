@@ -105,7 +105,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
     Future.successful(splineUrlTemplate)
   }
 
-  def create(newRun: Run, username: String, retriesLeft: Int = 1): Future[Run] = {
+  def create(newRun: Run, username: String, retriesLeft: Int = 3): Future[Run] = {
     for {
       latestOpt  <- runMongoRepository.getLatestRun(newRun.dataset, newRun.datasetVersion)
       run        <- getRunIdentifiersIfAbsent(newRun, username, latestOpt)
