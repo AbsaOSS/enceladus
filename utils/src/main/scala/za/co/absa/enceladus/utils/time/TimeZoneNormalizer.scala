@@ -48,13 +48,9 @@ object TimeZoneNormalizer {
     log.debug(s"Spark session ${spark.sparkContext.applicationId} time zone of name ${spark.sparkContext.appName} set to $timeZone")
   }
 
-  def normalizeAll(sparks: Seq[SparkSession]): Unit = {
+  def normalizeAll(spark: SparkSession): Unit = {
     normalizeJVMTimeZone()
-    sparks.foreach(normalizeSessionTimeZone)
+    normalizeSessionTimeZone(spark)
   }
-
-  def normalizeAll(spark: SparkSession): Unit = normalizeAll(Seq(spark))
-
-  def normalizeAll(): Unit = normalizeAll(Seq.empty)
 
 }

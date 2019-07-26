@@ -29,7 +29,7 @@ object CustomRuleSample3 {
     .appName("CustomRuleSample3")
     .config("spark.sql.codegen.wholeStage", value = false)
     .getOrCreate()
-  TimeZoneNormalizer.normalizeAll(Seq(spark)) //normalize the timezone of JVM and ALL the spark sessions (one in this case)
+  TimeZoneNormalizer.normalizeAll(spark) //normalize the timezone of JVM and the spark session
 
   def main(args: Array[String]): Unit = {
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
