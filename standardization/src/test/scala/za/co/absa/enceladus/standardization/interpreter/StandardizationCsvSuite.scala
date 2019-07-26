@@ -17,6 +17,7 @@ package za.co.absa.enceladus.standardization.interpreter
 
 import java.nio.charset.StandardCharsets
 
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.scalatest.{Outcome, fixture}
 import za.co.absa.enceladus.model.Dataset
@@ -60,6 +61,15 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
     outcome
   }
 
+  /** Creates a dataframe from an input file name path and command line arguments to Standardization */
+  private def getTestDataFrame(tmpFileName: String, args: Array[String]): DataFrame = {
+    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+    StandardizationJob
+      .getFormatSpecificReader(cmd, dataSet)
+      .schema(schema)
+      .load(tmpFileName)
+  }
+
   test("Test standardizing a CSV file with format-specific options") { tmpFileName =>
     // The delimiter used is '¡'
     // A quote character should be any character that cannot be encountered in the CSV
@@ -81,13 +91,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |
         |""".stripMargin
 
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-
-    val dfReader = StandardizationJob
-      .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
-      .schema(schema)
-
-    val df = dfReader.load(tmpFileName)
+    val df = getTestDataFrame(tmpFileName, args)
 
     val actual = df.dataAsString(truncate = false)
 
@@ -112,13 +116,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |
         |""".stripMargin
 
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-
-    val dfReader = StandardizationJob
-      .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
-      .schema(schema)
-
-    val df = dfReader.load(tmpFileName)
+    val df = getTestDataFrame(tmpFileName, args)
 
     val actual = df.dataAsString(truncate = false)
 
@@ -144,13 +142,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |
         |""".stripMargin
 
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-
-    val dfReader = StandardizationJob
-      .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
-      .schema(schema)
-
-    val df = dfReader.load(tmpFileName)
+    val df = getTestDataFrame(tmpFileName, args)
 
     val actual = df.dataAsString(truncate = false)
 
@@ -177,16 +169,11 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |
         |""".stripMargin
 
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-
-    val dfReader = StandardizationJob
-      .getFormatSpecificReader(spark.read.format("csv"), cmd, dataSet)
-      .schema(schema)
-
-    val df = dfReader.load(tmpFileName)
+    val df = getTestDataFrame(tmpFileName, args)
 
     val actual = df.dataAsString(truncate = false)
 
     assert(actual == expected)
   }
+
 }
