@@ -15,22 +15,14 @@
 
 package za.co.absa.enceladus.standardization
 
-import java.io.PrintWriter
-import java.io.StringWriter
+import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
 import java.util.UUID
 
-import scala.util.control.NonFatal
-import org.apache.log4j.LogManager
-import org.apache.log4j.Logger
-import org.apache.spark.sql.Column
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.DataFrameReader
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.StructField
-import org.apache.spark.sql.types.StructType
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
+import org.apache.log4j.{LogManager, Logger}
+import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
+import org.apache.spark.sql.types.{StructField, StructType}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.{Atum, Constants}
@@ -39,14 +31,15 @@ import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.stdandardization._
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
-import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
+import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 
 import scala.collection.immutable.HashMap
+import scala.util.control.NonFatal
 
 object StandardizationJob {
 
@@ -131,14 +124,15 @@ object StandardizationJob {
   }
 
   /**
-    * Applies all format-specific options provided by command line parameters to a dataframe reader.
+    * Returns a Spark reader with all format-specific options applied.
+    * Options are provided by command line parameters.
     *
-    * @param dfReader An input dataframe reader
     * @param cmd      Command line parameters containing format-specific options
     * @param dataset  A dataset definition
     * @return The updated dataframe reader
     */
-  def getFormatSpecificReader(dfReader: DataFrameReader, cmd: CmdConfig, dataset: Dataset): DataFrameReader = {
+  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset)(implicit spark: SparkSession): DataFrameReader = {
+    val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
     val options = getCobolOptions(cmd, dataset) ++
       getGenericOptions(cmd) ++
@@ -152,72 +146,72 @@ object StandardizationJob {
         case (key, Some(value)) =>
           value match {
             // Handle all .option() overloads
-            case s: String => df.option(key, s)
-            case b: Boolean => df.option(key, b)
-            case l: Long => df.option(key, l)
-            case d: Double => df.option(key, d)
+            case StringParameter(s) => df.option(key, s)
+            case BooleanParameter(b) => df.option(key, b)
+            case LongParameter(l) => df.option(key, l)
+            case DoubleParameter(d) => df.option(key, d)
           }
         case (_, None) => df
       }
     }
   }
 
-  private def getGenericOptions(cmd: CmdConfig): HashMap[String,Option[Any]] = {
-    HashMap("charset" -> cmd.charset)
+  private def getGenericOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+    HashMap("charset" -> cmd.charset.map(StringParameter))
   }
 
-  private def getXmlOptions(cmd: CmdConfig): HashMap[String,Option[Any]] = {
+  private def getXmlOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("xml")) {
-      HashMap("rowtag" -> cmd.rowTag)
+      HashMap("rowtag" -> cmd.rowTag.map(StringParameter))
     } else {
       HashMap()
     }
   }
 
-  private def getCsvOptions(cmd: CmdConfig): HashMap[String,Option[Any]] = {
+  private def getCsvOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
-        "delimiter" -> cmd.csvDelimiter,
-        "header" -> cmd.csvHeader,
-        "quote" -> cmd.csvQuote,
-        "escape" -> cmd.csvEscape
+        "delimiter" -> cmd.csvDelimiter.map(StringParameter),
+        "header" -> cmd.csvHeader.map(BooleanParameter),
+        "quote" -> cmd.csvQuote.map(StringParameter),
+        "escape" -> cmd.csvEscape.map(StringParameter)
       )
     } else {
       HashMap()
     }
   }
 
-  private def getFixedWidthOptions(cmd: CmdConfig): HashMap[String,Option[Any]] = {
+  private def getFixedWidthOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
-      HashMap("trimValues" -> cmd.fixedWidthTrimValues)
+      HashMap("trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter))
     } else {
       HashMap()
     }
   }
 
-  private def getCobolOptions(cmd: CmdConfig, dataset: Dataset): HashMap[String,Option[Any]] = {
+  private def getCobolOptions(cmd: CmdConfig, dataset: Dataset): HashMap[String,Option[RawFormatParameter]] = {
     cmd.cobolOptions match {
       case Some(opts) =>
         HashMap(
         getCopybookOption(opts, dataset),
-          "is_xcom" -> Option(opts.isXcom),
-          "schema_retention_policy" -> Some("collapse_root")
+          "is_xcom" -> Option(BooleanParameter(opts.isXcom)),
+          "schema_retention_policy" -> Some(StringParameter("collapse_root"))
         )
       case None =>
         HashMap()
     }
   }
 
-  private def getCopybookOption(opts: CobolOptions, dataset: Dataset): (String, Option[String]) = {
+  private def getCopybookOption(opts: CobolOptions, dataset: Dataset): (String, Option[RawFormatParameter]) = {
     val copybook = opts.copybook
     if (copybook.isEmpty) {
       log.info("Copybook location is not provided via command line - fetching the copybook attached to the schema...")
       val copybookContents = EnceladusRestDAO.getSchemaAttachment(dataset.schemaName, dataset.schemaVersion)
       log.info(s"Applying the following copybook:\n$copybookContents")
-      ("copybook_contents", Option(copybookContents))
+      ("copybook_contents", Option(StringParameter(copybookContents)))
     } else {
       log.info(s"Use copybook at $copybook")
-      ("copybook", Option(copybook))
+      ("copybook", Option(StringParameter(copybook)))
     }
   }
 
@@ -227,7 +221,7 @@ object StandardizationJob {
                                dataset: Dataset)
                               (implicit spark: SparkSession,
                                fsUtils: FileSystemVersionUtils): DataFrame = {
-    val dfReaderConfigured = getFormatSpecificReader(spark.read.format(cmd.rawFormat), cmd, dataset)
+    val dfReaderConfigured = getFormatSpecificReader(cmd, dataset)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
       dfReaderConfigured.schema(inputSchema)
