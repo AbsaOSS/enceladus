@@ -23,7 +23,7 @@ class TypeParser_FromBooleanTypeSuite extends TypeParserSuiteTemplate  {
 
   private val input = Input(
     baseType = BooleanType,
-    defaultValueDate = "0",
+    defaultValueDate = "1",
     defaultValueTimestamp = "1",
     datePattern = "u",
     timestampPattern = "F",

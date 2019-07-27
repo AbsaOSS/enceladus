@@ -30,7 +30,10 @@ case class EnceladusDateTimeParser(pattern: DateTimePattern) {
   private val formatter: Option[SimpleDateFormat] = if (pattern.isEpoch) {
     None
   } else {
-    Some(new SimpleDateFormat(pattern.patternWithoutSecondFractions, Locale.US)) // locale here is hardcoded to the same value as Spark uses
+    // locale here is hardcoded to the same value as Spark uses, lenient set to false also per Spark usage
+    val sdf = new SimpleDateFormat(pattern.patternWithoutSecondFractions, Locale.US)
+    sdf.setLenient(false)
+    Some(sdf)
   }
 
   def parseDate(dateValue: String): Date = {
