@@ -21,8 +21,7 @@ import java.util.TimeZone
 
 import org.apache.spark.sql.types.{StringType, StructField}
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
-import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser, TimeZoneNormalizer}
-import org.apache.spark.sql.functions._
+import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser}
 
 import scala.util.control.NonFatal
 

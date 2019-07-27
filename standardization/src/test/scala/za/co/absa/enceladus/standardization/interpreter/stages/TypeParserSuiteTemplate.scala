@@ -36,8 +36,6 @@ trait TypeParserSuiteTemplate extends FunSuite with SparkTestBase {
   protected def createErrorCondition(srcField: String, target: StructField, castS: String):String
 
   private val sourceFieldName = "sourceField"
-  private val dateEpochPattern = DateTimePattern.EpochKeyword
-  private val timestampEpochPattern = DateTimePattern.EpochMilliKeyword
 
   protected val log: Logger = LogManager.getLogger(this.getClass)
 
@@ -174,17 +172,17 @@ trait TypeParserSuiteTemplate extends FunSuite with SparkTestBase {
   protected def doTestIntoDateFieldWithEpochPattern(input: Input): Unit = {
     import input._
     val dateField = StructField("dateField", DateType, nullable = false,
-      new MetadataBuilder().putString("sourcecolumn", sourceFieldName).putString("pattern", dateEpochPattern).build)
+      new MetadataBuilder().putString("sourcecolumn", sourceFieldName).putString("pattern", DateTimePattern.EpochKeyword).build)
     val schema = buildSchema(Array(sourceField(baseType), dateField), path)
-    testTemplate(dateField, schema, path, dateEpochPattern)
+    testTemplate(dateField, schema, path, DateTimePattern.EpochKeyword)
   }
 
   protected def doTestIntoTimestampFieldWithEpochPattern(input: Input): Unit = {
     import input._
     val timestampField = StructField("timestampField", TimestampType, nullable = false,
-      new MetadataBuilder().putString("sourcecolumn", sourceFieldName).putString("pattern", timestampEpochPattern).build)
+      new MetadataBuilder().putString("sourcecolumn", sourceFieldName).putString("pattern", DateTimePattern.EpochMilliKeyword).build)
     val schema = buildSchema(Array(sourceField(baseType), timestampField), path)
-    testTemplate(timestampField, schema, path, timestampEpochPattern)
+    testTemplate(timestampField, schema, path, DateTimePattern.EpochMilliKeyword)
   }
 
   private def sourceField(baseType: DataType, nullable: Boolean = true): StructField = StructField(sourceFieldName, baseType, nullable)

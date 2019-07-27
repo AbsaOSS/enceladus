@@ -20,7 +20,7 @@ import java.security.InvalidParameterException
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
 
-class StringImplicitsSuite  extends FunSuite {
+class StringImplicitsSuite extends FunSuite {
   test("StringImprovements.findFirstUnquoted - empty string") {
     var result = "".findFirstUnquoted(Set.empty, Set.empty)
     assert(result.isEmpty)

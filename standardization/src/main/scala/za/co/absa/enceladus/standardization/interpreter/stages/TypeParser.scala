@@ -61,6 +61,17 @@ sealed trait TypeParser {
 }
 
 object TypeParser extends StandardizationCommon {
+  import za.co.absa.enceladus.utils.implicits.ColumnImplicits.ColumnEnhancements
+
+  // scalastyle:off magic.number
+  private val decimalType = DecimalType(30,9)
+  // scalastyle:on magic.number
+
+  private val MillisecondsPerSecond = 1000
+  private val MicrosecondsPerSecond = 1000000
+  private val NanosecondsPerSecond  = 1000000000
+
+
   def standardize(field: StructField, path: String, origSchema: StructType)
                  (implicit udfLib: UDFLibrary): ParseOutput = {
     // udfLib implicit is present for error column UDF implementation
@@ -266,8 +277,6 @@ object TypeParser extends StandardizationCommon {
     override protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
       //NB! loss of precision is not addressed for any fractional type
 
-      import za.co.absa.enceladus.utils.implicits.ColumnImplicits.ColumnEnhancements
-
       if (allowInfinity) {
         castedCol.isNull or castedCol.isNaN
       } else {
@@ -309,7 +318,6 @@ object TypeParser extends StandardizationCommon {
     * Other         | ->String->to_date               | ->String->to_timestamp->to_utc_timestamp->to_date
     */
   private trait DateTimeParser extends PrimitiveParser {
-    protected val basicCastFunction: (Column, String) => Column  //for epoch casting
     protected val pattern: DateTimePattern = DateTimePattern.fromStructField(field)
 
     override protected def assemblePrimitiveCastLogic: Column = {
@@ -326,11 +334,6 @@ object TypeParser extends StandardizationCommon {
           s"Dates & times represented as ${originType.typeName} values need specified 'pattern' metadata"
         )
       }
-    }
-
-    private def castEpoch(): Column = {
-      val epochPattern: String = Defaults.getGlobalFormat(field.dataType)
-      basicCastFunction(from_unixtime(column.cast(LongType)  / pattern.epochFactor, epochPattern), epochPattern)
     }
 
     private def castWithPattern(): Column = {
@@ -370,6 +373,10 @@ object TypeParser extends StandardizationCommon {
       castStringColumn(nonStringColumn.cast(StringType))
     }
 
+    protected def castEpoch(): Column = {
+      (column.cast(decimalType) / pattern.epochFactor).cast(TimestampType)
+    }
+
     protected def castStringColumn(stringColumn: Column): Column
 
     protected def castDateColumn(dateColumn: Column): Column
@@ -382,14 +389,29 @@ object TypeParser extends StandardizationCommon {
                                       path: String,
                                       origSchema: StructType,
                                       parent: Option[Parent]) extends DateTimeParser {
-    protected val basicCastFunction: (Column, String) => Column = to_date //for epoch casting
+    private def applyPatternToStringColumn(column: Column, pattern: String, defaultTimeZone: Option[String]): Column = {
+      defaultTimeZone.map(tz =>
+        to_date(to_utc_timestamp(to_timestamp(column, pattern), tz))
+      ).getOrElse(
+        to_date(column, pattern)
+      )
+    }
+
+    override def castEpoch(): Column = {
+      // number cannot be cast to date directly, so first casting to timestamp and then truncating
+      to_date(super.castEpoch())
+    }
 
     override protected def castStringColumn(stringColumn: Column): Column = {
-      pattern.defaultTimeZone.map(tz =>
-        to_date(to_utc_timestamp(to_timestamp(stringColumn, pattern), tz))
-      ).getOrElse(
-        to_date(stringColumn, pattern)
-      )
+      if (pattern.containsSecondFractions) {
+        // date doesn't need to care about second fractions
+        applyPatternToStringColumn(
+          stringColumn.removeSections(
+            Seq(pattern.millisecondsPosition, pattern.microsecondsPosition, pattern.nanosecondsPosition).flatten
+          ), pattern.patternWithoutSecondFractions, pattern.defaultTimeZone)
+      } else {
+        applyPatternToStringColumn(stringColumn, pattern, pattern.defaultTimeZone)
+      }
     }
 
     override protected def castDateColumn(dateColumn: Column): Column = {
@@ -413,11 +435,36 @@ object TypeParser extends StandardizationCommon {
                                            path: String,
                                            origSchema: StructType,
                                            parent: Option[Parent]) extends DateTimeParser {
-    protected val basicCastFunction: (Column, String) => Column = to_timestamp //for epoch casting
+
+    private def applyPatternToStringColumn(column: Column, pattern: String, defaultTimeZone: Option[String]): Column = {
+      val interim: Column = to_timestamp(column, pattern)
+      defaultTimeZone.map(to_utc_timestamp(interim, _)).getOrElse(interim)
+    }
 
     override protected def castStringColumn(stringColumn: Column): Column = {
-      val interim: Column = to_timestamp(stringColumn, pattern)
-      pattern.defaultTimeZone.map(to_utc_timestamp(interim, _)).getOrElse(interim)
+      if (pattern.containsSecondFractions) {
+        //this is a trick how to enforce fractions of seconds into the timestamp
+        // - turn into timestamp up to seconds precision and that into unix_timestamp,
+        // - the second fractions turn into numeric fractions
+        // - add both together and convert to timestamp
+        val colSeconds = unix_timestamp(applyPatternToStringColumn(
+          stringColumn.removeSections(
+            Seq(pattern.millisecondsPosition, pattern.microsecondsPosition, pattern.nanosecondsPosition).flatten
+          ), pattern.patternWithoutSecondFractions, pattern.defaultTimeZone))
+
+        val colMilliseconds: Option[Column] =
+          pattern.millisecondsPosition.map(stringColumn.zeroBasedSubstr(_).cast(decimalType) / MillisecondsPerSecond)
+        val colMicroseconds: Option[Column] =
+          pattern.microsecondsPosition.map(stringColumn.zeroBasedSubstr(_).cast(decimalType) / MicrosecondsPerSecond)
+        val colNanoseconds: Option[Column] =
+          pattern.nanosecondsPosition.map(stringColumn.zeroBasedSubstr(_).cast(decimalType) / NanosecondsPerSecond)
+        val colFractions: Column =
+          (colMilliseconds ++ colMicroseconds ++ colNanoseconds).reduceOption(_ + _).getOrElse(lit(0))
+
+        (colSeconds + colFractions).cast(TimestampType)
+      } else {
+        applyPatternToStringColumn(stringColumn, pattern, pattern.defaultTimeZone)
+      }
     }
 
     override protected def castDateColumn(dateColumn: Column): Column = {

@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.standardization.interpreter
 
+import java.sql.{Date, Timestamp}
+
 import za.co.absa.enceladus.utils.error.ErrorMessage
 
 //Decimal Suite
@@ -108,3 +110,15 @@ case class InputRowBigDecimalsForIntegral(
     this(description, Option(value), Option(value), Option(value), Option(value))
   }
 }
+
+//Timestamp Suite
+case class TimestampRow(
+                         tms: Timestamp,
+                         errCol: Seq[ErrorMessage] = Seq.empty
+                       )
+
+//Date Suite
+case class DateRow(
+                    dateField: Date,
+                    errCol: Seq[ErrorMessage] = Seq.empty
+                  )
