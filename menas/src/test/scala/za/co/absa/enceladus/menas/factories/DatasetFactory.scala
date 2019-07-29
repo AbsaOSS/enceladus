@@ -18,15 +18,15 @@ package za.co.absa.enceladus.menas.factories
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.versionedModel.VersionedSummary
 
-object DatasetFactory {
+object DatasetFactory extends EntityFactory[Dataset] {
 
-  val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss XXXX")
-  val dummyZonedDateTime = ZonedDateTime.parse("04-12-2017 16:19:17 +0200", formatter)
+  override val collectionBaseName: String = DatasetMongoRepository.collectionBaseName
 
   def getDummyDataset(name: String = "dummyName",
                       version: Int = 1,

@@ -17,7 +17,7 @@ package za.co.absa.enceladus.menas.integration.repositories
 
 import java.util.concurrent.TimeUnit
 
-import org.mongodb.scala.{Completed, MongoDatabase}
+import org.mongodb.scala.MongoDatabase
 import org.scalatest.{BeforeAndAfter, WordSpec}
 import org.springframework.beans.factory.annotation.Autowired
 import za.co.absa.enceladus.menas.integration.TestContextManagement
@@ -50,7 +50,7 @@ abstract class BaseRepositoryTest extends WordSpec with TestContextManagement wi
 
   override def afterAll(): Unit = {
     super.afterAll()
-    await[Completed](mongoDb.drop().toFuture())
+    await(mongoDb.drop().toFuture())
   }
 
   after {
