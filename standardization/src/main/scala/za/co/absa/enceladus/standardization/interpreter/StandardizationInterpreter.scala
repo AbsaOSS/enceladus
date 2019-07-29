@@ -16,18 +16,15 @@
 package za.co.absa.enceladus.standardization.interpreter
 
 import org.apache.spark.sql._
-import org.apache.spark.sql.types._
-import za.co.absa.enceladus.standardization.interpreter.dataTypes._
 import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.utils.transformations.ArrayTransformations
+import org.apache.spark.sql.types._
 import za.co.absa.enceladus.standardization.StandardizationCommon
-import za.co.absa.enceladus.utils.validation.ValidationException
-import za.co.absa.enceladus.utils.error.UDFLibrary
-import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.standardization.interpreter.stages.SchemaChecker
-import za.co.absa.enceladus.standardization.interpreter.stages.SparkXMLHack
-import za.co.absa.enceladus.standardization.interpreter.stages.TypeParser
+import za.co.absa.enceladus.standardization.interpreter.dataTypes._
+import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, SparkXMLHack, TypeParser}
+import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.enceladus.utils.transformations.ArrayTransformations
+import za.co.absa.enceladus.utils.validation.ValidationException
 
 /**
   * Object representing set of tools for performing the actual standardization
@@ -43,7 +40,6 @@ object StandardizationInterpreter extends StandardizationCommon{
     */
   def standardize(df: Dataset[Row], expSchema: StructType, inputType: String)
                  (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
-    import spark.implicits._
 
     logger.info(s"Step 1: Schema validation")
     validateSchemaAgainstSelfInconsistencies(expSchema)
@@ -87,7 +83,8 @@ object StandardizationInterpreter extends StandardizationCommon{
   }
 
 
-  private def validateSchemaAgainstSelfInconsistencies(expSchema: StructType): Unit = {
+  private def validateSchemaAgainstSelfInconsistencies(expSchema: StructType)
+                                                      (implicit spark: SparkSession): Unit = {
     val validationErrors = SchemaChecker.validateSchemaAndLog(expSchema)
     if (validationErrors._1.nonEmpty) {
       throw new ValidationException("A fatal schema validation error occurred.", validationErrors._1)
