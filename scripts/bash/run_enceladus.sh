@@ -220,7 +220,7 @@ if [ ! -z "$MAPPING_TABLE_PATTERN" ]; then
 fi
 
 CONF="spark.driver.extraJavaOptions=-Dmenas.rest.uri=$MENAS_URI -Dstandardized.hdfs.path=$STD_HDFS_PATH \
--Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=2.7.3 \
+-Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=$HDP_VERSION \
 $MT_PATTERN"
 
 CMD_LINE="$SPARK_SUBMIT"

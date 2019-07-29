@@ -21,8 +21,8 @@ import java.util.UUID
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.{LogManager, Logger}
-import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
+import org.apache.spark.sql.types.{StructField, StructType}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.{Atum, Constants}
