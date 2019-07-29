@@ -114,15 +114,15 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
         if (validation.isValid()) {
           super.create(run)
             .recoverWith {
-            case e: MongoWriteException =>
-              log.warn("Failed to create Run", e)
-              if (retriesLeft > 0) {
-                log.warn(s"Retries left: $retriesLeft")
-                log.warn(s"Retrying to create Run: $newRun")
-                create(newRun, username, retriesLeft - 1)
-              } else {
-                throw ValidationException(validation.withError("runId", s"run with this runId already exists: ${run.runId}"))
-              }
+              case e: MongoWriteException =>
+                log.warn("Failed to create Run", e)
+                if (retriesLeft > 0) {
+                  log.warn(s"Retries left: $retriesLeft")
+                  log.warn(s"Retrying to create Run: $newRun")
+                  create(newRun, username, retriesLeft - 1)
+                } else {
+                  throw ValidationException(validation.withError("runId", s"run with this runId already exists: ${run.runId}"))
+                }
           }
         } else {
           log.warn(s"Validation failed for Run: $validation")
