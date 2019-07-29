@@ -58,7 +58,7 @@ object DataFrameImplicits {
     }
 
     /**
-      * Adds a column to a dataframe if it does not exists
+      * Adds a column to a dataframe if it does not exist
       *
       * @param colName A column to add if it does not exist already
       * @param col     An expression for the column to add
