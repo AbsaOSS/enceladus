@@ -186,7 +186,7 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     assert(parser7.format(t) == "(789) 1970-01-02 (123) 01:00:00 (456)")
   }
 
-  test("Lenient interpretation is not accepter") {
+  test("Lenient interpretation is not accepted") {
     //first lenient interpretation
     val pattern = "dd-MM-yyyy"
     val dateString = "2015-01-01"
