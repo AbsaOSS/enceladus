@@ -18,6 +18,7 @@ package za.co.absa.enceladus.utils.time
 import org.scalatest.FunSuite
 import java.sql.Date
 import java.sql.Timestamp
+import java.text.{ParseException, SimpleDateFormat}
 
 case class TestInputRow(id: Int, stringField: String)
 
@@ -185,4 +186,16 @@ class EnceladusDateTimeParserSuite extends FunSuite{
     assert(parser7.format(t) == "(789) 1970-01-02 (123) 01:00:00 (456)")
   }
 
+  test("Lenient interpretation is not accepted") {
+    //first lenient interpretation
+    val pattern = "dd-MM-yyyy"
+    val dateString = "2015-01-01"
+    val sdf = new SimpleDateFormat(pattern)
+    sdf.parse(dateString)
+    //non lenient within EnceladusDateTimeParser
+    val parser = EnceladusDateTimeParser(pattern)
+    intercept[ParseException] {
+      parser.parseDate(dateString)
+    }
+  }
 }

@@ -125,6 +125,7 @@
 
     <properties>
         <encoding>UTF-8</encoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!--plugin versions-->
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
@@ -304,7 +305,7 @@
                         end to end test could run. This can be removed later when dynamic conformance
                         becomes more efficient
                     -->
-                    <argLine>-Xmx4000m</argLine>
+                    <argLine>-Xmx4000m -Dfile.encoding=UTF-8</argLine>
                 </configuration>
                 <executions>
                     <execution>
