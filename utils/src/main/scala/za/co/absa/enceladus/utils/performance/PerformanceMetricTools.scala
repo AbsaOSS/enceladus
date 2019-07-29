@@ -43,7 +43,8 @@ object PerformanceMetricTools {
                                           optionPrefix: String,
                                           inputPath: String,
                                           outputPath: String,
-                                          loginUserName: String
+                                          loginUserName: String,
+                                          cmdLineArgs: String
                                          ): Unit = {
     // Spark job configuration
     val sc = spark.sparkContext
@@ -68,6 +69,9 @@ object PerformanceMetricTools {
       Atum.setAdditionalInfo(s"${optionPrefix}_size_ratio" -> s"$percentFormatted %")
     }
 
+    Atum.setAdditionalInfo(s"${optionPrefix}_cmd_line_args" -> cmdLineArgs)
+    Atum.setAdditionalInfo(s"${optionPrefix}_input_dir" -> inputPath)
+    Atum.setAdditionalInfo(s"${optionPrefix}_output_dir" -> outputPath)
     Atum.setAdditionalInfo(s"${optionPrefix}_input_dir_size" -> inputDirSize.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_output_dir_size" -> outputDirSize.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_enceladus_version" -> ProjectMetadataTools.getEnceladusVersion)

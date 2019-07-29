@@ -15,33 +15,28 @@
 
 package za.co.absa.enceladus.conformance
 
-import java.io.PrintWriter
-import java.io.StringWriter
+import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
 
-import scala.util.control.NonFatal
-import org.apache.log4j.LogManager
-import org.apache.log4j.Logger
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.apache.spark.sql.functions.{lit, to_date}
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
+import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql
+import org.apache.spark.sql.functions.{lit, to_date}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import za.co.absa.atum.AtumImplicits
-import za.co.absa.atum.AtumImplicits.DataSetWrapper
-import za.co.absa.atum.AtumImplicits.StringToPath
+import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
-import za.co.absa.enceladus.dao.EnceladusDAO
-import za.co.absa.enceladus.dao.EnceladusRestDAO
+import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
-import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
+import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+
+import scala.util.control.NonFatal
 
 object DynamicConformanceJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
@@ -92,7 +87,7 @@ object DynamicConformanceJob {
 
     val result = conform(conformance, inputData, enableCF)
 
-    processResult(result, performance, publishPath, stdPath, reportVersion)
+    processResult(result, performance, publishPath, stdPath, reportVersion, args.mkString(" "))
   }
 
   private def isExperimentalRuleEnabled()(implicit cmd: CmdConfig): Boolean = {
@@ -191,7 +186,11 @@ object DynamicConformanceJob {
     }
   }
 
-  private def processResult(result: DataFrame, performance: PerformanceMeasurer, publishPath: String, stdPath: String, reportVersion: Int)
+  private def processResult(result: DataFrame,
+                            performance: PerformanceMeasurer,
+                            publishPath: String, stdPath: String,
+                            reportVersion: Int,
+                            cmdLineArgs: String)
                            (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
     val withPartCols = result
       .withColumn(infoDateColumn, to_date(lit(cmd.reportDate), reportDateFormat))
@@ -216,7 +215,7 @@ object DynamicConformanceJob {
     val publishDirSize = fsUtils.getDirectorySize(publishPath)
     performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "conform",
-      stdPath, publishPath, EnceladusRestDAO.userName)
+      stdPath, publishPath, EnceladusRestDAO.userName, cmdLineArgss)
 
     withPartCols.writeInfoFile(publishPath)
     cmd.performanceMetricsFile.foreach(fileName => {

@@ -21,8 +21,8 @@ import java.util.UUID
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.{LogManager, Logger}
-import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.apache.spark.sql.types.{StructField, StructType}
+import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.{Atum, Constants}
@@ -106,7 +106,7 @@ object StandardizationJob {
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, path, dataset)
 
-    executeStandardization(performance, dfAll, schema, cmd, path, stdPath)
+    executeStandardization(performance, dfAll, schema, cmd, path, stdPath, args.mkString(" "))
     cmd.performanceMetricsFile.foreach(fileName => {
       try {
         performance.writeMetricsToFile(fileName)
@@ -237,7 +237,8 @@ object StandardizationJob {
       schema: StructType,
       cmd: CmdConfig,
       path: String,
-      stdPath: String)(implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
+      stdPath: String,
+      cmdLineArgs: String)(implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
     val rawDirSize: Long = fsUtils.getDirectorySize(path)
     performance.startMeasurement(rawDirSize)
 
@@ -283,7 +284,7 @@ object StandardizationJob {
       cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
     }
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", path, stdPath,
-      EnceladusRestDAO.userName)
+      EnceladusRestDAO.userName, cmdLineArgs)
     stdRenameSourceColumns.writeInfoFile(stdPath)
   }
 
