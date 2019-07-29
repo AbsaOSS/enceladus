@@ -26,7 +26,7 @@ object SparkUtils {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   /**
-    * Adds a column to a dataframe if it does not exists
+    * Adds a column to a dataframe if it does not exist
     *
     * @param df      A dataframe
     * @param colName A column to add if it does not exist already

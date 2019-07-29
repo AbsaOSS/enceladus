@@ -48,17 +48,17 @@ object SchemaValidator {
 
   /**
     * Validates the error column.
-    * Most of the time the error columns should not exist in the input schema. But uf it does exist, it should
+    * Most of the time the error column should not exist in the input schema. But if it does exist, it should
     * conform to the expected type.
     * Nullability of the error column is not an issue.
     *
     * @param schema A Spark schema
-    * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
+    * @return A list of ValidationErrors, each containing a column name and the list of errors and warnings
     */
   def validateErrorColumn(schema: StructType)
                          (implicit spark: SparkSession)
                          : List[FieldValidationFailure] = {
-    val expectedTypeNonNullable = ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false)
+    val expectedTypeNonNullable = ArrayType(ErrorMessage.errorColSchema, containsNull = false)
     val expectedTypeNullable = ArrayType.apply(ErrorMessage.errorColSchema, containsNull = true)
     val errCol = schema.find(f => f.name == ErrorMessage.errorColumnName)
     errCol match {

@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.standardization.interpreter
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
@@ -52,16 +51,17 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
   type FixtureParam = String
 
   def withFixture(test: OneArgTest): Outcome = {
-    val tmpDir = Files.createTempDirectory(tmpDirPrefix)
     val tmpFile = createTempFile(tmpFilePrefix, tmpFileSuffix, StandardCharsets.UTF_8, csvContent)
     val outcome = test(tmpFile.getAbsolutePath)
     tmpFile.delete()
-    Files.delete(tmpDir)
     outcome
   }
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
-  private def getTestDataFrame(tmpFileName: String, schemaStr: StructType, args: Array[String]): DataFrame = {
+  private def getTestDataFrame(tmpFileName: String, schemaStr: StructType): DataFrame = {
+    val args = ("--dataset-name SpecialColumns --dataset-version 1 --report-date 2019-07-23 " +
+      "--report-version 1 --raw-format csv --header false --delimiter |").split(" ")
+
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     StandardizationJob
       .getFormatSpecificReader(cmd, dataSet)
@@ -87,9 +87,6 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
       StructField("A5", StringType, nullable = true)
     ))
 
-    val args = ("--dataset-name SpecialColumns --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false --delimiter |").split(" ")
-
     val expectedOutput =
       """+---+---+----+----------+----------+------+
         ||A1 |A2 |A3  |A4        |A5        |errCol|
@@ -103,7 +100,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
         |
         |""".stripMargin.replace("\r\n", "\n")
 
-    val inputDf = getTestDataFrame(tmpFileName, schemaStr, args)
+    val inputDf = getTestDataFrame(tmpFileName, schemaStr)
 
     val stdDf = StandardizationInterpreter.standardize(inputDf, schema, "").cache()
 
@@ -130,13 +127,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
       StructField("enceladus_info_date_string", StringType, nullable = true)
     ))
 
-    val args = ("--dataset-name SpecialColumns --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false --delimiter |").split(" ")
-
-    val ttt = ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false)
-    println(ttt)
-
-    val inputDf = getTestDataFrame(tmpFileName, schemaStr, args)
+    val inputDf = getTestDataFrame(tmpFileName, schemaStr)
 
     assertThrows[ValidationException] {
       StandardizationInterpreter.standardize(inputDf, schema, "").cache()
@@ -161,10 +152,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
       StructField("enceladus_info_date_string", StringType, nullable = true)
     ))
 
-    val args = ("--dataset-name SpecialColumns --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false --delimiter |").split(" ")
-
-    val inputDf = getTestDataFrame(tmpFileName, schemaStr, args)
+    val inputDf = getTestDataFrame(tmpFileName, schemaStr)
       .withColumn(ErrorMessage.errorColumnName, typedLit(List[ErrorMessage]()))
 
     val stdDf = StandardizationInterpreter.standardize(inputDf, schema, "").cache()
