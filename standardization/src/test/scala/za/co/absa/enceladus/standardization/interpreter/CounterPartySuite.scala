@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.standardization.interpreter
 
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import org.scalatest.FunSuite
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.utils.error.UDFLibrary
@@ -24,21 +24,21 @@ import za.co.absa.enceladus.utils.error.ErrorMessage
 case class Root(ConformedParty: Party, errCol: Seq[ErrorMessage] = Seq.empty)
 case class Party(key: Integer, clientKeys1: Seq[String], clientKeys2: Seq[String])
 
-class CounterPartySuite extends FunSuite with SparkTestBase {
+class CounterPartySuite extends FunSuite with SparkTestBase with LoggerTestBase{
 
   test("Mimic running standardization twice on counter party") {
     import spark.implicits._
 
     val desiredSchema = StructType(Seq(StructField("ConformedParty", StructType(
       Seq(
-        StructField("key", IntegerType, true),
-        StructField("clientKeys1", ArrayType(StringType, true), true)
+        StructField("key", IntegerType, nullable = true),
+        StructField("clientKeys1", ArrayType(StringType, containsNull = true), nullable = true)
         ,
-        StructField("clientKeys2", ArrayType(StringType, true), true)
+        StructField("clientKeys2", ArrayType(StringType, containsNull = true), nullable = true)
 
-      )), true)))
+      )), nullable = true)))
 
-    implicit val udfLib = new UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary
 
     val input = spark.createDataFrame(Seq(
       Root(Party(key = 0, clientKeys1 = Seq("a", "b", "c"), clientKeys2 = Seq("d", "e", "f"))),
@@ -51,8 +51,8 @@ class CounterPartySuite extends FunSuite with SparkTestBase {
 
     val std = StandardizationInterpreter.standardize(input, desiredSchema, "").cache()
 
-    std.show(false)
-    
+    logDataFrameContent(std)
+
     assertResult(input.as[Root].collect.toList)(std.as[Root].collect().sortBy(_.ConformedParty.key).toList)
   }
 }

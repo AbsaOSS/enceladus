@@ -321,7 +321,7 @@ object TypeParser extends StandardizationCommon {
     protected val pattern: DateTimePattern = DateTimePattern.fromStructField(field)
 
     override protected def assemblePrimitiveCastLogic: Column = {
-      if (DateTimePattern.isEpoch(pattern)) {
+      if (pattern.isEpoch) {
         castEpoch()
       } else {
         castWithPattern()

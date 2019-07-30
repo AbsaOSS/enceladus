@@ -21,12 +21,12 @@ import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.stages.SchemaChecker
 import za.co.absa.enceladus.standardization.samples.TestSamples
 import za.co.absa.enceladus.utils.error.UDFLibrary
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.utils.validation.{SchemaValidator, ValidationError, ValidationException}
 
 import scala.io.Source
 
-class DateTimeSuite extends FunSuite with SparkTestBase {
+class DateTimeSuite extends FunSuite with SparkTestBase with LoggerTestBase{
 
   lazy val data: DataFrame = spark.createDataFrame(TestSamples.dateSamples)
   lazy val schemaWrong: StructType = DataType.fromJson(Source
@@ -38,10 +38,10 @@ class DateTimeSuite extends FunSuite with SparkTestBase {
     .getLines().mkString("\n"))
     .asInstanceOf[StructType]
 
-  implicit val udfLib = UDFLibrary()
+  private implicit val udfLib: UDFLibrary = UDFLibrary()
 
   test("Validation should return critical errors") {
-    println(data.schema.prettyJson)
+    logger.debug(data.schema.prettyJson)
     val validationErrors = SchemaValidator.validateSchema(schemaWrong)
     val hasCriticalErrors = validationErrors.exists( p =>
       p.issues.exists {
@@ -64,8 +64,7 @@ class DateTimeSuite extends FunSuite with SparkTestBase {
 
   test("Date Time Standardization Example with fixed schema should work") {
     val std = StandardizationInterpreter.standardize(data, schemaOk, "dates")
-    std.show(false)
-    std.printSchema
-    println(std.schema.prettyJson)
+    logDataFrameContent(std)
+    //TODO finish test
   }
 }

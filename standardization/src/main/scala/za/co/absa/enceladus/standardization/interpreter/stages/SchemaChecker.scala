@@ -22,7 +22,7 @@ import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue, 
 
 object SchemaChecker {
 
-  val log: Logger = LogManager.getLogger("enceladus.standardization.interpreter")
+  val log: Logger = LogManager.getLogger(this.getClass)
 
   /**
     * Validate a schema, log all errors and warnings, throws if there are fatal errors

@@ -74,8 +74,11 @@ object CmdConfig {
     opt[Int]('d', "dataset-version").required().action((value, config) =>
       config.copy(datasetVersion = value)).text("Dataset version")
       .validate(value =>
-        if (value > 0) success
-        else failure("Option --dataset-version must be >0"))
+        if (value > 0) {
+          success
+        } else {
+          failure("Option --dataset-version must be >0")
+        })
 
     val reportDateMatcher: Regex = "^\\d{4}-\\d{2}-\\d{2}$".r
     opt[String]('R', "report-date").required().action((value, config) =>
@@ -93,29 +96,37 @@ object CmdConfig {
       credsFile = Some(path)
       config.copy(menasCredentials = Some(credential))
     }).text("Path to Menas credentials config file.").validate(path =>
+      // scalastyle:off if.brace
       if (keytabFile.isDefined) failure("Only one authentication method is allowed at a time")
       else if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
       else failure("Credentials file not found."))
+      // scalastyle:on if.brace
+
 
     opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
       keytabFile = Some(file)
       if(!fsUtils.localExists(file) && fsUtils.hdfsExists(file)) {
         config.copy(menasCredentials = Some(Right(fsUtils.hdfsFileToLocalTempFile(file))))
       } else {
-      config.copy(menasCredentials = Some(Right(file)))
+        config.copy(menasCredentials = Some(Right(file)))
       }
     }).text("Path to keytab file used for authenticating to menas").validate({ file =>
+      // scalastyle:off if.brace
       if (credsFile.isDefined) failure("Only one authentication method is allowed at a time")
       else if(fsUtils.exists(file)) success
       else failure("Keytab file doesn't exist")
+      // scalastyle:on if.brace
     })
 
     opt[Int]('r', "report-version").optional().action((value, config) =>
       config.copy(reportVersion = Some(value)))
       .text("Report version. If not provided, it is inferred based on the publish path (it's an EXPERIMENTAL feature)")
       .validate(value =>
-        if (value > 0) success
-        else failure("Option --report-version must be >0"))
+        if (value > 0) {
+          success
+        } else {
+          failure("Option --report-version must be >0")
+        })
 
     opt[String]('f', "raw-format").required().action((value, config) => {
       rawFormat = Some(value)
@@ -129,60 +140,68 @@ object CmdConfig {
           (rawFormat.get.equalsIgnoreCase("xml") ||
           rawFormat.get.equalsIgnoreCase("csv") ||
           rawFormat.get.equalsIgnoreCase("json")))
+        {
           success
-        else
-          failure("The --charset option is supported only for CSV, JSON and XML"))
+        } else {
+          failure("The --charset option is supported only for CSV, JSON and XML")
+        })
 
     opt[String]("row-tag").optional().action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")
       .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("xml"))
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("xml")) {
           success
-        else
-          failure("The --row-tag option is supported only for XML raw data format"))
+        } else {
+          failure("The --row-tag option is supported only for XML raw data format")
+        })
 
     opt[String]("delimiter").optional().action((value, config) =>
       config.copy(csvDelimiter = Some(value))).text("use the specific delimiter instead of ',' for CSV format")
       .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv")) {
           success
-        else
-          failure("The --delimiter option is supported only for CSV raw data format"))
+        } else {
+          failure("The --delimiter option is supported only for CSV raw data format")
+        })
 
     opt[String]("csv-quote").optional().action((value, config) =>
       config.copy(csvQuote = Some(value)))
       .text("use the specific quote character for creating CSV fields that may contain delimiter character(s) (default is '\"')")
       .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv")) {
           success
-        else
-          failure("The --csv-quote option is supported only for CSV raw data format"))
+        } else {
+          failure("The --csv-quote option is supported only for CSV raw data format")
+        })
 
     opt[String]("csv-escape").optional().action((value, config) =>
       config.copy(csvEscape = Some(value)))
       .text("use the specific escape character for CSV fields (default is '\\')")
       .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv")) {
           success
-        else
-          failure("The --csv-escape option is supported only for CSV raw data format"))
+        } else {
+          failure("The --csv-escape option is supported only for CSV raw data format")
+        })
 
     // no need for validation for boolean since scopt itself will do
     opt[Boolean]("header").optional().action((value, config) =>
       config.copy(csvHeader = Some(value))).text("use the header option to consider CSV header")
       .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv")) {
           success
-        else
-          failure("The --header option is supported only for CSV "))
+        } else {
+          failure("The --header option is supported only for CSV ")
+        })
 
     opt[Boolean]("trimValues").optional().action((value, config) =>
       config.copy(fixedWidthTrimValues = Some(value))).text("use --trimValues option to trim values in  fixed width file")
       .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("fixed-width"))
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("fixed-width")) {
           success
-        else
-          failure("The --trimValues option is supported only for fixed-width files "))
+        } else {
+          failure("The --trimValues option is supported only for fixed-width files ")
+        })
 
     processCobolCmdOptions()
 
@@ -212,10 +231,11 @@ object CmdConfig {
         config.copy(cobolOptions = cobolSetIsXcom(config.cobolOptions, value))
       }).text("Does a mainframe file in COBOL format contain XCOM record headers")
         .validate(value =>
-          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol"))
+          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol")) {
             success
-          else
-            failure("The --is-xcom option is supported only for COBOL data format"))
+          } else {
+            failure("The --is-xcom option is supported only for COBOL data format")
+          })
     }
 
     private def cobolSetCopybook(cobolOptions: Option[CobolOptions], newCopybook: String): Option[CobolOptions] = {
