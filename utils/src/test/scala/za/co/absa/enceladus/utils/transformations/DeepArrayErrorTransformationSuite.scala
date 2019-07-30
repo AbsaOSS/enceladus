@@ -21,10 +21,10 @@ import org.apache.spark.sql.types.{IntegerType, StringType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.general.JsonUtils
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import DeepArraySamples._
 
-class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
+class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase with LoggerTestBase{
   // scalastyle:off line.size.limit
   // scalastyle:off null
 
@@ -873,7 +873,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
     }.getMessage contains "Output field cannot be empty")
 
     assert(intercept[IllegalArgumentException] {
-      DeepArrayTransformations.nestedAddColumn(df, "value", _ => lit("foo")).printSchema()
+      DeepArrayTransformations.nestedAddColumn(df, "value", () => lit("foo")).printSchema()
     }.getMessage contains "The column 'value' already exists")
 
   }
@@ -1017,20 +1017,20 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase {
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
     if (actualSchema != expectedSchema) {
-      println("EXPECTED:")
-      println(expectedSchema)
-      println("ACTUAL:")
-      println(actualSchema)
+      logger.debug("EXPECTED:")
+      logger.debug(expectedSchema)
+      logger.debug("ACTUAL:")
+      logger.debug(actualSchema)
       fail("Actual conformed schema does not match the expected schema (see above).")
     }
   }
 
   private def assertResults(actualResults: String, expectedResults: String): Unit = {
     if (actualResults != expectedResults) {
-      println("EXPECTED:")
-      println(expectedResults)
-      println("ACTUAL:")
-      println(actualResults)
+      logger.debug("EXPECTED:")
+      logger.debug(expectedResults)
+      logger.debug("ACTUAL:")
+      logger.debug(actualResults)
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
     }
   }

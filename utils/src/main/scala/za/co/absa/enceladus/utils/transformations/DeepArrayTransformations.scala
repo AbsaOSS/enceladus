@@ -27,7 +27,7 @@ import scala.util.control.NonFatal
 object DeepArrayTransformations {
 
   type TransformFunction = Column => Column
-  
+
   /**
     * Map transformation for columns that can be inside nested structs, arrays and its combinations.
     *
@@ -124,7 +124,7 @@ object DeepArrayTransformations {
     */
   def nestedAddColumn(df: DataFrame,
                       newColumnName: String,
-                      expression: Unit => Column): DataFrame = {
+                      expression: () => Column): DataFrame = {
     try {
       nestedWithColumnMapHelper(df, newColumnName, "", Some(_ => expression()), None)._1
     } catch {

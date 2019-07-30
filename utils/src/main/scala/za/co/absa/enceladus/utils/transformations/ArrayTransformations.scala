@@ -24,30 +24,31 @@ import org.apache.spark.sql.api.java.UDF2
 import org.slf4j.LoggerFactory
 import org.apache.spark.storage.StorageLevel
 
-import scala.collection.mutable.ListBuffer
-
 object ArrayTransformations {
 
-  val logger = LoggerFactory.getLogger(this.getClass)
+  private val logger = LoggerFactory.getLogger(this.getClass)
   private[enceladus] val arraySizeCols = new scala.collection.mutable.HashMap[String, String]()
 
   private val zipWithOrderUDF1 = new UDF1[Seq[Row], Seq[(Int, Row)]] {
-    override def call(t1: Seq[Row]) = {
-      if (t1 == null) null
+    override def call(t1: Seq[Row]): Seq[(Int, Row)] = {
+      // scalastyle:off if.brace
+      if (t1 == null) null // scalastyle:ignore null
       else t1.zipWithIndex.map(_.swap)
+      // scalastyle:on if.brace
     }
   }
 
   //array safe col
   def arrCol(any: String): Column = {
     val toks = any.replaceAll("\\[(\\d+)\\]", "\\.$1").split("\\.")
-    toks.tail.foldLeft(col(toks.head))({
-      case (acc, tok) => {
+    toks.tail.foldLeft(col(toks.head)){
+      case (acc, tok) =>
         if (tok.matches("\\d+")) {
           acc(tok.toInt)
-        } else acc(tok)
-      }
-    })
+        } else {
+          acc(tok)
+        }
+    }
   }
 
   def nestedWithColumn(ds: Dataset[Row])(columnName: String, column: Column): Dataset[Row] = {
@@ -61,16 +62,21 @@ object ArrayTransformations {
       if (currPath == columnName) {
         column as tokens.head
       } // some other attribute
-      else if (!columnName.startsWith(currPath)) arrCol(currPath)
-      // partial match, keep going
-      else {
-        if (topType.isEmpty) struct(helper(tokens.tail, pathAcc ++ List(tokens.head))) as tokens.head
-        else topType.get match {
-          case s: StructType => {
+      else if (!columnName.startsWith(currPath)) {
+        arrCol(currPath)
+      } // partial match, keep going
+      else if (topType.isEmpty) {
+        struct(helper(tokens.tail, pathAcc ++ List(tokens.head))) as tokens.head
+      } else {
+        topType.get match {
+          case s: StructType =>
             val cols = s.fields.map(_.name)
-            val fields = if (tokens.size > 1 && !cols.contains(tokens(1))) (cols :+ tokens(1)) else cols
+            val fields = if (tokens.size > 1 && !cols.contains(tokens(1))) {
+              cols :+ tokens(1)
+            } else {
+              cols
+            }
             struct(fields.map(field => helper((List(field) ++ tokens.tail).distinct, pathAcc :+ tokens.head) as field): _*) as tokens.head
-          }
           case _: ArrayType => throw new IllegalStateException("Cannot reconstruct array columns. Please use this within arrayTransform.")
           case _: DataType  => arrCol(currPath) as tokens.head
         }
@@ -82,8 +88,11 @@ object ArrayTransformations {
 
   private def getArraySchema(field: String, schema: StructType): ArrayType = {
     val arrType = SchemaUtils.getFieldType(field, schema)
-    if (arrType.isEmpty || !arrType.get.isInstanceOf[ArrayType]) throw new IllegalStateException(s"Column $field either does not exist or is not of type ArrayType")
-    else arrType.get.asInstanceOf[ArrayType]
+    if (arrType.isEmpty || !arrType.get.isInstanceOf[ArrayType]) {
+      throw new IllegalStateException(s"Column $field either does not exist or is not of type ArrayType")
+    } else {
+      arrType.get.asInstanceOf[ArrayType]
+    }
   }
 
   /**
@@ -97,13 +106,13 @@ object ArrayTransformations {
     val udfName = "arrayZipWithIndex_" + arrCol.replace(".", "_")
 
     val elType = getArraySchema(arrCol, ds.schema)
-    val newType = ArrayType.apply(StructType(Seq(StructField("_1", IntegerType, false), StructField("_2", elType.elementType, elType.containsNull))))
+    val newType = ArrayType.apply(StructType(Seq(StructField("_1", IntegerType, nullable = false), StructField("_2", elType.elementType, elType.containsNull))))
 
     logger.info(s"Registering $udfName UDF for Array Zip With Index")
-    logger.info(s"Calling UDF ${udfName}(${arrCol}))")
+    logger.info(s"Calling UDF $udfName($arrCol))")
 
-    val zipUdf = spark.udf.register(udfName, zipWithOrderUDF1, newType)
-    val res = nestedWithColumn(ds)(arrCol, expr(s"${udfName}(${arrCol})"))
+    spark.udf.register(udfName, zipWithOrderUDF1, newType)
+    val res = nestedWithColumn(ds)(arrCol, expr(s"$udfName($arrCol)"))
     res
   }
 
@@ -116,7 +125,7 @@ object ArrayTransformations {
    *      Fn has to preserve the element path.
    *  @return Dataset with the array of transformed elements (at the original path) and preserving the original order of the elements.
    */
-  def arrayTransform(ds: Dataset[Row], arrayCol: String)(fn: ((Dataset[Row]) => Dataset[Row]))(implicit spark: SparkSession) = {
+  def arrayTransform(ds: Dataset[Row], arrayCol: String)(fn: Dataset[Row] => Dataset[Row])(implicit spark: SparkSession): DataFrame = {
 
     import spark.implicits._
 
@@ -144,10 +153,12 @@ object ArrayTransformations {
     val arraySchema = ArrayType.apply(arrayChildSchema, origArraySchema.containsNull)
 
     spark.udf.register(s"${groupField}_handleNullAndEmpty", new UDF2[Int, Seq[Row], Seq[Row]] {
-      override def call(t1: Int, t2: Seq[Row]) = {
-        if (t1 == -1) null
+      override def call(t1: Int, t2: Seq[Row]): Seq[Row] = {
+        // scalastyle:off if.brace
+        if (t1 == -1) null // scalastyle:ignore null
         else if (t1 == 0) Seq()
         else t2
+        // scalastyle:on if.brace
       }
 
     }, arraySchema)
@@ -161,7 +172,7 @@ object ArrayTransformations {
     res4
   }
 
-  def nestedDrop(df: Dataset[Row], colName: String) = {
+  def nestedDrop(df: Dataset[Row], colName: String): Dataset[Row] = {
     val toks = colName.split("\\.")
     if (toks.size == 1) df.drop(colName) else {
       if (SchemaUtils.getFirstArrayPath(colName, df.schema) != "") throw new IllegalStateException(s"Array Type fields in the path of $colName - dropping arrays children is not supported")
@@ -170,12 +181,12 @@ object ArrayTransformations {
       val parentType = SchemaUtils.getFieldType(parentPath, df.schema)
       logger.info(s"Nested Drop: parent type $parentType")
       val parentCols = if (parentType.isEmpty) throw new IllegalStateException(s"Field $colName does not exist in \n ${df.printSchema()}") else parentType.get.asInstanceOf[StructType].fields
-      val replace = struct(parentCols.filter(_.name != toks.last).map(x => arrCol(s"${parentPath}.${x.name}") as x.name): _*)
+      val replace = struct(parentCols.filter(_.name != toks.last).map(x => arrCol(s"$parentPath.${x.name}") as x.name): _*)
       this.nestedWithColumn(df)(parentPath, replace)
     }
   }
 
-  def flattenArrays(df: Dataset[Row], colName: String)(implicit spark: SparkSession) = {
+  def flattenArrays(df: Dataset[Row], colName: String)(implicit spark: SparkSession): Dataset[Row] = {
     val typ = SchemaUtils.getFieldType(colName, df.schema).getOrElse(throw new Error(s"Field $colName does not exist in ${df.schema.printTreeString()}"))
     if (!typ.isInstanceOf[ArrayType]) {
       logger.info(s"Field $colName is not an ArrayType, returning the original dataset!")
@@ -183,13 +194,13 @@ object ArrayTransformations {
     } else {
       val arrType = typ.asInstanceOf[ArrayType]
       if (!arrType.elementType.isInstanceOf[ArrayType]) {
-        logger.info(s"Field ${colName} is not a nested array, returning the original dataset!")
+        logger.info(s"Field $colName is not a nested array, returning the original dataset!")
         df
       } else {
         val udfName = colName.replace('.', '_') + System.currentTimeMillis()
 
         spark.udf.register(udfName, new UDF1[Seq[Seq[Row]], Seq[Row]] {
-          def call(t1: Seq[Seq[Row]]): Seq[Row] = if (t1 == null) null.asInstanceOf[Seq[Row]] else t1.filter(_ != null).flatten
+          def call(t1: Seq[Seq[Row]]): Seq[Row] = if (t1 == null) null.asInstanceOf[Seq[Row]] else t1.filter(_ != null).flatten // scalastyle:ignore null
         }, arrType.elementType)
 
         nestedWithColumn(df)(colName, callUDF(udfName, col(colName)))
@@ -198,18 +209,17 @@ object ArrayTransformations {
 
   }
 
-  def handleArrays(targetColumn: String, df: Dataset[Row])(fn: (Dataset[Row] => Dataset[Row]))(implicit spark: SparkSession): Dataset[Row] = {
+  def handleArrays(targetColumn: String, df: Dataset[Row])(fn: Dataset[Row] => Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
     logger.info(s"handleArrays: Finding first array for $targetColumn")
     val firstArr = SchemaUtils.getFirstArrayPath(targetColumn, df.schema)
     logger.info(s"handleArrays: First array field $firstArr")
     firstArr match {
       case "" => fn(df)
-      case _ => {
+      case _ =>
         val res = ArrayTransformations.arrayTransform(df, firstArr) {
           case dfArr => handleArrays(targetColumn, dfArr)(fn)
         }
         res
-      }
     }
   }
 

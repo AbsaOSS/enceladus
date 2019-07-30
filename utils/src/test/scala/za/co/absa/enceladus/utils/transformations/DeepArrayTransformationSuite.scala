@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.utils.transformations
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
 import DeepArraySamples._
@@ -27,7 +27,7 @@ import DeepArraySamples._
 // It is declared package private so the names won't pollute public/exported namespace
 
 
-class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
+class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with LoggerTestBase{
   // scalastyle:off line.size.limit
   // scalastyle:off null
 
@@ -212,9 +212,6 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     // Array of struct
     val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleN).toDF
 
-    //df.printSchema()
-    //df.toJSON.take(10).foreach(println)
-
     val dfOut = DeepArrayTransformations.nestedWithColumnMap(df, "legs.conditions.conif", "conformedField", c => {
       upper(c)
     })
@@ -261,7 +258,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
   test("Test lit() of a plain field") {
     val df = spark.sparkContext.parallelize(plainSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "planet", c => {
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "planet", () => {
       lit("Earth")
     })
 
@@ -287,7 +284,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     // Struct of struct
     val df = spark.sparkContext.parallelize(structOfStructSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "employee.address.conformedType", c => {
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "employee.address.conformedType", () => {
       lit("City")
     })
 
@@ -318,10 +315,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     // Array of struct
     val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
 
-    //df.printSchema()
-    //df.toJSON.take(10).foreach(println)
-
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.conformedType", c => {
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.conformedType", () => {
       lit("Person")
     })
 
@@ -350,7 +344,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     // Array of struct
     val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.department", c => {
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.department", () => {
       lit("IT")
     })
 
@@ -380,10 +374,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
     // Array of struct
     val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleN).toDF
 
-    //df.printSchema()
-    //df.toJSON.take(10).foreach(println)
-
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "legs.conditions.conformedSystem", c => {
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "legs.conditions.conformedSystem", () => {
       lit("Trading")
     })
 
@@ -850,20 +841,20 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase {
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
     if (actualSchema != expectedSchema) {
-      println("EXPECTED:")
-      println(expectedSchema)
-      println("ACTUAL:")
-      println(actualSchema)
+      logger.debug("EXPECTED:")
+      logger.debug(expectedSchema)
+      logger.debug("ACTUAL:")
+      logger.debug(actualSchema)
       fail("Actual conformed schema does not match the expected schema (see above).")
     }
   }
 
   private def assertResults(actualResults: String, expectedResults: String): Unit = {
     if (actualResults != expectedResults) {
-      println("EXPECTED:")
-      println(expectedResults)
-      println("ACTUAL:")
-      println(actualResults)
+      logger.debug("EXPECTED:")
+      logger.debug(expectedResults)
+      logger.debug("ACTUAL:")
+      logger.debug(actualResults)
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
     }
   }
