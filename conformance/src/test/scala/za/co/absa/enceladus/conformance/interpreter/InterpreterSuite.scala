@@ -42,7 +42,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
   }
 
   def testEndToEndDynamicConformance(useExperimentalMappingRule: Boolean): Unit = {
-    // Enable Conformance Framweork
+    // Enable Conformance framework
     import za.co.absa.atum.AtumImplicits._
     spark.enableControlMeasuresTracking("src/test/testData/employee/2017/11/01/_INFO", "src/test/testData/_testOutput/_INFO")
 
@@ -69,7 +69,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
       dfs,
       useExperimentalMappingRule,
       isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF).cache
+      enableControlFramework = enableCF)
 
     val data = conformed.as[ConformedEmployee].collect.sortBy(_.employee_id).toList
     val expected = EmployeeConformance.conformedEmployees.sortBy(_.employee_id).toList
@@ -99,7 +99,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
   }
 
   def testEndToEndArrayConformance(useExperimentalMappingRule: Boolean): Unit = {
-    // Enable Conformance Framweork
+    // Enable Conformance Framework
     import za.co.absa.atum.AtumImplicits._
     spark.enableControlMeasuresTracking("src/test/testData/_tradeData/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
 

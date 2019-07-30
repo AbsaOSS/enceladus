@@ -33,7 +33,7 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
   private val idField1 = SchemaUtils.getUniqueName("tmpId", Option(inputDf.schema))
   private val idField2 = s"${idField1}_2"
   private val dfWithId = inputDf.withColumn(idField1, lit(1))
-  private val dfJustId = Seq(1).toDF(idField2).cache
+  private val dfJustId = Seq(1).toDF(idField2)
 
   /**
     * Returns a dataframe prepared to apply the Catalyst workaround

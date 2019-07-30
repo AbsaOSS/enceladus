@@ -23,9 +23,9 @@ import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.samples.NegationRuleSamples
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class NegationRuleSuite extends FunSuite with SparkTestBase {
+class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
 
   import spark.implicits._
 
@@ -110,16 +110,14 @@ class NegationRuleSuite extends FunSuite with SparkTestBase {
     val conformedJSON = conformed.toJSON.collect().mkString("\n")
 
     if (conformedJSON != expectedJSON) {
-      println("EXPECTED:")
-      println(expectedJSON)
-      println("ACTUAL:")
-      println(conformedJSON)
-      println("DETAILS (Input):")
-      inputDf.printSchema()
-      inputDf.show
-      println("DETAILS (Conformed):")
-      conformed.printSchema()
-      conformed.show
+      logger.debug("EXPECTED:")
+      logger.debug(expectedJSON)
+      logger.debug("ACTUAL:")
+      logger.debug(conformedJSON)
+      logger.debug("DETAILS (Input):")
+      logDataFrameContent(inputDf)
+      logger.debug("DETAILS (Conformed):")
+      logDataFrameContent(conformed)
 
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
     }

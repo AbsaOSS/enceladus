@@ -33,7 +33,7 @@ import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 object DynamicInterpreter {
-  private val log = LogManager.getLogger("enceladus.conformance.DynamicInterpreter")
+  private val log = LogManager.getLogger(this.getClass)
 
   /**
     * interpret The dynamic conformance interpreter function

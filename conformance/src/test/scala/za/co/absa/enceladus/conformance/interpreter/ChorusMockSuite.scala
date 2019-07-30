@@ -16,11 +16,11 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.model.{ Dataset => ConfDataset }
-import org.mockito.Mockito.{ mock, when => mockWhen }
+import za.co.absa.enceladus.model.{Dataset => ConfDataset}
+import org.mockito.Mockito.{mock, when => mockWhen}
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.MappingTable
@@ -30,7 +30,7 @@ case class MyMappingTableInner(description: String, name: String)
 case class MyData(id: Int, toJoin: Int)
 case class MyDataConfd(id: Int, toJoin: Int, confMapping: MyMappingTableInner)
 
-class ChorusMockSuite extends FunSuite with SparkTestBase {
+class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase{
 
   def testChorusMockData(useExperimentalMappingRule: Boolean): Unit = {
     val d = Seq(
@@ -54,8 +54,8 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
     DataSource.setData("myMappingTable", mappingDf)
 
     val conformanceDef = ConfDataset(
-      name = "My dummy conformance workflow", // whatev here
-      version = 0, // whatev here
+      name = "My dummy conformance workflow", // whatever here
+      version = 0, // whatever here
       hdfsPath = "/a/b/c",
       hdfsPublishPath = "/publish/a/b/c",
 
@@ -73,14 +73,11 @@ class ChorusMockSuite extends FunSuite with SparkTestBase {
       enableControlFramework = enableCF)
       .repartition(2)
 
-    confd.show(100, false)
-    confd.printSchema()
+    logDataFrameContent(confd)
 
     confd.write.mode("overwrite").parquet("_testOutput")
-    //
     val readAgain = spark.read.parquet("_testOutput")
 
-    assert(readAgain.show.isInstanceOf[Unit])
     assert(readAgain.count === 3)
   }
 

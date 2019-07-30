@@ -85,12 +85,12 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
 
       errorsDf = joined.withColumn(
         ErrorMessage.errorColumnName,
-        when((col(s"`${rule.outputColumn}`") isNull) and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).otherwise(col(ErrorMessage.errorColumnName)))
+        when(col(s"`${rule.outputColumn}`").isNull and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).otherwise(col(ErrorMessage.errorColumnName)))
 
       // see if we need to apply default value
       defaultValueOpt match {
         case Some(defaultValue) =>
-          ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, when(col(s"`${rule.outputColumn}`") isNotNull, col(s"`${rule.outputColumn}`"))
+          ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, when(col(s"`${rule.outputColumn}`").isNotNull, col(s"`${rule.outputColumn}`"))
             .otherwise(expr(defaultValue)))
         case None =>
           ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, col(s"`${rule.outputColumn}`"))
@@ -104,7 +104,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     // and in the current rule the joining key is an array so the error values will duplicate as the size of array :
     // applied deduplicate logic while flattening error column
     spark.udf.register(s"${idField}_flattenErrDistinct", new UDF1[Seq[Seq[Row]], Seq[Row]] {
-      override def call(t1: Seq[Seq[Row]]) = {
+      override def call(t1: Seq[Seq[Row]]): Seq[Row] = {
         t1.flatten.distinct
       }
 
@@ -173,9 +173,10 @@ object MappingRuleInterpreter {
 
     val targetField = getQualifiedField(schema, targetAttribute)
 
-    if (targetField.isEmpty)
+    if (targetField.isEmpty) {
       throw new ValidationException(
         s"The mapping table '$mappingTable' does not contain the specified target attribute '$targetAttribute'\n")
+    }
 
     val targetAttributeType = targetField.get.dataType
 
@@ -244,11 +245,8 @@ object MappingRuleInterpreter {
 
   private[rules] def getQualifiedField(schema: StructType, fieldName: String): Option[StructField] = {
     val flatSchema = flattenForJoin(schema)
-    val field = flatSchema.find(_.name == fieldName)
-    if (field.isDefined)
-      Some(field.get)
-    else
-      None
+    val field: Option[StructField] = flatSchema.find(_.name == fieldName)
+    field
   }
 
   // Flattens a schema for join validation purposes.
@@ -277,7 +275,7 @@ object MappingRuleInterpreter {
 
     val cond = pairs.foldLeft(lit(true))({
       case (acc: Column, attrs: (String, String)) => acc and
-        joinCond(col(s"${inputDfAlias}.${attrs._2}"), col(s"${mappingTableAlias}.${attrs._1}"))
+        joinCond(col(s"$inputDfAlias.${attrs._2}"), col(s"$mappingTableAlias.${attrs._1}"))
     })
     cond
   }
@@ -296,16 +294,15 @@ object MappingRuleInterpreter {
     paths
       .map(x => (x, ArrayTransformations.arraySizeCols(x)))
       .foldLeft(lit(true)) {
-        case (acc: Column, (origPath, sizePath)) => {
+        case (acc: Column, (origPath, sizePath)) =>
           val nullable = lit(SchemaUtils.getFieldNullability(origPath, schema).get)
-          val nll = col(sizePath) === lit(-1)          
+          val nll = col(sizePath) === lit(-1)
           val empty = col(sizePath) === lit(0)
-          
+
           acc and (
               (!empty and !nll) or
               (!nullable and nll)
           )
-        }
       }
   }
 

@@ -29,8 +29,8 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   import spark.implicits._
   // spark.enableControlFrameworkTracking()
 
-  implicit var dao: EnceladusDAO = null
-  implicit var progArgs: CmdConfig = null
+  implicit var dao: EnceladusDAO = _
+  implicit var progArgs: CmdConfig = _
 
   private val enableCF = false
   private val isCatalystWorkaroundEnabled = true
@@ -58,7 +58,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
       df,
       useExperimentalMappingRule,
       isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF).cache()
+      enableControlFramework = enableCF)
     val expected = ArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[ConformedOuter].collect().sortBy(_.order).toList
     assertResult(expected)(conformed)
@@ -81,7 +81,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
       df,
       useExperimentalMappingRule,
       isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF).cache()
+      enableControlFramework = enableCF)
 
     val expected = NullArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
@@ -109,7 +109,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
       df,
       useExperimentalMappingRule,
       isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF).cache()
+      enableControlFramework = enableCF)
     val expected = EmtpyArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
 

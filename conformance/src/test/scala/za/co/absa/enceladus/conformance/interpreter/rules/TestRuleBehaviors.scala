@@ -44,7 +44,7 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
       inputDf,
       experimentalMR,
       isCatalystWorkaroundEnabled,
-      enableCF).cache
+      enableCF)
 
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 
@@ -55,7 +55,7 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
       logger.error(conformedJSON)
       logger.error("DETAILS (Input):")
       logDataFrameContent(inputDf, ERROR)
-      println("DETAILS (Conformed):")
+      logger.error("DETAILS (Conformed):")
       logDataFrameContent(conformed, ERROR)
       fail("Actual conformed dataset JSON does not match the expected JSON (see log).")
     }

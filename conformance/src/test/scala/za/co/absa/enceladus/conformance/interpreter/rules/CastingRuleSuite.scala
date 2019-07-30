@@ -22,9 +22,9 @@ import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, RuleVal
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.samples.CastingRuleSamples
 import za.co.absa.enceladus.utils.general.JsonUtils
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class CastingRuleSuite extends FunSuite with SparkTestBase {
+class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
 
   test("Casting conformance rule test") {
 
@@ -51,16 +51,14 @@ class CastingRuleSuite extends FunSuite with SparkTestBase {
     val conformedJSON = JsonUtils.prettySparkJSON(conformed.orderBy($"id").toJSON.collect)
 
     if (conformedJSON != CastingRuleSamples.conformedOrdersJSON) {
-      println("EXPECTED:")
-      println(CastingRuleSamples.conformedOrdersJSON)
-      println("ACTUAL:")
-      println(conformedJSON)
-      println("DETAILS (Input):")
-      inputDf.printSchema()
-      inputDf.show
-      println("DETAILS (Conformed):")
-      conformed.printSchema()
-      conformed.show
+      logger.debug("EXPECTED:")
+      logger.debug(CastingRuleSamples.conformedOrdersJSON)
+      logger.debug("ACTUAL:")
+      logger.debug(conformedJSON)
+      logger.debug("DETAILS (Input):")
+      logDataFrameContent(inputDf)
+      logger.debug("DETAILS (Conformed):")
+      logDataFrameContent(conformed)
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
     }
 
