@@ -40,6 +40,7 @@ object ErrorMessage {
     ErrorMessage(errType = "confMapError", errCode = "E00001", errMsg = "Conformance Error - Null produced by mapping conformance rule", errCol = errCol, rawValues = rawValues, mappings = mappings)
   def confCastErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(errType = "confCastError", errCode = "E00003", errMsg = "Conformance Error - Null returned by casting conformance rule", errCol = errCol, rawValues = Seq(rawValue))
   def confNegErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(errType = "confNegError", errCode = "E00004", errMsg = "Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged", errCol = errCol, rawValues = Seq(rawValue))
+  def confLitErr(errCol: String, rawValue: String) = ErrorMessage(errType = "confLitError", errCode = "E00005", errMsg = "Conformance Error - Special column value has changed", errCol = errCol, rawValues = Seq(rawValue))
 
   def errorColSchema(implicit spark: SparkSession): StructType = {
     import spark.implicits._

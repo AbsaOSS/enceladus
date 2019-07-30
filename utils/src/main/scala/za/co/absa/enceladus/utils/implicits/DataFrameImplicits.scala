@@ -62,7 +62,7 @@ object DataFrameImplicits {
       *
       * @param colName A column to add if it does not exist already
       * @param col     An expression for the column to add
-      * @return true if the column is the only column in a struct
+      * @return a new dataframe with the new column
       */
     def withColumnIfDoesNotExist(colName: String, col: Column): DataFrame = {
       SparkUtils.withColumnIfDoesNotExist(df, colName, col)
