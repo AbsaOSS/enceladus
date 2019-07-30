@@ -73,38 +73,34 @@ object KafkaDispatcher {
 
     if (configurationPath.isEmpty) {
       log.error("No Kafka settings were informed.")
-      return
-    }
-
-    if (!hasSchema(dataframe)) {
+    } else if (!hasSchema(dataframe)) {
       log.error("Dataframe does not have a valid schema, thus, it is not possible to define the structures of the records.")
-      return
-    }
+    } else {
+      val properties = KafkaParametersProcessor.loadProperties(configurationPath.get)
+      if (KafkaParametersProcessor.validate(properties)) {
 
-    val properties = KafkaParametersProcessor.loadProperties(configurationPath.get)
-    if (KafkaParametersProcessor.validate(properties)) {
+        sendFiles(properties, dataframe)
 
-      sendFiles(properties, dataframe)
+        val extraColumns = KafkaParametersProcessor.getColumnsToDispatch(properties)
+        log.info(s"""Sending default fields to Kafka: [${DEFAULT_COLUMNS.mkString(",")}]""")
+        log.info(s"""Sending extra fields to Kafka: [${extraColumns.mkString(",")}]""")
 
-      val extraColumns = KafkaParametersProcessor.getColumnsToDispatch(properties)
-      log.info(s"""Sending default fields to Kafka: [${DEFAULT_COLUMNS.mkString(",")}]""")
-      log.info(s"""Sending extra fields to Kafka: [${extraColumns.mkString(",")}]""")
+        import za.co.absa.abris.avro.AvroSerDe._
+        import KafkaParametersProcessor._
 
-      import za.co.absa.abris.avro.AvroSerDe._
-      import KafkaParametersProcessor._
+        val filtered = dataframe
+          .filter(s"size(${DEFAULT_COLUMNS.head}) > 0")
+          .select(DEFAULT_COLUMNS.head, DEFAULT_COLUMNS.tail ::: extraColumns: _*)
 
-      val filtered = dataframe
-        .filter(s"size(${DEFAULT_COLUMNS.head}) > 0")
-        .select(DEFAULT_COLUMNS.head, DEFAULT_COLUMNS.tail:::extraColumns:_*)
+        generateAvroSchema(filtered.schema, properties)
 
-      generateAvroSchema(filtered.schema, properties)
-
-      filtered
-        .toAvro(DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAMESPACE)
-        .write
-        .format(KAFKA_REGISTERED_FORMAT)
+        filtered
+          .toAvro(DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAMESPACE)
+          .write
+          .format(KAFKA_REGISTERED_FORMAT)
           .addOptions(properties)
-        .save()
+          .save()
+      }
     }
   }
 

@@ -26,7 +26,7 @@ class DefaultSource
     with SchemaRelationProvider
     with DataSourceRegister {
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {
-    createRelation(sqlContext, parameters, null)
+    createRelation(sqlContext, parameters, null) // scalastyle:ignore null
   }
 
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String], schema: StructType): BaseRelation = {

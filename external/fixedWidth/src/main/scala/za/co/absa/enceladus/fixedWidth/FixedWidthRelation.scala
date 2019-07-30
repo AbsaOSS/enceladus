@@ -68,12 +68,16 @@ class FixedWidthRelation(sourceDirPath: String, dataSchema: StructType, trimValu
         val triple: (Int, Int, StructField) = (index, index + width, field)
         index = length
         triple
-      }
-      else throw new IllegalStateException(s"No width has been defined for the column ${field.name}"))
+      } else {
+        throw new IllegalStateException(s"No width has been defined for the column ${field.name}")
+      })
   }
 
   private def getProcessedValue(value: String): String = {
-    if (!trimValues) value
-    else value.trim
+    if (!trimValues) {
+      value
+    } else {
+      value.trim
+    }
   }
 }
