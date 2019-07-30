@@ -59,7 +59,7 @@ object SchemaValidator {
                          (implicit spark: SparkSession)
                          : List[FieldValidationFailure] = {
     val expectedTypeNonNullable = ArrayType(ErrorMessage.errorColSchema, containsNull = false)
-    val expectedTypeNullable = ArrayType.apply(ErrorMessage.errorColSchema, containsNull = true)
+    val expectedTypeNullable = ArrayType(ErrorMessage.errorColSchema, containsNull = true)
     val errCol = schema.find(f => f.name == ErrorMessage.errorColumnName)
     errCol match {
       case Some(errColField) =>

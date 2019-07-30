@@ -27,7 +27,7 @@ class SparkUtilsSuite extends FunSuite with SparkTestBase {
   private def getDummyDataFrame: DataFrame = {
     import spark.implicits._
 
-    Seq(1, 2, 3, 4, 5).toDF("value")
+    Seq(1, 1, 1, 2, 1).toDF("value")
   }
 
   test("Test withColumnIfNotExist() when the column does not exist") {
@@ -36,10 +36,10 @@ class SparkUtilsSuite extends FunSuite with SparkTestBase {
         ||value|foo|
         |+-----+---+
         ||1    |1  |
+        ||1    |1  |
+        ||1    |1  |
         ||2    |1  |
-        ||3    |1  |
-        ||4    |1  |
-        ||5    |1  |
+        ||1    |1  |
         |+-----+---+
         |
         |""".stripMargin.replace("\r\n", "\n")
@@ -56,15 +56,15 @@ class SparkUtilsSuite extends FunSuite with SparkTestBase {
 
   test("Test withColumnIfNotExist() when the column exists") {
     val expectedOutput =
-      """+-----+
-        ||value|
-        |+-----+
-        ||1    |
-        ||2    |
-        ||3    |
-        ||4    |
-        ||5    |
-        |+-----+
+      """+-----+----------------------------------------------------------------------------------------------+
+        ||value|errCol                                                                                        |
+        |+-----+----------------------------------------------------------------------------------------------+
+        ||1    |[]                                                                                            |
+        ||1    |[]                                                                                            |
+        ||1    |[]                                                                                            |
+        ||1    |[[confLitError, E00005, Conformance Error - Special column value has changed, value, [2], []]]|
+        ||1    |[]                                                                                            |
+        |+-----+----------------------------------------------------------------------------------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
 
@@ -79,15 +79,15 @@ class SparkUtilsSuite extends FunSuite with SparkTestBase {
 
   test("Test withColumnIfNotExist() when the column exists, but has a different case") {
     val expectedOutput =
-      """+-----+
-        ||value|
-        |+-----+
-        ||1    |
-        ||2    |
-        ||3    |
-        ||4    |
-        ||5    |
-        |+-----+
+      """+-----+----------------------------------------------------------------------------------------------+
+        ||vAlUe|errCol                                                                                        |
+        |+-----+----------------------------------------------------------------------------------------------+
+        ||1    |[]                                                                                            |
+        ||1    |[]                                                                                            |
+        ||1    |[]                                                                                            |
+        ||1    |[[confLitError, E00005, Conformance Error - Special column value has changed, vAlUe, [2], []]]|
+        ||1    |[]                                                                                            |
+        |+-----+----------------------------------------------------------------------------------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
 
