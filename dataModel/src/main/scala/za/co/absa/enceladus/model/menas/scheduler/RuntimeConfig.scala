@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.model.menas.scheduler
 
 case class RuntimeConfig(
+    // scalastyle:off magic.number
     stdNumExecutors: Int = 4,
     stdExecutorMemory: Int = 2,
     confNumExecutors: Int = 4,
@@ -24,4 +25,5 @@ case class RuntimeConfig(
     driverMemory: Int = 2,
     sysUser: String,
     menasKeytabFile: String
+    // scalastyle:on magic.number
 )

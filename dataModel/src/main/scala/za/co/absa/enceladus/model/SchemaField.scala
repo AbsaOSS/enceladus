@@ -20,7 +20,7 @@ case class SchemaField
   name: String,
   `type`: String,
   path: String,  // path up to this field
-  
+
   // These fields are optional when the type of the field is "array".
   elementType: Option[String] = None,
   containsNull: Option[Boolean] = None,

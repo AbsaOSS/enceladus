@@ -32,10 +32,10 @@ case class MappingTable(name: String,
     defaultMappingValue: List[DefaultValue] = List(),
 
     dateCreated: ZonedDateTime = ZonedDateTime.now(),
-    userCreated: String = null,
+    userCreated: String = null, // scalastyle:ignore null
 
     lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-    userUpdated: String = null,
+    userUpdated: String = null, // scalastyle:ignore null
 
     disabled: Boolean = false,
     dateDisabled: Option[ZonedDateTime] = None,
@@ -49,14 +49,14 @@ case class MappingTable(name: String,
   override def setDescription(desc: Option[String]): VersionedModel = this.copy(description = desc)
   override def setDateCreated(time: ZonedDateTime): VersionedModel = this.copy(dateCreated = time)
   override def setUserCreated(user: String): VersionedModel = this.copy(userCreated = user)
-  def setSchemaName(newName: String) = this.copy(schemaName = newName)
-  def setSchemaVersion(newVersion: Int) = this.copy(schemaVersion = newVersion)
-  def setHDFSPath(newPath: String) = this.copy(hdfsPath = newPath)
-  def setDefaultMappingValue(newDefaults: List[DefaultValue]) = this.copy(defaultMappingValue = newDefaults)
-  override def setParent(newParent: Option[MenasReference]) = this.copy(parent = newParent)
+  def setSchemaName(newName: String): MappingTable = this.copy(schemaName = newName)
+  def setSchemaVersion(newVersion: Int): MappingTable = this.copy(schemaVersion = newVersion)
+  def setHDFSPath(newPath: String): MappingTable = this.copy(hdfsPath = newPath)
+  def setDefaultMappingValue(newDefaults: List[DefaultValue]): MappingTable = this.copy(defaultMappingValue = newDefaults)
+  override def setParent(newParent: Option[MenasReference]): MappingTable = this.copy(parent = newParent)
 
   def getDefaultMappingValues: Map[String, String] = {
-    defaultMappingValue.map(_.toTouple()).toMap
+    defaultMappingValue.map(_.toTuple).toMap
   }
 
   override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),

@@ -15,15 +15,15 @@
 
 package za.co.absa.enceladus.model.menas.jackson
 
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.core.JsonParser
 
 class OptCharDeserializer extends StdDeserializer[Option[Char]](classOf[Option[Char]]) {
   override def deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext): Option[Char] = {
       Some(jsonParser.getText.head)
   }
-  
-  override def getNullValue(): Option[Char] = None
-  override def getEmptyValue(): Option[Char] = None
+
+  override def getNullValue: Option[Char] = None
+  override def getEmptyValue: Option[Char] = None
 }

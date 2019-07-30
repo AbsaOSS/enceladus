@@ -29,15 +29,15 @@ trait Auditable[T <: Product] { self: T =>
   private def fields(implicit ct: ClassTag[T]) = ct.runtimeClass.getDeclaredFields
 
   val createdMessage: AuditTrailEntry
-  
+
   /**
    * Get an index of a given field in T
    */
-  private def getFieldIndex(fieldName: String)(implicit ct: ClassTag[T]): Option[Int] = fields.zipWithIndex.find(field => field._1.getName == fieldName).map(_._2)  
-  
+  private def getFieldIndex(fieldName: String)(implicit ct: ClassTag[T]): Option[Int] = fields.zipWithIndex.find(field => field._1.getName == fieldName).map(_._2)
+
   /**
    * Get list of audit entries for specified fields of primitive types
-   * 
+   *
    * @param newValue New record of type T
    * @param fieldNames List of fields for which the audit messages are to be generated and their human readable names
    */
@@ -48,31 +48,33 @@ trait Auditable[T <: Product] { self: T =>
       fieldIndex.flatMap({ i =>
           val newVal = newValue.productElement(i)
           val oldVal = self.productElement(i)
-          if (newVal != oldVal)
+          if (newVal != oldVal) {
             Some(AuditTrailChange(field = name.declaredField, oldValue = Some(unwrapOption(oldVal).toString), newValue = Some(unwrapOption(newVal).toString), message = s"${name.humanReadableField} updated."))
-          else None
+          } else {
+            None
+          }
       })
-    }).collect { 
+    }).collect {
       case Some(change) => change
     }
   }
-  
+
   /**
-   * Get list of audit messages for a specific Seq field. 
-   * 
+   * Get list of audit messages for a specific Seq field.
+   *
    * @param newValue Newer record of type T
    * @param fieldName Name of the field to generate the audit messages for
    */
   private[model] def getSeqFieldsAudit(newValue: T, fieldName: AuditFieldName)(implicit ct: ClassTag[T]): Seq[AuditTrailChange] = {
     val index = getFieldIndex(fieldName.declaredField)
-    
+
     index.map({i =>
       val newSeq = newValue.productElement(i).asInstanceOf[Seq[_]]
       val oldSeq = self.productElement(i).asInstanceOf[Seq[_]]
-      
+
       val added = newSeq.diff(oldSeq).map(v => AuditTrailChange(field = fieldName.declaredField, oldValue = None, newValue = Some(unwrapOption(v).toString), message = s"${fieldName.humanReadableField} added."))
       val removed = oldSeq.diff(newSeq).map(v => AuditTrailChange(field = fieldName.declaredField, oldValue = Some(unwrapOption(v).toString), newValue = None, message = s"${fieldName.humanReadableField} removed."))
-      
+
       removed ++ added
     }).getOrElse(Seq())
   }
