@@ -81,8 +81,9 @@ object SchemaUtils {
     */
   def getFieldNullability(path: String, schema: StructType): Option[Boolean] = {
     def typeHelper(pt: List[String], st: DataType, nl: Option[Boolean]): Option[Boolean] = {
-      if (pt.isEmpty) nl
-      else {
+      if (pt.isEmpty) {
+        nl
+      } else {
         st match {
           case str: StructType => Try {
             typeHelper(pt.tail, str(pt.head).dataType, Some(str.apply(pt.head).nullable))
@@ -253,13 +254,13 @@ object SchemaUtils {
     * @return The path with the new field appended or the field itself if path is empty
     */
   private[enceladus] def appendPath(path: String, fieldName: String) = {
-    if (path.isEmpty()) fieldName else s"$path.$fieldName"
+    if (path.isEmpty) fieldName else s"$path.$fieldName"
   }
 
   /**
     * Determine if a datatype is a primitive one
     */
-  def isPrimitive(dt: DataType) = dt match {
+  def isPrimitive(dt: DataType): Boolean = dt match {
     case _: BinaryType | _: BooleanType | _: ByteType | _: DateType | _: DecimalType | _: DoubleType | _: FloatType | _: IntegerType | _: LongType | _: NullType | _: ShortType | _: StringType | _: TimestampType => true
     case _ => false
   }
@@ -268,15 +269,15 @@ object SchemaUtils {
     * Determine the name of a field
     * Will override to "sourcecolumn" in the Metadata if it exists
     *
-    * @param field
-    * @return Metadata "sourcecolumn" if it exists or field.name
+    * @param field  field to work with
+    * @return       Metadata "sourcecolumn" if it exists or field.name
     */
   def getFieldNameOverriddenByMetadata(field: StructField): String = {
     if (field.metadata.contains("sourcecolumn")) {
       field.metadata.getString("sourcecolumn")
-    }
-    else
+    } else {
       field.name
+    }
   }
 
   /**

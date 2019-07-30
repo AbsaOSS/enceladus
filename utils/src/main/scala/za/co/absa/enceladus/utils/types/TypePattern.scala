@@ -15,9 +15,7 @@
 
 package za.co.absa.enceladus.utils.types
 
-import org.apache.spark.sql.types.StructField
-
-import scala.util.Try
+import scala.language.implicitConversions
 
 /**
   * Class to carry enhanced information about formatting pattern in conversion from/to string

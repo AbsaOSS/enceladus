@@ -25,7 +25,7 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
   */
 class FsUtilsSpec extends FlatSpec with Matchers with SparkTestBase {
   val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-  
+
   "splitUriPath" should "split URI and path" in
   {
     val path = new Path("hdfs://some-host:8020/user/data/input")
