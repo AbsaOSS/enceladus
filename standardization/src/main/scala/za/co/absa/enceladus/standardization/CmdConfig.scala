@@ -96,12 +96,13 @@ object CmdConfig {
       credsFile = Some(path)
       config.copy(menasCredentials = Some(credential))
     }).text("Path to Menas credentials config file.").validate(path =>
-      // scalastyle:off if.brace
-      if (keytabFile.isDefined) failure("Only one authentication method is allowed at a time")
-      else if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
-      else failure("Credentials file not found."))
-      // scalastyle:on if.brace
-
+      if (keytabFile.isDefined) {
+        failure("Only one authentication method is allowed at a time")
+      } else if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) {
+        success
+      } else {
+        failure("Credentials file not found.")
+      })
 
     opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
       keytabFile = Some(file)
@@ -111,11 +112,13 @@ object CmdConfig {
         config.copy(menasCredentials = Some(Right(file)))
       }
     }).text("Path to keytab file used for authenticating to menas").validate({ file =>
-      // scalastyle:off if.brace
-      if (credsFile.isDefined) failure("Only one authentication method is allowed at a time")
-      else if(fsUtils.exists(file)) success
-      else failure("Keytab file doesn't exist")
-      // scalastyle:on if.brace
+      if (credsFile.isDefined) {
+        failure("Only one authentication method is allowed at a time")
+      } else if(fsUtils.exists(file)) {
+        success
+      } else {
+        failure("Keytab file doesn't exist")
+      }
     })
 
     opt[Int]('r', "report-version").optional().action((value, config) =>
