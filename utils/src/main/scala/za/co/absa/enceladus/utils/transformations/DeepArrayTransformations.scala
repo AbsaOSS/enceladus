@@ -124,7 +124,7 @@ object DeepArrayTransformations {
     */
   def nestedAddColumn(df: DataFrame,
                       newColumnName: String,
-                      expression: () => Column): DataFrame = {
+                      expression: Unit => Column): DataFrame = {
     try {
       nestedWithColumnMapHelper(df, newColumnName, "", Some(_ => expression()), None)._1
     } catch {
