@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.menas.services
 
 import org.scalatest.{BeforeAndAfter, FunSuite}
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
 

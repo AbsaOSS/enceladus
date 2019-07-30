@@ -33,7 +33,7 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
       case Some(version) => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName), ("mappingTableVersion", version))
       case None          => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName))
     }
-    
+
     used.map(refs => UsedIn(Some(refs), None))
   }
 

@@ -15,29 +15,29 @@
 
 package za.co.absa.enceladus.menas.auth.kerberos
 
+import java.util
+
 import org.springframework.ldap.core.DirContextOperations
 import org.springframework.ldap.core.DistinguishedName
+import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.AuthorityUtils
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator;
+import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator
 
 class ActiveDirectoryLdapAuthoritiesPopulator extends LdapAuthoritiesPopulator  {
-  
+
   import scala.collection.JavaConversions._
-  
-  override def getGrantedAuthorities(userData: DirContextOperations, username: String) = {
-    val groups = userData.getStringAttributes("memberOf");
-    
+
+  override def getGrantedAuthorities(userData: DirContextOperations, username: String): util.List[_ >: SimpleGrantedAuthority <: GrantedAuthority] = {
+    val groups = userData.getStringAttributes("memberOf")
+
      if (groups == null) {
-            AuthorityUtils.NO_AUTHORITIES;
+            AuthorityUtils.NO_AUTHORITIES
         }
-     
      else {
        groups.map({group =>
-         new SimpleGrantedAuthority(new DistinguishedName(group).removeLast.getValue)
+         new SimpleGrantedAuthority(new DistinguishedName(group).removeLast().getValue)
        }).toList
      }
-    
   }
-  
 }

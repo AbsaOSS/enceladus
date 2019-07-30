@@ -24,7 +24,7 @@ import scala.compat.java8.FutureConverters._
 import org.mongodb.scala.bson.codecs.Macros._
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
-import org.bson.codecs.configuration.CodecRegistries
+import org.bson.codecs.configuration.{CodecRegistries, CodecRegistry}
 import io.github.cbartosiak.bson.codecs.jsr310.zoneddatetime.ZonedDateTimeAsDocumentCodec
 import za.co.absa.enceladus.model._
 import za.co.absa.enceladus.model.api._
@@ -37,12 +37,13 @@ import za.co.absa.enceladus.model.menas.scheduler._
 import za.co.absa.enceladus.model.menas.scheduler.dataFormats._
 import za.co.absa.enceladus.model.menas.scheduler.oozie._
 import za.co.absa.enceladus.menas.models.RunSummary
+import scala.language.implicitConversions
 
 package object implicits {
-  implicit def optJavaScala[C](in: Optional[C]) = if (in.isPresent()) Some(in.get) else None
-  implicit def scalaToJavaFuture[T](in: Future[T]): CompletableFuture[T] = in.toJava.toCompletableFuture()
+  implicit def optJavaScala[C](in: Optional[C]): Option[C] = if (in.isPresent) Some(in.get) else None
+  implicit def scalaToJavaFuture[T](in: Future[T]): CompletableFuture[T] = in.toJava.toCompletableFuture
 
-  val codecRegistry = fromRegistries(fromProviders(
+  val codecRegistry: CodecRegistry = fromRegistries(fromProviders(
     classOf[DatasetDetail], classOf[MappingTableDetail], classOf[SchemaDetail],
     classOf[HDFSFolder],
     classOf[ConformanceRule],

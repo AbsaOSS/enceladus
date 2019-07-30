@@ -36,7 +36,7 @@ class AttachmentRepositoryIntegrationSuite extends BaseRepositoryTest {
   private val attachmentRepository: AttachmentMongoRepository = null
 
   private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
-    
+
   before {
     attachmentFixture.createCollection()
   }
@@ -44,7 +44,7 @@ class AttachmentRepositoryIntegrationSuite extends BaseRepositoryTest {
   after {
     attachmentFixture.dropCollection()
   }
-  
+
   "AttachmentMongoRepository::getSchemaByNameAndVersion" should {
     "return None" when {
       "no Attachment exists for the specified name" in {

@@ -57,34 +57,42 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
       case Some(version) => getVersion(name, version)
       case _ => throw NotFoundException()
     })
-    
+
   }
-  
+
   def getLatestVersionValue(name: String): Future[Option[Int]] = {
     versionedMongoRepository.getLatestVersionValue(name)
   }
-  
+
   private[services] def getParents(name: String, fromVersion: Option[Int] = None): Future[Seq[C]] = {
     for {
       versions <- {
         //store all in version ascending order
-        val all = versionedMongoRepository.getAllVersions(name, true).map(_.sortBy(_.version))
+        val all = versionedMongoRepository.getAllVersions(name, inclDisabled = true).map(_.sortBy(_.version))
         //get those relevant to us
         if (fromVersion.isDefined) all.map(_.filter(_.version <= fromVersion.get)) else all
       }
       res <- {
         //see if this was branched from a different entity
-        val topParent = if (versions.isEmpty) None
-          else if (versions.head.parent.isEmpty) None
-          else versions.head.parent
-        if(topParent.isDefined) getParents(topParent.get.name, Some(topParent.get.version)) else Future.successful(Seq())
+        val topParent = if (versions.isEmpty) {
+          None
+        } else if (versions.head.parent.isEmpty) {
+          None
+        } else {
+          versions.head.parent
+        }
+        if (topParent.isDefined) {
+          getParents(topParent.get.name, Some(topParent.get.version))
+        } else {
+          Future.successful(Seq())
+        }
       }
     } yield res ++ versions
   }
-  
+
   def getAuditTrail(name: String): Future[AuditTrail] = {
     val allParents = getParents(name)
-    
+
     allParents.flatMap({ parents =>
       val msgs = if(parents.size < 2) Seq() else {
         val pairs = parents.sliding(2)
@@ -108,8 +116,11 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   private[menas] def create(item: C, username: String): Future[Option[C]] = {
     for {
       validation <- validate(item)
-      _ <- if (validation.isValid()) versionedMongoRepository.create(item, username)
-      else throw ValidationException(validation)
+      _ <- if (validation.isValid()) {
+        versionedMongoRepository.create(item, username)
+      } else {
+        throw ValidationException(validation)
+      }
       detail <- getLatestVersion(item.name)
     } yield detail
   }
@@ -119,8 +130,11 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   private[services] def updateFuture(username: String, itemName: String, itemVersion: Int)(transform: C => Future[C]): Future[Option[C]] = {
     for {
       version <- getVersion(itemName, itemVersion)
-      transformed <- if (version.isEmpty) Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
-      else transform(version.get)
+      transformed <- if (version.isEmpty) {
+        Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
+      } else {
+        transform(version.get)
+      }
       update <- versionedMongoRepository.update(username, transformed)
     } yield Some(update)
   }
@@ -132,7 +146,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
       }
     }
   }
-  
+
   def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
 
   def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
@@ -163,8 +177,11 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
       Future.successful(validation.withError("name", s"name contains whitespace: '$name'"))
     } else {
       isUniqueName(name).map { isUnique =>
-        if (isUnique) validation
-        else validation.withError("name", s"entity with name already exists: '$name'")
+        if (isUnique) {
+          validation
+        } else {
+          validation.withError("name", s"entity with name already exists: '$name'")
+        }
       }
     }
   }

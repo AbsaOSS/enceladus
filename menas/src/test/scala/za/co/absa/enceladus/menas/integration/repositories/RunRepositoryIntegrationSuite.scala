@@ -712,7 +712,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
             runStatus = RunFactory.getDummyRunStatus(RunState.running))
         val run3 = RunFactory.getDummyRun(dataset = "dataset3",
             datasetVersion = 1,
-            runId = 1, 
+            runId = 1,
             startDateTime = today)
         runFixture.add(run1, run2, run3)
         assert(await(runMongoRepository.getTodaysRunningRuns()) == 2)

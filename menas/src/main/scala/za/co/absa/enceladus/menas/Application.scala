@@ -31,9 +31,11 @@ class Application() {
 
   @Bean def asyncExecutor(): ThreadPoolTaskExecutor = {
     val executor = new ThreadPoolTaskExecutor()
+    // scalastyle:off magic.number
     executor.setCorePoolSize(12)
     executor.setMaxPoolSize(24)
     executor.setQueueCapacity(1024)
+    // scalastyle:on magic.number
     executor.initialize()
     executor
   }

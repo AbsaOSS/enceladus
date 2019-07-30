@@ -98,15 +98,17 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
   }
 
   def convertSparkToMenasFields(sparkFields: Seq[StructField]): Seq[SchemaField] = {
-    convertSparkToMenasFields(sparkFields, "");
+    convertSparkToMenasFields(sparkFields, "")
   }
 
   /** Converts a seq of spark struct fields to menas representation */
   def convertSparkToMenasFields(sparkFields: Seq[StructField], path: String): Seq[SchemaField] = {
     sparkFields.map({ field =>
-      val arr = if (field.dataType.isInstanceOf[ArrayType]) {
-        Some(field.dataType.asInstanceOf[ArrayType])
-      } else None
+      val arr = field.dataType match {
+        case arrayType: ArrayType =>
+          Some(arrayType)
+        case _ => None
+      }
 
       SchemaField(
         name = field.name,
@@ -116,7 +118,7 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
         containsNull = arr.map(_.containsNull),
         nullable = field.nullable,
         metadata = objMapper.readValue(field.metadata.json, classOf[Map[String, String]]),
-        children = getChildren(field.dataType, s"$path${if (path.isEmpty()) "" else "."}${field.name}"))
+        children = getChildren(field.dataType, s"$path${if (path.isEmpty) "" else "."}${field.name}"))
     }).toList
   }
 
@@ -137,7 +139,7 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
     val outStream = new ByteArrayOutputStream()
     objMapper.writeValue(outStream, menasField.metadata)
 
-    val metadata = Metadata.fromJson(new String(outStream.toByteArray(), "UTF-8"))
+    val metadata = Metadata.fromJson(new String(outStream.toByteArray, "UTF-8"))
 
     StructField(
       name = menasField.name,

@@ -95,7 +95,7 @@ class RestDAO {
     }
     return RestClient.get(`api/${this.entityType}/list${query}`)
   }
-  
+
   getSearchSuggestions() {
     return RestClient.get(`api/${this.entityType}/searchSuggestions`)
   }

@@ -521,7 +521,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
     }
 
     "return all datasets" when {
-      "search query is empty" in { 
+      "search query is empty" in {
         val dataset1ver1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1)
         val dataset1ver2 = DatasetFactory.getDummyDataset(name = "dataset1", version = 2)
         val dataset2ver1 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
@@ -555,7 +555,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
   "DatasetMongoRepository::distinctCount" should {
     "return 0" when {
       "no datasets exists" in {
-        val actual = await(datasetMongoRepository.distinctCount)
+        val actual = await(datasetMongoRepository.distinctCount())
 
         assert(actual == 0)
       }
@@ -566,7 +566,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
           disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
         datasetFixture.add(dataset1, dataset2)
 
-        val actual = await(datasetMongoRepository.distinctCount)
+        val actual = await(datasetMongoRepository.distinctCount())
 
         assert(actual == 0)
       }

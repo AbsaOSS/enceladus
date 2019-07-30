@@ -94,7 +94,7 @@ class EntityService {
       sap.m.MessageBox.error(this.messageProvider.failedToGetList())
     })
   }
-  
+
   getSearchSuggestions(oModel, sEntityType) {
     return this.restDAO.getSearchSuggestions().then((oData) => {
       if(Array.isArray(oData)) {
@@ -262,7 +262,7 @@ class DatasetService extends EntityService {
   publishUpdatedEvent(oDataset) {
     this.eventBus.publish("datasets", "updated", oDataset);
   }
-  
+
   publishUpdateFailedEvent() {
     this.eventBus.publish("datasets", "updateFailed");
   }
@@ -323,7 +323,7 @@ class SchemaService extends DependentEntityService {
   publishUpdatedEvent(oSchema) {
     this.eventBus.publish("schemas", "updated", oSchema);
   }
-  
+
   publishUpdateFailedEvent() {
     this.eventBus.publish("schemas", "updateFailed");
   }
@@ -382,7 +382,7 @@ class MappingTableService extends DependentEntityService {
   publishUpdatedEvent(oMappingTable) {
     this.eventBus.publish("mappingTables", "updated", oMappingTable);
   }
-  
+
   publishUpdateFailedEvent() {
     this.eventBus.publish("mappingTables", "updateFailed");
   }

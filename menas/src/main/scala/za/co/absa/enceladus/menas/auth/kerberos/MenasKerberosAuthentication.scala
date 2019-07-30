@@ -123,7 +123,7 @@ class MenasKerberosAuthentication extends MenasAuthentication with InitializingB
 
   private def ldapUserDetailsService() = {
     val userSearch = new KerberosLdapUserSearch(ldapSearchBase, ldapSearchFilter, kerberosLdapContextSource())
-    val service = new LdapUserDetailsService(userSearch, new ActiveDirectoryLdapAuthoritiesPopulator());
+    val service = new LdapUserDetailsService(userSearch, new ActiveDirectoryLdapAuthoritiesPopulator())
     service.setUserDetailsMapper(new LdapUserDetailsMapper())
     service
   }
@@ -153,7 +153,7 @@ object MenasKerberosAuthentication {
     filter.setAuthenticationManager(authenticationManager)
     filter.setSkipIfAlreadyAuthenticated(true)
     filter.setFailureHandler(new AuthenticationFailureHandler {
-      override def onAuthenticationFailure(request: HttpServletRequest, response: HttpServletResponse, exception: AuthenticationException) = {
+      override def onAuthenticationFailure(request: HttpServletRequest, response: HttpServletResponse, exception: AuthenticationException): Unit = {
         exception.printStackTrace()
       }
     })

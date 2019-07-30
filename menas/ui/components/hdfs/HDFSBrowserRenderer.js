@@ -24,7 +24,7 @@ sap.ui.define([], function() {
     oControl._scroll.setHorizontal(oControl.getProperty("horizontalScroll"));
 
     oControl._model.setProperty("/currentPath", oControl.getHDFSPath());
-    
+
     oControl._enableBusy(oControl);
     oControl._treeNavigateTo(oControl.getHDFSPath());
 

@@ -48,7 +48,7 @@ sap.ui.define([
 
     /**
      * For some reason the iframe isn't being displayed properly even though rendered fine into the DOM.
-     * 
+     *
      * This function re-applies a style class, forcing the frame to be rerendered (works on chrome)
      */
     iframeHack: function() {

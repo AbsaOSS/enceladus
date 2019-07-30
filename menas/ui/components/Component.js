@@ -81,7 +81,7 @@ sap.ui.define([
             home: {
               viewName: "components.home.landingPage",
               viewLevel: 1,
-              viewId: "landingPage"              
+              viewId: "landingPage"
             },
             runs: {
               viewName: "components.run.runDetail",
