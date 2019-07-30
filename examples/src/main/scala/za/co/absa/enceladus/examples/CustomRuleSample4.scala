@@ -54,29 +54,32 @@ object CustomRuleSample4 {
     opt[String]("row-tag").optional.action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")
       .validate(value =>
-        if (inputFormat.isDefined && inputFormat.get.equalsIgnoreCase("xml"))
+        if (inputFormat.isDefined && inputFormat.get.equalsIgnoreCase("xml")) {
           success
-        else
+        } else {
           failure("The --row-tag option is supported only for XML raw data format")
+        }
       )
 
     opt[String]("delimiter").optional.action((value, config) =>
       config.copy(csvDelimiter = Some(value))).text("use the specific delimiter instead of ',' for CSV format")
       .validate(value =>
-        if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv"))
+        if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv")) {
           success
-        else
+        } else {
           failure("The --delimiter option is supported only for CSV raw data format")
+        }
       )
 
     // no need for validation for boolean since scopt itself will do
     opt[Boolean]("header").optional.action((value, config) =>
       config.copy(csvHeader = Some(value))).text("use the header option to consider CSV header")
       .validate(value =>
-        if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv"))
+        if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv")) {
           success
-        else
+        } else {
           failure("The --header option is supported only for CSV ")
+        }
       )
 
     opt[String]("input-file").required.action((value, config) =>
