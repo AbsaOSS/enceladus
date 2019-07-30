@@ -1017,20 +1017,20 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase with
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
     if (actualSchema != expectedSchema) {
-      logger.debug("EXPECTED:")
-      logger.debug(expectedSchema)
-      logger.debug("ACTUAL:")
-      logger.debug(actualSchema)
+      logger.error("EXPECTED:")
+      logger.error(expectedSchema)
+      logger.error("ACTUAL:")
+      logger.error(actualSchema)
       fail("Actual conformed schema does not match the expected schema (see above).")
     }
   }
 
   private def assertResults(actualResults: String, expectedResults: String): Unit = {
     if (actualResults != expectedResults) {
-      logger.debug("EXPECTED:")
-      logger.debug(expectedResults)
-      logger.debug("ACTUAL:")
-      logger.debug(actualResults)
+      logger.error("EXPECTED:")
+      logger.error(expectedResults)
+      logger.error("ACTUAL:")
+      logger.error(actualResults)
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
     }
   }
