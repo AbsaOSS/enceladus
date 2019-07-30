@@ -31,10 +31,13 @@ object ArrayTransformations {
 
   private val zipWithOrderUDF1 = new UDF1[Seq[Row], Seq[(Int, Row)]] {
     override def call(t1: Seq[Row]): Seq[(Int, Row)] = {
-      // scalastyle:off if.brace
-      if (t1 == null) null // scalastyle:ignore null
-      else t1.zipWithIndex.map(_.swap)
-      // scalastyle:on if.brace
+      // scalastyle:off null
+      if (t1 == null) {
+        null
+      } else {
+        t1.zipWithIndex.map(_.swap)
+      }
+      // scalastyle:on null
     }
   }
 
@@ -154,11 +157,13 @@ object ArrayTransformations {
 
     spark.udf.register(s"${groupField}_handleNullAndEmpty", new UDF2[Int, Seq[Row], Seq[Row]] {
       override def call(t1: Int, t2: Seq[Row]): Seq[Row] = {
-        // scalastyle:off if.brace
-        if (t1 == -1) null // scalastyle:ignore null
-        else if (t1 == 0) Seq()
-        else t2
-        // scalastyle:on if.brace
+        if (t1 == -1) {
+          null // scalastyle:ignore null
+        } else if (t1 == 0) {
+          Seq()
+        } else {
+          t2
+        }
       }
 
     }, arraySchema)
