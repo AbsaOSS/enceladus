@@ -55,7 +55,7 @@ object RestCaller {
     */
   def call(method: RestMethod, url: String, payload: String, contentType: String): Response = {
     val headers: Map[String, String] = Map("content-type" -> contentType)
-    (method: @switch) match {
+    method match {
       case POST => callPost(url, payload, headers)
       case GET => callGet(url, payload, headers)
       case DELETE => callDelete(url, payload, headers)

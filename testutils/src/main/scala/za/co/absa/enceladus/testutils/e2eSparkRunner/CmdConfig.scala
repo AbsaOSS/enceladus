@@ -178,8 +178,11 @@ object CmdConfig {
       config.copy(menasCredentialsFile = value)
     }).text("Path to Menas credentials config file. Suitable only for client mode")
       .validate(path =>
-        if (new File(path).isFile) success
-        else failure("Credentials file not found.")
+        if (new File(path).isFile) {
+          success
+        } else {
+          failure("Credentials file not found.")
+        }
       )
 
     opt[String]("dataset-name").required.action((value, config) => {
@@ -190,8 +193,11 @@ object CmdConfig {
       config.copy(datasetVersion = value)
     }).text("Dataset version")
       .validate(value =>
-        if (value.toInt > 0) success
-        else failure("Option --dataset-version must be >0"))
+        if (value.toInt > 0) {
+          success
+        } else {
+          failure("Option --dataset-version must be >0")
+        })
 
     val reportDateMatcher: Regex = "^\\d{4}-\\d{2}-\\d{2}$".r
     opt[String]("report-date").required.action((value, config) => {
@@ -210,8 +216,11 @@ object CmdConfig {
       config.copy(reportVersion = value)
     }).text("Report version")
       .validate(value =>
-        if (value.toInt > 0) success
-        else failure("Option --report-version must be >0"))
+        if (value.toInt > 0) {
+          success
+        } else {
+          failure("Option --report-version must be >0")
+        })
 
     opt[String]("spark-conf-file").required.action((value, config) => {
       config.copy(sparkConfFile = value)

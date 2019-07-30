@@ -37,7 +37,7 @@ class DataframeReader(datasetPath: String, inputSchema: Option[StructType] )
 
   private def getDataFrameReader(implicit dfReaderOptions: DataframeReaderOptions,
                                  sparkSession: SparkSession): DataFrameReader = {
-    (dfReaderOptions.rawFormat: @switch) match {
+    dfReaderOptions.rawFormat match {
       case "csv" => getCsvReader
       case "xml" => getXmlReader
       case "fixed-width" => getFixedWidthReader
