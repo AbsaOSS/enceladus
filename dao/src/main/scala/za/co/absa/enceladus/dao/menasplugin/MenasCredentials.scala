@@ -27,7 +27,7 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 object MenasCredentials {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
-  
+
   /**
    * Retrieves Menas Credentials from file either on local file system or on HDFS
    */
@@ -40,7 +40,7 @@ object MenasCredentials {
     }
     MenasCredentials(conf.getString("username"), conf.getString("password"))
   }
-  
+
   /**
    * Checks whether the file exists either on HDFS or on the local file system
    */
@@ -51,7 +51,7 @@ object MenasCredentials {
   def replaceHome(path: String): String = {
     if (path.matches("^~.*")) {
       //not using replaceFirst as it interprets the backslash in Windows path as escape character mangling the result
-      System.getProperty("user.home")+path.substring(1)
+      System.getProperty("user.home") + path.substring(1)
     } else {
       path
     }
