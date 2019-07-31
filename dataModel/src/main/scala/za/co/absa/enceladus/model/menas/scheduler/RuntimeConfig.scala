@@ -15,15 +15,24 @@
 
 package za.co.absa.enceladus.model.menas.scheduler
 
+import RuntimeConfig._
+
 case class RuntimeConfig(
-    // scalastyle:off magic.number
-    stdNumExecutors: Int = 4,
-    stdExecutorMemory: Int = 2,
-    confNumExecutors: Int = 4,
-    confExecutorMemory: Int = 2,
-    driverCores: Int = 2,
-    driverMemory: Int = 2,
+    stdNumExecutors: Int = DefaultStdNumExecutors,
+    stdExecutorMemory: Int = DefaultStdExecutorMemory,
+    confNumExecutors: Int = DefaultConfNumExecutors,
+    confExecutorMemory: Int = DefaultConfExecutorMemory,
+    driverCores: Int = DefaultDriverCores,
+    driverMemory: Int = DefaultDriverMemory,
     sysUser: String,
     menasKeytabFile: String
-    // scalastyle:on magic.number
 )
+
+object RuntimeConfig {
+  private val DefaultStdNumExecutors = 4
+  private val DefaultStdExecutorMemory = 2
+  private val DefaultConfNumExecutors = 4
+  private val DefaultConfExecutorMemory = 2
+  private val DefaultDriverCores = 2
+  private val DefaultDriverMemory = 2
+}

@@ -25,10 +25,10 @@ case class Schema(name: String,
     description: Option[String],
 
     dateCreated: ZonedDateTime = ZonedDateTime.now(),
-    userCreated: String = null, // scalastyle:ignore null
+    userCreated: String = null,
 
     lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-    userUpdated: String = null, // scalastyle:ignore null
+    userUpdated: String = null,
 
     disabled: Boolean = false,
     dateDisabled: Option[ZonedDateTime] = None,

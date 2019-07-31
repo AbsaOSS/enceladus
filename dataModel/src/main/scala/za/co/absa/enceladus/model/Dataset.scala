@@ -35,10 +35,10 @@ case class Dataset(
   schemaVersion: Int,
 
   dateCreated: ZonedDateTime = ZonedDateTime.now(),
-  userCreated: String        = null, // scalastyle:ignore null
+  userCreated: String        = null,
 
   lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-  userUpdated: String        = null, // scalastyle:ignore null
+  userUpdated: String        = null,
 
   disabled:     Boolean               = false,
   dateDisabled: Option[ZonedDateTime] = None,
