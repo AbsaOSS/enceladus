@@ -23,7 +23,7 @@ import org.apache.spark.sql.DataFrameWriter
 import org.apache.spark.sql.streaming.DataStreamReader
 
 import scala.collection.JavaConverters._
-
+import KafkaParametersProcessor._
 /**
   * Provides methods to cope with parameter setting, such as load, validation and transparent
   * setting (through implicits).
@@ -141,7 +141,7 @@ object KafkaParametersProcessor {
       stream.option(MANDATORY_PARAM_BROKERS, properties.getProperty(MANDATORY_PARAM_BROKERS))
       getOptionalKeys(properties)
         .foreach(keys => {
-          KafkaParametersProcessor.log.debug(s"DataStreamReader: setting option: ${keys._2} = ${properties.getProperty(keys._1)}")
+          log.debug(s"DataStreamReader: setting option: ${keys._2} = ${properties.getProperty(keys._1)}")
           stream.option(keys._2, properties.getProperty(keys._1))
         })
       stream
@@ -160,7 +160,7 @@ object KafkaParametersProcessor {
       stream.option(MANDATORY_PARAM_BROKERS, properties.getProperty(MANDATORY_PARAM_BROKERS))
       getOptionalKeys(properties)
         .foreach(keys => {
-          KafkaParametersProcessor.log.debug(s"DataStreamReader: setting option: ${keys._2} = ${properties.getProperty(keys._1)}")
+          log.debug(s"DataStreamReader: setting option: ${keys._2} = ${properties.getProperty(keys._1)}")
           stream.option(keys._2, properties.getProperty(keys._1))
         })
       stream
