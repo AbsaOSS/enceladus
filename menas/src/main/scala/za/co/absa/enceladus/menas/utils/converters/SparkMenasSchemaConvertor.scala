@@ -105,9 +105,8 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
   def convertSparkToMenasFields(sparkFields: Seq[StructField], path: String): Seq[SchemaField] = {
     sparkFields.map({ field =>
       val arr = field.dataType match {
-        case arrayType: ArrayType =>
-          Some(arrayType)
-        case _ => None
+        case arrayType: ArrayType => Some(arrayType)
+        case _                    => None
       }
 
       SchemaField(
