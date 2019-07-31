@@ -104,7 +104,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   }
 
   @PostMapping(Array("/edit"))
-  @Transactional(timeout = 120) // scalastyle:ignore magic.number
+  @Transactional(timeout = 120) // scalastyle:ignore magic.number (annotation argument needs to be a constant)
   @ResponseStatus(HttpStatus.CREATED)
   def edit(@AuthenticationPrincipal user: UserDetails,
       @RequestBody item: C): CompletableFuture[C] = {

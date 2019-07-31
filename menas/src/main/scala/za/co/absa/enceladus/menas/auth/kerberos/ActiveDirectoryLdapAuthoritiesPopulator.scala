@@ -28,7 +28,7 @@ class ActiveDirectoryLdapAuthoritiesPopulator extends LdapAuthoritiesPopulator  
 
   import scala.collection.JavaConversions._
 
-  override def getGrantedAuthorities(userData: DirContextOperations, username: String): util.List[_ >: SimpleGrantedAuthority <: GrantedAuthority] = {
+ override def getGrantedAuthorities(userData: DirContextOperations, username: String): util.Collection[_ <: GrantedAuthority] = {
     val groups = userData.getStringAttributes("memberOf")
 
      if (groups == null) {

@@ -28,14 +28,15 @@ import org.springframework.security.core.context.SecurityContextHolder
 @EnableAsync
 @Configuration
 class Application() {
+  private val DefaultCorePoolSize = 12
+  private val DefaultMaxPoolSize = 24
+  private val QueueCapacity = 1024
 
   @Bean def asyncExecutor(): ThreadPoolTaskExecutor = {
     val executor = new ThreadPoolTaskExecutor()
-    // scalastyle:off magic.number
-    executor.setCorePoolSize(12)
-    executor.setMaxPoolSize(24)
-    executor.setQueueCapacity(1024)
-    // scalastyle:on magic.number
+    executor.setCorePoolSize(DefaultCorePoolSize)
+    executor.setMaxPoolSize(DefaultMaxPoolSize)
+    executor.setQueueCapacity(QueueCapacity)
     executor.initialize()
     executor
   }

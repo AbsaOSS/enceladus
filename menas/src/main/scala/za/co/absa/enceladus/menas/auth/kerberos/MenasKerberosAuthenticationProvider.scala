@@ -52,7 +52,6 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
     classOf[UsernamePasswordAuthenticationToken].isAssignableFrom(authentication)
   }
 
-  //noinspection ScalaStyle
   private def login(username: String, password: String): MenasKerberosLoginResult = {
     val loginContext = new LoginContext("", null, getSpringCBHandler(username, password), getLoginConfig) // scalastyle:ignore null
     loginContext.login()
