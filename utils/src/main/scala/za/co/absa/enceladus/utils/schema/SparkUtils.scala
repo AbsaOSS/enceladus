@@ -33,7 +33,7 @@ object SparkUtils {
     *
     * @param df      A dataframe
     * @param colName A column to add if it does not exist already
-    * @param colExpr     An expression for the column to add
+    * @param colExpr An expression for the column to add
     * @return a new dataframe with the new column
     */
   def withColumnIfDoesNotExist(df: DataFrame, colName: String, colExpr: Column): DataFrame = {
