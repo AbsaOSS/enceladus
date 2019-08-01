@@ -44,6 +44,7 @@ class EntityVersionMapMock extends EntityVersionMap {
     * @return An version of the entity in the new version of the database, None if the entity is not found
     *         in the mapping
     */
+  @throws[IllegalStateException]
   override def get(collectionName: String, entityName: String, oldVersion: Int): Option[Int] = {
     val versionOpt = db.get((collectionName, entityName, oldVersion))
     actionsExecuted += s"EntityVersionMapMock.get($collectionName,$entityName,$oldVersion) = $versionOpt"
