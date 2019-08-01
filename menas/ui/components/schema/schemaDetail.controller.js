@@ -88,7 +88,7 @@ sap.ui.define([
       new SchemaRestDAO().getSchemaStruct(schema.name, schema.version)
         .then((data, status, request) => {
           const mimeType = "application/json";
-          const extension = "json";
+          const extension = "-struct.json";
           this._downloadFile(schema, JSON.stringify(data, null, 2), mimeType, extension);
         })
         .fail(() => {
@@ -111,7 +111,7 @@ sap.ui.define([
 
     _downloadFile: function (schema, data, mimeType, extension) {
       const blob = new Blob([data], {type: mimeType});
-      const filename = `${schema.name}-v${schema.version}.${extension}`;
+      const filename = `${schema.name}-v${schema.version}${extension}`;
       if (window.navigator && window.navigator.msSaveOrOpenBlob) {
         window.navigator.msSaveOrOpenBlob(blob, filename);
       } else {
@@ -129,9 +129,9 @@ sap.ui.define([
     _getFileExtension: function (mimeType) {
       switch (mimeType) {
         case "application/json":
-          return "json";
+          return ".json";
         case "application/octet-stream":
-          return "cob"; //copybook
+          return ".cob"; //copybook
         default:
           return "";
       }
