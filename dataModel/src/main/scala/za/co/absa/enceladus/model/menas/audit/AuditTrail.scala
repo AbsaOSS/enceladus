@@ -29,7 +29,7 @@ case class AuditTrailChange(field: String,
     oldValue: Option[String],
     newValue: Option[String],
     message: String)
-    
+
 /**
  * Case representing a field in the class and its human readable/friendly name
  */

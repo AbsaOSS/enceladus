@@ -44,12 +44,12 @@ case class Schema(name: String,
   override def setUserCreated(user: String): VersionedModel = this.copy(userCreated = user)
   override def setUpdatedUser(user: String): VersionedModel = this.copy(userUpdated = user)
   override def setDescription(desc: Option[String]): VersionedModel = this.copy(description = desc)
-  override def setParent(newParent: Option[MenasReference]) = this.copy(parent = newParent)
+  override def setParent(newParent: Option[MenasReference]): Schema = this.copy(parent = newParent)
 
   override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
-    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Schema ${name} created.")))
-    
+    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Schema $name created.")))
+
   override def getAuditMessages(newRecord: Schema): AuditTrailEntry = {
     AuditTrailEntry(menasRef = MenasReference(collection = None, name = newRecord.name, version = newRecord.version),
       updated = newRecord.lastUpdated,
