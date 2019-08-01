@@ -93,6 +93,8 @@ class SchemaController @Autowired() (
               @RequestParam(defaultValue = "false") pretty: Boolean): CompletableFuture[String] = {
     schemaService.getVersion(name, version).map {
       case Some(schema) =>
+        if (schema.fields.isEmpty) throw notFound()
+
         val sparkStruct = StructType(sparkMenasConvertor.convertMenasToSparkFields(schema.fields))
         if (pretty) sparkStruct.prettyJson else sparkStruct.json
       case None         =>

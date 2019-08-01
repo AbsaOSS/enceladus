@@ -138,6 +138,14 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
 
         assertNotFound(response)
       }
+      "the schema has no fields" in {
+        val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1)
+        schemaFixture.add(schema)
+
+        val response = sendGet[String](s"$apiUrl/json/schema1/1")
+
+        assertNotFound(response)
+      }
       "a non-boolean value is provided for the `pretty` query parameter" in {
         val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1, fields = List(SchemaFactory.getDummySchemaField()))
         schemaFixture.add(schema)
@@ -150,18 +158,6 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
 
     "return 200" when {
       "there is a Schema with the specified name and version" should {
-        "return an empty Spark Struct as JSON if no schema has been uploded" in {
-          val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1)
-          schemaFixture.add(schema)
-
-          val response = sendGet[String](s"$apiUrl/json/schema1/1")
-
-          assertOk(response)
-
-          val body = response.getBody
-          val expected = """{"type":"struct","fields":[]}"""
-          assert(body == expected)
-        }
         "return the Spark Struct representation of a schema as a JSON (pretty=false by default)" in {
           val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1, fields = List(SchemaFactory.getDummySchemaField()))
           schemaFixture.add(schema)
