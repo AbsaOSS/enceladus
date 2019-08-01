@@ -96,7 +96,7 @@ class RestDAO {
   }
 
   getList(searchQuery) {
-    let query = (searchQuery) ? `/${encodeURI(searchQuery)}` : "";
+    let query = searchQuery ? `/${encodeURI(searchQuery)}` : "";
     return RestClient.get(`api/${this.entityType}/list${query}`)
   }
 
