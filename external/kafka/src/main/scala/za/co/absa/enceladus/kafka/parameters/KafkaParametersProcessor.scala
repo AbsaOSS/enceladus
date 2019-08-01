@@ -23,14 +23,14 @@ import org.apache.spark.sql.DataFrameWriter
 import org.apache.spark.sql.streaming.DataStreamReader
 
 import scala.collection.JavaConverters._
-
+import KafkaParametersProcessor._
 /**
   * Provides methods to cope with parameter setting, such as load, validation and transparent
   * setting (through implicits).
   */
 object KafkaParametersProcessor {
 
-  val log:Logger = LogManager.getLogger(KafkaParametersProcessor.getClass)
+  private val log:Logger = LogManager.getLogger(KafkaParametersProcessor.getClass)
 
   val MANDATORY_PARAM_BROKERS       = "kafka.bootstrap.servers"
   val MANDATORY_PARAM_TOPIC         = "topic"
@@ -42,9 +42,10 @@ object KafkaParametersProcessor {
   private val OPTIONAL_PARAM_PREFIX = "option."
 
   def getAvroSchemaDestination(properties: Properties): Option[String] = {
-    properties.containsKey(PARAM_AVRO_SCHEMA_DESTINATION) match {
-      case true => Some(properties.getProperty(PARAM_AVRO_SCHEMA_DESTINATION))
-      case _ => None
+    if (properties.containsKey(PARAM_AVRO_SCHEMA_DESTINATION)) {
+      Some(properties.getProperty(PARAM_AVRO_SCHEMA_DESTINATION))
+    } else {
+      None
     }
   }
 
@@ -140,7 +141,7 @@ object KafkaParametersProcessor {
       stream.option(MANDATORY_PARAM_BROKERS, properties.getProperty(MANDATORY_PARAM_BROKERS))
       getOptionalKeys(properties)
         .foreach(keys => {
-          println(s"DataStreamReader: setting option: ${keys._2} = ${properties.getProperty(keys._1)}")
+          log.debug(s"DataStreamReader: setting option: ${keys._2} = ${properties.getProperty(keys._1)}")
           stream.option(keys._2, properties.getProperty(keys._1))
         })
       stream
@@ -159,7 +160,7 @@ object KafkaParametersProcessor {
       stream.option(MANDATORY_PARAM_BROKERS, properties.getProperty(MANDATORY_PARAM_BROKERS))
       getOptionalKeys(properties)
         .foreach(keys => {
-          println(s"DataStreamReader: setting option: ${keys._2} = ${properties.getProperty(keys._1)}")
+          log.debug(s"DataStreamReader: setting option: ${keys._2} = ${properties.getProperty(keys._1)}")
           stream.option(keys._2, properties.getProperty(keys._1))
         })
       stream
