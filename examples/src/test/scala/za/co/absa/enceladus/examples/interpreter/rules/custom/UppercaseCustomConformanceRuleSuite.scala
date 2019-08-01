@@ -33,7 +33,6 @@ object TestOutputRow {
 
 class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
 
-
   import spark.implicits._
 
   implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
