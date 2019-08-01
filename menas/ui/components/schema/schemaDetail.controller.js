@@ -89,7 +89,7 @@ sap.ui.define([
         .then((data, status, request) => {
           const mimeType = "application/json";
           const extension = "json";
-          this._downloadFile(schema, data, mimeType, extension);
+          this._downloadFile(schema, JSON.stringify(data, null, 2), mimeType, extension);
         })
         .fail(() => {
           sap.m.MessageToast.show(`No schema found for: "${schema.name}", version: ${schema.version}`)
@@ -115,8 +115,8 @@ sap.ui.define([
       if (window.navigator && window.navigator.msSaveOrOpenBlob) {
         window.navigator.msSaveOrOpenBlob(blob, filename);
       } else {
-        const event = document.createEvent('MouseEvents'),
-          element = document.createElement('a');
+        const event = document.createEvent('MouseEvents');
+        const element = document.createElement('a');
 
         element.download = filename;
         element.href = window.URL.createObjectURL(blob);
