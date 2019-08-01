@@ -22,7 +22,7 @@ class RestClient {
       url: url,
       async: true
     };
-    const jqXHR = (shouldUseCache) ? RestClient.cache(request) : $.ajax(request);
+    const jqXHR = shouldUseCache ? RestClient.cache(request) : $.ajax(request);
     return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
   }
 
@@ -31,7 +31,7 @@ class RestClient {
       url: url,
       async: false
     };
-    const jqXHR = (shouldUseCache) ? RestClient.cache(request) : $.ajax(request);
+    const jqXHR = shouldUseCache ? RestClient.cache(request) : $.ajax(request);
     return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
 
   }
