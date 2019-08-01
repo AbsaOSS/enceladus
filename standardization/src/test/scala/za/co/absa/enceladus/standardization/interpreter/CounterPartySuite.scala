@@ -24,7 +24,7 @@ import za.co.absa.enceladus.utils.error.ErrorMessage
 case class Root(ConformedParty: Party, errCol: Seq[ErrorMessage] = Seq.empty)
 case class Party(key: Integer, clientKeys1: Seq[String], clientKeys2: Seq[String])
 
-class CounterPartySuite extends FunSuite with SparkTestBase with LoggerTestBase{
+class CounterPartySuite extends FunSuite with SparkTestBase with LoggerTestBase {
 
   test("Mimic running standardization twice on counter party") {
     import spark.implicits._

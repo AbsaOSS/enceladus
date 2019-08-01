@@ -72,17 +72,19 @@ object StandardizationJob {
         newVersion
     }
 
-    val path: String = buildRawPath(cmd, dataset, dateTokens, reportVersion)
-    log.info(s"input path: $path")
-    val stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"),
-      cmd.datasetName,
-      cmd.datasetVersion.toString,
-      cmd.reportDate,
-      reportVersion.toString)
-    log.info(s"output path: $stdPath")
+    val pathCfg = PathCfg(
+      inputPath = buildRawPath(cmd, dataset, dateTokens, reportVersion),
+      outputPath = MessageFormat.format(conf.getString("standardized.hdfs.path"),
+        cmd.datasetName,
+        cmd.datasetVersion.toString,
+        cmd.reportDate,
+        reportVersion.toString)
+    )
+    log.info(s"input path: ${pathCfg.inputPath}")
+    log.info(s"output path: ${pathCfg.outputPath}")
     // die if the output path exists
-    if (fsUtils.hdfsExists(stdPath)) {
-      throw new IllegalStateException(s"Path $stdPath already exists. Increment the run version, or delete $stdPath")
+    if (fsUtils.hdfsExists(pathCfg.outputPath)) {
+      throw new IllegalStateException(s"Path ${pathCfg.outputPath} already exists. Increment the run version, or delete ${pathCfg.outputPath}")
     }
 
     // init spline
@@ -91,7 +93,7 @@ object StandardizationJob {
 
     // init CF
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking(s"$path/_INFO").setControlMeasuresWorkflow("Standardization")
+    spark.enableControlMeasuresTracking(s"${pathCfg.inputPath}/_INFO").setControlMeasuresWorkflow("Standardization")
 
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
@@ -104,9 +106,9 @@ object StandardizationJob {
 
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
-    val dfAll: DataFrame = prepareDataFrame(schema, cmd, path, dataset)
+    val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 
-    executeStandardization(performance, dfAll, schema, cmd, path, stdPath, args.mkString(" "))
+    executeStandardization(performance, dfAll, schema, cmd, pathCfg)
     cmd.performanceMetricsFile.foreach(fileName => {
       try {
         performance.writeMetricsToFile(fileName)
@@ -233,13 +235,12 @@ object StandardizationJob {
   }
 
   private def executeStandardization(performance: PerformanceMeasurer,
-      dfAll: DataFrame,
-      schema: StructType,
-      cmd: CmdConfig,
-      path: String,
-      stdPath: String,
-      cmdLineArgs: String)(implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
-    val rawDirSize: Long = fsUtils.getDirectorySize(path)
+                                     dfAll: DataFrame,
+                                     schema: StructType,
+                                     cmd: CmdConfig,
+                                     pathCfg: PathCfg)
+                                    (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
+    val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
     performance.startMeasurement(rawDirSize)
 
     addRawRecordCountToMetadata(dfAll)
@@ -260,7 +261,7 @@ object StandardizationJob {
     }
     // If the meta data value sourcecolumn is set override source data column name with the field name
     val stdRenameSourceColumns: DataFrame = std.select(std.schema.fields.map { field: StructField =>
-      renameSourceColumn(std, field, true)
+      renameSourceColumn(std, field, registerWithATUM = true)
     }: _*)
 
     stdRenameSourceColumns.setCheckpoint("Standardization - End", persistInDatabase = false)
@@ -274,18 +275,18 @@ object StandardizationJob {
       AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", errMsg, "")
       throw new IllegalStateException(errMsg)
     }
-    stdRenameSourceColumns.write.parquet(stdPath)
+    stdRenameSourceColumns.write.parquet(pathCfg.outputPath)
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
-    val stdDirSize = fsUtils.getDirectorySize(stdPath)
+    val stdDirSize = fsUtils.getDirectorySize(pathCfg.outputPath)
     performance.finishMeasurement(stdDirSize, recordCount)
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     if (cmd.csvDelimiter.isDefined) {
       cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
     }
-    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", path, stdPath,
-      EnceladusRestDAO.userName, cmdLineArgs)
-    stdRenameSourceColumns.writeInfoFile(stdPath)
+    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
+      EnceladusRestDAO.userName, cmd.cmdLineArgs.mkString(" "))
+    stdRenameSourceColumns.writeInfoFile(pathCfg.outputPath)
   }
 
   private def ensureSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
@@ -305,7 +306,7 @@ object StandardizationJob {
     // Handle renaming of source columns in case there are columns
     // that will break because of issues in column names like spaces
     df.select(schema.fields.map { field: StructField =>
-      renameSourceColumn(df, field, false)
+      renameSourceColumn(df, field, registerWithATUM = false)
     }: _*).write.parquet(tempParquetDir)
 
     fsUtils.deleteOnExit(tempParquetDir)
@@ -400,4 +401,5 @@ object StandardizationJob {
     )
   }
 
+  private final case class PathCfg(inputPath: String, outputPath: String)
 }

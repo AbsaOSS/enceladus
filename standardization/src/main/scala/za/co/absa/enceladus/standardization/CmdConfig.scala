@@ -29,7 +29,9 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
  * Note: scopt requires all fields to have default values.
  * Even if a field is mandatory it needs a default value.
  */
-case class CmdConfig(datasetName: String = "",
+case class CmdConfig(
+    cmdLineArgs: Array[String],
+    datasetName: String = "",
     datasetVersion: Int = 1,
     reportDate: String = "",
     reportVersion: Option[Int] = None,
@@ -54,7 +56,7 @@ object CmdConfig {
   def getCmdLineArguments(args: Array[String])(implicit spark: SparkSession): CmdConfig = {
     val parser = new CmdParser("spark-submit [spark options] StandardizationBundle.jar")
 
-    val optionCmd = parser.parse(args, CmdConfig())
+    val optionCmd = parser.parse(args, CmdConfig(args))
     if (optionCmd.isEmpty) {
       // Wrong arguments provided, the message is already displayed
       System.exit(1)
@@ -224,10 +226,11 @@ object CmdConfig {
         config.copy(cobolOptions = cobolSetCopybook(config.cobolOptions, value))
       }).text("Path to a copybook for COBOL data format")
         .validate(value =>
-          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol"))
+          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol")) {
             success
-          else
+          } else {
             failure("The --copybook option is supported only for COBOL data format")
+          }
         )
 
       opt[Boolean]("is-xcom").optional().action((value, config) => {
