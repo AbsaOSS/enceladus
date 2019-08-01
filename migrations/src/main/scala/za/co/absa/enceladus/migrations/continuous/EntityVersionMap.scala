@@ -34,12 +34,12 @@ abstract class EntityVersionMap {
     * Adds a 'name - version' mapping.
     *
     * @param collectionName The name of the collection that containg the entity
-    * @param entityName     An Entity name
+    * @param entityName     An entity name
     * @param oldVersion     An version of the entity in the old version of the database
     * @param newVersion     An version of the entity in the new version of the database
     */
   @throws[IllegalStateException]
-  def add(collectionName: String, entityName: String, oldVersion: Int, newVersion: Int): Unit = {
+  final def add(collectionName: String, entityName: String, oldVersion: Int, newVersion: Int): Unit = {
     get(collectionName, entityName, oldVersion) match {
       case Some(storedVersion) =>
         if (storedVersion != newVersion) {
@@ -57,7 +57,7 @@ abstract class EntityVersionMap {
     * as it does additional checks.
     *
     * @param collectionName The name of the collection that containg the entity
-    * @param entityName     An Entity name
+    * @param entityName     An entity name
     * @param oldVersion     An version of the entity in the old version of the database
     * @param newVersion     An version of the entity in the new version of the database
     */
@@ -72,6 +72,6 @@ abstract class EntityVersionMap {
     * @return An version of the entity in the new version of the database, None if the entity is not found
     *         in the mapping
     */
+  @throws[IllegalStateException]
   def get(collectionName: String, entityName: String, oldVersion: Int): Option[Int]
-
 }
