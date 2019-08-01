@@ -83,38 +83,55 @@ sap.ui.define([
       });
     },
 
-    onExportPress: function (oEv) {
+    onExportStructPress: function (oEv) {
       const schema = this._model.getProperty("/currentSchema");
-      new SchemaRestDAO().downloadSchema(schema.name, schema.version)
+      new SchemaRestDAO().getSchemaStruct(schema.name, schema.version)
+        .then((data, status, request) => {
+          const mimeType = "application/json";
+          const extension = "-struct.json";
+          this._downloadFile(schema, JSON.stringify(data, null, 2), mimeType, extension);
+        })
+        .fail(() => {
+          sap.m.MessageToast.show(`No schema found for: "${schema.name}", version: ${schema.version}`)
+        })
+    },
+
+    onExportFilePress: function (oEv) {
+      const schema = this._model.getProperty("/currentSchema");
+      new SchemaRestDAO().getSchemaFile(schema.name, schema.version)
         .then((data, status, request) => {
           const mimeType = request.getResponseHeader("mime-type");
-          const blob = new Blob([data], {type: mimeType});
           const extension = this._getFileExtension(mimeType);
-          const filename = `${schema.name}-v${schema.version}.${extension}`;
-          if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-            window.navigator.msSaveOrOpenBlob(blob, filename);
-          } else {
-            const event = document.createEvent('MouseEvents'),
-              element = document.createElement('a');
-
-            element.download = filename;
-            element.href = window.URL.createObjectURL(blob);
-            element.dataset.downloadurl = [mimeType, element.download, element.href].join(':');
-            event.initEvent('click', true, false);
-            element.dispatchEvent(event);
-          }
+          this._downloadFile(schema, data, mimeType, extension);
         })
         .fail(() => {
           sap.m.MessageToast.show(`No file uploaded for schema: "${schema.name}", version: ${schema.version}`)
         })
     },
 
+    _downloadFile: function (schema, data, mimeType, extension) {
+      const blob = new Blob([data], {type: mimeType});
+      const filename = `${schema.name}-v${schema.version}${extension}`;
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveOrOpenBlob(blob, filename);
+      } else {
+        const event = document.createEvent('MouseEvents');
+        const element = document.createElement('a');
+
+        element.download = filename;
+        element.href = window.URL.createObjectURL(blob);
+        element.dataset.downloadurl = [mimeType, element.download, element.href].join(':');
+        event.initEvent('click', true, false);
+        element.dispatchEvent(event);
+      }
+    },
+
     _getFileExtension: function (mimeType) {
       switch (mimeType) {
         case "application/json":
-          return "json";
+          return ".json";
         case "application/octet-stream":
-          return "cob"; //copybook
+          return ".cob"; //copybook
         default:
           return "";
       }

@@ -165,8 +165,12 @@ class SchemaRestDAO extends DependentRestDAO {
     super("schema")
   }
 
-  downloadSchema(name, version) {
+  getSchemaFile(name, version) {
     return RestClient.get(`api/${this.entityType}/export/${encodeURI(name)}/${encodeURI(version)}`)
+  }
+
+  getSchemaStruct(name, version) {
+    return RestClient.get(`api/${this.entityType}/json/${encodeURI(name)}/${encodeURI(version)}?pretty=true`)
   }
 
 }
