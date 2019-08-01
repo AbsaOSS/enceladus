@@ -86,13 +86,17 @@ class SchemaController @Autowired() (
     }
   }
 
-  @GetMapping(Array("/json/{name}/{version}"))
+  @GetMapping(path = Array("/json/{name}/{version}"), produces = Array("application/json"))
   @ResponseStatus(HttpStatus.OK)
   def getJson(@PathVariable name: String,
-              @PathVariable version: Int): CompletableFuture[String] = {
+              @PathVariable version: Int,
+              @RequestParam(defaultValue = "false") pretty: Boolean): CompletableFuture[String] = {
     schemaService.getVersion(name, version).map {
-      case Some(schema) => StructType(sparkMenasConvertor.convertMenasToSparkFields(schema.fields)).json
-      case None         => throw notFound()
+      case Some(schema) =>
+        val sparkStruct = StructType(sparkMenasConvertor.convertMenasToSparkFields(schema.fields))
+        if (pretty) sparkStruct.prettyJson else sparkStruct.json
+      case None         =>
+        throw notFound()
     }
   }
 

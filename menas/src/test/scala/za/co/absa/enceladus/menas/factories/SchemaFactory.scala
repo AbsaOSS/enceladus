@@ -52,4 +52,24 @@ object SchemaFactory extends EntityFactory[Schema] {
       parent)
   }
 
+  def getDummySchemaField(name: String = "dummyFieldName",
+                          fieldType: String = "string",
+                          path: String = "dummy.path",
+                          elementType: Option[String] = None,
+                          containsNull: Option[Boolean] = None,
+                          nullable: Boolean = true,
+                          metadata: Map[String, String] = Map(),
+                          children: Seq[SchemaField] = Nil): SchemaField = {
+    SchemaField(
+      name,
+      fieldType,
+      path,
+      elementType,
+      containsNull,
+      nullable,
+      metadata,
+      children
+    )
+  }
+
 }
