@@ -52,13 +52,13 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   def testArrayTypeConformance(useExperimentalMappingRule: Boolean): Unit = {
     val df = spark.createDataFrame(ArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
-
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
 
     val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef,
-      df,
-      useExperimentalMappingRule,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF)
+      df)
     val expected = ArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[ConformedOuter].collect().sortBy(_.order).toList
     assertResult(expected)(conformed)
@@ -76,12 +76,13 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   def testConformanceMatchingNull(useExperimentalMappingRule: Boolean): Unit = {
     val df = spark.createDataFrame(NullArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
 
     val conformedDf = DynamicInterpreter.interpret(NullArraySamples.mappingOnlyConformanceDef,
-      df,
-      useExperimentalMappingRule,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF)
+      df)
 
     val expected = NullArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
@@ -104,12 +105,13 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
 
     val df = spark.createDataFrame(EmtpyArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
 
     val conformedDf = DynamicInterpreter.interpret(EmtpyArraySamples.mappingOnlyConformanceDef,
-      df,
-      useExperimentalMappingRule,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF)
+      df)
     val expected = EmtpyArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList
 

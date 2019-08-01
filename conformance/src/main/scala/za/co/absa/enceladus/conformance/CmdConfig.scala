@@ -108,7 +108,7 @@ object CmdConfig {
 
     opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
       keytabFile = Some(file)
-      if(!fsUtils.localExists(file) && fsUtils.hdfsExists(file)) {
+      if (!fsUtils.localExists(file) && fsUtils.hdfsExists(file)) {
         config.copy(menasCredentials = Some(Right(fsUtils.hdfsFileToLocalTempFile(file))))
       } else {
         config.copy(menasCredentials = Some(Right(file)))
@@ -116,7 +116,7 @@ object CmdConfig {
     }).text("Path to keytab file used for authenticating to menas").validate({ file =>
       if (credsFile.isDefined) {
         failure("Only one authentication method is allowed at a time")
-      } else if(fsUtils.exists(file)) {
+      } else if (fsUtils.exists(file)) {
         success
       } else {
         failure("Keytab file doesn't exist")

@@ -30,7 +30,7 @@ case class MyMappingTableInner(description: String, name: String)
 case class MyData(id: Int, toJoin: Int)
 case class MyDataConfd(id: Int, toJoin: Int, confMapping: MyMappingTableInner)
 
-class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase{
+class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
 
   def testChorusMockData(useExperimentalMappingRule: Boolean): Unit = {
     val d = Seq(
@@ -66,11 +66,13 @@ class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase{
         MappingConformanceRule(order = 1, controlCheckpoint = false, mappingTable = "myMappingTable", mappingTableVersion = 0,
           attributeMappings = Map("id" -> "toJoin"), targetAttribute = "mappedAttr", outputColumn = "confMapping")))
 
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
+
     val confd = DynamicInterpreter.interpret(conformanceDef,
-      inputDf,
-      useExperimentalMappingRule,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF)
+      inputDf)
       .repartition(2)
 
     logDataFrameContent(confd)

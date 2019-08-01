@@ -19,7 +19,7 @@ import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.log4j.{LogManager, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import org.apache.spark.sql
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
@@ -27,7 +27,7 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
@@ -46,7 +46,7 @@ object DynamicConformanceJob {
   private val reportDateFormat = "yyyy-MM-dd"
   private val infoVersionColumn = "enceladus_info_version"
 
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
 
   def main(args: Array[String]) {
@@ -69,25 +69,27 @@ object DynamicConformanceJob {
       case None => inferVersion(conformance.hdfsPublishPath, cmd.reportDate)
     }
 
-    val stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName,
-      cmd.datasetVersion.toString, cmd.reportDate, reportVersion.toString)
-    val publishPath: String = buildPublishPath(infoDateColumn, infoVersionColumn, cmd, conformance, reportVersion)
-    log.info(s"stdpath = $stdPath, publishPath = $publishPath")
+    val pathCfg = PathCfg(
+      publishPath = buildPublishPath(infoDateColumn, infoVersionColumn, cmd, conformance, reportVersion),
+      stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName,
+        cmd.datasetVersion.toString, cmd.reportDate, reportVersion.toString)
+    )
+    log.info(s"stdpath = ${pathCfg.stdPath}, publishPath = ${pathCfg.publishPath}")
     // die before performing any computation if the output path already exists
-    if (fsUtils.hdfsExists(publishPath)) {
+    if (fsUtils.hdfsExists(pathCfg.publishPath)) {
       throw new IllegalStateException(
-        s"Path $publishPath already exists. Increment the run version, or delete $publishPath")
+        s"Path ${pathCfg.publishPath} already exists. Increment the run version, or delete ${pathCfg.publishPath}")
     }
 
     initFunctionalExtensions()
-    val performance = initPerformanceMeasurer(stdPath)
+    val performance = initPerformanceMeasurer(pathCfg.stdPath)
 
     // load data for input and mapping tables
-    val inputData = DataSource.getData(stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
+    val inputData = DataSource.getData(pathCfg.stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
 
     val result = conform(conformance, inputData, enableCF)
 
-    processResult(result, performance, publishPath, stdPath, reportVersion, args.mkString(" "))
+    processResult(result, performance, pathCfg, reportVersion, args.mkString(" "))
   }
 
   private def isExperimentalRuleEnabled()(implicit cmd: CmdConfig): Boolean = {
@@ -172,8 +174,13 @@ object DynamicConformanceJob {
 
   private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean)
                      (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils, dao: EnceladusDAO): DataFrame = {
+    implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled())
+      .setControlFrameworkEnabled(enableCF)
+
     try {
-      DynamicInterpreter.interpret(conformance, inputData, isExperimentalRuleEnabled(), isCatalystWorkaroundEnabled(), enableCF)
+      DynamicInterpreter.interpret(conformance, inputData)
     } catch {
       case e: ValidationException =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, e.techDetails)
@@ -188,7 +195,7 @@ object DynamicConformanceJob {
 
   private def processResult(result: DataFrame,
                             performance: PerformanceMeasurer,
-                            publishPath: String, stdPath: String,
+                            pathCfg: PathCfg,
                             reportVersion: Int,
                             cmdLineArgs: String)
                            (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
@@ -208,16 +215,16 @@ object DynamicConformanceJob {
       throw new IllegalStateException(errMsg)
     }
     // ensure the whole path but version exists
-    fsUtils.createAllButLastSubDir(publishPath)
+    fsUtils.createAllButLastSubDir(pathCfg.publishPath)
 
-    withPartCols.write.parquet(publishPath)
+    withPartCols.write.parquet(pathCfg.publishPath)
 
-    val publishDirSize = fsUtils.getDirectorySize(publishPath)
+    val publishDirSize = fsUtils.getDirectorySize(pathCfg.publishPath)
     performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "conform",
-      stdPath, publishPath, EnceladusRestDAO.userName, cmdLineArgs)
+      pathCfg.stdPath, pathCfg.publishPath, EnceladusRestDAO.userName, cmdLineArgs)
 
-    withPartCols.writeInfoFile(publishPath)
+    withPartCols.writeInfoFile(pathCfg.publishPath)
     cmd.performanceMetricsFile.foreach(fileName => {
       try {
         performance.writeMetricsToFile(fileName)
@@ -241,4 +248,8 @@ object DynamicConformanceJob {
         publishPathOverride
     }
   }
+
+  private final case class PathCfg(publishPath: String, stdPath: String)
 }
+
+

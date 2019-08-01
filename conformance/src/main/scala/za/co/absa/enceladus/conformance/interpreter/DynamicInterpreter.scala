@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.apache.log4j.LogManager
+import org.slf4j.LoggerFactory
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
@@ -33,7 +33,7 @@ import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 object DynamicInterpreter {
-  private val log = LogManager.getLogger(this.getClass)
+  private val log = LoggerFactory.getLogger(this.getClass)
 
   /**
     * interpret The dynamic conformance interpreter function
@@ -41,23 +41,14 @@ object DynamicInterpreter {
     * @param conformance                 The dataset object - this represents a data conformance workflow
     * @param inputDf                     The dataset to be conformed
     * @param jobShortName                A job name used for checkpoints
-    * @param experimentalMappingRule     If true the new explode-optimized conformance mapping rule interpreter will
-    *                                    be used
-    * @param isCatalystWorkaroundEnabled If true the Catalyst optimizer workaround is enabled
-    * @param enableControlFramework      If true sets the checkpoints on the dataset upon conforming
     * @return The conformed dataframe
     *
     */
-  def interpret(conformance: ConfDataset,
-                inputDf: Dataset[Row],
-                experimentalMappingRule: Boolean,
-                isCatalystWorkaroundEnabled: Boolean,
-                enableControlFramework: Boolean,
-                jobShortName: String = "Conformance"
-               )(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): DataFrame = {
+  def interpret(conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
+               (implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig, featureSwitches: FeatureSwitches): DataFrame = {
 
     implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
-      experimentalMappingRule, isCatalystWorkaroundEnabled, enableControlFramework, jobShortName, spark, dao, progArgs)
+      featureSwitches, jobShortName, spark, dao, progArgs)
 
     applyCheckpoint(inputDf, "Start")
 
@@ -85,7 +76,7 @@ object DynamicInterpreter {
     var explodeContext = ExplosionContext()
 
     val steps = getConformanceSteps
-    val optimizerTimeTracker = new OptimizerTimeTracker(inputDf, ictx.isCatalystWorkaroundEnabled)
+    val optimizerTimeTracker = new OptimizerTimeTracker(inputDf, ictx.featureSwitches.catalystWorkaroundEnabled)
     val dfInputWithIdForWorkaround = optimizerTimeTracker.getWorkaroundDataframe
 
     // Fold left on rules
@@ -121,7 +112,7 @@ object DynamicInterpreter {
     */
   def getConformanceSteps(implicit ictx: InterpreterContext): List[ConformanceRule] = {
     val steps = ictx.conformance.conformance.sortBy(_.order)
-    if (ictx.experimentalMappingRule) {
+    if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
       getExplosionOptimizedSteps(steps, ictx.schema)
     } else {
       steps
@@ -149,7 +140,7 @@ object DynamicInterpreter {
       case r: NegationConformanceRule         => NegationRuleInterpreter(r).conform(df)
       case r: CustomConformanceRule           => r.getInterpreter().conform(df)
       case r: MappingConformanceRule          =>
-        if (ictx.experimentalMappingRule) {
+        if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
           MappingRuleInterpreterGroupExplode(r, ictx.conformance, explodeContext).conform(df)
         } else {
           MappingRuleInterpreter(r, ictx.conformance).conform(df)
@@ -196,7 +187,7 @@ object DynamicInterpreter {
     * @param jobStage Specifies a job stage that will be added to the checkpoint name
     */
   private def applyCheckpoint(df: Dataset[Row], jobStage: String)(implicit ictx: InterpreterContext): Unit = {
-    if (ictx.enableControlFramework) {
+    if (ictx.featureSwitches.controlFrameworkEnabled) {
       df.setCheckpoint(s"${ictx.jobShortName} - $jobStage")
     }
   }
@@ -214,7 +205,7 @@ object DynamicInterpreter {
                                   df: Dataset[Row],
                                   explodeContext: ExplosionContext)
                                  (implicit ictx: InterpreterContext): Dataset[Row] = {
-    if (ictx.enableControlFramework && rule.controlCheckpoint) {
+    if (ictx.featureSwitches.controlFrameworkEnabled && rule.controlCheckpoint) {
       val explodeFilter = explodeContext.getControlFrameworkFilter
       // Cache the data first since Atum will execute an action for each control metric
       val cachedDf = df.cache

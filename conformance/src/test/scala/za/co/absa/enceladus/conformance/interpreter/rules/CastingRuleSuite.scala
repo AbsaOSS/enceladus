@@ -18,11 +18,12 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, RuleValidators}
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, RuleValidators}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.samples.CastingRuleSamples
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import org.slf4j.event.Level.ERROR
 
 class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
 
@@ -42,23 +43,25 @@ class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val mappingTablePattern = "{0}/{1}/{2}"
 
     import spark.implicits._
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(experimentalMR)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
+
     val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS,
-      inputDf,
-      experimentalMR,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF).cache
+      inputDf).cache
 
     val conformedJSON = JsonUtils.prettySparkJSON(conformed.orderBy($"id").toJSON.collect)
 
     if (conformedJSON != CastingRuleSamples.conformedOrdersJSON) {
-      logger.debug("EXPECTED:")
-      logger.debug(CastingRuleSamples.conformedOrdersJSON)
-      logger.debug("ACTUAL:")
-      logger.debug(conformedJSON)
-      logger.debug("DETAILS (Input):")
-      logDataFrameContent(inputDf)
-      logger.debug("DETAILS (Conformed):")
-      logDataFrameContent(conformed)
+      logger.error("EXPECTED:")
+      logger.error(CastingRuleSamples.conformedOrdersJSON)
+      logger.error("ACTUAL:")
+      logger.error(conformedJSON)
+      logger.error("DETAILS (Input):")
+      logDataFrameContent(inputDf, ERROR)
+      logger.error("DETAILS (Conformed):")
+      logDataFrameContent(conformed, ERROR)
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
     }
 

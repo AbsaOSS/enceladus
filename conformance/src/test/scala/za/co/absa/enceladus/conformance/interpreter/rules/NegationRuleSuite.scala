@@ -19,11 +19,12 @@ import org.apache.spark.sql.Dataset
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.samples.NegationRuleSamples
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import org.slf4j.event.Level.ERROR
 
 class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
 
@@ -100,24 +101,25 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
     mockWhen(dao.getDataset("Test Name", 1)) thenReturn enceladusDataset
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(experimentalMR)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
 
     val conformed = DynamicInterpreter.interpret(enceladusDataset,
-      inputDf,
-      experimentalMR,
-      isCatalystWorkaroundEnabled,
-      enableCF).cache
+      inputDf).cache
 
     val conformedJSON = conformed.toJSON.collect().mkString("\n")
 
     if (conformedJSON != expectedJSON) {
-      logger.debug("EXPECTED:")
-      logger.debug(expectedJSON)
-      logger.debug("ACTUAL:")
-      logger.debug(conformedJSON)
-      logger.debug("DETAILS (Input):")
-      logDataFrameContent(inputDf)
-      logger.debug("DETAILS (Conformed):")
-      logDataFrameContent(conformed)
+      logger.error("EXPECTED:")
+      logger.error(expectedJSON)
+      logger.error("ACTUAL:")
+      logger.error(conformedJSON)
+      logger.error("DETAILS (Input):")
+      logDataFrameContent(inputDf, ERROR)
+      logger.error("DETAILS (Conformed):")
+      logDataFrameContent(conformed, ERROR)
 
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
     }
