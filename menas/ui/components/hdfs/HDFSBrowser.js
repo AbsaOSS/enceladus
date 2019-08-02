@@ -110,13 +110,13 @@ sap.ui.define([], function() {
         arrayNames: ['children']
       }
     })
-    
+
     this._model.attachPropertyChange((oEv) => {
       if(oEv.getParameter("path") === "/currentPath") {
         this.setHDFSPath(oEv.getParameter("value"));
       }
     });
-    
+
     this._valueState = sap.ui.core.MessageType.None;
     this._scroll.addContent(this._tree);
   };
@@ -145,7 +145,7 @@ sap.ui.define([], function() {
       var path = this._model.getProperty(context).path;
       if(path == "/") context = "/HDFS";
       this._getList(path, context, sap.ui.getCore().byId(this.getBusyControl()), function() {
-          this._tree.rerender(); 
+          this._tree.rerender();
       }.bind(this))
     } else {
       this._tree.rerender();
@@ -158,12 +158,12 @@ sap.ui.define([], function() {
    */
   HDFSBrowser.prototype._treeNavigateTo = function(sPath) {
     if(!sPath || sPath === this._loadedHDFSPath) return;
-    
+
     this._setValueState(sap.ui.core.MessageType.None, "");
-    
+
     this.unselectAll();
     this.collapseAll();
-    
+
     // tokenize the path into suqsequent calls
     var paths = sPath.split("/").filter(x => x !== "");
     paths.unshift("/") // provide the leading slash
@@ -182,7 +182,7 @@ sap.ui.define([], function() {
       } else if (sPathAcc === "/" && sPath !== "/") {
         sNewPath = sPathAcc + tok;
         // the service wraps the root in an array
-        sModelPath += "/0"; 
+        sModelPath += "/0";
       }
 
       if (sNewPath !== "/") {
@@ -202,7 +202,7 @@ sap.ui.define([], function() {
           var bindingPath = items[i].getBindingContextPath();
           let oItem = that._model.getProperty(bindingPath);
           var hdfsPath = oItem["path"];
-          if (hdfsPath === sNewPath && oItem["children"] !== null && 
+          if (hdfsPath === sNewPath && oItem["children"] !== null &&
               (sPath === "/" || hdfsPath !== sPath)) {
             let index = parseInt(i);
             that._tree.expand(index);
@@ -227,7 +227,7 @@ sap.ui.define([], function() {
 
   /**
    * This unselects all items.
-   * 
+   *
    * Having selected tree items caused certain issues in ui5
    */
   HDFSBrowser.prototype.unselectAll = function() {
@@ -247,10 +247,10 @@ sap.ui.define([], function() {
       return true;
     }
   }
-  
+
   /**
    * Set the highlight and text for all items in the list
-   * 
+   *
    */
   HDFSBrowser.prototype._setValueState = function(valueState, text) {
     // update in pathInput too
@@ -264,10 +264,10 @@ sap.ui.define([], function() {
     }
     this._tree.rerender();
   };
-  
+
   /**
    * This collapses all items.
-   * 
+   *
    * Having selected tree items caused certain issues in ui5
    */
   HDFSBrowser.prototype.collapseAll = function() {
@@ -279,9 +279,9 @@ sap.ui.define([], function() {
    */
   HDFSBrowser.prototype._getList = function(sPath, sModelPath, oControl, fnSuccCallback) {
     Functions.ajax(this.getRestURI(), "POST", sPath, function(oData) {
-      
+
       let original = this._model.getProperty(sModelPath)
-      
+
       let merged = {};
       if (sPath === "/") {
         merged = _.defaultsDeep(oData, original[0]);
@@ -300,10 +300,10 @@ sap.ui.define([], function() {
       } else {
         sap.m.MessageBox.error("Failed to retreive the HDFS folder contents for " + sPath + ", please try again later.");
       }
-      
+
     }.bind(this), oControl)
   };
-  
+
   /**
    * Here update the associated label when the user changes the selection through the UI
    */

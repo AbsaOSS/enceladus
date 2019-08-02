@@ -44,7 +44,7 @@ sap.ui.define([
         this._appMasterBtnId = `${this._appMasterId}Btn`;
         this.handleMaster();
       }, this);
-      
+
       this._eventBus.subscribe("menas", "resize", this.handleMaster, this);
     },
 
@@ -52,7 +52,7 @@ sap.ui.define([
       const oCore = sap.ui.getCore();
       const oMaster = oCore.byId(this._appMasterId);
       const oMasterBtn = oCore.byId(this._appMasterBtnId);
-      
+
       setTimeout(function() {
         if (typeof this._model.getProperty("/userInfo/username") === 'undefined') {
           if(oMaster) oMaster.setVisible(false);
@@ -70,7 +70,7 @@ sap.ui.define([
         sap.m.MessageBox.warning("Chrome (version 68 and higher) is currently the only supported browser for menas");
       }
     },
-    
+
     onLoginSubmit: function (oEvent) {
       let oData = {
           username: this.byId(usernameField).getValue(),

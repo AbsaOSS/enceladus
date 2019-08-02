@@ -25,7 +25,7 @@ import javax.security.auth.Subject
 
 class MenasKerberosLdapContextSource(url: String, subject: Subject) extends DefaultSpringSecurityContextSource(url) {
   override def getDirContextInstance(environment: java.util.Hashtable[String, Object]): DirContext = {
-    
+
     environment.put(Context.SECURITY_AUTHENTICATION, "GSSAPI")
     val sup = super.getDirContextInstance _
 

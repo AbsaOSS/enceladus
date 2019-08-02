@@ -54,7 +54,7 @@ var Formatters = new function() {
       const dayOfMonthSep = aDayOfMonth.join(",")
       const monthSep = aMonth.join(",")
       const dayOfWeekSep = aDayOfWeek.join(",")
-    
+
       cronExpr = `${minuteSep} ${hourSep} ${dayOfMonthSep} ${monthSep} ${dayOfWeekSep}`;
     }
     return Formatters.cronExpressionFormatter(cronExpr);

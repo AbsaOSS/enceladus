@@ -36,7 +36,7 @@ sap.ui.define([
       // register TNT icons
       sap.ui.core.IconPool.registerFont({
         collectionName: "SAP-icons-TNT",
-        fontFamily: "SAP-icons-TNT", 
+        fontFamily: "SAP-icons-TNT",
         fontURI: sap.ui.require.toUrl("sap/tnt/themes/base/fonts"),
         lazy: true});
 
@@ -47,7 +47,7 @@ sap.ui.define([
 
       GenericService.getUserInfo();
       GenericService.getOozieInfo();
-      
+
       this._router.getRoute("root").attachMatched((oEvent) => {
         let userInfo = sap.ui.getCore().getModel().getProperty("/userInfo");
         if (typeof userInfo.username === 'undefined') {
@@ -95,7 +95,7 @@ sap.ui.define([
       this._eventBus.publish("runs", "list");
       this._app.toMaster(this.createId("runsPage"));
     },
-    
+
     onHomePress: function (oEv) {
       this._eventBus.publish("home", "home");
       this._router.navTo("home")

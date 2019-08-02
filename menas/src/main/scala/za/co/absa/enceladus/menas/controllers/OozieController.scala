@@ -32,6 +32,6 @@ class OozieController @Autowired() (oozieService: OozieService) extends BaseCont
   def isOozieEnabled: Boolean = oozieService.isOozieEnabled
 
   @GetMapping(path = Array("/coordinatorStatus/{id}"))
-  def getCoordinatorStatus(@PathVariable id: String): CompletableFuture[OozieCoordinatorStatus] = oozieService.getCoordinatorStatus(id)  
-  
+  def getCoordinatorStatus(@PathVariable id: String): CompletableFuture[OozieCoordinatorStatus] = oozieService.getCoordinatorStatus(id)
+
 }

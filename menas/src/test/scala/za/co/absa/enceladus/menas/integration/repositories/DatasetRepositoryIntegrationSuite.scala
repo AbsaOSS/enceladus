@@ -542,7 +542,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
   "DatasetMongoRepository::distinctCount" should {
     "return 0" when {
       "no datasets exists" in {
-        val actual = await(datasetMongoRepository.distinctCount)
+        val actual = await(datasetMongoRepository.distinctCount())
 
         assert(actual == 0)
       }
@@ -553,7 +553,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
           disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
         datasetFixture.add(dataset1, dataset2)
 
-        val actual = await(datasetMongoRepository.distinctCount)
+        val actual = await(datasetMongoRepository.distinctCount())
 
         assert(actual == 0)
       }

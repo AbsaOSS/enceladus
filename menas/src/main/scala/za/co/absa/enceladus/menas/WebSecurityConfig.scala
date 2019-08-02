@@ -37,15 +37,17 @@ import org.springframework.security.web.authentication.logout.HttpStatusReturnin
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler
 import org.springframework.security.web.csrf.CsrfToken
 import org.springframework.stereotype.Component
-
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import org.springframework.security.authentication.AuthenticationManager
 import za.co.absa.enceladus.menas.auth.InMemoryMenasAuthentication
 import za.co.absa.enceladus.menas.auth.MenasAuthentication
 import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication
 
 @EnableWebSecurity
 class WebSecurityConfig {
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   @Value("${za.co.absa.enceladus.menas.auth.mechanism:}")
   val authMechanism: String = ""
@@ -54,9 +56,7 @@ class WebSecurityConfig {
   val menasVersion: String = ""
 
   @Autowired
-  val beanFactory: BeanFactory = null
-
-  val logger = LoggerFactory.getLogger(this.getClass)
+  val beanFactory: BeanFactory = null // scalastyle:ignore null
 
   @Bean
   def authenticationFailureHandler(): AuthenticationFailureHandler = {
@@ -85,7 +85,7 @@ class WebSecurityConfig {
         .and()
         .authorizeRequests()
           .antMatchers("/index.html", "/resources/**", "/generic/**",
-            "/service/**", "/webjars/**", "/css/**", "/components/**", 
+            "/service/**", "/webjars/**", "/css/**", "/components/**",
             "/api/oozie/isEnabled", "/api/user/version", s"/$menasVersion/**")
           .permitAll()
         .anyRequest()
@@ -105,7 +105,7 @@ class WebSecurityConfig {
           .deleteCookies("JSESSIONID")
           .invalidateHttpSession(true)
         .and
-        .addFilterBefore(MenasKerberosAuthentication.spnegoAuthenticationProcessingFilter(authenticationManagerBean), classOf[UsernamePasswordAuthenticationFilter])
+        .addFilterBefore(MenasKerberosAuthentication.spnegoAuthenticationProcessingFilter(authenticationManagerBean()), classOf[UsernamePasswordAuthenticationFilter])
     }
 
     @Bean
@@ -134,7 +134,7 @@ class WebSecurityConfig {
     }
 
     @Bean
-    override def authenticationManagerBean() = {
+    override def authenticationManagerBean(): AuthenticationManager = {
       super.authenticationManagerBean()
     }
   }
