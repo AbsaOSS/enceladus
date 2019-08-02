@@ -34,7 +34,6 @@ class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
   private val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[EntityVersionMapping]),
     DEFAULT_CODEC_REGISTRY)
 
-  // This adds .execute() method to observables
   import ScalaMongoImplicits._
 
   private val entityMapCollectionName = "entity_version_map"
@@ -54,7 +53,7 @@ class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
                                   entityName: String,
                                   oldVersion: Int,
                                   newVersion: Int): Unit = {
-    getTypedCollection[EntityVersionMapping](entityMapCollectionName)
+    getTypedCollection[EntityVersionMapping]
       .insertOne(EntityVersionMapping(collectionName, entityName, oldVersion, newVersion))
       .execute()
   }
@@ -72,7 +71,7 @@ class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
   override def get(collectionName: String,
                    entityName: String,
                    oldVersion: Int): Option[Int] = {
-    val mappings = getTypedCollection[EntityVersionMapping](entityMapCollectionName)
+    val mappings = getTypedCollection[EntityVersionMapping]
       .find(getFilter(collectionName, entityName, oldVersion))
       .execute()
     if (mappings.lengthCompare(1) > 0) {
@@ -86,7 +85,7 @@ class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
   /**
     * Returns a collection that is serialized as a case class.
     */
-  private def getTypedCollection[T](collectionName: String)(implicit ct: ClassTag[T]): MongoCollection[T] = {
+  private def getTypedCollection[T](implicit ct: ClassTag[T]): MongoCollection[T] = {
     db.getCollection[T](entityMapCollectionName)
       .withCodecRegistry(codecRegistry)
   }

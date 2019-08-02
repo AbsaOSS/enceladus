@@ -21,6 +21,7 @@ import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.migrations.framework.migration._
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 import za.co.absa.enceladus.migrations.migrations.model1.{DefaultValue, Serializer1}
+
 import scala.util.control.NonFatal
 
 /**
@@ -168,7 +169,7 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
   /**
     * Converts a Model 0 conformance rule into Model 1 conformance rule
     */
-  private def convertConformanceRule(rule: model0.conformanceRule.ConformanceRule): model1.conformanceRule.ConformanceRule = {
+  def convertConformanceRule(rule: model0.conformanceRule.ConformanceRule): model1.conformanceRule.ConformanceRule = {
     rule match {
       case model0.conformanceRule.CastingConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, outputDataType) =>
         model1.conformanceRule.CastingConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, outputDataType, "CastingConformanceRule")
@@ -204,7 +205,7 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
   /**
     * Converts a Model 0 schema field into Model 1 schema field
     */
-  private def convertSchemaField(field0: model0.SchemaField, path: List[String]): model1.SchemaField = {
+  def convertSchemaField(field0: model0.SchemaField, path: List[String]): model1.SchemaField = {
     field0.`type` match {
       case "array" => convertSchemaFieldArray(field0, path :+ field0.name)
       case "struct" => convertSchemaFieldStruct(field0, path :+ field0.name)
