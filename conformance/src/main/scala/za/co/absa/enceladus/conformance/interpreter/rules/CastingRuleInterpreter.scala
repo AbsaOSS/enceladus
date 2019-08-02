@@ -50,7 +50,7 @@ case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInte
         }, c => {
           when(c.isNotNull.and(c.cast(rule.outputDataType).isNull),
             callUDF("confCastErr", lit(rule.outputColumn), c.cast(StringType)))
-            .otherwise(null)
+            .otherwise(null) // scalastyle:ignore null
         })
     }
   }

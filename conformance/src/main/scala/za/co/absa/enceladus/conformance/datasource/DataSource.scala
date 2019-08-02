@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.conformance.datasource
 
-import org.apache.log4j.LogManager
+import org.slf4j.LoggerFactory
 import scala.collection.mutable.HashMap
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
@@ -27,12 +27,12 @@ import org.apache.hadoop.fs.Path
  * Utility object to provide access to data in HDFS (including partitioning and caching)
  */
 object DataSource {
-  private val log = LogManager.getLogger("enceladus.conformance.DataSource")
+  private val log = LoggerFactory.getLogger("enceladus.conformance.DataSource")
   private val dfs = HashMap[String, Dataset[Row]]()
 
   /**
    * Get loaded dataframe or load data given the report date and partitioning pattern
-   * 
+   *
    * @param path The base path in HDFS of the data
    * @param reportYear String representing the year in `yyyy` format
    * @param reportMonth String representing the month in `MM` format

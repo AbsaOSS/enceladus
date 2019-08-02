@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions._
 import org.mockito.Mockito.mock
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.{conformanceRule, Dataset => ConfDataset}
@@ -79,13 +79,13 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
     )
   )
 
-  val expected = Seq(MineConfd(1, 1d, Seq()), MineConfd(4, 2d, Seq()), MineConfd(9, 3d, Seq()), MineConfd(16, 4d, Seq()))
+  private val expected = Seq(MineConfd(1, 1d, Seq()), MineConfd(4, 2d, Seq()), MineConfd(9, 3d, Seq()), MineConfd(16, 4d, Seq()))
+  implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+    .setExperimentalMappingRuleEnabled(experimentalMR)
+    .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+    .setControlFrameworkEnabled(enableCF)
 
-  val actualDf: DataFrame = DynamicInterpreter.interpret(conformanceDef,
-    inputData,
-    experimentalMR,
-    isCatalystWorkaroundEnabled,
-    enableCF)
+  val actualDf: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
 
   val actual: Seq[MineConfd] = actualDf.as[MineConfd].collect().toSeq
 

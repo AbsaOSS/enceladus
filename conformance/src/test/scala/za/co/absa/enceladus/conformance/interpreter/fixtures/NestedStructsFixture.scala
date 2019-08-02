@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.fixtures
 import java.io.File
 
 import org.apache.commons.io.{FileUtils, IOUtils}
-import org.apache.log4j.{LogManager, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import za.co.absa.enceladus.conformance.CmdConfig
@@ -149,7 +149,7 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
       castingRule7)
   )
 
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   private val infoFileContents: String = IOUtils.toString(this.getClass
     .getResourceAsStream("/interpreter/nestedStructs/info.json"), "UTF-8")
