@@ -31,7 +31,7 @@ import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.stdandardization._
+import za.co.absa.enceladus.standardization._
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
@@ -40,6 +40,7 @@ import za.co.absa.enceladus.utils.validation.ValidationException
 
 import scala.collection.immutable.HashMap
 import scala.util.control.NonFatal
+import scala.math.max
 
 object StandardizationJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
@@ -134,13 +135,13 @@ object StandardizationJob {
     * @param dataset  A dataset definition
     * @return The updated dataframe reader
     */
-  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset)(implicit spark: SparkSession): DataFrameReader = {
+  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, schema: StructType)(implicit spark: SparkSession): DataFrameReader = {
     val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
     val options = getCobolOptions(cmd, dataset) ++
       getGenericOptions(cmd) ++
       getXmlOptions(cmd) ++
-      getCsvOptions(cmd) ++
+      getCsvOptions(cmd, schema) ++
       getFixedWidthOptions(cmd)
 
     // Applying all the options
@@ -171,13 +172,16 @@ object StandardizationJob {
     }
   }
 
-  private def getCsvOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+  private def getCsvOptions(cmd: CmdConfig, schema: StructType): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
         "delimiter" -> cmd.csvDelimiter.map(StringParameter),
         "header" -> cmd.csvHeader.map(BooleanParameter),
         "quote" -> cmd.csvQuote.map(StringParameter),
-        "escape" -> cmd.csvEscape.map(StringParameter)
+        "escape" -> cmd.csvEscape.map(StringParameter),
+        // increase the default limit on the number of columns if needed
+        // default is set at org.apache.spark.sql.execution.datasources.csv.CSVOptions maxColumns
+        "maxColumns" -> Option(LongParameter(max(20480, schema.fields.length)))
       )
     } else {
       HashMap()
@@ -224,7 +228,7 @@ object StandardizationJob {
                                dataset: Dataset)
                               (implicit spark: SparkSession,
                                fsUtils: FileSystemVersionUtils): DataFrame = {
-    val dfReaderConfigured = getFormatSpecificReader(cmd, dataset)
+    val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, schema: StructType)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
       dfReaderConfigured.schema(inputSchema)

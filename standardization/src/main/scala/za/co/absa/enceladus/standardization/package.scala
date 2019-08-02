@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus
 
-package object stdandardization {
+package object standardization {
 
   /**
     * The trait and the case classes are used for type-safely applying
@@ -27,7 +27,7 @@ package object stdandardization {
 
   case class BooleanParameter(value: Boolean) extends RawFormatParameter
 
-  case class LongParameter(long: Boolean) extends RawFormatParameter
+  case class LongParameter(long: Long) extends RawFormatParameter
 
   case class DoubleParameter(double: Double) extends RawFormatParameter
 }

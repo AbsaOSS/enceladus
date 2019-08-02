@@ -65,7 +65,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
   private def getTestDataFrame(tmpFileName: String, args: Array[String]): DataFrame = {
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     StandardizationJob
-      .getFormatSpecificReader(cmd, dataSet)
+      .getFormatSpecificReader(cmd, dataSet, schema)
       .schema(schema)
       .load(tmpFileName)
   }
