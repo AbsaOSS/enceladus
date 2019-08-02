@@ -18,10 +18,11 @@ package za.co.absa.enceladus.conformance.interpreter
 /**
  * Class bundling together switched for features to be used during Conformance
  * It's a sealed abstract case class to enforce the the provided constructor (apply). This way values can be
- * changed only via the setters and in case of removal of any of them, compiler will complain whenever they were used.
- * @param experimentalMappingRuleEnabled     If true the new explode-optimized conformance mapping rule interpreter will be used
- * @param catalystWorkaroundEnabled If true the Catalyst optimizer workaround is enabled
- * @param controlFrameworkEnabled     If true sets the checkpoints on the dataset upon conforming
+ * changed only via the setters. This way enforces setting them by name only instead of by position like it would be in
+ * the case of classical constructor.
+ * @param experimentalMappingRuleEnabled  If true the new explode-optimized conformance mapping rule interpreter will be used
+ * @param catalystWorkaroundEnabled       If true the Catalyst optimizer workaround is enabled
+ * @param controlFrameworkEnabled         If true sets the checkpoints on the dataset upon conforming
  */
 sealed abstract case class FeatureSwitches(
                                             experimentalMappingRuleEnabled: Boolean = false,

@@ -85,8 +85,7 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
     .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
     .setControlFrameworkEnabled(enableCF)
 
-  val actualDf: DataFrame = DynamicInterpreter.interpret(conformanceDef,
-    inputData)
+  val actualDf: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
 
   val actual: Seq[MineConfd] = actualDf.as[MineConfd].collect().toSeq
 

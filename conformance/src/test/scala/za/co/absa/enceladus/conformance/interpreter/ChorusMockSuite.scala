@@ -71,9 +71,7 @@ class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val confd = DynamicInterpreter.interpret(conformanceDef,
-      inputDf)
-      .repartition(2)
+    val confd = DynamicInterpreter.interpret(conformanceDef, inputDf).repartition(2)
 
     logDataFrameContent(confd)
 

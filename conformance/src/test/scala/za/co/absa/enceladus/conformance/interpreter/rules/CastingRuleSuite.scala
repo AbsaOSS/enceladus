@@ -48,8 +48,7 @@ class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS,
-      inputDf).cache
+    val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS, inputDf).cache
 
     val conformedJSON = JsonUtils.prettySparkJSON(conformed.orderBy($"id").toJSON.collect)
 

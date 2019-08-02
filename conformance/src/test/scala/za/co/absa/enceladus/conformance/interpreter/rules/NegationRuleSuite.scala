@@ -106,8 +106,7 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val conformed = DynamicInterpreter.interpret(enceladusDataset,
-      inputDf).cache
+    val conformed = DynamicInterpreter.interpret(enceladusDataset, inputDf).cache
 
     val conformedJSON = conformed.toJSON.collect().mkString("\n")
 

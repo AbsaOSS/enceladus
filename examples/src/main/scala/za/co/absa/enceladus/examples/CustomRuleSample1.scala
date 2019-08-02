@@ -73,8 +73,7 @@ object CustomRuleSample1 {
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef,
-      inputData)
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
 
     outputData.show(false)
     //scalastyleon: magicnumber

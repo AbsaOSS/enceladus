@@ -32,10 +32,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
 
-    val conformed = DynamicInterpreter.interpret(
-      nestedStructsDS,
-      standardizedDf
-    )
+    val conformed = DynamicInterpreter.interpret(nestedStructsDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }
@@ -46,10 +43,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
 
-    val conformed = DynamicInterpreter.interpret(
-      nestedStructsUpperDS,
-      standardizedDf
-    )
+    val conformed = DynamicInterpreter.interpret(nestedStructsUpperDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }
@@ -60,10 +54,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
 
-    val conformed = DynamicInterpreter.interpret(
-      nestedStructsNegationDS,
-      standardizedDf
-    )
+    val conformed = DynamicInterpreter.interpret( nestedStructsNegationDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }
@@ -74,10 +65,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
 
-    val conformed = DynamicInterpreter.interpret(
-      nestedStructsCastingDS,
-      standardizedDf
-    )
+    val conformed = DynamicInterpreter.interpret(nestedStructsCastingDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }

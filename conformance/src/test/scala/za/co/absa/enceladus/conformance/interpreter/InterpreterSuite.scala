@@ -69,8 +69,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS,
-      dfs)
+    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs)
 
     val data = conformed.as[ConformedEmployee].collect.sortBy(_.employee_id).toList
     val expected = EmployeeConformance.conformedEmployees.sortBy(_.employee_id).toList
@@ -124,8 +123,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS,
-      dfs).cache
+    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs).cache
 
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
 

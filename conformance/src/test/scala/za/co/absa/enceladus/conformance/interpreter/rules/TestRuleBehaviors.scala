@@ -46,8 +46,7 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
       .setControlFrameworkEnabled(enableCF)
 
 
-    val conformed = DynamicInterpreter.interpret(inputDataset,
-      inputDf)
+    val conformed = DynamicInterpreter.interpret(inputDataset, inputDf)
 
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 
