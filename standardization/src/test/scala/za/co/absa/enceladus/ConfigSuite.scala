@@ -170,13 +170,13 @@ class ConfigSuite extends FunSuite with SparkTestBase {
     val publishPathNoFolderPrefix = StandardizationJob.buildRawPath(cmdConfigNoFolderPrefix, standardiseDataset,
         dateTokens, cmdConfigNoFolderPrefix.reportVersion.get)
     assert(publishPathNoFolderPrefix === s"${standardiseDataset.hdfsPath}/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigNoFolderPrefix.reportVersion.get}")
-    val publishPathFolderPrefix = StandardizationJob.buildRawPath(cmdConfigFolderPrefix, standardiseDataset, 
+    val publishPathFolderPrefix = StandardizationJob.buildRawPath(cmdConfigFolderPrefix, standardiseDataset,
         dateTokens, cmdConfigFolderPrefix.reportVersion.get)
     assert(publishPathFolderPrefix === s"${standardiseDataset.hdfsPath}/$folderPrefix/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigFolderPrefix.reportVersion.get}")
     val publishPathRawPathOverride = StandardizationJob.buildRawPath(cmdConfigRawPathOverride, standardiseDataset,
         dateTokens, cmdConfigRawPathOverride.reportVersion.get)
     assert(publishPathRawPathOverride === hdfsRawPathOverride)
-    val publishPathRawPathOverrideAndFolderPrefix = StandardizationJob.buildRawPath(cmdConfigRawPathOverrideAndFolderPrefix, 
+    val publishPathRawPathOverrideAndFolderPrefix = StandardizationJob.buildRawPath(cmdConfigRawPathOverrideAndFolderPrefix,
         standardiseDataset, dateTokens, cmdConfigRawPathOverrideAndFolderPrefix.reportVersion.get)
     assert(publishPathRawPathOverrideAndFolderPrefix === hdfsRawPathOverride)
   }

@@ -19,12 +19,12 @@ import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types._
 
 /**
- * This component is used in the standardization job. We've got a strongly typed (target) schema. When reading the data however, we do not want spark to apply casts 
- * automatically. Instead we want to read all primitive types as strings. This component takes the target (desired) schema and generates a plain one which is used for 
+ * This component is used in the standardization job. We've got a strongly typed (target) schema. When reading the data however, we do not want spark to apply casts
+ * automatically. Instead we want to read all primitive types as strings. This component takes the target (desired) schema and generates a plain one which is used for
  * reading source data in the job.
  */
 object PlainSchemaGenerator {
-  
+
   def generateInputSchema(inp: DataType): DataType = {
     inp match {
       case i: StructType => StructType(i.fields.map(field =>

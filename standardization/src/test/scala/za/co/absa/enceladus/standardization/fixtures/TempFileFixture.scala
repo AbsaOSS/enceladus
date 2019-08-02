@@ -25,9 +25,9 @@ trait TempFileFixture {
   /**
     * Creates a temporary text file and returns the full path to it
     *
-    * @param prefix  The prefix string to be used in generating the file's name;
+    * @param prefix  The prefix string to be used in generating the file's name
     *                must be at least three characters long
-    * @param suffix  The suffix string to be used in generating the file's name;
+    * @param suffix  The suffix string to be used in generating the file's name
     *                may be <code>null</code>, in which case the suffix <code>".tmp"</code> will be used
     * @param charset A charset of the data in the temporaty text file
     * @param content A contents to put to the file

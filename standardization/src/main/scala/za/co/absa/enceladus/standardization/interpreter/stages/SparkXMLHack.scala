@@ -38,19 +38,12 @@ object SparkXMLHack {
     val currentAttrPath = appendPath(path, field.name)
 
     field.dataType match {
-      case a @ ArrayType(elType, nullable) => {
-
-        when((size(arrCol(currentAttrPath)) === 1) and (arrCol(currentAttrPath)(0) isNull), lit(null)).otherwise(arrCol(currentAttrPath)) as field.name
-
-      }
-
-      case t: StructType => {
+      case a @ ArrayType(elType, nullable) =>
+        when((size(arrCol(currentAttrPath)) === 1) and arrCol(currentAttrPath)(0).isNull, lit(null)).otherwise(arrCol(currentAttrPath)) as field.name // scalastyle:ignore null
+      case t: StructType =>
         struct(t.fields.toSeq.map(x => hack(x, currentAttrPath, df)): _*) as field.name
-
-      }
-      case _ => {
+      case _ =>
         arrCol(currentAttrPath) as field.name
-      }
     }
   }
 }

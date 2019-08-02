@@ -63,9 +63,7 @@ sealed trait TypeParser {
 object TypeParser extends StandardizationCommon {
   import za.co.absa.enceladus.utils.implicits.ColumnImplicits.ColumnEnhancements
 
-  // scalastyle:off magic.number
-  private val decimalType = DecimalType(30,9)
-  // scalastyle:on magic.number
+  private val decimalType = DecimalType(30,9) // scalastyle:ignore magic.number
 
   private val MillisecondsPerSecond = 1000
   private val MicrosecondsPerSecond = 1000000
@@ -321,7 +319,7 @@ object TypeParser extends StandardizationCommon {
     protected val pattern: DateTimePattern = DateTimePattern.fromStructField(field)
 
     override protected def assemblePrimitiveCastLogic: Column = {
-      if (DateTimePattern.isEpoch(pattern)) {
+      if (pattern.isEpoch) {
         castEpoch()
       } else {
         castWithPattern()

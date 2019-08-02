@@ -15,18 +15,21 @@
 
 package za.co.absa.enceladus.standardization.interpreter
 
-import org.apache.spark.sql.DataFrame
+import java.sql.{Date, Timestamp}
+
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.stages.SchemaChecker
 import za.co.absa.enceladus.standardization.samples.TestSamples
-import za.co.absa.enceladus.utils.error.UDFLibrary
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.utils.validation.{SchemaValidator, ValidationError, ValidationException}
 
 import scala.io.Source
 
-class DateTimeSuite extends FunSuite with SparkTestBase {
+class DateTimeSuite extends FunSuite with SparkTestBase with LoggerTestBase{
+  import spark.implicits._
 
   lazy val data: DataFrame = spark.createDataFrame(TestSamples.dateSamples)
   lazy val schemaWrong: StructType = DataType.fromJson(Source
@@ -38,10 +41,10 @@ class DateTimeSuite extends FunSuite with SparkTestBase {
     .getLines().mkString("\n"))
     .asInstanceOf[StructType]
 
-  implicit val udfLib = UDFLibrary()
+  private implicit val udfLib: UDFLibrary = UDFLibrary()
 
   test("Validation should return critical errors") {
-    println(data.schema.prettyJson)
+    logger.debug(data.schema.prettyJson)
     val validationErrors = SchemaValidator.validateSchema(schemaWrong)
     val hasCriticalErrors = validationErrors.exists( p =>
       p.issues.exists {
@@ -63,9 +66,29 @@ class DateTimeSuite extends FunSuite with SparkTestBase {
   }
 
   test("Date Time Standardization Example with fixed schema should work") {
-    val std = StandardizationInterpreter.standardize(data, schemaOk, "dates")
-    std.show(false)
-    std.printSchema
-    println(std.schema.prettyJson)
+    val date0 = new Date(0)
+    val ts = Timestamp.valueOf("2017-10-20 08:11:31")
+    val ts0 = new Timestamp(0)
+    val exp = List((
+      1L,
+      Date.valueOf("2017-10-20"),
+      Date.valueOf("2017-10-20"),
+      Date.valueOf("2017-12-29"),
+      date0,
+      date0,
+      date0,
+      ts, ts, ts, ts0, ts0, ts0,
+      List(
+        ErrorMessage.stdCastErr("dateSampleWrong1","10-20-2017"),
+        ErrorMessage.stdCastErr("dateSampleWrong2","201711"),
+        ErrorMessage.stdCastErr("dateSampleWrong3",""),
+        ErrorMessage.stdCastErr("timestampSampleWrong1", "20171020T081131"),
+        ErrorMessage.stdCastErr("timestampSampleWrong2", "2017-10-20t081131"),
+        ErrorMessage.stdCastErr("timestampSampleWrong3", "2017-10-20")
+      )
+    ))
+    val std: Dataset[Row] = StandardizationInterpreter.standardize(data, schemaOk, "dates")
+    logDataFrameContent(std)
+    assertResult(exp)(std.as[Tuple14[Long, Date, Date, Date, Date, Date, Date, Timestamp, Timestamp, Timestamp, Timestamp, Timestamp,Timestamp, Seq[ErrorMessage]]].collect().toList)
   }
 }
