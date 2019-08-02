@@ -15,7 +15,9 @@
 
 package za.co.absa.enceladus.utils.validation
 
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.validation.field.{FieldValidationFailure, FieldValidator}
 
 import scala.collection.mutable.ListBuffer
@@ -30,7 +32,7 @@ object SchemaValidator {
     * @param schema A Spark schema
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
-  def validateSchema(schema: StructType): Seq[FieldValidationFailure] = {
+  def validateSchema(schema: StructType): List[FieldValidationFailure] = {
     var errorsAccumulator = new ListBuffer[FieldValidationFailure]
     val flatSchema = flattenSchema(schema)
     for {s <- flatSchema} {
@@ -42,6 +44,36 @@ object SchemaValidator {
       }
     }
     errorsAccumulator.toList
+  }
+
+  /**
+    * Validates the error column.
+    * Most of the time the error column should not exist in the input schema. But if it does exist, it should
+    * conform to the expected type.
+    * Nullability of the error column is not an issue.
+    *
+    * @param schema A Spark schema
+    * @return A list of ValidationErrors, each containing a column name and the list of errors and warnings
+    */
+  def validateErrorColumn(schema: StructType)
+                         (implicit spark: SparkSession)
+                         : List[FieldValidationFailure] = {
+    val expectedTypeNonNullable = ArrayType(ErrorMessage.errorColSchema, containsNull = false)
+    val expectedTypeNullable = ArrayType(ErrorMessage.errorColSchema, containsNull = true)
+    val errCol = schema.find(f => f.name == ErrorMessage.errorColumnName)
+    errCol match {
+      case Some(errColField) =>
+        if (errColField.dataType != expectedTypeNonNullable && errColField.dataType != expectedTypeNullable) {
+          val actualType = errColField.dataType
+          List(FieldValidationFailure(errColField.name, "",
+            ValidationError("The error column in the input data does not conform to the expected type. " +
+              s"Expected: $expectedTypeNonNullable, actual: $actualType") :: Nil))
+        } else {
+          Nil
+        }
+      case None =>
+        Nil
+    }
   }
 
   /**

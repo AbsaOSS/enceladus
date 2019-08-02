@@ -42,7 +42,7 @@ class FileSystemVersionUtils(conf: Configuration) {
     val uri = path.toUri
     val scheme = uri.getScheme
     val authority = uri.getAuthority
-    val prefix = if (scheme == null || authority == null) "" else scheme + "://"+authority
+    val prefix = if (scheme == null || authority == null) "" else scheme + "://" + authority
     val rawPath = uri.getRawPath
     (prefix, rawPath)
   }
@@ -61,7 +61,7 @@ class FileSystemVersionUtils(conf: Configuration) {
 
     var currPath = prefix
     tokens.foreach({ dir =>
-      currPath = currPath + "/"+dir
+      currPath = currPath + "/" + dir
       val p = new Path(currPath)
       log.info(s"Checking path: ${p.toUri.toString}")
       if (!fs.exists(p)) {

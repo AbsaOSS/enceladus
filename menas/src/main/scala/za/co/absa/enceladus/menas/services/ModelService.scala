@@ -15,19 +15,23 @@
 
 package za.co.absa.enceladus.menas.services
 
-import org.mongodb.scala.Completed
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.menas.repositories.MongoRepository
 
 import scala.concurrent.Future
 
 abstract class ModelService[C](mongoRepository: MongoRepository[C]) {
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  val log: Logger = LoggerFactory.getLogger(this.getClass)
+
   def isUniqueName(name: String): Future[Boolean] = {
     mongoRepository.isUniqueName(name)
   }
 
-  def create(item: C): Future[Completed] = {
-    mongoRepository.create(item)
+  def create(item: C): Future[C] = {
+    mongoRepository.create(item).map(_ => item)
   }
 
 }

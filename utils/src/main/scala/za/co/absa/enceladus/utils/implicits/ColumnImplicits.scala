@@ -30,7 +30,7 @@ object ColumnImplicits {
       * Scala/ Java.
       * Another enhancement is, that the function allows a negative index, denoting counting of the index from back
       * This version takes the substring from the startPos until the end.
-      * @param startPos the index (zero based) where to start the substring from, if negative it;s counted from end
+      * @param startPos the index (zero based) where to start the substring from, if negative it's counted from end
       * @return         column with requested substring
       */
     def zeroBasedSubstr(startPos: Int): Column = {
@@ -46,7 +46,7 @@ object ColumnImplicits {
       * Scala/ Java.
       * Another enhancement is, that the function allows a negative index, denoting counting of the index from back
       * This version takes the substring from the startPos and takes up to the given number of characters (less.
-      * @param startPos the index (zero based) where to start the substring from, if negative it;s counted from end
+      * @param startPos the index (zero based) where to start the substring from, if negative it's counted from end
       * @param len      length of the desired substring, if longer then the rest of the string, all the remaining characters are taken
       * @return         column with requested substring
       */

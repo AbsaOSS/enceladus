@@ -29,8 +29,8 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
-import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
+import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
@@ -192,10 +192,11 @@ object DynamicConformanceJob {
                             reportVersion: Int,
                             cmdLineArgs: String)
                            (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
+    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
     val withPartCols = result
-      .withColumn(infoDateColumn, to_date(lit(cmd.reportDate), reportDateFormat))
-      .withColumn(infoDateColumnString, lit(cmd.reportDate))
-      .withColumn(infoVersionColumn, lit(reportVersion))
+      .withColumnIfDoesNotExist(infoDateColumn, to_date(lit(cmd.reportDate), reportDateFormat))
+      .withColumnIfDoesNotExist(infoDateColumnString, lit(cmd.reportDate))
+      .withColumnIfDoesNotExist(infoVersionColumn, lit(reportVersion))
 
     val recordCount = result.lastCheckpointRowCount match {
       case None    => withPartCols.count

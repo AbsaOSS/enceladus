@@ -86,8 +86,11 @@ class EventListenerMenas(menasDao: MenasDAO,
   /** Called when job status changes. */
   override def onJobStatusChange(newStatus: RunStatus): Unit = {
     for (uniqueId <- runUniqueId if needToSendStatusChange(runStatus, newStatus)) {
-      val statusToSave = if (isJobStageOnly && newStatus.status == RunState.allSucceeded)
-        newStatus.copy(status = RunState.stageSucceeded) else newStatus
+      val statusToSave = if (isJobStageOnly && newStatus.status == RunState.allSucceeded) {
+        newStatus.copy(status = RunState.stageSucceeded)
+      } else {
+        newStatus
+      }
       if (!dao.updateRunStatus(uniqueId, statusToSave)) {
         log.error(s"Unable to update status of a run object ($uniqueId) in the database")
       }
@@ -118,7 +121,8 @@ class EventListenerMenas(menasDao: MenasDAO,
       }
       false
     }
-    else
+    else {
       true
+    }
   }
 }

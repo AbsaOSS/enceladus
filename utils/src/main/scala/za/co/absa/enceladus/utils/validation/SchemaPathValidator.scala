@@ -17,6 +17,8 @@ package za.co.absa.enceladus.utils.validation
 
 import org.apache.spark.sql.types._
 
+import scala.annotation.tailrec
+
 /**
   * Object responsible for validating paths to fields, it's existence and case sensitivity
   */
@@ -181,6 +183,7 @@ object SchemaPathValidator {
     underlyingType
   }
 
+  @tailrec
   private def getSchemaField(schema: StructType, path: Array[String]): Option[StructField] = {
     if (path.isEmpty) {
       None

@@ -112,10 +112,11 @@ object HelperFunctions {
           case _ =>
             val newFieldName = s"$fieldNamePrefix${field.name}"
             fields += expr(s"$path`${field.name}`").as(newFieldName)
-            if (path.contains('['))
+            if (path.contains('[')) {
               stringFields += s"""expr("$path`${field.name}` AS `$newFieldName`")"""
-            else
+            } else {
               stringFields += s"""col("$path`${field.name}`").as("$newFieldName")"""
+            }
         }
       })
     }

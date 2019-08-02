@@ -18,9 +18,11 @@ package za.co.absa.enceladus.menas.integration.fixtures
 import org.mongodb.scala.MongoDatabase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
-import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.menas.repositories.SchemaMongoRepository
+import za.co.absa.enceladus.model.Schema
 
 @Component
-class DatasetFixtureService @Autowired()(mongoDb: MongoDatabase)
-  extends FixtureService[Dataset](mongoDb, DatasetMongoRepository.collectionName)
+class SchemaFixtureService @Autowired()(mongoDb: MongoDatabase)
+  extends FixtureService[Schema](mongoDb, SchemaMongoRepository.collectionName) {
+
+}

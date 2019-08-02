@@ -38,16 +38,15 @@ case class Nested1Level(a: List[Option[Int]])
 
 class ArrayTransformationsSuite extends FunSuite with SparkTestBase {
 
-  val inputData = (0 to 10).toList.map(x => (x, Random.shuffle((0 until x).toList)))
-  val inputDataOrig = OuterStruct(-1, null) :: inputData.map({ case (x, vals) => OuterStruct(x, vals.map(InnerStruct(_))) })
-  val inputDataZipped = ZippedOuterStruct(-1, null) :: inputData.map({ case (x, vals) => ZippedOuterStruct(x, vals.zipWithIndex.map(x => (x._2, InnerStruct(x._1)))) })
+  private val inputData = (0 to 10).toList.map(x => (x, Random.shuffle((0 until x).toList)))
+  private val inputDataOrig = OuterStruct(-1, null) :: inputData.map({ case (x, vals) => OuterStruct(x, vals.map(InnerStruct(_))) })
+  private val inputDataZipped = ZippedOuterStruct(-1, null) :: inputData.map({ case (x, vals) => ZippedOuterStruct(x, vals.zipWithIndex.map(x => (x._2, InnerStruct(x._1)))) })
 
-  val extraNested = inputDataOrig.map(Outer2(_))
-  val extraNestedZipped = inputDataZipped.map(ZippedOuter2(_))
+  private val extraNested = inputDataOrig.map(Outer2)
 
   import spark.implicits._
 
-  val df = spark.createDataFrame(inputDataOrig)
+  private val df = spark.createDataFrame(inputDataOrig)
 
   test("Testing Reversed Zip With Index") {
     val zipped = ArrayTransformations.zipWithOrder(df, "vals").as[ZippedOuterStruct].collect()
@@ -70,7 +69,7 @@ class ArrayTransformationsSuite extends FunSuite with SparkTestBase {
     val df = spark.createDataFrame(inputDataOrig)
 
     val t = ArrayTransformations.arrayTransform(df, "vals")({
-      case (d) =>
+      case d =>
         val tmpCol = d.withColumn("tmp", $"vals.a" * 2)
         val dropped = ArrayTransformations.nestedDrop(tmpCol, "vals.a")
         val renamed = ArrayTransformations.nestedWithColumn(dropped)("vals.a", $"tmp")
@@ -120,8 +119,8 @@ class ArrayTransformationsSuite extends FunSuite with SparkTestBase {
       Nested1Level(List()),
       Nested1Level(null)).toSeq
 
-    val reslocal = res.as[Nested1Level].collect().toSeq
+    val resLocal = res.as[Nested1Level].collect().toSeq
 
-    assertResult(exp)(reslocal)
+    assertResult(exp)(resLocal)
   }
 }

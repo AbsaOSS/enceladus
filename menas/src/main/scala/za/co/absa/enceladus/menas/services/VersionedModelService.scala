@@ -26,8 +26,10 @@ import za.co.absa.enceladus.menas.exceptions._
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.menas.audit._
+
 import scala.concurrent.Future
-import java.time.ZonedDateTime
+
+import com.mongodb.MongoWriteException
 
 abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]](versionedMongoRepository: VersionedMongoRepository[C])
   extends ModelService(versionedMongoRepository) {
@@ -70,7 +72,11 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
         //store all in version ascending order
         val all = versionedMongoRepository.getAllVersions(name, inclDisabled = true).map(_.sortBy(_.version))
         //get those relevant to us
-        if (fromVersion.isDefined) all.map(_.filter(_.version <= fromVersion.get)) else all
+        if (fromVersion.isDefined) {
+          all.map(_.filter(_.version <= fromVersion.get))
+        } else {
+          all
+        }
       }
       res <- {
         //see if this was branched from a different entity
@@ -111,13 +117,19 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   def getUsedIn(name: String, version: Option[Int]): Future[UsedIn]
 
-  private[menas] def getMenasRef(item: C): MenasReference = MenasReference(Some(versionedMongoRepository.collectionBaseName), item.name, item.version)
+  private[menas] def getMenasRef(item: C): MenasReference = {
+    MenasReference(Some(versionedMongoRepository.collectionBaseName), item.name, item.version)
+  }
 
   private[menas] def create(item: C, username: String): Future[Option[C]] = {
     for {
       validation <- validate(item)
       _ <- if (validation.isValid()) {
         versionedMongoRepository.create(item, username)
+          .recover {
+            case e: MongoWriteException =>
+              throw ValidationException(Validation().withError("name", s"entity with name already exists: '${item.name}'"))
+          }
       } else {
         throw ValidationException(validation)
       }
@@ -136,6 +148,10 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
         transform(version.get)
       }
       update <- versionedMongoRepository.update(username, transformed)
+        .recover {
+          case e: MongoWriteException =>
+            throw ValidationException(Validation().withError("version", s"entity '$itemName' with this version already exists: ${itemVersion + 1}"))
+        }
     } yield Some(update)
   }
 
@@ -147,7 +163,9 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     }
   }
 
-  def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
+  def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = {
+    versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
+  }
 
   def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
     val auth = SecurityContextHolder.getContext.getAuthentication

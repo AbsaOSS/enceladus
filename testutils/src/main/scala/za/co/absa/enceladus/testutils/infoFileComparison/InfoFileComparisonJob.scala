@@ -33,6 +33,8 @@ import scala.collection.JavaConverters._
 import scala.reflect.io.File
 
 object InfoFileComparisonJob {
+  private val BufferSizeDefaultValue = 4096
+
   TimeZoneNormalizer.normalizeJVMTimeZone()
 
   private val log: Logger = LogManager.getLogger(this.getClass)
@@ -70,9 +72,9 @@ object InfoFileComparisonJob {
 
     val fs = FileSystem.get(hadoopConfiguration)
     val overwrite = true
-    val progress = null
+    val progress = null // scalastyle:ignore null
     val permission = new FsPermission("777")
-    val bufferSize = hadoopConfiguration.getInt("io.file.buffer.size", 4096)
+    val bufferSize = hadoopConfiguration.getInt("io.file.buffer.size", BufferSizeDefaultValue)
 
     for (fos <- fs.create(
       path,
