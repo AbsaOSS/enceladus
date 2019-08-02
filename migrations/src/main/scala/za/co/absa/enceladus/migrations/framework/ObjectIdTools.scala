@@ -79,4 +79,13 @@ object ObjectIdTools {
       document
     }
   }
+
+  def extractId(objIdExpression: String): String = {
+    val idRegexp = """.*\"\$oid\"\s*:\s*\"(.*)\".*""".r
+    objIdExpression match {
+      case idRegexp(id) => id
+      case _ => throw new RuntimeException(s"Unable to extract Object Id from '$objIdExpression'")
+    }
+  }
+
 }

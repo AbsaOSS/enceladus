@@ -16,10 +16,11 @@
 package za.co.absa.enceladus.migrations.continuous.migrate01
 
 import org.mongodb.scala.MongoDatabase
-import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.{BsonDocument, ObjectId}
+import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.Filters.{and, equal, regex}
 import org.mongodb.scala.model.Sorts._
-import org.mongodb.scala.model.{Filters, Projections}
+import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 
 /**
   * The class contains a set of MongoDB versioned collection manipulation routines needed for continuous migration.
@@ -49,8 +50,9 @@ class EntityEepository(db: MongoDatabase, collectionName: String) {
     * @return true if such a document exists, false otherwise.
     */
   def doesDocumentExist(objectId: String): Boolean = {
+    val id = ObjectIdTools.extractId(objectId)
     val documents = db.getCollection(collectionName)
-      .find(Filters.equal("_id", objectId))
+      .find(Filters.equal("_id", new ObjectId(id)))
       .execute()
     documents.nonEmpty
   }
@@ -58,7 +60,7 @@ class EntityEepository(db: MongoDatabase, collectionName: String) {
   /**
     * Returns true if a document with the particular name and version exists in the collection.
     *
-    * @param name A name of an entity.
+    * @param name    A name of an entity.
     * @param version A version of the entity.
     * @return true if such a document exists, false otherwise.
     */
@@ -82,11 +84,10 @@ class EntityEepository(db: MongoDatabase, collectionName: String) {
   def getLatestVersion(name: String): Int = {
     val documents = db.getCollection(collectionName)
       .find(regex("name", name, "i"))
-      .sort(descending("name"))
-      .projection(Projections.fields(Projections.include("version")))
+      .sort(descending("version"))
       .limit(1)
       .execute()
-    documents.headOption.map(_.head.toString().toInt).getOrElse(0)
+    documents.headOption.map(_.getInteger("version").toInt).getOrElse(0)
   }
 
   /**
