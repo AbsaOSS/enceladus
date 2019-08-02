@@ -18,7 +18,7 @@ package za.co.absa.enceladus.migrations
 import scopt.OptionParser
 
 /**
-  * This is a class for configuration provided by the command line parameters to the command like Mgration Tool
+  * This is a class for configuration provided by the command line parameters to the command line Migration Tool
   *
   * Note: scopt requires all fields to have default values.
   * Even if a field is mandatory it needs a default value.

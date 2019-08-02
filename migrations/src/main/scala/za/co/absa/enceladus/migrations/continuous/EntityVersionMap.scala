@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.migrations.continuous
 
 /**
-  * An abstract class representing en entity version map. Entity version map is a tool for keeping track
+  * A base class representing en entity version map. Entity version map is a tool for keeping track
   * of 'name - version' mapping of entities between different versions of the database.
   *
   * It is used for a conflict resolution when doing a continuous migration.
