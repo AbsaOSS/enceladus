@@ -15,38 +15,33 @@
 
 package za.co.absa.enceladus.menas.integration.fixtures
 
+import com.mongodb.MongoBulkWriteException
 import org.mongodb.scala.MongoDatabase
 import org.mongodb.scala.bson.BsonDocument
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.menas.repositories.RunMongoRepository
+import za.co.absa.enceladus.model.Run
 
+import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 
 @Component
-class RunFixtureService @Autowired()(mongoDb: MongoDatabase) {
+class RunFixtureService @Autowired()(mongoDb: MongoDatabase)
+  extends FixtureService[Run](mongoDb, RunMongoRepository.collectionName) {
 
-  import scala.concurrent.ExecutionContext.Implicits.global
-
-  private val collection = mongoDb.getCollection(RunMongoRepository.collectionName)
-
-  def createCollection(): Unit = {
-    Await.ready(mongoDb.createCollection(RunMongoRepository.collectionName).toFuture(), Duration.Inf)
-  }
-
-  def add(runs: Run*): Unit = {
-    val futureRuns = runs.map { run =>
-      val bson = BsonDocument(ControlUtils.asJson(run))
-      collection.withDocumentClass[BsonDocument].insertOne(bson).head()
+  override def add(runs: Run*): Unit = {
+    val bsonRuns = runs.map { run =>
+      BsonDocument(ControlUtils.asJson(run))
     }
-    Await.ready(Future.sequence(futureRuns), Duration.Inf)
-  }
-
-  def dropCollection(): Unit = {
-    Await.ready(mongoDb.getCollection(RunMongoRepository.collectionName).drop().toFuture(), Duration.Inf)
+    try {
+      Await.result(collection.withDocumentClass[BsonDocument].insertMany(bsonRuns).toFuture(), Duration.Inf)
+    } catch {
+      case exception: MongoBulkWriteException =>
+        fail(s"""${this.getClass.getSimpleName} failed to set up database:
+                |    ${exception.getMessage}""".stripMargin)
+    }
   }
 
 }

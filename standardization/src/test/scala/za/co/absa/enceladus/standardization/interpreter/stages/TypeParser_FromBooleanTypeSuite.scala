@@ -23,7 +23,7 @@ class TypeParser_FromBooleanTypeSuite extends TypeParserSuiteTemplate  {
 
   private val input = Input(
     baseType = BooleanType,
-    defaultValueDate = "0",
+    defaultValueDate = "1",
     defaultValueTimestamp = "1",
     datePattern = "u",
     timestampPattern = "F",
@@ -34,8 +34,8 @@ class TypeParser_FromBooleanTypeSuite extends TypeParserSuiteTemplate  {
   override protected def createCastTemplate(toType: DataType, pattern: String, timezone: Option[String]): String = {
     val isEpoch = DateTimePattern.isEpoch(pattern)
     (toType, isEpoch, timezone) match {
-      case (DateType, true, _)                      => s"to_date(from_unixtime((CAST(`%s` AS BIGINT) / ${DateTimePattern.epochFactor(pattern)}L), 'yyyy-MM-dd'), 'yyyy-MM-dd')"
-      case (TimestampType, true, _)                 => s"to_timestamp(from_unixtime((CAST(`%s` AS BIGINT) / ${DateTimePattern.epochFactor(pattern)}L), 'yyyy-MM-dd HH:mm:ss'), 'yyyy-MM-dd HH:mm:ss')"
+      case (DateType, true, _)                      => s"to_date(CAST((CAST(`%s` AS DECIMAL(30,9)) / ${DateTimePattern.epochFactor(pattern)}L) AS TIMESTAMP))"
+      case (TimestampType, true, _)                 => s"CAST((CAST(%s AS DECIMAL(30,9)) / ${DateTimePattern.epochFactor(pattern)}) AS TIMESTAMP)"
       case (DateType, _, Some(tz))                  => s"to_date(to_utc_timestamp(to_timestamp(CAST(`%s` AS STRING), '$pattern'), '$tz'))"
       case (TimestampType, _, Some(tz))             => s"to_utc_timestamp(to_timestamp(CAST(`%s` AS STRING), '$pattern'), $tz)"
       case (TimestampType, _, _)                    => s"to_timestamp(CAST(`%s` AS STRING), '$pattern')"

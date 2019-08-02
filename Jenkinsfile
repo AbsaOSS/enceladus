@@ -44,10 +44,10 @@ pipeline {
                 }
             }
         }
-        stage ('Deploy') {
+        stage ('Deploy Snapshot Version to Repository') {
             when {
-                expression { 
-                    env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'master' 
+                expression {
+                    env.BRANCH_NAME == 'develop'
                 }
             }
             steps {
@@ -56,8 +56,20 @@ pipeline {
                     sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${artifactoryURL} ${mavenAdditionalSettingsDeploy} deploy"
                 }
             }
-         }
-         stage ('Deploy to Test Server') {
+        }
+        stage ('Deploy Release Version to Repository') {
+            when {
+                expression {
+                    env.BRANCH_NAME == 'master'
+                }
+            }
+            steps {
+                configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
+                    sh "mvn -s $MAVEN_SETTINGS_XML -DaltDeploymentRepository=${artifactoryURL} ${mavenAdditionalSettingsDeploy} deploy"
+                }
+            }
+        }
+        stage ('Deploy to Test Server') {
             when {
                 expression { 
                     env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'master' 
@@ -66,6 +78,6 @@ pipeline {
             steps {
                 callSSHPublish()
             }
-         }
+        }
     }
 }

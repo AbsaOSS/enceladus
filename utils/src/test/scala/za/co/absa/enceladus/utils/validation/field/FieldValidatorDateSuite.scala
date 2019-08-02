@@ -39,7 +39,19 @@ class FieldValidatorDateSuite extends FunSuite  {
   test("epochmilli pattern") {
     assert(FieldValidatorDate.validateStructField(field("epochmilli")).isEmpty)
     //with default
-    assert(FieldValidatorDate.validateStructField(field("epochmilli", Option("55455560000"))).isEmpty)
+    assert(FieldValidatorDate.validateStructField(field("epochmilli", Option("5545556000"))).isEmpty)
+  }
+
+  test("epochmicro pattern") {
+    assert(FieldValidatorDate.validateStructField(field("epochmicro")).isEmpty)
+    //with default
+    assert(FieldValidatorDate.validateStructField(field("epochmicro", Option("5545556000111"))).isEmpty)
+  }
+
+  test("epochnano pattern") {
+    assert(FieldValidatorDate.validateStructField(field("epochnano")).isEmpty)
+    //with default
+    assert(FieldValidatorDate.validateStructField(field("epochnano", Option("5545556000111222"))).isEmpty)
   }
 
   test("date pattern") {
@@ -158,6 +170,22 @@ class FieldValidatorDateSuite extends FunSuite  {
       ValidationWarning("No day placeholder 'dd' found.")
     )
     assert(FieldValidatorDate.validateStructField(field("GG")).toSet == expected)
+  }
+
+  test("warning issues: redundant placeholders") {
+    val expected = Set(
+      ValidationWarning("Redundant hour placeholder 'H' found."),
+      ValidationWarning("Redundant minute placeholder 'm' found."),
+      ValidationWarning("Redundant second placeholder 's' found."),
+      ValidationWarning("Redundant millisecond placeholder 'S' found."),
+      ValidationWarning("Redundant microsecond placeholder 'i' found."),
+      ValidationWarning("Redundant nanosecond placeholder 'n' found."),
+      ValidationWarning("Redundant am/pm placeholder 'a' found."),
+      ValidationWarning("Redundant hour placeholder 'k' found."),
+      ValidationWarning("Redundant hour placeholder 'h' found."),
+      ValidationWarning("Redundant hour placeholder 'H' found.")
+    )
+    assert(FieldValidatorDate.validateStructField(field("yyyy-MM-dd HH:mm:ss.SSSiiinnn (aakkhhKK)", None, None)).toSet == expected)
   }
 
   test("warning issues: missing placeholders with default time zone") {

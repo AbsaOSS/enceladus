@@ -21,16 +21,16 @@ trait VersionedModel {
   val name: String
   val version: Int
   val description: Option[String]
-  
+
   val dateCreated: ZonedDateTime
   val userCreated: String
-  
+
   val lastUpdated: ZonedDateTime
   val userUpdated: String
-  
+
   val disabled: Boolean
   val dateDisabled: Option[ZonedDateTime]
   val userDisabled: Option[String]
-  
+
   val parent: Option[MenasReference]
 }

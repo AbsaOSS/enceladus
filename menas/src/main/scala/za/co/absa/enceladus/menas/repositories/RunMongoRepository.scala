@@ -20,7 +20,7 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Projections._
-import org.mongodb.scala.model.Sorts.descending
+import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model._
 import org.mongodb.scala.{Completed, MapReduceObservable, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
@@ -115,7 +115,8 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   def getAllSummaries(): Future[Seq[RunSummary]] = {
     val pipeline = Seq(
-      summaryProjection
+      summaryProjection,
+      sort(ascending("datasetName", "datasetVersion", "runId"))
     )
     collection
       .aggregate[RunSummary](pipeline)
@@ -127,7 +128,8 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       filter(
         equal("dataset", datasetName)
       ),
-      summaryProjection
+      summaryProjection,
+      sort(ascending("datasetVersion", "runId"))
     )
     collection
       .aggregate[RunSummary](pipeline)
@@ -139,7 +141,8 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
         equal("dataset", datasetName),
         equal("datasetVersion", datasetVersion)
       )),
-      summaryProjection
+      summaryProjection,
+      sort(ascending("runId"))
     )
     collection
       .aggregate[RunSummary](pipeline)
@@ -167,6 +170,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .mapReduce[BsonDocument](mapFn, reduceFn)
       .finalizeFunction(finalizeFn)
       .jsMode(true)
+      .sort(ascending("dataset"))
   }
 
   def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Option[Run]] = {

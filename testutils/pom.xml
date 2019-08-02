@@ -23,7 +23,7 @@
     <parent>
         <groupId>za.co.absa</groupId>
         <artifactId>enceladus-parent</artifactId>
-        <version>1.0.0-RC2-SNAPSHOT</version>
+        <version>1.0.0-RC4-SNAPSHOT</version>
     </parent>
 
     <properties>

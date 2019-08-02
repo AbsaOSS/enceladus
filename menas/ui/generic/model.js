@@ -24,7 +24,7 @@ var model = new sap.ui.model.json.JSONModel({
   currentMappingTable: {},
   newMappingTable: {},
   newSchema: {},
-  menasVersion: "${project.version}",
+  menasVersion: "",
   appInfo: {
     oozie: {}
   },

@@ -31,7 +31,8 @@ import scala.util.{Failure, Success}
 class EventListenerMenas(menasDao: MenasDAO,
                          datasetName: String,
                          datasetVersion: Int,
-                         isJobStageOnly: Boolean) extends EventListener {
+                         isJobStageOnly: Boolean,
+                         generateNewRun: Boolean) extends EventListener {
 
   private val dao: MenasDAO = menasDao
   private val log = LogManager.getLogger("EventListenerMenas")
@@ -40,15 +41,23 @@ class EventListenerMenas(menasDao: MenasDAO,
 
   /** Called when an _INFO file have been loaded. */
   override def onLoad(sparkApplicationId: String, inputInfoFileName: String, controlMeasure: ControlMeasure): Unit = {
-    if (controlMeasure.runUniqueId.isEmpty) {
+    if (controlMeasure.runUniqueId.isEmpty || generateNewRun) {
       if (datasetName.isEmpty) {
-        throw new IllegalStateException(s"The Dataset name is not provided, nor 'runUniqueId' is present in $inputInfoFileName file. " +
-          s"Please, provide the dataset name when calling to enableControlFrameworkTracking() or make sure 'runUniqueId' field is present in " +
+        throw new IllegalStateException("The Dataset name is not provided, nor a 'runUniqueId' from the previous " +
+          s"stage is present in $inputInfoFileName file. Please, provide the dataset name when invoking " +
+          "enableControlFrameworkTracking() or make sure 'runUniqueId' field is present in " +
           s"$inputInfoFileName.")
       }
       val splineRef = SplineReference(sparkApplicationId, "")
       val runStatus = RunStatus(RunState.running, None)
-      val run = Run(None, 0, datasetName, datasetVersion, splineRef, ControlUtils.getTimestampAsString, runStatus, controlMeasure)
+      val run = Run(None,
+        0,
+        datasetName,
+        datasetVersion,
+        splineRef,
+        ControlUtils.getTimestampAsString,
+        runStatus,
+        controlMeasure)
       dao.storeNewRunObject(run) match {
         case Success(uniqueId) =>
           runUniqueId = Some(uniqueId)
@@ -77,8 +86,11 @@ class EventListenerMenas(menasDao: MenasDAO,
   /** Called when job status changes. */
   override def onJobStatusChange(newStatus: RunStatus): Unit = {
     for (uniqueId <- runUniqueId if needToSendStatusChange(runStatus, newStatus)) {
-      val statusToSave = if (isJobStageOnly && newStatus.status == RunState.allSucceeded)
-        newStatus.copy(status = RunState.stageSucceeded) else newStatus
+      val statusToSave = if (isJobStageOnly && newStatus.status == RunState.allSucceeded) {
+        newStatus.copy(status = RunState.stageSucceeded)
+      } else {
+        newStatus
+      }
       if (!dao.updateRunStatus(uniqueId, statusToSave)) {
         log.error(s"Unable to update status of a run object ($uniqueId) in the database")
       }
@@ -109,7 +121,8 @@ class EventListenerMenas(menasDao: MenasDAO,
       }
       false
     }
-    else
+    else {
       true
+    }
   }
 }

@@ -32,7 +32,7 @@ class UseCaseTestData {
     createCollection("schema")
     createCollection("mappingtable")
     createCollection("foo")
-    createIndex("dataset", "name" :: Nil)
+    createIndex("dataset", IndexField("name", ASC) :: Nil, unique = true)
   }
 
   object Migration1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration  {
@@ -41,8 +41,8 @@ class UseCaseTestData {
     renameCollection("mappingtable", "mapping_table")
     dropCollection("foo")
     createCollection("attachment")
-    createIndex("dataset", "order" :: Nil)
-    createIndex("dataset", "version" :: Nil)
+    createIndex("dataset", IndexField("order", ASC) :: Nil)
+    createIndex("dataset", IndexField("version", DESC) :: Nil)
 
     transformJSON("schema")(jsonIn => {
       jsonIn.replace(" ","")
@@ -64,7 +64,7 @@ class UseCaseTestData {
   object Migration2 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration  {
     override val targetVersion: Int = 2
 
-    dropIndex("dataset", "order" :: Nil)
+    dropIndex("dataset", IndexField("order", ASC) :: Nil)
 
     transformJSON("schema")(jsonIn => {
       "{\"new_schema\": \"none\"}"
@@ -89,34 +89,34 @@ class UseCaseTestData {
 
     db.insertDocument("schema",
       """{
-        |	"type": "struct",
-        |	"fields": [
-        |		{
-        |			"name": "field1",
-        |			"type": "string",
-        |			"nullable": true,
-        |			"metadata": {}
-        |		},
-        |		{
-        |			"name": "field2",
-        |			"type": "integer",
-        |			"nullable": true,
-        |			"metadata": {}
-        |		},
-        |		{
-        |			"name": "field3",
-        |			"type": "date",
-        |			"nullable": true,
-        |			"metadata": {
-        |				"pattern": "yyyy-MM-dd"
-        |			}
-        |		},
-        |		{
-        |			"name": "field4",
-        |			"type": "string",
-        |			"nullable": true,
-        |			"metadata": {}
-        |		}
+        | "type": "struct",
+        | "fields": [
+        |   {
+        |     "name": "field1",
+        |     "type": "string",
+        |     "nullable": true,
+        |     "metadata": {}
+        |   },
+        |   {
+        |     "name": "field2",
+        |     "type": "integer",
+        |     "nullable": true,
+        |     "metadata": {}
+        |   },
+        |   {
+        |     "name": "field3",
+        |     "type": "date",
+        |     "nullable": true,
+        |     "metadata": {
+        |       "pattern": "yyyy-MM-dd"
+        |     }
+        |   },
+        |   {
+        |     "name": "field4",
+        |     "type": "string",
+        |     "nullable": true,
+        |     "metadata": {}
+        |   }
         |    ]
         |}""".stripMargin)
 

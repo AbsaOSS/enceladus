@@ -18,10 +18,10 @@ package za.co.absa.enceladus.dao
 import java.net.URI
 
 import scala.util.control.NonFatal
-import org.apache.http.HttpStatus
+import org.apache.http.{HttpEntity, HttpStatus}
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClients
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 import org.apache.http.util.EntityUtils
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.types.DataType
@@ -47,7 +47,7 @@ object EnceladusRestDAO extends EnceladusDAO {
   private val conf = ConfigFactory.load()
   private val restBase = conf.getString("menas.rest.uri")
 
-  val httpClient = HttpClients.createDefault
+  val httpClient: CloseableHttpClient = HttpClients.createDefault
 
   private var _userName: String = ""
   def userName: String = _userName
@@ -60,7 +60,7 @@ object EnceladusRestDAO extends EnceladusDAO {
 
   var login: Option[Either[MenasCredentials, String]] = None
 
-  val objectMapper = new ObjectMapper()
+  val objectMapper: ObjectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
     .registerModule(new JavaTimeModule())
     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
@@ -216,13 +216,11 @@ object EnceladusRestDAO extends EnceladusDAO {
   }
 
   private def readResponseObject(response: CloseableHttpResponse): Option[String] = {
-    val httpEntity = response.getEntity()
-    if (httpEntity != null)
-      Some(EntityUtils.toString(httpEntity))
-    else {
+    val httpEntity: Option[HttpEntity] = Option(response.getEntity)
+    if (httpEntity.isEmpty) {
       log.warn(response.toString)
-      None
     }
+    httpEntity.map(EntityUtils.toString)
   }
 
 }

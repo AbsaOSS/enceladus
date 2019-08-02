@@ -16,21 +16,23 @@
 package za.co.absa.enceladus.standardization.interpreter.stages
 
 import org.apache.log4j.{LogManager, Logger}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
-import za.co.absa.enceladus.utils.validation.SchemaValidator.validateSchema
+import za.co.absa.enceladus.utils.validation.SchemaValidator.{validateErrorColumn, validateSchema}
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue, ValidationWarning}
 
 object SchemaChecker {
 
-  val log: Logger = LogManager.getLogger("enceladus.standardization.interpreter")
+  val log: Logger = LogManager.getLogger(this.getClass)
 
   /**
     * Validate a schema, log all errors and warnings, throws if there are fatal errors
     *
     * @param schema A Spark schema
     */
-  def validateSchemaAndLog(schema: StructType): (Seq[String], Seq[String]) = {
-    val failures = validateSchema(schema)
+  def validateSchemaAndLog(schema: StructType)
+                          (implicit spark: SparkSession): (Seq[String], Seq[String]) = {
+    val failures = validateSchema(schema) ::: validateErrorColumn(schema)
 
     type ColName = String
     type Pattern = String

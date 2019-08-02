@@ -68,7 +68,6 @@ class DatasetDialog extends EntityDialog {
     oController.byId("newDatasetAddButton").attachPress(this.submit, this);
     oController.byId("newDatasetCancelButton").attachPress(this.cancel, this);
     oController.byId("newDatasetName").attachChange(this.onNameChange, this);
-    oController.byId("schemaNameSelect").attachChange(this.onSchemaSelect, this);
   }
 
   get schemaService() {
@@ -78,9 +77,6 @@ class DatasetDialog extends EntityDialog {
   resetValueState() {
     this.oController.byId("newDatasetName").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("newDatasetName").setValueStateText("");
-
-    this.oController.byId("schemaNameSelect").setValueState(sap.ui.core.ValueState.None);
-    this.oController.byId("schemaNameSelect").setValueStateText("");
 
     this.oController.byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("schemaVersionSelect").setValueStateText("");
@@ -92,7 +88,7 @@ class DatasetDialog extends EntityDialog {
     let hasValidName = EntityValidationService.hasValidName(oDataset, "Dataset",
       this.oController.byId("newDatasetName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oDataset, "Dataset",
-      this.oController.byId("schemaNameSelect"), this.oController.byId("schemaVersionSelect"));
+        this.oController.byId("schemaVersionSelect"));
     let hasValidRawHDFSPath = this.oController.byId("newDatasetRawHDFSBrowser").validate();
     let hasValidPublishHDFSPath = hasValidRawHDFSPath ? this.oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
 
@@ -114,6 +110,11 @@ class DatasetDialog extends EntityDialog {
       this.oDialog.getModel("entity"), "/schemaVersion");
   }
 
+  cancel() {
+    sap.ui.getCore().getModel().setProperty("/currentSchemaVersions", undefined);
+    super.cancel();
+  }
+
 }
 
 class AddDatasetDialog extends DatasetDialog {
@@ -123,14 +124,11 @@ class AddDatasetDialog extends DatasetDialog {
     this.oDialog.open();
 
     this.schemaService.getList(this.oDialog).then(oData => {
-      this.schemaService.getAllVersions(oData[0]._id);
-      let oFirstSchema = this.oDialog.getModel("schemas").oData[0];
-
       this.oDialog.setModel(new sap.ui.model.json.JSONModel({
         name: "",
         description: "",
-        schemaName: oFirstSchema._id,
-        schemaVersion: oFirstSchema.latestVersion,
+        schemaName: "",
+        schemaVersion: "",
         hdfsPath: "/",
         hdfsPublishPath: "/",
         isEdit: false,
@@ -234,7 +232,6 @@ class MappingTableDialog extends EntityDialog {
     oController.byId("newMappingTableAddButton").attachPress(this.submit, this);
     oController.byId("newMappingTableCancelButton").attachPress(this.cancel, this);
     oController.byId("newMappingTableName").attachChange(this.onNameChange, this);
-    oController.byId("schemaNameSelect").attachChange(this.onSchemaSelect, this);
   }
 
   get schemaService() {
@@ -244,9 +241,6 @@ class MappingTableDialog extends EntityDialog {
   resetValueState() {
     this.oController.byId("newMappingTableName").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("newMappingTableName").setValueStateText("");
-
-    this.oController.byId("schemaNameSelect").setValueState(sap.ui.core.ValueState.None);
-    this.oController.byId("schemaNameSelect").setValueStateText("");
 
     this.oController.byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("schemaVersionSelect").setValueStateText("");
@@ -258,7 +252,7 @@ class MappingTableDialog extends EntityDialog {
     let hasValidName = EntityValidationService.hasValidName(oMT, "Mapping Table",
       this.oController.byId("newMappingTableName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Mapping Table",
-      this.oController.byId("schemaNameSelect"), this.oController.byId("schemaVersionSelect"));
+      this.oController.byId("schemaVersionSelect"));
     let hasValidHDFSPath = this.oController.byId("addMtHDFSBrowser").validate();
 
     return hasValidName && hasValidSchema && hasValidHDFSPath;
@@ -272,13 +266,6 @@ class MappingTableDialog extends EntityDialog {
       this.oDialog.getModel("entity").setProperty("/nameUnique", true);
     }
   }
-
-  onSchemaSelect(oEv) {
-    let sSchemaId = oEv.getParameter("selectedItem").getKey();
-    this.schemaService.getAllVersions(sSchemaId, this.oController.byId("schemaVersionSelect"),
-      this.oDialog.getModel("entity"), "/schemaVersion");
-  }
-
 }
 
 class AddMappingTableDialog extends MappingTableDialog {
@@ -288,14 +275,11 @@ class AddMappingTableDialog extends MappingTableDialog {
     this.oDialog.open();
 
     this.schemaService.getList(this.oDialog).then(oData => {
-      this.schemaService.getAllVersions(oData[0]._id);
-      let oFirstSchema = this.oDialog.getModel("schemas").oData[0];
-
       this.oDialog.setModel(new sap.ui.model.json.JSONModel({
         name: "",
         description: "",
-        schemaName: oFirstSchema._id,
-        schemaVersion: oFirstSchema.latestVersion,
+        schemaName: "",
+        schemaVersion: "",
         hdfsPath: "/",
         isEdit: false,
         title: "Add"

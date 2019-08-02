@@ -13,8 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.migrations.exceptions
+class RunRestDAO {
 
-class BackupException(message:String, cause: Throwable = null) extends Exception(message, cause) {
+  getSplineUrlTemplate() {
+    return RestClient.getSync(`api/runs/splineUrlTemplate`)
+  }
 
 }

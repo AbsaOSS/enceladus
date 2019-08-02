@@ -32,8 +32,6 @@ class PerformanceMeasurer(val jobName: String) {
     def getMetrics: String = content
   }
 
-  implicit def MetricsToString(metrics: PerfMetricsBuilder): String = metrics.getMetrics
-
   def startMeasurement(inputDatasetSize: Long): Unit = {
     startDateTime = Some(ZonedDateTime.now())
     this.inputDatasetSize = Some(inputDatasetSize)
@@ -50,7 +48,7 @@ class PerformanceMeasurer(val jobName: String) {
       case (Some(start), Some(finish)) => Duration.between(start, finish)
       case _ => throw new IllegalStateException(s"Performance metrics: either start or finish time is not set ($startDateTime .. $finishDateTime).")
     }
-    new PerfMetricsBuilder()
+    val perfMetricsBuilder = new PerfMetricsBuilder()
       .addVariable("perf_job_name", jobName)
       .addVariable("perf_start_date_time", startDateTime.get)
       .addVariable("perf_finish_date_time", finishDateTime.get)
@@ -58,6 +56,8 @@ class PerformanceMeasurer(val jobName: String) {
       .addVariable("perf_output_dataset_size", outputDatasetSize.get)
       .addVariable("perf_num_of_records", numberOfRecords.get)
       .addVariable("perf_elapsed_seconds", elapsedTime.getSeconds)
+
+    perfMetricsBuilder.getMetrics
   }
 
   def writeMetricsToFile(fileName: String): Unit = {

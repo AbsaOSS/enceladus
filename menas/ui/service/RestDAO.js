@@ -15,16 +15,23 @@
 
 class RestClient {
 
-  static get(url) {
-    const jqXHR = $.get(url);
+  static cache = _.memoize($.ajax, ({url}) => url);
+
+  static get(url, shouldUseCache = false) {
+    let request = {
+      url: url,
+      async: true
+    };
+    const jqXHR = shouldUseCache ? RestClient.cache(request) : $.ajax(request);
     return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
   }
 
-  static getSync(url) {
-    const jqXHR = $.get({
+  static getSync(url, shouldUseCache = false) {
+    let request = {
       url: url,
       async: false
-    });
+    };
+    const jqXHR = shouldUseCache ? RestClient.cache(request) : $.ajax(request);
     return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
 
   }
@@ -35,7 +42,7 @@ class RestClient {
       data: JSON.stringify(data),
       contentType: "application/json",
       headers: {
-        "X-CSRF-TOKEN" : localStorage.getItem("csrfToken")
+        "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
       }
     });
     return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
@@ -47,7 +54,7 @@ class RestClient {
       data: JSON.stringify(data),
       contentType: "application/json",
       headers: {
-        "X-CSRF-TOKEN" : localStorage.getItem("csrfToken")
+        "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
       }
     });
     return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
@@ -57,7 +64,7 @@ class RestClient {
     const jqXHR = $.delete({
       url: url,
       headers: {
-        "X-CSRF-TOKEN" : localStorage.getItem("csrfToken")
+        "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
       }
     });
     return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
@@ -67,10 +74,12 @@ class RestClient {
     return jqXHR;
   }
 
-  static handleExpiredSession({status}) {
-    if (status === 401) {
+  static handleExpiredSession(jqXHR) {
+    if (jqXHR.status === 401) {
       GenericService.clearSession("Session has expired");
       return $.Deferred().resolve({}).promise();
+    } else {
+      return jqXHR
     }
   }
 
@@ -87,13 +96,10 @@ class RestDAO {
   }
 
   getList(searchQuery) {
-    let query = ""
-    if(searchQuery) {
-      query = `/${encodeURI(searchQuery)}`
-    }
+    let query = searchQuery ? `/${encodeURI(searchQuery)}` : "";
     return RestClient.get(`api/${this.entityType}/list${query}`)
   }
-  
+
   getSearchSuggestions() {
     return RestClient.get(`api/${this.entityType}/searchSuggestions`)
   }
@@ -107,11 +113,11 @@ class RestDAO {
   }
 
   getByNameAndVersion(name, version) {
-    return RestClient.get(`api/${this.entityType}/detail/${encodeURI(name)}/${encodeURI(version)}`)
+    return RestClient.get(`api/${this.entityType}/detail/${encodeURI(name)}/${encodeURI(version)}`, true)
   }
 
   getByNameAndVersionSync(name, version) {
-    return RestClient.getSync(`api/${this.entityType}/detail/${encodeURI(name)}/${encodeURI(version)}`)
+    return RestClient.getSync(`api/${this.entityType}/detail/${encodeURI(name)}/${encodeURI(version)}`, true)
   }
 
   getAuditTrail(name) {
@@ -163,8 +169,12 @@ class SchemaRestDAO extends DependentRestDAO {
     super("schema")
   }
 
-  downloadSchema(name, version) {
-    return RestClient.get(`api/${this.entityType}/export/${name}/${version}`)
+  getSchemaFile(name, version) {
+    return RestClient.get(`api/${this.entityType}/export/${encodeURI(name)}/${encodeURI(version)}`)
+  }
+
+  getSchemaStruct(name, version) {
+    return RestClient.get(`api/${this.entityType}/json/${encodeURI(name)}/${encodeURI(version)}?pretty=true`)
   }
 
 }

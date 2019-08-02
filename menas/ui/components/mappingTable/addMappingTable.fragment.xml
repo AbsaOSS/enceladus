@@ -30,7 +30,7 @@
                         <Input id="newMappingTableDescription" type="Text" placeholder="Enter mapping table description"
                                width="100%"
                                value="{entity>/description}"/>
-                        <core:Fragment type="XML" fragmentName="components.schemaSelector"/>
+                        <core:Fragment type="XML" fragmentName="components.schema.selector.schemaSelector"/>
                         <Label text="HDFS Path"/>
                         <VBox>
                             <Input type="Text" id="selectedHDFSPathLabel"/>

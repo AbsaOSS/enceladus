@@ -15,22 +15,14 @@
 
 package za.co.absa.enceladus.standardization
 
-import java.io.PrintWriter
-import java.io.StringWriter
+import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
 import java.util.UUID
 
-import scala.util.control.NonFatal
-import org.apache.log4j.LogManager
-import org.apache.log4j.Logger
-import org.apache.spark.sql.Column
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.DataFrameReader
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.StructField
-import org.apache.spark.sql.types.StructType
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
+import org.apache.log4j.{LogManager, Logger}
+import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
+import org.apache.spark.sql.types.{StructField, StructType}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.{Atum, Constants}
@@ -39,14 +31,18 @@ import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.stdandardization._
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
-import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
+import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 
+import scala.collection.immutable.HashMap
+import scala.util.control.NonFatal
+
 object StandardizationJob {
+  TimeZoneNormalizer.normalizeJVMTimeZone()
 
   private val log: Logger = LogManager.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
@@ -67,27 +63,28 @@ object StandardizationJob {
 
     val reportVersion = cmd.reportVersion match {
       case Some(version) => version
-      case None => {
+      case None =>
         val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, cmd.reportDate) + 1
         log.warn(s"Report version not provided, inferred report version: $newVersion")
         log.warn("This is an EXPERIMENTAL feature.")
         log.warn(" -> It can lead to issues when running multiple jobs on a dataset concurrently.")
         log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
         newVersion
-      }
     }
 
-    val path: String = buildRawPath(cmd, dataset, dateTokens, reportVersion)
-    log.info(s"input path: $path")
-    val stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"),
-      cmd.datasetName,
-      cmd.datasetVersion.toString,
-      cmd.reportDate,
-      reportVersion.toString)
-    log.info(s"output path: $stdPath")
+    val pathCfg = PathCfg(
+      inputPath = buildRawPath(cmd, dataset, dateTokens, reportVersion),
+      outputPath = MessageFormat.format(conf.getString("standardized.hdfs.path"),
+        cmd.datasetName,
+        cmd.datasetVersion.toString,
+        cmd.reportDate,
+        reportVersion.toString)
+    )
+    log.info(s"input path: ${pathCfg.inputPath}")
+    log.info(s"output path: ${pathCfg.outputPath}")
     // die if the output path exists
-    if (fsUtils.hdfsExists(stdPath)) {
-      throw new IllegalStateException(s"Path $stdPath already exists. Increment the run version, or delete $stdPath")
+    if (fsUtils.hdfsExists(pathCfg.outputPath)) {
+      throw new IllegalStateException(s"Path ${pathCfg.outputPath} already exists. Increment the run version, or delete ${pathCfg.outputPath}")
     }
 
     // init spline
@@ -96,12 +93,12 @@ object StandardizationJob {
 
     // init CF
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking(s"$path/_INFO").setControlMeasuresWorkflow("Standardization")
-    
+    spark.enableControlMeasuresTracking(s"${pathCfg.inputPath}/_INFO").setControlMeasuresWorkflow("Standardization")
+
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
     // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true)
+    MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true, generateNewRun = true)
 
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
     Atum.setAdditionalInfo(s"enceladus_info_date" -> cmd.reportDate)
@@ -109,9 +106,9 @@ object StandardizationJob {
 
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
-    val dfAll: DataFrame = prepareDataFrame(schema, cmd, path, dataset)
+    val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 
-    executeStandardization(performance, dfAll, schema, cmd, path, stdPath)
+    executeStandardization(performance, dfAll, schema, cmd, pathCfg)
     cmd.performanceMetricsFile.foreach(fileName => {
       try {
         performance.writeMetricsToFile(fileName)
@@ -125,51 +122,99 @@ object StandardizationJob {
     val spark = SparkSession.builder()
       .appName("Standardisation")
       .getOrCreate()
-    TimeZoneNormalizer.normalizeAll(Seq(spark))
+    TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
   }
 
-  private def readerFormatSpecific(dfReader: DataFrameReader, cmd: CmdConfig, dataset: Dataset): DataFrameReader = {
+  /**
+    * Returns a Spark reader with all format-specific options applied.
+    * Options are provided by command line parameters.
+    *
+    * @param cmd      Command line parameters containing format-specific options
+    * @param dataset  A dataset definition
+    * @return The updated dataframe reader
+    */
+  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset)(implicit spark: SparkSession): DataFrameReader = {
+    val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
-    val dfReaderWithOptions = {
-      val dfr1 = if (cmd.rowTag.isDefined) dfReader.option("rowTag", cmd.rowTag.get) else dfReader
-      val dfr2 = if (cmd.csvDelimiter.isDefined) dfr1.option("delimiter", cmd.csvDelimiter.get) else dfr1
-      val dfr3 = if (cmd.csvHeader.isDefined) dfr2.option("header", cmd.csvHeader.get) else dfr2
-      val dfr4 = if (cmd.rawFormat.equalsIgnoreCase("cobol")) applyCobolOptions(dfr3, cmd, dataset) else dfr3
-      dfr4
-    }
-    if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
-      val dfWithFixedWithOptions = if (cmd.fixedWidthTrimValues.get) {
-        dfReaderWithOptions.option("trimValues", "true")
-      } else {
-        dfReaderWithOptions
+    val options = getCobolOptions(cmd, dataset) ++
+      getGenericOptions(cmd) ++
+      getXmlOptions(cmd) ++
+      getCsvOptions(cmd) ++
+      getFixedWidthOptions(cmd)
+
+    // Applying all the options
+    options.foldLeft(dfReader) { (df, optionPair) =>
+      optionPair match {
+        case (key, Some(value)) =>
+          value match {
+            // Handle all .option() overloads
+            case StringParameter(s) => df.option(key, s)
+            case BooleanParameter(b) => df.option(key, b)
+            case LongParameter(l) => df.option(key, l)
+            case DoubleParameter(d) => df.option(key, d)
+          }
+        case (_, None) => df
       }
-      dfWithFixedWithOptions
-    } else {
-      dfReaderWithOptions
     }
   }
 
-  private def applyCobolOptions(dfReader: DataFrameReader,
-                                cmd: CmdConfig,
-                                dataset: Dataset): DataFrameReader = {
-    val isXcom = cmd.cobolOptions.map(_.isXcom).getOrElse(false)
-    val copybook = cmd.cobolOptions.map(_.copybook).getOrElse("")
+  private def getGenericOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+    HashMap("charset" -> cmd.charset.map(StringParameter))
+  }
 
-    val reader = dfReader
-      .option("is_xcom", isXcom)
-      .option("schema_retention_policy", "collapse_root")
-      // This is a temporary option before https://github.com/AbsaOSS/cobrix/issues/115 is fixed
-      .option("debug_ignore_file_size", "true")
+  private def getXmlOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+    if (cmd.rawFormat.equalsIgnoreCase("xml")) {
+      HashMap("rowtag" -> cmd.rowTag.map(StringParameter))
+    } else {
+      HashMap()
+    }
+  }
 
+  private def getCsvOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+    if (cmd.rawFormat.equalsIgnoreCase("csv")) {
+      HashMap(
+        "delimiter" -> cmd.csvDelimiter.map(StringParameter),
+        "header" -> cmd.csvHeader.map(BooleanParameter),
+        "quote" -> cmd.csvQuote.map(StringParameter),
+        "escape" -> cmd.csvEscape.map(StringParameter)
+      )
+    } else {
+      HashMap()
+    }
+  }
+
+  private def getFixedWidthOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+    if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
+      HashMap("trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter))
+    } else {
+      HashMap()
+    }
+  }
+
+  private def getCobolOptions(cmd: CmdConfig, dataset: Dataset): HashMap[String,Option[RawFormatParameter]] = {
+    cmd.cobolOptions match {
+      case Some(opts) =>
+        HashMap(
+        getCopybookOption(opts, dataset),
+          "is_xcom" -> Option(BooleanParameter(opts.isXcom)),
+          "schema_retention_policy" -> Some(StringParameter("collapse_root"))
+        )
+      case None =>
+        HashMap()
+    }
+  }
+
+  private def getCopybookOption(opts: CobolOptions, dataset: Dataset): (String, Option[RawFormatParameter]) = {
+    val copybook = opts.copybook
     if (copybook.isEmpty) {
       log.info("Copybook location is not provided via command line - fetching the copybook attached to the schema...")
       val copybookContents = EnceladusRestDAO.getSchemaAttachment(dataset.schemaName, dataset.schemaVersion)
       log.info(s"Applying the following copybook:\n$copybookContents")
-      reader.option("copybook_contents", copybookContents)
+      ("copybook_contents", Option(StringParameter(copybookContents)))
     } else {
       log.info(s"Use copybook at $copybook")
-      reader.option("copybook", copybook)
+      ("copybook", Option(StringParameter(copybook)))
     }
   }
 
@@ -179,7 +224,7 @@ object StandardizationJob {
                                dataset: Dataset)
                               (implicit spark: SparkSession,
                                fsUtils: FileSystemVersionUtils): DataFrame = {
-    val dfReaderConfigured = readerFormatSpecific(spark.read.format(cmd.rawFormat), cmd, dataset)
+    val dfReaderConfigured = getFormatSpecificReader(cmd, dataset)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
       dfReaderConfigured.schema(inputSchema)
@@ -190,12 +235,12 @@ object StandardizationJob {
   }
 
   private def executeStandardization(performance: PerformanceMeasurer,
-      dfAll: DataFrame,
-      schema: StructType,
-      cmd: CmdConfig,
-      path: String,
-      stdPath: String)(implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
-    val rawDirSize: Long = fsUtils.getDirectorySize(path)
+                                     dfAll: DataFrame,
+                                     schema: StructType,
+                                     cmd: CmdConfig,
+                                     pathCfg: PathCfg)
+                                    (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
+    val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
     performance.startMeasurement(rawDirSize)
 
     addRawRecordCountToMetadata(dfAll)
@@ -216,7 +261,7 @@ object StandardizationJob {
     }
     // If the meta data value sourcecolumn is set override source data column name with the field name
     val stdRenameSourceColumns: DataFrame = std.select(std.schema.fields.map { field: StructField =>
-      renameSourceColumn(std, field, true)
+      renameSourceColumn(std, field, registerWithATUM = true)
     }: _*)
 
     stdRenameSourceColumns.setCheckpoint("Standardization - End", persistInDatabase = false)
@@ -230,18 +275,18 @@ object StandardizationJob {
       AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", errMsg, "")
       throw new IllegalStateException(errMsg)
     }
-    stdRenameSourceColumns.write.parquet(stdPath)
+    stdRenameSourceColumns.write.parquet(pathCfg.outputPath)
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
-    val stdDirSize = fsUtils.getDirectorySize(stdPath)
+    val stdDirSize = fsUtils.getDirectorySize(pathCfg.outputPath)
     performance.finishMeasurement(stdDirSize, recordCount)
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     if (cmd.csvDelimiter.isDefined) {
-      cmd.csvDelimiter.foreach(deLimiter => Atum.setAdditionalInfo("csv_delimiter" -> deLimiter))
+      cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
     }
-    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", path, stdPath,
-      EnceladusRestDAO.userName)
-    stdRenameSourceColumns.writeInfoFile(stdPath)
+    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
+      EnceladusRestDAO.userName, cmd.cmdLineArgs.mkString(" "))
+    stdRenameSourceColumns.writeInfoFile(pathCfg.outputPath)
   }
 
   private def ensureSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
@@ -261,7 +306,7 @@ object StandardizationJob {
     // Handle renaming of source columns in case there are columns
     // that will break because of issues in column names like spaces
     df.select(schema.fields.map { field: StructField =>
-      renameSourceColumn(df, field, false)
+      renameSourceColumn(df, field, registerWithATUM = false)
     }: _*).write.parquet(tempParquetDir)
 
     fsUtils.deleteOnExit(tempParquetDir)
@@ -356,4 +401,5 @@ object StandardizationJob {
     )
   }
 
+  private final case class PathCfg(inputPath: String, outputPath: String)
 }

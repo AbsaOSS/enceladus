@@ -15,12 +15,13 @@
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
   "sap/ui/core/Fragment",
-  "components/types/NonEmptyArrType",
+  "components/types/CronEntryType",
   "components/validator/Validator",
   "sap/m/MessageToast",
   "./../external/it/designfuture/chartjs/library-preload",
-  "components/tables/TableUtils"
-], function (Controller, Fragment, NonEmptyArrType, Validator, MessageToast, Openui5Chartjs, TableUtils) {
+  "components/tables/TableUtils",
+  "components/AuditTrail"
+], function (Controller, Fragment, CronEntryType, Validator, MessageToast, Openui5Chartjs, TableUtils, AuditTrail) {
   "use strict";
 
   return Controller.extend("components.dataset.datasetDetail", {
@@ -85,29 +86,34 @@ sap.ui.define([
         }
       });
 
+      this._rb = sap.ui.getCore().getModel("i18n").getResourceBundle();
+
       // Cron time picker
       let cronTemplate = {
-        "minute" : this._generateCronTemplateRange(0, 60),
-        "hour": this._generateCronTemplateRange(0, 24),
-        "dayOfMonth": this._generateCronTemplateRange(1, 32),
-        "month": this._generateCronTemplateRange(1, 13),
-        "dayOfWeek": this._generateCronTemplateRange(0, 7)
+        "minute" : this._generateCronTemplateRange(0, 60, this._rb),
+        "hour": this._generateCronTemplateRange(0, 24, this._rb),
+        "dayOfMonth": this._generateCronTemplateRange(1, 32, this._rb),
+        "month": this._generateCronTemplateRange(1, 13, this._rb, "MENAS_SCHEDULE_MONTH"),
+        "dayOfWeek": this._generateCronTemplateRange(0, 7, this._rb, "MENAS_SCHEDULE_DAY")
       }
-
       this._model.setProperty("/cronFormTemplate", cronTemplate);
       
       const auditTable = this.byId("auditTrailTable");
-      const auditTableUtils = new TableUtils(auditTable, "Audit Trail");
-      auditTableUtils.makeSortable(["Change Time", "Author", "Version"], 
-          ["updated", "updatedBy", "menasRef/version"]);
-      auditTableUtils.makeGroupable(["Author"], ["updatedBy"]);
+      const auditUtils = new AuditTrail(auditTable);
+      auditUtils.applyTableUtils();
     },
 
-    _generateCronTemplateRange: function(iStart, iEnd) {
+    _generateCronTemplateRange: function(iStart, iEnd, oRb, oRbProperty) {
       return ["*", ...(_.range(iStart, iEnd, 1))].map(n => {
+        let description = n.toString();
+        if(oRbProperty) {
+          description = oRb.getText(`${oRbProperty}[${n}]`);
+        } else if(n === "*") {
+          description = oRb.getText("MENAS_SCHEDULE_ANY");
+        }
         return {
         "key": n.toString(),
-        "name": n.toString()
+        "name": description
         }
       });
     },
@@ -487,10 +493,8 @@ sap.ui.define([
     },
 
     onFindRunsPress: function (oEv){
-      // Check selected interval
       this.updateMonitoringData()
     },
-
     setDefaultMonitoringDateInterval: function () {
       let oEnd = new Date();
       let oStart = new Date(oEnd.getTime() - 14 * 24 * 60 * 60 * 1000); // Two weeks before today
@@ -509,6 +513,43 @@ sap.ui.define([
         version: datasetVersion,
         id: runId
       });
+    },
+
+    // Bar chart popover
+    onExit : function () {
+      if (this._oPopover) {
+        this._oPopover.close();
+      }
+    },
+
+    onRecordsBarClick: function (oEvent) {
+      let oChart = oEvent.getSource().__chart;
+      let oActiveElement = oChart.getElementsAtEvent(oEvent.getParameters().event)[0];
+      if (!oActiveElement) return;
+      let runIndex = oActiveElement._index;
+
+      // create popover
+      if (!this._oPopover) {
+        this._oPopover = sap.ui.xmlfragment("components.dataset.monitoring.barChartPopover", this);
+        this.getView().addDependent(this._oPopover);
+      }
+      this._oPopover.bindElement("/monitoringRunData/" + runIndex);
+      this._oPopover.openBy(oEvent.getSource(), false);
+    },
+
+    popoverToRun: function (oEvent) {
+      let sPath = this._oPopover.getElementBinding()["sPath"];
+      let oRun = this._model.getProperty(sPath);
+      this._router.navTo("runs", {
+        dataset: oRun["datasetName"],
+        version: oRun["datasetVersion"],
+        id: oRun["runId"]
+      });
+    },
+
+    popoverClose: function (oEvent) {
+      if (!this._oPopover) return;
+      this._oPopover.close();
     }
 
   });

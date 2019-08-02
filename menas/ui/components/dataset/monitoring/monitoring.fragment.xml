@@ -20,32 +20,33 @@
                          xmlns:lab="it.designfuture.chartjs"
                          xmlns:form="sap.ui.layout.form"
                          xmlns:tnt="sap.tnt">
-            <Bar>
-                <contentLeft>
-                    <Label text="Info date from:"/>
+        <Bar>
+            <contentMiddle>
+                <OverflowToolbar>
+                    <Label class="sapUiSmallMarginBeginEnd" text="Info date from:"/>
                     <DatePicker
                         id="dateFromPicker"
                         dateValue="{/monitoringDateFrom}"
                         maxDate="{/monitoringDateTo}"
                         change="handleDateChange"
                         width="10rem"/>
-
-                    <Label text="to:"/>
+                    <Label class="sapUiSmallMarginBeginEnd" text="to:"/>
                     <DatePicker
                         id="dateToPicker"
                         dateValue="{/monitoringDateTo}"
                         minDate="{/monitoringDateFrom}"
                         change="handleDateChange"
                         width="10rem"/>
-
                     <Button id="FindRunsButton" text="Find runs" icon="sap-icon://search"
                             press="onFindRunsPress"/>
-
+                    <ToolbarSeparator/>
                     <CheckBox text="Totals" selected="{/monitoringTotalsVisible}" />
                     <CheckBox text="Records per run" selected="{/monitoringRecordsVisible}" />
                     <CheckBox text="Run details" selected="{/monitoringDetailsVisible}" />
-                </contentLeft>
-            </Bar>
+                    <ToolbarSpacer/>
+                </OverflowToolbar>
+            </contentMiddle>
+        </Bar>
 
         <layout:BlockLayout id="mon-totals-BlockLayout" visible="{/monitoringTotalsVisible}">
             <layout:BlockLayoutRow>
@@ -110,7 +111,8 @@
                         labels="{/pieChartStatusTotals/labels}"
                         titleDisplay="false"
                         titleText=""
-                        tooltipEnabled="true">
+                        tooltipEnabled="true"
+                        tooltipMode="dataset">
                     </lab:PieChartJS>
                 </layout:BlockLayoutCell>
 
@@ -124,13 +126,14 @@
                         labels="{/pieChartRecordTotals/labels}"
                         titleDisplay="false"
                         titleText=""
-                        tooltipEnabled="true">
+                        tooltipEnabled="true"
+                        tooltipMode="dataset">
                     </lab:PieChartJS>
                 </layout:BlockLayoutCell>
             </layout:BlockLayoutRow>
         </layout:BlockLayout>
 
-    <Title class="monitoringTitle" text="Records per run" visible="{/monitoringRecordsVisible}"/>
+        <Title class="monitoringTitle" text="Records per run" visible="{/monitoringRecordsVisible}"/>
         <Panel id="mon-bar-chart-panel" height="{/barChartHeight}" visible="{/monitoringRecordsVisible}">
             <lab:BarChartJS
                 legendPosition="left"
@@ -142,6 +145,7 @@
                 titleDisplay="false"
                 titleText="Records per run"
                 tooltipEnabled="true"
+                tooltipMode="y"
                 isHorizontal="true"
                 maintainAspectRatio="false"
                 onClick="onRecordsBarClick">
@@ -180,15 +184,30 @@
                         </table:template>
                     </table:Column>
 
-                    <table:Column width="5rem" hAlign="Center">
-                        <Label text="Dataset version"  textAlign="Center" width="100%" wrapping="true"/>
+                    <table:Column width="5rem" headerSpan="{=[3,1]}" hAlign="Center">
+                        <table:multiLabels>
+                            <Label text="Run"  textAlign="Center" width="100%" wrapping="true"/>
+                            <Label text="Attempt"  textAlign="Center" width="100%" wrapping="true"/>
+                        </table:multiLabels>
                         <table:template>
-                            <Text text="{datasetVersion}" wrapping="false" />
+                            <Text text="{runAttempts}" wrapping="false" />
                         </table:template>
                     </table:Column>
-
                     <table:Column width="10rem" hAlign="Center">
-                        <Label text="Status"  textAlign="Center" width="100%" />
+                        <table:multiLabels>
+                            <Label text="Run"  textAlign="Center" width="100%" wrapping="true"/>
+                            <Label text="Start"  textAlign="Center" width="100%" wrapping="true"/>
+                        </table:multiLabels>
+                        <table:template>
+                            <Text text="{path: 'startDateTime',
+                                formatter: 'Formatters.dateShortFormatter'}" wrapping="false" />
+                        </table:template>
+                    </table:Column>
+                    <table:Column width="10rem" hAlign="Center">
+                        <table:multiLabels>
+                            <Label text="Run"  textAlign="Center" width="100%" wrapping="true"/>
+                            <Label text="Status"  textAlign="Center" width="100%" wrapping="true"/>
+                        </table:multiLabels>
                         <table:template>
                             <tnt:InfoLabel
                                 text="{prettyStatus}"
@@ -196,20 +215,10 @@
                         </table:template>
                     </table:Column>
 
-                    <table:Column width="12rem" hAlign="Left">
-                        <Label text="Warnings"  textAlign="Center" width="100%" wrapping="true"/>
+                    <table:Column width="5rem" hAlign="Center">
+                        <Label text="Dataset version"  textAlign="Center" width="100%" wrapping="true"/>
                         <table:template>
-                            <List showNoData="false" width="auto" backgroundDesign="Transparent" showSeparators="None"
-                                items="{path:'warnings', templateShareable:false}" >
-                                <items>
-                                    <CustomListItem>
-                                        <ObjectStatus
-                                            text="{text}"
-                                            icon="{icon}"
-                                            state="{state}" />
-                                    </CustomListItem>
-                                </items>
-                            </List>
+                            <Text text="{datasetVersion}" wrapping="false" />
                         </table:template>
                     </table:Column>
 
@@ -322,10 +331,28 @@
                             }" />
                         </table:template>
                     </table:Column>
+
+                    <table:Column width="12rem" hAlign="Left">
+                        <Label text="Warnings"  textAlign="Center" width="100%" wrapping="true"/>
+                        <table:template>
+                            <List showNoData="false" width="auto" backgroundDesign="Transparent" showSeparators="None"
+                                  items="{path:'warnings', templateShareable:false}" >
+                                <items>
+                                    <CustomListItem>
+                                        <ObjectStatus
+                                            text="{text}"
+                                            icon="{icon}"
+                                            state="{state}" />
+                                    </CustomListItem>
+                                </items>
+                            </List>
+                        </table:template>
+                    </table:Column>
+
                 </table:columns>
                 <table:rowActionTemplate>
                     <table:RowAction>
-                        <table:RowActionItem press="monitoringToRun"	type="Navigation" icon="sap-icon://detail-view" />
+                        <table:RowActionItem press="monitoringToRun"	type="Navigation" icon="sap-icon://activities" />
                     </table:RowAction>
                 </table:rowActionTemplate>
             </table:Table>

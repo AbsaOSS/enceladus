@@ -17,6 +17,7 @@ package za.co.absa.enceladus.menas.services
 
 import java.util.UUID
 
+import com.mongodb.MongoWriteException
 import org.joda.time.format.DateTimeFormat
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
@@ -36,6 +37,9 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  @Value("${za.co.absa.enceladus.spline.urlTemplate}")
+  val splineUrlTemplate: String = ""
+
   def getAllLatest(): Future[Seq[Run]] = {
     runMongoRepository.getAllLatest()
   }
@@ -44,7 +48,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
     runMongoRepository.count()
   }
 
-  def getTodaysRunsStatistics() = {
+  def getTodaysRunsStatistics(): Future[TodaysRunsStatistics] = {
     for {
       total <- runMongoRepository.getTodaysRuns()
       successfulWithErrors <- runMongoRepository.getTodaysSuccessWithErrors()
@@ -91,18 +95,37 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   }
 
   def getSplineUrl(datasetName: String, datasetVersion: Int, runId: Int): Future[String] = {
-    getRun(datasetName, datasetVersion, runId).map(_.splineUrl)
+    getRun(datasetName, datasetVersion, runId).map { run =>
+      val splineRef = run.splineRef
+      String.format(splineUrlTemplate, splineRef.outputPath, splineRef.sparkApplicationId)
+    }
   }
 
-  def create(newRun: Run, username: String): Future[Run] = {
+  def getSplineUrlTemplate(): Future[String] = {
+    Future.successful(splineUrlTemplate)
+  }
+
+  def create(newRun: Run, username: String, retriesLeft: Int = 3): Future[Run] = {
     for {
       latestOpt  <- runMongoRepository.getLatestRun(newRun.dataset, newRun.datasetVersion)
       run        <- getRunIdentifiersIfAbsent(newRun, username, latestOpt)
       validation <- validate(run)
       createdRun <-
         if (validation.isValid()) {
-          super.create(run).map(_ => run)
+          super.create(run)
+            .recoverWith {
+              case e: MongoWriteException =>
+                log.warn("Failed to create Run", e)
+                if (retriesLeft > 0) {
+                  log.warn(s"Retries left: $retriesLeft")
+                  log.warn(s"Retrying to create Run: $newRun")
+                  create(newRun, username, retriesLeft - 1)
+                } else {
+                  throw ValidationException(validation.withError("runId", s"run with this runId already exists: ${run.runId}"))
+                }
+          }
         } else {
+          log.warn(s"Validation failed for Run: $validation")
           throw ValidationException(validation)
         }
     } yield createdRun
@@ -151,7 +174,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
 
   private def validateUniqueness(validation: Validation, uniqueId: String): Future[Validation] = {
     runMongoRepository.existsId(uniqueId).map {
-      case true  => validation.withError("uniqueId", s"run with this id already exists: $uniqueId")
+      case true  => validation.withError("uniqueId", s"run with this uniqueId already exists: $uniqueId")
       case false => validation
     }
   }

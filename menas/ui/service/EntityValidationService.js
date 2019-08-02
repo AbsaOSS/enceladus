@@ -64,12 +64,10 @@ var EntityValidationService = new function () {
     return isOk;
   };
 
-  this.hasValidSchema = function (oEntity, sEntityType, oNameInput, oVersionInput) {
+  this.hasValidSchema = function (oEntity, sEntityType, oVersionInput) {
     let isOk = true;
 
     if (!oEntity.schemaName || oEntity.schemaName === "") {
-      oNameInput.setValueState(sap.ui.core.ValueState.Error);
-      oNameInput.setValueStateText("Please choose the Schema of the " + sEntityType);
       isOk = false;
     }
     if (oEntity.schemaVersion === undefined || oEntity.schemaVersion === "") {

@@ -176,8 +176,8 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterE
     }
     val df = spark.read.format("parquet").load(outPath)
 
-    Console.withOut(outCapture) { df.show(false) }
-    val result = new String(outCapture.toByteArray).trim.split("\n").toList
+    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+    val result = df.dataAsString(false).split("\n").toList
 
     assert(lines == result)
   }

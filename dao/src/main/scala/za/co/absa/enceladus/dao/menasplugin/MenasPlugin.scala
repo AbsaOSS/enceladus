@@ -26,14 +26,20 @@ object MenasPlugin {
   /**
     * This is Menas plugin for Conformance Framework
     *
-    * @param datasetName The name of the Dataset
+    * @param datasetName    The name of the Dataset
     * @param datasetVersion The version of the Dataset
-    * @param isJobStageOnly true if the spark job is only a stage of some job chain
+    * @param isJobStageOnly true if the Spark job is only a stage of some job chain
+    * @param generateNewRun true if a new run needs to be generated for the Spark job
     */
   def enableMenas(datasetName: String = "",
                   datasetVersion: Int = 1,
-                  isJobStageOnly: Boolean = false): Unit = {
-    val eventListener = new EventListenerMenas(MenasRestDAO, datasetName, datasetVersion, isJobStageOnly)
+                  isJobStageOnly: Boolean = false,
+                  generateNewRun: Boolean = false): Unit = {
+    val eventListener = new EventListenerMenas(MenasRestDAO,
+      datasetName,
+      datasetVersion,
+      isJobStageOnly,
+      generateNewRun)
     PluginManager.loadPlugin(eventListener)
   }
 }

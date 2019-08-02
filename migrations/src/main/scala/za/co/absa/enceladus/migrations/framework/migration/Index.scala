@@ -13,15 +13,24 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.migrations.models
+package za.co.absa.enceladus.migrations.framework.migration
 
-import org.mongodb.scala.MongoDatabase
+case class Index(collection: String, key: Seq[IndexField], unique: Boolean = false)
 
-/**
- * The MigratorConfiguration is used to set up the entire MongoMigrator
- *
- * @param backupConfiguration The BackupConfiguration to use for performing mongodump and mongorestore
- * @param mongoDb The MongoDatabase instance to use for the evolutions
- * @param timeout The maximum timeout for the evolutions to complete in seconds
- */
-case class MigratorConfiguration(backupConfiguration: BackupConfiguration, mongoDb: MongoDatabase, timeout: Int)
+case class IndexField(field: String, sort: Sort) {
+
+  def toPair: (String, Int) = field -> sort.order
+
+  override def toString: String = s"($field: $sort)"
+
+}
+
+sealed abstract class Sort(val order: Int)
+
+case object ASC extends Sort(1) {
+  override def toString: String = "ASC"
+}
+
+case object DESC extends Sort(-1) {
+  override def toString: String = "DESC"
+}

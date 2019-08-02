@@ -1,9 +1,9 @@
 # Enceladus
 
 ### <a name="build_status"/>Build Status
-| develop |
-| ------------- |
-| [![Build Status](https://opensource.bigusdatus.com/jenkins/buildStatus/icon?job=Absa-OSS-Projects%2Fenceladus%2Fdevelop)](https://opensource.bigusdatus.com/jenkins/job/Absa-OSS-Projects/job/enceladus/job/develop/)  | 
+| master | develop |
+| ------------- | ------------- |
+| [![Build Status](https://opensource.bigusdatus.com/jenkins/buildStatus/icon?job=Absa-OSS-Projects%2Fenceladus%2Fmaster)](https://opensource.bigusdatus.com/jenkins/job/Absa-OSS-Projects/job/enceladus/job/master/) | [![Build Status](https://opensource.bigusdatus.com/jenkins/buildStatus/icon?job=Absa-OSS-Projects%2Fenceladus%2Fdevelop)](https://opensource.bigusdatus.com/jenkins/job/Absa-OSS-Projects/job/enceladus/job/develop/) | 
 
 ___
 
@@ -56,7 +56,7 @@ Ensure the properties there fit your environment.
 #### Menas requirements:
 - [**Tomcat 8.5/9.0** installation](https://tomcat.apache.org/download-90.cgi)
 - [**MongoDB 4.0** installation](https://docs.mongodb.com/manual/administration/install-community/)
-- [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.8/spline-web-0.3.8.war)
+- [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.9/spline-web-0.3.9.war)
  in your Tomcat webapps directory (rename after downloading to _spline.war_); NB! don't forget to set up the `spline.mongodb.url` configuration for the _war_
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
@@ -102,7 +102,7 @@ password=changeme
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
---report-version <data_run-version> \
+--report-version <data_run_version> \
 --raw-format <data_format> \
 --row-tag <tag>
 ```
@@ -127,9 +127,95 @@ password=changeme
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
---report-version <data_run-version>
+--report-version <data_run_version>
 ```
 * In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
+
+#### Helper scripts for running Standardization and Conformance
+
+The Scripts in `scripts` folder can be used to simplify command lines for running Standardization and Conformance jobs.
+
+Steps to configure the scripts are as follows:
+* Copy all the scripts in `scripts` directory to a location in your environment.
+* Copy `enceladus_env.template.sh` to `enceladus_env.sh`.
+* Change `enceladus_env.sh` according to your environment settings.
+* Use `run_standardization.sh` and `run_conformance.sh` scripts instead of directly invoking `spark-submit` to run your jobs.
+
+The syntax for running Standardization and Conformance is similar to running them using `spark-submit`. The only difference is that
+you don't have to provide environment-specific settings. Several resource options, like driver memory and driver cores also have
+default values and can be omitted. The number of executors is still a mandatory parameter.
+
+The basic command to run Standardization becomes:
+```
+<path to scripts>/run_standardization.sh \
+--num-executors <num> \
+--deploy-mode <client/cluster> \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <date> \
+--report-version <data_run_version> \
+--raw-format <data_format> \
+--row-tag <tag>
+```
+
+The basic command to run Conformance becomes:
+```
+<path to scripts>/run_conformance.sh \
+--num-executors <num> \
+--deploy-mode <client/cluster> \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <date> \
+--report-version <data_run_version>
+```
+
+The list of options for configuring Spark deployment mode in Yarn and resource specification:
+
+|            Option          |                           Description |
+| -------------------------- |:----------------------------------------------------------------------------- |
+| --deploy-mode **cluster/client**  | Specifies a Spark Application deployment mode when Spark runs on Yarn. Can be either `client` or `cluster`. |
+| --num-executors **n**      | Specifies the number of executors to use. |
+| --executor-memory **mem**  | Specifies an amount of memory to request for each executor. See memory specification syntax in Spark. Examples: `4g`, `8g`. |
+| --driver-cores **n**       | Specifies a number of CPU cores to allocate for the driver process. |
+| --driver-memory **mem**    | Specifies an amount of memory to request for the driver process. See memory specification syntax in Spark. Examples: `4g`, `8g`. |
+
+For more information on these options see the official documentation on running Spark on Yarn: 
+[https://spark.apache.org/docs/latest/running-on-yarn.html](https://spark.apache.org/docs/latest/running-on-yarn.html)
+
+The list of all options for running both Standardization and Conformance:
+
+|            Option          |                           Description |
+| -------------------------- |:----------------------------------------------------------------------------- |
+| --menas-auth-keytab **filename** | A keytab file used for Kerberized authentication to Menas. Cannot be used together with `--menas-credentials-file`. |
+| --menas-credentials-file **filename** | A credentials file containing a login and a password used to authenticate to Menas. Cannot be used together with `--menas-auth-keytab`. |
+| --dataset-name **name** | A dataset name to be standardized or conformed. |
+| --dataset-version **version** | A version of a dataset to be standardized or conformed. |
+| --report-date **YYYY-mm-dd** | A date specifying a day for which a raw data is landed. |
+| --report-version **version** | A version of the data for a particular day. |
+| --std-hdfs-path **path**   | A path pattern where to put standardized data. The following tokens are expending in the pattern: `{0}` - dataset name, `{1}` - dataset verrsion, `{2}`- report date, `{3}`- report version. |
+
+The list of additional options available for running Standardization:
+
+|            Option          |                           Description |
+| -------------------------- |:----------------------------------------------------------------------------- |
+| --raw-format **format**    | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`. |
+| --charset **charset**      | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.    |
+| --row-tag **tag**          | A row tag if the input format is `xml`.                                       |
+| --header **true/false**    | Indicates if in the input CSV data has headers as the first row of each file. |
+| --delimiter **character**  | Specifies a delmiter character to use for CSV format. By default `,` is used. |
+| --csv-quote **character**  | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. |
+| --csv-escape **character** | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used. |
+| --trimValues **true/false** | Indicates if string fields of fixed with text data should be trimmed.        |
+| --folder-prefix **prefix** | Adds a folder prefix before the date tokens.                                  |
+| --debug-set-raw-path **path** | Override the path of the raw data (used for testing purposes).             |
+
+The list of additional options available for running Conformance:
+
+|            Option          |                           Description |
+| -------------------------- |:----------------------------------------------------------------------------- |
+| --mapping-table-pattern **pattern** | A pattern to look for mapping table for the specified date.<br>The list of possible substitutions: `{0}` - year, `{1}` - month, `{2}` - day of month. By default the pattern is `reportDate={0}-{1}-{2}`. Special symbols in the pattern need to be escaped. For example, an empty pattern can be be specified as `\'\'` (single quotes are escaped using a backslash character).|
 
 ## <a name="contribute"/>How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
@@ -183,44 +269,52 @@ To enable processing of time entries from other systems **Standardization** offe
 string and even numeric values to timestamp or date types. It's done using Spark's ability to convert strings to 
 timestamp/date with some enhancements. The pattern placeholders and usage is described in Java's 
 [`SimpleDateFormat` class description](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html) with 
-the addition of recognizing two keywords `epoch` and `milliepoch` (case insensitive) to denote the number of 
-seconds/milliseconds since epoch (1970/01/01 00:00:00.000 UTC).
+the addition of recognizing some keywords (like `epoch` and `milliepoch` (case insensitive)) to denote the number of 
+seconds/milliseconds since epoch (1970/01/01 00:00:00.000 UTC) and some additional placeholders.
 It should be noted explicitly that `epoch` and `milliepoch` are considered a pattern including time zone.
  
 Summary:
 
-| placeholder | Description | Example |
-| --- | --- | --- |
-| G | Era designator | AD |
-| y | Year | 1996; 96 |
-| Y | Week year | 2009; 09 |
-| M | Month in year (context sensitive) |  July; Jul; 07 |
-| L | Month in year (standalone form) | July; Jul; 07 |
-| w | Week in year | 27 |
-| W | Week in month | 2 |
-| D | Day in year | 189 |
-| d | Day in month |  10 |
-| F | Day of week in month | 2 |
-| E | Day name in week | Tuesday; Tue |
-| u | Day number of week (1 = Monday, ..., 7 = Sunday) | 1 |
-| a | Am/pm marker | PM |
-| H | Hour in day (0-23) | 0 |
-| k | Hour in day (1-24) | 24 |
-| K | Hour in am/pm (0-11) |  0 |
-| h | Hour in am/pm (1-12) | 12 |
-| m | Minute in hour | 30 |
-| s | Second in minute | 55 |
-| S | Millisecond | 978 |
-| z | General time zone | Pacific Standard Time; PST; GMT-08:00 |
-| Z | RFC 822 time zone | -0800 |
-| X | ISO 8601 time zone | -08; -0800; -08:00 |
-| _epoch_ | Seconds since 1970/01/01 00:00:00 | 1557136493|
-| _milliepoch_ | Milliseconds since 1970/01/01 00:00:00.0000| 15571364938124 |
+| placeholder | Description | Example | Note |
+| --- | --- | --- | --- |
+| G | Era designator | AD | |
+| y | Year | 1996; 96 | |
+| Y | Week year | 2009; 09 | |
+| M | Month in year (context sensitive) |  July; Jul; 07 | |
+| L | Month in year (standalone form) | July; Jul; 07 | |
+| w | Week in year | 27 | |
+| W | Week in month | 2 | |
+| D | Day in year | 189 | |
+| d | Day in month |  10 | |
+| F | Day of week in month | 2 | |
+| E | Day name in week | Tuesday; Tue | |
+| u | Day number of week (1 = Monday, ..., 7 = Sunday) | 1 | |
+| a | Am/pm marker | PM | |
+| H | Hour in day (0-23) | 0 | |
+| k | Hour in day (1-24) | 24 | |
+| K | Hour in am/pm (0-11) |  0 | |
+| h | Hour in am/pm (1-12) | 12 | |
+| m | Minute in hour | 30 | |
+| s | Second in minute | 55 | |
+| S | Millisecond | 978 | |
+| z | General time zone | Pacific Standard Time; PST; GMT-08:00 | |
+| Z | RFC 822 time zone | -0800 | |
+| X | ISO 8601 time zone | -08; -0800; -08:00 | |
+| _epoch_ | Seconds since 1970/01/01 00:00:00 | 1557136493, 1557136493.136| |
+| _epochmilli_ | Milliseconds since 1970/01/01 00:00:00.0000| 1557136493128, 1557136493128.001 | |
+| _epochmicro_ | Microseconds since 1970/01/01 00:00:00.0000| 1557136493128789, 1557136493128789.999 | |
+| _epochnano_ | Nanoseconds since 1970/01/01 00:00:00.0000| 1557136493128789101 | Seen the remark bellow regarding the loss of precision in _nanoseconds_ |
+| i | Microsecond | 111, 321001 | |
+| n | Nanosecond | 999, 542113879 | Seen the remark bellow regarding the loss of precision in _nanoseconds_ |
+
 
 **NB!** Spark uses US Locale and because on-the-fly conversion would be complicated, at the moment we stick to this 
 hardcoded locale as well. E.g. `am/pm` for `a` placeholder, English names of days and months etc.
 
 **NB!** The keywords are case **insensitive**. Therefore, there is no difference between `epoch` and `EpoCH`.
+
+**NB!** While _nanoseconds_ designation is supported on input, it's not supported in storage or further usage. So any
+value behind microseconds precision will be truncated.
    
 ##### Time Zone support
 As it has been mentioned, it's highly recommended to use timestamps with the time zone. But it's not unlikely that the 

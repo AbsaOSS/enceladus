@@ -19,6 +19,7 @@ import org.mongodb.scala.{MongoClient, MongoDatabase}
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import za.co.absa.enceladus.migrations.framework.dao.{MongoDb, ScalaMongoImplicits}
 import za.co.absa.enceladus.migrations.framework.integration.config.IntegrationTestConfiguration
+import za.co.absa.enceladus.migrations.framework.migration.{ASC, IndexField}
 
 trait MigrationsFixture extends BeforeAndAfterAll {
 
@@ -63,5 +64,6 @@ trait MigrationsFixture extends BeforeAndAfterAll {
     db.insertDocument("foo1", """ { "name" : "Doodad" } """)
     db.insertDocument("foo2", """ { "name" : "Dingus" } """)
     db.insertDocument("foo3", """ { "name" : "Doohickey" } """)
+    db.createIndex("foo1", IndexField("date", ASC) :: Nil)
   }
 }

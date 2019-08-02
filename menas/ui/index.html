@@ -17,70 +17,95 @@
 
 <html>
 <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv='Content-Type' content='text/html;charset=UTF-8'/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv='Content-Type' content='text/html;charset=UTF-8' />
 
-    <link type="text/css" href="css/style.css" rel="stylesheet"/>
+<script src="webjars/openui5/sap-ui-core.js" id="sap-ui-bootstrap"
+  data-sap-ui-compatVersion="edge"
+  data-sap-ui-libs="sap.m,sap.ui.table,sap.ui.layout"
+  data-sap-ui-bindingSyntax="complex"
+  data-sap-ui-theme='sap_belize'></script>
+  
+<script src="webjars/momentjs/min/moment.min.js"></script>
+<script src="webjars/lodash/lodash.js"></script>
+<script src="webjars/cronstrue-webjar/cronstrue-webjar.js"></script>
 
-    <script src="webjars/openui5/sap-ui-core.js" id="sap-ui-bootstrap"
-            data-sap-ui-compatVersion="edge"
-            data-sap-ui-libs="sap.m,sap.ui.table,sap.ui.layout"
-            data-sap-ui-bindingSyntax="complex"
-            data-sap-ui-theme='sap_belize'>
-    </script>
-    <script src="webjars/momentjs/min/moment.min.js"></script>
-    <script src="webjars/lodash/lodash.js"></script>
-    <script src="generic/model.js"></script>
-    <script src="generic/prop.js"></script>
-    <script src="generic/functions.js"></script>
-    <script src="generic/formatters.js"></script>
-    <script src="service/ValidationResult.js"></script>
-    <script src="components/dataset/conformanceRule/ConformanceRule.js"></script>
-    <script src="components/dataset/conformanceRule/SchemaManager.js"></script>
-    <script src="components/dataset/conformanceRule/MappingConformanceRule/JoinConditionDialog.js"></script>
-    <script src="components/dataset/conformanceRule/MappingConformanceRule/JoinConditionDialogFactory.js"></script>
-    <script src="components/dataset/conformanceRule/ConcatenationConformanceRule/ConcatenationColumnDialog.js"></script>
-    <script src="components/dataset/conformanceRule/ConcatenationConformanceRule/ConcatenationColumnDialogFactory.js"></script>
-    <script src="components/SchemaTable.js"></script>
-    <script src="service/MessageProvider.js"></script>
-    <script src="service/RestDAO.js"></script>
-    <script src="service/EntityService.js"></script>
-    <script src="service/GenericService.js"></script>
-    <script src="service/MonitoringService.js"></script>
-    <script src="service/RuleService.js"></script>
-    <script src="service/OozieService.js"></script>
-    <script src="service/RunService.js"></script>
-    <script src="service/EntityDialog.js"></script>
-    <script src="service/DialogFactory.js"></script>
-    <script src="service/EntityValidationService.js"></script>
-    <script src="service/SchemaFieldSelector.js"></script>
-    <script src="components/dataset/conformanceRule/ConformanceRuleDialog.js"></script>
-    <script src="components/dataset/conformanceRule/ConformanceRuleForm.js"></script>
-    <script src="components/dataset/conformanceRule/ConformanceRuleFormFactory.js"></script>
+<script>
+      function _menasLoadElem(sElemType, sSrc, aAttrs, fnOnLoad) {
+        const el = document.createElement(sElemType);
+        const srcAttr = sElemType === "link" ? "href" : "src";
+        el[srcAttr] = `${window.menasVersion}/${sSrc}`;
+        aAttrs.forEach((attr) => {
+          el.setAttribute(attr.k, attr.v);
+        })
+        if(fnOnLoad) {
+          el.addEventListener("load", fnOnLoad);
+        }
+        document.getElementsByTagName("head").item(0).append(el);
+      }
+      
+      fetch("api/user/version").then((resp) => {
+        resp.body.getReader().read().then((versionEnc) => {
+          const decoder = new TextDecoder("utf-8")
+          const version = decoder.decode(versionEnc.value);
+          window.menasVersion = version;
 
-    <!-- only load the mobile lib "sap.m" and the "sap_bluecrystal" theme -->
+          _menasLoadElem("link", "css/style.css", [
+            {k: "type", v: "text/css"},
+            {k: "rel", v: "stylesheet"}
+          ]);
 
-    <script>
-        sap.ui.localResources("components");
-        
-        // register TNT icons
-        sap.ui.core.IconPool.registerFont({
-          collectionName: "SAP-icons-TNT",
-          fontFamily: "SAP-icons-TNT", 
-          fontURI: sap.ui.require.toUrl("sap/tnt/themes/base/fonts"),
-          lazy: true});
+          //Load deps which require sap on load
+          sap.ui.getCore().attachInit(function() {
+            _menasLoadElem("script", "generic/model.js", []);
+            _menasLoadElem("script", "generic/prop.js", []);
+            _menasLoadElem("script", "generic/functions.js", []);
+            _menasLoadElem("script", "generic/formatters.js", []);
+            _menasLoadElem("script", "service/ValidationResult.js", []);
+            _menasLoadElem("script", "components/dataset/conformanceRule/ConformanceRule.js", []);
+            _menasLoadElem("script", "components/dataset/conformanceRule/SchemaManager.js", []);
+            _menasLoadElem("script", "components/dataset/conformanceRule/MappingConformanceRule/JoinConditionDialog.js", []);
+            _menasLoadElem("script", "components/dataset/conformanceRule/MappingConformanceRule/JoinConditionDialogFactory.js", []);
+            _menasLoadElem("script", "components/dataset/conformanceRule/ConcatenationConformanceRule/ConcatenationColumnDialog.js", []);
+            _menasLoadElem("script", "components/dataset/conformanceRule/ConcatenationConformanceRule/ConcatenationColumnDialogFactory.js", []);
+            _menasLoadElem("script", "components/SchemaTable.js", []);
+            _menasLoadElem("script", "service/MessageProvider.js", []);
+            _menasLoadElem("script", "service/RestDAO.js", []);
+            _menasLoadElem("script", "service/RunRestDAO.js", []);
+            _menasLoadElem("script", "service/EntityService.js", []);
+            _menasLoadElem("script", "service/GenericService.js", []);
+            _menasLoadElem("script", "service/MonitoringService.js", []);
+            _menasLoadElem("script", "service/RuleService.js", []);
+            _menasLoadElem("script", "service/OozieService.js", []);
+            _menasLoadElem("script", "service/RunService.js", []);
+            _menasLoadElem("script", "service/EntityDialog.js", []);
+            _menasLoadElem("script", "service/DialogFactory.js", []);
+            _menasLoadElem("script", "service/EntityValidationService.js", []);
+            _menasLoadElem("script", "service/SchemaFieldSelector.js", []);
+            _menasLoadElem("script", "components/dataset/conformanceRule/ConformanceRuleDialog.js", []);
+            _menasLoadElem("script", "components/dataset/conformanceRule/ConformanceRuleForm.js", []);
+            _menasLoadElem("script", "components/dataset/conformanceRule/ConformanceRuleFormFactory.js", [], function() {
 
-        var component = new sap.ui.core.ComponentContainer("MenasComponent", {
-            name: "components",
-        });
+              sap.ui.loader.config({
+                async: true,
+                paths: {
+                  'components': `${window.menasVersion}/components/`
+                }
+              });
 
-        component.placeAt("content");
+              var component = new sap.ui.core.ComponentContainer("MenasComponent", {
+                  name: "components",
+              });
 
-        component.setBusy(true);
+              component.placeAt("content");
+              });
+            });
+        })
+      })
     </script>
 
 </head>
 <body class="sapUiBody" role="application">
-    <div id="content"></div>
+  <div id="content"></div>
 </body>
 </html>

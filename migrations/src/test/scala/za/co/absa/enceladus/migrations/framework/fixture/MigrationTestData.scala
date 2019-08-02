@@ -34,7 +34,7 @@ object MigrationTestData {
     renameCollection("mapping", "mapping_table")
     dropCollection("foo")
     createCollection("attachment")
-    createIndex("dataset", "order" :: Nil)
+    createIndex("dataset", IndexField("order", ASC) :: Nil)
 
     transformJSON("dataset")(jsonIn => {
       jsonIn + "_transformed"
@@ -64,7 +64,7 @@ object MigrationTestData {
   object MigrationExample3 extends MigrationBase with JsonMigration with CollectionMigration {
     override val targetVersion: Int = 3
 
-    dropIndex("dataset", "order" :: Nil)
+    dropIndex("dataset", IndexField("order", ASC) :: Nil)
 
     transformJSON("dataset")(jsonIn => {
       jsonIn + "_t1"

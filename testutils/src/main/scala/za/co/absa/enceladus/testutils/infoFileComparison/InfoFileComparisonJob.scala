@@ -27,11 +27,16 @@ import za.co.absa.atum.persistence.ControlMeasuresParser
 import za.co.absa.atum.utils.ARMImplicits
 import za.co.absa.enceladus.testutils.exceptions.InfoFilesDifferException
 import za.co.absa.enceladus.testutils.infoFileComparison.AtumModelUtils._
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 import scala.collection.JavaConverters._
 import scala.reflect.io.File
 
 object InfoFileComparisonJob {
+  private val BufferSizeDefaultValue = 4096
+
+  TimeZoneNormalizer.normalizeJVMTimeZone()
+
   private val log: Logger = LogManager.getLogger(this.getClass)
   private lazy val hadoopConfiguration = getHadoopConfiguration
 
@@ -67,9 +72,9 @@ object InfoFileComparisonJob {
 
     val fs = FileSystem.get(hadoopConfiguration)
     val overwrite = true
-    val progress = null
+    val progress = null // scalastyle:ignore null
     val permission = new FsPermission("777")
-    val bufferSize = hadoopConfiguration.getInt("io.file.buffer.size", 4096)
+    val bufferSize = hadoopConfiguration.getInt("io.file.buffer.size", BufferSizeDefaultValue)
 
     for (fos <- fs.create(
       path,

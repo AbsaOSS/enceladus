@@ -94,7 +94,7 @@ object CmdConfig {
     }).text("Path to Menas credentials config file.").validate(path =>
       if (keytabFile.isDefined) failure("Only one authentication method is allow at a time")
       else if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
-      else failure("Credentials file does not exist. Make sure you are running in client mode"))
+      else failure("Credentials file not found."))
 
     opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
       keytabFile = Some(file)

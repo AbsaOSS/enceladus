@@ -26,8 +26,8 @@ var Formatters = new function() {
     } else return sap.ui.core.ValueState.Error;
   };
 
-   let defaultDateFormat = sap.ui.core.format.DateFormat.getDateTimeInstance({
-    style : "short"
+  let defaultDateFormat = sap.ui.core.format.DateFormat.getDateTimeInstance({
+    style: "short"
   }, new sap.ui.core.Locale("en_GB"));
 
   this.dateShortFormatter = function(oDate) {
@@ -35,6 +35,30 @@ var Formatters = new function() {
       return "";
     return defaultDateFormat.format(oDate)
   };
+
+  this.cronExpressionFormatter = function(sCron) {
+    if(!sCron) {
+      return "Never";
+    } else if(sCron.split(/(\s+)/).length < 5) {
+      return "All time components have to be selected."
+    } else {
+      return cronstrue.toString(sCron);
+    }
+  };
+
+  this.cronScheduleTimingFormatter = function(aMinute, aHour, aDayOfMonth, aMonth, aDayOfWeek) {
+    let cronExpr;
+    if(aMinute && aHour && aDayOfMonth && aMonth && aDayOfWeek) {
+      const minuteSep = aMinute.join(",")
+      const hourSep = aHour.join(",")
+      const dayOfMonthSep = aDayOfMonth.join(",")
+      const monthSep = aMonth.join(",")
+      const dayOfWeekSep = aDayOfWeek.join(",")
+    
+      cronExpr = `${minuteSep} ${hourSep} ${dayOfMonthSep} ${monthSep} ${dayOfWeekSep}`;
+    }
+    return Formatters.cronExpressionFormatter(cronExpr);
+  }
 
   this.nonNullArrFormatter = function(aArr) {
     if(!aArr) return [];
@@ -69,7 +93,6 @@ var Formatters = new function() {
       return res;
     }
   };
-
 
   this.infoDatePattern = "yyyy-MM-dd";
 

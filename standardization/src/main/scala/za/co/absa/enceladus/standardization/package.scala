@@ -13,8 +13,21 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.migrations.exceptions
+package za.co.absa.enceladus
 
-class EvolutionException(message:String, cause: Throwable = null) extends Exception(message, cause) {
+package object stdandardization {
 
+  /**
+    * The trait and the case classes are used for type-safely applying
+    * command line parameters as Spark reader options.
+    */
+  sealed trait RawFormatParameter
+
+  case class StringParameter(value: String) extends RawFormatParameter
+
+  case class BooleanParameter(value: Boolean) extends RawFormatParameter
+
+  case class LongParameter(long: Boolean) extends RawFormatParameter
+
+  case class DoubleParameter(double: Double) extends RawFormatParameter
 }

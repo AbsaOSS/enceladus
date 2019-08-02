@@ -26,8 +26,10 @@ import za.co.absa.enceladus.menas.exceptions._
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.menas.audit._
+
 import scala.concurrent.Future
-import java.time.ZonedDateTime
+
+import com.mongodb.MongoWriteException
 
 abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]](versionedMongoRepository: VersionedMongoRepository[C])
   extends ModelService(versionedMongoRepository) {
@@ -57,13 +59,13 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
       case Some(version) => getVersion(name, version)
       case _ => throw NotFoundException()
     })
-    
+
   }
-  
+
   def getLatestVersionValue(name: String): Future[Option[Int]] = {
     versionedMongoRepository.getLatestVersionValue(name)
   }
-  
+
   private[services] def getParents(name: String, fromVersion: Option[Int] = None): Future[Seq[C]] = {
     for {
       versions <- {
@@ -81,10 +83,10 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
       }
     } yield res ++ versions
   }
-  
+
   def getAuditTrail(name: String): Future[AuditTrail] = {
     val allParents = getParents(name)
-    
+
     allParents.flatMap({ parents =>
       val msgs = if(parents.size < 2) Seq() else {
         val pairs = parents.sliding(2)
@@ -103,13 +105,22 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   def getUsedIn(name: String, version: Option[Int]): Future[UsedIn]
 
-  private[menas] def getMenasRef(item: C): MenasReference = MenasReference(Some(versionedMongoRepository.collectionBaseName), item.name, item.version)
+  private[menas] def getMenasRef(item: C): MenasReference = {
+    MenasReference(Some(versionedMongoRepository.collectionBaseName), item.name, item.version)
+  }
 
   private[menas] def create(item: C, username: String): Future[Option[C]] = {
     for {
       validation <- validate(item)
-      _ <- if (validation.isValid()) versionedMongoRepository.create(item, username)
-      else throw ValidationException(validation)
+      _ <- if (validation.isValid()) {
+        versionedMongoRepository.create(item, username)
+          .recover {
+            case e: MongoWriteException =>
+              throw ValidationException(Validation().withError("name", s"entity with name already exists: '${item.name}'"))
+          }
+      } else {
+        throw ValidationException(validation)
+      }
       detail <- getLatestVersion(item.name)
     } yield detail
   }
@@ -119,9 +130,16 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   private[services] def updateFuture(username: String, itemName: String, itemVersion: Int)(transform: C => Future[C]): Future[Option[C]] = {
     for {
       version <- getVersion(itemName, itemVersion)
-      transformed <- if (version.isEmpty) Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
-      else transform(version.get)
+      transformed <- if (version.isEmpty) {
+        Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
+      } else {
+        transform(version.get)
+      }
       update <- versionedMongoRepository.update(username, transformed)
+        .recover {
+          case e: MongoWriteException =>
+            throw ValidationException(Validation().withError("version", s"entity '$itemName' with this version already exists: ${itemVersion + 1}"))
+        }
     } yield Some(update)
   }
 
@@ -132,8 +150,10 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
       }
     }
   }
-  
-  def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
+
+  def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = {
+    versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
+  }
 
   def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
     val auth = SecurityContextHolder.getContext.getAuthentication

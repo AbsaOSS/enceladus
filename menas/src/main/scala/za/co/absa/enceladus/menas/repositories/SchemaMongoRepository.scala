@@ -18,14 +18,20 @@ package za.co.absa.enceladus.menas.repositories
 import org.mongodb.scala.MongoDatabase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
+import za.co.absa.enceladus.model
 import za.co.absa.enceladus.model.Schema
 
 import scala.reflect.ClassTag
+
+object SchemaMongoRepository {
+  val collectionBaseName = "schema"
+  val collectionName = collectionBaseName + model.CollectionSuffix
+}
 
 @Repository
 class SchemaMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends VersionedMongoRepository[Schema](mongoDb)(ClassTag(classOf[Schema])) {
 
-  override private[menas] def collectionBaseName = "schema"
+  override private[menas] def collectionBaseName: String = SchemaMongoRepository.collectionBaseName
 
 }

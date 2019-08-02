@@ -22,19 +22,19 @@ trait VersionedModel {
   val name: String
   val version: Int
   val description: Option[String]
-  
+
   val dateCreated: ZonedDateTime
   val userCreated: String
-  
+
   val lastUpdated: ZonedDateTime
   val userUpdated: String
-  
+
   val disabled: Boolean
   val dateDisabled: Option[ZonedDateTime]
   val userDisabled: Option[String]
-  
+
   val parent: Option[MenasReference]
-  
+
   def setVersion(value: Int): VersionedModel
   def setDisabled(disabled: Boolean) : VersionedModel
   def setLastUpdated(time: ZonedDateTime) : VersionedModel
@@ -43,7 +43,7 @@ trait VersionedModel {
   def setDateCreated(time: ZonedDateTime): VersionedModel
   def setUserCreated(user: String): VersionedModel
   def setParent(newParent: Option[MenasReference]): VersionedModel
-  
+
   def setCreatedInfo(username: String): VersionedModel = {
     setDateCreated(ZonedDateTime.now).setUserCreated(username)
   }

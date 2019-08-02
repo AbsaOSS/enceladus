@@ -60,9 +60,15 @@ myTestCheckpoints
 **/main/resources/application.yml
 **/main/resources/spline.properties
 **/main/resources/kafka.properties
+**/enceladus_env.sh
 *.config
 *.keytab
 .DS_Store
 
 node_modules/
 Component-preload.js
+
+# Jekyll auto
+_site
+.sass-cache
+.jekyll-metadata

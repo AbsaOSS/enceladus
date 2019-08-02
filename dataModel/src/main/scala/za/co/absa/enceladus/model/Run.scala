@@ -28,28 +28,4 @@ case class Run
   startDateTime: String,
   runStatus: RunStatus,
   controlMeasure: ControlMeasure
-) {
-  val splineUrl: String = Run.splineUrl(splineRef)
-}
-
-
-object Run {
-  private val splineUrlTemplate: String = getConf("za.co.absa.enceladus.spline.urlTemplate", "")
-
-  private def getConf(path: String, default: String): String = {
-    val config: Config = ConfigFactory.load()
-    if (config.hasPath(path)) {
-      config.getString(path)
-    } else {
-      default
-    }
-  }
-
-  def splineUrl(splineReference: SplineReference): String = {
-    if (splineUrlTemplate.nonEmpty) {
-      String.format(Run.splineUrlTemplate, splineReference.outputPath, splineReference.sparkApplicationId)
-    } else {
-      ""
-    }
-  }
-}
+)

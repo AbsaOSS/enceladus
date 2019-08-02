@@ -15,16 +15,13 @@
 
 package za.co.absa.enceladus.utils.error
 
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.types._
+import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.api.java._
+import org.apache.spark.sql.types._
 
 import scala.collection.mutable
 
 case class UDFLibrary()(implicit val spark: SparkSession) {
-
-  import spark.implicits._
 
   spark.udf.register("stdCastErr", { (errCol: String, rawValue: String) =>
     ErrorMessage.stdCastErr(errCol, rawValue)
@@ -42,6 +39,10 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
 
   spark.udf.register("confNegErr", { (errCol: String, rawValue: String) =>
     ErrorMessage.confNegErr(errCol, rawValue)
+  })
+
+  spark.udf.register("confLitErr", { (errCol: String, rawValue: String) =>
+    ErrorMessage.confLitErr(errCol, rawValue)
   })
 
   spark.udf.register("arrayDistinctErrors",

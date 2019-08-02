@@ -19,8 +19,9 @@ sap.ui.define([
   "sap/m/MessageToast",
   "sap/m/MessageItem",
   "sap/m/MessageBox",
-  "sap/m/MessagePopover"
-], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, MessagePopover) {
+  "sap/m/MessagePopover",
+  "components/AuditTrail"
+], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, MessagePopover, AuditTrail) {
   "use strict";
 
   return Controller.extend("components.mappingTable.mappingTableDetail", {
@@ -64,6 +65,10 @@ sap.ui.define([
       this._schemaService = new SchemaService(this._model, eventBus);
       this._schemaTable = new SchemaTable(this);
       this._schemaFieldSelector = new SimpleSchemaFieldSelector(this, this._addDefaultDialog)
+
+      const auditTable = this.byId("auditTrailTable");
+      const auditUtils = new AuditTrail(auditTable);
+      auditUtils.applyTableUtils();
     },
 
     onEntityUpdated: function (sTopic, sEvent, oData) {

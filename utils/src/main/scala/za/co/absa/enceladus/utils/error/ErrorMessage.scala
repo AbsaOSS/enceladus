@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.utils.error
 
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.StructType
 
 /**
  * Case class to represent an error message
@@ -33,14 +34,15 @@ case class Mapping(mappingTableColumn: String, mappedDatasetColumn: String)
 object ErrorMessage {
   val errorColumnName = "errCol"
 
-  def stdCastErr(errCol: String, rawValue: String) = ErrorMessage(errType = "stdCastError", errCode = "E00000", errMsg = "Standardization Error - Type cast", errCol = errCol, rawValues = Seq(rawValue))
-  def stdNullErr(errCol: String) = ErrorMessage(errType = "stdNullError", errCode = "E00002", errMsg = "Standardization Error - Null detected in non-nullable attribute", errCol = errCol, rawValues = Seq("null"))
-  def confMappingErr(errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =
+  def stdCastErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(errType = "stdCastError", errCode = "E00000", errMsg = "Standardization Error - Type cast", errCol = errCol, rawValues = Seq(rawValue))
+  def stdNullErr(errCol: String): ErrorMessage = ErrorMessage(errType = "stdNullError", errCode = "E00002", errMsg = "Standardization Error - Null detected in non-nullable attribute", errCol = errCol, rawValues = Seq("null"))
+  def confMappingErr(errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]): ErrorMessage =
     ErrorMessage(errType = "confMapError", errCode = "E00001", errMsg = "Conformance Error - Null produced by mapping conformance rule", errCol = errCol, rawValues = rawValues, mappings = mappings)
-  def confCastErr(errCol: String, rawValue: String) = ErrorMessage(errType = "confCastError", errCode = "E00003", errMsg = "Conformance Error - Null returned by casting conformance rule", errCol = errCol, rawValues = Seq(rawValue))
-  def confNegErr(errCol: String, rawValue: String) = ErrorMessage(errType = "confNegError", errCode = "E00004", errMsg = "Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged", errCol = errCol, rawValues = Seq(rawValue))
+  def confCastErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(errType = "confCastError", errCode = "E00003", errMsg = "Conformance Error - Null returned by casting conformance rule", errCol = errCol, rawValues = Seq(rawValue))
+  def confNegErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(errType = "confNegError", errCode = "E00004", errMsg = "Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged", errCol = errCol, rawValues = Seq(rawValue))
+  def confLitErr(errCol: String, rawValue: String) = ErrorMessage(errType = "confLitError", errCode = "E00005", errMsg = "Conformance Error - Special column value has changed", errCol = errCol, rawValues = Seq(rawValue))
 
-  def errorColSchema(implicit spark: SparkSession) = {
+  def errorColSchema(implicit spark: SparkSession): StructType = {
     import spark.implicits._
     spark.emptyDataset[ErrorMessage].schema
   }
