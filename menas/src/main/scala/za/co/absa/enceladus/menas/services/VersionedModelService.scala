@@ -80,9 +80,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
       }
       res <- {
         //see if this was branched from a different entity
-        val topParent = if (versions.isEmpty) {
-          None
-        } else if (versions.head.parent.isEmpty) {
+        val topParent = if (versions.isEmpty || versions.head.parent.isEmpty) {
           None
         } else {
           versions.head.parent

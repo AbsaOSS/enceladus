@@ -27,7 +27,7 @@ abstract class BaseServiceTest extends FunSuite with MockitoSugar with BeforeAnd
   val shortTimeout = Duration(100, TimeUnit.MILLISECONDS)
   val longTimeout = Duration(500, TimeUnit.MILLISECONDS)
 
-  def await[T](future: Future[T], awaitDuration: Duration = longTimeout): T = {
+  def await[T](future: Future[T], awaitDuration: Duration = longTimeout): T = { // default set for longTimeout as shortTimeout fails on some systems in some cases
     Await.result(future, awaitDuration)
   }
 
