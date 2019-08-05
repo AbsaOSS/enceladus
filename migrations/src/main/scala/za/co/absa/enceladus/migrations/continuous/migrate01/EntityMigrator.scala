@@ -15,11 +15,46 @@
 
 package za.co.absa.enceladus.migrations.continuous.migrate01
 
+import org.mongodb.scala.MongoDatabase
+import za.co.absa.enceladus.migrations.framework.ObjectIdTools
+
 /**
   * An base class for continuous migration providers.
   */
 abstract class EntityMigrator {
 
-  def migrate(): Unit
+  protected val migrationUserName = "c_migration"
+
+  /** A collection base name. E.g. 'schema' or 'dataset' */
+  protected def collectionBase: String
+
+  /** A versioned collection name for the old version of the mode. E.g. 'schema_v1' or 'dataset_v1' */
+  protected def collectionOld: String
+
+  /** A versioned collection name for the old version of the mode. E.g. 'schema_v0' or 'dataset_v0' */
+  protected def collectionNew: String
+
+  protected def dbOld: MongoDatabase
+  protected def dbNew: MongoDatabase
+
+  def migrateEntity(srcJson: String, objectId: String, repo: EntityEepository): Unit
+
+  /** Runs a continuous migration for schemas. */
+  def migrate(): Unit = {
+    val repoOld = new EntityEepository(dbOld, collectionOld)
+    val repoNew = new EntityEepository(dbNew, collectionNew)
+
+    val schemasOld = repoOld.getSortedDocuments
+
+    schemasOld.foreach(schemaOld => {
+      val objectId = ObjectIdTools.getObjectIdFromDocument(schemaOld)
+      objectId.foreach(id => {
+        if (!repoNew.doesDocumentExist(id)) {
+          migrateEntity(schemaOld, id, repoNew)
+        }
+      })
+    })
+  }
+
 
 }

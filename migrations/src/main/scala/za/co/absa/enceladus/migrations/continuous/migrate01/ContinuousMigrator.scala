@@ -25,11 +25,11 @@ import za.co.absa.enceladus.migrations.framework.dao.MongoDb
   * @param dbOld An instance of a MongoDB database connection containing old model documents.
   * @param dbNew An instance of a MongoDB database connection containing new model documents.
   */
-class ContinuousMigrator(dbOld: MongoDatabase, dbNew: MongoDatabase) extends EntityMigrator {
+class ContinuousMigrator(dbOld: MongoDatabase, dbNew: MongoDatabase) {
   val db0 = new MongoDb(dbOld)
   val db1 = new MongoDb(dbNew)
 
-  override def migrate(): Unit = {
+  def migrate(): Unit = {
     val evm = new EntityVersionMapMongo(dbNew)
     val migratorSchema = new MigratorSchema(evm, dbOld, dbNew)
 
