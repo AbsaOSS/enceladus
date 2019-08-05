@@ -54,6 +54,16 @@ class ContinuousMigrationIntegrationSuite extends FunSuite with ExampleDatabaseF
     assert(mappingTableExists("TestMT2", 4, "TestSchema2", 4) )
     assert(mappingTableExists("TestMT4", 2, "TestSchema4", 2) )
     assert(!mappingTableExists("TestMT4", 2, "TestSchema4", 1) )
+
+    // Datasets
+    // Original
+    assert(datasetExists("TestDataset", 1, "TestSchema1", 1, "TestMT1", 1) )
+
+
+    // Migrated
+    assert(datasetExists("TestDataset", 2, "TestSchema1", 2, "TestMT1", 2) )
+    assert(datasetExists("TestDataset", 3, "TestSchema2", 4, "TestMT2", 4) )
+    assert(!datasetExists("TestDataset", 3, "TestSchema2", 4, "TestMT2", 2) )
   }
 
 }

@@ -50,7 +50,7 @@ class MigratorMappingTable(evm: EntityVersionMap,
     * Migrates a single instance of mapping table.
     *
     * @param srcMappingTableJson A JSON representation of a mapping table in the model 0 format.
-    * @param objectId            An Object Id if the mapping table.
+    * @param objectId            An Object Id of the mapping table.
     * @param repo                An entity repository.
     */
   def migrateEntity(srcMappingTableJson: String, objectId: String, repo: EntityEepository): Unit = {
