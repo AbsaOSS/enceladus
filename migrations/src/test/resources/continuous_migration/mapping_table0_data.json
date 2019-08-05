@@ -1,0 +1,6 @@
+{ "_id" : ObjectId("5a046d949b2c26c8fc07e201"), "name" : "TestMT1", "version" : 1, "hdfsPath" : "/dummy1", "schemaName" : "TestSchema1", "schemaVersion" : 1, "defaultMappingValue" : "'Unknown'" }
+{ "_id" : ObjectId("5a046d949b2c26c8fc07e202"), "name" : "TestMT1", "version" : 2, "hdfsPath" : "/dummy2", "schemaName" : "TestSchema1", "schemaVersion" : 2, "defaultMappingValue" : "'Unknown'" }
+{ "_id" : ObjectId("5a046d949b2c26c8fc07e203"), "name" : "TestMT2", "version" : 1, "hdfsPath" : "/dummy3", "schemaName" : "TestSchema2", "schemaVersion" : 1, "defaultMappingValue" : "'Unknown'" }
+{ "_id" : ObjectId("5a046d949b2c26c8fc07e204"), "name" : "TestMT2", "version" : 2, "hdfsPath" : "/dummy4", "schemaName" : "TestSchema2", "schemaVersion" : 2, "defaultMappingValue" : "'Unknown'" }
+{ "_id" : ObjectId("5a046d949b2c26c8fc07e205"), "name" : "TestMT3", "version" : 1, "hdfsPath" : "/dummy5", "schemaName" : "TestSchema3", "schemaVersion" : 1, "defaultMappingValue" : "'Unknown'" }
+{ "_id" : ObjectId("5a046d949b2c26c8fc07e206"), "name" : "TestMT4", "version" : 1, "hdfsPath" : "/dummy6", "schemaName" : "TestSchema4", "schemaVersion" : 1, "defaultMappingValue" : "'Unknown'" }

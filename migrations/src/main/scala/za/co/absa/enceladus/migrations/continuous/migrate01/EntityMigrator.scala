@@ -37,20 +37,20 @@ abstract class EntityMigrator {
   protected def dbOld: MongoDatabase
   protected def dbNew: MongoDatabase
 
-  def migrateEntity(srcJson: String, objectId: String, repo: EntityEepository): Unit
+  def migrateEntity(srcJson: String, objectId: String, repo: EntityRepository): Unit
 
   /** Runs a continuous migration for schemas. */
   def migrate(): Unit = {
-    val repoOld = new EntityEepository(dbOld, collectionOld)
-    val repoNew = new EntityEepository(dbNew, collectionNew)
+    val repoOld = new EntityRepository(dbOld, collectionOld)
+    val repoNew = new EntityRepository(dbNew, collectionNew)
 
-    val schemasOld = repoOld.getSortedDocuments
+    val entitiesOld = repoOld.getSortedDocuments
 
-    schemasOld.foreach(schemaOld => {
-      val objectId = ObjectIdTools.getObjectIdFromDocument(schemaOld)
+    entitiesOld.foreach(entityOld => {
+      val objectId = ObjectIdTools.getObjectIdFromDocument(entityOld)
       objectId.foreach(id => {
         if (!repoNew.doesDocumentExist(id)) {
-          migrateEntity(schemaOld, id, repoNew)
+          migrateEntity(entityOld, id, repoNew)
         }
       })
     })

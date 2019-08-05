@@ -23,8 +23,8 @@ import za.co.absa.enceladus.migrations.continuous.EntityVersionMap
 import za.co.absa.enceladus.migrations.framework.{MigrationUtils, ObjectIdTools}
 import za.co.absa.enceladus.migrations.migrations.MigrationToV1.convertConformanceRule
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
-import za.co.absa.enceladus.migrations.migrations.{model0, model1}
 import za.co.absa.enceladus.migrations.migrations.model1.Serializer1
+import za.co.absa.enceladus.migrations.migrations.{model0, model1}
 
 import scala.util.control.NonFatal
 
@@ -54,7 +54,7 @@ class MigratorDataset(evm: EntityVersionMap,
     * @param objectId       An Object Id of the dataset.
     * @param repo           An entity repository.
     */
-  def migrateEntity(srcDatasetJson: String, objectId: String, repo: EntityEepository): Unit = {
+  def migrateEntity(srcDatasetJson: String, objectId: String, repo: EntityRepository): Unit = {
     val dataset1Opt = try {
       val fixJson = srcDatasetJson.replaceAll("\"jsonClass\" :", "\"_t\" :")
       val dataset0 = Serializer0.deserializeDataset(fixJson)
@@ -106,7 +106,7 @@ class MigratorDataset(evm: EntityVersionMap,
     * @param objectId An Object Id if the dataset
     * @param repo     An entity repository
     */
-  def normalInsert(dataset: model1.Dataset, objectId: String, repo: EntityEepository): Unit = {
+  def normalInsert(dataset: model1.Dataset, objectId: String, repo: EntityRepository): Unit = {
     val dataset1Json = ObjectIdTools.putObjectIdIfNotPresent(Serializer1.serializeDataset(dataset),
       Option(objectId))
 
@@ -127,7 +127,7 @@ class MigratorDataset(evm: EntityVersionMap,
     * @param objectId An Object Id if the dataset
     * @param repo     An entity repository
     */
-  def resolveConflict(dataset: model1.Dataset, objectId: String, repo: EntityEepository): Unit = {
+  def resolveConflict(dataset: model1.Dataset, objectId: String, repo: EntityRepository): Unit = {
     var retriesLeft = EntityMigrator.NumberOfInsertRetries
     var saved = false
     while (retriesLeft > 0 && !saved) {
