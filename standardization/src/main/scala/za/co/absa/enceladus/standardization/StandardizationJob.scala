@@ -135,7 +135,7 @@ object StandardizationJob {
     * @param dataset  A dataset definition
     * @return The updated dataframe reader
     */
-  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, schema: StructType)(implicit spark: SparkSession): DataFrameReader = {
+  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, schema: Option[StructType] = None)(implicit spark: SparkSession): DataFrameReader = {
     val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
     val options = getCobolOptions(cmd, dataset) ++
@@ -172,8 +172,9 @@ object StandardizationJob {
     }
   }
 
-  private def getCsvOptions(cmd: CmdConfig, schema: StructType): HashMap[String,Option[RawFormatParameter]] = {
+  private def getCsvOptions(cmd: CmdConfig, schema: Option[StructType] = None): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
+      val knownNumberOfFields = if (schema.isDefined) schema.get.fields.length else 0
       HashMap(
         "delimiter" -> cmd.csvDelimiter.map(StringParameter),
         "header" -> cmd.csvHeader.map(BooleanParameter),
@@ -181,7 +182,7 @@ object StandardizationJob {
         "escape" -> cmd.csvEscape.map(StringParameter),
         // increase the default limit on the number of columns if needed
         // default is set at org.apache.spark.sql.execution.datasources.csv.CSVOptions maxColumns
-        "maxColumns" -> Option(LongParameter(max(20480, schema.fields.length)))
+        "maxColumns" -> Option(LongParameter(max(20480, knownNumberOfFields)))
       )
     } else {
       HashMap()
@@ -228,7 +229,7 @@ object StandardizationJob {
                                dataset: Dataset)
                               (implicit spark: SparkSession,
                                fsUtils: FileSystemVersionUtils): DataFrame = {
-    val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, schema: StructType)
+    val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, Some(schema))
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
       dfReaderConfigured.schema(inputSchema)
