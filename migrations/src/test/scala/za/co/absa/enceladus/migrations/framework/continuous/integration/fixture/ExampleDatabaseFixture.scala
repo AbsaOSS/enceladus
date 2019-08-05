@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.migrations.framework.continuous.integration.fixture
 
 import org.apache.commons.io.IOUtils
+import org.mongodb.scala.model.Filters.{and, equal, regex}
 import org.mongodb.scala.{MongoClient, MongoDatabase}
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import za.co.absa.enceladus.migrations.framework.dao.{MongoDb, ScalaMongoImplicits}
@@ -41,6 +42,33 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
   override protected def afterAll(): Unit = {
     try super.afterAll()
     finally mongoClient.getDatabase(integrationTestDbName).drop().execute()
+  }
+
+  def schemaExists(name: String, version: Int): Boolean = {
+    db.getCollection("schema_v1")
+      .find(
+        and(
+          regex("name", name, "i"),
+          equal("version", version))
+      )
+      .execute()
+      .nonEmpty
+  }
+
+  def mappingTableExists(name: String, version: Int, schemaName: String, schemaVersion: Int): Boolean = {
+    db.getCollection("mapping_table_v1")
+      .find(
+        and(
+          and(
+            regex("name", name, "i"),
+            equal("version", version)),
+          and(
+            regex("schemaName", schemaName, "i"),
+            equal("schemaVersion", schemaVersion))
+        )
+      )
+      .execute()
+      .nonEmpty
   }
 
   private def initDatabase(): Unit = {
