@@ -82,7 +82,7 @@ class MigratorSchema(evm: EntityVersionMap,
     * If inserting is unsuccessful fallback to conflict resolution.
     *
     * @param schema   A schema to save as an instance of Model 1 object
-    * @param objectId An Object Id if the schema
+    * @param objectId An Object Id of the schema
     * @param repo     An entity repository
     */
   def normalInsert(schema: model1.Schema, objectId: String, repo: EntityEepository): Unit = {

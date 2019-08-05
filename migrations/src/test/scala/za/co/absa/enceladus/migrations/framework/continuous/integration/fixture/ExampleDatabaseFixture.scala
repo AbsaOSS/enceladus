@@ -71,6 +71,33 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
       .nonEmpty
   }
 
+  def datasetExists(name: String,
+                    version: Int,
+                    schemaName: String,
+                    schemaVersion: Int,
+                    mappingTableName: String,
+                    mappingTableVersion: Int): Boolean = {
+    db.getCollection("dataset_v1")
+      .find(
+        and(
+          and(
+            and(
+              regex("name", name, "i"),
+              equal("version", version)),
+            and(
+              regex("schemaName", schemaName, "i"),
+              equal("schemaVersion", schemaVersion))
+          ),
+          and(
+            regex("conformance.mappingTable", mappingTableName, "i"),
+            equal("conformance.mappingTableVersion", mappingTableVersion)
+          )
+        )
+      )
+      .execute()
+      .nonEmpty
+  }
+
   private def initDatabase(): Unit = {
     mongoClient = MongoClient(mongoConnectionString)
     val dbs = mongoClient.listDatabaseNames().execute()
@@ -87,37 +114,28 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
   private def populateExampleData(mongoDb: MongoDb): Unit = {
     populateExampleSchemas(mongoDb)
     populateExampleMappingTables(mongoDb)
+    populateExampleDatasets(mongoDb)
   }
 
   private def populateExampleSchemas(mongoDb: MongoDb): Unit = {
-    val schemas0 = IOUtils.toString(this.getClass
-      .getResourceAsStream("/continuous_migration/schema0_data.json"), "UTF-8").split('\n')
-
-    mongoDb.createCollection("schema")
-    schemas0.foreach(s => mongoDb.insertDocument("schema", s))
-
-    val schemas1 = IOUtils.toString(this.getClass
-      .getResourceAsStream("/continuous_migration/schema1_data.json"), "UTF-8").split('\n')
-
-    mongoDb.createCollection("schema_v1")
-    schemas1.foreach(s =>
-      mongoDb.insertDocument("schema_v1", s)
-    )
+    populateFromResource(mongoDb, "schema", "/continuous_migration/schema0_data.json")
+    populateFromResource(mongoDb, "schema_v1", "/continuous_migration/schema1_data.json")
   }
 
   private def populateExampleMappingTables(mongoDb: MongoDb): Unit = {
-    val mappingTables0 = IOUtils.toString(this.getClass
-      .getResourceAsStream("/continuous_migration/mapping_table0_data.json"), "UTF-8").split('\n')
+    populateFromResource(mongoDb, "mapping_table", "/continuous_migration/mapping_table0_data.json")
+    populateFromResource(mongoDb, "mapping_table_v1", "/continuous_migration/mapping_table1_data.json")
+  }
 
-    mongoDb.createCollection("mapping_table")
-    mappingTables0.foreach(s => mongoDb.insertDocument("mapping_table", s))
+  private def populateExampleDatasets(mongoDb: MongoDb): Unit = {
+    populateFromResource(mongoDb, "dataset", "/continuous_migration/dataset0_data.json")
+    populateFromResource(mongoDb, "dataset_v1", "/continuous_migration/dataset1_data.json")
+  }
 
-    val mappingTables1 = IOUtils.toString(this.getClass
-      .getResourceAsStream("/continuous_migration/mapping_table1_data.json"), "UTF-8").split('\n')
+  private def populateFromResource(mongoDb: MongoDb, collection: String, resourcePath: String): Unit = {
+    val jsons = IOUtils.toString(this.getClass.getResourceAsStream(resourcePath), "UTF-8").split('\n')
 
-    mongoDb.createCollection("mapping_table_v1")
-    mappingTables1.foreach(s =>
-      mongoDb.insertDocument("mapping_table_v1", s)
-    )
+    mongoDb.createCollection(collection)
+    jsons.foreach(s => mongoDb.insertDocument(collection, s))
   }
 }
