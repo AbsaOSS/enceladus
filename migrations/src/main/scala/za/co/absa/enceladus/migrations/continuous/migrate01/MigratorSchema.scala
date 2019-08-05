@@ -64,7 +64,7 @@ class MigratorSchema(evm: EntityVersionMap,
       ))
     } catch {
       case NonFatal(e) =>
-        log.warn(s"Encountered a serialization error for 'schema': ${e.getMessage}")
+        log.warn(s"Encountered a serialization error for '$collectionBase': ${e.getMessage}")
         None
     }
 
@@ -106,7 +106,7 @@ class MigratorSchema(evm: EntityVersionMap,
     * @param repo     An entity repository
     */
   def resolveConflict(schema: model1.Schema, objectId: String, repo: EntityEepository): Unit = {
-    var retriesLeft = 3
+    var retriesLeft = EntityMigrator.NumberOfInsertRetries
     var saved = false
     while (retriesLeft > 0 && !saved) {
       retriesLeft -= 1

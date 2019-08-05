@@ -58,6 +58,7 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
 
   private def populateExampleData(mongoDb: MongoDb): Unit = {
     populateExampleSchemas(mongoDb)
+    populateExampleMappingTables(mongoDb)
   }
 
   private def populateExampleSchemas(mongoDb: MongoDb): Unit = {
@@ -73,6 +74,22 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
     mongoDb.createCollection("schema_v1")
     schemas1.foreach(s =>
       mongoDb.insertDocument("schema_v1", s)
+    )
+  }
+
+  private def populateExampleMappingTables(mongoDb: MongoDb): Unit = {
+    val mappingTables0 = IOUtils.toString(this.getClass
+      .getResourceAsStream("/continuous_migration/mapping_table0_data.json"), "UTF-8").split('\n')
+
+    mongoDb.createCollection("mapping_table")
+    mappingTables0.foreach(s => mongoDb.insertDocument("mapping_table", s))
+
+    val mappingTables1 = IOUtils.toString(this.getClass
+      .getResourceAsStream("/continuous_migration/mapping_table1_data.json"), "UTF-8").split('\n')
+
+    mongoDb.createCollection("mapping_table_v1")
+    mappingTables1.foreach(s =>
+      mongoDb.insertDocument("mapping_table_v1", s)
     )
   }
 }

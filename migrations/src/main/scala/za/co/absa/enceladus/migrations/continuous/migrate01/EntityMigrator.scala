@@ -56,5 +56,9 @@ abstract class EntityMigrator {
     })
   }
 
+}
 
+object EntityMigrator {
+  // Specifies the number of retries for inserting a new version of an entity into a database.
+  val NumberOfInsertRetries = 3
 }
