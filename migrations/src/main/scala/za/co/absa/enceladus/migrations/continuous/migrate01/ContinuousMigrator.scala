@@ -35,7 +35,8 @@ class ContinuousMigrator(dbOld: MongoDatabase, dbNew: MongoDatabase) {
     val migrations = List(
       new MigratorSchema(evm, dbOld, dbNew),
       new MigratorMappingTable(evm, dbOld, dbNew),
-      new MigratorDataset(evm, dbOld, dbNew)
+      new MigratorDataset(evm, dbOld, dbNew),
+      new MigratorRun(evm, dbOld, dbNew)
     )
 
     migrations.foreach(_.migrate())

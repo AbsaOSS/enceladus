@@ -25,7 +25,7 @@ import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 /**
   * The class contains a set of MongoDB versioned collection manipulation routines needed for continuous migration.
   */
-class EntityEepository(db: MongoDatabase, collectionName: String) {
+class EntityRepository(db: MongoDatabase, collectionName: String) {
 
   import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits._
 
@@ -38,6 +38,20 @@ class EntityEepository(db: MongoDatabase, collectionName: String) {
     db.getCollection(collectionName)
       .find()
       .sort(ascending("name", "version"))
+      .execute()
+      .toIterator
+      .map(_.toJson)
+  }
+
+  /**
+    * Returns iterator to a sorted collection of runs. Documents are sorted by datasetName, datasetVersion and runId.
+    *
+    * @return An iterator to a JSON representation of the documents.
+    */
+  def getSortedRuns: Iterator[String] = {
+    db.getCollection(collectionName)
+      .find()
+      .sort(ascending("dataset", "datasetVersion", "runId"))
       .execute()
       .toIterator
       .map(_.toJson)
@@ -76,6 +90,27 @@ class EntityEepository(db: MongoDatabase, collectionName: String) {
   }
 
   /**
+    * Returns true if a run with a particular runId, datasetName and datasetVersion exists in the collection.
+    *
+    * @param datasetName    A name of an entity.
+    * @param datasetVersion A version of the entity.
+    * @return true if such a document exists, false otherwise.
+    */
+  def doesRunExist(runId: Int, datasetName: String, datasetVersion: Int): Boolean = {
+    val documents = db.getCollection(collectionName)
+      .find(
+        and(
+          equal("runId", runId),
+          and(
+            regex("dataset", datasetName, "i"),
+            equal("datasetVersion", datasetVersion)
+          )
+        ))
+      .execute()
+    documents.nonEmpty
+  }
+
+  /**
     * Gets the latest version of a document having a particular name.
     *
     * @param name A name of an entity.
@@ -88,6 +123,26 @@ class EntityEepository(db: MongoDatabase, collectionName: String) {
       .limit(1)
       .execute()
     documents.headOption.map(_.getInteger("version").toInt).getOrElse(0)
+  }
+
+  /**
+    * Gets the latest version of a run having a particular dataset name and version.
+    *
+    * @param datasetName A name of a dataset.
+    * @param datasetVersion A version of the dataset.
+    * @return the latest run id of an entity, or 0 if the collection is empty.
+    */
+  def getLatestRunId(datasetName: String, datasetVersion: Int): Int = {
+    val documents = db.getCollection(collectionName)
+      .find(
+        and(
+        regex("dataset", datasetName, "i"),
+          equal("datasetVersion", datasetVersion))
+      )
+      .sort(descending("runId"))
+      .limit(1)
+      .execute()
+    documents.headOption.map(_.getInteger("runId").toInt).getOrElse(0)
   }
 
   /**

@@ -55,4 +55,20 @@ object Serializer0 {
     objectMapper.readValue(json, classOf[Dataset])
   }
 
+  /**
+    * Deserializes a Model 0 run JSON
+    */
+  def deserializeRun(json: String): Run = {
+    //objectMapper.readValue(json, classOf[Run])
+    implicit val formats: Formats = formatsDefault
+    Serialization.read[Run](json)
+  }
+
+  /**
+    * Serializes a Model 0 run object
+    */
+  def serializeRun(run: Run): String = {
+    objectMapper.writeValueAsString(run)
+  }
+
 }

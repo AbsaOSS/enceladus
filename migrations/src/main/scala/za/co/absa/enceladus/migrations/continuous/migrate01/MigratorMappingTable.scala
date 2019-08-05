@@ -53,7 +53,7 @@ class MigratorMappingTable(evm: EntityVersionMap,
     * @param objectId            An Object Id of the mapping table.
     * @param repo                An entity repository.
     */
-  def migrateEntity(srcMappingTableJson: String, objectId: String, repo: EntityEepository): Unit = {
+  def migrateEntity(srcMappingTableJson: String, objectId: String, repo: EntityRepository): Unit = {
     val mappingTable1Opt = try {
       val mappingTable0 = Serializer0.deserializeMappingTable(srcMappingTableJson)
 
@@ -98,7 +98,7 @@ class MigratorMappingTable(evm: EntityVersionMap,
     * @param objectId     An Object Id if the mapping table
     * @param repo         An entity repository
     */
-  def normalInsert(mappingTable: model1.MappingTable, objectId: String, repo: EntityEepository): Unit = {
+  def normalInsert(mappingTable: model1.MappingTable, objectId: String, repo: EntityRepository): Unit = {
     val mappingTable1Json = ObjectIdTools.putObjectIdIfNotPresent(Serializer1.serializeMappingTable(mappingTable),
       Option(objectId))
 
@@ -119,7 +119,7 @@ class MigratorMappingTable(evm: EntityVersionMap,
     * @param objectId     An Object Id if the mapping table
     * @param repo         An entity repository
     */
-  def resolveConflict(mappingTable: model1.MappingTable, objectId: String, repo: EntityEepository): Unit = {
+  def resolveConflict(mappingTable: model1.MappingTable, objectId: String, repo: EntityRepository): Unit = {
     var retriesLeft = EntityMigrator.NumberOfInsertRetries
     var saved = false
     while (retriesLeft > 0 && !saved) {

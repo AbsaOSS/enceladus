@@ -19,105 +19,115 @@ import org.apache.log4j.{LogManager, Logger}
 import org.mongodb.scala.MongoDatabase
 import za.co.absa.enceladus.migrations.continuous.EntityVersionMap
 import za.co.absa.enceladus.migrations.framework.{MigrationUtils, ObjectIdTools}
+import za.co.absa.enceladus.migrations.migrations.model0
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
-import za.co.absa.enceladus.migrations.migrations.model1.Serializer1
-import za.co.absa.enceladus.migrations.migrations.{MigrationToV1, model1}
 
 import scala.util.control.NonFatal
 
 /**
-  * The class provides schemas continuous migration from model version 0 to model version 1.
+  * The class provides runs continuous migration from model version 0 to model version 1.
   *
   * @param evm         An entity mapper for tracking the mapping between old versions of entities and new ones.
   * @param databaseOld An instance of a MongoDB database connection containing old model documents.
   * @param databaseNew An instance of a MongoDB database connection containing new model documents.
   */
-class MigratorSchema(evm: EntityVersionMap,
-                     databaseOld: MongoDatabase,
-                     databaseNew: MongoDatabase) extends EntityMigrator {
+class MigratorRun(evm: EntityVersionMap,
+                  databaseOld: MongoDatabase,
+                  databaseNew: MongoDatabase) extends EntityMigrator {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
-  override protected val collectionBase = "schema"
+  override protected val collectionBase = "run"
   protected val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
   protected val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
 
   protected val dbOld: MongoDatabase = databaseOld
   protected val dbNew: MongoDatabase = databaseNew
 
+  /** Migration for runs is slightly different. */
+  override def migrate(): Unit = {
+    val repoOld = new EntityRepository(dbOld, collectionOld)
+    val repoNew = new EntityRepository(dbNew, collectionNew)
+
+    val runsOld = repoOld.getSortedRuns
+
+    runsOld.foreach(runOld => {
+      val objectId = ObjectIdTools.getObjectIdFromDocument(runOld)
+      objectId.foreach(id => {
+        if (!repoNew.doesDocumentExist(id)) {
+          migrateEntity(runOld, id, repoNew)
+        }
+      })
+    })
+  }
+
   /**
-    * Migrates a single instance of schema.
+    * Migrates a single instance of run.
     *
-    * @param srcSchemaJson A JSON representation of a schema in the model 0 format.
-    * @param objectId      An Object Id if the schema.
-    * @param repo          An entity repository.
+    * @param srcRunJson A JSON representation of a run in the model 0 format.
+    * @param objectId   An Object Id of the run.
+    * @param repo       An entity repository.
     */
-  def migrateEntity(srcSchemaJson: String, objectId: String, repo: EntityRepository): Unit = {
-    val schema1Opt = try {
-      val schema0 = Serializer0.deserializeSchema(srcSchemaJson)
-      Option(model1.Schema(
-        schema0.name,
-        schema0.version,
-        None,
-        userCreated = migrationUserName,
-        userUpdated = migrationUserName,
-        fields = schema0.fields.map(MigrationToV1.convertSchemaField(_, Nil))
-      ))
+  def migrateEntity(srcRunJson: String, objectId: String, repo: EntityRepository): Unit = {
+    val runOpt = try {
+      val run0 = Serializer0.deserializeRun(srcRunJson)
+
+      Option(run0) // TODO !!! Resolve foreign keys, remap metadata!
     } catch {
       case NonFatal(e) =>
         log.warn(s"Encountered a serialization error for '$collectionBase': ${e.getMessage}")
         None
     }
 
-    schema1Opt.foreach(schema1 => {
-      if (repo.doesDocumentExist(schema1.name, schema1.version)) {
-        resolveConflict(schema1, objectId, repo)
+    runOpt.foreach(run1 => {
+      if (repo.doesRunExist(run1.runId, run1.dataset, run1.datasetVersion)) {
+        resolveConflict(run1, objectId, repo)
       } else {
-        normalInsert(schema1, objectId, repo)
+        normalInsert(run1, objectId, repo)
       }
     })
   }
 
   /**
-    * In case there is no conflict, insert a new schema normally.
+    * In case there is no conflict, insert a new dataset normally.
     * If inserting is unsuccessful fallback to conflict resolution.
     *
-    * @param schema   A schema to save as an instance of Model 1 object
-    * @param objectId An Object Id of the schema
+    * @param run      A dataset to save as an instance of Model 1 object
+    * @param objectId An Object Id if the dataset
     * @param repo     An entity repository
     */
-  def normalInsert(schema: model1.Schema, objectId: String, repo: EntityRepository): Unit = {
-    val schema1Json = ObjectIdTools.putObjectIdIfNotPresent(Serializer1.serializeSchema(schema), Option(objectId))
+  def normalInsert(run: model0.Run, objectId: String, repo: EntityRepository): Unit = {
+    val runJson = ObjectIdTools.putObjectIdIfNotPresent(Serializer0.serializeRun(run),
+      Option(objectId))
 
     try {
-      repo.insertDocument(schema1Json)
+      repo.insertDocument(runJson)
     } catch {
       case NonFatal(e) =>
-        log.warn(s"Unable to append a document for 'schema': ${e.getMessage}. Retrying...")
-        resolveConflict(schema, objectId, repo)
+        log.warn(s"Unable to append a document for '$collectionBase': ${e.getMessage}. Retrying...")
+        resolveConflict(run, objectId, repo)
     }
   }
 
   /**
-    * In case there is a conflict, resolve it by adding a new version of the schema
+    * In case there is a conflict, resolve it by adding a new version of the dataset
     * and register the mapping between the old version and the new one in ahe entity version map.
     *
-    * @param schema   A schema to save as an instance of Model 1 object
-    * @param objectId An Object Id if the schema
+    * @param run      A run to save as an instance of Model 1 object
+    * @param objectId An Object Id if the dataset
     * @param repo     An entity repository
     */
-  def resolveConflict(schema: model1.Schema, objectId: String, repo: EntityRepository): Unit = {
+  def resolveConflict(run: model0.Run, objectId: String, repo: EntityRepository): Unit = {
     var retriesLeft = EntityMigrator.NumberOfInsertRetries
     var saved = false
     while (retriesLeft > 0 && !saved) {
       retriesLeft -= 1
-      val latestVersion = repo.getLatestVersion(schema.name)
-      val schemaToSave = schema.copy(version = latestVersion + 1)
-      val schema1Json = ObjectIdTools.putObjectIdIfNotPresent(Serializer1.serializeSchema(schemaToSave),
-        Option(objectId))
+      val latestRunId = repo.getLatestRunId(run.dataset, run.datasetVersion)
+      val runToSave = run.copy(runId = latestRunId + 1)
+      val runJson = ObjectIdTools
+        .putObjectIdIfNotPresent(Serializer0.serializeRun(runToSave), Option(objectId))
 
       try {
-        repo.insertDocument(schema1Json)
-        evm.add(collectionBase, schema.name, schema.version, schemaToSave.version)
+        repo.insertDocument(runJson)
         saved = true
       } catch {
         case NonFatal(e) =>
@@ -127,7 +137,6 @@ class MigratorSchema(evm: EntityVersionMap,
             throw e // Something went terribly wrong
           }
       }
-
     }
   }
 

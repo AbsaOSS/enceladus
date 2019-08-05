@@ -41,7 +41,7 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
 
   override protected def afterAll(): Unit = {
     try super.afterAll()
-    finally mongoClient.getDatabase(integrationTestDbName).drop().execute()
+    //finally mongoClient.getDatabase(integrationTestDbName).drop().execute()
   }
 
   def schemaExists(name: String, version: Int): Boolean = {
@@ -115,6 +115,7 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
     populateExampleSchemas(mongoDb)
     populateExampleMappingTables(mongoDb)
     populateExampleDatasets(mongoDb)
+    populateRuns(mongoDb)
   }
 
   private def populateExampleSchemas(mongoDb: MongoDb): Unit = {
@@ -130,6 +131,11 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
   private def populateExampleDatasets(mongoDb: MongoDb): Unit = {
     populateFromResource(mongoDb, "dataset", "/continuous_migration/dataset0_data.json")
     populateFromResource(mongoDb, "dataset_v1", "/continuous_migration/dataset1_data.json")
+  }
+
+  private def populateRuns(mongoDb: MongoDb): Unit = {
+    populateFromResource(mongoDb, "run", "/continuous_migration/run0_data.json")
+    populateFromResource(mongoDb, "run_v1", "/continuous_migration/run1_data.json")
   }
 
   private def populateFromResource(mongoDb: MongoDb, collection: String, resourcePath: String): Unit = {
