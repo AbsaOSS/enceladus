@@ -127,8 +127,9 @@ object MenasRestDAO extends MenasDAO {
       try {
         val status = response.getStatusLine.getStatusCode
         val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
-        val unAuthorized = status == HttpStatus.SC_UNAUTHORIZED
-        if (unAuthorized) {
+        val isUnauthorized = status == HttpStatus.SC_UNAUTHORIZED || status == HttpStatus.SC_FORBIDDEN
+
+        if (isUnauthorized) {
           log.warn(s"Unauthorized POST request for Menas URL: $url")
           log.warn(s"Expired session, reauthenticating")
           if (enceladusLogin()) {
