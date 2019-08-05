@@ -25,9 +25,9 @@ import za.co.absa.enceladus.menas.repositories.OozieRepository
 
 @Component
 class OozieService @Autowired() (oozieRepository: OozieRepository) {
-  
+
   def isOozieEnabled: Boolean = oozieRepository.isOozieEnabled()
-  
+
   def getCoordinatorStatus(coordinatorId: String): Future[OozieCoordinatorStatus] = {
     oozieRepository.getCoordinatorStatus(coordinatorId)
   }

@@ -46,7 +46,7 @@ sap.ui.define(["sap/ui/core/Fragment"], function(Fragment) {
   SchemaSelectorUtils.onCancel = function(oEv) {
     oEv.getSource().getBinding("items").filter([]);
   };
-  
+
   SchemaSelectorUtils.onSearch = function(oEv) {
     const sValue = oEv.getParameter("value");
     if(!sValue) {
@@ -67,7 +67,7 @@ sap.ui.define(["sap/ui/core/Fragment"], function(Fragment) {
 
     const eventBus = sap.ui.getCore().getEventBus();
     const schemaService = new SchemaService(oDialog.getModel("entity"), eventBus);
-    schemaService.getAllVersions(selectedSchema._id, oDialog, 
+    schemaService.getAllVersions(selectedSchema._id, oDialog,
         oDialog.getModel("entity"), "/schemaVersion").then((oVersions) => {
           sap.ui.getCore().getModel().setProperty("/currentSchemaVersions", oVersions);
         });

@@ -73,11 +73,13 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
 
   private def getError(inputColumn: Column, errorColumnUDF: Column, fieldType: DataType): Column = {
     fieldType match {
+      // scalastyle:off null
       case _: ByteType => when(inputColumn === Byte.MinValue, errorColumnUDF).otherwise(null)
       case _: ShortType => when(inputColumn === Short.MinValue, errorColumnUDF).otherwise(null)
       case _: IntegerType => when(inputColumn === Int.MinValue, errorColumnUDF).otherwise(null)
       case _: LongType => when(inputColumn === Long.MinValue, errorColumnUDF).otherwise(null)
       case _ => null
+      // scalastyle:on null
     }
   }
 

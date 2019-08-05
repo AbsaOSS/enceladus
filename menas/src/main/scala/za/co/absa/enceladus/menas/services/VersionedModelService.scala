@@ -70,16 +70,26 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     for {
       versions <- {
         //store all in version ascending order
-        val all = versionedMongoRepository.getAllVersions(name, true).map(_.sortBy(_.version))
+        val all = versionedMongoRepository.getAllVersions(name, inclDisabled = true).map(_.sortBy(_.version))
         //get those relevant to us
-        if (fromVersion.isDefined) all.map(_.filter(_.version <= fromVersion.get)) else all
+        if (fromVersion.isDefined) {
+          all.map(_.filter(_.version <= fromVersion.get))
+        } else {
+          all
+        }
       }
       res <- {
         //see if this was branched from a different entity
-        val topParent = if (versions.isEmpty) None
-          else if (versions.head.parent.isEmpty) None
-          else versions.head.parent
-        if(topParent.isDefined) getParents(topParent.get.name, Some(topParent.get.version)) else Future.successful(Seq())
+        val topParent = if (versions.isEmpty || versions.head.parent.isEmpty) {
+          None
+        } else {
+          versions.head.parent
+        }
+        if (topParent.isDefined) {
+          getParents(topParent.get.name, Some(topParent.get.version))
+        } else {
+          Future.successful(Seq())
+        }
       }
     } yield res ++ versions
   }
@@ -183,8 +193,11 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
       Future.successful(validation.withError("name", s"name contains whitespace: '$name'"))
     } else {
       isUniqueName(name).map { isUnique =>
-        if (isUnique) validation
-        else validation.withError("name", s"entity with name already exists: '$name'")
+        if (isUnique) {
+          validation
+        } else {
+          validation.withError("name", s"entity with name already exists: '$name'")
+        }
       }
     }
   }

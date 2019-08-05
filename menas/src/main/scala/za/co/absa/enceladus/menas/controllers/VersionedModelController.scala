@@ -43,13 +43,13 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
     val searchOpt: Option[String] = searchQuery
     versionedModelService.getLatestVersions(searchQuery)
   }
-  
+
   @GetMapping(Array("/searchSuggestions"))
   @ResponseStatus(HttpStatus.OK)
   def getSearchSuggestions(): CompletableFuture[Seq[String]] = {
     versionedModelService.getSearchSuggestions()
   }
-  
+
   @GetMapping(Array("/detail/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
   def getVersionDetail(@PathVariable name: String,
@@ -102,9 +102,9 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
       case None         => throw notFound()
     }
   }
-  
+
   @PostMapping(Array("/edit"))
-  @Transactional(timeout = 120)
+  @Transactional(timeout = 120) // scalastyle:ignore magic.number (annotation argument needs to be a constant)
   @ResponseStatus(HttpStatus.CREATED)
   def edit(@AuthenticationPrincipal user: UserDetails,
       @RequestBody item: C): CompletableFuture[C] = {

@@ -19,7 +19,7 @@ import org.apache.spark.sql.functions.{col, concat, concat_ws, lit}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, SparkSession}
 import scopt.OptionParser
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.model.Dataset
@@ -134,14 +134,10 @@ object CustomRuleSample4 {
 
   def main(args: Array[String]): Unit = {
     val cmd: CmdConfigLocal = getCmdLineArguments(args)
-
     implicit val spark: SparkSession = buildSparkSession()
 
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with Menas)
-    val experimentalMR= true
-    val isCatalystWorkaroundEnabled = true
-    val enableCF: Boolean = false
 
     val dfReader: DataFrameReader = {
       val dfReader0 = spark.read
@@ -179,12 +175,12 @@ object CustomRuleSample4 {
       )
     )
     // scalastyle:on magic.number
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef,
-      inputData,
-      experimentalMR,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF)
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(true)
+      .setCatalystWorkaroundEnabled(true)
+      .setControlFrameworkEnabled(false)
 
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
     outputData.show()
     saveToCsv(outputData, cmd.outPath)
   }

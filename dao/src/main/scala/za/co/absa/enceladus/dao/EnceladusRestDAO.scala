@@ -178,9 +178,9 @@ object EnceladusRestDAO extends EnceladusDAO {
       try {
         val status = response.getStatusLine.getStatusCode
         val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
-        val unAuthorized = status == HttpStatus.SC_UNAUTHORIZED
+        val isUnauthorized = status == HttpStatus.SC_UNAUTHORIZED || status == HttpStatus.SC_FORBIDDEN
 
-        if (unAuthorized) {
+        if (isUnauthorized) {
           log.warn(s"Unauthorized GET request for Menas URL: $url")
           log.warn(s"Expired session, reauthenticating")
           if (enceladusLogin()) {

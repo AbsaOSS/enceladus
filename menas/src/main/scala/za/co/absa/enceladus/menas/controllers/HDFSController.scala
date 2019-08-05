@@ -27,7 +27,7 @@ import za.co.absa.enceladus.menas.services.HDFSService
 @RestController
 @RequestMapping(Array("/api/hdfs"))
 class HDFSController @Autowired() (hdfsService: HDFSService) extends BaseController {
-  
+
   import za.co.absa.enceladus.menas.utils.implicits._
 
   import scala.concurrent.ExecutionContext.Implicits.global

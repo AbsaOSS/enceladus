@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.apache.log4j.LogManager
+import org.slf4j.LoggerFactory
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{col, lit}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
@@ -23,7 +23,7 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(implicit spark: SparkSession) {
   import spark.implicits._
 
-  private val log = LogManager.getLogger(this.getClass)
+  private val log = LoggerFactory.getLogger(this.getClass)
 
   private val maxToleratedPlanGenerationPerRuleMs = 100L
   private val initialElapsedTimeBaselineMs = 300L
@@ -33,7 +33,7 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
   private val idField1 = SchemaUtils.getUniqueName("tmpId", Option(inputDf.schema))
   private val idField2 = s"${idField1}_2"
   private val dfWithId = inputDf.withColumn(idField1, lit(1))
-  private val dfJustId = Seq(1).toDF(idField2).cache
+  private val dfJustId = Seq(1).toDF(idField2).cache()
 
   /**
     * Returns a dataframe prepared to apply the Catalyst workaround

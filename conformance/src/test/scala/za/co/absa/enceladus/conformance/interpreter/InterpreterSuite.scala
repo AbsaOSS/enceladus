@@ -42,7 +42,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
   }
 
   def testEndToEndDynamicConformance(useExperimentalMappingRule: Boolean): Unit = {
-    // Enable Conformance Framweork
+    // Enable Conformance Framework
     import za.co.absa.atum.AtumImplicits._
     spark.enableControlMeasuresTracking("src/test/testData/employee/2017/11/01/_INFO", "src/test/testData/_testOutput/_INFO")
 
@@ -64,12 +64,12 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     mockWhen(dao.getMappingTable("department", 0)) thenReturn EmployeeConformance.departmentMT
     mockWhen(dao.getMappingTable("role", 0)) thenReturn EmployeeConformance.roleMT
     mockWhen(dao.getSchema("Employee", 0)) thenReturn dfs.schema
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
 
-    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS,
-      dfs,
-      useExperimentalMappingRule,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF).cache
+    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs)
 
     val data = conformed.as[ConformedEmployee].collect.sortBy(_.employee_id).toList
     val expected = EmployeeConformance.conformedEmployees.sortBy(_.employee_id).toList
@@ -99,7 +99,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
   }
 
   def testEndToEndArrayConformance(useExperimentalMappingRule: Boolean): Unit = {
-    // Enable Conformance Framweork
+    // Enable Conformance Framework
     import za.co.absa.atum.AtumImplicits._
     spark.enableControlMeasuresTracking("src/test/testData/_tradeData/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
 
@@ -118,12 +118,12 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     mockWhen(dao.getMappingTable("currency", 0)) thenReturn TradeConformance.currencyMT
     mockWhen(dao.getMappingTable("product", 0)) thenReturn TradeConformance.productMT
     mockWhen(dao.getSchema("Trade", 0)) thenReturn dfs.schema
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
 
-    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS,
-      dfs,
-      useExperimentalMappingRule,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF).cache
+    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs).cache
 
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
 

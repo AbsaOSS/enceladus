@@ -35,7 +35,7 @@ class RulesSuite extends FunSuite with SparkTestBase {
     val countryRule = EmployeeConformance.countryRule
     val countryCondGen = MappingRuleInterpreterGroupExplode.getJoinCondition(countryRule).expr
     val countryCond = (lit(true)
-      && (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.country") === col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.country_code"))) expr
+      && (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.country") === col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.country_code"))).expr
 
     assert(countryCondGen.semanticEquals(countryCond))
   }
@@ -44,7 +44,7 @@ class RulesSuite extends FunSuite with SparkTestBase {
     val deptRule = EmployeeConformance.departmentRule
     val deptCondGen = MappingRuleInterpreterGroupExplode.getJoinCondition(deptRule).expr
     val deptCond = (lit(true) &&
-      (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.dept") === col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.dept_id"))) expr
+      (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.dept") === col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.dept_id"))).expr
 
     assert(deptCondGen.semanticEquals(deptCond))
   }
@@ -54,7 +54,7 @@ class RulesSuite extends FunSuite with SparkTestBase {
     val roleCondGen = MappingRuleInterpreterGroupExplode.getJoinCondition(roleRule).expr
     val roleCond = (lit(true) &&
       (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.role") <=> col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.role_id")) &&
-      (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.conformed_country") <=> col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.country"))) expr
+      (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.conformed_country") <=> col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.country"))).expr
 
     assert(roleCondGen.semanticEquals(roleCond))
   }
@@ -67,7 +67,7 @@ class RulesSuite extends FunSuite with SparkTestBase {
   }
 
   test("Infest strictest type long") {
-    val colGen = dummyInterpreter.inferStrictestType((Long.MaxValue - 1) toString).expr
+    val colGen = dummyInterpreter.inferStrictestType((Long.MaxValue - 1).toString).expr
     val colMan = lit(Long.MaxValue - 1).expr
 
     assert(colGen.semanticEquals(colMan))
@@ -128,9 +128,9 @@ class RulesSuite extends FunSuite with SparkTestBase {
       MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("not_string", schema, "name", "struct('Unknown' as name)")
     }.getMessage contains "A string expected")
 
-    println(intercept[ValidationException] {
+    intercept[ValidationException] {
       MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("id_null", schema, "id", "null")
-    }.getMessage)
+    }
 
     intercept[ValidationException] {
       MappingRuleInterpreterGroupExplode.ensureDefaultValueMatchSchema("id_test", schema, "id", "wrong")

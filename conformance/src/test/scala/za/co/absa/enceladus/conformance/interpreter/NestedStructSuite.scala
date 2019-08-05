@@ -27,49 +27,45 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFixture {
 
   test("Test Dynamic Conformance does not hang on many mixed conformance rules") {
-    val conformed = DynamicInterpreter.interpret(
-      nestedStructsDS,
-      standardizedDf,
-      experimentalMappingRule = false,
-      isCatalystWorkaroundEnabled = true,
-      enableControlFramework = false
-    )
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(false)
+      .setCatalystWorkaroundEnabled(true)
+      .setControlFrameworkEnabled(false)
+
+    val conformed = DynamicInterpreter.interpret(nestedStructsDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }
 
   test("Test Dynamic Conformance does not hang on many uppercase conformance rules") {
-    val conformed = DynamicInterpreter.interpret(
-      nestedStructsUpperDS,
-      standardizedDf,
-      experimentalMappingRule = false,
-      isCatalystWorkaroundEnabled = true,
-      enableControlFramework = false
-    )
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(false)
+      .setCatalystWorkaroundEnabled(true)
+      .setControlFrameworkEnabled(false)
+
+    val conformed = DynamicInterpreter.interpret(nestedStructsUpperDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }
 
   test("Test Dynamic Conformance does not hang on many negation conformance rules") {
-    val conformed = DynamicInterpreter.interpret(
-      nestedStructsNegationDS,
-      standardizedDf,
-      experimentalMappingRule = false,
-      isCatalystWorkaroundEnabled = true,
-      enableControlFramework = false
-    )
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(false)
+      .setCatalystWorkaroundEnabled(true)
+      .setControlFrameworkEnabled(false)
+
+    val conformed = DynamicInterpreter.interpret( nestedStructsNegationDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }
 
   test("Test Dynamic Conformance does not hang on many casting conformance rules") {
-    val conformed = DynamicInterpreter.interpret(
-      nestedStructsCastingDS,
-      standardizedDf,
-      experimentalMappingRule = false,
-      isCatalystWorkaroundEnabled = true,
-      enableControlFramework = false
-    )
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(false)
+      .setCatalystWorkaroundEnabled(true)
+      .setControlFrameworkEnabled(false)
+
+    val conformed = DynamicInterpreter.interpret(nestedStructsCastingDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }

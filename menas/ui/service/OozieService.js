@@ -26,7 +26,7 @@ var OozieService = new function () {
       Functions.ajax(`api/oozie/coordinatorStatus/${coordinatorId}`, "GET", {}, function (oData) {
         model.setProperty("/currentDataset/schedule/activeInstance/status", oData)
       }, function () {
-      })      
+      })
     }
   };
 

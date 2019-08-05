@@ -32,35 +32,34 @@ import javax.security.auth.login.LoginContext
 
 class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String, baseDN: String)
   extends AuthenticationProvider {
-  
+
   case class MenasKerberosLoginResult(loginContext: LoginContext, verifiedName: String)
-  
+
   private val logger = LoggerFactory.getLogger(this.getClass)
-  
+
   override def authenticate(authentication: Authentication): Authentication = {
     val auth = authentication.asInstanceOf[UsernamePasswordAuthenticationToken]
     val loginResult = login(auth.getName, auth.getCredentials.toString)
     val userDetailsService = getUserDetailService(loginResult.loginContext.getSubject)
     val userDetails = userDetailsService.loadUserByUsername(loginResult.verifiedName)
-    loginResult.loginContext.logout
-    val output = new UsernamePasswordAuthenticationToken(userDetails, auth.getCredentials, userDetails.getAuthorities);
-		output.setDetails(authentication.getDetails)
-		output
+    loginResult.loginContext.logout()
+    val output = new UsernamePasswordAuthenticationToken(userDetails, auth.getCredentials, userDetails.getAuthorities)
+    output.setDetails(authentication.getDetails)
+    output
   }
-  
+
   override def supports(authentication: Class[_]): Boolean = {
     classOf[UsernamePasswordAuthenticationToken].isAssignableFrom(authentication)
   }
-  
-  //noinspection ScalaStyle
+
   private def login(username: String, password: String): MenasKerberosLoginResult = {
-    val loginContext = new LoginContext("", null, getSpringCBHandler(username, password), getLoginConfig)
+    val loginContext = new LoginContext("", null, getSpringCBHandler(username, password), getLoginConfig) // scalastyle:ignore null
     loginContext.login()
     val loggedInUser = loginContext.getSubject.getPrincipals.iterator.next.toString
     logger.debug(s"Logged In User: $loggedInUser")
     MenasKerberosLoginResult(loginContext, loggedInUser)
   }
-  
+
   private def getSpringCBHandler(username: String, password: String) = {
     new CallbackHandler(){
       def handle(callbacks: Array[Callback]) {
@@ -71,19 +70,19 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
       }
     }
   }
-  
+
   private def getUserDetailService(subject: Subject) = {
     val contextSource = new MenasKerberosLdapContextSource(adServer, subject)
     contextSource.afterPropertiesSet()
     val userSearch = new KerberosLdapUserSearch(baseDN, searchFilter, contextSource)
     new LdapUserDetailsService(userSearch, new ActiveDirectoryLdapAuthoritiesPopulator())
   }
-  
+
   private def getLoginConfig: Configuration = {
     import scala.collection.JavaConversions._
 
     new Configuration {
-      override def getAppConfigurationEntry(name: String) = {
+      override def getAppConfigurationEntry(name: String): Array[AppConfigurationEntry] = {
         val opts = Map(
           "storeKey" -> "true",
           "refreshKrb5Config" -> "true",

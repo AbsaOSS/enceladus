@@ -87,4 +87,5 @@ class LiteralRuleSuite extends FunSuite with SparkTestBase with TestRuleBehavior
     conformanceRuleShouldMatchExpected(inputDf, literalOrdersDS3, conformedLiteralOrdersJSON3)
   }
 
+  // scalastyle:on line.size.limit
 }
