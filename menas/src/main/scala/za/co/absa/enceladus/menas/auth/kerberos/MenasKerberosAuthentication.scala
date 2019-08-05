@@ -37,6 +37,7 @@ import org.springframework.stereotype.Component
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import za.co.absa.enceladus.menas.auth.MenasAuthentication
+import MenasKerberosAuthentication._
 
 @Component("kerberosMenasAuthentication")
 class MenasKerberosAuthentication extends MenasAuthentication with InitializingBean {
@@ -57,9 +58,7 @@ class MenasKerberosAuthentication extends MenasAuthentication with InitializingB
   @Value("${za.co.absa.enceladus.menas.auth.kerberos.krb5conf:}")
   val krb5conf: String = ""
 
-  val logger = LoggerFactory.getLogger(this.getClass)
-
-  lazy val requiredParameters = Seq((adDomain, "za.co.absa.enceladus.menas.auth.ad.domain"),
+  private lazy val requiredParameters = Seq((adDomain, "za.co.absa.enceladus.menas.auth.ad.domain"),
     (adServer, "za.co.absa.enceladus.menas.auth.ad.server"),
     (servicePrincipal, "za.co.absa.enceladus.menas.auth.servicename.principal"),
     (keytabLocation, "za.co.absa.enceladus.menas.auth.servicename.keytab.location"),
@@ -70,14 +69,14 @@ class MenasKerberosAuthentication extends MenasAuthentication with InitializingB
     System.setProperty("javax.net.debug", kerberosDebug.toString)
     System.setProperty("sun.security.krb5.debug", kerberosDebug.toString)
 
-    if (!krb5conf.isEmpty()) {
+    if (!krb5conf.isEmpty) {
       logger.info(s"Using KRB5 CONF from $krb5conf")
       System.setProperty("java.security.krb5.conf", krb5conf)
     }
   }
 
-  private def validateParam(param: String, paramName: String) = {
-    if (param.isEmpty()) {
+  private def validateParam(param: String, paramName: String): Unit = {
+    if (param.isEmpty) {
       throw new IllegalArgumentException(s"$paramName has to be configured in order to use kerberos Menas authentication")
     }
   }
@@ -123,7 +122,7 @@ class MenasKerberosAuthentication extends MenasAuthentication with InitializingB
 
   private def ldapUserDetailsService() = {
     val userSearch = new KerberosLdapUserSearch(ldapSearchBase, ldapSearchFilter, kerberosLdapContextSource())
-    val service = new LdapUserDetailsService(userSearch, new ActiveDirectoryLdapAuthoritiesPopulator());
+    val service = new LdapUserDetailsService(userSearch, new ActiveDirectoryLdapAuthoritiesPopulator())
     service.setUserDetailsMapper(new LdapUserDetailsMapper())
     service
   }
@@ -148,13 +147,15 @@ class MenasKerberosAuthentication extends MenasAuthentication with InitializingB
 }
 
 object MenasKerberosAuthentication {
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
   def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager): SpnegoAuthenticationProcessingFilter = {
     val filter = new SpnegoAuthenticationProcessingFilter()
     filter.setAuthenticationManager(authenticationManager)
     filter.setSkipIfAlreadyAuthenticated(true)
     filter.setFailureHandler(new AuthenticationFailureHandler {
-      override def onAuthenticationFailure(request: HttpServletRequest, response: HttpServletResponse, exception: AuthenticationException) = {
-        exception.printStackTrace()
+      override def onAuthenticationFailure(request: HttpServletRequest, response: HttpServletResponse, exception: AuthenticationException): Unit = {
+        logger.error(exception.getStackTrace.toString)
       }
     })
     filter

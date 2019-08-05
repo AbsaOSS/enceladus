@@ -27,6 +27,7 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import com.typesafe.config.Config
 
 trait SparkTestBase { self =>
+  TimeZoneNormalizer.normalizeJVMTimeZone()
 
   val config: Config = ConfigFactory.load()
   val sparkMaster: String = config.getString("enceladus.utils.testUtils.sparkTestBaseMaster")
@@ -35,6 +36,7 @@ trait SparkTestBase { self =>
     .master(sparkMaster)
     .appName(s"Enceladus test - ${self.getClass.getName}")
     .config("spark.ui.enabled", "false")
+    .config("spark.debug.maxToStringFields", 100)
 
   implicit val spark: SparkSession = if (sparkMaster == "yarn") {
     val confDir = config.getString("enceladus.utils.testUtils.hadoop.conf.dir")
@@ -62,8 +64,7 @@ trait SparkTestBase { self =>
       .config("spark.driver.host", "127.0.0.1")
       .getOrCreate()
   }
-
-  TimeZoneNormalizer.normalizeAll(Seq(spark))
+  TimeZoneNormalizer.normalizeSessionTimeZone(spark)
 
   // Do not display INFO entries for tests
   Logger.getLogger("org").setLevel(Level.WARN)

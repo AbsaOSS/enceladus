@@ -21,9 +21,9 @@ import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.error.Mapping
 
 object EmployeeConformance {
-  val countryMT = new MappingTable(name = "country", version = 0, hdfsPath = "src/test/testData/country", schemaName = "country", schemaVersion = 0)
-  val departmentMT = new MappingTable(name = "department", version = 0, hdfsPath = "src/test/testData/department", schemaName = "dept", schemaVersion = 0, defaultMappingValue = List(DefaultValue("department_name","'Unknown dept'")))
-  val roleMT = new MappingTable(name = "role", version = 0, hdfsPath = "src/test/testData/role", schemaName = "role", schemaVersion = 0, defaultMappingValue = List())
+  val countryMT = MappingTable(name = "country", version = 0, hdfsPath = "src/test/testData/country", schemaName = "country", schemaVersion = 0)
+  val departmentMT = MappingTable(name = "department", version = 0, hdfsPath = "src/test/testData/department", schemaName = "dept", schemaVersion = 0, defaultMappingValue = List(DefaultValue("department_name","'Unknown dept'")))
+  val roleMT = MappingTable(name = "role", version = 0, hdfsPath = "src/test/testData/role", schemaName = "role", schemaVersion = 0, defaultMappingValue = List())
 
   val countryRule = new MappingConformanceRule(order = 0, mappingTable = "country", controlCheckpoint = false,
     mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country" ), targetAttribute = "country_name", outputColumn = "conformed_country")
@@ -54,7 +54,7 @@ object EmployeeConformance {
       schemaName = "Employee", schemaVersion = 0,
       conformance = List(countryRule, departmentRule, roleRule, litRule, upperRule, lit2Rule, dropRule, concatRule, sparkConfRule, singleColRule, castingColRules) )
 
-  val conformedEmployees = Seq(
+  val conformedEmployees: Seq[ConformedEmployee] = Seq(
     ConformedEmployee(employee_id = 0, name = "John", surname = "Doe0", dept= 0, role = 1, country = "CZE", conformed_country = "Czech Republic", conformed_department = "Tooling Squad",
       conformed_role = "Big Data Engineer", errCol= List(), MyLiteral = "abcdef", MyUpperLiteral = "ABCDEF", Concatenated = "abcdefABCDEF", SparkConfAttr = "hello :)",
       ConformedRole(1), ConformedEmployeeId = "0"),
@@ -67,7 +67,7 @@ object EmployeeConformance {
     ConformedEmployee(employee_id = 3, name = "John", surname = "Doe3", dept= 3, role = 2, country = "SWE", conformed_country = null, conformed_department = "Unknown dept",
       conformed_role = "External dev", errCol= List(
           ErrorMessage.confMappingErr("conformed_country", Seq("SWE"), Seq(Mapping("country_code", "country"))),
-          ErrorMessage.confMappingErr("conformed_department", Seq("3"), Seq(Mapping("dept_id", "dept"))) 
+          ErrorMessage.confMappingErr("conformed_department", Seq("3"), Seq(Mapping("dept_id", "dept")))
       ), MyLiteral = "abcdef", MyUpperLiteral = "ABCDEF", Concatenated = "abcdefABCDEF", SparkConfAttr = "hello :)", ConformedRole(2), ConformedEmployeeId = "3"),
     ConformedEmployee(employee_id = 4, name = "John", surname = "Doe4", dept= 1, role = 2, country = "IN", conformed_country = "India", conformed_department = "Ingestion Squad",
       conformed_role = "Ingestion Developer", errCol= List(), MyLiteral = "abcdef", MyUpperLiteral = "ABCDEF", Concatenated = "abcdefABCDEF", SparkConfAttr = "hello :)",
@@ -81,5 +81,5 @@ object EmployeeConformance {
 case class ConformedEmployee(employee_id: Int, name: String, surname: String, dept: Int, role: Int, country: String, conformed_country: String, conformed_department: String,
     conformed_role: String, errCol: List[ErrorMessage], MyLiteral: String, MyUpperLiteral: String, Concatenated: String, SparkConfAttr: String, ConformedRoleId: ConformedRole,
     ConformedEmployeeId: String)
-    
+
 case class ConformedRole(roleId: Int)

@@ -39,7 +39,6 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
                                               conformance: ConfDataset,
                                               explodeContext: ExplosionContext)
   extends RuleInterpreter {
-  // scalastyle:off null
 
   private val conf = ConfigFactory.load()
 
@@ -110,7 +109,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
           case None => c
         }
       }, _ => {
-        when(errorCondition, mappingErrUdfCall).otherwise(null)
+        when(errorCondition, mappingErrUdfCall).otherwise(null) // scalastyle:ignore null
       }
     )
     errorsDf

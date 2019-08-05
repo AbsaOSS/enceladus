@@ -47,7 +47,7 @@ object SparkTypeResolver {
     catch {
       case NonFatal(e) =>
         logger.error(s"Error during spark type casting for: ${field.dataType} $e")
-        null
+        null // scalastyle:ignore null
     }
   }
 

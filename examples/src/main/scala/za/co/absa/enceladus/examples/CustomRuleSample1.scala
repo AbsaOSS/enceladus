@@ -17,7 +17,7 @@ package za.co.absa.enceladus.examples
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.UppercaseCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset
@@ -33,10 +33,10 @@ object CustomRuleSample1 {
     .appName("CustomRuleSample1")
     .config("spark.sql.codegen.wholeStage", value = false)
     .getOrCreate()
+  TimeZoneNormalizer.normalizeAll(spark) //normalize the timezone of JVM and the spark session
 
   def main(args: Array[String]) {
     // scalastyle:off magic.number
-    TimeZoneNormalizer.normalizeAll(Seq(spark))
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
     val experimentalMR = true
@@ -68,11 +68,12 @@ object CustomRuleSample1 {
       )
     )
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef,
-      inputData,
-      experimentalMR,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF)
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(experimentalMR)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
+
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
 
     outputData.show(false)
     //scalastyleon: magicnumber

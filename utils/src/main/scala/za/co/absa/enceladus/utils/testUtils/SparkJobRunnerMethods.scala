@@ -27,10 +27,13 @@ trait SparkJobRunnerMethods {
     type MainClass = {def main(args: Array[String]): Unit}
 
     val jobClass = ct.runtimeClass
-    val jobClassSymbol = universe runtimeMirror jobClass.getClassLoader classSymbol jobClass
+    val jobClassSymbol = universe.runtimeMirror(jobClass.getClassLoader).classSymbol(jobClass)
     val jobInstance =
-      if (jobClassSymbol.isModuleClass) jobClass getField "MODULE$" get jobClass
-      else jobClass.newInstance
+      if (jobClassSymbol.isModuleClass) {
+        jobClass.getField("MODULE$").get(jobClass)
+      } else {
+        jobClass.newInstance
+      }
 
     jobInstance.asInstanceOf[MainClass].main(Array.empty)
   }

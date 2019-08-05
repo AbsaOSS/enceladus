@@ -16,10 +16,10 @@
 package za.co.absa.enceladus.model
 
 case class DefaultValue(
-    columnName: String, 
+    columnName: String,
     value: String
 ) {
-  def toTouple(): (String, String) = {
+  def toTuple: (String, String) = {
     (columnName, value)
   }
 }

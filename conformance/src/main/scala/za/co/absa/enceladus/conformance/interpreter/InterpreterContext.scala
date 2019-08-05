@@ -27,9 +27,7 @@ import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 case class InterpreterContext (
                                 schema: StructType,
                                 conformance: ConfDataset,
-                                experimentalMappingRule: Boolean,
-                                isCatalystWorkaroundEnabled: Boolean,
-                                enableControlFramework: Boolean,
+                                featureSwitches: FeatureSwitches,
                                 jobShortName: String,
                                 spark: SparkSession,
                                 dao: EnceladusDAO,

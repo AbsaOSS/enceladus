@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.factories.AttachmentFactory
-import za.co.absa.enceladus.menas.integration.fixtures.AttachmentFixtureService
+import za.co.absa.enceladus.menas.integration.fixtures.{AttachmentFixtureService, FixtureService}
 import za.co.absa.enceladus.menas.repositories.{AttachmentMongoRepository, RefCollection}
 import za.co.absa.enceladus.model.menas.MenasAttachment
 
@@ -35,16 +35,10 @@ class AttachmentRepositoryIntegrationSuite extends BaseRepositoryTest {
   @Autowired
   private val attachmentRepository: AttachmentMongoRepository = null
 
-  private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
-    
-  before {
-    attachmentFixture.createCollection()
-  }
+  override def fixtures: List[FixtureService[_]] = List(attachmentFixture)
 
-  after {
-    attachmentFixture.dropCollection()
-  }
-  
+  private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
+
   "AttachmentMongoRepository::getSchemaByNameAndVersion" should {
     "return None" when {
       "no Attachment exists for the specified name" in {

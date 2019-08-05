@@ -15,15 +15,16 @@
 
 package za.co.absa.enceladus.menas.integration.repositories
 
+import com.mongodb.MongoWriteException
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.menas.exceptions.EntityAlreadyExistsException
 import za.co.absa.enceladus.menas.factories.DatasetFactory
-import za.co.absa.enceladus.menas.integration.fixtures.DatasetFixtureService
+import za.co.absa.enceladus.menas.integration.fixtures.{DatasetFixtureService, FixtureService}
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
+import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -35,13 +36,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
   @Autowired
   private val datasetMongoRepository: DatasetMongoRepository = null
 
-  before {
-    datasetFixture.createCollection()
-  }
-
-  after {
-    datasetFixture.dropCollection()
-  }
+  override def fixtures: List[FixtureService[_]] = List(datasetFixture)
 
   val concatenationConformanceRules = List(
     DatasetFactory.getDummyConcatenationRule(order = 1, inputColumns = Seq()),
@@ -323,19 +318,11 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
       }
     }
 
-    "allow duplicate entries (this should be prohibited at the service layer)" in {
+    "not allow duplicate entries" in {
       val dataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1)
 
       await(datasetMongoRepository.create(dataset, "user"))
-      await(datasetMongoRepository.create(dataset, "user"))
-      val actual = await(datasetMongoRepository.getVersion("dataset", 1))
-
-      assert(await(datasetMongoRepository.count()) == 2)
-      assert(actual.isDefined)
-      val expected = dataset.copy(
-        userCreated = "user", dateCreated = actual.get.dateCreated,
-        userUpdated = "user", lastUpdated = actual.get.lastUpdated)
-      assert(actual.contains(expected))
+      assertThrows[MongoWriteException](await(datasetMongoRepository.create(dataset, "user")))
     }
   }
 
@@ -521,7 +508,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
     }
 
     "return all datasets" when {
-      "search query is empty" in { 
+      "search query is empty" in {
         val dataset1ver1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1)
         val dataset1ver2 = DatasetFactory.getDummyDataset(name = "dataset1", version = 2)
         val dataset2ver1 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
@@ -555,7 +542,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
   "DatasetMongoRepository::distinctCount" should {
     "return 0" when {
       "no datasets exists" in {
-        val actual = await(datasetMongoRepository.distinctCount)
+        val actual = await(datasetMongoRepository.distinctCount())
 
         assert(actual == 0)
       }
@@ -566,7 +553,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
           disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
         datasetFixture.add(dataset1, dataset2)
 
-        val actual = await(datasetMongoRepository.distinctCount)
+        val actual = await(datasetMongoRepository.distinctCount())
 
         assert(actual == 0)
       }

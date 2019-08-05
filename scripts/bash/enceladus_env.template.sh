@@ -25,6 +25,8 @@ SPLINE_MONGODB_NAME="spline"
 export SPARK_HOME="/opt/spark-2.4.3"
 SPARK_SUBMIT="$SPARK_HOME/bin/spark-submit"
 
+HDP_VERSION="2.7.3"
+
 STD_CLASS="za.co.absa.enceladus.standardization.StandardizationJob"
 STD_JAR="enceladus-standardization.jar"
 

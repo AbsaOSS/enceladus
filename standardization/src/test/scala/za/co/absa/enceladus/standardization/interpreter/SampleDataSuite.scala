@@ -19,29 +19,32 @@ import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.samples.{StdEmployee, TestSamples}
 import za.co.absa.enceladus.utils.error.UDFLibrary
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 import scala.io.Source
 
-class SampleDataSuite extends FunSuite with SparkTestBase {
+class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase {
 
   test("Simple Example Test") {
     import spark.implicits._
     val data = spark.createDataFrame(TestSamples.data1)
-    
-    data.printSchema()    
-    
+
+    logDataFrameContent(data)
+
     implicit val udfLib: UDFLibrary = UDFLibrary()
 
-    val schema = DataType.fromJson(Source.fromFile("src/test/resources/data1Schema.json").getLines().mkString("\n")).asInstanceOf[StructType]
-
-    val std = StandardizationInterpreter.standardize(data, schema, "whatev").as[StdEmployee].collect.sortBy(_.name).toList
+    val sourceFile = Source.fromFile("src/test/resources/data1Schema.json")
+    try {
+    val schema = DataType.fromJson(sourceFile.getLines().mkString("\n")).asInstanceOf[StructType]
+    val std = StandardizationInterpreter.standardize(data, schema, "whatev")
+    logDataFrameContent(std)
+    val stdList = std.as[StdEmployee].collect.sortBy(_.name).toList
     val exp = TestSamples.resData.sortBy(_.name)
-    
-//    std.show(false)
-//    std.printSchema()
-    
-    assertResult(exp)(std)
+
+    assertResult(exp)(stdList)
+    } finally {
+      sourceFile.close()
+    }
 
   }
 

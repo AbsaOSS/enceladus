@@ -47,21 +47,23 @@ object FieldValidatorDate extends FieldValidatorDateTime {
     }
 
     val patternIssues: Seq[ValidationIssue] = if (!pattern.isEpoch) {
-      val placeholders = Set('y', 'M', 'd', 'H', 'm', 's', 'D', 'S', 'a', 'k', 'K', 'h')
-      val patternChars = pattern.pattern.countUnquoted(placeholders, Set('''))
-      patternChars.foldLeft(List.empty[ValidationIssue]) {(acc, item) => item match {
-        case ('y', 0) => ValidationWarning("No year placeholder 'yyyy' found.")::acc
-        case ('M', 0) => ValidationWarning("No month placeholder 'MM' found.")::acc
-        case ('d', 0) => ValidationWarning("No day placeholder 'dd' found.")::acc
-        case ('H', x) if x > 0 => ValidationWarning("Redundant hour placeholder 'H' found.")::acc
-        case ('m', x) if x > 0 => ValidationWarning("Redundant minute placeholder 'm' found.")::acc
-        case ('s', x) if x > 0 => ValidationWarning("Redundant second placeholder 's' found.")::acc
-        case ('S', x) if x > 0 => ValidationWarning("Redundant millisecond placeholder 'S' found.")::acc
-        case ('a', x) if x > 0 => ValidationWarning("Redundant am/pm placeholder 'a' found.")::acc
-        case ('k', x) if x > 0 => ValidationWarning("Redundant hour placeholder 'k' found.")::acc
-        case ('h', x) if x > 0 => ValidationWarning("Redundant hour placeholder 'h' found.")::acc
-        case ('K', x) if x > 0 => ValidationWarning("Redundant hour placeholder 'H' found.")::acc
-        case ('D', x) if x > 0 && patternChars('d') == 0  =>
+      val placeholders = Set('y', 'M', 'd', 'H', 'm', 's', 'D', 'S', 'i', 'n', 'a', 'k', 'K', 'h')
+      val patternChars: Map[Char, Int] = pattern.pattern.countUnquoted(placeholders, Set('''))
+      patternChars.foldLeft(List.empty[ValidationIssue]) {(acc, item) => (item._1, item._2 > 0) match {
+        case ('y', false) => ValidationWarning("No year placeholder 'yyyy' found.")::acc
+        case ('M', false) => ValidationWarning("No month placeholder 'MM' found.")::acc
+        case ('d', false) => ValidationWarning("No day placeholder 'dd' found.")::acc
+        case ('H', true) => ValidationWarning("Redundant hour placeholder 'H' found.")::acc
+        case ('m', true) => ValidationWarning("Redundant minute placeholder 'm' found.")::acc
+        case ('s', true) => ValidationWarning("Redundant second placeholder 's' found.")::acc
+        case ('S', true) => ValidationWarning("Redundant millisecond placeholder 'S' found.")::acc
+        case ('i', true) => ValidationWarning("Redundant microsecond placeholder 'i' found.")::acc
+        case ('n', true) => ValidationWarning("Redundant nanosecond placeholder 'n' found.")::acc
+        case ('a', true) => ValidationWarning("Redundant am/pm placeholder 'a' found.")::acc
+        case ('k', true) => ValidationWarning("Redundant hour placeholder 'k' found.")::acc
+        case ('h', true) => ValidationWarning("Redundant hour placeholder 'h' found.")::acc
+        case ('K', true) => ValidationWarning("Redundant hour placeholder 'H' found.")::acc
+        case ('D', true) if patternChars('d') == 0  =>
           ValidationWarning("Rarely used DayOfYear placeholder 'D' found. Possibly DayOfMonth 'd' intended.")::acc
         case _ => acc
       }}

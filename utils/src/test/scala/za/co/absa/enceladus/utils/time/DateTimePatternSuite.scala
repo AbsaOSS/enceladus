@@ -19,6 +19,7 @@ import java.security.InvalidParameterException
 
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.utils.general.Section
 
 class DateTimePatternSuite extends FunSuite {
 
@@ -29,7 +30,6 @@ class DateTimePatternSuite extends FunSuite {
     assert(dateTimePattern.pattern == pattern)
     assert(!dateTimePattern.isEpoch)
     assert(0 == dateTimePattern.epochFactor)
-    assert(0 == dateTimePattern.epochMilliFactor)
   }
 
   test("Pattern for date") {
@@ -39,10 +39,9 @@ class DateTimePatternSuite extends FunSuite {
     assert(dateTimePattern.pattern == pattern)
     assert(!dateTimePattern.isEpoch)
     assert(dateTimePattern.epochFactor == 0)
-    assert(dateTimePattern.epochMilliFactor  == 0)
   }
 
-  test("DateTimePattern.isEpoch returns expected values.") {
+  test("DateTimePattern.isEpoch should return true for known keywords, regardless of case") {
     val result1 = DateTimePattern.isEpoch("epoch")
     assert(result1)
     val result2 = DateTimePattern.isEpoch("epochmilli")
@@ -53,28 +52,34 @@ class DateTimePatternSuite extends FunSuite {
     assert(!result4)
     val result5 = DateTimePattern.isEpoch("")
     assert(!result5)
+    val result6 = DateTimePattern.isEpoch("epochMicro")
+    assert(result6)
+    val result7 = DateTimePattern.isEpoch("EPOCHNANO")
+    assert(result7)
   }
 
-  test("DateTimePattern.epochFactor/epochMilliFactor returns expected values.") {
+  test("DateTimePattern.epochFactor returns appropriate power of ten corresponding the keyword") {
     var result = DateTimePattern.epochFactor("Epoch")
     assert(result == 1L)
     result = DateTimePattern.epochFactor("EpOcHmIlLi")
     assert(result == 1000L)
+    result = DateTimePattern.epochFactor("EpochMICRO")
+    assert(result == 1000000L)
+    result = DateTimePattern.epochFactor("epochnano")
+    assert(result == 1000000000L)
     result = DateTimePattern.epochFactor("zoom")
-    assert(result == 0L)
-    result = DateTimePattern.epochMilliFactor("Epoch")
-    assert(result == 1000L)
-    result = DateTimePattern.epochMilliFactor("EpOcHmIlLi")
-    assert(result == 1L)
-    result = DateTimePattern.epochMilliFactor("xxxx")
     assert(result == 0L)
   }
 
-  test("Epoch in pattern") {
+  test("Time zone in epoch pattern") {
     val dateTimePattern1 = DateTimePattern("epoch")
     assert(dateTimePattern1.timeZoneInPattern)
     val dateTimePattern2 = DateTimePattern("epochmilli")
     assert(dateTimePattern2.timeZoneInPattern)
+    val dateTimePattern3 = DateTimePattern("epochmicro")
+    assert(dateTimePattern3.timeZoneInPattern)
+    val dateTimePattern4 = DateTimePattern("epochnano")
+    assert(dateTimePattern4.timeZoneInPattern)
   }
 
   test("Time zone NOT in pattern") {
@@ -137,6 +142,10 @@ class DateTimePatternSuite extends FunSuite {
     assert(dateTimePattern1.defaultTimeZone.isEmpty)
     val dateTimePattern2 = DateTimePattern("epoch", Some("CET"))
     assert(dateTimePattern2.defaultTimeZone.isEmpty)
+    val dateTimePattern3 = DateTimePattern("epochmicro", Some("WST"))
+    assert(dateTimePattern3.defaultTimeZone.isEmpty)
+    val dateTimePattern4 = DateTimePattern("epochnano", Some("CET"))
+    assert(dateTimePattern4.defaultTimeZone.isEmpty)
   }
 
   test("Is NOT time-zoned ") {
@@ -177,7 +186,6 @@ class DateTimePatternSuite extends FunSuite {
       assert(dtp.isDefault == isDefault)
       assert(!dtp.isEpoch)
       assert(dtp.epochFactor == 0)
-      assert(dtp.epochMilliFactor == 0)
       assert(dtp.timeZoneInPattern == timeZoneInPattern)
       assert(dtp.defaultTimeZone == defaultTimeZone)
     }
@@ -235,4 +243,99 @@ class DateTimePatternSuite extends FunSuite {
     check(dtp6, pattern6, isDefault = false, timeZoneInPattern = false, Some(timeZone6))
   }
 
+  test("Second fractions detection in epoch") {
+    val dtp = DateTimePattern("epoch")
+    assert(dtp.millisecondsPosition.isEmpty)
+    assert(dtp.microsecondsPosition.isEmpty)
+    assert(dtp.nanosecondsPosition.isEmpty)
+    assert(dtp.secondFractionsSections.isEmpty)
+    assert(dtp.patternWithoutSecondFractions == "epoch")
+    assert(!dtp.containsSecondFractions)
+  }
+
+  test("Second fractions detection in epochmilli") {
+    val dtp = DateTimePattern("epochmilli")
+    assert(dtp.millisecondsPosition.contains(Section(-3,3)))
+    assert(dtp.microsecondsPosition.isEmpty)
+    assert(dtp.nanosecondsPosition.isEmpty)
+    assert(dtp.secondFractionsSections == Seq(Section(-3,3)))
+    assert(dtp.patternWithoutSecondFractions == "epoch")
+    assert(dtp.containsSecondFractions)
+  }
+
+  test("Second fractions detection in epochmicro") {
+    val dtp = DateTimePattern("epochmicro")
+    assert(dtp.millisecondsPosition.contains(Section(-6,3)))
+    assert(dtp.microsecondsPosition.contains(Section(-3,3)))
+    assert(dtp.nanosecondsPosition.isEmpty)
+    assert(dtp.secondFractionsSections == Seq(Section(-6,6)))
+    assert(dtp.patternWithoutSecondFractions == "epoch")
+    assert(dtp.containsSecondFractions)
+  }
+
+  test("Second fractions detection in epochnano") {
+    val dtp = DateTimePattern("epochnano")
+    assert(dtp.millisecondsPosition.contains(Section(-9,3)))
+    assert(dtp.microsecondsPosition.contains(Section(-6,3)))
+    assert(dtp.nanosecondsPosition.contains(Section(-3,3)))
+    assert(dtp.secondFractionsSections == Seq(Section(-9,9)))
+    assert(dtp.patternWithoutSecondFractions == "epoch")
+    assert(dtp.containsSecondFractions)
+  }
+
+  test("Second fractions detection in regular pattern - milliseconds") {
+    val pattern = "yyyy-MM-dd HH:mm:ss.SSS"
+    val dtp = DateTimePattern(pattern)
+    assert(dtp.millisecondsPosition.contains(Section(20,3)))
+    assert(dtp.microsecondsPosition.isEmpty)
+    assert(dtp.nanosecondsPosition.isEmpty)
+    assert(dtp.secondFractionsSections == Seq(Section(20,3)))
+    assert(dtp.patternWithoutSecondFractions == "yyyy-MM-dd HH:mm:ss.")
+    assert(dtp.containsSecondFractions)
+  }
+
+  test("Second fractions detection in regular pattern - microseconds") {
+    val pattern = "yyyy-MM-dd HH:mm:ss.iiiiii"
+    val dtp = DateTimePattern(pattern)
+    assert(dtp.millisecondsPosition.isEmpty)
+    assert(dtp.microsecondsPosition.contains(Section(20,6)))
+    assert(dtp.nanosecondsPosition.isEmpty)
+    assert(dtp.secondFractionsSections == Seq(Section(20,6)))
+    assert(dtp.patternWithoutSecondFractions == "yyyy-MM-dd HH:mm:ss.")
+    assert(dtp.containsSecondFractions)
+  }
+
+  test("Second fractions detection in regular pattern - nanoseconds") {
+    val pattern = "yyyy-MM-dd HH:mm:ss.nnnnnnnnn"
+    val dtp = DateTimePattern(pattern)
+    assert(dtp.millisecondsPosition.isEmpty)
+    assert(dtp.microsecondsPosition.isEmpty)
+    assert(dtp.nanosecondsPosition.contains(Section(20,9)))
+    assert(dtp.secondFractionsSections == Seq(Section(20,9)))
+    assert(dtp.patternWithoutSecondFractions == "yyyy-MM-dd HH:mm:ss.")
+    assert(dtp.containsSecondFractions)
+  }
+
+  test("Second fractions detection in regular pattern - milli-, micro-, nanosecond combined") {
+    val pattern = "nnniii|yyyy-MM-dd SSS HH:mm:ss"
+    val dtp = DateTimePattern(pattern)
+    assert(dtp.millisecondsPosition.contains(Section(18,3)))
+    assert(dtp.microsecondsPosition.contains(Section(3,3)))
+    assert(dtp.nanosecondsPosition.contains(Section(0,3)))
+    assert(dtp.secondFractionsSections == Seq(Section(18,3), Section(0, 6)))
+    assert(dtp.patternWithoutSecondFractions == "|yyyy-MM-dd  HH:mm:ss")
+    assert(dtp.containsSecondFractions)
+  }
+
+
+  test("Second fractions detection in regular pattern - not present") {
+    val pattern = "yyyy-MM-dd HH:mm:ss"
+    val dtp = DateTimePattern(pattern)
+    assert(dtp.millisecondsPosition.isEmpty)
+    assert(dtp.microsecondsPosition.isEmpty)
+    assert(dtp.nanosecondsPosition.isEmpty)
+    assert(dtp.secondFractionsSections.isEmpty)
+    assert(dtp.patternWithoutSecondFractions == "yyyy-MM-dd HH:mm:ss")
+    assert(!dtp.containsSecondFractions)
+  }
 }

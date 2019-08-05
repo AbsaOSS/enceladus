@@ -60,38 +60,42 @@ object CmdConfig {
     opt[String]("row-tag").optional.action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")
       .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("xml"))
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("xml")) {
           success
-        else
+        } else {
           failure("The --row-tag option is supported only for XML raw data format")
+        }
       )
 
     opt[String]("delimiter").optional.action((value, config) =>
       config.copy(csvDelimiter = Some(value))).text("use the specific delimiter instead of ',' for CSV format")
       .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv")) {
           success
-        else
+        } else {
           failure("The --delimiter option is supported only for CSV raw data format")
+        }
       )
 
     // no need for validation for boolean since scopt itself will do
     opt[Boolean]("header").optional.action((value, config) =>
       config.copy(csvHeader = Some(value))).text("use the header option to consider CSV header")
       .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv"))
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv")) {
           success
-        else
+        } else {
           failure("The --header option is supported only for CSV ")
+        }
       )
 
     opt[Boolean]("trim-values").optional.action((value, config) =>
       config.copy(fixedWidthTrimValues = Some(value))).text("use --trimValues option to trim values in  fixed width file")
       .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("fixed-width"))
+        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("fixed-width")) {
           success
-        else
+        } else {
           failure("The --trimValues option is supported only for fixed-width files ")
+        }
       )
 
     opt[String]("test-data-path").required.action((value, config) => {
@@ -99,21 +103,23 @@ object CmdConfig {
       config.copy(testDataPath = value)
     }).text("Path to standardized dataset")
       .validate(value =>
-        if (testResultPath.isDefined && testResultPath.get.equalsIgnoreCase(value))
-            failure("std-path and out-path can not be equal")
-        else
-            success
-        )
+        if (testResultPath.isDefined && testResultPath.get.equalsIgnoreCase(value)) {
+          failure("std-path and out-path can not be equal")
+        } else {
+          success
+        }
+      )
 
     opt[String]("result-path").required.action((value, config) => {
       testResultPath = Some(value)
       config.copy(testResultPath = value)
     }).text("Path to diff output")
       .validate(value =>
-        if (testDataPath.isDefined && testDataPath.get.equalsIgnoreCase(value))
+        if (testDataPath.isDefined && testDataPath.get.equalsIgnoreCase(value)) {
           failure("out-path and std-path can not be equal")
-        else
+        } else {
           success
+        }
       )
 
     opt[String]("test-name").required.action((value, config) => {

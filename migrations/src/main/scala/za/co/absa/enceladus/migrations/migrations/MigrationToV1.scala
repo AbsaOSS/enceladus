@@ -35,6 +35,12 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
 
   createCollection("attachment")
 
+  createIndex("dataset", Seq(IndexField("name", ASC), IndexField("version", ASC)), unique = true)
+  createIndex("schema", Seq(IndexField("name", ASC), IndexField("version", ASC)), unique = true)
+  createIndex("mapping_table", Seq(IndexField("name", ASC), IndexField("version", ASC)), unique = true)
+  createIndex("run", Seq(IndexField("dataset", ASC), IndexField("datasetVersion", ASC), IndexField("runId", ASC)), unique = true)
+  createIndex("attachment", Seq(IndexField("refName", ASC), IndexField("refVersion", ASC)))
+
   // rename and add dir sizes in additionalInfo
   runCommand("run") (versionedCollectionName => {
     s"""{

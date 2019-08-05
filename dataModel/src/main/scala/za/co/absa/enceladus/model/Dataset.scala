@@ -27,7 +27,7 @@ case class Dataset(
   name:    String,
   version: Int = 1,
   description: Option[String] = None,
-  
+
   hdfsPath:        String,
   hdfsPublishPath: String,
 
@@ -46,7 +46,7 @@ case class Dataset(
   conformance:  List[ConformanceRule],
   parent:       Option[MenasReference] = None,
   schedule:     Option[OozieSchedule] = None) extends VersionedModel with Auditable[Dataset] {
-    
+
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
   override def setLastUpdated(time: ZonedDateTime): VersionedModel = this.copy(lastUpdated = time)
@@ -61,7 +61,7 @@ case class Dataset(
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
   def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
-  
+
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the dots are
    *         <MappingConformanceRule.DOT_REPLACEMENT_SYMBOL>

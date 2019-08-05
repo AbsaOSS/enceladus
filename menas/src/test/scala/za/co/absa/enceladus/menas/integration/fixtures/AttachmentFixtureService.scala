@@ -21,29 +21,6 @@ import org.springframework.stereotype.Component
 import za.co.absa.enceladus.menas.repositories.AttachmentMongoRepository
 import za.co.absa.enceladus.model.menas.MenasAttachment
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
-
 @Component
-class AttachmentFixtureService @Autowired()(mongoDb: MongoDatabase) {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
-
-  private val collection = mongoDb.getCollection[MenasAttachment](AttachmentMongoRepository.collectionName)
-
-  def createCollection(): Unit = {
-    Await.ready(mongoDb.createCollection(AttachmentMongoRepository.collectionName).toFuture(), Duration.Inf)
-  }
-
-  def add(attachments: MenasAttachment*): Unit = {
-    val futureAttachments = attachments.map { attachment =>
-      collection.insertOne(attachment).head()
-    }
-    Await.ready(Future.sequence(futureAttachments), Duration.Inf)
-  }
-
-  def dropCollection(): Unit = {
-    Await.ready(mongoDb.getCollection(AttachmentMongoRepository.collectionName).drop().toFuture(), Duration.Inf)
-  }
-
-}
+class AttachmentFixtureService @Autowired()(mongoDb: MongoDatabase)
+  extends FixtureService[MenasAttachment](mongoDb, AttachmentMongoRepository.collectionName)

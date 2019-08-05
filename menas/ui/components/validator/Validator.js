@@ -24,7 +24,7 @@ jQuery.sap.require("sap.ui.core.ValueState")
 sap.ui.define(["sap/ui/core/message/Message", "sap/ui/core/MessageType", "sap/ui/core/ValueState"], function(Message, MessageType, ValueState) {
 
   const Validator = function() {}
-  
+
   Validator.prototype._aPossibleAggregations = ["items", "content", "form", "formContainers", "formElements", "fields", "sections", "subSections", "_grid", "cells", "_page"];
   Validator.prototype._aValidateProperties = ["value", "selectedKey", "selectedKeys", "text"];
 
@@ -34,7 +34,7 @@ sap.ui.define(["sap/ui/core/message/Message", "sap/ui/core/MessageType", "sap/ui
 
   Validator.prototype._traverseControlAggregations = function(oControl, fnTransform, fnReduceOp) {
     let fnReduce = fnReduceOp ? fnReduceOp : this._andReduceOp;
-  
+
     if(!oControl || !oControl.getVisible || !oControl.getVisible()) return true;
 
     const aAllAggregations = this._aPossibleAggregations.map(currAgg => {
@@ -102,7 +102,7 @@ sap.ui.define(["sap/ui/core/message/Message", "sap/ui/core/MessageType", "sap/ui
         oControl instanceof sap.ui.layout.form.FormContainer ||
         oControl instanceof sap.ui.layout.form.FormElement) && oControl.getVisible()) {
       const aProperties = this._aValidateProperties.map(sProperty => this._validateProperty(oControl, sProperty));
-      
+
       return _.reduce(aProperties, this._andReduceOp, true);
     } else {
       return true;

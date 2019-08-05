@@ -18,7 +18,7 @@ package za.co.absa.enceladus.samples
 import java.io.File
 
 import org.apache.commons.io.{FileUtils, IOUtils}
-import org.apache.log4j.{LogManager, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.{Dataset, DefaultValue, MappingTable}
@@ -26,7 +26,7 @@ import za.co.absa.enceladus.model.{Dataset, DefaultValue, MappingTable}
 import scala.util.control.NonFatal
 
 object TradeConformance {
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   val countryMT = MappingTable(name = "country", version = 0, hdfsPath = "src/test/testData/_countryMT",
     schemaName = "country", schemaVersion = 0)

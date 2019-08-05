@@ -19,13 +19,18 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.menas.factories.AttachmentFactory
-import za.co.absa.enceladus.menas.integration.fixtures.AttachmentFixtureService
+import za.co.absa.enceladus.menas.factories.{AttachmentFactory, SchemaFactory}
+import za.co.absa.enceladus.menas.integration.fixtures.{AttachmentFixtureService, FixtureService, SchemaFixtureService}
+import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.RefCollection
+import za.co.absa.enceladus.model.Schema
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class SchemaApiIntegrationSuite extends BaseRestApiTest {
+
+  @Autowired
+  private val schemaFixture: SchemaFixtureService = null
 
   @Autowired
   private val attachmentFixture: AttachmentFixtureService = null
@@ -33,12 +38,172 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
   private val apiUrl = "/schema"
   private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
 
-  before {
-    attachmentFixture.createCollection()
+  override def fixtures: List[FixtureService[_]] = List(schemaFixture, attachmentFixture)
+
+  s"POST $apiUrl/create" can {
+    "return 201" when {
+      "a Schema is created" should {
+        "return the created Schema" in {
+          val schema = SchemaFactory.getDummySchema()
+
+          val response = sendPost[Schema, Schema](s"$apiUrl/create", bodyOpt = Some(schema))
+
+          assertCreated(response)
+
+          val actual = response.getBody
+          val expected = toExpected(schema, actual)
+          assert(actual == expected)
+        }
+      }
+    }
+
+    "return 400" when {
+      "a Schema with that name already exists" in {
+        val schema = SchemaFactory.getDummySchema()
+        schemaFixture.add(schema)
+
+        val response = sendPost[Schema, Validation](s"$apiUrl/create", bodyOpt = Some(schema))
+
+        assertBadRequest(response)
+
+        val actual = response.getBody
+        val expected = Validation().withError("name", "entity with name already exists: 'dummyName'")
+        assert(actual == expected)
+      }
+    }
   }
 
-  after {
-    attachmentFixture.dropCollection()
+  s"POST $apiUrl/edit" can {
+    "return 201" when {
+      "a Schema with the given name and version is the latest that exists" should {
+        "return the updated Schema" in {
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          schemaFixture.add(schema1)
+
+          val response = sendPost[Schema, Schema](s"$apiUrl/edit", bodyOpt = Some(schema1))
+
+          assertCreated(response)
+
+          val actual = response.getBody
+          val schema2 = SchemaFactory.getDummySchema(
+            name = "schema",
+            version = 2,
+            parent = Some(SchemaFactory.toParent(schema1)))
+          val expected = toExpected(schema2, actual)
+          assert(actual == expected)
+        }
+      }
+    }
+
+// TODO: https://github.com/AbsaOSS/enceladus/issues/220
+//
+//    "return 400" when {
+//      "a Schema with the given name and version exists" should {
+//        "return the updated Schema" in {
+//          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+//          schemaFixture.add(schema1)
+//          val schema2 = SchemaFactory.getDummySchema(
+//            name = "schema",
+//            version = 2,
+//            parent = Some(SchemaFactory.toParent(schema1)))
+//          schemaFixture.add(schema2)
+//
+//          val response = sendPost[Schema, Validation](s"$apiUrl/edit", bodyOpt = Some(schema1))
+//
+//          assertBadRequest(response)
+//
+//          val actual = response.getBody
+//          val expected = Validation()
+//          assert(actual == expected)
+//        }
+//      }
+//    }
+  }
+
+  s"GET $apiUrl/json/{name}/{version}" should {
+    "return 404" when {
+      "no schema exists for the specified name" in {
+        val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1)
+        schemaFixture.add(schema)
+
+        val response = sendGet[String](s"$apiUrl/json/otherSchemaName/1")
+
+        assertNotFound(response)
+      }
+      "no schema exists for the specified version" in {
+        val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1)
+        schemaFixture.add(schema)
+
+        val response = sendGet[String](s"$apiUrl/json/schema1/2")
+
+        assertNotFound(response)
+      }
+      "the schema has no fields" in {
+        val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1)
+        schemaFixture.add(schema)
+
+        val response = sendGet[String](s"$apiUrl/json/schema1/1")
+
+        assertNotFound(response)
+      }
+      "a non-boolean value is provided for the `pretty` query parameter" in {
+        val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1, fields = List(SchemaFactory.getDummySchemaField()))
+        schemaFixture.add(schema)
+
+        val response = sendGet[String](s"$apiUrl/json/schema1/1?pretty=tru")
+
+        assertNotFound(response)
+      }
+    }
+
+    "return 200" when {
+      "there is a Schema with the specified name and version" should {
+        "return the Spark Struct representation of a schema as a JSON (pretty=false by default)" in {
+          val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1, fields = List(SchemaFactory.getDummySchemaField()))
+          schemaFixture.add(schema)
+
+          val response = sendGet[String](s"$apiUrl/json/schema1/1")
+
+          assertOk(response)
+
+          val body = response.getBody
+          val expected = """{"type":"struct","fields":[{"name":"dummyFieldName","type":"string","nullable":true,"metadata":{}}]}"""
+          assert(body == expected)
+        }
+        "return the Spark Struct representation of a schema as a JSON (pretty=false explict)" in {
+          val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1, fields = List(SchemaFactory.getDummySchemaField()))
+          schemaFixture.add(schema)
+
+          val response = sendGet[String](s"$apiUrl/json/schema1/1?pretty=false")
+
+          assertOk(response)
+
+          val body = response.getBody
+          val expected = """{"type":"struct","fields":[{"name":"dummyFieldName","type":"string","nullable":true,"metadata":{}}]}"""
+          assert(body == expected)
+        }
+        "return the Spark Struct representation of a schema as a pretty JSON" in {
+          val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1, fields = List(SchemaFactory.getDummySchemaField()))
+          schemaFixture.add(schema)
+
+          val response = sendGet[String](s"$apiUrl/json/schema1/1?pretty=true")
+
+          assertOk(response)
+
+          val body = response.getBody
+          val expected = """|{
+                            |  "type" : "struct",
+                            |  "fields" : [ {
+                            |    "name" : "dummyFieldName",
+                            |    "type" : "string",
+                            |    "nullable" : true,
+                            |    "metadata" : { }
+                            |  } ]
+                            |}""".stripMargin
+          assert(body == expected)
+        }
+      }
+    }
   }
 
   s"GET $apiUrl/export/{name}/{version}" should {
@@ -117,4 +282,14 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
+
+  private def toExpected(schema: Schema, actual: Schema): Schema = {
+    schema.copy(
+      dateCreated = actual.dateCreated,
+      userCreated = actual.userCreated,
+      lastUpdated = actual.lastUpdated,
+      userUpdated = actual.userUpdated,
+      dateDisabled = actual.dateDisabled,
+      userDisabled = actual.userDisabled)
+  }
 }

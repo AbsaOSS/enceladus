@@ -1,9 +1,9 @@
 # Enceladus
 
 ### <a name="build_status"/>Build Status
-| develop |
-| ------------- |
-| [![Build Status](https://opensource.bigusdatus.com/jenkins/buildStatus/icon?job=Absa-OSS-Projects%2Fenceladus%2Fdevelop)](https://opensource.bigusdatus.com/jenkins/job/Absa-OSS-Projects/job/enceladus/job/develop/)  | 
+| master | develop |
+| ------------- | ------------- |
+| [![Build Status](https://opensource.bigusdatus.com/jenkins/buildStatus/icon?job=Absa-OSS-Projects%2Fenceladus%2Fmaster)](https://opensource.bigusdatus.com/jenkins/job/Absa-OSS-Projects/job/enceladus/job/master/) | [![Build Status](https://opensource.bigusdatus.com/jenkins/buildStatus/icon?job=Absa-OSS-Projects%2Fenceladus%2Fdevelop)](https://opensource.bigusdatus.com/jenkins/job/Absa-OSS-Projects/job/enceladus/job/develop/) | 
 
 ___
 
@@ -56,7 +56,7 @@ Ensure the properties there fit your environment.
 #### Menas requirements:
 - [**Tomcat 8.5/9.0** installation](https://tomcat.apache.org/download-90.cgi)
 - [**MongoDB 4.0** installation](https://docs.mongodb.com/manual/administration/install-community/)
-- [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.8/spline-web-0.3.8.war)
+- [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.9/spline-web-0.3.9.war)
  in your Tomcat webapps directory (rename after downloading to _spline.war_); NB! don't forget to set up the `spline.mongodb.url` configuration for the _war_
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
@@ -201,8 +201,12 @@ The list of additional options available for running Standardization:
 |            Option          |                           Description |
 | -------------------------- |:----------------------------------------------------------------------------- |
 | --raw-format **format**    | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`. |
+| --charset **charset**      | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.    |
 | --row-tag **tag**          | A row tag if the input format is `xml`.                                       |
 | --header **true/false**    | Indicates if in the input CSV data has headers as the first row of each file. |
+| --delimiter **character**  | Specifies a delmiter character to use for CSV format. By default `,` is used. |
+| --csv-quote **character**  | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. |
+| --csv-escape **character** | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used. |
 | --trimValues **true/false** | Indicates if string fields of fixed with text data should be trimmed.        |
 | --folder-prefix **prefix** | Adds a folder prefix before the date tokens.                                  |
 | --debug-set-raw-path **path** | Override the path of the raw data (used for testing purposes).             |
@@ -265,44 +269,52 @@ To enable processing of time entries from other systems **Standardization** offe
 string and even numeric values to timestamp or date types. It's done using Spark's ability to convert strings to 
 timestamp/date with some enhancements. The pattern placeholders and usage is described in Java's 
 [`SimpleDateFormat` class description](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html) with 
-the addition of recognizing two keywords `epoch` and `milliepoch` (case insensitive) to denote the number of 
-seconds/milliseconds since epoch (1970/01/01 00:00:00.000 UTC).
+the addition of recognizing some keywords (like `epoch` and `milliepoch` (case insensitive)) to denote the number of 
+seconds/milliseconds since epoch (1970/01/01 00:00:00.000 UTC) and some additional placeholders.
 It should be noted explicitly that `epoch` and `milliepoch` are considered a pattern including time zone.
  
 Summary:
 
-| placeholder | Description | Example |
-| --- | --- | --- |
-| G | Era designator | AD |
-| y | Year | 1996; 96 |
-| Y | Week year | 2009; 09 |
-| M | Month in year (context sensitive) |  July; Jul; 07 |
-| L | Month in year (standalone form) | July; Jul; 07 |
-| w | Week in year | 27 |
-| W | Week in month | 2 |
-| D | Day in year | 189 |
-| d | Day in month |  10 |
-| F | Day of week in month | 2 |
-| E | Day name in week | Tuesday; Tue |
-| u | Day number of week (1 = Monday, ..., 7 = Sunday) | 1 |
-| a | Am/pm marker | PM |
-| H | Hour in day (0-23) | 0 |
-| k | Hour in day (1-24) | 24 |
-| K | Hour in am/pm (0-11) |  0 |
-| h | Hour in am/pm (1-12) | 12 |
-| m | Minute in hour | 30 |
-| s | Second in minute | 55 |
-| S | Millisecond | 978 |
-| z | General time zone | Pacific Standard Time; PST; GMT-08:00 |
-| Z | RFC 822 time zone | -0800 |
-| X | ISO 8601 time zone | -08; -0800; -08:00 |
-| _epoch_ | Seconds since 1970/01/01 00:00:00 | 1557136493|
-| _milliepoch_ | Milliseconds since 1970/01/01 00:00:00.0000| 15571364938124 |
+| placeholder | Description | Example | Note |
+| --- | --- | --- | --- |
+| G | Era designator | AD | |
+| y | Year | 1996; 96 | |
+| Y | Week year | 2009; 09 | |
+| M | Month in year (context sensitive) |  July; Jul; 07 | |
+| L | Month in year (standalone form) | July; Jul; 07 | |
+| w | Week in year | 27 | |
+| W | Week in month | 2 | |
+| D | Day in year | 189 | |
+| d | Day in month |  10 | |
+| F | Day of week in month | 2 | |
+| E | Day name in week | Tuesday; Tue | |
+| u | Day number of week (1 = Monday, ..., 7 = Sunday) | 1 | |
+| a | Am/pm marker | PM | |
+| H | Hour in day (0-23) | 0 | |
+| k | Hour in day (1-24) | 24 | |
+| K | Hour in am/pm (0-11) |  0 | |
+| h | Hour in am/pm (1-12) | 12 | |
+| m | Minute in hour | 30 | |
+| s | Second in minute | 55 | |
+| S | Millisecond | 978 | |
+| z | General time zone | Pacific Standard Time; PST; GMT-08:00 | |
+| Z | RFC 822 time zone | -0800 | |
+| X | ISO 8601 time zone | -08; -0800; -08:00 | |
+| _epoch_ | Seconds since 1970/01/01 00:00:00 | 1557136493, 1557136493.136| |
+| _epochmilli_ | Milliseconds since 1970/01/01 00:00:00.0000| 1557136493128, 1557136493128.001 | |
+| _epochmicro_ | Microseconds since 1970/01/01 00:00:00.0000| 1557136493128789, 1557136493128789.999 | |
+| _epochnano_ | Nanoseconds since 1970/01/01 00:00:00.0000| 1557136493128789101 | Seen the remark bellow regarding the loss of precision in _nanoseconds_ |
+| i | Microsecond | 111, 321001 | |
+| n | Nanosecond | 999, 542113879 | Seen the remark bellow regarding the loss of precision in _nanoseconds_ |
+
 
 **NB!** Spark uses US Locale and because on-the-fly conversion would be complicated, at the moment we stick to this 
 hardcoded locale as well. E.g. `am/pm` for `a` placeholder, English names of days and months etc.
 
 **NB!** The keywords are case **insensitive**. Therefore, there is no difference between `epoch` and `EpoCH`.
+
+**NB!** While _nanoseconds_ designation is supported on input, it's not supported in storage or further usage. So any
+value behind microseconds precision will be truncated.
    
 ##### Time Zone support
 As it has been mentioned, it's highly recommended to use timestamps with the time zone. But it's not unlikely that the 

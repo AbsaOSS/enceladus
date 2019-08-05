@@ -15,18 +15,19 @@
 
 package za.co.absa.enceladus.examples
 
-import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.functions.{col, concat, concat_ws, lit}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, SparkSession}
 import scopt.OptionParser
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object CustomRuleSample4 {
+  TimeZoneNormalizer.normalizeJVMTimeZone() //normalize JVM time zone as soon as possible
+
   /**
     * This is a class for configuration provided by the command line parameters
     *
@@ -53,29 +54,32 @@ object CustomRuleSample4 {
     opt[String]("row-tag").optional.action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")
       .validate(value =>
-        if (inputFormat.isDefined && inputFormat.get.equalsIgnoreCase("xml"))
+        if (inputFormat.isDefined && inputFormat.get.equalsIgnoreCase("xml")) {
           success
-        else
+        } else {
           failure("The --row-tag option is supported only for XML raw data format")
+        }
       )
 
     opt[String]("delimiter").optional.action((value, config) =>
       config.copy(csvDelimiter = Some(value))).text("use the specific delimiter instead of ',' for CSV format")
       .validate(value =>
-        if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv"))
+        if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv")) {
           success
-        else
+        } else {
           failure("The --delimiter option is supported only for CSV raw data format")
+        }
       )
 
     // no need for validation for boolean since scopt itself will do
     opt[Boolean]("header").optional.action((value, config) =>
       config.copy(csvHeader = Some(value))).text("use the header option to consider CSV header")
       .validate(value =>
-        if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv"))
+        if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv")) {
           success
-        else
+        } else {
           failure("The --header option is supported only for CSV ")
+        }
       )
 
     opt[String]("input-file").required.action((value, config) =>
@@ -123,20 +127,17 @@ object CustomRuleSample4 {
       .appName("CustomRuleSample4")
       .config("spark.sql.codegen.wholeStage", value = false)
       .getOrCreate()
-    TimeZoneNormalizer.normalizeAll(Seq(result))
+    //normalize the spark session timezone, the JVM has been done on the CustomRuleSample4 object creation above
+    TimeZoneNormalizer.normalizeSessionTimeZone(result)
     result
   }
 
   def main(args: Array[String]): Unit = {
     val cmd: CmdConfigLocal = getCmdLineArguments(args)
-
     implicit val spark: SparkSession = buildSparkSession()
 
     implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with Menas)
-    val experimentalMR= true
-    val isCatalystWorkaroundEnabled = true
-    val enableCF: Boolean = false
 
     val dfReader: DataFrameReader = {
       val dfReader0 = spark.read
@@ -174,12 +175,12 @@ object CustomRuleSample4 {
       )
     )
     // scalastyle:on magic.number
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef,
-      inputData,
-      experimentalMR,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF)
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(true)
+      .setCatalystWorkaroundEnabled(true)
+      .setControlFrameworkEnabled(false)
 
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
     outputData.show()
     saveToCsv(outputData, cmd.outPath)
   }

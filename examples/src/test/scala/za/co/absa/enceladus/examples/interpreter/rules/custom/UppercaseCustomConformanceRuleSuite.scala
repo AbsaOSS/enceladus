@@ -19,7 +19,7 @@ import org.apache.spark.sql
 import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
@@ -32,7 +32,6 @@ object TestOutputRow {
 }
 
 class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
-
 
   import spark.implicits._
 
@@ -62,12 +61,12 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
         UppercaseCustomConformanceRule(order = 0, outputColumn = "doneUpper", controlCheckpoint = false, inputColumn = "mandatoryString")
       )
     )
+    implicit val featureSwitches:FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(experimentalMR)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
-      inputData,
-      experimentalMR,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
 
     val output: Seq[TestOutputRow] = outputData.as[TestOutputRow].collect().toSeq
     val expected: Seq[TestOutputRow] = (input zip Seq("HELLO WORLD", "ONE RING TO RULE THEM ALL", "ALREADY CAPS")).map(x => TestOutputRow(x._1, x._2))
@@ -96,11 +95,12 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
       )
     )
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
-      inputData,
-      experimentalMR,
-      isCatalystWorkaroundEnabled,
-      enableCF)
+    implicit val featureSwitches:FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(experimentalMR)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
+
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
 
     val output: Seq[TestOutputRow] = outputData.as[TestOutputRow].collect().toSeq
     val expected: Seq[TestOutputRow] = (input zip Seq("1", "4", "9")).map(x => TestOutputRow(x._1, x._2))
@@ -128,12 +128,12 @@ class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
         UppercaseCustomConformanceRule(order = 0, outputColumn = "doneUpper", controlCheckpoint = false, inputColumn = "nullableString")
       )
     )
+    implicit val featureSwitches:FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(experimentalMR)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
 
-    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef,
-      inputData,
-      experimentalMR,
-      isCatalystWorkaroundEnabled,
-      enableCF)
+    val outputData: sql.DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
 
     val output: List[TestOutputRow] = outputData.as[TestOutputRow].collect().toList
     val expected: List[TestOutputRow] = (input zip Seq("WHAT A BEAUTIFUL PLACE", "ONE RING TO FIND THEM", null)).map(x => TestOutputRow(x._1, x._2)).toList
