@@ -25,6 +25,35 @@ class ContinuousMigrationIntegrationSuite extends FunSuite with ExampleDatabaseF
     val mig = new ContinuousMigrator(db, db)
 
     mig.migrate()
+
+    // Schemas
+    // Original
+    assert(schemaExists("TestSchema1", 1) )
+    assert(schemaExists("TestSchema2", 1) )
+    assert(schemaExists("TestSchema2", 2) )
+    assert(schemaExists("TestSchema2", 3) )
+    assert(schemaExists("TestSchema3", 1) )
+    assert(schemaExists("TestSchema4", 1) )
+
+    // Migrated
+    assert(schemaExists("TestSchema1", 2) )
+    assert(schemaExists("TestSchema2", 4) )
+    assert(schemaExists("TestSchema4", 2) )
+
+    // Mapping tables
+    // Original
+    assert(mappingTableExists("TestMT1", 1, "TestSchema1", 1) )
+    assert(mappingTableExists("TestMT2", 1, "TestSchema2", 1) )
+    assert(mappingTableExists("TestMT2", 2, "TestSchema2", 2) )
+    assert(mappingTableExists("TestMT2", 3, "TestSchema2", 3) )
+    assert(mappingTableExists("TestMT3", 1, "TestSchema3", 1) )
+    assert(mappingTableExists("TestMT4", 1, "TestSchema4", 1) )
+
+    // Migrated
+    assert(mappingTableExists("TestMT1", 2, "TestSchema1", 2) )
+    assert(mappingTableExists("TestMT2", 4, "TestSchema2", 4) )
+    assert(mappingTableExists("TestMT4", 2, "TestSchema4", 2) )
+    assert(!mappingTableExists("TestMT4", 2, "TestSchema4", 1) )
   }
 
 }
