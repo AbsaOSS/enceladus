@@ -31,9 +31,13 @@ class ContinuousMigrator(dbOld: MongoDatabase, dbNew: MongoDatabase) {
 
   def migrate(): Unit = {
     val evm = new EntityVersionMapMongo(dbNew)
-    val migratorSchema = new MigratorSchema(evm, dbOld, dbNew)
 
-    migratorSchema.migrate()
+    val migrations = List(
+      new MigratorSchema(evm, dbOld, dbNew),
+      new MigratorMappingTable(evm, dbOld, dbNew)
+    )
+
+    migrations.foreach(_.migrate())
   }
 
 }
