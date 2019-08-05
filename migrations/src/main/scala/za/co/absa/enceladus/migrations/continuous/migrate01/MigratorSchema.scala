@@ -26,36 +26,23 @@ import za.co.absa.enceladus.migrations.migrations.{MigrationToV1, model1}
 import scala.util.control.NonFatal
 
 /**
-  * The class provides schemas continuous migration from model 1 to model 2.
+  * The class provides schemas continuous migration from model version 0 to model version 1.
   *
-  * @param evm   An entity mapper for tracking the mapping between old versions of entities and new ones.
-  * @param dbOld An instance of a MongoDB database connection containing old model documents.
-  * @param dbNew An instance of a MongoDB database connection containing new model documents.
+  * @param evm         An entity mapper for tracking the mapping between old versions of entities and new ones.
+  * @param databaseOld An instance of a MongoDB database connection containing old model documents.
+  * @param databaseNew An instance of a MongoDB database connection containing new model documents.
   */
-class MigratorSchema(evm: EntityVersionMap, dbOld: MongoDatabase, dbNew: MongoDatabase) extends EntityMigrator {
+class MigratorSchema(evm: EntityVersionMap,
+                     databaseOld: MongoDatabase,
+                     databaseNew: MongoDatabase) extends EntityMigrator {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
-  private val migrationUserName = "c_migration"
-  private val collection = "schema"
-  private val collection0 = MigrationUtils.getVersionedCollectionName(collection, 0)
-  private val collection1 = MigrationUtils.getVersionedCollectionName(collection, 1)
+  override protected val collectionBase = "schema"
+  protected val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
+  protected val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
 
-  /** Runs a continuous migration for schemas. */
-  override def migrate(): Unit = {
-    val repo0 = new EntityEepository(dbOld, collection0)
-    val repo1 = new EntityEepository(dbNew, collection1)
-
-    val schemas0 = repo0.getSortedDocuments
-
-    schemas0.foreach(schema0 => {
-      val objectId = ObjectIdTools.getObjectIdFromDocument(schema0)
-      objectId.foreach(id => {
-        if (!repo1.doesDocumentExist(id)) {
-          migrateSchema(schema0, id, repo1)
-        }
-      })
-    })
-  }
+  protected val dbOld: MongoDatabase = databaseOld
+  protected val dbNew: MongoDatabase = databaseNew
 
   /**
     * Migrates a single instance of schema.
@@ -64,7 +51,7 @@ class MigratorSchema(evm: EntityVersionMap, dbOld: MongoDatabase, dbNew: MongoDa
     * @param objectId      An Object Id if the schema.
     * @param repo          An entity repository.
     */
-  def migrateSchema(srcSchemaJson: String, objectId: String, repo: EntityEepository): Unit = {
+  def migrateEntity(srcSchemaJson: String, objectId: String, repo: EntityEepository): Unit = {
     val schema1Opt = try {
       val schema0 = Serializer0.deserializeSchema(srcSchemaJson)
       Option(model1.Schema(
@@ -130,12 +117,12 @@ class MigratorSchema(evm: EntityVersionMap, dbOld: MongoDatabase, dbNew: MongoDa
 
       try {
         repo.insertDocument(schema1Json)
-        evm.add(collection, schema.name, schema.version, schemaToSave.version)
+        evm.add(collectionBase, schema.name, schema.version, schemaToSave.version)
         saved = true
       } catch {
         case NonFatal(e) =>
           if (retriesLeft > 0) {
-            log.warn(s"Unable to append a document for '$collection': ${e.getMessage}")
+            log.warn(s"Unable to append a document for '$collectionBase': ${e.getMessage}")
           } else {
             throw e // Something went terribly wrong
           }
