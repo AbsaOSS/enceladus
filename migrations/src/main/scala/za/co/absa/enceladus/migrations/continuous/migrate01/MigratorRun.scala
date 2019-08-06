@@ -15,6 +15,9 @@
 
 package za.co.absa.enceladus.migrations.continuous.migrate01
 
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 import org.apache.log4j.{LogManager, Logger}
 import org.mongodb.scala.MongoDatabase
 import za.co.absa.atum.model.ControlMeasure
@@ -32,12 +35,12 @@ import scala.util.control.NonFatal
   * @param databaseOld An instance of a MongoDB database connection containing old model documents.
   * @param databaseNew An instance of a MongoDB database connection containing new model documents.
   */
-class MigratorRun(evm: EntityVersionMap,
+final class MigratorRun(evm: EntityVersionMap,
                   databaseOld: MongoDatabase,
                   databaseNew: MongoDatabase) extends EntityMigrator {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
-  override protected val collectionBase = "run"
+  override protected val collectionBase: String = EntityMigrator.runCollection
   protected val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
   protected val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
 
@@ -86,19 +89,37 @@ class MigratorRun(evm: EntityVersionMap,
     })
   }
 
+  /**
+    * Applies all transformations to a Run object expected to happen when migrating from model 0 to model 1.
+    *
+    * @param run0 A Run object.
+    * @return A Run object with all required transformations applied.
+    */
   private def migrateRun(run0: model0.Run): model0.Run = {
     run0
-      .copy(datasetVersion = evm.getSafeVersion("dataset", run0.dataset, run0.datasetVersion))
+      .copy(datasetVersion = evm.getSafeVersion(EntityMigrator.datasetCollection, run0.dataset, run0.datasetVersion))
       .copy(controlMeasure = migrateControlMeasures(run0.controlMeasure))
   }
 
+  /**
+    * Applies all transformations to a Control Measurements object expected to happen when migrating from
+    * model 0 to model 1.
+    *
+    * @param cm A Control Measurements object.
+    * @return A Control Measurement object with all required transformations applied.
+    */
   private def migrateControlMeasures(cm: ControlMeasure): ControlMeasure = {
+    val now = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss.SSS Z").format(ZonedDateTime.now())
     cm.copy(metadata = cm.metadata
-      .copy(additionalInfo = cm.metadata.additionalInfo.flatMap { case pair =>
+      .copy(additionalInfo = cm.metadata.additionalInfo.flatMap { pair =>
         pair match {
           case ("raw_dir_size", v) => Seq(("std_input_dir_size", v))
           case ("publish_dir_size", v) => Seq(("conform_output_dir_size", v))
-          case ("std_dir_size", v) => Seq(("std_output_dir_size", v), ("conform_input_dir_size", v))
+          case ("std_dir_size", v) => Seq(
+            ("std_output_dir_size", v),
+            ("conform_input_dir_size", v),
+            ("migrated_0_to_1", now)
+          )
           case p => Seq(p)
         }
       }))

@@ -56,7 +56,7 @@ abstract class EntityVersionMap {
     * An implementation if this abstract class should redefine this method. Clients of this class shoudl use add()
     * as it does additional checks.
     *
-    * @param collectionName The name of the collection that containg the entity
+    * @param collectionName The name of the collection that contains the entity
     * @param entityName     An entity name
     * @param oldVersion     An version of the entity in the old version of the database
     * @param newVersion     An version of the entity in the new version of the database
@@ -76,10 +76,10 @@ abstract class EntityVersionMap {
   def get(collectionName: String, entityName: String, oldVersion: Int): Option[Int]
 
   /**
-    * Gets a safe 'name - version' mapping. If the maping isn't found in the entity version map it is assumed
+    * Gets a safe 'name - version' mapping. If the mapping isn't found in the entity version map it is assumed
     * the original version number can be used
     *
-    * @param collectionName The name of the collection that containg the entity
+    * @param collectionName The name of the collection that contains the entity
     * @param entityName     An Entity name
     * @param oldVersion     An version of the entity in the old version of the database
     * @return An version of the entity in the new version of the database, None if the entity is not found
