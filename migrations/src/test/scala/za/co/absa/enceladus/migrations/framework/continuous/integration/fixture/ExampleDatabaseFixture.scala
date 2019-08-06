@@ -41,7 +41,7 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
 
   override protected def afterAll(): Unit = {
     try super.afterAll()
-    //finally mongoClient.getDatabase(integrationTestDbName).drop().execute()
+    finally mongoClient.getDatabase(integrationTestDbName).drop().execute()
   }
 
   def schemaExists(name: String, version: Int): Boolean = {
@@ -65,6 +65,21 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
           and(
             regex("schemaName", schemaName, "i"),
             equal("schemaVersion", schemaVersion))
+        )
+      )
+      .execute()
+      .nonEmpty
+  }
+
+  def runExists(runId: Int, datasetName: String, datasetVersion: Int): Boolean = {
+    db.getCollection("run_v1")
+      .find(
+        and(
+          and(
+            equal("runId", runId),
+            regex("dataset", datasetName, "i")
+          ),
+          equal("datasetVersion", datasetVersion)
         )
       )
       .execute()
