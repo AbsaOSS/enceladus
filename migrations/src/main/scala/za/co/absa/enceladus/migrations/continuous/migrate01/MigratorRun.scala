@@ -17,6 +17,7 @@ package za.co.absa.enceladus.migrations.continuous.migrate01
 
 import org.apache.log4j.{LogManager, Logger}
 import org.mongodb.scala.MongoDatabase
+import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.migrations.continuous.EntityVersionMap
 import za.co.absa.enceladus.migrations.framework.{MigrationUtils, ObjectIdTools}
 import za.co.absa.enceladus.migrations.migrations.model0
@@ -69,9 +70,7 @@ class MigratorRun(evm: EntityVersionMap,
     */
   def migrateEntity(srcRunJson: String, objectId: String, repo: EntityRepository): Unit = {
     val runOpt = try {
-      val run0 = Serializer0.deserializeRun(srcRunJson)
-
-      Option(run0) // TODO !!! Resolve foreign keys, remap metadata!
+      Option(migrateRun(Serializer0.deserializeRun(srcRunJson)))
     } catch {
       case NonFatal(e) =>
         log.warn(s"Encountered a serialization error for '$collectionBase': ${e.getMessage}")
@@ -85,6 +84,24 @@ class MigratorRun(evm: EntityVersionMap,
         normalInsert(run1, objectId, repo)
       }
     })
+  }
+
+  private def migrateRun(run0: model0.Run): model0.Run = {
+    run0
+      .copy(datasetVersion = evm.getSafeVersion("dataset", run0.dataset, run0.datasetVersion))
+      .copy(controlMeasure = migrateControlMeasures(run0.controlMeasure))
+  }
+
+  private def migrateControlMeasures(cm: ControlMeasure): ControlMeasure = {
+    cm.copy(metadata = cm.metadata
+      .copy(additionalInfo = cm.metadata.additionalInfo.flatMap { case pair =>
+        pair match {
+          case ("raw_dir_size", v) => Seq(("std_input_dir_size", v))
+          case ("publish_dir_size", v) => Seq(("conform_output_dir_size", v))
+          case ("std_dir_size", v) => Seq(("std_output_dir_size", v), ("conform_input_dir_size", v))
+          case p => Seq(p)
+        }
+      }))
   }
 
   /**
