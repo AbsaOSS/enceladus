@@ -28,7 +28,7 @@ import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits
 
 import scala.reflect.ClassTag
 
-class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
+final class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   private val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[EntityVersionMapping]),

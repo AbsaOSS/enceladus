@@ -32,14 +32,14 @@ import scala.util.control.NonFatal
   * @param databaseOld An instance of a MongoDB database connection containing old model documents.
   * @param databaseNew An instance of a MongoDB database connection containing new model documents.
   */
-class MigratorSchema(evm: EntityVersionMap,
+final class MigratorSchema(evm: EntityVersionMap,
                      databaseOld: MongoDatabase,
                      databaseNew: MongoDatabase) extends EntityMigrator {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
-  override protected val collectionBase = "schema"
-  protected val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
-  protected val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
+  override protected val collectionBase: String = EntityMigrator.schemaCollection
+  override protected val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
+  override protected val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
 
   protected val dbOld: MongoDatabase = databaseOld
   protected val dbNew: MongoDatabase = databaseNew

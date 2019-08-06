@@ -18,6 +18,16 @@ package za.co.absa.enceladus.migrations.continuous.migrate01
 import org.mongodb.scala.MongoDatabase
 import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 
+object EntityMigrator {
+  // Specifies the number of retries for inserting a new version of an entity into a database.
+  val NumberOfInsertRetries = 3
+
+  val schemaCollection = "schema"
+  val mappingTableCollection = "mapping_table"
+  val datasetCollection = "dataset"
+  val runCollection = "run"
+}
+
 /**
   * An base class for continuous migration providers.
   */
@@ -34,9 +44,13 @@ abstract class EntityMigrator {
   /** A versioned collection name for the old version of the mode. E.g. 'schema_v0' or 'dataset_v0' */
   protected def collectionNew: String
 
+  /** A database to migrate from */
   protected def dbOld: MongoDatabase
+
+  /** A database to migrate to */
   protected def dbNew: MongoDatabase
 
+  /** Migrate a specific entity. This should be overridden an implemented in concrete classes */
   def migrateEntity(srcJson: String, objectId: String, repo: EntityRepository): Unit
 
   /** Runs a continuous migration for schemas. */
@@ -56,9 +70,4 @@ abstract class EntityMigrator {
     })
   }
 
-}
-
-object EntityMigrator {
-  // Specifies the number of retries for inserting a new version of an entity into a database.
-  val NumberOfInsertRetries = 3
 }

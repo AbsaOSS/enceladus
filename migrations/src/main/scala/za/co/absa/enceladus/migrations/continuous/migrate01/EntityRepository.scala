@@ -25,7 +25,7 @@ import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 /**
   * The class contains a set of MongoDB versioned collection manipulation routines needed for continuous migration.
   */
-class EntityRepository(db: MongoDatabase, collectionName: String) {
+final class EntityRepository(db: MongoDatabase, collectionName: String) {
 
   import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits._
 

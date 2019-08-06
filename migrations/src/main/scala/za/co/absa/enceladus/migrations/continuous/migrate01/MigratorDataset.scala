@@ -35,14 +35,14 @@ import scala.util.control.NonFatal
   * @param databaseOld An instance of a MongoDB database connection containing old model documents.
   * @param databaseNew An instance of a MongoDB database connection containing new model documents.
   */
-class MigratorDataset(evm: EntityVersionMap,
+final class MigratorDataset(evm: EntityVersionMap,
                       databaseOld: MongoDatabase,
                       databaseNew: MongoDatabase) extends EntityMigrator {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
-  override protected val collectionBase = "dataset"
-  protected val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
-  protected val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
+  override protected val collectionBase: String = EntityMigrator.datasetCollection
+  override protected val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
+  override protected val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
 
   protected val dbOld: MongoDatabase = databaseOld
   protected val dbNew: MongoDatabase = databaseNew
@@ -66,7 +66,7 @@ class MigratorDataset(evm: EntityVersionMap,
         dataset0.hdfsPath,
         dataset0.hdfsPublishPath,
         dataset0.schemaName,
-        evm.getSafeVersion("schema", dataset0.schemaName, dataset0.schemaVersion),
+        evm.getSafeVersion(EntityMigrator.schemaCollection, dataset0.schemaName, dataset0.schemaVersion),
         ZonedDateTime.now(),
         migrationUserName,
         ZonedDateTime.now(),
@@ -92,7 +92,9 @@ class MigratorDataset(evm: EntityVersionMap,
     val migratedConformanceRule = convertConformanceRule(rule)
     migratedConformanceRule match {
       case r: model1.conformanceRule.MappingConformanceRule =>
-        r.copy(mappingTableVersion = evm.getSafeVersion("mapping_table", r.mappingTable, r.mappingTableVersion))
+        r.copy(mappingTableVersion = evm.getSafeVersion(EntityMigrator.mappingTableCollection,
+          r.mappingTable,
+          r.mappingTableVersion))
       case r =>
         r
     }
