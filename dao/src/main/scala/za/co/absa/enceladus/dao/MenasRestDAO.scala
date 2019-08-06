@@ -137,8 +137,8 @@ object MenasRestDAO extends MenasDAO {
 
           if (isUnauthorized) {
             log.warn(s"Unauthorized POST request for Menas URL: $url")
-            if (retriesLeft == 0) {
-              throw UnauthorizedException(s"Unable to retry the request further.")
+            if (retriesLeft <= 0) {
+              throw UnauthorizedException(s"Unable to reauthenticate, no retires left")
             }
             log.warn(s"Expired session, reauthenticating")
             if (enceladusLogin()) {
@@ -146,7 +146,7 @@ object MenasRestDAO extends MenasDAO {
               log.info(s"Retries left: $retriesLeft")
               sendPostJson(url, json, retriesLeft - 1)
             } else {
-              throw UnauthorizedException()
+              throw UnauthorizedException("Login failed")
             }
           }
         }
