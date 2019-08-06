@@ -18,7 +18,7 @@ package za.co.absa.enceladus.standardization.interpreter
 import java.nio.charset.StandardCharsets
 
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType, BooleanType}
 import org.scalatest.{Outcome, fixture}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
@@ -62,18 +62,11 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
   }
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
-  private def getTestDataFrame(tmpFileName: String, args: Array[String]): DataFrame = {
+  private def getTestDataFrame(tmpFileName: String, args: Array[String], checkMaxColumns: Boolean = false): DataFrame = {
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+    val schemaOpt = if (checkMaxColumns) Some(schema) else None
     StandardizationJob
-      .getFormatSpecificReader(cmd, dataSet, Some(schema))
-      .schema(schema)
-      .load(tmpFileName)
-  }
-
-  private def getTestDataFrameWOmaxColumsAdjustment(tmpFileName: String, args: Array[String]): DataFrame = {
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-    StandardizationJob
-      .getFormatSpecificReader(cmd, dataSet)
+      .getFormatSpecificReader(cmd, dataSet, schemaOpt)
       .schema(schema)
       .load(tmpFileName)
   }
@@ -184,7 +177,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
     assert(actual == expected)
   }
 
-  test("Test standardizing a CSV file W/O adjustment of maxColumns limit") { tmpFileName =>
+  test("Test standardizing a CSV file with enabled check of maxColumns limit") { tmpFileName =>
     // The delimiter used is '¡'
     // A quote character should be any character that cannot be encountered in the CSV
     // For this case it is '$'
@@ -205,7 +198,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |
         |""".stripMargin
 
-    val df = getTestDataFrameWOmaxColumsAdjustment(tmpFileName, args)
+    val df = getTestDataFrame(tmpFileName, args, true)
 
     val actual = df.dataAsString(truncate = false)
 
