@@ -70,6 +70,14 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
       .load(tmpFileName)
   }
 
+  private def getTestDataFrameWOmaxColumsAdjustment(tmpFileName: String, args: Array[String]): DataFrame = {
+    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+    StandardizationJob
+      .getFormatSpecificReader(cmd, dataSet)
+      .schema(schema)
+      .load(tmpFileName)
+  }
+
   test("Test standardizing a CSV file with format-specific options") { tmpFileName =>
     // The delimiter used is '¡'
     // A quote character should be any character that cannot be encountered in the CSV
@@ -170,6 +178,34 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |""".stripMargin
 
     val df = getTestDataFrame(tmpFileName, args)
+
+    val actual = df.dataAsString(truncate = false)
+
+    assert(actual == expected)
+  }
+
+  test("Test standardizing a CSV file W/O adjustment of maxColumns limit") { tmpFileName =>
+    // The delimiter used is '¡'
+    // A quote character should be any character that cannot be encountered in the CSV
+    // For this case it is '$'
+    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
+      "--report-version 1 --raw-format csv --header false " +
+      "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
+
+    val expected =
+      """+----------+------+------+------+-----+
+        ||A1        |A2    |A3    |A4    |A5   |
+        |+----------+------+------+------+-----+
+        ||1         |2     |3     |4     |5    |
+        ||Text1     |Text2 |Text3 |10    |11   |
+        ||Text5     |Text6 |Text7 |-99999|99999|
+        ||Text10"Add|Text11|Text12|100   |200  |
+        ||"Text15   |Text16|Text17|1000  |2000 |
+        |+----------+------+------+------+-----+
+        |
+        |""".stripMargin
+
+    val df = getTestDataFrameWOmaxColumsAdjustment(tmpFileName, args)
 
     val actual = df.dataAsString(truncate = false)
 
