@@ -21,8 +21,8 @@ import java.util.UUID
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.{LogManager, Logger}
-import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.apache.spark.sql.types.{StructField, StructType}
+import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.{Atum, Constants}
@@ -198,16 +198,16 @@ object StandardizationJob {
     }
   }
 
-  private def getCobolOptions(cmd: CmdConfig, dataset: Dataset): HashMap[String,Option[RawFormatParameter]] = {
-    cmd.cobolOptions match {
-      case Some(opts) =>
-        HashMap(
-        getCopybookOption(opts, dataset),
-          "is_xcom" -> Option(BooleanParameter(opts.isXcom)),
-          "schema_retention_policy" -> Some(StringParameter("collapse_root"))
-        )
-      case None =>
-        HashMap()
+  private def getCobolOptions(cmd: CmdConfig, dataset: Dataset): HashMap[String, Option[RawFormatParameter]] = {
+    if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
+      val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
+      HashMap(
+        getCopybookOption(cobolOptions, dataset),
+        "is_xcom" -> Option(BooleanParameter(cobolOptions.isXcom)),
+        "schema_retention_policy" -> Some(StringParameter("collapse_root"))
+      )
+    } else {
+      HashMap()
     }
   }
 
