@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.migrations.framework.continuous.integration.fixture
 
 import org.apache.commons.io.IOUtils
-import org.mongodb.scala.model.Filters.{and, equal, regex}
+import org.mongodb.scala.model.Filters.{and, equal}
 import org.mongodb.scala.{MongoClient, MongoDatabase}
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import za.co.absa.enceladus.migrations.framework.dao.{MongoDb, ScalaMongoImplicits}
@@ -48,7 +48,7 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
     db.getCollection("schema_v1")
       .find(
         and(
-          regex("name", name, "i"),
+          equal("name", name),
           equal("version", version))
       )
       .execute()
@@ -59,12 +59,10 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
     db.getCollection("mapping_table_v1")
       .find(
         and(
-          and(
-            regex("name", name, "i"),
-            equal("version", version)),
-          and(
-            regex("schemaName", schemaName, "i"),
-            equal("schemaVersion", schemaVersion))
+          equal("name", name),
+          equal("version", version),
+          equal("schemaName", schemaName),
+          equal("schemaVersion", schemaVersion)
         )
       )
       .execute()
@@ -75,10 +73,8 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
     db.getCollection("run_v1")
       .find(
         and(
-          and(
-            equal("runId", runId),
-            regex("dataset", datasetName, "i")
-          ),
+          equal("runId", runId),
+          equal("dataset", datasetName),
           equal("datasetVersion", datasetVersion)
         )
       )
@@ -95,18 +91,12 @@ trait ExampleDatabaseFixture extends BeforeAndAfterAll {
     db.getCollection("dataset_v1")
       .find(
         and(
-          and(
-            and(
-              regex("name", name, "i"),
-              equal("version", version)),
-            and(
-              regex("schemaName", schemaName, "i"),
-              equal("schemaVersion", schemaVersion))
-          ),
-          and(
-            regex("conformance.mappingTable", mappingTableName, "i"),
-            equal("conformance.mappingTableVersion", mappingTableVersion)
-          )
+          equal("name", name),
+          equal("version", version),
+          equal("schemaName", schemaName),
+          equal("schemaVersion", schemaVersion),
+          equal("conformance.mappingTable", mappingTableName),
+          equal("conformance.mappingTableVersion", mappingTableVersion)
         )
       )
       .execute()

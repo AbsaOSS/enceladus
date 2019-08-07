@@ -18,7 +18,7 @@ package za.co.absa.enceladus.migrations.continuous.migrate01
 import org.mongodb.scala.MongoDatabase
 import org.mongodb.scala.bson.{BsonDocument, ObjectId}
 import org.mongodb.scala.model.Filters
-import org.mongodb.scala.model.Filters.{and, equal, regex}
+import org.mongodb.scala.model.Filters.{and, equal}
 import org.mongodb.scala.model.Sorts._
 import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 
@@ -82,7 +82,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
     val documents = db.getCollection(collectionName)
       .find(
         and(
-          regex("name", name, "i"),
+          equal("name", name),
           equal("version", version))
       )
       .execute()
@@ -101,11 +101,10 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
       .find(
         and(
           equal("runId", runId),
-          and(
-            regex("dataset", datasetName, "i"),
-            equal("datasetVersion", datasetVersion)
-          )
-        ))
+          equal("dataset", datasetName),
+          equal("datasetVersion", datasetVersion)
+        )
+      )
       .execute()
     documents.nonEmpty
   }
@@ -118,17 +117,17 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
     */
   def getLatestVersion(name: String): Int = {
     val documents = db.getCollection(collectionName)
-      .find(regex("name", name, "i"))
+      .find(equal("name", name))
       .sort(descending("version"))
       .limit(1)
       .execute()
-    documents.headOption.map(_.getInteger("version").toInt).getOrElse(0)
+    documents.headOption.fold(0)(_.getInteger("version").toInt)
   }
 
   /**
     * Gets the latest version of a run having a particular dataset name and version.
     *
-    * @param datasetName A name of a dataset.
+    * @param datasetName    A name of a dataset.
     * @param datasetVersion A version of the dataset.
     * @return the latest run id of an entity, or 0 if the collection is empty.
     */
@@ -136,7 +135,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
     val documents = db.getCollection(collectionName)
       .find(
         and(
-        regex("dataset", datasetName, "i"),
+          equal("dataset", datasetName),
           equal("datasetVersion", datasetVersion))
       )
       .sort(descending("runId"))
