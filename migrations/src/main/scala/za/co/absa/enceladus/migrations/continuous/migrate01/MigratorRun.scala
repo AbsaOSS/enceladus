@@ -22,7 +22,7 @@ import org.apache.log4j.{LogManager, Logger}
 import org.mongodb.scala.MongoDatabase
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.migrations.continuous.EntityVersionMap
-import za.co.absa.enceladus.migrations.framework.{MigrationUtils, ObjectIdTools}
+import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 import za.co.absa.enceladus.migrations.migrations.model0
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 
@@ -37,15 +37,10 @@ import scala.util.control.NonFatal
   */
 final class MigratorRun(evm: EntityVersionMap,
                         databaseOld: MongoDatabase,
-                        databaseNew: MongoDatabase) extends EntityMigrator {
+                        databaseNew: MongoDatabase) extends EntityMigrator(databaseOld, databaseNew) {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   override protected val collectionBase: String = EntityMigrator.runCollection
-  protected val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
-  protected val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
-
-  protected val dbOld: MongoDatabase = databaseOld
-  protected val dbNew: MongoDatabase = databaseNew
 
   /** Migration for runs is slightly different. */
   override def migrate(): Unit = {
