@@ -134,16 +134,16 @@ object StandardizationJob {
     *
     * @param cmd      Command line parameters containing format-specific options
     * @param dataset  A dataset definition
-    * @param schemaOpt (Optional) Schema, enables reading CSV files with the number of columns larger than Spark default
+    * @param numberOfColumns (Optional) number of columns, enables reading CSV files with the number of columns larger than Spark default
     * @return The updated dataframe reader
     */
-  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, schemaOpt: Option[StructType] = None)(implicit spark: SparkSession): DataFrameReader = {
+  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, numberOfColumns: Int = 0)(implicit spark: SparkSession): DataFrameReader = {
     val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
     val options = getCobolOptions(cmd, dataset) ++
       getGenericOptions(cmd) ++
       getXmlOptions(cmd) ++
-      getCsvOptions(cmd, schemaOpt) ++
+      getCsvOptions(cmd, numberOfColumns) ++
       getFixedWidthOptions(cmd)
 
     // Applying all the options
@@ -174,9 +174,8 @@ object StandardizationJob {
     }
   }
 
-  private def getCsvOptions(cmd: CmdConfig, schemaOpt: Option[StructType] = None): HashMap[String,Option[RawFormatParameter]] = {
+  private def getCsvOptions(cmd: CmdConfig, numberOfColumns: Int = 0): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
-      val knownNumberOfFields = schemaOpt.map(_.fields.length).getOrElse(0)
       HashMap(
         "delimiter" -> cmd.csvDelimiter.map(StringParameter),
         "header" -> cmd.csvHeader.map(BooleanParameter),
@@ -184,7 +183,7 @@ object StandardizationJob {
         "escape" -> cmd.csvEscape.map(StringParameter),
         // increase the default limit on the number of columns if needed
         // default is set at org.apache.spark.sql.execution.datasources.csv.CSVOptions maxColumns
-        "maxColumns" -> {if (knownNumberOfFields > SparkCSVReaderMaxColumnsDefault) Some(LongParameter(knownNumberOfFields)) else None}
+        "maxColumns" -> {if (numberOfColumns > SparkCSVReaderMaxColumnsDefault) Some(LongParameter(numberOfColumns)) else None}
       )
     } else {
       HashMap()
@@ -231,7 +230,8 @@ object StandardizationJob {
                                dataset: Dataset)
                               (implicit spark: SparkSession,
                                fsUtils: FileSystemVersionUtils): DataFrame = {
-    val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, Some(schema))
+    val numberOfColumns = schema.fields.length
+    val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, numberOfColumns)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
       dfReaderConfigured.schema(inputSchema)

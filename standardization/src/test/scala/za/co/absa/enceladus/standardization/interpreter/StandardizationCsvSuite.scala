@@ -64,9 +64,11 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
   private def getTestDataFrame(tmpFileName: String, args: Array[String], checkMaxColumns: Boolean = false): DataFrame = {
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
-    val schemaOpt = if (checkMaxColumns) Some(schema) else None
-    StandardizationJob
-      .getFormatSpecificReader(cmd, dataSet, schemaOpt)
+    val csvReader = checkMaxColumns match {
+      case true  => StandardizationJob.getFormatSpecificReader(cmd, dataSet, schema.fields.length)
+      case false => StandardizationJob.getFormatSpecificReader(cmd, dataSet)
+    }
+    csvReader
       .schema(schema)
       .load(tmpFileName)
   }

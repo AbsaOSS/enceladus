@@ -64,7 +64,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
 
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     StandardizationJob
-      .getFormatSpecificReader(cmd, dataSet, Some(schemaStr))
+      .getFormatSpecificReader(cmd, dataSet, schemaStr.fields.length)
       .schema(schemaStr)
       .load(tmpFileName)
   }
