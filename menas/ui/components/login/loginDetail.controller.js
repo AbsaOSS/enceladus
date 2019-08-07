@@ -120,6 +120,7 @@ sap.ui.define([
         localStorage.setItem("csrfToken", csrfToken);
         Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
+          model.setProperty("/menasVersion", oInfo.menasVersion);
           sap.ui.getCore().byId(this._appId).backToTopMaster();
           this.handleMaster();
           this._router.navTo("home");
