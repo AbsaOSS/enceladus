@@ -76,17 +76,17 @@ class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBas
         ErrorMessage.stdNullErr("small"))),
       DecimalRow("03-Long", Option(zero), Option(Long.MinValue), Seq(
         ErrorMessage.stdCastErr("small", Long.MaxValue.toString))),
-      DecimalRow("04-infinity", Option(zero), Option(zero),  Seq(
+      DecimalRow("04-infinity", Option(zero), None,  Seq(
         ErrorMessage.stdCastErr("small", "-Infinity"),
         ErrorMessage.stdCastErr("big", "Infinity"))),
-      DecimalRow("05-Really big", Option(zero), Option(zero), Seq(
+      DecimalRow("05-Really big", Option(zero), None, Seq(
         ErrorMessage.stdCastErr("small", "123456789123456791245678912324789123456789123456789.12"),
         ErrorMessage.stdCastErr("big", "1234567891234567912456789123247891234567891234567891234567891"
           + "2345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345678"
           + "9123456789123456789123456789123456789123467891234567891234567891234567891234567912456789123247891234567891"
           + "2345678912345678912345678912345679124567891232478912345678912345678912345678912345678912345678912345678912"
           + "3456789.1"))),
-      DecimalRow("06-Text", Option(zero), Option(zero), Seq(
+      DecimalRow("06-Text", Option(zero), None, Seq(
         ErrorMessage.stdCastErr("small", "foo"),
         ErrorMessage.stdCastErr("big", "bar"))),
       DecimalRow("07-Exponential notation", Option(bd(-123)), Option(bd(0.00098765))),
@@ -117,13 +117,13 @@ class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBas
         ErrorMessage.stdNullErr("small"))),
       DecimalRow("03-Long", Option(zero), Option(-9223372036854776000.0), Seq(  // rounding in doubles for large integers
         ErrorMessage.stdCastErr("small", "9.223372036854776E18"))),
-      DecimalRow("04-Infinity", Option(zero), Option(zero),  Seq(
+      DecimalRow("04-Infinity", Option(zero), None,  Seq(
         ErrorMessage.stdCastErr("small", "-Infinity"),
         ErrorMessage.stdCastErr("big", "Infinity"))),
-      DecimalRow("05-Really big", Option(zero), Option(zero), Seq(
+      DecimalRow("05-Really big", Option(zero), None, Seq(
         ErrorMessage.stdCastErr("small", reallyBig.toString),
       ErrorMessage.stdCastErr("big", reallyBig.toString))),
-      DecimalRow("06-NaN", Option(zero), Option(zero), Seq(
+      DecimalRow("06-NaN", Option(zero), None, Seq(
         ErrorMessage.stdCastErr("small", "NaN"),
         ErrorMessage.stdCastErr("big", "NaN")))
     )

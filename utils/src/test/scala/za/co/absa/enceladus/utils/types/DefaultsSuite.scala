@@ -18,50 +18,69 @@ package za.co.absa.enceladus.utils.types
 import java.sql.{Date, Timestamp}
 import java.util.TimeZone
 
-import org.apache.spark.sql.types.{DateType, Metadata, StructField, TimestampType}
+import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
+
+import scala.util.Success
 
 class DefaultsSuite extends FunSuite {
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
-  test("Timestamp with default value and pattern - should parse the given default based on the pattern and return a Timestamp with it.") {
-    val timestamp = Defaults.getDefaultValue(StructField("timestamp", TimestampType, metadata = Metadata.fromJson("""{"default": "20250101.142626", "pattern": "yyyyMMdd.HHmmss"}""")))
-    assert(timestamp == new Timestamp(1735741586000L))
+  test("ByteType") {
+    assert(Defaults.getGlobalDefaultWithNull(ByteType, nullable = false) === Success(Some(0.toByte)))
   }
 
-  test("Timestamp with default value, no pattern - should parse the given default based on the default pattern and return a Timestamp with it.") {
-    val timestamp = Defaults.getDefaultValue(StructField("timestamp", TimestampType, metadata = Metadata.fromJson("""{"default": "2025-01-01 14:26:26"}""")))
-    assert(timestamp == new Timestamp(1735741586000L))
+  test("ShortType") {
+    assert(Defaults.getGlobalDefaultWithNull(ShortType, nullable = false) === Success(Some(0.toShort)))
   }
 
-  test("Timestamp with pattern, no default value - should return the global default Timestamp.") {
-    val timestamp = Defaults.getDefaultValue(StructField("timestamp", TimestampType, metadata = Metadata.fromJson("""{"pattern": "yyyyMMdd.HHmmss"}""")))
-    assert(timestamp == new Timestamp(0L))
+  test("IntegerType") {
+    assert(Defaults.getGlobalDefaultWithNull(IntegerType, nullable = false) === Success(Some(0)))
   }
 
-  test("Timestamp without default value or pattern - should return the global default Timestamp.") {
-    val timestamp = Defaults.getDefaultValue(StructField("timestamp", TimestampType, metadata = Metadata.fromJson("""{}""")))
-    assert(timestamp == new Timestamp(0L))
+  test("LongType") {
+    assert(Defaults.getGlobalDefaultWithNull(LongType, nullable = false) === Success(Some(0L)))
   }
 
-  test("Date with default value and pattern - should parse the given default based on the pattern and return a Date with it.") {
-    val date = Defaults.getDefaultValue(StructField("date", DateType, metadata = Metadata.fromJson("""{"default": "20250101", "pattern": "yyyyMMdd"}""")))
-    assert(date == new Date(1735689600000L))
+  test("FloatType") {
+    assert(Defaults.getGlobalDefaultWithNull(FloatType, nullable = false) === Success(Some(0F)))
   }
 
-  test("Date with default value, no pattern - should parse the given default based on the default pattern and return a Date with it.") {
-    val date = Defaults.getDefaultValue(StructField("date", DateType, metadata = Metadata.fromJson("""{"default": "2025-01-01"}""")))
-    assert(date == new Date(1735689600000L))
+  test("DoubleType") {
+    assert(Defaults.getGlobalDefaultWithNull(DoubleType, nullable = false) === Success(Some(0D)))
   }
 
-  test("Date with pattern, no default value - should return the global default Date.") {
-    val date = Defaults.getDefaultValue(StructField("date", DateType, metadata = Metadata.fromJson("""{"pattern": "yyyyMMdd"}""")))
-    assert(date == new Date(0L))
+  test("StringType") {
+    assert(Defaults.getGlobalDefaultWithNull(StringType, nullable = false) === Success(Some("")))
   }
 
-  test("Date without default value or pattern - should return the global default Date.") {
-    val date = Defaults.getDefaultValue(StructField("date", DateType, metadata = Metadata.fromJson("""{}""")))
-    assert(date == new Date(0L))
+  test("DateType") {
+    assert(Defaults.getGlobalDefaultWithNull(DateType, nullable = false) === Success(Some(new Date(0))))
   }
 
+  test("TimestampType") {
+    assert(Defaults.getGlobalDefaultWithNull(TimestampType, nullable = false) === Success(Some(new Timestamp(0))))
+  }
+
+  test("BooleanType") {
+    assert(Defaults.getGlobalDefaultWithNull(BooleanType, nullable = false) === (Success(Some(false))))
+  }
+
+  test("DecimalType") {
+    assert(Defaults.getGlobalDefaultWithNull(DecimalType(6, 3), nullable = false) === Success(Some(new java.math.BigDecimal("000.000"))))
+  }
+
+  test("ArrayType") {
+    val dataType = ArrayType(StringType)
+    val result = Defaults.getGlobalDefaultWithNull(dataType, nullable = false)
+    val e = intercept[IllegalStateException] {
+      result.get
+    }
+    assert(e.getMessage == s"No default value defined for data type ${dataType.typeName}")
+  }
+
+  test("Nullable default is None") {
+    assert(Defaults.getGlobalDefaultWithNull(BooleanType, nullable = true) === Success(None))
+  }
 }
+

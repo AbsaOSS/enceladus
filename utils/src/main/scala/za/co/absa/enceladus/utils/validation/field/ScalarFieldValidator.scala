@@ -13,23 +13,24 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.implicits
+package za.co.absa.enceladus.utils.validation.field
 
-import org.apache.spark.sql.types._
+import za.co.absa.enceladus.utils.types.TypedStructField
+import za.co.absa.enceladus.utils.validation.ValidationIssue
+
 import scala.util.Try
 
-object StructFieldImplicits {
-  implicit class StructFieldEnhancements(val structField: StructField) {
-    def getMetadataString(key: String): Option[String] = {
-      Try(structField.metadata.getString(key)).toOption
-    }
 
-    def getMetadataBoolean(key: String): Option[Boolean] = {
-      Try(structField.metadata.getBoolean(key)).toOption
-    }
+/**
+  * Scalar types schema validation against default value
+  */
+object ScalarFieldValidator extends FieldValidator {
 
-    def hasMetadataKey(key: String): Boolean = {
-      structField.metadata.contains(key)
-    }
+  private def validateDefaultValue(field: TypedStructField): Try[Any] = {
+    field.defaultValueWithGlobal
+  }
+
+  override def validate(field: TypedStructField): Seq[ValidationIssue] = {
+    tryToValidationIssues(validateDefaultValue(field))
   }
 }

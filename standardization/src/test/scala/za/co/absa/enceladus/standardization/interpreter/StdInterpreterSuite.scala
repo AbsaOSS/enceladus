@@ -18,8 +18,7 @@ package za.co.absa.enceladus.standardization.interpreter
 import java.sql.{Date, Timestamp}
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import org.apache.spark.sql.{SparkSession, types}
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.utils.error.UDFLibrary
@@ -35,7 +34,7 @@ case class MyWrapperStd(counterparty: MyHolder, errCol: Seq[ErrorMessage])
 case class Time(id: Int, date: String, timestamp: String)
 case class StdTime(id: Int, date: Date, timestamp: Timestamp, errCol: List[ErrorMessage])
 
-class StdInterpreterSuite extends FunSuite with SparkTestBase {
+class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBase {
 import spark.implicits._
 
   case class subCC(subFieldA: Integer, subFieldB: String)
@@ -46,31 +45,31 @@ import spark.implicits._
 
   val stdExpectedSchema = StructType(
     Seq(
-      StructField("rootField", StringType, true),
+      StructField("rootField", StringType, nullable = true),
       StructField("rootStruct",
         StructType(
           Seq(
-            StructField("subFieldA", IntegerType, true),
-            StructField("subFieldB", StringType, true))), false),
+            StructField("subFieldA", IntegerType, nullable = true),
+            StructField("subFieldB", StringType, nullable = true))), nullable = false),
       StructField("rootStruct2",
         StructType(
           Seq(
             StructField("subStruct2",
               StructType(
                 Seq(
-                  StructField("subSub2FieldA", IntegerType, true),
-                  StructField("subSub2FieldB", StringType, true))), false))), false),
+                  StructField("subSub2FieldA", IntegerType, nullable = true),
+                  StructField("subSub2FieldB", StringType, nullable = true))), nullable = false))), nullable = false),
       StructField("rootArray",
         ArrayType(
           StructType(
             Seq(
-              StructField("arrayFieldA", IntegerType, true),
-              StructField("arrayFieldB", StringType, true),
+              StructField("arrayFieldA", IntegerType, nullable = true),
+              StructField("arrayFieldB", StringType, nullable = true),
               StructField("arrayStruct",
                 StructType(
                   Seq(
-                    StructField("subFieldA", IntegerType, true),
-                    StructField("subFieldB", StringType, true))), false))), false
+                    StructField("subFieldA", IntegerType, nullable = true),
+                    StructField("subFieldB", StringType, nullable = true))), nullable = false))), containsNull = false
         ))))
 
   test("Non-null errors produced for non-nullable attribute in a struct") {
@@ -88,7 +87,7 @@ import spark.implicits._
     val schema = StructType(Seq(
       StructField("counterparty", StructType(
         Seq(
-          StructField("yourRef", StringType, false))), false)))
+          StructField("yourRef", StringType, nullable = false))), nullable = false)))
 
     val standardizedDF = StandardizationInterpreter.standardize(orig, schema, "")
 
@@ -96,7 +95,7 @@ import spark.implicits._
   }
 
   test("Existing error messages should be preserved") {
-    implicit val udfLib = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
     import spark.implicits._
 
     val df = spark.createDataFrame(Array(
@@ -119,7 +118,7 @@ import spark.implicits._
   }
 
   test("Standardize Test") {
-    implicit val udfLib = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
 
     val sourceDF = spark.createDataFrame(
       Array(
@@ -131,29 +130,29 @@ import spark.implicits._
     val expectedSchema = stdExpectedSchema.add(
       StructField("errCol",
         ArrayType(
-          ErrorMessage.errorColSchema, false)))
+          ErrorMessage.errorColSchema, containsNull = false)))
 
     val standardizedDF = StandardizationInterpreter.standardize(sourceDF, stdExpectedSchema, "")
 
-    standardizedDF.printSchema()
-    expectedSchema.printTreeString()
+    logger.debug(standardizedDF.schema.treeString)
+    logger.debug(expectedSchema.treeString)
 
     assert(standardizedDF.schema.treeString === expectedSchema.treeString)
   }
 
   test("Standardize Test (JSON source)") {
-    implicit val udfLib = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
     val sourceDF = spark.read.json("src/test/resources/standardizeJsonSrc.json")
 
     val expectedSchema = stdExpectedSchema.add(
       StructField("errCol",
         ArrayType(
-          ErrorMessage.errorColSchema, false)))
+          ErrorMessage.errorColSchema, containsNull = false)))
 
     val standardizedDF = StandardizationInterpreter.standardize(sourceDF, stdExpectedSchema, "")
 
-    standardizedDF.printSchema()
-    expectedSchema.printTreeString()
+    logger.debug(standardizedDF.schema.treeString)
+    logger.debug(expectedSchema.treeString)
 
     assert(standardizedDF.schema.treeString === expectedSchema.treeString)
   }
@@ -185,8 +184,6 @@ import spark.implicits._
     // But orders[].ordername is not nullable, so it must be specified
     // But absence of orders should not cause validation errors
     val count = standardizedDF.where(size(col("errCol")) > 0).count()
-
-    standardizedDF.toJSON.take(4).foreach(println)
 
     assert(count == 0)
   }
@@ -253,7 +250,7 @@ import spark.implicits._
       Seq(
         StructField("id" ,IntegerType, nullable = false),
         StructField("date", DateType, nullable = true, Metadata.fromJson("""{"pattern": "yyyyMMdd"}""")),
-        StructField("timestamp", TimestampType, nullable = true, Metadata.fromJson("""{"pattern": "yyyyMMdd.HHmmss"}"""))))
+        StructField("timestamp", TimestampType, nullable = false, Metadata.fromJson("""{"pattern": "yyyyMMdd.HHmmss"}"""))))
 
     val sourceDF = spark.createDataFrame(
       List (
@@ -264,7 +261,7 @@ import spark.implicits._
 
     val expected = List (
       StdTime(1, new Date(1507075200000L), new Timestamp(1507115471000L), List()),
-      StdTime(2, new Date(0L), new Timestamp(0L), List(ErrorMessage.stdCastErr("date", ""), ErrorMessage.stdCastErr("timestamp", "")))
+      StdTime(2, null, new Timestamp(0L), List(ErrorMessage.stdCastErr("date", ""), ErrorMessage.stdCastErr("timestamp", "")))
     )
 
     val standardizedDF = StandardizationInterpreter.standardize(sourceDF, schema, "")
@@ -279,7 +276,7 @@ import spark.implicits._
     val schema = StructType(
       Seq(
         StructField("id" ,IntegerType, nullable = false),
-        StructField("date", DateType, nullable = true),
+        StructField("date", DateType, nullable = false),
         StructField("timestamp", TimestampType, nullable = true)))
 
     val sourceDF = spark.createDataFrame(
@@ -291,7 +288,7 @@ import spark.implicits._
 
     val expected = List (
       StdTime(1, new Date(1507075200000L), new Timestamp(1507115471000L), List()),
-      StdTime(2, new Date(0L), new Timestamp(0L), List(ErrorMessage.stdCastErr("date", ""), ErrorMessage.stdCastErr("timestamp", "")))
+      StdTime(2, new Date(0L), null, List(ErrorMessage.stdCastErr("date", ""), ErrorMessage.stdCastErr("timestamp", "")))
     )
 
     val standardizedDF = StandardizationInterpreter.standardize(sourceDF, schema, "")

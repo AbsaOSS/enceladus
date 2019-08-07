@@ -53,7 +53,6 @@ abstract sealed class DateTimePattern(pattern: String, isDefault: Boolean = fals
 
 object DateTimePattern {
   import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
-  import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.{StructFieldEnhancements, PatternInfo}
 
   val EpochKeyword = "epoch"
   val EpochMilliKeyword = "epochmilli"
@@ -159,16 +158,9 @@ object DateTimePattern {
     create(pattern, assignedDefaultTimeZone, isDefault = false)
   }
 
-  def fromStructField(structField: StructField ): DateTimePattern = {
-    if (!Seq(DateType, TimestampType).contains(structField.dataType)) {
-      val typeName = structField.dataType.typeName
-      throw new InvalidParameterException(
-        s"StructField data type for DateTimePattern has to be DateType or TimestampType, instead $typeName was given."
-      )
-    }
-    val PatternInfo(pattern, isDefault) = structField.readPatternInfo()
-    val timeZoneOpt = structField.getMetadataString("timezone")
-    create(pattern, timeZoneOpt, isDefault)
+  def asDefault(pattern: String,
+                assignedDefaultTimeZone: Option[String] = None): DateTimePattern = {
+    create(pattern, assignedDefaultTimeZone, isDefault = true)
   }
 
   def isEpoch(pattern: String): Boolean = {

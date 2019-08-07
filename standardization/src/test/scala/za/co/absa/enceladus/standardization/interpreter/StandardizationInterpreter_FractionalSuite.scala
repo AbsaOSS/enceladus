@@ -64,17 +64,17 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       FractionalRow("02-Null", Option(0), None, Seq(
         ErrorMessage.stdNullErr("floatField"))),
       FractionalRow("03-Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
-      FractionalRow("04-infinity", Option(0), Option(0),  Seq(
+      FractionalRow("04-infinity", Option(0), None,  Seq(
         ErrorMessage.stdCastErr("floatField", "-Infinity"),
         ErrorMessage.stdCastErr("doubleField", "Infinity"))),
-      FractionalRow("05-Really big", Option(0), Option(0), Seq(
+      FractionalRow("05-Really big", Option(0), None, Seq(
         ErrorMessage.stdCastErr("floatField", "123456789123456791245678912324789123456789123456789.12"),
         ErrorMessage.stdCastErr("doubleField", "12345678912345679124567891232478912345678912345678912"
           + "3456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789123456789"
           + "1234567891234567891234567891234567891234567891234678912345678912345678912345678912345679124567891232478912"
           + "3456789123456789123456789123456789123456791245678912324789123456789123456789123456789123456789123456789123"
           + "456789123456789.1"))),
-      FractionalRow("06-Text", Option(0), Option(0), Seq(
+      FractionalRow("06-Text", Option(0), None, Seq(
         ErrorMessage.stdCastErr("floatField", "foo"),
         ErrorMessage.stdCastErr("doubleField", "bar"))),
       FractionalRow("07-Exponential notation", Option(-12300.0f), Option(0.0098765))
@@ -124,12 +124,12 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       FractionalRow("02-Null", Option(0), None, Seq(
         ErrorMessage.stdNullErr("floatField"))),
       FractionalRow("03-Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
-      FractionalRow("04-Infinity", Option(0), Option(0),  Seq(
+      FractionalRow("04-Infinity", Option(0), None,  Seq(
         ErrorMessage.stdCastErr("floatField", "-Infinity"),
         ErrorMessage.stdCastErr("doubleField", "Infinity"))),
       FractionalRow("05-Really big", Option(0), Option(reallyBig), Seq(
         ErrorMessage.stdCastErr("floatField", reallyBig.toString))),
-      FractionalRow("06-NaN", Option(0), Option(0), Seq(
+      FractionalRow("06-NaN", Option(0), None, Seq(
         ErrorMessage.stdCastErr("floatField", "NaN"),
         ErrorMessage.stdCastErr("doubleField", "NaN")))
     )
@@ -167,7 +167,7 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       FractionalRow("03-Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
       FractionalRow("04-infinity", Some(Float.NegativeInfinity), Option(Double.PositiveInfinity)),
       FractionalRow("05-Really big", Option(Float.PositiveInfinity), Option(Double.NegativeInfinity)),
-      FractionalRow("06-Text", Option(0), Option(0), Seq(
+      FractionalRow("06-Text", Option(0), None, Seq(
         ErrorMessage.stdCastErr("floatField", "foo"),
         ErrorMessage.stdCastErr("doubleField", "bar"))),
       FractionalRow("07-Exponential notation", Option(-12300.0f), Option(0.0098765))
@@ -196,7 +196,7 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
       FractionalRow("03-Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
       FractionalRow("04-Infinity", Option(Float.NegativeInfinity), Option(Double.PositiveInfinity)),
       FractionalRow("05-Really big", Option(Float.PositiveInfinity), Option(reallyBig)),
-      FractionalRow("06-NaN", Option(0), Option(0), Seq(
+      FractionalRow("06-NaN", Option(0), None, Seq(
         ErrorMessage.stdCastErr("floatField", "NaN"),
         ErrorMessage.stdCastErr("doubleField", "NaN")))
     )

@@ -76,8 +76,8 @@ class DateTimeSuite extends FunSuite with SparkTestBase with LoggerTestBase{
       Date.valueOf("2017-12-29"),
       date0,
       date0,
-      date0,
-      ts, ts, ts, ts0, ts0, ts0,
+      null,
+      ts, ts, ts, null, ts0, ts0,
       List(
         ErrorMessage.stdCastErr("dateSampleWrong1","10-20-2017"),
         ErrorMessage.stdCastErr("dateSampleWrong2","201711"),

@@ -15,35 +15,25 @@
 
 package za.co.absa.enceladus.utils.validation.field
 
-import org.apache.spark.sql.types._
-import za.co.absa.enceladus.utils.validation.ValidationIssue
+import za.co.absa.enceladus.utils.types.TypedStructField
+import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
 
-trait FieldValidator {
-  def validateStructField(field: StructField): Seq[ValidationIssue]
-}
+import scala.util.{Failure, Success, Try}
 
-object FieldValidator {
-
-  /**
-    * Validates a StructField and returns the list of issues encountered
-    *
-    * @param field A field
-    * @return The list if validation issues encountered
-    */
-  def validate(field: StructField): Seq[ValidationIssue] = {
-    val validator = field.dataType match {
-      case _: DateType =>
-        Option(FieldValidatorDate)
-      case _: TimestampType =>
-        Option(FieldValidatorTimestamp)
-      case _: BooleanType =>
-        Option(FieldValidatorScalar)
-      case _: NumericType =>
-        Option(FieldValidatorScalar)
-      case _: StringType =>
-        Option(FieldValidatorScalar)
-      case _ => None
+class FieldValidator {
+  protected def tryToValidationIssues(tryValue: Try[Any]): Seq[ValidationIssue] = {
+    tryValue match {
+      case Failure(e)                      => Seq(ValidationError(e.getMessage))
+      case Success(seq: Seq[_])            => seq.collect{case x:ValidationIssue => x} //have to use collect because of type erasure
+      case Success(opt: Option[_])         => opt.collect{case x:ValidationIssue => x}.toSeq
+      case Success(issue: ValidationIssue) => Seq(issue)
+      case _                               => Nil
     }
-    validator.map(_.validateStructField(field)).getOrElse(Nil)
+  }
+
+  def validate(field: TypedStructField): Seq[ValidationIssue] = {
+    Nil
   }
 }
+
+object FieldValidator extends FieldValidator

@@ -18,7 +18,8 @@ package za.co.absa.enceladus.utils.validation
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.validation.field.{FieldValidationFailure, FieldValidator}
+import za.co.absa.enceladus.utils.types.TypedStructField
+import za.co.absa.enceladus.utils.validation.field.{FieldValidationFailure}
 
 import scala.collection.mutable.ListBuffer
 
@@ -37,9 +38,9 @@ object SchemaValidator {
     val flatSchema = flattenSchema(schema)
     for {s <- flatSchema} {
       val fieldWithPath = if (s.structPath.isEmpty) s.field else s.field.copy(name = s.structPath + "." + s.field.name)
-      val issues = validateColumnName(s.field.name, s.structPath) ++ FieldValidator.validate(fieldWithPath)
+      val issues = validateColumnName(s.field.name, s.structPath) ++ TypedStructField(fieldWithPath).validate()
       if (issues.nonEmpty) {
-        val pattern = if (s.field.metadata contains "pattern") s.field.metadata.getString("pattern") else ""
+        val pattern = if (s.field.metadata contains "pattern") s.field.metadata.getString("pattern") else "" //TODO look into this
         errorsAccumulator += FieldValidationFailure(fieldWithPath.name, pattern, issues)
       }
     }
