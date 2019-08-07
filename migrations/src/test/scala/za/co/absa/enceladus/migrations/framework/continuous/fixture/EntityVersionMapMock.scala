@@ -25,7 +25,7 @@ class EntityVersionMapMock extends EntityVersionMap {
   /**
     * Adds a 'name - version' mapping.
     *
-    * @param collectionName The name of the collection that containg the entity
+    * @param collectionName The name of the collection that contains the entity
     * @param entityName     An Entity name
     * @param oldVersion     An version of the entity in the old version of the database
     * @param newVersion     An version of the entity in the new version of the database
@@ -38,7 +38,7 @@ class EntityVersionMapMock extends EntityVersionMap {
   /**
     * Gets a 'name - version' mapping.
     *
-    * @param collectionName The name of the collection that containg the entity
+    * @param collectionName The name of the collection that contains the entity
     * @param entityName     An Entity name
     * @param oldVersion     An version of the entity in the old version of the database
     * @return An version of the entity in the new version of the database, None if the entity is not found

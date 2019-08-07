@@ -31,7 +31,7 @@ import za.co.absa.enceladus.migrations.continuous.migrate01.ContinuousMigrator
   */
 object MongoContinuousMigratorApp {
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit = {
 
     val cmd: ContinuousMigrationCmdConfig = ContinuousMigrationCmdConfig.getCmdLineArguments(args)
 

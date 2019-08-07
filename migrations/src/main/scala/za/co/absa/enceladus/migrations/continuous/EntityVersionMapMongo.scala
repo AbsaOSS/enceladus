@@ -61,7 +61,7 @@ final class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
   /**
     * Gets a 'name - version' mapping.
     *
-    * @param collectionName The name of the collection that containg the entity
+    * @param collectionName The name of the collection that contains the entity
     * @param entityName     An entity name
     * @param oldVersion     An version of the entity in the old version of the database
     * @return An version of the entity in the new version of the database, None if the entity is not found
@@ -97,9 +97,8 @@ final class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
                         entityName: String,
                         oldVersion: Int): Bson = {
     and(
-      and(
-        regex("collection", collectionName, "i"),
-        regex("entityName", entityName, "i")),
+      equal("collection", collectionName),
+      equal("entityName", entityName),
       equal("oldVersion", oldVersion))
   }
 

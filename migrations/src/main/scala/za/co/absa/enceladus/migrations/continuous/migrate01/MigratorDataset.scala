@@ -36,8 +36,8 @@ import scala.util.control.NonFatal
   * @param databaseNew An instance of a MongoDB database connection containing new model documents.
   */
 final class MigratorDataset(evm: EntityVersionMap,
-                      databaseOld: MongoDatabase,
-                      databaseNew: MongoDatabase) extends EntityMigrator {
+                            databaseOld: MongoDatabase,
+                            databaseNew: MongoDatabase) extends EntityMigrator {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   override protected val collectionBase: String = EntityMigrator.datasetCollection
