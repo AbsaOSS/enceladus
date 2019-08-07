@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.migrations.continuous.migrate01
 
 import org.mongodb.scala.MongoDatabase
-import za.co.absa.enceladus.migrations.framework.ObjectIdTools
+import za.co.absa.enceladus.migrations.framework.{MigrationUtils, ObjectIdTools}
 
 object EntityMigrator {
   // Specifies the number of retries for inserting a new version of an entity into a database.
@@ -30,8 +30,11 @@ object EntityMigrator {
 
 /**
   * An base class for continuous migration providers.
+  * @param databaseOld A database to migrate from.
+  * @param databaseNew A database to migrate to.
   */
-abstract class EntityMigrator {
+abstract class EntityMigrator(databaseOld: MongoDatabase,
+                              databaseNew: MongoDatabase) {
 
   protected val migrationUserName = "c_migration"
 
@@ -39,16 +42,13 @@ abstract class EntityMigrator {
   protected def collectionBase: String
 
   /** A versioned collection name for the old version of the mode. E.g. 'schema_v1' or 'dataset_v1' */
-  protected def collectionOld: String
+  protected lazy val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
 
   /** A versioned collection name for the old version of the mode. E.g. 'schema_v0' or 'dataset_v0' */
-  protected def collectionNew: String
+  protected lazy val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
 
-  /** A database to migrate from */
-  protected def dbOld: MongoDatabase
-
-  /** A database to migrate to */
-  protected def dbNew: MongoDatabase
+  protected val dbOld: MongoDatabase = databaseOld
+  protected val dbNew: MongoDatabase = databaseNew
 
   /** Migrate a specific entity. This should be overridden an implemented in concrete classes */
   def migrateEntity(srcJson: String, objectId: String, repo: EntityRepository): Unit

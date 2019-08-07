@@ -20,7 +20,7 @@ import java.time.ZonedDateTime
 import org.apache.log4j.{LogManager, Logger}
 import org.mongodb.scala.MongoDatabase
 import za.co.absa.enceladus.migrations.continuous.EntityVersionMap
-import za.co.absa.enceladus.migrations.framework.{MigrationUtils, ObjectIdTools}
+import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 import za.co.absa.enceladus.migrations.migrations.MigrationToV1.convertConformanceRule
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 import za.co.absa.enceladus.migrations.migrations.model1.Serializer1
@@ -37,15 +37,10 @@ import scala.util.control.NonFatal
   */
 final class MigratorDataset(evm: EntityVersionMap,
                             databaseOld: MongoDatabase,
-                            databaseNew: MongoDatabase) extends EntityMigrator {
+                            databaseNew: MongoDatabase) extends EntityMigrator(databaseOld, databaseNew) {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   override protected val collectionBase: String = EntityMigrator.datasetCollection
-  override protected val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
-  override protected val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
-
-  protected val dbOld: MongoDatabase = databaseOld
-  protected val dbNew: MongoDatabase = databaseNew
 
   /**
     * Migrates a single instance of dataset.
