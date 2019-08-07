@@ -15,13 +15,14 @@
 
 package za.co.absa.enceladus.migrations.continuous
 
-import org.apache.log4j.{LogManager, Logger}
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros._
+import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.{MongoCollection, MongoDatabase}
 import za.co.absa.enceladus.migrations.continuous.model.EntityVersionMapping
 import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits
@@ -29,8 +30,6 @@ import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits
 import scala.reflect.ClassTag
 
 final class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
-  private val log: Logger = LogManager.getLogger(this.getClass)
-
   private val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[EntityVersionMapping]),
     DEFAULT_CODEC_REGISTRY)
 
@@ -109,6 +108,13 @@ final class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
     val collections = db.listCollectionNames().execute()
     if (!collections.contains(entityMapCollectionName)) {
       db.createCollection(entityMapCollectionName).execute()
+      db.getCollection(entityMapCollectionName)
+        .createIndex(
+          Document(
+            Seq("collection" -> 1, "entityName" -> 2, "oldVersion" -> 3)
+          ),
+          IndexOptions().unique(true))
+        .execute()
     }
   }
 

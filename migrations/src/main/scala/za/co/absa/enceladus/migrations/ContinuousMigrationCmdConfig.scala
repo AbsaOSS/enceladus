@@ -35,9 +35,9 @@ object ContinuousMigrationCmdConfig {
 
   def getCmdLineArguments(args: Array[String]): ContinuousMigrationCmdConfig = {
     val parser = new CmdParser("java -cp MigrationsBundle.jar " +
-      "za.co.absa.enceladus.migrations.MongoMigratorApp " +
-      "--src-mongodb-url <MongoDb URL>" +
-      "--trg-mongodb-url <MongoDb URL>" +
+      "za.co.absa.enceladus.migrations.MongoContinuousMigratorApp " +
+      "--src-mongodb-url <MongoDb URL> " +
+      "--trg-mongodb-url <MongoDb URL> " +
       "--src-database <Database Name> " +
       "--trg-database <Database Name>")
 
@@ -49,8 +49,8 @@ object ContinuousMigrationCmdConfig {
     optionCmd.get
   }
 
-  private class CmdParser(programName: String) extends OptionParser[ContinuousMigrationCmdConfig](programName) {
-    head("\nStandardization", "")
+  private class CmdParser(programSyntax: String) extends OptionParser[ContinuousMigrationCmdConfig](programSyntax) {
+    head("\nContinuous Migration", "")
     var rawFormat: Option[String] = None
 
     opt[String]("src-mongodb-url").required().action((value, config) =>
