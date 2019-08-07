@@ -41,7 +41,7 @@ class EventListenerMenas(menasDao: MenasDAO,
 
   /** Called when an _INFO file have been loaded. */
   override def onLoad(sparkApplicationId: String, inputInfoFileName: String, controlMeasure: ControlMeasure): Unit = {
-    if (controlMeasure.runUniqueId.isEmpty || generateNewRun) {
+    if (controlMeasure.runUniqueId.isEmpty || (generateNewRun && runUniqueId.isEmpty)) {
       if (datasetName.isEmpty) {
         throw new IllegalStateException("The Dataset name is not provided, nor a 'runUniqueId' from the previous " +
           s"stage is present in $inputInfoFileName file. Please, provide the dataset name when invoking " +
