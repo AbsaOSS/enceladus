@@ -370,6 +370,7 @@
                         <origin>origin</origin>
                     </gitFlowConfig>
                     <commitDevelopmentVersionAtStart>true</commitDevelopmentVersionAtStart>
+                    <versionDigitToIncrement>1</versionDigitToIncrement>
 
                     <commitMessages>
                         <releaseStartMessage>Update versions for release v@{version}</releaseStartMessage>
