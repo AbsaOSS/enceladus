@@ -18,8 +18,9 @@ package za.co.absa.enceladus.migrations.continuous.migrate01
 import org.mongodb.scala.MongoDatabase
 import org.mongodb.scala.bson.{BsonDocument, ObjectId}
 import org.mongodb.scala.model.Filters
-import org.mongodb.scala.model.Filters.{and, equal}
+import org.mongodb.scala.model.Filters.{and, equal, or}
 import org.mongodb.scala.model.Sorts._
+import za.co.absa.atum.model.RunState
 import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 
 /**
@@ -50,7 +51,12 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
     */
   def getSortedRuns: Iterator[String] = {
     db.getCollection(collectionName)
-      .find()
+      .find(
+        or(
+          equal("runStatus.status", RunState.allSucceeded.toString),
+          equal("runStatus.status", RunState.failed.toString)
+        )
+      )
       .sort(ascending("dataset", "datasetVersion", "runId"))
       .execute()
       .toIterator

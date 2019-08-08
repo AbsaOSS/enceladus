@@ -41,10 +41,10 @@ abstract class EntityMigrator(databaseOld: MongoDatabase,
   /** A collection base name. E.g. 'schema' or 'dataset' */
   protected def collectionBase: String
 
-  /** A versioned collection name for the old version of the mode. E.g. 'schema_v1' or 'dataset_v1' */
+  /** A versioned collection name for the old version of the model. E.g. 'schema' or 'dataset' */
   protected lazy val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
 
-  /** A versioned collection name for the old version of the mode. E.g. 'schema_v0' or 'dataset_v0' */
+  /** A versioned collection name for the new version of the model. E.g. 'schema_v1' or 'dataset_v1' */
   protected lazy val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
 
   protected val dbOld: MongoDatabase = databaseOld
