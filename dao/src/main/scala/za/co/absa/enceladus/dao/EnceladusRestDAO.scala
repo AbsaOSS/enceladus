@@ -182,16 +182,16 @@ object EnceladusRestDAO extends EnceladusDAO {
 
         if (isUnauthorized) {
           log.warn(s"Unauthorized GET request for Menas URL: $url")
+          if (retriesLeft <= 0) {
+            throw UnauthorizedException(s"Unable to reauthenticate, no retires left")
+          }
           log.warn(s"Expired session, reauthenticating")
           if (enceladusLogin()) {
-            if (retriesLeft > 0) {
-              throw UnauthorizedException(s"Unable to reauthenticate after retries")
-            }
             log.info(s"Retrying GET request for Menas URL: $url")
             log.info(s"Retries left: $retriesLeft")
             sendGet(url, retriesLeft - 1)
           } else {
-            throw UnauthorizedException()
+            throw UnauthorizedException("Login failed")
           }
         } else {
           val content = {

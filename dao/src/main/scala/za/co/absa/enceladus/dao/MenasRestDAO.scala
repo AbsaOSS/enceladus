@@ -129,24 +129,26 @@ object MenasRestDAO extends MenasDAO {
         val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
         val isUnauthorized = status == HttpStatus.SC_UNAUTHORIZED || status == HttpStatus.SC_FORBIDDEN
 
-        if (isUnauthorized) {
-          log.warn(s"Unauthorized POST request for Menas URL: $url")
-          log.warn(s"Expired session, reauthenticating")
-          if (enceladusLogin()) {
-            if (retriesLeft > 0) {
-              throw UnauthorizedException(s"Unable to reauthenticate after retries")
-            }
-            log.info(s"Retrying POST request for Menas URL: $url")
-            log.info(s"Retries left: $retriesLeft")
-            sendPostJson(url, json, retriesLeft - 1)
-          } else {
-            throw UnauthorizedException()
-          }
-        } else if (ok) {
+        if (ok) {
           log.info(response.toString)
         } else {
           val responseBody = getResponseBody(response)
           log.error(s"RESPONSE: ${response.getStatusLine} - $responseBody")
+
+          if (isUnauthorized) {
+            log.warn(s"Unauthorized POST request for Menas URL: $url")
+            if (retriesLeft <= 0) {
+              throw UnauthorizedException(s"Unable to reauthenticate, no retires left")
+            }
+            log.warn(s"Expired session, reauthenticating")
+            if (enceladusLogin()) {
+              log.info(s"Retrying POST request for Menas URL: $url")
+              log.info(s"Retries left: $retriesLeft")
+              sendPostJson(url, json, retriesLeft - 1)
+            } else {
+              throw UnauthorizedException("Login failed")
+            }
+          }
         }
         ok
       }
