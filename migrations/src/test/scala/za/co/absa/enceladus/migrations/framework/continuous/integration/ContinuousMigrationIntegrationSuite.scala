@@ -77,6 +77,9 @@ class ContinuousMigrationIntegrationSuite extends FunSuite with ExampleDatabaseF
     assert(runExists(3, "TestDataset", 3) )
     assert(runExists(2, "TestDataset2", 1) )
     assert(runExists(3, "TestDataset2", 1) )
+    // Intermediate state runs
+    assert(!runExists(4, "TestDataset2", 1) )
+    assert(!runExists(5, "TestDataset2", 1) )
   }
 
 }
