@@ -35,7 +35,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.typesafe.config.ConfigFactory
-import sun.security.krb5.internal.ktab.KeyTab
+import sun.security.krb5.internal.ktab.KeyTab //scalastyle:ignore illegal.imports
 import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.MappingTable

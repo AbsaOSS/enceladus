@@ -126,6 +126,7 @@ object SchemaPathValidator {
                                       parentOnly: Boolean = false,
                                       fullPathNew: Boolean = false,
                                       parentPath: String = ""): Seq[ValidationIssue] = {
+    // scalastyle:off  return Covered in Issue #730
     if (path.isEmpty) {
       return Nil
     }
@@ -172,6 +173,7 @@ object SchemaPathValidator {
 
     }
     failures
+    // scalastyle:on return
   }
 
   /** Returns underlying data type of a field after traversing nested arrays. */
