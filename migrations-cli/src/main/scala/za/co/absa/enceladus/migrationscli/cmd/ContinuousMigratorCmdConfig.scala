@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.migrations
+package za.co.absa.enceladus.migrationscli.cmd
 
 import scopt.OptionParser
 
@@ -24,24 +24,24 @@ import scopt.OptionParser
   * Note: scopt requires all fields to have default values.
   * Even if a field is mandatory it needs a default value.
   */
-case class ContinuousMigrationCmdConfig(mongoDbUrlSrc: String = "",
-                                        mongoDbUrlTrg: String = "",
-                                        databaseSrc: String = "",
-                                        databaseTrg: String = "")
+case class ContinuousMigratorCmdConfig(mongoDbUrlSrc: String = "",
+                                       mongoDbUrlTrg: String = "",
+                                       databaseSrc: String = "",
+                                       databaseTrg: String = "")
 
 
 
-object ContinuousMigrationCmdConfig {
+object ContinuousMigratorCmdConfig {
 
-  def getCmdLineArguments(args: Array[String]): ContinuousMigrationCmdConfig = {
-    val parser = new CmdParser("java -cp MigrationsBundle.jar " +
-      "za.co.absa.enceladus.migrations.MongoContinuousMigratorApp " +
+  def getCmdLineArguments(args: Array[String]): ContinuousMigratorCmdConfig = {
+    val parser = new CmdParser("java -cp enceladus-migrations-cli.jar " +
+      "za.co.absa.enceladus.migrationscli.ContinuousMigratorApp " +
       "--src-mongodb-url <MongoDb URL> " +
       "--trg-mongodb-url <MongoDb URL> " +
       "--src-database <Database Name> " +
       "--trg-database <Database Name>")
 
-    val optionCmd = parser.parse(args, ContinuousMigrationCmdConfig())
+    val optionCmd = parser.parse(args, ContinuousMigratorCmdConfig())
     if (optionCmd.isEmpty) {
       // Wrong arguments provided, the message is already displayed
       System.exit(1)
@@ -49,7 +49,7 @@ object ContinuousMigrationCmdConfig {
     optionCmd.get
   }
 
-  private class CmdParser(programSyntax: String) extends OptionParser[ContinuousMigrationCmdConfig](programSyntax) {
+  private class CmdParser(programSyntax: String) extends OptionParser[ContinuousMigratorCmdConfig](programSyntax) {
     head("\nContinuous Migration", "")
     var rawFormat: Option[String] = None
 

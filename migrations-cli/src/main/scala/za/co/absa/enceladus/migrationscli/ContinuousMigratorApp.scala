@@ -13,27 +13,28 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.migrations
+package za.co.absa.enceladus.migrationscli
 
 import org.mongodb.scala.MongoClient
 import za.co.absa.enceladus.migrations.continuous.migrate01.ContinuousMigrator
+import za.co.absa.enceladus.migrationscli.cmd.ContinuousMigratorCmdConfig
 
 /**
   * This is a command line tool for running continuous migration from version 0 to version 1
   * on 2 MongoDb databases.
   *
   * Syntax:
-  *   java -cp enceladus-migrations.jar za.co.absa.enceladus.migrations.MongoContinuousMigratorApp \
+  *   java -cp enceladus-migrations-cli.jar za.co.absa.enceladus.migrationscli.ContinuousMigratorApp \
   *     --src-mongodb-url <MongoDb URL>
   *     --trg-mongodb-url <MongoDb URL>
   *     --src-database <Database Name>
   *     --trg-database <Database Name>
   */
-object MongoContinuousMigratorApp {
+object ContinuousMigratorApp {
 
   def main(args: Array[String]): Unit = {
 
-    val cmd: ContinuousMigrationCmdConfig = ContinuousMigrationCmdConfig.getCmdLineArguments(args)
+    val cmd: ContinuousMigratorCmdConfig = ContinuousMigratorCmdConfig.getCmdLineArguments(args)
 
     val mongoClientSrc = MongoClient(cmd.mongoDbUrlSrc)
     val mongoClientTrg = MongoClient(cmd.mongoDbUrlTrg)

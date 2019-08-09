@@ -13,25 +13,26 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.migrations
+package za.co.absa.enceladus.migrationscli
 
 import org.mongodb.scala.MongoClient
 import za.co.absa.enceladus.migrations.framework.Migrator
 import za.co.absa.enceladus.migrations.framework.dao.MongoDb
 import za.co.absa.enceladus.migrations.migrations._
+import za.co.absa.enceladus.migrationscli.cmd.MigratorCmdConfig
 
 /**
   * This is a command line tool for running migrations on a MongoDb database.
   *
   * Syntax:
-  *   java -cp enceladus-migrations.jar za.co.absa.enceladus.migrations.MongoMigratorApp \
+  *   java -cp enceladus-migrations-cli.jar za.co.absa.enceladus.migrationscli.MigratorApp \
   *     --mongodb-url <MongoDb URL> --database <Database Name> --new-db-version <New DB version>
   */
-object MongoMigratorApp {
+object MigratorApp {
 
   def main(args: Array[String]) {
 
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+    val cmd: MigratorCmdConfig = MigratorCmdConfig.getCmdLineArguments(args)
 
     val mongoClient = MongoClient(cmd.mongoDbURL)
     val db = new MongoDb(mongoClient.getDatabase(cmd.database))

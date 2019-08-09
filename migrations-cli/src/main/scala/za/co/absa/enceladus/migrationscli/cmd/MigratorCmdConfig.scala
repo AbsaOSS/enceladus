@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.migrations
+package za.co.absa.enceladus.migrationscli.cmd
 
 import scopt.OptionParser
 
@@ -23,18 +23,18 @@ import scopt.OptionParser
   * Note: scopt requires all fields to have default values.
   * Even if a field is mandatory it needs a default value.
   */
-case class CmdConfig (mongoDbURL: String = "",
-                      database: String = "",
-                      targetVersion: Int = -1)
+case class MigratorCmdConfig(mongoDbURL: String = "",
+                             database: String = "",
+                             targetVersion: Int = -1)
 
-object CmdConfig {
+object MigratorCmdConfig {
 
-  def getCmdLineArguments(args: Array[String]): CmdConfig = {
-    val parser = new CmdParser("java -cp MigrationsBundle.jar " +
-      "za.co.absa.enceladus.migrations.MongoMigratorApp " +
+  def getCmdLineArguments(args: Array[String]): MigratorCmdConfig = {
+    val parser = new CmdParser("java -cp enceladus-migrations-cli.jar " +
+      "za.co.absa.enceladus.migrationscli.MigratorApp " +
       "--mongodb-url <MongoDb URL> --database <Database Name> --new-db-version <New DB Version>")
 
-    val optionCmd = parser.parse(args, CmdConfig())
+    val optionCmd = parser.parse(args, MigratorCmdConfig())
     if (optionCmd.isEmpty) {
       // Wrong arguments provided, the message is already displayed
       System.exit(1)
@@ -42,7 +42,7 @@ object CmdConfig {
     optionCmd.get
   }
 
-  private class CmdParser(programName: String) extends OptionParser[CmdConfig](programName) {
+  private class CmdParser(programName: String) extends OptionParser[MigratorCmdConfig](programName) {
     head("\nStandardization", "")
     var rawFormat: Option[String] = None
 
