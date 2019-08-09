@@ -113,6 +113,7 @@
         <module>dao</module>
         <module>menas</module>
         <module>migrations</module>
+        <module>migrations-cli</module>
         <module>external/kafka</module>
         <module>external/fixedWidth</module>
         <module>testutils</module>
