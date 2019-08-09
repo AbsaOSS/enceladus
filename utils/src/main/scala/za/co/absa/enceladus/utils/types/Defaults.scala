@@ -42,14 +42,13 @@ object Defaults {
 
   /** A function which defines default values for primitive types, allowing possible Null*/
   def getGlobalDefaultWithNull(dt: DataType, nullable: Boolean): Try[Option[Any]] = {
-    val result = if (nullable) {
+    if (nullable) {
       Success(None)
     } else {
       Try{
         getGlobalDefault(dt)
       }.map(Some(_))
     }
-    result
   }
 
   /** A function which defines default formats for primitive types */

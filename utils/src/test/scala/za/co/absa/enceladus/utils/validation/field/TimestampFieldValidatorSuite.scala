@@ -104,7 +104,7 @@ class TimestampFieldValidatorSuite extends FunSuite  {
     assert(TimestampFieldValidator.validate(field("yyyy/MM/dd", Option("1999-12-31"))).toSet == expected2)
     //invalid epoch default
     val expected3 = Set(
-      ValidationError("""For input string: "2019-01-01"""")
+      ValidationError("'2019-01-01' cannot be cast to timestamp")
     )
     assert(TimestampFieldValidator.validate(field("epoch", Option("2019-01-01"))).toSet == expected3)
     //timestamp pattern, date default
@@ -115,7 +115,7 @@ class TimestampFieldValidatorSuite extends FunSuite  {
     assert(TimestampFieldValidator.validate(field("dd.MM.yyyy hh-mm-ss", Option("31.12.2004"))).toSet == expected4)
     //epoch overflow
     val expected5 = Set(
-      ValidationError("""For input string: "8748743743948390823948239084294938231122123"""")
+      ValidationError("'8748743743948390823948239084294938231122123' cannot be cast to timestamp")
     )
     assert(TimestampFieldValidator.validate(field("epoch", Option("8748743743948390823948239084294938231122123"))).toSet == expected5)
   }

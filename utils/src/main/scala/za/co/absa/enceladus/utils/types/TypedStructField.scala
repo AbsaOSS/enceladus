@@ -28,9 +28,13 @@ import scala.util.{Failure, Success, Try}
 sealed abstract class TypedStructField(structField: StructField) extends StructFieldEnhancements(structField) {
   protected def convertString(string: String): Try[Any]
 
-  def validate():Seq[ValidationIssue]
+  def validate(): Seq[ValidationIssue]
 
   def stringToTyped(string: String): Try[Option[Any]] = {
+    def errMsg: String = {
+      s"'$string' cannot be cast to ${dataType.typeName}"
+    }
+
     if (string == null) {
       if (structField.nullable) {
         Success(None)
@@ -38,21 +42,46 @@ sealed abstract class TypedStructField(structField: StructField) extends StructF
         Failure(new IllegalArgumentException(s"null is not a valid value for field '${structField.name}'"))
       }
     } else {
-      convertString(string).map(Some(_))
+      convertString(string) match {
+        case Failure(e: NumberFormatException) if e.getClass == classOf[NumberFormatException] =>
+          // replacing some not very informative exception message with better one
+          Failure(new NumberFormatException(errMsg))
+        case Failure(e: IllegalArgumentException)  if e.getClass == classOf[IllegalArgumentException]=>
+          // replacing some not very informative exception message with better one
+          Failure(new IllegalArgumentException(errMsg, e.getCause))
+        case Failure(e) =>
+          // other failures stay unchanged
+          Failure(e)
+        case Success(good) =>
+          // good result is put withing the option as the return type requires
+          Success(Some(good))
+      }
     }
+
   }
 
+  /**
+   * The default value defined in the metadata of the field, if present
+   * @return  Try - because the gathering may fail in conversion between types
+   *          outer Option - None means no default was defined within the metadata of the field
+   *          inner Option - the actual default value or None in case the default is null
+   */
   def ownDefaultValue: Try[Option[Option[Any]]] = {
     if (hasMetadataKey(MetadataKeys.DefaultValue)) {
       for {
-        defeaultValueString <- Try{structField.metadata.getString(MetadataKeys.DefaultValue)}
-        defaultValueTyped <- stringToTyped(defeaultValueString)
+        defaultValueString <- Try{structField.metadata.getString(MetadataKeys.DefaultValue)}
+        defaultValueTyped <- stringToTyped(defaultValueString)
       } yield Some(defaultValueTyped)
     } else {
       Success(None)
     }
   }
 
+  /**
+   * The default value that iwll be used for the field, local if defined otherwise global
+   * @return Try - because the gathering of local default  may fail in conversion between types
+   *         Option - the actual default value or None in case the default is null
+   */
   def defaultValueWithGlobal: Try[Option[Any]] = {
     for {
       localDefault <- ownDefaultValue
@@ -75,20 +104,20 @@ sealed abstract class TypedStructField(structField: StructField) extends StructF
 object TypedStructField {
   def apply(structField: StructField): TypedStructField = {
     structField.dataType match {
-      case _: StringType =>StringTypeStructField(structField)
-      case _: BooleanType => BooleanTypeStructField(structField)
-      case _: ByteType => IntegralTypeStructField(structField)
-      case _: ShortType => IntegralTypeStructField(structField)
-      case _: IntegerType => IntegralTypeStructField(structField)
-      case _: LongType => IntegralTypeStructField(structField)
-      case _: FloatType => FractionalTypeStructField(structField)
-      case _: DoubleType => FractionalTypeStructField(structField)
-      case dt: DecimalType => DecimalTypeStructField(structField, dt)
+      case _: StringType    =>StringTypeStructField(structField)
+      case _: BooleanType   => BooleanTypeStructField(structField)
+      case _: ByteType      => IntegralTypeStructField(structField)
+      case _: ShortType     => IntegralTypeStructField(structField)
+      case _: IntegerType   => IntegralTypeStructField(structField)
+      case _: LongType      => IntegralTypeStructField(structField)
+      case _: FloatType     => FractionalTypeStructField(structField)
+      case _: DoubleType    => FractionalTypeStructField(structField)
+      case dt: DecimalType  => DecimalTypeStructField(structField, dt)
       case _: TimestampType => DateTimeTypeStructField(structField, TimestampFieldValidator)
-      case _: DateType => DateTimeTypeStructField(structField, DateFieldValidator)
-      case at: ArrayType => ArrayTypeStructField(structField, at)
-      case st: StructType => StructTypeStructField(structField, st)
-      case _ => GeneralTypeStructField(structField)
+      case _: DateType      => DateTimeTypeStructField(structField, DateFieldValidator)
+      case at: ArrayType    => ArrayTypeStructField(structField, at)
+      case st: StructType   => StructTypeStructField(structField, st)
+      case _                => GeneralTypeStructField(structField)
     }
   }
 
@@ -175,7 +204,9 @@ object TypedStructField {
     def scale: Int = dataType.scale
   }
 
-  sealed case class DateTimeTypeStructField(override val structField: StructField, validator: DateTimeFieldValidator) extends TypedStructField(structField) {
+  sealed case class DateTimeTypeStructField(override val structField: StructField, validator: DateTimeFieldValidator)
+    extends TypedStructField(structField) {
+
     override def pattern: Try[Option[DateTimePattern]] = {
       parser.map(x => Some(x.pattern))
     }
@@ -207,6 +238,8 @@ object TypedStructField {
   }
 
   sealed trait WeakSupport {
+    this: TypedStructField =>
+
     def structField: StructField
 
     def convertString(string: String): Try[Any] = {
@@ -214,7 +247,7 @@ object TypedStructField {
     }
 
     def validate(): Seq[ValidationIssue] = {
-      Nil
+      FieldValidator.validate(this)
     }
   }
 

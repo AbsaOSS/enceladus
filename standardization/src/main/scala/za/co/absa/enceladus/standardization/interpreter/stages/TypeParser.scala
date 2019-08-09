@@ -94,19 +94,20 @@ object TypeParser extends StandardizationCommon {
                     origSchema: StructType,
                     parent: Option[Parent] = None): TypeParser = {
     val parserClass: (String, StructType, Option[Parent]) => TypeParser = field.dataType match {
-      case _: ArrayType => ArrayParser(TypedStructField.asArrayTypeStructField(field), _, _, _)
-      case _: StructType => StructParser(TypedStructField.asStructTypeStructField(field), _, _, _)
-      case _: ByteType => IntegralParser(TypedStructField(field), _, _, _,Set(ShortType, IntegerType, LongType), Byte.MinValue, Byte.MaxValue)
-      case _: ShortType => IntegralParser(TypedStructField(field), _, _, _, Set(IntegerType, LongType), Short.MinValue, Short.MaxValue)
-      case _: IntegerType => IntegralParser(TypedStructField(field), _, _, _, Set(LongType), Int.MinValue, Int.MaxValue)
-      case _: LongType => IntegralParser(TypedStructField(field), _, _, _, Set.empty, Long.MinValue, Long.MaxValue)
-      case _: FloatType | _: DoubleType => FractionalParser(TypedStructField.asFractionalTypeStructField(field), _, _, _)
-      case _: DecimalType => DecimalParser(TypedStructField(field), _, _, _)
-      case _: StringType => StringParser(TypedStructField(field), _, _, _)
-      case _: BooleanType => BooleanParser(TypedStructField(field), _, _, _)
-      case _: DateType => DateParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _)
+      case _: ArrayType     => ArrayParser(TypedStructField.asArrayTypeStructField(field), _, _, _)
+      case _: StructType    => StructParser(TypedStructField.asStructTypeStructField(field), _, _, _)
+      case _: ByteType      => IntegralParser(TypedStructField(field), _, _, _,Set(ShortType, IntegerType, LongType), Byte.MinValue, Byte.MaxValue)
+      case _: ShortType     => IntegralParser(TypedStructField(field), _, _, _, Set(IntegerType, LongType), Short.MinValue, Short.MaxValue)
+      case _: IntegerType   => IntegralParser(TypedStructField(field), _, _, _, Set(LongType), Int.MinValue, Int.MaxValue)
+      case _: LongType      => IntegralParser(TypedStructField(field), _, _, _, Set.empty, Long.MinValue, Long.MaxValue)
+      case _: FloatType |
+           _: DoubleType    => FractionalParser(TypedStructField.asFractionalTypeStructField(field), _, _, _)
+      case _: DecimalType   => DecimalParser(TypedStructField(field), _, _, _)
+      case _: StringType    => StringParser(TypedStructField(field), _, _, _)
+      case _: BooleanType   => BooleanParser(TypedStructField(field), _, _, _)
+      case _: DateType      => DateParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _)
       case _: TimestampType => TimestampParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _)
-      case t => throw new IllegalStateException(s"${t.typeName} is not a supported type in this version of Enceladus")
+      case t                => throw new IllegalStateException(s"${t.typeName} is not a supported type in this version of Enceladus")
     }
     parserClass(path, origSchema, parent)
   }

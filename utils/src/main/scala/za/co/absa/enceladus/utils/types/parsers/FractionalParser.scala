@@ -31,10 +31,10 @@ class FractionalParser (val allowInfinity: Boolean) {
   def parseDouble(value: String): Double = {
     val result = value.toDouble
     if (result == Double.NaN) {
-      throw new NumberFormatException(s"The Float value '$value' is NaN")
+      throw new NumberFormatException(s"The Double value '$value' is NaN")
     }
     if (result.isInfinity && (!allowInfinity)) {
-      throw new NumberFormatException(s"The Float value '$value' is infinite or out of range")
+      throw new NumberFormatException(s"The Double value '$value' is infinite or out of range")
     }
     result
   }
