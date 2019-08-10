@@ -181,7 +181,13 @@
         <cronstrue.version>1.79.0</cronstrue.version>
         <!--other properties-->
         <skip.integration.tests>true</skip.integration.tests>
-        <scalastyle.configLocation>${project.basedir}/scalastyle-config.xml</scalastyle.configLocation>
+        <!--suppress UnresolvedMavenProperty -->
+        <scalastyle.configLocation>${maven.multiModuleProjectDirectory}/scalastyle-config.xml</scalastyle.configLocation>
+        <!-- logging-->
+        <log.level.base>WARN</log.level.base>
+        <log.level.testcode>ERROR</log.level.testcode>
+        <log.pattern>[%p] %d{yy/MM/dd HH:mm:ss} %c{4}: %m%n</log.pattern>
+        <log.specialfilters.acceptonmatch>false</log.specialfilters.acceptonmatch>
     </properties>
 
     <dependencies>
@@ -282,6 +288,34 @@
     </dependencies>
 
     <build>
+        <sourceDirectory>src/main/scala</sourceDirectory>
+        <testSourceDirectory>src/test/scala</testSourceDirectory>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.scalastyle</groupId>
+                    <artifactId>scalastyle-maven-plugin</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <verbose>false</verbose>
+                        <failOnViolation>true</failOnViolation>
+                        <failOnWarning>false</failOnWarning>
+                        <includeTestSourceDirectory>false</includeTestSourceDirectory>
+                        <sourceDirectory>${project.basedir}/src/main/scala</sourceDirectory>
+                        <testSourceDirectory>${project.basedir}/src/test/scala</testSourceDirectory>
+                        <configLocation>${scalastyle.configLocation}</configLocation>
+                        <outputFile>${project.basedir}/target/scalastyle-output.xml</outputFile>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <!-- disable surefire -->
             <plugin>
@@ -331,28 +365,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.scalastyle</groupId>
-                <artifactId>scalastyle-maven-plugin</artifactId>
-                <version>1.0.0</version>
-                <configuration>
-                    <verbose>false</verbose>
-                    <failOnViolation>true</failOnViolation>
-                    <failOnWarning>false</failOnWarning>
-                    <includeTestSourceDirectory>false</includeTestSourceDirectory>
-                    <sourceDirectory>${project.basedir}/src/main/scala</sourceDirectory>
-                    <testSourceDirectory>${project.basedir}/src/test/scala</testSourceDirectory>
-                    <configLocation>${scalastyle.configLocation}</configLocation>
-                    <outputFile>${project.basedir}/target/scalastyle-output.xml</outputFile>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>com.amashchenko.maven.plugin</groupId>
                 <artifactId>gitflow-maven-plugin</artifactId>
                 <version>1.12.0</version>
@@ -378,7 +390,29 @@
                     </commitMessages>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <delimiters>
+                        <delimiter>@</delimiter>
+                    </delimiters>
+                </configuration>
+            </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
     </build>
 
     <profiles>
