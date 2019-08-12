@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework
 
-import org.apache.log4j.{LogManager, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 
 import util.control.Breaks._
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
@@ -25,7 +25,7 @@ import scala.collection.mutable.ArrayBuffer
 
 class Migrator(db: DocumentDb, migrations: Seq[Migration]) {
 
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   def getCollectionMigrations: Seq[CollectionMigration] = migrations.collect({ case m: CollectionMigration => m })
 

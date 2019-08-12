@@ -41,7 +41,7 @@ class EntityMapSuite extends FunSuite {
     // Adding the same mapping is ok
     enp.add("dataset", "test", 1, 2)
 
-    // Overwriting a mapping is ok
+    // Overwriting a mapping is not allowed
     assertThrows[IllegalStateException] {
       enp.add("dataset", "test", 1, 3)
     }

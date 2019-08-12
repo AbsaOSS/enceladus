@@ -33,10 +33,10 @@ abstract class EntityVersionMap {
   /**
     * Adds a 'name - version' mapping.
     *
-    * @param collectionName The name of the collection that contains the entity
+    * @param collectionName A collection name corresponding to an entity type
     * @param entityName     An entity name
-    * @param oldVersion     An version of the entity in the old version of the database
-    * @param newVersion     An version of the entity in the new version of the database
+    * @param oldVersion     A version of an entity in the old version of the database
+    * @param newVersion     A version of an entity in the new version of the database
     */
   @throws[IllegalStateException]
   final def add(collectionName: String, entityName: String, oldVersion: Int, newVersion: Int): Unit = {
@@ -53,23 +53,23 @@ abstract class EntityVersionMap {
   }
 
   /**
-    * An implementation if this abstract class should redefine this method. Clients of this class should use add()
+    * An implementation of this abstract class should redefine this method. Clients of this class should use add()
     * as it does additional checks.
     *
-    * @param collectionName The name of the collection that contains the entity
+    * @param collectionName A collection name corresponding to an entity type
     * @param entityName     An entity name
-    * @param oldVersion     An version of the entity in the old version of the database
-    * @param newVersion     An version of the entity in the new version of the database
+    * @param oldVersion     A version of an entity in the old version of the database
+    * @param newVersion     A version of an entity in the new version of the database
     */
   protected def addEntry(collectionName: String, entityName: String, oldVersion: Int, newVersion: Int): Unit
 
   /**
     * Gets a 'name - version' mapping.
     *
-    * @param collectionName The name of the collection that contains the entity
+    * @param collectionName A collection name corresponding to an entity type
     * @param entityName     An Entity name
-    * @param oldVersion     An version of the entity in the old version of the database
-    * @return An version of the entity in the new version of the database, None if the entity is not found
+    * @param oldVersion     A version of an entity in the old version of the database
+    * @return A version of an entity in the new version of the database, None if the entity is not found
     *         in the mapping
     */
   @throws[IllegalStateException]
@@ -79,10 +79,10 @@ abstract class EntityVersionMap {
     * Gets a safe 'name - version' mapping. If the mapping isn't found in the entity version map it is assumed
     * the original version number can be used
     *
-    * @param collectionName The name of the collection that contains the entity
+    * @param collectionName A collection name corresponding to an entity type
     * @param entityName     An Entity name
-    * @param oldVersion     An version of the entity in the old version of the database
-    * @return An version of the entity in the new version of the database, None if the entity is not found
+    * @param oldVersion     A version of an entity in the old version of the database
+    * @return A version of an entity in the new version of the database, None if the entity is not found
     *         in the mapping
     */
   def getSafeVersion(collectionName: String, entityName: String, oldVersion: Int): Int = {

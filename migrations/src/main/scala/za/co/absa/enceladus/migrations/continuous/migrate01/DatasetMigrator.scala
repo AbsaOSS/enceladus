@@ -17,8 +17,8 @@ package za.co.absa.enceladus.migrations.continuous.migrate01
 
 import java.time.ZonedDateTime
 
-import org.apache.log4j.{LogManager, Logger}
 import org.mongodb.scala.MongoDatabase
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.continuous.EntityVersionMap
 import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 import za.co.absa.enceladus.migrations.migrations.MigrationToV1.convertConformanceRule
@@ -26,6 +26,7 @@ import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 import za.co.absa.enceladus.migrations.migrations.model1.Serializer1
 import za.co.absa.enceladus.migrations.migrations.{model0, model1}
 
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 /**
@@ -35,10 +36,10 @@ import scala.util.control.NonFatal
   * @param databaseOld An instance of a MongoDB database connection containing old model documents.
   * @param databaseNew An instance of a MongoDB database connection containing new model documents.
   */
-final class MigratorDataset(evm: EntityVersionMap,
+final class DatasetMigrator(evm: EntityVersionMap,
                             databaseOld: MongoDatabase,
                             databaseNew: MongoDatabase) extends EntityMigrator(databaseOld, databaseNew) {
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   override protected val collectionBase: String = EntityMigrator.datasetCollection
 
@@ -50,11 +51,11 @@ final class MigratorDataset(evm: EntityVersionMap,
     * @param repo           An entity repository.
     */
   def migrateEntity(srcDatasetJson: String, objectId: String, repo: EntityRepository): Unit = {
-    val dataset1Opt = try {
+    Try {
       val fixJson = srcDatasetJson.replaceAll("\"jsonClass\" :", "\"_t\" :")
       val dataset0 = Serializer0.deserializeDataset(fixJson)
 
-      Option(model1.Dataset(
+      model1.Dataset(
         dataset0.name,
         dataset0.version,
         None,
@@ -67,22 +68,26 @@ final class MigratorDataset(evm: EntityVersionMap,
         ZonedDateTime.now(),
         migrationUserName,
         conformance = dataset0.conformance.map(migrateConformanceRule)
-      ))
-    } catch {
-      case NonFatal(e) =>
+      )
+    } match {
+      case Success(dataset1) =>
+        if (repo.doesDocumentExist(dataset1.name, dataset1.version)) {
+          resolveConflict(dataset1, objectId, repo)
+        } else {
+          normalInsert(dataset1, objectId, repo)
+        }
+      case Failure(e) =>
         log.warn(s"Encountered a serialization error for '$collectionBase': ${e.getMessage}")
-        None
     }
-
-    dataset1Opt.foreach(dataset1 => {
-      if (repo.doesDocumentExist(dataset1.name, dataset1.version)) {
-        resolveConflict(dataset1, objectId, repo)
-      } else {
-        normalInsert(dataset1, objectId, repo)
-      }
-    })
   }
 
+  /**
+    * Migrates a conformance rule replacing a foreign key reference if necessary.
+    * Only mapping rules have foreign key references in the model version 0.
+    *
+    * @param rule A conformance rule from the model version 0.
+    * @return The transformed conformance rule.
+    */
   def migrateConformanceRule(rule: model0.conformanceRule.ConformanceRule): model1.conformanceRule.ConformanceRule = {
     val migratedConformanceRule = convertConformanceRule(rule)
     migratedConformanceRule match {
@@ -118,7 +123,7 @@ final class MigratorDataset(evm: EntityVersionMap,
 
   /**
     * In case there is a conflict, resolve it by adding a new version of the dataset
-    * and register the mapping between the old version and the new one in ahe entity version map.
+    * and register the mapping between the old version and the new one in the entity version map.
     *
     * @param dataset  A dataset to save as an instance of Model 1 object
     * @param objectId An Object Id if the dataset
@@ -141,7 +146,7 @@ final class MigratorDataset(evm: EntityVersionMap,
       } catch {
         case NonFatal(e) =>
           if (retriesLeft > 0) {
-            log.warn(s"Unable to append a document for '$collectionBase': ${e.getMessage}")
+            log.warn(s"Unable to append a document for '$collectionBase': ${e.getMessage}. Retrying...")
           } else {
             throw e // Something went terribly wrong
           }
