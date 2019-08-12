@@ -103,8 +103,11 @@ object StandardizationJob {
     MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true, generateNewRun = true)
 
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
-    Atum.setAdditionalInfo(s"enceladus_info_date" -> cmd.reportDate)
-    Atum.setAdditionalInfo(s"enceladus_info_version" -> reportVersion.toString)
+    Atum.setAdditionalInfo("enceladus_info_date" -> cmd.reportDate)
+    Atum.setAdditionalInfo("enceladus_info_version" -> reportVersion.toString)
+
+    // Add the raw format of the input file(s) to Atum's metadta as well
+    Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
