@@ -181,8 +181,7 @@
         <cronstrue.version>1.79.0</cronstrue.version>
         <!--other properties-->
         <skip.integration.tests>true</skip.integration.tests>
-        <!--suppress UnresolvedMavenProperty -->
-        <scalastyle.configLocation>${maven.multiModuleProjectDirectory}/scalastyle-config.xml</scalastyle.configLocation>
+        <scalastyle.configLocation>${project.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <!-- logging-->
         <log.level.base>WARN</log.level.base>
         <log.level.testcode>ERROR</log.level.testcode>
