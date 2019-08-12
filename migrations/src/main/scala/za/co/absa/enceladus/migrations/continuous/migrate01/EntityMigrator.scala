@@ -29,7 +29,7 @@ object EntityMigrator {
 }
 
 /**
-  * An base class for continuous migration providers.
+  * A base class for continuous migration providers.
   * @param databaseOld A database to migrate from.
   * @param databaseNew A database to migrate to.
   */
@@ -38,19 +38,19 @@ abstract class EntityMigrator(databaseOld: MongoDatabase,
 
   protected val migrationUserName = "c_migration"
 
-  /** A collection base name. E.g. 'schema' or 'dataset' */
+  /** A collection base name. E.g. 'schema' or 'dataset'. */
   protected def collectionBase: String
 
-  /** A versioned collection name for the old version of the model. E.g. 'schema' or 'dataset' */
+  /** A versioned collection name for the old version of the model. E.g. 'schema' or 'dataset'. */
   protected lazy val collectionOld: String = MigrationUtils.getVersionedCollectionName(collectionBase, 0)
 
-  /** A versioned collection name for the new version of the model. E.g. 'schema_v1' or 'dataset_v1' */
+  /** A versioned collection name for the new version of the model. E.g. 'schema_v1' or 'dataset_v1'. */
   protected lazy val collectionNew: String = MigrationUtils.getVersionedCollectionName(collectionBase, 1)
 
   protected val dbOld: MongoDatabase = databaseOld
   protected val dbNew: MongoDatabase = databaseNew
 
-  /** Migrate a specific entity. This should be overridden an implemented in concrete classes */
+  /** Migrate a specific entity. This should be implemented in concrete subclasses. */
   def migrateEntity(srcJson: String, objectId: String, repo: EntityRepository): Unit
 
   /** Runs a continuous migration for schemas. */

@@ -53,11 +53,11 @@ class ObjectIdToolsSuite extends FunSuite {
     assert (ObjectIdTools.putObjectIdIfNotPresent(doc4, Some(oid)) == expected4)
   }
 
-  test("Test ObjectId value extractor") {
+  test("Test ObjectId value extractor should disregard whitespaces around keys and values") {
     val oid1 = """ "_id" : { "$oid" : "5a02c0799b2c26c8fc064e01" } """
     val oid2 = """"_id" : { "$oid" : "5a02c0799b2c26c8fc064e01" }"""
     val oid3 = """"_id":{ "$oid" : "5a02c0799b2c26c8fc064e01"}"""
-    val oid4 = """"_id":  "$oid"  :  "5a02c0799b2c26c8fc064e01"  }  """
+    val oid4 = """"_id": { "$oid"  :  "5a02c0799b2c26c8fc064e01"  }  """
     val oid5 = """"_id":{"$oid":"5a02c0799b2c26c8fc064e01"}"""
 
     val expected = "5a02c0799b2c26c8fc064e01"

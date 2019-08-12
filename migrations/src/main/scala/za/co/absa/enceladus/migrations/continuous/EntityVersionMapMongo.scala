@@ -40,13 +40,12 @@ final class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
   ensureCollectionExists()
 
   /**
-    * An implementation if this abstract class should redefine this method. Clients of this class should use add()
-    * as it does additional checks.
+    * A MongoDB implementation of an entity name-version mapping persistence.
     *
-    * @param collectionName The name of the collection that contains the entity
+    * @param collectionName A collection name corresponding to an entity type
     * @param entityName     An entity name
-    * @param oldVersion     An version of the entity in the old version of the database
-    * @param newVersion     An version of the entity in the new version of the database
+    * @param oldVersion     A version of an entity in the old version of the database
+    * @param newVersion     A version of an entity in the new version of the database
     */
   override protected def addEntry(collectionName: String,
                                   entityName: String,
@@ -60,10 +59,10 @@ final class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
   /**
     * Gets a 'name - version' mapping.
     *
-    * @param collectionName The name of the collection that contains the entity
+    * @param collectionName A collection name corresponding to an entity type
     * @param entityName     An entity name
-    * @param oldVersion     An version of the entity in the old version of the database
-    * @return An version of the entity in the new version of the database, None if the entity is not found
+    * @param oldVersion     A version of an entity in the old version of the database
+    * @return An option of the version of the entity in the new version of the database, None if the entity is not found
     *         in the mapping
     */
   @throws[IllegalStateException]
@@ -111,7 +110,7 @@ final class EntityVersionMapMongo(db: MongoDatabase) extends EntityVersionMap {
       db.getCollection(entityMapCollectionName)
         .createIndex(
           Document(
-            Seq("collection" -> 1, "entityName" -> 2, "oldVersion" -> 3)
+            Seq("collection" -> 1, "entityName" -> 1, "oldVersion" -> 1)
           ),
           IndexOptions().unique(true))
         .execute()

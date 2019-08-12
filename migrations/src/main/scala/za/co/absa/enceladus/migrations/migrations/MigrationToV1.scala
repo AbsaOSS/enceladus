@@ -17,7 +17,7 @@ package za.co.absa.enceladus.migrations.migrations
 
 import java.time.ZonedDateTime
 
-import org.apache.log4j.{LogManager, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.framework.migration._
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 import za.co.absa.enceladus.migrations.migrations.model1.{DefaultValue, Serializer1}
@@ -29,7 +29,7 @@ import scala.util.control.NonFatal
   */
 object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration {
 
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val migrationUserName = "migration"
 
   override val targetVersion: Int = 1

@@ -34,7 +34,7 @@ object ContinuousMigratorApp {
 
   def main(args: Array[String]): Unit = {
 
-    val cmd: ContinuousMigratorCmdConfig = ContinuousMigratorCmdConfig.getCmdLineArguments(args)
+    val cmd = ContinuousMigratorCmdConfig.getCmdLineArguments(args)
 
     val mongoClientSrc = MongoClient(cmd.mongoDbUrlSrc)
     val mongoClientTrg = MongoClient(cmd.mongoDbUrlTrg)

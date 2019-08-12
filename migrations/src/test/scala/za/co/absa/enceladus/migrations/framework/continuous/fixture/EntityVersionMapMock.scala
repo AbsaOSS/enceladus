@@ -22,28 +22,15 @@ import scala.collection.mutable.ListBuffer
 
 class EntityVersionMapMock extends EntityVersionMap {
 
-  /**
-    * Adds a 'name - version' mapping.
-    *
-    * @param collectionName The name of the collection that contains the entity
-    * @param entityName     An Entity name
-    * @param oldVersion     An version of the entity in the old version of the database
-    * @param newVersion     An version of the entity in the new version of the database
-    */
+  type LookupType = (String, String, Int)
+  private val db = new mutable.HashMap[LookupType, Int]()
+  private val actionsExecuted = new ListBuffer[String]
+
   override def addEntry(collectionName: String, entityName: String, oldVersion: Int, newVersion: Int): Unit = {
     db.put((collectionName, entityName, oldVersion), newVersion)
     actionsExecuted += s"EntityVersionMapMock.put($collectionName,$entityName,$oldVersion,$newVersion)"
   }
 
-  /**
-    * Gets a 'name - version' mapping.
-    *
-    * @param collectionName The name of the collection that contains the entity
-    * @param entityName     An Entity name
-    * @param oldVersion     An version of the entity in the old version of the database
-    * @return An version of the entity in the new version of the database, None if the entity is not found
-    *         in the mapping
-    */
   @throws[IllegalStateException]
   override def get(collectionName: String, entityName: String, oldVersion: Int): Option[Int] = {
     val versionOpt = db.get((collectionName, entityName, oldVersion))
@@ -56,8 +43,4 @@ class EntityVersionMapMock extends EntityVersionMap {
   def resetExecutedActions(): Unit = {
     actionsExecuted.clear()
   }
-
-  type LookupType = (String, String, Int)
-  private val db = new mutable.HashMap[LookupType, Int]()
-  private val actionsExecuted = new ListBuffer[String]
 }

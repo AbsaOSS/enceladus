@@ -17,14 +17,15 @@ package za.co.absa.enceladus.migrations.continuous.migrate01
 
 import java.time.ZonedDateTime
 
-import org.apache.log4j.{LogManager, Logger}
 import org.mongodb.scala.MongoDatabase
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.continuous.EntityVersionMap
 import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 import za.co.absa.enceladus.migrations.migrations.model1
 import za.co.absa.enceladus.migrations.migrations.model1.{DefaultValue, Serializer1}
 
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 /**
@@ -34,10 +35,10 @@ import scala.util.control.NonFatal
   * @param databaseOld An instance of a MongoDB database connection containing old model documents.
   * @param databaseNew An instance of a MongoDB database connection containing new model documents.
   */
-final class MigratorMappingTable(evm: EntityVersionMap,
+final class MappingTableMigrator(evm: EntityVersionMap,
                                  databaseOld: MongoDatabase,
                                  databaseNew: MongoDatabase) extends EntityMigrator(databaseOld, databaseNew) {
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   override protected val collectionBase: String = EntityMigrator.mappingTableCollection
 
@@ -49,7 +50,7 @@ final class MigratorMappingTable(evm: EntityVersionMap,
     * @param repo                An entity repository.
     */
   def migrateEntity(srcMappingTableJson: String, objectId: String, repo: EntityRepository): Unit = {
-    val mappingTable1Opt = try {
+    Try {
       val mappingTable0 = Serializer0.deserializeMappingTable(srcMappingTableJson)
 
       val defaultValueList = mappingTable0.defaultMappingValue match {
@@ -57,7 +58,7 @@ final class MigratorMappingTable(evm: EntityVersionMap,
         case None => Nil
       }
 
-      Option(model1.MappingTable(
+      model1.MappingTable(
         mappingTable0.name,
         mappingTable0.version,
         None,
@@ -69,20 +70,17 @@ final class MigratorMappingTable(evm: EntityVersionMap,
         migrationUserName,
         ZonedDateTime.now(),
         migrationUserName
-      ))
-    } catch {
-      case NonFatal(e) =>
+      )
+    } match {
+      case Success(mappingTable1) =>
+        if (repo.doesDocumentExist(mappingTable1.name, mappingTable1.version)) {
+          resolveConflict(mappingTable1, objectId, repo)
+        } else {
+          normalInsert(mappingTable1, objectId, repo)
+        }
+      case Failure(e) =>
         log.warn(s"Encountered a serialization error for '$collectionBase': ${e.getMessage}")
-        None
     }
-
-    mappingTable1Opt.foreach(mappingTable1 => {
-      if (repo.doesDocumentExist(mappingTable1.name, mappingTable1.version)) {
-        resolveConflict(mappingTable1, objectId, repo)
-      } else {
-        normalInsert(mappingTable1, objectId, repo)
-      }
-    })
   }
 
   /**
@@ -108,7 +106,7 @@ final class MigratorMappingTable(evm: EntityVersionMap,
 
   /**
     * In case there is a conflict, resolve it by adding a new version of the mapping table
-    * and register the mapping between the old version and the new one in ahe entity version map.
+    * and register the mapping between the old version and the new one in the entity version map.
     *
     * @param mappingTable A mapping table to save as an instance of Model 1 object
     * @param objectId     An Object Id if the mapping table
@@ -131,7 +129,7 @@ final class MigratorMappingTable(evm: EntityVersionMap,
       } catch {
         case NonFatal(e) =>
           if (retriesLeft > 0) {
-            log.warn(s"Unable to append a document for '$collectionBase': ${e.getMessage}")
+            log.warn(s"Unable to append a document for '$collectionBase': ${e.getMessage}. Retrying...")
           } else {
             throw e // Something went terribly wrong
           }

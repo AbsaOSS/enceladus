@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.migrations.framework.dao
 
-import org.apache.log4j.{LogManager, Logger}
 import org.mongodb.scala.bson.codecs.Macros._
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
@@ -24,6 +23,7 @@ import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.{MongoCollection, MongoDatabase, MongoNamespace}
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.framework.model.DbVersion
 import za.co.absa.enceladus.migrations.framework.Configuration.DatabaseVersionCollectionName
 import za.co.absa.enceladus.migrations.framework.migration.IndexField
@@ -38,7 +38,7 @@ import scala.util.control.NonFatal
   * passed as a constructor parameter.
   */
 class MongoDb(db: MongoDatabase) extends DocumentDb {
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[DbVersion]), DEFAULT_CODEC_REGISTRY)
 

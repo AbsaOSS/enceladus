@@ -15,27 +15,28 @@
 
 package za.co.absa.enceladus.migrations.continuous.migrate01
 
-import org.apache.log4j.{LogManager, Logger}
 import org.mongodb.scala.MongoDatabase
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.continuous.EntityVersionMap
 import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 import za.co.absa.enceladus.migrations.migrations.model1.Serializer1
 import za.co.absa.enceladus.migrations.migrations.{MigrationToV1, model1}
 
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 /**
-  * The class provides schemas continuous migration from model version 0 to model version 1.
+  * The class provides continuous migration for schemas from model version 0 to model version 1.
   *
   * @param evm         An entity mapper for tracking the mapping between old versions of entities and new ones.
   * @param databaseOld An instance of a MongoDB database connection containing old model documents.
   * @param databaseNew An instance of a MongoDB database connection containing new model documents.
   */
-final class MigratorSchema(evm: EntityVersionMap,
+final class SchemaMigrator(evm: EntityVersionMap,
                            databaseOld: MongoDatabase,
                            databaseNew: MongoDatabase) extends EntityMigrator(databaseOld, databaseNew) {
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   override protected val collectionBase: String = EntityMigrator.schemaCollection
 
@@ -43,33 +44,30 @@ final class MigratorSchema(evm: EntityVersionMap,
     * Migrates a single instance of schema.
     *
     * @param srcSchemaJson A JSON representation of a schema in the model 0 format.
-    * @param objectId      An Object Id if the schema.
+    * @param objectId      An Object Id of the schema.
     * @param repo          An entity repository.
     */
   def migrateEntity(srcSchemaJson: String, objectId: String, repo: EntityRepository): Unit = {
-    val schema1Opt = try {
+    Try {
       val schema0 = Serializer0.deserializeSchema(srcSchemaJson)
-      Option(model1.Schema(
+      model1.Schema(
         schema0.name,
         schema0.version,
         None,
         userCreated = migrationUserName,
         userUpdated = migrationUserName,
         fields = schema0.fields.map(MigrationToV1.convertSchemaField(_, Nil))
-      ))
-    } catch {
-      case NonFatal(e) =>
+      )
+    } match {
+      case Success(schema1) =>
+        if (repo.doesDocumentExist(schema1.name, schema1.version)) {
+          resolveConflict(schema1, objectId, repo)
+        } else {
+          normalInsert(schema1, objectId, repo)
+        }
+      case Failure(e) =>
         log.warn(s"Encountered a serialization error for '$collectionBase': ${e.getMessage}")
-        None
     }
-
-    schema1Opt.foreach(schema1 => {
-      if (repo.doesDocumentExist(schema1.name, schema1.version)) {
-        resolveConflict(schema1, objectId, repo)
-      } else {
-        normalInsert(schema1, objectId, repo)
-      }
-    })
   }
 
   /**
@@ -94,7 +92,7 @@ final class MigratorSchema(evm: EntityVersionMap,
 
   /**
     * In case there is a conflict, resolve it by adding a new version of the schema
-    * and register the mapping between the old version and the new one in ahe entity version map.
+    * and register the mapping between the old version and the new one in the entity version map.
     *
     * @param schema   A schema to save as an instance of Model 1 object
     * @param objectId An Object Id if the schema
@@ -117,7 +115,7 @@ final class MigratorSchema(evm: EntityVersionMap,
       } catch {
         case NonFatal(e) =>
           if (retriesLeft > 0) {
-            log.warn(s"Unable to append a document for '$collectionBase': ${e.getMessage}")
+            log.warn(s"Unable to append a document for '$collectionBase': ${e.getMessage}. Retrying...")
           } else {
             throw e // Something went terribly wrong
           }

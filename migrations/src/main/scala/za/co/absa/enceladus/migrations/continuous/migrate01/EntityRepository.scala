@@ -81,7 +81,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
     * Returns true if a document with the particular name and version exists in the collection.
     *
     * @param name    A name of an entity.
-    * @param version A version of the entity.
+    * @param version A version of an entity.
     * @return true if such a document exists, false otherwise.
     */
   def doesDocumentExist(name: String, version: Int): Boolean = {
@@ -99,7 +99,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
     * Returns true if a run with a particular runId, datasetName and datasetVersion exists in the collection.
     *
     * @param datasetName    A name of an entity.
-    * @param datasetVersion A version of the entity.
+    * @param datasetVersion A version of an entity.
     * @return true if such a document exists, false otherwise.
     */
   def doesRunExist(runId: Int, datasetName: String, datasetVersion: Int): Boolean = {
@@ -134,7 +134,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
     * Gets the latest version of a run having a particular dataset name and version.
     *
     * @param datasetName    A name of a dataset.
-    * @param datasetVersion A version of the dataset.
+    * @param datasetVersion A version of a dataset.
     * @return the latest run id of an entity, or 0 if the collection is empty.
     */
   def getLatestRunId(datasetName: String, datasetVersion: Int): Int = {
