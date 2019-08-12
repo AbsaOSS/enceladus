@@ -258,7 +258,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
   test("Test lit() of a plain field") {
     val df = spark.sparkContext.parallelize(plainSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "planet", c => {
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "planet", () => {
       lit("Earth")
     })
 
@@ -284,7 +284,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     // Struct of struct
     val df = spark.sparkContext.parallelize(structOfStructSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "employee.address.conformedType", c => {
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "employee.address.conformedType", () => {
       lit("City")
     })
 
@@ -315,7 +315,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     // Array of struct
     val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.conformedType", c => {
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.conformedType", () => {
       lit("Person")
     })
 
@@ -344,7 +344,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     // Array of struct
     val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.department", c => {
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.department", () => {
       lit("IT")
     })
 
@@ -374,7 +374,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     // Array of struct
     val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "legs.conditions.conformedSystem", c => {
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "legs.conditions.conformedSystem", () => {
       lit("Trading")
     })
 

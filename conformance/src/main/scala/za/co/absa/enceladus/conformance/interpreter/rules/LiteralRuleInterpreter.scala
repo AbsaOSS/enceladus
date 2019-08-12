@@ -40,7 +40,7 @@ case class LiteralRuleInterpreter(rule: LiteralConformanceRule) extends RuleInte
 
   /** Handles literal conformance rule for nested fields. */
   private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
-    DeepArrayTransformations.nestedAddColumn(df, rule.outputColumn, c => inferStrictestType(rule.value))
+    DeepArrayTransformations.nestedAddColumn(df, rule.outputColumn, () => inferStrictestType(rule.value))
   }
 
   /** Handles literal conformance rule for root (non-nested) fields. */

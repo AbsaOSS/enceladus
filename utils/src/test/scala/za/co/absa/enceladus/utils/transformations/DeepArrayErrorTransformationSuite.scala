@@ -873,7 +873,7 @@ class DeepArrayErrorTransformationSuite extends FunSuite with SparkTestBase with
     }.getMessage contains "Output field cannot be empty")
 
     assert(intercept[IllegalArgumentException] {
-      DeepArrayTransformations.nestedAddColumn(df, "value", c => lit("foo")).printSchema()
+      DeepArrayTransformations.nestedAddColumn(df, "value", () => lit("foo")).printSchema()
     }.getMessage contains "The column 'value' already exists")
 
   }
