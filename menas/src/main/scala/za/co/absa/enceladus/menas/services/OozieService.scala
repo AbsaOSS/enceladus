@@ -44,10 +44,10 @@ class OozieService @Autowired() (oozieRepository: OozieRepository) {
     }
     val reportDateString = reportDate match {
       case Some(date) => date
-      case None => {
+      case None =>
         val d = LocalDate.now().plusDays(oozieSchedule.reportDateOffset)
         DateTimeFormatter.ofPattern("yyyy-MM-dd").format(d)
-      }
+
     }
     oozieRepository.runWorkflow(wfPath, oozieSchedule.runtimeParams, reportDateString)
   }

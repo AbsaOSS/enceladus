@@ -30,7 +30,6 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.fs.permission.FsAction
 import org.apache.hadoop.fs.permission.FsPermission
 import org.apache.oozie.client.OozieClient
-import org.apache.oozie.client.WorkflowJob.{Status => WorkflowStatus}
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
@@ -326,7 +325,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   def runWorkflow(wfPath: String, runtimeParams: RuntimeConfig, reportDate: String): Future[String] = {
     getOozieClientWrap { oozieClient: OozieClient =>
       val conf = getOozieConf(oozieClient, runtimeParams)
-      conf.setProperty(OozieClient.APP_PATH, s"$wfPath");
+      conf.setProperty(OozieClient.APP_PATH, wfPath);
       conf.setProperty("reportDate", reportDate)
       oozieClient.run(conf)
     }
