@@ -210,8 +210,6 @@ The list of additional options available for running Standardization:
 | --trimValues **true/false** | Indicates if string fields of fixed with text data should be trimmed.        |
 | --is-xcom **true/false**   | If `true` a mainframe input file is expected to have XCOM RDW headers.        |
 | --folder-prefix **prefix** | Adds a folder prefix before the date tokens.                                  |
-| --experimental-mapping-rule **true/false** | If `true`, the experimental optimized mapping rule implementation is used. The default value is build-specific and is set in 'application.properties'. |
-| --catalyst-workaround **true/false** | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. It is `true` by default. Turn this off only is you encounter timing freeze issues when running Conformance. | 
 | --debug-set-raw-path **path** | Override the path of the raw data (used for testing purposes).             |
 
 The list of additional options available for running Conformance:
@@ -219,6 +217,9 @@ The list of additional options available for running Conformance:
 |            Option          |                           Description |
 | -------------------------- |:----------------------------------------------------------------------------- |
 | --mapping-table-pattern **pattern** | A pattern to look for mapping table for the specified date.<br>The list of possible substitutions: `{0}` - year, `{1}` - month, `{2}` - day of month. By default the pattern is `reportDate={0}-{1}-{2}`. Special symbols in the pattern need to be escaped. For example, an empty pattern can be be specified as `\'\'` (single quotes are escaped using a backslash character).|
+| --experimental-mapping-rule **true/false** | If `true`, the experimental optimized mapping rule implementation is used. The default value is build-specific and is set in 'application.properties'. |
+| --catalyst-workaround **true/false** | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. It is `true` by default. Turn this off only is you encounter timing freeze issues when running Conformance. | 
+| --autoclean-std-folder **true/false** | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job. |
 
 ## <a name="contribute"/>How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).

@@ -38,7 +38,8 @@ case class CmdConfig(datasetName: String = "",
     publishPathOverride: Option[String] = None,
     folderPrefix: Option[String] = None,
     experimentalMappingRule: Option[Boolean] = None,
-    isCatalystWorkaroundEnabled: Option[Boolean] = None)
+    isCatalystWorkaroundEnabled: Option[Boolean] = None,
+    autocleanStandardizedFolder: Option[Boolean] = None)
 
 object CmdConfig {
 
@@ -138,6 +139,11 @@ object CmdConfig {
     opt[Boolean]("catalyst-workaround").optional().action((value, config) =>
       config.copy(isCatalystWorkaroundEnabled = Option(value))).text("Turn on or off Catalyst workaround feature. " +
       "This overrides 'conformance.catalyst.workaround' configuration value provided in 'application.conf'.")
+
+    opt[Boolean]("autoclean-std-folder").optional().action((value, config) =>
+      config.copy(autocleanStandardizedFolder = Option(value))).text("Deletes standardized data from HDFS once " +
+      "it is successfully conformed. This overrides 'conformance.autoclean.standardized.hdfs.folder' configuration " +
+      " value provided in 'application.conf'.")
 
     help("help").text("prints this usage text")
   }
