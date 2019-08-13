@@ -119,14 +119,14 @@ object DeepArrayTransformations {
     *
     * @param df            Dataframe to be transformed
     * @param newColumnName A column name to be created
-    * @param expression    A function that returns the value of the new column as a Spark expression
+    * @param expression    A new column value
     * @return A dataframe with a new field that contains transformed values.
     */
   def nestedAddColumn(df: DataFrame,
                       newColumnName: String,
-                      expression: () => Column): DataFrame = {
+                      expression: Column): DataFrame = {
     try {
-      nestedWithColumnMapHelper(df, newColumnName, "", Some(_ => expression()), None)._1
+      nestedWithColumnMapHelper(df, newColumnName, "", Some(_ => expression), None)._1
     } catch {
       case e: IllegalArgumentException if e.getMessage.contains("Output field cannot be empty") =>
         throw new IllegalArgumentException(s"The column '$newColumnName' already exists.", e)
