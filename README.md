@@ -208,7 +208,10 @@ The list of additional options available for running Standardization:
 | --csv-quote **character**  | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. |
 | --csv-escape **character** | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used. |
 | --trimValues **true/false** | Indicates if string fields of fixed with text data should be trimmed.        |
+| --is-xcom **true/false**   | If `true` a mainframe input file is expected to have XCOM RDW headers.        |
 | --folder-prefix **prefix** | Adds a folder prefix before the date tokens.                                  |
+| --experimental-mapping-rule **true/false** | If `true`, an experimental optimized mapping rule implementation is used. The default value is environment-specific and is set in configuration files. |
+| --catalyst-workaround **true/false** | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. It is `true` by default. Turn this off only is you encounter timing freeze issues when running Conformance. | 
 | --debug-set-raw-path **path** | Override the path of the raw data (used for testing purposes).             |
 
 The list of additional options available for running Conformance:

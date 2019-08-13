@@ -39,9 +39,12 @@ HEADER=""
 CSV_QUOTE=""
 CSV_ESCAPE=""
 TRIM_VALUES=""
+IS_XCOM=""
 MAPPING_TABLE_PATTERN=""
 FOLDER_PREFIX=""
 DEBUG_SET_RAW_PATH=""
+EXPERIMENTAL_MAPPING_RULE=""
+CATALYST_WORKAROUND=""
 
 # Security command line defaults
 MENAS_CREDENTIALS_FILE=""
@@ -147,6 +150,10 @@ case $key in
     TRIM_VALUES="$2"
     shift 2 # past argument and value
     ;;
+    --is-xcom)
+    IS_XCOM="$2"
+    shift 2 # past argument and value
+    ;;
     --mapping-table-pattern)
     MAPPING_TABLE_PATTERN="$2"
     shift 2 # past argument and value
@@ -166,6 +173,14 @@ case $key in
     ;;
     --menas-auth-keytab)
     MENAS_AUTH_KEYTAB="$2"
+    shift 2 # past argument and value
+    ;;
+    --experimental-mapping-rule)
+    EXPERIMENTAL_MAPPING_RULE="$2"
+    shift 2 # past argument and value
+    ;;
+    --catalyst-workaround)
+    CATALYST_WORKAROUND="$2"
     shift 2 # past argument and value
     ;;
     *)    # unknown option
@@ -255,8 +270,11 @@ add_to_cmd_line "--header" ${HEADER}
 add_to_cmd_line "--csv-quote" ${CSV_QUOTE}
 add_to_cmd_line "--csv-escape" ${CSV_ESCAPE}
 add_to_cmd_line "--trimValues" ${TRIM_VALUES}
+add_to_cmd_line "--is-xcom" ${IS_XCOM}
 add_to_cmd_line "--folder-prefix" ${FOLDER_PREFIX}
 add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
+add_to_cmd_line "--experimental-mapping-rule" ${EXPERIMENTAL_MAPPING_RULE}
+add_to_cmd_line "--catalyst-workaround" ${CATALYST_WORKAROUND}
 
 echo "Command line:"
 echo "$CMD_LINE"
