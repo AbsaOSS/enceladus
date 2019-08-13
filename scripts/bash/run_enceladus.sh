@@ -288,7 +288,7 @@ if [[ -z "$DRY_RUN" ]]; then
     # Initializing Kerberos ticket
     if [[ ! -z "$MENAS_AUTH_KEYTAB" ]]; then
       # Get principle stored in the keyfile (Thanks @Zejnilovic)
-      PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9]*?(?=@)" | head -1`
+      PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1`
       # Alternative way, might be less reliable
       # PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1`
       if [[ ! -z "$PR" ]]; then
