@@ -26,5 +26,8 @@ conformance.mapping.rule.experimental.implementation=false
 # Enable workaround for Catalyst execution plan optimization freeze
 conformance.catalyst.workaround=true
 
+# Automatically delete standardized data folder after successful run of a Conformance job
+conformance.autoclean.standardized.hdfs.folder=false
+
 #system-wide time zone
 timezone="UTC"

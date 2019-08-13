@@ -45,6 +45,7 @@ FOLDER_PREFIX=""
 DEBUG_SET_RAW_PATH=""
 EXPERIMENTAL_MAPPING_RULE=""
 CATALYST_WORKAROUND=""
+AUTOCLEAN_STD_FOLDER=""
 
 # Security command line defaults
 MENAS_CREDENTIALS_FILE=""
@@ -183,6 +184,10 @@ case $key in
     CATALYST_WORKAROUND="$2"
     shift 2 # past argument and value
     ;;
+    --autoclean-std-folder)
+    AUTOCLEAN_STD_FOLDER="$2"
+    shift 2 # past argument and value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -275,6 +280,7 @@ add_to_cmd_line "--folder-prefix" ${FOLDER_PREFIX}
 add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
 add_to_cmd_line "--experimental-mapping-rule" ${EXPERIMENTAL_MAPPING_RULE}
 add_to_cmd_line "--catalyst-workaround" ${CATALYST_WORKAROUND}
+add_to_cmd_line "--autoclean-std-folder" ${AUTOCLEAN_STD_FOLDER}
 
 echo "Command line:"
 echo "$CMD_LINE"
