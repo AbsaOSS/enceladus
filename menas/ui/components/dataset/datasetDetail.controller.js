@@ -444,11 +444,11 @@ sap.ui.define([
     },
 
     scheduleSuspend: function() {
-      
+      OozieService.suspend();
     },
 
     scheduleResume: function() {
-      
+      OozieService.resume();
     },
 
     // Monitoring related part

@@ -19,7 +19,7 @@ var OozieService = new function() {
 
   const model = sap.ui.getCore().getModel();
   const eventBus = sap.ui.getCore().getEventBus();
-  
+
   this.getCoordinatorStatus = function() {
     const coordinatorId = model.getProperty("/currentDataset/schedule/activeInstance/coordinatorId")
     if(coordinatorId) {
@@ -33,9 +33,29 @@ var OozieService = new function() {
     const oSchedule = model.getProperty("/currentDataset/schedule")
     if(oSchedule) {
       RestClient.post("api/oozie/runNow", oSchedule).then((oData) => {
-        MessageToast.show(`Schedule has been submitted with ID: ${oData}`, {duration: 10000});
+        sap.m.MessageToast.show(`Schedule has been submitted with ID: ${oData}`, {duration: 10000});
       })
     }
   };
-  
+
+  this.suspend = function() {
+    const oSchedule = model.getProperty("/currentDataset/schedule")
+    if(oSchedule && oSchedule.activeInstance) {
+      RestClient.post(`api/oozie/suspend/${oSchedule.activeInstance.coordinatorId}`).then((oData) => {
+        sap.m.MessageToast.show(`Schedule ${oSchedule.activeInstance.coordinatorId} has been suspended`, {duration: 10000});
+        model.setProperty("/currentDataset/schedule/activeInstance/status", oData);
+      })
+    }
+  };
+
+  this.resume = function() {
+    const oSchedule = model.getProperty("/currentDataset/schedule")
+    if(oSchedule && oSchedule.activeInstance) {
+      RestClient.post(`api/oozie/resume/${oSchedule.activeInstance.coordinatorId}`).then((oData) => {
+        sap.m.MessageToast.show(`Schedule ${oSchedule.activeInstance.coordinatorId} has been resumed`, {duration: 10000});
+        model.setProperty("/currentDataset/schedule/activeInstance/status", oData);
+      })
+    }
+  };
+
 }();

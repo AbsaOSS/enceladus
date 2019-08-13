@@ -43,6 +43,7 @@ import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
 import za.co.absa.enceladus.menas.exceptions.EntityAlreadyExistsException
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import OozieRepository._
+import scala.util.Try
 
 
 object OozieRepository {
@@ -208,7 +209,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   }
 
   /**
-   * Get status of submitted coordinater
+   * Get status of submitted coordinator
    */
   def getCoordinatorStatus(coordId: String): Future[OozieCoordinatorStatus] = {
     getOozieClientWrap({ oozieClient: OozieClient =>
@@ -223,20 +224,13 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   }
 
   /**
-   * Get status of a running workflow
-   */
-  def getJobStatus(jobId: String): Future[WorkflowStatus] = {
-    getOozieClientWrap({ oozieClient: OozieClient =>
-      oozieClient.getJobInfo(jobId).getStatus
-    })
-  }
-
-  /**
    * Kill a running coordinator
    */
   def killCoordinator(coordId: String): Future[Unit] = {
     getOozieClientWrap({ oozieClient: OozieClient =>
-      oozieClient.kill(coordId)
+      Try {
+        oozieClient.kill(coordId)
+      }
     })
   }
 
@@ -329,11 +323,12 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   /**
    * Run a workflow now
    */
-  def runWorkflow(wfPath: String, runtimeParams: RuntimeConfig): Future[String] = {
+  def runWorkflow(wfPath: String, runtimeParams: RuntimeConfig, reportDate: String): Future[String] = {
     getOozieClientWrap { oozieClient: OozieClient =>
       val conf = getOozieConf(oozieClient, runtimeParams)
       conf.setProperty(OozieClient.APP_PATH, s"$wfPath");
-      oozieClient.submit(conf)
+      conf.setProperty("reportDate", reportDate)
+      oozieClient.run(conf)
     }
   }
 

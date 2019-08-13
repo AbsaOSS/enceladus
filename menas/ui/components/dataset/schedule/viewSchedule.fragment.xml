@@ -73,6 +73,8 @@
         <Text text="{/currentDataset/schedule/datasetVersion}" />
         <Label text="Mapping Table Folder Pattern" />
         <Text text="{/currentDataset/schedule/mappingTablePattern}" />
+        <Label text="Report Date Offset" />
+        <Text text="{/currentDataset/schedule/reportDateOffset}" />
         <Label text="Data Format"></Label>
         <Text text="{/currentDataset/schedule/rawFormat/name}" />
         <Label text="XML Row Tag" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'xml' }"></Label>
