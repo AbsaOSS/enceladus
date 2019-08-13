@@ -258,9 +258,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
   test("Test lit() of a plain field") {
     val df = spark.sparkContext.parallelize(plainSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "planet", c => {
-      lit("Earth")
-    })
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "planet", lit("Earth"))
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = dfOut.toJSON.collect.mkString("\n")
@@ -284,9 +282,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     // Struct of struct
     val df = spark.sparkContext.parallelize(structOfStructSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "employee.address.conformedType", c => {
-      lit("City")
-    })
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "employee.address.conformedType", lit("City"))
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = dfOut.toJSON.collect.mkString("\n")
@@ -315,9 +311,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     // Array of struct
     val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.conformedType", c => {
-      lit("Person")
-    })
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.conformedType", lit("Person"))
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = dfOut.toJSON.collect.mkString("\n")
@@ -344,9 +338,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     // Array of struct
     val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.department", c => {
-      lit("IT")
-    })
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "person.department", lit("IT"))
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = dfOut.toJSON.collect.mkString("\n")
@@ -374,9 +366,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     // Array of struct
     val df = spark.sparkContext.parallelize(arraysOfStrtuctsDeepSampleN).toDF
 
-    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "legs.conditions.conformedSystem", c => {
-      lit("Trading")
-    })
+    val dfOut = DeepArrayTransformations.nestedAddColumn(df, "legs.conditions.conformedSystem", lit("Trading"))
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = dfOut.toJSON.collect.mkString("\n")
