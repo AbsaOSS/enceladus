@@ -183,10 +183,10 @@ class ConfigSuite extends FunSuite with SparkTestBase {
     val publishPathFolderPrefix = DynamicConformanceJob.buildPublishPath(infoDateColumn, infoVersionColumn,
         cmdConfigFolderPrefix, conformanceDataset, cmdConfigFolderPrefix.reportVersion.get)
     assert(publishPathFolderPrefix === s"$hdfsPublishPath/$folderPrefix/$infoDateColumn=$reportDate/$infoVersionColumn=$reportVersion")
-    val publishPathPublishPathOverride = DynamicConformanceJob.buildPublishPath(infoDateColumn, infoVersionColumn, 
+    val publishPathPublishPathOverride = DynamicConformanceJob.buildPublishPath(infoDateColumn, infoVersionColumn,
         cmdConfigPublishPathOverride, conformanceDataset, cmdConfigPublishPathOverride.reportVersion.get)
     assert(publishPathPublishPathOverride === hdfsPublishPathOverride)
-    val publishPathPublishPathOverrideAndFolderPrefix = DynamicConformanceJob.buildPublishPath(infoDateColumn, infoVersionColumn, 
+    val publishPathPublishPathOverrideAndFolderPrefix = DynamicConformanceJob.buildPublishPath(infoDateColumn, infoVersionColumn,
         cmdConfigPublishPathOverrideAndFolderPrefix, conformanceDataset, cmdConfigPublishPathOverrideAndFolderPrefix.reportVersion.get)
     assert(publishPathPublishPathOverrideAndFolderPrefix === hdfsPublishPathOverride)
   }

@@ -18,8 +18,6 @@ package za.co.absa.enceladus.utils.general
 import org.scalatest.FunSuite
 
 class AlgorithmsSpec extends FunSuite {
-  // scalastyle:off null
-
   case class Person(firstName: String, lastName: String)
 
   private val people = Seq(Person("Andrew", "Mikels"), Person("Andrew", "Gross"),
@@ -59,9 +57,8 @@ class AlgorithmsSpec extends FunSuite {
   }
 
   test("Test stableGroupBy() should not group nulls") {
-    val numbers: Seq[Integer] = Seq(1, 1, 1, null, null, 3, 3, 1, 1, null, null, 1, 1)
-    val expected = Seq(Seq(1, 1, 1), Seq(null), Seq(null), Seq(3, 3), Seq(1, 1), Seq(null), Seq(null), Seq(1, 1))
-
+    val numbers: Seq[Integer] = Seq(1, 1, 1, null, null, 3, 3, 1, 1, null, null, 1, 1) // scalastyle:ignore null
+    val expected = Seq(Seq(1, 1, 1), Seq(null), Seq(null), Seq(3, 3), Seq(1, 1), Seq(null), Seq(null), Seq(1, 1)) // scalastyle:ignore null
     val actual = Algorithms.stableGroupBy[Integer, Integer](numbers, a => a)
 
     assert(actual == expected)

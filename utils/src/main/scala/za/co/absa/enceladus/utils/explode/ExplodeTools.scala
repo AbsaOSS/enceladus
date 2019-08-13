@@ -338,7 +338,7 @@ object ExplodeTools {
   private def addSuperTransientField(inputDf: DataFrame, arrayColPathName: String): (DataFrame, String) = {
     val colName = SchemaUtils.getUniqueName(superTransientColumnName, Some(inputDf.schema))
     val nestedColName = (arrayColPathName.split('.').dropRight(1) :+ colName).mkString(".")
-    val df = DeepArrayTransformations.nestedAddColumn(inputDf, nestedColName, c => lit(null))
+    val df = DeepArrayTransformations.nestedAddColumn(inputDf, nestedColName, lit(null))
     (df, nestedColName)
   }
 

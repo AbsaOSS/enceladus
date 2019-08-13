@@ -17,7 +17,7 @@ package za.co.absa.enceladus.examples
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.LPadCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset
@@ -69,11 +69,12 @@ object CustomRuleSample2 {
       )
     )
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef,
-      inputData,
-      experimentalMR,
-      isCatalystWorkaroundEnabled,
-      enableControlFramework = enableCF)
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(experimentalMR)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
+
+    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
 
     outputData.show(false)
     // scalastyle:on magic.number

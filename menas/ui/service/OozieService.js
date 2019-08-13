@@ -15,12 +15,12 @@
 
 jQuery.sap.require("sap.m.MessageToast");
 
-var OozieService = new function() {
+var OozieService = new function () {
 
   const model = sap.ui.getCore().getModel();
   const eventBus = sap.ui.getCore().getEventBus();
 
-  this.getCoordinatorStatus = function() {
+  this.getCoordinatorStatus = function () {
     const coordinatorId = model.getProperty("/currentDataset/schedule/activeInstance/coordinatorId")
     if(coordinatorId) {
       RestClient.get(`api/oozie/coordinatorStatus/${coordinatorId}`).then((oData) => {

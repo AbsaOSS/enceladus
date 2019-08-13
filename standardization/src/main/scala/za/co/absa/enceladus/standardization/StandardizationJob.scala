@@ -21,8 +21,8 @@ import java.util.UUID
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.{LogManager, Logger}
-import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.apache.spark.sql.types.{StructField, StructType}
+import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.{Atum, Constants}
@@ -31,7 +31,7 @@ import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.stdandardization._
+import za.co.absa.enceladus.standardization._
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
@@ -40,12 +40,14 @@ import za.co.absa.enceladus.utils.validation.ValidationException
 
 import scala.collection.immutable.HashMap
 import scala.util.control.NonFatal
+import scala.math.max
 
 object StandardizationJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
 
   private val log: Logger = LogManager.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
+  private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
     implicit val spark: SparkSession = obtainSparkSession()
@@ -101,8 +103,11 @@ object StandardizationJob {
     MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true, generateNewRun = true)
 
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
-    Atum.setAdditionalInfo(s"enceladus_info_date" -> cmd.reportDate)
-    Atum.setAdditionalInfo(s"enceladus_info_version" -> reportVersion.toString)
+    Atum.setAdditionalInfo("enceladus_info_date" -> cmd.reportDate)
+    Atum.setAdditionalInfo("enceladus_info_version" -> reportVersion.toString)
+
+    // Add the raw format of the input file(s) to Atum's metadta as well
+    Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
@@ -132,15 +137,16 @@ object StandardizationJob {
     *
     * @param cmd      Command line parameters containing format-specific options
     * @param dataset  A dataset definition
+    * @param numberOfColumns (Optional) number of columns, enables reading CSV files with the number of columns larger than Spark default
     * @return The updated dataframe reader
     */
-  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset)(implicit spark: SparkSession): DataFrameReader = {
+  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, numberOfColumns: Int = 0)(implicit spark: SparkSession): DataFrameReader = {
     val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
     val options = getCobolOptions(cmd, dataset) ++
       getGenericOptions(cmd) ++
       getXmlOptions(cmd) ++
-      getCsvOptions(cmd) ++
+      getCsvOptions(cmd, numberOfColumns) ++
       getFixedWidthOptions(cmd)
 
     // Applying all the options
@@ -171,13 +177,16 @@ object StandardizationJob {
     }
   }
 
-  private def getCsvOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+  private def getCsvOptions(cmd: CmdConfig, numberOfColumns: Int = 0): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
         "delimiter" -> cmd.csvDelimiter.map(StringParameter),
         "header" -> cmd.csvHeader.map(BooleanParameter),
         "quote" -> cmd.csvQuote.map(StringParameter),
-        "escape" -> cmd.csvEscape.map(StringParameter)
+        "escape" -> cmd.csvEscape.map(StringParameter),
+        // increase the default limit on the number of columns if needed
+        // default is set at org.apache.spark.sql.execution.datasources.csv.CSVOptions maxColumns
+        "maxColumns" -> {if (numberOfColumns > SparkCSVReaderMaxColumnsDefault) Some(LongParameter(numberOfColumns)) else None}
       )
     } else {
       HashMap()
@@ -192,16 +201,16 @@ object StandardizationJob {
     }
   }
 
-  private def getCobolOptions(cmd: CmdConfig, dataset: Dataset): HashMap[String,Option[RawFormatParameter]] = {
-    cmd.cobolOptions match {
-      case Some(opts) =>
-        HashMap(
-        getCopybookOption(opts, dataset),
-          "is_xcom" -> Option(BooleanParameter(opts.isXcom)),
-          "schema_retention_policy" -> Some(StringParameter("collapse_root"))
-        )
-      case None =>
-        HashMap()
+  private def getCobolOptions(cmd: CmdConfig, dataset: Dataset): HashMap[String, Option[RawFormatParameter]] = {
+    if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
+      val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
+      HashMap(
+        getCopybookOption(cobolOptions, dataset),
+        "is_xcom" -> Option(BooleanParameter(cobolOptions.isXcom)),
+        "schema_retention_policy" -> Some(StringParameter("collapse_root"))
+      )
+    } else {
+      HashMap()
     }
   }
 
@@ -224,7 +233,8 @@ object StandardizationJob {
                                dataset: Dataset)
                               (implicit spark: SparkSession,
                                fsUtils: FileSystemVersionUtils): DataFrame = {
-    val dfReaderConfigured = getFormatSpecificReader(cmd, dataset)
+    val numberOfColumns = schema.fields.length
+    val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, numberOfColumns)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
       dfReaderConfigured.schema(inputSchema)

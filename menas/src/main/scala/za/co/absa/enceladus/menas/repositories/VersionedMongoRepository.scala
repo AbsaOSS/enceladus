@@ -106,13 +106,17 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
   def update(username: String, updated: C): Future[C] = {
     for {
       latestVersion <- getLatestVersionValue(updated.name)
-      newVersion <- if(latestVersion.isEmpty) throw new NotFoundException()
-           else if(latestVersion.get != updated.version) throw new EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.") 
-           else Future.successful(latestVersion.get + 1)
+      newVersion <- if (latestVersion.isEmpty) {
+        throw NotFoundException()
+      } else if(latestVersion.get != updated.version) {
+        throw EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.")
+      } else {
+        Future.successful(latestVersion.get + 1)
+      }
       newInfo <- Future.successful(updated.setUpdatedInfo(username).setVersion(newVersion).setParent(Some(getParent(updated))).asInstanceOf[C])
       res <- collection.insertOne(newInfo).toFuture()
     } yield newInfo
-    
+
   }
 
   def disableVersion(name: String, version: Option[Int], username: String): Future[UpdateResult] = {

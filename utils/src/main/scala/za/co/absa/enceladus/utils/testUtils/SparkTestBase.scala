@@ -36,6 +36,8 @@ trait SparkTestBase { self =>
     .master(sparkMaster)
     .appName(s"Enceladus test - ${self.getClass.getName}")
     .config("spark.ui.enabled", "false")
+    .config("spark.debug.maxToStringFields", 100) // scalastyle:ignore magic.number
+    // ^- default value is insufficient for some tests, 100 is a compromise between resource consumption and expected need
 
   implicit val spark: SparkSession = if (sparkMaster == "yarn") {
     val confDir = config.getString("enceladus.utils.testUtils.hadoop.conf.dir")

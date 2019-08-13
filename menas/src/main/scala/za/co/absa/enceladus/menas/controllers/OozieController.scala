@@ -34,9 +34,7 @@ class OozieController @Autowired() (oozieService: OozieService) extends BaseCont
   def isOozieEnabled: Boolean = oozieService.isOozieEnabled
 
   @GetMapping(path = Array("/coordinatorStatus/{id}"))
-  def getCoordinatorStatus(@PathVariable id: String): CompletableFuture[OozieCoordinatorStatus] = {
-    oozieService.getCoordinatorStatus(id)
-  }
+  def getCoordinatorStatus(@PathVariable id: String): CompletableFuture[OozieCoordinatorStatus] = oozieService.getCoordinatorStatus(id)
 
   @PostMapping(path = Array("/runNow"))
   def runNow(@RequestBody schedule: OozieSchedule, @RequestParam reportDate: Optional[String]): CompletableFuture[String] = {
@@ -46,13 +44,10 @@ class OozieController @Autowired() (oozieService: OozieService) extends BaseCont
 
   @PostMapping(path = Array("/suspend/{coordId}"))
   @ResponseStatus(HttpStatus.OK)
-  def suspend(@PathVariable coordId: String): CompletableFuture[OozieCoordinatorStatus] = {
-    oozieService.suspend(coordId)
-  }
+  def suspend(@PathVariable coordId: String): CompletableFuture[OozieCoordinatorStatus] = oozieService.suspend(coordId)
 
   @PostMapping(path = Array("/resume/{coordId}"))
   @ResponseStatus(HttpStatus.OK)
-  def resume(@PathVariable coordId: String): CompletableFuture[OozieCoordinatorStatus] = {
-    oozieService.resume(coordId)
-  }
+  def resume(@PathVariable coordId: String): CompletableFuture[OozieCoordinatorStatus] = oozieService.resume(coordId)
+
 }

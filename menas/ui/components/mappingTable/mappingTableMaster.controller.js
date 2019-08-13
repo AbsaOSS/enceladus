@@ -36,7 +36,7 @@ sap.ui.define([
     },
 
     list: function () {
-      this._mappingTableService.getList(this.byId("masterPage"));      
+      this._mappingTableService.getList(this.byId("masterPage"));
       this._mappingTableService.getSearchSuggestions(this._model, "mappingTable")
     },
 

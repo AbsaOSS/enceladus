@@ -19,7 +19,7 @@ import org.apache.spark.sql.DataFrame
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
@@ -40,11 +40,13 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
     mockWhen(dao.getDataset("Library Conformance", 1)) thenReturn inputDataset
 
     import spark.implicits._
-    val conformed = DynamicInterpreter.interpret(inputDataset,
-      inputDf,
-      experimentalMR,
-      isCatalystWorkaroundEnabled,
-      enableCF).cache
+    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(experimentalMR)
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
+      .setControlFrameworkEnabled(enableCF)
+
+
+    val conformed = DynamicInterpreter.interpret(inputDataset, inputDf)
 
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 
@@ -55,7 +57,7 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
       logger.error(conformedJSON)
       logger.error("DETAILS (Input):")
       logDataFrameContent(inputDf, ERROR)
-      println("DETAILS (Conformed):")
+      logger.error("DETAILS (Conformed):")
       logDataFrameContent(conformed, ERROR)
       fail("Actual conformed dataset JSON does not match the expected JSON (see log).")
     }

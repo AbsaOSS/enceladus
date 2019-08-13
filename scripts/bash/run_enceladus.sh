@@ -124,7 +124,11 @@ case $key in
     shift 2 # past argument and value
     ;;
     --delimiter)
-    DELIMITER="\\$2"
+    if [[ "$2" == " " ]]; then
+      DELIMITER="' '"
+    else
+      DELIMITER="\\$2"
+    fi
     shift 2 # past argument and value
     ;;
     --header)
@@ -246,7 +250,7 @@ add_to_cmd_line "--report-version" ${REPORT_VERSION}
 add_to_cmd_line "--raw-format" ${RAW_FORMAT}
 add_to_cmd_line "--charset" ${CHARSET}
 add_to_cmd_line "--row-tag" ${ROW_TAG}
-add_to_cmd_line "--delimiter" ${DELIMITER}
+add_to_cmd_line "--delimiter" "${DELIMITER}"
 add_to_cmd_line "--header" ${HEADER}
 add_to_cmd_line "--csv-quote" ${CSV_QUOTE}
 add_to_cmd_line "--csv-escape" ${CSV_ESCAPE}

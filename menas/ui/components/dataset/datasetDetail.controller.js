@@ -97,7 +97,7 @@ sap.ui.define([
         "dayOfWeek": this._generateCronTemplateRange(0, 7, this._rb, "MENAS_SCHEDULE_DAY")
       }
       this._model.setProperty("/cronFormTemplate", cronTemplate);
-      
+
       const auditTable = this.byId("auditTrailTable");
       const auditUtils = new AuditTrail(auditTable);
       auditUtils.applyTableUtils();

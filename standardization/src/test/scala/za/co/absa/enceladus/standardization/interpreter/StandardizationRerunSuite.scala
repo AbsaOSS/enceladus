@@ -58,14 +58,14 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
   }
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
-  private def getTestDataFrame(tmpFileName: String, schemaStr: StructType): DataFrame = {
+  private def getTestDataFrame(tmpFileName: String, schemaWithStringType: StructType): DataFrame = {
     val args = ("--dataset-name SpecialColumns --dataset-version 1 --report-date 2019-07-23 " +
       "--report-version 1 --raw-format csv --header false --delimiter |").split(" ")
 
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     StandardizationJob
-      .getFormatSpecificReader(cmd, dataSet)
-      .schema(schemaStr)
+      .getFormatSpecificReader(cmd, dataSet, schemaWithStringType.fields.length)
+      .schema(schemaWithStringType)
       .load(tmpFileName)
   }
 
@@ -79,7 +79,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
       StructField("A5", StringType, nullable = true)
     ))
 
-    val schemaStr: StructType = StructType(Seq(
+    val schemaWithStringType: StructType = StructType(Seq(
       StructField("A1", StringType, nullable = true),
       StructField("A2", StringType, nullable = true),
       StructField("A3", StringType, nullable = true),
@@ -100,7 +100,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
         |
         |""".stripMargin.replace("\r\n", "\n")
 
-    val inputDf = getTestDataFrame(tmpFileName, schemaStr)
+    val inputDf = getTestDataFrame(tmpFileName, schemaWithStringType)
 
     val stdDf = StandardizationInterpreter.standardize(inputDf, schema, "").cache()
 

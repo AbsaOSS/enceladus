@@ -20,7 +20,7 @@ var GenericService = new function () {
 
   let eventBus = sap.ui.getCore().getEventBus();
   const restClient = new RestClient();
-  
+
   this.getUserInfo = function () {
     let fnSuccess = (oInfo) => {
       model.setProperty("/userInfo", oInfo);
@@ -30,7 +30,7 @@ var GenericService = new function () {
     $.ajax("api/user/info", {
       method: "GET",
       success: fnSuccess,
-      async: false 
+      async: false
     })
   };
 
@@ -80,7 +80,7 @@ var GenericService = new function () {
   this.getOozieInfo = function() {
     Functions.ajax("api/oozie/isEnabled", "GET", {}, oData => {
       model.setProperty("/appInfo/oozie/isEnabled", oData);
-    });    
+    });
   };
 
   this.clearSession = function (sLogoutMessage) {

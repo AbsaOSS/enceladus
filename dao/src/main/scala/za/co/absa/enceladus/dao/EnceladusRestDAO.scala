@@ -35,7 +35,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.typesafe.config.ConfigFactory
-import sun.security.krb5.internal.ktab.KeyTab
+import sun.security.krb5.internal.ktab.KeyTab //scalastyle:ignore illegal.imports
 import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.MappingTable
@@ -178,20 +178,20 @@ object EnceladusRestDAO extends EnceladusDAO {
       try {
         val status = response.getStatusLine.getStatusCode
         val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
-        val unAuthorized = status == HttpStatus.SC_UNAUTHORIZED
+        val isUnauthorized = status == HttpStatus.SC_UNAUTHORIZED || status == HttpStatus.SC_FORBIDDEN
 
-        if (unAuthorized) {
+        if (isUnauthorized) {
           log.warn(s"Unauthorized GET request for Menas URL: $url")
+          if (retriesLeft <= 0) {
+            throw UnauthorizedException(s"Unable to reauthenticate, no retires left")
+          }
           log.warn(s"Expired session, reauthenticating")
           if (enceladusLogin()) {
-            if (retriesLeft > 0) {
-              throw UnauthorizedException(s"Unable to reauthenticate after retries")
-            }
             log.info(s"Retrying GET request for Menas URL: $url")
             log.info(s"Retries left: $retriesLeft")
             sendGet(url, retriesLeft - 1)
           } else {
-            throw UnauthorizedException()
+            throw UnauthorizedException("Login failed")
           }
         } else {
           val content = {

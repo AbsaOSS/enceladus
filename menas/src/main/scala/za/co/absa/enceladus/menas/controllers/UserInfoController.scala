@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import org.springframework.security.web.csrf.CsrfToken
 
-@RestController 
+@RestController
 @RequestMapping(Array("/api/user"))
 class UserInfoController extends BaseController {
 

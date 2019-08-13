@@ -66,8 +66,11 @@ object CmdConfig {
     opt[Int]('d', "dataset-version").required().action((value, config) =>
       config.copy(datasetVersion = value)).text("Dataset version")
       .validate(value =>
-        if (value > 0) success
-        else failure("Option --dataset-version must be >0"))
+        if (value > 0) {
+          success
+        } else {
+          failure("Option --dataset-version must be >0")
+        })
 
     val reportDateMatcher: Regex = "^\\d{4}-\\d{2}-\\d{2}$".r
     opt[String]('R', "report-date").required().action((value, config) =>
@@ -82,8 +85,11 @@ object CmdConfig {
       config.copy(reportVersion = Some(value)))
       .text("Report version. If not provided, it is inferred based on the publish path (it's an EXPERIMENTAL feature)")
       .validate(value =>
-        if (value > 0) success
-        else failure("Option --report-version must be >0"))
+        if (value > 0) {
+          success
+        } else {
+          failure("Option --report-version must be >0")
+        })
 
     private var credsFile: Option[String] = None
     private var keytabFile: Option[String] = None
@@ -92,21 +98,29 @@ object CmdConfig {
       credsFile = Some(path)
       config.copy(menasCredentials = Some(credential))
     }).text("Path to Menas credentials config file.").validate(path =>
-      if (keytabFile.isDefined) failure("Only one authentication method is allow at a time")
-      else if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) success
-      else failure("Credentials file not found."))
+      if (keytabFile.isDefined) {
+        failure("Only one authentication method is allow at a time")
+      } else if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) {
+        success
+      } else {
+        failure("Credentials file not found.")
+      })
 
     opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
       keytabFile = Some(file)
-      if(!fsUtils.localExists(file) && fsUtils.hdfsExists(file)) {
+      if (!fsUtils.localExists(file) && fsUtils.hdfsExists(file)) {
         config.copy(menasCredentials = Some(Right(fsUtils.hdfsFileToLocalTempFile(file))))
       } else {
-      config.copy(menasCredentials = Some(Right(file)))
+        config.copy(menasCredentials = Some(Right(file)))
       }
     }).text("Path to keytab file used for authenticating to menas").validate({ file =>
-      if (credsFile.isDefined) failure("Only one authentication method is allowed at a time")
-      else if(fsUtils.exists(file)) success
-      else failure("Keytab file doesn't exist")
+      if (credsFile.isDefined) {
+        failure("Only one authentication method is allowed at a time")
+      } else if (fsUtils.exists(file)) {
+        success
+      } else {
+        failure("Keytab file doesn't exist")
+      }
     })
 
     opt[String]("performance-file").optional().action((value, config) =>
