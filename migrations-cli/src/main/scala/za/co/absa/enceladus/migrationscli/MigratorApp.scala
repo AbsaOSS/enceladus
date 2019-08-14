@@ -32,7 +32,7 @@ object MigratorApp {
 
   def main(args: Array[String]) {
 
-    val cmd: MigratorCmdConfig = MigratorCmdConfig.getCmdLineArguments(args)
+    val cmd: MigratorCmdConfig = MigratorCmdConfig(args)
 
     val mongoClient = MongoClient(cmd.mongoDbURL)
     val db = new MongoDb(mongoClient.getDatabase(cmd.database))
