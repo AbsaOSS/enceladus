@@ -72,7 +72,7 @@ object SparkUtils {
 
     // Add a temporary error column containing errors if the original value does not match the intended one
     val dfWithErrorColumn = dfWithIntendedColumn
-      .withColumn(tmpErrColumn, array(when(col(tmpColumn) !== colExpr, litErrUdfCall).otherwise(null)))
+      .withColumn(tmpErrColumn, array(when(col(tmpColumn) =!= colExpr, litErrUdfCall).otherwise(null))) // scalastyle:ignore null
 
     // Gather all errors in errCol
     val dfWithAggregatedErrColumn = DeepArrayTransformations
