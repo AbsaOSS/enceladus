@@ -29,7 +29,7 @@ case class MigratorCmdConfig(mongoDbURL: String = "",
 
 object MigratorCmdConfig {
 
-  def getCmdLineArguments(args: Array[String]): MigratorCmdConfig = {
+  def apply(args: Array[String]): MigratorCmdConfig = {
     val parser = new CmdParser("java -cp enceladus-migrations-cli.jar " +
       "za.co.absa.enceladus.migrationscli.MigratorApp " +
       "--mongodb-url <MongoDb URL> --database <Database Name> --new-db-version <New DB Version>")

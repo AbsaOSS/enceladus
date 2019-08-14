@@ -78,7 +78,7 @@ final class RunMigrator(evm: EntityVersionMap,
           normalInsert(run1, objectId, repo)
         }
       case Failure(e) =>
-        log.warn(s"Encountered a serialization error for '$collectionBase': ${e.getMessage}")
+        log.error(s"Encountered a serialization error for '$collectionBase': ${e.getMessage}")
     }
   }
 

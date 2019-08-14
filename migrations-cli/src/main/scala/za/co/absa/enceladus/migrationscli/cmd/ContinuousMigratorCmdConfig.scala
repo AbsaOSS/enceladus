@@ -33,7 +33,7 @@ case class ContinuousMigratorCmdConfig(mongoDbUrlSrc: String = "",
 
 object ContinuousMigratorCmdConfig {
 
-  def getCmdLineArguments(args: Array[String]): ContinuousMigratorCmdConfig = {
+  def apply(args: Array[String]): ContinuousMigratorCmdConfig = {
     val parser = new CmdParser("java -cp enceladus-migrations-cli.jar " +
       "za.co.absa.enceladus.migrationscli.ContinuousMigratorApp " +
       "--src-mongodb-url <MongoDb URL> " +
