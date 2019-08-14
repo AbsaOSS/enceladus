@@ -242,7 +242,9 @@ object DynamicConformanceJob {
       }
     })
 
-    autocleanStandardizedHdfsPath(pathCfg)
+    if (isAutocleanStdFolderEnabled()) {
+      fsUtils.deleteDirectoryRecursively(pathCfg.stdPath)
+    }
   }
 
   def buildPublishPath(infoDateCol: String,
@@ -257,17 +259,6 @@ object DynamicConformanceJob {
         s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
       case (Some(publishPathOverride), _) =>
         publishPathOverride
-    }
-  }
-
-  /**
-    * Cleans up standardized data by deleting the standardized directory if it is enabled by the configuration
-    * or by a command line parameter.
-    */
-  private def autocleanStandardizedHdfsPath(pathCfg: PathCfg)
-                                   (implicit cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
-    if (isAutocleanStdFolderEnabled()) {
-      fsUtils.deleteDirectoryRecursively(pathCfg.stdPath)
     }
   }
 
