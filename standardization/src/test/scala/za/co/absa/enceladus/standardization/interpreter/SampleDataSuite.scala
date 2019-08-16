@@ -19,11 +19,10 @@ import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.samples.{StdEmployee, TestSamples}
 import za.co.absa.enceladus.utils.error.UDFLibrary
+import za.co.absa.enceladus.utils.general.FileReader
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-import scala.io.Source
-
-class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase {
+class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase with FileReader {
 
   test("Simple Example Test") {
     import spark.implicits._
@@ -33,18 +32,14 @@ class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase {
 
     implicit val udfLib: UDFLibrary = UDFLibrary()
 
-    val sourceFile = Source.fromFile("src/test/resources/data1Schema.json")
-    try {
-    val schema = DataType.fromJson(sourceFile.getLines().mkString("\n")).asInstanceOf[StructType]
+    val sourceFile = readFileAsString("src/test/resources/data1Schema.json")
+    val schema = DataType.fromJson(sourceFile).asInstanceOf[StructType]
     val std = StandardizationInterpreter.standardize(data, schema, "whatev")
     logDataFrameContent(std)
     val stdList = std.as[StdEmployee].collect.sortBy(_.name).toList
     val exp = TestSamples.resData.sortBy(_.name)
 
     assertResult(exp)(stdList)
-    } finally {
-      sourceFile.close()
-    }
 
   }
 

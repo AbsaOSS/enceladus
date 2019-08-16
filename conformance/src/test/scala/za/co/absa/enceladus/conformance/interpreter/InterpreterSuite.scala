@@ -25,10 +25,9 @@ import za.co.absa.enceladus.samples.{ConformedEmployee, EmployeeConformance, Tra
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import org.json4s._
 import org.json4s.native.JsonParser._
+import za.co.absa.enceladus.utils.general.FileReader
 
-import scala.io.Source
-
-class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll {
+class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with FileReader {
 
   override def beforeAll(): Unit = {
     super.beforeAll
@@ -79,7 +78,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     spark.disableControlMeasuresTracking()
 
-    val infoFile = Source.fromFile("src/test/testData/_testOutput/_INFO").getLines().mkString("\n")
+    val infoFile = readFileAsString("src/test/testData/_testOutput/_INFO")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 
@@ -140,7 +139,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     spark.disableControlMeasuresTracking()
 
-    val infoFile = Source.fromFile("src/test/testData/_tradeOutput/_INFO").getLines().mkString("\n")
+    val infoFile = readFileAsString("src/test/testData/_tradeOutput/_INFO")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 

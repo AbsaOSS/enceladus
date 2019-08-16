@@ -20,14 +20,12 @@ import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 import za.co.absa.enceladus.testutils.exceptions._
+import za.co.absa.enceladus.utils.general.FileReader
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-import scala.io.Source
-
-class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterEach {
+class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterEach with FileReader {
 
   val format = new SimpleDateFormat("yyyy_MM_dd-HH_mm_ss")
   var timePrefix = ""
@@ -156,7 +154,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterE
   }
 
   test("Compare nested structures with errors") {
-    val lines: List[String] = Source.fromFile("src/test/resources/json_output").getLines.toList
+    val lines: List[String] = readFileAsLines("src/test/resources/json_output").toList
     val outCapture = new ByteArrayOutputStream
 
     val refPath = "src/test/resources/json_orig"

@@ -70,8 +70,6 @@ trait SparkTestBase { self =>
   // Do not display INFO entries for tests
   Logger.getLogger("org").setLevel(Level.WARN)
   Logger.getLogger("akka").setLevel(Level.WARN)
-
-
 }
 
 object SparkTestBase {
