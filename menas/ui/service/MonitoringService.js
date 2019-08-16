@@ -201,6 +201,7 @@ var MonitoringService = new function() {
     return !isNaN(oRun["rawRecordcount"])
       && oRun["std_records_succeeded"] != null && oRun["std_records_failed"] != null
       && oRun["conform_records_succeeded"] != null && oRun["conform_records_failed"] != null
+      && oRun["checkpointsMatch"]
       // sanity checks
       && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["rawRecordcount"])
       && (+oRun["conform_records_succeeded"]) + (+oRun["conform_records_failed"]) == (+oRun["rawRecordcount"])
@@ -212,6 +213,7 @@ var MonitoringService = new function() {
     return !isNaN(oRun["rawRecordcount"])
       && oRun["std_records_succeeded"] != null && oRun["std_records_failed"] != null
       && oRun["conform_records_succeeded"] == null && oRun["conform_records_failed"] == null
+      && oRun["checkpointsMatch"]
       //sanity checks
       && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["rawRecordcount"])
   };
@@ -220,6 +222,7 @@ var MonitoringService = new function() {
     return !isNaN(oRun["rawRecordcount"])
       && oRun["std_records_succeeded"]  == null && oRun["std_records_failed"] == null
       && oRun["conform_records_succeeded"]  == null && oRun["conform_records_failed"] == null
+      && oRun["checkpointsMatch"]
   };
 
   this.processConformed = function(oRun) {
@@ -340,6 +343,15 @@ var MonitoringService = new function() {
     oRun["latestCheckpoint"] = latestCheckpoint;
   };
 
+  this.processCeckpoints = function (oRun) {
+    if (CheckpointUtils.checkpointsContlolsMatch(oRun["controlMeasure"]["checkpoints"])) {
+      oRun["checkpointsMatch"] = true;
+    } else {
+      oRun["checkpointsMatch"] = false;
+      oRun["warnings"].push(warningTypes.controlMeasuresMismatch);
+    }
+  }
+
 
   this.getData = function(sId, sStartDate, sEndDate) {
     MonitoringService.clearAggregators();
@@ -357,6 +369,7 @@ var MonitoringService = new function() {
           oRun["warnings"] = [];
 
           MonitoringService.processLatestCheckpoint(oRun);
+          MonitoringService.processCeckpoints(oRun);
           MonitoringService.processRunStatus(oRun);
           MonitoringService.processDirSizes(oRun);
           MonitoringService.setRawRecordcount(oRun);
