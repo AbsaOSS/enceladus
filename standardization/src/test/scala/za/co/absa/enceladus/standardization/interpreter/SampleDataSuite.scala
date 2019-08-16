@@ -19,7 +19,7 @@ import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.samples.{StdEmployee, TestSamples}
 import za.co.absa.enceladus.utils.error.UDFLibrary
-import za.co.absa.enceladus.utils.general.FileReader
+import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase with FileReader {

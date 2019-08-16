@@ -25,7 +25,7 @@ import za.co.absa.enceladus.samples.{ConformedEmployee, EmployeeConformance, Tra
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import org.json4s._
 import org.json4s.native.JsonParser._
-import za.co.absa.enceladus.utils.general.FileReader
+import za.co.absa.enceladus.utils.fs.FileReader
 
 class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with FileReader {
 

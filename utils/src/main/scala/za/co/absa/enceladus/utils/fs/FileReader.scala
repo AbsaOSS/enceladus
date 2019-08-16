@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.general
+package za.co.absa.enceladus.utils.fs
 
 import scala.io.Source
 
@@ -21,7 +21,7 @@ trait FileReader {
   def readFileAsLines(filename: String): Seq[String] = {
     val sourceFile = Source.fromFile(filename)
     try {
-      sourceFile.getLines().toList.map(x => x)
+      sourceFile.getLines().toVector.map(x => x) // need to the actual copy before the stream is closed
     } finally {
       sourceFile.close()
     }
@@ -34,7 +34,6 @@ trait FileReader {
     } finally {
       sourceFile.close()
     }
-    readFileAsLines(filename).mkString(lineSeparator)
   }
 
 

@@ -18,7 +18,7 @@ package za.co.absa.enceladus.testutils.e2eSparkRunner
 import java.io.File
 
 import scopt.OptionParser
-import za.co.absa.enceladus.utils.general.FileReader
+import za.co.absa.enceladus.utils.fs.FileReader
 
 import scala.io.Source
 import scala.util.matching.Regex

@@ -22,7 +22,7 @@ import java.util.Calendar
 
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 import za.co.absa.enceladus.testutils.exceptions._
-import za.co.absa.enceladus.utils.general.FileReader
+import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterEach with FileReader {

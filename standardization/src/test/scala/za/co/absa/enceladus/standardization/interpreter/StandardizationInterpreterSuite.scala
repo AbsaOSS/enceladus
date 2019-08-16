@@ -19,7 +19,8 @@ import org.apache.spark.sql.types.{ArrayType, BooleanType, DoubleType, IntegerTy
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreterSuite._
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
-import za.co.absa.enceladus.utils.general.{FileReader, JsonUtils}
+import za.co.absa.enceladus.utils.fs.FileReader
+import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with LoggerTestBase with FileReader {
