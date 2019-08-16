@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
+import org.json4s._
+import org.json4s.native.JsonParser._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.atum.model.ControlMeasure
@@ -22,16 +24,11 @@ import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.samples.{ConformedEmployee, EmployeeConformance, TradeConformance}
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import org.json4s._
-import org.json4s.native.JsonParser._
-import org.slf4j.LoggerFactory
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 import scala.io.Source
 
-class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll {
-
-  private val log = LoggerFactory.getLogger(this.getClass)
+class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase {
 
   override def beforeAll(): Unit = {
     super.beforeAll
@@ -150,10 +147,10 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     val checkpoints = parse(infoFile).extract[ControlMeasure].checkpoints
 
     if (data != expected) {
-      log.error("EXPECTED:")
-      log.error(expected)
-      log.error("ACTUAL:")
-      log.error(data)
+      logger.error("EXPECTED:")
+      logger.error(expected)
+      logger.error("ACTUAL:")
+      logger.error(data)
       assert(data == expected)
     }
 
