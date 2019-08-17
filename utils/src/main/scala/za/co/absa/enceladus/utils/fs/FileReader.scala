@@ -21,7 +21,7 @@ trait FileReader {
   def readFileAsLines(filename: String): Seq[String] = {
     val sourceFile = Source.fromFile(filename)
     try {
-      sourceFile.getLines().toVector.map(x => x) // need to the actual copy before the stream is closed
+      sourceFile.getLines().toVector // making it a vector to copy the content of the file into memory before it's closed
     } finally {
       sourceFile.close()
     }
