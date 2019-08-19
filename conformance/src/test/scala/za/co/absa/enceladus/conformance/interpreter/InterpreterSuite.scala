@@ -27,7 +27,7 @@ import org.json4s._
 import org.json4s.native.JsonParser._
 import za.co.absa.enceladus.utils.fs.FileReader
 
-class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with FileReader {
+class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll {
 
   override def beforeAll(): Unit = {
     super.beforeAll
@@ -78,7 +78,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     spark.disableControlMeasuresTracking()
 
-    val infoFile = readFileAsString("src/test/testData/_testOutput/_INFO")
+    val infoFile = FileReader.readFileAsString("src/test/testData/_testOutput/_INFO")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 
@@ -139,7 +139,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     spark.disableControlMeasuresTracking()
 
-    val infoFile = readFileAsString("src/test/testData/_tradeOutput/_INFO")
+    val infoFile = FileReader.readFileAsString("src/test/testData/_tradeOutput/_INFO")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 

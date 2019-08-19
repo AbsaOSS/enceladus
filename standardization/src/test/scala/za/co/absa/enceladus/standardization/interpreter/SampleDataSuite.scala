@@ -22,7 +22,7 @@ import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase with FileReader {
+class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase {
 
   test("Simple Example Test") {
     import spark.implicits._
@@ -32,7 +32,7 @@ class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase wi
 
     implicit val udfLib: UDFLibrary = UDFLibrary()
 
-    val sourceFile = readFileAsString("src/test/resources/data1Schema.json")
+    val sourceFile = FileReader.readFileAsString("src/test/resources/data1Schema.json")
     val schema = DataType.fromJson(sourceFile).asInstanceOf[StructType]
     val std = StandardizationInterpreter.standardize(data, schema, "whatev")
     logDataFrameContent(std)

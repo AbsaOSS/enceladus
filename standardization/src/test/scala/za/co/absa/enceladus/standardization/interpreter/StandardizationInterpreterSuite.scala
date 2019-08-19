@@ -23,7 +23,7 @@ import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with LoggerTestBase with FileReader {
+class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
@@ -105,7 +105,7 @@ class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with 
     ))
 
 
-    val srcString:String = readFileAsString("src/test/resources/data/patients.json")
+    val srcString:String = FileReader.readFileAsString("src/test/resources/data/patients.json")
 
     val src = JsonUtils.getDataFrameFromJson(spark, Seq(srcString))
 

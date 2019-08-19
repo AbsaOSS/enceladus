@@ -25,7 +25,7 @@ import za.co.absa.enceladus.testutils.exceptions._
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterEach with FileReader {
+class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterEach {
 
   val format = new SimpleDateFormat("yyyy_MM_dd-HH_mm_ss")
   var timePrefix = ""
@@ -154,7 +154,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterE
   }
 
   test("Compare nested structures with errors") {
-    val lines: List[String] = readFileAsLines("src/test/resources/json_output").toList
+    val lines: List[String] = FileReader.readFileAsListOfLines("src/test/resources/json_output")
     val outCapture = new ByteArrayOutputStream
 
     val refPath = "src/test/resources/json_orig"

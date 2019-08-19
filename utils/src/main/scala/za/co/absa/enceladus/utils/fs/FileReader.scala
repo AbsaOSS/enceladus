@@ -17,11 +17,11 @@ package za.co.absa.enceladus.utils.fs
 
 import scala.io.Source
 
-trait FileReader {
-  def readFileAsLines(filename: String): Seq[String] = {
+object FileReader {
+  def readFileAsListOfLines(filename: String): List[String] = {
     val sourceFile = Source.fromFile(filename)
     try {
-      sourceFile.getLines().toVector // making it a vector to copy the content of the file into memory before it's closed
+      sourceFile.getLines().toList // making it a List to copy the content of the file into memory before it's closed
     } finally {
       sourceFile.close()
     }
