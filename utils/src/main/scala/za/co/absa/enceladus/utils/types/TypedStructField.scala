@@ -78,7 +78,7 @@ sealed abstract class TypedStructField(structField: StructField) extends StructF
   }
 
   /**
-   * The default value that iwll be used for the field, local if defined otherwise global
+   * The default value that will be used for the field, local if defined otherwise global
    * @return Try - because the gathering of local default  may fail in conversion between types
    *         Option - the actual default value or None in case the default is null
    */
@@ -102,6 +102,14 @@ sealed abstract class TypedStructField(structField: StructField) extends StructF
 }
 
 object TypedStructField {
+  /**
+   * This is to be the only accessible constructor for TypedStructField sub-classes
+   * The point is, that sub-classes of TypedStructField are defined as abstract sealed ones to prevent their
+   * instantiation outside this apply constructor. This is to ensure at compile time there is a bound between the
+   * provided StructField.dataType and the class created
+   * @param structField the structField to wrap TypedStructField around
+   * @return            the object of non-abstract TypedStructField successor class relevant to the StructField dataType
+   */
   def apply(structField: StructField): TypedStructField = {
     structField.dataType match {
       case _: StringType    => new StringTypeStructField(structField) {}

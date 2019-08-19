@@ -21,6 +21,13 @@ import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
 import scala.util.{Failure, Success, Try}
 
 class FieldValidator {
+  /**
+   * Function to convert a Try type to sequence of ValidationIssue. Naming by the patter StringToInt; Try is a noun here
+   * @param tryValue Try value to convert to ValidationIssue - Failure is converted to ValidationError, any ValidationIssue
+   *                 included within Success will be returned in the Sequence, all other will result in empty sequence
+   * @return         sequence of ValidationIssue, that were either part the input or if the input was a failure, then
+   *                 it converted into ValidationError
+   */
   protected def tryToValidationIssues(tryValue: Try[Any]): Seq[ValidationIssue] = {
     tryValue match {
       case Failure(e)                      => Seq(ValidationError(e.getMessage))
