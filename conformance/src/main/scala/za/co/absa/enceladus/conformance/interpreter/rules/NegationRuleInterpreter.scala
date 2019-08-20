@@ -40,8 +40,11 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
       case _: DecimalType =>
         // Negating decimal cannot fail
         DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => negate(c))
+      case _: BooleanType =>
+        DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => not(c))
       case _: DoubleType | _: FloatType =>
-        // Negating floating point numbers cannot fail, but we need to account for signed zeros (see the note for getNegator()).
+        // Negating floating point numbers cannot fail, but we need to account
+        // for signed zeros (see the note for getNegator()).
         DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => getNegator(c, fieldType))
       case _ =>
         // The generic negation with checking for error conditions
@@ -78,7 +81,8 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
       case _: ShortType => when(inputColumn === Short.MinValue, errorColumnUDF).otherwise(null)
       case _: IntegerType => when(inputColumn === Int.MinValue, errorColumnUDF).otherwise(null)
       case _: LongType => when(inputColumn === Long.MinValue, errorColumnUDF).otherwise(null)
-      case _ => null
+      case a => throw new IllegalArgumentException("NegationRuleInterpreter.getError() should be called only for " +
+       s"data types that can produce errors. It is called for $a data type.")
       // scalastyle:on null
     }
   }
@@ -89,7 +93,7 @@ object NegationRuleInterpreter {
 
   @throws[ValidationException]
   def validateInputField(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val issues = SchemaPathValidator.validateSchemaPathNumeric(schema, fieldPath)
+    val issues = SchemaPathValidator.validateSchemaPathAlgebraic(schema, fieldPath)
     RuleValidators.checkAndThrowValidationErrors(datasetName: String, "Negation rule input field is incorrect.", issues)
   }
 }
