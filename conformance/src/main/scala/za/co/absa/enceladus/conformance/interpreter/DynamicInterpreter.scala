@@ -84,19 +84,19 @@ object DynamicInterpreter {
     val conformedDf = steps.foldLeft(dfInputWithIdForWorkaround)({
       case (df, rule) =>
         val (ruleAppliedDf, ec) = applyConformanceRule(df, rule, explodeContext)
-        explodeContext = ec
 
         val conformedDf = if (explodeContext.explosions.isEmpty &&
           optimizerTimeTracker.isCatalystWorkaroundRequired(ruleAppliedDf, rulesApplied)) {
           // Apply a workaround BEFORE applying the rule so that the execution plan generation still runs fast
-          val (workAroundDf, ec) = applyConformanceRule(
+          val (workAroundDf, ecInner) = applyConformanceRule(
             optimizerTimeTracker.applyCatalystWorkaround(df),
             rule,
             explodeContext)
-          explodeContext = ec
+          explodeContext = ecInner
           optimizerTimeTracker.recordExecutionPlanOptimizationTime(workAroundDf)
           workAroundDf
         } else {
+          explodeContext = ec
           ruleAppliedDf
         }
         rulesApplied += 1

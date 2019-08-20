@@ -22,12 +22,12 @@ import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.samples.{ConformedEmployee, EmployeeConformance, TradeConformance}
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import org.json4s._
 import org.json4s.native.JsonParser._
 import za.co.absa.enceladus.utils.fs.FileReader
 
-class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll {
+class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase {
 
   override def beforeAll(): Unit = {
     super.beforeAll
@@ -145,7 +145,13 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     val checkpoints = parse(infoFile).extract[ControlMeasure].checkpoints
 
-    assert(data == expected)
+    if (data != expected) {
+      logger.error("EXPECTED:")
+      logger.error(expected)
+      logger.error("ACTUAL:")
+      logger.error(data)
+      assert(data == expected)
+    }
 
     // check that all the expected checkpoints are there
     assert(checkpoints.lengthCompare(12) == 0)
