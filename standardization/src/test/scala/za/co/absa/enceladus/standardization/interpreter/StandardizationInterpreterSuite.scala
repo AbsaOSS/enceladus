@@ -15,15 +15,13 @@
 
 package za.co.absa.enceladus.standardization.interpreter
 
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{ArrayType, BooleanType, DoubleType, IntegerType, MetadataBuilder, StringType, StructField, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreterSuite._
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-
-import scala.io.Source
 
 class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._
@@ -107,9 +105,7 @@ class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with 
     ))
 
 
-    val bufferedSource = Source.fromFile("src/test/resources/data/patients.json")
-    val srcString:String = bufferedSource.getLines().mkString("\n")
-    bufferedSource.close
+    val srcString:String = FileReader.readFileAsString("src/test/resources/data/patients.json")
 
     val src = JsonUtils.getDataFrameFromJson(spark, Seq(srcString))
 

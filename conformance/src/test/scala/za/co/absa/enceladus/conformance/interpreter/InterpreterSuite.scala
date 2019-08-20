@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.json4s._
-import org.json4s.native.JsonParser._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.atum.model.ControlMeasure
@@ -25,8 +23,9 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.samples.{ConformedEmployee, EmployeeConformance, TradeConformance}
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-
-import scala.io.Source
+import org.json4s._
+import org.json4s.native.JsonParser._
+import za.co.absa.enceladus.utils.fs.FileReader
 
 class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase {
 
@@ -79,7 +78,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     spark.disableControlMeasuresTracking()
 
-    val infoFile = Source.fromFile("src/test/testData/_testOutput/_INFO").getLines().mkString("\n")
+    val infoFile = FileReader.readFileAsString("src/test/testData/_testOutput/_INFO")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 
@@ -140,7 +139,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     spark.disableControlMeasuresTracking()
 
-    val infoFile = Source.fromFile("src/test/testData/_tradeOutput/_INFO").getLines().mkString("\n")
+    val infoFile = FileReader.readFileAsString("src/test/testData/_tradeOutput/_INFO")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 
