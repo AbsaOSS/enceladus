@@ -1,6 +1,6 @@
 class CheckpointUtils {
 
-  static checkpointsContlolsMatch(aCheckpoints) {
+  static checkpointsControlsMatch(aCheckpoints) {
     if (!Array.isArray(aCheckpoints)) {
       return false
     }
@@ -40,8 +40,6 @@ class CheckpointUtils {
 
   static controlsMatch(oControl1, oControl2) {
     return ( oControl1["controlName"] == oControl2["controlName"]
-      && oControl1["controlType"] == oControl2["controlType"]
-      && oControl1["controlCol"] == oControl2["controlCol"]
       && oControl1["controlValue"] == oControl2["controlValue"]
     )
   }

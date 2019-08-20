@@ -300,7 +300,7 @@ var MonitoringService = new function() {
   };
 
   // find raw recordcount
-  this.setRawRecordcount = function (oRun) {
+  this.setRawRecordCount = function (oRun) {
     let rawRecordcount = oRun["controlMeasure"]["metadata"]["additionalInfo"]["raw_record_count"];
     if (rawRecordcount != null && !isNaN(rawRecordcount) ) {
       oRun["rawRecordcount"] = rawRecordcount;
@@ -344,7 +344,7 @@ var MonitoringService = new function() {
   };
 
   this.processCeckpoints = function (oRun) {
-    if (CheckpointUtils.checkpointsContlolsMatch(oRun["controlMeasure"]["checkpoints"])) {
+    if (CheckpointUtils.checkpointsControlsMatch(oRun["controlMeasure"]["checkpoints"])) {
       oRun["checkpointsMatch"] = true;
     } else {
       oRun["checkpointsMatch"] = false;
@@ -372,7 +372,7 @@ var MonitoringService = new function() {
           MonitoringService.processCeckpoints(oRun);
           MonitoringService.processRunStatus(oRun);
           MonitoringService.processDirSizes(oRun);
-          MonitoringService.setRawRecordcount(oRun);
+          MonitoringService.setRawRecordCount(oRun);
           MonitoringService.processRecordCounts(oRun);
         }
 
