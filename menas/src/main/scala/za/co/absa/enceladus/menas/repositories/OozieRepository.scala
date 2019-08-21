@@ -314,7 +314,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   def runCoordinator(coordPath: String, runtimeParams: RuntimeConfig): Future[String] = {
     getOozieClientWrap { oozieClient: OozieClient =>
       val conf = getOozieConf(oozieClient, runtimeParams)
-      conf.setProperty(OozieClient.COORDINATOR_APP_PATH, s"$coordPath");
+      conf.setProperty(OozieClient.COORDINATOR_APP_PATH, s"$coordPath")
       oozieClient.submit(conf)
     }
   }
@@ -325,7 +325,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   def runWorkflow(wfPath: String, runtimeParams: RuntimeConfig, reportDate: String): Future[String] = {
     getOozieClientWrap { oozieClient: OozieClient =>
       val conf = getOozieConf(oozieClient, runtimeParams)
-      conf.setProperty(OozieClient.APP_PATH, wfPath);
+      conf.setProperty(OozieClient.APP_PATH, wfPath)
       conf.setProperty("reportDate", reportDate)
       oozieClient.run(conf)
     }
