@@ -280,8 +280,28 @@ class DatasetService extends EntityService {
     return super.getByNameAndVersion(sName, iVersion, sModelPath, "#/dataset")
   }
 
+  cleanupEntity(oEntity) {
+    return {
+      description: oEntity.description,
+      name: oEntity.name,
+      schemaName: oEntity.schemaName,
+      schemaVersion: oEntity.schemaVersion,
+      hdfsPath: oEntity.hdfsPath,
+      hdfsPublishPath: oEntity.hdfsPublishPath,
+      title: oEntity.title,
+      version: oEntity.version,
+      conformance: ( oEntity.conformance || [] )
+    }
+  }
+
+  create(oDataset) {
+    let cleanDataset = this.cleanupEntity(oDataset);
+    return super.create(cleanDataset);
+  }
+
   update(oDataset) {
-    return super.update(oDataset).then((oData) => {
+    let cleanDataset = this.cleanupEntity(oDataset);
+    return super.update(cleanDataset).then((oData) => {
       return this.schemaRestDAO.getByNameAndVersion(oData.schemaName, oData.schemaVersion).then((oData) => {
         this.modelBinder.setProperty(oData, "/schema");
         return oData
@@ -338,6 +358,25 @@ class SchemaService extends DependentEntityService {
 
   getByNameAndVersion(sName, iVersion, sModelPath = "/currentSchema") {
     return super.getByNameAndVersion(sName, iVersion, sModelPath, "#/schema")
+  }
+
+  cleanupEntity(oEntity) {
+    return {
+      name: oEntity.name,
+      description: oEntity.description,
+      title: oEntity.title,
+      version: oEntity.version
+    }
+  }
+
+  create(oSchema) {
+    let cleanSchema = this.cleanupEntity(oSchema);
+    return super.create(cleanSchema);
+  }
+
+  update(oSchema) {
+    let cleanSchema = this.cleanupEntity(oSchema);
+    return super.update(cleanSchema);
   }
 
   disable(sName, iVersion) {
@@ -399,8 +438,26 @@ class MappingTableService extends DependentEntityService {
     return super.getByNameAndVersion(sName, iVersion, sModelPath, "#/mapping")
   }
 
+  cleanupEntity(oEntity) {
+    return {
+      name: oEntity.name,
+      description: oEntity.description,
+      schemaName: oEntity.schemaName,
+      schemaVersion: oEntity.schemaVersion,
+      hdfsPath: oEntity.hdfsPath,
+      title: oEntity.title,
+      version: oEntity.version
+    }
+  }
+
+  create(oMappingTable) {
+    let cleanMappingTable = this.cleanupEntity(oMappingTable);
+    return super.create(cleanMappingTable);
+  }
+
   update(oMappingTable) {
-    return super.update(oMappingTable).then((oData) => {
+    let cleanMappingTable = this.cleanupEntity(oMappingTable);
+    return super.update(cleanMappingTable).then((oData) => {
       return this.schemaRestDAO.getByNameAndVersion(oData.schemaName, oData.schemaVersion).then((oData) => {
         this.modelBinder.setProperty(oData, "/schema");
         return oData
