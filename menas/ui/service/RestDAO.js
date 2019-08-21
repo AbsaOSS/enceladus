@@ -17,13 +17,29 @@ class RestClient {
 
   static cache = _.memoize($.ajax, ({url}) => url);
 
-  static get(url, shouldUseCache = false) {
+  static _setBusy(oCtl) {
+    if(oCtl && oCtl.setBusy && oCtl.setBusyIndicatorDelay) {
+      oCtl.setBusyIndicatorDelay(0);
+      oCtl.setBusy(true);
+    }
+  }
+
+  static _clearBusy(oCtl) {
+    if(oCtl && oCtl.setBusy) {
+      oCtl.setBusy(false);
+    }
+  }
+
+  static get(url, shouldUseCache = false, oBusyControl = undefined) {
     let request = {
       url: url,
       async: true
     };
+    this._setBusy(oBusyControl);
     const jqXHR = shouldUseCache ? RestClient.cache(request) : $.ajax(request);
-    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession).always(() => {
+      this._clearBusy(oBusyControl);
+    });
   }
 
   static getSync(url, shouldUseCache = false) {
@@ -36,7 +52,8 @@ class RestClient {
 
   }
 
-  static post(url, data) {
+  static post(url, data, oBusyControl = undefined) {
+    this._setBusy(oBusyControl);
     const jqXHR = $.post({
       url: url,
       data: JSON.stringify(data),
@@ -45,10 +62,13 @@ class RestClient {
         "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
       }
     });
-    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession).always(() => {
+      this._clearBusy(oBusyControl);
+    });
   }
 
-  static put(url, data) {
+  static put(url, data, oBusyControl = undefined) {
+    this._setBusy(oBusyControl);
     const jqXHR = $.put({
       url: url,
       data: JSON.stringify(data),
@@ -57,17 +77,22 @@ class RestClient {
         "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
       }
     });
-    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession).always(() => {
+      this._clearBusy(oBusyControl);
+    });
   }
 
-  static delete(url) {
+  static delete(url, oBusyControl = undefined) {
+    this._setBusy(oBusyControl);
     const jqXHR = $.delete({
       url: url,
       headers: {
         "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
       }
     });
-    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession).always(() => {
+      this._clearBusy(oBusyControl);
+    });
   }
 
   static identity(jqXHR) {

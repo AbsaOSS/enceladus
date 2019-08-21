@@ -27,7 +27,11 @@ html, body {
 }
 
 .mt10 {
-	margin-top: 10px;
+  margin-top: 10px;
+}
+
+.mt1rem {
+  margin-top: 1rem !important;
 }
 
 .menasAddMappingFlex {
@@ -87,20 +91,16 @@ html, body {
   height: 100% !important;
 }
 
-.scheduleActionButton {
-  padding: 0px !important;
-  height: 1.25rem !important;
+.scheduleMenuButton {
+  margin-top: -1rem !important;
+  position: absolute !important;
 }
 
-.scheduleActionButton > .sapMBtnInner {
-  height: 1.25rem !important;
-  font-size: 0.9rem !important;
-  line-height: 1rem !important;
+.scheduleMenuHBox {
+  height: 2rem !important;
+  margin-top: 1rem !important;
 }
 
-.scheduleActionButton > .sapMBtnInner > .sapMBtnIcon {
-  height: 1.25rem !important;
-  font-size: 0.9rem !important;
-  line-height: 1rem !important;
-  padding-top: 0.1rem !important;
+h5[id$=datasetDetailView--scheduleTimingTitle] {
+  margin-top: 1rem !important;
 }

@@ -44,6 +44,7 @@ sap.ui.define([
 
       let cont = new ConformanceRuleDialog(this);
       let view = this.getView();
+      this._scheduleActionMenu = this.byId("scheduleActionMenuButton");
 
       // Monitoring
 
@@ -440,15 +441,15 @@ sap.ui.define([
     },
 
     scheduleRunNow: function() {
-      OozieService.runNow();
+      OozieService.runNow(this._scheduleActionMenu);
     },
 
     scheduleSuspend: function() {
-      OozieService.suspend();
+      OozieService.suspend(this._scheduleActionMenu);
     },
 
     scheduleResume: function() {
-      OozieService.resume();
+      OozieService.resume(this._scheduleActionMenu);
     },
 
     // Monitoring related part
