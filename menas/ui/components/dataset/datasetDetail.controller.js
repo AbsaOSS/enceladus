@@ -398,7 +398,7 @@ sap.ui.define([
       const oCurrentDataset = this._model.getProperty("/currentDataset");
 
       const oAuditModel = this.byId("auditTrailTable").getModel("auditTrail");
-      const aAuditEntries = oAuditModel.getProperty("/entries").map(e => {
+      const aAuditEntries = !oAuditModel ? [] : oAuditModel.getProperty("/entries").map(e => {
         return {
           menasRef: e.menasRef
         };
