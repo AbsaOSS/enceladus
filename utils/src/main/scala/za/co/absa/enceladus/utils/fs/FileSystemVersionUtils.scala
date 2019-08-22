@@ -168,7 +168,7 @@ class FileSystemVersionUtils(conf: Configuration) {
     * Deletes a directory and all its contents recursively
     */
   def deleteDirectoryRecursively(path: String): Unit = {
-    log.warn(s"Deleting '$path' recursively...")
+    log.info(s"Deleting '$path' recursively...")
     val hdfsPath = new Path(path)
     fs.delete(hdfsPath, true)
   }
