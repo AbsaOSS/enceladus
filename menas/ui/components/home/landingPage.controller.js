@@ -35,6 +35,10 @@ sap.ui.define([
         shortLimit: 9999,
         style: "short"
       });
+
+      ConfigRestClient.getEnvironmentName()
+        .then( sEnvironmentName => sap.ui.getCore().getModel().setProperty("/menasEnvironment", sEnvironmentName) )
+        .fail(console.log("Failed to get Environment variable"));
     },
 
     tileNumberFormatter: function(nNum) {

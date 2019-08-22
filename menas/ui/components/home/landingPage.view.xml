@@ -15,11 +15,11 @@
 
 <core:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="components.home.landingPage" xmlns:html="http://www.w3.org/1999/xhtml"
     xmlns:lab="it.designfuture.chartjs">
-    <Page title="Menas" enableScrolling="false">
+    <Page title="Menas on {/menasEnvironment}" enableScrolling="false">
         <customHeader>
             <Bar>
                 <contentMiddle>
-                    <Title text="Menas" />
+                    <Title text="Menas on {/menasEnvironment}" />
                 </contentMiddle>
                 <contentRight>
                     <core:Fragment type="XML" fragmentName="components.userInfo" />

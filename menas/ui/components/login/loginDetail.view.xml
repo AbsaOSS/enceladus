@@ -15,7 +15,7 @@
 
 <core:View id="loginDetailView" xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" 
     xmlns:form="sap.ui.layout.form" controllerName="components.login.loginDetail">
-    <Page title="Login" enableScrolling="true">
+    <Page title="Login to {/menasEnvironment}" enableScrolling="true">
         <content>
             <VBox id="loginForm" fitContainer="true" justifyContent="Center" alignItems="Center">
                 <items>
