@@ -27,6 +27,7 @@
 
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
+        <json4s.version>3.5.3</json4s.version>
     </properties>
 
     <dependencies>
@@ -44,6 +45,11 @@
             <groupId>com.github.scopt</groupId>
             <artifactId>scopt_${scala.compat.version}</artifactId>
             <version>${scopt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-jackson_${scala.compat.version}</artifactId>
+            <version>${json4s.version}</version>
         </dependency>
     </dependencies>
 
