@@ -168,7 +168,9 @@ class EntityService {
   }
 
   create(entity) {
-    return this.restDAO.create(entity).then((oData) => {
+    let cleanEntity = this.cleanupEntity(entity);
+
+    return this.restDAO.create(cleanEntity).then((oData) => {
       this.updateMasterPage();
       this.publishCreatedEvent(oData);
       sap.m.MessageToast.show(this.messageProvider.entityCreated());
@@ -179,7 +181,9 @@ class EntityService {
   }
 
   update(entity) {
-    return this.restDAO.update(entity).then((oData) => {
+    let cleanEntity = this.cleanupEntity(entity);
+
+    return this.restDAO.update(cleanEntity).then((oData) => {
       this.updateMasterPage();
       this.publishUpdatedEvent(oData);
       sap.m.MessageToast.show(this.messageProvider.entityUpdated());
@@ -282,26 +286,19 @@ class DatasetService extends EntityService {
 
   cleanupEntity(oEntity) {
     return {
-      description: oEntity.description,
       name: oEntity.name,
-      schemaName: oEntity.schemaName,
-      schemaVersion: oEntity.schemaVersion,
+      version: oEntity.version,
+      description: oEntity.description,
       hdfsPath: oEntity.hdfsPath,
       hdfsPublishPath: oEntity.hdfsPublishPath,
-      title: oEntity.title,
-      version: oEntity.version,
+      schemaName: oEntity.schemaName,
+      schemaVersion: oEntity.schemaVersion,
       conformance: ( oEntity.conformance || [] )
     }
   }
 
-  create(oDataset) {
-    let cleanDataset = this.cleanupEntity(oDataset);
-    return super.create(cleanDataset);
-  }
-
   update(oDataset) {
-    let cleanDataset = this.cleanupEntity(oDataset);
-    return super.update(cleanDataset).then((oData) => {
+    return super.update(oDataset).then((oData) => {
       return this.schemaRestDAO.getByNameAndVersion(oData.schemaName, oData.schemaVersion).then((oData) => {
         this.modelBinder.setProperty(oData, "/schema");
         return oData
@@ -363,20 +360,9 @@ class SchemaService extends DependentEntityService {
   cleanupEntity(oEntity) {
     return {
       name: oEntity.name,
-      description: oEntity.description,
-      title: oEntity.title,
-      version: oEntity.version
+      version: oEntity.version,
+      description: oEntity.description
     }
-  }
-
-  create(oSchema) {
-    let cleanSchema = this.cleanupEntity(oSchema);
-    return super.create(cleanSchema);
-  }
-
-  update(oSchema) {
-    let cleanSchema = this.cleanupEntity(oSchema);
-    return super.update(cleanSchema);
   }
 
   disable(sName, iVersion) {
@@ -441,23 +427,16 @@ class MappingTableService extends DependentEntityService {
   cleanupEntity(oEntity) {
     return {
       name: oEntity.name,
+      version: oEntity.version,
       description: oEntity.description,
-      schemaName: oEntity.schemaName,
-      schemaVersion: oEntity.schemaVersion,
       hdfsPath: oEntity.hdfsPath,
-      title: oEntity.title,
-      version: oEntity.version
+      schemaName: oEntity.schemaName,
+      schemaVersion: oEntity.schemaVersion
     }
   }
 
-  create(oMappingTable) {
-    let cleanMappingTable = this.cleanupEntity(oMappingTable);
-    return super.create(cleanMappingTable);
-  }
-
   update(oMappingTable) {
-    let cleanMappingTable = this.cleanupEntity(oMappingTable);
-    return super.update(cleanMappingTable).then((oData) => {
+    return super.update(oMappingTable).then((oData) => {
       return this.schemaRestDAO.getByNameAndVersion(oData.schemaName, oData.schemaVersion).then((oData) => {
         this.modelBinder.setProperty(oData, "/schema");
         return oData
