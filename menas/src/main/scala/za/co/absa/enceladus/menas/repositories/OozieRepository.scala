@@ -42,7 +42,8 @@ import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
 import za.co.absa.enceladus.menas.exceptions.EntityAlreadyExistsException
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import OozieRepository._
-import scala.util.Try
+import scala.util.{Try, Success, Failure}
+import za.co.absa.enceladus.menas.exceptions.OozieActionException
 
 
 object OozieRepository {
@@ -323,11 +324,17 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Run a workflow now
    */
   def runWorkflow(wfPath: String, runtimeParams: RuntimeConfig, reportDate: String): Future[String] = {
-    getOozieClientWrap { oozieClient: OozieClient =>
+    getOozieClient { oozieClient: OozieClient =>
       val conf = getOozieConf(oozieClient, runtimeParams)
       conf.setProperty(OozieClient.APP_PATH, wfPath)
       conf.setProperty("reportDate", reportDate)
-      oozieClient.run(conf)
+      val res = Try {
+        oozieClient.run(conf)
+      }
+      res match {
+        case Success(x) => Future.successful(x)
+        case Failure(e) => Future.failed(OozieActionException(e.getMessage, e.getCause))
+      }
     }
   }
 

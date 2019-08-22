@@ -14,9 +14,7 @@
  */
 
 jQuery.sap.require("sap.m.MessageToast");
-jQuery.sap.require("sap.m.Dialog");
-jQuery.sap.require("sap.m.Button");
-jQuery.sap.require("sap.m.FormattedText");
+jQuery.sap.require("sap.m.MessageBox");
 
 var OozieService = new function () {
 
@@ -42,25 +40,8 @@ var OozieService = new function () {
           sap.m.MessageToast.show(`The job has been submitted with ID: ${oData}`, {duration: 10000});
         })
         .fail((err) => {
-          const formText = new sap.m.FormattedText();
-          const dialog = new sap.m.Dialog({
-            title: 'Error',
-            type: 'Message',
-            state: 'Error',
-            content: formText,
-            buttons: [new sap.m.Button({
-              text: 'OK',
-              press: function () {
-                dialog.close();
-              }
-            })],
-            afterClose: function() {
-              dialog.destroy();
-            }
-          });
-          //TODO: Set in the constructor when HTML sanitization is done properly
-          formText.setHtmlText(err.responseText);
-          dialog.open();
+          const error = JSON.parse(err.responseText);
+          sap.m.MessageBox.error(`${error.message}\nError id: ${error.id}`);
         });
     }
   };
