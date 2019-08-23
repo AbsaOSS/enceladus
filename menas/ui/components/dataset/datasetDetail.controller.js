@@ -440,16 +440,45 @@ sap.ui.define([
       this._editScheduleDialog.close();
     },
 
+    _setBusy: function(oCtl) {
+      if(oCtl && oCtl.setBusy && oCtl.setBusyIndicatorDelay) {
+        oCtl.setBusyIndicatorDelay(0);
+        oCtl.setBusy(true);
+      }
+    },
+
+    _clearBusy: function(oCtl) {
+      if(oCtl && oCtl.setBusy) {
+        oCtl.setBusy(false);
+      }
+    },
+
+    _clearBusyPromise: function(oCtl, oPromise) {
+      if(oPromise) {
+        oPromise.always(() => {
+          this._clearBusy(oCtl);
+        })
+      } else {
+        this._clearBusy(oCtl);
+      }
+    },
+    
     scheduleRunNow: function() {
-      OozieService.runNow(this._scheduleActionMenu);
+      this._setBusy(this._scheduleActionMenu);
+      const prom = OozieService.runNow();
+      this._clearBusyPromise(this._scheduleActionMenu, prom)
     },
 
     scheduleSuspend: function() {
-      OozieService.suspend(this._scheduleActionMenu);
+      this._setBusy(this._scheduleActionMenu);
+      const prom = OozieService.suspend();
+      this._clearBusyPromise(this._scheduleActionMenu, prom)
     },
 
     scheduleResume: function() {
-      OozieService.resume(this._scheduleActionMenu);
+      this._setBusy(this._scheduleActionMenu);
+      const prom = OozieService.resume();
+      this._clearBusyPromise(this._scheduleActionMenu, prom)
     },
 
     // Monitoring related part

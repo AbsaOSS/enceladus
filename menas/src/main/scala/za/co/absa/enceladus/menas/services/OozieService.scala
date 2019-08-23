@@ -15,16 +15,18 @@
 
 package za.co.absa.enceladus.menas.services
 
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
 import scala.concurrent.Future
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
+import za.co.absa.enceladus.menas.exceptions.OozieActionException
 import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
 import za.co.absa.enceladus.menas.repositories.OozieRepository
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @Component
 class OozieService @Autowired() (oozieRepository: OozieRepository) {
@@ -40,7 +42,7 @@ class OozieService @Autowired() (oozieRepository: OozieRepository) {
   def runNow(oozieSchedule: OozieSchedule, reportDate: Option[String]): Future[String] = {
     val wfPath = oozieSchedule.activeInstance match {
       case Some(instance) => instance.workflowPath
-      case None           => throw new IllegalArgumentException("Cannot run a non-active schedule.")
+      case None           => throw OozieActionException("Cannot run a job without an active schedule. Click 'Edit Schedule' to configure schedule first.")
     }
     val reportDateString = reportDate match {
       case Some(date) => date

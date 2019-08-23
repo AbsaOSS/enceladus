@@ -212,7 +212,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Get status of submitted coordinator
    */
   def getCoordinatorStatus(coordId: String): Future[OozieCoordinatorStatus] = {
-    getOozieClientWrap({ oozieClient: OozieClient =>
+    getOozieClientWrap({ oozieClient =>
       val jobInfo = oozieClient.getCoordJobInfo(coordId)
       val nextMaterializeTime = if (jobInfo.getNextMaterializedTime == null) {
         ""
@@ -227,7 +227,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Kill a running coordinator
    */
   def killCoordinator(coordId: String): Future[Unit] = {
-    getOozieClientWrap({ oozieClient: OozieClient =>
+    getOozieClientWrap({ oozieClient =>
       Try {
         oozieClient.kill(coordId)
       }
@@ -313,7 +313,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Submits a coordinator
    */
   def runCoordinator(coordPath: String, runtimeParams: RuntimeConfig): Future[String] = {
-    getOozieClientWrap { oozieClient: OozieClient =>
+    getOozieClientWrap { oozieClient =>
       val conf = getOozieConf(oozieClient, runtimeParams)
       conf.setProperty(OozieClient.COORDINATOR_APP_PATH, s"$coordPath")
       oozieClient.submit(conf)
@@ -324,14 +324,13 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Run a workflow now
    */
   def runWorkflow(wfPath: String, runtimeParams: RuntimeConfig, reportDate: String): Future[String] = {
-    getOozieClient { oozieClient: OozieClient =>
+    getOozieClient { oozieClient =>
       val conf = getOozieConf(oozieClient, runtimeParams)
       conf.setProperty(OozieClient.APP_PATH, wfPath)
       conf.setProperty("reportDate", reportDate)
-      val res = Try {
+      Try {
         oozieClient.run(conf)
-      }
-      res match {
+      } match {
         case Success(x) => Future.successful(x)
         case Failure(e) => Future.failed(OozieActionException(e.getMessage, e.getCause))
       }
@@ -342,7 +341,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Suspend a coordinator
    */
   def suspend(coordId: String): Future[Unit] = {
-    getOozieClientWrap { oozieClient: OozieClient =>
+    getOozieClientWrap { oozieClient =>
       oozieClient.suspend(coordId)
     }
   }
@@ -351,7 +350,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Resume a coordinator
    */
   def resume(coordId: String): Future[Unit] = {
-    getOozieClientWrap { oozieClient: OozieClient =>
+    getOozieClientWrap { oozieClient =>
       oozieClient.resume(coordId)
     }
   }

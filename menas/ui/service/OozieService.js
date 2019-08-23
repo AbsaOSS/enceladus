@@ -16,7 +16,25 @@
 jQuery.sap.require("sap.m.MessageToast");
 jQuery.sap.require("sap.m.MessageBox");
 
-var OozieService = new function () {
+class OozieDAO {
+  static getCoordinatorStatus(sCoordinatorId) {
+    return RestClient.get(`api/oozie/coordinatorStatus/${sCoordinatorId}`);
+  }
+
+  static runNow(oSchedule) {
+    return RestClient.post("api/oozie/runNow", oSchedule);
+  }
+
+  static suspend(sCoordinatorId) {
+    return RestClient.post(`api/oozie/suspend/${sCoordinatorId}`);
+  }
+
+  static resume(sCoordinatorId) {
+    return RestClient.post(`api/oozie/resume/${sCoordinatorId}`);
+  }
+}
+
+const OozieService = new function () {
 
   const model = () => {
     return sap.ui.getCore().getModel();
@@ -26,30 +44,29 @@ var OozieService = new function () {
   this.getCoordinatorStatus = function () {
     const coordinatorId = model().getProperty("/currentDataset/schedule/activeInstance/coordinatorId")
     if(coordinatorId) {
-      RestClient.get(`api/oozie/coordinatorStatus/${coordinatorId}`).then((oData) => {
+      return OozieDAO.getCoordinatorStatus(coordinatorId).then((oData) => {
         model().setProperty("/currentDataset/schedule/activeInstance/status", oData);
-      })
+      });
     }
   };
 
   this.runNow = function(oCtl) {
     const oSchedule = model().getProperty("/currentDataset/schedule")
     if(oSchedule) {
-      RestClient.post("api/oozie/runNow", oSchedule, oCtl)
-        .then((oData) => {
-          sap.m.MessageToast.show(`The job has been submitted with ID: ${oData}`, {duration: 10000});
-        })
-        .fail((err) => {
-          const error = JSON.parse(err.responseText);
-          sap.m.MessageBox.error(`${error.message}\nError id: ${error.id}`);
-        });
+      return OozieDAO.runNow(oSchedule).then((oData) => {
+        sap.m.MessageToast.show(`The job has been submitted with ID: ${oData}`, {duration: 10000});
+      })
+      .fail((err) => {
+        const error = JSON.parse(err.responseText);
+        sap.m.MessageBox.error(`${error.message}\nError id: ${error.id}`);
+      });
     }
   };
 
   this.suspend = function(oCtl) {
     const oSchedule = model().getProperty("/currentDataset/schedule")
     if(oSchedule && oSchedule.activeInstance) {
-      RestClient.post(`api/oozie/suspend/${oSchedule.activeInstance.coordinatorId}`, undefined, oCtl).then((oData) => {
+      return OozieDAO.suspend(oSchedule.activeInstance.coordinatorId).then((oData) => {
         if(oData.status === "SUSPENDED") {
           sap.m.MessageToast.show(`Schedule ${oSchedule.activeInstance.coordinatorId} has been suspended`, {duration: 10000});
         } else {
@@ -63,13 +80,12 @@ var OozieService = new function () {
   this.resume = function(oCtl) {
     const oSchedule = model().getProperty("/currentDataset/schedule")
     if(oSchedule && oSchedule.activeInstance) {
-      RestClient.post(`api/oozie/resume/${oSchedule.activeInstance.coordinatorId}`, undefined, oCtl).then((oData) => {
+      return OozieDAO.resume(oSchedule.activeInstance.coordinatorId).then((oData) => {
         if(oData.status === "RUNNING") {
           sap.m.MessageToast.show(`Schedule ${oSchedule.activeInstance.coordinatorId} has been resumed`, {duration: 10000});
         } else {
           sap.m.MessageToast.show(`Failed to resume schedule: ${oSchedule.activeInstance.coordinatorId}!`, {duration: 10000});
         }
-        
         model().setProperty("/currentDataset/schedule/activeInstance/status", oData);
       })
     }
