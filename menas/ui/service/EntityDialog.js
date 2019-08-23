@@ -189,7 +189,7 @@ class SchemaDialog extends EntityDialog {
     if (GenericService.isValidEntityName(sName)) {
       SchemaService.hasUniqueName(sName, this.oDialog.getModel("entity"))
     } else {
-      this.oDialog.getModel("entity").setProperty("/newSchema/nameUnique", true)
+      this.oDialog.getModel("entity").setProperty("/nameUnique", true);
     }
   }
 
