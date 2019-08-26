@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
+import org.apache.spark.sql.types._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
@@ -25,7 +26,9 @@ import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import org.slf4j.event.Level.ERROR
 
-class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
+class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase {
+  private val ruleName = "Casting rule"
+  private val columnName = "dummy"
 
   test("Casting conformance rule test") {
 
@@ -38,7 +41,7 @@ class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
 
-    mockWhen (dao.getDataset("Orders Conformance", 1)) thenReturn CastingRuleSamples.ordersDS
+    mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn CastingRuleSamples.ordersDS
 
     val mappingTablePattern = "{0}/{1}/{2}"
 
@@ -71,7 +74,6 @@ class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val dsName = "dataset"
 
     // These fields should pass the validation
-    val ruleName = "Casting rule"
     RuleValidators.validateInputField(dsName, ruleName, schema, "id")
     RuleValidators.validateInputField(dsName, ruleName, schema, "date")
     RuleValidators.validateInputField(dsName, ruleName, schema, "items.qty")
@@ -123,6 +125,62 @@ class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
         "order.item.details.payment")
     }.getMessage contains "have different parents")
 
+  }
+
+  test("Test Casting rule ok handling conversion from 'long' to 'string'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, LongType, "string")
+  }
+
+  test("Test Casting rule ok handling conversion from 'string' to 'long'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, StringType, "long")
+  }
+
+  test("Test Casting rule ok handling conversion from 'string' to 'date'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, StringType, "date")
+  }
+
+  test("Test Casting rule ok handling conversion from 'boolean' to 'decimal(10,2)'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, BooleanType, "decimal(10,2)")
+  }
+
+  test("Test Casting rule ok handling conversion from 'long' to 'timestamp'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, LongType, "timestamp")
+  }
+
+  test("Test Casting rule ok handling conversion from 'timestamp' to 'boolean'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, TimestampType, "boolean")
+  }
+
+  test("Test Casting rule ok handling conversion from 'date' to 'boolean'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, DateType, "boolean")
+  }
+
+  test("Test Casting rule failure handling conversion from 'long' to 'date'") {
+    val e = intercept[ValidationException] {
+      RuleValidators.validateTypeCompatibility(ruleName, columnName, LongType, "date")
+    }
+    assert(e.message.contains("conversion from 'long' to 'date' is not supported"))
+  }
+
+  test("Test Casting rule failure handling conversion from 'boolean' to 'date'") {
+    val e = intercept[ValidationException] {
+      RuleValidators.validateTypeCompatibility(ruleName, columnName, BooleanType, "date")
+    }
+    assert(e.message.contains("conversion from 'boolean' to 'date' is not supported"))
+  }
+
+  test("Test Casting rule failure handling conversion from 'decimal(10,2)' to 'date'") {
+    val e = intercept[ValidationException] {
+      RuleValidators.validateTypeCompatibility(ruleName, columnName, DecimalType(10, 2), "date")
+    }
+    assert(e.message.contains("conversion from 'decimal(10,2)' to 'date' is not supported"))
+  }
+
+  test("Test Casting rule failure handling conversion from 'boolean' to 'timestamp'") {
+    val e = intercept[ValidationException] {
+      RuleValidators.validateTypeCompatibility(ruleName, columnName, BooleanType, "timestamp")
+    }
+    assert(e.message.contains("conversion from 'boolean' to 'timestamp' is not supported"))
   }
 
 }
