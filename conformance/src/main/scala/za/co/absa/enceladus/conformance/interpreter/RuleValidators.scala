@@ -66,14 +66,14 @@ object RuleValidators {
     * @param ruleName        A name of a conformance rule to be used as part of an exception error message
     * @param inputColumnName A name of an input column to be used as part of an exception error message
     * @param inputType       A type of an input field
-    * @param outputType      A type to cast to
+    * @param outputTypeName  A name oa a type definition to cast to
     * @param spark           (implicit) A Spark Session
     */
   @throws[ValidationException]
   def validateTypeCompatibility(ruleName: String,
                                 inputColumnName: String,
                                 inputType: DataType,
-                                outputType: String)
+                                outputTypeName: String)
                                (implicit spark: SparkSession): Unit = {
     import spark.implicits._
 
@@ -87,13 +87,13 @@ object RuleValidators {
     try {
       // The initial type is 'string'. Convert it to 'inputType' first (conversion from string never throws), and than
       // try to convert it to 'outputType'.
-      df.select(col("dummy"), col("dummy").cast(inputType).cast(outputType).as("field"))
+      df.select(col("dummy"), col("dummy").cast(inputType).cast(outputTypeName).as("field"))
         .collect
     } catch {
       case NonFatal(e) =>
         throw new ValidationException(
-          s"$ruleName validation error: cannot cast '$inputColumnName' to '$outputType' since conversion from " +
-            s"'${inputType.typeName}' to '$outputType' is not supported.", e.getMessage)
+          s"$ruleName validation error: cannot cast '$inputColumnName' to '$outputTypeName' since conversion from " +
+            s"'${inputType.typeName}' to '$outputTypeName' is not supported.", e.getMessage)
     }
   }
 }
