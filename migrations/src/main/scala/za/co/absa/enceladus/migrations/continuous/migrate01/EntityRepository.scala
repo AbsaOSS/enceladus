@@ -20,6 +20,7 @@ import org.mongodb.scala.bson.{BsonDocument, ObjectId}
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.Filters.{and, equal, or}
 import org.mongodb.scala.model.Sorts._
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.model.RunState
 import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 
@@ -29,6 +30,8 @@ import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 final class EntityRepository(db: MongoDatabase, collectionName: String) {
 
   import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits._
+
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
     * Returns iterator to a sorted collection of documents. Documents are sorted by name and version.
@@ -156,6 +159,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
     * @param document A JSON representation of a document.
     */
   def insertDocument(document: String): Unit = {
+    log.info(s"INSERT INTO $collectionName: $document")
     db.getCollection(collectionName)
       .insertOne(BsonDocument(document))
       .execute()
