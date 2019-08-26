@@ -117,6 +117,11 @@
             <artifactId>hadoop-client</artifactId>
             <version>${hadoop.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.databricks</groupId>
+            <artifactId>spark-xml_${scala.compat.version}</artifactId>
+            <version>${spark.xml.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
