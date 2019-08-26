@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{ArrayType, DataType, StringType, StructType}
+import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.RuleValidators
@@ -34,6 +34,9 @@ case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInte
     RuleValidators.validateInputField(progArgs.datasetName, ruleName, df.schema, rule.inputColumn)
     RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)
     RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumn, rule.outputColumn)
+
+    SchemaUtils.getFieldType(rule.inputColumn, df.schema)
+      .foreach(dt => RuleValidators.validateTypeCompatibility(ruleName, rule.inputColumn, dt, rule.outputDataType))
 
     val sourceDataType = SchemaUtils.getFieldType(rule.inputColumn, df.schema).get
     val targetDataType = CatalystSqlParser.parseDataType(rule.outputDataType)

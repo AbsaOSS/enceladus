@@ -15,9 +15,13 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{DataType, StructType}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.utils.validation.{SchemaPathValidator, ValidationIssue, ValidationUtils}
+
+import scala.util.control.NonFatal
 
 object RuleValidators {
 
@@ -52,6 +56,44 @@ object RuleValidators {
     if (validationIssues.nonEmpty) {
       val errorMessages = ValidationUtils.getValidationMsgs(validationIssues).mkString(";")
       throw new ValidationException(s"$datasetName - $message $errorMessages" )
+    }
+  }
+
+  /**
+    * Checks if Spark allows casting from one specific type to another.
+    * Throws an instance of ValidationException exception otherwise.
+    *
+    * @param ruleName        A name of a conformance rule to be used as part of an exception error message
+    * @param inputColumnName A name of an input column to be used as part of an exception error message
+    * @param inputType       A type of an input field
+    * @param outputType      A type to cast to
+    * @param spark           (implicit) A Spark Session
+    */
+  @throws[ValidationException]
+  def validateTypeCompatibility(ruleName: String,
+                                inputColumnName: String,
+                                inputType: DataType,
+                                outputType: String)
+                               (implicit spark: SparkSession): Unit = {
+    import spark.implicits._
+
+    // This generates a dataframe we can use to check cast()
+    // Various values need to be here, otherwise Spark may accept incompatible types
+    val df = List("", "true", "false", "0", "1", "-999", "2.2", "a",
+      "2019-01-01", "2019-01-01 00:00:00", "1970-01-01 00:00:00").toDF("dummy")
+
+    // Check if inputType can be cast to outputType
+    // If types are completely incompatible Spark throws an exception
+    try {
+      // The initial type is 'string'. Convert it to 'inputType' first (conversion from string never throws), and than
+      // try to convert it to 'outputType'.
+      df.select(col("dummy"), col("dummy").cast(inputType).cast(outputType).as("field"))
+        .collect
+    } catch {
+      case NonFatal(e) =>
+        throw new ValidationException(
+          s"$ruleName validation error: cannot cast '$inputColumnName' to '$outputType' since conversion from " +
+            s"'${inputType.typeName}' to '$outputType' is not supported.", e.getMessage)
     }
   }
 }
