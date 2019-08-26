@@ -53,8 +53,8 @@ class MigrationsIntegrationSuite extends FunSuite with MigrationsFixture {
     val doc1 = docs.next()
     val doc2 = docs.next()
 
-    assert(doc1.contains(""""name" : "Gizmo", "date" : "2018-10-10""""))
-    assert(doc2.contains(""""name" : "Hickey""""))
+    assert(doc1.contains(""""name": "Gizmo", "date": "2018-10-10""""))
+    assert(doc2.contains(""""name": "Hickey""""))
   }
 
   test("Test a database initialization") {

@@ -49,7 +49,7 @@ class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
     val doc1 = db.getDocuments("bar1").next()
     val doc2 = db.getDocuments("bar2").next()
 
-    assert(doc2.contains(""""item" : "1""""))
+    assert(doc2.contains(""""item": "1""""))
     assert(doc1 == doc2)
     assert(db.doesCollectionExists("bar1"))
     assert(db.doesCollectionExists("bar2"))
