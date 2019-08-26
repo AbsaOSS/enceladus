@@ -144,6 +144,7 @@ class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase {
   }
 
   test("Test Casting rule ok handling conversion from 'long' to 'timestamp'") {
+    // A long value is expected to hold the number of seconds since Epoch (1970-01-01T00:00:00.000+00:00) by default
     RuleValidators.validateTypeCompatibility(ruleName, columnName, LongType, "timestamp")
   }
 
@@ -153,6 +154,26 @@ class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase {
 
   test("Test Casting rule ok handling conversion from 'date' to 'boolean'") {
     RuleValidators.validateTypeCompatibility(ruleName, columnName, DateType, "boolean")
+  }
+
+  test("Test Casting rule ok handling conversion from 'double' to 'timestamp'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, DoubleType, "timestamp")
+  }
+
+  test("Test Casting rule ok handling conversion from 'double' to 'long'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, DoubleType, "long")
+  }
+
+  test("Test Casting rule ok handling conversion from 'timestamp' to 'double'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, TimestampType, "double")
+  }
+
+  test("Test Casting rule ok handling conversion from 'date' to 'double'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, DateType, "double")
+  }
+
+  test("Test Casting rule ok handling conversion from 'long' to 'double'") {
+    RuleValidators.validateTypeCompatibility(ruleName, columnName, LongType, "double")
   }
 
   test("Test Casting rule failure handling conversion from 'long' to 'date'") {
@@ -181,6 +202,13 @@ class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase {
       RuleValidators.validateTypeCompatibility(ruleName, columnName, BooleanType, "timestamp")
     }
     assert(e.message.contains("conversion from 'boolean' to 'timestamp' is not supported"))
+  }
+
+  test("Test Casting rule failure handling conversion from 'double' to 'date'") {
+    val e = intercept[ValidationException] {
+      RuleValidators.validateTypeCompatibility(ruleName, columnName, DoubleType, "date")
+    }
+    assert(e.message.contains("conversion from 'double' to 'date' is not supported"))
   }
 
 }
