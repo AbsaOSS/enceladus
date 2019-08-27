@@ -52,7 +52,7 @@ var EntityValidationService = new function () {
     } else if (GenericService.hasWhitespace(oEntity.name)) {
       oInput.setValueState(sap.ui.core.ValueState.Error);
       oInput.setValueStateText(
-        sEntityType + " name '" + oEntity.name + "' should not have whitespaces. Please remove spaces and retry");
+        sEntityType + " name can only contain alphanumeric characters and underscores");
       isOk = false;
     } else if (!oEntity.isEdit && !oEntity.nameUnique) {
       oInput.setValueState(sap.ui.core.ValueState.Error);
