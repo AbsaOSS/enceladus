@@ -455,6 +455,7 @@
                                 <exclude>**/*.MF</exclude>
                                 <exclude>**/*.crc</exclude>
                                 <exclude>**/*.parquet</exclude>
+                                <exclude>**/example*.xml</exclude>
                                 <exclude>**/_SUCCESS</exclude>
                                 <exclude>**/_INFO</exclude>
                                 <exclude>**/json_output</exclude>
