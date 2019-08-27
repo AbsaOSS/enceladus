@@ -463,22 +463,22 @@ sap.ui.define([
       }
     },
     
-    scheduleRunNow: function() {
+    scheduleActionCall: function(fnServiceCall) {
       this._setBusy(this._scheduleActionMenu);
-      const prom = OozieService.runNow();
+      const prom = fnServiceCall();
       this._clearBusyPromise(this._scheduleActionMenu, prom)
+    },
+    
+    scheduleRunNow: function() {
+      this.scheduleActionCall(OozieService.runNow);
     },
 
     scheduleSuspend: function() {
-      this._setBusy(this._scheduleActionMenu);
-      const prom = OozieService.suspend();
-      this._clearBusyPromise(this._scheduleActionMenu, prom)
+      this.scheduleActionCall(OozieService.suspend);
     },
 
     scheduleResume: function() {
-      this._setBusy(this._scheduleActionMenu);
-      const prom = OozieService.resume();
-      this._clearBusyPromise(this._scheduleActionMenu, prom)
+      this.scheduleActionCall(OozieService.resume);
     },
 
     // Monitoring related part

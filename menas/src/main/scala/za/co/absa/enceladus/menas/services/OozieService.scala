@@ -42,7 +42,7 @@ class OozieService @Autowired() (oozieRepository: OozieRepository) {
   def runNow(oozieSchedule: OozieSchedule, reportDate: Option[String]): Future[String] = {
     val wfPath = oozieSchedule.activeInstance match {
       case Some(instance) => instance.workflowPath
-      case None           => throw OozieActionException("Cannot run a job without an active schedule. Click 'Edit Schedule' to configure schedule first.")
+      case None           => throw OozieActionException("Cannot run a job without an active schedule.")
     }
     val reportDateString = reportDate match {
       case Some(date) => date

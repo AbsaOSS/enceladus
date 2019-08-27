@@ -50,9 +50,9 @@ class RestExceptionHandler {
   }
 
   @ExceptionHandler(Array(classOf[OozieActionException]))
-   def handleOozieActionException(ex: RuntimeException): ResponseEntity[Object] = {
+   def handleOozieActionException(ex: OozieActionException): ResponseEntity[Object] = {
     val err = RestError(ex.getMessage)
-    logger.error(s"Exception: $err", ex.getCause)
+    logger.error(s"Exception: $err", ex)
     new ResponseEntity(err, HttpStatus.INTERNAL_SERVER_ERROR);
    }
   

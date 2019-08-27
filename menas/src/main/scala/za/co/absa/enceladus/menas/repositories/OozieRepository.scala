@@ -228,9 +228,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    */
   def killCoordinator(coordId: String): Future[Unit] = {
     getOozieClientWrap({ oozieClient =>
-      Try {
-        oozieClient.kill(coordId)
-      }
+      oozieClient.kill(coordId)
     })
   }
 
