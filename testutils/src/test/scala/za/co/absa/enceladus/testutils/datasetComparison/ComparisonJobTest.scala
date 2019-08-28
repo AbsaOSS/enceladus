@@ -182,7 +182,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterE
 
   test("Key based compare of xml files with compound keys") {
     val expectedDiff = FileReader
-      .readFileAsListOfLines("src/test/resources/xml_examples/example12_diff.txt")
+      .readFileAsListOfLines("src/test/resources/xml_examples/example12_diff.json")
       .mkString("\n")
 
     val refPath = "src/test/resources/xml_examples/example1.xml"
@@ -207,8 +207,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterE
       .load(outPath)
       .orderBy("expected_id", "expected_id2", "actual_id", "actual_id2", "actual_value")
 
-    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
-    val actualDiff = df.dataAsString(false).split("\n").toList.mkString("\n")
+    val actualDiff = df.toJSON.collect().mkString("\n")
 
     assert(actualDiff == expectedDiff)
   }
