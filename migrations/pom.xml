@@ -63,7 +63,7 @@
         <dependency>
             <groupId>io.github.cbartosiak</groupId>
             <artifactId>bson-codecs-jsr310</artifactId>
-            <version>3.1.3</version>
+            <version>${bson.codec.jsr310.version}</version>
         </dependency>
     </dependencies>
 
