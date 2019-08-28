@@ -209,3 +209,10 @@ class MappingTableRestDAO extends DependentRestDAO {
   }
 
 }
+
+class ConfigRestClient {
+
+  static getEnvironmentName() {
+    return RestClient.get(`api/configuration/environment`)
+  }
+}
