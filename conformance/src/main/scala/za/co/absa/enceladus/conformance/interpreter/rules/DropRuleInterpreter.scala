@@ -15,21 +15,27 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import za.co.absa.enceladus.model.conformanceRule.DropConformanceRule
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.EnceladusDAO
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.model.conformanceRule.DropConformanceRule
+import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
+
+import scala.util.{Failure, Success, Try}
 
 case class DropRuleInterpreter(rule: DropConformanceRule) extends RuleInterpreter {
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
-    if (rule.outputColumn.contains('.')) {
-      conformNestedField(df)
-    } else {
-      conformRootField(df)
+    Try(df(rule.outputColumn)) match {
+      case Success(_) =>
+        if (rule.outputColumn.contains('.')) {
+          conformNestedField(df)
+        } else {
+          conformRootField(df)
+        }
+      case Failure(_) =>
+        log.warn(s"Could not drop ${rule.outputColumn}. Column is not present in the dataset")
+        df
     }
   }
 
