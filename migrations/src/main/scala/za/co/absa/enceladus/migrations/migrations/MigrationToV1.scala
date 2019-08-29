@@ -138,7 +138,7 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
   })
 
   transformJSON("dataset")(model0Json => {
-    val fixJson = model0Json.replaceAll("\"jsonClass\"\\w*:", "\"_t\" :")
+    val fixJson = model0Json.replaceAll("\"jsonClass\"\\s*:", "\"_t\" :")
 
     try {
       val dataset0 = Serializer0.deserializeDataset(fixJson)
