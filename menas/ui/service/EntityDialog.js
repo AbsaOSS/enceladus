@@ -263,9 +263,9 @@ class MappingTableDialog extends EntityDialog {
     let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT.hdfsPath,
       "Mapping Table HDFS path",
       this.oController.byId("selectedHDFSPathLabel"));
-    let hasExistingRawHDFSPath = hasValidHDFSPath ? this.oController.byId("addMtHDFSBrowser").validate() : false;
+    let hasExistingHDFSPath = hasValidHDFSPath ? this.oController.byId("addMtHDFSBrowser").validate() : false;
 
-    return hasValidName && hasValidSchema && hasExistingRawHDFSPath;
+    return hasValidName && hasValidSchema && hasExistingHDFSPath;
   }
 
   onNameChange() {
