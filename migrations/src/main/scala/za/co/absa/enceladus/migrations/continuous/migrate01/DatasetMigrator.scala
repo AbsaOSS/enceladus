@@ -52,7 +52,7 @@ final class DatasetMigrator(evm: EntityVersionMap,
     */
   def migrateEntity(srcDatasetJson: String, objectId: String, repo: EntityRepository): Unit = {
     Try {
-      val fixJson = srcDatasetJson.replaceAll("\"jsonClass\"\\w*:", "\"_t\" :")
+      val fixJson = srcDatasetJson.replaceAll("\"jsonClass\"\\s*:", "\"_t\" :")
       val dataset0 = Serializer0.deserializeDataset(fixJson)
 
       model1.Dataset(
