@@ -18,7 +18,7 @@ jQuery.sap.require("sap.m.MessageBox");
 var EntityValidationService = new function () {
 
   this.hasValidHDFSPath = function (sHDFSPath, sEntityType, oInput) {
-    let rHDFSPathRegex = new RegExp("^[a-zA-Z0-9\-_\.\/=]+$");
+    let rHDFSPathRegex = /^[\w\-\.\/=]+$/;
     let isOk = rHDFSPathRegex.test(sHDFSPath);
 
     if (!isOk) {
