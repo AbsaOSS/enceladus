@@ -99,33 +99,48 @@ sealed abstract class TypedStructField(structField: StructField) extends StructF
   def name: String = structField.name
   def nullable: Boolean = structField.nullable
   def dataType: DataType = structField.dataType
+
+  def canEqual(any: Any): Boolean = any.isInstanceOf[TypedStructField]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: TypedStructField => that.canEqual(this) && structField == that.structField
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    /* one of the suggested ways to implement the hasCode logic */
+    val prime = 31
+    var result = 1
+    result = prime * result + (if (structField == null) 0 else structField.hashCode)
+    result
+  }
 }
 
 object TypedStructField {
   /**
    * This is to be the only accessible constructor for TypedStructField sub-classes
-   * The point is, that sub-classes of TypedStructField are defined as abstract sealed ones to prevent their
-   * instantiation outside this apply constructor. This is to ensure at compile time there is a bound between the
-   * provided StructField.dataType and the class created
+   * The point is, that sub-classes have private constructors to prevent their instantiation outside this apply
+   * constructor. This is to ensure at compile time there is a bound between the provided StructField.dataType and the
+   * class created
    * @param structField the structField to wrap TypedStructField around
    * @return            the object of non-abstract TypedStructField successor class relevant to the StructField dataType
    */
   def apply(structField: StructField): TypedStructField = {
     structField.dataType match {
-      case _: StringType    => new StringTypeStructField(structField) {}
-      case _: BooleanType   => new BooleanTypeStructField(structField) {}
-      case _: ByteType      => new IntegralTypeStructField(structField) {}
-      case _: ShortType     => new IntegralTypeStructField(structField) {}
-      case _: IntegerType   => new IntegralTypeStructField(structField) {}
-      case _: LongType      => new IntegralTypeStructField(structField) {}
-      case _: FloatType     => new FractionalTypeStructField(structField) {}
-      case _: DoubleType    => new FractionalTypeStructField(structField) {}
-      case dt: DecimalType  => new DecimalTypeStructField(structField, dt) {}
-      case _: TimestampType => new DateTimeTypeStructField(structField, TimestampFieldValidator) {}
-      case _: DateType      => new DateTimeTypeStructField(structField, DateFieldValidator) {}
-      case at: ArrayType    => new ArrayTypeStructField(structField, at) {}
-      case st: StructType   => new StructTypeStructField(structField, st) {}
-      case _                => new GeneralTypeStructField(structField) {}
+      case _: StringType    => new StringTypeStructField(structField)
+      case _: BooleanType   => new BooleanTypeStructField(structField)
+      case _: ByteType      => new IntegralTypeStructField(structField)
+      case _: ShortType     => new IntegralTypeStructField(structField)
+      case _: IntegerType   => new IntegralTypeStructField(structField)
+      case _: LongType      => new IntegralTypeStructField(structField)
+      case _: FloatType     => new FractionalTypeStructField(structField)
+      case _: DoubleType    => new FractionalTypeStructField(structField)
+      case dt: DecimalType  => new DecimalTypeStructField(structField, dt)
+      case _: TimestampType => new DateTimeTypeStructField(structField, TimestampFieldValidator)
+      case _: DateType      => new DateTimeTypeStructField(structField, DateFieldValidator)
+      case at: ArrayType    => new ArrayTypeStructField(structField, at)
+      case st: StructType   => new StructTypeStructField(structField, st)
+      case _                => new GeneralTypeStructField(structField)
     }
   }
 
@@ -138,7 +153,9 @@ object TypedStructField {
   def asArrayTypeStructField(structField: StructField): ArrayTypeStructField = TypedStructField(structField).asInstanceOf[ArrayTypeStructField]
   def asStructTypeStructField(structField: StructField): StructTypeStructField = TypedStructField(structField).asInstanceOf[StructTypeStructField]
 
-  abstract sealed case class StringTypeStructField(override val structField: StructField) extends TypedStructField(structField) {
+  def unapply(typedStructField: TypedStructField): Option[StructField] = Some(typedStructField.structField)
+
+  final class StringTypeStructField private[TypedStructField] (structField: StructField) extends TypedStructField(structField) {
     override protected def convertString(string: String): Try[Any] = {
       Success(string)
     }
@@ -148,7 +165,7 @@ object TypedStructField {
     }
   }
 
-  abstract sealed case class BooleanTypeStructField(override val structField: StructField) extends TypedStructField(structField) {
+  final class BooleanTypeStructField private[TypedStructField] (structField: StructField) extends TypedStructField(structField) {
     override protected def convertString(string: String): Try[Any] = {
       Try{string.toBoolean}
     }
@@ -158,7 +175,7 @@ object TypedStructField {
     }
   }
 
-  abstract sealed case class IntegralTypeStructField(override val structField: StructField) extends TypedStructField(structField) {
+  final class IntegralTypeStructField private[TypedStructField] (structField: StructField) extends TypedStructField(structField) {
     val parser: IntegralParser = IntegralParser
 
     override protected def convertString(string: String): Try[Any] = {
@@ -177,7 +194,7 @@ object TypedStructField {
     }
   }
 
-  abstract sealed case class FractionalTypeStructField(override val structField: StructField) extends TypedStructField(structField) {
+  final class FractionalTypeStructField private[TypedStructField] (structField: StructField) extends TypedStructField(structField) {
 
     val allowInfinity: Boolean = getMetadataBoolean(MetadataKeys.allowInfinity).getOrElse(false)
 
@@ -197,7 +214,7 @@ object TypedStructField {
     }
   }
 
-  abstract sealed case class DecimalTypeStructField(override val structField: StructField, override val dataType: DecimalType) extends TypedStructField(structField) {
+  final class DecimalTypeStructField private[TypedStructField] (structField: StructField, override val dataType: DecimalType) extends TypedStructField(structField) {
     val parser = DecimalParser(precision, scale)
 
     override protected def convertString(string: String): Try[Any] = {
@@ -212,7 +229,7 @@ object TypedStructField {
     def scale: Int = dataType.scale
   }
 
-  abstract sealed case class DateTimeTypeStructField(override val structField: StructField, validator: DateTimeFieldValidator)
+  final class DateTimeTypeStructField private[TypedStructField] (structField: StructField, validator: DateTimeFieldValidator)
     extends TypedStructField(structField) {
 
     override def pattern: Try[Option[DateTimePattern]] = {
@@ -259,14 +276,14 @@ object TypedStructField {
     }
   }
 
-  abstract sealed case class ArrayTypeStructField(override val structField: StructField, override val dataType: ArrayType)
+  final class ArrayTypeStructField private[TypedStructField] (structField: StructField, override val dataType: ArrayType)
     extends TypedStructField(structField)
     with WeakSupport
 
-  abstract sealed case class StructTypeStructField(override val structField: StructField, override val dataType: StructType)
+  final class StructTypeStructField(structField: StructField, override val dataType: StructType)
     extends TypedStructField(structField)
     with WeakSupport
 
-  abstract sealed case class GeneralTypeStructField(override val structField: StructField) extends TypedStructField(structField) with WeakSupport
+  final class GeneralTypeStructField private[TypedStructField] (structField: StructField) extends TypedStructField(structField) with WeakSupport
 
 }
