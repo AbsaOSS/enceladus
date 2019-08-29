@@ -17,26 +17,14 @@ jQuery.sap.require("sap.m.MessageBox");
 
 var EntityValidationService = new function () {
 
-  this.hasValidHDFSPaths = function (oEntity, sEntityType, oRawInput, oPublishInput) {
-    let isRawPathOk = this._isValidHDFSPath(oEntity.hdfsPath, oRawInput);
-    let isPublishPathOk = this._isValidHDFSPath(oEntity.hdfsPublishPath, oPublishInput);
-
-    if (!isRawPathOk && !isPublishPathOk) {
-      sap.m.MessageToast.show("Please choose the Raw and Publish HDFS paths of the " + sEntityType);
-    } else if (!isRawPathOk) {
-      sap.m.MessageToast.show("Please choose the Raw HDFS path of the " + sEntityType);
-    } else if (!isPublishPathOk) {
-      sap.m.MessageToast.show("Please choose the Publish HDFS path of the " + sEntityType);
-    }
-
-    return isRawPathOk && isPublishPathOk;
-  };
-
-  this.hasValidHDFSPath = function (oEntity, sEntityType, oInput) {
-    let isOk = this._isValidHDFSPath(oEntity.hdfsPath, oInput);
+  this.hasValidHDFSPath = function (sHDFSPath, sEntityType, oInput) {
+    let rHDFSPathRegex = new RegExp("^[a-zA-Z0-9\-_\.\/=]+$");
+    let isOk = rHDFSPathRegex.test(sHDFSPath);
 
     if (!isOk) {
-      sap.m.MessageToast.show("Please choose the HDFS path of the " + sEntityType);
+      oInput.setValueState(sap.ui.core.ValueState.Error);
+      oInput.setValueStateText(sEntityType + " can only contain alphanumeric " +
+        "characters, dot, underscore, dash or equals");
     }
 
     return isOk;

@@ -89,10 +89,18 @@ class DatasetDialog extends EntityDialog {
       this.oController.byId("newDatasetName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oDataset, "Dataset",
         this.oController.byId("schemaVersionSelect"));
-    let hasValidRawHDFSPath = this.oController.byId("newDatasetRawHDFSBrowser").validate();
-    let hasValidPublishHDFSPath = hasValidRawHDFSPath ? this.oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
+    let hasValidRawHDFSPath = EntityValidationService.hasValidHDFSPath(oDataset.hdfsPath,
+      "Dataset Raw HDFS path",
+      this.oController.byId("selectedRawHDFSPathLabel"));
+    let hasValidPublishHDFSPath = EntityValidationService.hasValidHDFSPath(oDataset.hdfsPublishPath,
+      "Dataset publish HDFS path",
+      this.oController.byId("selectedPublishHDFSPathLabel"));
+    let hasExistingRawHDFSPath = hasValidRawHDFSPath ? this.oController.byId("newDatasetRawHDFSBrowser").validate() : false;
+    let hasExistingPublishHDFSPath = hasValidRawHDFSPath && hasValidPublishHDFSPath ?
+      this.oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
 
-    return hasValidName && hasValidSchema && hasValidPublishHDFSPath && hasValidRawHDFSPath;
+    return hasValidName && hasValidSchema && hasValidPublishHDFSPath && hasValidRawHDFSPath
+      && hasExistingRawHDFSPath && hasExistingPublishHDFSPath;
   }
 
   onNameChange() {
@@ -253,9 +261,12 @@ class MappingTableDialog extends EntityDialog {
       this.oController.byId("newMappingTableName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Mapping Table",
       this.oController.byId("schemaVersionSelect"));
-    let hasValidHDFSPath = this.oController.byId("addMtHDFSBrowser").validate();
+    let hasValidRawHDFSPath = EntityValidationService.hasValidHDFSPath(oMT.hdfsPath,
+      "Mapping Table HDFS path",
+      this.oController.byId("selectedHDFSPathLabel"));
+    let hasExistingRawHDFSPath = hasValidRawHDFSPath ? this.oController.byId("addMtHDFSBrowser").validate() : false;
 
-    return hasValidName && hasValidSchema && hasValidHDFSPath;
+    return hasValidName && hasValidSchema && hasExistingRawHDFSPath && hasValidHDFSPath;
   }
 
   onNameChange() {
