@@ -172,7 +172,7 @@ sap.ui.define([
 
       if (status === 500) {
         const sSchemaType = this.byId("schemaFormatSelect").getSelectedItem().getText();
-        let oRawResponse = JSON.parse(oParams.getParameter("responseRaw"));
+        const oRawResponse = JSON.parse(oParams.getParameter("responseRaw"));
         const errorMessage = oRawResponse.message;
 
         MessageBox.error(`Failed to upload new schema. Ensure that the file is a valid ${sSchemaType} schema and try again.` +
