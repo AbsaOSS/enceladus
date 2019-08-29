@@ -26,20 +26,12 @@ html, body {
   min-width: 40rem !important;
 }
 
-.minW30rem {
-  min-width: 30rem !important;
-}
-
-.maxH90pc {
-  max-height: 90% !important;
-}
-
-.hAuto {
-  height: auto !important;
-}
-
 .mt10 {
   margin-top: 10px;
+}
+
+.mt1rem {
+  margin-top: 1rem !important;
 }
 
 .menasAddMappingFlex {
@@ -80,11 +72,27 @@ html, body {
   height: 100% !important;
 }
 
-.auditTrailNestedList > ul > li {
-  width: 100%;
-  display: inline-block !important;
+.auditTrailNestedList > ul > .sapMListNoData {
+  background-color: inherit !important;
+  border-bottom: 0px !important;
+  padding-left: 0px !important;
 }
 
-.sapMPopoverScroll > .sapUiSimpleFixFlex > .sapUiSimpleFixFlexFlexContentContainer {
-  overflow-y: auto !important;
+.lineageIframe {
+  border: none !important;
+  height: 100% !important;
+}
+
+.scheduleMenuButton {
+  margin-top: -1rem !important;
+  position: absolute !important;
+}
+
+.scheduleMenuHBox {
+  height: 2rem !important;
+  margin-top: 1rem !important;
+}
+
+h5[id$=datasetDetailView--scheduleTimingTitle] {
+  margin-top: 1rem !important;
 }

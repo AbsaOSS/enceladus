@@ -44,6 +44,7 @@ sap.ui.define([
 
       let cont = new ConformanceRuleDialog(this);
       let view = this.getView();
+      this._scheduleActionMenu = this.byId("scheduleActionMenuButton");
 
       // Monitoring
 
@@ -397,7 +398,7 @@ sap.ui.define([
       const oCurrentDataset = this._model.getProperty("/currentDataset");
 
       const oAuditModel = this.byId("auditTrailTable").getModel("auditTrail");
-      const aAuditEntries = oAuditModel.getProperty("/entries").map(e => {
+      const aAuditEntries = !oAuditModel ? [] : oAuditModel.getProperty("/entries").map(e => {
         return {
           menasRef: e.menasRef
         };
@@ -437,6 +438,47 @@ sap.ui.define([
 
     closeScheduleDialog: function() {
       this._editScheduleDialog.close();
+    },
+
+    _setBusy: function(oCtl) {
+      if(oCtl && oCtl.setBusy && oCtl.setBusyIndicatorDelay) {
+        oCtl.setBusyIndicatorDelay(0);
+        oCtl.setBusy(true);
+      }
+    },
+
+    _clearBusy: function(oCtl) {
+      if(oCtl && oCtl.setBusy) {
+        oCtl.setBusy(false);
+      }
+    },
+
+    _clearBusyPromise: function(oCtl, oPromise) {
+      if(oPromise) {
+        oPromise.always(() => {
+          this._clearBusy(oCtl);
+        })
+      } else {
+        this._clearBusy(oCtl);
+      }
+    },
+    
+    scheduleActionCall: function(fnServiceCall) {
+      this._setBusy(this._scheduleActionMenu);
+      const prom = fnServiceCall();
+      this._clearBusyPromise(this._scheduleActionMenu, prom)
+    },
+    
+    scheduleRunNow: function() {
+      this.scheduleActionCall(OozieService.runNow);
+    },
+
+    scheduleSuspend: function() {
+      this.scheduleActionCall(OozieService.suspend);
+    },
+
+    scheduleResume: function() {
+      this.scheduleActionCall(OozieService.resume);
     },
 
     // Monitoring related part

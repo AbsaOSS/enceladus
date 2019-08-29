@@ -16,15 +16,17 @@
 jQuery.sap.require("sap.m.MessageBox");
 var GenericService = new function () {
 
-  let model = sap.ui.getCore().getModel();
+  const model = () => {
+    return sap.ui.getCore().getModel()
+  };
 
   let eventBus = sap.ui.getCore().getEventBus();
   const restClient = new RestClient();
 
   this.getUserInfo = function () {
     let fnSuccess = (oInfo) => {
-      model.setProperty("/userInfo", oInfo);
-      model.setProperty("/menasVersion", oInfo.menasVersion);
+      model().setProperty("/userInfo", oInfo);
+      model().setProperty("/menasVersion", oInfo.menasVersion);
     };
 
     $.ajax("api/user/info", {
@@ -58,7 +60,7 @@ var GenericService = new function () {
 
   this.getLandingPageInfo = function() {
     RestClient.get("api/landing/info").then((oData) => {
-      model.setProperty("/landingPageInfo", oData);
+      model().setProperty("/landingPageInfo", oData);
       const graphData = jQuery.extend({}, oData.todaysRunsStatistics);
       delete graphData["total"];
       const keys = Object.keys(graphData).map(this.runStatusFormatter);
@@ -71,7 +73,7 @@ var GenericService = new function () {
           }],
           "labels": keys
       };
-      model.setProperty("/landingPageInfo/todayRunsGraph", graph);
+      model().setProperty("/landingPageInfo/todayRunsGraph", graph);
     }).fail(() => {
       sap.m.MessageBox.error("Failed to load landing page information");
     })
@@ -79,12 +81,12 @@ var GenericService = new function () {
 
   this.getOozieInfo = function() {
     Functions.ajax("api/oozie/isEnabled", "GET", {}, oData => {
-      model.setProperty("/appInfo/oozie/isEnabled", oData);
+      model().setProperty("/appInfo/oozie/isEnabled", oData);
     });
   };
 
   this.clearSession = function (sLogoutMessage) {
-    model.setProperty("/userInfo", {});
+    model().setProperty("/userInfo", {});
     localStorage.clear();
     eventBus.publish("nav", "logout");
     if (sLogoutMessage) {
