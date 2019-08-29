@@ -15,7 +15,7 @@
 
 SRC_DIR=`dirname "$0"`
 
-source ${SRC_DIR}/enceladus_env.sh
+source ${SRC_DIR}/encveladus_env.sh
 
 export CLASS=${CONF_CLASS}
 export JAR=${CONF_JAR}

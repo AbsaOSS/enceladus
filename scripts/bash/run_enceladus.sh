@@ -39,6 +39,7 @@ TRIM_VALUES=""
 MAPPING_TABLE_PATTERN=""
 FOLDER_PREFIX=""
 DEBUG_SET_RAW_PATH=""
+ENCELADUS_JAR_FS=""
 
 # Security command line defaults
 MENAS_CREDENTIALS_FILE=""
@@ -149,6 +150,10 @@ case $key in
     MENAS_AUTH_KEYTAB="$2"
     shift 2 # past argument and value
     ;;
+    --enceladus-jar-fs)
+    ENCELADUS_JAR_FS="$2"
+    shift 2 # past argument and value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -210,6 +215,15 @@ $MT_PATTERN"
 
 CMD_LINE="$SPARK_SUBMIT"
 
+# Construct file path to JAR
+JAR_PATH=""
+if [ ! -z "$ENCELADUS_JAR_FS" ]; then
+    JAR_PATH=$ENCELADUS_JAR_FS://$JAR
+   else
+    JAR_PATH=$JAR
+fi
+
+
 # Adding command line parameters that go BEFORE the jar file
 add_to_cmd_line "--master" ${MASTER}
 add_to_cmd_line "--deploy-mode" ${DEPLOY_MODE}
@@ -219,7 +233,7 @@ add_to_cmd_line "--driver-cores" ${DRIVER_CORES}
 add_to_cmd_line "--driver-memory" ${DRIVER_MEMORY}
 
 # Adding JVM configuration, entry point class name and the jar file
-CMD_LINE="$CMD_LINE --conf \"$CONF\" --class $CLASS $JAR"
+CMD_LINE="$CMD_LINE --conf \"$CONF\" --class $CLASS $JAR_PATH"
 
 # Adding command line parameters that go AFTER the jar file
 add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
