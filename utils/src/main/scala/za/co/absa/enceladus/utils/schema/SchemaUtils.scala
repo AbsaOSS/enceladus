@@ -50,6 +50,27 @@ object SchemaUtils {
     typeHelper(pathTokens, schema)
   }
 
+  def fieldExists(path: String, schema: StructType): Boolean = {
+    def existsHelper(pt: List[String], st: DataType): Boolean = {
+      if (pt.isEmpty) {
+        true
+      } else {
+        st match {
+          case str: StructType => Try {
+            existsHelper(pt.tail, str(pt.head).dataType)
+          }.getOrElse(false)
+          case ArrayType(el: StructType, _) => Try {
+            existsHelper(pt.tail, el(pt.head).dataType)
+          }.getOrElse(false)
+          case _ => false
+        }
+      }
+    }
+
+    val pathTokens = path.split('.').toList
+    existsHelper(pathTokens, schema)
+  }
+
   /**
     * Checks if the specified path is an array of structs
     *

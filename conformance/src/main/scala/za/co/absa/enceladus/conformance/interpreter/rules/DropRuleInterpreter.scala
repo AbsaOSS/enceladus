@@ -25,16 +25,15 @@ import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 case class DropRuleInterpreter(rule: DropConformanceRule) extends RuleInterpreter {
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
-    SchemaUtils.getFieldType(rule.outputColumn, df.schema) match {
-      case Some(_) =>
-        if (rule.outputColumn.contains('.')) {
-          conformNestedField(df)
-        } else {
-          conformRootField(df)
-        }
-      case None =>
-        log.warn(s"Could not drop ${rule.outputColumn}. Column is not present in the dataset")
-        df
+    if (SchemaUtils.fieldExists(rule.outputColumn, df.schema)) {
+      if (rule.outputColumn.contains('.')) {
+        conformNestedField(df)
+      } else {
+        conformRootField(df)
+      }
+    } else {
+      log.warn(s"Could not drop ${rule.outputColumn}. Column is not present in the dataset")
+      df
     }
   }
 
