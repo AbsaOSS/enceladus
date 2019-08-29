@@ -56,7 +56,7 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
     logDataFrameContent(std)
 
     val exp = Seq(
-      IntegralRow("Decimal entry", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("Decimal entry", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", "1.0"),
         ErrorMessage.stdCastErr("shortsize", "2.0"),
         ErrorMessage.stdCastErr("integersize", "3.0"),
@@ -67,17 +67,17 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
         ErrorMessage.stdNullErr("bytesize"),
         ErrorMessage.stdNullErr("shortsize"))),
       IntegralRow("One", Option(1), Option(1), Option(1), Option(1)),
-      IntegralRow("Overflow", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("Overflow", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", "128"),
         ErrorMessage.stdCastErr("shortsize", "32768"),
         ErrorMessage.stdCastErr("integersize", "2147483648"),
         ErrorMessage.stdCastErr("longsize", "9223372036854775808"))),
-      IntegralRow("Underflow", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("Underflow", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", "-129"),
         ErrorMessage.stdCastErr("shortsize", "-32769"),
         ErrorMessage.stdCastErr("integersize", "-2147483649"),
         ErrorMessage.stdCastErr("longsize", "-9223372036854775809"))),
-      IntegralRow("With fractions", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("With fractions", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", "3.14"),
         ErrorMessage.stdCastErr("shortsize", "2.71"),
         ErrorMessage.stdCastErr("integersize", "1.41"),
@@ -96,7 +96,7 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
     logDataFrameContent(std)
 
     val exp = Seq(
-      IntegralRow("Decimal entry", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("Decimal entry", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", "1.0"),
         ErrorMessage.stdCastErr("shortsize", "2.0"),
         ErrorMessage.stdCastErr("integersize", "3.0"),
@@ -107,17 +107,17 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
         ErrorMessage.stdNullErr("bytesize"),
         ErrorMessage.stdNullErr("shortsize"))),
       IntegralRow("One", Option(1), Option(1), Option(1), Option(1)),
-      IntegralRow("Overflow", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("Overflow", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", "128"),
         ErrorMessage.stdCastErr("shortsize", "32768"),
         ErrorMessage.stdCastErr("integersize", "2147483648"),
         ErrorMessage.stdCastErr("longsize", "9223372036854775808"))),
-      IntegralRow("Underflow", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("Underflow", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", "-129"),
         ErrorMessage.stdCastErr("shortsize", "-32769"),
         ErrorMessage.stdCastErr("integersize", "-2147483649"),
         ErrorMessage.stdCastErr("longsize", "-9223372036854775809"))),
-      IntegralRow("With fractions", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("With fractions", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", "3.14"),
         ErrorMessage.stdCastErr("shortsize", "2.71"),
         ErrorMessage.stdCastErr("integersize", "1.41"),
@@ -138,20 +138,20 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
     val exp = Seq(
       IntegralRow("Decimal entry", Option(0), Option(2), Option(3), Option(4), Seq(
         ErrorMessage.stdCastErr("bytesize", "1.1"))),
-      IntegralRow("Full negative", Option(-128), Option(-32768), Option(-2147483648), Option(0), Seq(
+      IntegralRow("Full negative", Option(-128), Option(-32768), Option(-2147483648), None, Seq(
         ErrorMessage.stdCastErr("longsize", "-9223372036854776000"))),
-      IntegralRow("Full positive", Option(127), Option(32767), Option(2147483647), Option(0), Seq(
+      IntegralRow("Full positive", Option(127), Option(32767), Option(2147483647), None, Seq(
         ErrorMessage.stdCastErr("longsize", "9223372036854776000"))),
       IntegralRow("Nulls", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdNullErr("bytesize"),
         ErrorMessage.stdNullErr("shortsize"))),
       IntegralRow("One", Option(1), Option(1), Option(1), Option(1)),
-      IntegralRow("Overflow", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("Overflow", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", "128.0"),
         ErrorMessage.stdCastErr("shortsize", "32768"),
         ErrorMessage.stdCastErr("integersize", "2147483648"),
         ErrorMessage.stdCastErr("longsize", "9223372036854776000"))),
-      IntegralRow("Underflow", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("Underflow", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", "-129.0"),
         ErrorMessage.stdCastErr("shortsize", "-32769"),
         ErrorMessage.stdCastErr("integersize", "-2147483649"),
@@ -183,7 +183,7 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
       IntegralRow("3-Int", Option(0), Option(0), Option(Int.MaxValue), Option(Int.MaxValue), Seq(
         ErrorMessage.stdCastErr("bytesize", Int.MaxValue.toString),
         ErrorMessage.stdCastErr("shortsize", Int.MaxValue.toString))),
-      IntegralRow("4-Long", Option(0), Option(0), Option(0), Option(Long.MaxValue), Seq(
+      IntegralRow("4-Long", Option(0), Option(0), None, Option(Long.MaxValue), Seq(
         ErrorMessage.stdCastErr("bytesize", Long.MaxValue.toString),
         ErrorMessage.stdCastErr("shortsize", Long.MaxValue.toString),
         ErrorMessage.stdCastErr("integersize", Long.MaxValue.toString))),
@@ -193,7 +193,7 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
       IntegralRow("7-Int", Option(0), Option(0), Option(Int.MinValue), Option(Int.MinValue), Seq(
         ErrorMessage.stdCastErr("bytesize", Int.MinValue.toString),
         ErrorMessage.stdCastErr("shortsize", Int.MinValue.toString))),
-      IntegralRow("8-Long", Option(0), Option(0), Option(0), Option(Long.MinValue), Seq(
+      IntegralRow("8-Long", Option(0), Option(0), None, Option(Long.MinValue), Seq(
         ErrorMessage.stdCastErr("bytesize", Long.MinValue.toString),
         ErrorMessage.stdCastErr("shortsize", Long.MinValue.toString),
         ErrorMessage.stdCastErr("integersize", Long.MinValue.toString)))
@@ -238,7 +238,7 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
       IntegralRow("03-Int", Option(0), Option(0), Option(Int.MaxValue), Option(Int.MaxValue), Seq(
         ErrorMessage.stdCastErr("bytesize", Int.MaxValue.toDouble.toString),
         ErrorMessage.stdCastErr("shortsize", Int.MaxValue.toDouble.toString))),
-      IntegralRow("04-Long", Option(0), Option(0), Option(0), Option(Long.MaxValue), Seq(
+      IntegralRow("04-Long", Option(0), Option(0), None, Option(Long.MaxValue), Seq(
         ErrorMessage.stdCastErr("bytesize", Long.MaxValue.toDouble.toString),
         ErrorMessage.stdCastErr("shortsize", Long.MaxValue.toDouble.toString),
         ErrorMessage.stdCastErr("integersize", Long.MaxValue.toDouble.toString))),
@@ -248,32 +248,32 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
       IntegralRow("07-Int", Option(0), Option(0), Option(Int.MinValue), Option(Int.MinValue), Seq(
         ErrorMessage.stdCastErr("bytesize", Int.MinValue.toDouble.toString),
         ErrorMessage.stdCastErr("shortsize", Int.MinValue.toDouble.toString))),
-      IntegralRow("08-Long", Option(0), Option(0), Option(0), Option(Long.MinValue), Seq(
+      IntegralRow("08-Long", Option(0), Option(0), None, Option(Long.MinValue), Seq(
         ErrorMessage.stdCastErr("bytesize", Long.MinValue.toDouble.toString),
         ErrorMessage.stdCastErr("shortsize", Long.MinValue.toDouble.toString),
         ErrorMessage.stdCastErr("integersize", Long.MinValue.toDouble.toString))),
-      IntegralRow("09-Pi", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("09-Pi", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", Math.PI.toString),
         ErrorMessage.stdCastErr("shortsize", Math.PI.toString),
         ErrorMessage.stdCastErr("integersize", Math.PI.toString),
         ErrorMessage.stdCastErr("longsize", Math.PI.toString))),
       IntegralRow("10-Whole", Option(7), Option(7), Option(7), Option(7)),
-      IntegralRow("11-Really small", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("11-Really small", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", Double.MinPositiveValue.toString),
         ErrorMessage.stdCastErr("shortsize", Double.MinPositiveValue.toString),
         ErrorMessage.stdCastErr("integersize", Double.MinPositiveValue.toString),
         ErrorMessage.stdCastErr("longsize", Double.MinPositiveValue.toString))),
-      IntegralRow("12-Really big", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("12-Really big", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", reallyBig.toString),
         ErrorMessage.stdCastErr("shortsize", reallyBig.toString),
         ErrorMessage.stdCastErr("integersize", reallyBig.toString),
         ErrorMessage.stdCastErr("longsize", reallyBig.toString))),
-      IntegralRow("13-Tiny fractional part", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("13-Tiny fractional part", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", tinyFractionalPart.toString),
         ErrorMessage.stdCastErr("shortsize", tinyFractionalPart.toString),
         ErrorMessage.stdCastErr("integersize", tinyFractionalPart.toString),
         ErrorMessage.stdCastErr("longsize", tinyFractionalPart.toString))),
-      IntegralRow("14-NaN", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("14-NaN", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", "NaN"),
         ErrorMessage.stdCastErr("shortsize", "NaN"),
         ErrorMessage.stdCastErr("integersize", "NaN"),
@@ -319,22 +319,22 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
 
     val exp = Seq(
       IntegralRow("00-One", Option(1), Option(1), Option(1), Option(1)),
-      IntegralRow("01-Pi", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("01-Pi", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", formatBigDecimal(pi)),
         ErrorMessage.stdCastErr("shortsize", formatBigDecimal(pi)),
         ErrorMessage.stdCastErr("integersize", formatBigDecimal(pi)),
         ErrorMessage.stdCastErr("longsize", formatBigDecimal(pi)))),
-      IntegralRow("02-Tiny fractional part", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("02-Tiny fractional part", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", tinyFractionalPartStr),
         ErrorMessage.stdCastErr("shortsize", tinyFractionalPartStr),
         ErrorMessage.stdCastErr("integersize", tinyFractionalPartStr),
         ErrorMessage.stdCastErr("longsize", tinyFractionalPartStr))),
-      IntegralRow("03-Really big", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("03-Really big", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", reallyBigStr),
         ErrorMessage.stdCastErr("shortsize", reallyBigStr),
         ErrorMessage.stdCastErr("integersize", reallyBigStr),
         ErrorMessage.stdCastErr("longsize", reallyBigStr))),
-      IntegralRow("04-Really small", Option(0), Option(0), Option(0), Option(0), Seq(
+      IntegralRow("04-Really small", Option(0), Option(0), None, None, Seq(
         ErrorMessage.stdCastErr("bytesize", reallySmallStr),
         ErrorMessage.stdCastErr("shortsize", reallySmallStr),
         ErrorMessage.stdCastErr("integersize", reallySmallStr),

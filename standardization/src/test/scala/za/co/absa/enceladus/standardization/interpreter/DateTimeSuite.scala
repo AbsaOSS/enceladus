@@ -24,7 +24,8 @@ import za.co.absa.enceladus.standardization.interpreter.stages.SchemaChecker
 import za.co.absa.enceladus.standardization.samples.TestSamples
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-import za.co.absa.enceladus.utils.validation.{SchemaValidator, ValidationError, ValidationException}
+import za.co.absa.enceladus.utils.validation.field.FieldValidationFailure
+import za.co.absa.enceladus.utils.validation.{SchemaValidator, ValidationError, ValidationException, ValidationWarning}
 
 import scala.io.Source
 
@@ -46,12 +47,26 @@ class DateTimeSuite extends FunSuite with SparkTestBase with LoggerTestBase{
   test("Validation should return critical errors") {
     logger.debug(data.schema.prettyJson)
     val validationErrors = SchemaValidator.validateSchema(schemaWrong)
-    val hasCriticalErrors = validationErrors.exists( p =>
-      p.issues.exists {
-        case issue: ValidationError => true
-        case _ => false
-      })
-    assert(hasCriticalErrors)
+    val exp = List(
+      FieldValidationFailure("dateSampleWrong1", "DD-MM-yyyy", List(
+        ValidationWarning("No day placeholder 'dd' found."),
+        ValidationWarning("Rarely used DayOfYear placeholder 'D' found. Possibly DayOfMonth 'd' intended."))),
+      FieldValidationFailure("dateSampleWrong2", "Dy", List(
+        ValidationWarning("No day placeholder 'dd' found."),
+        ValidationWarning("Rarely used DayOfYear placeholder 'D' found. Possibly DayOfMonth 'd' intended."),
+        ValidationWarning("No month placeholder 'MM' found."))),
+      FieldValidationFailure("dateSampleWrong3", "rrr", List(
+        ValidationError("Illegal pattern character 'r'"))),
+      FieldValidationFailure("timestampSampleWrong1", "yyyyMMddTHHmmss", List(
+        ValidationError("Illegal pattern character 'T'"))),
+      FieldValidationFailure("timestampSampleWrong3", "yyyy-MM-dd", List(
+        ValidationWarning("No hour placeholder 'HH' found."),
+        ValidationWarning("No minute placeholder 'mm' found."),
+        ValidationWarning("No second placeholder 'ss' found."))),
+      FieldValidationFailure("timestampNullDefaultWrong", "", List(
+        ValidationError("null is not a valid value for field 'timestampNullDefaultWrong'")))
+    )
+    assert(validationErrors == exp)
   }
 
   test("Validation for this data should return critical errors") {
@@ -76,8 +91,8 @@ class DateTimeSuite extends FunSuite with SparkTestBase with LoggerTestBase{
       Date.valueOf("2017-12-29"),
       date0,
       date0,
-      date0,
-      ts, ts, ts, ts0, ts0, ts0,
+      null,
+      ts, ts, ts, null, ts0, ts0,
       List(
         ErrorMessage.stdCastErr("dateSampleWrong1","10-20-2017"),
         ErrorMessage.stdCastErr("dateSampleWrong2","201711"),

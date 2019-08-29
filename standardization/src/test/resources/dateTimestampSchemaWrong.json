@@ -89,5 +89,19 @@
     "metadata" : {
       "pattern" : "yyyy-MM-dd"
     }
+  }, {
+    "name" : "timestampNullDefaultWrong",
+    "type" : "timestamp",
+    "nullable" : false,
+    "metadata" : {
+      "default" : null
+    }
+  }, {
+    "name" : "timestampNullDefaultOK",
+    "type" : "timestamp",
+    "nullable" : true,
+    "metadata" : {
+      "default" : null
+    }
   } ]
 }

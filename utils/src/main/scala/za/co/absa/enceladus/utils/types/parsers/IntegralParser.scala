@@ -13,23 +13,28 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.implicits
+package za.co.absa.enceladus.utils.types.parsers
 
-import org.apache.spark.sql.types._
-import scala.util.Try
+class IntegralParser {
+  def parseByte(value: String): Byte = {
+    value.toByte
+  }
 
-object StructFieldImplicits {
-  implicit class StructFieldEnhancements(val structField: StructField) {
-    def getMetadataString(key: String): Option[String] = {
-      Try(structField.metadata.getString(key)).toOption
-    }
+  def parseShort(value: String): Short = {
+    value.toShort
+  }
 
-    def getMetadataBoolean(key: String): Option[Boolean] = {
-      Try(structField.metadata.getBoolean(key)).toOption
-    }
+  def parseInt(value: String): Int = {
+    value.toInt
+  }
 
-    def hasMetadataKey(key: String): Boolean = {
-      structField.metadata.contains(key)
-    }
+  def parseLong(value: String): Long = {
+    value.toLong
+  }
+
+  def format(value: Long): String = {
+    value.toString
   }
 }
+
+object IntegralParser extends IntegralParser

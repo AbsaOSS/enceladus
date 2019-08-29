@@ -22,14 +22,15 @@ import org.apache.spark.sql.types._
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils.appendPath
-import za.co.absa.enceladus.utils.types.Defaults
+import za.co.absa.enceladus.utils.types.TypedStructField
 import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.standardization.StandardizationCommon
 import za.co.absa.spark.hofs.transform
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.time.DateTimePattern
+import za.co.absa.enceladus.utils.types.TypedStructField._
 
-import scala.util.Random
+import scala.util.{Random, Try}
 
 /**
   * Base trait for standardization function
@@ -51,10 +52,10 @@ sealed trait TypeParser {
   def standardize(): ParseOutput
 
   val origSchema: StructType
-  val field: StructField
+  val field: TypedStructField
   val path: String
   val parent: Option[TypeParser.Parent]
-  val fieldName: String = SchemaUtils.getFieldNameOverriddenByMetadata(field)
+  val fieldName: String = SchemaUtils.getFieldNameOverriddenByMetadata(field.structField)
   val currentColumnPath: String = appendPath(path, fieldName) // absolute path to field to parse
   val column: Column = parent.map(_.childColumn(fieldName)).getOrElse(col(currentColumnPath)) // no parent
   val isArrayElement: Boolean = parent.exists(_.isInstanceOf[TypeParser.ArrayParent])
@@ -92,29 +93,30 @@ object TypeParser extends StandardizationCommon {
                     path: String,
                     origSchema: StructType,
                     parent: Option[Parent] = None): TypeParser = {
-    val parserClass: (StructField, String, StructType, Option[Parent]) => TypeParser = field.dataType match {
-      case _: ArrayType => ArrayParser
-      case _: StructType => StructParser
-      case _: ByteType => IntegralParser(_, _, _, _,Set(ShortType, IntegerType, LongType), Byte.MinValue, Byte.MaxValue)
-      case _: ShortType => IntegralParser(_, _, _, _, Set(IntegerType, LongType), Short.MinValue, Short.MaxValue)
-      case _: IntegerType => IntegralParser(_, _, _, _, Set(LongType), Int.MinValue, Int.MaxValue)
-      case _: LongType => IntegralParser(_, _, _, _, Set.empty, Long.MinValue, Long.MaxValue)
-      case _: FloatType | _: DoubleType => FractionalParser
-      case _: DecimalType => DecimalParser
-      case _: StringType => StringParser
-      case _: BooleanType => BooleanParser
-      case _: DateType => DateParser
-      case _: TimestampType => TimestampParser
-      case t => throw new IllegalStateException(s"${t.typeName} is not a supported type in this version of Enceladus")
+    val parserClass: (String, StructType, Option[Parent]) => TypeParser = field.dataType match {
+      case _: ArrayType     => ArrayParser(TypedStructField.asArrayTypeStructField(field), _, _, _)
+      case _: StructType    => StructParser(TypedStructField.asStructTypeStructField(field), _, _, _)
+      case _: ByteType      => IntegralParser(TypedStructField(field), _, _, _,Set(ShortType, IntegerType, LongType), Byte.MinValue, Byte.MaxValue)
+      case _: ShortType     => IntegralParser(TypedStructField(field), _, _, _, Set(IntegerType, LongType), Short.MinValue, Short.MaxValue)
+      case _: IntegerType   => IntegralParser(TypedStructField(field), _, _, _, Set(LongType), Int.MinValue, Int.MaxValue)
+      case _: LongType      => IntegralParser(TypedStructField(field), _, _, _, Set.empty, Long.MinValue, Long.MaxValue)
+      case _: FloatType |
+           _: DoubleType    => FractionalParser(TypedStructField.asFractionalTypeStructField(field), _, _, _)
+      case _: DecimalType   => DecimalParser(TypedStructField(field), _, _, _)
+      case _: StringType    => StringParser(TypedStructField(field), _, _, _)
+      case _: BooleanType   => BooleanParser(TypedStructField(field), _, _, _)
+      case _: DateType      => DateParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _)
+      case _: TimestampType => TimestampParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _)
+      case t                => throw new IllegalStateException(s"${t.typeName} is not a supported type in this version of Enceladus")
     }
-    parserClass(field, path, origSchema, parent)
+    parserClass(path, origSchema, parent)
   }
 
-  private final case class ArrayParser(field: StructField,
+  private final case class ArrayParser(field: ArrayTypeStructField,
                                        path: String,
                                        origSchema: StructType,
                                        parent: Option[Parent]) extends TypeParser {
-    private val fieldType = field.dataType.asInstanceOf[ArrayType]
+    private val fieldType = field.dataType
     private val arrayField = StructField(fieldName, fieldType.elementType, fieldType.containsNull)
 
     override def standardize(): ParseOutput = {
@@ -139,11 +141,11 @@ object TypeParser extends StandardizationCommon {
     }
   }
 
-  private final case class StructParser(field: StructField,
+  private final case class StructParser(field: StructTypeStructField,
                                         path: String,
                                         origSchema: StructType,
                                         parent: Option[Parent]) extends TypeParser {
-    private val fieldType = field.dataType.asInstanceOf[StructType]
+    private val fieldType = field.dataType
 
     override def standardize(): ParseOutput = {
       val out =  fieldType.fields.map(TypeParser(_, currentColumnPath, origSchema, Option(StructParent(column)))
@@ -197,7 +199,7 @@ object TypeParser extends StandardizationCommon {
 
 
       val std: Column = when(size(err) > lit(0), // there was an error on cast
-        Defaults.getDefaultValue(field)
+        field.defaultValueWithGlobal.get.orNull // Error should never appear here, then converting Option to value or Null
       ).otherwise( when (column.isNotNull,
         castedCol
       ) //.otherwise(null) - no need to explicitly mention
@@ -219,13 +221,13 @@ object TypeParser extends StandardizationCommon {
 
   }
 
-  private trait ScalarParser extends  PrimitiveParser {
+  private trait ScalarParser extends PrimitiveParser {
     override def assemblePrimitiveCastLogic: Column = column.cast(field.dataType)
   }
 
   private trait NumericParser extends ScalarParser
 
-  private final case class IntegralParser(field: StructField,
+  private final case class IntegralParser(field: TypedStructField,
                                           path: String,
                                           origSchema: StructType,
                                           parent: Option[Parent],
@@ -256,26 +258,24 @@ object TypeParser extends StandardizationCommon {
     }
   }
 
-  private final case class DecimalParser(field: StructField,
-                                            path: String,
-                                            origSchema: StructType,
-                                            parent: Option[Parent]) extends NumericParser
+  private final case class DecimalParser(field: TypedStructField,
+                                         path: String,
+                                         origSchema: StructType,
+                                         parent: Option[Parent]) extends NumericParser
   // NB! loss of precision is not addressed for any DecimalType
   // e.g. 3.241592 will be Standardized to Decimal(10,2) as 3.14
 
-  private final case class FractionalParser(field: StructField,
+  private final case class FractionalParser(field: FractionalTypeStructField,
                                             path: String,
                                             origSchema: StructType,
                                             parent: Option[Parent]) extends NumericParser {
 
     import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldEnhancements
 
-    private val allowInfinity = field.getMetadataBoolean("allowinfinity").getOrElse(false)
-
     override protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
       //NB! loss of precision is not addressed for any fractional type
 
-      if (allowInfinity) {
+      if (field.allowInfinity) {
         castedCol.isNull or castedCol.isNaN
       } else {
         castedCol.isNull or castedCol.isNaN or castedCol.isInfinite
@@ -283,12 +283,12 @@ object TypeParser extends StandardizationCommon {
     }
   }
 
-  private final case class StringParser(field: StructField,
+  private final case class StringParser(field: TypedStructField,
                                         path: String,
                                         origSchema: StructType,
                                         parent: Option[Parent]) extends ScalarParser
 
-  private final case class BooleanParser(field: StructField,
+  private final case class BooleanParser(field: TypedStructField,
                                          path: String,
                                          origSchema: StructType,
                                          parent: Option[Parent]) extends ScalarParser
@@ -316,7 +316,8 @@ object TypeParser extends StandardizationCommon {
     * Other         | ->String->to_date               | ->String->to_timestamp->to_utc_timestamp->to_date
     */
   private trait DateTimeParser extends PrimitiveParser {
-    protected val pattern: DateTimePattern = DateTimePattern.fromStructField(field)
+    override val field: DateTimeTypeStructField
+    protected val pattern: DateTimePattern = field.pattern.get.get
 
     override protected def assemblePrimitiveCastLogic: Column = {
       if (pattern.isEpoch) {
@@ -383,7 +384,7 @@ object TypeParser extends StandardizationCommon {
 
   }
 
-  private final case class DateParser(field: StructField,
+  private final case class DateParser(field: DateTimeTypeStructField,
                                       path: String,
                                       origSchema: StructType,
                                       parent: Option[Parent]) extends DateTimeParser {
@@ -429,7 +430,7 @@ object TypeParser extends StandardizationCommon {
     }
   }
 
-  private final case class TimestampParser(field: StructField,
+  private final case class TimestampParser(field: DateTimeTypeStructField,
                                            path: String,
                                            origSchema: StructType,
                                            parent: Option[Parent]) extends DateTimeParser {

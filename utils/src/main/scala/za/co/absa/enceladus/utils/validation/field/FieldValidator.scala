@@ -15,35 +15,32 @@
 
 package za.co.absa.enceladus.utils.validation.field
 
-import org.apache.spark.sql.types._
-import za.co.absa.enceladus.utils.validation.ValidationIssue
+import za.co.absa.enceladus.utils.types.TypedStructField
+import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
 
-trait FieldValidator {
-  def validateStructField(field: StructField): Seq[ValidationIssue]
-}
+import scala.util.{Failure, Success, Try}
 
-object FieldValidator {
-
+class FieldValidator {
   /**
-    * Validates a StructField and returns the list of issues encountered
-    *
-    * @param field A field
-    * @return The list if validation issues encountered
-    */
-  def validate(field: StructField): Seq[ValidationIssue] = {
-    val validator = field.dataType match {
-      case _: DateType =>
-        Option(FieldValidatorDate)
-      case _: TimestampType =>
-        Option(FieldValidatorTimestamp)
-      case _: BooleanType =>
-        Option(FieldValidatorScalar)
-      case _: NumericType =>
-        Option(FieldValidatorScalar)
-      case _: StringType =>
-        Option(FieldValidatorScalar)
-      case _ => None
+   * Function to convert a Try type to sequence of ValidationIssue. Naming by the patter StringToInt; Try is a noun here
+   * @param tryValue Try value to convert to ValidationIssue - Failure is converted to ValidationError, any ValidationIssue
+   *                 included within Success will be returned in the Sequence, all other will result in empty sequence
+   * @return         sequence of ValidationIssue, that were either part the input or if the input was a failure, then
+   *                 it converted into ValidationError
+   */
+  protected def tryToValidationIssues(tryValue: Try[Any]): Seq[ValidationIssue] = {
+    tryValue match {
+      case Failure(e)                      => Seq(ValidationError(e.getMessage))
+      case Success(seq: Seq[_])            => seq.collect{case x:ValidationIssue => x} //have to use collect because of type erasure
+      case Success(opt: Option[_])         => opt.collect{case x:ValidationIssue => x}.toSeq
+      case Success(issue: ValidationIssue) => Seq(issue)
+      case _                               => Nil
     }
-    validator.map(_.validateStructField(field)).getOrElse(Nil)
+  }
+
+  def validate(field: TypedStructField): Seq[ValidationIssue] = {
+    Nil
   }
 }
+
+object FieldValidator extends FieldValidator

@@ -273,8 +273,8 @@ object SchemaUtils {
     * @return       Metadata "sourcecolumn" if it exists or field.name
     */
   def getFieldNameOverriddenByMetadata(field: StructField): String = {
-    if (field.metadata.contains("sourcecolumn")) {
-      field.metadata.getString("sourcecolumn")
+    if (field.metadata.contains(MetadataKeys.SourceColumn)) {
+      field.metadata.getString(MetadataKeys.SourceColumn)
     } else {
       field.name
     }

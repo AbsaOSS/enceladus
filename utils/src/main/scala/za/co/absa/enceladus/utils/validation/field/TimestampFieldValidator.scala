@@ -17,14 +17,11 @@ package za.co.absa.enceladus.utils.validation.field
 
 import java.util.Date
 
-import org.apache.spark.sql.Column
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{StructField, TimestampType}
-import za.co.absa.enceladus.utils.time.{DateTimePattern, EnceladusDateTimeParser}
-import za.co.absa.enceladus.utils.types.Defaults
+import za.co.absa.enceladus.utils.time.DateTimePattern
+import za.co.absa.enceladus.utils.types.parsers.DateTimeParser
 import za.co.absa.enceladus.utils.validation._
 
-object FieldValidatorTimestamp extends FieldValidatorDateTime {
+object TimestampFieldValidator extends DateTimeFieldValidator {
   import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
 
   override protected def patternAnalysisIssues(pattern: DateTimePattern,
@@ -76,7 +73,7 @@ object FieldValidatorTimestamp extends FieldValidatorDateTime {
     doubleTimeZoneIssue ++ patternIssues
   }
 
-  override def verifyStringDateTime(dateTime: String)(implicit parser: EnceladusDateTimeParser): Date = {
+  override def verifyStringDateTime(dateTime: String)(implicit parser: DateTimeParser): Date = {
     parser.parseTimestamp(dateTime)
   }
 
