@@ -19,21 +19,20 @@ import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.DropConformanceRule
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
-
-import scala.util.{Failure, Success, Try}
 
 case class DropRuleInterpreter(rule: DropConformanceRule) extends RuleInterpreter {
 
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
-    Try(df(rule.outputColumn)) match {
-      case Success(_) =>
+    SchemaUtils.getFieldType(rule.outputColumn, df.schema) match {
+      case Some(_) =>
         if (rule.outputColumn.contains('.')) {
           conformNestedField(df)
         } else {
           conformRootField(df)
         }
-      case Failure(_) =>
+      case None =>
         log.warn(s"Could not drop ${rule.outputColumn}. Column is not present in the dataset")
         df
     }
