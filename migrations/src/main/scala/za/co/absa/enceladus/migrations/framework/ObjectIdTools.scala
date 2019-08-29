@@ -79,4 +79,26 @@ object ObjectIdTools {
       document
     }
   }
+
+  /**
+    * Extracts an object id value from an object id json formatted object id.
+    * Here is an example. For the following input (all quotes are parts of the string itself):
+    *
+    * `"_id" : { "$oid" : "5b98eea5a43a28a6154a2453" }"`
+    *
+    * the output of the method will be:
+    *
+    * `5b98eea5a43a28a6154a2453`
+    *
+    * @param objIdExpression An Object Id as a JSON key-value expression.
+    * @return A string value of the Object Id
+    */
+  def extractId(objIdExpression: String): String = {
+    val idRegexp = """.*"\$oid"\s*:\s*"([0-9a-fA-F]*)".*""".r
+    objIdExpression match {
+      case idRegexp(id) => id
+      case _ => throw new RuntimeException(s"Unable to extract Object Id from '$objIdExpression'")
+    }
+  }
+
 }

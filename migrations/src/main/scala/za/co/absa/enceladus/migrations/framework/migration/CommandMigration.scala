@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
-import org.apache.log4j.{LogManager, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
@@ -60,7 +60,7 @@ trait CommandMigration extends Migration {
   // on that collection.
   type CommandGenerator = String => Command
 
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   private val commands = new ListBuffer[(String, CommandGenerator)]()
 

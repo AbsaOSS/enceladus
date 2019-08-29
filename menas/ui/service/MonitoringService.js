@@ -29,7 +29,8 @@ var MonitoringService = new function() {
     zombie: {infoLabel: 9, state: "None", icon: "sap-icon://lateness", text: "Zombie job"},
     stdErrors: {infoLabel: 1, state: "Warning", icon: "sap-icon://message-warning", text: "Errors at standardization"},
     cnfrmErrors: {infoLabel: 3, state: "Error", icon: "sap-icon://message-warning", text: "Errors at conformance"},
-    noSucceded: {infoLabel: 3, state: "Error", icon: "sap-icon://alert", text: "No records succeeded"}
+    noSucceded: {infoLabel: 3, state: "Error", icon: "sap-icon://alert", text: "No records succeeded"},
+    controlMeasuresMismatch: {infoLabel: 4, state: "Error", icon: "sap-icon://error", text: "Control measures mismatch"}
   };
 
   let totals = {
@@ -200,6 +201,7 @@ var MonitoringService = new function() {
     return !isNaN(oRun["rawRecordcount"])
       && oRun["std_records_succeeded"] != null && oRun["std_records_failed"] != null
       && oRun["conform_records_succeeded"] != null && oRun["conform_records_failed"] != null
+      && oRun["checkpointsMatch"]
       // sanity checks
       && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["rawRecordcount"])
       && (+oRun["conform_records_succeeded"]) + (+oRun["conform_records_failed"]) == (+oRun["rawRecordcount"])
@@ -211,6 +213,7 @@ var MonitoringService = new function() {
     return !isNaN(oRun["rawRecordcount"])
       && oRun["std_records_succeeded"] != null && oRun["std_records_failed"] != null
       && oRun["conform_records_succeeded"] == null && oRun["conform_records_failed"] == null
+      && oRun["checkpointsMatch"]
       //sanity checks
       && (+oRun["std_records_succeeded"]) + (+oRun["std_records_failed"]) == (+oRun["rawRecordcount"])
   };
@@ -219,6 +222,7 @@ var MonitoringService = new function() {
     return !isNaN(oRun["rawRecordcount"])
       && oRun["std_records_succeeded"]  == null && oRun["std_records_failed"] == null
       && oRun["conform_records_succeeded"]  == null && oRun["conform_records_failed"] == null
+      && oRun["checkpointsMatch"]
   };
 
   this.processConformed = function(oRun) {
@@ -296,8 +300,12 @@ var MonitoringService = new function() {
   };
 
   // find raw recordcount
-  // TODO: Compare controlls across all checkpoints
-  this.processCheckpoints = function(oRun) {
+  this.setRawRecordCount = function (oRun) {
+    let rawRecordcount = oRun["controlMeasure"]["metadata"]["additionalInfo"]["raw_record_count"];
+    if (rawRecordcount != null && !isNaN(rawRecordcount) ) {
+      oRun["rawRecordcount"] = rawRecordcount;
+      return;
+    }
     let aCheckpoints = oRun["controlMeasure"]["checkpoints"];
     if ( !Array.isArray(aCheckpoints)) { return; }
 
@@ -308,7 +316,7 @@ var MonitoringService = new function() {
         if ( !Array.isArray(aControls)) { continue; }
 
         for (let oControl of aControls) {
-          if (oControl["controlName"].toLowerCase() == "recordcount"
+          if (oControl["controlType"].toLowerCase() == "controltype.count"
             && !isNaN(oControl["controlValue"])
             && +oControl["controlValue"] >= 0) {
               oRun["rawRecordcount"] = +oControl["controlValue"];
@@ -335,6 +343,15 @@ var MonitoringService = new function() {
     oRun["latestCheckpoint"] = latestCheckpoint;
   };
 
+  this.processCeckpoints = function (oRun) {
+    if (CheckpointUtils.checkpointsControlsMatch(oRun["controlMeasure"]["checkpoints"])) {
+      oRun["checkpointsMatch"] = true;
+    } else {
+      oRun["checkpointsMatch"] = false;
+      oRun["warnings"].push(warningTypes.controlMeasuresMismatch);
+    }
+  }
+
 
   this.getData = function(sId, sStartDate, sEndDate) {
     MonitoringService.clearAggregators();
@@ -352,9 +369,10 @@ var MonitoringService = new function() {
           oRun["warnings"] = [];
 
           MonitoringService.processLatestCheckpoint(oRun);
+          MonitoringService.processCeckpoints(oRun);
           MonitoringService.processRunStatus(oRun);
           MonitoringService.processDirSizes(oRun);
-          MonitoringService.processCheckpoints(oRun);
+          MonitoringService.setRawRecordCount(oRun);
           MonitoringService.processRecordCounts(oRun);
         }
 
