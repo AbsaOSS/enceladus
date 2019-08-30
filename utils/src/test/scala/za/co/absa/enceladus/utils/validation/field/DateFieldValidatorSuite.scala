@@ -18,49 +18,51 @@ package za.co.absa.enceladus.utils.validation.field
 import org.apache.spark.sql.types.{DateType, MetadataBuilder, StructField}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.utils.types.TypedStructField
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue, ValidationWarning}
 
-class FieldValidatorDateSuite extends FunSuite  {
+class DateFieldValidatorSuite extends FunSuite  {
   TimeZoneNormalizer.normalizeJVMTimeZone()
 
-  private def field(pattern: String, defaultValue: Option[String] = None, defaultTimeZone: Option[String] = None): StructField = {
+  private def field(pattern: String, defaultValue: Option[String] = None, defaultTimeZone: Option[String] = None): TypedStructField = {
     val builder = new MetadataBuilder().putString("pattern",pattern)
     val builder2 = defaultValue.map(builder.putString("default", _)).getOrElse(builder)
     val builder3 = defaultTimeZone.map(builder2.putString("timezone", _)).getOrElse(builder2)
-    StructField("test_field", DateType,  nullable = false, builder3.build())
+    val result = StructField("test_field", DateType,  nullable = false, builder3.build())
+    TypedStructField(result)
   }
 
   test("epoch pattern") {
-    assert(FieldValidatorDate.validateStructField(field("epoch")).isEmpty)
+    assert(DateFieldValidator.validate(field("epoch")).isEmpty)
     //with default
-    assert(FieldValidatorDate.validateStructField(field("epoch", Option("5545556"))).isEmpty)
+    assert(DateFieldValidator.validate(field("epoch", Option("5545556"))).isEmpty)
   }
 
   test("epochmilli pattern") {
-    assert(FieldValidatorDate.validateStructField(field("epochmilli")).isEmpty)
+    assert(DateFieldValidator.validate(field("epochmilli")).isEmpty)
     //with default
-    assert(FieldValidatorDate.validateStructField(field("epochmilli", Option("5545556000"))).isEmpty)
+    assert(DateFieldValidator.validate(field("epochmilli", Option("5545556000"))).isEmpty)
   }
 
   test("epochmicro pattern") {
-    assert(FieldValidatorDate.validateStructField(field("epochmicro")).isEmpty)
+    assert(DateFieldValidator.validate(field("epochmicro")).isEmpty)
     //with default
-    assert(FieldValidatorDate.validateStructField(field("epochmicro", Option("5545556000111"))).isEmpty)
+    assert(DateFieldValidator.validate(field("epochmicro", Option("5545556000111"))).isEmpty)
   }
 
   test("epochnano pattern") {
-    assert(FieldValidatorDate.validateStructField(field("epochnano")).isEmpty)
+    assert(DateFieldValidator.validate(field("epochnano")).isEmpty)
     //with default
-    assert(FieldValidatorDate.validateStructField(field("epochnano", Option("5545556000111222"))).isEmpty)
+    assert(DateFieldValidator.validate(field("epochnano", Option("5545556000111222"))).isEmpty)
   }
 
   test("date pattern") {
     //no default
-    assert(FieldValidatorDate.validateStructField(field("yyyy-MM-dd")).isEmpty)
+    assert(DateFieldValidator.validate(field("yyyy-MM-dd")).isEmpty)
     //default as date
-    assert(FieldValidatorDate.validateStructField(field("dd.MM.yy", Option("01.05.18"))).isEmpty)
+    assert(DateFieldValidator.validate(field("dd.MM.yy", Option("01.05.18"))).isEmpty)
     //default as timestamp
-    assert(FieldValidatorDate.validateStructField(field("yyyy/dd/MM", Option("2010/21/11 04:00:00"))).isEmpty)
+    assert(DateFieldValidator.validate(field("yyyy/dd/MM", Option("2010/21/11 04:00:00"))).isEmpty)
   }
 
   test("date with time zone in pattern") {
@@ -68,28 +70,24 @@ class FieldValidatorDateSuite extends FunSuite  {
       ValidationWarning("Time zone is defined in pattern for date. While it's valid, it can lead to unexpected outcomes.")
     )
     //no default
-    assert(FieldValidatorDate.validateStructField(field("yyyy-MM-dd zz")).toSet == expected)
+    assert(DateFieldValidator.validate(field("yyyy-MM-dd zz")).toSet == expected)
     //default as timestamp
-    assert(FieldValidatorDate.validateStructField(field("dd.MM.yyyy+zz", Option("23.10.2000+CET"))).toSet == expected)
+    assert(DateFieldValidator.validate(field("dd.MM.yyyy+zz", Option("23.10.2000+CET"))).toSet == expected)
     //extra chars in default
-    assert(FieldValidatorDate.validateStructField(field("yyMMdd_zz", Option("190301_EST!!!!"))).toSet == expected)
+    assert(DateFieldValidator.validate(field("yyMMdd_zz", Option("190301_EST!!!!"))).toSet == expected)
     //timestamp with offset time zone
-    assert(FieldValidatorDate.validateStructField(field("yyyy/MM/dd XXX", Option("2019/01/31 -11:00"))).toSet == expected)
+    assert(DateFieldValidator.validate(field("yyyy/MM/dd XXX", Option("2019/01/31 -11:00"))).toSet == expected)
   }
 
   test("invalid pattern") {
     val expected1 = Set(
-      ValidationError("Illegal pattern character 'f'"),
-      ValidationWarning("No year placeholder 'yyyy' found."),
-      ValidationWarning("No month placeholder 'MM' found."),
-      ValidationWarning("No day placeholder 'dd' found."),
-      ValidationWarning("Redundant am/pm placeholder 'a' found.")
+      ValidationError("Illegal pattern character 'f'")
     )
-    assert(FieldValidatorDate.validateStructField(field("fubar")).toSet == expected1)
+    assert(DateFieldValidator.validate(field("fubar")).toSet == expected1)
     val expected2 = Set(
       ValidationError("Illegal pattern character 'x'")
     )
-    assert(FieldValidatorDate.validateStructField(field("yyMMdd_xx")).toSet == expected2)
+    assert(DateFieldValidator.validate(field("yyMMdd_xx")).toSet == expected2)
   }
 
   test("invalid default") {
@@ -98,22 +96,22 @@ class FieldValidatorDateSuite extends FunSuite  {
       ValidationError("""Unparseable date: """""),
       ValidationWarning("Time zone is defined in pattern for date. While it's valid, it can lead to unexpected outcomes.")
     )
-    assert(FieldValidatorDate.validateStructField(field("yyMMdd_zz", Option(""))).toSet == expected1)
+    assert(DateFieldValidator.validate(field("yyMMdd_zz", Option(""))).toSet == expected1)
     //wrong default
     val expected2 = Set(
       ValidationError("""Unparseable date: "1999-12-31"""")
     )
-    assert(FieldValidatorDate.validateStructField(field("yyyy/MM/dd", Option("1999-12-31"))).toSet == expected2)
+    assert(DateFieldValidator.validate(field("yyyy/MM/dd", Option("1999-12-31"))).toSet == expected2)
     //invalid epoch default
     val expected3 = Set(
-      ValidationError("""For input string: "2019-01-01"""")
+      ValidationError("'2019-01-01' cannot be cast to date")
     )
-    assert(FieldValidatorDate.validateStructField(field("epoch", Option("2019-01-01"))).toSet == expected3)
+    assert(DateFieldValidator.validate(field("epoch", Option("2019-01-01"))).toSet == expected3)
     //epoch overflow
     val expected5 = Set(
-      ValidationError("""For input string: "8748743743948390823948239084294938231122123"""")
+      ValidationError("'8748743743948390823948239084294938231122123' cannot be cast to date")
     )
-    assert(FieldValidatorDate.validateStructField(field("epoch", Option("8748743743948390823948239084294938231122123"))).toSet == expected5)
+    assert(DateFieldValidator.validate(field("epoch", Option("8748743743948390823948239084294938231122123"))).toSet == expected5)
   }
 
   test("utilizing default time zone") {
@@ -123,11 +121,11 @@ class FieldValidatorDateSuite extends FunSuite  {
       ValidationWarning("Time zone is defined in pattern for date. While it's valid, it can lead to unexpected outcomes.")
     )
     // full name
-    assert(FieldValidatorDate.validateStructField(field(pattern, value, Option("Africa/Johannesburg"))).toSet == expected)
+    assert(DateFieldValidator.validate(field(pattern, value, Option("Africa/Johannesburg"))).toSet == expected)
     // abbreviation
-    assert(FieldValidatorDate.validateStructField(field(pattern, value, Option("CET"))).toSet == expected)
+    assert(DateFieldValidator.validate(field(pattern, value, Option("CET"))).toSet == expected)
     // offset to GMT
-    assert(FieldValidatorDate.validateStructField(field(pattern, value, Option("Etc/GMT-6"))).toSet == expected)
+    assert(DateFieldValidator.validate(field(pattern, value, Option("Etc/GMT-6"))).toSet == expected)
   }
 
   test("issues with default time zone") {
@@ -142,16 +140,16 @@ class FieldValidatorDateSuite extends FunSuite  {
     val value = Option("2000-01-01")
     // offset
     val tz1 = "-03:00"
-    assert(FieldValidatorDate.validateStructField(field(pattern, value, Option(tz1))).toSet == expected(tz1))
+    assert(DateFieldValidator.validate(field(pattern, value, Option(tz1))).toSet == expected(tz1))
     // empty
     val tz2 = ""
-    assert(FieldValidatorDate.validateStructField(field(pattern, value, Option(tz2))).toSet == expected(tz2))
+    assert(DateFieldValidator.validate(field(pattern, value, Option(tz2))).toSet == expected(tz2))
     // gibberish
     val tz3 = "Gjh878-++_?"
-    assert(FieldValidatorDate.validateStructField(field(pattern, value, Option(tz3))).toSet == expected(tz3))
+    assert(DateFieldValidator.validate(field(pattern, value, Option(tz3))).toSet == expected(tz3))
     // non-existing
     val tz4 = "Africa/New York"
-    assert(FieldValidatorDate.validateStructField(field(pattern, value, Option(tz4))).toSet == expected(tz4))
+    assert(DateFieldValidator.validate(field(pattern, value, Option(tz4))).toSet == expected(tz4))
   }
 
   test("warning issues: double time zone") {
@@ -159,8 +157,8 @@ class FieldValidatorDateSuite extends FunSuite  {
       ValidationWarning("Pattern includes time zone placeholder and default time zone is also defined (will never be used)"),
       ValidationWarning("Time zone is defined in pattern for date. While it's valid, it can lead to unexpected outcomes.")
     )
-    assert(FieldValidatorDate.validateStructField(field("yyyy-MM-dd XX", None, Option("CET"))).toSet == expected)
-    assert(FieldValidatorDate.validateStructField(field("yyyy-MM-dd zz", None, Option("CET"))).toSet == expected)
+    assert(DateFieldValidator.validate(field("yyyy-MM-dd XX", None, Option("CET"))).toSet == expected)
+    assert(DateFieldValidator.validate(field("yyyy-MM-dd zz", None, Option("CET"))).toSet == expected)
   }
 
   test("warning issues: missing placeholders") {
@@ -169,7 +167,7 @@ class FieldValidatorDateSuite extends FunSuite  {
       ValidationWarning("No month placeholder 'MM' found."),
       ValidationWarning("No day placeholder 'dd' found.")
     )
-    assert(FieldValidatorDate.validateStructField(field("GG")).toSet == expected)
+    assert(DateFieldValidator.validate(field("GG")).toSet == expected)
   }
 
   test("warning issues: redundant placeholders") {
@@ -185,7 +183,7 @@ class FieldValidatorDateSuite extends FunSuite  {
       ValidationWarning("Redundant hour placeholder 'h' found."),
       ValidationWarning("Redundant hour placeholder 'H' found.")
     )
-    assert(FieldValidatorDate.validateStructField(field("yyyy-MM-dd HH:mm:ss.SSSiiinnn (aakkhhKK)", None, None)).toSet == expected)
+    assert(DateFieldValidator.validate(field("yyyy-MM-dd HH:mm:ss.SSSiiinnn (aakkhhKK)", None, None)).toSet == expected)
   }
 
   test("warning issues: missing placeholders with default time zone") {
@@ -195,7 +193,7 @@ class FieldValidatorDateSuite extends FunSuite  {
       ValidationWarning("No day placeholder 'dd' found."),
       ValidationWarning("Time zone is defined in pattern for date. While it's valid, it can lead to unexpected outcomes.")
     )
-    assert(FieldValidatorDate.validateStructField(field("GG", None, Option("CET"))).toSet == expected)
+    assert(DateFieldValidator.validate(field("GG", None, Option("CET"))).toSet == expected)
   }
 
   test("warning issues: day placeholder wrong case") {
@@ -203,10 +201,10 @@ class FieldValidatorDateSuite extends FunSuite  {
       ValidationWarning("No day placeholder 'dd' found."),
       ValidationWarning("Rarely used DayOfYear placeholder 'D' found. Possibly DayOfMonth 'd' intended.")
     )
-    assert(FieldValidatorDate.validateStructField(field("yyyy/MM/DD")).toSet == expected)
+    assert(DateFieldValidator.validate(field("yyyy/MM/DD")).toSet == expected)
   }
 
   test("all relevant placeholders") {
-    assert(FieldValidatorDate.validateStructField(field("GG yyyy MM ww W DDD dd F E")).isEmpty)
+    assert(DateFieldValidator.validate(field("GG yyyy MM ww W DDD dd F E")).isEmpty)
   }
 }

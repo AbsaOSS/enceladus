@@ -19,13 +19,15 @@ import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.json4s.jackson.Serialization
-import org.json4s.{DefaultFormats, Formats, NoTypeHints}
+import org.json4s.{DefaultFormats, Formats, NoTypeHints, ext}
+import za.co.absa.atum.model.RunState
 
 /**
   * This is the object for deserializing Model 0 version of Enceladus Schema
   */
 object Serializer0 {
-  private val formatsDefault: Formats = DefaultFormats.withHints(NoTypeHints)
+  private implicit val formatsDefault: Formats = DefaultFormats.withHints(NoTypeHints).withBigDecimal +
+    new ext.EnumNameSerializer(RunState)
 
   private val objectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
@@ -36,7 +38,6 @@ object Serializer0 {
     * Deserializes a Model 0 schema JSON
     */
   def deserializeSchema(json: String): Schema = {
-    implicit val formats: Formats = formatsDefault
     Serialization.read[Schema](json)
   }
 
@@ -44,7 +45,6 @@ object Serializer0 {
     * Deserializes a Model 0 mapping table JSON
     */
   def deserializeMappingTable(json: String): MappingTable = {
-    implicit val formats: Formats = formatsDefault
     Serialization.read[MappingTable](json)
   }
 
@@ -53,6 +53,20 @@ object Serializer0 {
     */
   def deserializeDataset(json: String): Dataset = {
     objectMapper.readValue(json, classOf[Dataset])
+  }
+
+  /**
+    * Deserializes a Model 0 run JSON
+    */
+  def deserializeRun(json: String): Run = {
+    Serialization.read[Run](json)
+  }
+
+  /**
+    * Serializes a Model 0 run object
+    */
+  def serializeRun(run: Run): String = {
+    Serialization.write[Run](run)
   }
 
 }

@@ -15,12 +15,8 @@
 
 package za.co.absa.enceladus.utils.validation
 
-import java.time.format.DateTimeFormatter
-import java.time.{Instant, ZoneOffset, ZonedDateTime}
 import java.sql.Timestamp
-
-import za.co.absa.enceladus.utils.time.EnceladusDateTimeParser
-
+import za.co.absa.enceladus.utils.types.parsers.DateTimeParser
 import scala.util.control.NonFatal
 
 /**
@@ -42,7 +38,7 @@ object DateTimeValidator {
   def isDateTimePatternValid(pattern: String, default: Option[String] = None): Option[ValidationIssue] ={
     try {
       // Checking pattern syntax
-      val parser = EnceladusDateTimeParser(pattern)
+      val parser = DateTimeParser(pattern)
       // Checking pattern's ability to be used in formatting date/time values
       parser.format(exampleDate)
       // Checking default value correctness

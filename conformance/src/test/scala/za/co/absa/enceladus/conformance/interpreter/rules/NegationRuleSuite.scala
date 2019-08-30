@@ -39,7 +39,7 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
 
     assert(intercept[ValidationException] {
       NegationRuleInterpreter.validateInputField("dataset", schema, "date")
-    }.getMessage contains "field is not a numeric type")
+    }.getMessage contains "field is neither NumericType nor BooleanType")
   }
 
   test("Negation conformance rule should negate positive numeric values") {
@@ -105,11 +105,8 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
       .setExperimentalMappingRuleEnabled(experimentalMR)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
-
     val conformed = DynamicInterpreter.interpret(enceladusDataset, inputDf).cache
-
     val conformedJSON = conformed.toJSON.collect().mkString("\n")
-
     if (conformedJSON != expectedJSON) {
       logger.error("EXPECTED:")
       logger.error(expectedJSON)

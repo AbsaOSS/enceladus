@@ -15,8 +15,7 @@
 
 package za.co.absa.enceladus.utils.implicits
 
-import org.apache.spark.sql.types.StructField
-import za.co.absa.enceladus.utils.types.Defaults
+import org.apache.spark.sql.types._
 import scala.util.Try
 
 object StructFieldImplicits {
@@ -29,15 +28,8 @@ object StructFieldImplicits {
       Try(structField.metadata.getBoolean(key)).toOption
     }
 
-    def readPatternInfo(): PatternInfo = {
-      val patternOpt: Option[String] = getMetadataString("pattern")
-      PatternInfo(patternOpt.getOrElse(Defaults.getGlobalFormat(structField.dataType)), patternOpt.isEmpty)
-    }
-
-    def defaultValueAsString: Option[String] = {
-      getMetadataString("default")
+    def hasMetadataKey(key: String): Boolean = {
+      structField.metadata.contains(key)
     }
   }
-
-  case class PatternInfo (pattern: String, isDefault: Boolean)
 }

@@ -295,7 +295,7 @@ sap.ui.define([], function() {
         fnSuccCallback();
     }.bind(this), function(jqXHR) {
       if(jqXHR.status === 404) {
-        this._setValueState(sap.ui.core.MessageType.Warning, "Select a valid HDFS path");
+        this._setValueState(sap.ui.core.MessageType.Warning, "Path does not exist.");
         this.unselectAll();
       } else {
         sap.m.MessageBox.error("Failed to retreive the HDFS folder contents for " + sPath + ", please try again later.");

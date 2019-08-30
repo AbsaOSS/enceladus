@@ -29,14 +29,14 @@
   }, {
     "name" : "dateSampleWrong1",
     "type" : "date",
-    "nullable" : true,
+    "nullable" : false,
     "metadata" : {
       "pattern" : "dd-MM-yyyy"
     }
   }, {
     "name" : "dateSampleWrong2",
     "type" : "date",
-    "nullable" : true,
+    "nullable" : false,
     "metadata" : {
       "pattern" : "dd-MM-yyyy"
     }
@@ -78,14 +78,14 @@
   }, {
     "name" : "timestampSampleWrong2",
     "type" : "timestamp",
-    "nullable" : true,
+    "nullable" : false,
     "metadata" : {
       "pattern" : "yyyy-MM-dd'T'HH:mm:ss"
     }
   }, {
     "name" : "timestampSampleWrong3",
     "type" : "timestamp",
-    "nullable" : true,
+    "nullable" : false,
     "metadata" : {
       "pattern" : "yyyy-MM-dd'T'HH:mm:ss"
     }

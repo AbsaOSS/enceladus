@@ -28,6 +28,7 @@ import org.json4s.{Formats, NoTypeHints}
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros._
+import za.co.absa.atum.model._
 import za.co.absa.enceladus.migrations.migrations.model1.conformanceRule._
 
 /**
@@ -47,12 +48,15 @@ object Serializer1 {
     classOf[Dataset], classOf[ConcatenationConformanceRule],
     classOf[MappingConformanceRule], classOf[LiteralConformanceRule], classOf[ConcatenationConformanceRule],
     classOf[DropConformanceRule], classOf[SparkSessionConfConformanceRule], classOf[UppercaseConformanceRule],
-    classOf[SingleColumnConformanceRule], classOf[CastingConformanceRule], classOf[NegationConformanceRule]),
+    classOf[SingleColumnConformanceRule], classOf[CastingConformanceRule], classOf[NegationConformanceRule],
+    classOf[Run], classOf[SplineReference], classOf[RunStatus], classOf[ControlMeasure],
+    classOf[ControlMeasureMetadata], classOf[Checkpoint], classOf[Measurement]),
     CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
 
   private val schemaCodec: Codec[Schema] = codecRegistry.get(classOf[Schema])
   private val mappingTableCodec: Codec[MappingTable] = codecRegistry.get(classOf[MappingTable])
   private val datasetCodec: Codec[Dataset] = codecRegistry.get(classOf[Dataset])
+  private val runCodec: Codec[Run] = codecRegistry.get(classOf[Run])
 
   /**
     * Serializes a Model 1 schema JSON
@@ -105,6 +109,13 @@ object Serializer1 {
     datasetCodec.encode(bsonWriter, dataset, encodeContext)
 
     bsonDocument.toJson
+  }
+
+  /**
+    * Serializes a Model 1 run JSON
+    */
+  def serializeRun(run: Run): String = {
+    objectMapper.writeValueAsString(run)
   }
 
   /**

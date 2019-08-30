@@ -15,7 +15,18 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
     <form:SimpleForm id="scheduleDisplayForm" editable="false">
-        <core:Title text="Active Schedule" />
+        <HBox class="scheduleMenuHBox">
+            <Title text="Active Schedule" />
+            <MenuButton id="scheduleActionMenuButton" class="scheduleMenuButton sapUiTinyMarginBegin" icon="sap-icon://menu" type="Transparent">
+                <Menu>
+                        <MenuItem text="Run Now!" icon="sap-icon://physical-activity" press="scheduleRunNow" />
+                        <MenuItem text="Suspend" icon="sap-icon://pause" press="scheduleSuspend" 
+                            visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' }"/>
+                        <MenuItem text="Resume" icon="sap-icon://play" press="scheduleResume" 
+                            visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'SUSPENDED' }" />
+                </Menu>
+            </MenuButton>
+        </HBox>
         <Label text="Coordinator ID" />
         <Text text="{/currentDataset/schedule/activeInstance/coordinatorId}" />
         <Label text="Coordinator Path" />
@@ -26,10 +37,10 @@
         <Text text="{path:'/currentDataset/schedule/activeInstance/status/nextMaterializedTime', formatter: 'Formatters.stringDateShortFormatter'}" 
             visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' }" />
         <Label text="Schedule Status" />
-        <ObjectStatus class="sapMObjectStatusLarge" 
+        <ObjectStatus class="sapMObjectStatusLarge"
             text="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' ? 'Active' : ${/currentDataset/schedule/activeInstance/status/status} }"
             state="{path:'/currentDataset/schedule/activeInstance/status/status', formatter:'Formatters.oozieCoordinatorStatusFormatter'}" />
-        <core:Title text="Schedule Timing (in UTC)" />
+        <core:Title id="scheduleTimingTitle" text="Schedule Timing (in UTC)" />
         <Label text="Will run" />
         <Text text="{path: '/currentDataset/schedule/scheduleTiming/cronSchedule', formatter: 'Formatters.cronExpressionFormatter'}" />
         <Label text="Minute" />
@@ -64,6 +75,8 @@
         <Text text="{/currentDataset/schedule/datasetVersion}" />
         <Label text="Mapping Table Folder Pattern" />
         <Text text="{/currentDataset/schedule/mappingTablePattern}" />
+        <Label text="Report Date Offset" />
+        <Text text="{/currentDataset/schedule/reportDateOffset}" />
         <Label text="Data Format"></Label>
         <Text text="{/currentDataset/schedule/rawFormat/name}" />
         <Label text="XML Row Tag" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'xml' }"></Label>

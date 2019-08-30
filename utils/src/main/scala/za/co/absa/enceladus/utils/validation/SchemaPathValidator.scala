@@ -108,6 +108,21 @@ object SchemaPathValidator {
     }
   }
 
+  /**
+    * Validate schema path data type is algebraic
+    *
+    * @param schema      A Spark schema
+    * @param fieldPath   A path to a field (e.g. "data.employees.employee.age")
+    * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
+    */
+  def validateSchemaPathAlgebraic(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
+    validateSchemaPathType(schema, fieldPath) {
+      case _: NumericType |  _: BooleanType => Seq.empty[ValidationIssue]
+      case k => Seq(ValidationError(s"The datatype '${k.typeName}' of '$fieldPath' field " +
+        "is neither NumericType nor BooleanType"))
+    }
+  }
+
   private def validateSchemaPathType(schema: StructType, fieldPath: String)(f: DataType => Seq[ValidationIssue]): Seq[ValidationIssue] = {
     val path = fieldPath.split('.')
     if (path.isEmpty) {
@@ -126,6 +141,7 @@ object SchemaPathValidator {
                                       parentOnly: Boolean = false,
                                       fullPathNew: Boolean = false,
                                       parentPath: String = ""): Seq[ValidationIssue] = {
+    // scalastyle:off  return Covered in Issue #730
     if (path.isEmpty) {
       return Nil
     }
@@ -172,6 +188,7 @@ object SchemaPathValidator {
 
     }
     failures
+    // scalastyle:on return
   }
 
   /** Returns underlying data type of a field after traversing nested arrays. */

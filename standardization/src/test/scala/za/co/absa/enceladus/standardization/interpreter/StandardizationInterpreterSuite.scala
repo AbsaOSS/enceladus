@@ -15,15 +15,13 @@
 
 package za.co.absa.enceladus.standardization.interpreter
 
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{ArrayType, BooleanType, DoubleType, IntegerType, MetadataBuilder, StringType, StructField, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreterSuite._
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-
-import scala.io.Source
 
 class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._
@@ -91,14 +89,14 @@ class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with 
         new MetadataBuilder().putString("sourcecolumn", "last name").build),
       StructField("body_stats",
         StructType(Seq(
-          StructField("height", IntegerType, false),
-          StructField("weight", IntegerType, false),
+          StructField("height", IntegerType, nullable = false),
+          StructField("weight", IntegerType, nullable = false),
           StructField("miscellaneous", StructType(Seq(
            StructField("eye_color", StringType, nullable = true,
              new MetadataBuilder().putString("sourcecolumn", "eye color").build),
            StructField("glasses", BooleanType, nullable = true)
           ))),
-          StructField("temperature_measurements", ArrayType(DoubleType, true), true,
+          StructField("temperature_measurements", ArrayType(DoubleType, containsNull = false), nullable = false,
             new MetadataBuilder().putString("sourcecolumn", "temperature measurements").build)
         )),
         nullable = false,
@@ -107,9 +105,7 @@ class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with 
     ))
 
 
-    val bufferedSource = Source.fromFile("src/test/resources/data/patients.json")
-    val srcString:String = bufferedSource.getLines().mkString("\n")
-    bufferedSource.close
+    val srcString:String = FileReader.readFileAsString("src/test/resources/data/patients.json")
 
     val src = JsonUtils.getDataFrameFromJson(spark, Seq(srcString))
 
@@ -151,7 +147,7 @@ class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with 
       PatientRow("Scott", "Lang", BodyStats(0, 83, "blue", Option(false),Seq(36.6, 36.7, 37.0, 36.6)), Seq(
         ErrorMessage.stdCastErr("body stats.height", "various")
       )),
-      PatientRow("Aldrich", "Killian", BodyStats(181, 90, "brown or orange", Option(false), Seq(36.7, 36.5, 38.0, 48.0, 152.0, 831.0, 0.0)), Seq(
+      PatientRow("Aldrich", "Killian", BodyStats(181, 90, "brown or orange", None, Seq(36.7, 36.5, 38.0, 48.0, 152.0, 831.0, 0.0)), Seq(
         ErrorMessage.stdCastErr("body stats.miscellaneous.glasses", "not any more"),
         ErrorMessage.stdCastErr("body stats.temperature measurements[*]", "exploded")
       ))

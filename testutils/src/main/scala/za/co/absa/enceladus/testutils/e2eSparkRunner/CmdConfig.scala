@@ -18,8 +18,7 @@ package za.co.absa.enceladus.testutils.e2eSparkRunner
 import java.io.File
 
 import scopt.OptionParser
-
-import scala.io.Source
+import za.co.absa.enceladus.utils.fs.FileReader
 import scala.util.matching.Regex
 
 /**
@@ -58,7 +57,7 @@ case class CmdConfig(rawFormat: String = "xml",
   private lazy val cmpStdPath = s"/cmp/tmp/$stdPaths"
   private lazy val cmpConfPath = s"/cmp/publish/$confPaths"
 
-  lazy val sparkConf: String = Source.fromFile(sparkConfFile).getLines().mkString
+  lazy val sparkConf: String = FileReader.readFileAsString(sparkConfFile, "")
 
   lazy val stdComparisonConf: String = comparisonConf(defaultStdOut, refStdOut, cmpStdPath, keys)
   lazy val confComparisonConf: String = comparisonConf(defaultConfOut, refConfOut, cmpConfPath, keys)

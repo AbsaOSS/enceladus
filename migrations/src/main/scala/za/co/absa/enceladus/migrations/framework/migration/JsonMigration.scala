@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
-import org.apache.log4j.{LogManager, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.framework.{MigrationUtils, ObjectIdTools}
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
@@ -53,7 +53,7 @@ trait JsonMigration extends Migration {
   // A document transformer is a function that maps a JSON string to a JSON string
   type DocumentTransformer = String => String
 
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
   val InvalidDocument = ""
 
   private val transformers = new mutable.HashMap[String, DocumentTransformer]()

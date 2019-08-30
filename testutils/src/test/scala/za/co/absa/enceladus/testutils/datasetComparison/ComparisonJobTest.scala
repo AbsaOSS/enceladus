@@ -20,12 +20,10 @@ import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 import za.co.absa.enceladus.testutils.exceptions._
+import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-
-import scala.io.Source
 
 class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterEach {
 
@@ -156,7 +154,7 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterE
   }
 
   test("Compare nested structures with errors") {
-    val lines: List[String] = Source.fromFile("src/test/resources/json_output").getLines.toList
+    val lines: List[String] = FileReader.readFileAsListOfLines("src/test/resources/json_output")
     val outCapture = new ByteArrayOutputStream
 
     val refPath = "src/test/resources/json_orig"
@@ -181,4 +179,37 @@ class ComparisonJobTest extends FunSuite with SparkTestBase with BeforeAndAfterE
 
     assert(lines == result)
   }
+
+  test("Key based compare of xml files with compound keys") {
+    val expectedDiff = FileReader
+      .readFileAsListOfLines("src/test/resources/xml_examples/example12_diff.json")
+      .mkString("\n")
+
+    val refPath = "src/test/resources/xml_examples/example1.xml"
+    val newPath = "src/test/resources/xml_examples/example2.xml"
+    val outPath = s"target/test_output/comparison_job/negative/$timePrefix"
+
+    val args = Array(
+      "--raw-format", "xml",
+      "--row-tag", "row",
+      "--new-path", newPath,
+      "--ref-path", refPath,
+      "--out-path", outPath,
+      "--keys", "id,id2,ckey.value"
+    )
+
+    intercept[CmpJobDatasetsDifferException] {
+      ComparisonJob.main(args)
+    }
+
+    val df = spark.read
+      .format("parquet")
+      .load(outPath)
+      .orderBy("expected_id", "expected_id2", "actual_id", "actual_id2", "actual_value")
+
+    val actualDiff = df.toJSON.collect().mkString("\n")
+
+    assert(actualDiff == expectedDiff)
+  }
+
 }

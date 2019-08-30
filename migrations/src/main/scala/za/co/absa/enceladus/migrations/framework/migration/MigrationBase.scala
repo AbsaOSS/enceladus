@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
-import org.apache.log4j.{LogManager, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
@@ -34,7 +34,7 @@ import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
   * }}}
   */
 abstract class MigrationBase extends Migration {
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   def execute(db: DocumentDb, collectionNames: Seq[String]): Unit = {
     collectionNames.foreach(collection => cloneCollection(db, collection))

@@ -15,20 +15,50 @@
 
 package za.co.absa.enceladus.menas.services
 
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
 import scala.concurrent.Future
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
+import za.co.absa.enceladus.menas.exceptions.OozieActionException
 import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
 import za.co.absa.enceladus.menas.repositories.OozieRepository
+import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
 
 @Component
 class OozieService @Autowired() (oozieRepository: OozieRepository) {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   def isOozieEnabled: Boolean = oozieRepository.isOozieEnabled()
 
   def getCoordinatorStatus(coordinatorId: String): Future[OozieCoordinatorStatus] = {
     oozieRepository.getCoordinatorStatus(coordinatorId)
+  }
+
+  def runNow(oozieSchedule: OozieSchedule, reportDate: Option[String]): Future[String] = {
+    val wfPath = oozieSchedule.activeInstance match {
+      case Some(instance) => instance.workflowPath
+      case None           => throw OozieActionException("Cannot run a job without an active schedule.")
+    }
+    val reportDateString = reportDate match {
+      case Some(date) => date
+      case None =>
+        val d = LocalDate.now().plusDays(oozieSchedule.reportDateOffset)
+        DateTimeFormatter.ofPattern("yyyy-MM-dd").format(d)
+
+    }
+    oozieRepository.runWorkflow(wfPath, oozieSchedule.runtimeParams, reportDateString)
+  }
+
+  def suspend(coordinatorId: String): Future[OozieCoordinatorStatus] = {
+    oozieRepository.suspend(coordinatorId).flatMap(_ => this.getCoordinatorStatus(coordinatorId))
+  }
+
+  def resume(coordinatorId: String): Future[OozieCoordinatorStatus] = {
+    oozieRepository.resume(coordinatorId).flatMap(_ => this.getCoordinatorStatus(coordinatorId))
   }
 }

@@ -108,6 +108,14 @@ object DynamicConformanceJob {
     enabled
   }
 
+  private def isAutocleanStdFolderEnabled()(implicit cmd: CmdConfig): Boolean = {
+    val enabled = getCmdOrConfigBoolean(cmd.autocleanStandardizedFolder,
+      "conformance.autoclean.standardized.hdfs.folder",
+      defaultValue = false)
+    log.info(s"Autoclean standardized HDFS folder = $enabled")
+    enabled
+  }
+
   /**
     * Returns an effective value of a parameter according to the following priorities:
     * - Command line arguments [highest]
@@ -233,6 +241,10 @@ object DynamicConformanceJob {
         case NonFatal(e) => log.error(s"Unable to write performance metrics to file '$fileName': ${e.getMessage}")
       }
     })
+
+    if (isAutocleanStdFolderEnabled()) {
+      fsUtils.deleteDirectoryRecursively(pathCfg.stdPath)
+    }
   }
 
   def buildPublishPath(infoDateCol: String,
@@ -252,5 +264,3 @@ object DynamicConformanceJob {
 
   private final case class PathCfg(publishPath: String, stdPath: String)
 }
-
-

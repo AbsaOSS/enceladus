@@ -22,7 +22,7 @@ import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
-import za.co.absa.enceladus.utils.types.Defaults
+import za.co.absa.enceladus.utils.types.{Defaults, TypedStructField}
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate._
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
@@ -216,11 +216,13 @@ trait TypeParserSuiteTemplate extends FunSuite with SparkTestBase {
                                      target: StructField,
                                      castExpression: String,
                                      errorExpression: String): String = {
-    val default = Defaults.getDefaultValue(target) match {
-      case d: Date => s"DATE '${d.toString}'"
-      case t: Timestamp => s"TIMESTAMP('${t.toString}')"
-      case s: String => s
-      case x => x.toString
+    val defaultValue = TypedStructField(target).defaultValueWithGlobal.get
+    val default = defaultValue match {
+      case Some(d: Date) => s"DATE '${d.toString}'"
+      case Some(t: Timestamp) => s"TIMESTAMP('${t.toString}')"
+      case Some(s: String) => s
+      case Some(x) => x.toString
+      case None => "NULL"
     }
 
     s"CASE WHEN (size($errorExpression) > 0) THEN $default ELSE CASE WHEN ($srcField IS NOT NULL) THEN $castExpression END END AS `${target.name}`"

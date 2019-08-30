@@ -13,34 +13,31 @@
   ~ limitations under the License.
   -->
 
-<coordinator-app name="$coordName"
-  frequency="$cronTiming"
-  start="$startDate" end="$endDate" timezone="$timezone"
-  xmlns="uri:oozie:coordinator:0.2">
-  <controls>
-    <execution>FIFO</execution>
-  </controls>
-  <action>
-    <workflow>
-      <app-path>$wfApplicationPath</app-path>
-      <configuration>
-      	<property>
-      		<name>reportDate</name>
-      		<value>${coord:formatTime(coord:dateOffset(coord:nominalTime(), $reportDateOffset,'DAY'), "yyyy-MM-dd")}</value>
-      	</property>
-        <property>
-            <name>oozie.use.system.libpath</name>
-            <value>True</value>
-        </property>
-        <property>
-            <name>start_date</name>
-            <value>$startDate</value>
-        </property>
-        <property>
-            <name>end_date</name>
-            <value>$endDate</value>
-        </property>
-      </configuration>
-   </workflow>
-  </action>
+<coordinator-app name="$coordName" frequency="$cronTiming" start="$startDate" end="$endDate" timezone="$timezone" xmlns="uri:oozie:coordinator:0.2">
+    <controls>
+        <execution>FIFO</execution>
+    </controls>
+    <action>
+        <workflow>
+            <app-path>$wfApplicationPath</app-path>
+            <configuration>
+                <property>
+                    <name>reportDate</name>
+                    <value>${coord:formatTime(coord:dateOffset(coord:nominalTime(), $reportDateOffset,'DAY'), "yyyy-MM-dd")}</value>
+                </property>
+                <property>
+                    <name>oozie.use.system.libpath</name>
+                    <value>True</value>
+                </property>
+                <property>
+                    <name>start_date</name>
+                    <value>$startDate</value>
+                </property>
+                <property>
+                    <name>end_date</name>
+                    <value>$endDate</value>
+                </property>
+            </configuration>
+        </workflow>
+    </action>
 </coordinator-app>

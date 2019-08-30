@@ -30,7 +30,6 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.fs.permission.FsAction
 import org.apache.hadoop.fs.permission.FsPermission
 import org.apache.oozie.client.OozieClient
-import org.apache.oozie.client.WorkflowJob.{Status => WorkflowStatus}
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
@@ -43,6 +42,8 @@ import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
 import za.co.absa.enceladus.menas.exceptions.EntityAlreadyExistsException
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import OozieRepository._
+import scala.util.{Try, Success, Failure}
+import za.co.absa.enceladus.menas.exceptions.OozieActionException
 
 
 object OozieRepository {
@@ -208,10 +209,10 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   }
 
   /**
-   * Get status of submitted coordinater
+   * Get status of submitted coordinator
    */
   def getCoordinatorStatus(coordId: String): Future[OozieCoordinatorStatus] = {
-    getOozieClientWrap({ oozieClient: OozieClient =>
+    getOozieClientWrap({ oozieClient =>
       val jobInfo = oozieClient.getCoordJobInfo(coordId)
       val nextMaterializeTime = if (jobInfo.getNextMaterializedTime == null) {
         ""
@@ -223,19 +224,10 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   }
 
   /**
-   * Get status of a running workflow
-   */
-  def getJobStatus(jobId: String): Future[WorkflowStatus] = {
-    getOozieClientWrap({ oozieClient: OozieClient =>
-      oozieClient.getJobInfo(jobId).getStatus
-    })
-  }
-
-  /**
    * Kill a running coordinator
    */
   def killCoordinator(coordId: String): Future[Unit] = {
-    getOozieClientWrap({ oozieClient: OozieClient =>
+    getOozieClientWrap({ oozieClient =>
       oozieClient.kill(coordId)
     })
   }
@@ -319,11 +311,45 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Submits a coordinator
    */
   def runCoordinator(coordPath: String, runtimeParams: RuntimeConfig): Future[String] = {
-    getOozieClientWrap { oozieClient: OozieClient =>
+    getOozieClientWrap { oozieClient =>
       val conf = getOozieConf(oozieClient, runtimeParams)
-      conf.setProperty(OozieClient.COORDINATOR_APP_PATH, s"$coordPath");
-      // submit and start the workflow job
+      conf.setProperty(OozieClient.COORDINATOR_APP_PATH, s"$coordPath")
       oozieClient.submit(conf)
+    }
+  }
+
+  /**
+   * Run a workflow now
+   */
+  def runWorkflow(wfPath: String, runtimeParams: RuntimeConfig, reportDate: String): Future[String] = {
+    getOozieClient { oozieClient =>
+      val conf = getOozieConf(oozieClient, runtimeParams)
+      conf.setProperty(OozieClient.APP_PATH, wfPath)
+      conf.setProperty("reportDate", reportDate)
+      Try {
+        oozieClient.run(conf)
+      } match {
+        case Success(x) => Future.successful(x)
+        case Failure(e) => Future.failed(OozieActionException(e.getMessage, e.getCause))
+      }
+    }
+  }
+
+  /**
+   * Suspend a coordinator
+   */
+  def suspend(coordId: String): Future[Unit] = {
+    getOozieClientWrap { oozieClient =>
+      oozieClient.suspend(coordId)
+    }
+  }
+
+  /**
+   * Resume a coordinator
+   */
+  def resume(coordId: String): Future[Unit] = {
+    getOozieClientWrap { oozieClient =>
+      oozieClient.resume(coordId)
     }
   }
 

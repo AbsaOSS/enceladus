@@ -168,7 +168,9 @@ class EntityService {
   }
 
   create(entity) {
-    return this.restDAO.create(entity).then((oData) => {
+    let cleanEntity = this.cleanupEntity(entity);
+
+    return this.restDAO.create(cleanEntity).then((oData) => {
       this.updateMasterPage();
       this.publishCreatedEvent(oData);
       sap.m.MessageToast.show(this.messageProvider.entityCreated());
@@ -179,7 +181,9 @@ class EntityService {
   }
 
   update(entity) {
-    return this.restDAO.update(entity).then((oData) => {
+    let cleanEntity = this.cleanupEntity(entity);
+
+    return this.restDAO.update(cleanEntity).then((oData) => {
       this.updateMasterPage();
       this.publishUpdatedEvent(oData);
       sap.m.MessageToast.show(this.messageProvider.entityUpdated());
@@ -280,6 +284,20 @@ class DatasetService extends EntityService {
     return super.getByNameAndVersion(sName, iVersion, sModelPath, "#/dataset")
   }
 
+  cleanupEntity(oEntity) {
+    return {
+      name: oEntity.name,
+      version: oEntity.version,
+      description: oEntity.description,
+      hdfsPath: oEntity.hdfsPath,
+      hdfsPublishPath: oEntity.hdfsPublishPath,
+      schemaName: oEntity.schemaName,
+      schemaVersion: oEntity.schemaVersion,
+      schedule: oEntity.schedule, 
+      conformance: ( oEntity.conformance || [] )
+    }
+  }
+
   update(oDataset) {
     return super.update(oDataset).then((oData) => {
       return this.schemaRestDAO.getByNameAndVersion(oData.schemaName, oData.schemaVersion).then((oData) => {
@@ -340,6 +358,14 @@ class SchemaService extends DependentEntityService {
     return super.getByNameAndVersion(sName, iVersion, sModelPath, "#/schema")
   }
 
+  cleanupEntity(oEntity) {
+    return {
+      name: oEntity.name,
+      version: oEntity.version,
+      description: oEntity.description
+    }
+  }
+
   disable(sName, iVersion) {
     return super.disable(sName, iVersion, "#/schema").fail((xhr) => {
       if (xhr.status === 400) {
@@ -397,6 +423,17 @@ class MappingTableService extends DependentEntityService {
 
   getByNameAndVersion(sName, iVersion, sModelPath = "/currentMappingTable") {
     return super.getByNameAndVersion(sName, iVersion, sModelPath, "#/mapping")
+  }
+
+  cleanupEntity(oEntity) {
+    return {
+      name: oEntity.name,
+      version: oEntity.version,
+      description: oEntity.description,
+      hdfsPath: oEntity.hdfsPath,
+      schemaName: oEntity.schemaName,
+      schemaVersion: oEntity.schemaVersion
+    }
   }
 
   update(oMappingTable) {

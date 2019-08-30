@@ -23,7 +23,7 @@ class RestClient {
       async: true
     };
     const jqXHR = shouldUseCache ? RestClient.cache(request) : $.ajax(request);
-    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession);
   }
 
   static getSync(url, shouldUseCache = false) {
@@ -32,8 +32,7 @@ class RestClient {
       async: false
     };
     const jqXHR = shouldUseCache ? RestClient.cache(request) : $.ajax(request);
-    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
-
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession);
   }
 
   static post(url, data) {
@@ -45,7 +44,7 @@ class RestClient {
         "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
       }
     });
-    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession);
   }
 
   static put(url, data) {
@@ -57,7 +56,7 @@ class RestClient {
         "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
       }
     });
-    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession);
   }
 
   static delete(url) {
@@ -67,7 +66,7 @@ class RestClient {
         "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
       }
     });
-    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession)
+    return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession);
   }
 
   static identity(jqXHR) {
@@ -208,4 +207,11 @@ class MappingTableRestDAO extends DependentRestDAO {
     })
   }
 
+}
+
+class ConfigRestClient {
+
+  static getEnvironmentName() {
+    return RestClient.get(`api/configuration/environment`)
+  }
 }

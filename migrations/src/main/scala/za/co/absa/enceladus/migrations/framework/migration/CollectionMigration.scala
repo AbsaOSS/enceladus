@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
-import org.apache.log4j.{LogManager, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.framework.MigrationUtils
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
 
@@ -47,7 +47,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
   */
 trait CollectionMigration extends Migration {
 
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   private val collectionsToCreate = new ListBuffer[String]()
   private val collectionsToDrop = new ListBuffer[String]()

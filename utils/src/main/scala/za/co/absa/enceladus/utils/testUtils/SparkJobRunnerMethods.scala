@@ -17,6 +17,7 @@ package za.co.absa.enceladus.utils.testUtils
 
 import org.scalatest.FunSuiteLike
 
+import scala.language.reflectiveCalls
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe
 

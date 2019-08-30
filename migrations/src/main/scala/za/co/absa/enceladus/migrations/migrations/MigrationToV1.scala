@@ -17,10 +17,11 @@ package za.co.absa.enceladus.migrations.migrations
 
 import java.time.ZonedDateTime
 
-import org.apache.log4j.{LogManager, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.framework.migration._
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 import za.co.absa.enceladus.migrations.migrations.model1.{DefaultValue, Serializer1}
+
 import scala.util.control.NonFatal
 
 /**
@@ -28,7 +29,7 @@ import scala.util.control.NonFatal
   */
 object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMigration with CommandMigration {
 
-  private val log: Logger = LogManager.getLogger(this.getClass)
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val migrationUserName = "migration"
 
   override val targetVersion: Int = 1
@@ -137,7 +138,7 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
   })
 
   transformJSON("dataset")(model0Json => {
-    val fixJson = model0Json.replaceAll("\"jsonClass\" :", "\"_t\" :")
+    val fixJson = model0Json.replaceAll("\"jsonClass\"\\s*:", "\"_t\" :")
 
     try {
       val dataset0 = Serializer0.deserializeDataset(fixJson)
@@ -168,7 +169,7 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
   /**
     * Converts a Model 0 conformance rule into Model 1 conformance rule
     */
-  private def convertConformanceRule(rule: model0.conformanceRule.ConformanceRule): model1.conformanceRule.ConformanceRule = {
+  def convertConformanceRule(rule: model0.conformanceRule.ConformanceRule): model1.conformanceRule.ConformanceRule = {
     rule match {
       case model0.conformanceRule.CastingConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, outputDataType) =>
         model1.conformanceRule.CastingConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, outputDataType, "CastingConformanceRule")
@@ -204,7 +205,7 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
   /**
     * Converts a Model 0 schema field into Model 1 schema field
     */
-  private def convertSchemaField(field0: model0.SchemaField, path: List[String]): model1.SchemaField = {
+  def convertSchemaField(field0: model0.SchemaField, path: List[String]): model1.SchemaField = {
     field0.`type` match {
       case "array" => convertSchemaFieldArray(field0, path :+ field0.name)
       case "struct" => convertSchemaFieldStruct(field0, path :+ field0.name)

@@ -51,7 +51,22 @@ class ObjectIdToolsSuite extends FunSuite {
     assert (ObjectIdTools.putObjectIdIfNotPresent(doc2, Some(oid)) == expected2)
     assert (ObjectIdTools.putObjectIdIfNotPresent(doc3, Some(oid)) == expected3)
     assert (ObjectIdTools.putObjectIdIfNotPresent(doc4, Some(oid)) == expected4)
+  }
 
+  test("Test ObjectId value extractor should disregard whitespaces around keys and values") {
+    val oid1 = """ "_id" : { "$oid" : "5a02c0799b2c26c8fc064e01" } """
+    val oid2 = """"_id" : { "$oid" : "5a02c0799b2c26c8fc064e01" }"""
+    val oid3 = """"_id":{ "$oid" : "5a02c0799b2c26c8fc064e01"}"""
+    val oid4 = """"_id": { "$oid"  :  "5a02c0799b2c26c8fc064e01"  }  """
+    val oid5 = """"_id":{"$oid":"5a02c0799b2c26c8fc064e01"}"""
+
+    val expected = "5a02c0799b2c26c8fc064e01"
+
+    assert(ObjectIdTools.extractId(oid1) == expected)
+    assert(ObjectIdTools.extractId(oid2) == expected)
+    assert(ObjectIdTools.extractId(oid3) == expected)
+    assert(ObjectIdTools.extractId(oid4) == expected)
+    assert(ObjectIdTools.extractId(oid5) == expected)
   }
 
 }
