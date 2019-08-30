@@ -68,7 +68,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
 
       newInstance.map({ i =>
         val schedule = newDataset.schedule.get.copy(activeInstance = Some(i))
-        newDataset.setSchedule(Some(schedule))
+        latest.setSchedule(Some(schedule))
       })
     }
   }
