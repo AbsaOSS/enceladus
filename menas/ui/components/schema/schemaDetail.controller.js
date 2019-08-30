@@ -173,7 +173,19 @@ sap.ui.define([
       if (status === 500) {
         const sSchemaType = this.byId("schemaFormatSelect").getSelectedItem().getText();
 
-        MessageBox.error(`Failed to upload new schema. Ensure that the file is a valid ${sSchemaType} schema and try again.`)
+        const rawResponse = oParams.getParameter("responseRaw");
+        let errorMessageDetails = "";
+        try {
+          const oParsedResponse = JSON.parse(rawResponse);
+          if (oParsedResponse.message) {
+            errorMessageDetails = `\n\nDetails:\n${oParsedResponse.message}`;
+          }
+        } catch (e) {
+          console.error(`Unable to parse the raw response from the server. Error: ${e}. Response: ${rawResponse}`)
+        }
+
+        MessageBox.error(`Failed to upload new schema. Ensure that the file is a valid ${sSchemaType} schema and ` +
+          `try again.${errorMessageDetails}`)
       } else if (status === 201) {
         this.byId("fileUploader").setValue(undefined);
         MessageToast.show("Schema successfully uploaded.");
