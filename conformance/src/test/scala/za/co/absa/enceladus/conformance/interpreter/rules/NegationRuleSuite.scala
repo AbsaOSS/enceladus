@@ -81,6 +81,15 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val expectedDataset = NegationRuleSamples.dataset
     val expectedJSON = NegationRuleSamples.Min.conformedJSON
 
+    testRule(inputDataset, expectedDataset, expectedJSON, nullableSchema = false)
+  }
+
+  test("Negation conformance rule should produce errors when negating min numeric values due to Silent " +
+    "Overflow and set to null for nullable columns") {
+    val inputDataset = NegationRuleSamples.MinWithNullableColumns.data.toDS
+    val expectedDataset = NegationRuleSamples.dataset
+    val expectedJSON = NegationRuleSamples.MinWithNullableColumns.conformedJSON
+
     testRule(inputDataset, expectedDataset, expectedJSON)
   }
 
@@ -92,8 +101,13 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     testRule(inputDataset, expectedDataset, expectedJSON)
   }
 
-  private def testRule(inputDataset: Dataset[String], enceladusDataset: ConfDataset, expectedJSON: String): Unit = {
-    val inputDf = spark.read.schema(NegationRuleSamples.schema).json(inputDataset)
+  private def testRule(inputDataset: Dataset[String], enceladusDataset: ConfDataset, expectedJSON: String, nullableSchema: Boolean = true): Unit = {
+    val schema = if (nullableSchema) {
+      NegationRuleSamples.schemaNullable
+    } else {
+      NegationRuleSamples.schema
+    }
+    val inputDf = spark.read.schema(schema).json(inputDataset)
 
     implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")

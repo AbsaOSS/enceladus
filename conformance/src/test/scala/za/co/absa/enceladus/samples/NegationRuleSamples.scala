@@ -23,16 +23,20 @@ object NegationRuleSamples {
 
   val schema = StructType(
     Array(
-      StructField("byte", ByteType),
-      StructField("short", ShortType),
-      StructField("integer", IntegerType),
-      StructField("long", LongType),
-      StructField("float", FloatType),
-      StructField("double", DoubleType),
-      StructField("decimal", DecimalType(32, 2)),
-      StructField("date", DateType),
-      StructField("boolean", BooleanType)
+      StructField("byte", ByteType, nullable = false),
+      StructField("short", ShortType, nullable = false),
+      StructField("integer", IntegerType, nullable = false),
+      StructField("long", LongType, nullable = false),
+      StructField("float", FloatType, nullable = false),
+      StructField("double", DoubleType, nullable = false),
+      StructField("decimal", DecimalType(32, 2), nullable = false),
+      StructField("date", DateType, nullable = false),
+      StructField("boolean", BooleanType, nullable = false)
     )
+  )
+
+  val schemaNullable = StructType(
+    schema.fields.map(_.copy(nullable = true))
   )
 
   val negateByte = NegationConformanceRule(order = 1, outputColumn = "ConformedByte", controlCheckpoint = false, inputColumn = "byte")
@@ -106,6 +110,21 @@ object NegationRuleSamples {
          |  "boolean": true}""".stripMargin)
 
     val conformedJSON = """{"byte":-128,"short":-32768,"integer":-2147483648,"long":-9223372036854775808,"float":-3.4028235E38,"double":-1.7976931348623157E308,"decimal":0.00,"date":"2018-06-11","boolean":true,"errCol":[{"errType":"confNegError","errCode":"E00004","errMsg":"Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged","errCol":"ConformedByte","rawValues":["-128"],"mappings":[]},{"errType":"confNegError","errCode":"E00004","errMsg":"Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged","errCol":"ConformedShort","rawValues":["-32768"],"mappings":[]},{"errType":"confNegError","errCode":"E00004","errMsg":"Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged","errCol":"ConformedInt","rawValues":["-2147483648"],"mappings":[]},{"errType":"confNegError","errCode":"E00004","errMsg":"Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged","errCol":"ConformedLong","rawValues":["-9223372036854775808"],"mappings":[]}],"ConformedByte":0,"ConformedShort":0,"ConformedInt":0,"ConformedLong":0,"ConformedFloat":3.4028234663852886E38,"ConformedDouble":1.7976931348623157E308,"ConformedDecimal":0.00,"ConformedBoolean":false}"""
+  }
+
+  object MinWithNullableColumns {
+    val data: Seq[String] = Seq(
+      s"""{ "byte": ${Byte.MinValue},
+         |  "short": ${Short.MinValue},
+         |  "integer": ${Int.MinValue},
+         |  "long": ${Long.MinValue},
+         |  "float": ${Float.MinValue},
+         |  "double": ${Double.MinValue},
+         |  "decimal": 0,
+         |  "date": "2018-06-11",
+         |  "boolean": true}""".stripMargin)
+
+    val conformedJSON = """{"byte":-128,"short":-32768,"integer":-2147483648,"long":-9223372036854775808,"float":-3.4028235E38,"double":-1.7976931348623157E308,"decimal":0.00,"date":"2018-06-11","boolean":true,"errCol":[{"errType":"confNegError","errCode":"E00004","errMsg":"Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged","errCol":"ConformedByte","rawValues":["-128"],"mappings":[]},{"errType":"confNegError","errCode":"E00004","errMsg":"Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged","errCol":"ConformedShort","rawValues":["-32768"],"mappings":[]},{"errType":"confNegError","errCode":"E00004","errMsg":"Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged","errCol":"ConformedInt","rawValues":["-2147483648"],"mappings":[]},{"errType":"confNegError","errCode":"E00004","errMsg":"Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged","errCol":"ConformedLong","rawValues":["-9223372036854775808"],"mappings":[]}],"ConformedFloat":3.4028234663852886E38,"ConformedDouble":1.7976931348623157E308,"ConformedDecimal":0.00,"ConformedBoolean":false}"""
   }
 
   object Max {
