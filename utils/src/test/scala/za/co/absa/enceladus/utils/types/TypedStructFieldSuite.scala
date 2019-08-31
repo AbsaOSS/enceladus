@@ -133,7 +133,7 @@ class TypedStructFieldSuite extends FunSuite {
   test("Byte type not nullable, with default defined as not not-numeric string") {
     val fieldType = ByteType
     val nullable = false
-    val field = createField(fieldType, nullable, Some("seven")) // scalastyle:ignore null
+    val field = createField(fieldType, nullable, Some("seven"))
     val typed = TypedStructField(field)
     val errMsg = "'seven' cannot be cast to byte"
     val fail = Failure(new NumberFormatException(errMsg))
@@ -143,17 +143,15 @@ class TypedStructFieldSuite extends FunSuite {
   test("Long type not nullable, with default defined as binary integer") {
     val fieldType = LongType
     val nullable = false
-    val field = createField(fieldType, nullable, Some(-1L)) // scalastyle:ignore null
+    val field = createField(fieldType, nullable, Some(-1L))
     val typed = TypedStructField(field)
-    val errMsg = "java.lang.Long cannot be cast to java.lang.String"
-    val fail = Failure(new ClassCastException(errMsg))
-    checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError(errMsg)))
+    checkField(typed, fieldType, Success(Some(Some(-1L))), Success(Some(-1L)), nullable)
   }
 
   test("Float type nullable, with default defined in exponential notation") {
     val fieldType = FloatType
     val nullable = true
-    val field = createField(fieldType, nullable, Some("314e-2")) // scalastyle:ignore null
+    val field = createField(fieldType, nullable, Some("314e-2"))
     val typed = TypedStructField(field)
     val errMsg = "'314e-2' cannot be cast to float"
     checkField(typed, fieldType, Success(Some(Some(3.14F))), Success(Some(3.14F)), nullable)
@@ -179,5 +177,37 @@ class TypedStructFieldSuite extends FunSuite {
     checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError(errMsg)))
   }
 
+  test("Byte type not nullable, with default defined as Double") {
+    val fieldType = LongType
+    val nullable = false
+    val field = createField(fieldType, nullable, Some(3,14))
+    val typed = TypedStructField(field)
+    val errMsg = "'(3,14)' cannot be cast to long"
+    val fail = Failure(new NumberFormatException(errMsg))
+    checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError(errMsg)))
+  }
 
+  test("Boolean type nullable, with default defined as Boolean") {
+    val fieldType = BooleanType
+    val nullable = false
+    val field = createField(fieldType, nullable, Some(true))
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(Some(Some(true))), Success(Some(true)), nullable)
+  }
+
+  test("Float type nullable, with default defined as Long") {
+    val fieldType = FloatType
+    val nullable = false
+    val field = createField(fieldType, nullable, Some(1000L))
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(Some(Some(1000D))), Success(Some(1000D)), nullable)
+  }
+
+  test("Decimal type nullable, with default defined as binary Boolean") {
+    val fieldType = DecimalType(10, 3)
+    val nullable = false
+    val field = createField(fieldType, nullable, Some(2.71))
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(Some(Some(2.71))), Success(Some(2.71)), nullable)
+  }
 }

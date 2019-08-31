@@ -22,7 +22,6 @@ import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.types.parsers._
 import za.co.absa.enceladus.utils.validation.ValidationIssue
 import za.co.absa.enceladus.utils.validation.field.{DateFieldValidator, DateTimeFieldValidator, FieldValidator, ScalarFieldValidator, TimestampFieldValidator}
-
 import scala.util.{Failure, Success, Try}
 
 sealed abstract class TypedStructField(structField: StructField) extends StructFieldEnhancements(structField) {
@@ -68,10 +67,7 @@ sealed abstract class TypedStructField(structField: StructField) extends StructF
    */
   def ownDefaultValue: Try[Option[Option[Any]]] = {
     if (hasMetadataKey(MetadataKeys.DefaultValue)) {
-      for {
-        defaultValueString <- Try{structField.metadata.getString(MetadataKeys.DefaultValue)}
-        defaultValueTyped <- stringToTyped(defaultValueString)
-      } yield Some(defaultValueTyped)
+      defaultValueInMetadata.map(Some(_))
     } else {
       Success(None)
     }
@@ -113,6 +109,13 @@ sealed abstract class TypedStructField(structField: StructField) extends StructF
     var result = 1
     result = prime * result + (if (structField == null) 0 else structField.hashCode)
     result
+  }
+
+  protected def defaultValueInMetadata: Try[Option[Any]] = {
+    for {
+      defaultValueString <- Try{structField.metadata.getString(MetadataKeys.DefaultValue)}
+      defaultValueTyped <- stringToTyped(defaultValueString)
+    } yield defaultValueTyped
   }
 }
 
@@ -173,6 +176,12 @@ object TypedStructField {
     override def validate(): Seq[ValidationIssue] = {
       ScalarFieldValidator.validate(this)
     }
+
+    override protected def defaultValueInMetadata: Try[Option[Any]] = {
+      super.defaultValueInMetadata.recover {
+        case _: ClassCastException => Some(structField.metadata.getBoolean(MetadataKeys.DefaultValue))
+      }
+    }
   }
 
   final class IntegralTypeStructField private[TypedStructField] (structField: StructField) extends TypedStructField(structField) {
@@ -191,6 +200,12 @@ object TypedStructField {
 
     override def validate(): Seq[ValidationIssue] = {
       ScalarFieldValidator.validate(this)
+    }
+
+    override protected def defaultValueInMetadata: Try[Option[Any]] = {
+      super.defaultValueInMetadata.recover {
+        case _: ClassCastException => Some(structField.metadata.getLong(MetadataKeys.DefaultValue))
+      }
     }
   }
 
@@ -212,6 +227,14 @@ object TypedStructField {
     override def validate(): Seq[ValidationIssue] = {
       ScalarFieldValidator.validate(this)
     }
+
+    override protected def defaultValueInMetadata: Try[Option[Any]] = {
+      super.defaultValueInMetadata.recover {
+        case _: ClassCastException => Some(structField.metadata.getDouble(MetadataKeys.DefaultValue))
+      }.recover {
+        case _: ClassCastException => Some(structField.metadata.getLong(MetadataKeys.DefaultValue))
+      }
+    }
   }
 
   final class DecimalTypeStructField private[TypedStructField] (structField: StructField, override val dataType: DecimalType) extends TypedStructField(structField) {
@@ -227,6 +250,14 @@ object TypedStructField {
 
     def precision: Int = dataType.precision
     def scale: Int = dataType.scale
+
+    override protected def defaultValueInMetadata: Try[Option[Any]] = {
+      super.defaultValueInMetadata.recover {
+        case _: ClassCastException => Some(structField.metadata.getDouble(MetadataKeys.DefaultValue))
+      }.recover {
+        case _: ClassCastException => Some(structField.metadata.getLong(MetadataKeys.DefaultValue))
+      }
+    }
   }
 
   final class DateTimeTypeStructField private[TypedStructField] (structField: StructField, validator: DateTimeFieldValidator)
@@ -285,5 +316,4 @@ object TypedStructField {
     with WeakSupport
 
   final class GeneralTypeStructField private[TypedStructField] (structField: StructField) extends TypedStructField(structField) with WeakSupport
-
 }
