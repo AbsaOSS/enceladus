@@ -36,3 +36,20 @@ footer {
 i {
   color: rgb(182, 1, 36)!important;
 }
+
+#page_number {
+  text-align: center;
+}
+
+#page_move {
+  text-align: right;
+}
+
+#search_button {
+  background-color: rgb(182, 1, 36)!important;
+  border-color: rgb(150, 1, 36)!important;
+}
+
+#search_results {
+  margin-top: 1rem;
+}
