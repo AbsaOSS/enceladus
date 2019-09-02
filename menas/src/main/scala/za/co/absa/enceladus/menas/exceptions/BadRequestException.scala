@@ -13,17 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.controllers
+package za.co.absa.enceladus.menas.exceptions
 
-import org.slf4j.LoggerFactory
-import za.co.absa.enceladus.menas.exceptions.{BadRequestException, NotFoundException}
-
-abstract class BaseController {
-
-  private[controllers] val logger = LoggerFactory.getLogger(this.getClass)
-
-  def notFound(): NotFoundException = NotFoundException()
-
-  def badRequest(msg: String): BadRequestException = BadRequestException(msg)
-
-}
+case class BadRequestException(message: String, cause: Throwable = None.orNull) extends Exception(message, cause)
