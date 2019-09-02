@@ -28,7 +28,7 @@ object SchemaUtils {
    * @param schema The schema which should contain the specified path
    * @return       Some(the requested field) or None if the field does not exist
    */
-  def getStructField(path: String, schema: StructType): Option[StructField] = {
+  def getField(path: String, schema: StructType): Option[StructField] = {
 
     @tailrec
     def goThroughArrays(dataType: DataType): DataType = {
@@ -44,13 +44,13 @@ object SchemaUtils {
         Option(structField)
       } else {
         structField.dataType match {
-          case str: StructType              => diveInto(names.tail, str(names.head))
+          case str: StructType            => diveInto(names.tail, str(names.head))
           case ArrayType(el: DataType, _) =>
             goThroughArrays(el) match {
               case struct: StructType => diveInto(names.tail, struct(names.head))
-              case _ => None
+              case _                  => None
             }
-          case _                            => None
+          case _                          => None
         }
       }
     }
@@ -69,7 +69,7 @@ object SchemaUtils {
     * @return Some(the type of the field) or None if the field does not exist
     */
   def getFieldType(path: String, schema: StructType): Option[DataType] = {
-    getStructField(path, schema).map(_.dataType)
+    getField(path, schema).map(_.dataType)
   }
 
   def fieldExists(path: String, schema: StructType): Boolean = {
@@ -123,7 +123,7 @@ object SchemaUtils {
     * @return Some(nullable) or None if the field does not exist
     */
   def getFieldNullability(path: String, schema: StructType): Option[Boolean] = {
-    getStructField(path, schema).map(_.nullable)
+    getField(path, schema).map(_.nullable)
   }
 
   /**
@@ -133,7 +133,7 @@ object SchemaUtils {
    * @return       True if the field exists false otherwise
    */
   def fieldExists(path: String, schema: StructType): Boolean = {
-    getStructField(path, schema).nonEmpty
+    getField(path, schema).nonEmpty
   }
 
   /**
@@ -167,7 +167,7 @@ object SchemaUtils {
     * Get paths for all array subfields of this given datatype
     */
   def getAllArraySubPaths(path: String, name: String, dt: DataType): Seq[String] = {
-    val currPath = fullPath(path, name)
+    val currPath = appendPath(path, name)
     dt match {
       case s: StructType => s.fields.flatMap(f => getAllArraySubPaths(currPath, f.name, f.dataType))
       case a@ArrayType(elType, nullable) => getAllArraySubPaths(path, name, elType) :+ currPath
@@ -291,20 +291,6 @@ object SchemaUtils {
     * @return The path with the new field appended or the field itself if path is empty
     */
   def appendPath(path: String, fieldName: String): String = {
-    if (path.isEmpty) {
-      fieldName
-    } else {
-      s"$path.$fieldName"
-    }
-  }
-
-  /**
-   * Combines path and field name using dot notation
-   * @param path      The dot-separated existing path
-   * @param fieldName Name of the field to be appended to the path
-   * @return          The combined path and field name
-   */
-  def fullPath(path: String, fieldName: String): String = {
     if (path.isEmpty) {
       fieldName
     } else if (fieldName.isEmpty) {

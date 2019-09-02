@@ -32,7 +32,7 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
   override def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
     NegationRuleInterpreter.validateInputField(progArgs.datasetName, df.schema, rule.inputColumn)
 
-    val field = SchemaUtils.getStructField(rule.inputColumn, df.schema).get
+    val field = SchemaUtils.getField(rule.inputColumn, df.schema).get
 
     val negationErrUdfCall = callUDF("confNegErr", lit(rule.outputColumn), col(rule.inputColumn))
     val errCol = "errCol"
@@ -48,10 +48,10 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
         // Negating floating point numbers cannot fail, but we need to account
         // for signed zeros (see the note for getNegator()).
         DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => getNegator(c, field))
-      case _ =>
+      case dt =>
         // The generic negation with checking for error conditions
         DeepArrayTransformations.nestedWithColumnAndErrorMap(df, rule.inputColumn, rule.outputColumn, errCol,
-          c => getNegator(c, field), c => getError(c, negationErrUdfCall, field.dataType))
+          c => getNegator(c, field), c => getError(c, negationErrUdfCall, dt))
     }
   }
 

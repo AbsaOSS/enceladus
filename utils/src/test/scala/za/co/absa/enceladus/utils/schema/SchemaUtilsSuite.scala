@@ -321,10 +321,10 @@ class SchemaUtilsSuite extends FunSuite {
   }
 
   test("Test getStructField on array of arrays") {
-    assert(getStructField("a", arrayOfArraysSchema).contains(StructField("a",ArrayType(ArrayType(IntegerType)),nullable = false)))
-    assert(getStructField("b", arrayOfArraysSchema).contains(StructField("b",ArrayType(ArrayType(StructType(Seq(StructField("c",StringType,nullable = false))))), nullable = true)))
-    assert(getStructField("b.c", arrayOfArraysSchema).contains(StructField("c",StringType,nullable = false)))
-    assert(getStructField("b.d", arrayOfArraysSchema).isEmpty)
+    assert(getField("a", arrayOfArraysSchema).contains(StructField("a",ArrayType(ArrayType(IntegerType)),nullable = false)))
+    assert(getField("b", arrayOfArraysSchema).contains(StructField("b",ArrayType(ArrayType(StructType(Seq(StructField("c",StringType,nullable = false))))), nullable = true)))
+    assert(getField("b.c", arrayOfArraysSchema).contains(StructField("c",StringType,nullable = false)))
+    assert(getField("b.d", arrayOfArraysSchema).isEmpty)
   }
 
   test("Test fieldExists") {
