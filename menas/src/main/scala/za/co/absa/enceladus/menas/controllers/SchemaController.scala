@@ -15,25 +15,25 @@
 
 package za.co.absa.enceladus.menas.controllers
 
+import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
-import org.apache.spark.sql.types.{DataType, StructType}
+import javax.servlet.http.HttpServletResponse
+import org.apache.spark.sql.types.StructType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
-import za.co.absa.enceladus.model.menas._
+import za.co.absa.cobrix.cobol.parser.CopybookParser
+import za.co.absa.cobrix.spark.cobol.schema.{CobolSchema, SchemaRetentionPolicy}
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaService}
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
-import java.util.Optional
+import za.co.absa.enceladus.model.menas._
 
-import javax.servlet.http.HttpServletResponse
-import za.co.absa.cobrix.cobol.parser.CopybookParser
-import za.co.absa.cobrix.spark.cobol.schema.CobolSchema
-import za.co.absa.cobrix.spark.cobol.schema.SchemaRetentionPolicy
+import scala.util.control.NonFatal
 
 @RestController
 @RequestMapping(Array("/api/schema"))
@@ -44,6 +44,7 @@ class SchemaController @Autowired() (
   extends VersionedModelController(schemaService) {
 
   import za.co.absa.enceladus.menas.utils.implicits._
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   @PostMapping(Array("/upload"))
@@ -57,16 +58,31 @@ class SchemaController @Autowired() (
     val fileContent = new String(file.getBytes)
 
     val sparkStruct = origFormat match {
-      case Some("struct") | Some("") | None => sparkMenasConvertor.convertAnyToStructType(fileContent)
+      case Some("struct") | Some("") | None =>
+        try {
+          sparkMenasConvertor.convertAnyToStructType(fileContent)
+        } catch {
+          case NonFatal(e) => throw badRequest(e.getMessage)
+        }
       case Some("copybook") =>
-        val parsedSchema = CopybookParser.parseTree(fileContent)
-        val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
-        cobolSchema.getSparkSchema
-      case Some(x) => throw new UnsupportedOperationException(s"$x is not a recognized schema format. Menas currently supports: 'struct' and 'copybook'")
+        try {
+          val parsedSchema = CopybookParser.parseTree(fileContent)
+          val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
+          cobolSchema.getSparkSchema
+        } catch {
+          case NonFatal(e) => throw badRequest(e.getMessage)
+        }
+      case Some(x) =>
+        throw badRequest(s"$x is not a recognized schema format. Menas currently supports: 'struct' and 'copybook'")
     }
 
-    val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase, refName = name, refVersion = version + 1, attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
-      filename = file.getOriginalFilename, fileContent = file.getBytes, fileMIMEType = file.getContentType)
+    val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
+      refName = name,
+      refVersion = version + 1,
+      attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
+      filename = file.getOriginalFilename,
+      fileContent = file.getBytes,
+      fileMIMEType = file.getContentType)
 
     for {
       upload <- attachmentService.uploadAttachment(origFile)

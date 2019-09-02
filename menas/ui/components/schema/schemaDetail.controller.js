@@ -170,13 +170,7 @@ sap.ui.define([
       sap.ui.core.BusyIndicator.hide();
       let status = oParams.getParameter("status");
 
-      if (status === 500) {
-        const sSchemaType = this.byId("schemaFormatSelect").getSelectedItem().getText();
-        const errorMessage = ResponseUtils.getErrorMessage(oParams.getParameter("responseRaw"));
-        const errorMessageDetails = errorMessage ? `\n\nDetails:\n${errorMessage}` : "";
-        MessageBox.error(`Failed to upload new schema. Ensure that the file is a valid ${sSchemaType} schema and ` +
-          `try again.${errorMessageDetails}`)
-      } else if (status === 201) {
+      if (status === 201) {
         this.byId("fileUploader").setValue(undefined);
         MessageToast.show("Schema successfully uploaded.");
         let oData = JSON.parse(oParams.getParameter("responseRaw"));
@@ -186,8 +180,20 @@ sap.ui.define([
         this._eventBus.publish("schemas", "list");
         // nav back to info
         this.byId("schemaIconTabBar").setSelectedKey("info");
+      } else if (status === 400) {
+        const sSchemaType = this.byId("schemaFormatSelect").getSelectedItem().getText();
+        const errorMessage = ResponseUtils.getErrorMessage(oParams.getParameter("responseRaw"));
+        const errorMessageDetails = errorMessage ? `\n\nDetails:\n${errorMessage}` : "";
+        MessageBox.error(`Error parsing the schema file. Ensure that the file is a valid ${sSchemaType} schema and ` +
+          `try again.${errorMessageDetails}`)
+      } else if (status === 500) {
+        MessageBox.error("Failed to upload new schema. In internal server error has been occurred.")
       } else if (status === 401 || status === 403) {
         GenericService.clearSession("Session has expired");
+      } else if (status === 0) {
+        MessageBox.error(`Failed to upload new schema. The connectivity to the server has been lost.`)
+      } else {
+        MessageBox.error(`Unexpected status=${status} error occurred. Please, check your connectivity to the server.`)
       }
     },
 
@@ -205,7 +211,7 @@ sap.ui.define([
     load: function () {
       const currentSchema = this._model.getProperty("/currentSchema");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentSchema), "schema");
-      this._schemaTable.model = this._model.getProperty("/currentSchema")
+      this._schemaTable.model = this._model.getProperty("/currentSchema");
       const auditTable = this.byId("auditTrailTable");
       this._schemaService.getAuditTrail(currentSchema.name, auditTable);
     }

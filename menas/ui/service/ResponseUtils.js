@@ -19,10 +19,9 @@ class ResponseUtils {
    * The method always returns a string and is tolerant to raw response format issues.
    *
    * {
-   *   "status": 500,
-   *   "error": "Internal Server Error",
+   *   "timestamp": "2019-09-02T11:54:45.574Z",
+   *   "id": "67a8b19b-f88c-4792-ba2a-2d67ec1a74b9",
    *   "message": "Detailed error message",
-   *   ...
    * }
    *
    */

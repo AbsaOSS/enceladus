@@ -19,8 +19,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import za.co.absa.enceladus.model.UsedIn
-import za.co.absa.enceladus.menas.exceptions.{EntityInUseException, NotFoundException, ValidationException, OozieActionException}
-import za.co.absa.enceladus.menas.models.{Validation, RestError}
+import za.co.absa.enceladus.menas.exceptions._
+import za.co.absa.enceladus.menas.models.{RestError, Validation}
 import org.springframework.http.HttpStatus
 import org.slf4j.LoggerFactory
 
@@ -32,6 +32,11 @@ class RestExceptionHandler {
   @ExceptionHandler(value = Array(classOf[NotFoundException]))
   def handleNotFoundException(exception: NotFoundException): ResponseEntity[Any] = {
     ResponseEntity.notFound().build[Any]()
+  }
+
+  @ExceptionHandler(value = Array(classOf[BadRequestException]))
+  def handleBadRequestException(exception: BadRequestException): ResponseEntity[Any] = {
+    ResponseEntity.badRequest().body(RestError(exception.message))
   }
 
   @ExceptionHandler(value = Array(classOf[ValidationException]))
@@ -53,7 +58,7 @@ class RestExceptionHandler {
    def handleOozieActionException(ex: OozieActionException): ResponseEntity[Object] = {
     val err = RestError(ex.getMessage)
     logger.error(s"Exception: $err", ex)
-    new ResponseEntity(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    new ResponseEntity(err, HttpStatus.INTERNAL_SERVER_ERROR)
    }
   
 }
