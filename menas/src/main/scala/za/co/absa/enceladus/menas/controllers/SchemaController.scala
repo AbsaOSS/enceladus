@@ -27,7 +27,9 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
 import za.co.absa.cobrix.cobol.parser.CopybookParser
+import za.co.absa.cobrix.cobol.parser.exceptions.SyntaxErrorException
 import za.co.absa.cobrix.spark.cobol.schema.{CobolSchema, SchemaRetentionPolicy}
+import za.co.absa.enceladus.menas.models.rest.exceptions.{SchemaFormatException, SchemaParsingException}
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaService}
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
@@ -47,6 +49,9 @@ class SchemaController @Autowired() (
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  val SchemaTypeStruct = "struct"
+  val SchemaTypeCopybook = "copybook"
+
   @PostMapping(Array("/upload"))
   @ResponseStatus(HttpStatus.CREATED)
   def handleFileUpload(@AuthenticationPrincipal principal: UserDetails,
@@ -58,22 +63,26 @@ class SchemaController @Autowired() (
     val fileContent = new String(file.getBytes)
 
     val sparkStruct = origFormat match {
-      case Some("struct") | Some("") | None =>
+      case Some(SchemaTypeStruct) | Some("") | None =>
         try {
           sparkMenasConvertor.convertAnyToStructType(fileContent)
         } catch {
-          case NonFatal(e) => throw badRequest(e.getMessage)
+          case NonFatal(e) => throw SchemaParsingException(SchemaTypeStruct, e.getMessage)
         }
-      case Some("copybook") =>
+      case Some(SchemaTypeCopybook) =>
         try {
           val parsedSchema = CopybookParser.parseTree(fileContent)
           val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
           cobolSchema.getSparkSchema
         } catch {
-          case NonFatal(e) => throw badRequest(e.getMessage)
+          case e: SyntaxErrorException =>
+            throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, Some(e.lineNumber), None, Some(e.field), e)
+          case NonFatal(e) =>
+            throw SchemaParsingException(SchemaTypeCopybook, e.getMessage)
         }
-      case Some(x) =>
-        throw badRequest(s"$x is not a recognized schema format. Menas currently supports: 'struct' and 'copybook'")
+      case Some(schemaType) =>
+        throw SchemaFormatException(schemaType, s"$schemaType is not a recognized schema format. " +
+          s"Menas currently supports: '$SchemaTypeStruct' and '$SchemaTypeCopybook'.")
     }
 
     val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,

@@ -23,6 +23,9 @@ import za.co.absa.enceladus.menas.exceptions._
 import za.co.absa.enceladus.menas.models.{RestError, Validation}
 import org.springframework.http.HttpStatus
 import org.slf4j.LoggerFactory
+import za.co.absa.enceladus.menas.models.rest.RestResponse
+import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
+import za.co.absa.enceladus.menas.models.rest.exceptions.{SchemaFormatException, SchemaParsingException}
 
 
 @ControllerAdvice(annotations = Array(classOf[RestController]))
@@ -34,9 +37,18 @@ class RestExceptionHandler {
     ResponseEntity.notFound().build[Any]()
   }
 
-  @ExceptionHandler(value = Array(classOf[BadRequestException]))
-  def handleBadRequestException(exception: BadRequestException): ResponseEntity[Any] = {
-    ResponseEntity.badRequest().body(RestError(exception.message))
+  @ExceptionHandler(value = Array(classOf[SchemaParsingException]))
+  def handleBadRequestException(exception: SchemaParsingException): ResponseEntity[Any] = {
+    val response = RestResponse(exception.message, Option(SchemaParsingError.fromException(exception)))
+    logger.error(s"Exception: $response", exception)
+    ResponseEntity.badRequest().body(response)
+  }
+
+  @ExceptionHandler(value = Array(classOf[SchemaFormatException]))
+  def handleBadRequestException(exception: SchemaFormatException): ResponseEntity[Any] = {
+    val response = RestResponse(exception.message, Option(SchemaFormatError.fromException(exception)))
+    logger.error(s"Exception: $response", exception)
+    ResponseEntity.badRequest().body(response)
   }
 
   @ExceptionHandler(value = Array(classOf[ValidationException]))
