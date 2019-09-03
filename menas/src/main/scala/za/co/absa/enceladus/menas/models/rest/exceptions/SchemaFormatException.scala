@@ -13,15 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.controllers
+package za.co.absa.enceladus.menas.models.rest.exceptions
 
-import org.slf4j.LoggerFactory
-import za.co.absa.enceladus.menas.exceptions.NotFoundException
-
-abstract class BaseController {
-
-  private[controllers] val logger = LoggerFactory.getLogger(this.getClass)
-
-  def notFound(): NotFoundException = NotFoundException()
-
-}
+/**
+  * This exception is thrown when a wrong schema format is specified.
+  */
+case class SchemaFormatException(
+                                  schemaType: String,
+                                  message: String,
+                                  cause: Throwable = null
+                                ) extends Exception(message, cause)

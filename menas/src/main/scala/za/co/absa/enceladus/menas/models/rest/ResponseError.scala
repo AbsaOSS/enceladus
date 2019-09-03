@@ -13,6 +13,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.exceptions
+package za.co.absa.enceladus.menas.models.rest
 
-case class BadRequestException(message: String, cause: Throwable = None.orNull) extends Exception(message, cause)
+/**
+  * This abstract class is used as a parent for all REST errors.
+  */
+abstract class ResponseError {
+  /** An error type. Should be as concise as possible to be parsable by a service. */
+  val errorType: String
+}
