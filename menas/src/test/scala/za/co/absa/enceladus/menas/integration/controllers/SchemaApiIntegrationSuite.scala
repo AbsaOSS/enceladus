@@ -22,8 +22,12 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.factories.{AttachmentFactory, SchemaFactory}
 import za.co.absa.enceladus.menas.integration.fixtures.{AttachmentFixtureService, FixtureService, SchemaFixtureService}
 import za.co.absa.enceladus.menas.models.Validation
+import za.co.absa.enceladus.menas.models.rest.RestResponse
+import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.model.Schema
+
+import scala.collection.immutable.HashMap
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -277,6 +281,105 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
 
           val body = response.getBody
           assert(body.sameElements(attachment4.fileContent))
+        }
+      }
+    }
+  }
+
+  s"POST $apiUrl/upload" should {
+    "return 201" when {
+      "a copybook has no errors" should {
+        "return a new version of the schema" in {
+          val schema = SchemaFactory.getDummySchema()
+          val responseCreated = sendPost[Schema, Schema](s"$apiUrl/create", bodyOpt = Some(schema))
+          assertCreated(responseCreated)
+
+          val schemaParams = HashMap[String, Any] (
+            "name" -> schema.name, "version" -> schema.version, "format" -> "copybook")
+          val responseUploaded = sendPostUploadFile[Schema](
+            s"$apiUrl/upload", "/test_data/schemas/copybook_ok.cob", schemaParams)
+          assertCreated(responseUploaded)
+
+          val actual = responseUploaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 3)
+        }
+      }
+
+      "a JSON struct type schema has no errors" should {
+        "return a new version of the schema" in {
+          val schema = SchemaFactory.getDummySchema()
+          val responseCreated = sendPost[Schema, Schema](s"$apiUrl/create", bodyOpt = Some(schema))
+          assertCreated(responseCreated)
+
+          val schemaParams = HashMap[String, Any] (
+            "name" -> schema.name, "version" -> schema.version, "format" -> "struct")
+          val responseUploaded = sendPostUploadFile[Schema](
+            s"$apiUrl/upload", "/test_data/schemas/schema_json_ok.json", schemaParams)
+          assertCreated(responseUploaded)
+
+          val actual = responseUploaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 2)
+        }
+      }
+    }
+
+    "return 400" when {
+      "a copybook with a syntax error" should {
+        "return a response containing a schema parsing error with syntax error specific fields" in {
+          val schemaParams = HashMap[String, Any] ("version" -> 1, "name" -> "MySchema", "format" -> "copybook")
+          val response = sendPostUploadFile[RestResponse](
+            s"$apiUrl/upload", "/test_data/schemas/copybook_bogus.cob", schemaParams)
+          val body = response.getBody
+
+          assertBadRequest(response)
+          body.error match {
+            case Some(e: SchemaParsingError) =>
+              assert(e.errorType == "schema_parsing")
+              assert(e.schemaType == "copybook")
+              assert(e.line.contains(22))
+              assert(body.message.contains("Syntax error in the copybook"))
+            case e => fail(s"Expected an instance of SchemaParsingError, got $e.")
+          }
+        }
+      }
+
+      "a JSON struct type schema with a syntax error" should {
+        "return a response containing a schema parsing error returned by the StructType parser" in {
+          val schemaParams = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "struct")
+          val response = sendPostUploadFile[RestResponse](
+            s"$apiUrl/upload", "/test_data/schemas/schema_json_bogus.json", schemaParams)
+          val body = response.getBody
+
+          assertBadRequest(response)
+          body.error match {
+            case Some(e: SchemaParsingError) =>
+              assert(e.errorType == "schema_parsing")
+              assert(e.schemaType == "struct")
+              assert(body.message.contains("StructType serializer: Failed to convert the JSON string"))
+            case e => fail(s"Expected an instance of SchemaParsingError, got $e.")
+          }
+        }
+      }
+
+      "a wrong format has been specified" should {
+        "return a response containing a schema format error" in {
+          val schemaParams = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "ERROR")
+          val response = sendPostUploadFile[RestResponse](
+            s"$apiUrl/upload", "/test_data/schemas/schema_json_bogus.json", schemaParams)
+          val body = response.getBody
+
+          assertBadRequest(response)
+          body.error match {
+            case Some(e: SchemaFormatError) =>
+              assert(e.errorType == "schema_format")
+              assert(e.schemaType == "ERROR")
+              assert(body.message.contains("ERROR is not a recognized schema format."))
+            case e => fail(s"Expected an instance of SchemaFormatError, got $e.")
+          }
         }
       }
     }

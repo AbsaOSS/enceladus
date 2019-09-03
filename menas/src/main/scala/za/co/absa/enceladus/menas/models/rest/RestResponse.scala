@@ -33,8 +33,8 @@ import java.util.UUID
   * }}}
   */
 case class RestResponse(
-    message: String,
-    error: Option[ResponseError] = None,
-    timestamp: ZonedDateTime = ZonedDateTime.now(),
-    id: UUID = UUID.randomUUID()
-)
+                         message: String,
+                         error: Option[ResponseError] = None,
+                         timestamp: ZonedDateTime = ZonedDateTime.now(),
+                         id: UUID = UUID.randomUUID()
+                       )
