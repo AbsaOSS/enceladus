@@ -68,8 +68,6 @@ class HDFSServiceSuite extends BaseServiceTest {
     val listStatus = Array(fileStatus, subdirStatus)
 
     Mockito.when(fs.listStatus(dirPath)).thenReturn(listStatus)
-    Mockito.when(fs.listStatus(filePath)).thenReturn(Array[FileStatus]())
-    Mockito.when(fs.listStatus(subdirPath)).thenReturn(Array(fileStatus))
 
     val result = Await.result(hdfsService.getFolder(dirPath), Duration(100, TimeUnit.MILLISECONDS))
 

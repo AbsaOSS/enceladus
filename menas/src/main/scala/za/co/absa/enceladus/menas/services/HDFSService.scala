@@ -27,6 +27,8 @@ import scala.util.Try
 class HDFSService @Autowired() (fs: FileSystem) {
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  private val ChildrenMarker = Seq(HDFSFolder("", "", None))
+
   def exists(path: Path): Future[Boolean] = Future {
     fs.exists(path)
   }
@@ -36,21 +38,25 @@ class HDFSService @Autowired() (fs: FileSystem) {
       HDFSFolder(path.toUri.getPath, path.getName, None)
     } else {
       val status = fs.listStatus(path)
-      val children = if (status.isEmpty) None else {
-        Some(
-          status.map({ x =>
+      val children = if (status.isEmpty) {
+        None
+      } else {
+        Some {
+          status.map { x =>
             val child = x.getPath
-            HDFSFolder(child.toUri.getPath, child.getName, safeLS(child))
-          }).toSeq)
+            HDFSFolder(child.toUri.getPath, child.getName, setChildrenMarker(child))
+          }.toSeq
+        }
       }
       HDFSFolder(path.toUri.getPath, path.getName, children)
     }
   }
 
-  private def safeLS(path: Path): Option[Seq[HDFSFolder]] = {
-    Try {
-      fs.listStatus(path)
-    }.toOption.flatMap(children =>
-      if (children.isEmpty) None else Some(Seq(HDFSFolder("", "", None))))
+  private def setChildrenMarker(path: Path): Option[Seq[HDFSFolder]] = {
+    if (fs.isDirectory(path)) {
+      Some(ChildrenMarker)
+    } else {
+      None
+    }
   }
 }
