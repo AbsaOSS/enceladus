@@ -390,8 +390,13 @@
                     <versionDigitToIncrement>1</versionDigitToIncrement>
 
                     <commitMessages>
+                        <hotfixStartMessage>Update versions for hotfix v@{version}</hotfixStartMessage>
+                        <hotfixFinishMessage>Update for next development version @{version}</hotfixFinishMessage>
+                        <hotfixVersionUpdateMessage>Update to hotfix version @{version}</hotfixVersionUpdateMessage>
+
                         <releaseStartMessage>Update versions for release v@{version}</releaseStartMessage>
                         <releaseFinishMessage>Update for next development version @{version}</releaseFinishMessage>
+                        <releaseVersionUpdateMessage>Update for next development version @{version}</releaseVersionUpdateMessage>
                     </commitMessages>
                 </configuration>
             </plugin>
