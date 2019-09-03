@@ -1,0 +1,75 @@
+{
+  "type": "bogus",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long",
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "legs",
+      "type": {
+        "type": "array",
+        "elementType": {
+          "type": "struct",
+          "fields": [
+            {
+              "name": "conditions",
+              "type": {
+                "type": "array",
+                "elementType": {
+                  "type": "struct",
+                  "fields": [
+                    {
+                      "name": "amount",
+                      "type": "long",
+                      "nullable": true,
+                      "metadata": {}
+                    },
+                    {
+                      "name": "checks",
+                      "type": {
+                        "type": "array",
+                        "elementType": {
+                          "type": "struct",
+                          "fields": [
+                            {
+                              "name": "checkNums",
+                              "type": {
+                                "type": "array",
+                                "elementType": "string",
+                                "containsNull": true
+                              },
+                              "nullable": true,
+                              "metadata": {}
+                            }
+                          ]
+                        },
+                        "containsNull": true
+                      },
+                      "nullable": true,
+                      "metadata": {}
+                    }
+                  ]
+                },
+                "containsNull": true
+              },
+              "nullable": true,
+              "metadata": {}
+            },
+            {
+              "name": "legid",
+              "type": "long",
+              "nullable": true,
+              "metadata": {}
+            }
+          ]
+        },
+        "containsNull": true
+      },
+      "nullable": true,
+      "metadata": {}
+    }
+  ]
+}

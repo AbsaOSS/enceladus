@@ -15,9 +15,18 @@
 
 package za.co.absa.enceladus.menas.models.rest
 
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type
+import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
+import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
+
 /**
   * This abstract class is used as a parent for all REST errors.
   */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_t")
+@JsonSubTypes(Array(
+  new Type(value = classOf[SchemaFormatError], name = "SchemaFormatError"),
+  new Type(value = classOf[SchemaParsingError], name = "SchemaParsingError")
+))
 abstract class ResponseError {
   /** An error type. Should be as concise as possible to be parsable by a service. */
   val errorType: String

@@ -21,17 +21,17 @@ import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 /**
   * This error is produced when a parsing error is occurred when uploading a schema.
   */
-case class SchemaParsingError (
-                                errorType: String,
-                                schemaType: String,
-                                line: Option[Int],
-                                column: Option[Int]
-                              ) extends ResponseError
+case class SchemaParsingError(
+                               errorType: String,
+                               schemaType: String,
+                               line: Option[Int],
+                               column: Option[Int]
+                             ) extends ResponseError
 
 object SchemaParsingError {
-  def fromException(ex: SchemaParsingException): SchemaParsingError = SchemaParsingError (
-             errorType = "schema_parsing",
-             schemaType  = ex.schemaType,
-             line = ex.line,
-             column = ex.column)
+  def fromException(ex: SchemaParsingException): SchemaParsingError = SchemaParsingError(
+    errorType = "schema_parsing",
+    schemaType = ex.schemaType,
+    line = ex.line,
+    column = ex.column)
 }
