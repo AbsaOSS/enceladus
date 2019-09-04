@@ -5,7 +5,7 @@ title: News
 <!-- This loops through the paginated posts -->
 {% for post in paginator.posts %}
   <h2>{{ post.title }}</h2>
-  <p>{{ post.excerpt }} -- <a href="{{ post.url }}">read more</a></p>
+  <p>{{ post.excerpt }} -- <a href="{{ site.baseurl }}{{ post.url }}">read more</a></p>
 {% endfor %}
 
 <!-- Pagination links -->
