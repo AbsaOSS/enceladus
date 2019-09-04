@@ -89,14 +89,51 @@ var RunService = new function () {
 
   this.setCurrentRun = function (oControl, oTable, oRun) {
     let checkpoints = oRun.controlMeasure.checkpoints;
+    let rawAdditionalInfo = oRun.controlMeasure.metadata.additionalInfo;
 
     this._preprocessRun(oRun, checkpoints);
     this._setUpCheckpointsTable(checkpoints, oTable);
 
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun), "run");
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun.controlMeasure.metadata), "metadata");
+    oControl.setModel(new sap.ui.model.json.JSONModel(this._getStructuredRunInfo(rawAdditionalInfo)), "info");
     //the core:HTML data binding doesn't update properly for iframe for some reason, we try to update manually therefore
-    this._updateLineageIframeSrc(oRun.splineUrl)
+    this._updateLineageIframeSrc(oRun.splineUrl);
+  };
+
+  this._getStructuredRunInfo = function(oInfoMap) {
+    return {
+      "enceladus_info_date": oInfoMap.enceladus_info_date,
+      "enceladus_info_version": oInfoMap.enceladus_info_version,
+      "raw_record_count": oInfoMap.raw_record_count,
+      "raw_format": oInfoMap.raw_format,
+      "raw_dir_size": oInfoMap.std_input_dir_size,
+      "std": this._getJobRunInfo("std", oInfoMap),
+      "conform": this._getJobRunInfo("conform", oInfoMap)
+    };
+  };
+
+  this._getJobRunInfo = function(prefix, oInfoMap) {
+    if (!oInfoMap[`${prefix}_application_id`]) {
+      return null;
+    }
+    return {
+      "application_id": oInfoMap[`${prefix}_application_id`],
+      "enceladus_version": oInfoMap[`${prefix}_enceladus_version`],
+      "username": oInfoMap[`${prefix}_username`],
+
+      "input_dir_size": oInfoMap[`${prefix}_input_dir_size`],
+      "output_dir_size": oInfoMap[`${prefix}_output_dir_size`],
+      "size_ratio": oInfoMap[`${prefix}_size_ratio`],
+
+      "record_count": oInfoMap[`${prefix}_record_count`],
+      "records_succeeded": oInfoMap[`${prefix}_records_succeeded`],
+      "records_failed": oInfoMap[`${prefix}_records_failed`],
+      "errors_count": oInfoMap[`${prefix}_size_errors_count`],
+
+      "executors_num": oInfoMap[`${prefix}_executors_num`],
+      "executors_memory": oInfoMap[`${prefix}_executors_memory`]
+    };
   };
 
   this._bindRunSummaries = function(oRunSummaries, oControl) {
