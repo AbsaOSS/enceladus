@@ -187,7 +187,7 @@ sap.ui.define([
         MessageBox.error(`Error parsing the schema file. Ensure that the file is a valid ${sSchemaType} schema and ` +
           `try again.${errorMessageDetails}`)
       } else if (status === 500) {
-        MessageBox.error("Failed to upload new schema. In internal server error has been occurred.")
+        MessageBox.error("Failed to upload new schema. An internal server error has been occurred.")
       } else if (status === 401 || status === 403) {
         GenericService.clearSession("Session has expired");
       } else if (status === 0) {
