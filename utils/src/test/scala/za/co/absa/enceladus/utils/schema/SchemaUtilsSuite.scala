@@ -68,6 +68,20 @@ class SchemaUtilsSuite extends FunSuite {
     assert(getFieldType("f.g.h.a", schema).isEmpty)
   }
 
+  test("Testing fieldExists") {
+    assert(fieldExists("a", schema))
+    assert(fieldExists("b", schema))
+    assert(fieldExists("b.c", schema))
+    assert(fieldExists("b.d", schema))
+    assert(fieldExists("b.d.e", schema))
+    assert(fieldExists("f", schema))
+    assert(fieldExists("f.g", schema))
+    assert(fieldExists("f.g.h", schema))
+    assert(!fieldExists("z", schema))
+    assert(!fieldExists("x.y.z", schema))
+    assert(!fieldExists("f.g.h.a", schema))
+  }
+
   test ("Test isColumnArrayOfStruct") {
     assert(!isColumnArrayOfStruct("a", schema))
     assert(!isColumnArrayOfStruct("b", schema))
