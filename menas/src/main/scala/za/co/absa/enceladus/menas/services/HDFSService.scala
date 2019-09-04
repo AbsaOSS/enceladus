@@ -18,14 +18,15 @@ package za.co.absa.enceladus.menas.services
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import za.co.absa.enceladus.model.api.HDFSFolder
+import za.co.absa.enceladus.model.menas.HDFSFolder
 
 import scala.concurrent.Future
-import scala.util.Try
 
 @Component
 class HDFSService @Autowired() (fs: FileSystem) {
   import scala.concurrent.ExecutionContext.Implicits.global
+
+  private val directoryMarker = Seq(HDFSFolder("", "", None))
 
   def exists(path: Path): Future[Boolean] = Future {
     fs.exists(path)
@@ -36,21 +37,25 @@ class HDFSService @Autowired() (fs: FileSystem) {
       HDFSFolder(path.toUri.getPath, path.getName, None)
     } else {
       val status = fs.listStatus(path)
-      val children = if (status.isEmpty) None else {
-        Some(
-          status.map({ x =>
+      val children = if (status.isEmpty) {
+        None
+      } else {
+        Some {
+          status.map { x =>
             val child = x.getPath
-            HDFSFolder(child.toUri.getPath, child.getName, safeLS(child))
-          }).toSeq)
+            HDFSFolder(child.toUri.getPath, child.getName, markIfDirectory(child))
+          }.toSeq
+        }
       }
       HDFSFolder(path.toUri.getPath, path.getName, children)
     }
   }
 
-  private def safeLS(path: Path): Option[Seq[HDFSFolder]] = {
-    Try {
-      fs.listStatus(path)
-    }.toOption.flatMap(children =>
-      if (children.isEmpty) None else Some(Seq(HDFSFolder("", "", None))))
+  private def markIfDirectory(path: Path): Option[Seq[HDFSFolder]] = {
+    if (fs.isDirectory(path)) {
+      Some(directoryMarker)
+    } else {
+      None
+    }
   }
 }

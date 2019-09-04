@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.api
+package za.co.absa.enceladus.model.menas
 
 case class HDFSFolder
 (
