@@ -291,8 +291,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
       "a copybook has no errors" should {
         "return a new version of the schema" in {
           val schema = SchemaFactory.getDummySchema()
-          val responseCreated = sendPost[Schema, Schema](s"$apiUrl/create", bodyOpt = Some(schema))
-          assertCreated(responseCreated)
+          schemaFixture.add(schema)
 
           val schemaParams = HashMap[String, Any] (
             "name" -> schema.name, "version" -> schema.version, "format" -> "copybook")
@@ -310,8 +309,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
       "a JSON struct type schema has no errors" should {
         "return a new version of the schema" in {
           val schema = SchemaFactory.getDummySchema()
-          val responseCreated = sendPost[Schema, Schema](s"$apiUrl/create", bodyOpt = Some(schema))
-          assertCreated(responseCreated)
+          schemaFixture.add(schema)
 
           val schemaParams = HashMap[String, Any] (
             "name" -> schema.name, "version" -> schema.version, "format" -> "struct")

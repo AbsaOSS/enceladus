@@ -67,7 +67,7 @@ class SchemaController @Autowired() (
         try {
           sparkMenasConvertor.convertAnyToStructType(fileContent)
         } catch {
-          case NonFatal(e) => throw SchemaParsingException(SchemaTypeStruct, e.getMessage)
+          case NonFatal(e) => throw SchemaParsingException(SchemaTypeStruct, e.getMessage, cause = e)
         }
       case Some(SchemaTypeCopybook) =>
         try {
@@ -78,7 +78,7 @@ class SchemaController @Autowired() (
           case e: SyntaxErrorException =>
             throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, Some(e.lineNumber), None, Some(e.field), e)
           case NonFatal(e) =>
-            throw SchemaParsingException(SchemaTypeCopybook, e.getMessage)
+            throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, cause = e)
         }
       case Some(schemaType) =>
         throw SchemaFormatException(schemaType, s"$schemaType is not a recognized schema format. " +
