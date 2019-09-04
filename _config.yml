@@ -11,5 +11,7 @@ collections:
 plugins:
   # https://help.github.com/en/articles/mentions-on-github-pages
   - jekyll-mentions
+  - jekyll-paginate
 
-theme: jekyll-theme-midnight
+paginate: 15
+paginate_path: "/blog/page:num/"
