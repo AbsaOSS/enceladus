@@ -18,16 +18,15 @@ package za.co.absa.enceladus.menas.services
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import za.co.absa.enceladus.model.api.HDFSFolder
+import za.co.absa.enceladus.model.menas.HDFSFolder
 
 import scala.concurrent.Future
-import scala.util.Try
 
 @Component
 class HDFSService @Autowired() (fs: FileSystem) {
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private val ChildrenMarker = Seq(HDFSFolder("", "", None))
+  private val directoryMarker = Seq(HDFSFolder("", "", None))
 
   def exists(path: Path): Future[Boolean] = Future {
     fs.exists(path)
@@ -44,7 +43,7 @@ class HDFSService @Autowired() (fs: FileSystem) {
         Some {
           status.map { x =>
             val child = x.getPath
-            HDFSFolder(child.toUri.getPath, child.getName, setChildrenMarker(child))
+            HDFSFolder(child.toUri.getPath, child.getName, markIfDirectory(child))
           }.toSeq
         }
       }
@@ -52,9 +51,9 @@ class HDFSService @Autowired() (fs: FileSystem) {
     }
   }
 
-  private def setChildrenMarker(path: Path): Option[Seq[HDFSFolder]] = {
+  private def markIfDirectory(path: Path): Option[Seq[HDFSFolder]] = {
     if (fs.isDirectory(path)) {
-      Some(ChildrenMarker)
+      Some(directoryMarker)
     } else {
       None
     }

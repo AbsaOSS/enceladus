@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
 import org.mockito.Mockito
-import za.co.absa.enceladus.model.api.HDFSFolder
+import za.co.absa.enceladus.model.menas.HDFSFolder
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
