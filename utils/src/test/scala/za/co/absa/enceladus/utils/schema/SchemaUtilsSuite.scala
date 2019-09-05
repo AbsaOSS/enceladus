@@ -39,6 +39,14 @@ class SchemaUtilsSuite extends FunSuite {
         StructField("d", ArrayType(StructType(Seq(
           StructField("e", IntegerType))))))))))))))
 
+  val arrayOfArraysSchema = StructType(Seq(
+    StructField("a", ArrayType(ArrayType(IntegerType)), nullable = false),
+    StructField("b", ArrayType(ArrayType(StructType(Seq(
+        StructField("c", StringType, nullable = false)
+      ))
+    )), nullable = true)
+  ))
+
   val structFieldNoMetadata = StructField("a", IntegerType)
 
   val structFieldWithMetadataNotSourceColumn = StructField("a", IntegerType, nullable = false, new MetadataBuilder().putString("meta", "data").build)
@@ -307,11 +315,34 @@ class SchemaUtilsSuite extends FunSuite {
     ))
 
     assert(!isOnlyField(schema, "a"))
-    assert(!isOnlyField(schema, "a"))
-    assert(!isOnlyField(schema, "a"))
     assert(!isOnlyField(schema, "b.e"))
     assert(!isOnlyField(schema, "b.f"))
     assert(isOnlyField(schema, "c.d"))
   }
 
+  test("Test getStructField on array of arrays") {
+    assert(getField("a", arrayOfArraysSchema).contains(StructField("a",ArrayType(ArrayType(IntegerType)),nullable = false)))
+    assert(getField("b", arrayOfArraysSchema).contains(StructField("b",ArrayType(ArrayType(StructType(Seq(StructField("c",StringType,nullable = false))))), nullable = true)))
+    assert(getField("b.c", arrayOfArraysSchema).contains(StructField("c",StringType,nullable = false)))
+    assert(getField("b.d", arrayOfArraysSchema).isEmpty)
+  }
+
+  test("Test fieldExists") {
+    assert(fieldExists("a", schema))
+    assert(fieldExists("b", schema))
+    assert(fieldExists("b.c", schema))
+    assert(fieldExists("b.d", schema))
+    assert(fieldExists("b.d.e", schema))
+    assert(fieldExists("f", schema))
+    assert(fieldExists("f.g", schema))
+    assert(fieldExists("f.g.h", schema))
+    assert(!fieldExists("z", schema))
+    assert(!fieldExists("x.y.z", schema))
+    assert(!fieldExists("f.g.h.a", schema))
+
+    assert(fieldExists("a", arrayOfArraysSchema))
+    assert(fieldExists("b", arrayOfArraysSchema))
+    assert(fieldExists("b.c", arrayOfArraysSchema))
+    assert(!fieldExists("b.d", arrayOfArraysSchema))
+  }
 }
