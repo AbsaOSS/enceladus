@@ -31,23 +31,23 @@ object SchemaUtils {
   def getField(path: String, schema: StructType): Option[StructField] = {
 
     @tailrec
-    def goThroughArrays(dataType: DataType): DataType = {
+    def goThroughArrayDataType(dataType: DataType): DataType = {
       dataType match {
-        case ArrayType(dt, _) => goThroughArrays(dt)
+        case ArrayType(dt, _) => goThroughArrayDataType(dt)
         case result => result
       }
     }
 
     @tailrec
-    def diveInto(names: List[String], structField: StructField): Option[StructField] = {
+    def examineStructField(names: List[String], structField: StructField): Option[StructField] = {
       if (names.isEmpty) {
         Option(structField)
       } else {
         structField.dataType match {
-          case str: StructType            => diveInto(names.tail, str(names.head))
+          case struct: StructType         => examineStructField(names.tail, struct(names.head))
           case ArrayType(el: DataType, _) =>
-            goThroughArrays(el) match {
-              case struct: StructType => diveInto(names.tail, struct(names.head))
+            goThroughArrayDataType(el) match {
+              case struct: StructType => examineStructField(names.tail, struct(names.head))
               case _                  => None
             }
           case _                          => None
@@ -57,7 +57,7 @@ object SchemaUtils {
 
     val pathTokens = path.split('.').toList
     Try{
-      diveInto(pathTokens.tail, schema(pathTokens.head))
+      examineStructField(pathTokens.tail, schema(pathTokens.head))
     }.getOrElse(None)
   }
 
