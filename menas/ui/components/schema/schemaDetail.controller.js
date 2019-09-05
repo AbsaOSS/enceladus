@@ -219,7 +219,7 @@ sap.ui.define([
 
         this._schemaRestDAO = new SchemaRestDAO();
         this._schemaRestDAO.getLatestVersionByName(currentSchema.name)
-          .then(version => sap.ui.getCore().getModel().setProperty("/editingEnabled", currentSchema.version === version));
+          .then(version => this._model.setProperty("/editingEnabled", currentSchema.version === version));
       }
     }
 

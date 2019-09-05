@@ -96,7 +96,7 @@
                             press="onAddDefaultPress"/>
                     <Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress"
                             enabled="{/editingEnabled}"
-                            tooltip="{= ${/editingEnabled} ? 'Editing enabled' : 'Editing old version is disabled'}" />
+                            tooltip="{= ${/editingEnabled} ? 'Edit current mapping table' : 'Editing old version is disabled'}" />
                 </contentRight>
             </Bar>
         </footer>
