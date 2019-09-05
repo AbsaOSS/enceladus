@@ -285,14 +285,16 @@ sap.ui.define([
 
     load: function() {
       let currentMT = this._model.getProperty("/currentMappingTable");
-      this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentMT), "mappingTable")
-      this.fetchSchema();
-      const auditTable = this.byId("auditTrailTable");
-      this._mappingTableService.getAuditTrail(currentMT.name, auditTable);
+      this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentMT), "mappingTable");
+      if (currentMT) {
+        this.fetchSchema();
+        const auditTable = this.byId("auditTrailTable");
+        this._mappingTableService.getAuditTrail(currentMT.name, auditTable);
 
-      this._mtRestDAO = new MappingTableRestDAO();
-      this._mtRestDAO.getLatestVersionByName(currentMT.name)
-        .then(version => sap.ui.getCore().getModel().setProperty("/editingEnabled", currentMT.version === version));
+        this._mtRestDAO = new MappingTableRestDAO();
+        this._mtRestDAO.getLatestVersionByName(currentMT.name)
+          .then(version => sap.ui.getCore().getModel().setProperty("/editingEnabled", currentMT.version === version));
+      }
     }
 
   });
