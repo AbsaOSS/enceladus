@@ -19,7 +19,7 @@ title: Search news
     searchInput: document.getElementById('search-input'),
     resultsContainer: document.getElementById('results-container'),
     searchResultTemplate: '<a href="{url}" class="list-group-item list-group-item-action">{title}</a>',
-    json: '/search.json',
+    json: '{{ site.baseurl }}/search.json',
     noResultsText: "No result found!",
     sortMiddleware: function(a, b) {
       var astr = String(a.title);
