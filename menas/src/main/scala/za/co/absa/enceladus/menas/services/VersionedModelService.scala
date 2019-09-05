@@ -62,6 +62,13 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   }
 
+  def getLatestVersionNumber(name: String): Future[Int] = {
+    versionedMongoRepository.getLatestVersionValue(name).flatMap({
+      case Some(version) => Future(version)
+      case _ => throw NotFoundException()
+    })
+  }
+
   def getLatestVersionValue(name: String): Future[Option[Int]] = {
     versionedMongoRepository.getLatestVersionValue(name)
   }

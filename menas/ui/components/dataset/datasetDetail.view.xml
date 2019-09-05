@@ -65,8 +65,9 @@
             <Bar>
                 <contentRight>
                     <Button id="Delete" text="Delete" icon="sap-icon://delete" press="onRemovePress" />
-                    <Button id="AddRule" text="Add Conformance Rule" icon="sap-icon://add-equipment" press="onAddConformanceRulePress"></Button>
-                    <Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress" />
+                    <Button id="AddRule" text="Add Conformance Rule" icon="sap-icon://add-equipment" press="onAddConformanceRulePress" />
+                    <Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress" enabled="{/editingEnabled}"
+                            tooltip="{= ${/editingEnabled} ? 'Editing enabled' : 'Editing old version is disabled'}" />
                     <Button id="editSchedule" text="Edit Schedule" icon="sap-icon://provision" press="onScheduleEditPress" enabled="{/appInfo/oozie/isEnabled}" />
                 </contentRight>
             </Bar>

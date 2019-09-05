@@ -289,6 +289,10 @@ sap.ui.define([
       this.fetchSchema();
       const auditTable = this.byId("auditTrailTable");
       this._mappingTableService.getAuditTrail(currentMT.name, auditTable);
+
+      this._mtRestDAO = new MappingTableRestDAO();
+      this._mtRestDAO.getLatestVersionByName(currentMT.name)
+        .then(version => sap.ui.getCore().getModel().setProperty("/editingEnabled", currentMT.version === version));
     }
 
   });

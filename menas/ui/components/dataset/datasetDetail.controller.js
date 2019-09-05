@@ -96,7 +96,7 @@ sap.ui.define([
         "dayOfMonth": this._generateCronTemplateRange(1, 32, this._rb),
         "month": this._generateCronTemplateRange(1, 13, this._rb, "MENAS_SCHEDULE_MONTH"),
         "dayOfWeek": this._generateCronTemplateRange(0, 7, this._rb, "MENAS_SCHEDULE_DAY")
-      }
+      };
       this._model.setProperty("/cronFormTemplate", cronTemplate);
 
       const auditTable = this.byId("auditTrailTable");
@@ -350,11 +350,15 @@ sap.ui.define([
         this._transitiveSchemas = [];
         const transitiveSchemas = this._transitiveSchemas;
         new SchemaRestDAO().getByNameAndVersionSync(currentDataset.schemaName, currentDataset.schemaVersion).then((schema) => {
-          this._model.setProperty("/currentDataset/schema", schema)
+          this._model.setProperty("/currentDataset/schema", schema);
           this._schemaTable.model = schema;
           transitiveSchemas.push(schema);
           SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
         });
+
+        this._datasetRestDAO = new DatasetRestDAO();
+        this._datasetRestDAO.getLatestVersionByName(currentDataset.name)
+          .then(version => sap.ui.getCore().getModel().setProperty("/editingEnabled", currentDataset.version === version));
 
         const auditTable = this.byId("auditTrailTable");
         this._datasetService.getAuditTrail(currentDataset.name, auditTable);

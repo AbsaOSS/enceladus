@@ -211,9 +211,16 @@ sap.ui.define([
     load: function () {
       const currentSchema = this._model.getProperty("/currentSchema");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentSchema), "schema");
-      this._schemaTable.model = this._model.getProperty("/currentSchema");
-      const auditTable = this.byId("auditTrailTable");
-      this._schemaService.getAuditTrail(currentSchema.name, auditTable);
+
+      if(currentSchema) {
+        this._schemaTable.model = this._model.getProperty("/currentSchema");
+        const auditTable = this.byId("auditTrailTable");
+        this._schemaService.getAuditTrail(currentSchema.name, auditTable);
+
+        this._schemaRestDAO = new SchemaRestDAO();
+        this._schemaRestDAO.getLatestVersionByName(currentSchema.name)
+          .then(version => sap.ui.getCore().getModel().setProperty("/editingEnabled", currentSchema.version === version));
+      }
     }
 
   });
