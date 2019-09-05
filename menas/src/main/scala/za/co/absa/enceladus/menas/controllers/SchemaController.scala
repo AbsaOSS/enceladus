@@ -33,9 +33,8 @@ import za.co.absa.enceladus.menas.models.rest.exceptions.{SchemaFormatException,
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaService}
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
-
-import scala.util.control.NonFatal
 
 @RestController
 @RequestMapping(Array("/api/schema"))
@@ -58,30 +57,15 @@ class SchemaController @Autowired() (
                        @RequestParam file: MultipartFile,
                        @RequestParam version: Int,
                        @RequestParam name: String,
-                       @RequestParam format: Optional[String]): CompletableFuture[_] = {
+                       @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
     val origFormat: Option[String] = format
     val fileContent = new String(file.getBytes)
 
     val sparkStruct = origFormat match {
-      case Some(SchemaTypeStruct) | Some("") | None =>
-        try {
-          sparkMenasConvertor.convertAnyToStructType(fileContent)
-        } catch {
-          case NonFatal(e) => throw SchemaParsingException(SchemaTypeStruct, e.getMessage, cause = e)
-        }
-      case Some(SchemaTypeCopybook) =>
-        try {
-          val parsedSchema = CopybookParser.parseTree(fileContent)
-          val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
-          cobolSchema.getSparkSchema
-        } catch {
-          case e: SyntaxErrorException =>
-            throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, Some(e.lineNumber), None, Some(e.field), e)
-          case NonFatal(e) =>
-            throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, cause = e)
-        }
+      case Some(SchemaTypeStruct) | Some("") | None => parseStructType(fileContent)
+      case Some(SchemaTypeCopybook) => parseCopybook(fileContent)
       case Some(schemaType) =>
-        throw SchemaFormatException(schemaType, s"$schemaType is not a recognized schema format. " +
+        throw SchemaFormatException(schemaType, s"'$schemaType' is not a recognized schema format. " +
           s"Menas currently supports: '$SchemaTypeStruct' and '$SchemaTypeCopybook'.")
     }
 
@@ -124,6 +108,42 @@ class SchemaController @Autowired() (
         if (pretty) sparkStruct.prettyJson else sparkStruct.json
       case None         =>
         throw notFound()
+    }
+  }
+
+  /**
+    * Parses an StructType JSON file contents and converts it to Spark [[StructType]].
+    *
+    * @param structTypeJson A StructType JSON string.
+    * @return The parsed schema as an instance of [[StructType]].
+    */
+  private def parseStructType(structTypeJson: String): StructType = {
+    try {
+      sparkMenasConvertor.convertAnyToStructType(structTypeJson)
+    } catch {
+      case e: IllegalStateException =>
+        throw SchemaParsingException(SchemaTypeStruct, e.getMessage, cause = e)
+    }
+  }
+
+  /**
+    * Parses a COBOL copybook file contents and converts it to Spark [[StructType]].
+    *
+    * @param copybookContents A COBOL copybook contents.
+    * @return The parsed schema as an instance of [[StructType]].
+    */
+  private def parseCopybook(copybookContents: String): StructType = {
+    try {
+      val parsedSchema = CopybookParser.parseTree(copybookContents)
+      val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
+      cobolSchema.getSparkSchema
+    } catch {
+      case e: SyntaxErrorException =>
+        throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, Some(e.lineNumber), None, Some(e.field), e)
+      case e: IllegalStateException =>
+        // Cobrix can throw this exception if an unknown AST object is encountered.
+        // This might be considered a parsing error.
+        throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, cause = e)
     }
   }
 

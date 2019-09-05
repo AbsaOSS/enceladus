@@ -19,10 +19,10 @@ package za.co.absa.enceladus.menas.models.rest.exceptions
   * This exception is thrown when a syntax error parsing a schema file is encountered.
   */
 case class SchemaParsingException(
-                                schemaType: String,
-                                message: String,
-                                line: Option[Int] = None,
-                                column: Option[Int] = None,
-                                schemaField: Option[String] = None,
-                                cause: Throwable = null
+                                   schemaType: String,
+                                   message: String,
+                                   line: Option[Int] = None,
+                                   column: Option[Int] = None,
+                                   field: Option[String] = None,
+                                   cause: Throwable = null
                               ) extends Exception(message, cause)

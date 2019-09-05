@@ -19,6 +19,6 @@
        01  R.
           03 N      PIC 9(1).
           03 A      OCCURS 0 TO 9 TIMES DEPENDING ON N.
-         :BUG:   05  B1  PIC X(1).
+            05  B1  PIC :BUG:.
             05  B2  PIC X(1).
           03 C      PIC X(1).
