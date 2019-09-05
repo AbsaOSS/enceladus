@@ -25,7 +25,8 @@ case class SchemaParsingError(
                                errorType: String,
                                schemaType: String,
                                line: Option[Int],
-                               column: Option[Int]
+                               column: Option[Int],
+                               field: Option[String]
                              ) extends ResponseError
 
 object SchemaParsingError {
@@ -33,5 +34,6 @@ object SchemaParsingError {
     errorType = "schema_parsing",
     schemaType = ex.schemaType,
     line = ex.line,
-    column = ex.column)
+    column = ex.column,
+    field = ex.field)
 }

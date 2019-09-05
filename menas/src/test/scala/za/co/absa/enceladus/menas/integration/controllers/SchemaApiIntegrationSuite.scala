@@ -323,6 +323,42 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           assert(actual.fields.length == 2)
         }
       }
+
+      "a JSON struct type schema is uploaded, but an empty format type is specified" should {
+        "return a new version of the schema" in {
+          val schema = SchemaFactory.getDummySchema()
+          schemaFixture.add(schema)
+
+          val schemaParams = HashMap[String, Any] (
+            "name" -> schema.name, "version" -> schema.version, "format" -> "")
+          val responseUploaded = sendPostUploadFile[Schema](
+            s"$apiUrl/upload", "/test_data/schemas/schema_json_ok.json", schemaParams)
+          assertCreated(responseUploaded)
+
+          val actual = responseUploaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 2)
+        }
+      }
+
+      "a JSON struct type schema is uploaded, but no format type is specified" should {
+        "return a new version of the schema" in {
+          val schema = SchemaFactory.getDummySchema()
+          schemaFixture.add(schema)
+
+          val schemaParams = HashMap[String, Any] (
+            "name" -> schema.name, "version" -> schema.version)
+          val responseUploaded = sendPostUploadFile[Schema](
+            s"$apiUrl/upload", "/test_data/schemas/schema_json_ok.json", schemaParams)
+          assertCreated(responseUploaded)
+
+          val actual = responseUploaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 2)
+        }
+      }
     }
 
     "return 400" when {
@@ -339,6 +375,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
               assert(e.errorType == "schema_parsing")
               assert(e.schemaType == "copybook")
               assert(e.line.contains(22))
+              assert(e.field.contains("B1"))
               assert(body.message.contains("Syntax error in the copybook"))
             case e => fail(s"Expected an instance of SchemaParsingError, got $e.")
           }
@@ -365,7 +402,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
 
       "a wrong format has been specified" should {
         "return a response containing a schema format error" in {
-          val schemaParams = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "ERROR")
+          val schemaParams = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "foo")
           val response = sendPostUploadFile[RestResponse](
             s"$apiUrl/upload", "/test_data/schemas/schema_json_bogus.json", schemaParams)
           val body = response.getBody
@@ -374,11 +411,21 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           body.error match {
             case Some(e: SchemaFormatError) =>
               assert(e.errorType == "schema_format")
-              assert(e.schemaType == "ERROR")
-              assert(body.message.contains("ERROR is not a recognized schema format."))
+              assert(e.schemaType == "foo")
+              assert(body.message.contains("'foo' is not a recognized schema format."))
             case e => fail(s"Expected an instance of SchemaFormatError, got $e.")
           }
         }
+      }
+    }
+
+    "return 404" when {
+      "a schema file is uploaded, but no schema exists for the specified name and version" in {
+        val schemaParams = HashMap[String, Any](
+          "name" -> "dummy", "version" -> 1, "format" -> "copybook")
+        val responseUploaded = sendPostUploadFile[Schema](
+          s"$apiUrl/upload", "/test_data/schemas/copybook_ok.cob", schemaParams)
+        assertNotFound(responseUploaded)
       }
     }
   }
