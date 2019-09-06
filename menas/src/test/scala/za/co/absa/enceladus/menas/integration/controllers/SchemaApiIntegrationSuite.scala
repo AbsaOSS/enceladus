@@ -122,7 +122,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
 
   s"GET $apiUrl/detail/{name}/latestVersion" should {
     "return 200" when {
-      "there is a schema" in {
+      "a Schema with the given name exists" in {
         val schemaV1 = SchemaFactory.getDummySchema(name = "schema1", version = 1)
         val schemaV2 = SchemaFactory.getDummySchema(name = "schema1",
                                                     version = 2,
@@ -132,13 +132,13 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
 
         val response = sendGet[String](s"$apiUrl/detail/schema1/latestVersion")
 
-        assert("2" == response.getBody)
         assertOk(response)
+        assert("2" == response.getBody)
       }
     }
 
     "return 404" when {
-      "there is a schema" in {
+      "a Schema with the given name does not exist" in {
         val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1)
         schemaFixture.add(schema)
 

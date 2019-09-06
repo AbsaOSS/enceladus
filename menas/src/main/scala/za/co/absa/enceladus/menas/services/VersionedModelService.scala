@@ -146,11 +146,10 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private[services] def updateFuture(username: String, itemName: String, itemVersion: Int)(transform: C => Future[C]): Future[Option[C]] = {
     for {
-      versionToUpdate <- getVersion(itemName, itemVersion)
-      latestVersion <- getLatestVersionNumber(itemName)
+      versionToUpdate <- getLatestVersion(itemName)
       transformed <- if (versionToUpdate.isEmpty) {
         Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
-      } else if (versionToUpdate.get.version != latestVersion) {
+      } else if (versionToUpdate.get.version != itemVersion) {
         Future.failed(ValidationException(Validation().withError("version", s"Version $itemVersion of $itemName is not the latest version, therefore cannot be edited")))
       }
       else {
