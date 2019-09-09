@@ -13,17 +13,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.factories
+package za.co.absa.enceladus.model.test.factories
 
 import java.time.ZonedDateTime
 
-import za.co.absa.enceladus.menas.repositories.SchemaMongoRepository
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.{Schema, SchemaField}
 
 object SchemaFactory extends EntityFactory[Schema] {
 
-  override val collectionBaseName: String = SchemaMongoRepository.collectionBaseName
+  override val collectionBaseName: String = "schema"
 
   def getDummySchema(name: String = "dummyName",
                      version: Int = 1,
