@@ -29,8 +29,8 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
+import za.co.absa.enceladus.dao.{MenasDAO, MenasRestDAO, RestDaoFactory}
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
-import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
@@ -54,12 +54,11 @@ object DynamicConformanceJob {
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-    implicit val dao: EnceladusDAO = EnceladusRestDAO // use REST DAO
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials) // use REST DAO
 
     val enableCF: Boolean = true
 
-    EnceladusRestDAO.login = cmd.menasCredentials
-    EnceladusRestDAO.enceladusLogin()
+    dao.authenticate()
 
     // get the dataset definition
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
@@ -162,7 +161,7 @@ object DynamicConformanceJob {
     newVersion
   }
 
-  private def initFunctionalExtensions()(implicit spark: SparkSession): Unit = {
+  private def initFunctionalExtensions()(implicit spark: SparkSession, dao: MenasDAO): Unit = {
     import za.co.absa.spline.core.SparkLineageInitializer._ // Enable Spline
     spark.enableLineageTracking()
 
@@ -182,7 +181,7 @@ object DynamicConformanceJob {
   }
 
   private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean)
-                     (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils, dao: EnceladusDAO): DataFrame = {
+                     (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils, dao: MenasDAO): DataFrame = {
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled())
@@ -228,7 +227,7 @@ object DynamicConformanceJob {
     val publishDirSize = fsUtils.getDirectorySize(pathCfg.publishPath)
     performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "conform",
-      pathCfg.stdPath, pathCfg.publishPath, EnceladusRestDAO.userName, cmdLineArgs)
+      pathCfg.stdPath, pathCfg.publishPath, cmd.menasCredentials.get.username, cmdLineArgs)
 
     withPartCols.writeInfoFile(pathCfg.publishPath)
     cmd.performanceMetricsFile.foreach(fileName => {

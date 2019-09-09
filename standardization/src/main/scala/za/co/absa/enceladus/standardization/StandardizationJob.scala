@@ -19,14 +19,14 @@ import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
 import java.util.UUID
 
-import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.log4j.{LogManager, Logger}
-import org.apache.spark.sql.types.{StructField, StructType}
+import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
+import org.apache.spark.sql.types.{StructField, StructType}
+import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.{Atum, Constants}
-import za.co.absa.enceladus.dao.EnceladusRestDAO
+import za.co.absa.enceladus.dao.{MenasDAO, RestDaoFactory}
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
@@ -44,8 +44,8 @@ import scala.util.control.NonFatal
 object StandardizationJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
 
-  private val log: Logger = LogManager.getLogger(this.getClass)
-  private val conf: Config = ConfigFactory.load()
+  private val log = LoggerFactory.getLogger(this.getClass)
+  private val conf = ConfigFactory.load()
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
@@ -54,12 +54,12 @@ object StandardizationJob {
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
 
     implicit val udfLib: UDFLibrary = new UDFLibrary
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials)
 
-    EnceladusRestDAO.login = cmd.menasCredentials
-    EnceladusRestDAO.enceladusLogin()
+    dao.authenticate()
 
-    val dataset = EnceladusRestDAO.getDataset(cmd.datasetName, cmd.datasetVersion)
-    val schema: StructType = EnceladusRestDAO.getSchema(dataset.schemaName, dataset.schemaVersion)
+    val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
+    val schema: StructType = dao.getSchema(dataset.schemaName, dataset.schemaVersion)
     val dateTokens = cmd.reportDate.split("-")
 
     val reportVersion = cmd.reportVersion match {
@@ -141,7 +141,7 @@ object StandardizationJob {
     * @return The updated dataframe reader
     */
   def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, numberOfColumns: Int = 0)
-                             (implicit spark: SparkSession): DataFrameReader = {
+                             (implicit spark: SparkSession, dao: MenasDAO): DataFrameReader = {
     val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
     val options = getCobolOptions(cmd, dataset) ++
@@ -202,7 +202,7 @@ object StandardizationJob {
     }
   }
 
-  private def getCobolOptions(cmd: CmdConfig, dataset: Dataset): HashMap[String, Option[RawFormatParameter]] = {
+  private def getCobolOptions(cmd: CmdConfig, dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
       val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
       HashMap(
@@ -215,11 +215,11 @@ object StandardizationJob {
     }
   }
 
-  private def getCopybookOption(opts: CobolOptions, dataset: Dataset): (String, Option[RawFormatParameter]) = {
+  private def getCopybookOption(opts: CobolOptions, dataset: Dataset)(implicit dao: MenasDAO): (String, Option[RawFormatParameter]) = {
     val copybook = opts.copybook
     if (copybook.isEmpty) {
       log.info("Copybook location is not provided via command line - fetching the copybook attached to the schema...")
-      val copybookContents = EnceladusRestDAO.getSchemaAttachment(dataset.schemaName, dataset.schemaVersion)
+      val copybookContents = dao.getSchemaAttachment(dataset.schemaName, dataset.schemaVersion)
       log.info(s"Applying the following copybook:\n$copybookContents")
       ("copybook_contents", Option(StringParameter(copybookContents)))
     } else {
@@ -233,7 +233,8 @@ object StandardizationJob {
                                path: String,
                                dataset: Dataset)
                               (implicit spark: SparkSession,
-                               fsUtils: FileSystemVersionUtils): DataFrame = {
+                               fsUtils: FileSystemVersionUtils,
+                               dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, numberOfColumns)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
@@ -259,7 +260,7 @@ object StandardizationJob {
     val std = try {
       StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
     } catch {
-      case e @ ValidationException(msg, errors) =>
+      case e@ValidationException(msg, errors) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
           errors.mkString("\n")
         }", "")
@@ -278,7 +279,7 @@ object StandardizationJob {
     stdRenameSourceColumns.setCheckpoint("Standardization - End", persistInDatabase = false)
 
     val recordCount = stdRenameSourceColumns.lastCheckpointRowCount match {
-      case None    => std.count
+      case None => std.count
       case Some(p) => p
     }
     if (recordCount == 0) { handleEmptyOutputAfterStandardization() }
@@ -293,7 +294,7 @@ object StandardizationJob {
       cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
     }
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
-      EnceladusRestDAO.userName, cmd.cmdLineArgs.mkString(" "))
+      cmd.menasCredentials.get.username, cmd.cmdLineArgs.mkString(" "))
     stdRenameSourceColumns.writeInfoFile(pathCfg.outputPath)
   }
 
@@ -373,7 +374,7 @@ object StandardizationJob {
       case None =>
         val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
         cmd.folderPrefix match {
-          case None               => s"${dataset.hdfsPath}$folderSuffix"
+          case None => s"${dataset.hdfsPath}$folderSuffix"
           case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
         }
       case Some(rawPathOverride) => rawPathOverride
@@ -392,7 +393,7 @@ object StandardizationJob {
 
     val rawRecordCount = checkpointRawRecordCount match {
       case Some(num) => num
-      case None      => df.count
+      case None => df.count
     }
     Atum.setAdditionalInfo(s"raw_record_count" -> rawRecordCount.toString)
   }
@@ -417,7 +418,7 @@ object StandardizationJob {
       try {
         val rawCount = m.controlValue.toString.toLong
         // Basic sanity check
-        if (rawCount >=0 ) {
+        if (rawCount >= 0) {
           Some(rawCount)
         } else {
           None

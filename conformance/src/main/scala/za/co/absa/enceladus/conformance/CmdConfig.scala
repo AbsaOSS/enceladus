@@ -16,11 +16,10 @@
 package za.co.absa.enceladus.conformance
 
 import scala.util.matching.Regex
-
 import org.apache.spark.sql.SparkSession
-
 import scopt.OptionParser
-import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
+import sun.security.krb5.internal.ktab.KeyTab
+import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 /**
@@ -30,20 +29,18 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
  *       Even if a field is mandatory it needs a default value.
  */
 case class CmdConfig(datasetName: String = "",
-    datasetVersion: Int = 1,
-    reportDate: String = "",
-    reportVersion: Option[Int] = None,
-    menasCredentials: Option[Either[MenasCredentials, CmdConfig.KeytabLocation]] = None,
-    performanceMetricsFile: Option[String] = None,
-    publishPathOverride: Option[String] = None,
-    folderPrefix: Option[String] = None,
-    experimentalMappingRule: Option[Boolean] = None,
-    isCatalystWorkaroundEnabled: Option[Boolean] = None,
-    autocleanStandardizedFolder: Option[Boolean] = None)
+                     datasetVersion: Int = 1,
+                     reportDate: String = "",
+                     reportVersion: Option[Int] = None,
+                     menasCredentials: Option[MenasCredentials] = None,
+                     performanceMetricsFile: Option[String] = None,
+                     publishPathOverride: Option[String] = None,
+                     folderPrefix: Option[String] = None,
+                     experimentalMappingRule: Option[Boolean] = None,
+                     isCatalystWorkaroundEnabled: Option[Boolean] = None,
+                     autocleanStandardizedFolder: Option[Boolean] = None)
 
 object CmdConfig {
-
-  type KeytabLocation = String
 
   def getCmdLineArguments(args: Array[String])(implicit spark: SparkSession): CmdConfig = {
     val parser = new CmdParser("spark-submit [spark options] ConformanceBundle.jar")
@@ -95,13 +92,13 @@ object CmdConfig {
     private var credsFile: Option[String] = None
     private var keytabFile: Option[String] = None
     opt[String]("menas-credentials-file").hidden.optional().action({ (path, config) =>
-      val credential = Left(MenasCredentials.fromFile(path))
+      val credential = MenasPlainCredentials.fromFile(path)
       credsFile = Some(path)
       config.copy(menasCredentials = Some(credential))
     }).text("Path to Menas credentials config file.").validate(path =>
       if (keytabFile.isDefined) {
         failure("Only one authentication method is allow at a time")
-      } else if (MenasCredentials.exists(MenasCredentials.replaceHome(path))) {
+      } else if (MenasPlainCredentials.exists(MenasPlainCredentials.replaceHome(path))) {
         success
       } else {
         failure("Credentials file not found.")
@@ -109,11 +106,14 @@ object CmdConfig {
 
     opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
       keytabFile = Some(file)
-      if (!fsUtils.localExists(file) && fsUtils.hdfsExists(file)) {
-        config.copy(menasCredentials = Some(Right(fsUtils.hdfsFileToLocalTempFile(file))))
+      val localPath = if (!fsUtils.localExists(file) && fsUtils.hdfsExists(file)) {
+        fsUtils.hdfsFileToLocalTempFile(file)
       } else {
-        config.copy(menasCredentials = Some(Right(file)))
+        file
       }
+      val keytab = KeyTab.getInstance(localPath)
+      val username = keytab.getOneName.getName
+      config.copy(menasCredentials = Some(MenasKerberosCredentials(username, localPath)))
     }).text("Path to keytab file used for authenticating to menas").validate({ file =>
       if (credsFile.isDefined) {
         failure("Only one authentication method is allowed at a time")

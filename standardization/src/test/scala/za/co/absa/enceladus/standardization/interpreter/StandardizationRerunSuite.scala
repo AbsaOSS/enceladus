@@ -20,7 +20,9 @@ import java.nio.charset.StandardCharsets
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.{CmdConfig, StandardizationJob}
@@ -28,11 +30,12 @@ import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.validation.ValidationException
 
-class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture {
+class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
 
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
+  private implicit val dao: MenasDAO = mock[MenasDAO]
 
   private val tmpDirPrefix = "StdRerunTest"
   private val tmpFilePrefix = "test-input-"

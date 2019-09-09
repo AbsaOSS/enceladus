@@ -18,8 +18,7 @@ package za.co.absa.enceladus
 import java.time.ZonedDateTime
 
 import org.scalatest.FunSuite
-
-import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
+import za.co.absa.enceladus.dao.menasplugin.{MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.CmdConfig
 import za.co.absa.enceladus.standardization.StandardizationJob
@@ -35,9 +34,9 @@ class ConfigSuite extends FunSuite with SparkTestBase {
   private val hdfsRawPathOverride = "/bigdatahdfs/datalake/raw/system/feed/override"
   private val hdfsPublishPath = "/bigdatahdfs/datalake/publish/system/feed"
   private val menasCredentialsFile = "src/test/resources/menas-credentials.conf"
-  private val menasCredentials = Some(Left(MenasCredentials.fromFile(menasCredentialsFile)))
-  private val keytabPath = "src/test/resources/menas-keytab-dummy.keytab"
-  private val menasKeytab = Some(Right(keytabPath))
+  private val menasCredentials = Some(MenasPlainCredentials.fromFile(menasCredentialsFile))
+  private val keytabPath = "src/test/resources/user.keytab.example"
+  private val menasKeytab = Some(MenasKerberosCredentials("user@EXAMPLE.COM", keytabPath))
   private val datasetName = "test-dataset-name"
   private val datasetVersion = 2
   private val description = None

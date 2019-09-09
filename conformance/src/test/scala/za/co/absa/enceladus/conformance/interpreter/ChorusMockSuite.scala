@@ -17,7 +17,8 @@ package za.co.absa.enceladus.conformance.interpreter
 
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import org.mockito.Mockito.{mock, when => mockWhen}
@@ -45,7 +46,7 @@ class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
     val mappingDf = spark.createDataFrame(mapping)
 
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
-    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here (if not working with menas)
+    implicit val dao: MenasDAO = mock(classOf[MenasDAO]) // you may have to hard-code your own implementation here (if not working with menas)
     val enableCF = false
     val isCatalystWorkaroundEnabled = true
 

@@ -20,7 +20,7 @@ import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.samples.NegationRuleSamples
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
@@ -109,7 +109,7 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     }
     val inputDf = spark.read.schema(schema).json(inputDataset)
 
-    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
+    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true

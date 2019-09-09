@@ -18,9 +18,11 @@ package za.co.absa.enceladus.examples.interpreter.rules.custom
 import org.apache.spark.sql
 import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
+import org.scalatest.mockito.MockitoSugar
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
+import za.co.absa.enceladus.dao.menasplugin.MenasKerberosCredentials
+import za.co.absa.enceladus.dao.{MenasDAO, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
@@ -30,11 +32,12 @@ object XPadTestOutputRow {
   def apply(input: XPadTestInputRow, targetField: String): XPadTestOutputRow = XPadTestOutputRow(input.intField, input.stringField, targetField)
 }
 
-class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
+class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase with MockitoSugar {
   import spark.implicits._
 
   implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val dao: MenasDAO = mock[MenasDAO] // you may have to hard-code your own implementation here (if not working with menas)
+
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true
   val enableCF: Boolean = false
@@ -175,11 +178,12 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
 
 class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
 
-
   import spark.implicits._
 
-  implicit val progArgs: CmdConfig = CmdConfig()
-  implicit val dao: EnceladusDAO = EnceladusRestDAO
+  val meansCredentials = Some(MenasKerberosCredentials("user@EXAMPLE.COM", "src/test/resources/user.keytab.example"))
+  implicit val progArgs: CmdConfig = CmdConfig(menasCredentials = meansCredentials) // here we may need to specify some parameters (for certain rules)
+  implicit val dao: MenasDAO = RestDaoFactory.getInstance(progArgs.menasCredentials) // you may have to hard-code your own implementation here (if not working with menas)
+
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true
   val enableCF: Boolean = false

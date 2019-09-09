@@ -18,16 +18,20 @@ package za.co.absa.enceladus.standardization.interpreter
 import java.nio.charset.StandardCharsets
 
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType, BooleanType}
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.{CmdConfig, StandardizationJob}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture {
+class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
 
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+
+  private implicit val dao: MenasDAO = mock[MenasDAO]
 
   private val tmpFilePrefix = "csv-special-chars-"
   private val tmpFileSuffix = ".csv"
