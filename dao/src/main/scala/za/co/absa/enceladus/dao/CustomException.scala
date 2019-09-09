@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.dao
 
-final case class UnauthorizedException(private val message: String = "Unauthorised access to Enceladus",
+final case class UnauthorizedException(private val message: String = "Unauthorised access to Menas",
                                        private val cause: Throwable = None.orNull)
-  extends Exception(message, cause)
+  extends RuntimeException(message, cause)
 
-final case class DaoException(private val message: String ,
-                                       private val cause: Throwable = None.orNull)
-  extends Exception(message, cause)
+final case class DaoException(private val message: String,
+                              private val cause: Throwable = None.orNull)
+  extends RuntimeException(message, cause)

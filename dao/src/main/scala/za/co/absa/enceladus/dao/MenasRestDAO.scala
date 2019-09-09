@@ -15,157 +15,154 @@
 
 package za.co.absa.enceladus.dao
 
-import java.util.UUID
-
-import com.typesafe.config.ConfigFactory
-import org.apache.http.HttpStatus
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost}
-import org.apache.http.entity.{ContentType, StringEntity}
-import org.apache.log4j.LogManager
+import org.apache.spark.sql.types.{DataType, StructType}
+import org.slf4j.LoggerFactory
+import org.springframework.http._
+import org.springframework.web.client.RestTemplate
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
-import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference}
 
-import scala.io.Source
-import scala.util.Try
-import scala.util.control.NonFatal
+import scala.reflect.ClassTag
 
-/** Implements routines for Menas REST API. */
-object MenasRestDAO extends MenasDAO {
+/**
+  * Implementation of Menas REST API DAO
+  */
+protected class MenasRestDAO(private[dao] val apiBaseUrl: String,
+                             private[dao] val authClient: AuthClient,
+                             private[dao] val restTemplate: RestTemplate) extends MenasDAO {
 
-  import za.co.absa.enceladus.dao.EnceladusRestDAO.{csrfToken, enceladusLogin, httpClient, sessionCookie}
+  private val log = LoggerFactory.getLogger(this.getClass)
 
-  private val conf = ConfigFactory.load()
-  private val restBase = conf.getString("menas.rest.uri")
-  private val log = LogManager.getLogger(this.getClass)
+  private val runsUrl = s"$apiBaseUrl/runs"
 
-  /**
-    * Stores a new Run object in the database by sending REST request to Menas
-    *
-    * @param run A Run object
-    * @return The unique id of newly created Run object or encapsulated exception
-    */
-  def storeNewRunObject(run: Run): Try[String] = {
-    Try({
-      val runToSave = if (run.uniqueId.isEmpty) run.copy(uniqueId = Some(UUID.randomUUID().toString)) else run
-      val json = EnceladusRestDAO.objectMapper.writeValueAsString(runToSave)
-      val url = s"$restBase/runs"
+  private[dao] var authHeaders: HttpHeaders = new HttpHeaders()
 
-      if (sendPostJson(url, json)) {
-        runToSave.uniqueId.get
-      }
-      else {
-        throw new IllegalStateException("Unable to store a Control Framework Run object in the database.")
-      }
-    })
+  def authenticate(): Unit = {
+    authHeaders = authClient.authenticate()
   }
 
-  /**
-    * Updates control measure object of the specified run
-    *
-    * @param uniqueId       An unique id of a Run object
-    * @param controlMeasure Control Measures
-    * @return true if Run object is successfully updated
-    */
+  def getDataset(name: String, version: Int): Dataset = {
+    val url = s"$apiBaseUrl/dataset/detail/${encode(name)}/$version"
+    sendGet[Dataset](url)
+  }
+
+  def getMappingTable(name: String, version: Int): MappingTable = {
+    val url = s"$apiBaseUrl/mappingTable/detail/${encode(name)}/$version"
+    sendGet[MappingTable](url)
+  }
+
+  def getSchema(name: String, version: Int): StructType = {
+    val url = s"$apiBaseUrl/schema/json/${encode(name)}/$version"
+    val json = sendGet[String](url)
+    DataType.fromJson(json).asInstanceOf[StructType]
+  }
+
+  def getSchemaAttachment(name: String, version: Int): String = {
+    val url = s"$apiBaseUrl/schema/export/${encode(name)}/$version"
+    sendGet[String](url)
+  }
+
+  def storeNewRunObject(run: Run): String = {
+    sendPost[Run, Run](runsUrl, bodyOpt = Option(run)).uniqueId.get
+  }
+
   def updateControlMeasure(uniqueId: String,
                            controlMeasure: ControlMeasure): Boolean = {
-    val url = s"$restBase/runs/updateControlMeasure/$uniqueId"
-    val json = EnceladusRestDAO.objectMapper.writeValueAsString(controlMeasure)
+    val url = s"$runsUrl/updateControlMeasure/$uniqueId"
 
-    sendPostJson(url, json)
+    sendPost[ControlMeasure, String](url, bodyOpt = Option(controlMeasure))
+    true
   }
 
   def updateRunStatus(uniqueId: String,
                       runStatus: RunStatus): Boolean = {
-    val url = s"$restBase/runs/updateRunStatus/$uniqueId"
-    val json = EnceladusRestDAO.objectMapper.writeValueAsString(runStatus)
+    val url = s"$runsUrl/updateRunStatus/$uniqueId"
 
-    sendPostJson(url, json)
+    sendPost[RunStatus, String](url, bodyOpt = Option(runStatus))
+    true
   }
 
-  /**
-    * Updates spline reference of the specified run
-    *
-    * @param uniqueId  An unique id of a Run object
-    * @param splineRef Spline Reference
-    * @return true if Run object is successfully updated
-    */
   def updateSplineReference(uniqueId: String,
                             splineRef: SplineReference): Boolean = {
-    val url = s"$restBase/runs/updateSplineReference/$uniqueId"
-    val json = EnceladusRestDAO.objectMapper.writeValueAsString(splineRef)
+    val url = s"$runsUrl/updateSplineReference/$uniqueId"
 
-    sendPostJson(url, json)
+    sendPost[SplineReference, String](url, bodyOpt = Option(splineRef))
+    true
   }
 
-  /**
-    * Creates new Run object in the database by loading control measurements from
-    * _INFO file accompanied by output data
-    *
-    * @param uniqueId   An unique id of a Run object
-    * @param checkpoint A checkpoint to be appended to the database
-    * @return true if Run object is successfully updated
-    */
   def appendCheckpointMeasure(uniqueId: String,
                               checkpoint: Checkpoint): Boolean = {
-    val url = s"$restBase/runs/addCheckpoint/$uniqueId"
-    val json = EnceladusRestDAO.objectMapper.writeValueAsString(checkpoint)
+    val url = s"$runsUrl/addCheckpoint/$uniqueId"
 
-    sendPostJson(url, json)
+    sendPost[Checkpoint, String](url, bodyOpt = Option(checkpoint))
+    true
   }
 
-  private def sendPostJson(url: String, json: String, retriesLeft: Int = 1): Boolean = {
-    try {
-      log.info(s"URL: $url POST: $json")
-      val httpPost = new HttpPost(url)
-      httpPost.addHeader("cookie", sessionCookie)
-      httpPost.addHeader("X-CSRF-TOKEN", csrfToken)
-      httpPost.addHeader("content-type", "application/json")
+  /* The URLEncoder implements the HTML Specifications
+   * so have to replace '+' with %20
+   * https://stackoverflow.com/questions/4737841/urlencoder-not-able-to-translate-space-character
+   */
+  private def encode(string: String): String = {
+    java.net.URLEncoder.encode(string, "UTF-8").replace("+", "%20")
+  }
 
-      httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON))
+  private def sendGet[T](urlPath: String,
+                         headers: HttpHeaders = new HttpHeaders())
+                        (implicit ct: ClassTag[T]): T = {
+    send[T, T](HttpMethod.GET, urlPath, headers)
+  }
 
-      val response: CloseableHttpResponse = httpClient.execute(httpPost)
-      try {
-        val status = response.getStatusLine.getStatusCode
-        val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
-        val isUnauthorized = status == HttpStatus.SC_UNAUTHORIZED || status == HttpStatus.SC_FORBIDDEN
+  private def sendPost[B, T](urlPath: String,
+                             headers: HttpHeaders = new HttpHeaders(),
+                             bodyOpt: Option[B] = None)
+                            (implicit ct: ClassTag[T]): T = {
+    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+    send[B, T](HttpMethod.POST, urlPath, headers, bodyOpt)
+  }
 
-        if (ok) {
-          log.info(response.toString)
-        } else {
-          val responseBody = getResponseBody(response)
-          log.error(s"RESPONSE: ${response.getStatusLine} - $responseBody")
+  private def send[B, T](method: HttpMethod,
+                         url: String,
+                         headers: HttpHeaders = new HttpHeaders(),
+                         bodyOpt: Option[B] = None,
+                         retriesLeft: Int = 1)
+                        (implicit ct: ClassTag[T]): T = {
+    log.info(s"$method - URL: $url")
+    headers.putAll(authHeaders)
 
-          if (isUnauthorized) {
-            log.warn(s"Unauthorized POST request for Menas URL: $url")
-            if (retriesLeft <= 0) {
-              throw UnauthorizedException(s"Unable to reauthenticate, no retires left")
-            }
-            log.warn(s"Expired session, reauthenticating")
-            if (enceladusLogin()) {
-              log.info(s"Retrying POST request for Menas URL: $url")
-              log.info(s"Retries left: $retriesLeft")
-              sendPostJson(url, json, retriesLeft - 1)
-            } else {
-              throw UnauthorizedException("Login failed")
-            }
-          }
+    val httpEntity = bodyOpt match {
+      case Some(body) => new HttpEntity[B](body, headers)
+      case None       => new HttpEntity[B](headers)
+    }
+
+    val response = restTemplate.exchange(url, method, httpEntity, classOf[String])
+
+    val statusCode = response.getStatusCode
+
+    statusCode match {
+      case HttpStatus.OK | HttpStatus.CREATED             =>
+        log.info(s"Response (${response.getStatusCode}): ${response.getBody}")
+        JsonSerializer.fromJson[T](response.getBody)
+
+      case HttpStatus.UNAUTHORIZED | HttpStatus.FORBIDDEN =>
+        log.warn(s"Response - $statusCode : ${Option(response.getBody).getOrElse("None")}")
+        log.warn(s"Unauthorized $method request for Menas URL: $url")
+        if (retriesLeft <= 0) {
+          throw UnauthorizedException("Unable to reauthenticate, no retries left")
         }
-        ok
-      }
-      finally {
-        response.close()
-      }
-    }
-    catch {
-      case unAuthException: UnauthorizedException => throw unAuthException
-      case NonFatal(e) =>
-        log.error(s"Unable to connect to Menas endpoint via $url with error: ${e.getMessage}")
-        false
-    }
-  }
 
-  private def getResponseBody(response: CloseableHttpResponse): String = {
-    Source.fromInputStream(response.getEntity.getContent).mkString
+        log.warn(s"Expired session, reauthenticating")
+        authenticate()
+
+        log.info(s"Retrying $method request for Menas URL: $url")
+        log.info(s"Retries left: $retriesLeft")
+        send[B, T](method, url, headers, bodyOpt, retriesLeft - 1)
+
+      case HttpStatus.NOT_FOUND                           =>
+        throw DaoException(s"Entity not found - $statusCode")
+
+      case _                                              =>
+        throw DaoException(s"Response - $statusCode : ${Option(response.getBody).getOrElse("None")}")
+    }
   }
 
 }
