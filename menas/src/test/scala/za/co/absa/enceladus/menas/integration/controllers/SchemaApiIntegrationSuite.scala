@@ -99,29 +99,54 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
       }
     }
 
-// TODO: https://github.com/AbsaOSS/enceladus/issues/220
-//
-//    "return 400" when {
-//      "a Schema with the given name and version exists" should {
-//        "return the updated Schema" in {
-//          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
-//          schemaFixture.add(schema1)
-//          val schema2 = SchemaFactory.getDummySchema(
-//            name = "schema",
-//            version = 2,
-//            parent = Some(SchemaFactory.toParent(schema1)))
-//          schemaFixture.add(schema2)
-//
-//          val response = sendPost[Schema, Validation](s"$apiUrl/edit", bodyOpt = Some(schema1))
-//
-//          assertBadRequest(response)
-//
-//          val actual = response.getBody
-//          val expected = Validation()
-//          assert(actual == expected)
-//        }
-//      }
-//    }
+    "return 400" when {
+      "a Schema with the given name and version exists" should {
+        "return the updated Schema" in {
+          val schema1 = SchemaFactory.getDummySchema(name = "Schema", version = 1)
+          schemaFixture.add(schema1)
+          val schema2 = SchemaFactory.getDummySchema(
+            name = "Schema",
+            version = 2,
+            parent = Some(SchemaFactory.toParent(schema1)))
+          schemaFixture.add(schema2)
+
+          val response = sendPost[Schema, Validation](s"$apiUrl/edit", bodyOpt = Some(schema1))
+          val expectedValidation = Validation().withError("version", "Version 1 of Schema is not the " +
+                                                          "latest version, therefore cannot be edited")
+          assertBadRequest(response)
+          assert(response.getBody == expectedValidation)
+        }
+      }
+    }
+  }
+
+  s"GET $apiUrl/detail/{name}/latestVersion" should {
+    "return 200" when {
+      "a Schema with the given name exists" in {
+        val schemaV1 = SchemaFactory.getDummySchema(name = "schema1", version = 1)
+        val schemaV2 = SchemaFactory.getDummySchema(name = "schema1",
+                                                    version = 2,
+                                                    parent = Some(SchemaFactory.toParent(schemaV1)))
+        schemaFixture.add(schemaV1)
+        schemaFixture.add(schemaV2)
+
+        val response = sendGet[String](s"$apiUrl/detail/schema1/latestVersion")
+
+        assertOk(response)
+        assert("2" == response.getBody)
+      }
+    }
+
+    "return 404" when {
+      "a Schema with the given name does not exist" in {
+        val schema = SchemaFactory.getDummySchema(name = "schema1", version = 1)
+        schemaFixture.add(schema)
+
+        val response = sendGet[String](s"$apiUrl/detail/schema2/latestVersion")
+
+        assertNotFound(response)
+      }
+    }
   }
 
   s"GET $apiUrl/json/{name}/{version}" should {

@@ -69,6 +69,12 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
     }
   }
 
+  @GetMapping(Array("/detail/{name}/latestVersion"))
+  @ResponseStatus(HttpStatus.OK)
+  def getLatestVersionNumber(@PathVariable name: String): CompletableFuture[Int] = {
+    versionedModelService.getLatestVersionNumber(name)
+  }
+
   @GetMapping(Array("/detail/{name}/audit"))
   @ResponseStatus(HttpStatus.OK)
   def getAuditTrail(@PathVariable name: String): CompletableFuture[AuditTrail] = {
