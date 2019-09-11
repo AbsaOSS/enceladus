@@ -70,6 +70,9 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   @Value("${za.co.absa.enceladus.menas.oozie.sharelibForSpark:spark}")
   val oozieShareLib: String = ""
 
+  @Value("${za.co.absa.enceladus.menas.oozie.libpath:}")
+  val oozieLibPath: String = ""
+
   @Value("${za.co.absa.enceladus.menas.oozie.enceladusJarLocation:}")
   val enceladusJarLocation: String = ""
 
@@ -299,7 +302,12 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     val conf = oozieClient.createConfiguration()
     conf.setProperty("jobTracker", resourceManager)
     conf.setProperty("nameNode", namenode)
-    conf.setProperty(OozieClient.USE_SYSTEM_LIBPATH, "True")
+    if(oozieLibPath.isEmpty()) {
+      conf.setProperty(OozieClient.USE_SYSTEM_LIBPATH, "True")
+    } else {
+      conf.setProperty(OozieClient.USE_SYSTEM_LIBPATH, "False")
+      conf.setProperty(OozieClient.LIBPATH, oozieLibPath)
+    }
     conf.setProperty("send_email", "False")
     conf.setProperty("mapreduce.job.user.name", runtimeParams.sysUser)
     conf.setProperty("security_enabled", "False")

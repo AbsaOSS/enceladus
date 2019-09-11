@@ -86,6 +86,9 @@ za.co.absa.enceladus.menas.monitoring.fetch.limit=500
 #This ensures that schedules are run with correct version of spark without updating oozie sharelibs globally
 za.co.absa.enceladus.menas.oozie.sharelibForSpark=spark-menas
 
+#This parameter configures the HDFS root folder for menas specific sharelibs
+#za.co.absa.enceladus.menas.oozie.libpath=/user/oozie/share/lib
+
 #Enceladus jars are going to be loaded into this location
 za.co.absa.enceladus.menas.oozie.enceladusJarLocation=hdfs:///tmp/enceladus-jars
 

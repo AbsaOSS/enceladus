@@ -65,7 +65,7 @@ class HDFSConfig @Autowired() (spark: SparkSession) {
     authMethod match {
       case "krb5"         => authenticateUsingKerberos(conf)
       case "simple"       => authenticateUsingSimpleAuth(conf)
-      case "default" | "" => authenticateUsingDefaultAuth(conf)
+      case "default"      => authenticateUsingDefaultAuth(conf)
       case _ =>
         logger.warn(s"Hadoop authentication method '$authMethod' in not one of 'default', 'simple' or 'krb5'.")
         authenticateUsingDefaultAuth(conf)
@@ -74,7 +74,7 @@ class HDFSConfig @Autowired() (spark: SparkSession) {
 
   private def authenticateUsingKerberos(conf: HadoopConfiguration): HadoopConfiguration = {
     logger.info("Using kerberos hadoop authentication")
-
+    System.setProperty("javax.net.debug", krb5debug)
     System.setProperty("sun.security.krb5.debug", krb5debug)
     System.setProperty("java.security.krb5.realm", krb5realm)
     System.setProperty("java.security.krb5.kdc", krb5kdc)
