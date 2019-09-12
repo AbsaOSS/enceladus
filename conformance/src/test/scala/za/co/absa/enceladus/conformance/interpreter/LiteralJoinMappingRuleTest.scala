@@ -78,8 +78,6 @@ class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with Logger
     confd.write.mode("overwrite").parquet("_testOutput")
     val readAgain = spark.read.parquet("_testOutput")
 
-    readAgain.show(false)
-
     assert(readAgain.count === 2)
   }
 
