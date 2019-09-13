@@ -290,7 +290,6 @@ if [[ -z "$DRY_RUN" ]]; then
     DATE=`date +%Y_%m_%d-%H_%M_%S`
     NAME=`sed -e 's#.*\.\(\)#\1#' <<< $CLASS`
     TMP_PATH_NAME="$LOG_DIR/enceladus_${NAME}_${DATE}.log"
-
     # Initializing Kerberos ticket
     if [[ ! -z "$MENAS_AUTH_KEYTAB" ]]; then
       # Get principle stored in the keyfile (Thanks @Zejnilovic)
@@ -308,18 +307,27 @@ if [[ -z "$DRY_RUN" ]]; then
         sleep 10
       fi
     fi
-
-    # Log the log location
+    # Log the log locationd
     echo "$CMD_LINE" >> "$TMP_PATH_NAME"
     echo "The log will be saved to $TMP_PATH_NAME"
-
-    # Run the job
-    bash -c "$CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
-
-    # Report the log location
-    echo
-    echo "Job has finished. The logs are saved to $TMP_PATH_NAME"
+    # Run the job and return exit status of the last failed command in the subshell pipeline (Issue #893)
+    bash -c "set -o pipefail; $CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
+	# Save the exit status of spark submit subshell run
+	EXIT_STATUS="$?"
+	# Test if the command executed successfully
+	if [ $EXIT_STATUS -eq 0 ]; then
+		# Report the log location
+		echo
+		echo "Job has finished. The logs are saved to $TMP_PATH_NAME"
+	else
+		# Report the failed exit status and log location
+		echo
+		echo "Job failed with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME"
+		exit $EXIT_STATUS
+	fi
   else
     bash -c "$CMD_LINE"
+	# Exit with the same status as spark submit
+	exit $?
   fi
 fi
