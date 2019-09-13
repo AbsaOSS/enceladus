@@ -16,13 +16,13 @@
 class SchemaManager {
 
   static getTransitiveSchemas(schemas, rules) {
-    if(rules) {
-      rules.map(RuleFactory.createRule).forEach((rule, index) => {
-        const schema = $.extend(true, [], schemas[index]);
-        rule.apply(schema.fields);
-        schemas.push(schema);
-      })
-    }
+    if(!rules) return;
+
+    rules.map(RuleFactory.createRule).forEach((rule, index) => {
+      const schema = $.extend(true, [], schemas[index]);
+      rule.apply(schema.fields);
+      schemas.push(schema);
+    })
   }
 
   static validateTransitiveSchemas(firstSchema, rules) {
