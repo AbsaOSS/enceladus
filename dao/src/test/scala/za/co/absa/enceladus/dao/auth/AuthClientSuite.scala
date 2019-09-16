@@ -30,7 +30,7 @@ abstract class AuthClientSuite() extends WordSpec
 
   protected val username: String = "user"
   protected val restTemplate: RestTemplate = mock[RestTemplate]
-  protected val url = "http://localhost:8080/menas/api"
+  protected val url: String = "http://localhost:8080/menas/api"
 
   val authClient: AuthClient
 

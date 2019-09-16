@@ -23,7 +23,7 @@ object MenasRestDAOGetDatasetSuite {
   private val name = "name"
   private val version = 1
   private val entity = DatasetFactory.getDummyDataset(name, version)
-  private val entityJson: String = JsonSerializer.toJson(entity)
+  private val entityJson = JsonSerializer.toJson(entity)
   private val url = s"${MenasRestDAOBaseSuite.apiBaseUrl}/dataset/detail/$name/$version"
 
 }
