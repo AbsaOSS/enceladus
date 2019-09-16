@@ -64,7 +64,7 @@ object StandardizationJob {
 
     val reportVersion = cmd.reportVersion match {
       case Some(version) => version
-      case None =>
+      case None          =>
         val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, cmd.reportDate) + 1
         log.warn(s"Report version not provided, inferred report version: $newVersion")
         log.warn("This is an EXPERIMENTAL feature.")
@@ -161,7 +161,7 @@ object StandardizationJob {
             case LongParameter(l) => df.option(key, l)
             case DoubleParameter(d) => df.option(key, d)
           }
-        case (_, None) => df
+        case (_, None)          => df
       }
     }
   }
@@ -260,7 +260,7 @@ object StandardizationJob {
     val std = try {
       StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
     } catch {
-      case e@ValidationException(msg, errors) =>
+      case e@ValidationException(msg, errors)                  =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
           errors.mkString("\n")
         }", "")
@@ -279,7 +279,7 @@ object StandardizationJob {
     stdRenameSourceColumns.setCheckpoint("Standardization - End", persistInDatabase = false)
 
     val recordCount = stdRenameSourceColumns.lastCheckpointRowCount match {
-      case None => std.count
+      case None    => std.count
       case Some(p) => p
     }
     if (recordCount == 0) { handleEmptyOutputAfterStandardization() }
@@ -371,10 +371,10 @@ object StandardizationJob {
 
   def buildRawPath(cmd: CmdConfig, dataset: Dataset, dateTokens: Array[String], reportVersion: Int): String = {
     cmd.rawPathOverride match {
-      case None =>
+      case None                  =>
         val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
         cmd.folderPrefix match {
-          case None => s"${dataset.hdfsPath}$folderSuffix"
+          case None               => s"${dataset.hdfsPath}$folderSuffix"
           case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
         }
       case Some(rawPathOverride) => rawPathOverride
@@ -393,7 +393,7 @@ object StandardizationJob {
 
     val rawRecordCount = checkpointRawRecordCount match {
       case Some(num) => num
-      case None => df.count
+      case None      => df.count
     }
     Atum.setAdditionalInfo(s"raw_record_count" -> rawRecordCount.toString)
   }

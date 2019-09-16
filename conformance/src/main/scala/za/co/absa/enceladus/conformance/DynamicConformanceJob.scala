@@ -66,7 +66,7 @@ object DynamicConformanceJob {
 
     val reportVersion = cmd.reportVersion match {
       case Some(version) => version
-      case None => inferVersion(conformance.hdfsPublishPath, cmd.reportDate)
+      case None          => inferVersion(conformance.hdfsPublishPath, cmd.reportDate)
     }
 
     val pathCfg = PathCfg(
@@ -132,7 +132,7 @@ object DynamicConformanceJob {
                                     defaultValue: Boolean): Boolean = {
     val enabled = cmdParameterOpt match {
       case Some(b) => b
-      case None =>
+      case None    =>
         if (conf.hasPath(configKey)) {
           conf.getBoolean(configKey)
         } else {
@@ -193,7 +193,7 @@ object DynamicConformanceJob {
       case e: ValidationException =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, e.techDetails)
         throw e
-      case NonFatal(e) =>
+      case NonFatal(e)            =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, sw.toString)
@@ -268,9 +268,9 @@ object DynamicConformanceJob {
       ds: Dataset,
       reportVersion: Int): String = {
     (cmd.publishPathOverride, cmd.folderPrefix) match {
-      case (None, None) =>
+      case (None, None)                   =>
         s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
-      case (None, Some(folderPrefix)) =>
+      case (None, Some(folderPrefix))     =>
         s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
       case (Some(publishPathOverride), _) =>
         publishPathOverride
