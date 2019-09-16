@@ -32,6 +32,10 @@ case class MenasPlainCredentials(username: String, password: String) extends Men
 
 case class MenasKerberosCredentials(username: String, keytabLocation: String) extends MenasCredentials
 
+case class InvalidMenasCredentials() extends MenasCredentials {
+  override val username: String = "invalid-credentials"
+}
+
 object MenasPlainCredentials {
 
   private val logger = LoggerFactory.getLogger(this.getClass)

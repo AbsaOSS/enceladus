@@ -62,8 +62,9 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
   private def getTestDataFrame(tmpFileName: String, schemaWithStringType: StructType): DataFrame = {
-    val args = ("--dataset-name SpecialColumns --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false --delimiter |").split(" ")
+    val args = ("--dataset-name SpecialColumns --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
+      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format csv --header false --delimiter |").split(" ")
 
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     StandardizationJob

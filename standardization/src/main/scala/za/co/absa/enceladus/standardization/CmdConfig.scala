@@ -19,7 +19,7 @@ import scala.util.matching.Regex
 import org.apache.spark.sql.SparkSession
 import scopt.OptionParser
 import sun.security.krb5.internal.ktab.KeyTab
-import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
+import za.co.absa.enceladus.dao.menasplugin.{InvalidMenasCredentials, MenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 /**
@@ -35,7 +35,7 @@ case class CmdConfig(
                       reportDate: String = "",
                       reportVersion: Option[Int] = None,
                       rawFormat: String = "xml",
-                      menasCredentials: Option[MenasCredentials] = None,
+                      menasCredentials: MenasCredentials = InvalidMenasCredentials(),
                       charset: Option[String] = None,
                       rowTag: Option[String] = None,
                       csvDelimiter: Option[String] = None,
@@ -93,7 +93,7 @@ object CmdConfig {
     opt[String]("menas-credentials-file").hidden.optional().action({ (path, config) =>
       val credential = MenasPlainCredentials.fromFile(path)
       credsFile = Some(path)
-      config.copy(menasCredentials = Some(credential))
+      config.copy(menasCredentials = credential)
     }).text("Path to Menas credentials config file.").validate(path =>
       if (keytabFile.isDefined) {
         failure("Only one authentication method is allow at a time")
@@ -112,7 +112,7 @@ object CmdConfig {
       }
       val keytab = KeyTab.getInstance(localPath)
       val username = keytab.getOneName.getName
-      config.copy(menasCredentials = Some(MenasKerberosCredentials(username, localPath)))
+      config.copy(menasCredentials = MenasKerberosCredentials(username, localPath))
     }).text("Path to keytab file used for authenticating to menas").validate({ file =>
       if (credsFile.isDefined) {
         failure("Only one authentication method is allowed at a time")
@@ -220,6 +220,13 @@ object CmdConfig {
       config.copy(folderPrefix = Some(value))).text("Adds a folder prefix before the date tokens")
 
     help("help").text("prints this usage text")
+
+    checkConfig { config =>
+      config.menasCredentials match {
+        case InvalidMenasCredentials() => failure("No authentication method specified (e.g. --menas-auth-keytab)")
+        case _                         => success
+      }
+    }
 
     private def processCobolCmdOptions(): Unit = {
       opt[String]("copybook").optional().action((value, config) => {

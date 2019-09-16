@@ -227,7 +227,7 @@ object DynamicConformanceJob {
     val publishDirSize = fsUtils.getDirectorySize(pathCfg.publishPath)
     performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "conform",
-      pathCfg.stdPath, pathCfg.publishPath, cmd.menasCredentials.get.username, cmdLineArgs)
+      pathCfg.stdPath, pathCfg.publishPath, cmd.menasCredentials.username, cmdLineArgs)
 
     withPartCols.writeInfoFile(pathCfg.publishPath)
     cmd.performanceMetricsFile.foreach(fileName => {

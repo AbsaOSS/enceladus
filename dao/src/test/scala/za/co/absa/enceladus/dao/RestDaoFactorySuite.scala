@@ -23,7 +23,7 @@ class RestDaoFactorySuite extends WordSpec with Matchers {
   "RestDaoFactory::getInstance" should {
     "return a MenasRestDAO instance with a SpnegoAuthClient" when {
       "given a Keytab location" in {
-        val keytabCredentials = Some(MenasKerberosCredentials("user", "src/test/resources/user.keytab.example"))
+        val keytabCredentials = MenasKerberosCredentials("user", "src/test/resources/user.keytab.example")
         val restDao = RestDaoFactory.getInstance(keytabCredentials)
         restDao.apiBaseUrl should be("http://localhost:8080/menas/api")
         restDao.authClient.getClass should be(classOf[SpnegoAuthClient])
@@ -31,19 +31,10 @@ class RestDaoFactorySuite extends WordSpec with Matchers {
     }
     "return a MenasRestDAO instance with a LdapAuthClient" when {
       "given plain MenasCredentials" in {
-        val plainCredentials = Some(MenasPlainCredentials("user", "changeme"))
+        val plainCredentials = MenasPlainCredentials("user", "changeme")
         val restDao = RestDaoFactory.getInstance(plainCredentials)
         restDao.apiBaseUrl should be("http://localhost:8080/menas/api")
         restDao.authClient.getClass should be(classOf[LdapAuthClient])
-      }
-    }
-    "throw an error" when {
-      "no auth credentials are provided" in {
-        val noCredentials = None
-        val exception = intercept[UnauthorizedException] {
-          RestDaoFactory.getInstance(noCredentials)
-        }
-        exception.getMessage should be("Menas credentials have to be provided")
       }
     }
   }

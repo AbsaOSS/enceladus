@@ -38,7 +38,7 @@ object CustomRuleSample2 {
 
   def main(args: Array[String]) {
     // scalastyle:off magic.number
-    val meansCredentials = Some(MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example"))
+    val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
     implicit val progArgs: CmdConfig = CmdConfig(menasCredentials = meansCredentials) // here we may need to specify some parameters (for certain rules)
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(progArgs.menasCredentials) // you may have to hard-code your own implementation here (if not working with menas)
 

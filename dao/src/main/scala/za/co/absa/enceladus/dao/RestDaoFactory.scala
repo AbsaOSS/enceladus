@@ -33,17 +33,9 @@ object RestDaoFactory {
     template
   }
 
-  def getInstance(authCredentials: Option[MenasCredentials]): MenasRestDAO = {
-    val authClient = getAuthClient(authCredentials)
+  def getInstance(authCredentials: MenasCredentials): MenasRestDAO = {
+    val authClient = AuthClient(authCredentials, apiBaseUrl)
     new MenasRestDAO(apiBaseUrl, authClient, restTemplate)
   }
 
-  private def getAuthClient(authCredentials: Option[MenasCredentials]): AuthClient = {
-    authCredentials match {
-      case Some(credentials) => AuthClient(credentials, apiBaseUrl)
-      case None              => throw UnauthorizedException("Menas credentials have to be provided")
-    }
-  }
-
 }
-

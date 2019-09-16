@@ -34,9 +34,9 @@ class ConfigSuite extends FunSuite with SparkTestBase {
   private val hdfsPublishPath = "/bigdatahdfs/datalake/publish/system/feed"
   private val hdfsPublishPathOverride = "/bigdatahdfs/datalake/publish/system/feed/override"
   private val menasCredentialsFile = "src/test/resources/menas-credentials.conf"
-  private val menasCredentials = Some(MenasPlainCredentials.fromFile(menasCredentialsFile))
+  private val menasCredentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
   private val keytabPath = "src/test/resources/user.keytab.example"
-  private val menasKeytab = Some(MenasKerberosCredentials("user@EXAMPLE.COM", keytabPath))
+  private val menasKeytab = MenasKerberosCredentials("user@EXAMPLE.COM", keytabPath)
   private val datasetName = "test-dataset-name"
   private val datasetVersion = 2
   private val description = None
@@ -88,22 +88,6 @@ class ConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
     assert(cmdConfigFolderPrefix.folderPrefix.get === folderPrefix)
     assert(cmdConfigFolderPrefix.publishPathOverride.isEmpty)
-
-    val cmdConfigPublishPathOverride = CmdConfig.getCmdLineArguments(
-      Array(
-        "--dataset-name", datasetName,
-        "--dataset-version", datasetVersion.toString,
-        "--report-date", reportDate,
-        "--report-version", reportVersion.toString,
-        "--debug-set-publish-path", hdfsPublishPathOverride))
-    assert(cmdConfigPublishPathOverride.datasetName === datasetName)
-    assert(cmdConfigPublishPathOverride.datasetVersion === datasetVersion)
-    assert(cmdConfigPublishPathOverride.reportDate === reportDate)
-    assert(cmdConfigPublishPathOverride.reportVersion.get === reportVersion)
-    assert(cmdConfigPublishPathOverride.menasCredentials === None)
-    assert(cmdConfigPublishPathOverride.folderPrefix.isEmpty)
-    assert(cmdConfigPublishPathOverride.publishPathOverride.nonEmpty)
-    assert(cmdConfigPublishPathOverride.publishPathOverride.get === hdfsPublishPathOverride)
 
     val cmdConfigPublishPathOverrideAndFolderPrefix = CmdConfig.getCmdLineArguments(
       Array(

@@ -294,7 +294,7 @@ object StandardizationJob {
       cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
     }
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
-      cmd.menasCredentials.get.username, cmd.cmdLineArgs.mkString(" "))
+      cmd.menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     stdRenameSourceColumns.writeInfoFile(pathCfg.outputPath)
   }
 
