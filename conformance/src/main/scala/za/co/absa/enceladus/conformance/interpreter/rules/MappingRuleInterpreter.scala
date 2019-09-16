@@ -46,6 +46,10 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     log.info(s"Processing mapping rule to conform ${rule.outputColumn}...")
     import spark.implicits._
 
+    //A fix for cases, where the join condition only uses columns previously created by a literal rule
+    //see https://github.com/AbsaOSS/enceladus/issues/892
+    spark.conf.set("spark.sql.crossJoin.enabled", "true")
+
     val datasetSchema = dao.getSchema(conformance.schemaName, conformance.schemaVersion)
 
     val idField = rule.outputColumn.replace(".", "_") + "_arrayConformanceId"

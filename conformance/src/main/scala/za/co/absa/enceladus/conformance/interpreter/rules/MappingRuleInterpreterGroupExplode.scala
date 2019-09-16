@@ -47,6 +47,10 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
+    //A fix for cases, where the join condition only uses columns previously created by a literal rule
+    //see https://github.com/AbsaOSS/enceladus/issues/892
+    spark.conf.set("spark.sql.crossJoin.enabled", "true")
+
     // find the data frame from the mapping table
     val mapTable = DataSource.getData(mappingTableDef.hdfsPath, progArgs.reportDate, mapPartitioning)
     val joinConditionStr = getJoinCondition(rule).toString
