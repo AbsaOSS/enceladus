@@ -307,7 +307,7 @@ if [[ -z "$DRY_RUN" ]]; then
         sleep 10
       fi
     fi
-    # Log the log locationd
+    # Log the log location
     echo "$CMD_LINE" >> "$TMP_PATH_NAME"
     echo "The log will be saved to $TMP_PATH_NAME"
     # Run the job and return exit status of the last failed command in the subshell pipeline (Issue #893)
@@ -316,18 +316,15 @@ if [[ -z "$DRY_RUN" ]]; then
 	EXIT_STATUS="$?"
 	# Test if the command executed successfully
 	if [ $EXIT_STATUS -eq 0 ]; then
-		# Report the log location
-		echo
-		echo "Job has finished. The logs are saved to $TMP_PATH_NAME"
+      RESULT="passed"
 	else
-		# Report the failed exit status and log location
-		echo
-		echo "Job failed with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME"
-		exit $EXIT_STATUS
+	  RESULT="failed"
 	fi
+	# Report the result and log location
+	echo ""
+	echo "Job $RESULT with exit status $EXIT STATUS. Refer to logs at $TMP_PATH_NAME"
+	exit $EXIT_STATUS
   else
     bash -c "$CMD_LINE"
-	# Exit with the same status as spark submit
-	exit $?
   fi
 fi
