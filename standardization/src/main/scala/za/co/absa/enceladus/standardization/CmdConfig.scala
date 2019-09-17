@@ -35,7 +35,7 @@ case class CmdConfig(
                       reportDate: String = "",
                       reportVersion: Option[Int] = None,
                       rawFormat: String = "xml",
-                      menasCredentials: MenasCredentials = InvalidMenasCredentials(),
+                      menasCredentials: MenasCredentials = InvalidMenasCredentials,
                       charset: Option[String] = None,
                       rowTag: Option[String] = None,
                       csvDelimiter: Option[String] = None,
@@ -223,8 +223,8 @@ object CmdConfig {
 
     checkConfig { config =>
       config.menasCredentials match {
-        case InvalidMenasCredentials() => failure("No authentication method specified (e.g. --menas-auth-keytab)")
-        case _                         => success
+        case InvalidMenasCredentials => failure("No authentication method specified (e.g. --menas-auth-keytab)")
+        case _                       => success
       }
     }
 
