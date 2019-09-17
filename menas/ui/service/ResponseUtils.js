@@ -25,12 +25,23 @@ class ResponseUtils {
    * }
    *
    */
-  static getErrorMessage(rawResponse) {
+  static getBadRequestErrorMessage(rawResponse) {
     let errorMessageDetails = "";
     try {
       const oParsedResponse = JSON.parse(rawResponse);
       if (oParsedResponse.message) {
         errorMessageDetails = oParsedResponse.message;
+      }
+      if (oParsedResponse.error) {
+        if (oParsedResponse.error.line) {
+          errorMessageDetails += "\nLine: " + oParsedResponse.error.line
+        }
+        if (oParsedResponse.error.column) {
+          errorMessageDetails += "\nColumn: " + oParsedResponse.error.column
+        }
+        if (oParsedResponse.error.field) {
+          errorMessageDetails += "\nField: " + oParsedResponse.error.field
+        }
       }
     } catch (e) {
       console.error(`Unable to parse the raw response from the server. Error: ${e}. Response: ${rawResponse}`)
