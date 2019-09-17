@@ -258,7 +258,7 @@ add_to_cmd_line "--driver-cores" ${DRIVER_CORES}
 add_to_cmd_line "--driver-memory" ${DRIVER_MEMORY}
 
 # Adding JVM configuration, entry point class name and the jar file
-CMD_LINE="$CMD_LINE --conf \"$CONF\" --class $CLASS $JAR"
+CMD_LINE="${CMD_LINE} --conf \"${CONF} ${ADDITIONAL_SPARK_CONF}\" --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
 add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
