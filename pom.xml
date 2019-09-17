@@ -177,6 +177,7 @@
         <cronstrue.version>1.79.0</cronstrue.version>
         <!--other properties-->
         <skip.integration.tests>true</skip.integration.tests>
+        <quiet.scalastyle.check>true</quiet.scalastyle.check>
         <scalastyle.configLocation>${project.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <!-- logging-->
         <log.level.base>WARN</log.level.base>
@@ -292,6 +293,7 @@
                     <artifactId>scalastyle-maven-plugin</artifactId>
                     <version>1.0.0</version>
                     <configuration>
+                        <quiet>${quiet.scalastyle.check}</quiet>
                         <verbose>false</verbose>
                         <failOnViolation>true</failOnViolation>
                         <failOnWarning>false</failOnWarning>
@@ -420,6 +422,12 @@
             <id>integration</id>
             <properties>
                 <skip.integration.tests>false</skip.integration.tests>
+            </properties>
+        </profile>
+        <profile>
+            <id>scalastyle</id>
+            <properties>
+                <quiet.scalastyle.check>false</quiet.scalastyle.check>
             </properties>
         </profile>
         <profile>
