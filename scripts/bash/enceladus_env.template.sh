@@ -34,3 +34,6 @@ CONF_CLASS="za.co.absa.enceladus.conformance.DynamicConformanceJob"
 CONF_JAR="enceladus-conformance.jar"
 
 LOG_DIR="/tmp"
+
+# Additional environment-specific Spark options, e.g. "spark.driver.host=myhost"
+ADDITIONAL_SPARK_CONF=""
