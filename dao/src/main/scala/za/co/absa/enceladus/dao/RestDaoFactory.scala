@@ -16,8 +16,6 @@
 package za.co.absa.enceladus.dao
 
 import com.typesafe.config.ConfigFactory
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
-import org.springframework.web.client.RestTemplate
 import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 
 object RestDaoFactory {
@@ -25,13 +23,7 @@ object RestDaoFactory {
   private val conf = ConfigFactory.load()
   private val apiBaseUrl = conf.getString("menas.rest.uri")
 
-  private val restTemplate = {
-    val template = new RestTemplate()
-    val converters = template.getMessageConverters
-    converters.add(new MappingJackson2HttpMessageConverter(JsonSerializer.objectMapper))
-    template.setMessageConverters(converters)
-    template
-  }
+  private val restTemplate = RestTemplateSingletn.instance
 
   def getInstance(authCredentials: MenasCredentials): MenasRestDAO = {
     val authClient = AuthClient(authCredentials, apiBaseUrl)

@@ -15,10 +15,17 @@
 
 package za.co.absa.enceladus.dao
 
-final case class UnauthorizedException(private val message: String = "Unauthorised access to Menas",
-                                       private val cause: Throwable = None.orNull)
-  extends Exception(message, cause)
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
+import org.springframework.web.client.RestTemplate
 
-final case class DaoException(private val message: String,
-                              private val cause: Throwable = None.orNull)
-  extends Exception(message, cause)
+object RestTemplateSingletn {
+
+  val instance: RestTemplate = {
+    val template = new RestTemplate()
+    val converters = template.getMessageConverters
+    converters.add(new MappingJackson2HttpMessageConverter(JsonSerializer.objectMapper))
+    template.setMessageConverters(converters)
+    template
+  }
+
+}

@@ -17,7 +17,6 @@ package za.co.absa.enceladus.conformance.interpreter
 
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}

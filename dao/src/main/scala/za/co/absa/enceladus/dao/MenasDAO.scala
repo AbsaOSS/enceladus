@@ -26,7 +26,9 @@ trait MenasDAO {
 
   /**
     * Authenticates user with Menas
+    * @throws UnauthorizedException if authentication fails
     */
+  @throws[UnauthorizedException]
   def authenticate(): Unit
 
   /**
@@ -54,7 +56,7 @@ trait MenasDAO {
     *
     * @param name    The schema's name
     * @param version The schema's version
-    * @return The spark representation of the retrieved schema
+    * @return The original representation of the retrieved schema (aka schema attachment)
     */
   def getSchema(name: String,
                 version: Int): StructType

@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.dao
 
 import org.scalatest.{Matchers, WordSpec}
-import za.co.absa.enceladus.dao.menasplugin.{MenasPlainCredentials, MenasKerberosCredentials}
+import za.co.absa.enceladus.dao.menasplugin.{InvalidMenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
 
 class RestDaoFactorySuite extends WordSpec with Matchers {
 
@@ -35,6 +35,14 @@ class RestDaoFactorySuite extends WordSpec with Matchers {
         val restDao = RestDaoFactory.getInstance(plainCredentials)
         restDao.apiBaseUrl should be("http://localhost:8080/menas/api")
         restDao.authClient.getClass should be(classOf[LdapAuthClient])
+      }
+    }
+    "throw an error" when {
+      "given invalid credentials" in {
+        val exception = intercept[UnauthorizedException] {
+          RestDaoFactory.getInstance(InvalidMenasCredentials)
+        }
+        exception.getMessage should be("No Menas credentials provided")
       }
     }
   }

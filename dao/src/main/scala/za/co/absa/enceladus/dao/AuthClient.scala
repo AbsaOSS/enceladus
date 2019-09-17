@@ -15,16 +15,12 @@
 
 package za.co.absa.enceladus.dao
 
-import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.slf4j.{Logger, LoggerFactory}
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.http.{HttpHeaders, HttpStatus, ResponseEntity}
 import org.springframework.security.kerberos.client.KerberosRestTemplate
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
-import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
+import za.co.absa.enceladus.dao.menasplugin._
 
 object AuthClient {
 
@@ -32,29 +28,19 @@ object AuthClient {
     credentials match {
       case menasCredentials: MenasPlainCredentials    => createLdapAuthClient(apiBaseUrl, menasCredentials)
       case menasCredentials: MenasKerberosCredentials => createSpnegoAuthClient(apiBaseUrl, menasCredentials)
+      case InvalidMenasCredentials                    => throw UnauthorizedException("No Menas credentials provided")
     }
   }
 
-  private def createLdapAuthClient(apiBaseUrl: String, menasCredentials: MenasPlainCredentials): LdapAuthClient = {
-    val objectMapper = new ObjectMapper()
-      .registerModule(DefaultScalaModule)
-      .registerModule(new JavaTimeModule())
-      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-
-    val restTemplate = new RestTemplate()
-
-    val converters = restTemplate.getMessageConverters
-    converters.add(new MappingJackson2HttpMessageConverter(objectMapper))
-    restTemplate.setMessageConverters(converters)
-
-    new LdapAuthClient(menasCredentials.username, menasCredentials.password, restTemplate, s"$apiBaseUrl/login")
+  private def createLdapAuthClient(apiBaseUrl: String, credentials: MenasPlainCredentials): LdapAuthClient = {
+    val restTemplate = RestTemplateSingletn.instance
+    new LdapAuthClient(credentials.username, credentials.password, restTemplate, s"$apiBaseUrl/login")
   }
 
-  private def createSpnegoAuthClient(apiBaseUrl: String, menasCredentials: MenasKerberosCredentials): SpnegoAuthClient = {
-    val restTemplate = new KerberosRestTemplate(menasCredentials.keytabLocation, menasCredentials.username)
+  private def createSpnegoAuthClient(apiBaseUrl: String, credentials: MenasKerberosCredentials): SpnegoAuthClient = {
+    val restTemplate = new KerberosRestTemplate(credentials.keytabLocation, credentials.username)
 
-    new SpnegoAuthClient(menasCredentials.username, menasCredentials.keytabLocation, restTemplate, s"$apiBaseUrl/user/info")
+    new SpnegoAuthClient(credentials.username, credentials.keytabLocation, restTemplate, s"$apiBaseUrl/user/info")
   }
 }
 
@@ -64,6 +50,7 @@ sealed abstract class AuthClient(username: String, restTemplate: RestTemplate, u
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
 
+  @throws[UnauthorizedException]
   def authenticate(): HttpHeaders = {
     val response = requestAuthentication()
     val statusCode = response.getStatusCode
