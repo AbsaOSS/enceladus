@@ -20,27 +20,29 @@ import za.co.absa.enceladus.dao.menasplugin.{InvalidMenasCredentials, MenasKerbe
 
 class RestDaoFactorySuite extends WordSpec with Matchers {
 
+  private val menasApiBaseUrl = "http://localhost:8080/menas/api"
+
   "RestDaoFactory::getInstance" should {
     "return a MenasRestDAO instance with a SpnegoAuthClient" when {
       "given a Keytab location" in {
         val keytabCredentials = MenasKerberosCredentials("user", "src/test/resources/user.keytab.example")
-        val restDao = RestDaoFactory.getInstance(keytabCredentials)
-        restDao.apiBaseUrl should be("http://localhost:8080/menas/api")
+        val restDao = RestDaoFactory.getInstance(keytabCredentials, menasApiBaseUrl)
+        restDao.apiBaseUrl should be(menasApiBaseUrl)
         restDao.authClient.getClass should be(classOf[SpnegoAuthClient])
       }
     }
     "return a MenasRestDAO instance with a LdapAuthClient" when {
       "given plain MenasCredentials" in {
         val plainCredentials = MenasPlainCredentials("user", "changeme")
-        val restDao = RestDaoFactory.getInstance(plainCredentials)
-        restDao.apiBaseUrl should be("http://localhost:8080/menas/api")
+        val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrl)
+        restDao.apiBaseUrl should be(menasApiBaseUrl)
         restDao.authClient.getClass should be(classOf[LdapAuthClient])
       }
     }
     "throw an error" when {
       "given invalid credentials" in {
         val exception = intercept[UnauthorizedException] {
-          RestDaoFactory.getInstance(InvalidMenasCredentials)
+          RestDaoFactory.getInstance(InvalidMenasCredentials, menasApiBaseUrl)
         }
         exception.getMessage should be("No Menas credentials provided")
       }

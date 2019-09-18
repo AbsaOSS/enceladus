@@ -46,6 +46,7 @@ object StandardizationJob {
 
   private val log = LoggerFactory.getLogger(this.getClass)
   private val conf = ConfigFactory.load()
+  private val menasApiBaseUrl = conf.getString("menas.rest.uri")
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
@@ -54,7 +55,7 @@ object StandardizationJob {
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
 
     implicit val udfLib: UDFLibrary = new UDFLibrary
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials, menasApiBaseUrl)
 
     dao.authenticate()
 

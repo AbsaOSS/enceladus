@@ -19,7 +19,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.menasplugin.MenasKerberosCredentials
-import za.co.absa.enceladus.dao.{MenasDAO, MenasRestDAO, RestDaoFactory}
+import za.co.absa.enceladus.dao.{MenasDAO, RestDaoFactory}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.UppercaseCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
@@ -38,9 +38,10 @@ object CustomRuleSample1 {
 
   def main(args: Array[String]) {
     // scalastyle:off magic.number
+    val menasApiBaseUrl = "http://localhost:8080/menas"
     val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
     implicit val progArgs: CmdConfig = CmdConfig(menasCredentials = meansCredentials) // here we may need to specify some parameters (for certain rules)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(progArgs.menasCredentials) // you may have to hard-code your own implementation here (if not working with menas)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(progArgs.menasCredentials, menasApiBaseUrl) // you may have to hard-code your own implementation here (if not working with menas)
 
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true

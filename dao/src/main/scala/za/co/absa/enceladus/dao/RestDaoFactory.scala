@@ -15,17 +15,13 @@
 
 package za.co.absa.enceladus.dao
 
-import com.typesafe.config.ConfigFactory
 import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 
 object RestDaoFactory {
 
-  private val conf = ConfigFactory.load()
-  private val apiBaseUrl = conf.getString("menas.rest.uri")
-
   private val restTemplate = RestTemplateSingletn.instance
 
-  def getInstance(authCredentials: MenasCredentials): MenasRestDAO = {
+  def getInstance(authCredentials: MenasCredentials, apiBaseUrl: String): MenasRestDAO = {
     val authClient = AuthClient(authCredentials, apiBaseUrl)
     new MenasRestDAO(apiBaseUrl, authClient, restTemplate)
   }

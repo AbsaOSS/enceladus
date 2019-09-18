@@ -49,12 +49,13 @@ object DynamicConformanceJob {
 
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
+  private val menasApiBaseUrl = conf.getString("menas.rest.uri")
 
   def main(args: Array[String]) {
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials) // use REST DAO
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials, menasApiBaseUrl)
 
     val enableCF: Boolean = true
 

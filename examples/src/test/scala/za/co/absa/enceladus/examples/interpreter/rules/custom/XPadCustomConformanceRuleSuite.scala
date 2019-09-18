@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.examples.interpreter.rules.custom
 
+import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql
 import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
@@ -180,9 +181,11 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
 
   import spark.implicits._
 
-  val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/test/resources/user.keytab.example")
+  private val conf = ConfigFactory.load()
+  private val menasApiBaseUrl = conf.getString("menas.rest.uri")
+  private val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/test/resources/user.keytab.example")
   implicit val progArgs: CmdConfig = CmdConfig(menasCredentials = meansCredentials) // here we may need to specify some parameters (for certain rules)
-  implicit val dao: MenasDAO = RestDaoFactory.getInstance(progArgs.menasCredentials) // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val dao: MenasDAO = RestDaoFactory.getInstance(progArgs.menasCredentials, menasApiBaseUrl) // you may have to hard-code your own implementation here (if not working with menas)
 
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true

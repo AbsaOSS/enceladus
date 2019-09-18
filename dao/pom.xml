@@ -30,11 +30,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.typesafe</groupId>
-            <artifactId>config</artifactId>
-            <version>${typesafe.config.version}</version>
-        </dependency>
-        <dependency>
             <groupId>za.co.absa</groupId>
             <artifactId>enceladus-dataModel</artifactId>
             <version>${project.version}</version>
