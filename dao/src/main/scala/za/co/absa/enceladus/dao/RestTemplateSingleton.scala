@@ -18,7 +18,7 @@ package za.co.absa.enceladus.dao
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.web.client.RestTemplate
 
-object RestTemplateSingletn {
+object RestTemplateSingleton {
 
   val instance: RestTemplate = {
     val template = new RestTemplate()

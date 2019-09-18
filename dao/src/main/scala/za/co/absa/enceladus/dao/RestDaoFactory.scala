@@ -19,7 +19,7 @@ import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 
 object RestDaoFactory {
 
-  private val restTemplate = RestTemplateSingletn.instance
+  private val restTemplate = RestTemplateSingleton.instance
 
   def getInstance(authCredentials: MenasCredentials, apiBaseUrl: String): MenasRestDAO = {
     val authClient = AuthClient(authCredentials, apiBaseUrl)

@@ -33,7 +33,7 @@ object AuthClient {
   }
 
   private def createLdapAuthClient(apiBaseUrl: String, credentials: MenasPlainCredentials): LdapAuthClient = {
-    val restTemplate = RestTemplateSingletn.instance
+    val restTemplate = RestTemplateSingleton.instance
     new LdapAuthClient(credentials.username, credentials.password, restTemplate, s"$apiBaseUrl/login")
   }
 
