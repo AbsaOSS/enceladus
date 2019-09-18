@@ -14,25 +14,23 @@
  */
 
 package za.co.absa.enceladus.utils.validation.field
-
+import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.TypedStructField
-import za.co.absa.enceladus.utils.validation.ValidationIssue
+import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
 
-import scala.util.Try
+object FractionalFieldValidator extends FractionalFieldValidator
 
-
-/**
-  * Scalar types schema validation against default value
-  */
-object ScalarFieldValidator extends ScalarFieldValidator
-
-class ScalarFieldValidator extends FieldValidator {
-
-  private def validateDefaultValue(field: TypedStructField): Try[Any] = {
-    field.defaultValueWithGlobal
+class FractionalFieldValidator extends ScalarFieldValidator {
+  private def validateAllowInfinity(field: TypedStructField): Seq[ValidationIssue] = {
+    if (field.hasMetadataKey(MetadataKeys.allowInfinity) && field.getMetadataStringAsBoolean(MetadataKeys.allowInfinity).isEmpty) {
+      Seq(ValidationError(s"allowInfinity metadata value of field '${field.name}' is not Boolean in String format"))
+    } else {
+      Nil
+    }
   }
 
   override def validate(field: TypedStructField): Seq[ValidationIssue] = {
-    tryToValidationIssues(validateDefaultValue(field))
+    validateAllowInfinity(field) ++ super.validate(field)
   }
 }
+

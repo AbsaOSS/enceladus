@@ -15,21 +15,24 @@ class TypedStructFieldSuite extends FunSuite {
   private def createField(dataType: DataType,
                           nullable: Boolean = false,
                           default: Option[Any] = None,
-                          otherMetadata: Map[String, String] = Map.empty
+                          otherMetadata: Map[String, Any] = Map.empty
                          ): StructField = {
-    val medatadaBuilder: MetadataBuilder = otherMetadata.foldLeft(new MetadataBuilder()) (
-      (builder, data) => builder.putString(data._1, data._2)
-    )
-    val metadata = (default match {
-      case None             => medatadaBuilder
-      case Some(null)       => medatadaBuilder.putNull(MetadataKeys.DefaultValue) // scalastyle:ignore null
-      case Some(s: String)  => medatadaBuilder.putString(MetadataKeys.DefaultValue, s)
-      case Some(i: Int)    => medatadaBuilder.putLong(MetadataKeys.DefaultValue, i)
-      case Some(l: Long)    => medatadaBuilder.putLong(MetadataKeys.DefaultValue, l)
-      case Some(b: Boolean) => medatadaBuilder.putBoolean(MetadataKeys.DefaultValue, b)
-      case Some(d: Double)  => medatadaBuilder.putDouble(MetadataKeys.DefaultValue, d)
-      case Some(x)          => medatadaBuilder.putString(MetadataKeys.DefaultValue, x.toString)
-    }).build()
+    def addMetadata(builder: MetadataBuilder, key: String, value: Option[Any]): MetadataBuilder = {
+      value match {
+        case None => builder
+        case Some(null) => builder.putNull(key) // scalastyle:ignore null
+        case Some(s: String) => builder.putString(key, s)
+        case Some(i: Int) => builder.putLong(key, i)
+        case Some(l: Long) => builder.putLong(key, l)
+        case Some(b: Boolean) => builder.putBoolean(key, b)
+        case Some(f: Float) => builder.putDouble(key, f)
+        case Some(d: Double) => builder.putDouble(key, d)
+        case Some(x) => builder.putString(key, x.toString)
+      }
+    }
+    val metadataBuilder: MetadataBuilder = otherMetadata.foldLeft(new MetadataBuilder()) (
+      (builder, data) => addMetadata(builder, data._1, Some(data._2)))
+    val metadata = addMetadata(metadataBuilder, MetadataKeys.DefaultValue, default).build()
     StructField(fieldName, dataType, nullable,metadata)
   }
 
@@ -44,11 +47,11 @@ class TypedStructFieldSuite extends FunSuite {
       expected match {
         case Success(_) => assert(got == expected)
         case Failure(e) =>
-          val cought = intercept[Exception] {
+          val caught = intercept[Exception] {
             got.get
           }
-          assert(cought.getClass == e.getClass)
-          assert(cought.getMessage == e.getMessage)
+          assert(caught.getClass == e.getClass)
+          assert(caught.getMessage == e.getMessage)
       }
     }
 
@@ -133,7 +136,7 @@ class TypedStructFieldSuite extends FunSuite {
   test("Byte type not nullable, with default defined as not not-numeric string") {
     val fieldType = ByteType
     val nullable = false
-    val field = createField(fieldType, nullable, Some("seven")) // scalastyle:ignore null
+    val field = createField(fieldType, nullable, Some("seven"))
     val typed = TypedStructField(field)
     val errMsg = "'seven' cannot be cast to byte"
     val fail = Failure(new NumberFormatException(errMsg))
@@ -143,17 +146,17 @@ class TypedStructFieldSuite extends FunSuite {
   test("Long type not nullable, with default defined as binary integer") {
     val fieldType = LongType
     val nullable = false
-    val field = createField(fieldType, nullable, Some(-1L)) // scalastyle:ignore null
+    val field = createField(fieldType, nullable, Some(-1L))
     val typed = TypedStructField(field)
     val errMsg = "java.lang.Long cannot be cast to java.lang.String"
     val fail = Failure(new ClassCastException(errMsg))
     checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError(errMsg)))
   }
 
-  test("Float type nullable, with default defined in exponential notation") {
+  test("Float type nullable, with default defined in exponential notation, allowInfinity is set to true") {
     val fieldType = FloatType
     val nullable = true
-    val field = createField(fieldType, nullable, Some("314e-2")) // scalastyle:ignore null
+    val field = createField(fieldType, nullable, Some("314e-2"), Map( MetadataKeys.allowInfinity->"true" ))
     val typed = TypedStructField(field)
     val errMsg = "'314e-2' cannot be cast to float"
     checkField(typed, fieldType, Success(Some(Some(3.14F))), Success(Some(3.14F)), nullable)
@@ -179,5 +182,13 @@ class TypedStructFieldSuite extends FunSuite {
     checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError(errMsg)))
   }
 
-
+  test("Float type nullable, with default defined as Long and allowInfinity as binary Boolean") {
+    val fieldType = FloatType
+    val nullable = false
+    val field = createField(fieldType, nullable, Some(1000L), Map( MetadataKeys.allowInfinity->false ))
+    val typed = TypedStructField(field)
+    val errMsg = "java.lang.Long cannot be cast to java.lang.String"
+    val fail = Failure(new ClassCastException(errMsg))
+    checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError("allowInfinity metadata value of field 'test_field' is not Boolean in String format"), ValidationError(errMsg)))
+  }
 }
