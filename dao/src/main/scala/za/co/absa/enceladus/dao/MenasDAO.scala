@@ -56,7 +56,7 @@ trait MenasDAO {
     *
     * @param name    The schema's name
     * @param version The schema's version
-    * @return The original representation of the retrieved schema (aka schema attachment)
+    * @return The spark representation of the retrieved schema
     */
   def getSchema(name: String,
                 version: Int): StructType
@@ -66,7 +66,7 @@ trait MenasDAO {
     *
     * @param name    The schema's name
     * @param version The schema's version
-    * @return The spark representation of the retrieved schema
+    * @return The original representation of the retrieved schema (i.e., schema attachment)
     */
   def getSchemaAttachment(name: String, version: Int): String
 
