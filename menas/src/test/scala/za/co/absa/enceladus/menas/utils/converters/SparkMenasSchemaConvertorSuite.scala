@@ -19,7 +19,6 @@ import org.scalatest.FunSuite
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.model._
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import org.springframework.beans.factory.annotation.Autowired
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
@@ -86,7 +85,7 @@ class SparkMenasSchemaConvertorSuite extends FunSuite with SparkTestBase {
     assertResult(sparkSimleFlat)(res)
   }
 
-  test("ConvertSparkToMenas with non-string values in metadata") {
+  test("convertSparkToMenasFields with non-string values in metadata") {
     val fieldName = "field_name"
     val sparkDefinition = Seq(
       StructField(name = fieldName, dataType = IntegerType, nullable = true, metadata = new MetadataBuilder().putLong("default", 0).build)
@@ -97,6 +96,22 @@ class SparkMenasSchemaConvertorSuite extends FunSuite with SparkTestBase {
     }
 
     assert(caught == SchemaParsingException(schemaType = "", message = "Value for metadata key 'default' has to be a string", field = Option(fieldName)))
+  }
+
+  test("convertSparkToMenasFields and convertMenasToSparkFields with nulls in values of metadata") {
+    val fieldName = "field_with_null_metadata_values"
+    val sparkDefinition = Seq(
+      StructField(name = fieldName, dataType = IntegerType, nullable = true, metadata = new MetadataBuilder().putNull("default").putString("foo", "bar").build)
+    )
+    val menasDefinition = Seq(
+      SchemaField(name = fieldName, `type` = "integer", path = "", elementType = None, containsNull = None, nullable = true, metadata = Map("default" -> null, "foo" -> "bar"), children = List()) // scalastyle:ignore null
+    )
+
+    val res1 = sparkConvertor.convertSparkToMenasFields(sparkDefinition)
+    assertResult(menasDefinition)(res1)
+
+    val res2 = sparkConvertor.convertMenasToSparkFields(menasDefinition)
+    assertResult(sparkDefinition)(res2)
   }
 
 }

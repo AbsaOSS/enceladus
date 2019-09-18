@@ -116,18 +116,20 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
       case _                    => None
     }
 
-    val childrenPath = SchemaUtils.appendPath(path, field.name)
     val metadata: Map[String, String] = objMapper.readValue(field.metadata.json, classOf[Map[Any, Any]])
         .collect{
           // objMapper.readValue(_, classOf[Map[String, String]] doesn't actually enforce typing within the Map, this
           // construction ensures it
           case (key: String, value: String) => (key, value)
+          case (key: String, null) => (key, null) // scalastyle:ignore null - some values can be null, particularly default, can be null
           case (key, _) => throw SchemaParsingException(
             schemaType = "",
             message = s"Value for metadata key '$key' has to be a string",
             field = Option(field.name)
           )
         }
+
+    val childrenPath = SchemaUtils.appendPath(path, field.name)
 
     SchemaField(
       name = field.name,
