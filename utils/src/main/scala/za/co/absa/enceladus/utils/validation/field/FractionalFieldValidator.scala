@@ -18,9 +18,7 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.TypedStructField
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
 
-object FractionalFieldValidator extends FractionalFieldValidator
-
-class FractionalFieldValidator extends ScalarFieldValidator {
+object FractionalFieldValidator extends ScalarFieldValidator {
   private def validateAllowInfinity(field: TypedStructField): Seq[ValidationIssue] = {
     if (field.hasMetadataKey(MetadataKeys.allowInfinity) && field.getMetadataStringAsBoolean(MetadataKeys.allowInfinity).isEmpty) {
       Seq(ValidationError(s"allowInfinity metadata value of field '${field.name}' is not Boolean in String format"))

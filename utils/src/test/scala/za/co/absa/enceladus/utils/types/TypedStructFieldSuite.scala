@@ -171,7 +171,7 @@ class TypedStructFieldSuite extends FunSuite {
   test("Float type nullable, with default defined in exponential notation, allowInfinity is set to true") {
     val fieldType = FloatType
     val nullable = true
-    val field = createField(fieldType, nullable, Some("314e-2"), Map( MetadataKeys.allowInfinity->"true" ))
+    val field = createField(fieldType, nullable, Some("314e-2"), Map(MetadataKeys.allowInfinity -> "true"))
     val typed = TypedStructField(field)
     val errMsg = "'314e-2' cannot be cast to float"
     checkField(typed, fieldType, Success(Some(Some(3.14F))), Success(Some(3.14F)), nullable)
