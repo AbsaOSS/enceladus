@@ -36,6 +36,12 @@ import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
 
+
+object SchemaController {
+  val SchemaTypeStruct = "struct"
+  val SchemaTypeCopybook = "copybook"
+}
+
 @RestController
 @RequestMapping(Array("/api/schema"))
 class SchemaController @Autowired() (
@@ -44,12 +50,9 @@ class SchemaController @Autowired() (
   sparkMenasConvertor: SparkMenasSchemaConvertor)
   extends VersionedModelController(schemaService) {
 
+  import SchemaController._
   import za.co.absa.enceladus.menas.utils.implicits._
-
   import scala.concurrent.ExecutionContext.Implicits.global
-
-  val SchemaTypeStruct = "struct"
-  val SchemaTypeCopybook = "copybook"
 
   @PostMapping(Array("/upload"))
   @ResponseStatus(HttpStatus.CREATED)
@@ -61,9 +64,9 @@ class SchemaController @Autowired() (
     val origFormat: Option[String] = format
     val fileContent = new String(file.getBytes)
 
-    val sparkStruct = origFormat match {
-      case Some(SchemaTypeStruct) | Some("") | None => parseStructType(fileContent)
-      case Some(SchemaTypeCopybook) => parseCopybook(fileContent)
+    val (sparkStruct, schemaType) = origFormat match {
+      case Some(SchemaTypeStruct) | Some("") | None => (parseStructType(fileContent), SchemaTypeStruct)
+      case Some(SchemaTypeCopybook) => (parseCopybook(fileContent), SchemaTypeCopybook)
       case Some(schemaType) =>
         throw SchemaFormatException(schemaType, s"'$schemaType' is not a recognized schema format. " +
           s"Menas currently supports: '$SchemaTypeStruct' and '$SchemaTypeCopybook'.")
@@ -77,10 +80,16 @@ class SchemaController @Autowired() (
       fileContent = file.getBytes,
       fileMIMEType = file.getContentType)
 
-    for {
-      upload <- attachmentService.uploadAttachment(origFile)
-      update <- schemaService.schemaUpload(principal.getUsername, name, version, sparkStruct)
-    } yield update
+    try {
+
+      for {
+        // the parsing of sparkStruct can fail, therefore we try to save it first before saving the attachment
+        update <- schemaService.schemaUpload(principal.getUsername, name, version, sparkStruct)
+        _ <- attachmentService.uploadAttachment(origFile)
+      } yield update
+    } catch {
+      case e: SchemaParsingException => throw e.copy(schemaType = schemaType) //adding schema type
+    }
   }
 
   @GetMapping(path = Array("/export/{name}/{version}"))
@@ -146,5 +155,4 @@ class SchemaController @Autowired() (
         throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, cause = e)
     }
   }
-
 }

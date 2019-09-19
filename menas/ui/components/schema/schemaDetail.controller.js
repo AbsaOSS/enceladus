@@ -182,7 +182,7 @@ sap.ui.define([
         this.byId("schemaIconTabBar").setSelectedKey("info");
       } else if (status === 400) {
         const sSchemaType = this.byId("schemaFormatSelect").getSelectedItem().getText();
-        const errorMessage = ResponseUtils.getErrorMessage(oParams.getParameter("responseRaw"));
+        const errorMessage = ResponseUtils.getBadRequestErrorMessage(oParams.getParameter("responseRaw"));
         const errorMessageDetails = errorMessage ? `\n\nDetails:\n${errorMessage}` : "";
         MessageBox.error(`Error parsing the schema file. Ensure that the file is a valid ${sSchemaType} schema and ` +
           `try again.${errorMessageDetails}`)
