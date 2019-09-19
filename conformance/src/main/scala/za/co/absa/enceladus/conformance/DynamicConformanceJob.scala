@@ -251,7 +251,7 @@ object DynamicConformanceJob {
       .flatMap(checkpoint =>
         checkpoint.controls.filter(control =>
           control.controlName.equalsIgnoreCase(controlTypeRecordCount)))
-      .forall(m => Try(m.controlValue.toString.toLong).getOrElse(1L) == 0L)
+      .forall(m => Try(m.controlValue.toString.toDouble).toOption.contains(0D))
 
     if (areCountMeasurementsAllZero) {
       log.warn("Empty output after running Dynamic Conformance. Previous checkpoints show this is correct.")
