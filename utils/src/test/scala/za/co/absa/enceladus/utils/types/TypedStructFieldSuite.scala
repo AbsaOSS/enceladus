@@ -46,7 +46,7 @@ class TypedStructFieldSuite extends FunSuite {
       }
     }
     val metadataBuilder: MetadataBuilder = otherMetadata.foldLeft(new MetadataBuilder()) (
-      (builder, data) => addMetadata(builder, data._1, Some(data._2)))
+      (builder, data) => addMetadata(builder, key = data._1, value = Some(data._2)))
     val metadata = addMetadata(metadataBuilder, MetadataKeys.DefaultValue, default).build()
     StructField(fieldName, dataType, nullable,metadata)
   }
