@@ -218,7 +218,7 @@ object DynamicConformanceJob {
       case None    => withPartCols.count
       case Some(p) => p
     }
-    if (recordCount == 0) { handleEmptyOutputAfterConformance }
+    if (recordCount == 0) { handleEmptyOutputAfterConformance() }
 
     // ensure the whole path but version exists
     fsUtils.createAllButLastSubDir(pathCfg.publishPath)
@@ -244,15 +244,17 @@ object DynamicConformanceJob {
     }
   }
 
-  private def handleEmptyOutputAfterConformance(implicit spark: SparkSession): Unit = {
+  private def handleEmptyOutputAfterConformance()(implicit spark: SparkSession): Unit = {
+    import za.co.absa.atum.core.Constants._
+
     val areCountMeasurementsAllZero = Atum.getControMeasure.checkpoints
       .flatMap(checkpoint =>
         checkpoint.controls.filter(control =>
-          control.controlName.equalsIgnoreCase(za.co.absa.atum.core.Constants.controlTypeRecordCount)))
+          control.controlName.equalsIgnoreCase(controlTypeRecordCount)))
       .forall(m => Try(m.controlValue.toString.toLong).getOrElse(1L) == 0L)
 
     if (areCountMeasurementsAllZero) {
-      log.warn("Empty output after running Dynamic Conformance. Previous checkpoint show this is correct.")
+      log.warn("Empty output after running Dynamic Conformance. Previous checkpoints show this is correct.")
     } else {
       val errMsg = "Empty output after running Dynamic Conformance, " +
         "while previous checkpoints show non zero record count"

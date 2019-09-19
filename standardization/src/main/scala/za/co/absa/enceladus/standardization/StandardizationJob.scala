@@ -281,7 +281,7 @@ object StandardizationJob {
       case None    => std.count
       case Some(p) => p
     }
-    if (recordCount == 0) { handleEmptyOutputAfterStandardization }
+    if (recordCount == 0) { handleEmptyOutputAfterStandardization() }
 
     stdRenameSourceColumns.write.parquet(pathCfg.outputPath)
     // Store performance metrics
@@ -297,15 +297,17 @@ object StandardizationJob {
     stdRenameSourceColumns.writeInfoFile(pathCfg.outputPath)
   }
 
-  private def handleEmptyOutputAfterStandardization(implicit spark: SparkSession): Unit = {
+  private def handleEmptyOutputAfterStandardization()(implicit spark: SparkSession): Unit = {
+    import za.co.absa.atum.core.Constants._
+
     val areCountMeasurementsAllZero = Atum.getControMeasure.checkpoints
       .flatMap(checkpoint =>
         checkpoint.controls.filter(control =>
-          control.controlName.equalsIgnoreCase(za.co.absa.atum.core.Constants.controlTypeRecordCount)))
+          control.controlName.equalsIgnoreCase(controlTypeRecordCount)))
       .forall(m => Try(m.controlValue.toString.toLong).getOrElse(1L) == 0L)
 
     if (areCountMeasurementsAllZero) {
-      log.warn("Empty output after running Standardization. Previous checkpoint show this is correct.")
+      log.warn("Empty output after running Standardization. Previous checkpoints show this is correct.")
     } else {
       val errMsg = "Empty output after running Standardization, while previous checkpoints show non zero record count"
       AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", errMsg, "")
