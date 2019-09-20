@@ -31,7 +31,6 @@ import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.standardization._
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
@@ -39,8 +38,8 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 
 import scala.collection.immutable.HashMap
+import scala.util.Try
 import scala.util.control.NonFatal
-import scala.math.max
 
 object StandardizationJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
@@ -137,10 +136,12 @@ object StandardizationJob {
     *
     * @param cmd      Command line parameters containing format-specific options
     * @param dataset  A dataset definition
-    * @param numberOfColumns (Optional) number of columns, enables reading CSV files with the number of columns larger than Spark default
+    * @param numberOfColumns (Optional) number of columns, enables reading CSV files with the number of columns
+    *                        larger than Spark default
     * @return The updated dataframe reader
     */
-  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, numberOfColumns: Int = 0)(implicit spark: SparkSession): DataFrameReader = {
+  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, numberOfColumns: Int = 0)
+                             (implicit spark: SparkSession): DataFrameReader = {
     val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
     val options = getCobolOptions(cmd, dataset) ++
@@ -280,11 +281,8 @@ object StandardizationJob {
       case None    => std.count
       case Some(p) => p
     }
-    if (recordCount == 0) {
-      val errMsg = "Empty output after running Standardization."
-      AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", errMsg, "")
-      throw new IllegalStateException(errMsg)
-    }
+    if (recordCount == 0) { handleEmptyOutputAfterStandardization() }
+
     stdRenameSourceColumns.write.parquet(pathCfg.outputPath)
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
@@ -299,7 +297,26 @@ object StandardizationJob {
     stdRenameSourceColumns.writeInfoFile(pathCfg.outputPath)
   }
 
-  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
+  private def handleEmptyOutputAfterStandardization()(implicit spark: SparkSession): Unit = {
+    import za.co.absa.atum.core.Constants._
+
+    val areCountMeasurementsAllZero = Atum.getControMeasure.checkpoints
+      .flatMap(checkpoint =>
+        checkpoint.controls.filter(control =>
+          control.controlName.equalsIgnoreCase(controlTypeRecordCount)))
+      .forall(m => Try(m.controlValue.toString.toDouble).toOption.contains(0D))
+
+    if (areCountMeasurementsAllZero) {
+      log.warn("Empty output after running Standardization. Previous checkpoints show this is correct.")
+    } else {
+      val errMsg = "Empty output after running Standardization, while previous checkpoints show non zero record count"
+      AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", errMsg, "")
+      throw new IllegalStateException(errMsg)
+    }
+  }
+
+  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)
+                              (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
     if (fsUtils.isNonSplittable(path)) {
       convertToSplittable(df, path, schema)
     } else {
@@ -307,7 +324,8 @@ object StandardizationJob {
     }
   }
 
-  private def convertToSplittable(df: DataFrame, path: String, schema: StructType)(implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
+  private def convertToSplittable(df: DataFrame, path: String, schema: StructType)
+                                 (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
     log.warn("Dataset is stored in a non-splittable format. This can have a severe performance impact.")
 
     val tempParquetDir = s"/tmp/nonsplittable-to-parquet-${UUID.randomUUID()}"

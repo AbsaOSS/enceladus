@@ -107,6 +107,10 @@ class RestDAO {
     return RestClient.get(`api/${this.entityType}/allVersions/${encodeURI(name)}`)
   }
 
+  getLatestVersionByName(name) {
+    return RestClient.get(`api/${this.entityType}/detail/${encodeURI(name)}/latestVersion`)
+  }
+
   getLatestByName(name) {
     return RestClient.get(`api/${this.entityType}/detail/${encodeURI(name)}/latest`)
   }

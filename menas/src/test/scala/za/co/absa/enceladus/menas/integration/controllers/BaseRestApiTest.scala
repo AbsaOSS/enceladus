@@ -26,6 +26,7 @@ import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.context.annotation.Bean
 import org.springframework.http._
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
+import org.springframework.util.LinkedMultiValueMap
 import za.co.absa.enceladus.menas.integration.repositories.BaseRepositoryTest
 
 import scala.concurrent.Future
@@ -92,6 +93,15 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     send(HttpMethod.POST, urlPath, headers, bodyOpt)
   }
 
+  def sendPostUploadFile[T](urlPath: String,
+                            fileName: String,
+                            parameters: Map[String, Any],
+                            fileParamName: String = "file",
+                            headers: HttpHeaders = new HttpHeaders())
+                           (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    upload(urlPath, headers, fileParamName, fileName, parameters)
+  }
+
   def sendPostAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): Future[ResponseEntity[T]] = {
     sendAsync(HttpMethod.POST, urlPath, headers, bodyOpt)
@@ -134,6 +144,29 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
 
     restTemplate.exchange(url, method, httpEntity, clazz)
+  }
+
+  def upload[T](urlPath: String,
+                headers: HttpHeaders = HttpHeaders.EMPTY,
+                fileParamName: String,
+                fileName: String,
+                additionalParams: Map[String, Any])
+               (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+
+    val parameters = new LinkedMultiValueMap[String, Any]
+    parameters.add(fileParamName, new org.springframework.core.io.ClassPathResource(fileName))
+    additionalParams.foreach {
+      case (key, value) => parameters.add(key, value)
+    }
+
+    val url = s"$baseUrl/$urlPath"
+    headers.addAll(authHeaders)
+    headers.setContentType(MediaType.MULTIPART_FORM_DATA)
+
+    val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
+
+    val httpEntity = new HttpEntity[LinkedMultiValueMap[String, Any]](parameters, headers)
+    restTemplate.exchange(url, HttpMethod.POST, httpEntity, clazz)
   }
 
   def assertOk(responseEntity: ResponseEntity[_]): Unit = {

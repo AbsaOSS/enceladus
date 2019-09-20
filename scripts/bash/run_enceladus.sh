@@ -258,7 +258,7 @@ add_to_cmd_line "--driver-cores" ${DRIVER_CORES}
 add_to_cmd_line "--driver-memory" ${DRIVER_MEMORY}
 
 # Adding JVM configuration, entry point class name and the jar file
-CMD_LINE="$CMD_LINE --conf \"$CONF\" --class $CLASS $JAR"
+CMD_LINE="${CMD_LINE} --conf \"${CONF} ${ADDITIONAL_SPARK_CONF}\" --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
 add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
@@ -290,7 +290,6 @@ if [[ -z "$DRY_RUN" ]]; then
     DATE=`date +%Y_%m_%d-%H_%M_%S`
     NAME=`sed -e 's#.*\.\(\)#\1#' <<< $CLASS`
     TMP_PATH_NAME="$LOG_DIR/enceladus_${NAME}_${DATE}.log"
-
     # Initializing Kerberos ticket
     if [[ ! -z "$MENAS_AUTH_KEYTAB" ]]; then
       # Get principle stored in the keyfile (Thanks @Zejnilovic)
@@ -308,17 +307,23 @@ if [[ -z "$DRY_RUN" ]]; then
         sleep 10
       fi
     fi
-
     # Log the log location
     echo "$CMD_LINE" >> "$TMP_PATH_NAME"
     echo "The log will be saved to $TMP_PATH_NAME"
-
-    # Run the job
-    bash -c "$CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
-
-    # Report the log location
-    echo
-    echo "Job has finished. The logs are saved to $TMP_PATH_NAME"
+    # Run the job and return exit status of the last failed command in the subshell pipeline (Issue #893)
+    bash -c "set -o pipefail; $CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
+	# Save the exit status of spark submit subshell run
+	EXIT_STATUS="$?"
+	# Test if the command executed successfully
+	if [ $EXIT_STATUS -eq 0 ]; then
+      RESULT="passed"
+	else
+	  RESULT="failed"
+	fi
+	# Report the result and log location
+	echo ""
+	echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME"
+	exit $EXIT_STATUS
   else
     bash -c "$CMD_LINE"
   fi

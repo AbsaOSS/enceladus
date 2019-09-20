@@ -36,6 +36,7 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
+import scala.util.Try
 import scala.util.control.NonFatal
 
 object DynamicConformanceJob {
@@ -217,12 +218,8 @@ object DynamicConformanceJob {
       case None    => withPartCols.count
       case Some(p) => p
     }
+    if (recordCount == 0) { handleEmptyOutputAfterConformance() }
 
-    if (recordCount == 0) {
-      val errMsg = "Empty output after running Dynamic Conformance."
-      AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", errMsg, "")
-      throw new IllegalStateException(errMsg)
-    }
     // ensure the whole path but version exists
     fsUtils.createAllButLastSubDir(pathCfg.publishPath)
 
@@ -244,6 +241,25 @@ object DynamicConformanceJob {
 
     if (isAutocleanStdFolderEnabled()) {
       fsUtils.deleteDirectoryRecursively(pathCfg.stdPath)
+    }
+  }
+
+  private def handleEmptyOutputAfterConformance()(implicit spark: SparkSession): Unit = {
+    import za.co.absa.atum.core.Constants._
+
+    val areCountMeasurementsAllZero = Atum.getControMeasure.checkpoints
+      .flatMap(checkpoint =>
+        checkpoint.controls.filter(control =>
+          control.controlName.equalsIgnoreCase(controlTypeRecordCount)))
+      .forall(m => Try(m.controlValue.toString.toDouble).toOption.contains(0D))
+
+    if (areCountMeasurementsAllZero) {
+      log.warn("Empty output after running Dynamic Conformance. Previous checkpoints show this is correct.")
+    } else {
+      val errMsg = "Empty output after running Dynamic Conformance, " +
+        "while previous checkpoints show non zero record count"
+      AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", errMsg, "")
+      throw new IllegalStateException(errMsg)
     }
   }
 

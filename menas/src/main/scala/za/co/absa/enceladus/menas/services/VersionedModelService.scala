@@ -62,6 +62,13 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   }
 
+  def getLatestVersionNumber(name: String): Future[Int] = {
+    versionedMongoRepository.getLatestVersionValue(name).flatMap({
+      case Some(version) => Future(version)
+      case _ => throw NotFoundException()
+    })
+  }
+
   def getLatestVersionValue(name: String): Future[Option[Int]] = {
     versionedMongoRepository.getLatestVersionValue(name)
   }
@@ -139,11 +146,14 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private[services] def updateFuture(username: String, itemName: String, itemVersion: Int)(transform: C => Future[C]): Future[Option[C]] = {
     for {
-      version <- getVersion(itemName, itemVersion)
-      transformed <- if (version.isEmpty) {
+      versionToUpdate <- getLatestVersion(itemName)
+      transformed <- if (versionToUpdate.isEmpty) {
         Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
-      } else {
-        transform(version.get)
+      } else if (versionToUpdate.get.version != itemVersion) {
+        Future.failed(ValidationException(Validation().withError("version", s"Version $itemVersion of $itemName is not the latest version, therefore cannot be edited")))
+      }
+      else {
+        transform(versionToUpdate.get)
       }
       update <- versionedMongoRepository.update(username, transformed)
         .recover {

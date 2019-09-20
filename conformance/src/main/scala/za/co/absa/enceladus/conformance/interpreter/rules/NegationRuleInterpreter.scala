@@ -32,28 +32,30 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
   override def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
     NegationRuleInterpreter.validateInputField(progArgs.datasetName, df.schema, rule.inputColumn)
 
-    val fieldType = SchemaUtils.getFieldType(rule.inputColumn, df.schema).get
+    val field = SchemaUtils.getField(rule.inputColumn, df.schema).get
+
     val negationErrUdfCall = callUDF("confNegErr", lit(rule.outputColumn), col(rule.inputColumn))
     val errCol = "errCol"
 
-    fieldType match {
+    field.dataType match {
       case _: DecimalType =>
         // Negating decimal cannot fail
         DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => negate(c))
       case _: BooleanType =>
+        // Negating Boolean cannot fail
         DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => not(c))
       case _: DoubleType | _: FloatType =>
         // Negating floating point numbers cannot fail, but we need to account
         // for signed zeros (see the note for getNegator()).
-        DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => getNegator(c, fieldType))
-      case _ =>
+        DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => getNegator(c, field))
+      case dt =>
         // The generic negation with checking for error conditions
         DeepArrayTransformations.nestedWithColumnAndErrorMap(df, rule.inputColumn, rule.outputColumn, errCol,
-          c => getNegator(c, fieldType), c => getError(c, negationErrUdfCall, fieldType))
+          c => getNegator(c, field), c => getError(c, negationErrUdfCall, dt))
     }
   }
 
-  private def getNegator(inputColumn: Column, inputDataType: DataType): Column = {
+  private def getNegator(inputColumn: Column, field: StructField): Column = {
     // Just a couple JVM things:
     // 1. Beware of silent integer overflow, -Int.MinValue == Int.MaxValue + 1 == Int.MinValue
     //    Proof:
@@ -63,13 +65,18 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
     // 2. Beware negative floating-point zeroes, i.e. 0.0 * -1 == -0.0
     //    Equality (0.0 == -0.0) holds true, but Spark SQL considers 0.0 and -0.0 distinct and fails joins
     // The above is true not only for JVM, but for the most of the CPU/hardware implementations of numeric data types
+
+    def defaultValue(dt: DataType, nullable: Boolean): Any = {
+      Defaults.getGlobalDefaultWithNull(dt, field.nullable).get.orNull
+    }
+
     val neg = negate(inputColumn)
-    inputDataType match {
+    field.dataType match {
       case _: DoubleType | _: FloatType => when(inputColumn === 0.0, 0.0).otherwise(neg)
-      case dt: ByteType => when(inputColumn === Byte.MinValue, Defaults.getGlobalDefault(dt)).otherwise(neg)
-      case dt: ShortType => when(inputColumn === Short.MinValue, Defaults.getGlobalDefault(dt)).otherwise(neg)
-      case dt: IntegerType => when(inputColumn === Int.MinValue, Defaults.getGlobalDefault(dt)).otherwise(neg)
-      case dt: LongType => when(inputColumn === Long.MinValue, Defaults.getGlobalDefault(dt)).otherwise(neg)
+      case dt: ByteType => when(inputColumn === Byte.MinValue, defaultValue(dt, field.nullable)).otherwise(neg)
+      case dt: ShortType => when(inputColumn === Short.MinValue, defaultValue(dt, field.nullable)).otherwise(neg)
+      case dt: IntegerType => when(inputColumn === Int.MinValue,defaultValue(dt, field.nullable)).otherwise(neg)
+      case dt: LongType => when(inputColumn === Long.MinValue, defaultValue(dt, field.nullable)).otherwise(neg)
       case _ => neg
     }
   }
