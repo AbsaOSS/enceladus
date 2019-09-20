@@ -431,12 +431,6 @@
             </properties>
         </profile>
         <profile>
-            <id>selenium</id>
-            <modules>
-                <module>selenium</module>
-            </modules>
-        </profile>
-        <profile>
             <id>license-check</id>
             <build>
                 <plugins>
