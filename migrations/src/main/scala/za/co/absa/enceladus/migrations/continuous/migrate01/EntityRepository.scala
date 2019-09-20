@@ -159,7 +159,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
     * @param document A JSON representation of a document.
     */
   def insertDocument(document: String): Unit = {
-    log.info(s"INSERT INTO $collectionName: $document")
+    log.debug(s"INSERT INTO $collectionName: $document")
     db.getCollection(collectionName)
       .insertOne(BsonDocument(document))
       .execute()
