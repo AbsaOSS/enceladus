@@ -26,8 +26,8 @@ import za.co.absa.enceladus.migrations.framework.ObjectIdTools
 import za.co.absa.enceladus.migrations.migrations.model0
 import za.co.absa.enceladus.migrations.migrations.model0.Serializer0
 
-import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 /**
   * The class provides runs continuous migration from model version 0 to model version 1.
@@ -47,17 +47,25 @@ final class RunMigrator(evm: EntityVersionMap,
   override def migrate(): Unit = {
     val repoOld = new EntityRepository(dbOld, collectionOld)
     val repoNew = new EntityRepository(dbNew, collectionNew)
+    var count = 0
+    var migratedCount = 0
 
     val runsOld = repoOld.getSortedRuns
+
+    log.info(s"Started migration from $collectionOld to $collectionNew...")
 
     runsOld.foreach(runOld => {
       val objectId = ObjectIdTools.getObjectIdFromDocument(runOld)
       objectId.foreach(id => {
+        count += 1
         if (!repoNew.doesDocumentExist(id)) {
+          migratedCount += 1
           migrateEntity(runOld, id, repoNew)
         }
       })
     })
+
+    log.info(s"Imported $migratedCount new documents (from $count in the old database) from $collectionOld to $collectionNew.")
   }
 
   /**
