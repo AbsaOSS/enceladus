@@ -50,11 +50,9 @@ final class RunMigrator(evm: EntityVersionMap,
     var count = 0
     var migratedCount = 0
 
-    val runsOld = repoOld.getSortedRuns
-
     log.info(s"Started migration from $collectionOld to $collectionNew...")
 
-    runsOld.foreach(runOld => {
+    repoOld.processSortedRuns(runOld => {
       val objectId = ObjectIdTools.getObjectIdFromDocument(runOld)
       objectId.foreach(id => {
         count += 1

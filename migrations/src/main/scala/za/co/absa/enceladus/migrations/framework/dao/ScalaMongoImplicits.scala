@@ -17,11 +17,11 @@ package za.co.absa.enceladus.migrations.framework.dao
 
 import java.util.concurrent.TimeUnit
 
-import org.mongodb.scala.{FindObservable, Observable, SingleObservable}
+import org.mongodb.scala.{FindObservable, Observable, Observer, SingleObservable}
 import za.co.absa.enceladus.migrations.framework.Configuration
 
-import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Promise}
 
 /**
   * These implicits extend observables returned by Scala MongoDB driver with .execute() method
@@ -41,4 +41,23 @@ object ScalaMongoImplicits {
   implicit class FindObservableExecutor[T](observable: FindObservable[T]) {
     def execute(): Seq[T] = Await.result(observable.toFuture, executionTimeout)
   }
+
+  implicit class FindObservableTraversable[T](observable: FindObservable[T]) {
+    def foreach(transform: T => Unit): Unit = {
+      val p = Promise[Unit]()
+      val f = p.future
+
+      observable.subscribe(new Observer[T] {
+        override def onNext(result: T): Unit = transform(result)
+
+        override def onError(e: Throwable): Unit = p.failure(new RuntimeException("Error"))
+
+        override def onComplete(): Unit = p.success()
+      })
+
+      // An infinite wait since processing all documents in a collection can take a long time
+      Await.result(f, Duration.Inf)
+    }
+  }
+
 }

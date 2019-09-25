@@ -48,11 +48,12 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
   }
 
   /**
-    * Returns iterator to a sorted collection of runs. Documents are sorted by datasetName, datasetVersion and runId.
+    * Transforms all runs in a sorted order.
     *
+    * @param f A transformer function for a run.
     * @return An iterator to a JSON representation of the documents.
     */
-  def getSortedRuns: Iterator[String] = {
+  def processSortedRuns(f: String => Unit): Unit = {
     db.getCollection(collectionName)
       .find(
         or(
@@ -61,9 +62,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
         )
       )
       .sort(ascending("dataset", "datasetVersion", "runId"))
-      .execute()
-      .toIterator
-      .map(_.toJson)
+      .foreach(s => f(s.toJson))
   }
 
   /**
