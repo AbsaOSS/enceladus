@@ -34,21 +34,19 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
-    * Returns iterator to a sorted collection of documents. Documents are sorted by name and version.
+    * Processes Menas entity documents in the sorted order.
     *
     * @return An iterator to a JSON representation of the documents.
     */
-  def getSortedDocuments: Iterator[String] = {
+  def processSortedDocuments(f: String => Unit): Unit = {
     db.getCollection(collectionName)
       .find()
       .sort(ascending("name", "version"))
-      .execute()
-      .toIterator
-      .map(_.toJson)
+      .foreach(s => f(s.toJson))
   }
 
   /**
-    * Transforms all runs in a sorted order.
+    * Transforms all runs in the sorted order.
     *
     * @param f A transformer function for a run.
     * @return An iterator to a JSON representation of the documents.
