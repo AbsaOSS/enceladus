@@ -50,7 +50,7 @@ object ScalaMongoImplicits {
       observable.subscribe(new Observer[T] {
         override def onNext(result: T): Unit = transform(result)
 
-        override def onError(e: Throwable): Unit = p.failure(new RuntimeException("Error"))
+        override def onError(e: Throwable): Unit = p.failure(new RuntimeException("Error fetching MongoDB documents.", e))
 
         override def onComplete(): Unit = p.success()
       })
