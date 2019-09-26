@@ -34,24 +34,24 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
-    * Processes Menas entity documents in the sorted order.
+    * Traverses a sorted collection of Menas entities and executes a function on each document.
     *
     * @return An iterator to a JSON representation of the documents.
     */
-  def processSortedDocuments(f: String => Unit): Unit = {
+  def sortedDocumentsForEach(f: String => Unit): Unit = {
     db.getCollection(collectionName)
       .find()
       .sort(ascending("name", "version"))
-      .foreach(s => f(s.toJson))
+      .foreach(document => f(document.toJson))
   }
 
   /**
-    * Transforms all runs in the sorted order.
+    * Traverses a sorted collection of runs and executes a function on each document.
     *
     * @param f A transformer function for a run.
     * @return An iterator to a JSON representation of the documents.
     */
-  def processSortedRuns(f: String => Unit): Unit = {
+  def sortedRunsForEach(f: String => Unit): Unit = {
     db.getCollection(collectionName)
       .find(
         or(
@@ -60,7 +60,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
         )
       )
       .sort(ascending("dataset", "datasetVersion", "runId"))
-      .foreach(s => f(s.toJson))
+      .foreach(document => f(document.toJson))
   }
 
   /**
