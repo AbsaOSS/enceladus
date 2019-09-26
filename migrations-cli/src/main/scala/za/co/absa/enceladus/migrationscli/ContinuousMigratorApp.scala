@@ -39,12 +39,17 @@ object ContinuousMigratorApp {
     val mongoClientSrc = MongoClient(cmd.mongoDbUrlSrc)
     val mongoClientTrg = MongoClient(cmd.mongoDbUrlTrg)
 
-    val dbSrc = mongoClientSrc.getDatabase(cmd.databaseSrc)
-    val dbTrg = mongoClientTrg.getDatabase(cmd.databaseTrg)
+    try {
+      val dbSrc = mongoClientSrc.getDatabase(cmd.databaseSrc)
+      val dbTrg = mongoClientTrg.getDatabase(cmd.databaseTrg)
 
-    val mig = new ContinuousMigrator(dbSrc, dbTrg)
+      val mig = new ContinuousMigrator(dbSrc, dbTrg)
 
-    mig.migrate()
+      mig.migrate()
+    } finally {
+      mongoClientSrc.close()
+      mongoClientTrg.close()
+    }
   }
 
 }
