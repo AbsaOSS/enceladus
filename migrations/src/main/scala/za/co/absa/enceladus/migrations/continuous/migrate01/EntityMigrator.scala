@@ -65,7 +65,7 @@ abstract class EntityMigrator(databaseOld: MongoDatabase,
 
     log.info(s"Started migration from $collectionOld to $collectionNew...")
 
-    repoOld.processSortedDocuments(entityOld => {
+    repoOld.sortedDocumentsForEach(entityOld => {
       val objectId = ObjectIdTools.getObjectIdFromDocument(entityOld)
       objectId.foreach(id => {
         count += 1
