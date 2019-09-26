@@ -35,11 +35,16 @@ object MigratorApp {
     val cmd: MigratorCmdConfig = MigratorCmdConfig(args)
 
     val mongoClient = MongoClient(cmd.mongoDbURL)
-    val db = new MongoDb(mongoClient.getDatabase(cmd.database))
 
-    val mig = new Migrator(db, Migrations)
+    try {
+      val db = new MongoDb(mongoClient.getDatabase(cmd.database))
 
-    mig.migrate(cmd.targetVersion)
+      val mig = new Migrator(db, Migrations)
+
+      mig.migrate(cmd.targetVersion)
+    } finally {
+      mongoClient.close()
+    }
   }
 
 }
