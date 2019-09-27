@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.migrationscli
 
 import org.mongodb.scala.MongoClient
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.framework.Migrator
 import za.co.absa.enceladus.migrations.framework.dao.MongoDb
 import za.co.absa.enceladus.migrations.migrations._
@@ -29,6 +30,7 @@ import za.co.absa.enceladus.migrationscli.cmd.MigratorCmdConfig
   *     --mongodb-url <MongoDb URL> --database <Database Name> --new-db-version <New DB version>
   */
 object MigratorApp {
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   def main(args: Array[String]) {
 
@@ -38,11 +40,23 @@ object MigratorApp {
 
     try {
       val db = new MongoDb(mongoClient.getDatabase(cmd.database))
+      val dbVersion = db.getVersion()
 
       val mig = new Migrator(db, Migrations)
 
-      mig.migrate(cmd.targetVersion)
-    } finally {
+      if (!mig.isMigrationRequired(cmd.targetVersion)) {
+        if (dbVersion == cmd.targetVersion) {
+          log.info(s"The database version is already $dbVersion. No migration needed.")
+        } else {
+          log.warn(s"No migration needed to version ${cmd.targetVersion} since the database version is $dbVersion.")
+        }
+      } else {
+        log.info(s"Migrating the database from version $dbVersion to ${cmd.targetVersion}...")
+        mig.migrate(cmd.targetVersion)
+        log.info(s"The migration is complete.")
+      }
+    }
+    finally {
       mongoClient.close()
     }
   }

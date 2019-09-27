@@ -236,10 +236,9 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
     *
     * @param collectionName A collection name to load documents from.
     * @param f              A function to apply for each document in the collection.
-    * @return An iterator to documents in the collection.
     */
   def forEachDocument(collectionName: String)(f: String => Unit): Unit = {
-    log.info(s"Processing all documents for $collectionName...")
+    log.info(s"Processing all documents of $collectionName...")
     getCollection(collectionName)
       .find()
       .foreach(document => f(document.toJson))
