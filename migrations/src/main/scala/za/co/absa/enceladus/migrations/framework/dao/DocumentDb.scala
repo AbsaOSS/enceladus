@@ -98,7 +98,6 @@ abstract class DocumentDb {
     *
     * @param collectionName A collection name to load documents from.
     * @param f              A function to apply for each document in the collection.
-    * @return An iterator to documents in the collection.
     */
   def forEachDocument(collectionName: String)(f: String => Unit): Unit
 
