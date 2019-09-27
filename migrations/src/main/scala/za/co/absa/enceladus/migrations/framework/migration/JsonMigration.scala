@@ -16,8 +16,8 @@
 package za.co.absa.enceladus.migrations.framework.migration
 
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.enceladus.migrations.framework.{MigrationUtils, ObjectIdTools}
 import za.co.absa.enceladus.migrations.framework.dao.DocumentDb
+import za.co.absa.enceladus.migrations.framework.{MigrationUtils, ObjectIdTools}
 
 import scala.collection.mutable
 
@@ -124,11 +124,10 @@ trait JsonMigration extends Migration {
 
     log.info(s"Applying a per-document transformation $sourceCollection -> $targetCollection")
 
-    val documents = db.getDocuments(sourceCollection)
     val transformer = transformers(collectionName)
     var invalidDocumentsCount = 0
 
-    documents.foreach(doc => {
+    db.forEachDocument(sourceCollection)(doc => {
       val oid = ObjectIdTools.getObjectIdFromDocument(doc)
       val newDocument = ObjectIdTools.putObjectIdIfNotPresent(transformer(doc), oid)
       if (newDocument.nonEmpty) {
