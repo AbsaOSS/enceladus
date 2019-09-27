@@ -43,7 +43,7 @@ object ScalaMongoImplicits {
   }
 
   implicit class FindObservableTraversable[T](observable: FindObservable[T]) {
-    def foreach(transform: T => Unit): Unit = {
+    def syncForeach(transform: T => Unit): Unit = {
       val p = Promise[Unit]()
       val f = p.future
 

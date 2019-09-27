@@ -42,7 +42,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
     db.getCollection(collectionName)
       .find()
       .sort(ascending("name", "version"))
-      .foreach(document => f(document.toJson))
+      .syncForeach(document => f(document.toJson))
   }
 
   /**
@@ -60,7 +60,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
         )
       )
       .sort(ascending("dataset", "datasetVersion", "runId"))
-      .foreach(document => f(document.toJson))
+      .syncForeach(document => f(document.toJson))
   }
 
   /**
