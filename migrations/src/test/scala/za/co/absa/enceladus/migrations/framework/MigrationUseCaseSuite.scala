@@ -81,7 +81,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "createIndex(dataset_v1,List((order: ASC)),false)" ::
         "createIndex(dataset_v1,List((version: DESC)),false)" ::
         "empty(schema_v1)" ::
-        "getDocuments(schema)" ::
+        "forEachDocument(schema)" ::
         "insertTo(schema_v1)" ::
         "{collStats: \"dataset_v1\", scale: undefined, $readPreference: { mode: \"secondaryPreferred\"}}" ::
         "{collStats: \"mappingtable_v1\", $readPreference: { mode: \"secondaryPreferred\"}}" ::
@@ -128,7 +128,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "createIndex(dataset_v1,List((order: ASC)),false)" ::
         "createIndex(dataset_v1,List((version: DESC)),false)" ::
         "empty(schema_v1)" ::
-        "getDocuments(schema)" ::
+        "forEachDocument(schema)" ::
         "insertTo(schema_v1)" ::
         "{collStats: \"dataset_v1\", scale: undefined, $readPreference: { mode: \"secondaryPreferred\"}}" ::
         "{collStats: \"mappingtable_v1\", $readPreference: { mode: \"secondaryPreferred\"}}" ::
@@ -140,7 +140,7 @@ class MigrationUseCaseSuite extends FunSuite {
         "clone(attachment_v1,attachment_v2)" ::
         "dropIndex(dataset_v2,List((order: ASC)))" ::
         "empty(schema_v2)" ::
-        "getDocuments(schema_v1)" ::
+        "forEachDocument(schema_v1)" ::
         "insertTo(schema_v2)" ::
         "{collStats: \"schema_v2\"}" ::
         "setDbVersion(2)" ::

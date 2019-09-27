@@ -15,18 +15,18 @@
 
 package za.co.absa.enceladus.migrations.framework.dao
 
-import org.mongodb.scala.bson.codecs.Macros._
-import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.bson.codecs.Macros._
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.{MongoCollection, MongoDatabase, MongoNamespace}
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.enceladus.migrations.framework.model.DbVersion
 import za.co.absa.enceladus.migrations.framework.Configuration.DatabaseVersionCollectionName
 import za.co.absa.enceladus.migrations.framework.migration.IndexField
+import za.co.absa.enceladus.migrations.framework.model.DbVersion
 
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
@@ -216,6 +216,11 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
 
   /**
     * Returns an iterator on all documents in the specified collection.
+    *
+    * Note. This method loads all documents into memory. Use this method only for small collections.
+    *       Most of the time `forEachDocument()` is preferred.
+    * @param collectionName A collection name to load documents from.
+    * @return An iterator to documents in the collection.
     */
   override def getDocuments(collectionName: String): Iterator[String] = {
     log.info(s"Getting all documents for $collectionName...")
@@ -224,6 +229,20 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
       .execute()
       .toIterator
       .map(_.toJson())
+  }
+
+  /**
+    * Traverses a collection and executes a function on each document.
+    *
+    * @param collectionName A collection name to load documents from.
+    * @param f              A function to apply for each document in the collection.
+    * @return An iterator to documents in the collection.
+    */
+  def forEachDocument(collectionName: String)(f: String => Unit): Unit = {
+    log.info(s"Processing all documents for $collectionName...")
+    getCollection(collectionName)
+      .find()
+      .foreach(document => f(document.toJson))
   }
 
   /**

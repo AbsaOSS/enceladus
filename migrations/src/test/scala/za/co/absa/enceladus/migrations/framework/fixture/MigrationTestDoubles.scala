@@ -35,5 +35,6 @@ object MigrationTestDoubles {
     override def insertDocument(collectionName: String, document: String): Unit = {}
     override def executeCommand(query: String): Unit = {}
     override def getDocuments(collectionName: String): Iterator[String] = List[String]().toIterator
+    override def forEachDocument(collectionName: String)(f: String => Unit): Unit = {}
   }
 }

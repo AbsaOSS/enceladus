@@ -123,6 +123,14 @@ class DocumentDbMock extends DocumentDb {
     db(collectionName).toIterator
   }
 
+  override def forEachDocument(collectionName: String)(f: String => Unit): Unit = {
+    if (!doesCollectionExists(collectionName)) {
+      throw new IllegalStateException(s"Collection does not exist: '$collectionName'.")
+    }
+    actionsExecuted += s"forEachDocument($collectionName)"
+    db(collectionName).foreach(f)
+  }
+
   override def executeCommand(cmd: String): Unit = {
     actionsExecuted += cmd
   }
