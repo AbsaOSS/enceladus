@@ -23,7 +23,8 @@ object RestDaoFactory {
 
   def getInstance(authCredentials: MenasCredentials, apiBaseUrl: String): MenasRestDAO = {
     val authClient = AuthClient(authCredentials, apiBaseUrl)
-    new MenasRestDAO(apiBaseUrl, authClient, restTemplate)
+    val restClient = new RestClient(authClient, restTemplate)
+    new MenasRestDAO(apiBaseUrl, restClient)
   }
 
 }

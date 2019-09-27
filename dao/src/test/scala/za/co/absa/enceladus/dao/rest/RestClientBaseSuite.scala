@@ -18,32 +18,21 @@ package za.co.absa.enceladus.dao.rest
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito
 import org.mockito.stubbing.OngoingStubbing
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
 import org.springframework.http._
 import org.springframework.web.client.RestTemplate
-import za.co.absa.enceladus.dao.{AuthClient, MenasRestDAO, UnauthorizedException}
-import za.co.absa.enceladus.model.test.VersionedModelMatchers
+import za.co.absa.enceladus.dao.{AuthClient, RestClient, UnauthorizedException}
 
-object MenasRestDAOBaseSuite {
-  val apiBaseUrl = "http://test/api"
-}
-
-abstract class MenasRestDAOBaseSuite extends WordSpec
-  with Matchers
-  with VersionedModelMatchers
-  with MockitoSugar
-  with BeforeAndAfter {
+abstract class RestClientBaseSuite extends BaseTestSuite {
 
   val authClient: AuthClient = mock[AuthClient]
   val restTemplate: RestTemplate = mock[RestTemplate]
 
-  val restDAO: MenasRestDAO = new MenasRestDAO(MenasRestDAOBaseSuite.apiBaseUrl, authClient, restTemplate)
+  val restClient: RestClient = new RestClient(authClient, restTemplate)
 
   before {
     Mockito.reset(authClient)
     Mockito.reset(restTemplate)
-    restDAO.authHeaders = new HttpHeaders()
+    restClient.authHeaders = new HttpHeaders()
   }
 
   def stubOkGetRequest(url: String,
@@ -56,7 +45,7 @@ abstract class MenasRestDAOBaseSuite extends WordSpec
   def stubCreatedPostRequest[T](url: String,
                                 headers: HttpHeaders,
                                 requestBody: T,
-                                responseBody: String = ""): OngoingStubbing[ResponseEntity[String]] = {
+                                responseBody: String): OngoingStubbing[ResponseEntity[String]] = {
     stubPostRequest(url, headers, requestBody)
       .thenReturn(new ResponseEntity[String](responseBody, HttpStatus.CREATED))
   }
@@ -149,7 +138,7 @@ abstract class MenasRestDAOBaseSuite extends WordSpec
   def stubExpiredSession(): HttpHeaders = {
     val expiredSessionHeaders = new HttpHeaders()
     expiredSessionHeaders.add("session", "expired")
-    restDAO.authHeaders = expiredSessionHeaders
+    restClient.authHeaders = expiredSessionHeaders
 
     expiredSessionHeaders
   }

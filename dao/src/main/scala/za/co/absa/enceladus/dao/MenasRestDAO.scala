@@ -28,49 +28,44 @@ import scala.reflect.ClassTag
   * Implementation of Menas REST API DAO
   */
 protected class MenasRestDAO(private[dao] val apiBaseUrl: String,
-                             private[dao] val authClient: AuthClient,
-                             private[dao] val restTemplate: RestTemplate) extends MenasDAO {
-
-  private val log = LoggerFactory.getLogger(this.getClass)
+                             private[dao] val restClient: RestClient) extends MenasDAO {
 
   private val runsUrl = s"$apiBaseUrl/runs"
 
-  private[dao] var authHeaders: HttpHeaders = new HttpHeaders()
-
   def authenticate(): Unit = {
-    authHeaders = authClient.authenticate()
+    restClient.authenticate()
   }
 
   def getDataset(name: String, version: Int): Dataset = {
     val url = s"$apiBaseUrl/dataset/detail/${encode(name)}/$version"
-    sendGet[Dataset](url)
+    restClient.sendGet[Dataset](url)
   }
 
   def getMappingTable(name: String, version: Int): MappingTable = {
     val url = s"$apiBaseUrl/mappingTable/detail/${encode(name)}/$version"
-    sendGet[MappingTable](url)
+    restClient.sendGet[MappingTable](url)
   }
 
   def getSchema(name: String, version: Int): StructType = {
     val url = s"$apiBaseUrl/schema/json/${encode(name)}/$version"
-    val json = sendGet[String](url)
+    val json = restClient.sendGet[String](url)
     DataType.fromJson(json).asInstanceOf[StructType]
   }
 
   def getSchemaAttachment(name: String, version: Int): String = {
     val url = s"$apiBaseUrl/schema/export/${encode(name)}/$version"
-    sendGet[String](url)
+    restClient.sendGet[String](url)
   }
 
   def storeNewRunObject(run: Run): String = {
-    sendPost[Run, Run](runsUrl, bodyOpt = Option(run)).uniqueId.get
+    restClient.sendPost[Run, Run](runsUrl, run).uniqueId.get
   }
 
   def updateControlMeasure(uniqueId: String,
                            controlMeasure: ControlMeasure): Boolean = {
     val url = s"$runsUrl/updateControlMeasure/$uniqueId"
 
-    sendPost[ControlMeasure, String](url, bodyOpt = Option(controlMeasure))
+    restClient.sendPost[ControlMeasure, String](url, controlMeasure)
     true
   }
 
@@ -78,7 +73,7 @@ protected class MenasRestDAO(private[dao] val apiBaseUrl: String,
                       runStatus: RunStatus): Boolean = {
     val url = s"$runsUrl/updateRunStatus/$uniqueId"
 
-    sendPost[RunStatus, String](url, bodyOpt = Option(runStatus))
+    restClient.sendPost[RunStatus, String](url, runStatus)
     true
   }
 
@@ -86,7 +81,7 @@ protected class MenasRestDAO(private[dao] val apiBaseUrl: String,
                             splineRef: SplineReference): Boolean = {
     val url = s"$runsUrl/updateSplineReference/$uniqueId"
 
-    sendPost[SplineReference, String](url, bodyOpt = Option(splineRef))
+    restClient.sendPost[SplineReference, String](url, splineRef)
     true
   }
 
@@ -94,7 +89,7 @@ protected class MenasRestDAO(private[dao] val apiBaseUrl: String,
                               checkpoint: Checkpoint): Boolean = {
     val url = s"$runsUrl/addCheckpoint/$uniqueId"
 
-    sendPost[Checkpoint, String](url, bodyOpt = Option(checkpoint))
+    restClient.sendPost[Checkpoint, String](url, checkpoint)
     true
   }
 
@@ -104,65 +99,6 @@ protected class MenasRestDAO(private[dao] val apiBaseUrl: String,
    */
   private def encode(string: String): String = {
     java.net.URLEncoder.encode(string, "UTF-8").replace("+", "%20")
-  }
-
-  private def sendGet[T](urlPath: String,
-                         headers: HttpHeaders = new HttpHeaders())
-                        (implicit ct: ClassTag[T]): T = {
-    send[T, T](HttpMethod.GET, urlPath, headers)
-  }
-
-  private def sendPost[B, T](urlPath: String,
-                             headers: HttpHeaders = new HttpHeaders(),
-                             bodyOpt: Option[B] = None)
-                            (implicit ct: ClassTag[T]): T = {
-    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-    send[B, T](HttpMethod.POST, urlPath, headers, bodyOpt)
-  }
-
-  private def send[B, T](method: HttpMethod,
-                         url: String,
-                         headers: HttpHeaders = new HttpHeaders(),
-                         bodyOpt: Option[B] = None,
-                         retriesLeft: Int = 1)
-                        (implicit ct: ClassTag[T]): T = {
-    log.info(s"$method - URL: $url")
-    headers.putAll(authHeaders)
-
-    val httpEntity = bodyOpt match {
-      case Some(body) => new HttpEntity[B](body, headers)
-      case None       => new HttpEntity[B](headers)
-    }
-
-    val response = restTemplate.exchange(url, method, httpEntity, classOf[String])
-
-    val statusCode = response.getStatusCode
-
-    statusCode match {
-      case HttpStatus.OK | HttpStatus.CREATED             =>
-        log.info(s"Response (${response.getStatusCode}): ${response.getBody}")
-        JsonSerializer.fromJson[T](response.getBody)
-
-      case HttpStatus.UNAUTHORIZED | HttpStatus.FORBIDDEN =>
-        log.warn(s"Response - $statusCode : ${Option(response.getBody).getOrElse("None")}")
-        log.warn(s"Unauthorized $method request for Menas URL: $url")
-        if (retriesLeft <= 0) {
-          throw UnauthorizedException("Unable to reauthenticate, no retries left")
-        }
-
-        log.warn(s"Expired session, reauthenticating")
-        authenticate()
-
-        log.info(s"Retrying $method request for Menas URL: $url")
-        log.info(s"Retries left: $retriesLeft")
-        send[B, T](method, url, headers, bodyOpt, retriesLeft - 1)
-
-      case HttpStatus.NOT_FOUND                           =>
-        throw DaoException(s"Entity not found - $statusCode")
-
-      case _                                              =>
-        throw DaoException(s"Response - $statusCode : ${Option(response.getBody).getOrElse("None")}")
-    }
   }
 
 }

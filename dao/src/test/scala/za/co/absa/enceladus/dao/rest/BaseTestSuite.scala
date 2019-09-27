@@ -15,26 +15,10 @@
 
 package za.co.absa.enceladus.dao.rest
 
-import org.mockito.Mockito
-import org.springframework.http.HttpHeaders
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
 
-class MenasRestDAOAuthSuite extends MenasRestDAOBaseSuite {
-
-  "MenasRestDAO::authenticate" should {
-    "call AuthClient::authenticate" in {
-      restDAO.authenticate()
-
-      Mockito.verify(authClient, Mockito.only()).authenticate()
-    }
-    "update the authHeaders on successful authentication" in {
-      val headers = new HttpHeaders()
-      headers.add("test", "test")
-      Mockito.when(authClient.authenticate()).thenReturn(headers)
-
-      restDAO.authenticate()
-
-      restDAO.authHeaders shouldBe headers
-    }
-  }
-
-}
+abstract class BaseTestSuite extends WordSpec
+  with Matchers
+  with MockitoSugar
+  with BeforeAndAfter
