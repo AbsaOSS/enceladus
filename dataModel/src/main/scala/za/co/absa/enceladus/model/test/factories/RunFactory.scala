@@ -13,14 +13,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.factories
+package za.co.absa.enceladus.model.test.factories
 
 import java.util.UUID
 
 import za.co.absa.atum.model.RunState.RunState
 import za.co.absa.atum.model._
-import za.co.absa.enceladus.menas.models.RunSummary
-import za.co.absa.enceladus.model.versionedModel.VersionedSummary
 import za.co.absa.enceladus.model.{Run, SplineReference}
 
 object RunFactory {
@@ -95,10 +93,6 @@ object RunFactory {
                           controlCol: String = "dummyControlCol",
                           controlValue: Any = 0): Measurement = {
     Measurement(controlName, controlType, controlCol, controlValue)
-  }
-
-  def toSummary(run: Run): RunSummary = {
-    RunSummary(run.dataset, run.datasetVersion, run.runId, run.runStatus.status.toString, run.startDateTime)
   }
 
 }

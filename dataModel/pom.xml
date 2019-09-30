@@ -47,6 +47,12 @@
             <artifactId>config</artifactId>
             <version>${typesafe.config.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.compat.version}</artifactId>
+            <version>${scalatest.version}</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>

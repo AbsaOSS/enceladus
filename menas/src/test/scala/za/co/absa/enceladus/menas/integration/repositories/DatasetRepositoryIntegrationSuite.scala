@@ -21,10 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.exceptions.EntityAlreadyExistsException
-import za.co.absa.enceladus.menas.factories.DatasetFactory
 import za.co.absa.enceladus.menas.integration.fixtures.{DatasetFixtureService, FixtureService}
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
+import za.co.absa.enceladus.model.test.factories.DatasetFactory
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

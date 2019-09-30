@@ -13,12 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.factories
+package za.co.absa.enceladus.model.test.factories
 
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
-import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.menas.MenasReference
@@ -26,7 +24,7 @@ import za.co.absa.enceladus.model.versionedModel.VersionedSummary
 
 object DatasetFactory extends EntityFactory[Dataset] {
 
-  override val collectionBaseName: String = DatasetMongoRepository.collectionBaseName
+  override val collectionBaseName: String = "dataset"
 
   def getDummyDataset(name: String = "dummyName",
                       version: Int = 1,

@@ -20,7 +20,7 @@ import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.samples._
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
@@ -29,7 +29,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   import spark.implicits._
   // spark.enableControlFrameworkTracking()
 
-  implicit var dao: EnceladusDAO = _
+  implicit var dao: MenasDAO = _
   implicit var progArgs: CmdConfig = _
 
   private val enableCF = false
@@ -39,7 +39,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
 
     val mapDF = spark.createDataFrame(MappingsSamples.mapping)
 
-    dao = mock(classOf[EnceladusDAO])
+    dao = mock(classOf[MenasDAO])
     progArgs = new CmdConfig(reportDate = "2017-11-01")
 
     mockWhen(dao.getMappingTable("mapping", 0)) thenReturn MappingsSamples.mappingTable

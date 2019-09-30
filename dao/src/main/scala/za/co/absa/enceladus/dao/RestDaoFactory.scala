@@ -15,15 +15,16 @@
 
 package za.co.absa.enceladus.dao
 
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 
-import org.json4s.CustomSerializer
-import org.json4s.JsonAST.JString
+object RestDaoFactory {
 
-// A serializer for ZonedDateTime
-case object ZonedDateTimeFormatter extends CustomSerializer[ZonedDateTime](format => ( {
-  case JString(s) => ZonedDateTime.parse(s)
-}, {
-  case zdt: ZonedDateTime => JString(zdt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")))
-}))
+  private val restTemplate = RestTemplateSingleton.instance
+
+  def getInstance(authCredentials: MenasCredentials, apiBaseUrl: String): MenasRestDAO = {
+    val authClient = AuthClient(authCredentials, apiBaseUrl)
+    val restClient = new RestClient(authClient, restTemplate)
+    new MenasRestDAO(apiBaseUrl, restClient)
+  }
+
+}

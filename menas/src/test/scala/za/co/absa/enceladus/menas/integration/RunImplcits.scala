@@ -13,15 +13,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao
+package za.co.absa.enceladus.menas.integration
 
-import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.model.MappingTable
-import org.apache.spark.sql.types.StructType
+import za.co.absa.enceladus.menas.models.RunSummary
+import za.co.absa.enceladus.model.Run
 
-trait EnceladusDAO {
-  def getDataset(name: String, version: Int) : Dataset
-  def getMappingTable(name: String, version: Int): MappingTable
-  def getSchema(name: String, version: Int): StructType
-  def getSchemaAttachment(name: String, version: Int): String
+object RunImplcits {
+
+  implicit class RunExtensions(run: Run) {
+
+    def toSummary: RunSummary = {
+      RunSummary(run.dataset, run.datasetVersion, run.runId, run.runStatus.status.toString, run.startDateTime)
+    }
+
+  }
+
 }

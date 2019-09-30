@@ -24,21 +24,33 @@ import com.typesafe.config.ConfigFactory
 
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
-object MenasCredentials {
+sealed abstract class MenasCredentials {
+  val username: String
+}
+
+case class MenasPlainCredentials(username: String, password: String) extends MenasCredentials
+
+case class MenasKerberosCredentials(username: String, keytabLocation: String) extends MenasCredentials
+
+case object InvalidMenasCredentials extends MenasCredentials {
+  override val username: String = "invalid-credentials"
+}
+
+object MenasPlainCredentials {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * Retrieves Menas Credentials from file either on local file system or on HDFS
    */
-  def fromFile(path: String)(implicit spark: SparkSession): MenasCredentials = {
+  def fromFile(path: String)(implicit spark: SparkSession): MenasPlainCredentials = {
     val conf = if(path.startsWith("hdfs://")) {
      val file = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration).hdfsRead(path)
      ConfigFactory.parseString(file)
     } else {
      ConfigFactory.parseFile(new File(replaceHome(path)))
     }
-    MenasCredentials(conf.getString("username"), conf.getString("password"))
+    MenasPlainCredentials(conf.getString("username"), conf.getString("password"))
   }
 
   /**
@@ -58,5 +70,3 @@ object MenasCredentials {
   }
 
 }
-
-case class MenasCredentials(username: String, password: String)

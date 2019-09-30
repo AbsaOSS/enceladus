@@ -18,9 +18,10 @@ package za.co.absa.enceladus.examples.interpreter.rules.custom
 import org.apache.spark.sql
 import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
+import org.scalatest.mockito.MockitoSugar
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
@@ -31,12 +32,12 @@ object TestOutputRow {
   def apply(input: TestInputRow, doneUpper: String): TestOutputRow = TestOutputRow(input.id, input.mandatoryString, input.nullableString, doneUpper)
 }
 
-class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
-
+class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase with MockitoSugar {
   import spark.implicits._
 
   implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao: EnceladusDAO = EnceladusRestDAO // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val dao: MenasDAO = mock[MenasDAO] // you may have to hard-code your own implementation here (if not working with menas)
+
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true
   val enableCF: Boolean = false

@@ -20,7 +20,7 @@ import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
@@ -42,7 +42,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
 
   private val conf = ConfigFactory.load()
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule to conform ${rule.outputColumn}...")
     import spark.implicits._
 
@@ -124,7 +124,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
   }
 
   private def getDefaultValue(mappingTableDef: MappingTable)
-                             (implicit spark: SparkSession, dao: EnceladusDAO): Option[String] = {
+                             (implicit spark: SparkSession, dao: MenasDAO): Option[String] = {
     val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
 
     val attributeDefaultValueOpt = defaultMappingValueMap.get(rule.targetAttribute)

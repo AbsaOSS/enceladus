@@ -58,14 +58,9 @@ class EventListenerMenas(menasDao: MenasDAO,
         ControlUtils.getTimestampAsString,
         runStatus,
         controlMeasure)
-      dao.storeNewRunObject(run) match {
-        case Success(uniqueId) =>
-          runUniqueId = Some(uniqueId)
-          Atum.setRunUniqueId(uniqueId)
-        case Failure(e) => e match {
-          case unAuthException:UnauthorizedException => throw unAuthException
-          case _ => log.error(s"Unable to store the Run object for the job, checkpoints will not be saved to database")
-      }}
+      val uniqueId = dao.storeNewRunObject(run)
+      runUniqueId = Some(uniqueId)
+      Atum.setRunUniqueId(uniqueId)
     } else {
       runUniqueId = controlMeasure.runUniqueId
       runStatus = RunStatus(RunState.running, None)

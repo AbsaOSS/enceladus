@@ -23,7 +23,7 @@ import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreterGroupExplode._
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
@@ -42,7 +42,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
 
   private val conf = ConfigFactory.load()
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule (explode-optimized) to conform ${rule.outputColumn}...")
     val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
@@ -120,7 +120,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
   }
 
   private def getDefaultValue(mappingTableDef: MappingTable)
-                     (implicit spark: SparkSession, dao: EnceladusDAO): Option[String] = {
+                     (implicit spark: SparkSession, dao: MenasDAO): Option[String] = {
     val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
 
     val attributeDefaultValueOpt = defaultMappingValueMap.get(rule.targetAttribute)
@@ -145,7 +145,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
   }
 
   private def validateMappingRule(df: Dataset[Row],
-                                  dao: EnceladusDAO,
+                                  dao: MenasDAO,
                                   mappingTableDef: MappingTable,
                                   mapTable: Dataset[Row],
                                   joinConditionStr: String)

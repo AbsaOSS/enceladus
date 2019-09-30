@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.factories
+package za.co.absa.enceladus.model.test.factories
 
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter

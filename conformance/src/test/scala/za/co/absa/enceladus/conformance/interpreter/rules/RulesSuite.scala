@@ -21,14 +21,14 @@ import za.co.absa.enceladus.samples.EmployeeConformance
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.CmdConfig
 
 
 class RulesSuite extends FunSuite with SparkTestBase {
 
   val dummyInterpreter = new RuleInterpreter {
-    def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = df
+    def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = df
   }
 
   test("Test country code join condition") {

@@ -30,11 +30,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.typesafe</groupId>
-            <artifactId>config</artifactId>
-            <version>${typesafe.config.version}</version>
-        </dependency>
-        <dependency>
             <groupId>za.co.absa</groupId>
             <artifactId>enceladus-dataModel</artifactId>
             <version>${project.version}</version>
@@ -58,11 +53,6 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>${jackson.spark.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.8</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.security.kerberos</groupId>

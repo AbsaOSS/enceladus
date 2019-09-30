@@ -20,7 +20,7 @@ import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.testUtils.LoggerTestBase
@@ -30,7 +30,7 @@ import org.slf4j.event.Level._
 trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase {
 
   def conformanceRuleShouldMatchExpected(inputDf: DataFrame, inputDataset: Dataset, expectedJSON: String) {
-    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
+    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true

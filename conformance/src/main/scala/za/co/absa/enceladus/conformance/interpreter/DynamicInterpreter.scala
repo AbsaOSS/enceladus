@@ -24,7 +24,7 @@ import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
@@ -45,7 +45,7 @@ object DynamicInterpreter {
     *
     */
   def interpret(conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
-               (implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig, featureSwitches: FeatureSwitches): DataFrame = {
+               (implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig, featureSwitches: FeatureSwitches): DataFrame = {
 
     implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
       featureSwitches, jobShortName, spark, dao, progArgs)
@@ -69,7 +69,7 @@ object DynamicInterpreter {
   private def applyConformanceRules(inputDf: DataFrame)
                                    (implicit ictx: InterpreterContext): DataFrame = {
     implicit val spark: SparkSession = ictx.spark
-    implicit val dao: EnceladusDAO = ictx.dao
+    implicit val dao: MenasDAO = ictx.dao
     implicit val progArgs: CmdConfig = ictx.progArgs
     implicit val udfLib: UDFLibrary = new UDFLibrary
 
@@ -124,7 +124,7 @@ object DynamicInterpreter {
                                    ec: ExplosionContext)
                                   (implicit ictx: InterpreterContext): (DataFrame, ExplosionContext) = {
     implicit val spark: SparkSession = ictx.spark
-    implicit val dao: EnceladusDAO = ictx.dao
+    implicit val dao: MenasDAO = ictx.dao
     implicit val progArgs: CmdConfig = ictx.progArgs
 
     var explodeContext = ec
