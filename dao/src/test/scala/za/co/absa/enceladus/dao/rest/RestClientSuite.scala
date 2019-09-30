@@ -38,11 +38,17 @@ class RestClientSuite() extends RestClientBaseSuite {
 
       restClient.authenticate()
 
-      restClient.authHeaders shouldBe headers
+      getAuthHeaders(restClient) shouldBe headers
     }
   }
 
-  s"RestClient::sendGet" should {
+  private def getAuthHeaders(restClient: RestClient): HttpHeaders = {
+    val field = classOf[RestClient].getDeclaredField("authHeaders")
+    field.setAccessible(true)
+    field.get(restClient).asInstanceOf[HttpHeaders]
+  }
+
+  "RestClient::sendGet" should {
     "return the entity on 200 OK" in {
       stubOkGetRequest(url, new HttpHeaders(), responseJson)
 
@@ -111,7 +117,7 @@ class RestClientSuite() extends RestClientBaseSuite {
     }
   }
 
-  s"RestClient::sendPost" should {
+  "RestClient::sendPost" should {
     "return true on 201 CREATED" in {
       stubCreatedPostRequest(url, new HttpHeaders(), requestBody, responseJson)
 

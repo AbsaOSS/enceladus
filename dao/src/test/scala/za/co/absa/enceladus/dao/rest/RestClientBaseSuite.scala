@@ -32,7 +32,7 @@ abstract class RestClientBaseSuite extends BaseTestSuite {
   before {
     Mockito.reset(authClient)
     Mockito.reset(restTemplate)
-    restClient.authHeaders = new HttpHeaders()
+    setAuthHeaders(restClient, new HttpHeaders())
   }
 
   def stubOkGetRequest(url: String,
@@ -138,9 +138,15 @@ abstract class RestClientBaseSuite extends BaseTestSuite {
   def stubExpiredSession(): HttpHeaders = {
     val expiredSessionHeaders = new HttpHeaders()
     expiredSessionHeaders.add("session", "expired")
-    restClient.authHeaders = expiredSessionHeaders
+    setAuthHeaders(restClient, expiredSessionHeaders)
 
     expiredSessionHeaders
+  }
+
+  private def setAuthHeaders(restClient: RestClient, httpHeaders: HttpHeaders): Unit = {
+    val field = classOf[RestClient].getDeclaredField("authHeaders")
+    field.setAccessible(true)
+    field.set(restClient, httpHeaders)
   }
 
 }

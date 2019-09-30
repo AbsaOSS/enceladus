@@ -22,12 +22,12 @@ import org.springframework.web.client.RestTemplate
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
-protected class RestClient(private[dao] val authClient: AuthClient,
-                           private[dao] val restTemplate: RestTemplate) {
+protected class RestClient(authClient: AuthClient,
+                           restTemplate: RestTemplate) {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
-  private[dao] var authHeaders: HttpHeaders = new HttpHeaders()
+  private var authHeaders: HttpHeaders = new HttpHeaders()
 
   def authenticate(): Unit = {
     authHeaders = authClient.authenticate()
