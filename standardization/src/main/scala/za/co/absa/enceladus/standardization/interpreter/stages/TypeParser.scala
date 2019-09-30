@@ -96,7 +96,8 @@ object TypeParser extends StandardizationCommon {
     val parserClass: (String, StructType, Option[Parent]) => TypeParser = field.dataType match {
       case _: ArrayType     => ArrayParser(TypedStructField.asArrayTypeStructField(field), _, _, _)
       case _: StructType    => StructParser(TypedStructField.asStructTypeStructField(field), _, _, _)
-      case _: ByteType      => IntegralParser(TypedStructField(field), _, _, _,Set(ShortType, IntegerType, LongType), Byte.MinValue, Byte.MaxValue)
+      case _: ByteType      =>
+        IntegralParser(TypedStructField(field), _, _, _, Set(ShortType, IntegerType, LongType), Byte.MinValue, Byte.MaxValue)
       case _: ShortType     => IntegralParser(TypedStructField(field), _, _, _, Set(IntegerType, LongType), Short.MinValue, Short.MaxValue)
       case _: IntegerType   => IntegralParser(TypedStructField(field), _, _, _, Set(LongType), Int.MinValue, Int.MaxValue)
       case _: LongType      => IntegralParser(TypedStructField(field), _, _, _, Set.empty, Long.MinValue, Long.MaxValue)
@@ -196,7 +197,6 @@ object TypeParser extends StandardizationCommon {
           typedLit(Seq.empty[ErrorMessage])
         ))
       }
-
 
       val std: Column = when(size(err) > lit(0), // there was an error on cast
         field.defaultValueWithGlobal.get.orNull // Error should never appear here, then converting Option to value or Null
