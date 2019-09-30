@@ -31,9 +31,10 @@ import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.error.UDFLibrary
+import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
+import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 
@@ -271,9 +272,12 @@ object StandardizationJob {
         throw e
     }
     // If the meta data value sourcecolumn is set override source data column name with the field name
-    val stdRenameSourceColumns: DataFrame = std.select(std.schema.fields.map { field: StructField =>
-      renameSourceColumn(std, field, registerWithATUM = true)
-    }: _*)
+    val stdRenameSourceColumns: DataFrame = std.select(
+      (
+        schema.fields.map { field: StructField => renameSourceColumn(std, field, registerWithATUM = true)}
+        :+ std.col(ErrorMessage.errorColumnName)
+      ): _*
+    )
 
     stdRenameSourceColumns.setCheckpoint("Standardization - End", persistInDatabase = false)
 
@@ -346,8 +350,8 @@ object StandardizationJob {
   }
 
   private def renameSourceColumn(df: DataFrame, field: StructField, registerWithATUM: Boolean): Column = {
-    if (field.metadata.contains("sourcecolumn")) {
-      val sourceColumnName = field.metadata.getString("sourcecolumn")
+    if (field.metadata.contains(MetadataKeys.SourceColumn)) {
+      val sourceColumnName = field.metadata.getString(MetadataKeys.SourceColumn)
       log.info(s"schema field : ${field.name} : rename : $sourceColumnName")
       if (registerWithATUM) {
         df.registerColumnRename(sourceColumnName, field.name) //register rename with ATUM
@@ -359,8 +363,8 @@ object StandardizationJob {
   }
 
   private def reverseRenameSourceColumn(df: DataFrame, field: StructField): Column = {
-    if (field.metadata.contains("sourcecolumn")) {
-      val sourceColumnName = field.metadata.getString("sourcecolumn")
+    if (field.metadata.contains(MetadataKeys.SourceColumn)) {
+      val sourceColumnName = field.metadata.getString(MetadataKeys.SourceColumn)
       log.info(s"schema field : $sourceColumnName : reverse rename : ${field.name}")
       df.col(field.name).as(sourceColumnName)
     } else {
