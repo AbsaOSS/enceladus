@@ -322,7 +322,7 @@ if [[ -z "$DRY_RUN" ]]; then
 	fi
 	# Report the result and log location
 	echo ""
-	echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME"
+	echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME" | tee -a "$TMP_PATH_NAME"
 	exit $EXIT_STATUS
   else
     bash -c "$CMD_LINE"
