@@ -28,15 +28,62 @@ object PerformanceMetricTools {
 
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
+  /**
+    * Adds general job information to Atum's metadata that will end up in an info file.
+    *
+    * The method should be ran at the beginning of a job so that this general information is available for debugging.
+    *
+    * @param spark         A Spark Session
+    * @param optionPrefix  A prefix for all performance metrics options, e.g. 'std' for Standardization and 'conform' for Conformance
+    * @param inputPath     A path to an input directory of the job
+    * @param outputPath    A path to an output directory of the job
+    * @param loginUserName A login user name who performed the job
+    *
+    **/
+  def addJobInfoToAtumMetadata(optionPrefix: String,
+                                inputPath: String,
+                                outputPath: String,
+                                loginUserName: String,
+                                cmdLineArgs: String)
+                               (implicit spark: SparkSession): Unit = {
+    // Spark job configuration
+    val sc = spark.sparkContext
+
+    // The number of executors minus the driver
+    val numberOfExecutors = sc.getExecutorMemoryStatus.keys.size - 1
+
+    val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+    // Directory sizes and size ratio
+    val inputDirSize = fsUtils.getDirectorySize(inputPath)
+
+    addSparkConfig(optionPrefix, "spark.driver.memory", "driver_memory")
+    addSparkConfig(optionPrefix, "spark.driver.cores", "driver_cores")
+    addSparkConfig(optionPrefix, "spark.driver.memoryOverhead", "driver_memory_overhead")
+    addSparkConfig(optionPrefix, "spark.executor.memory", "executor_memory")
+    addSparkConfig(optionPrefix, "spark.executor.cores", "executor_cores")
+    addSparkConfig(optionPrefix, "spark.executor.memoryOverhead", "executor_memory_overhead")
+    addSparkConfig(optionPrefix, "spark.submit.deployMode", "yarn_deploy_mode")
+    addSparkConfig(optionPrefix, "spark.master", "spark_master")
+
+    Atum.setAdditionalInfo(s"${optionPrefix}_cmd_line_args" -> cmdLineArgs)
+    Atum.setAdditionalInfo(s"${optionPrefix}_input_dir" -> inputPath)
+    Atum.setAdditionalInfo(s"${optionPrefix}_output_dir" -> outputPath)
+    Atum.setAdditionalInfo(s"${optionPrefix}_input_dir_size" -> inputDirSize.toString)
+    Atum.setAdditionalInfo(s"${optionPrefix}_enceladus_version" -> ProjectMetadataTools.getEnceladusVersion)
+    Atum.setAdditionalInfo(s"${optionPrefix}_application_id" -> spark.sparkContext.applicationId)
+    Atum.setAdditionalInfo(s"${optionPrefix}_username" -> loginUserName)
+    Atum.setAdditionalInfo(s"${optionPrefix}_executors_num" -> s"$numberOfExecutors")
+  }
+
 
   /**
     * Adds performance metrics to the Spark job metadata. Atum is used to set these metrics.
     *
-    * @param spark            A Spark Session
-    * @param optionPrefix     A prefix for all performance metrics options, e.g. 'std' for Standardization and 'conform' for Conformance
-    * @param inputPath        A path to an input directory of the job
-    * @param outputPath       A path to an output directory of the job
-    * @param loginUserName    A login user name who performed the job
+    * @param spark         A Spark Session
+    * @param optionPrefix  A prefix for all performance metrics options, e.g. 'std' for Standardization and 'conform' for Conformance
+    * @param inputPath     A path to an input directory of the job
+    * @param outputPath    A path to an output directory of the job
+    * @param loginUserName A login user name who performed the job
     *
     **/
   def addPerformanceMetricsToAtumMetadata(spark: SparkSession,
@@ -46,17 +93,8 @@ object PerformanceMetricTools {
                                           loginUserName: String,
                                           cmdLineArgs: String
                                          ): Unit = {
-    // Spark job configuration
-    val sc = spark.sparkContext
-    sc.getConf.getAll.mkString("\n")
-
-    // The number of executors minus the driver
-    val numberOfExecutrs = sc.getExecutorMemoryStatus.keys.size - 1
-
-    val executorMemory = spark.sparkContext.getConf.getOption("spark.executor.memory")
-    executorMemory.foreach(mem => Atum.setAdditionalInfo(s"${optionPrefix}_executors_memory" -> s"$mem"))
-
     val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+
     // Directory sizes and size ratio
     val inputDirSize = fsUtils.getDirectorySize(inputPath)
     val outputDirSize = fsUtils.getDirectorySize(outputPath)
@@ -69,15 +107,7 @@ object PerformanceMetricTools {
       Atum.setAdditionalInfo(s"${optionPrefix}_size_ratio" -> s"$percentFormatted %")
     }
 
-    Atum.setAdditionalInfo(s"${optionPrefix}_cmd_line_args" -> cmdLineArgs)
-    Atum.setAdditionalInfo(s"${optionPrefix}_input_dir" -> inputPath)
-    Atum.setAdditionalInfo(s"${optionPrefix}_output_dir" -> outputPath)
-    Atum.setAdditionalInfo(s"${optionPrefix}_input_dir_size" -> inputDirSize.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_output_dir_size" -> outputDirSize.toString)
-    Atum.setAdditionalInfo(s"${optionPrefix}_enceladus_version" -> ProjectMetadataTools.getEnceladusVersion)
-    Atum.setAdditionalInfo(s"${optionPrefix}_application_id" -> spark.sparkContext.applicationId)
-    Atum.setAdditionalInfo(s"${optionPrefix}_username" -> loginUserName)
-    Atum.setAdditionalInfo(s"${optionPrefix}_executors_num" -> s"$numberOfExecutrs")
     Atum.setAdditionalInfo(s"${optionPrefix}_record_count" -> (numRecordsSuccessful + numRecordsFailed).toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_records_succeeded" -> numRecordsSuccessful.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_records_failed" -> numRecordsFailed.toString)
@@ -87,6 +117,19 @@ object PerformanceMetricTools {
       logger.error("No successful records after running the Spark Application. Possibly the schema is incorrectly " +
         "defined for the dataset.")
     }
+  }
+
+  /**
+    * Adds a Spark config key-value to Atum metadata if such key is present in Spark runtime config.
+    *
+    * @param optionPrefix A prefix for a job (e.g. "std", "conf", etc.)
+    * @param sparkKey A Spark configuration key
+    * @param atumKey An Atum metadata key
+    */
+  private def addSparkConfig(optionPrefix: String, sparkKey: String, atumKey: String)
+                            (implicit spark: SparkSession): Unit = {
+    val sparkConfigValOpt = spark.sparkContext.getConf.getOption(sparkKey)
+    sparkConfigValOpt.foreach(sparkVal => Atum.setAdditionalInfo(s"${optionPrefix}_$atumKey" -> s"$sparkVal"))
   }
 
   /** Returns if output to input size ratio makes sense. The input dir size should be begger than zero and the output
