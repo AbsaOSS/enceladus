@@ -19,18 +19,18 @@ import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.slf4j.{Logger, LoggerFactory}
 import org.apache.spark.sql
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
-import za.co.absa.enceladus.dao.{MenasDAO, MenasRestDAO, RestDaoFactory}
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
+import za.co.absa.enceladus.dao.{MenasDAO, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
@@ -89,6 +89,9 @@ object DynamicConformanceJob {
     val inputData = DataSource.getData(pathCfg.stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
 
     val result = conform(conformance, inputData, enableCF)
+
+    PerformanceMetricTools.addJobInfoToAtumMetadata("conform",
+      pathCfg.stdPath, pathCfg.publishPath, cmd.menasCredentials.username, args.mkString(" "))
 
     processResult(result, performance, pathCfg, reportVersion, args.mkString(" "))
   }
