@@ -228,10 +228,42 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
     }
 
-    "keep JSON unchanged when desrializing to String" in {
-      val expected = """{"test":"json"}"""
-      val result = JsonSerializer.fromJson[String](expected)
-      result should be(expected)
+    "handle JSON Strings" when {
+      "serializing" in {
+        val expected = """{"test":"json"}"""
+        val result = JsonSerializer.toJson(expected)
+        result should be(expected)
+      }
+      "deserializing" in {
+        val expected = """{"test":"json"}"""
+        val result = JsonSerializer.fromJson[String](expected)
+        result should be(expected)
+      }
+    }
+
+    "handle non-JSON Strings" when {
+      "serializing" in {
+        val str = """{"test": not a json}"""
+        val expected = """"{\"test\": not a json}""""
+        val result = JsonSerializer.toJson(str)
+        result should be(expected)
+      }
+      "deserializing" in {
+        val expected = """"{\"test\": not a json}""""
+        val result = JsonSerializer.fromJson[String](expected)
+        result should be(expected)
+      }
+    }
+
+    "check if a String is a valid JSON" when {
+      "given a valid JSON" in {
+        val validJson = """{"test":"json"}""""
+        JsonSerializer.isValidJson(validJson) should be(true)
+      }
+      "given an invalid JSON" in {
+        val invalidJson = """{"test": not a json}"""
+        JsonSerializer.isValidJson(invalidJson) should be(false)
+      }
     }
   }
 

@@ -27,7 +27,7 @@ protected class RestClient(authClient: AuthClient,
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
-  private var authHeaders: HttpHeaders = new HttpHeaders()
+  private var authHeaders = new HttpHeaders()
 
   def authenticate(): Unit = {
     authHeaders = authClient.authenticate()
@@ -57,8 +57,12 @@ protected class RestClient(authClient: AuthClient,
     headers.putAll(authHeaders)
 
     val httpEntity = bodyOpt match {
-      case Some(body) => new HttpEntity[B](body, headers)
-      case None => new HttpEntity[B](headers)
+      case Some(body) =>
+        val requestBody = JsonSerializer.toJson(body)
+        log.info(s"Request Body: $requestBody")
+        new HttpEntity[String](requestBody, headers)
+      case None       =>
+        new HttpEntity[String](headers)
     }
 
     val response = restTemplate.exchange(url, method, httpEntity, classOf[String])
@@ -66,7 +70,7 @@ protected class RestClient(authClient: AuthClient,
     val statusCode = response.getStatusCode
 
     statusCode match {
-      case HttpStatus.OK | HttpStatus.CREATED =>
+      case HttpStatus.OK | HttpStatus.CREATED             =>
         log.info(s"Response (${response.getStatusCode}): ${response.getBody}")
         JsonSerializer.fromJson[T](response.getBody)
 
@@ -84,10 +88,10 @@ protected class RestClient(authClient: AuthClient,
         log.info(s"Retries left: $retriesLeft")
         send[B, T](method, url, headers, bodyOpt, retriesLeft - 1)
 
-      case HttpStatus.NOT_FOUND =>
+      case HttpStatus.NOT_FOUND                           =>
         throw DaoException(s"Entity not found - $statusCode")
 
-      case _ =>
+      case _                                              =>
         throw DaoException(s"Response - $statusCode : ${Option(response.getBody).getOrElse("None")}")
     }
   }
