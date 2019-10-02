@@ -16,13 +16,8 @@
 package za.co.absa.enceladus.dao
 
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.slf4j.LoggerFactory
-import org.springframework.http._
-import org.springframework.web.client.RestTemplate
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference}
-
-import scala.reflect.ClassTag
 
 /**
   * Implementation of Menas REST API DAO

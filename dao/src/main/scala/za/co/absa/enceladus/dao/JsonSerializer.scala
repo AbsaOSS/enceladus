@@ -20,6 +20,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 
 object JsonSerializer {
 
@@ -40,7 +41,16 @@ object JsonSerializer {
   }
 
   def toJson[T](entity: T): String = {
-    objectMapper.writeValueAsString(entity)
+    entity match {
+      case str: String =>
+        if (isValidJson(str)) str else objectMapper.writeValueAsString(entity)
+      case _ =>
+        objectMapper.writeValueAsString(entity)
+    }
+  }
+
+  def isValidJson[T](str: T with String): Boolean = {
+    Try(objectMapper.readTree(str)).isSuccess
   }
 
 }
