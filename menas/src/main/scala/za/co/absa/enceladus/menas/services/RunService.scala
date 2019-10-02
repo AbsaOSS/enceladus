@@ -36,6 +36,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   extends ModelService(runMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
+  import za.co.absa.enceladus.menas.models.Validation._
 
   @Value("${za.co.absa.enceladus.spline.urlTemplate}")
   val splineUrlTemplate: String = ""
@@ -160,7 +161,29 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   }
 
   def validate(run: Run): Future[Validation] = {
-    validateUniqueId(run)
+    validateUniqueId(run).map { validation =>
+      validateDatasetName(run, validation)
+    }.map { validation =>
+      validateDatasetVersion(run, validation)
+    }
+  }
+
+  private def validateDatasetVersion(run: Run, validation: Validation): Validation = {
+    val datasetVersionOpt = Option(run.datasetVersion)
+
+    if (datasetVersionOpt.contains(0)) {
+      validation.withError("datasetVersion", NotSpecified)
+    } else {
+      validation
+    }
+  }
+
+  private def validateDatasetName(run: Run, validation: Validation) = {
+    if (Option(run.dataset).isEmpty) {
+      validation.withError("dataset", NotSpecified)
+    } else {
+      validation
+    }
   }
 
   private def validateUniqueId(run: Run): Future[Validation] = {
@@ -168,7 +191,8 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
 
     run.uniqueId match {
       case Some(uniqueId) => validateUniqueness(validation, uniqueId)
-      case None           => Future.successful(validation.withError("uniqueId", "not specified"))
+      case None           =>
+        Future.successful(validation.withError("uniqueId", NotSpecified))
     }
   }
 
