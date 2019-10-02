@@ -31,6 +31,7 @@ import za.co.absa.enceladus.model.{Run, SplineReference}
 class RunApiIntegrationSuite extends BaseRestApiTest {
 
   import za.co.absa.enceladus.menas.integration.RunImplcits.RunExtensions
+  import za.co.absa.enceladus.menas.models.Validation._
 
   @Autowired
   private val runFixture: RunFixtureService = null
@@ -704,6 +705,17 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
 
     "return 400" when {
+      "receiving an empty JSON" in {
+        val response = sendPost[String, Validation](endpointBase, bodyOpt = Option("{}"))
+
+        assertBadRequest(response)
+
+        val body = response.getBody
+        assert(!body.isValid)
+        assert(body == Validation()
+          .withError("dataset", NotSpecified)
+          .withError("datasetVersion", NotSpecified))
+      }
       "a Run with the given uniqueId already exists" in {
         val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
         val presentRun = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
