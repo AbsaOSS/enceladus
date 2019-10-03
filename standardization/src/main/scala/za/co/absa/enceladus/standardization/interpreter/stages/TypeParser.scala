@@ -22,7 +22,7 @@ import org.apache.spark.sql.types._
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils.appendPath
-import za.co.absa.enceladus.utils.types.TypedStructField
+import za.co.absa.enceladus.utils.types.{Defaults, TypedStructField}
 import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.standardization.StandardizationCommon
 import za.co.absa.spark.hofs.transform
@@ -388,7 +388,13 @@ object TypeParser extends StandardizationCommon {
                                       path: String,
                                       origSchema: StructType,
                                       parent: Option[Parent]) extends DateTimeParser {
-    private def applyPatternToStringColumn(column: Column, pattern: String, defaultTimeZone: Option[String]): Column = {
+    private val defaultTimeZone: Option[String] = if (pattern.isTimeZoned) {
+      pattern.defaultTimeZone
+    } else {
+      Defaults.getGlobalDefaultDateTimeZone
+    }
+
+    private def applyPatternToStringColumn(column: Column, pattern: String): Column = { //TODO defaultxTimeZone
       defaultTimeZone.map(tz =>
         to_date(to_utc_timestamp(to_timestamp(column, pattern), tz))
       ).getOrElse(
@@ -407,14 +413,14 @@ object TypeParser extends StandardizationCommon {
         applyPatternToStringColumn(
           stringColumn.removeSections(
             Seq(pattern.millisecondsPosition, pattern.microsecondsPosition, pattern.nanosecondsPosition).flatten
-          ), pattern.patternWithoutSecondFractions, pattern.defaultTimeZone)
+          ), pattern.patternWithoutSecondFractions)
       } else {
-        applyPatternToStringColumn(stringColumn, pattern, pattern.defaultTimeZone)
+        applyPatternToStringColumn(stringColumn, pattern)
       }
     }
 
     override protected def castDateColumn(dateColumn: Column): Column = {
-      pattern.defaultTimeZone.map(
+      defaultTimeZone.map(
         tz => to_date(to_utc_timestamp(dateColumn, tz))
       ).getOrElse(
         dateColumn
@@ -422,7 +428,7 @@ object TypeParser extends StandardizationCommon {
     }
 
     override protected def castTimestampColumn(timestampColumn: Column): Column = {
-      to_date(pattern.defaultTimeZone.map(
+      to_date(defaultTimeZone.map(
         to_utc_timestamp(timestampColumn, _)
       ).getOrElse(
         timestampColumn
@@ -435,7 +441,13 @@ object TypeParser extends StandardizationCommon {
                                            origSchema: StructType,
                                            parent: Option[Parent]) extends DateTimeParser {
 
-    private def applyPatternToStringColumn(column: Column, pattern: String, defaultTimeZone: Option[String]): Column = {
+    private val defaultTimeZone: Option[String] = if (pattern.isTimeZoned) {
+      pattern.defaultTimeZone
+    } else {
+      Defaults.getGlobalDefaultTimestampTimeZone
+    }
+
+    private def applyPatternToStringColumn(column: Column, pattern: String): Column = {
       val interim: Column = to_timestamp(column, pattern)
       defaultTimeZone.map(to_utc_timestamp(interim, _)).getOrElse(interim)
     }
@@ -449,7 +461,7 @@ object TypeParser extends StandardizationCommon {
         val colSeconds = unix_timestamp(applyPatternToStringColumn(
           stringColumn.removeSections(
             Seq(pattern.millisecondsPosition, pattern.microsecondsPosition, pattern.nanosecondsPosition).flatten
-          ), pattern.patternWithoutSecondFractions, pattern.defaultTimeZone))
+          ), pattern.patternWithoutSecondFractions))
 
         val colMilliseconds: Option[Column] =
           pattern.millisecondsPosition.map(stringColumn.zeroBasedSubstr(_).cast(decimalType) / MillisecondsPerSecond)
@@ -462,12 +474,12 @@ object TypeParser extends StandardizationCommon {
 
         (colSeconds + colFractions).cast(TimestampType)
       } else {
-        applyPatternToStringColumn(stringColumn, pattern, pattern.defaultTimeZone)
+        applyPatternToStringColumn(stringColumn, pattern)
       }
     }
 
     override protected def castDateColumn(dateColumn: Column): Column = {
-      pattern.defaultTimeZone.map(
+      defaultTimeZone.map(
         to_utc_timestamp(dateColumn, _)
       ).getOrElse(
         to_timestamp(dateColumn)
@@ -475,7 +487,7 @@ object TypeParser extends StandardizationCommon {
     }
 
     override protected def castTimestampColumn(timestampColumn: Column): Column = {
-      pattern.defaultTimeZone.map(
+      defaultTimeZone.map(
         to_utc_timestamp(timestampColumn, _)
       ).getOrElse(
         timestampColumn
