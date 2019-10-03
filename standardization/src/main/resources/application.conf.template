@@ -18,7 +18,7 @@ standardized.hdfs.path="/tmp/conformance-output/standardized-{0}-{1}-{2}-{3}"
 #system-wide time zone
 timezone="UTC"
 #time zone used for timestamp fields standardization if none specified in the schema
-#defaultTimestampTimeZone
+#defaultTimestampTimeZone="Africa/Johannesburg"
 #time zone used for date fields standardization if none specified in the schema; recommended not to define
-#defaultDateTimeZone
+#defaultDateTimeZone="UTC"
 
