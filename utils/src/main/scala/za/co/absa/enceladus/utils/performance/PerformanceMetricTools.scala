@@ -123,8 +123,8 @@ object PerformanceMetricTools {
     * Adds a Spark config key-value to Atum metadata if such key is present in Spark runtime config.
     *
     * @param optionPrefix A prefix for a job (e.g. "std", "conf", etc.)
-    * @param sparkKey A Spark configuration key
-    * @param atumKey An Atum metadata key
+    * @param sparkKey     A Spark configuration key
+    * @param atumKey      An Atum metadata key
     */
   private def addSparkConfig(optionPrefix: String, sparkKey: String, atumKey: String)
                             (implicit spark: SparkSession): Unit = {
