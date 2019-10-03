@@ -23,6 +23,7 @@ MASTER="yarn"
 DEPLOY_MODE="client"
 NUM_EXECUTORS=""
 EXECUTOR_MEMORY="4G"
+EXECUTOR_CORES=""
 DRIVER_CORES="4"
 DRIVER_MEMORY="8G"
 
@@ -47,6 +48,10 @@ EXPERIMENTAL_MAPPING_RULE=""
 CATALYST_WORKAROUND=""
 AUTOCLEAN_STD_FOLDER=""
 
+# Spark configuration options
+CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=""
+CONF_SPARK_MEMORY_FRACTION=""
+
 # Security command line defaults
 MENAS_CREDENTIALS_FILE=""
 MENAS_AUTH_KEYTAB=""
@@ -64,6 +69,10 @@ case $key in
     ;;
     --num-executors)
     NUM_EXECUTORS="$2"
+    shift 2 # past argument and value
+    ;;
+    --executor-cores)
+    EXECUTOR_CORES="$2"
     shift 2 # past argument and value
     ;;
     --executor-memory)
@@ -84,6 +93,14 @@ case $key in
     ;;
     --driver-memory)
     DRIVER_MEMORY="$2"
+    shift 2 # past argument and value
+    ;;
+    --conf-spark-executor-memoryOverhead)
+    CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD="$2"
+    shift 2 # past argument and value
+    ;;
+    --conf-spark-memory-fraction)
+    CONF_SPARK_MEMORY_FRACTION="$2"
     shift 2 # past argument and value
     ;;
     --jar)
@@ -231,6 +248,13 @@ add_to_cmd_line() {
     fi
 }
 
+# Puts Spark configuration properties to the command line
+add_spark_conf_cmd() {
+    if [ ! -z "$2" ]; then
+        CMD_LINE="$CMD_LINE --conf $1=$2"
+    fi
+}
+
 echoerr() {
     echo "$@" 1>&2;
 }
@@ -254,8 +278,13 @@ add_to_cmd_line "--master" ${MASTER}
 add_to_cmd_line "--deploy-mode" ${DEPLOY_MODE}
 add_to_cmd_line "--num-executors" ${NUM_EXECUTORS}
 add_to_cmd_line "--executor-memory" ${EXECUTOR_MEMORY}
+add_to_cmd_line "--executor-cores" ${EXECUTOR_CORES}
 add_to_cmd_line "--driver-cores" ${DRIVER_CORES}
 add_to_cmd_line "--driver-memory" ${DRIVER_MEMORY}
+
+# Adding Spark config options
+add_spark_conf_cmd "spark.executor.memoryOverhead" ${CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD}
+add_spark_conf_cmd "spark.memory.fraction" ${CONF_SPARK_MEMORY_FRACTION}
 
 # Adding JVM configuration, entry point class name and the jar file
 CMD_LINE="${CMD_LINE} --conf \"${CONF} ${ADDITIONAL_SPARK_CONF}\" --class ${CLASS} ${JAR}"
