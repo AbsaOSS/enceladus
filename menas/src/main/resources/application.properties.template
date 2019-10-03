@@ -108,3 +108,7 @@ za.co.absa.enceladus.menas.oozie.splineMongoURL=mongodb://localhost:27017
 #In some cases extra driver options need to be surrounded by double quotes
 #This seems to depend of the version of oozie
 #za.co.absa.enceladus.menas.oozie.sparkConf.surroundingQuoteChar="
+
+#Configure the following two parameters to use oozie impersonation
+#za.co.absa.enceladus.menas.oozie.proxyUser=oozieProxyUser
+#za.co.absa.enceladus.menas.oozie.proxyUserKeytab=/path/to/keytab

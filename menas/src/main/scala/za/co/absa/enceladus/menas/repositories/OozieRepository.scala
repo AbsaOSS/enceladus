@@ -44,7 +44,9 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import OozieRepository._
 import scala.util.{Try, Success, Failure}
 import za.co.absa.enceladus.menas.exceptions.OozieActionException
-
+import org.apache.hadoop.security.UserGroupInformation
+import java.security.PrivilegedExceptionAction
+import java.util.concurrent.Callable
 
 object OozieRepository {
   private lazy val dateFormat = {
@@ -94,6 +96,12 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   @Value("${za.co.absa.enceladus.menas.oozie.sparkConf.surroundingQuoteChar:}")
   val sparkConfQuotes: String = ""
 
+  @Value("${za.co.absa.enceladus.menas.oozie.proxyUser:}")
+  val oozieProxyUser: String = ""
+
+  @Value("${za.co.absa.enceladus.menas.oozie.proxyUserKeytab:}")
+  val oozieProxyUserKeytab: String = ""
+
   private val classLoader = Thread.currentThread().getContextClassLoader
   private val workflowTemplate = getTemplateFile("scheduling/oozie/workflow_template.xml")
   private val coordinatorTemplate = getTemplateFile("scheduling/oozie/coordinator_template.xml")
@@ -121,7 +129,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
 
   private def validateProperty(prop: String, propName: String, logWarnings: Boolean = false): Boolean = {
     if (prop == null || prop.isEmpty) {
-      if(logWarnings) {
+      if (logWarnings) {
         logger.warn(s"Oozie support disabled. Missing required configuration property $propName")
       }
       false
@@ -189,6 +197,35 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     new BufferedReader(
       new InputStreamReader(
         classLoader.getResourceAsStream(fileName), "UTF-8")).lines().toArray().mkString("\n")
+  }
+
+  /**
+   * This is a helper function for impersonating oozie calls using the proper proxy user if configured
+   */
+  private def impersonateWrapper[T](user: String)(fn: () => T) = {
+    if (oozieProxyUser.nonEmpty && oozieProxyUserKeytab.nonEmpty) {
+      //first we login as the proxy user, this seems to be necessary as otherwise
+      //oozie it will use the user running the service, this could potentially be solved
+      //by storing previously authenticated tokens in a cache
+      logger.info(s"impersonateWrapper Logging in as proxy user $oozieProxyUser")
+      val ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(oozieProxyUser, oozieProxyUserKeytab)
+      println(s"l1: $ugi")
+      ugi.doAs(new PrivilegedExceptionAction[T]() {
+        def run(): T = {
+          println(s"l2: ${System.getProperty("user.name")}")
+          //Impersonate
+          logger.info(s"impersonateWrapper Trying to impersonate $user as $oozieProxyUser")
+          OozieClient.doAs(user, new Callable[T]() {
+            override def call(): T = {
+              println(s"l4: ${System.getProperty("user.name")}")
+              fn()
+            }
+          });
+        }
+      })
+    } else {
+      fn()
+    }
   }
 
   /**
@@ -266,7 +303,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   }
 
   private def getCredsOrKeytabArgument(filename: String, protocol: String): String = {
-    if(filename.toLowerCase.trim.endsWith(".properties")) {
+    if (filename.toLowerCase.trim.endsWith(".properties")) {
       s"""<arg>--menas-credentials-file</arg>
          |<arg>$protocol$filename</arg>""".stripMargin
     } else {
@@ -302,7 +339,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     val conf = oozieClient.createConfiguration()
     conf.setProperty("jobTracker", resourceManager)
     conf.setProperty("nameNode", namenode)
-    if(oozieLibPath.isEmpty()) {
+    if (oozieLibPath.isEmpty()) {
       conf.setProperty(OozieClient.USE_SYSTEM_LIBPATH, "True")
     } else {
       conf.setProperty(OozieClient.USE_SYSTEM_LIBPATH, "False")
@@ -319,10 +356,12 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Submits a coordinator
    */
   def runCoordinator(coordPath: String, runtimeParams: RuntimeConfig): Future[String] = {
-    getOozieClientWrap { oozieClient =>
-      val conf = getOozieConf(oozieClient, runtimeParams)
-      conf.setProperty(OozieClient.COORDINATOR_APP_PATH, s"$coordPath")
-      oozieClient.submit(conf)
+    impersonateWrapper(runtimeParams.sysUser) { () =>
+      getOozieClientWrap { oozieClient =>
+        val conf = getOozieConf(oozieClient, runtimeParams)
+        conf.setProperty(OozieClient.COORDINATOR_APP_PATH, s"$coordPath")
+        oozieClient.submit(conf)
+      }
     }
   }
 
@@ -330,15 +369,17 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Run a workflow now
    */
   def runWorkflow(wfPath: String, runtimeParams: RuntimeConfig, reportDate: String): Future[String] = {
-    getOozieClient { oozieClient =>
-      val conf = getOozieConf(oozieClient, runtimeParams)
-      conf.setProperty(OozieClient.APP_PATH, wfPath)
-      conf.setProperty("reportDate", reportDate)
-      Try {
-        oozieClient.run(conf)
-      } match {
-        case Success(x) => Future.successful(x)
-        case Failure(e) => Future.failed(OozieActionException(e.getMessage, e.getCause))
+    impersonateWrapper(runtimeParams.sysUser) { () =>
+      getOozieClient { oozieClient =>
+        val conf = getOozieConf(oozieClient, runtimeParams)
+        conf.setProperty(OozieClient.APP_PATH, wfPath)
+        conf.setProperty("reportDate", reportDate)
+        Try {
+          new OozieClient("http://jhbdsr020000017.corp.dsarena.com:11000/oozie/").run(conf)
+        } match {
+          case Success(x) => Future.successful(x)
+          case Failure(e) => Future.failed(OozieActionException(e.getMessage, e.getCause))
+        }
       }
     }
   }
@@ -368,9 +409,9 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     Future {
       val p = new Path(path)
       if (hadoopFS.exists(p)) {
-        throw EntityAlreadyExistsException(s"Schedule already exists! Please delete $path and/or try again")
+        logger.warn(s"Schedule $path already exists! Overwriting")
       }
-      val os = hadoopFS.create(p)
+      val os = hadoopFS.create(p, true)
       os.write(content)
       os.flush()
       os.close()
