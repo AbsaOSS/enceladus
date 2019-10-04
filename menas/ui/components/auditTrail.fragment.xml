@@ -47,7 +47,7 @@
                                     <Label visible="{path:'auditTrail>newValue', formatter:'Formatters.nonEmptyObject'}" text="New Value"/>
                                     <Text visible="{path:'auditTrail>newValue', formatter:'Formatters.nonEmptyObject'}" text="{auditTrail>newValue}"/>
                                     <Label visible="{path:'auditTrail>oldValue', formatter:'Formatters.nonEmptyObject'}" text="Old Value"/>
-                                    <Text visible="{path:'auditTrail>oldValue', formatter:'Formatters.nonEmptyObject'}" text="{oldValue}"/>
+                                    <Text visible="{path:'auditTrail>oldValue', formatter:'Formatters.nonEmptyObject'}" text="{auditTrail>oldValue}"/>
                                 </form:content>
                             </form:SimpleForm>
                         </CustomListItem>
