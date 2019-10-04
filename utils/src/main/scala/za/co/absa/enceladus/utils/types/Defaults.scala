@@ -17,7 +17,11 @@ package za.co.absa.enceladus.utils.types
 
 import java.sql.Date
 import java.sql.Timestamp
+import java.util.TimeZone
+
 import org.apache.spark.sql.types._
+import za.co.absa.enceladus.utils.general.ConfigReader
+
 import scala.util.{Success, Try}
 
 object Defaults {
@@ -58,5 +62,22 @@ object Defaults {
       case TimestampType => "yyyy-MM-dd HH:mm:ss"
       case _             => throw new IllegalStateException(s"No default format defined for data type ${dt.typeName}")
     }
+
+  def getGlobalDefaultTimestampTimeZone: Option[String] = globalDefaultTimestampTimeZone
+  def getGlobalDefaultDateTimeZone: Option[String] = globalDefaultDateTimeZone
+
+  private val globalDefaultTimestampTimeZone: Option[String] = readTimezone("defaultTimestampTimeZone")
+  private val globalDefaultDateTimeZone: Option[String] = readTimezone("defaultDateTimeZone")
+
+  private def readTimezone(path: String): Option[String] = {
+    val result = ConfigReader.readStringConfigIfExist(path)
+    result.foreach(tz =>
+      if (!TimeZone.getAvailableIDs().contains(tz )) {
+        throw new IllegalStateException(s"The setting '$tz' of '$path' is not recognized as known time zone")
+      }
+    )
+
+    result
+  }
 }
 
