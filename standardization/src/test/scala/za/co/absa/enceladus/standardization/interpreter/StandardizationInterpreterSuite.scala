@@ -28,59 +28,6 @@ class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with 
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
 
-  test("sourcecolumn meta (does not yet) rename field") {
-    /* TODO once ##398 is done and solved as expected this test should start to fail
-       (which is good - see the two columns of same name on the output) */
-    val sourceColumnName = "source column"
-    val desiredSchema = StructType(Seq(
-      StructField("description", StringType, nullable = false),
-      StructField("new_column", StringType, nullable = false,
-        new MetadataBuilder().putString("sourcecolumn", sourceColumnName).build),
-      StructField("new_column_nullable", StringType, nullable = true,
-        new MetadataBuilder().putString("sourcecolumn", sourceColumnName).build)
-    ))
-
-    val seq = Seq(
-      ("01-Hello", "World"),
-      ("02-Null", null),
-      ("03-Number", Long.MaxValue.toString)
-    )
-    val src = seq.toDF("description", sourceColumnName)
-    logDataFrameContent(src)
-
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    logDataFrameContent(std)
-
-    val actualSchema = std.schema.treeString
-    val expectedSchema = "root\n" +
-      " |-- description: string (nullable = true)\n" +
-      " |-- source column: string (nullable = true)\n" +
-      " |-- source column: string (nullable = true)\n" +
-      " |-- errCol: array (nullable = true)\n" +
-      " |    |-- element: struct (containsNull = false)\n" +
-      " |    |    |-- errType: string (nullable = true)\n" +
-      " |    |    |-- errCode: string (nullable = true)\n" +
-      " |    |    |-- errMsg: string (nullable = true)\n" +
-      " |    |    |-- errCol: string (nullable = true)\n" +
-      " |    |    |-- rawValues: array (nullable = true)\n" +
-      " |    |    |    |-- element: string (containsNull = true)\n" +
-      " |    |    |-- mappings: array (nullable = true)\n" +
-      " |    |    |    |-- element: struct (containsNull = true)\n" +
-      " |    |    |    |    |-- mappingTableColumn: string (nullable = true)\n" +
-      " |    |    |    |    |-- mappedDatasetColumn: string (nullable = true)\n"
-    assert(actualSchema == expectedSchema)
-
-    val exp = Seq(
-      RenamingRow("01-Hello", Option("World")),
-      RenamingRow("02-Null", None, Seq(
-        ErrorMessage.stdNullErr(sourceColumnName)
-      )),
-      RenamingRow("03-Number", Option(Long.MaxValue.toString))
-    )
-
-    assertResult(exp)(std.as[RenamingRow].collect().toList)
-  }
-
   test("Errors in fields and having source columns") {
     val desiredSchema = StructType(Seq(
       StructField("first_name", StringType, nullable = true,
@@ -116,17 +63,15 @@ class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with 
 
     val actualSchema = std.schema.treeString
     val expectedSchema = "root\n" +
-                         " |-- first name: string (nullable = true)\n" +
-                         " |-- last name: string (nullable = true)\n" +
-                         " |-- body stats: struct (nullable = false)\n" +
+                         " |-- first_name: string (nullable = true)\n" +
+                         " |-- last_name: string (nullable = true)\n" +
+                         " |-- body_stats: struct (nullable = false)\n" +
                          " |    |-- height: integer (nullable = true)\n" +
                          " |    |-- weight: integer (nullable = true)\n" +
                          " |    |-- miscellaneous: struct (nullable = false)\n" +
                          " |    |    |-- eye_color: string (nullable = true)\n" +
-                          // TODO #398 notice that this field is renamed (not renamed back)
                          " |    |    |-- glasses: boolean (nullable = true)\n" +
-                         " |    |-- temperature measurements: array (nullable = true)\n" +
-                          // TODO after #398 should be 'temperature measurements' (among other changes)
+                         " |    |-- temperature_measurements: array (nullable = true)\n" +
                          " |    |    |-- element: double (containsNull = true)\n" +
                          " |-- errCol: array (nullable = true)\n" +
                          " |    |-- element: struct (containsNull = false)\n" +

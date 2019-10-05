@@ -34,7 +34,7 @@ import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenera
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
-import za.co.absa.enceladus.utils.schema.MetadataKeys
+import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 
@@ -62,27 +62,9 @@ object StandardizationJob {
 
     val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     val schema: StructType = dao.getSchema(dataset.schemaName, dataset.schemaVersion)
-    val dateTokens = cmd.reportDate.split("-")
+    val reportVersion = getReportVersion(cmd, dataset)
+    val pathCfg = getPathCfg(cmd, dataset, reportVersion)
 
-    val reportVersion = cmd.reportVersion match {
-      case Some(version) => version
-      case None          =>
-        val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, cmd.reportDate) + 1
-        log.warn(s"Report version not provided, inferred report version: $newVersion")
-        log.warn("This is an EXPERIMENTAL feature.")
-        log.warn(" -> It can lead to issues when running multiple jobs on a dataset concurrently.")
-        log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
-        newVersion
-    }
-
-    val pathCfg = PathCfg(
-      inputPath = buildRawPath(cmd, dataset, dateTokens, reportVersion),
-      outputPath = MessageFormat.format(conf.getString("standardized.hdfs.path"),
-        cmd.datasetName,
-        cmd.datasetVersion.toString,
-        cmd.reportDate,
-        reportVersion.toString)
-    )
     log.info(s"input path: ${pathCfg.inputPath}")
     log.info(s"output path: ${pathCfg.outputPath}")
     // die if the output path exists
@@ -124,6 +106,31 @@ object StandardizationJob {
     })
   }
 
+  private def getReportVersion(cmd: CmdConfig, dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {
+    cmd.reportVersion match {
+      case Some(version) => version
+      case None          =>
+        val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, cmd.reportDate) + 1
+        log.warn(s"Report version not provided, inferred report version: $newVersion")
+        log.warn("This is an EXPERIMENTAL feature.")
+        log.warn(" -> It can lead to issues when running multiple jobs on a dataset concurrently.")
+        log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
+        newVersion
+    }
+  }
+
+  private def getPathCfg(cmd: CmdConfig, dataset: Dataset, reportVersion: Int): PathCfg = {
+    val dateTokens = cmd.reportDate.split("-")
+    PathCfg(
+      inputPath = buildRawPath(cmd, dataset, dateTokens, reportVersion),
+      outputPath = MessageFormat.format(conf.getString("standardized.hdfs.path"),
+        cmd.datasetName,
+        cmd.datasetVersion.toString,
+        cmd.reportDate,
+        reportVersion.toString)
+    )
+  }
+
   private def obtainSparkSession(): SparkSession = {
     val spark = SparkSession.builder()
       .appName("Standardisation")
@@ -133,15 +140,15 @@ object StandardizationJob {
   }
 
   /**
-    * Returns a Spark reader with all format-specific options applied.
-    * Options are provided by command line parameters.
-    *
-    * @param cmd      Command line parameters containing format-specific options
-    * @param dataset  A dataset definition
-    * @param numberOfColumns (Optional) number of columns, enables reading CSV files with the number of columns
-    *                        larger than Spark default
-    * @return The updated dataframe reader
-    */
+   * Returns a Spark reader with all format-specific options applied.
+   * Options are provided by command line parameters.
+   *
+   * @param cmd      Command line parameters containing format-specific options
+   * @param dataset  A dataset definition
+   * @param numberOfColumns (Optional) number of columns, enables reading CSV files with the number of columns
+   *                        larger than Spark default
+   * @return The updated dataframe reader
+   */
   def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, numberOfColumns: Int = 0)
                              (implicit spark: SparkSession, dao: MenasDAO): DataFrameReader = {
     val dfReader = spark.read.format(cmd.rawFormat)
@@ -259,7 +266,7 @@ object StandardizationJob {
 
     addRawRecordCountToMetadata(dfAll)
 
-    val std = try {
+    val std: DataFrame = try {
       StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
     } catch {
       case e@ValidationException(msg, errors)                  =>
@@ -273,23 +280,22 @@ object StandardizationJob {
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", e.getMessage, sw.toString)
         throw e
     }
+
     // If the meta data value sourcecolumn is set override source data column name with the field name
-    val stdRenameSourceColumns: DataFrame = std.select(
-      (
-        schema.fields.map { field: StructField => renameSourceColumn(std, field, registerWithATUM = true)}
-        :+ std.col(ErrorMessage.errorColumnName)
-      ): _*
-    )
+    val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
+    fieldRenames.foreach {
+      case (destinationName, sourceName) => std.registerColumnRename(sourceName, destinationName) //register rename with ATUM)
+    }
 
-    stdRenameSourceColumns.setCheckpoint("Standardization - End", persistInDatabase = false)
+    std.setCheckpoint("Standardization - End", persistInDatabase = false)
 
-    val recordCount = stdRenameSourceColumns.lastCheckpointRowCount match {
+    val recordCount = std.lastCheckpointRowCount match {
       case None    => std.count
       case Some(p) => p
     }
     if (recordCount == 0) { handleEmptyOutputAfterStandardization() }
 
-    stdRenameSourceColumns.write.parquet(pathCfg.outputPath)
+    std.write.parquet(pathCfg.outputPath)
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
     val stdDirSize = fsUtils.getDirectorySize(pathCfg.outputPath)
@@ -300,7 +306,7 @@ object StandardizationJob {
     }
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
       cmd.menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
-    stdRenameSourceColumns.writeInfoFile(pathCfg.outputPath)
+    std.writeInfoFile(pathCfg.outputPath)
   }
 
   private def handleEmptyOutputAfterStandardization()(implicit spark: SparkSession): Unit = {
@@ -340,7 +346,7 @@ object StandardizationJob {
     // Handle renaming of source columns in case there are columns
     // that will break because of issues in column names like spaces
     df.select(schema.fields.map { field: StructField =>
-      renameSourceColumn(df, field, registerWithATUM = false)
+      renameSourceColumn(df, field)
     }: _*).write.parquet(tempParquetDir)
 
     fsUtils.deleteOnExit(tempParquetDir)
@@ -351,13 +357,10 @@ object StandardizationJob {
     }: _*)
   }
 
-  private def renameSourceColumn(df: DataFrame, field: StructField, registerWithATUM: Boolean): Column = {
+  private def renameSourceColumn(df: DataFrame, field: StructField): Column = {
     if (field.metadata.contains(MetadataKeys.SourceColumn)) {
       val sourceColumnName = field.metadata.getString(MetadataKeys.SourceColumn)
       log.info(s"schema field : ${field.name} : rename : $sourceColumnName")
-      if (registerWithATUM) {
-        df.registerColumnRename(sourceColumnName, field.name) //register rename with ATUM
-      }
       df.col(sourceColumnName).as(field.name, field.metadata)
     } else {
       df.col(field.name)
@@ -387,12 +390,12 @@ object StandardizationJob {
   }
 
   /**
-    * Adds metadata about the number of records in raw data by checking Atum's checkpoints first.
-    * If raw record count is not available in checkpoints the method will calculate that count
-    * based on the provided raw dataframe.
-    *
-    * @return The number of records in a checkpoint corresponding to raw data (if available)
-    */
+   * Adds metadata about the number of records in raw data by checking Atum's checkpoints first.
+   * If raw record count is not available in checkpoints the method will calculate that count
+   * based on the provided raw dataframe.
+   *
+   * @return The number of records in a checkpoint corresponding to raw data (if available)
+   */
   private def addRawRecordCountToMetadata(df: DataFrame): Unit = {
     val checkpointRawRecordCount = getRawRecordCountFromCheckpoints
 
@@ -404,10 +407,10 @@ object StandardizationJob {
   }
 
   /**
-    * Gets the number of records in raw data by traversing Atum's checkpoints.
-    *
-    * @return The number of records in a checkpoint corresponding to raw data (if available)
-    */
+   * Gets the number of records in raw data by traversing Atum's checkpoints.
+   *
+   * @return The number of records in a checkpoint corresponding to raw data (if available)
+   */
   private def getRawRecordCountFromCheckpoints: Option[Long] = {
     val controlMeasure = Atum.getControMeasure
 

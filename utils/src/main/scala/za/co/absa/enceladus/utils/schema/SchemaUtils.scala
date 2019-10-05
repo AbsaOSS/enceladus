@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.utils.schema
 
 import org.apache.spark.sql.types._
-
 import scala.annotation.tailrec
 import scala.util.{Random, Try}
 
@@ -62,23 +61,23 @@ object SchemaUtils {
   }
 
   /**
-    * Get a type of a field from a text path and a given schema
-    *
-    * @param path   The dot-separated path to the field
-    * @param schema The schema which should contain the specified path
-    * @return Some(the type of the field) or None if the field does not exist
-    */
+   * Get a type of a field from a text path and a given schema
+   *
+   * @param path   The dot-separated path to the field
+   * @param schema The schema which should contain the specified path
+   * @return Some(the type of the field) or None if the field does not exist
+   */
   def getFieldType(path: String, schema: StructType): Option[DataType] = {
     getField(path, schema).map(_.dataType)
   }
 
   /**
-    * Checks if the specified path is an array of structs
-    *
-    * @param path   The dot-separated path to the field
-    * @param schema The schema which should contain the specified path
-    * @return true if the field is an array of structs
-    */
+   * Checks if the specified path is an array of structs
+   *
+   * @param path   The dot-separated path to the field
+   * @param schema The schema which should contain the specified path
+   * @return true if the field is an array of structs
+   */
   def isColumnArrayOfStruct(path: String, schema: StructType): Boolean = {
     getFieldType(path, schema) match {
       case Some(dt) =>
@@ -95,12 +94,12 @@ object SchemaUtils {
   }
 
   /**
-    * Get nullability of a field from a text path and a given schema
-    *
-    * @param path   The dot-separated path to the field
-    * @param schema The schema which should contain the specified path
-    * @return Some(nullable) or None if the field does not exist
-    */
+   * Get nullability of a field from a text path and a given schema
+   *
+   * @param path   The dot-separated path to the field
+   * @param schema The schema which should contain the specified path
+   * @return Some(nullable) or None if the field does not exist
+   */
   def getFieldNullability(path: String, schema: StructType): Option[Boolean] = {
     getField(path, schema).map(_.nullable)
   }
@@ -116,14 +115,59 @@ object SchemaUtils {
   }
 
   /**
-    * Get first array column's path out of complete path.
-    *
-    *  E.g if the path argument is "a.b.c.d.e" where b and d are arrays, "a.b" will be returned.
-    *
-    * @param path   The path to the attribute
-    * @param schema The schema of the whole dataset
-    * @return The path of the first array field or "" if none were found
-    */
+   * Returns all renames in the provided schema.
+   * @param schema  schema to examine
+   * @return        the keys of the returned map are the columns' names after renames, the values are the source columns;
+   *                the name are full paths denoted with dot notation
+   */
+  def getRenamesInSchema(schema: StructType): Map[String, String] = {
+
+    def getRenamesRecursively(path: String, struct: StructType, acc: Map[String, String]): Map[String, String] = {
+      import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldEnhancements
+
+      struct.fields.foldLeft(acc) { (renames, field) =>
+        val fieldPath = appendPath(path, field.name)
+        // fieldOwnRename will be a map of only one item only if sourcecolumn is present in metadata and differs from field.name
+        // otherwise fieldOwnRename will be empty
+        val fieldOwnRename  = field.getMetadataString(MetadataKeys.SourceColumn)
+          .filter(_ != field.name)
+          .map(inputName => (fieldPath, appendPath(fieldPath, inputName)))
+          .toMap
+        val renamesWithLocal = renames ++ fieldOwnRename
+
+        field.dataType match {
+          case st: StructType => getRenamesRecursively(fieldPath, st, renamesWithLocal)
+          case at: ArrayType  =>
+            getStructInArray(at.elementType)
+              .map(x => getRenamesRecursively(fieldPath, x, renamesWithLocal))
+              .getOrElse(renamesWithLocal)
+          case _              => renamesWithLocal
+        }
+      }
+    }
+
+
+    @tailrec
+    def getStructInArray(dataType: DataType): Option[StructType] = {
+      dataType match {
+        case st: StructType => Option(st)
+        case at: ArrayType => getStructInArray(at.elementType)
+        case _ => None
+      }
+    }
+
+    getRenamesRecursively("", schema, Map.empty)
+  }
+
+  /**
+   * Get first array column's path out of complete path.
+   *
+   *  E.g if the path argument is "a.b.c.d.e" where b and d are arrays, "a.b" will be returned.
+   *
+   * @param path   The path to the attribute
+   * @param schema The schema of the whole dataset
+   * @return The path of the first array field or "" if none were found
+   */
   def getFirstArrayPath(path: String, schema: StructType): String = {
     @tailrec
     def helper(remPath: Seq[String], pathAcc: Seq[String]): Seq[String] = {
@@ -143,8 +187,8 @@ object SchemaUtils {
   }
 
   /**
-    * Get paths for all array subfields of this given datatype
-    */
+   * Get paths for all array subfields of this given datatype
+   */
   def getAllArraySubPaths(path: String, name: String, dt: DataType): Seq[String] = {
     val currPath = appendPath(path, name)
     dt match {
@@ -155,14 +199,14 @@ object SchemaUtils {
   }
 
   /**
-    * Get all array columns' paths out of complete path.
-    *
-    *  E.g. if the path argument is "a.b.c.d.e" where b and d are arrays, "a.b" and "a.b.c.d" will be returned.
-    *
-    * @param path   The path to the attribute
-    * @param schema The schema of the whole dataset
-    * @return Seq of dot-separated paths for all array fields in the provided path
-    */
+   * Get all array columns' paths out of complete path.
+   *
+   *  E.g. if the path argument is "a.b.c.d.e" where b and d are arrays, "a.b" and "a.b.c.d" will be returned.
+   *
+   * @param path   The path to the attribute
+   * @param schema The schema of the whole dataset
+   * @return Seq of dot-separated paths for all array fields in the provided path
+   */
   def getAllArraysInPath(path: String, schema: StructType): Seq[String] = {
     @tailrec
     def helper(remPath: Seq[String], pathAcc: Seq[String], arrayAcc: Seq[String]): Seq[String] = {
@@ -184,20 +228,20 @@ object SchemaUtils {
   }
 
   /**
-    * For a given list of field paths determines the deepest common array path.
-    *
-    * For instance, if given 'a.b', 'a.b.c', 'a.b.c.d' where b and c are arrays the common deepest array
-    * path is 'a.b.c'.
-    *
-    * If any of the arrays are on diverging paths this function returns None.
-    *
-    * The purpose of the function is to determine the order of explosions to be made before the dataframe can be
-    * joined on a field inside an array.
-    *
-    * @param schema     A Spark schema
-    * @param fieldPaths A list of paths to analyze
-    * @return Returns a common array path if there is one and None if any of the arrays are on diverging paths
-    */
+   * For a given list of field paths determines the deepest common array path.
+   *
+   * For instance, if given 'a.b', 'a.b.c', 'a.b.c.d' where b and c are arrays the common deepest array
+   * path is 'a.b.c'.
+   *
+   * If any of the arrays are on diverging paths this function returns None.
+   *
+   * The purpose of the function is to determine the order of explosions to be made before the dataframe can be
+   * joined on a field inside an array.
+   *
+   * @param schema     A Spark schema
+   * @param fieldPaths A list of paths to analyze
+   * @return Returns a common array path if there is one and None if any of the arrays are on diverging paths
+   */
   def getDeepestCommonArrayPath(schema: StructType, fieldPaths: Seq[String]): Option[String] = {
     val arrayPaths = fieldPaths.flatMap(path => getAllArraysInPath(path, schema)).distinct
 
@@ -209,14 +253,14 @@ object SchemaUtils {
   }
 
   /**
-    * For a field path determines the deepest array path.
-    *
-    * For instance, if given 'a.b.c.d' where b and c are arrays the deepest array is 'a.b.c'.
-    *
-    * @param schema    A Spark schema
-    * @param fieldPath A path to analyze
-    * @return Returns a common array path if there is one and None if any of the arrays are on diverging paths
-    */
+   * For a field path determines the deepest array path.
+   *
+   * For instance, if given 'a.b.c.d' where b and c are arrays the deepest array is 'a.b.c'.
+   *
+   * @param schema    A Spark schema
+   * @param fieldPath A path to analyze
+   * @return Returns a common array path if there is one and None if any of the arrays are on diverging paths
+   */
   def getDeepestArrayPath(schema: StructType, fieldPath: String): Option[String] = {
     val arrayPaths = getAllArraysInPath(fieldPath, schema)
 
@@ -228,15 +272,15 @@ object SchemaUtils {
   }
 
   /**
-    * For a given list of field paths determines if any path pair is a subset of one another.
-    *
-    * For instance,
-    *  - 'a.b', 'a.b.c', 'a.b.c.d' have this property.
-    *  - 'a.b', 'a.b.c', 'a.x.y' does NOT have it, since 'a.b.c' and 'a.x.y' have diverging subpaths.
-    *
-    * @param paths A list of paths to be analyzed
-    * @return true if for all pathe the above property holds
-    */
+   * For a given list of field paths determines if any path pair is a subset of one another.
+   *
+   * For instance,
+   *  - 'a.b', 'a.b.c', 'a.b.c.d' have this property.
+   *  - 'a.b', 'a.b.c', 'a.x.y' does NOT have it, since 'a.b.c' and 'a.x.y' have diverging subpaths.
+   *
+   * @param paths A list of paths to be analyzed
+   * @return true if for all pathe the above property holds
+   */
   def isCommonSubPath(paths: String*): Boolean = {
     def sliceRoot(paths: Seq[Seq[String]]): Seq[Seq[String]] = {
       paths.map(path => path.drop(1)).filter(_.nonEmpty)
@@ -253,22 +297,22 @@ object SchemaUtils {
   }
 
   /**
-    * Get paths for all array fields in the schema
-    *
-    * @param schema The schema in which to look for array fields
-    * @return Seq of dot separated paths of fields in the schema, which are of type Array
-    */
+   * Get paths for all array fields in the schema
+   *
+   * @param schema The schema in which to look for array fields
+   * @return Seq of dot separated paths of fields in the schema, which are of type Array
+   */
   def getAllArrayPaths(schema: StructType): Seq[String] = {
     schema.fields.flatMap(f => getAllArraySubPaths("", f.name, f.dataType)).toSeq
   }
 
   /**
-    * Append a new attribute to path or empty string.
-    *
-    * @param path      The dot-separated existing path
-    * @param fieldName Name of the field to be appended to the path
-    * @return The path with the new field appended or the field itself if path is empty
-    */
+   * Append a new attribute to path or empty string.
+   *
+   * @param path      The dot-separated existing path
+   * @param fieldName Name of the field to be appended to the path
+   * @return The path with the new field appended or the field itself if path is empty
+   */
   def appendPath(path: String, fieldName: String): String = {
     if (path.isEmpty) {
       fieldName
@@ -280,20 +324,20 @@ object SchemaUtils {
   }
 
   /**
-    * Determine if a datatype is a primitive one
-    */
+   * Determine if a datatype is a primitive one
+   */
   def isPrimitive(dt: DataType): Boolean = dt match {
     case _: BinaryType | _: BooleanType | _: ByteType | _: DateType | _: DecimalType | _: DoubleType | _: FloatType | _: IntegerType | _: LongType | _: NullType | _: ShortType | _: StringType | _: TimestampType => true
     case _ => false
   }
 
   /**
-    * Determine the name of a field
-    * Will override to "sourcecolumn" in the Metadata if it exists
-    *
-    * @param field  field to work with
-    * @return       Metadata "sourcecolumn" if it exists or field.name
-    */
+   * Determine the name of a field
+   * Will override to "sourcecolumn" in the Metadata if it exists
+   *
+   * @param field  field to work with
+   * @return       Metadata "sourcecolumn" if it exists or field.name
+   */
   def getFieldNameOverriddenByMetadata(field: StructField): String = {
     if (field.metadata.contains(MetadataKeys.SourceColumn)) {
       field.metadata.getString(MetadataKeys.SourceColumn)
@@ -303,11 +347,11 @@ object SchemaUtils {
   }
 
   /**
-    * For an array of arrays of arrays, ... get the final element type at the bottom of the array
-    *
-    * @param arrayType An array data type from a Spark dataframe schema
-    * @return A non-array data type at the bottom of array nesting
-    */
+   * For an array of arrays of arrays, ... get the final element type at the bottom of the array
+   *
+   * @param arrayType An array data type from a Spark dataframe schema
+   * @return A non-array data type at the bottom of array nesting
+   */
   @tailrec
   def getDeepestArrayType(arrayType: ArrayType): DataType = {
     arrayType.elementType match {
@@ -317,12 +361,12 @@ object SchemaUtils {
   }
 
   /**
-    * Generate a unique column name
-    *
-    * @param prefix A prefix to use for the column name
-    * @param schema An optional schema to validate if the column already exists (a very low probability)
-    * @return A name that can be used as a unique column name
-    */
+   * Generate a unique column name
+   *
+   * @param prefix A prefix to use for the column name
+   * @param schema An optional schema to validate if the column already exists (a very low probability)
+   * @return A name that can be used as a unique column name
+   */
   def getUniqueName(prefix: String, schema: Option[StructType]): String = {
     schema match {
       case None =>
@@ -339,12 +383,12 @@ object SchemaUtils {
   }
 
   /**
-    * Get a closest unique column name
-    *
-    * @param desiredName A prefix to use for the column name
-    * @param schema      A schema to validate if the column already exists
-    * @return A name that can be used as a unique column name
-    */
+   * Get a closest unique column name
+   *
+   * @param desiredName A prefix to use for the column name
+   * @param schema      A schema to validate if the column already exists
+   * @return A name that can be used as a unique column name
+   */
   def getClosestUniqueName(desiredName: String, schema: StructType): String = {
     var exists = true
     var columnName = ""
@@ -358,12 +402,12 @@ object SchemaUtils {
   }
 
   /**
-    * Checks if a casting between types always succeeds
-    *
-    * @param sourceType A type to be casted
-    * @param targetType A type to be casted to
-    * @return true if casting never fails
-    */
+   * Checks if a casting between types always succeeds
+   *
+   * @param sourceType A type to be casted
+   * @param targetType A type to be casted to
+   * @return true if casting never fails
+   */
   def isCastAlwaysSucceeds(sourceType: DataType, targetType: DataType): Boolean = {
     (sourceType, targetType) match {
       case (_: StructType, _) | (_: ArrayType, _) => false
@@ -378,12 +422,12 @@ object SchemaUtils {
   }
 
   /**
-    * Checks if a field is an array
-    *
-    * @param schema        A schema
-    * @param fieldPathName A field to check
-    * @return true if the specified field is an array
-    */
+   * Checks if a field is an array
+   *
+   * @param schema        A schema
+   * @param fieldPathName A field to check
+   * @return true if the specified field is an array
+   */
   def isArray(schema: StructType, fieldPathName: String): Boolean = {
     @tailrec
     def arrayHelper(arrayField: ArrayType, path: Seq[String]): Boolean = {
@@ -435,12 +479,12 @@ object SchemaUtils {
   }
 
   /**
-    * Checks if a field is an array that is not nested in another array
-    *
-    * @param schema        A schema
-    * @param fieldPathName A field to check
-    * @return true if a field is an array that is not nested in another array
-    */
+   * Checks if a field is an array that is not nested in another array
+   *
+   * @param schema        A schema
+   * @param fieldPathName A field to check
+   * @return true if a field is an array that is not nested in another array
+   */
   def isNonNestedArray(schema: StructType, fieldPathName: String): Boolean = {
     def structHelper(structField: StructType, path: Seq[String]): Boolean = {
       val currentField = path.head
@@ -473,12 +517,12 @@ object SchemaUtils {
   }
 
   /**
-    * Checks if a field is the only field in a struct
-    *
-    * @param schema A schema
-    * @param column A column to check
-    * @return true if the column is the only column in a struct
-    */
+   * Checks if a field is the only field in a struct
+   *
+   * @param schema A schema
+   * @param column A column to check
+   * @return true if the column is the only column in a struct
+   */
   def isOnlyField(schema: StructType, column: String): Boolean = {
     def structHelper(structField: StructType, path: Seq[String]): Boolean = {
       val currentField = path.head
@@ -506,6 +550,10 @@ object SchemaUtils {
     }
     val path = column.split('.')
     structHelper(schema, path)
+  }
+
+  def unpath(path: String): String = {
+    path.replace('.', '_')
   }
 
 }
