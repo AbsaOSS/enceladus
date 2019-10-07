@@ -225,10 +225,19 @@ validate() {
     fi
 }
 
+validate_either() {
+    if [[ -z "$1" && -z "$3" ]]; then
+        echo "Either $2 or $4 should be specified"
+        VALID="0"
+    fi
+}
+
 validate "$NUM_EXECUTORS" "--num-executors"
 validate "$DATASET_NAME" "--dataset-name"
 validate "$DATASET_VERSION" "--dataset-version"
 validate "$REPORT_DATE" "--report-date"
+
+validate_either "$MENAS_CREDENTIALS_FILE" "--menas-credentials-file" "$MENAS_AUTH_KEYTAB" "--menas-auth-keytab"
 
 if [[ "$MASTER" != "yarn" ]]; then
   echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
