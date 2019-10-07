@@ -35,5 +35,11 @@ CONF_JAR="enceladus-conformance.jar"
 
 LOG_DIR="/tmp"
 
-# Additional environment-specific Spark options, e.g. "spark.driver.host=myhost"
+# Additional environment-specific Spark options, e.g. "--conf spark.driver.host=myhost"
+# To specify several configuration options prepend '--conf' to each config key.
+# Example: ADDITIONAL_SPARK_CONF="--conf spark.driver.host=myhost --conf spark.driver.port=12233"
 ADDITIONAL_SPARK_CONF=""
+
+# Additional JVM options
+# Example: ADDITIONAL_JVM_CONF="-Dtimezone=UTC -Dfoo=bar"
+ADDITIONAL_JVM_CONF=""

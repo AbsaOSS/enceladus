@@ -267,7 +267,7 @@ if [ ! -z "$MAPPING_TABLE_PATTERN" ]; then
     MT_PATTERN="-Dconformance.mappingtable.pattern=$MAPPING_TABLE_PATTERN"
 fi
 
-CONF="spark.driver.extraJavaOptions=-Dmenas.rest.uri=$MENAS_URI -Dstandardized.hdfs.path=$STD_HDFS_PATH \
+JVM_CONF="spark.driver.extraJavaOptions=-Dmenas.rest.uri=$MENAS_URI -Dstandardized.hdfs.path=$STD_HDFS_PATH \
 -Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=$HDP_VERSION \
 $MT_PATTERN"
 
@@ -287,7 +287,7 @@ add_spark_conf_cmd "spark.executor.memoryOverhead" ${CONF_SPARK_EXECUTOR_MEMORY_
 add_spark_conf_cmd "spark.memory.fraction" ${CONF_SPARK_MEMORY_FRACTION}
 
 # Adding JVM configuration, entry point class name and the jar file
-CMD_LINE="${CMD_LINE} --conf \"${CONF} ${ADDITIONAL_SPARK_CONF}\" --class ${CLASS} ${JAR}"
+CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
 add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
