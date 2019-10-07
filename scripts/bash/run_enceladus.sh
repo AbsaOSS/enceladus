@@ -219,25 +219,25 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 # Validation
 VALID="1"
 validate() {
-    if [ -z "$1" ]; then
-        echo "Missing mandatory option $2"
+    if [[ -z "$2" ]]; then
+        echo "Missing mandatory option $1"
         VALID="0"
     fi
 }
 
 validate_either() {
-    if [[ -z "$1" && -z "$3" ]]; then
-        echo "Either $2 or $4 should be specified"
+    if [[ -z "$2" && -z "$4" ]]; then
+        echo "Either $1 or $3 should be specified"
         VALID="0"
     fi
 }
 
-validate "$NUM_EXECUTORS" "--num-executors"
-validate "$DATASET_NAME" "--dataset-name"
-validate "$DATASET_VERSION" "--dataset-version"
-validate "$REPORT_DATE" "--report-date"
+validate "--num-executors" "$NUM_EXECUTORS"
+validate "--dataset-name" "$DATASET_NAME"
+validate "--dataset-version" "$DATASET_VERSION"
+validate "--report-date" "$REPORT_DATE"
 
-validate_either "$MENAS_CREDENTIALS_FILE" "--menas-credentials-file" "$MENAS_AUTH_KEYTAB" "--menas-auth-keytab"
+validate_either "--menas-credentials-file" "$MENAS_CREDENTIALS_FILE" "--menas-auth-keytab" "$MENAS_AUTH_KEYTAB"
 
 if [[ "$MASTER" != "yarn" ]]; then
   echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
@@ -250,17 +250,16 @@ if [ "$VALID" == "0" ]; then
 fi
 
 # Construct command line
-CMD_LINE=""
 add_to_cmd_line() {
-    if [ ! -z "$2" ]; then
+    if [[ ! -z "$2" ]]; then
         CMD_LINE="$CMD_LINE $1 $2"
     fi
 }
 
 # Puts Spark configuration properties to the command line
 add_spark_conf_cmd() {
-    if [ ! -z "$2" ]; then
-        CMD_LINE="$CMD_LINE --conf $1=$2"
+    if [[ ! -z "$2" ]]; then
+        SPARK_CONF="$SPARK_CONF --conf $1=$2"
     fi
 }
 
@@ -275,6 +274,8 @@ MT_PATTERN=""
 if [ ! -z "$MAPPING_TABLE_PATTERN" ]; then
     MT_PATTERN="-Dconformance.mappingtable.pattern=$MAPPING_TABLE_PATTERN"
 fi
+
+SPARK_CONF="--conf spark.logConf=true"
 
 JVM_CONF="spark.driver.extraJavaOptions=-Dmenas.rest.uri=$MENAS_URI -Dstandardized.hdfs.path=$STD_HDFS_PATH \
 -Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=$HDP_VERSION \
@@ -296,7 +297,7 @@ add_spark_conf_cmd "spark.executor.memoryOverhead" ${CONF_SPARK_EXECUTOR_MEMORY_
 add_spark_conf_cmd "spark.memory.fraction" ${CONF_SPARK_MEMORY_FRACTION}
 
 # Adding JVM configuration, entry point class name and the jar file
-CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
+CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
 add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
