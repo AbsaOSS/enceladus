@@ -26,17 +26,17 @@ import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.validation.ValidationException
 
 /**
- * Object representing set of tools for performing the actual standardization
- */
+  * Object representing set of tools for performing the actual standardization
+  */
 object StandardizationInterpreter{
 
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
-   * Perform the standardization of the dataframe given the expected schema
-   * @param df Dataframe to be standardized
-   * @param expSchema The schema for the df to be standardized into
-   */
+    * Perform the standardization of the dataframe given the expected schema
+    * @param df Dataframe to be standardized
+    * @param expSchema The schema for the df to be standardized into
+    */
   def standardize(df: Dataset[Row], expSchema: StructType, inputType: String)
                  (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
 
@@ -61,6 +61,11 @@ object StandardizationInterpreter{
     cleanedStd
   }
 
+  /**
+    *
+    * @param expSchema
+    * @param spark
+    */
   private def validateSchemaAgainstSelfInconsistencies(expSchema: StructType)
                                                       (implicit spark: SparkSession): Unit = {
     val validationErrors = SchemaChecker.validateSchemaAndLog(expSchema)
@@ -70,14 +75,13 @@ object StandardizationInterpreter{
   }
 
   private def standardizeDataset(df: Dataset[Row], expSchema: StructType)
-                                    (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame  = {
+                                (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame  = {
 
     val (stdCols, errorCols, oldErrorColumn) = expSchema.fields.foldLeft(List.empty[Column], List.empty[Column], None: Option[Column]) {
       (acc, field) =>
         logger.info(s"Standardizing field: ${field.name}")
         val (accCols, accErrorCols, accOldErrorColumn) = acc
         if (field.name == ErrorMessage.errorColumnName) {
-          ((df.col(field.name) as (s"${ErrorMessage.errorColumnName}0", field.metadata)  ):: accCols, accErrorCols)
           (accCols, accErrorCols, Option(df.col(field.name)))
         } else {
           val ParseOutput(stdColumn, errColumn) = TypeParser.standardize(field, "", df.schema)

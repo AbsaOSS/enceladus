@@ -140,15 +140,15 @@ object StandardizationJob {
   }
 
   /**
-   * Returns a Spark reader with all format-specific options applied.
-   * Options are provided by command line parameters.
-   *
-   * @param cmd      Command line parameters containing format-specific options
-   * @param dataset  A dataset definition
-   * @param numberOfColumns (Optional) number of columns, enables reading CSV files with the number of columns
-   *                        larger than Spark default
-   * @return The updated dataframe reader
-   */
+    * Returns a Spark reader with all format-specific options applied.
+    * Options are provided by command line parameters.
+    *
+    * @param cmd      Command line parameters containing format-specific options
+    * @param dataset  A dataset definition
+    * @param numberOfColumns (Optional) number of columns, enables reading CSV files with the number of columns
+    *                        larger than Spark default
+    * @return The updated dataframe reader
+    */
   def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, numberOfColumns: Int = 0)
                              (implicit spark: SparkSession, dao: MenasDAO): DataFrameReader = {
     val dfReader = spark.read.format(cmd.rawFormat)
@@ -266,7 +266,7 @@ object StandardizationJob {
 
     addRawRecordCountToMetadata(dfAll)
 
-    val std: DataFrame = try {
+    val standardizedDF = try {
       StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
     } catch {
       case e@ValidationException(msg, errors)                  =>
@@ -281,21 +281,21 @@ object StandardizationJob {
         throw e
     }
 
-    // If the meta data value sourcecolumn is set override source data column name with the field name
+    //register renames with ATUM)
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {
-      case (destinationName, sourceName) => std.registerColumnRename(sourceName, destinationName) //register rename with ATUM)
+      case (destinationName, sourceName) => standardizedDF.registerColumnRename(sourceName, destinationName)
     }
 
-    std.setCheckpoint("Standardization - End", persistInDatabase = false)
+    standardizedDF.setCheckpoint("Standardization - End", persistInDatabase = false)
 
-    val recordCount = std.lastCheckpointRowCount match {
-      case None    => std.count
+    val recordCount = standardizedDF.lastCheckpointRowCount match {
+      case None    => standardizedDF.count
       case Some(p) => p
     }
     if (recordCount == 0) { handleEmptyOutputAfterStandardization() }
 
-    std.write.parquet(pathCfg.outputPath)
+    standardizedDF.write.parquet(pathCfg.outputPath)
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
     val stdDirSize = fsUtils.getDirectorySize(pathCfg.outputPath)
@@ -306,7 +306,7 @@ object StandardizationJob {
     }
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
       cmd.menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
-    std.writeInfoFile(pathCfg.outputPath)
+    standardizedDF.writeInfoFile(pathCfg.outputPath)
   }
 
   private def handleEmptyOutputAfterStandardization()(implicit spark: SparkSession): Unit = {
@@ -407,10 +407,10 @@ object StandardizationJob {
   }
 
   /**
-   * Gets the number of records in raw data by traversing Atum's checkpoints.
-   *
-   * @return The number of records in a checkpoint corresponding to raw data (if available)
-   */
+    * Gets the number of records in raw data by traversing Atum's checkpoints.
+    *
+    * @return The number of records in a checkpoint corresponding to raw data (if available)
+    */
   private def getRawRecordCountFromCheckpoints: Option[Long] = {
     val controlMeasure = Atum.getControMeasure
 
