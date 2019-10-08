@@ -390,12 +390,12 @@ object StandardizationJob {
   }
 
   /**
-   * Adds metadata about the number of records in raw data by checking Atum's checkpoints first.
-   * If raw record count is not available in checkpoints the method will calculate that count
-   * based on the provided raw dataframe.
-   *
-   * @return The number of records in a checkpoint corresponding to raw data (if available)
-   */
+    * Adds metadata about the number of records in raw data by checking Atum's checkpoints first.
+    * If raw record count is not available in checkpoints the method will calculate that count
+    * based on the provided raw dataframe.
+    *
+    * @return The number of records in a checkpoint corresponding to raw data (if available)
+    */
   private def addRawRecordCountToMetadata(df: DataFrame): Unit = {
     val checkpointRawRecordCount = getRawRecordCountFromCheckpoints
 
