@@ -52,7 +52,7 @@ object ScalaMongoImplicits {
 
         override def onError(e: Throwable): Unit = p.failure(new RuntimeException("Error fetching MongoDB documents.", e))
 
-        override def onComplete(): Unit = p.success()
+        override def onComplete(): Unit = p.success((): Unit)
       })
 
       // An infinite wait since processing all documents in a collection can take a long time
