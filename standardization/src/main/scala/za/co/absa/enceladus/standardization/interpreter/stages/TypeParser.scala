@@ -33,21 +33,21 @@ import za.co.absa.enceladus.utils.types.TypedStructField._
 import scala.util.{Random, Try}
 
 /**
- * Base trait for standardization function
- * Each final class in the hierarchy represents a `standardize` function for its specific data type field
- * Class hierarchy:
- *   TypeParser
- *     ArrayParser !
- *     StructParser !
- *     PrimitiveParser
- *       ScalarParser
- *         NumericParser !
- *         StringParser !
- *         BooleanParser !
- *       DateTimeParser
- *         TimestampParser !
- *         DateParser !
- */
+  * Base trait for standardization function
+  * Each final class in the hierarchy represents a `standardize` function for its specific data type field
+  * Class hierarchy:
+  *   TypeParser
+  *     ArrayParser !
+  *     StructParser !
+  *     PrimitiveParser
+  *       ScalarParser
+  *         NumericParser !
+  *         StringParser !
+  *         BooleanParser !
+  *       DateTimeParser
+  *         TimestampParser !
+  *         DateParser !
+  */
 sealed trait TypeParser {
   def standardize(): ParseOutput
 
@@ -298,27 +298,27 @@ object TypeParser {
                                          parent: Option[Parent]) extends ScalarParser
 
   /**
-   * Timestamp conversion logic
-   * Original type | TZ in pattern/without TZ        | Has default TZ
-   * ==============|=================================|============================================================
-   * Fractional    | ->Decimal->String->to_timestamp | ->Decimal->String->to_timestamp->to_utc_timestamp
-   * Decimal       | ->String->to_timestamp          | ->String->to_timestamp->to_utc_timestamp
-   * String        | ->to_timestamp                  | ->to_timestamp->to_utc_timestamp
-   * Timestamp     | O                               | ->to_utc_timestamp
-   * Date          | ->to_timestamp(no pattern)      | ->to_utc_timestamp
-   * Other         | ->String->to_timestamp          | ->String->to_timestamp->to_utc_timestamp
-   *
-   *
-   * Date conversion logic
-   * Original type | TZ in pattern/without TZ        | Has default TZ (the last to_date is always without pattern)
-   * ==============|=================================|============================================================
-   * Float         | ->Decimal->String->to_date      | ->Decimal->String->to_timestamp->to_utc_timestamp->to_date
-   * Decimal       | ->String->to_date               | ->String->->to_timestamp->->to_utc_timestamp->to_date
-   * String        | ->to_date                       | ->to_timestamp->->to_utc_timestamp->to_date
-   * Timestamp     | ->to_date(no pattern)           | ->to_utc_timestamp->to_date
-   * Date          | O                               | ->to_utc_timestamp->to_date
-   * Other         | ->String->to_date               | ->String->to_timestamp->to_utc_timestamp->to_date
-   */
+    * Timestamp conversion logic
+    * Original type | TZ in pattern/without TZ        | Has default TZ
+    * ==============|=================================|============================================================
+    * Fractional    | ->Decimal->String->to_timestamp | ->Decimal->String->to_timestamp->to_utc_timestamp
+    * Decimal       | ->String->to_timestamp          | ->String->to_timestamp->to_utc_timestamp
+    * String        | ->to_timestamp                  | ->to_timestamp->to_utc_timestamp
+    * Timestamp     | O                               | ->to_utc_timestamp
+    * Date          | ->to_timestamp(no pattern)      | ->to_utc_timestamp
+    * Other         | ->String->to_timestamp          | ->String->to_timestamp->to_utc_timestamp
+    *
+    *
+    * Date conversion logic
+    * Original type | TZ in pattern/without TZ        | Has default TZ (the last to_date is always without pattern)
+    * ==============|=================================|============================================================
+    * Float         | ->Decimal->String->to_date      | ->Decimal->String->to_timestamp->to_utc_timestamp->to_date
+    * Decimal       | ->String->to_date               | ->String->->to_timestamp->->to_utc_timestamp->to_date
+    * String        | ->to_date                       | ->to_timestamp->->to_utc_timestamp->to_date
+    * Timestamp     | ->to_date(no pattern)           | ->to_utc_timestamp->to_date
+    * Date          | O                               | ->to_utc_timestamp->to_date
+    * Other         | ->String->to_date               | ->String->to_timestamp->to_utc_timestamp->to_date
+    */
   private trait DateTimeParser extends PrimitiveParser {
     override val field: DateTimeTypeStructField
     protected val pattern: DateTimePattern = field.pattern.get.get
