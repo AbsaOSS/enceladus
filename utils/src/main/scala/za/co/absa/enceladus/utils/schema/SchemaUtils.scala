@@ -16,18 +16,17 @@
 package za.co.absa.enceladus.utils.schema
 
 import org.apache.spark.sql.types._
-
 import scala.annotation.tailrec
 import scala.util.{Random, Try}
 
 object SchemaUtils {
 
   /**
-   * Get a field from a text path and a given schema
-   * @param path   The dot-separated path to the field
-   * @param schema The schema which should contain the specified path
-   * @return       Some(the requested field) or None if the field does not exist
-   */
+    * Get a field from a text path and a given schema
+    * @param path   The dot-separated path to the field
+    * @param schema The schema which should contain the specified path
+    * @return       Some(the requested field) or None if the field does not exist
+    */
   def getField(path: String, schema: StructType): Option[StructField] = {
 
     @tailrec
@@ -106,13 +105,59 @@ object SchemaUtils {
   }
 
   /**
-   * Checks if a field specified by a path and a schema exists
-   * @param path   The dot-separated path to the field
-   * @param schema The schema which should contain the specified path
-   * @return       True if the field exists false otherwise
-   */
+    * Checks if a field specified by a path and a schema exists
+    * @param path   The dot-separated path to the field
+    * @param schema The schema which should contain the specified path
+    * @return       True if the field exists false otherwise
+    */
   def fieldExists(path: String, schema: StructType): Boolean = {
     getField(path, schema).nonEmpty
+  }
+
+  /**
+    * Returns all renames in the provided schema.
+    * @param schema                       schema to examine
+    * @param includeIfPredecessorChanged  if set to true, fields are included even if their name have not changed but
+    *                                     a predecessor's (parent, grandparent etc.) has
+    * @return        the keys of the returned map are the columns' names after renames, the values are the source columns;
+    *                the name are full paths denoted with dot notation
+    */
+  def getRenamesInSchema(schema: StructType, includeIfPredecessorChanged: Boolean = true): Map[String, String] = {
+
+    def getRenamesRecursively(path: String, sourcePath: String, struct: StructType, renamesAcc: Map[String, String], predecessorChanged: Boolean): Map[String, String] = {
+      import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldEnhancements
+
+      struct.fields.foldLeft(renamesAcc) { (renamesSoFar, field) =>
+        val fieldFullName = appendPath(path, field.name)
+        val fieldSourceName = field.getMetadataString(MetadataKeys.SourceColumn).getOrElse(field.name)
+        val fieldFullSourceName = appendPath(sourcePath, fieldSourceName)
+
+        val (renames, renameOnPath) = if ((fieldSourceName != field.name) || (predecessorChanged && includeIfPredecessorChanged)) {
+          (renamesSoFar + (fieldFullName -> fieldFullSourceName), true)
+        } else {
+          (renamesSoFar, predecessorChanged)
+        }
+
+        field.dataType match {
+          case st: StructType => getRenamesRecursively(fieldFullName, fieldFullSourceName, st, renames, renameOnPath)
+          case at: ArrayType  => getStructInArray(at.elementType).fold(renames) { item =>
+              getRenamesRecursively(fieldFullName, fieldFullSourceName, item, renames, renameOnPath)
+            }
+          case _              => renames
+        }
+      }
+    }
+
+    @tailrec
+    def getStructInArray(dataType: DataType): Option[StructType] = {
+      dataType match {
+        case st: StructType => Option(st)
+        case at: ArrayType => getStructInArray(at.elementType)
+        case _ => None
+      }
+    }
+
+    getRenamesRecursively("", "", schema, Map.empty, predecessorChanged = false)
   }
 
   /**
@@ -506,6 +551,17 @@ object SchemaUtils {
     }
     val path = column.split('.')
     structHelper(schema, path)
+  }
+
+  /**
+    * Converts a fully qualified field name (including its path, e.g. containing fields) to a unique field name without
+    * dot notation
+    * @param path  the fully qualified field name
+    * @return      unique top level field name
+    */
+  def unpath(path: String): String = {
+    path.replace("_", "__")
+        .replace('.', '_')
   }
 
 }

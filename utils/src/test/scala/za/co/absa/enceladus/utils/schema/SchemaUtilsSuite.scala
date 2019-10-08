@@ -22,24 +22,24 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils._
 class SchemaUtilsSuite extends FunSuite {
   // scalastyle:off magic.number
 
-  val schema = StructType(Seq(
-    StructField("a", IntegerType, false),
+  private val schema = StructType(Seq(
+    StructField("a", IntegerType, nullable = false),
     StructField("b", StructType(Seq(
       StructField("c", IntegerType),
       StructField("d", StructType(Seq(
-        StructField("e", IntegerType))), true)))),
+        StructField("e", IntegerType))), nullable = true)))),
     StructField("f", StructType(Seq(
       StructField("g", ArrayType.apply(StructType(Seq(
         StructField("h", IntegerType))))))))))
 
-  val nestedSchema = StructType(Seq(
+  private val nestedSchema = StructType(Seq(
     StructField("a", IntegerType),
     StructField("b", ArrayType(StructType(Seq(
       StructField("c", StructType(Seq(
         StructField("d", ArrayType(StructType(Seq(
           StructField("e", IntegerType))))))))))))))
 
-  val arrayOfArraysSchema = StructType(Seq(
+  private val arrayOfArraysSchema = StructType(Seq(
     StructField("a", ArrayType(ArrayType(IntegerType)), nullable = false),
     StructField("b", ArrayType(ArrayType(StructType(Seq(
         StructField("c", StringType, nullable = false)
@@ -47,10 +47,10 @@ class SchemaUtilsSuite extends FunSuite {
     )), nullable = true)
   ))
 
-  val structFieldNoMetadata = StructField("a", IntegerType)
+  private val structFieldNoMetadata = StructField("a", IntegerType)
 
-  val structFieldWithMetadataNotSourceColumn = StructField("a", IntegerType, nullable = false, new MetadataBuilder().putString("meta", "data").build)
-  val structFieldWithMetadataSourceColumn = StructField("a", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "override_a").build)
+  private val structFieldWithMetadataNotSourceColumn = StructField("a", IntegerType, nullable = false, new MetadataBuilder().putString("meta", "data").build)
+  private val structFieldWithMetadataSourceColumn = StructField("a", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "override_a").build)
 
   test("Testing getFieldType") {
 
@@ -102,6 +102,114 @@ class SchemaUtilsSuite extends FunSuite {
     assert(!isColumnArrayOfStruct("a", nestedSchema))
     assert(isColumnArrayOfStruct("b", nestedSchema))
     assert(isColumnArrayOfStruct("b.c.d", nestedSchema))
+  }
+
+  test("getRenamesInSchema - no renames") {
+    val result = getRenamesInSchema(StructType(Seq(
+      structFieldNoMetadata,
+      structFieldWithMetadataNotSourceColumn)))
+    assert(result.isEmpty)
+  }
+
+  test("getRenamesInSchema - simple rename") {
+    val result = getRenamesInSchema(StructType(Seq(structFieldWithMetadataSourceColumn)))
+    assert(result == Map("a" -> "override_a"))
+
+  }
+
+  test("getRenamesInSchema - complex with includeIfPredecessorChanged set") {
+    val sub = StructType(Seq(
+      StructField("d", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "o").build),
+      StructField("e", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "e").build),
+      StructField("f", IntegerType)
+    ))
+    val schema = StructType(Seq(
+      StructField("a", sub, nullable = false, new MetadataBuilder().putString("sourcecolumn", "x").build),
+      StructField("b", sub, nullable = false, new MetadataBuilder().putString("sourcecolumn", "b").build),
+      StructField("c", sub)
+    ))
+
+    val includeIfPredecessorChanged = true
+    val result = getRenamesInSchema(schema, includeIfPredecessorChanged)
+    val expected = Map(
+      "a"   -> "x"  ,
+      "a.d" -> "x.o",
+      "a.e" -> "x.e",
+      "a.f" -> "x.f",
+      "b.d" -> "b.o",
+      "c.d" -> "c.o"
+    )
+
+    assert(result == expected)
+  }
+
+  test("getRenamesInSchema - complex with includeIfPredecessorChanged not set") {
+    val sub = StructType(Seq(
+      StructField("d", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "o").build),
+      StructField("e", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "e").build),
+      StructField("f", IntegerType)
+    ))
+    val schema = StructType(Seq(
+      StructField("a", sub, nullable = false, new MetadataBuilder().putString("sourcecolumn", "x").build),
+      StructField("b", sub, nullable = false, new MetadataBuilder().putString("sourcecolumn", "b").build),
+      StructField("c", sub)
+    ))
+
+    val includeIfPredecessorChanged = false
+    val result = getRenamesInSchema(schema, includeIfPredecessorChanged)
+    val expected = Map(
+      "a"   -> "x",
+      "a.d" -> "x.o",
+      "b.d" -> "b.o",
+      "c.d" -> "c.o"
+    )
+
+    assert(result == expected)
+  }
+
+
+  test("getRenamesInSchema - array") {
+    val sub = StructType(Seq(
+      StructField("renamed", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "rename source").build),
+      StructField("same", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "same").build),
+      StructField("f", IntegerType)
+    ))
+    val schema = StructType(Seq(
+      StructField("array1", ArrayType(sub)),
+      StructField("array2", ArrayType(ArrayType(ArrayType(sub)))),
+      StructField("array3", ArrayType(IntegerType), nullable = false, new MetadataBuilder().putString("sourcecolumn", "array source").build)
+    ))
+
+    val includeIfPredecessorChanged = false
+    val result = getRenamesInSchema(schema, includeIfPredecessorChanged)
+    val expected = Map(
+      "array1.renamed" -> "array1.rename source",
+      "array2.renamed" -> "array2.rename source",
+      "array3"   -> "array source"
+    )
+
+    assert(result == expected)
+  }
+
+
+  test("getRenamesInSchema - source column used multiple times") {
+    val sub = StructType(Seq(
+      StructField("x", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "src").build),
+      StructField("y", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "src").build)
+    ))
+    val schema = StructType(Seq(
+      StructField("a", sub),
+      StructField("b", IntegerType, nullable = false, new MetadataBuilder().putString("sourcecolumn", "src").build)
+    ))
+
+    val result = getRenamesInSchema(schema)
+    val expected = Map(
+      "a.x" -> "a.src",
+      "a.y" -> "a.src",
+      "b"   -> "src"
+    )
+
+    assert(result == expected)
   }
 
   test("Testing getFirstArrayPath") {
@@ -344,5 +452,23 @@ class SchemaUtilsSuite extends FunSuite {
     assert(fieldExists("b", arrayOfArraysSchema))
     assert(fieldExists("b.c", arrayOfArraysSchema))
     assert(!fieldExists("b.d", arrayOfArraysSchema))
+  }
+
+  test("unpath - empty string remains empty") {
+    val result = unpath("")
+    val expected = ""
+    assert(result == expected)
+  }
+
+  test("unpath - underscores get doubled") {
+    val result = unpath("one_two__three")
+    val expected = "one__two____three"
+    assert(result == expected)
+  }
+
+  test("unpath - dot notation conversion") {
+    val result = unpath("grand_parent.parent.first_child")
+    val expected = "grand__parent_parent_first__child"
+    assert(result == expected)
   }
 }
