@@ -61,12 +61,12 @@ object SchemaUtils {
   }
 
   /**
-   * Get a type of a field from a text path and a given schema
-   *
-   * @param path   The dot-separated path to the field
-   * @param schema The schema which should contain the specified path
-   * @return Some(the type of the field) or None if the field does not exist
-   */
+    * Get a type of a field from a text path and a given schema
+    *
+    * @param path   The dot-separated path to the field
+    * @param schema The schema which should contain the specified path
+    * @return Some(the type of the field) or None if the field does not exist
+    */
   def getFieldType(path: String, schema: StructType): Option[DataType] = {
     getField(path, schema).map(_.dataType)
   }

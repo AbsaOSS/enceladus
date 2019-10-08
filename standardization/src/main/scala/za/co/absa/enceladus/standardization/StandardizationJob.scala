@@ -281,7 +281,7 @@ object StandardizationJob {
         throw e
     }
 
-    //register renames with ATUM)
+    //register renames with ATUM
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {
       case (destinationName, sourceName) => standardizedDF.registerColumnRename(sourceName, destinationName)

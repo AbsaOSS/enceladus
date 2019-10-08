@@ -34,8 +34,8 @@ object StandardizationInterpreter{
 
   /**
     * Perform the standardization of the dataframe given the expected schema
-    * @param df Dataframe to be standardized
-    * @param expSchema The schema for the df to be standardized into
+    * @param df         Dataframe to be standardized
+    * @param expSchema  The schema for the df to be standardized into
     */
   def standardize(df: Dataset[Row], expSchema: StructType, inputType: String)
                  (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
@@ -61,11 +61,6 @@ object StandardizationInterpreter{
     cleanedStd
   }
 
-  /**
-    *
-    * @param expSchema
-    * @param spark
-    */
   private def validateSchemaAgainstSelfInconsistencies(expSchema: StructType)
                                                       (implicit spark: SparkSession): Unit = {
     val validationErrors = SchemaChecker.validateSchemaAndLog(expSchema)
