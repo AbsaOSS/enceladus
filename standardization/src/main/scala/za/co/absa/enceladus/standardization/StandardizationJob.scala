@@ -20,14 +20,14 @@ import java.text.MessageFormat
 import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
-import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.apache.spark.sql.types.{StructField, StructType}
+import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.{Atum, Constants}
-import za.co.absa.enceladus.dao.{MenasDAO, RestDaoFactory}
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
+import za.co.absa.enceladus.dao.{MenasDAO, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
@@ -266,6 +266,8 @@ object StandardizationJob {
 
     addRawRecordCountToMetadata(dfAll)
 
+    PerformanceMetricTools.addJobInfoToAtumMetadata("std", pathCfg.inputPath, pathCfg.outputPath,
+      cmd.menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     val standardizedDF = try {
       StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
     } catch {
