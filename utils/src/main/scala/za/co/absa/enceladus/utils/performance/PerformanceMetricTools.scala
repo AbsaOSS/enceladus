@@ -55,6 +55,7 @@ object PerformanceMetricTools {
     val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     // Directory sizes and size ratio
     val inputDirSize = fsUtils.getDirectorySize(inputPath)
+    val inputDataSize = fsUtils.getDirectorySizeNoHidden(inputPath)
 
     addSparkConfig(optionPrefix, "spark.driver.memory", "driver_memory")
     addSparkConfig(optionPrefix, "spark.driver.cores", "driver_cores")
@@ -69,6 +70,7 @@ object PerformanceMetricTools {
     Atum.setAdditionalInfo(s"${optionPrefix}_input_dir" -> inputPath)
     Atum.setAdditionalInfo(s"${optionPrefix}_output_dir" -> outputPath)
     Atum.setAdditionalInfo(s"${optionPrefix}_input_dir_size" -> inputDirSize.toString)
+    Atum.setAdditionalInfo(s"${optionPrefix}_input_data_size" -> inputDataSize.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_enceladus_version" -> ProjectMetadataTools.getEnceladusVersion)
     Atum.setAdditionalInfo(s"${optionPrefix}_application_id" -> spark.sparkContext.applicationId)
     Atum.setAdditionalInfo(s"${optionPrefix}_username" -> loginUserName)
@@ -97,17 +99,24 @@ object PerformanceMetricTools {
 
     // Directory sizes and size ratio
     val inputDirSize = fsUtils.getDirectorySize(inputPath)
+    val inputDataSize = fsUtils.getDirectorySizeNoHidden(inputPath)
     val outputDirSize = fsUtils.getDirectorySize(outputPath)
+    val outputDataSize = fsUtils.getDirectorySizeNoHidden(outputPath)
 
     val (numRecordsFailed, numRecordsSuccessful, numOfErrors) = getNumberOfErrors(spark, outputPath)
 
-    if (doesSizeRatioMakesSense(inputDirSize, numRecordsFailed + numRecordsSuccessful)) {
-      val percent = (outputDirSize.toDouble / inputDirSize.toDouble) * 100
-      val percentFormatted = f"$percent%3.2f"
-      Atum.setAdditionalInfo(s"${optionPrefix}_size_ratio" -> s"$percentFormatted %")
-    }
+    calculateSizeRatio(inputDirSize, outputDataSize, numRecordsFailed + numRecordsSuccessful)
+      .foreach(ratio => {
+        Atum.setAdditionalInfo(s"${optionPrefix}_size_ratio" -> prettyPercent(ratio * 100))
+      })
+
+    calculateSizeRatio(inputDirSize, outputDataSize, numRecordsFailed + numRecordsSuccessful)
+      .foreach(ratio => {
+        Atum.setAdditionalInfo(s"${optionPrefix}_data_size_ratio" -> prettyPercent(ratio * 100))
+      })
 
     Atum.setAdditionalInfo(s"${optionPrefix}_output_dir_size" -> outputDirSize.toString)
+    Atum.setAdditionalInfo(s"${optionPrefix}_output_data_size" -> outputDataSize.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_record_count" -> (numRecordsSuccessful + numRecordsFailed).toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_records_succeeded" -> numRecordsSuccessful.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_records_failed" -> numRecordsFailed.toString)
@@ -118,6 +127,14 @@ object PerformanceMetricTools {
         "defined for the dataset.")
     }
   }
+
+  /**
+    * Format a percentages in a pretty way.
+    *
+    * @param percent A percentage value.
+    * @return A pretty formatted percentage value.
+    */
+  private def prettyPercent(percent: Double): String = f"$percent%3.2f %%"
 
   /**
     * Adds a Spark config key-value to Atum metadata if such key is present in Spark runtime config.
@@ -132,9 +149,32 @@ object PerformanceMetricTools {
     sparkConfigValOpt.foreach(sparkVal => Atum.setAdditionalInfo(s"${optionPrefix}_$atumKey" -> s"$sparkVal"))
   }
 
-  /** Returns if output to input size ratio makes sense. The input dir size should be begger than zero and the output
-    * dataframe should contain at leat one record
-    *  */
+  /**
+    * Calculates ratio between input and output directory sizes if it makes sense.
+    *
+    * @param inputDirSize  An input directory size in bytes
+    * @param outputDirSize An output directory size in bytes
+    * @param numRecords    Number of records in an output dataset
+    * @return A ratio between input and output directory sizes if it makes sense, None otherwise
+    */
+  private def calculateSizeRatio(inputDirSize: Long,
+                                 outputDirSize: Long,
+                                 numRecords: Long): Option[Double] = {
+    if (doesSizeRatioMakesSense(inputDirSize, numRecords)) {
+      Option(outputDirSize.toDouble / inputDirSize.toDouble)
+    } else {
+      None
+    }
+  }
+
+  /**
+    * Returns if output to input size ratio makes sense. The input dir size should be bigger than zero and the output
+    * dataset should contain at least one record
+    *
+    * @param inputDirSize An input directory size in bytes
+    * @param numRecords   Number of records in an output dataset
+    * @return true if it makes sense to calculate input to output size ratio.
+    */
   private def doesSizeRatioMakesSense(inputDirSize: Long,
                                       numRecords: Long): Boolean = {
     inputDirSize > 0 && numRecords > 0
