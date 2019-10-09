@@ -49,4 +49,25 @@ class FsUtilsSpec extends FlatSpec with Matchers with SparkTestBase {
       prefix shouldEqual ""
       rawPath shouldEqual "data/input"
     }
+
+  "getDirectorySize" should "return the size of all files in a directory" in {
+    val dirSize = fsUtils.getDirectorySize("src/test/resources/test_data/test_dir")
+    assert(dirSize == 47L)
+  }
+
+  "getDirectorySize" should "return the size of all files recursively" in {
+    val dirSize = fsUtils.getDirectorySize("src/test/resources/test_data/test_dir2")
+    assert(dirSize == 87L)
+  }
+
+  "getDirectorySizeNoHidden" should "return the size of all non-hidden files in a directory" in {
+    val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir")
+    assert(dirSize == 20L)
+  }
+
+  "getDirectorySizeNoHidden" should "return the size of all non-hidden files recursively along non-hidden paths" in {
+    val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir2")
+    assert(dirSize == 40L)
+  }
+
 }
