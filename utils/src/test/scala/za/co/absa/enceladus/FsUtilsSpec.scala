@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus
 
+import java.io.FileNotFoundException
+
 import org.apache.hadoop.fs.Path
 import org.scalatest.{FlatSpec, Matchers}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
@@ -50,6 +52,22 @@ class FsUtilsSpec extends FlatSpec with Matchers with SparkTestBase {
       rawPath shouldEqual "data/input"
     }
 
+  "getDirectorySize" should "throw an exception if provided path does not exist" in {
+    val e = intercept[FileNotFoundException] {
+      fsUtils.getDirectorySize("src/test/resources/test_data/not_exist")
+    }
+  }
+
+  "getDirectorySize" should "return the file size if a single file is specified" in {
+    val dirSize = fsUtils.getDirectorySize("src/test/resources/test_data/test_dir/dummy.txt")
+    assert(dirSize == 20L)
+  }
+
+  "getDirectorySize" should "return the file size if a single hidden file is specified" in {
+    val dirSize = fsUtils.getDirectorySize("src/test/resources/test_data/test_dir/_hidden_dummy.txt")
+    assert(dirSize == 27L)
+  }
+
   "getDirectorySize" should "return the size of all files in a directory" in {
     val dirSize = fsUtils.getDirectorySize("src/test/resources/test_data/test_dir")
     assert(dirSize == 47L)
@@ -60,6 +78,22 @@ class FsUtilsSpec extends FlatSpec with Matchers with SparkTestBase {
     assert(dirSize == 87L)
   }
 
+  "getDirectorySizeNoHidden" should "throw an exception if provided path does not exist" in {
+    val e = intercept[FileNotFoundException] {
+      fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/not_exist")
+    }
+  }
+
+  "getDirectorySizeNoHidden" should "return the file size if a single file is specified" in {
+    val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir/dummy.txt")
+    assert(dirSize == 20L)
+  }
+
+  "getDirectorySizeNoHidden" should "return the file size if a single hidden file is specified" in {
+    val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir/_hidden_dummy.txt")
+    assert(dirSize == 27L)
+  }
+
   "getDirectorySizeNoHidden" should "return the size of all non-hidden files in a directory" in {
     val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir")
     assert(dirSize == 20L)
@@ -68,6 +102,11 @@ class FsUtilsSpec extends FlatSpec with Matchers with SparkTestBase {
   "getDirectorySizeNoHidden" should "return the size of all non-hidden files recursively along non-hidden paths" in {
     val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir2")
     assert(dirSize == 40L)
+  }
+
+  "getDirectorySizeNoHidden" should "return the size of all non-hidden files if a hidden directory is specified explicitly" in {
+    val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir2/_inner_dir")
+    assert(dirSize == 20L)
   }
 
 }
