@@ -28,7 +28,7 @@
 
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <netty.io.version>4.1.36.Final</netty.io.version>
+        <netty.io.version>4.1.42.Final</netty.io.version>
         <json4s.version>3.5.3</json4s.version>
     </properties>
 
