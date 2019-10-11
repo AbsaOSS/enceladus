@@ -153,28 +153,31 @@ class FileSystemVersionUtils(conf: Configuration) {
     */
   def getDirectorySizeNoHidden(path: String): Long = {
     def getDirSizeHelper(f: Path): Long = {
-      val status = fs.getFileStatus(f)
-      if (status.isFile) {
-        status.getLen
-      } else {
-        var totalLength = 0L
-        for (fileStatus <- fs.listStatus(f)) {
-          val fileName = fileStatus.getPath.getName
-          if (!fileName.startsWith("_") && !fileName.startsWith(".")) {
-            val length = if (fileStatus.isDirectory) {
-              getDirSizeHelper(fileStatus.getPath)
-            }
-            else {
-              fileStatus.getLen
-            }
-            totalLength += length
+      var totalLength = 0L
+      for (fileStatus <- fs.listStatus(f)) {
+        val fileName = fileStatus.getPath.getName
+        if (!fileName.startsWith("_") && !fileName.startsWith(".")) {
+          val length = if (fileStatus.isDirectory) {
+            getDirSizeHelper(fileStatus.getPath)
           }
+          else {
+            fileStatus.getLen
+          }
+          totalLength += length
         }
-        totalLength
       }
+      totalLength
     }
 
-    getDirSizeHelper(new Path(path))
+    val fsPath = new Path(path)
+    val status = fs.getFileStatus(fsPath)
+
+    if (status.isFile) {
+      // If a specific file is provided return its length even if this file is hidden.
+      status.getLen
+    } else {
+      getDirSizeHelper(new Path(path))
+    }
   }
 
   /**
