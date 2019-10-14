@@ -15,13 +15,13 @@
 
 package za.co.absa.enceladus.conformance.datasource
 
-import org.slf4j.LoggerFactory
-import scala.collection.mutable.HashMap
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
 import java.text.MessageFormat
+
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import org.slf4j.LoggerFactory
+
+import scala.collection.mutable.HashMap
 
 /**
  * Utility object to provide access to data in HDFS (including partitioning and caching)
@@ -42,7 +42,7 @@ object DataSource {
    */
   def getData(path: String, reportYear: String, reportMonth: String, reportDay: String, partitioningPattern: String)(implicit spark: SparkSession): Dataset[Row] = {
     if (dfs.contains(path)) {
-      dfs(path).cache
+      dfs(path)
     } else {
       val subPath = MessageFormat.format(partitioningPattern, reportYear, reportMonth, reportDay)
       val fillPath = if (subPath.isEmpty) new Path(path).toUri.toString else new Path(path, subPath).toUri.toString
