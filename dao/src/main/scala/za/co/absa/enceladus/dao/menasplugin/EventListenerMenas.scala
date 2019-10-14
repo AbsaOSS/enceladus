@@ -64,10 +64,9 @@ class EventListenerMenas(dao: MenasDAO,
         runStatus,
         controlMeasure)
       val storedRun = dao.storeNewRunObject(run)
-      val uniqueId = storedRun.uniqueId.get
       _runNumber = Option(storedRun.runId)
-      _runUniqueId = Some(uniqueId)
-      Atum.setRunUniqueId(uniqueId)
+      _runUniqueId = storedRun.uniqueId
+      Atum.setRunUniqueId(_runUniqueId.get)
     } else {
       _runUniqueId = controlMeasure.runUniqueId
       _runStatus = RunStatus(RunState.running, None)
