@@ -84,7 +84,7 @@ object StandardizationJob {
     Atum.setAllowUnpersistOldDatasets(true)
 
     // Enable non-default persistence storage level if provided in the command line
-    cmd.persistStorageLevel.foreach(Atum.enableCaching)
+    cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
 
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true, generateNewRun = true)
