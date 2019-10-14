@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.slf4j.LoggerFactory
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.rules._
@@ -207,11 +207,9 @@ object DynamicInterpreter {
                                  (implicit ictx: InterpreterContext): Dataset[Row] = {
     if (ictx.featureSwitches.controlFrameworkEnabled && rule.controlCheckpoint) {
       val explodeFilter = explodeContext.getControlFrameworkFilter
-      // Cache the data first since Atum will execute an action for each control metric
-      val cachedDf = df.cache
-      cachedDf.filter(explodeFilter)
+      // Note. setCheckpoint() handles caching/persistence automatically
+      df.filter(explodeFilter)
         .setCheckpoint(s"${ictx.jobShortName} (${rule.order}) - ${rule.outputColumn}")
-      cachedDf
     }
     else {
       df
