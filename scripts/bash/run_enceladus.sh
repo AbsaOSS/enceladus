@@ -47,6 +47,7 @@ DEBUG_SET_RAW_PATH=""
 EXPERIMENTAL_MAPPING_RULE=""
 CATALYST_WORKAROUND=""
 AUTOCLEAN_STD_FOLDER=""
+PERSIST_STORAGE_LEVEL=""
 
 # Spark configuration options
 CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=""
@@ -205,6 +206,10 @@ case $key in
     AUTOCLEAN_STD_FOLDER="$2"
     shift 2 # past argument and value
     ;;
+    --persist-storage-level)
+    PERSIST_STORAGE_LEVEL="$2"
+    shift 2 # past argument and value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -320,6 +325,7 @@ add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
 add_to_cmd_line "--experimental-mapping-rule" ${EXPERIMENTAL_MAPPING_RULE}
 add_to_cmd_line "--catalyst-workaround" ${CATALYST_WORKAROUND}
 add_to_cmd_line "--autoclean-std-folder" ${AUTOCLEAN_STD_FOLDER}
+add_to_cmd_line "--persist-storage-level" ${PERSIST_STORAGE_LEVEL}
 
 echo "Command line:"
 echo "$CMD_LINE"

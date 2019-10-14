@@ -15,12 +15,14 @@
 
 package za.co.absa.enceladus.conformance
 
-import scala.util.matching.Regex
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.storage.StorageLevel
 import scopt.OptionParser
 import sun.security.krb5.internal.ktab.KeyTab
 import za.co.absa.enceladus.dao.menasplugin.{InvalidMenasCredentials, MenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+
+import scala.util.matching.Regex
 
 /**
  * This is a class for configuration provided by the command line parameters
@@ -38,7 +40,8 @@ case class CmdConfig(datasetName: String = "",
                      folderPrefix: Option[String] = None,
                      experimentalMappingRule: Option[Boolean] = None,
                      isCatalystWorkaroundEnabled: Option[Boolean] = None,
-                     autocleanStandardizedFolder: Option[Boolean] = None)
+                     autocleanStandardizedFolder: Option[Boolean] = None,
+                     persistStorageLevel: Option[StorageLevel] = None)
 
 object CmdConfig {
 
@@ -144,6 +147,10 @@ object CmdConfig {
       config.copy(autocleanStandardizedFolder = Option(value))).text("Deletes standardized data from HDFS once " +
       "it is successfully conformed. This overrides 'conformance.autoclean.standardized.hdfs.folder' configuration " +
       " value provided in 'application.conf'.")
+
+    opt[String]("persist-storage-level").optional().action((value, config) =>
+      config.copy(persistStorageLevel = Some(StorageLevel.fromString(value))))
+      .text("Specifies persistence storage level to use when processing data. Spark's default is MEMORY_AND_DISK.")
 
     help("help").text("prints this usage text")
 

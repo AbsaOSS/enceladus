@@ -74,16 +74,20 @@ object StandardizationJob {
       throw new IllegalStateException(s"Path ${pathCfg.outputPath} already exists. Increment the run version, or delete ${pathCfg.outputPath}")
     }
 
-    // init spline
+    // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
 
-    // init CF
+    // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
     spark.enableControlMeasuresTracking(s"${pathCfg.inputPath}/_INFO").setControlMeasuresWorkflow("Standardization")
 
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
+
+    // Enable non-default persistence storage level if provided in the command line
+    cmd.persistStorageLevel.foreach(Atum.enableCaching)
+
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true, generateNewRun = true)
 

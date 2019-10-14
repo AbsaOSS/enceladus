@@ -179,14 +179,23 @@ object DynamicConformanceJob {
     newVersion
   }
 
-  private def initFunctionalExtensions()(implicit spark: SparkSession, dao: MenasDAO): Unit = {
-    import za.co.absa.spline.core.SparkLineageInitializer._ // Enable Spline
+  private def initFunctionalExtensions()(implicit spark: SparkSession, dao: MenasDAO, cmd: CmdConfig): Unit = {
+    // Enable Spline
+    import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
 
+    // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
     spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
-    Atum.setAllowUnpersistOldDatasets(true) // Enable control framework performance optimization for pipeline-like jobs
-    MenasPlugin.enableMenas() // Enable Menas
+
+    // Enable control framework performance optimization for pipeline-like jobs
+    Atum.setAllowUnpersistOldDatasets(true)
+
+    // Enable non-default persistence storage level if provided in the command line
+    cmd.persistStorageLevel.foreach(Atum.enableCaching)
+
+    // Enable Menas plugin for Control Framework
+    MenasPlugin.enableMenas()
   }
 
   private def initPerformanceMeasurer(stdPath: String)
