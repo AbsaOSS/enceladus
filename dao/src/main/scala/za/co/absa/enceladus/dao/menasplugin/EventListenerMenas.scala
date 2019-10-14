@@ -20,28 +20,33 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.atum.model._
 import za.co.absa.atum.plugins.EventListener
 import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.dao.{MenasDAO, UnauthorizedException}
+import za.co.absa.enceladus.dao.{DaoException, MenasDAO}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 
-import scala.util.{Failure, Success}
+import scala.util.control.NonFatal
 
 /**
   * This is Menas plugin. The plugin listens to Control Framework events and sends information to Menas using REST API.
   */
-class EventListenerMenas(menasDao: MenasDAO,
+class EventListenerMenas(dao: MenasDAO,
                          datasetName: String,
                          datasetVersion: Int,
                          isJobStageOnly: Boolean,
                          generateNewRun: Boolean) extends EventListener {
 
-  private val dao: MenasDAO = menasDao
   private val log = LogManager.getLogger("EventListenerMenas")
-  private var runUniqueId: Option[String] = None
-  private var runStatus: RunStatus = RunStatus(RunState.running, None)
+
+  private var _runUniqueId: Option[String] = None
+  private var _runNumber: Option[Int] = None
+  private var _runStatus: RunStatus = RunStatus(RunState.running, None)
+
+  def runUniqueId: Option[String] = _runUniqueId
+  def runNumber: Option[Int] = _runNumber
+  def runStatus: RunStatus = _runStatus
 
   /** Called when an _INFO file have been loaded. */
   override def onLoad(sparkApplicationId: String, inputInfoFileName: String, controlMeasure: ControlMeasure): Unit = {
-    if (controlMeasure.runUniqueId.isEmpty || (generateNewRun && runUniqueId.isEmpty)) {
+    if (controlMeasure.runUniqueId.isEmpty || (generateNewRun && _runUniqueId.isEmpty)) {
       if (datasetName.isEmpty) {
         throw new IllegalStateException("The Dataset name is not provided, nor a 'runUniqueId' from the previous " +
           s"stage is present in $inputInfoFileName file. Please, provide the dataset name when invoking " +
@@ -58,51 +63,60 @@ class EventListenerMenas(menasDao: MenasDAO,
         ControlUtils.getTimestampAsString,
         runStatus,
         controlMeasure)
-      val uniqueId = dao.storeNewRunObject(run)
-      runUniqueId = Some(uniqueId)
+      val storedRun = dao.storeNewRunObject(run)
+      val uniqueId = storedRun.uniqueId.get
+      _runNumber = Option(storedRun.runId)
+      _runUniqueId = Some(uniqueId)
       Atum.setRunUniqueId(uniqueId)
     } else {
-      runUniqueId = controlMeasure.runUniqueId
-      runStatus = RunStatus(RunState.running, None)
-      dao.updateRunStatus(runUniqueId.get, runStatus)
+      _runUniqueId = controlMeasure.runUniqueId
+      _runStatus = RunStatus(RunState.running, None)
+      val storedRun = dao.updateRunStatus(_runUniqueId.get, _runStatus)
+      _runNumber = Option(storedRun.runId)
     }
   }
 
   /** Called when a checkpoint has been completed. */
   override def onControlMeasurementsUpdated(controlMeasure: ControlMeasure): Unit = {
     // This approach makes run object correspond to _INFO file. It just replaces previous runs of the same job
-    for (uniqueId <- runUniqueId) {
-      if (!dao.updateControlMeasure(uniqueId, controlMeasure)) {
-        log.error(s"Unable to update control measurements for a Run object ($uniqueId) in the database")
+    for (uniqueId <- _runUniqueId) {
+      try {
+        dao.updateControlMeasure(uniqueId, controlMeasure)
+      } catch {
+        case NonFatal(e) => throw DaoException((s"Unable to update control measurements for a Run object ($uniqueId) in the database"), e)
       }
     }
   }
 
   /** Called when job status changes. */
   override def onJobStatusChange(newStatus: RunStatus): Unit = {
-    for (uniqueId <- runUniqueId if needToSendStatusChange(runStatus, newStatus)) {
+    for (uniqueId <- _runUniqueId if needToSendStatusChange(_runStatus, newStatus)) {
       val statusToSave = if (isJobStageOnly && newStatus.status == RunState.allSucceeded) {
         newStatus.copy(status = RunState.stageSucceeded)
       } else {
         newStatus
       }
-      if (!dao.updateRunStatus(uniqueId, statusToSave)) {
-        log.error(s"Unable to update status of a run object ($uniqueId) in the database")
+      try {
+        dao.updateRunStatus(uniqueId, statusToSave)
+      } catch {
+        case NonFatal(e) => throw DaoException(s"Unable to update status of a run object ($uniqueId) in the database", e)
       }
     }
-    runStatus = newStatus
+    _runStatus = newStatus
   }
 
   /** Called when a dataset controlled by Control Framework is saved. */
   override def onSaveOutput(sparkApplicationId: String, outputPathFileName: String): Unit = {
-    if (runUniqueId.isEmpty) {
+    if (_runUniqueId.isEmpty) {
       log.error(s"Unable to append spline reference as uniqueId of the run is not set")
     }
     else {
-      val uniqueId = runUniqueId.get
+      val uniqueId = _runUniqueId.get
       val splineReference = SplineReference(sparkApplicationId, outputPathFileName)
-      if (!dao.updateSplineReference(uniqueId, splineReference)) {
-        log.error(s"Unable to update spline reference for the Run object ($uniqueId) in the database")
+      try {
+        dao.updateSplineReference(uniqueId, splineReference)
+      } catch {
+        case NonFatal(e) => throw DaoException(s"Unable to update spline reference for the Run object ($uniqueId) in the database", e)
       }
     }
   }
@@ -115,8 +129,7 @@ class EventListenerMenas(menasDao: MenasDAO,
         log.warn(s"Attempt to set an error status twice at ${error.step}. ${error.description}")
       }
       false
-    }
-    else {
+    } else {
       true
     }
   }

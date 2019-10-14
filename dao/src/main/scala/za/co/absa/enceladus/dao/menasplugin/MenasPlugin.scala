@@ -23,6 +23,8 @@ import za.co.absa.enceladus.dao.MenasDAO
   */
 object MenasPlugin {
 
+  private var listener: Option[EventListenerMenas] = None
+
   /**
     * This is Menas plugin for Conformance Framework
     *
@@ -41,6 +43,12 @@ object MenasPlugin {
       datasetVersion,
       isJobStageOnly,
       generateNewRun)
+    listener = Option(eventListener)
     PluginManager.loadPlugin(eventListener)
   }
+
+  def runUniqueId: Option[String] = listener.flatMap(_.runUniqueId)
+
+  def runNumber: Option[Int] = listener.flatMap(_.runNumber)
+
 }
