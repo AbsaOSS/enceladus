@@ -19,6 +19,7 @@ import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.conformance.CmdConfig
@@ -100,7 +101,7 @@ object DynamicInterpreter {
           ruleAppliedDf
         }
         rulesApplied += 1
-        applyRuleCheckpoint(rule, conformedDf, explodeContext)
+        applyRuleCheckpoint(rule, conformedDf, progArgs.persistStorageLevel, explodeContext)
     })
     optimizerTimeTracker.cleanupWorkaroundDf(conformedDf)
   }
@@ -195,21 +196,28 @@ object DynamicInterpreter {
   /**
     * Create a new Control Framework checkpoint for a specified Conformance Rule (after the rule is applied)
     *
-    * @param rule           The conformance rule
-    * @param df             Dataframe to apply the checkpoint on
-    * @param explodeContext An exploded context to be taken into account if a checkpoint is created for an exploded
-    *                       dataframe
+    * @param rule                The conformance rule
+    * @param df                  Dataframe to apply the checkpoint on
+    * @param persistStorageLevel A storage level for caching/persisting the df, if set.
+    * @param explodeContext      An exploded context to be taken into account if a checkpoint is created for an exploded
+    *                            dataframe
     * @return A cached dataframe if a checkpoint is calculated, otherwise returns the original dataframe
     */
   private def applyRuleCheckpoint(rule: ConformanceRule,
                                   df: Dataset[Row],
+                                  persistStorageLevel: Option[StorageLevel],
                                   explodeContext: ExplosionContext)
                                  (implicit ictx: InterpreterContext): Dataset[Row] = {
     if (ictx.featureSwitches.controlFrameworkEnabled && rule.controlCheckpoint) {
       val explodeFilter = explodeContext.getControlFrameworkFilter
-      // Note. setCheckpoint() handles caching/persistence automatically
-      df.filter(explodeFilter)
+      // Cache the data first since Atum will execute an action for each control metric
+      val cachedDf = persistStorageLevel match {
+        case Some(level) => df.persist(level)
+        case None => df.cache
+      }
+      cachedDf.filter(explodeFilter)
         .setCheckpoint(s"${ictx.jobShortName} (${rule.order}) - ${rule.outputColumn}")
+      cachedDf
     }
     else {
       df
