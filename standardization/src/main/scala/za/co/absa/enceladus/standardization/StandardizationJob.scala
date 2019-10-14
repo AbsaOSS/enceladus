@@ -318,7 +318,7 @@ object StandardizationJob {
   private def handleEmptyOutputAfterStandardization()(implicit spark: SparkSession): Unit = {
     import za.co.absa.atum.core.Constants._
 
-    val areCountMeasurementsAllZero = Atum.getControMeasure.checkpoints
+    val areCountMeasurementsAllZero = Atum.getControlMeasure.checkpoints
       .flatMap(checkpoint =>
         checkpoint.controls.filter(control =>
           control.controlName.equalsIgnoreCase(controlTypeRecordCount)))
@@ -418,7 +418,7 @@ object StandardizationJob {
     * @return The number of records in a checkpoint corresponding to raw data (if available)
     */
   private def getRawRecordCountFromCheckpoints: Option[Long] = {
-    val controlMeasure = Atum.getControMeasure
+    val controlMeasure = Atum.getControlMeasure
 
     val rawCheckpoint = controlMeasure
       .checkpoints
