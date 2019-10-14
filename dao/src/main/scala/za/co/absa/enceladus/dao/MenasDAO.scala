@@ -74,9 +74,9 @@ trait MenasDAO {
     * Stores a new Run object in the database by sending REST request to Menas
     *
     * @param run A Run object
-    * @return The unique id of newly created Run object or encapsulated exception
+    * @return The Run as stored in Menas with a newly created unique ID and a run ID
     */
-  def storeNewRunObject(run: Run): String
+  def storeNewRunObject(run: Run): Run
 
   /**
     * Updates control measure object of the specified run
@@ -86,17 +86,17 @@ trait MenasDAO {
     * @return true if Run object is successfully updated
     */
   def updateControlMeasure(uniqueId: String,
-                           controlMeasure: ControlMeasure): Boolean
+                           controlMeasure: ControlMeasure): Run
 
   /**
     * Updates status of the specified run
     *
     * @param uniqueId  An unique id of a run object
     * @param runStatus Status of a run object
-    * @return true if Run object is successfully updated
+    * @return The Run as stored in Menas with an updated run status
     */
   def updateRunStatus(uniqueId: String,
-                      runStatus: RunStatus): Boolean
+                      runStatus: RunStatus): Run
 
   /**
     * Updates spline reference of the specified run
@@ -106,7 +106,7 @@ trait MenasDAO {
     * @return true if Run object is successfully updated
     */
   def updateSplineReference(uniqueId: String,
-                            splineRef: SplineReference): Boolean
+                            splineRef: SplineReference): Run
 
   /**
     * Stores a new Run object in the database by loading control measurements from
@@ -117,6 +117,6 @@ trait MenasDAO {
     * @return true if Run object is successfully updated
     */
   def appendCheckpointMeasure(uniqueId: String,
-                              checkpoint: Checkpoint): Boolean
+                              checkpoint: Checkpoint): Run
 
 }

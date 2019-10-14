@@ -120,52 +120,57 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
 
       val result = menasDao.storeNewRunObject(requestRun)
 
-      result should be(uniqueId)
+      result should be(responseRun)
       Mockito.verify(restClient, Mockito.only()).sendPost[Run, Run](url, requestRun)
     }
 
     "updateControlMeasure" in {
       val controlMeasure = RunFactory.getDummyControlMeasure()
+      val responseRun = RunFactory.getDummyRun(uniqueId = Some(uniqueId), controlMeasure = controlMeasure)
       val url = s"$apiBaseUrl/runs/updateControlMeasure/$uniqueId"
-      Mockito.when(restClient.sendPost[ControlMeasure, String](url, controlMeasure)).thenReturn(dummyResponse)
+      Mockito.when(restClient.sendPost[ControlMeasure, Run](url, controlMeasure)).thenReturn(responseRun)
 
       val result = menasDao.updateControlMeasure(uniqueId, controlMeasure)
 
-      result should be(true)
-      Mockito.verify(restClient, Mockito.only()).sendPost[ControlMeasure, String](url, controlMeasure)
+      result should be(responseRun)
+      Mockito.verify(restClient, Mockito.only()).sendPost[ControlMeasure, Run](url, controlMeasure)
     }
 
     "updateRunStatus" in {
       val runStatus = RunFactory.getDummyRunStatus()
+      val responseRun = RunFactory.getDummyRun(uniqueId = Some(uniqueId), runStatus = runStatus)
       val url = s"$apiBaseUrl/runs/updateRunStatus/$uniqueId"
-      Mockito.when(restClient.sendPost[RunStatus, String](url, runStatus)).thenReturn(dummyResponse)
+      Mockito.when(restClient.sendPost[RunStatus, Run](url, runStatus)).thenReturn(responseRun)
 
       val result = menasDao.updateRunStatus(uniqueId, runStatus)
 
-      result should be(true)
-      Mockito.verify(restClient, Mockito.only()).sendPost[RunStatus, String](url, runStatus)
+      result should be(responseRun)
+      Mockito.verify(restClient, Mockito.only()).sendPost[RunStatus, Run](url, runStatus)
     }
 
     "updateSplineReference" in {
       val splineReference = RunFactory.getDummySplineReference()
+      val responseRun = RunFactory.getDummyRun(uniqueId = Some(uniqueId), splineRef = splineReference)
       val url = s"$apiBaseUrl/runs/updateSplineReference/$uniqueId"
-      Mockito.when(restClient.sendPost[SplineReference, String](url, splineReference)).thenReturn(dummyResponse)
+      Mockito.when(restClient.sendPost[SplineReference, Run](url, splineReference)).thenReturn(responseRun)
 
       val result = menasDao.updateSplineReference(uniqueId, splineReference)
 
-      result should be(true)
-      Mockito.verify(restClient, Mockito.only()).sendPost[SplineReference, String](url, splineReference)
+      result should be(responseRun)
+      Mockito.verify(restClient, Mockito.only()).sendPost[SplineReference, Run](url, splineReference)
     }
 
     "appendCheckpointMeasure" in {
       val checkpoint = RunFactory.getDummyCheckpoint()
+      val controlMeasure = RunFactory.getDummyControlMeasure(checkpoints = List(checkpoint))
+      val responseRun = RunFactory.getDummyRun(uniqueId = Some(uniqueId), controlMeasure = controlMeasure)
       val url = s"$apiBaseUrl/runs/addCheckpoint/$uniqueId"
-      Mockito.when(restClient.sendPost[Checkpoint, String](url, checkpoint)).thenReturn(dummyResponse)
+      Mockito.when(restClient.sendPost[Checkpoint, Run](url, checkpoint)).thenReturn(responseRun)
 
       val result = menasDao.appendCheckpointMeasure(uniqueId, checkpoint)
 
-      result should be(true)
-      Mockito.verify(restClient, Mockito.only()).sendPost[Checkpoint, String](url, checkpoint)
+      result should be(responseRun)
+      Mockito.verify(restClient, Mockito.only()).sendPost[Checkpoint, Run](url, checkpoint)
     }
   }
 

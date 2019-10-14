@@ -52,40 +52,36 @@ protected class MenasRestDAO(private[dao] val apiBaseUrl: String,
     restClient.sendGet[String](url)
   }
 
-  def storeNewRunObject(run: Run): String = {
-    restClient.sendPost[Run, Run](runsUrl, run).uniqueId.get
+  def storeNewRunObject(run: Run): Run = {
+    restClient.sendPost[Run, Run](runsUrl, run)
   }
 
   def updateControlMeasure(uniqueId: String,
-                           controlMeasure: ControlMeasure): Boolean = {
+                           controlMeasure: ControlMeasure): Run = {
     val url = s"$runsUrl/updateControlMeasure/$uniqueId"
 
-    restClient.sendPost[ControlMeasure, String](url, controlMeasure)
-    true
+    restClient.sendPost[ControlMeasure, Run](url, controlMeasure)
   }
 
   def updateRunStatus(uniqueId: String,
-                      runStatus: RunStatus): Boolean = {
+                      runStatus: RunStatus): Run = {
     val url = s"$runsUrl/updateRunStatus/$uniqueId"
 
-    restClient.sendPost[RunStatus, String](url, runStatus)
-    true
+    restClient.sendPost[RunStatus, Run](url, runStatus)
   }
 
   def updateSplineReference(uniqueId: String,
-                            splineRef: SplineReference): Boolean = {
+                            splineRef: SplineReference): Run = {
     val url = s"$runsUrl/updateSplineReference/$uniqueId"
 
-    restClient.sendPost[SplineReference, String](url, splineRef)
-    true
+    restClient.sendPost[SplineReference, Run](url, splineRef)
   }
 
   def appendCheckpointMeasure(uniqueId: String,
-                              checkpoint: Checkpoint): Boolean = {
+                              checkpoint: Checkpoint): Run = {
     val url = s"$runsUrl/addCheckpoint/$uniqueId"
 
-    restClient.sendPost[Checkpoint, String](url, checkpoint)
-    true
+    restClient.sendPost[Checkpoint, Run](url, checkpoint)
   }
 
   /* The URLEncoder implements the HTML Specifications

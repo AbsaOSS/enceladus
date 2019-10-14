@@ -48,6 +48,8 @@ object StandardizationJob {
   private val log = LoggerFactory.getLogger(this.getClass)
   private val conf = ConfigFactory.load()
   private val menasApiBaseUrl = conf.getString("menas.rest.uri")
+  private val menasUiBaseUrl = menasApiBaseUrl.replace("/api/", "/#/")
+
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
@@ -96,14 +98,26 @@ object StandardizationJob {
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 
-    executeStandardization(performance, dfAll, schema, cmd, pathCfg)
-    cmd.performanceMetricsFile.foreach(fileName => {
-      try {
-        performance.writeMetricsToFile(fileName)
-      } catch {
-        case NonFatal(e) => log.error(s"Unable to write performance metrics to file '$fileName': ${e.getMessage}")
+    try {
+      executeStandardization(performance, dfAll, schema, cmd, pathCfg)
+      cmd.performanceMetricsFile.foreach { fileName =>
+        try {
+          performance.writeMetricsToFile(fileName)
+        } catch {
+          case NonFatal(e) => log.error(s"Unable to write performance metrics to file '$fileName': ${e.getMessage}")
+        }
       }
-    })
+      log.info("Standardization finished successfully")
+    } finally {
+      Atum.getControlMeasure.runUniqueId
+
+      MenasPlugin.runNumber.foreach { runNumber =>
+        val name = cmd.datasetName
+        val version = cmd.datasetVersion
+        log.info(s"Menas API Run URL: $menasApiBaseUrl/runs/$name/$version/$runNumber")
+        log.info(s"Menas UI Run URL: $menasUiBaseUrl/runs/$name/$version/$runNumber")
+      }
+    }
   }
 
   private def getReportVersion(cmd: CmdConfig, dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {

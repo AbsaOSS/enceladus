@@ -50,6 +50,7 @@ object DynamicConformanceJob {
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
   private val menasApiBaseUrl = conf.getString("menas.rest.uri")
+  private val menasUiBaseUrl = menasApiBaseUrl.replace("/api/", "/#/")
 
   def main(args: Array[String]) {
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
@@ -88,12 +89,25 @@ object DynamicConformanceJob {
     // load data for input and mapping tables
     val inputData = DataSource.getData(pathCfg.stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
 
-    val result = conform(conformance, inputData, enableCF)
+    try {
+      val result = conform(conformance, inputData, enableCF)
 
-    PerformanceMetricTools.addJobInfoToAtumMetadata("conform",
-      pathCfg.stdPath, pathCfg.publishPath, cmd.menasCredentials.username, args.mkString(" "))
+      PerformanceMetricTools.addJobInfoToAtumMetadata("conform",
+        pathCfg.stdPath, pathCfg.publishPath, cmd.menasCredentials.username, args.mkString(" "))
 
-    processResult(result, performance, pathCfg, reportVersion, args.mkString(" "))
+      processResult(result, performance, pathCfg, reportVersion, args.mkString(" "))
+
+      log.info("Conformance finished successfully")
+    } finally {
+      Atum.getControlMeasure.runUniqueId
+
+      MenasPlugin.runNumber.foreach { runNumber =>
+        val name = cmd.datasetName
+        val version = cmd.datasetVersion
+        log.info(s"Menas API Run URL: $menasApiBaseUrl/runs/$name/$version/$runNumber")
+        log.info(s"Menas UI Run URL: $menasUiBaseUrl/runs/$name/$version/$runNumber")
+      }
+    }
   }
 
   private def isExperimentalRuleEnabled()(implicit cmd: CmdConfig): Boolean = {
