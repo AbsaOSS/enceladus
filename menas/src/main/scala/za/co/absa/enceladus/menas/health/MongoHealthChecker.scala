@@ -18,6 +18,7 @@ package za.co.absa.enceladus.menas.health
 import java.util.concurrent.TimeUnit
 
 import org.mongodb.scala.MongoDatabase
+import org.mongodb.scala.bson.collection.immutable.Document
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.actuate.health.{Health, HealthIndicator}
@@ -31,9 +32,11 @@ import scala.util.{Failure, Success, Try}
 class MongoHealthChecker @Autowired()(mongoDb: MongoDatabase) extends HealthIndicator {
   private val log = LoggerFactory.getLogger(this.getClass)
 
+  private val ping = Document("{ ping : 1 }")
+
   override protected def health(): Health = {
     Try {
-      Await.ready(mongoDb.listCollectionNames().toFuture(), Duration(1, TimeUnit.SECONDS))
+      Await.ready(mongoDb.runCommand(ping).toFuture(), Duration(1, TimeUnit.SECONDS))
     } match {
       case Success(_) =>
         Health.up().build()

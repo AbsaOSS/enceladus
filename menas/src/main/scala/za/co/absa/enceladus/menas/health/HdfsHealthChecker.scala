@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.menas.health
 
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.FileSystem
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.actuate.health.{Health, HealthIndicator}
@@ -29,7 +29,9 @@ class HdfsHealthChecker @Autowired()(hdfs: FileSystem) extends HealthIndicator {
   private val log = LoggerFactory.getLogger(this.getClass)
 
   override protected def health(): Health = {
-    Try(hdfs.getFileStatus(new Path("/"))) match {
+    Try {
+      hdfs.getStatus()
+    } match {
       case Success(_) =>
         Health.up().build()
       case Failure(e) =>
