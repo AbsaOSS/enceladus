@@ -27,52 +27,52 @@ class DefaultsSuite extends FunSuite {
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
   test("ByteType") {
-    assert(Defaults.getGlobalDefaultWithNull(ByteType, nullable = false) === Success(Some(0.toByte)))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(ByteType, nullable = false) === Success(Some(0.toByte)))
   }
 
   test("ShortType") {
-    assert(Defaults.getGlobalDefaultWithNull(ShortType, nullable = false) === Success(Some(0.toShort)))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(ShortType, nullable = false) === Success(Some(0.toShort)))
   }
 
   test("IntegerType") {
-    assert(Defaults.getGlobalDefaultWithNull(IntegerType, nullable = false) === Success(Some(0)))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(IntegerType, nullable = false) === Success(Some(0)))
   }
 
   test("LongType") {
-    assert(Defaults.getGlobalDefaultWithNull(LongType, nullable = false) === Success(Some(0L)))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(LongType, nullable = false) === Success(Some(0L)))
   }
 
   test("FloatType") {
-    assert(Defaults.getGlobalDefaultWithNull(FloatType, nullable = false) === Success(Some(0F)))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(FloatType, nullable = false) === Success(Some(0F)))
   }
 
   test("DoubleType") {
-    assert(Defaults.getGlobalDefaultWithNull(DoubleType, nullable = false) === Success(Some(0D)))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(DoubleType, nullable = false) === Success(Some(0D)))
   }
 
   test("StringType") {
-    assert(Defaults.getGlobalDefaultWithNull(StringType, nullable = false) === Success(Some("")))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(StringType, nullable = false) === Success(Some("")))
   }
 
   test("DateType") {
-    assert(Defaults.getGlobalDefaultWithNull(DateType, nullable = false) === Success(Some(new Date(0))))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(DateType, nullable = false) === Success(Some(new Date(0))))
   }
 
   test("TimestampType") {
-    assert(Defaults.getGlobalDefaultWithNull(TimestampType, nullable = false) === Success(Some(new Timestamp(0))))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(TimestampType, nullable = false) === Success(Some(new Timestamp(0))))
   }
 
   test("BooleanType") {
-    assert(Defaults.getGlobalDefaultWithNull(BooleanType, nullable = false) === (Success(Some(false))))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(BooleanType, nullable = false) === (Success(Some(false))))
   }
 
   test("DecimalType") {
-    assert(Defaults.getGlobalDefaultWithNull(DecimalType(6, 3), nullable = false) === Success(Some(new java.math.BigDecimal("000.000"))))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(DecimalType(6, 3), nullable = false) === Success(Some(new java.math.BigDecimal("000.000"))))
   }
 
   test("ArrayType") {
     val dataType = ArrayType(StringType)
-    val result = Defaults.getGlobalDefaultWithNull(dataType, nullable = false)
+    val result = GlobalDefaults.getDataTypeDefaultValueWithNull(dataType, nullable = false)
     val e = intercept[IllegalStateException] {
       result.get
     }
@@ -80,7 +80,7 @@ class DefaultsSuite extends FunSuite {
   }
 
   test("Nullable default is None") {
-    assert(Defaults.getGlobalDefaultWithNull(BooleanType, nullable = true) === Success(None))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(BooleanType, nullable = true) === Success(None))
   }
 }
 

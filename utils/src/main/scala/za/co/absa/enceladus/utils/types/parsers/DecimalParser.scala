@@ -15,22 +15,28 @@
 
 package za.co.absa.enceladus.utils.types.parsers
 
-class DecimalParser(val precision: Int, val scale: Int) {
+import java.text.DecimalFormat
+import za.co.absa.enceladus.utils.numeric.NumericPattern
 
-  def parseDecimal(value: String): BigDecimal = {
-    val result = BigDecimal(value)
-    if (result.precision > precision || result.scale > scale) {
-      throw new NumberFormatException(s"The Decimal(${precision},${scale}) value '$value' is " +
-        s"out of range with precision=${result.precision} and scale=${result.scale} ")
-    }
-    result
-  }
+class DecimalParser(override val pattern: NumericPattern,
+                    override val min: Option[BigDecimal],
+                    override val max: Option[BigDecimal])
+  extends NumericParser(pattern, min, max) with ParseViaDecimalFormat[BigDecimal] {
 
-  def format(value: Double): String = {
-    value.toString
-  }
+  override protected val stringConversion: String => BigDecimal = BigDecimal(_)
+  override protected val numberConversion: Number => BigDecimal = {n => BigDecimal(n.asInstanceOf[java.math.BigDecimal])}
+
+  protected val decimalFormat: Option[DecimalFormat] = pattern.specifiedPattern.map (s => {
+    val df = new DecimalFormat(s, pattern.decimalSymbols.toDecimalFormatSymbols)
+    df.setParseBigDecimal(true)
+    df
+  })
 }
 
 object DecimalParser {
-  def apply(precision: Int, scale: Int): DecimalParser = new DecimalParser(precision, scale)
+  def apply(pattern: NumericPattern,
+            min: Option[BigDecimal] = None,
+            max: Option[BigDecimal] = None): DecimalParser = {
+    new DecimalParser(pattern, min, max)
+  }
 }

@@ -13,15 +13,25 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.validation.field
-import za.co.absa.enceladus.utils.schema.MetadataKeys
-import za.co.absa.enceladus.utils.types.TypedStructField
-import za.co.absa.enceladus.utils.validation.ValidationIssue
+package za.co.absa.enceladus.utils.numeric
 
-object FractionalFieldValidator extends NumericFieldValidator {
-  override def validate(field: TypedStructField): Seq[ValidationIssue] = {
-    super.validate(field) ++
-      this.checkMetadataKey[Boolean](field, MetadataKeys.AllowInfinity)
+import za.co.absa.enceladus.utils.types.TypePattern
+import NumericPattern._
+
+case class NumericPattern (override val pattern: String, val decimalSymbols: DecimalSymbols)
+  extends TypePattern(pattern, isDefault = (pattern == DefaultPatternValue)) {
+
+  def specifiedPattern: Option[String] = {
+    if (isDefault) {
+      None
+    } else {
+      Option(pattern)
+    }
   }
 }
 
+object NumericPattern {
+  val DefaultPatternValue = ""
+
+  def apply(decimalSymbols: DecimalSymbols): NumericPattern = NumericPattern(DefaultPatternValue, decimalSymbols)
+}

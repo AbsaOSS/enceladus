@@ -18,9 +18,10 @@ package za.co.absa.enceladus.standardization.interpreter
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Locale
 
-import org.apache.spark.sql.types.{DecimalType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{DecimalType, MetadataBuilder, StringType, StructField, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBase with LoggerTestBase {
@@ -131,5 +132,93 @@ class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBas
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     logDataFrameContent(std)
 
-    assertResult(exp)(std.as[DecimalRow].collect().sortBy(_.description).toList)  }
+    assertResult(exp)(std.as[DecimalRow].collect().sortBy(_.description).toList)
+  }
+
+  test("No pattern, but altered symbols") {
+    val input = Seq(
+      ("01-Normal", "123:456"),
+      ("02-Null", null),
+      ("03-Far negative", "N100000000:999"),
+      ("04-Wrong", "hello"),
+      ("05-Not adhering to pattern", "123456.789")
+    )
+
+    val decimalSeparator = ":"
+    val minusSign = "N"
+    val srcField = "src"
+
+    val src = input.toDF("description", srcField)
+
+    val desiredSchemaWithAlters = StructType(Seq(
+      StructField("description", StringType, nullable = false),
+      StructField("src", StringType, nullable = true),
+      StructField("small", DecimalType(5,2), nullable = false, new MetadataBuilder()
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .build()),
+      StructField("big", DecimalType(38,18), nullable = true, new MetadataBuilder()
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .putString(MetadataKeys.DefaultValue, "N1:1")
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .build())
+    ))
+
+    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithAlters, "").cache()
+    logDataFrameContent(std)
+
+    val exp = List(
+      ("01-Normal", "123:456", BigDecimal("123.460000000000000000"), BigDecimal("123.456000000000000000"), Seq.empty), //NB the rounding in the small
+      ("02-Null", null,  BigDecimal("0E-18"), null, Seq(ErrorMessage.stdNullErr(srcField))),
+      ("03-Far negative", "N100000000:999",  BigDecimal("0E-18"), BigDecimal("-100000000.999000000000000000"), Seq(ErrorMessage.stdCastErr(srcField,"N100000000:999"))),
+      ("04-Wrong", "hello",  BigDecimal("0E-18"), BigDecimal("-1.100000000000000000"), Seq(ErrorMessage.stdCastErr(srcField,"hello"), ErrorMessage.stdCastErr(srcField,"hello"))),
+      ("05-Not adhering to pattern", "123456.789",  BigDecimal("0E-18"), BigDecimal("-1.100000000000000000"), Seq(ErrorMessage.stdCastErr(srcField,"123456.789"), ErrorMessage.stdCastErr(srcField,"123456.789")))
+    )
+
+    assertResult(exp)(std.as[(String, String, BigDecimal, BigDecimal, Seq[ErrorMessage])].collect().toList)
+  }
+
+  test("Using patterns") {
+    val input = Seq(
+      ("01-Normal", "123.4‰"),
+      ("02-Null", null),
+      ("03-Big", "100,000,000.999‰"),
+      ("04-Wrong", "hello"),
+      ("05-Not adhering to pattern", "123456.789")
+    )
+
+    val pattern = "#,##0.##‰"
+    val srcField = "src"
+
+    val src = input.toDF("description", srcField)
+
+    val desiredSchemaWithPatterns = StructType(Seq(
+      StructField("description", StringType, nullable = false),
+      StructField("src", StringType, nullable = true),
+      StructField("small", DecimalType(5,2), nullable = false, new MetadataBuilder()
+        .putString(MetadataKeys.Pattern, pattern)
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .build()),
+      StructField("big", DecimalType(38,18), nullable = true, new MetadataBuilder()
+        .putString(MetadataKeys.Pattern, pattern)
+        .putString(MetadataKeys.DefaultValue, "1,000‰")
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .build())
+    ))
+
+    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithPatterns, "").cache()
+    logDataFrameContent(std)
+
+    val exp = List(
+      ("01-Normal", "123.4‰", BigDecimal("0.120000000000000000"), BigDecimal("0.123400000000000000"), Seq.empty),
+      ("02-Null", null,  BigDecimal("0E-18"), null, Seq(ErrorMessage.stdNullErr(srcField))),
+      ("03-Big", "100,000,000.999‰",  BigDecimal("0E-18"), BigDecimal("100000.000999000000000000"), Seq(ErrorMessage.stdCastErr(srcField,"100,000,000.999‰"))),
+      ("04-Wrong", "hello",  BigDecimal("0E-18"), BigDecimal("1.000000000000000000"), Seq(ErrorMessage.stdCastErr(srcField,"hello"), ErrorMessage.stdCastErr(srcField,"hello"))),
+      ("05-Not adhering to pattern", "123456.789",  BigDecimal("0E-18"), BigDecimal("1.000000000000000000"), Seq(ErrorMessage.stdCastErr(srcField,"123456.789"), ErrorMessage.stdCastErr(srcField,"123456.789")))
+    )
+
+    assertResult(exp)(std.as[(String, String, BigDecimal, BigDecimal, Seq[ErrorMessage])].collect().toList)
+  }
 }

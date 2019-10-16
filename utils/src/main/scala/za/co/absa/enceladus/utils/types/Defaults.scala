@@ -17,16 +17,34 @@ package za.co.absa.enceladus.utils.types
 
 import java.sql.Date
 import java.sql.Timestamp
-import java.util.TimeZone
+import java.text.DecimalFormatSymbols
+import java.util.{Locale, TimeZone}
 
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.utils.general.ConfigReader
+import za.co.absa.enceladus.utils.numeric.DecimalSymbols
 
 import scala.util.{Success, Try}
 
-object Defaults {
+abstract class Defaults {
   /** A function which defines default values for primitive types */
-  def getGlobalDefault(dt: DataType): Any =
+  def getDataTypeDefaultValue(dt: DataType): Any
+
+  /** A function which defines default values for primitive types, allowing possible Null*/
+  def getDataTypeDefaultValueWithNull(dt: DataType, nullable: Boolean): Try[Option[Any]]
+
+  /** A function which defines default formats for primitive types */
+  def getStringPattern(dt: DataType): String
+
+  def getDefaultTimestampTimeZone: Option[String]
+  def getDefaultDateTimeZone: Option[String]
+
+  def getDecimalSymbols: DecimalSymbols
+}
+
+object GlobalDefaults extends Defaults {
+  /** A function which defines default values for primitive types */
+  override def getDataTypeDefaultValue(dt: DataType): Any =
     dt match {
       case _: IntegerType   => 0
       case _: FloatType     => 0f
@@ -45,29 +63,39 @@ object Defaults {
     }
 
   /** A function which defines default values for primitive types, allowing possible Null*/
-  def getGlobalDefaultWithNull(dt: DataType, nullable: Boolean): Try[Option[Any]] = {
+  override def getDataTypeDefaultValueWithNull(dt: DataType, nullable: Boolean): Try[Option[Any]] = {
     if (nullable) {
       Success(None)
     } else {
       Try{
-        getGlobalDefault(dt)
+        getDataTypeDefaultValue(dt)
       }.map(Some(_))
     }
   }
 
   /** A function which defines default formats for primitive types */
-  def getGlobalFormat(dt: DataType): String =
+  override def getStringPattern(dt: DataType): String =
     dt match {
-      case DateType      => "yyyy-MM-dd"
-      case TimestampType => "yyyy-MM-dd HH:mm:ss"
-      case _             => throw new IllegalStateException(s"No default format defined for data type ${dt.typeName}")
+      case DateType         => "yyyy-MM-dd"
+      case TimestampType    => "yyyy-MM-dd HH:mm:ss"
+      case _: IntegerType
+            | FloatType
+            | ByteType
+            | ShortType
+            | DoubleType
+            | LongType      => ""
+      case _: DecimalType   => ""
+      case _                => throw new IllegalStateException(s"No default format defined for data type ${dt.typeName}")
     }
 
-  def getGlobalDefaultTimestampTimeZone: Option[String] = globalDefaultTimestampTimeZone
-  def getGlobalDefaultDateTimeZone: Option[String] = globalDefaultDateTimeZone
+  override def getDefaultTimestampTimeZone: Option[String] = defaultTimestampTimeZone
+  override def getDefaultDateTimeZone: Option[String] = defaultDateTimeZone
 
-  private val globalDefaultTimestampTimeZone: Option[String] = readTimezone("defaultTimestampTimeZone")
-  private val globalDefaultDateTimeZone: Option[String] = readTimezone("defaultDateTimeZone")
+  override def getDecimalSymbols: DecimalSymbols = decimalSymbols
+
+  private val defaultTimestampTimeZone: Option[String] = readTimezone("defaultTimestampTimeZone")
+  private val defaultDateTimeZone: Option[String] = readTimezone("defaultDateTimeZone")
+  private val decimalSymbols = DecimalSymbols(Locale.US)
 
   private def readTimezone(path: String): Option[String] = {
     val result = ConfigReader.readStringConfigIfExist(path)
@@ -80,4 +108,3 @@ object Defaults {
     result
   }
 }
-

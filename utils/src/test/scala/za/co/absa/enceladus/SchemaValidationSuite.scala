@@ -85,7 +85,7 @@ class SchemaValidationSuite extends FunSuite with LoggerTestBase{
         StructField("float_bad", FloatType, nullable = false, Metadata.fromJson(""" { "default": "1e40" } """)),
         StructField("double_good", DoubleType, nullable = false, Metadata.fromJson(""" { "default": "1000000.5544" } """)),
         StructField("double_bad", DoubleType, nullable = false, Metadata.fromJson(""" { "default": "1e310" } """)),
-        StructField("decimal_good", DecimalType(20,10), nullable = false, Metadata.fromJson(""" { "default": "314159265351.31415926"}""")),
+        StructField("decimal_good", DecimalType(20,10), nullable = false, Metadata.fromJson(""" { "default": "-9999999999.9999999999"}""")),
         StructField("decimal_bad", DecimalType(20,10), nullable = false, Metadata.fromJson(""" { "default": "123456789012345678901.12345678901"}"""))
       )
     )

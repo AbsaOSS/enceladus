@@ -24,7 +24,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.NegationConformanceRule
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
-import za.co.absa.enceladus.utils.types.Defaults
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.validation.SchemaPathValidator
 
 case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleInterpreter {
@@ -67,7 +67,7 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
     // The above is true not only for JVM, but for the most of the CPU/hardware implementations of numeric data types
 
     def defaultValue(dt: DataType, nullable: Boolean): Any = {
-      Defaults.getGlobalDefaultWithNull(dt, field.nullable).get.orNull
+      GlobalDefaults.getDataTypeDefaultValueWithNull(dt, field.nullable).get.orNull
     }
 
     val neg = negate(inputColumn)

@@ -13,15 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.validation.field
-import za.co.absa.enceladus.utils.schema.MetadataKeys
-import za.co.absa.enceladus.utils.types.TypedStructField
-import za.co.absa.enceladus.utils.validation.ValidationIssue
+package za.co.absa.enceladus.utils.implicits
 
-object FractionalFieldValidator extends NumericFieldValidator {
-  override def validate(field: TypedStructField): Seq[ValidationIssue] = {
-    super.validate(field) ++
-      this.checkMetadataKey[Boolean](field, MetadataKeys.AllowInfinity)
+import scala.util.{Failure, Success, Try}
+
+object OptionImplicits {
+  implicit class OptionEnhancements[T](option: Option[T]) {
+    def toTry(failure: Exception): Try[T] = {
+      option.fold[Try[T]](Failure(failure))(Success(_))
+    }
   }
 }
-

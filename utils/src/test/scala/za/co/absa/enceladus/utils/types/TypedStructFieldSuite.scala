@@ -26,6 +26,7 @@ import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
 import scala.util.{Failure, Success, Try}
 
 class TypedStructFieldSuite extends FunSuite {
+  private implicit val defaults: Defaults = GlobalDefaults
   private val fieldName = "test_field"
   private def createField(dataType: DataType,
                           nullable: Boolean = false,
@@ -73,14 +74,19 @@ class TypedStructFieldSuite extends FunSuite {
     assert(field.name == fieldName)
     assert(field.dataType == dataType)
     val (correctType, expectedTypeName) = dataType match {
-      case ByteType | ShortType | IntegerType | LongType => (field.isInstanceOf[IntegralTypeStructField], "IntegralTypeStructField")
-      case FloatType | DoubleType => (field.isInstanceOf[FractionalTypeStructField], "FractionalTypeStructField")
-      case StringType => (field.isInstanceOf[StringTypeStructField], "StringTypeStructField")
-      case BooleanType => (field.isInstanceOf[BooleanTypeStructField], "BooleanTypeStructField")
-      case DateType | TimestampType => (field.isInstanceOf[DateTimeTypeStructField], "DateTimeTypeStructField")
+      case ByteType       => (field.isInstanceOf[ByteTypeStructField], "ByteTypeStructField")
+      case ShortType      => (field.isInstanceOf[ShortTypeStructField], "ShortTypeStructField")
+      case IntegerType    => (field.isInstanceOf[IntTypeStructField], "IntTypeStructField")
+      case LongType       => (field.isInstanceOf[LongTypeStructField], "LongTypeStructField")
+      case FloatType      => (field.isInstanceOf[FloatTypeStructField], "FloatTypeStructField")
+      case DoubleType     => (field.isInstanceOf[DoubleTypeStructField], "DoubleTypeStructField")
+      case StringType     => (field.isInstanceOf[StringTypeStructField], "StringTypeStructField")
+      case BooleanType    => (field.isInstanceOf[BooleanTypeStructField], "BooleanTypeStructField")
+      case DateType       => (field.isInstanceOf[DateTypeStructField], "DateTypeStructField")
+      case TimestampType  => (field.isInstanceOf[TimestampTypeStructField], "TimestampTypeStructField")
       case _: DecimalType => (field.isInstanceOf[DecimalTypeStructField], "DecimalTypeStructField")
-      case _: ArrayType => (field.isInstanceOf[ArrayTypeStructField], "ArrayTypeStructField")
-      case _: StructType => (field.isInstanceOf[StructTypeStructField], "StructTypeStructField")
+      case _: ArrayType   => (field.isInstanceOf[ArrayTypeStructField], "ArrayTypeStructField")
+      case _: StructType  => (field.isInstanceOf[StructTypeStructField], "StructTypeStructField")
       case _ => (field.isInstanceOf[GeneralTypeStructField], "GeneralTypeStructField")
     }
     assert(correctType, s"\nWrong TypedStructField type. Expected: '$expectedTypeName', but got: '${field.getClass.getSimpleName}'")
@@ -171,9 +177,8 @@ class TypedStructFieldSuite extends FunSuite {
   test("Float type nullable, with default defined in exponential notation, allowInfinity is set to true") {
     val fieldType = FloatType
     val nullable = true
-    val field = createField(fieldType, nullable, Some("314e-2"), Map(MetadataKeys.allowInfinity -> "true"))
+    val field = createField(fieldType, nullable, Some("314e-2"), Map(MetadataKeys.AllowInfinity -> "true"))
     val typed = TypedStructField(field)
-    val errMsg = "'314e-2' cannot be cast to float"
     checkField(typed, fieldType, Success(Some(Some(3.14F))), Success(Some(3.14F)), nullable)
   }
 
@@ -200,13 +205,13 @@ class TypedStructFieldSuite extends FunSuite {
   test("Float type nullable, with default defined as Long and allowInfinity as binary Boolean") {
     val fieldType = FloatType
     val nullable = false
-    val field = createField(fieldType, nullable, Some(1000L), Map( MetadataKeys.allowInfinity->false ))
+    val field = createField(fieldType, nullable, Some(1000L), Map( MetadataKeys.AllowInfinity->false ))
     val typed = TypedStructField(field)
     val errMsg = "java.lang.Long cannot be cast to java.lang.String"
     val fail = Failure(new ClassCastException(errMsg))
     checkField(typed, fieldType, fail, fail, nullable, Seq(
-      ValidationError("allowInfinity metadata value of field 'test_field' is not Boolean in String format"),
-      ValidationError(errMsg)
+      ValidationError(errMsg),
+      ValidationError(s"${MetadataKeys.AllowInfinity} metadata value of field 'test_field' is not Boolean in String format")
     ))
   }
 }

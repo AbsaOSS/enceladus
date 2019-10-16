@@ -59,7 +59,7 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
     }
   }
 
-  spark.udf.register("cleanErrCol", cleanErrCol, ArrayType.apply(ErrorMessage.errorColSchema, false))
+  spark.udf.register("cleanErrCol", cleanErrCol, ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
 
   private val errorColumnAppend = new UDF2[Seq[Row], Row, Seq[Row]] {
     override def call(t1: Seq[Row], t2: Row) : Seq[Row] = {
@@ -67,6 +67,6 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
     }
   }
 
-  spark.udf.register("errorColumnAppend", errorColumnAppend, ArrayType.apply(ErrorMessage.errorColSchema, false))
+  spark.udf.register("errorColumnAppend", errorColumnAppend, ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
 
 }

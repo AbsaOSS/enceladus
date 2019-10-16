@@ -17,8 +17,8 @@ package za.co.absa.enceladus.utils.validation.field
 
 import za.co.absa.enceladus.utils.types.TypedStructField
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
-
 import scala.util.{Failure, Success, Try}
+import scala.reflect.runtime.universe._
 
 class FieldValidator {
   /**
@@ -35,6 +35,27 @@ class FieldValidator {
       case Success(opt: Option[_])         => opt.collect{case x:ValidationIssue => x}.toSeq
       case Success(issue: ValidationIssue) => Seq(issue)
       case _                               => Nil
+    }
+  }
+
+  protected def checkMetadataKey[T: TypeTag](field: TypedStructField,
+                                             metadataKey: String,
+                                             issueConstructor: String => ValidationIssue = ValidationError.apply): Seq[ValidationIssue] = {
+    def optionToValidationIssueSeq(option: Option[_], typeName: String): Seq[ValidationIssue] = {
+      option.map(_ => Nil).getOrElse(
+        Seq(issueConstructor(s"$metadataKey metadata value of field '${field.name}' is not $typeName in String format"))
+      )
+    }
+
+    if (field.hasMetadataKey(metadataKey)) {
+      typeOf[T] match {
+        case t if t =:= typeOf[String] => optionToValidationIssueSeq(field.getMetadataString(metadataKey), t.toString)
+        case t if t =:= typeOf[Boolean] => optionToValidationIssueSeq(field.getMetadataStringAsBoolean(metadataKey), t.toString)
+        case t if t =:= typeOf[Char] => optionToValidationIssueSeq(field.getMetadataChar(metadataKey), t.toString)
+        case _ => Seq(ValidationError(s"Unsupported metadata validation type for key '$metadataKey' of field '${field.name}'"))
+      }
+    } else {
+      Nil
     }
   }
 

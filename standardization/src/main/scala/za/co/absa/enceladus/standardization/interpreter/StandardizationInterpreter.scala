@@ -23,13 +23,14 @@ import za.co.absa.enceladus.standardization.interpreter.dataTypes._
 import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, SparkXMLHack, TypeParser}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.validation.ValidationException
 
 /**
   * Object representing set of tools for performing the actual standardization
   */
 object StandardizationInterpreter{
-
+  private implicit val defaults: Defaults = GlobalDefaults
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
