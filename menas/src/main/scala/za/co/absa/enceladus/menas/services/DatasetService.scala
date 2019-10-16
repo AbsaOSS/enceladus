@@ -56,7 +56,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
         coordPath <- oozieRepository.createCoordinator(newDataset, wfPath)
         coordId <- latest.schedule match {
           case Some(sched) => sched.activeInstance match {
-              case Some(instance) => oozieRepository.killCoordinator(instance.coordinatorId).recover({case ex =>
+              case Some(instance) => oozieRepository.killCoordinator(instance.coordinatorId, sched.runtimeParams).recover({case ex =>
                 logger.warn(s"Killing the coordinator ${instance.coordinatorId} failed. Submitting new one.")
                 oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
               }).flatMap({ res =>

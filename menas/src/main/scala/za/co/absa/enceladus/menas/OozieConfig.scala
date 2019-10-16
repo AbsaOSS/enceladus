@@ -22,6 +22,8 @@ import scala.util.Try
 import za.co.absa.enceladus.menas.exceptions.OozieConfigurationException
 import scala.util.Success
 import scala.util.Failure
+import org.apache.oozie.client.AuthOozieClient
+import org.apache.oozie.client.AuthOozieClient.AuthType
 
 @Configuration
 class OozieConfig {
@@ -31,7 +33,7 @@ class OozieConfig {
 
   @Bean
   def oozieClient: Either[OozieConfigurationException, OozieClient] = {
-    Try(new OozieClient(oozieUrl)) match {
+    Try(new AuthOozieClient(oozieUrl, AuthType.KERBEROS.toString)) match {
       case Success(client) => Right(client)
       case Failure(e) => Left(OozieConfigurationException(e.getMessage, e))
     }
