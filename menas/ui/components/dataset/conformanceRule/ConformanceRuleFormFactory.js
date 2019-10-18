@@ -36,6 +36,18 @@ class ConformanceRuleFormFragmentFactory {
 
     oFormFragment = sap.ui.xmlfragment(sFragmentName, "components.dataset.conformanceRule." + sFragmentName + ".add", this.dialog);
     this.formFragments[sFragmentName] = oFormFragment;
+
+    jQuery.sap.require("components.tables.TableUtils");
+
+    const selectorId = `${sFragmentName}--schemaFieldSelector`;
+    const schemaSelector = sap.ui.getCore().byId(selectorId);
+    if(schemaSelector) {
+      const schemaFieldTableUtils = new components.tables.TableUtils(schemaSelector, "");
+      schemaFieldTableUtils.makeSearchable(["name"]);
+    } else {
+      console.log(`No schema field selector matching ${selectorId}, skipping search initialization.`);
+    }
+
     return this.formFragments[sFragmentName];
   }
 

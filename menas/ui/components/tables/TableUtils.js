@@ -141,16 +141,6 @@ sap.ui.define(["sap/m/ListBase",
     });
   };
 
-  TableUtils.prototype._initSearchDialog = function() {
-    Fragment.load({
-      name: "components.tables.searchDialog",
-      id: this._oControl.getId()
-    }).then((dialog) => {
-      this._oSearchDialog = dialog;
-      dialog.getContent()[0].attachSearch(this._onSearch.bind(this));
-    });
-  };
-
   TableUtils.prototype._addSort = function(aCols, aSortKeys) {
     this._oSortBtn = new Button({
       icon: "sap-icon://sort",
@@ -174,19 +164,17 @@ sap.ui.define(["sap/m/ListBase",
   };
 
   TableUtils.prototype._addSearch = function(aSearchKeys) {
-    this._oSearchBtn = new Button({
-      icon: "sap-icon://search",
-      press: () => {
-        if(this._oSearchDialog.isOpen()) {
-          this._oSearchDialog.close();
-        } else {
-          this._oSearchDialog.openBy(this._oSearchBtn);
-        }
-      }
+    this._oSearchBar = new sap.m.SearchField({
+      placeholder: "Search...",
+      search: this._onSearch.bind(this)
     });
+
     this._aSearchKeys = aSearchKeys;
-    this._oToolbar.addContent(this._oSearchBtn);
-    this._initSearchDialog();
+    this._oToolbar.addContent(this._oSearchBar);
+
+    if(this._sTableName) {
+      this._oSearchBar.setWidth("50%");
+    }
   }
 
   TableUtils.prototype.makeSortable = function(aCols, aSortKeys) {

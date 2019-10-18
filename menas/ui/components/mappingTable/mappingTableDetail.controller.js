@@ -52,8 +52,12 @@ sap.ui.define([
         oView.addDependent(oDialog);
         const selectorId = this.createId("schemaFieldSelector");
         const schemaSelector = sap.ui.getCore().byId(selectorId);
-        const schemaFieldTableUtils = new TableUtils(this.schemaSelector, "Audit Trail");
-        schemaFieldTableUtils.makeSearchable(["name"]);
+        if(schemaSelector) {
+          const schemaFieldTableUtils = new TableUtils(schemaSelector, "");
+          schemaFieldTableUtils.makeSearchable(["name"]);
+        } else {
+          console.log(`No schema field selector matching ${selectorId}, skipping search initialization.`);
+        }
       }.bind(this));
 
       this._addDefaultDialog = this.byId("addDefaultValueDialog");
