@@ -18,6 +18,7 @@ package za.co.absa.enceladus.model.menas.audit
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.{DropConformanceRule, LiteralConformanceRule}
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 
 class AuditableTest extends FunSuite {
   val obj1 = Dataset(name = "Test DS",
@@ -65,5 +66,13 @@ class AuditableTest extends FunSuite {
           AuditTrailChange(field = "conformance", oldValue = Some("DropConformanceRule(0,true,toDrop)"), None, message = "Conformance rule removed."),
           AuditTrailChange(field = "conformance", oldValue = None, newValue = Some("LiteralConformanceRule(0,something,true,1.01)"), message = "Conformance rule added.")
     ))(emptyRes)
+  }
+
+  test("Testing getSeqFieldsAudit removed rule") {
+    val removed = obj2.copy(conformance = List[ConformanceRule]())
+    val removedRes = obj2.getSeqFieldsAudit(removed, AuditFieldName("conformance", "Conformance rule"))
+    assertResult(Seq(
+          AuditTrailChange(field = "conformance", oldValue = Some("LiteralConformanceRule(0,something,true,1.01)"), None, message = "Conformance rule removed.")
+    ))(removedRes)
   }
 }

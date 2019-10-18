@@ -60,7 +60,7 @@ za.co.absa.enceladus.menas.mongo.connection.database=menas
 za.co.absa.enceladus.migration.mongo.query.timeout.seconds=300
 
 za.co.absa.enceladus.menas.version=@project.version@
-za.co.absa.enceladus.menas.environment=localhost
+za.co.absa.enceladus.menas.environment=Dev
 
 za.co.absa.enceladus.menas.spark.master=local[1]
 
@@ -70,6 +70,21 @@ za.co.absa.enceladus.spline.urlTemplate=//localhost:8080/spline/dataset/lineage/
 
 #system-wide time zone
 timezone="UTC"
+
+#---------- Actuator
+management.endpoints.web.base-path=/admin
+management.endpoints.jmx.exposure.exclude=*
+management.endpoints.web.exposure.include=health,threaddump,heapdump,loggers
+
+management.endpoints.enabled-by-default=false
+
+management.endpoint.health.enabled=true
+management.endpoint.health.show-details=always
+management.endpoint.threaddump.enabled=true
+management.endpoint.heapdump.enabled=true
+management.endpoint.loggers.enabled=true
+
+management.health.jms.enabled=false
 
 #---------- Monitoring
 # Limit on the number of documents to be fetch in a single mongodb query and shown in UI

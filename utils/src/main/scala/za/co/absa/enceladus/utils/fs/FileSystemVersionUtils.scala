@@ -15,12 +15,13 @@
 
 package za.co.absa.enceladus.utils.fs
 
-import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.log4j.LogManager
 import java.io.File
 import java.net.ConnectException
-import org.apache.hadoop.conf.Configuration
+
 import org.apache.commons.io.FileUtils
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.log4j.LogManager
 
 import scala.util.Try
 
@@ -142,6 +143,41 @@ class FileSystemVersionUtils(conf: Configuration) {
   def getDirectorySize(path: String): Long = {
     val hdfsPath = new Path(path)
     fs.getContentSummary(hdfsPath).getLength
+  }
+
+  /**
+    * Returns directory size in bytes, skipping hidden files and directories (starting from '_' or '.').
+    *
+    * @param path A path to a directory or a file.
+    * @return Directory size in bytes
+    */
+  def getDirectorySizeNoHidden(path: String): Long = {
+    def getDirSizeHelper(f: Path): Long = {
+      var totalLength = 0L
+      for (fileStatus <- fs.listStatus(f)) {
+        val fileName = fileStatus.getPath.getName
+        if (!fileName.startsWith("_") && !fileName.startsWith(".")) {
+          val length = if (fileStatus.isDirectory) {
+            getDirSizeHelper(fileStatus.getPath)
+          }
+          else {
+            fileStatus.getLen
+          }
+          totalLength += length
+        }
+      }
+      totalLength
+    }
+
+    val fsPath = new Path(path)
+    val status = fs.getFileStatus(fsPath)
+
+    if (status.isFile) {
+      // If a specific file is provided return its length even if this file is hidden.
+      status.getLen
+    } else {
+      getDirSizeHelper(new Path(path))
+    }
   }
 
   /**

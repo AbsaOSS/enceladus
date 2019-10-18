@@ -24,14 +24,16 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{RunState, RunStatus}
-import za.co.absa.enceladus.menas.factories.RunFactory
 import za.co.absa.enceladus.menas.integration.fixtures.{FixtureService, RunFixtureService}
 import za.co.absa.enceladus.menas.repositories.RunMongoRepository
 import za.co.absa.enceladus.model.Run
+import za.co.absa.enceladus.model.test.factories.RunFactory
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
+
+  import za.co.absa.enceladus.menas.integration.RunImplcits.RunExtensions
 
   @Autowired
   private val runFixture: RunFixtureService = null
@@ -160,7 +162,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         val actual = await(runMongoRepository.getAllSummaries())
 
-        val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1).map(RunFactory.toSummary)
+        val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1).map(_.toSummary)
         assert(actual == expected)
       }
     }
@@ -181,7 +183,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
       val actual = await(runMongoRepository.getAllSummaries())
 
-      val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1).map(RunFactory.toSummary)
+      val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1).map(_.toSummary)
       assert(actual == expected)
     }
 
@@ -213,7 +215,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         val actual = await(runMongoRepository.getSummariesByDatasetName(queriedDatasetName))
 
-        val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1).map(RunFactory.toSummary)
+        val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1).map(_.toSummary)
         assert(actual == expected)
       }
     }
@@ -231,7 +233,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
       val actual = await(runMongoRepository.getSummariesByDatasetName(queriedDatasetName))
 
-      val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1).map(RunFactory.toSummary)
+      val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1).map(_.toSummary)
       assert(actual == expected)
     }
 
@@ -270,7 +272,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         val actual = await(runMongoRepository.getSummariesByDatasetNameAndVersion(queriedDatasetName, queriedDatasetVersion))
 
-        val expected = List(dataset1v1run1, dataset1v1run2).map(RunFactory.toSummary)
+        val expected = List(dataset1v1run1, dataset1v1run2).map(_.toSummary)
         assert(actual == expected)
       }
     }
@@ -285,7 +287,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
       val actual = await(runMongoRepository.getSummariesByDatasetNameAndVersion(queriedDatasetName, queriedDatasetVersion))
 
-      val expected = List(dataset1v1run1, dataset1v1run2).map(RunFactory.toSummary)
+      val expected = List(dataset1v1run1, dataset1v1run2).map(_.toSummary)
       assert(actual == expected)
     }
 

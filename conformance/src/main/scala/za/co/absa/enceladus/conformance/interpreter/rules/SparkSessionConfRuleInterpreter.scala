@@ -19,7 +19,7 @@ import za.co.absa.enceladus.model.conformanceRule.SparkSessionConfConformanceRul
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
 import za.co.absa.enceladus.conformance.interpreter.RuleValidators
@@ -28,7 +28,7 @@ case class SparkSessionConfRuleInterpreter(rule: SparkSessionConfConformanceRule
 
   final val ruleName = "Spark Session Config rule"
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateOutputField(ruleName, progArgs.datasetName, df.schema, rule.outputColumn)
 

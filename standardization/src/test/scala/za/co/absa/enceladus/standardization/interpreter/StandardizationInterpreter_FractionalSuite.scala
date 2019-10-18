@@ -34,9 +34,9 @@ class StandardizationInterpreter_FractionalSuite extends FunSuite with SparkTest
   private val desiredSchemaWithInfinity = StructType(Seq(
     StructField("description", StringType, nullable = false),
     StructField("floatField", FloatType, nullable = false,
-      new MetadataBuilder().putBoolean("allowinfinity", value =true).build),
+      new MetadataBuilder().putString("allowinfinity", value = "true").build),
     StructField("doubleField", DoubleType, nullable = true,
-      new MetadataBuilder().putBoolean("allowinfinity", value = true).build)
+      new MetadataBuilder().putString("allowinfinity", value = "true").build)
   ))
 
   test("From String") {

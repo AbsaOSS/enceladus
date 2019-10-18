@@ -24,8 +24,8 @@ object StructFieldImplicits {
       Try(structField.metadata.getString(key)).toOption
     }
 
-    def getMetadataBoolean(key: String): Option[Boolean] = {
-      Try(structField.metadata.getBoolean(key)).toOption
+    def getMetadataStringAsBoolean(key: String): Option[Boolean] = {
+      Try(structField.metadata.getString(key).toBoolean).toOption
     }
 
     def hasMetadataKey(key: String): Boolean = {

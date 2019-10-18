@@ -23,7 +23,7 @@ import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
@@ -37,7 +37,7 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
 
   protected var standardizedDf: DataFrame = _
 
-  implicit protected val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
+  implicit protected val dao: MenasDAO = mock(classOf[MenasDAO])
   implicit protected val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
 
   protected val upperRule1 = UppercaseConformanceRule(order = 1, inputColumn = "strings.with_new_lines",

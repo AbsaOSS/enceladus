@@ -19,18 +19,18 @@ import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.slf4j.{Logger, LoggerFactory}
 import org.apache.spark.sql
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
-import za.co.absa.enceladus.dao.{EnceladusDAO, EnceladusRestDAO}
+import za.co.absa.enceladus.dao.{MenasDAO, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
@@ -49,17 +49,18 @@ object DynamicConformanceJob {
 
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
+  private val menasApiBaseUrl = conf.getString("menas.rest.uri")
+  private val menasUiBaseUrl = menasApiBaseUrl.replace("/api/", "/#/")
 
   def main(args: Array[String]) {
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-    implicit val dao: EnceladusDAO = EnceladusRestDAO // use REST DAO
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials, menasApiBaseUrl)
 
     val enableCF: Boolean = true
 
-    EnceladusRestDAO.login = cmd.menasCredentials
-    EnceladusRestDAO.enceladusLogin()
+    dao.authenticate()
 
     // get the dataset definition
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
@@ -67,7 +68,7 @@ object DynamicConformanceJob {
 
     val reportVersion = cmd.reportVersion match {
       case Some(version) => version
-      case None => inferVersion(conformance.hdfsPublishPath, cmd.reportDate)
+      case None          => inferVersion(conformance.hdfsPublishPath, cmd.reportDate)
     }
 
     val pathCfg = PathCfg(
@@ -88,9 +89,25 @@ object DynamicConformanceJob {
     // load data for input and mapping tables
     val inputData = DataSource.getData(pathCfg.stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
 
-    val result = conform(conformance, inputData, enableCF)
+    try {
+      val result = conform(conformance, inputData, enableCF)
 
-    processResult(result, performance, pathCfg, reportVersion, args.mkString(" "))
+      PerformanceMetricTools.addJobInfoToAtumMetadata("conform",
+        pathCfg.stdPath, pathCfg.publishPath, cmd.menasCredentials.username, args.mkString(" "))
+
+      processResult(result, performance, pathCfg, reportVersion, args.mkString(" "))
+
+      log.info("Conformance finished successfully")
+    } finally {
+      Atum.getControlMeasure.runUniqueId
+
+      MenasPlugin.runNumber.foreach { runNumber =>
+        val name = cmd.datasetName
+        val version = cmd.datasetVersion
+        log.info(s"Menas API Run URL: $menasApiBaseUrl/runs/$name/$version/$runNumber")
+        log.info(s"Menas UI Run URL: $menasUiBaseUrl/runs/$name/$version/$runNumber")
+      }
+    }
   }
 
   private def isExperimentalRuleEnabled()(implicit cmd: CmdConfig): Boolean = {
@@ -133,7 +150,7 @@ object DynamicConformanceJob {
                                     defaultValue: Boolean): Boolean = {
     val enabled = cmdParameterOpt match {
       case Some(b) => b
-      case None =>
+      case None    =>
         if (conf.hasPath(configKey)) {
           conf.getBoolean(configKey)
         } else {
@@ -162,14 +179,23 @@ object DynamicConformanceJob {
     newVersion
   }
 
-  private def initFunctionalExtensions()(implicit spark: SparkSession): Unit = {
-    import za.co.absa.spline.core.SparkLineageInitializer._ // Enable Spline
+  private def initFunctionalExtensions()(implicit spark: SparkSession, dao: MenasDAO, cmd: CmdConfig): Unit = {
+    // Enable Spline
+    import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
 
+    // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
     spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
-    Atum.setAllowUnpersistOldDatasets(true) // Enable control framework performance optimization for pipeline-like jobs
-    MenasPlugin.enableMenas() // Enable Menas
+
+    // Enable control framework performance optimization for pipeline-like jobs
+    Atum.setAllowUnpersistOldDatasets(true)
+
+    // Enable non-default persistence storage level if provided in the command line
+    cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
+
+    // Enable Menas plugin for Control Framework
+    MenasPlugin.enableMenas()
   }
 
   private def initPerformanceMeasurer(stdPath: String)
@@ -182,7 +208,7 @@ object DynamicConformanceJob {
   }
 
   private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean)
-                     (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils, dao: EnceladusDAO): DataFrame = {
+                     (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils, dao: MenasDAO): DataFrame = {
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled())
@@ -194,7 +220,7 @@ object DynamicConformanceJob {
       case e: ValidationException =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, e.techDetails)
         throw e
-      case NonFatal(e) =>
+      case NonFatal(e)            =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, sw.toString)
@@ -228,7 +254,7 @@ object DynamicConformanceJob {
     val publishDirSize = fsUtils.getDirectorySize(pathCfg.publishPath)
     performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "conform",
-      pathCfg.stdPath, pathCfg.publishPath, EnceladusRestDAO.userName, cmdLineArgs)
+      pathCfg.stdPath, pathCfg.publishPath, cmd.menasCredentials.username, cmdLineArgs)
 
     withPartCols.writeInfoFile(pathCfg.publishPath)
     cmd.performanceMetricsFile.foreach(fileName => {
@@ -247,7 +273,7 @@ object DynamicConformanceJob {
   private def handleEmptyOutputAfterConformance()(implicit spark: SparkSession): Unit = {
     import za.co.absa.atum.core.Constants._
 
-    val areCountMeasurementsAllZero = Atum.getControMeasure.checkpoints
+    val areCountMeasurementsAllZero = Atum.getControlMeasure.checkpoints
       .flatMap(checkpoint =>
         checkpoint.controls.filter(control =>
           control.controlName.equalsIgnoreCase(controlTypeRecordCount)))
@@ -269,9 +295,9 @@ object DynamicConformanceJob {
       ds: Dataset,
       reportVersion: Int): String = {
     (cmd.publishPathOverride, cmd.folderPrefix) match {
-      case (None, None) =>
+      case (None, None)                   =>
         s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
-      case (None, Some(folderPrefix)) =>
+      case (None, Some(folderPrefix))     =>
         s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
       case (Some(publishPathOverride), _) =>
         publishPathOverride

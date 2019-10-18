@@ -17,6 +17,12 @@ package za.co.absa.enceladus.menas.models
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 
+object Validation {
+
+  val NotSpecified = "not specified"
+
+}
+
 case class Validation (errors: Map[String, List[String]] = Map()) {
 
   @JsonIgnore

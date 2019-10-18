@@ -19,7 +19,7 @@ import za.co.absa.enceladus.model.conformanceRule.LiteralConformanceRule
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
 import za.co.absa.enceladus.conformance.interpreter.RuleValidators
@@ -27,7 +27,7 @@ import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 case class LiteralRuleInterpreter(rule: LiteralConformanceRule) extends RuleInterpreter {
   final val ruleName = "Literal rule"
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)
 

@@ -20,10 +20,10 @@ import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito
 import org.mongodb.scala.bson.BsonDocument
 import za.co.absa.enceladus.menas.exceptions.ValidationException
-import za.co.absa.enceladus.menas.factories.DatasetFactory
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.test.factories.DatasetFactory
 
 import scala.concurrent.Future
 

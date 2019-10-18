@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import za.co.absa.enceladus.model.menas.jackson.OptCharDeserializer
+import za.co.absa.enceladus.model.menas.jackson._
 
 package object dataFormats {
 
@@ -39,7 +39,8 @@ package object dataFormats {
     override def getArguments: Seq[String] = Seq("--row-tag", rowTag)
   }
 
-  case class CSVDataFormat(@JsonDeserialize(using = classOf[OptCharDeserializer]) csvDelimiter: Option[Char], csvHeader: Option[Boolean]) extends DataFormat {
+  case class CSVDataFormat(@JsonDeserialize(using = classOf[OptCharDeserializer]) csvDelimiter: Option[Char], 
+      @JsonDeserialize(using = classOf[NonNullOptBooleanDeserializer]) csvHeader: Option[Boolean]) extends DataFormat {
     val name: String = "csv"
     private val delimiter = csvDelimiter.map(d => Seq("--delimiter", d.toString)).getOrElse(Seq[String]())
     private val header = csvHeader.map(h => Seq("--header", h.toString)).getOrElse(Seq[String]())
@@ -51,7 +52,7 @@ package object dataFormats {
     override def getArguments: Seq[String] = Seq()
   }
 
-  case class FixedWidthDataFormat(trimValues: Option[Boolean]) extends DataFormat {
+  case class FixedWidthDataFormat(@JsonDeserialize(using = classOf[NonNullOptBooleanDeserializer]) trimValues: Option[Boolean]) extends DataFormat {
     val name: String = "fixed-width"
     private val trim = trimValues.map(t => Seq("--trimValues", t.toString)).getOrElse(Seq[String]())
     override def getArguments: Seq[String] = trim

@@ -20,7 +20,7 @@ import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.samples.{ConformedEmployee, EmployeeConformance, TradeConformance}
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import org.json4s._
@@ -48,7 +48,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     //configure conf value
     spark.sessionState.conf.setConfString("co.za.absa.enceladus.confTest", "hello :)")
 
-    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
+    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = Option(useExperimentalMappingRule))
     val enableCF = true
     val isCatalystWorkaroundEnabled = true
@@ -102,7 +102,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     import za.co.absa.atum.AtumImplicits._
     spark.enableControlMeasuresTracking("src/test/testData/_tradeData/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
 
-    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
+    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01", experimentalMappingRule = Option(useExperimentalMappingRule))
     val enableCF = true
     val isCatalystWorkaroundEnabled = true

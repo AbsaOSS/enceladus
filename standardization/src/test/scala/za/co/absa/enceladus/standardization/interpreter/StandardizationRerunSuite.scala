@@ -20,7 +20,9 @@ import java.nio.charset.StandardCharsets
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.{CmdConfig, StandardizationJob}
@@ -28,11 +30,12 @@ import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.validation.ValidationException
 
-class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture {
+class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
 
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
+  private implicit val dao: MenasDAO = mock[MenasDAO]
 
   private val tmpDirPrefix = "StdRerunTest"
   private val tmpFilePrefix = "test-input-"
@@ -59,8 +62,9 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
   private def getTestDataFrame(tmpFileName: String, schemaWithStringType: StructType): DataFrame = {
-    val args = ("--dataset-name SpecialColumns --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false --delimiter |").split(" ")
+    val args = ("--dataset-name SpecialColumns --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
+      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format csv --header false --delimiter |").split(" ")
 
     val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     StandardizationJob

@@ -21,7 +21,7 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.types.parsers._
 import za.co.absa.enceladus.utils.validation.ValidationIssue
-import za.co.absa.enceladus.utils.validation.field.{DateFieldValidator, DateTimeFieldValidator, FieldValidator, ScalarFieldValidator, TimestampFieldValidator}
+import za.co.absa.enceladus.utils.validation.field.{DateFieldValidator, DateTimeFieldValidator, FieldValidator, FractionalFieldValidator, ScalarFieldValidator, TimestampFieldValidator}
 
 import scala.util.{Failure, Success, Try}
 
@@ -196,7 +196,7 @@ object TypedStructField {
 
   final class FractionalTypeStructField private[TypedStructField] (structField: StructField) extends TypedStructField(structField) {
 
-    val allowInfinity: Boolean = getMetadataBoolean(MetadataKeys.allowInfinity).getOrElse(false)
+    val allowInfinity: Boolean = getMetadataStringAsBoolean(MetadataKeys.allowInfinity).getOrElse(false)
 
     val parser: FractionalParser = FractionalParser(allowInfinity)
 
@@ -210,7 +210,7 @@ object TypedStructField {
     }
 
     override def validate(): Seq[ValidationIssue] = {
-      ScalarFieldValidator.validate(this)
+      FractionalFieldValidator.validate(this)
     }
   }
 

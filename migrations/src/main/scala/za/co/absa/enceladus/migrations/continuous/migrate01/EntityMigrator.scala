@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.migrations.continuous.migrate01
 
 import org.mongodb.scala.MongoDatabase
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.migrations.framework.{MigrationUtils, ObjectIdTools}
 
 object EntityMigrator {
@@ -35,6 +36,8 @@ object EntityMigrator {
   */
 abstract class EntityMigrator(databaseOld: MongoDatabase,
                               databaseNew: MongoDatabase) {
+
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   protected val migrationUserName = "c_migration"
 
@@ -57,17 +60,23 @@ abstract class EntityMigrator(databaseOld: MongoDatabase,
   def migrate(): Unit = {
     val repoOld = new EntityRepository(dbOld, collectionOld)
     val repoNew = new EntityRepository(dbNew, collectionNew)
+    var count = 0
+    var migratedCount = 0
 
-    val entitiesOld = repoOld.getSortedDocuments
+    log.info(s"Started migration from $collectionOld to $collectionNew...")
 
-    entitiesOld.foreach(entityOld => {
+    repoOld.sortedDocumentsForEach(entityOld => {
       val objectId = ObjectIdTools.getObjectIdFromDocument(entityOld)
       objectId.foreach(id => {
+        count += 1
         if (!repoNew.doesDocumentExist(id)) {
+          migratedCount += 1
           migrateEntity(entityOld, id, repoNew)
         }
       })
     })
+
+    log.info(s"Imported $migratedCount new documents (from $count in the old database) from $collectionOld to $collectionNew.")
   }
 
 }

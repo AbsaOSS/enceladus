@@ -19,7 +19,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.CmdConfig
 import org.apache.spark.sql.Column
 
@@ -28,7 +28,7 @@ import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 
 trait RuleInterpreter {
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row]
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row]
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
 
