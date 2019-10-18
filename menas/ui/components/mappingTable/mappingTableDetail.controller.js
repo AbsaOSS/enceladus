@@ -20,8 +20,9 @@ sap.ui.define([
   "sap/m/MessageItem",
   "sap/m/MessageBox",
   "sap/m/MessagePopover",
-  "components/AuditTrail"
-], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, MessagePopover, AuditTrail) {
+  "components/AuditTrail",
+  "components/tables/TableUtils"
+], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, MessagePopover, AuditTrail, TableUtils) {
   "use strict";
 
   return Controller.extend("components.mappingTable.mappingTableDetail", {
@@ -49,7 +50,11 @@ sap.ui.define([
         controller: this
       }).then(function (oDialog) {
         oView.addDependent(oDialog);
-      });
+        const selectorId = this.createId("schemaFieldSelector");
+        const schemaSelector = sap.ui.getCore().byId(selectorId);
+        const schemaFieldTableUtils = new TableUtils(this.schemaSelector, "Audit Trail");
+        schemaFieldTableUtils.makeSearchable(["name"]);
+      }.bind(this));
 
       this._addDefaultDialog = this.byId("addDefaultValueDialog");
       this.byId("newDefaultValueAddButton").attachPress(this.defaultSubmit, this);
