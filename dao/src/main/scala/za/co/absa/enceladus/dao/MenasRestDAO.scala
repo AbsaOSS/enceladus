@@ -32,23 +32,23 @@ protected class MenasRestDAO(private[dao] val apiBaseUrl: String,
   }
 
   def getDataset(name: String, version: Int): Dataset = {
-    val url = s"$apiBaseUrl/dataset/detail/${encode(name)}/$version"
+    val url = s"$apiBaseUrl/dataset/detail/$name/$version"
     restClient.sendGet[Dataset](url)
   }
 
   def getMappingTable(name: String, version: Int): MappingTable = {
-    val url = s"$apiBaseUrl/mappingTable/detail/${encode(name)}/$version"
+    val url = s"$apiBaseUrl/mappingTable/detail/$name/$version"
     restClient.sendGet[MappingTable](url)
   }
 
   def getSchema(name: String, version: Int): StructType = {
-    val url = s"$apiBaseUrl/schema/json/${encode(name)}/$version"
+    val url = s"$apiBaseUrl/schema/json/$name/$version"
     val json = restClient.sendGet[String](url)
     DataType.fromJson(json).asInstanceOf[StructType]
   }
 
   def getSchemaAttachment(name: String, version: Int): String = {
-    val url = s"$apiBaseUrl/schema/export/${encode(name)}/$version"
+    val url = s"$apiBaseUrl/schema/export/$name/$version"
     restClient.sendGet[String](url)
   }
 
@@ -82,14 +82,6 @@ protected class MenasRestDAO(private[dao] val apiBaseUrl: String,
     val url = s"$runsUrl/addCheckpoint/$uniqueId"
 
     restClient.sendPost[Checkpoint, Run](url, checkpoint)
-  }
-
-  /* The URLEncoder implements the HTML Specifications
-   * so have to replace '+' with %20
-   * https://stackoverflow.com/questions/4737841/urlencoder-not-able-to-translate-space-character
-   */
-  private def encode(string: String): String = {
-    java.net.URLEncoder.encode(string, "UTF-8").replace("+", "%20")
   }
 
 }
