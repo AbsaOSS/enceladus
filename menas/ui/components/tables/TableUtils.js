@@ -197,8 +197,16 @@ sap.ui.define(["sap/m/ListBase",
     this._addToolbar();
     if(!this._oControl._menasSearchable) {
       this._addSearch(aSearchKeys);
+      const eventBus = sap.ui.getCore().getEventBus();
+      eventBus.subscribe("TableUtils", "clearAllSearch", this._clearSearch, this);
     }
     this._oControl._menasSearchable = true;
+  };
+
+  TableUtils.prototype._clearSearch = function() {
+    if(this._oSearchBar) {
+      this._oSearchBar.setValue(null);
+    }
   };
 
   return TableUtils;

@@ -43,7 +43,7 @@ class ConformanceRuleFormFragmentFactory {
     const schemaSelector = sap.ui.getCore().byId(selectorId);
     if(schemaSelector) {
       const schemaFieldTableUtils = new components.tables.TableUtils(schemaSelector, "");
-      schemaFieldTableUtils.makeSearchable(["name"]);
+      schemaFieldTableUtils.makeSearchable(["name", "absolutePath"]);
     } else {
       console.log(`No schema field selector matching ${selectorId}, skipping search initialization.`);
     }
