@@ -13,25 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.repositories
+package za.co.absa.enceladus.menas.integration.fixtures
 
 import org.mongodb.scala.MongoDatabase
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Repository
-import za.co.absa.enceladus.model
-import za.co.absa.enceladus.model.Schema
+import org.springframework.stereotype.Component
+import za.co.absa.enceladus.menas.repositories.MappingTableMongoRepository
+import za.co.absa.enceladus.model.MappingTable
 
-import scala.reflect.ClassTag
-
-object SchemaMongoRepository {
-  val collectionBaseName: String = "schema"
-  val collectionName: String = s"$collectionBaseName${model.CollectionSuffix}"
-}
-
-@Repository
-class SchemaMongoRepository @Autowired()(mongoDb: MongoDatabase)
-  extends VersionedMongoRepository[Schema](mongoDb)(ClassTag(classOf[Schema])) {
-
-  override private[menas] def collectionBaseName: String = SchemaMongoRepository.collectionBaseName
-
-}
+@Component
+class MappingTableFixtureService @Autowired()(mongoDb: MongoDatabase)
+  extends FixtureService[MappingTable](mongoDb, MappingTableMongoRepository.collectionName)

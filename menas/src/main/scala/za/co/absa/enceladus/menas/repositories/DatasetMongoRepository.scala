@@ -32,7 +32,7 @@ import scala.concurrent.Future
 
 object DatasetMongoRepository {
   val collectionBaseName: String = "dataset"
-  val collectionName: String = collectionBaseName + model.CollectionSuffix
+  val collectionName: String = s"$collectionBaseName${model.CollectionSuffix}"
 }
 
 @Repository

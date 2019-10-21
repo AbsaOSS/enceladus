@@ -36,8 +36,8 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 object RunMongoRepository {
-  val collectionBaseName = "run"
-  val collectionName = collectionBaseName + model.CollectionSuffix
+  val collectionBaseName: String = "run"
+  val collectionName: String = s"$collectionBaseName${model.CollectionSuffix}"
 }
 
 @Repository
