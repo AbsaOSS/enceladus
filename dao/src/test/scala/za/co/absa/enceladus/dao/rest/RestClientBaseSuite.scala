@@ -107,7 +107,7 @@ abstract class RestClientBaseSuite extends BaseTestSuite {
   private def stubPostRequest[T](url: String,
                                  headers: HttpHeaders,
                                  requestBody: T): OngoingStubbing[ResponseEntity[String]] = {
-    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+    headers.add(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
     val request = new HttpEntity[T](requestBody, headers)
     stubRequest(url, request, HttpMethod.POST)
   }

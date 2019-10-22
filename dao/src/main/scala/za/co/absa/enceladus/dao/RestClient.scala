@@ -42,7 +42,7 @@ protected class RestClient(authClient: AuthClient,
                      requestBody: B)
                     (implicit ct: ClassTag[T]): T = {
     val headers = new HttpHeaders()
-    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+    headers.add(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
     send[B, T](HttpMethod.POST, urlPath, headers, Option(requestBody))
   }
 
