@@ -24,7 +24,7 @@
     <parent>
         <groupId>za.co.absa</groupId>
         <artifactId>enceladus-parent</artifactId>
-        <version>1.3.0</version>
+        <version>1.3.1</version>
     </parent>
 
     <properties>
