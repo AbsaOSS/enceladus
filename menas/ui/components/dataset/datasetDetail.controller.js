@@ -36,6 +36,7 @@ sap.ui.define([
      */
     onInit: function () {
       this._model = sap.ui.getCore().getModel();
+      this._oEventBus = sap.ui.getCore().getEventBus();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
       this._router.getRoute("datasets").attachMatched(function (oEvent) {
         let args = oEvent.getParameter("arguments");
@@ -70,13 +71,12 @@ sap.ui.define([
 
       new DatasetDialogFactory(this, Fragment.load).getEdit();
 
-      const eventBus = sap.ui.getCore().getEventBus();
-      eventBus.subscribe("datasets", "updated", this.onEntityUpdated, this);
-      eventBus.subscribe("datasets", "updateFailed", this.onEntityUpdateFailed, this);
+      this._oEventBus.subscribe("datasets", "updated", this.onEntityUpdated, this);
+      this._oEventBus.subscribe("datasets", "updateFailed", this.onEntityUpdateFailed, this);
 
-      this._datasetService = new DatasetService(this._model, eventBus);
-      this._mappingTableService = new MappingTableService(this._model, eventBus);
-      this._schemaService = new SchemaService(this._model, eventBus)
+      this._datasetService = new DatasetService(this._model, this._oEventBus);
+      this._mappingTableService = new MappingTableService(this._model, this._oEventBus);
+      this._schemaService = new SchemaService(this._model, this._oEventBus)
       this._schemaTable = new SchemaTable(this)
 
       this._validator = new Validator();
@@ -340,6 +340,7 @@ sap.ui.define([
       } else {
         this._datasetService.getByNameAndVersion(oParams.id, oParams.version).then(() => this.load())
       }
+      this._oEventBus.publish("TableUtils", "clearAllSearch");
       this.byId("datasetIconTabBar").setSelectedKey("info");
     },
 

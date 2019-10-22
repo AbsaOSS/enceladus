@@ -25,6 +25,23 @@ class JoinConditionDialogFactory {
       controller: oController
     }).then(function (oDialog) {
       oView.addDependent(oDialog);
+      
+      jQuery.sap.require("components.tables.TableUtils");
+
+      const dsSchemaSelector = oController.byId("datasetSchemaFieldSelector");
+      const mtSchemaSelector = oController.byId("mappingTableSchemaFieldSelector");
+      if(dsSchemaSelector) {
+        const schemaFieldTableUtils = new components.tables.TableUtils(dsSchemaSelector, "");
+        schemaFieldTableUtils.makeSearchable(["name", "absolutePath"]);
+      } else {
+        console.log(`No schema field selector matching datasetSchemaFieldSelector, skipping search initialization.`);
+      }
+      if(mtSchemaSelector) {
+        const schemaFieldTableUtils = new components.tables.TableUtils(mtSchemaSelector, "");
+        schemaFieldTableUtils.makeSearchable(["name", "absolutePath"]);
+      } else {
+        console.log(`No schema field selector matching mappingTableSchemaFieldSelector, skipping search initialization.`);
+      }
     });
 
     this._oDialog = oController.byId("joinConditionDialog");

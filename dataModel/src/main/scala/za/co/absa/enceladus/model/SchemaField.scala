@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.model
 
+import org.codehaus.jackson.annotate.JsonProperty
+
 case class SchemaField
 (
   name: String,
@@ -28,4 +30,9 @@ case class SchemaField
   nullable: Boolean,
   metadata: Map[String, String],
   children: Seq[SchemaField]
-)
+) {
+  @JsonProperty("absolutePath")
+  def getAbsolutePath(): String = {
+    if(path.isEmpty) name else s"${path}.${name}"
+  }
+}
