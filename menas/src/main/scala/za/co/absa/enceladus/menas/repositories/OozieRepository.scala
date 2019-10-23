@@ -325,12 +325,12 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     //Here libpath takes precedence over sharelib
     val shareLibConfig = if(oozieLibPath.nonEmpty) "" else
       s"""
-         |<configuration>
+         |<parameters>
          |  <property>
          |    <name>oozie.action.sharelib.for.spark</name>
          |    <value>$oozieShareLib</value>
          |  </property>
-         |</configuration>
+         |</parameters>
       """.stripMargin
     import scala.collection.JavaConversions._
     val extraSparkConfString = sparkExtraConfigs.map({case (k, v) => s"--conf $sparkConfQuotes$k=$v$sparkConfQuotes"}).mkString("\n")

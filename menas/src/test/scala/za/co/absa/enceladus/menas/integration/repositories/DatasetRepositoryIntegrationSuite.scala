@@ -25,6 +25,8 @@ import za.co.absa.enceladus.menas.factories.DatasetFactory
 import za.co.absa.enceladus.menas.integration.fixtures.{DatasetFixtureService, FixtureService}
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
+import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
+import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -574,6 +576,33 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset4 = DatasetFactory.getDummyDataset(name = "dataset3", version = 1)
         datasetFixture.add(dataset4)
         assert(await(datasetMongoRepository.distinctCount) == 2)
+      }
+    }
+  }
+
+  "DatasetMongoRepository::findByCoordId" should {
+    "return empty seq" when {
+      "there are no datasets" in {
+        assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")) == Seq())
+      }
+      "there are no datasets matching the coordinator ID" in {
+        datasetFixture.add(DatasetFactory.getDummyDataset())
+        assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")) == Seq())
+      }
+    }
+    "return datasets witch matching coordinator ID" when {
+      "such datasets exist" in {
+        val schedule = OozieSchedule(scheduleTiming = null, runtimeParams = null, datasetVersion = 0,
+            mappingTablePattern = None, rawFormat = null, activeInstance = Some(OozieScheduleInstance("/abc", "/def", "SomeCoordId")))
+        val ds = DatasetFactory.getDummyDataset().copy(schedule = Some(schedule))
+
+        assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")).size == 0)
+
+        datasetFixture.add(ds)
+        assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")).size == 1)
+
+        datasetFixture.add(ds)
+        assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")).size == 2)
       }
     }
   }

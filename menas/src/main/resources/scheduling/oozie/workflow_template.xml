@@ -14,6 +14,7 @@
   -->
   
 <workflow-app name="$stdAppName" xmlns="uri:oozie:workflow:0.5">
+    $sharelibForSpark
     <start to="standardization" />
     <kill name="Kill">
         <message>Action failed</message>
@@ -22,7 +23,6 @@
         <spark xmlns="uri:oozie:spark-action:0.2">
             <job-tracker>$jobTracker</job-tracker>
             <name-node>$nameNode</name-node>
-            $sharelibForSpark
             <master>yarn</master>
             <mode>cluster</mode>
             <name>$stdAppName</name>
@@ -53,7 +53,6 @@
         <spark xmlns="uri:oozie:spark-action:0.2">
             <job-tracker>$jobTracker</job-tracker>
             <name-node>$nameNode</name-node>
-            $sharelibForSpark
             <master>yarn</master>
             <mode>cluster</mode>
             <name>$confAppName</name>
@@ -64,18 +63,7 @@
                 --executor-memory $confExecutorMemory 
                 --driver-cores $driverCores
                 --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties' -Dconformance.mappingtable.pattern='$mappingTablePattern'$sparkConfQuotes
-                --conf $sparkConfQuotesspark.eventLog.dir=hdfs:///spark2-history/$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.fs.logDirectory=hdfs:///spark2-history/$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.kerberos.enabled=true$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.kerberos.keytab=/etc/security/keytabs/spark.headless.keytab$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.kerberos.principal=spark-jedi@CORP.DSARENA.COM$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.provider=org.apache.spark.deploy.history.FsHistoryProvider$sparkConfQuotes
-                --conf $sparkConfQuotesspark.port.maxRetries=128$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.ui.port=18081$sparkConfQuotes
-                --conf $sparkConfQuotesspark.yarn.historyServer.address=jhbdsr020000016.corp.dsarena.com:18081$sparkConfQuotes
-                --conf $sparkConfQuotesspark.yarn.driver.memoryOverhead=684$sparkConfQuotes
-                --conf $sparkConfQuotesspark.yarn.executor.memoryOverhead=684$sparkConfQuotes
-                --conf $sparkConfQuotesspark.yarn.am.memoryOverhead=684$sparkConfQuotes
+                $extraSparkConfString
             </spark-opts>
             <arg>-D</arg>
             <arg>$datasetName</arg>

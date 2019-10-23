@@ -205,7 +205,7 @@ object ArrayTransformations {
         val udfName = colName.replace('.', '_') + System.currentTimeMillis()
 
         spark.udf.register(udfName, new UDF1[Seq[Seq[Row]], Seq[Row]] {
-          def call(t1: Seq[Seq[Row]]): Seq[Row] = if (t1 == null) null.asInstanceOf[Seq[Row]] else t1.filter(_ != null).flatten
+          def call(t1: Seq[Seq[Row]]): Seq[Row] = if (t1 == null) null.asInstanceOf[Seq[Row]] else t1.filter(_ != null).flatten // scalastyle:ignore null
         }, arrType.elementType)
 
         nestedWithColumn(df)(colName, callUDF(udfName, col(colName)))

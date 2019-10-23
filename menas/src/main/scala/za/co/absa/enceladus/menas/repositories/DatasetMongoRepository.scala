@@ -102,9 +102,11 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .toFuture()
   }
 
+  /** Find dataset by coordinatorId
+   *  @param coordId Coordinator ID
+   */
   def findByCoordId(coordId: String): Future[Seq[Dataset]] = {
     val filter = Filters.eq("schedule.activeInstance.coordinatorId", coordId)
-
     collection
       .find[Dataset](filter)
       .toFuture()

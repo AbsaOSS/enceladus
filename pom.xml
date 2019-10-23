@@ -102,11 +102,6 @@
             <name>OpenUI5-Absa</name>
             <url>https://dl.bintray.com/absa/openui5</url>
         </repository>
-        <repository>
-            <id>thirdparty-absa</id>
-            <name>Thirdparty-Absa</name>
-            <url>https://dl.bintray.com/absa/thirdparty</url>
-        </repository>
     </repositories>
 
     <modules>
