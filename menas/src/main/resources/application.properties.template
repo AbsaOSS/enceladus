@@ -86,8 +86,8 @@ za.co.absa.enceladus.menas.monitoring.fetch.limit=500
 #This ensures that schedules are run with correct version of spark without updating oozie sharelibs globally
 za.co.absa.enceladus.menas.oozie.sharelibForSpark=spark-menas
 
-#This parameter configures the HDFS root folder for menas specific sharelibs
-#za.co.absa.enceladus.menas.oozie.libpath=/user/oozie/share/lib
+#This parameter disables sharelibForSpark. It's the absolute path to a location containing all relevant spark sharelibs
+#za.co.absa.enceladus.menas.oozie.libpath=/some/path/libpath
 
 #Enceladus jars are going to be loaded into this location
 za.co.absa.enceladus.menas.oozie.enceladusJarLocation=hdfs:///tmp/enceladus-jars
@@ -112,3 +112,7 @@ za.co.absa.enceladus.menas.oozie.splineMongoURL=mongodb://localhost:27017
 #Configure the following two parameters to use oozie impersonation
 #za.co.absa.enceladus.menas.oozie.proxyUser=oozieProxyUser
 #za.co.absa.enceladus.menas.oozie.proxyUserKeytab=/path/to/keytab
+
+#Provide optional spark config options to be passed onto standardization and conformance jobs
+#za.co.absa.enceladus.menas.oozie.extraSparkConfigs={"spark.eventLog.dir" : "hdfs:///spark2-history/", \
+"spark.history.fs.logDirectory": "hdfs:///spark2-history" }

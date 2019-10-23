@@ -21,9 +21,17 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.HashMap
+import java.util.{ Map => JavaMap }
 import java.util.Properties
 import java.util.TimeZone
+import java.util.concurrent.Callable
+
 import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
@@ -35,34 +43,21 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Repository
+
+import OozieRepository.dateFormat
+import javax.security.auth.kerberos.KerberosPrincipal
+import javax.security.auth.kerberos.KeyTab
+import sun.security.krb5.{ Config => Krb5Config }
+import sun.security.krb5.KrbAsReqBuilder
+import sun.security.krb5.PrincipalName
+import sun.security.krb5.internal.KDCOptions
+import sun.security.krb5.internal.ccache.CredentialsCache
+import za.co.absa.enceladus.menas.exceptions.OozieActionException
 import za.co.absa.enceladus.menas.exceptions.OozieConfigurationException
 import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
-import za.co.absa.enceladus.menas.exceptions.EntityAlreadyExistsException
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
-import OozieRepository._
-import scala.util.{Try, Success, Failure}
-import za.co.absa.enceladus.menas.exceptions.OozieActionException
-import org.apache.hadoop.security.UserGroupInformation
-import java.security.PrivilegedExceptionAction
-import java.util.concurrent.Callable
-import javax.security.auth.kerberos.KeyTab
-import javax.security.auth.kerberos.KerberosPrincipal
-import javax.security.auth.Subject
-import org.ietf.jgss.GSSManager
-import org.ietf.jgss.GSSCredential
-import sun.security.jgss.GSSUtil
-import com.sun.security.auth.module.Krb5LoginModule
-import javax.security.auth.callback.CallbackHandler
-import javax.security.auth.callback.Callback
-import javax.security.auth.callback.NameCallback
-import javax.security.auth.callback.PasswordCallback
-import sun.security.krb5.PrincipalName
-import sun.security.krb5.KrbAsReqBuilder
-import sun.security.krb5.internal.KDCOptions
-import sun.security.krb5.{Config => Krb5Config}
-import sun.security.krb5.internal.ccache.CredentialsCache
 
 object OozieRepository {
   private lazy val dateFormat = {
@@ -120,6 +115,9 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
 
   @Value("${za.co.absa.enceladus.menas.auth.kerberos.krb5conf:}")
   val krb5conf: String = ""
+
+  @Value("#{${za.co.absa.enceladus.menas.oozie.extraSparkConfigs}}")
+  val sparkExtraConfigs: JavaMap[String, String] = new HashMap[String, String]()
 
   private val classLoader = Thread.currentThread().getContextClassLoader
   private val workflowTemplate = getTemplateFile("scheduling/oozie/workflow_template.xml")
@@ -220,6 +218,9 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
 
   /**
    * This is a helper function for impersonating oozie calls using the proper proxy user if configured
+   * 
+   * @param user User to impersonate
+   * @fn Oozie action to perform - Important to note that this should be Oozie action only (only wrap the call to oozieclient)
    */
   private def impersonateWrapper[T](user: String)(fn: () => T) = {
     if (oozieProxyUser.isEmpty || oozieProxyUserKeytab.isEmpty) {
@@ -231,42 +232,33 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       logger.info(s"impersonateWrapper Going to log in as $oozieProxyUser")
 
       val principal = new PrincipalName(oozieProxyUser, PrincipalName.KRB_NT_PRINCIPAL)
-      val cache = if (CredentialsCache.getInstance(principal) != null) {
-        logger.info(s"impersonateWrapper Credential cache exists")
-        CredentialsCache.getInstance(principal)
-      } else {
-        logger.info(s"impersonateWrapper Credential cache does not exist, creating.")
-        CredentialsCache.create(principal)
-      }
 
-      if (cache.getDefaultCreds == null || !cache.getDefaultCreds.isValid) {
-        logger.info(s"impersonateWrapper Did not find cached credentials for ${oozieProxyUser}, logging in")
-        logger.info(s"impersonateWrapper Reading keytab file ${oozieProxyUserKeytab}")
-        val kt = KeyTab.getInstance(new KerberosPrincipal(oozieProxyUser), new java.io.File(oozieProxyUserKeytab))
-        val builder = new KrbAsReqBuilder(principal, kt);
-        val opt = new KDCOptions();
-        opt.set(KDCOptions.RENEWABLE, true)
-        builder.setOptions(opt)
+      logger.info(s"impersonateWrapper Creating credentials cache.")
+      val cache = CredentialsCache.create(principal)
 
-        val realm = Krb5Config.getInstance.getDefaultRealm
-        logger.info(s"impersonateWrapper Using realm ${realm}")
+      logger.info(s"impersonateWrapper Reading keytab file ${oozieProxyUserKeytab}")
+      val kt = KeyTab.getInstance(new KerberosPrincipal(oozieProxyUser), new java.io.File(oozieProxyUserKeytab))
+      val builder = new KrbAsReqBuilder(principal, kt);
+      val opt = new KDCOptions();
+      opt.set(KDCOptions.RENEWABLE, true)
+      builder.setOptions(opt)
 
-        val sname = PrincipalName.tgsService(realm, realm)
-        logger.info(s"impersonateWrapper Target ${sname}")
-        builder.setTarget(sname)
+      val realm = Krb5Config.getInstance.getDefaultRealm
+      logger.info(s"impersonateWrapper Using realm ${realm}")
 
-        logger.info(s"impersonateWrapper Logging in")
-        builder.action()
+      val sname = PrincipalName.tgsService(realm, realm)
+      logger.info(s"impersonateWrapper Target ${sname}")
+      builder.setTarget(sname)
 
-        val creds = builder.getCCreds
-        builder.destroy()
+      logger.info(s"impersonateWrapper Logging in")
+      builder.action()
 
-        logger.info(s"impersonateWrapper Updating ticket cache ${cache.toString()}")
-        cache.update(creds)
-        cache.save()
-      } else {
-        logger.info(s"impersonateWrapper Credential cache contains valid credentials for ${oozieProxyUser}, skipping authentication")
-      }
+      val creds = builder.getCCreds
+      builder.destroy()
+
+      logger.info(s"impersonateWrapper Updating ticket cache ${cache.toString()}")
+      cache.update(creds)
+      cache.save()
 
       OozieClient.doAs(user, new Callable[T] {
         override def call(): T = {
@@ -302,34 +294,46 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Get status of submitted coordinator
    */
   def getCoordinatorStatus(coordId: String, runtimeParams: RuntimeConfig): Future[OozieCoordinatorStatus] = {
-    impersonateWrapper(runtimeParams.sysUser) { () =>
-      getOozieClientWrap({ oozieClient =>
-        val jobInfo = oozieClient.getCoordJobInfo(coordId)
-        val nextMaterializeTime = if (jobInfo.getNextMaterializedTime == null) {
-          ""
-        } else {
-          dateFormat.format(jobInfo.getNextMaterializedTime)
-        }
-        OozieCoordinatorStatus(jobInfo.getStatus, nextMaterializeTime)
-      })
-    }
+    getOozieClientWrap({ oozieClient =>
+      val jobInfo = impersonateWrapper(runtimeParams.sysUser) { () =>
+        oozieClient.getCoordJobInfo(coordId)
+      }
+      val nextMaterializeTime = if (jobInfo.getNextMaterializedTime == null) {
+        ""
+      } else {
+        dateFormat.format(jobInfo.getNextMaterializedTime)
+      }
+      OozieCoordinatorStatus(jobInfo.getStatus, nextMaterializeTime)
+    })
   }
 
   /**
    * Kill a running coordinator
    */
   def killCoordinator(coordId: String, runtimeParams: RuntimeConfig): Future[Unit] = {
-    impersonateWrapper(runtimeParams.sysUser) { () =>
-      getOozieClientWrap({ oozieClient =>
+    getOozieClientWrap({ oozieClient =>
+      impersonateWrapper(runtimeParams.sysUser) { () =>
         oozieClient.kill(coordId)
-      })
-    }
+      }
+    })
   }
 
   /**
    * Get workflow from teplate - this fills in all variables and returns representation of the workflow
    */
   private def getWorkflowFromTemplate(ds: Dataset): Array[Byte] = {
+    //Here libpath takes precedence over sharelib
+    val shareLibConfig = if(oozieLibPath.nonEmpty) "" else
+      s"""
+         |<configuration>
+         |  <property>
+         |    <name>oozie.action.sharelib.for.spark</name>
+         |    <value>$oozieShareLib</value>
+         |  </property>
+         |</configuration>
+      """.stripMargin
+    import scala.collection.JavaConversions._
+    val extraSparkConfString = sparkExtraConfigs.map({case (k, v) => s"--conf $sparkConfQuotes$k=$v$sparkConfQuotes"}).mkString("\n")
     val schedule = ds.schedule.get
     val runtimeParams = schedule.runtimeParams
     workflowTemplate.replaceAllLiterally("$stdAppName", s"Menas Schedule Standardization ${ds.name} (${ds.version})")
@@ -342,7 +346,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       .replaceAllLiterally("$dataFormat", schedule.rawFormat.name)
       .replaceAllLiterally("$otherDFArguments", schedule.rawFormat.getArguments.map(arg => s"<arg>$arg</arg>").mkString("\n"))
       .replaceAllLiterally("$jobTracker", resourceManager)
-      .replaceAllLiterally("$sharelibForSpark", oozieShareLib)
+      .replaceAllLiterally("$sharelibForSpark", shareLibConfig)
       .replaceAllLiterally("$nameNode", namenode)
       .replaceAllLiterally("$menasRestURI", menasApiURL)
       .replaceAllLiterally("$splineMongoURL", splineMongoURL)
@@ -353,6 +357,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       .replaceAllLiterally("$driverCores", s"${runtimeParams.driverCores}")
       .replaceAllLiterally("$menasKeytabFile", s"${getCredsOrKeytabArgument(runtimeParams.menasKeytabFile, namenode)}")
       .replaceAllLiterally("$sparkConfQuotes", sparkConfQuotes)
+      .replaceAllLiterally("$extraSparkConfString", extraSparkConfString)
       .getBytes("UTF-8")
   }
 
@@ -423,17 +428,17 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Run a workflow now
    */
   def runWorkflow(wfPath: String, runtimeParams: RuntimeConfig, reportDate: String): Future[String] = {
-    impersonateWrapper(runtimeParams.sysUser) { () =>
-      getOozieClient { oozieClient =>
-        val conf = getOozieConf(oozieClient, runtimeParams)
-        conf.setProperty(OozieClient.APP_PATH, wfPath)
-        conf.setProperty("reportDate", reportDate)
-        Try {
+    getOozieClient { oozieClient =>
+      val conf = getOozieConf(oozieClient, runtimeParams)
+      conf.setProperty(OozieClient.APP_PATH, wfPath)
+      conf.setProperty("reportDate", reportDate)
+      Try {
+        impersonateWrapper(runtimeParams.sysUser) { () =>
           oozieClient.run(conf)
-        } match {
-          case Success(x) => Future.successful(x)
-          case Failure(e) => Future.failed(OozieActionException(e.getMessage, e.getCause))
         }
+      } match {
+        case Success(x) => Future.successful(x)
+        case Failure(e) => Future.failed(OozieActionException(e.getMessage, e.getCause))
       }
     }
   }
@@ -442,8 +447,8 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Suspend a coordinator
    */
   def suspend(coordId: String, runtimeParams: RuntimeConfig): Future[Unit] = {
-    impersonateWrapper(runtimeParams.sysUser) { () =>
-      getOozieClientWrap { oozieClient =>
+    getOozieClientWrap { oozieClient =>
+      impersonateWrapper(runtimeParams.sysUser) { () =>
         oozieClient.suspend(coordId)
       }
     }
@@ -453,8 +458,8 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    * Resume a coordinator
    */
   def resume(coordId: String, runtimeParams: RuntimeConfig): Future[Unit] = {
-    impersonateWrapper(runtimeParams.sysUser) { () =>
-      getOozieClientWrap { oozieClient =>
+    getOozieClientWrap { oozieClient =>
+      impersonateWrapper(runtimeParams.sysUser) { () =>
         oozieClient.resume(coordId)
       }
     }

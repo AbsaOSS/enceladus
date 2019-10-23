@@ -22,12 +22,7 @@
         <spark xmlns="uri:oozie:spark-action:0.2">
             <job-tracker>$jobTracker</job-tracker>
             <name-node>$nameNode</name-node>
-<!--             <configuration> -->
-<!--                 <property> -->
-<!--                     <name>oozie.action.sharelib.for.spark</name> -->
-<!--                     <value>$sharelibForSpark</value> -->
-<!--                 </property> -->
-<!--             </configuration> -->
+            $sharelibForSpark
             <master>yarn</master>
             <mode>cluster</mode>
             <name>$stdAppName</name>
@@ -38,20 +33,7 @@
                 --executor-memory $stdExecutorMemory 
                 --driver-cores $driverCores
                 --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties'$sparkConfQuotes
-                --conf $sparkConfQuotesspark.eventLog.dir=hdfs:///spark2-history/$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.fs.logDirectory=hdfs:///spark2-history/$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.kerberos.enabled=true$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.kerberos.keytab=/etc/security/keytabs/spark.headless.keytab$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.kerberos.principal=spark-jedi@CORP.DSARENA.COM$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.provider=org.apache.spark.deploy.history.FsHistoryProvider$sparkConfQuotes
-                --conf $sparkConfQuotesspark.port.maxRetries=128$sparkConfQuotes
-                --conf $sparkConfQuotesspark.history.ui.port=18081$sparkConfQuotes
-                --conf $sparkConfQuotesspark.yarn.historyServer.address=jhbdsr020000016.corp.dsarena.com:18081$sparkConfQuotes
-                --conf $sparkConfQuotesspark.yarn.historyServer.address=jhbdsr020000016.corp.dsarena.com:18081$sparkConfQuotes
-                --conf $sparkConfQuotesspark.yarn.driver.memoryOverhead=684$sparkConfQuotes
-                --conf $sparkConfQuotesspark.yarn.executor.memoryOverhead=684$sparkConfQuotes
-                --conf $sparkConfQuotesspark.yarn.am.memoryOverhead=1024$sparkConfQuotes
-                --conf $sparkConfQuotesspark.yarn.jars=hdfs:///user/abjsa7l/lib/lib_20171211122240/spark-menas/*.jar$sparkConfQuotes
+                $extraSparkConfString
             </spark-opts>
             <arg>-D</arg>
             <arg>$datasetName</arg>
@@ -71,12 +53,7 @@
         <spark xmlns="uri:oozie:spark-action:0.2">
             <job-tracker>$jobTracker</job-tracker>
             <name-node>$nameNode</name-node>
-<!--             <configuration> -->
-<!--                 <property> -->
-<!--                     <name>oozie.action.sharelib.for.spark</name> -->
-<!--                     <value>$sharelibForSpark</value> -->
-<!--                 </property> -->
-<!--             </configuration> -->
+            $sharelibForSpark
             <master>yarn</master>
             <mode>cluster</mode>
             <name>$confAppName</name>
