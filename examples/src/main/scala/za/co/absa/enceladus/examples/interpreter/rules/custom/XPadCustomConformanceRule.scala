@@ -19,7 +19,7 @@ import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import ColumnFunctionCustomConformanceRule.RuleFunc
 import za.co.absa.enceladus.model.conformanceRule
@@ -35,7 +35,7 @@ object ColumnFunctionCustomConformanceRule {
 }
 
 case class StringFuncInterpreter(rule: ColumnFunctionCustomConformanceRule) extends RuleInterpreter {
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     handleArrays(rule.outputColumn, df) { flattened =>
       import spark.implicits._
       // we have to do this if this rule is to support arrays

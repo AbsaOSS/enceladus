@@ -15,21 +15,25 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import za.co.absa.enceladus.model.conformanceRule.DropConformanceRule
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.EnceladusDAO
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
+import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.model.conformanceRule.DropConformanceRule
+import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class DropRuleInterpreter(rule: DropConformanceRule) extends RuleInterpreter {
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
-    if (rule.outputColumn.contains('.')) {
-      conformNestedField(df)
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+    if (SchemaUtils.fieldExists(rule.outputColumn, df.schema)) {
+      if (rule.outputColumn.contains('.')) {
+        conformNestedField(df)
+      } else {
+        conformRootField(df)
+      }
     } else {
-      conformRootField(df)
+      log.warn(s"Could not drop ${rule.outputColumn}. Column is not present in the dataset")
+      df
     }
   }
 

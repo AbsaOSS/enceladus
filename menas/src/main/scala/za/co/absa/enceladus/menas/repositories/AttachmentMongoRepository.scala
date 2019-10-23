@@ -30,7 +30,7 @@ import scala.reflect.ClassTag
 
 object AttachmentMongoRepository {
   val collectionBaseName: String = "attachment"
-  val collectionName: String = collectionBaseName + model.CollectionSuffix
+  val collectionName: String = s"$collectionBaseName${model.CollectionSuffix}"
 }
 
 @Repository

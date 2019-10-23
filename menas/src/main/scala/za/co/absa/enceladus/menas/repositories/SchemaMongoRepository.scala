@@ -24,8 +24,8 @@ import za.co.absa.enceladus.model.Schema
 import scala.reflect.ClassTag
 
 object SchemaMongoRepository {
-  val collectionBaseName = "schema"
-  val collectionName = collectionBaseName + model.CollectionSuffix
+  val collectionBaseName: String = "schema"
+  val collectionName: String = s"$collectionBaseName${model.CollectionSuffix}"
 }
 
 @Repository

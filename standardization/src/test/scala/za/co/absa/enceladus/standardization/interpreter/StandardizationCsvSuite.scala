@@ -18,16 +18,20 @@ package za.co.absa.enceladus.standardization.interpreter
 import java.nio.charset.StandardCharsets
 
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType, BooleanType}
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.{CmdConfig, StandardizationJob}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture {
+class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
 
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+
+  private implicit val dao: MenasDAO = mock[MenasDAO]
 
   private val tmpFilePrefix = "csv-special-chars-"
   private val tmpFileSuffix = ".csv"
@@ -77,8 +81,9 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
     // The delimiter used is '¡'
     // A quote character should be any character that cannot be encountered in the CSV
     // For this case it is '$'
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false " +
+    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
+      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format csv --header false " +
       "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
 
     val expected =
@@ -103,8 +108,9 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
 
   test("Test standardizing a CSV file if a charset is not specified") { tmpFileName =>
     // When reading a different encoding invalid UTF-8 characters will be translated as unrecognized
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false ").split(" ")
+    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
+      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format csv --header false ").split(" ")
 
     val expected =
       """+--------------------------------+----+----+----+----+
@@ -128,8 +134,9 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
 
   test("Test standardizing a CSV file if a delimiter is not specified") { tmpFileName =>
     // This is a case where correct encoding is specified, but the delimiter is the default one.
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false " +
+    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
+      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format csv --header false " +
       "--charset ISO-8859-1").split(" ")
 
     val expected =
@@ -155,8 +162,9 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
   test("Test standardizing a CSV file if a quote character is not specified") { tmpFileName =>
     // This is a case where correct encoding and delimiter are specified.
     // But one field contains an opening double quote character without a closing one.
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false " +
+    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
+      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format csv --header false " +
       "--charset ISO-8859-1 --delimiter ¡").split(" ")
 
     val expected =
@@ -183,8 +191,9 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
     // The delimiter used is '¡'
     // A quote character should be any character that cannot be encountered in the CSV
     // For this case it is '$'
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 " +
-      "--report-version 1 --raw-format csv --header false " +
+    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
+      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format csv --header false " +
       "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
 
     val expected =

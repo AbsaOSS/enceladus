@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.CmdConfig
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
@@ -29,7 +29,7 @@ import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 case class ConcatenationRuleInterpreter(rule: ConcatenationConformanceRule) extends RuleInterpreter {
   final val ruleName = "Concatenation rule"
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumns :+ rule.outputColumn: _*)
 
@@ -61,7 +61,7 @@ case class ConcatenationRuleInterpreter(rule: ConcatenationConformanceRule) exte
 
   /*
   // This is the original implementation. Left it here since it supports concat of fields that have different levels of nesting
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     handleArrays(rule.outputColumn, df) { flattened =>
       ArrayTransformations.nestedWithColumn(flattened)(rule.outputColumn, concat(rule.inputColumns.map(col _): _*))
     }

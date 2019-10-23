@@ -34,25 +34,24 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
-    * Returns iterator to a sorted collection of documents. Documents are sorted by name and version.
+    * Traverses a sorted collection of Menas entities and executes a function on each document.
     *
     * @return An iterator to a JSON representation of the documents.
     */
-  def getSortedDocuments: Iterator[String] = {
+  def sortedDocumentsForEach(f: String => Unit): Unit = {
     db.getCollection(collectionName)
       .find()
       .sort(ascending("name", "version"))
-      .execute()
-      .toIterator
-      .map(_.toJson)
+      .syncForeach(document => f(document.toJson))
   }
 
   /**
-    * Returns iterator to a sorted collection of runs. Documents are sorted by datasetName, datasetVersion and runId.
+    * Traverses a sorted collection of runs and executes a function on each document.
     *
+    * @param f A transformer function for a run.
     * @return An iterator to a JSON representation of the documents.
     */
-  def getSortedRuns: Iterator[String] = {
+  def sortedRunsForEach(f: String => Unit): Unit = {
     db.getCollection(collectionName)
       .find(
         or(
@@ -61,9 +60,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
         )
       )
       .sort(ascending("dataset", "datasetVersion", "runId"))
-      .execute()
-      .toIterator
-      .map(_.toJson)
+      .syncForeach(document => f(document.toJson))
   }
 
   /**
@@ -159,7 +156,7 @@ final class EntityRepository(db: MongoDatabase, collectionName: String) {
     * @param document A JSON representation of a document.
     */
   def insertDocument(document: String): Unit = {
-    log.info(s"INSERT INTO $collectionName: $document")
+    log.debug(s"INSERT INTO $collectionName: $document")
     db.getCollection(collectionName)
       .insertOne(BsonDocument(document))
       .execute()

@@ -24,7 +24,9 @@ import scala.util.Try
 /**
   * Scalar types schema validation against default value
   */
-object ScalarFieldValidator extends FieldValidator {
+object ScalarFieldValidator extends ScalarFieldValidator
+
+class ScalarFieldValidator extends FieldValidator {
 
   private def validateDefaultValue(field: TypedStructField): Try[Any] = {
     field.defaultValueWithGlobal

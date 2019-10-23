@@ -23,6 +23,7 @@ MASTER="yarn"
 DEPLOY_MODE="client"
 NUM_EXECUTORS=""
 EXECUTOR_MEMORY="4G"
+EXECUTOR_CORES=""
 DRIVER_CORES="4"
 DRIVER_MEMORY="8G"
 
@@ -46,6 +47,11 @@ DEBUG_SET_RAW_PATH=""
 EXPERIMENTAL_MAPPING_RULE=""
 CATALYST_WORKAROUND=""
 AUTOCLEAN_STD_FOLDER=""
+PERSIST_STORAGE_LEVEL=""
+
+# Spark configuration options
+CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=""
+CONF_SPARK_MEMORY_FRACTION=""
 
 # Security command line defaults
 MENAS_CREDENTIALS_FILE=""
@@ -66,6 +72,10 @@ case $key in
     NUM_EXECUTORS="$2"
     shift 2 # past argument and value
     ;;
+    --executor-cores)
+    EXECUTOR_CORES="$2"
+    shift 2 # past argument and value
+    ;;
     --executor-memory)
     EXECUTOR_MEMORY="$2"
     shift 2 # past argument and value
@@ -84,6 +94,14 @@ case $key in
     ;;
     --driver-memory)
     DRIVER_MEMORY="$2"
+    shift 2 # past argument and value
+    ;;
+    --conf-spark-executor-memoryOverhead)
+    CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD="$2"
+    shift 2 # past argument and value
+    ;;
+    --conf-spark-memory-fraction)
+    CONF_SPARK_MEMORY_FRACTION="$2"
     shift 2 # past argument and value
     ;;
     --jar)
@@ -188,6 +206,10 @@ case $key in
     AUTOCLEAN_STD_FOLDER="$2"
     shift 2 # past argument and value
     ;;
+    --persist-storage-level)
+    PERSIST_STORAGE_LEVEL="$2"
+    shift 2 # past argument and value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -202,16 +224,25 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 # Validation
 VALID="1"
 validate() {
-    if [ -z "$1" ]; then
-        echo "Missing mandatory option $2"
+    if [[ -z "$2" ]]; then
+        echo "Missing mandatory option $1"
         VALID="0"
     fi
 }
 
-validate "$NUM_EXECUTORS" "--num-executors"
-validate "$DATASET_NAME" "--dataset-name"
-validate "$DATASET_VERSION" "--dataset-version"
-validate "$REPORT_DATE" "--report-date"
+validate_either() {
+    if [[ -z "$2" && -z "$4" ]]; then
+        echo "Either $1 or $3 should be specified"
+        VALID="0"
+    fi
+}
+
+validate "--num-executors" "$NUM_EXECUTORS"
+validate "--dataset-name" "$DATASET_NAME"
+validate "--dataset-version" "$DATASET_VERSION"
+validate "--report-date" "$REPORT_DATE"
+
+validate_either "--menas-credentials-file" "$MENAS_CREDENTIALS_FILE" "--menas-auth-keytab" "$MENAS_AUTH_KEYTAB"
 
 if [[ "$MASTER" != "yarn" ]]; then
   echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
@@ -224,10 +255,16 @@ if [ "$VALID" == "0" ]; then
 fi
 
 # Construct command line
-CMD_LINE=""
 add_to_cmd_line() {
-    if [ ! -z "$2" ]; then
+    if [[ ! -z "$2" ]]; then
         CMD_LINE="$CMD_LINE $1 $2"
+    fi
+}
+
+# Puts Spark configuration properties to the command line
+add_spark_conf_cmd() {
+    if [[ ! -z "$2" ]]; then
+        SPARK_CONF="$SPARK_CONF --conf $1=$2"
     fi
 }
 
@@ -243,7 +280,9 @@ if [ ! -z "$MAPPING_TABLE_PATTERN" ]; then
     MT_PATTERN="-Dconformance.mappingtable.pattern=$MAPPING_TABLE_PATTERN"
 fi
 
-CONF="spark.driver.extraJavaOptions=-Dmenas.rest.uri=$MENAS_URI -Dstandardized.hdfs.path=$STD_HDFS_PATH \
+SPARK_CONF="--conf spark.logConf=true"
+
+JVM_CONF="spark.driver.extraJavaOptions=-Dmenas.rest.uri=$MENAS_URI -Dstandardized.hdfs.path=$STD_HDFS_PATH \
 -Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=$HDP_VERSION \
 $MT_PATTERN"
 
@@ -254,11 +293,16 @@ add_to_cmd_line "--master" ${MASTER}
 add_to_cmd_line "--deploy-mode" ${DEPLOY_MODE}
 add_to_cmd_line "--num-executors" ${NUM_EXECUTORS}
 add_to_cmd_line "--executor-memory" ${EXECUTOR_MEMORY}
+add_to_cmd_line "--executor-cores" ${EXECUTOR_CORES}
 add_to_cmd_line "--driver-cores" ${DRIVER_CORES}
 add_to_cmd_line "--driver-memory" ${DRIVER_MEMORY}
 
+# Adding Spark config options
+add_spark_conf_cmd "spark.executor.memoryOverhead" ${CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD}
+add_spark_conf_cmd "spark.memory.fraction" ${CONF_SPARK_MEMORY_FRACTION}
+
 # Adding JVM configuration, entry point class name and the jar file
-CMD_LINE="$CMD_LINE --conf \"$CONF\" --class $CLASS $JAR"
+CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
 add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
@@ -281,6 +325,7 @@ add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
 add_to_cmd_line "--experimental-mapping-rule" ${EXPERIMENTAL_MAPPING_RULE}
 add_to_cmd_line "--catalyst-workaround" ${CATALYST_WORKAROUND}
 add_to_cmd_line "--autoclean-std-folder" ${AUTOCLEAN_STD_FOLDER}
+add_to_cmd_line "--persist-storage-level" ${PERSIST_STORAGE_LEVEL}
 
 echo "Command line:"
 echo "$CMD_LINE"
@@ -290,7 +335,6 @@ if [[ -z "$DRY_RUN" ]]; then
     DATE=`date +%Y_%m_%d-%H_%M_%S`
     NAME=`sed -e 's#.*\.\(\)#\1#' <<< $CLASS`
     TMP_PATH_NAME="$LOG_DIR/enceladus_${NAME}_${DATE}.log"
-
     # Initializing Kerberos ticket
     if [[ ! -z "$MENAS_AUTH_KEYTAB" ]]; then
       # Get principle stored in the keyfile (Thanks @Zejnilovic)
@@ -308,17 +352,23 @@ if [[ -z "$DRY_RUN" ]]; then
         sleep 10
       fi
     fi
-
     # Log the log location
     echo "$CMD_LINE" >> "$TMP_PATH_NAME"
     echo "The log will be saved to $TMP_PATH_NAME"
-
-    # Run the job
-    bash -c "$CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
-
-    # Report the log location
-    echo
-    echo "Job has finished. The logs are saved to $TMP_PATH_NAME"
+    # Run the job and return exit status of the last failed command in the subshell pipeline (Issue #893)
+    bash -c "set -o pipefail; $CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
+	# Save the exit status of spark submit subshell run
+	EXIT_STATUS="$?"
+	# Test if the command executed successfully
+	if [ $EXIT_STATUS -eq 0 ]; then
+      RESULT="passed"
+	else
+	  RESULT="failed"
+	fi
+	# Report the result and log location
+	echo ""
+	echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME" | tee -a "$TMP_PATH_NAME"
+	exit $EXIT_STATUS
   else
     bash -c "$CMD_LINE"
   fi

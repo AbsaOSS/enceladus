@@ -20,8 +20,9 @@ sap.ui.define([
   "sap/m/MessageItem",
   "sap/m/MessageBox",
   "sap/m/MessagePopover",
-  "components/AuditTrail"
-], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, MessagePopover, AuditTrail) {
+  "components/AuditTrail",
+  "components/tables/TableUtils"
+], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, MessagePopover, AuditTrail, TableUtils) {
   "use strict";
 
   return Controller.extend("components.mappingTable.mappingTableDetail", {
@@ -34,6 +35,7 @@ sap.ui.define([
      */
     onInit: function () {
       this._model = sap.ui.getCore().getModel();
+      this._oEventBus = sap.ui.getCore().getEventBus();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
       this._router.getRoute("mappingTables").attachMatched(function (oEvent) {
         let args = oEvent.getParameter("arguments");
@@ -49,7 +51,15 @@ sap.ui.define([
         controller: this
       }).then(function (oDialog) {
         oView.addDependent(oDialog);
-      });
+        const selectorId = this.createId("schemaFieldSelector");
+        const schemaSelector = sap.ui.getCore().byId(selectorId);
+        if(schemaSelector) {
+          const schemaFieldTableUtils = new TableUtils(schemaSelector, "");
+          schemaFieldTableUtils.makeSearchable(["name", "absolutePath"]);
+        } else {
+          console.log(`No schema field selector matching ${selectorId}, skipping search initialization.`);
+        }
+      }.bind(this));
 
       this._addDefaultDialog = this.byId("addDefaultValueDialog");
       this.byId("newDefaultValueAddButton").attachPress(this.defaultSubmit, this);
@@ -58,11 +68,10 @@ sap.ui.define([
 
       this._addDefaultDialog.setBusyIndicatorDelay(0);
 
-      const eventBus = sap.ui.getCore().getEventBus();
-      eventBus.subscribe("mappingTables", "updated", this.onEntityUpdated, this);
+      this._oEventBus.subscribe("mappingTables", "updated", this.onEntityUpdated, this);
 
-      this._mappingTableService = new MappingTableService(this._model, eventBus);
-      this._schemaService = new SchemaService(this._model, eventBus);
+      this._mappingTableService = new MappingTableService(this._model, this._oEventBus);
+      this._schemaService = new SchemaService(this._model, this._oEventBus);
       this._schemaTable = new SchemaTable(this);
       this._schemaFieldSelector = new SimpleSchemaFieldSelector(this, this._addDefaultDialog)
 
@@ -257,6 +266,7 @@ sap.ui.define([
       } else {
         this._mappingTableService.getByNameAndVersion(oParams.id, oParams.version).then(() => this.load())
       }
+      this._oEventBus.publish("TableUtils", "clearAllSearch");
       this.byId("mappingTableIconTabBar").setSelectedKey("info");
     },
 
@@ -285,10 +295,16 @@ sap.ui.define([
 
     load: function() {
       let currentMT = this._model.getProperty("/currentMappingTable");
-      this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentMT), "mappingTable")
-      this.fetchSchema();
-      const auditTable = this.byId("auditTrailTable");
-      this._mappingTableService.getAuditTrail(currentMT.name, auditTable);
+      this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentMT), "mappingTable");
+      if (currentMT) {
+        this.fetchSchema();
+        const auditTable = this.byId("auditTrailTable");
+        this._mappingTableService.getAuditTrail(currentMT.name, auditTable);
+
+        this._mtRestDAO = new MappingTableRestDAO();
+        this._mtRestDAO.getLatestVersionByName(currentMT.name)
+          .then(version => this._model.setProperty("/editingEnabled", currentMT.version === version));
+      }
     }
 
   });

@@ -20,7 +20,7 @@ import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.samples.NegationRuleSamples
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
@@ -47,7 +47,7 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val expectedDataset = NegationRuleSamples.dataset
     val expectedJSON = NegationRuleSamples.Positive.conformedJSON
 
-    testRule(inputDataset, expectedDataset, expectedJSON)
+    testRule(inputDataset, expectedDataset, expectedJSON, nullableSchema = true)
   }
 
   test("Negation conformance rule should negate negative numeric values") {
@@ -55,7 +55,7 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val expectedDataset = NegationRuleSamples.dataset
     val expectedJSON = NegationRuleSamples.Negative.conformedJSON
 
-    testRule(inputDataset, expectedDataset, expectedJSON)
+    testRule(inputDataset, expectedDataset, expectedJSON, nullableSchema = true)
   }
 
   test("Negation conformance rule should not change zero numeric values (Keep in mind positive " +
@@ -64,7 +64,7 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val expectedDataset = NegationRuleSamples.dataset
     val expectedJSON = NegationRuleSamples.Zero.conformedJSON
 
-    testRule(inputDataset, expectedDataset, expectedJSON)
+    testRule(inputDataset, expectedDataset, expectedJSON, nullableSchema = true)
   }
 
   test("Negation conformance rule should negate max numeric values") {
@@ -72,7 +72,7 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val expectedDataset = NegationRuleSamples.dataset
     val expectedJSON = NegationRuleSamples.Max.conformedJSON
 
-    testRule(inputDataset, expectedDataset, expectedJSON)
+    testRule(inputDataset, expectedDataset, expectedJSON, nullableSchema = true)
   }
 
   test("Negation conformance rule should produce errors when negating min numeric values due to Silent " +
@@ -81,7 +81,16 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val expectedDataset = NegationRuleSamples.dataset
     val expectedJSON = NegationRuleSamples.Min.conformedJSON
 
-    testRule(inputDataset, expectedDataset, expectedJSON)
+    testRule(inputDataset, expectedDataset, expectedJSON, nullableSchema = false)
+  }
+
+  test("Negation conformance rule should produce errors when negating min numeric values due to Silent " +
+    "Overflow and set to null for nullable columns") {
+    val inputDataset = NegationRuleSamples.MinWithNullableColumns.data.toDS
+    val expectedDataset = NegationRuleSamples.dataset
+    val expectedJSON = NegationRuleSamples.MinWithNullableColumns.conformedJSON
+
+    testRule(inputDataset, expectedDataset, expectedJSON, nullableSchema = true)
   }
 
   test("Negation conformance rule should disregard null numeric values") {
@@ -89,13 +98,18 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val expectedDataset = NegationRuleSamples.dataset
     val expectedJSON = NegationRuleSamples.Null.conformedJSON
 
-    testRule(inputDataset, expectedDataset, expectedJSON)
+    testRule(inputDataset, expectedDataset, expectedJSON, nullableSchema = true)
   }
 
-  private def testRule(inputDataset: Dataset[String], enceladusDataset: ConfDataset, expectedJSON: String): Unit = {
-    val inputDf = spark.read.schema(NegationRuleSamples.schema).json(inputDataset)
+  private def testRule(inputDataset: Dataset[String], enceladusDataset: ConfDataset, expectedJSON: String, nullableSchema: Boolean): Unit = {
+    val schema = if (nullableSchema) {
+      NegationRuleSamples.schemaNullable
+    } else {
+      NegationRuleSamples.schema
+    }
+    val inputDf = spark.read.schema(schema).json(inputDataset)
 
-    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
+    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
     implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true

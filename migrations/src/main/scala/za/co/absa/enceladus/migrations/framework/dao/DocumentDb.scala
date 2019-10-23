@@ -84,9 +84,22 @@ abstract class DocumentDb {
   def insertDocument(collectionName: String, document: String): Unit
 
   /**
-    * Returns an iterator on all documetns in the specified collection.
+    * Returns an iterator on all documents in the specified collection.
+    *
+    * Note. This method loads all documents into memory. Use this method only for small collections.
+    *       Most of the time `forEachDocument()` is preferred.
+    * @param collectionName A collection name to load documents from.
+    * @return An iterator to documents in the collection.
     */
   def getDocuments(collectionName: String): Iterator[String]
+
+  /**
+    * Traverses a collection and executes a function on each document.
+    *
+    * @param collectionName A collection name to load documents from.
+    * @param f              A function to apply for each document in the collection.
+    */
+  def forEachDocument(collectionName: String)(f: String => Unit): Unit
 
   /**
     * Executes a command expressed in the database-specific language/format on the database.

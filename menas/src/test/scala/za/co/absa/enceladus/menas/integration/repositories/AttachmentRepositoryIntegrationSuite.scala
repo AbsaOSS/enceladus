@@ -20,10 +20,10 @@ import org.scalatest.Assertion
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.menas.factories.AttachmentFactory
 import za.co.absa.enceladus.menas.integration.fixtures.{AttachmentFixtureService, FixtureService}
 import za.co.absa.enceladus.menas.repositories.{AttachmentMongoRepository, RefCollection}
 import za.co.absa.enceladus.model.menas.MenasAttachment
+import za.co.absa.enceladus.model.test.factories.AttachmentFactory
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

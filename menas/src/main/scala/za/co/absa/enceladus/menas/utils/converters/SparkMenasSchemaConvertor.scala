@@ -23,6 +23,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
 
+import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
+import za.co.absa.enceladus.utils.schema.SchemaUtils
+
 import scala.util.control.NonFatal
 
 @Component
@@ -97,36 +100,62 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
     }
   }
 
+  @throws[SchemaParsingException]
   def convertSparkToMenasFields(sparkFields: Seq[StructField]): Seq[SchemaField] = {
     convertSparkToMenasFields(sparkFields, "")
   }
 
   /** Converts a seq of spark struct fields to menas representation */
   def convertSparkToMenasFields(sparkFields: Seq[StructField], path: String): Seq[SchemaField] = {
-    sparkFields.map({ field =>
-      val arr = field.dataType match {
-        case arrayType: ArrayType => Some(arrayType)
-        case _                    => None
-      }
+    sparkFields.map(sparkToMenasField(_, path))
+  }
 
-      SchemaField(
-        name = field.name,
-        `type` = field.dataType.typeName,
-        path = path,
-        elementType = arr.map(_.elementType.typeName),
-        containsNull = arr.map(_.containsNull),
-        nullable = field.nullable,
-        metadata = objMapper.readValue(field.metadata.json, classOf[Map[String, String]]),
-        children = getChildren(field.dataType, s"$path${if (path.isEmpty) "" else "."}${field.name}"))
-    }).toList
+  private def sparkToMenasField(field: StructField, path: String): SchemaField = {
+    val arr = field.dataType match {
+      case arrayType: ArrayType => Some(arrayType)
+      case _                    => None
+    }
+
+    val metadata: Map[String, String] = objMapper.readValue(field.metadata.json, classOf[Map[Any, Any]])
+        .collect{
+          // objMapper.readValue(_, classOf[Map[String, String]] doesn't actually enforce typing within the Map, this
+          // construction ensures it
+          case (key: String, value: String) => (key, value)
+          case (key: String, null) => (key, null) // scalastyle:ignore null - some values can be null, particularly default, can be null
+          case (key, value) => throw SchemaParsingException(
+            schemaType = "",
+            message = s"Value for metadata key '$key' (of value $value) to be a string or null",
+            field = Option(field.name)
+          )
+        }
+
+    val childrenPath = SchemaUtils.appendPath(path, field.name)
+
+    SchemaField(
+      name = field.name,
+      `type` = field.dataType.typeName,
+      path = path,
+      elementType = arr.map(_.elementType.typeName),
+      containsNull = arr.map(_.containsNull),
+      nullable = field.nullable,
+      metadata = metadata,
+      children = getChildren(field.dataType, childrenPath)
+    )
   }
 
   /** Calculate the children field for the spark to menas conversion */
-  private def getChildren(spark: DataType, path: String): List[SchemaField] = {
-    spark match {
+  private def getChildren(fieldDataType: DataType, path: String): List[SchemaField] = {
+    fieldDataType match {
       case s: StructType => convertSparkToMenasFields(s.fields, path).toList
-      case a@ArrayType(el: ArrayType, _) if a.elementType.isInstanceOf[ArrayType] => List(SchemaField(name = "", `type` = el.typeName, path = path, elementType = Some(el.elementType.typeName),
-        containsNull = Some(el.containsNull), nullable = a.containsNull, metadata = Map(), children = getChildren(el, path)))
+      case a@ArrayType(el: ArrayType, _) => List(SchemaField(
+        name = "",
+        `type` = el.typeName,
+        path = path,
+        elementType = Some(el.elementType.typeName),
+        containsNull = Some(el.containsNull),
+        nullable = a.containsNull,
+        metadata = Map(),
+        children = getChildren(el, path)))
       case a: ArrayType => getChildren(a.elementType, path)
       case m: MapType => getChildren(m.valueType, path)
       case _: DataType => List()

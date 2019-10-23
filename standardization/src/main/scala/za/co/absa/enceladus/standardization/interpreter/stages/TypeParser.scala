@@ -22,9 +22,9 @@ import org.apache.spark.sql.types._
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils.appendPath
-import za.co.absa.enceladus.utils.types.TypedStructField
+import za.co.absa.enceladus.utils.types.{Defaults, TypedStructField}
 import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.standardization.StandardizationCommon
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.spark.hofs.transform
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.time.DateTimePattern
@@ -51,20 +51,23 @@ import scala.util.{Random, Try}
 sealed trait TypeParser {
   def standardize(): ParseOutput
 
-  val origSchema: StructType
-  val field: TypedStructField
-  val path: String
-  val parent: Option[TypeParser.Parent]
-  val fieldName: String = SchemaUtils.getFieldNameOverriddenByMetadata(field.structField)
-  val currentColumnPath: String = appendPath(path, fieldName) // absolute path to field to parse
-  val column: Column = parent.map(_.childColumn(fieldName)).getOrElse(col(currentColumnPath)) // no parent
-  val isArrayElement: Boolean = parent.exists(_.isInstanceOf[TypeParser.ArrayParent])
+  protected val origSchema: StructType
+  protected val field: TypedStructField
+  protected val metadata: Metadata = field.structField.metadata
+  protected val path: String
+  protected val parent: Option[TypeParser.Parent]
+  protected val fieldInputName: String = SchemaUtils.getFieldNameOverriddenByMetadata(field.structField)
+  protected val fieldOutputName: String = field.name
+  protected val inputFullPathName: String = appendPath(path, fieldInputName)
+  protected val column: Column = parent.map(_.childColumn(fieldInputName)).getOrElse(col(inputFullPathName)) // no parent
+  protected val isArrayElement: Boolean = parent.exists(_.isInstanceOf[TypeParser.ArrayParent])
 }
 
-object TypeParser extends StandardizationCommon {
+object TypeParser {
   import za.co.absa.enceladus.utils.implicits.ColumnImplicits.ColumnEnhancements
 
   private val decimalType = DecimalType(30,9) // scalastyle:ignore magic.number
+  private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   private val MillisecondsPerSecond = 1000
   private val MicrosecondsPerSecond = 1000000
@@ -96,7 +99,8 @@ object TypeParser extends StandardizationCommon {
     val parserClass: (String, StructType, Option[Parent]) => TypeParser = field.dataType match {
       case _: ArrayType     => ArrayParser(TypedStructField.asArrayTypeStructField(field), _, _, _)
       case _: StructType    => StructParser(TypedStructField.asStructTypeStructField(field), _, _, _)
-      case _: ByteType      => IntegralParser(TypedStructField(field), _, _, _,Set(ShortType, IntegerType, LongType), Byte.MinValue, Byte.MaxValue)
+      case _: ByteType      =>
+        IntegralParser(TypedStructField(field), _, _, _, Set(ShortType, IntegerType, LongType), Byte.MinValue, Byte.MaxValue)
       case _: ShortType     => IntegralParser(TypedStructField(field), _, _, _, Set(IntegerType, LongType), Short.MinValue, Short.MaxValue)
       case _: IntegerType   => IntegralParser(TypedStructField(field), _, _, _, Set(LongType), Int.MinValue, Int.MaxValue)
       case _: LongType      => IntegralParser(TypedStructField(field), _, _, _, Set.empty, Long.MinValue, Long.MaxValue)
@@ -117,12 +121,12 @@ object TypeParser extends StandardizationCommon {
                                        origSchema: StructType,
                                        parent: Option[Parent]) extends TypeParser {
     private val fieldType = field.dataType
-    private val arrayField = StructField(fieldName, fieldType.elementType, fieldType.containsNull)
+    private val arrayField = StructField(fieldInputName, fieldType.elementType, fieldType.containsNull)
 
     override def standardize(): ParseOutput = {
-      logger.info(s"Creating standardization plan for Array $currentColumnPath")
+      logger.info(s"Creating standardization plan for Array $inputFullPathName")
 
-      val lambdaVariableName = s"${unpath(currentColumnPath)}_${Random.nextLong().abs}"
+      val lambdaVariableName = s"${SchemaUtils.unpath(inputFullPathName)}_${Random.nextLong().abs}"
       val lambda = (forCol: Column) => TypeParser(arrayField, path, origSchema, Option(ArrayParent(forCol)))
         .standardize()
 
@@ -131,13 +135,13 @@ object TypeParser extends StandardizationCommon {
       val nullErrCond = column.isNull and lit(!field.nullable)
 
       val finalErrs = when(nullErrCond,
-        array(typedLit(ErrorMessage.stdNullErr(currentColumnPath))))
+        array(typedLit(ErrorMessage.stdNullErr(inputFullPathName))))
         .otherwise(
           typedLit(flatten(transform(column, lambdaErrCols, lambdaVariableName)))
         )
       val stdCols = transform(column, lambdaStdCols, lambdaVariableName)
-      logger.info(s"Finished standardization plan for Array $currentColumnPath")
-      ParseOutput(stdCols as fieldName, finalErrs)
+      logger.info(s"Finished standardization plan for Array $inputFullPathName")
+      ParseOutput(stdCols as (fieldOutputName, metadata), finalErrs)
     }
   }
 
@@ -148,7 +152,7 @@ object TypeParser extends StandardizationCommon {
     private val fieldType = field.dataType
 
     override def standardize(): ParseOutput = {
-      val out =  fieldType.fields.map(TypeParser(_, currentColumnPath, origSchema, Option(StructParent(column)))
+      val out =  fieldType.fields.map(TypeParser(_, inputFullPathName, origSchema, Option(StructParent(column)))
         .standardize())
       val cols = out.map(_.stdCol)
       val errs = out.map(_.errors)
@@ -160,23 +164,24 @@ object TypeParser extends StandardizationCommon {
         flatten(array(errs.map(x => when(dropChildrenErrsCond, typedLit(Seq[ErrorMessage]())).otherwise(x)): _*)),
         // then add an error if this one is null
         when(nullErrCond,
-          array(callUDF("stdNullErr", lit(currentColumnPath))))
+          array(callUDF("stdNullErr", lit(inputFullPathName))))
           .otherwise(
             typedLit(Seq[ErrorMessage]())
           )
       )
       // rebuild the struct
-      val str = struct(cols: _*).as(field.name)
-      ParseOutput(str, errs1)
+      val outputColumn = struct(cols: _*) as (fieldOutputName, metadata)
+
+      ParseOutput(outputColumn, errs1)
     }
   }
 
   private trait PrimitiveParser extends TypeParser {
     override def standardize(): ParseOutput = {
       val columnIdForUdf = if (isArrayElement) {
-        s"$currentColumnPath[*]"
+        s"$inputFullPathName[*]"
       } else {
-        currentColumnPath
+        inputFullPathName
       }
       val castedCol: Column = assemblePrimitiveCastLogic
       val castHasError: Column = assemblePrimitiveCastErrorLogic(castedCol)
@@ -197,13 +202,12 @@ object TypeParser extends StandardizationCommon {
         ))
       }
 
-
       val std: Column = when(size(err) > lit(0), // there was an error on cast
         field.defaultValueWithGlobal.get.orNull // Error should never appear here, then converting Option to value or Null
       ).otherwise( when (column.isNotNull,
         castedCol
       ) //.otherwise(null) - no need to explicitly mention
-      ) as field.name
+      ) as (fieldOutputName, metadata)
 
       ParseOutput(std, err)
     }
@@ -214,9 +218,9 @@ object TypeParser extends StandardizationCommon {
       castedCol.isNull  //this one is sufficient for most primitive data types
     }
 
-    @NoSuchElementException(s"The type of '$currentColumnPath' cannot be determined")
+    @NoSuchElementException(s"The type of '$inputFullPathName' cannot be determined")
     protected def origType: DataType = {
-      SchemaUtils.getFieldType(currentColumnPath, origSchema).get
+      SchemaUtils.getFieldType(inputFullPathName, origSchema).get
     }
 
   }
@@ -367,7 +371,7 @@ object TypeParser extends StandardizationCommon {
 
     private def castNonStringColumn(nonStringColumn: Column, originType: DataType): Column = {
       logger.warn(
-        s"$currentColumnPath is specified as timestamp or date, but original type is ${originType.typeName}. Trying to interpret as string."
+        s"$inputFullPathName is specified as timestamp or date, but original type is ${originType.typeName}. Trying to interpret as string."
       )
       castStringColumn(nonStringColumn.cast(StringType))
     }
@@ -388,7 +392,13 @@ object TypeParser extends StandardizationCommon {
                                       path: String,
                                       origSchema: StructType,
                                       parent: Option[Parent]) extends DateTimeParser {
-    private def applyPatternToStringColumn(column: Column, pattern: String, defaultTimeZone: Option[String]): Column = {
+    private val defaultTimeZone: Option[String] = if (pattern.isTimeZoned) {
+      pattern.defaultTimeZone
+    } else {
+      Defaults.getGlobalDefaultDateTimeZone
+    }
+
+    private def applyPatternToStringColumn(column: Column, pattern: String): Column = { //TODO defaultxTimeZone
       defaultTimeZone.map(tz =>
         to_date(to_utc_timestamp(to_timestamp(column, pattern), tz))
       ).getOrElse(
@@ -407,14 +417,14 @@ object TypeParser extends StandardizationCommon {
         applyPatternToStringColumn(
           stringColumn.removeSections(
             Seq(pattern.millisecondsPosition, pattern.microsecondsPosition, pattern.nanosecondsPosition).flatten
-          ), pattern.patternWithoutSecondFractions, pattern.defaultTimeZone)
+          ), pattern.patternWithoutSecondFractions)
       } else {
-        applyPatternToStringColumn(stringColumn, pattern, pattern.defaultTimeZone)
+        applyPatternToStringColumn(stringColumn, pattern)
       }
     }
 
     override protected def castDateColumn(dateColumn: Column): Column = {
-      pattern.defaultTimeZone.map(
+      defaultTimeZone.map(
         tz => to_date(to_utc_timestamp(dateColumn, tz))
       ).getOrElse(
         dateColumn
@@ -422,7 +432,7 @@ object TypeParser extends StandardizationCommon {
     }
 
     override protected def castTimestampColumn(timestampColumn: Column): Column = {
-      to_date(pattern.defaultTimeZone.map(
+      to_date(defaultTimeZone.map(
         to_utc_timestamp(timestampColumn, _)
       ).getOrElse(
         timestampColumn
@@ -435,7 +445,13 @@ object TypeParser extends StandardizationCommon {
                                            origSchema: StructType,
                                            parent: Option[Parent]) extends DateTimeParser {
 
-    private def applyPatternToStringColumn(column: Column, pattern: String, defaultTimeZone: Option[String]): Column = {
+    private val defaultTimeZone: Option[String] = if (pattern.isTimeZoned) {
+      pattern.defaultTimeZone
+    } else {
+      Defaults.getGlobalDefaultTimestampTimeZone
+    }
+
+    private def applyPatternToStringColumn(column: Column, pattern: String): Column = {
       val interim: Column = to_timestamp(column, pattern)
       defaultTimeZone.map(to_utc_timestamp(interim, _)).getOrElse(interim)
     }
@@ -449,7 +465,7 @@ object TypeParser extends StandardizationCommon {
         val colSeconds = unix_timestamp(applyPatternToStringColumn(
           stringColumn.removeSections(
             Seq(pattern.millisecondsPosition, pattern.microsecondsPosition, pattern.nanosecondsPosition).flatten
-          ), pattern.patternWithoutSecondFractions, pattern.defaultTimeZone))
+          ), pattern.patternWithoutSecondFractions))
 
         val colMilliseconds: Option[Column] =
           pattern.millisecondsPosition.map(stringColumn.zeroBasedSubstr(_).cast(decimalType) / MillisecondsPerSecond)
@@ -462,12 +478,12 @@ object TypeParser extends StandardizationCommon {
 
         (colSeconds + colFractions).cast(TimestampType)
       } else {
-        applyPatternToStringColumn(stringColumn, pattern, pattern.defaultTimeZone)
+        applyPatternToStringColumn(stringColumn, pattern)
       }
     }
 
     override protected def castDateColumn(dateColumn: Column): Column = {
-      pattern.defaultTimeZone.map(
+      defaultTimeZone.map(
         to_utc_timestamp(dateColumn, _)
       ).getOrElse(
         to_timestamp(dateColumn)
@@ -475,7 +491,7 @@ object TypeParser extends StandardizationCommon {
     }
 
     override protected def castTimestampColumn(timestampColumn: Column): Column = {
-      pattern.defaultTimeZone.map(
+      defaultTimeZone.map(
         to_utc_timestamp(timestampColumn, _)
       ).getOrElse(
         timestampColumn

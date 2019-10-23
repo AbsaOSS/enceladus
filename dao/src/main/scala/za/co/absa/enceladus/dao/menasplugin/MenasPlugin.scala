@@ -16,12 +16,14 @@
 package za.co.absa.enceladus.dao.menasplugin
 
 import za.co.absa.atum.plugins.PluginManager
-import za.co.absa.enceladus.dao.MenasRestDAO
+import za.co.absa.enceladus.dao.MenasDAO
 
 /**
   * This is Menas plugin for Conformance Framework
   */
 object MenasPlugin {
+
+  private var listener: Option[EventListenerMenas] = None
 
   /**
     * This is Menas plugin for Conformance Framework
@@ -34,12 +36,19 @@ object MenasPlugin {
   def enableMenas(datasetName: String = "",
                   datasetVersion: Int = 1,
                   isJobStageOnly: Boolean = false,
-                  generateNewRun: Boolean = false): Unit = {
-    val eventListener = new EventListenerMenas(MenasRestDAO,
+                  generateNewRun: Boolean = false)
+                 (implicit dao: MenasDAO): Unit = {
+    val eventListener = new EventListenerMenas(dao,
       datasetName,
       datasetVersion,
       isJobStageOnly,
       generateNewRun)
+    listener = Option(eventListener)
     PluginManager.loadPlugin(eventListener)
   }
+
+  def runUniqueId: Option[String] = listener.flatMap(_.runUniqueId)
+
+  def runNumber: Option[Int] = listener.flatMap(_.runNumber)
+
 }

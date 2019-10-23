@@ -20,22 +20,17 @@ import java.util.TimeZone
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.SparkSession
+import za.co.absa.enceladus.utils.general.ConfigReader
 
 /**
   * Sets the system time zone per application configuration, recommended value being UTC
    */
 object TimeZoneNormalizer {
   private val log: Logger = LogManager.getLogger(this.getClass)
-  private val timeZone: String = getConf("timezone", "UTC")
-
-  private def getConf(path: String, default: String): String = {
-    val config: Config = ConfigFactory.load()
-    if (config.hasPath(path)) {
-      config.getString(path)
-    } else {
-      log.warn(s"No time zone (timezone) setting found. Setting to default, which is $default.")
-      default
-    }
+  private val timeZone: String = ConfigReader.readStringConfigIfExist("timezone").getOrElse {
+    val default = "UTC"
+    log.warn(s"No time zone (timezone) setting found. Setting to default, which is $default.")
+    default
   }
 
   def normalizeJVMTimeZone(): Unit = {

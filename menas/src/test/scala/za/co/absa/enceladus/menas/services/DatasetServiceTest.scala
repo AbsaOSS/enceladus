@@ -20,17 +20,17 @@ import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito
 import org.mongodb.scala.bson.BsonDocument
 import za.co.absa.enceladus.menas.exceptions.ValidationException
-import za.co.absa.enceladus.menas.factories.DatasetFactory
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.test.factories.DatasetFactory
 
 import scala.concurrent.Future
 
 class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
 
-  override val modelRepository = mock[DatasetMongoRepository]
-  val oozieRepository = mock[OozieRepository]
+  override val modelRepository: DatasetMongoRepository = mock[DatasetMongoRepository]
+  val oozieRepository: OozieRepository = mock[OozieRepository]
   override val service = new DatasetService(modelRepository, oozieRepository)
 
   test("fail to create multiple Datasets with the same name concurrently with a ValidationException") {
@@ -51,13 +51,14 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
     val writeException = new MongoWriteException(new WriteError(1, "", new BsonDocument()), new ServerAddress())
 
     Mockito.when(modelRepository.getVersion("dataset", 1)).thenReturn(Future.successful(Some(dataset)))
+    Mockito.when(modelRepository.getLatestVersionValue("dataset")).thenReturn(Future.successful(Some(1)))
     Mockito.when(modelRepository.isUniqueName("dataset")).thenReturn(Future.successful(true))
     Mockito.when(modelRepository.update(eqTo("user"), any[Dataset]())).thenReturn(Future.failed(writeException))
 
     val result = intercept[ValidationException] {
       await(service.update("user", dataset))
     }
-    assert(result.validation == Validation().withError("version", s"entity 'dataset' with this version already exists: 2"))
+    assert(result.validation == Validation().withError("version", "entity 'dataset' with this version already exists: 2"))
   }
 
 }

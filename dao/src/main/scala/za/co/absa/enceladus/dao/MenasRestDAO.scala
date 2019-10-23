@@ -15,157 +15,73 @@
 
 package za.co.absa.enceladus.dao
 
-import java.util.UUID
-
-import com.typesafe.config.ConfigFactory
-import org.apache.http.HttpStatus
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost}
-import org.apache.http.entity.{ContentType, StringEntity}
-import org.apache.log4j.LogManager
+import org.apache.spark.sql.types.{DataType, StructType}
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
-import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference}
 
-import scala.io.Source
-import scala.util.Try
-import scala.util.control.NonFatal
+/**
+  * Implementation of Menas REST API DAO
+  */
+protected class MenasRestDAO(private[dao] val apiBaseUrl: String,
+                             private[dao] val restClient: RestClient) extends MenasDAO {
 
-/** Implements routines for Menas REST API. */
-object MenasRestDAO extends MenasDAO {
+  private val runsUrl = s"$apiBaseUrl/runs"
 
-  import za.co.absa.enceladus.dao.EnceladusRestDAO.{csrfToken, enceladusLogin, httpClient, sessionCookie}
-
-  private val conf = ConfigFactory.load()
-  private val restBase = conf.getString("menas.rest.uri")
-  private val log = LogManager.getLogger(this.getClass)
-
-  /**
-    * Stores a new Run object in the database by sending REST request to Menas
-    *
-    * @param run A Run object
-    * @return The unique id of newly created Run object or encapsulated exception
-    */
-  def storeNewRunObject(run: Run): Try[String] = {
-    Try({
-      val runToSave = if (run.uniqueId.isEmpty) run.copy(uniqueId = Some(UUID.randomUUID().toString)) else run
-      val json = EnceladusRestDAO.objectMapper.writeValueAsString(runToSave)
-      val url = s"$restBase/runs"
-
-      if (sendPostJson(url, json)) {
-        runToSave.uniqueId.get
-      }
-      else {
-        throw new IllegalStateException("Unable to store a Control Framework Run object in the database.")
-      }
-    })
+  def authenticate(): Unit = {
+    restClient.authenticate()
   }
 
-  /**
-    * Updates control measure object of the specified run
-    *
-    * @param uniqueId       An unique id of a Run object
-    * @param controlMeasure Control Measures
-    * @return true if Run object is successfully updated
-    */
-  def updateControlMeasure(uniqueId: String,
-                           controlMeasure: ControlMeasure): Boolean = {
-    val url = s"$restBase/runs/updateControlMeasure/$uniqueId"
-    val json = EnceladusRestDAO.objectMapper.writeValueAsString(controlMeasure)
+  def getDataset(name: String, version: Int): Dataset = {
+    val url = s"$apiBaseUrl/dataset/detail/$name/$version"
+    restClient.sendGet[Dataset](url)
+  }
 
-    sendPostJson(url, json)
+  def getMappingTable(name: String, version: Int): MappingTable = {
+    val url = s"$apiBaseUrl/mappingTable/detail/$name/$version"
+    restClient.sendGet[MappingTable](url)
+  }
+
+  def getSchema(name: String, version: Int): StructType = {
+    val url = s"$apiBaseUrl/schema/json/$name/$version"
+    val json = restClient.sendGet[String](url)
+    DataType.fromJson(json).asInstanceOf[StructType]
+  }
+
+  def getSchemaAttachment(name: String, version: Int): String = {
+    val url = s"$apiBaseUrl/schema/export/$name/$version"
+    restClient.sendGet[String](url)
+  }
+
+  def storeNewRunObject(run: Run): Run = {
+    restClient.sendPost[Run, Run](runsUrl, run)
+  }
+
+  def updateControlMeasure(uniqueId: String,
+                           controlMeasure: ControlMeasure): Run = {
+    val url = s"$runsUrl/updateControlMeasure/$uniqueId"
+
+    restClient.sendPost[ControlMeasure, Run](url, controlMeasure)
   }
 
   def updateRunStatus(uniqueId: String,
-                      runStatus: RunStatus): Boolean = {
-    val url = s"$restBase/runs/updateRunStatus/$uniqueId"
-    val json = EnceladusRestDAO.objectMapper.writeValueAsString(runStatus)
+                      runStatus: RunStatus): Run = {
+    val url = s"$runsUrl/updateRunStatus/$uniqueId"
 
-    sendPostJson(url, json)
+    restClient.sendPost[RunStatus, Run](url, runStatus)
   }
 
-  /**
-    * Updates spline reference of the specified run
-    *
-    * @param uniqueId  An unique id of a Run object
-    * @param splineRef Spline Reference
-    * @return true if Run object is successfully updated
-    */
   def updateSplineReference(uniqueId: String,
-                            splineRef: SplineReference): Boolean = {
-    val url = s"$restBase/runs/updateSplineReference/$uniqueId"
-    val json = EnceladusRestDAO.objectMapper.writeValueAsString(splineRef)
+                            splineRef: SplineReference): Run = {
+    val url = s"$runsUrl/updateSplineReference/$uniqueId"
 
-    sendPostJson(url, json)
+    restClient.sendPost[SplineReference, Run](url, splineRef)
   }
 
-  /**
-    * Creates new Run object in the database by loading control measurements from
-    * _INFO file accompanied by output data
-    *
-    * @param uniqueId   An unique id of a Run object
-    * @param checkpoint A checkpoint to be appended to the database
-    * @return true if Run object is successfully updated
-    */
   def appendCheckpointMeasure(uniqueId: String,
-                              checkpoint: Checkpoint): Boolean = {
-    val url = s"$restBase/runs/addCheckpoint/$uniqueId"
-    val json = EnceladusRestDAO.objectMapper.writeValueAsString(checkpoint)
+                              checkpoint: Checkpoint): Run = {
+    val url = s"$runsUrl/addCheckpoint/$uniqueId"
 
-    sendPostJson(url, json)
-  }
-
-  private def sendPostJson(url: String, json: String, retriesLeft: Int = 1): Boolean = {
-    try {
-      log.info(s"URL: $url POST: $json")
-      val httpPost = new HttpPost(url)
-      httpPost.addHeader("cookie", sessionCookie)
-      httpPost.addHeader("X-CSRF-TOKEN", csrfToken)
-      httpPost.addHeader("content-type", "application/json")
-
-      httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON))
-
-      val response: CloseableHttpResponse = httpClient.execute(httpPost)
-      try {
-        val status = response.getStatusLine.getStatusCode
-        val ok = status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES
-        val isUnauthorized = status == HttpStatus.SC_UNAUTHORIZED || status == HttpStatus.SC_FORBIDDEN
-
-        if (ok) {
-          log.info(response.toString)
-        } else {
-          val responseBody = getResponseBody(response)
-          log.error(s"RESPONSE: ${response.getStatusLine} - $responseBody")
-
-          if (isUnauthorized) {
-            log.warn(s"Unauthorized POST request for Menas URL: $url")
-            if (retriesLeft <= 0) {
-              throw UnauthorizedException(s"Unable to reauthenticate, no retires left")
-            }
-            log.warn(s"Expired session, reauthenticating")
-            if (enceladusLogin()) {
-              log.info(s"Retrying POST request for Menas URL: $url")
-              log.info(s"Retries left: $retriesLeft")
-              sendPostJson(url, json, retriesLeft - 1)
-            } else {
-              throw UnauthorizedException("Login failed")
-            }
-          }
-        }
-        ok
-      }
-      finally {
-        response.close()
-      }
-    }
-    catch {
-      case unAuthException: UnauthorizedException => throw unAuthException
-      case NonFatal(e) =>
-        log.error(s"Unable to connect to Menas endpoint via $url with error: ${e.getMessage}")
-        false
-    }
-  }
-
-  private def getResponseBody(response: CloseableHttpResponse): String = {
-    Source.fromInputStream(response.getEntity.getContent).mkString
+    restClient.sendPost[Checkpoint, Run](url, checkpoint)
   }
 
 }

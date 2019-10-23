@@ -351,11 +351,11 @@ class SchemaService extends DependentEntityService {
   }
 
   getLatestByName(sName) {
-    return super.getLatestByName(sName, "#/schema")
+    return super.getLatestByName(sName, "#/schema");
   }
 
   getByNameAndVersion(sName, iVersion, sModelPath = "/currentSchema") {
-    return super.getByNameAndVersion(sName, iVersion, sModelPath, "#/schema")
+    return super.getByNameAndVersion(sName, iVersion, sModelPath, "#/schema");
   }
 
   cleanupEntity(oEntity) {

@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
 import org.mockito.Mockito
-import za.co.absa.enceladus.model.api.HDFSFolder
+import za.co.absa.enceladus.model.menas.HDFSFolder
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -68,8 +68,6 @@ class HDFSServiceSuite extends BaseServiceTest {
     val listStatus = Array(fileStatus, subdirStatus)
 
     Mockito.when(fs.listStatus(dirPath)).thenReturn(listStatus)
-    Mockito.when(fs.listStatus(filePath)).thenReturn(Array[FileStatus]())
-    Mockito.when(fs.listStatus(subdirPath)).thenReturn(Array(fileStatus))
 
     val result = Await.result(hdfsService.getFolder(dirPath), Duration(100, TimeUnit.MILLISECONDS))
 

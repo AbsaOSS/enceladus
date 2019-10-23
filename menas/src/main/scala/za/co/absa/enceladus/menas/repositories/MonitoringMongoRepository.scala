@@ -28,7 +28,7 @@ import za.co.absa.enceladus.model.Run
 import scala.concurrent.Future
 
 object MonitoringMongoRepository {
-  val collectionBaseName = "run"
+  val collectionBaseName: String = "run"
 }
 
 @Repository

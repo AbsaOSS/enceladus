@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import za.co.absa.enceladus.model.conformanceRule.UppercaseConformanceRule
 import org.apache.spark.sql._
-import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
 import org.apache.spark.sql.functions._
@@ -26,7 +26,7 @@ import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 case class UppercaseRuleInterpreter(rule: UppercaseConformanceRule) extends RuleInterpreter {
   final val ruleName = "Uppercase rule"
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: EnceladusDAO, progArgs: CmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateInputField(progArgs.datasetName, ruleName, df.schema, rule.inputColumn)
     RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)

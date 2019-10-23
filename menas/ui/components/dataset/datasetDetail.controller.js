@@ -36,6 +36,7 @@ sap.ui.define([
      */
     onInit: function () {
       this._model = sap.ui.getCore().getModel();
+      this._oEventBus = sap.ui.getCore().getEventBus();
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
       this._router.getRoute("datasets").attachMatched(function (oEvent) {
         let args = oEvent.getParameter("arguments");
@@ -70,13 +71,12 @@ sap.ui.define([
 
       new DatasetDialogFactory(this, Fragment.load).getEdit();
 
-      const eventBus = sap.ui.getCore().getEventBus();
-      eventBus.subscribe("datasets", "updated", this.onEntityUpdated, this);
-      eventBus.subscribe("datasets", "updateFailed", this.onEntityUpdateFailed, this);
+      this._oEventBus.subscribe("datasets", "updated", this.onEntityUpdated, this);
+      this._oEventBus.subscribe("datasets", "updateFailed", this.onEntityUpdateFailed, this);
 
-      this._datasetService = new DatasetService(this._model, eventBus);
-      this._mappingTableService = new MappingTableService(this._model, eventBus);
-      this._schemaService = new SchemaService(this._model, eventBus)
+      this._datasetService = new DatasetService(this._model, this._oEventBus);
+      this._mappingTableService = new MappingTableService(this._model, this._oEventBus);
+      this._schemaService = new SchemaService(this._model, this._oEventBus)
       this._schemaTable = new SchemaTable(this)
 
       this._validator = new Validator();
@@ -96,7 +96,7 @@ sap.ui.define([
         "dayOfMonth": this._generateCronTemplateRange(1, 32, this._rb),
         "month": this._generateCronTemplateRange(1, 13, this._rb, "MENAS_SCHEDULE_MONTH"),
         "dayOfWeek": this._generateCronTemplateRange(0, 7, this._rb, "MENAS_SCHEDULE_DAY")
-      }
+      };
       this._model.setProperty("/cronFormTemplate", cronTemplate);
 
       const auditTable = this.byId("auditTrailTable");
@@ -340,6 +340,7 @@ sap.ui.define([
       } else {
         this._datasetService.getByNameAndVersion(oParams.id, oParams.version).then(() => this.load())
       }
+      this._oEventBus.publish("TableUtils", "clearAllSearch");
       this.byId("datasetIconTabBar").setSelectedKey("info");
     },
 
@@ -350,11 +351,15 @@ sap.ui.define([
         this._transitiveSchemas = [];
         const transitiveSchemas = this._transitiveSchemas;
         new SchemaRestDAO().getByNameAndVersionSync(currentDataset.schemaName, currentDataset.schemaVersion).then((schema) => {
-          this._model.setProperty("/currentDataset/schema", schema)
+          this._model.setProperty("/currentDataset/schema", schema);
           this._schemaTable.model = schema;
           transitiveSchemas.push(schema);
           SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
         });
+
+        this._datasetRestDAO = new DatasetRestDAO();
+        this._datasetRestDAO.getLatestVersionByName(currentDataset.name)
+          .then(version => this._model.setProperty("/editingEnabled", currentDataset.version === version));
 
         const auditTable = this.byId("auditTrailTable");
         this._datasetService.getAuditTrail(currentDataset.name, auditTable);

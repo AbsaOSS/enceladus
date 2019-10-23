@@ -28,7 +28,6 @@ import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.menas.exceptions.NotFoundException
 import za.co.absa.enceladus.menas.services.VersionedModelService
 import za.co.absa.enceladus.model.menas.audit._
-import org.springframework.transaction.annotation.Transactional
 
 abstract class VersionedModelController[C <: VersionedModel with Product with Auditable[C]](versionedModelService: VersionedModelService[C])
   extends BaseController {
@@ -40,7 +39,6 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @GetMapping(Array("/list", "/list/{searchQuery}"))
   @ResponseStatus(HttpStatus.OK)
   def getList(@PathVariable searchQuery: Optional[String]): CompletableFuture[Seq[VersionedSummary]] = {
-    val searchOpt: Option[String] = searchQuery
     versionedModelService.getLatestVersions(searchQuery)
   }
 
@@ -67,6 +65,12 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
       case Some(entity) => entity
       case None         => throw NotFoundException()
     }
+  }
+
+  @GetMapping(Array("/detail/{name}/latestVersion"))
+  @ResponseStatus(HttpStatus.OK)
+  def getLatestVersionNumber(@PathVariable name: String): CompletableFuture[Int] = {
+    versionedModelService.getLatestVersionNumber(name)
   }
 
   @GetMapping(Array("/detail/{name}/audit"))
@@ -103,8 +107,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
     }
   }
 
-  @PostMapping(Array("/edit"))
-  @Transactional(timeout = 120) // scalastyle:ignore magic.number (annotation argument needs to be a constant)
+  @RequestMapping(method = Array(RequestMethod.POST, RequestMethod.PUT), path = Array("/edit"))
   @ResponseStatus(HttpStatus.CREATED)
   def edit(@AuthenticationPrincipal user: UserDetails,
       @RequestBody item: C): CompletableFuture[C] = {
@@ -114,11 +117,16 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
     }
   }
 
-  @GetMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
+  @DeleteMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
   def disable(@PathVariable name: String,
-      @PathVariable version: Optional[Int]): CompletableFuture[UpdateResult] = {
-    val v = if (version.isPresent) Some(version.get) else None
+      @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
+    val v = if (version.isPresent) {
+      // For some reason Spring reads the Optional[Int] param as a Optional[String] and then throws ClassCastException
+      Some(version.get.toInt)
+    } else {
+      None
+    }
     versionedModelService.disableVersion(name, v)
   }
 

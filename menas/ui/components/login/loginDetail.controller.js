@@ -46,8 +46,11 @@ sap.ui.define([
       }, this);
 
       ConfigRestClient.getEnvironmentName()
-        .then( sEnvironmentName => sap.ui.getCore().getModel().setProperty("/menasEnvironment", sEnvironmentName) )
-        .fail(console.log("Failed to get Environment name"));
+        .then( sEnvironmentName => {
+          sap.ui.getCore().getModel().setProperty("/menasEnvironment", sEnvironmentName);
+          document.title = `Menas ${sEnvironmentName}`;
+        })
+        .fail( () => console.log("Failed to get Environment name"));
 
       this._eventBus.subscribe("menas", "resize", this.handleMaster, this);
     },

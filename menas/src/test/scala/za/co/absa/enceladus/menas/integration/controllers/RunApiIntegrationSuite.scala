@@ -21,17 +21,17 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.menas.factories.RunFactory
 import za.co.absa.enceladus.menas.integration.fixtures.{FixtureService, RunFixtureService}
 import za.co.absa.enceladus.menas.models.{RunSummary, Validation}
+import za.co.absa.enceladus.model.test.factories.RunFactory
 import za.co.absa.enceladus.model.{Run, SplineReference}
-
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class RunApiIntegrationSuite extends BaseRestApiTest {
+
+  import za.co.absa.enceladus.menas.integration.RunImplcits.RunExtensions
+  import za.co.absa.enceladus.menas.models.Validation._
 
   @Autowired
   private val runFixture: RunFixtureService = null
@@ -255,7 +255,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1).map(RunFactory.toSummary)
+          val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1).map(_.toSummary)
           assert(body.sameElements(expected))
         }
 
@@ -278,7 +278,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1).map(RunFactory.toSummary)
+          val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1).map(_.toSummary)
           assert(body.sameElements(expected))
         }
       }
@@ -319,7 +319,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1).map(RunFactory.toSummary)
+          val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1).map(_.toSummary)
           assert(body.sameElements(expected))
         }
 
@@ -339,7 +339,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1).map(RunFactory.toSummary)
+          val expected = List(dataset1v1run1, dataset1v1run2, dataset1v2run1).map(_.toSummary)
           assert(body.sameElements(expected))
 
         }
@@ -388,7 +388,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          val expected = List(dataset1v1run1, dataset1v1run2).map(RunFactory.toSummary)
+          val expected = List(dataset1v1run1, dataset1v1run2).map(_.toSummary)
           assert(body.sameElements(expected))
         }
 
@@ -405,7 +405,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          val expected = List(dataset1v1run1, dataset1v1run2).map(RunFactory.toSummary)
+          val expected = List(dataset1v1run1, dataset1v1run2).map(_.toSummary)
           assert(body.sameElements(expected))
         }
       }
@@ -705,6 +705,17 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
 
     "return 400" when {
+      "receiving an empty JSON" in {
+        val response = sendPost[String, Validation](endpointBase, bodyOpt = Option("{}"))
+
+        assertBadRequest(response)
+
+        val body = response.getBody
+        assert(!body.isValid)
+        assert(body == Validation()
+          .withError("dataset", NotSpecified)
+          .withError("datasetVersion", NotSpecified))
+      }
       "a Run with the given uniqueId already exists" in {
         val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
         val presentRun = RunFactory.getDummyRun(uniqueId = Option(uniqueId))

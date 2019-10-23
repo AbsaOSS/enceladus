@@ -16,11 +16,49 @@
 package za.co.absa.enceladus.utils.schema
 
 import org.apache.spark.sql.types._
-
 import scala.annotation.tailrec
 import scala.util.{Random, Try}
 
 object SchemaUtils {
+
+  /**
+    * Get a field from a text path and a given schema
+    * @param path   The dot-separated path to the field
+    * @param schema The schema which should contain the specified path
+    * @return       Some(the requested field) or None if the field does not exist
+    */
+  def getField(path: String, schema: StructType): Option[StructField] = {
+
+    @tailrec
+    def goThroughArrayDataType(dataType: DataType): DataType = {
+      dataType match {
+        case ArrayType(dt, _) => goThroughArrayDataType(dt)
+        case result => result
+      }
+    }
+
+    @tailrec
+    def examineStructField(names: List[String], structField: StructField): Option[StructField] = {
+      if (names.isEmpty) {
+        Option(structField)
+      } else {
+        structField.dataType match {
+          case struct: StructType         => examineStructField(names.tail, struct(names.head))
+          case ArrayType(el: DataType, _) =>
+            goThroughArrayDataType(el) match {
+              case struct: StructType => examineStructField(names.tail, struct(names.head))
+              case _                  => None
+            }
+          case _                          => None
+        }
+      }
+    }
+
+    val pathTokens = path.split('.').toList
+    Try{
+      examineStructField(pathTokens.tail, schema(pathTokens.head))
+    }.getOrElse(None)
+  }
 
   /**
     * Get a type of a field from a text path and a given schema
@@ -30,24 +68,7 @@ object SchemaUtils {
     * @return Some(the type of the field) or None if the field does not exist
     */
   def getFieldType(path: String, schema: StructType): Option[DataType] = {
-    def typeHelper(pt: List[String], st: DataType): Option[DataType] = {
-      if (pt.isEmpty) {
-        Some(st)
-      } else {
-        st match {
-          case str: StructType => Try {
-            typeHelper(pt.tail, str(pt.head).dataType)
-          }.getOrElse(None)
-          case ArrayType(el: StructType, _) => Try {
-            typeHelper(pt.tail, el(pt.head).dataType)
-          }.getOrElse(None)
-          case _ => None
-        }
-      }
-    }
-
-    val pathTokens = path.split('.').toList
-    typeHelper(pathTokens, schema)
+    getField(path, schema).map(_.dataType)
   }
 
   /**
@@ -80,26 +101,64 @@ object SchemaUtils {
     * @return Some(nullable) or None if the field does not exist
     */
   def getFieldNullability(path: String, schema: StructType): Option[Boolean] = {
-    def typeHelper(pt: List[String], st: DataType, nl: Option[Boolean]): Option[Boolean] = {
-      if (pt.isEmpty) {
-        nl
-      } else {
-        st match {
-          case str: StructType => Try {
-            typeHelper(pt.tail, str(pt.head).dataType, Some(str.apply(pt.head).nullable))
-          }.getOrElse(None)
-          case ArrayType(el: StructType, _) => Try {
-            typeHelper(pt.tail, el(pt.head).dataType, Some(el(pt.head).nullable))
-          }.getOrElse(None)
-          case _ => None
+    getField(path, schema).map(_.nullable)
+  }
+
+  /**
+    * Checks if a field specified by a path and a schema exists
+    * @param path   The dot-separated path to the field
+    * @param schema The schema which should contain the specified path
+    * @return       True if the field exists false otherwise
+    */
+  def fieldExists(path: String, schema: StructType): Boolean = {
+    getField(path, schema).nonEmpty
+  }
+
+  /**
+    * Returns all renames in the provided schema.
+    * @param schema                       schema to examine
+    * @param includeIfPredecessorChanged  if set to true, fields are included even if their name have not changed but
+    *                                     a predecessor's (parent, grandparent etc.) has
+    * @return        the keys of the returned map are the columns' names after renames, the values are the source columns;
+    *                the name are full paths denoted with dot notation
+    */
+  def getRenamesInSchema(schema: StructType, includeIfPredecessorChanged: Boolean = true): Map[String, String] = {
+
+    def getRenamesRecursively(path: String, sourcePath: String, struct: StructType, renamesAcc: Map[String, String], predecessorChanged: Boolean): Map[String, String] = {
+      import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldEnhancements
+
+      struct.fields.foldLeft(renamesAcc) { (renamesSoFar, field) =>
+        val fieldFullName = appendPath(path, field.name)
+        val fieldSourceName = field.getMetadataString(MetadataKeys.SourceColumn).getOrElse(field.name)
+        val fieldFullSourceName = appendPath(sourcePath, fieldSourceName)
+
+        val (renames, renameOnPath) = if ((fieldSourceName != field.name) || (predecessorChanged && includeIfPredecessorChanged)) {
+          (renamesSoFar + (fieldFullName -> fieldFullSourceName), true)
+        } else {
+          (renamesSoFar, predecessorChanged)
+        }
+
+        field.dataType match {
+          case st: StructType => getRenamesRecursively(fieldFullName, fieldFullSourceName, st, renames, renameOnPath)
+          case at: ArrayType  => getStructInArray(at.elementType).fold(renames) { item =>
+              getRenamesRecursively(fieldFullName, fieldFullSourceName, item, renames, renameOnPath)
+            }
+          case _              => renames
         }
       }
     }
 
-    val pathTokens = path.split('.').toList
-    typeHelper(pathTokens, schema, None)
-  }
+    @tailrec
+    def getStructInArray(dataType: DataType): Option[StructType] = {
+      dataType match {
+        case st: StructType => Option(st)
+        case at: ArrayType => getStructInArray(at.elementType)
+        case _ => None
+      }
+    }
 
+    getRenamesRecursively("", "", schema, Map.empty, predecessorChanged = false)
+  }
 
   /**
     * Get first array column's path out of complete path.
@@ -111,6 +170,7 @@ object SchemaUtils {
     * @return The path of the first array field or "" if none were found
     */
   def getFirstArrayPath(path: String, schema: StructType): String = {
+    @tailrec
     def helper(remPath: Seq[String], pathAcc: Seq[String]): Seq[String] = {
       if (remPath.isEmpty) Seq() else {
         val currPath = (pathAcc :+ remPath.head).mkString(".")
@@ -131,7 +191,7 @@ object SchemaUtils {
     * Get paths for all array subfields of this given datatype
     */
   def getAllArraySubPaths(path: String, name: String, dt: DataType): Seq[String] = {
-    val currPath = (if (path.isEmpty) name else if (name.isEmpty()) path else s"$path.${name}")
+    val currPath = appendPath(path, name)
     dt match {
       case s: StructType => s.fields.flatMap(f => getAllArraySubPaths(currPath, f.name, f.dataType))
       case a@ArrayType(elType, nullable) => getAllArraySubPaths(path, name, elType) :+ currPath
@@ -149,6 +209,7 @@ object SchemaUtils {
     * @return Seq of dot-separated paths for all array fields in the provided path
     */
   def getAllArraysInPath(path: String, schema: StructType): Seq[String] = {
+    @tailrec
     def helper(remPath: Seq[String], pathAcc: Seq[String], arrayAcc: Seq[String]): Seq[String] = {
       if (remPath.isEmpty) arrayAcc else {
         val currPath = (pathAcc :+ remPath.head).mkString(".")
@@ -253,8 +314,14 @@ object SchemaUtils {
     * @param fieldName Name of the field to be appended to the path
     * @return The path with the new field appended or the field itself if path is empty
     */
-  private[enceladus] def appendPath(path: String, fieldName: String) = {
-    if (path.isEmpty) fieldName else s"$path.$fieldName"
+  def appendPath(path: String, fieldName: String): String = {
+    if (path.isEmpty) {
+      fieldName
+    } else if (fieldName.isEmpty) {
+      path
+    } else {
+      s"$path.${fieldName}"
+    }
   }
 
   /**
@@ -363,6 +430,7 @@ object SchemaUtils {
     * @return true if the specified field is an array
     */
   def isArray(schema: StructType, fieldPathName: String): Boolean = {
+    @tailrec
     def arrayHelper(arrayField: ArrayType, path: Seq[String]): Boolean = {
       val currentField = path.head
       val isLeaf = path.lengthCompare(1) <= 0
@@ -477,13 +545,23 @@ object SchemaUtils {
                   s"Primitive fields cannot have child fields $currentField is a primitive in $column")
             }
           }
-
         }
       )
       isOnlyField
     }
     val path = column.split('.')
     structHelper(schema, path)
+  }
+
+  /**
+    * Converts a fully qualified field name (including its path, e.g. containing fields) to a unique field name without
+    * dot notation
+    * @param path  the fully qualified field name
+    * @return      unique top level field name
+    */
+  def unpath(path: String): String = {
+    path.replace("_", "__")
+        .replace('.', '_')
   }
 
 }

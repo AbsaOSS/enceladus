@@ -48,8 +48,9 @@ class RestClient {
   }
 
   static put(url, data) {
-    const jqXHR = $.put({
+    const jqXHR = $.ajax({
       url: url,
+      type: "PUT",
       data: JSON.stringify(data),
       contentType: "application/json",
       headers: {
@@ -60,8 +61,9 @@ class RestClient {
   }
 
   static delete(url) {
-    const jqXHR = $.delete({
+    const jqXHR = $.ajax({
       url: url,
+      type: "DELETE",
       headers: {
         "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
       }
@@ -107,6 +109,10 @@ class RestDAO {
     return RestClient.get(`api/${this.entityType}/allVersions/${encodeURI(name)}`)
   }
 
+  getLatestVersionByName(name) {
+    return RestClient.get(`api/${this.entityType}/detail/${encodeURI(name)}/latestVersion`)
+  }
+
   getLatestByName(name) {
     return RestClient.get(`api/${this.entityType}/detail/${encodeURI(name)}/latest`)
   }
@@ -128,7 +134,7 @@ class RestDAO {
   }
 
   update(entity) {
-    return RestClient.post(`api/${this.entityType}/edit`, entity)
+    return RestClient.put(`api/${this.entityType}/edit`, entity)
   }
 
   disable(name, version) {
@@ -137,7 +143,7 @@ class RestDAO {
       url += `/${encodeURI(version)}`
     }
 
-    return RestClient.get(url)
+    return RestClient.delete(url)
   }
 
 }

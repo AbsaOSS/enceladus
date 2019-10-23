@@ -22,7 +22,7 @@ import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
-import za.co.absa.enceladus.utils.types.{Defaults, TypedStructField}
+import za.co.absa.enceladus.utils.types.TypedStructField
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate._
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase

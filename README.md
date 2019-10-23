@@ -71,7 +71,7 @@ Simply copy the **menas.war** file produced when building the project into Tomca
 - Configure `spring.resources.cache.cachecontrol.max-age` in `application.properties` of Menas for caching of static resources
 
 #### Standardization and Conformance requirements:
-- [**Spark 2.4.3 (Scala 2.11)** installation](https://spark.apache.org/downloads.html)
+- [**Spark 2.4.4 (Scala 2.11)** installation](https://spark.apache.org/downloads.html)
 - [**Hadoop 2.7** installation](https://hadoop.apache.org/releases.html)
 - **Menas** running instance
 - **Menas Credentials File** in your home directory or on HDFS (a configuration file for authenticating the Spark jobs with Menas) 
@@ -178,8 +178,13 @@ The list of options for configuring Spark deployment mode in Yarn and resource s
 | --deploy-mode **cluster/client**  | Specifies a Spark Application deployment mode when Spark runs on Yarn. Can be either `client` or `cluster`. |
 | --num-executors **n**      | Specifies the number of executors to use. |
 | --executor-memory **mem**  | Specifies an amount of memory to request for each executor. See memory specification syntax in Spark. Examples: `4g`, `8g`. |
+| --executor-cores **mem**   | Specifies a number of cores to request for each executor (default=1). |
 | --driver-cores **n**       | Specifies a number of CPU cores to allocate for the driver process. |
 | --driver-memory **mem**    | Specifies an amount of memory to request for the driver process. See memory specification syntax in Spark. Examples: `4g`, `8g`. |
+| --persist-storage-level **level** | **Advanced** Specifies the storage level to use for persisting intermediate results. Can be one of `NONE`, `DISK_ONLY`, `MEMORY_ONLY`, `MEMORY_ONLY_SER`, `MEMORY_AND_DISK` (default), `MEMORY_AND_DISK_SER`, etc. See more [here](https://spark.apache.org/docs/2.4.4/api/java/index.html?org/apache/spark/storage/StorageLevel.html). |
+| --conf-spark-executor-memoryOverhead **mem** | **Adnavced**. The amount of off-heap memory to be allocated per executor, in MiB unless otherwise specified. Sets `spark.executor.memoryOverhead` Spark configuration parameter. See the detailed description [here](http://spark.apache.org/docs/latest/configuration.html#available-properties). See memory specification syntax in Spark. Examples: `4g`, `8g`. |
+| --conf-spark-memory-fraction **value** | **Adnavced**. Fraction of (heap space - 300MB) used for execution and storage (default=`0.6`). Sets `spark.memory.fraction` Spark configuration parameter. See the detailed description [here](http://spark.apache.org/docs/latest/configuration.html#memory-management). |
+
 
 For more information on these options see the official documentation on running Spark on Yarn: 
 [https://spark.apache.org/docs/latest/running-on-yarn.html](https://spark.apache.org/docs/latest/running-on-yarn.html)

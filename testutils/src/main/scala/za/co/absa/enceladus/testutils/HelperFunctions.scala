@@ -25,6 +25,7 @@ import org.apache.spark.sql.{Column, DataFrame}
 import scala.collection.mutable
 
 object HelperFunctions {
+  // scalastyle:off method.length  - nested functions, tightly coupled
   /**
     * Taken from AbsaOSS/Cobrix project spark-cobol utils
     * @see https://github.com/AbsaOSS/cobrix
@@ -125,6 +126,7 @@ object HelperFunctions {
     logger.info(stringFields.mkString("Flattening code: \n.select(\n", ",\n", "\n)"))
     fields.toList
   }
+  // scalastyle:on method.length
 
   def flattenDataFrame(df: DataFrame): DataFrame = {
     val flatteningFormula: List[Column] = flattenSchema(df)

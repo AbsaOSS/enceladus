@@ -37,8 +37,11 @@ sap.ui.define([
       });
 
       ConfigRestClient.getEnvironmentName()
-        .then( sEnvironmentName => sap.ui.getCore().getModel().setProperty("/menasEnvironment", sEnvironmentName) )
-        .fail(console.log("Failed to get Environment name"));
+        .then( sEnvironmentName => {
+          sap.ui.getCore().getModel().setProperty("/menasEnvironment", sEnvironmentName);
+          document.title = `Menas ${sEnvironmentName}`;
+        })
+        .fail( () => console.log("Failed to get Environment name"));
     },
 
     tileNumberFormatter: function(nNum) {
