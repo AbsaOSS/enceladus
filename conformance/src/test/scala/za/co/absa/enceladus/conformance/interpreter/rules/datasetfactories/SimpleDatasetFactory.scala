@@ -52,10 +52,10 @@ class SimpleDatasetFactory(implicit spark: SparkSession) {
     """{ "id": 5, "int_num": 3, "long_num": 3, "str_val": "10000" }"""
   )
 
-  private val emptyMT = MappingTable(name = "empty_mapping_table", version = 1, hdfsPath = "src/test/testData",
+  private val emptyMT = MappingTable(name = "empty_mapping_table", version = 1, hdfsPath = "src/test/testData/emptyMT",
     schemaName = "country", schemaVersion = 0)
 
-  private val nonExistentMT = MappingTable(name = "non_mapping_table", version = 1, hdfsPath = "src/test/testData/aaa",
+  private val nonExistentMT = MappingTable(name = "non_mapping_table", version = 1, hdfsPath = "src/test/testData/nonExistentMT",
     schemaName = "country", schemaVersion = 0)
 
   private val exampleDataset = Dataset(name = "Example",
@@ -130,9 +130,9 @@ class SimpleDatasetFactory(implicit spark: SparkSession) {
     deleteEmptyMappingTable()
   }
 
-  private def createEmptyMappingTable(): Unit = fs.mkdirs(new Path(s"src/test/testData/reportDate=$reportDate"))
+  private def createEmptyMappingTable(): Unit = fs.mkdirs(new Path(s"${emptyMT.hdfsPath}/reportDate=$reportDate"))
 
-  private def deleteEmptyMappingTable(): Unit = fs.delete(new Path(s"src/test/testData/reportDate=$reportDate"), true)
+  private def deleteEmptyMappingTable(): Unit = fs.delete(new Path(s"${emptyMT.hdfsPath}/reportDate=$reportDate"), true)
 
   /**
     * Arranges conformance rules according to the order they are provided in the argument list.
