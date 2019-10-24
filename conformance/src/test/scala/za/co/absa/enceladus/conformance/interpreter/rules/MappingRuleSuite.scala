@@ -22,9 +22,6 @@ import za.co.absa.enceladus.conformance.interpreter.rules.datasetfactories.Simpl
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class MappingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll {
-  private val ruleName = "Mapping rule"
-  private val columnName = "dummy"
-
   private val exampleFactory = new SimpleDatasetFactory()
 
   override def beforeAll(): Unit = {
@@ -37,26 +34,48 @@ class MappingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase w
     super.afterAll()
   }
 
-  test("Test empty mapping table error handling in a mapping rule") {
+  test("Test non-existent mapping table directory handling in a mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      exampleFactory.createExample(true, exampleFactory.emptyTableMappingRule)
+      exampleFactory.createExample(true, exampleFactory.nonExistentTableMappingRule)
 
     val ex = intercept[AnalysisException] {
       DynamicInterpreter.interpret(dataset, inputDf).cache
     }
 
-    assert(ex.getMessage().contains("Unable to infer schema for Parquet"))
+    assert(ex.getMessage.contains("Path does not exist"))
+  }
+
+  test("Test non-existent mapping table directory handling in an experimental mapping rule") {
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      exampleFactory.createExample(false, exampleFactory.nonExistentTableMappingRule)
+
+    val ex = intercept[AnalysisException] {
+      DynamicInterpreter.interpret(dataset, inputDf).cache
+    }
+
+    assert(ex.getMessage.contains("Path does not exist"))
+  }
+
+  test("Test empty mapping table error handling in a mapping rule") {
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      exampleFactory.createExample(true, exampleFactory.emptyTableMappingRule)
+
+    val ex = intercept[RuntimeException] {
+      DynamicInterpreter.interpret(dataset, inputDf).cache
+    }
+
+    assert(ex.getMessage.contains("Unable to read the mapping table"))
   }
 
   test("Test empty mapping table error handling in an experimental mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       exampleFactory.createExample(false, exampleFactory.emptyTableMappingRule)
 
-    val ex = intercept[AnalysisException] {
+    val ex = intercept[RuntimeException] {
       DynamicInterpreter.interpret(dataset, inputDf).cache
     }
 
-    assert(ex.getMessage().contains("Unable to infer schema for Parquet"))
+    assert(ex.getMessage.contains("Unable to read the mapping table"))
   }
 
 }

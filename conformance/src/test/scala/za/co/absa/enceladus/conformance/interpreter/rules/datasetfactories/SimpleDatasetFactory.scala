@@ -55,6 +55,9 @@ class SimpleDatasetFactory(implicit spark: SparkSession) {
   private val emptyMT = MappingTable(name = "empty_mapping_table", version = 1, hdfsPath = "src/test/testData",
     schemaName = "country", schemaVersion = 0)
 
+  private val nonExistentMT = MappingTable(name = "non_mapping_table", version = 1, hdfsPath = "src/test/testData/aaa",
+    schemaName = "country", schemaVersion = 0)
+
   private val exampleDataset = Dataset(name = "Example",
     version = 1,
     hdfsPath = "src/test/testData/example",
@@ -64,11 +67,23 @@ class SimpleDatasetFactory(implicit spark: SparkSession) {
     conformance = Nil)
 
   // These are conformance rules available for this example.
-  // Currently, only 1 mapping rule is available. But the intent is to extend available conformance rules.
+  // Currently, only 2 mapping rules are available.
+  // * A mapping rule that points to an empty directory.
+  // * A mapping rule that points to a path that does not exists.
+  // But the intent is to extend available conformance rules.
   val emptyTableMappingRule = MappingConformanceRule(order = 1,
     outputColumn = "conformedIntNum",
     controlCheckpoint = false,
     mappingTable = "empty_mapping_table",
+    mappingTableVersion = 1,
+    attributeMappings = Map[String, String](),
+    targetAttribute = "targetNum",
+    isNullSafe = false)
+
+  val nonExistentTableMappingRule = MappingConformanceRule(order = 1,
+    outputColumn = "conformedIntNum",
+    controlCheckpoint = false,
+    mappingTable = "non_existent_mapping_table",
     mappingTableVersion = 1,
     attributeMappings = Map[String, String](),
     targetAttribute = "targetNum",
@@ -91,6 +106,7 @@ class SimpleDatasetFactory(implicit spark: SparkSession) {
     val dao: MenasDAO = mock(classOf[MenasDAO])
     mockWhen(dao.getDataset("Example", 1)) thenReturn exampleDataset
     mockWhen(dao.getMappingTable("empty_mapping_table", 1)) thenReturn emptyMT
+    mockWhen(dao.getMappingTable("non_existent_mapping_table", 1)) thenReturn nonExistentMT
 
     val featureSwitches: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(experimentalMappingRule)
