@@ -124,9 +124,13 @@ za.co.absa.enceladus.menas.oozie.splineMongoURL=mongodb://localhost:27017
 #This seems to depend of the version of oozie
 #za.co.absa.enceladus.menas.oozie.sparkConf.surroundingQuoteChar="
 
-#Configure the following two parameters to use oozie impersonation
+#Configure the following three parameters to use oozie impersonation
 #za.co.absa.enceladus.menas.oozie.proxyUser=oozieProxyUser
+#za.co.absa.enceladus.menas.oozie.proxyGroup=oozieProxyGroup
 #za.co.absa.enceladus.menas.oozie.proxyUserKeytab=/path/to/keytab
+
+#The following property allows customization of the error message presented to the user if they're missing the impersonation group
+#za.co.absa.enceladus.menas.oozie.customImpersonationExceptionMessage="Please add the system user into the '${za.co.absa.enceladus.menas.oozie.proxyGroup}' group to use this feature."
 
 #Provide optional spark config options to be passed onto standardization and conformance jobs
 #za.co.absa.enceladus.menas.oozie.extraSparkConfigs={"spark.eventLog.dir" : "hdfs:///spark2-history/", \
