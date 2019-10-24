@@ -188,9 +188,14 @@ class EntityService {
       this.publishUpdatedEvent(oData);
       sap.m.MessageToast.show(this.messageProvider.entityUpdated());
       return oData;
-    }).fail(() => {
+    }).fail((err) => {
       this.publishUpdateFailedEvent();
-      sap.m.MessageBox.error(this.messageProvider.failedToUpdateEntity())
+      try {
+        const errParsed = JSON.parse(err.responseText);
+        sap.m.MessageBox.error(`${errParsed.message}\nError id: ${errParsed.id}`);
+      } catch(e) {
+        sap.m.MessageBox.error(this.messageProvider.failedToUpdateEntity())
+      }
     })
   }
 
