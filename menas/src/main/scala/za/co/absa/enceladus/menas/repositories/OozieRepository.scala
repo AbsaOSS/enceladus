@@ -116,7 +116,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   @Value("${za.co.absa.enceladus.menas.auth.kerberos.krb5conf:}")
   val krb5conf: String = ""
 
-  @Value("#{${za.co.absa.enceladus.menas.oozie.extraSparkConfigs}}")
+  @Value("#{${za.co.absa.enceladus.menas.oozie.extraSparkConfigs:{'spark.ui.enabled': 'true'}}}")
   val sparkExtraConfigs: JavaMap[String, String] = new HashMap[String, String]()
 
   private val classLoader = Thread.currentThread().getContextClassLoader

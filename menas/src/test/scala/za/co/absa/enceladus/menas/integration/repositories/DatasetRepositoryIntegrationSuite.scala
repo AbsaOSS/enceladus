@@ -27,6 +27,9 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConfo
 import za.co.absa.enceladus.model.test.factories.DatasetFactory
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
+import za.co.absa.enceladus.model.menas.scheduler.ScheduleTiming
+import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
+import za.co.absa.enceladus.model.menas.scheduler.dataFormats.ParquetDataFormat
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -592,16 +595,19 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
     }
     "return datasets witch matching coordinator ID" when {
       "such datasets exist" in {
-        val schedule = OozieSchedule(scheduleTiming = null, runtimeParams = null, datasetVersion = 0,
-            mappingTablePattern = None, rawFormat = null, activeInstance = Some(OozieScheduleInstance("/abc", "/def", "SomeCoordId")))
-        val ds = DatasetFactory.getDummyDataset().copy(schedule = Some(schedule))
+        val schedule = OozieSchedule(scheduleTiming = ScheduleTiming(Seq(), Seq(), Seq(), Seq(), Seq()), 
+            runtimeParams = RuntimeConfig(sysUser = "user", menasKeytabFile = "/a/b/c"), datasetVersion = 0,
+            mappingTablePattern = None, rawFormat = ParquetDataFormat(), 
+            activeInstance = Some(OozieScheduleInstance("/abc", "/def", "SomeCoordId")))
+        val ds1 = DatasetFactory.getDummyDataset().copy(name = "ds1", schedule = Some(schedule))
+        val ds2 = DatasetFactory.getDummyDataset().copy(name = "ds2", schedule = Some(schedule))
 
         assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")).size == 0)
 
-        datasetFixture.add(ds)
+        datasetFixture.add(ds1)
         assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")).size == 1)
 
-        datasetFixture.add(ds)
+        datasetFixture.add(ds2)
         assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")).size == 2)
       }
     }
