@@ -59,16 +59,17 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
         coordPath <- oozieRepository.createCoordinator(newDataset, wfPath)
         coordId <- latest.schedule match {
           case Some(sched) => sched.activeInstance match {
-              case Some(instance) => 
-                //Note: use the old schedule's runtime params for the kill - we need to impersonate the right user (it might have been updated)
-                oozieRepository.killCoordinator(instance.coordinatorId, sched.runtimeParams).flatMap({ res =>
+            case Some(instance) =>
+              //Note: use the old schedule's runtime params for the kill - we need to impersonate the right user (it might have been updated)
+              oozieRepository.killCoordinator(instance.coordinatorId, sched.runtimeParams).flatMap({ res =>
                 oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
-              }).recoverWith({case ex => 
-                logger.warn("First attempt to kill previous coordinator failed, submitting a new one.")
-                oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
+              }).recoverWith({
+                case ex =>
+                  logger.warn("First attempt to kill previous coordinator failed, submitting a new one.")
+                  oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
               })
-              case None => oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
-            }
+            case None => oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
+          }
           case None => oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
         }
       } yield OozieScheduleInstance(wfPath, coordPath, coordId)
