@@ -53,7 +53,7 @@ object DataSource {
       val subPath = MessageFormat.format(partitioningPattern, reportYear, reportMonth, reportDay)
       val fillPath = if (subPath.isEmpty) new Path(path).toUri.toString else new Path(path, subPath).toUri.toString
       log.info(s"Mapping table used: $fillPath")
-      val df = loadMappingTable(path)
+      val df = loadMappingTable(fillPath)
       dfs += (path -> df)
       df
     }
