@@ -130,4 +130,4 @@ za.co.absa.enceladus.menas.oozie.splineMongoURL=mongodb://localhost:27017
 
 #Provide optional spark config options to be passed onto standardization and conformance jobs
 #za.co.absa.enceladus.menas.oozie.extraSparkConfigs={"spark.eventLog.dir" : "hdfs:///spark2-history/", \
-"spark.history.fs.logDirectory": "hdfs:///spark2-history" }
+#"spark.history.fs.logDirectory": "hdfs:///spark2-history" }
