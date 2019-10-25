@@ -17,6 +17,7 @@ package za.co.absa.enceladus.utils.fs
 
 import java.io.File
 import java.net.ConnectException
+import java.nio.file.Files
 
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
@@ -69,6 +70,17 @@ class FileSystemVersionUtils(conf: Configuration) {
         fs.mkdirs(p)
       }
     })
+  }
+
+  /**
+    * Creates a temporary directory in the local filesystem.
+    *
+    * @param prefix A prefix to use for the temporary directory.
+    * @return A path to a temporary directory.
+    */
+  def getLocalTemporaryDirectory(prefix: String): String = {
+    val tmpPath = Files.createTempDirectory(prefix)
+    tmpPath.toAbsolutePath.toString
   }
 
   /**
