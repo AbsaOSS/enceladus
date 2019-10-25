@@ -18,25 +18,26 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql.AnalysisException
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
-import za.co.absa.enceladus.conformance.interpreter.rules.datasetfactories.SimpleDatasetFactory
+import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory
+import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class MappingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll {
-  private val exampleFactory = new SimpleDatasetFactory()
+  private val testCaseFactory = new SimpleTestCaseFactory()
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    exampleFactory.createMappingTables()
+    testCaseFactory.createMappingTables()
   }
 
   override def afterAll(): Unit = {
-    exampleFactory.deleteMappingTables()
+    testCaseFactory.deleteMappingTables()
     super.afterAll()
   }
 
   test("Test non-existent mapping table directory handling in a mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      exampleFactory.createExample(true, exampleFactory.nonExistentTableMappingRule)
+      testCaseFactory.getTestCase(true, nonExistentTableMappingRule)
 
     val ex = intercept[AnalysisException] {
       DynamicInterpreter.interpret(dataset, inputDf).cache
@@ -47,7 +48,7 @@ class MappingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase w
 
   test("Test non-existent mapping table directory handling in an experimental mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      exampleFactory.createExample(false, exampleFactory.nonExistentTableMappingRule)
+      testCaseFactory.getTestCase(false, nonExistentTableMappingRule)
 
     val ex = intercept[AnalysisException] {
       DynamicInterpreter.interpret(dataset, inputDf).cache
@@ -58,7 +59,7 @@ class MappingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase w
 
   test("Test empty mapping table error handling in a mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      exampleFactory.createExample(true, exampleFactory.emptyTableMappingRule)
+      testCaseFactory.getTestCase(true, emptyTableMappingRule)
 
     val ex = intercept[RuntimeException] {
       DynamicInterpreter.interpret(dataset, inputDf).cache
@@ -69,7 +70,7 @@ class MappingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase w
 
   test("Test empty mapping table error handling in an experimental mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      exampleFactory.createExample(false, exampleFactory.emptyTableMappingRule)
+      testCaseFactory.getTestCase(false, emptyTableMappingRule)
 
     val ex = intercept[RuntimeException] {
       DynamicInterpreter.interpret(dataset, inputDf).cache
