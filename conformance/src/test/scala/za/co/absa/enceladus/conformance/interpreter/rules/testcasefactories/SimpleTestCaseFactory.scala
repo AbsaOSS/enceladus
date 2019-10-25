@@ -29,6 +29,11 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 
 object SimpleTestCaseFactory {
+  private val reportDate = "2017-11-01"
+  private val testCaseName = "SimpleTestCase"
+  private val emptyMappingTableName = "empty_mapping_table"
+  private val nonExistentMappingTableName = "non_existent_mapping_table"
+
   // These are conformance rules available for this example.
   // Currently, only 2 mapping rules are available.
   // * A mapping rule that points to an empty directory.
@@ -37,27 +42,25 @@ object SimpleTestCaseFactory {
   val emptyTableMappingRule: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "conformedIntNum",
     controlCheckpoint = false,
-    mappingTable = "empty_mapping_table",
+    mappingTable = emptyMappingTableName,
     attributeMappings = Map[String, String](),
     targetAttribute = "targetNum")
 
   val nonExistentTableMappingRule: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "conformedIntNum",
     controlCheckpoint = false,
-    mappingTable = "non_existent_mapping_table",
+    mappingTable = nonExistentMappingTableName,
     attributeMappings = Map[String, String](),
     targetAttribute = "targetNum")
 
-  private val reportDate: String = "2017-11-01"
-
-  private val emptyMT = MappingTableFactory.getDummyMappingTable(name = "empty_mapping_table",
+  private val emptyMT = MappingTableFactory.getDummyMappingTable(name = emptyMappingTableName,
     hdfsPath = "src/test/testData/emptyMT")
 
-  private val nonExistentMT = MappingTableFactory.getDummyMappingTable(name = "non_mapping_table",
+  private val nonExistentMT = MappingTableFactory.getDummyMappingTable(name = nonExistentMappingTableName,
     hdfsPath = "src/test/testData/nonExistentMT")
 
-  private val testCaseDataset = DatasetFactory.getDummyDataset(name = "Example",
-    schemaName = "Example",
+  private val testCaseDataset = DatasetFactory.getDummyDataset(name = testCaseName,
+    schemaName = testCaseName,
     conformance = Nil)
 
   private val testCaseSchema = StructType(
@@ -103,12 +106,12 @@ class SimpleTestCaseFactory(implicit spark: SparkSession) {
     import spark.implicits._
     val inputDf = spark.read.schema(testCaseSchema).json(testCaseDataJson.toDS)
     val dataset = getDataSetWithConformanceRules(testCaseDataset, conformanceRules: _*)
-    val cmdConfig: CmdConfig = CmdConfig(reportDate = reportDate)
+    val cmdConfig  = CmdConfig(reportDate = reportDate)
 
-    val dao: MenasDAO = mock(classOf[MenasDAO])
-    mockWhen(dao.getDataset("Example", 1)) thenReturn testCaseDataset
-    mockWhen(dao.getMappingTable("empty_mapping_table", 1)) thenReturn fixPathsInMappingTable(emptyMT)
-    mockWhen(dao.getMappingTable("non_existent_mapping_table", 1)) thenReturn fixPathsInMappingTable(nonExistentMT)
+    val dao = mock(classOf[MenasDAO])
+    mockWhen(dao.getDataset(testCaseName, 1)) thenReturn testCaseDataset
+    mockWhen(dao.getMappingTable(emptyMappingTableName, 1)) thenReturn fixPathsInMappingTable(emptyMT)
+    mockWhen(dao.getMappingTable(nonExistentMappingTableName, 1)) thenReturn fixPathsInMappingTable(nonExistentMT)
 
     val featureSwitches: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(experimentalMappingRule)
