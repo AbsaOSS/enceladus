@@ -246,9 +246,9 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       val realm = Krb5Config.getInstance.getDefaultRealm
       logger.info(s"impersonateWrapper Using realm ${realm}")
 
-      val sname = PrincipalName.tgsService(realm, realm)
-      logger.info(s"impersonateWrapper Target ${sname}")
-      builder.setTarget(sname)
+      val serviceName = PrincipalName.tgsService(realm, realm)
+      logger.info(s"impersonateWrapper Target ${serviceName}")
+      builder.setTarget(serviceName)
 
       logger.info(s"impersonateWrapper Logging in")
       builder.action()

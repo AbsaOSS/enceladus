@@ -75,14 +75,14 @@ class RestExceptionHandler {
   }
 
   @ExceptionHandler(Array(classOf[OozieActionException]))
-  def handleOozieActionException(ex: OozieActionException): ResponseEntity[Object] = {
+  def handleOozieActionException(ex: OozieActionException): ResponseEntity[RestError] = {
     val err = RestError(ex.getMessage)
     logger.error(s"Exception: $err", ex)
     new ResponseEntity(err, HttpStatus.INTERNAL_SERVER_ERROR)
   }
 
   @ExceptionHandler(Array(classOf[OozieClientException]))
-  def handleOozieClientException(ex: OozieClientException): ResponseEntity[Object] = {
+  def handleOozieClientException(ex: OozieClientException): ResponseEntity[RestError] = {
     val err = if (ex.getMessage.toLowerCase.contains("unauthorized proxyuser")) {
       val message = if (oozieImpersonationExceptionMessage.nonEmpty) oozieImpersonationExceptionMessage else
         s"Please add the system user into ${oozieProxyGroup} group to use this feature."

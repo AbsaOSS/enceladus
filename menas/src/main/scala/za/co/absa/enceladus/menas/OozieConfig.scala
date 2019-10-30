@@ -42,7 +42,7 @@ class OozieConfig {
 
   @Bean
   def oozieClient: Either[OozieConfigurationException, OozieClient] = {
-    val clientTry = Try {
+    Try {
       if(oozieProxyUser.nonEmpty && oozieProxyUserKeytab.nonEmpty) {
         logger.info("Both oozie proxy user and proxy keytab provided, initializing the AuthOozieClient.")
         new AuthOozieClient(oozieUrl, AuthType.KERBEROS.toString)
@@ -50,8 +50,7 @@ class OozieConfig {
         logger.info("Missing proxyUser and/or proxyUserKeytab configs, initializing normal OozieClient")
         new OozieClient(oozieUrl)
       }
-    }
-    clientTry match {
+    } match {
       case Success(client) => Right(client)
       case Failure(e) => Left(OozieConfigurationException(e.getMessage, e))
     }
