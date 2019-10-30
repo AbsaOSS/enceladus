@@ -39,7 +39,7 @@ object AuthClient {
 
   private def createSpnegoAuthClient(apiBaseUrl: String, credentials: MenasKerberosCredentials): SpnegoAuthClient = {
     val restTemplate = new KerberosRestTemplate(credentials.keytabLocation, credentials.username)
-
+    restTemplate.setErrorHandler(NoOpErrorHandler)
     new SpnegoAuthClient(credentials.username, credentials.keytabLocation, restTemplate, s"$apiBaseUrl/user/info")
   }
 }
