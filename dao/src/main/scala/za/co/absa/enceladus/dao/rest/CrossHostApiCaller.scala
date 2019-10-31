@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.dao.rest
 
+import org.apache.commons.lang.exception.ExceptionUtils
+import org.slf4j.LoggerFactory
 import org.springframework.web.client.ResourceAccessException
 import za.co.absa.enceladus.dao.{DaoException, RetryableException}
 
@@ -29,6 +31,7 @@ protected object CrossHostApiCaller {
 }
 
 protected class CrossHostApiCaller(apiBaseUrls: List[String], var currentHostIndex: Int) extends ApiCaller {
+  private val logger  = LoggerFactory.getLogger(this.getClass)
 
   private val maxAttempts = apiBaseUrls.size - 1
 
@@ -36,13 +39,18 @@ protected class CrossHostApiCaller(apiBaseUrls: List[String], var currentHostInd
 
     def attempt(index: Int, attemptCount: Int = 0): Try[T] = {
       currentHostIndex = index
-      val nextIndex = (index + 1) % apiBaseUrls.size
+      val currentBaseUrl = apiBaseUrls(index)
       Try {
-        fn(apiBaseUrls(index))
+        fn(currentBaseUrl)
       }.recoverWith {
         case e: ResourceAccessException => Failure(DaoException("Server non-responsive", e))
       }.recoverWith {
-        case _: RetryableException if attemptCount < maxAttempts => attempt(nextIndex, attemptCount + 1)
+        case e: RetryableException if attemptCount < maxAttempts =>
+          val nextIndex = (index + 1) % apiBaseUrls.size
+          val nextBaseUrl = apiBaseUrls(nextIndex)
+          val rootCause = ExceptionUtils.getRootCauseMessage(e)
+          logger.warn(s"Request failed on host $currentBaseUrl, switching host to $nextBaseUrl - $rootCause")
+          attempt(nextIndex, attemptCount + 1)
       }
     }
 
