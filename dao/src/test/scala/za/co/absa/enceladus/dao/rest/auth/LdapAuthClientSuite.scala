@@ -13,27 +13,32 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao.auth
+package za.co.absa.enceladus.dao.rest.auth
 
 import org.mockito.Mockito
 import org.mockito.stubbing.OngoingStubbing
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.util.LinkedMultiValueMap
-import za.co.absa.enceladus.dao.{AuthClient, SpnegoAuthClient}
+import za.co.absa.enceladus.dao.rest.{AuthClient, LdapAuthClient}
 
-class SpnegoAuthClientSuite extends AuthClientSuite {
+class LdapAuthClientSuite extends AuthClientSuite {
+  private val password = "password"
 
-  override val authClient: AuthClient = new SpnegoAuthClient(username, "user.keytab", restTemplate, url)
+  private val requestParts = new LinkedMultiValueMap[String, String]
+  requestParts.add("username", username)
+  requestParts.add("password", password)
+
+  override val authClient: AuthClient = new LdapAuthClient(username, password, restTemplate, apiCaller)
 
   override def setUpSuccessfulAuthRequest(responseHeaders: LinkedMultiValueMap[String, String]): OngoingStubbing[ResponseEntity[String]] = {
     Mockito
-      .when(restTemplate.getForEntity(url, classOf[String]))
+      .when(restTemplate.postForEntity(s"$baseUrl/api/login", requestParts, classOf[String]))
       .thenReturn(new ResponseEntity[String](responseHeaders, HttpStatus.OK))
   }
 
   override def setUpUnsuccessfulAuthRequest(): OngoingStubbing[ResponseEntity[String]] = {
     Mockito
-      .when(restTemplate.getForEntity(url, classOf[String]))
+      .when(restTemplate.postForEntity(s"$baseUrl/api/login", requestParts, classOf[String]))
       .thenReturn(new ResponseEntity[String](HttpStatus.FORBIDDEN))
   }
 

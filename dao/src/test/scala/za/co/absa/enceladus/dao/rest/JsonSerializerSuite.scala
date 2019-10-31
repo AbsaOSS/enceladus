@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.dao.rest
 
 import org.scalactic.{AbstractStringUniformity, Uniformity}
-import za.co.absa.enceladus.dao.JsonSerializer
 import za.co.absa.enceladus.model.test.VersionedModelMatchers
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, RunFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, Schema}
