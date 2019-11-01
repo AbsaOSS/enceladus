@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.menas.auth.kerberos
 
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.apache.log4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -29,15 +30,11 @@ import org.springframework.security.kerberos.client.config.SunJaasKrb5LoginConfi
 import org.springframework.security.kerberos.client.ldap.KerberosLdapContextSource
 import org.springframework.security.kerberos.web.authentication.SpnegoAuthenticationProcessingFilter
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider
-import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper
-import org.springframework.security.ldap.userdetails.LdapUserDetailsService
+import org.springframework.security.ldap.userdetails.{LdapUserDetailsMapper, LdapUserDetailsService}
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
 import org.springframework.stereotype.Component
-
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 import za.co.absa.enceladus.menas.auth.MenasAuthentication
-import MenasKerberosAuthentication._
+import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication._
 
 @Component("kerberosMenasAuthentication")
 class MenasKerberosAuthentication extends MenasAuthentication with InitializingBean {
@@ -140,7 +137,6 @@ class MenasKerberosAuthentication extends MenasAuthentication with InitializingB
     //something here changes the log level to WARN
     auth
       .authenticationProvider(new MenasKerberosAuthenticationProvider(adServer, ldapSearchFilter, ldapSearchBase))
-      .authenticationProvider(activeDirectoryLdapAuthenticationProvider())
       .authenticationProvider(kerberosServiceAuthenticationProvider())
     Logger.getRootLogger.setLevel(originalLogLevel)
   }
