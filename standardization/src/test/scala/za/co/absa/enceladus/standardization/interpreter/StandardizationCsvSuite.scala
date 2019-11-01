@@ -97,7 +97,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         ||"Text15   |Text16|Text17|1000  |2000 |
         |+----------+------+------+------+-----+
         |
-        |""".stripMargin
+        |""".stripMargin.replace("\r\n", "\n")
 
     val df = getTestDataFrame(tmpFileName, args)
 
@@ -123,7 +123,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         ||Text15�Text16�Text17�1000�2000  |null|null|null|null|
         |+--------------------------------+----+----+----+----+
         |
-        |""".stripMargin
+        |""".stripMargin.replace("\r\n", "\n")
 
     val df = getTestDataFrame(tmpFileName, args)
 
@@ -150,7 +150,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         ||Text15¡Text16¡Text17¡1000¡2000  |null|null|null|null|
         |+--------------------------------+----+----+----+----+
         |
-        |""".stripMargin
+        |""".stripMargin.replace("\r\n", "\n")
 
     val df = getTestDataFrame(tmpFileName, args)
 
@@ -178,7 +178,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         ||Text15¡Text16¡Text17¡1000¡2000|null  |null  |null  |null |
         |+------------------------------+------+------+------+-----+
         |
-        |""".stripMargin
+        |""".stripMargin.replace("\r\n", "\n")
 
     val df = getTestDataFrame(tmpFileName, args)
 
@@ -207,7 +207,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         ||"Text15   |Text16|Text17|1000  |2000 |
         |+----------+------+------+------+-----+
         |
-        |""".stripMargin
+        |""".stripMargin.replace("\r\n", "\n")
 
     val df = getTestDataFrame(tmpFileName, args, true)
 

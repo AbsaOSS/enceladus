@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao.auth
+package za.co.absa.enceladus.dao.rest.auth
 
 import org.mockito.stubbing.OngoingStubbing
 import org.scalatest.mockito.MockitoSugar
@@ -21,7 +21,8 @@ import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
 import org.springframework.http.{HttpHeaders, ResponseEntity}
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
-import za.co.absa.enceladus.dao.{AuthClient, UnauthorizedException}
+import za.co.absa.enceladus.dao.UnauthorizedException
+import za.co.absa.enceladus.dao.rest.{ApiCaller, ApiCallerStub, AuthClient}
 
 abstract class AuthClientSuite() extends WordSpec
   with Matchers
@@ -30,7 +31,8 @@ abstract class AuthClientSuite() extends WordSpec
 
   protected val username: String = "user"
   protected val restTemplate: RestTemplate = mock[RestTemplate]
-  protected val url: String = "http://localhost:8080/menas/api"
+  protected val baseUrl: String = "http://localhost:8080/menas"
+  protected val apiCaller: ApiCaller = new ApiCallerStub(baseUrl)
 
   val authClient: AuthClient
 

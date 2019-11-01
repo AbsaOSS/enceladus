@@ -13,14 +13,15 @@
 
 enceladus.version=${project.version}
 
-menas.rest.uri="http://localhost:8080/menas/api"
+# The Menas URI can specify multiple semi-colon-separated base URIs
+# each can have multiple comma-separated hosts, these are used for fault-tolerance
+menas.rest.uri="http://localhost:8080,host2:9000/menas;https://localhost:8080,host2:9000/menas"
 
 standardized.hdfs.path="/tmp/conformance-output/standardized-{0}-{1}-{2}-{3}"
 
-#system-wide time zone
+# system-wide time zone
 timezone="UTC"
-#time zone used for timestamp fields standardization if none specified in the schema
-#defaultTimestampTimeZone="Africa/Johannesburg"
-#time zone used for date fields standardization if none specified in the schema; recommended not to define
-#defaultDateTimeZone="UTC"
-
+# time zone used for timestamp fields standardization if none specified in the schema
+# defaultTimestampTimeZone="Africa/Johannesburg"
+# time zone used for date fields standardization if none specified in the schema; recommended not to define
+# defaultDateTimeZone="UTC"

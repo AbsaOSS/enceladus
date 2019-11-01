@@ -19,13 +19,14 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.menas.integration.fixtures.{AttachmentFixtureService, FixtureService, SchemaFixtureService}
+import za.co.absa.enceladus.menas.integration.fixtures._
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.models.rest.RestResponse
 import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.menas.repositories.RefCollection
-import za.co.absa.enceladus.model.Schema
-import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, SchemaFactory}
+import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
+import za.co.absa.enceladus.model.{Schema, UsedIn}
 
 import scala.collection.immutable.HashMap
 
@@ -37,12 +38,18 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
   private val schemaFixture: SchemaFixtureService = null
 
   @Autowired
+  private val datasetFixture: DatasetFixtureService = null
+
+  @Autowired
+  private val mappingTableFixture: MappingTableFixtureService = null
+
+  @Autowired
   private val attachmentFixture: AttachmentFixtureService = null
 
   private val apiUrl = "/schema"
   private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
 
-  override def fixtures: List[FixtureService[_]] = List(schemaFixture, attachmentFixture)
+  override def fixtures: List[FixtureService[_]] = List(schemaFixture, attachmentFixture, datasetFixture, mappingTableFixture)
 
   s"POST $apiUrl/create" can {
     "return 201" when {
@@ -112,9 +119,322 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
 
           val response = sendPost[Schema, Validation](s"$apiUrl/edit", bodyOpt = Some(schema1))
           val expectedValidation = Validation().withError("version", "Version 1 of Schema is not the " +
-                                                          "latest version, therefore cannot be edited")
+            "latest version, therefore cannot be edited")
           assertBadRequest(response)
           assert(response.getBody == expectedValidation)
+        }
+      }
+    }
+  }
+
+  s"PUT $apiUrl/edit" can {
+    "return 201" when {
+      "a Schema with the given name and version is the latest that exists" should {
+        "return the updated Schema" in {
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          schemaFixture.add(schema1)
+
+          val response = sendPut[Schema, Schema](s"$apiUrl/edit", bodyOpt = Some(schema1))
+
+          assertCreated(response)
+
+          val actual = response.getBody
+          val schema2 = SchemaFactory.getDummySchema(
+            name = "schema",
+            version = 2,
+            parent = Some(SchemaFactory.toParent(schema1)))
+          val expected = toExpected(schema2, actual)
+          assert(actual == expected)
+        }
+      }
+    }
+
+    "return 400" when {
+      "a Schema with the given name and version exists" should {
+        "return the updated Schema" in {
+          val schema1 = SchemaFactory.getDummySchema(name = "Schema", version = 1)
+          schemaFixture.add(schema1)
+          val schema2 = SchemaFactory.getDummySchema(
+            name = "Schema",
+            version = 2,
+            parent = Some(SchemaFactory.toParent(schema1)))
+          schemaFixture.add(schema2)
+
+          val response = sendPut[Schema, Validation](s"$apiUrl/edit", bodyOpt = Some(schema1))
+          val expectedValidation = Validation().withError("version", "Version 1 of Schema is not the " +
+            "latest version, therefore cannot be edited")
+          assertBadRequest(response)
+          assert(response.getBody == expectedValidation)
+        }
+      }
+    }
+  }
+
+  s"DELETE $apiUrl/disable/{name}" can {
+    "return 200" when {
+      "a Schema with the given name exists" should {
+        "disable only the schema with the given name" in {
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "otherSchema", version = 1)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "multiple versions of the Schema with the given name exist" should {
+        "disable all versions of the Schema" in {
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":2,"modifiedCount":2,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "any version of the Schema is only used in disabled Datasets" should {
+        "disable all versions of the Schema" in {
+          val dataset = DatasetFactory.getDummyDataset(schemaName = "schema", schemaVersion = 1, disabled = true)
+          datasetFixture.add(dataset)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":2,"modifiedCount":2,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "any version of the Schema is only used in disabled MappingTables" should {
+        "disable all versions of the Schema" in {
+          val mappingTable = MappingTableFactory.getDummyMappingTable(schemaName = "schema", schemaVersion = 1, disabled = true)
+          mappingTableFixture.add(mappingTable)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":2,"modifiedCount":2,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "no Schema with the given name exists" should {
+        "disable nothing" in {
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":0,"modifiedCount":0,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+    }
+
+    "return 400" when {
+      "some version of the Schema is used by an enabled Dataset" should {
+        "return a list of the entities the Schema is used in" in {
+          val dataset = DatasetFactory.getDummyDataset(name = "dataset", schemaName = "schema", schemaVersion = 1, disabled = false)
+          datasetFixture.add(dataset)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema")
+
+          assertBadRequest(response)
+
+          val actual = response.getBody
+          val expected = UsedIn(Some(Seq(MenasReference(None, "dataset", 1))), Some(Seq()))
+          assert(actual == expected)
+        }
+      }
+      "some version of the Schema is used by a enabled MappingTable" should {
+        "return a list of the entities the Schema is used in" in {
+          val mappingTable = MappingTableFactory.getDummyMappingTable(name = "mapping", schemaName = "schema", schemaVersion = 1, disabled = false)
+          mappingTableFixture.add(mappingTable)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema")
+
+          assertBadRequest(response)
+
+          val actual = response.getBody
+          val expected = UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping", 1))))
+          assert(actual == expected)
+        }
+      }
+    }
+  }
+
+  s"DELETE $apiUrl/disable/{name}/{version}" can {
+    "return 200" when {
+      "a Schema with the given name and version exists" should {
+        "disable only the schema with the given name and version" in {
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "otherSchema", version = 1)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "multiple versions of the Schema with the given name exist" should {
+        "disable the specified version of the Schema" in {
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "the version of the Schema is only used in disabled Datasets" should {
+        "disable the specified version of the Schema" in {
+          val dataset = DatasetFactory.getDummyDataset(schemaName = "schema", schemaVersion = 1, disabled = true)
+          datasetFixture.add(dataset)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "the version of the Schema is not used in enabled Datasets" should {
+        "disable the specified version of the Schema" in {
+          val dataset = DatasetFactory.getDummyDataset(schemaName = "schema", schemaVersion = 1, disabled = false)
+          datasetFixture.add(dataset)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/2")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "the version of the Schema is only used in disabled MappingTables" should {
+        "disable the specified version of the Schema" in {
+          val mappingTable = MappingTableFactory.getDummyMappingTable(schemaName = "schema", schemaVersion = 1, disabled = true)
+          mappingTableFixture.add(mappingTable)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "the version of the Schema is not used in enabled MappingTables" should {
+        "disable the specified version of the Schema" in {
+          val mappingTable = MappingTableFactory.getDummyMappingTable(schemaName = "schema", schemaVersion = 1, disabled = false)
+          mappingTableFixture.add(mappingTable)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/2")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "no Schema with the given name exists" should {
+        "disable nothing" in {
+          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":0,"modifiedCount":0,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+    }
+
+    "return 400" when {
+      "the version of the Schema is used by an enabled Dataset" should {
+        "return a list of the entities the version of the Schema is used in" in {
+          val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", schemaName = "schema", schemaVersion = 1, disabled = false)
+          val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", schemaName = "schema", schemaVersion = 2, disabled = false)
+          datasetFixture.add(dataset1, dataset2)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema/1")
+
+          assertBadRequest(response)
+
+          val actual = response.getBody
+          val expected = UsedIn(Some(Seq(MenasReference(None, "dataset1", 1))), Some(Seq()))
+          assert(actual == expected)
+        }
+      }
+      "some version of the Schema is used by a enabled MappingTable" should {
+        "return a list of the entities the version of the Schema is used in" in {
+          val mappingTable1 = MappingTableFactory.getDummyMappingTable(name = "mapping1", schemaName = "schema", schemaVersion = 1, disabled = false)
+          val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mapping2", schemaName = "schema", schemaVersion = 2, disabled = false)
+          mappingTableFixture.add(mappingTable1, mappingTable2)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema/1")
+
+          assertBadRequest(response)
+
+          val actual = response.getBody
+          val expected = UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping1", 1))))
+          assert(actual == expected)
         }
       }
     }
@@ -125,8 +445,8 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
       "a Schema with the given name exists" in {
         val schemaV1 = SchemaFactory.getDummySchema(name = "schema1", version = 1)
         val schemaV2 = SchemaFactory.getDummySchema(name = "schema1",
-                                                    version = 2,
-                                                    parent = Some(SchemaFactory.toParent(schemaV1)))
+          version = 2,
+          parent = Some(SchemaFactory.toParent(schemaV1)))
         schemaFixture.add(schemaV1)
         schemaFixture.add(schemaV2)
 
@@ -454,7 +774,6 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
       }
     }
   }
-
 
   private def toExpected(schema: Schema, actual: Schema): Schema = {
     schema.copy(

@@ -30,7 +30,8 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
-import za.co.absa.enceladus.dao.{MenasDAO, RestDaoFactory}
+import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
@@ -49,14 +50,13 @@ object DynamicConformanceJob {
 
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
-  private val menasApiBaseUrl = conf.getString("menas.rest.uri")
-  private val menasUiBaseUrl = menasApiBaseUrl.replace("/api/", "/#/")
+  private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   def main(args: Array[String]) {
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials, menasApiBaseUrl)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials, menasBaseUrls)
 
     val enableCF: Boolean = true
 
@@ -104,8 +104,10 @@ object DynamicConformanceJob {
       MenasPlugin.runNumber.foreach { runNumber =>
         val name = cmd.datasetName
         val version = cmd.datasetVersion
-        log.info(s"Menas API Run URL: $menasApiBaseUrl/runs/$name/$version/$runNumber")
-        log.info(s"Menas UI Run URL: $menasUiBaseUrl/runs/$name/$version/$runNumber")
+        menasBaseUrls.foreach { menasBaseUrl =>
+          log.info(s"Menas API Run URL: $menasBaseUrl/api/runs/$name/$version/$runNumber")
+          log.info(s"Menas UI Run URL: $menasBaseUrl/#/runs/$name/$version/$runNumber")
+        }
       }
     }
   }

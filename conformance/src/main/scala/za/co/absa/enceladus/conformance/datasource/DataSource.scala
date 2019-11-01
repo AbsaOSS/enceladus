@@ -18,10 +18,11 @@ package za.co.absa.enceladus.conformance.datasource
 import java.text.MessageFormat
 
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import org.apache.spark.sql.{AnalysisException, DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.HashMap
+import scala.util.control.NonFatal
 
 /**
  * Utility object to provide access to data in HDFS (including partitioning and caching)
@@ -40,14 +41,19 @@ object DataSource {
    * @param partitioningPattern Pattern representing the date partitioning where {0} stands for year, {1} for month, {2} for day
    * @return Dataframe with the required data (cached if requested more than once)
    */
-  def getData(path: String, reportYear: String, reportMonth: String, reportDay: String, partitioningPattern: String)(implicit spark: SparkSession): Dataset[Row] = {
+  def getData(path: String,
+              reportYear: String,
+              reportMonth: String,
+              reportDay: String,
+              partitioningPattern: String)
+             (implicit spark: SparkSession): Dataset[Row] = {
     if (dfs.contains(path)) {
       dfs(path)
     } else {
       val subPath = MessageFormat.format(partitioningPattern, reportYear, reportMonth, reportDay)
       val fillPath = if (subPath.isEmpty) new Path(path).toUri.toString else new Path(path, subPath).toUri.toString
       log.info(s"Mapping table used: $fillPath")
-      val df = spark.read.parquet(fillPath)
+      val df = loadMappingTable(fillPath)
       dfs += (path -> df)
       df
     }
@@ -60,5 +66,18 @@ object DataSource {
 
   private[conformance] def setData(path: String, data: Dataset[Row]) {
     dfs += (path -> data)
+  }
+
+  private def loadMappingTable(path: String)
+                              (implicit spark: SparkSession): DataFrame = {
+    try {
+      spark.read.parquet(path)
+    } catch {
+      case ex: AnalysisException if ex.getMessage.contains("Unable to infer schema for Parquet") =>
+        throw new RuntimeException(s"Unable to read the mapping table from '$path'. " +
+          "Possibly, the directory does not have valid Parquet files.", ex)
+      case NonFatal(e) =>
+        throw e
+    }
   }
 }

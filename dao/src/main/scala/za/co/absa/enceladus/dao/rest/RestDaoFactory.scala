@@ -13,26 +13,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model
+package za.co.absa.enceladus.dao.rest
 
-import org.codehaus.jackson.annotate.JsonProperty
+import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 
-case class SchemaField
-(
-  name: String,
-  `type`: String,
-  path: String,  // path up to this field
+object RestDaoFactory {
 
-  // These fields are optional when the type of the field is "array".
-  elementType: Option[String] = None,
-  containsNull: Option[Boolean] = None,
+  private val restTemplate = RestTemplateSingleton.instance
 
-  nullable: Boolean,
-  metadata: Map[String, String],
-  children: Seq[SchemaField]
-) {
-  @JsonProperty("absolutePath")
-  def getAbsolutePath(): String = {
-    if(path.isEmpty) name else s"${path}.${name}"
+  def getInstance(authCredentials: MenasCredentials, apiBaseUrls: List[String]): MenasRestDAO = {
+    val apiCaller = CrossHostApiCaller(apiBaseUrls)
+    val authClient = AuthClient(authCredentials, apiCaller)
+    val restClient = new RestClient(authClient, restTemplate)
+    new MenasRestDAO(apiCaller, restClient)
   }
+
 }

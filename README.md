@@ -71,7 +71,7 @@ Simply copy the **menas.war** file produced when building the project into Tomca
 - Configure `spring.resources.cache.cachecontrol.max-age` in `application.properties` of Menas for caching of static resources
 
 #### Standardization and Conformance requirements:
-- [**Spark 2.4.3 (Scala 2.11)** installation](https://spark.apache.org/downloads.html)
+- [**Spark 2.4.4 (Scala 2.11)** installation](https://spark.apache.org/downloads.html)
 - [**Hadoop 2.7** installation](https://hadoop.apache.org/releases.html)
 - **Menas** running instance
 - **Menas Credentials File** in your home directory or on HDFS (a configuration file for authenticating the Spark jobs with Menas) 

@@ -13,26 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model
+package za.co.absa.enceladus.menas.integration.fixtures
 
-import org.codehaus.jackson.annotate.JsonProperty
+import org.mongodb.scala.MongoDatabase
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
+import za.co.absa.enceladus.menas.repositories.MappingTableMongoRepository
+import za.co.absa.enceladus.model.MappingTable
 
-case class SchemaField
-(
-  name: String,
-  `type`: String,
-  path: String,  // path up to this field
-
-  // These fields are optional when the type of the field is "array".
-  elementType: Option[String] = None,
-  containsNull: Option[Boolean] = None,
-
-  nullable: Boolean,
-  metadata: Map[String, String],
-  children: Seq[SchemaField]
-) {
-  @JsonProperty("absolutePath")
-  def getAbsolutePath(): String = {
-    if(path.isEmpty) name else s"${path}.${name}"
-  }
-}
+@Component
+class MappingTableFixtureService @Autowired()(mongoDb: MongoDatabase)
+  extends FixtureService[MappingTable](mongoDb, MappingTableMongoRepository.collectionName)

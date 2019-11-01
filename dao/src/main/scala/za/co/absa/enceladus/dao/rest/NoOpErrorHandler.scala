@@ -13,18 +13,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao
+package za.co.absa.enceladus.dao.rest
 
-import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
+import org.springframework.http.client.ClientHttpResponse
+import org.springframework.web.client.ResponseErrorHandler
 
-object RestDaoFactory {
+object NoOpErrorHandler extends ResponseErrorHandler {
 
-  private val restTemplate = RestTemplateSingleton.instance
+  override def hasError(response: ClientHttpResponse): Boolean = false
 
-  def getInstance(authCredentials: MenasCredentials, apiBaseUrl: String): MenasRestDAO = {
-    val authClient = AuthClient(authCredentials, apiBaseUrl)
-    val restClient = new RestClient(authClient, restTemplate)
-    new MenasRestDAO(apiBaseUrl, restClient)
-  }
+  override def handleError(response: ClientHttpResponse): Unit = {}
 
 }
