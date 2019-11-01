@@ -15,20 +15,20 @@
 
 package za.co.absa.enceladus.menas.auth.kerberos
 
-import org.slf4j.LoggerFactory
-import org.springframework.security.authentication.AuthenticationProvider
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.Authentication
-import org.springframework.security.ldap.userdetails.LdapUserDetailsService
+import java.net.{SocketTimeoutException, UnknownHostException}
+import java.security.PrivilegedActionException
 
 import javax.security.auth.Subject
-import javax.security.auth.callback.Callback
-import javax.security.auth.callback.CallbackHandler
-import javax.security.auth.callback.NameCallback
-import javax.security.auth.callback.PasswordCallback
-import javax.security.auth.login.AppConfigurationEntry
-import javax.security.auth.login.Configuration
-import javax.security.auth.login.LoginContext
+import javax.security.auth.callback.{Callback, CallbackHandler, NameCallback, PasswordCallback}
+import javax.security.auth.login.{AppConfigurationEntry, Configuration, LoginContext, LoginException}
+import org.slf4j.LoggerFactory
+import org.springframework.security.authentication.{AuthenticationProvider, BadCredentialsException, UsernamePasswordAuthenticationToken}
+import org.springframework.security.core.Authentication
+import org.springframework.security.ldap.userdetails.LdapUserDetailsService
+import sun.security.krb5.KrbException
+import za.co.absa.enceladus.menas.auth.exceptions.{AuthHostTimeoutException, BadKrbHostException, BadLdapHostException}
+
+import scala.util.control.NonFatal
 
 class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String, baseDN: String)
   extends AuthenticationProvider {
@@ -38,12 +38,32 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   override def authenticate(authentication: Authentication): Authentication = {
-    val auth = authentication.asInstanceOf[UsernamePasswordAuthenticationToken]
-    val loginResult = login(auth.getName, auth.getCredentials.toString)
-    val userDetailsService = getUserDetailService(loginResult.loginContext.getSubject)
-    val userDetails = userDetailsService.loadUserByUsername(loginResult.verifiedName)
-    loginResult.loginContext.logout()
-    val output = new UsernamePasswordAuthenticationToken(userDetails, auth.getCredentials, userDetails.getAuthorities)
+    val output = try {
+      val auth = authentication.asInstanceOf[UsernamePasswordAuthenticationToken]
+      val loginResult = login(auth.getName, auth.getCredentials.toString)
+      val userDetailsService = getUserDetailService(loginResult.loginContext.getSubject)
+      val userDetails = userDetailsService.loadUserByUsername(loginResult.verifiedName)
+      loginResult.loginContext.logout()
+      new UsernamePasswordAuthenticationToken(userDetails, auth.getCredentials, userDetails.getAuthorities)
+    } catch {
+      case ex: LoginException =>
+        ex.getCause match {
+          // This is thrown when there is an issue contacting a KDC specified in krb5.conf for the realm
+          case nestedException: SocketTimeoutException =>
+            throw AuthHostTimeoutException(s"Timeout host: ${nestedException.getMessage}", ex)
+          case nestedException: UnknownHostException =>
+            throw BadKrbHostException(s"Unknown authentication host: ${nestedException.getMessage}", ex)
+          case nestedException: KrbException =>
+            throw new BadCredentialsException(s"Invalid credentials: ${nestedException.getMessage}", ex)
+          case NonFatal(e) =>
+            throw ex
+        }
+      // This is thrown when there is an issue contacting an LDAP server specified in Menas configuration
+      case ex: PrivilegedActionException =>
+        throw BadLdapHostException(ex.toString, ex)
+      case NonFatal(ex) =>
+        throw ex
+    }
     output.setDetails(authentication.getDetails)
     output
   }
@@ -61,11 +81,11 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
   }
 
   private def getSpringCBHandler(username: String, password: String) = {
-    new CallbackHandler(){
+    new CallbackHandler() {
       def handle(callbacks: Array[Callback]) {
         callbacks.foreach({
-            case ncb: NameCallback => ncb.setName(username)
-            case pwdcb: PasswordCallback => pwdcb.setPassword(password.toCharArray)
+          case ncb: NameCallback => ncb.setName(username)
+          case pwdcb: PasswordCallback => pwdcb.setPassword(password.toCharArray)
         })
       }
     }
