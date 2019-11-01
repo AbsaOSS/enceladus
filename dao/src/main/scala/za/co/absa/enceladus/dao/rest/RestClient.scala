@@ -13,11 +13,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao
+package za.co.absa.enceladus.dao.rest
 
 import org.slf4j.LoggerFactory
 import org.springframework.http._
 import org.springframework.web.client.RestTemplate
+import za.co.absa.enceladus.dao.{DaoException, NotFoundException, UnauthorizedException}
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
@@ -33,17 +34,23 @@ protected class RestClient(authClient: AuthClient,
     authHeaders = authClient.authenticate()
   }
 
-  def sendGet[T](urlPath: String)
+  @throws[DaoException]
+  @throws[NotFoundException]
+  @throws[UnauthorizedException]
+  def sendGet[T](url: String)
                 (implicit ct: ClassTag[T]): T = {
-    send[T, T](HttpMethod.GET, urlPath, new HttpHeaders())
+    send[T, T](HttpMethod.GET, url, new HttpHeaders())
   }
 
-  def sendPost[B, T](urlPath: String,
+  @throws[DaoException]
+  @throws[NotFoundException]
+  @throws[UnauthorizedException]
+  def sendPost[B, T](url: String,
                      requestBody: B)
                     (implicit ct: ClassTag[T]): T = {
     val headers = new HttpHeaders()
     headers.add(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
-    send[B, T](HttpMethod.POST, urlPath, headers, Option(requestBody))
+    send[B, T](HttpMethod.POST, url, headers, Option(requestBody))
   }
 
   @tailrec
@@ -89,7 +96,7 @@ protected class RestClient(authClient: AuthClient,
         send[B, T](method, url, headers, bodyOpt, retriesLeft - 1)
 
       case HttpStatus.NOT_FOUND                           =>
-        throw DaoException(s"Entity not found - $statusCode")
+        throw NotFoundException(s"Entity not found - $statusCode")
 
       case _                                              =>
         throw DaoException(s"Response - $statusCode : ${Option(response.getBody).getOrElse("None")}")

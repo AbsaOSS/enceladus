@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao
+package za.co.absa.enceladus.dao.rest
 
 import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
 
@@ -21,10 +21,11 @@ object RestDaoFactory {
 
   private val restTemplate = RestTemplateSingleton.instance
 
-  def getInstance(authCredentials: MenasCredentials, apiBaseUrl: String): MenasRestDAO = {
-    val authClient = AuthClient(authCredentials, apiBaseUrl)
+  def getInstance(authCredentials: MenasCredentials, apiBaseUrls: List[String]): MenasRestDAO = {
+    val apiCaller = CrossHostApiCaller(apiBaseUrls)
+    val authClient = AuthClient(authCredentials, apiCaller)
     val restClient = new RestClient(authClient, restTemplate)
-    new MenasRestDAO(apiBaseUrl, restClient)
+    new MenasRestDAO(apiCaller, restClient)
   }
 
 }

@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-menas.rest.uri="http://localhost:8080/menas/api"
+# The Menas URI can specify multiple semi-colon-separated base URIs
+# each can have multiple comma-separated hosts, these are used for fault-tolerance
+menas.rest.uri="http://localhost:8080,host2:9000/menas;https://localhost:8080,host2:9000/menas"
 
-#system-wide time zone
+# system-wide time zone
 timezone="UTC"

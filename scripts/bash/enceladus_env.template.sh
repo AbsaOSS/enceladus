@@ -14,7 +14,10 @@
 # limitations under the License.
 
 # Environment configuration
-MENAS_URI="http://localhost:8080/menas/api"
+
+# The Menas URI can specify multiple semi-colon-separated base URIs
+# each can have multiple comma-separated hosts, these are used for fault-tolerance
+MENAS_URI="http://localhost:8080/menas;http://remotehost:8080/menas"
 STD_HDFS_PATH="/bigdata/std/std-{0}-{1}-{2}-{3}"
 
 # MongoDB connection configuration for Spline

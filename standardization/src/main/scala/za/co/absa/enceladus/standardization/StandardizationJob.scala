@@ -27,7 +27,8 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.{Atum, Constants}
 import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
-import za.co.absa.enceladus.dao.{MenasDAO, RestDaoFactory}
+import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
@@ -47,8 +48,7 @@ object StandardizationJob {
 
   private val log = LoggerFactory.getLogger(this.getClass)
   private val conf = ConfigFactory.load()
-  private val menasApiBaseUrl = conf.getString("menas.rest.uri")
-  private val menasUiBaseUrl = menasApiBaseUrl.replace("/api/", "/#/")
+  private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
@@ -58,7 +58,7 @@ object StandardizationJob {
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
 
     implicit val udfLib: UDFLibrary = new UDFLibrary
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials, menasApiBaseUrl)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials, menasBaseUrls)
 
     dao.authenticate()
 
@@ -118,8 +118,10 @@ object StandardizationJob {
       MenasPlugin.runNumber.foreach { runNumber =>
         val name = cmd.datasetName
         val version = cmd.datasetVersion
-        log.info(s"Menas API Run URL: $menasApiBaseUrl/runs/$name/$version/$runNumber")
-        log.info(s"Menas UI Run URL: $menasUiBaseUrl/runs/$name/$version/$runNumber")
+        menasBaseUrls.foreach { menasBaseUrl =>
+          log.info(s"Menas API Run URL: $menasBaseUrl/api/runs/$name/$version/$runNumber")
+          log.info(s"Menas UI Run URL: $menasBaseUrl/#/runs/$name/$version/$runNumber")
+        }
       }
     }
   }
