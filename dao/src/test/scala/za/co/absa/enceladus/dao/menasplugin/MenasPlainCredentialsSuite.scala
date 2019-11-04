@@ -40,7 +40,9 @@ class MenasPlainCredentialsSuite extends WordSpec with SparkTestBase {
       val homeDir = System.getProperty("user.home")
       val expected = s"$homeDir/dir/file"
 
-      val actual = MenasPlainCredentials.replaceHome("~/dir/file")
+      val menasUtils = new MenasAuthUtils(spark.sparkContext.hadoopConfiguration)
+
+      val actual = menasUtils.replaceHome("~/dir/file")
       assert(actual == expected)
     }
   }
