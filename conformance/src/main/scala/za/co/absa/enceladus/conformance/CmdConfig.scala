@@ -17,6 +17,7 @@ package za.co.absa.enceladus.conformance
 
 import org.apache.spark.storage.StorageLevel
 import scopt.OptionParser
+import za.co.absa.enceladus.dao.menasplugin.{InvalidMenasCredentialsFactory, MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 
 import scala.util.matching.Regex
 
@@ -30,8 +31,7 @@ case class CmdConfig(datasetName: String = "",
                      datasetVersion: Int = 1,
                      reportDate: String = "",
                      reportVersion: Option[Int] = None,
-                     menasCredentialsFile: String = "",
-                     menasKeytabFile: String = "",
+                     menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
                      performanceMetricsFile: Option[String] = None,
                      publishPathOverride: Option[String] = None,
                      folderPrefix: Option[String] = None,
@@ -91,7 +91,7 @@ object CmdConfig {
     private var keytabFile: Option[String] = None
     opt[String]("menas-credentials-file").hidden.optional().action({ (file, config) =>
       credsFile = Some(file)
-      config.copy(menasCredentialsFile = file)
+      config.copy(menasCredentialsFactory = new MenasPlainCredentialsFactory(file))
     }).text("Path to Menas credentials config file.").validate(path =>
       if (keytabFile.isDefined) {
         failure("Only one authentication method is allow at a time")
@@ -101,7 +101,7 @@ object CmdConfig {
 
     opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
       keytabFile = Some(file)
-      config.copy(menasKeytabFile = file)
+      config.copy(menasCredentialsFactory = new MenasKerberosCredentialsFactory(file))
     }).text("Path to keytab file used for authenticating to menas").validate({ file =>
       if (credsFile.isDefined) {
         failure("Only one authentication method is allowed at a time")
@@ -138,10 +138,9 @@ object CmdConfig {
     help("help").text("prints this usage text")
 
     checkConfig { config =>
-      if (config.menasCredentialsFile.isEmpty && config.menasKeytabFile.isEmpty) {
-        failure("No authentication method specified (e.g. --menas-auth-keytab)")
-      } else {
-        success
+      config.menasCredentialsFactory match {
+        case InvalidMenasCredentialsFactory => failure("No authentication method specified (e.g. --menas-auth-keytab)")
+        case _ => success
       }
     }
   }
