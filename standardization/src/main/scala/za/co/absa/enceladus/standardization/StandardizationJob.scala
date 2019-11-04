@@ -26,14 +26,15 @@ import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.{Atum, Constants}
-import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
-import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasKerberosCredentials, MenasPlainCredentials, MenasPlugin}
+import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
@@ -53,12 +54,19 @@ object StandardizationJob {
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
+    implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()
-    val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
 
     implicit val udfLib: UDFLibrary = new UDFLibrary
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials, menasBaseUrls)
+
+    val menasCredentials: MenasCredentials = if (cmd.menasCredentialsFile.nonEmpty) {
+      MenasPlainCredentials.fromFile(cmd.menasCredentialsFile)
+    } else {
+      MenasKerberosCredentials.fromFile(cmd.menasKeytabFile)
+    }
+
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
 
     dao.authenticate()
 
@@ -103,7 +111,7 @@ object StandardizationJob {
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 
     try {
-      executeStandardization(performance, dfAll, schema, cmd, pathCfg)
+      executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg)
       cmd.performanceMetricsFile.foreach { fileName =>
         try {
           performance.writeMetricsToFile(fileName)
@@ -151,9 +159,11 @@ object StandardizationJob {
     )
   }
 
-  private def obtainSparkSession(): SparkSession = {
+  private def obtainSparkSession()(implicit cmd: CmdConfig): SparkSession = {
+    val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
+    val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
     val spark = SparkSession.builder()
-      .appName("Standardisation")
+      .appName(s"Standardisation $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
       .getOrCreate()
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
@@ -279,6 +289,7 @@ object StandardizationJob {
                                      dfAll: DataFrame,
                                      schema: StructType,
                                      cmd: CmdConfig,
+                                     menasCredentials: MenasCredentials,
                                      pathCfg: PathCfg)
                                     (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
@@ -287,7 +298,7 @@ object StandardizationJob {
     addRawRecordCountToMetadata(dfAll)
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std", pathCfg.inputPath, pathCfg.outputPath,
-      cmd.menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
+      menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     val standardizedDF = try {
       StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
     } catch {
@@ -327,7 +338,7 @@ object StandardizationJob {
       cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
     }
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
-      cmd.menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
+      menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     standardizedDF.writeInfoFile(pathCfg.outputPath)
   }
 
