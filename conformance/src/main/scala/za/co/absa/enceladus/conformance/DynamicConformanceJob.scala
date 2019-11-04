@@ -30,7 +30,7 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasKerberosCredentials, MenasPlainCredentials, MenasPlugin}
+import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasPlugin}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
@@ -57,13 +57,7 @@ object DynamicConformanceJob {
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-
-    val menasCredentials: MenasCredentials = if (cmd.menasCredentialsFile.nonEmpty) {
-      MenasPlainCredentials.fromFile(cmd.menasCredentialsFile)
-    } else {
-      MenasKerberosCredentials.fromFile(cmd.menasKeytabFile)
-    }
-
+    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
 
     val enableCF: Boolean = true

@@ -27,7 +27,7 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.{Atum, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasKerberosCredentials, MenasPlainCredentials, MenasPlugin}
+import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasPlugin}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
@@ -57,15 +57,8 @@ object StandardizationJob {
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-
     implicit val udfLib: UDFLibrary = new UDFLibrary
-
-    val menasCredentials: MenasCredentials = if (cmd.menasCredentialsFile.nonEmpty) {
-      MenasPlainCredentials.fromFile(cmd.menasCredentialsFile)
-    } else {
-      MenasKerberosCredentials.fromFile(cmd.menasKeytabFile)
-    }
-
+    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
 
     dao.authenticate()
