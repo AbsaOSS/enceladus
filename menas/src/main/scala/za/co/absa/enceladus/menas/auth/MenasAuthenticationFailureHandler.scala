@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.menas.auth
 
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
@@ -27,17 +27,16 @@ import za.co.absa.enceladus.menas.auth.exceptions.{AuthHostTimeoutException, Bad
   */
 class MenasAuthenticationFailureHandler extends AuthenticationFailureHandler {
 
-  private val log: Logger = LoggerFactory.getLogger(this.getClass)
+  private val log = LoggerFactory.getLogger(this.getClass)
 
   override def onAuthenticationFailure(request: HttpServletRequest,
                                        response: HttpServletResponse,
                                        ex: AuthenticationException): Unit = {
-    val stack = ex.getStackTrace.mkString("\n")
-    log.warn(s"Authentication exception: ${ex.getMessage}\n$stack")
+    log.warn("Authentication exception", ex)
     ex match {
       case _: AuthHostTimeoutException =>
         response.sendError(HttpStatus.GATEWAY_TIMEOUT.value, ex.getMessage)
-      case _ : BadKrbHostException | _ : BadLdapHostException =>
+      case _: BadKrbHostException | _: BadLdapHostException =>
         response.sendError(HttpStatus.BAD_GATEWAY.value, ex.getMessage)
       case _ =>
         response.sendError(HttpStatus.UNAUTHORIZED.value, ex.getMessage)
