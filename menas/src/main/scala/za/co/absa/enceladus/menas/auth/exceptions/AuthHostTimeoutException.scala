@@ -18,7 +18,7 @@ package za.co.absa.enceladus.menas.auth.exceptions
 import org.springframework.security.core.AuthenticationException
 
 /**
-  * This exception is thrown then KDC or AD/LDAP server times out when authenticating a user.
+  * This exception is thrown when KDC or AD/LDAP server times out when authenticating a user.
   *
   * It needs to extend [[AuthenticationException]] so it could be processed by an authentication failure handler
   * to return the proper status code in the HTTP response.
