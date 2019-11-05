@@ -17,6 +17,17 @@ package za.co.absa.enceladus.dao.menasplugin
 
 import org.apache.spark.sql.SparkSession
 
+/**
+  * This class hierarchy helps to decouple creation of [[MenasCredentials]] instances from command line parsing.
+  *
+  * The reason for this is that in order to create Menas credentials a Spark session must be initialized first.
+  * But in order to initialize a Spark session and give the Spark application a proper name the command line
+  * parameters should be parsed.
+  *
+  * The solution is that the command line parser creates a Menas credentials factory depending on authentication
+  * mechanism specified in the command line. Credentials get instantiated from a factory later when a Spark session
+  * is available.
+  */
 sealed abstract class MenasCredentialsFactory {
   def getInstance()(implicit spark: SparkSession): MenasCredentials
 }
