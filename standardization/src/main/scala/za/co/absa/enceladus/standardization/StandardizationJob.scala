@@ -154,6 +154,7 @@ object StandardizationJob {
 
   private def obtainSparkSession()(implicit cmd: CmdConfig): SparkSession = {
     val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
+    log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
     val spark = SparkSession.builder()
       .appName(s"Standardisation $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
