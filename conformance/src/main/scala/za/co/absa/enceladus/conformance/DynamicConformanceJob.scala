@@ -166,6 +166,7 @@ object DynamicConformanceJob {
 
   private def obtainSparkSession()(implicit cmd: CmdConfig): SparkSession = {
     val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
+    log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
     val spark: SparkSession = SparkSession.builder()
       .appName(s"Dynamic Conformance $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
