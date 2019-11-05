@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.dao.menasplugin
 
 import org.scalatest.WordSpec
+import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class MenasPlainCredentialsSuite extends WordSpec with SparkTestBase {
@@ -40,9 +41,9 @@ class MenasPlainCredentialsSuite extends WordSpec with SparkTestBase {
       val homeDir = System.getProperty("user.home")
       val expected = s"$homeDir/dir/file"
 
-      val menasUtils = new MenasAuthUtils(spark.sparkContext.hadoopConfiguration)
+      val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
 
-      val actual = menasUtils.replaceHome("~/dir/file")
+      val actual = fsUtils.replaceHome("~/dir/file")
       assert(actual == expected)
     }
   }
