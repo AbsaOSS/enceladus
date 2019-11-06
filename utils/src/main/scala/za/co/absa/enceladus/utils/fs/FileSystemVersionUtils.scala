@@ -129,14 +129,14 @@ class FileSystemVersionUtils(conf: Configuration) {
   }
 
   /**
-    * Checks if a file is located in HDFS or in the local file system.
+    * Checks if a file is located on HDFS or the local file system.
     * If the file is in HDFS, it is copied to a temporary location.
     *
     * @param path A path to a file.  Can be either local or HDFS location.
     * @return A path to a file in the local filesystem.
     */
   @throws[FileNotFoundException]
-  def getLocalFile(path: String): String = {
+  def getLocalPathToFile(path: String): String = {
     val absolutePath = replaceHome(path)
     if (localExists(absolutePath)) {
       absolutePath

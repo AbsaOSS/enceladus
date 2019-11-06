@@ -32,7 +32,7 @@ case object InvalidMenasCredentials extends MenasCredentials {
 
 object MenasPlainCredentials {
   /**
-    * Creates Menas credentials from a credentials file located either on local file system or on HDFS.
+    * Instantiates [[MenasCredentials]] from a credentials file located either on local file system or on HDFS.
     *
     * @param path A path to a Menas Credentials file.
     * @return An instance of Menas Credentials.
@@ -45,13 +45,13 @@ object MenasPlainCredentials {
 
 object MenasKerberosCredentials {
   /**
-    * Creates Menas credentials from file either on local file system or on HDFS.
+    * Instantiates [[MenasCredentials]] from file either on local file system or on HDFS.
     *
     * @param path A path to a Kerberos keytab file.
     * @return An instance of Menas Credentials.
     */
   def fromFile(path: String)(implicit spark: SparkSession): MenasKerberosCredentials = {
     val menasAuthUtils = new MenasAuthUtils(spark.sparkContext.hadoopConfiguration)
-    menasAuthUtils.getKerberosCredentias(path)
+    menasAuthUtils.getKerberosCredentials(path)
   }
 }
