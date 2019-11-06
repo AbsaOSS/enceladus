@@ -21,7 +21,7 @@ import sun.security.krb5.internal.ktab.KeyTab
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 /**
-  * This object contins Menas authentication tools.
+  * This object contains Menas authentication tools.
   */
 class MenasAuthUtils(conf: Configuration) {
   private val fsUtils = new FileSystemVersionUtils(conf)
@@ -43,8 +43,8 @@ class MenasAuthUtils(conf: Configuration) {
     * @param keytabPath A path to a Kerberos keytab file.
     * @return An instance of Menas Credentials.
     */
-  def getKerberosCredentias(keytabPath: String): MenasKerberosCredentials = {
-    val localKeyTabPath = fsUtils.getLocalFile(keytabPath)
+  def getKerberosCredentials(keytabPath: String): MenasKerberosCredentials = {
+    val localKeyTabPath = fsUtils.getLocalPathToFile(keytabPath)
 
     val keytab = KeyTab.getInstance(localKeyTabPath)
     val username = keytab.getOneName.getName
