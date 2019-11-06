@@ -16,7 +16,10 @@
 package za.co.absa.enceladus.dao.menasplugin
 
 
+import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.SparkSession
+import sun.security.krb5.internal.ktab.KeyTab
+import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 sealed abstract class MenasCredentials {
   val username: String
@@ -32,26 +35,33 @@ case object InvalidMenasCredentials extends MenasCredentials {
 
 object MenasPlainCredentials {
   /**
-    * Instantiates [[MenasCredentials]] from a credentials file located either on local file system or on HDFS.
+    * Instantiates [[MenasCredentials]] from a credentials file located either on the local file system or on HDFS.
     *
     * @param path A path to a Menas Credentials file.
     * @return An instance of Menas Credentials.
     */
   def fromFile(path: String)(implicit spark: SparkSession): MenasPlainCredentials = {
-    val menasAuthUtils = new MenasAuthUtils(spark.sparkContext.hadoopConfiguration)
-    menasAuthUtils.getPlainCredentials(path)
+    val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+
+    val conf = ConfigFactory.parseString(fsUtils.getFileContent(path))
+    MenasPlainCredentials(conf.getString("username"), conf.getString("password"))
   }
 }
 
 object MenasKerberosCredentials {
   /**
-    * Instantiates [[MenasCredentials]] from file either on local file system or on HDFS.
+    * Instantiates [[MenasCredentials]] from file either on the local file system or on HDFS.
     *
     * @param path A path to a Kerberos keytab file.
     * @return An instance of Menas Credentials.
     */
   def fromFile(path: String)(implicit spark: SparkSession): MenasKerberosCredentials = {
-    val menasAuthUtils = new MenasAuthUtils(spark.sparkContext.hadoopConfiguration)
-    menasAuthUtils.getKerberosCredentials(path)
+    val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+
+    val localKeyTabPath = fsUtils.getLocalPathToFile(path)
+    val keytab = KeyTab.getInstance(localKeyTabPath)
+    val username = keytab.getOneName.getName
+
+    MenasKerberosCredentials(username, localKeyTabPath)
   }
 }
