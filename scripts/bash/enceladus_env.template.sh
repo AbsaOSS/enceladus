@@ -25,7 +25,7 @@ STD_HDFS_PATH="/bigdata/std/std-{0}-{1}-{2}-{3}"
 SPLINE_MONGODB_URL="mongodb://localhost:27017"
 SPLINE_MONGODB_NAME="spline"
 
-export SPARK_HOME="/opt/spark-2.4.3"
+export SPARK_HOME="/opt/spark-2.4.4"
 SPARK_SUBMIT="$SPARK_HOME/bin/spark-submit"
 
 HDP_VERSION="2.7.3"
