@@ -272,6 +272,14 @@ echoerr() {
     echo "$@" 1>&2;
 }
 
+get_temp_log_file() {
+    DATE=`date +%Y_%m_%d-%H_%M_%S`
+    NAME=`sed -e 's#.*\.##' <<< $CLASS`
+    TEMPLATE="enceladus_${NAME}_${DATE}_XXXXXX.log"
+
+    mktemp -p "$LOG_DIR" -t "$TEMPLATE"
+}
+
 # Constructing the grand command line
 # Configuration passed to JVM
 
@@ -332,9 +340,7 @@ echo "$CMD_LINE"
 
 if [[ -z "$DRY_RUN" ]]; then
   if [[ "$DEPLOY_MODE" == "client" ]]; then
-    DATE=`date +%Y_%m_%d-%H_%M_%S`
-    NAME=`sed -e 's#.*\.\(\)#\1#' <<< $CLASS`
-    TMP_PATH_NAME="$LOG_DIR/enceladus_${NAME}_${DATE}.log"
+    TMP_PATH_NAME=`get_temp_log_file`
     # Initializing Kerberos ticket
     if [[ ! -z "$MENAS_AUTH_KEYTAB" ]]; then
       # Get principle stored in the keyfile (Thanks @Zejnilovic)
