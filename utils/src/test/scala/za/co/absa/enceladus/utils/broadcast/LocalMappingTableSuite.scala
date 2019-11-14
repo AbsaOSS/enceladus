@@ -36,8 +36,6 @@ class LocalMappingTableSuite extends WordSpec with SparkTestBase {
     val dfMt = List((1, "a", Array(1, 2, 3)), (2, "b", Array(4, 5, 6)), (3, "c", Array(7, 8, 9)))
       .toDF("id", "val", "arr")
 
-    dfMt.printSchema()
-
     // A mapping table with arrays and structs
     // root
     //  |-- arst: array
@@ -143,6 +141,12 @@ class LocalMappingTableSuite extends WordSpec with SparkTestBase {
       "a join key is an array" in {
         intercept[IllegalArgumentException] {
           LocalMappingTable(dfMt, Seq("arr"), "val")
+        }
+      }
+
+      "a join key is a struct" in {
+        intercept[IllegalArgumentException] {
+          LocalMappingTable(dfComplexMt, Seq("sval"), "val")
         }
       }
 
