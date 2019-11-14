@@ -17,7 +17,7 @@ package za.co.absa.enceladus.utils.broadcast
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{ArrayType, DataType}
+import org.apache.spark.sql.types.{ArrayType, DataType, StructType}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.collection.mutable.ListBuffer
@@ -81,6 +81,7 @@ object LocalMappingTable {
     keyFields.foreach(field => {
       SchemaUtils.getFieldType(field, mappingTableDf.schema) match {
         case Some(_: ArrayType) => throw new IllegalArgumentException(s"Join condition field cannot be an array: $field.")
+        case Some(_: StructType) => throw new IllegalArgumentException(s"Join condition field cannot be a struct: $field.")
         case Some(_) =>
         case None => throw new IllegalArgumentException(s"Join condition field does not exist: $field.")
       }
