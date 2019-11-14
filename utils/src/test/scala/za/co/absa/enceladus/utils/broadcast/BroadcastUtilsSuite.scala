@@ -60,9 +60,9 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
         val localMt = LocalMappingTable(dfMt, Seq("id"), "val")
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        BroadcastUtils.registerMappingUdf("mappingUdf1", broadcastedMt)
+        val mappingUdf1 = BroadcastUtils.getMappingUdf(broadcastedMt)
 
-        val dfOut = df.withColumn("out", expr(s"mappingUdf1(key1)")).orderBy("key1")
+        val dfOut = df.withColumn("out", mappingUdf1(col("key1"))).orderBy("key1")
 
         assertResults(dfOut, expectedResultsMatchFound)
       }
@@ -214,9 +214,11 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
         val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"),
           Mapping("id", "key2"))
 
-        BroadcastUtils.registerErrorUdf("errorUdf5", broadcastedMt, "val", mappings)
+        val errorUdf5 = BroadcastUtils.getErrorUdf(broadcastedMt, "val", mappings)
 
-        val dfOut = df.withColumn("errCol", expr(s"errorUdf5(key2, key2, key2, key2, key2)")).orderBy("key2")
+        val dfOut = df.withColumn("errCol", errorUdf5(
+          col("key2"), col("key2"), col("key2"), col("key2"), col("key2")
+        )).orderBy("key2")
         val error = dfOut.filter(col("errCol").isNotNull).select("errCol").as[ErrorColumn].collect()(0)
 
         assert(dfOut.filter(col("errCol").isNull).count == 2)

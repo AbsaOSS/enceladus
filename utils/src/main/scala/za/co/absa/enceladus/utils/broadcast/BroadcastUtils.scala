@@ -35,6 +35,16 @@ object BroadcastUtils {
     * @param mappingTable A mapping table broadcasted to executors.
     */
   def registerMappingUdf(udfName: String, mappingTable: Broadcast[LocalMappingTable])(implicit spark: SparkSession): Unit = {
+    spark.udf.register(udfName, getMappingUdf(mappingTable))
+  }
+
+  /**
+    * Returns a UDF that takes values of join keys and returns the value of the target attribute or null
+    * if there is no mapping for the specified keys.
+    *
+    * @param mappingTable A mapping table broadcasted to executors.
+    */
+  def getMappingUdf(mappingTable: Broadcast[LocalMappingTable])(implicit spark: SparkSession): UserDefinedFunction = {
     val numberOfArgments = mappingTable.value.keyTypes.size
 
     val lambda = numberOfArgments match {
@@ -46,11 +56,9 @@ object BroadcastUtils {
       case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 5.")
     }
 
-    val mappingUdf = UserDefinedFunction(lambda,
+    UserDefinedFunction(lambda,
       mappingTable.value.valueType,
       Some(mappingTable.value.keyTypes))
-
-    spark.udf.register(udfName, mappingUdf)
   }
 
   /**
@@ -62,6 +70,17 @@ object BroadcastUtils {
   def registerErrorUdf(udfName: String, mappingTable: Broadcast[LocalMappingTable],
                        outputColumn: String,
                        mappings: Seq[Mapping])(implicit spark: SparkSession): Unit = {
+    spark.udf.register(udfName, getErrorUdf(mappingTable, outputColumn, mappings))
+  }
+
+  /**
+    * Returns a UDF that takes values of join keys and returns a join error or null if the join is successful.
+    *
+    * @param mappingTable A mapping table broadcasted to executors.
+    */
+  def getErrorUdf(mappingTable: Broadcast[LocalMappingTable],
+                       outputColumn: String,
+                       mappings: Seq[Mapping])(implicit spark: SparkSession): UserDefinedFunction = {
     val numberOfArgments = mappingTable.value.keyTypes.size
 
     val lambda = numberOfArgments match {
@@ -79,7 +98,7 @@ object BroadcastUtils {
       errorMessageSchema.dataType,
       Some(mappingTable.value.keyTypes))
 
-    spark.udf.register(udfName, errorUdf)
+    errorUdf
   }
 
   private def getMappingLambdaParam1(mappingTable: Broadcast[LocalMappingTable]): AnyRef = {
