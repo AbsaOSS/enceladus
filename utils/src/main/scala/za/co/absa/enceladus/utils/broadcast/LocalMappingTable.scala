@@ -66,7 +66,7 @@ object LocalMappingTable {
       var i = 0
       while (i < numberOfKeys) {
         keys += row(i + 1)
-        i += i + 1
+        i += 1
       }
       (keys.toSeq, value)
     }).toMap
