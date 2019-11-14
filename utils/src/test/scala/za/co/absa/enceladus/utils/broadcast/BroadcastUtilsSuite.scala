@@ -18,6 +18,7 @@ package za.co.absa.enceladus.utils.broadcast
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.scalatest.WordSpec
+import za.co.absa.enceladus.utils.error.Mapping
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBase {
@@ -35,20 +36,20 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
   // root
   //  |-- key1: integer
   //  |-- key2: integer
-  private val df = List((1, 2), (2, 3), (3, 1)).toDF("key1", "key2")
+  private val df = List((1, 2), (2, 3), (3, 4)).toDF("key1", "key2")
 
   // Expected dataframe when 'out' field contains the results of a join for 'key1'
   private val expectedResultsMatchFound =
     """{"key1":1,"key2":2,"out":"a"}
       |{"key1":2,"key2":3,"out":"b"}
-      |{"key1":3,"key2":1,"out":"c"}"""
+      |{"key1":3,"key2":4,"out":"c"}"""
       .stripMargin.replace("\r\n", "\n")
 
   // Expected dataframe when 'out' field contains the results of a failed join
   private val expectedResultsMatchNotFound =
     """{"key1":1,"key2":2}
       |{"key1":2,"key2":3}
-      |{"key1":3,"key2":1}"""
+      |{"key1":3,"key2":4}"""
       .stripMargin.replace("\r\n", "\n")
 
   "registerMappingUdf()" should {
@@ -137,6 +138,94 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
       }
     }
   }
+
+  "registerErrorUdf()" should {
+
+    "return a UDF that returns an error column in case of a join error" when {
+      "1 UDF parameter is used" in {
+        val expectedWithErrorColumn1 =
+          """{"key1":1,"key2":2}
+            |{"key1":2,"key2":3}
+            |{"key1":3,"key2":4,"errCol":{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"val","rawValues":["4"],"mappings":[{"mappingTableColumn":"id","mappedDatasetColumn":"key2"}]}}"""
+            .stripMargin.replace("\r\n", "\n")
+
+        val localMt = LocalMappingTable(dfMt, Seq("id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+        val mappings = Seq(Mapping("id", "key2"))
+
+        BroadcastUtils.registerErrorUdf("errorUdf1", broadcastedMt, "val", mappings)
+
+        val dfOut = df.withColumn("errCol", expr(s"errorUdf1(key2)")).orderBy("key2")
+
+        assertResults(dfOut, expectedWithErrorColumn1)
+      }
+
+      "2 UDF parameter is used" in {
+        val expectedWithErrorColumn1 =
+          """{"key1":1,"key2":2}
+            |{"key1":2,"key2":3}
+            |{"key1":3,"key2":4,"errCol":{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"val","rawValues":["4","4"],"mappings":[{"mappingTableColumn":"id","mappedDatasetColumn":"key2"},{"mappingTableColumn":"id","mappedDatasetColumn":"key2"}]}}"""
+            .stripMargin.replace("\r\n", "\n")
+
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+        val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"))
+
+        BroadcastUtils.registerErrorUdf("errorUdf2", broadcastedMt, "val", mappings)
+
+        val dfOut = df.withColumn("errCol", expr(s"errorUdf2(key2, key2)")).orderBy("key2")
+
+        assertResults(dfOut, expectedWithErrorColumn1)
+      }
+
+      "3 UDF parameter is used" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+        val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"))
+
+        BroadcastUtils.registerErrorUdf("errorUdf3", broadcastedMt, "val", mappings)
+
+        val dfOut = df.withColumn("errCol", expr(s"errorUdf3(key2, key2, key2)")).orderBy("key2")
+        val error = dfOut.filter(col("errCol").isNotNull).select("errCol").as[ErrorColumn].collect()(0)
+
+        assert(dfOut.filter(col("errCol").isNull).count == 2)
+        assert(error.errCol.mappings.size == 3)
+        assert(error.errCol.rawValues.size == 3)
+      }
+
+      "4 UDF parameter is used" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+        val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"))
+
+        BroadcastUtils.registerErrorUdf("errorUdf4", broadcastedMt, "val", mappings)
+
+        val dfOut = df.withColumn("errCol", expr(s"errorUdf4(key2, key2, key2, key2)")).orderBy("key2")
+        val error = dfOut.filter(col("errCol").isNotNull).select("errCol").as[ErrorColumn].collect()(0)
+
+        assert(dfOut.filter(col("errCol").isNull).count == 2)
+        assert(error.errCol.mappings.size == 4)
+        assert(error.errCol.rawValues.size == 4)
+      }
+
+      "5 UDF parameter is used" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+        val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"),
+          Mapping("id", "key2"))
+
+        BroadcastUtils.registerErrorUdf("errorUdf5", broadcastedMt, "val", mappings)
+
+        val dfOut = df.withColumn("errCol", expr(s"errorUdf5(key2, key2, key2, key2, key2)")).orderBy("key2")
+        val error = dfOut.filter(col("errCol").isNotNull).select("errCol").as[ErrorColumn].collect()(0)
+
+        assert(dfOut.filter(col("errCol").isNull).count == 2)
+        assert(error.errCol.mappings.size == 5)
+        assert(error.errCol.rawValues.size == 5)
+      }
+    }
+  }
+
 
   private def assertResults(actualDf: DataFrame, expectedJson: String): Unit = {
     val actualJson = actualDf.toJSON.collect.mkString("\n")

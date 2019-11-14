@@ -17,7 +17,9 @@ package za.co.absa.enceladus.utils.broadcast
 
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
 
 object BroadcastUtils {
 
@@ -57,8 +59,27 @@ object BroadcastUtils {
     * @param udfName      An UDF name.
     * @param mappingTable A mapping table broadcasted to executors.
     */
-  def registerErrorUdf(udfName: String, mappingTable: Broadcast[LocalMappingTable])(implicit spark: SparkSession): Unit = {
+  def registerErrorUdf(udfName: String, mappingTable: Broadcast[LocalMappingTable],
+                       outputColumn: String,
+                       mappings: Seq[Mapping])(implicit spark: SparkSession): Unit = {
+    val numberOfArgments = mappingTable.value.keyTypes.size
 
+    val lambda = numberOfArgments match {
+      case 1 => getErrorLambdaParam1(mappingTable, outputColumn, mappings)
+      case 2 => getErrorLambdaParam2(mappingTable, outputColumn, mappings)
+      case 3 => getErrorLambdaParam3(mappingTable, outputColumn, mappings)
+      case 4 => getErrorLambdaParam4(mappingTable, outputColumn, mappings)
+      case 5 => getErrorLambdaParam5(mappingTable, outputColumn, mappings)
+      case n => throw new IllegalArgumentException(s"Error column UDFs with $n arguments are not supported. Should be between 1 and 5.")
+    }
+
+    val errorMessageSchema = ScalaReflection.schemaFor[ErrorMessage]
+
+    val errorUdf = UserDefinedFunction(lambda,
+      errorMessageSchema.dataType,
+      Some(mappingTable.value.keyTypes))
+
+    spark.udf.register(udfName, errorUdf)
   }
 
   private def getMappingLambdaParam1(mappingTable: Broadcast[LocalMappingTable]): AnyRef = {
@@ -93,6 +114,73 @@ object BroadcastUtils {
     (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
       val mt = mappingTable.value.map
       mt.getOrElse(Seq(param1, param2, param3, param4, param5), null)
+    }
+  }
+
+  private def getErrorLambdaParam1(mappingTable: Broadcast[LocalMappingTable],
+                                   outputColumn: String,
+                                   mappings: Seq[Mapping]): AnyRef = {
+    param1: Any => {
+      val mt = mappingTable.value.map
+      if (mt.contains(Seq(param1))) {
+        null
+      } else {
+        ErrorMessage.confMappingErr(outputColumn, Seq(param1.toString), mappings)
+      }
+    }
+  }
+
+  private def getErrorLambdaParam2(mappingTable: Broadcast[LocalMappingTable],
+                                   outputColumn: String,
+                                   mappings: Seq[Mapping]): AnyRef = {
+    (param1: Any, param2: Any) => {
+      val mt = mappingTable.value.map
+      if (mt.contains(Seq(param1, param2))) {
+        null
+      } else {
+        ErrorMessage.confMappingErr(outputColumn, Seq(param1.toString, param2.toString), mappings)
+      }
+    }
+  }
+
+  private def getErrorLambdaParam3(mappingTable: Broadcast[LocalMappingTable],
+                                   outputColumn: String,
+                                   mappings: Seq[Mapping]): AnyRef = {
+    (param1: Any, param2: Any, param3: Any) => {
+      val mt = mappingTable.value.map
+      if (mt.contains(Seq(param1, param2, param3))) {
+        null
+      } else {
+        ErrorMessage.confMappingErr(outputColumn, Seq(param1.toString, param2.toString, param3.toString), mappings)
+      }
+    }
+  }
+
+  private def getErrorLambdaParam4(mappingTable: Broadcast[LocalMappingTable],
+                                   outputColumn: String,
+                                   mappings: Seq[Mapping]): AnyRef = {
+    (param1: Any, param2: Any, param3: Any, param4: Any) => {
+      val mt = mappingTable.value.map
+      if (mt.contains(Seq(param1, param2, param3, param4))) {
+        null
+      } else {
+        ErrorMessage.confMappingErr(outputColumn, Seq(param1.toString, param2.toString, param3.toString,
+          param4.toString), mappings)
+      }
+    }
+  }
+
+  private def getErrorLambdaParam5(mappingTable: Broadcast[LocalMappingTable],
+                                   outputColumn: String,
+                                   mappings: Seq[Mapping]): AnyRef = {
+    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
+      val mt = mappingTable.value.map
+      if (mt.contains(Seq(param1, param2, param3, param4, param5))) {
+        null
+      } else {
+        ErrorMessage.confMappingErr(outputColumn, Seq(param1.toString, param2.toString, param3.toString,
+          param4.toString, param5.toString), mappings)
+      }
     }
   }
 
