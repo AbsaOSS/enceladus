@@ -24,7 +24,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.NegationConformanceRule
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.enceladus.utils.types.GlobalDefaults
 import za.co.absa.enceladus.utils.validation.SchemaPathValidator
 
 case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleInterpreter {

@@ -509,7 +509,7 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
         .putString(MetadataKeys.MinusSign, minusSign)
         .build()),
       StructField("sf", ShortType, nullable = true, new MetadataBuilder()
-        .putString(MetadataKeys.DefaultValue, "§13")
+        .putString(MetadataKeys.DefaultValue, "§13") //NB 13 is 10 in decimal base
         .putString(MetadataKeys.SourceColumn, srcField)
         .putString(MetadataKeys.Radix, "7")
         .putString(MetadataKeys.MinusSign, minusSign)
@@ -521,7 +521,7 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
         .build()),
       StructField("lf", LongType, nullable = false, new MetadataBuilder()
         .putString(MetadataKeys.SourceColumn, srcField)
-        .putString(MetadataKeys.DefaultValue, "Ada")
+        .putString(MetadataKeys.DefaultValue, "Ada") // NB Ada is 7651 in decimal base
         .putString(MetadataKeys.Radix, "27")
         .putString(MetadataKeys.MinusSign, minusSign)
         .build())
@@ -547,4 +547,6 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
 
     assertResult(exp)(std.as[(String, String, Byte, Option[Short], Option[Int], Long, Seq[ErrorMessage])].collect().toList)
   }
+
+
 }

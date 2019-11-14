@@ -19,10 +19,8 @@ import java.math.BigInteger
 import java.text.DecimalFormat
 
 import scala.util.{Failure, Success, Try}
-import za.co.absa.enceladus.utils.numeric.Radix.RadixOrdering._
 import za.co.absa.enceladus.utils.numeric.{DecimalSymbols, NumericPattern, Radix}
 import za.co.absa.enceladus.utils.typeClasses.LongLike
-import za.co.absa.enceladus.utils.types.parsers.NumericParser.NumericParserException
 
 abstract class IntegralParser[N: LongLike] private(override val pattern: NumericPattern,
                                                    override val min: Option[N],
@@ -85,12 +83,6 @@ object IntegralParser {
                                     override val min: Option[N],
                                     override val max: Option[N])
     extends IntegralParser(NumericPattern(decimalSymbols), min, max) {
-    if (radix.value <= 0) {
-      throw new NumericParserException(s"Radix has to be greater then 0, $radix was entered")
-    }
-    if (radix > Radix.MaxSupportedRadix) {
-      throw new NumericParserException(s"Maximum supported radix is ${Radix.MaxSupportedRadix.value}, $radix was entered")
-    }
 
     private val minBI = BigInteger.valueOf(min.map(ev.toLong).getOrElse(Long.MinValue))
     private val maxBI = BigInteger.valueOf(max.map(ev.toLong).getOrElse(Long.MaxValue))
@@ -165,7 +157,7 @@ object IntegralParser {
     override protected val numberConversion: Number => N = {number =>
       val longValue = number.longValue()
       if ((longValue > ev.MaxValue) || (longValue < ev.MinValue)) {
-        throw this.outOfBoundsException(number.toString)
+        throw outOfBoundsException(number.toString)
       }
       ev.toT(longValue)
     }

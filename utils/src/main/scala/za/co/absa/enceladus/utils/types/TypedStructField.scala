@@ -213,7 +213,7 @@ object TypedStructField {
 
     private def readNumericPatternFromMetadata: Option[NumericPattern] = {
       val stringPatternOpt = getMetadataString(MetadataKeys.Pattern)
-      val decimalSymbolsOpt = readDecimalSymbolsFromMetadata
+      val decimalSymbolsOpt = readDecimalSymbolsFromMetadata()
 
       if (stringPatternOpt.nonEmpty) {
         stringPatternOpt.map(NumericPattern(_, decimalSymbolsOpt.getOrElse(defaults.getDecimalSymbols)))
@@ -222,7 +222,7 @@ object TypedStructField {
       }
     }
 
-    private def readDecimalSymbolsFromMetadata: Option[DecimalSymbols] = {
+    private def readDecimalSymbolsFromMetadata(): Option[DecimalSymbols] = {
       val ds = defaults.getDecimalSymbols
       val minusSign = getMetadataChar(MetadataKeys.MinusSign).getOrElse(ds.minusSign)
       val decimalSeparator = getMetadataChar(MetadataKeys.DecimalSeparator).getOrElse(ds.decimalSeparator)
@@ -243,13 +243,13 @@ object TypedStructField {
                                                                                       (implicit defaults: Defaults)
     extends NumericTypeStructField[L](structField, typeMin, typeMax) {
 
-    val base: Radix = readRadixFromMetadata
+    private val radix: Radix = readRadixFromMetadata
 
     override val parser: Try[IntegralParser[L]] = {
       pattern.flatMap { patternForParser =>
-      if (base != Radix.DefaultRadix) {
+      if (radix != Radix.DefaultRadix) {
         val decimalSymbols = patternForParser.map(_.decimalSymbols).getOrElse(defaults.getDecimalSymbols)
-        Try(IntegralParser.ofRadix(base, decimalSymbols, Option(typeMin), Option(typeMax)))
+        Try(IntegralParser.ofRadix(radix, decimalSymbols, Option(typeMin), Option(typeMax)))
       } else {
         Success(IntegralParser(patternForParser
           .getOrElse(NumericPattern(defaults.getDecimalSymbols)), Option(typeMin), Option(typeMax)))
@@ -261,7 +261,7 @@ object TypedStructField {
     }
 
     override def needsUdfParsing: Boolean = {
-      (base != Radix.DefaultRadix) || super.needsUdfParsing
+      (radix != Radix.DefaultRadix) || super.needsUdfParsing
     }
 
     private def readRadixFromMetadata:Radix = {

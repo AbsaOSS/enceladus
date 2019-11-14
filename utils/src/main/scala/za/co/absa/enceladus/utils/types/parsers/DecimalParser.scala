@@ -27,9 +27,9 @@ class DecimalParser(override val pattern: NumericPattern,
   override protected val numberConversion: Number => BigDecimal = {n => BigDecimal(n.asInstanceOf[java.math.BigDecimal])}
 
   protected val decimalFormat: Option[DecimalFormat] = pattern.specifiedPattern.map (s => {
-    val df = new DecimalFormat(s, pattern.decimalSymbols.toDecimalFormatSymbols)
-    df.setParseBigDecimal(true)
-    df
+    val format = new DecimalFormat(s, pattern.decimalSymbols.toDecimalFormatSymbols)
+    format.setParseBigDecimal(true)
+    format
   })
 }
 

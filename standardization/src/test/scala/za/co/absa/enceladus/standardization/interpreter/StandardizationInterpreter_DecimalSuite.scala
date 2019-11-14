@@ -221,4 +221,60 @@ class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBas
 
     assertResult(exp)(std.as[(String, String, BigDecimal, BigDecimal, Seq[ErrorMessage])].collect().toList)
   }
+
+  test("Pattern with symbols alterated") {
+    val input = Seq(
+      ("01-Normal", "9 123,4"),
+      ("02-Null", null),
+      ("03-Big", "100 000 000,999"),
+      ("04-Wrong", "hello"),
+      ("05-Not adhering to pattern", "123456.789"),
+      ("06-Negative", "~54 123,789")
+    )
+
+    val srcField = "src"
+    val decimalSeparator = ","
+    val groupingSeparator = " "
+    val minusSign = "~"
+    val pattern = "#,##0.#" // NB the default symbols, not the redefined ones
+
+    val src = input.toDF("description", srcField)
+
+    val desiredSchemaWithPatterns = StructType(Seq(
+      StructField("description", StringType, nullable = false),
+      StructField("src", StringType, nullable = true),
+      StructField("small", DecimalType(7,2), nullable = false, new MetadataBuilder()
+        .putString(MetadataKeys.Pattern, pattern)
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.GroupingSeparator, groupingSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .build()),
+      StructField("big", DecimalType(38,18), nullable = true, new MetadataBuilder()
+        .putString(MetadataKeys.Pattern, pattern)
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.GroupingSeparator, groupingSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .putString(MetadataKeys.DefaultValue, "1,000")
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .build())
+    ))
+
+    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithPatterns, "").cache()
+    logDataFrameContent(std)
+
+    val exp = List(
+      ("01-Normal", "9 123,4", BigDecimal("9123.400000000000000000"), BigDecimal("9123.400000000000000000"), Seq.empty),
+      ("02-Null", null,  BigDecimal("0E-18"), null, Seq(ErrorMessage.stdNullErr(srcField))),
+      ("03-Big", "100 000 000,999",  BigDecimal("0E-18"), BigDecimal("100000000.999000000000000000"), Seq(ErrorMessage.stdCastErr(srcField,"100 000 000,999"))),
+      ("04-Wrong", "hello",  BigDecimal("0E-18"), BigDecimal("1.000000000000000000"), Seq(ErrorMessage.stdCastErr(srcField,"hello"), ErrorMessage.stdCastErr(srcField,"hello"))),
+      ("05-Not adhering to pattern", "123456.789",  BigDecimal("0E-18"), BigDecimal("1.000000000000000000"), Seq(ErrorMessage.stdCastErr(srcField,"123456.789"), ErrorMessage.stdCastErr(srcField,"123456.789"))),
+      ("06-Negative", "~54 123,789", BigDecimal("-54123.790000000000000000"), BigDecimal("-54123.789000000000000000"), Seq.empty)
+    )
+
+    std.show(false)
+
+    assertResult(exp)(std.as[(String, String, BigDecimal, BigDecimal, Seq[ErrorMessage])].collect().toList)
+  }
+
 }

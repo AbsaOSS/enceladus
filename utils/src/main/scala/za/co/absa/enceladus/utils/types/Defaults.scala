@@ -17,7 +17,6 @@ package za.co.absa.enceladus.utils.types
 
 import java.sql.Date
 import java.sql.Timestamp
-import java.text.DecimalFormatSymbols
 import java.util.{Locale, TimeZone}
 
 import org.apache.spark.sql.types._

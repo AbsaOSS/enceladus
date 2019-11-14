@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.utils.implicits
 
 import java.security.InvalidParameterException
-
 import scala.annotation.tailrec
 
 object StringImplicits {
@@ -31,7 +30,7 @@ object StringImplicits {
       if (replacements.isEmpty) {
        string
       } else {
-        val result = new StringBuffer(string.length)
+        val result = new StringBuilder(string.length)
         string.foreach(char => result.append(replacements.getOrElse(char, char)))
         result.toString
       }

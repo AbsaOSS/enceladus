@@ -31,7 +31,11 @@ abstract class NumericParser[N: Ordering](val pattern: NumericPattern,
 
   def parse(string: String): Try[N] = {
     for {
-      parsed <- pattern.specifiedPattern.map(_ => parseUsingPattern(string)).getOrElse(parseWithoutPattern(string))
+      parsed <- if (pattern.specifiedPattern.isDefined) {
+          parseUsingPattern(string)
+        } else {
+          parseWithoutPattern(string)
+        }
       result <- valueWithinBounds(parsed)
     } yield result
   }

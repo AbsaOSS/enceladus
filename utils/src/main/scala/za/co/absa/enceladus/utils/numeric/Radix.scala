@@ -15,25 +15,36 @@
 
 package za.co.absa.enceladus.utils.numeric
 
-class Radix(val value: Int) extends AnyVal {
+import scala.util.control.NonFatal
+
+class Radix private(val value: Int) extends AnyVal {
   override def toString: String = {
     s"Radix($value)"
   }
 }
 
 object Radix {
+  private val MaxSupportedRadixValue = 36 //that's up to 0..9A..Z (case insensitive)
 
   implicit object RadixOrdering extends Ordering[Radix] {
     override def compare(a: Radix, b: Radix): Int = a.value compare b.value
   }
 
-  // scalastyle:off magic.number
-  val MaxSupportedRadix = Radix(36)
-  val DefaultRadix = Radix(10)
-  // scalastyle:on magic.number
+
+  val MaxSupportedRadix = Radix(MaxSupportedRadixValue)
+  val DefaultRadix = Radix(10) // scalastyle:ignore magic.number
 
 
-  def apply(value: Int): Radix = new Radix(value)
+  def apply(value: Int): Radix = {
+    if (value <= 0) {
+      throw new RadixFormatException(s"Radix has to be greater then 0, $value was entered")
+    }
+    if (value > MaxSupportedRadixValue) {
+      throw new RadixFormatException(s"Maximum supported radix is ${Radix.MaxSupportedRadix.value}, $value was entered")
+    }
+
+    new Radix(value)
+  }
   def apply(string: String): Radix = {
     // scalastyle:off magic.number obvious meaning
     val value = string.toLowerCase() match {
@@ -41,11 +52,19 @@ object Radix {
       case "hex" | "hexadecimal"  => 16
       case "bin" | "binary"       => 2
       case "oct" | "octal"        => 8
-      case x                      => x.toInt
+      case x                      =>
+        try {
+          x.toInt
+        }
+        catch {
+          case NonFatal(e) => throw new RadixFormatException(s"'$x' was not recognized as a Radix value")
+        }
     }
     // scalastyle:on magic.number
     Radix(value)
   }
 
   def unapply(arg: Radix): Option[Int] = Some(arg.value)
+
+  class RadixFormatException(s: String = "") extends NumberFormatException(s)
 }

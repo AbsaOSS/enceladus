@@ -31,7 +31,7 @@ class DateFieldValidatorSuite extends FunSuite  {
     val builder2 = defaultValue.map(builder.putString(MetadataKeys.DefaultValue, _)).getOrElse(builder)
     val builder3 = defaultTimeZone.map(builder2.putString(MetadataKeys.DefaultTimeZone, _)).getOrElse(builder2)
     val result = StructField("test_field", DateType,  nullable = false, builder3.build())
-    TypedStructField.asDateTimeTypeStructField(result)
+    TypedStructField(result)
   }
 
   test("epoch pattern") {

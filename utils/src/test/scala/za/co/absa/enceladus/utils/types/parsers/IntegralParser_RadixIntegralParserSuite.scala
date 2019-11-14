@@ -2,11 +2,12 @@ package za.co.absa.enceladus.utils.types.parsers
 
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.numeric.Radix
+import za.co.absa.enceladus.utils.numeric.Radix.RadixFormatException
 import za.co.absa.enceladus.utils.types.parsers.NumericParser.NumericParserException
 
 import scala.util.Success
 
-class IntegralParser_BaseIntegralParserSuite extends FunSuite {
+class IntegralParser_RadixIntegralParserSuite extends FunSuite {
 
   test("base 10 parsing succeeds") {
     val parser = IntegralParser.ofRadix(Radix(10))
@@ -127,21 +128,30 @@ class IntegralParser_BaseIntegralParserSuite extends FunSuite {
   }
 
   test("base out of range") {
-    val exception1 = intercept[NumericParserException] {
+    val exception1 = intercept[RadixFormatException] {
       IntegralParser.ofRadix(Radix(0))
     }
-    assert(exception1.getMessage == "Radix has to be greater then 0, Radix(0) was entered")
-    val exception2 = intercept[NumericParserException] {
+    assert(exception1.getMessage == "Radix has to be greater then 0, 0 was entered")
+    val exception2 = intercept[RadixFormatException] {
       IntegralParser.ofRadix(Radix(37))
     }
-    assert(exception2.getMessage == "Maximum supported radix is 36, Radix(37) was entered")
+    assert(exception2.getMessage == "Maximum supported radix is 36, 37 was entered")
   }
 
   test("base not recognized") {
-    val exception = intercept[NumberFormatException] {
+    val exception = intercept[RadixFormatException] {
       IntegralParser.ofStringRadix("hello")
     }
-    assert(exception.getMessage == """For input string: "hello"""")
+    assert(exception.getMessage == "'hello' was not recognized as a Radix value")
+  }
+
+  test("base is smaller then 10 and minus is a higher digit") {
+    val decimalSymbols =  NumericParser.defaultDecimalSymbols.copy(minusSign = '5')
+
+    val parser = IntegralParser.ofRadix(Radix(5), decimalSymbols)
+    assert(parser.parse("4321") == Success(586))
+    assert(parser.parse("54321") == Success(-586))
+    assert(parser.parse("-4321").isFailure)
   }
 
 }

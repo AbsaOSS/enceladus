@@ -42,11 +42,11 @@ trait ParseViaDecimalFormat[N] {
     }
 
     for {
-      df     <- decimalFormat.toTry(new NumericParserException("No pattern provided"))
-      pos     = new ParsePosition(0)
-      parsed <- Try(df.parse(stringToParse, pos))
-      _      <- checkPosAtEnd(pos)
-      result <- Try(numberConversion(parsed))
+      formatter <- decimalFormat.toTry(new NumericParserException("No pattern provided"))
+      pos       = new ParsePosition(0)
+      parsed    <- Try(formatter.parse(stringToParse, pos))
+      _         <- checkPosAtEnd(pos)
+      result    <- Try(numberConversion(parsed))
     } yield result
   }
 
