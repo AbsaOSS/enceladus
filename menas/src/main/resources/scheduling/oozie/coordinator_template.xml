@@ -26,10 +26,6 @@
                     <value>${coord:formatTime(coord:dateOffset(coord:nominalTime(), $reportDateOffset,'DAY'), "yyyy-MM-dd")}</value>
                 </property>
                 <property>
-                    <name>oozie.use.system.libpath</name>
-                    <value>True</value>
-                </property>
-                <property>
                     <name>start_date</name>
                     <value>$startDate</value>
                 </property>

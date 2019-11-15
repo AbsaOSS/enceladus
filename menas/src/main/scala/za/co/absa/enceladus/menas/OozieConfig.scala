@@ -22,6 +22,9 @@ import scala.util.Try
 import za.co.absa.enceladus.menas.exceptions.OozieConfigurationException
 import scala.util.Success
 import scala.util.Failure
+import org.apache.oozie.client.AuthOozieClient
+import org.apache.oozie.client.AuthOozieClient.AuthType
+import org.slf4j.LoggerFactory
 
 @Configuration
 class OozieConfig {
@@ -29,9 +32,25 @@ class OozieConfig {
   @Value("${za.co.absa.enceladus.menas.oozie.oozieUrl:}")
   val oozieUrl: String = ""
 
+  @Value("${za.co.absa.enceladus.menas.oozie.proxyUser:}")
+  val oozieProxyUser: String = ""
+
+  @Value("${za.co.absa.enceladus.menas.oozie.proxyUserKeytab:}")
+  val oozieProxyUserKeytab: String = ""
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
   @Bean
   def oozieClient: Either[OozieConfigurationException, OozieClient] = {
-    Try(new OozieClient(oozieUrl)) match {
+    Try {
+      if(oozieProxyUser.nonEmpty && oozieProxyUserKeytab.nonEmpty) {
+        logger.info("Both oozie proxy user and proxy keytab provided, initializing the AuthOozieClient.")
+        new AuthOozieClient(oozieUrl, AuthType.KERBEROS.toString)
+      } else {
+        logger.info("Missing proxyUser and/or proxyUserKeytab configs, initializing normal OozieClient")
+        new OozieClient(oozieUrl)
+      }
+    } match {
       case Success(client) => Right(client)
       case Failure(e) => Left(OozieConfigurationException(e.getMessage, e))
     }

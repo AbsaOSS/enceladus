@@ -27,17 +27,16 @@ import za.co.absa.enceladus.menas.exceptions.OozieActionException
 import za.co.absa.enceladus.menas.models.OozieCoordinatorStatus
 import za.co.absa.enceladus.menas.repositories.OozieRepository
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
+import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
+import za.co.absa.enceladus.menas.exceptions.NotFoundException
+import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
 
 @Component
-class OozieService @Autowired() (oozieRepository: OozieRepository) {
+class OozieService @Autowired() (oozieRepository: OozieRepository, datasetMongoRepository: DatasetMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def isOozieEnabled: Boolean = oozieRepository.isOozieEnabled()
-
-  def getCoordinatorStatus(coordinatorId: String): Future[OozieCoordinatorStatus] = {
-    oozieRepository.getCoordinatorStatus(coordinatorId)
-  }
 
   def runNow(oozieSchedule: OozieSchedule, reportDate: Option[String]): Future[String] = {
     val wfPath = oozieSchedule.activeInstance match {
@@ -54,11 +53,39 @@ class OozieService @Autowired() (oozieRepository: OozieRepository) {
     oozieRepository.runWorkflow(wfPath, oozieSchedule.runtimeParams, reportDateString)
   }
 
+  private def coordinatorIdRuntimeHelper[T](coordinatorId: String)(fn: RuntimeConfig => Future[T]): Future[T] = {
+    for {
+      datasets <- datasetMongoRepository.findByCoordId(coordinatorId)
+      res <- if(datasets.isEmpty) {
+        throw NotFoundException(s"No dataset with coordinator ID ${coordinatorId} found")
+      } else {
+        //Justification for get - schedule is being matched in the bson filter, it shouldn't be None
+        fn(datasets.head.schedule.get.runtimeParams)
+      }
+    } yield res
+  }
+
+  def getCoordinatorStatus(coordinatorId: String): Future[OozieCoordinatorStatus] = {
+    coordinatorIdRuntimeHelper(coordinatorId) { runtimeParams =>
+      oozieRepository.getCoordinatorStatus(coordinatorId, runtimeParams)
+    }
+  }
+
   def suspend(coordinatorId: String): Future[OozieCoordinatorStatus] = {
-    oozieRepository.suspend(coordinatorId).flatMap(_ => this.getCoordinatorStatus(coordinatorId))
+    coordinatorIdRuntimeHelper(coordinatorId) { runtimeParams =>
+      for {
+        susp <- oozieRepository.suspend(coordinatorId, runtimeParams)
+        status <- oozieRepository.getCoordinatorStatus(coordinatorId, runtimeParams)
+      } yield status
+    } 
   }
 
   def resume(coordinatorId: String): Future[OozieCoordinatorStatus] = {
-    oozieRepository.resume(coordinatorId).flatMap(_ => this.getCoordinatorStatus(coordinatorId))
+    coordinatorIdRuntimeHelper(coordinatorId) { runtimeParams =>
+      for {
+        susp <- oozieRepository.resume(coordinatorId, runtimeParams)
+        status <- oozieRepository.getCoordinatorStatus(coordinatorId, runtimeParams)
+      } yield status
+    } 
   }
 }
