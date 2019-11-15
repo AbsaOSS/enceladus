@@ -18,8 +18,7 @@ package za.co.absa.enceladus
 import java.time.ZonedDateTime
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.DynamicConformanceJob
+import za.co.absa.enceladus.conformance.{CmdConfig, DynamicConformanceJob}
 import za.co.absa.enceladus.dao.menasplugin.{MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
@@ -56,6 +55,19 @@ class ConfigSuite extends FunSuite with SparkTestBase {
   private val infoDateColumn = "enceladus_info_date"
   private val infoVersionColumn = "enceladus_info_version"
 
+  test("Test credentials file parsing "){
+    val credentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
+
+    assert(credentials.username == "user")
+    assert(credentials.password == "changeme")
+  }
+
+  test("Test keytab file parsing "){
+    val credentials = MenasKerberosCredentials.fromFile(keytabPath)
+
+    assert(credentials === menasKeytab)
+  }
+
   test("folder-prefix parameter") {
     val cmdConfigNoFolderPrefix = CmdConfig.getCmdLineArguments(
       Array(
@@ -64,13 +76,16 @@ class ConfigSuite extends FunSuite with SparkTestBase {
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile))
+
+    val actualPlainMenasCredentials = cmdConfigNoFolderPrefix.menasCredentialsFactory.getInstance()
+
     assert(cmdConfigNoFolderPrefix.datasetName === datasetName)
     assert(cmdConfigNoFolderPrefix.datasetVersion === datasetVersion)
     assert(cmdConfigNoFolderPrefix.reportDate === reportDate)
     assert(cmdConfigNoFolderPrefix.reportVersion.get === reportVersion)
-    assert(cmdConfigNoFolderPrefix.menasCredentials === menasCredentials)
     assert(cmdConfigNoFolderPrefix.folderPrefix.isEmpty)
     assert(cmdConfigNoFolderPrefix.publishPathOverride.isEmpty)
+    assert(actualPlainMenasCredentials === menasCredentials)
 
     val cmdConfigFolderPrefix = CmdConfig.getCmdLineArguments(
       Array(
@@ -80,14 +95,17 @@ class ConfigSuite extends FunSuite with SparkTestBase {
         "--report-version", reportVersion.toString,
         "--menas-auth-keytab", keytabPath,
         "--folder-prefix", folderPrefix))
+
+    val actualMenasKerberosCredentials = cmdConfigFolderPrefix.menasCredentialsFactory.getInstance()
+
     assert(cmdConfigFolderPrefix.datasetName === datasetName)
     assert(cmdConfigFolderPrefix.datasetVersion === datasetVersion)
     assert(cmdConfigFolderPrefix.reportDate === reportDate)
     assert(cmdConfigFolderPrefix.reportVersion.get === reportVersion)
-    assert(cmdConfigFolderPrefix.menasCredentials === menasKeytab)
     assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
     assert(cmdConfigFolderPrefix.folderPrefix.get === folderPrefix)
     assert(cmdConfigFolderPrefix.publishPathOverride.isEmpty)
+    assert(actualMenasKerberosCredentials === menasKeytab)
 
     val cmdConfigPublishPathOverrideAndFolderPrefix = CmdConfig.getCmdLineArguments(
       Array(
@@ -98,11 +116,11 @@ class ConfigSuite extends FunSuite with SparkTestBase {
         "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride,
         "--folder-prefix", folderPrefix))
+
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.datasetName === datasetName)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.datasetVersion === datasetVersion)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.reportDate === reportDate)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.reportVersion.get === reportVersion)
-    assert(cmdConfigPublishPathOverrideAndFolderPrefix.menasCredentials === menasCredentials)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.folderPrefix.nonEmpty)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.folderPrefix.get === folderPrefix)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.publishPathOverride.nonEmpty)

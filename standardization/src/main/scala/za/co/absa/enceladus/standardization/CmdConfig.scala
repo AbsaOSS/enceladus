@@ -15,12 +15,9 @@
 
 package za.co.absa.enceladus.standardization
 
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.storage.StorageLevel
 import scopt.OptionParser
-import sun.security.krb5.internal.ktab.KeyTab
-import za.co.absa.enceladus.dao.menasplugin.{InvalidMenasCredentials, MenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.dao.menasplugin.{InvalidMenasCredentialsFactory, MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 
 import scala.util.matching.Regex
 
@@ -37,7 +34,7 @@ case class CmdConfig(
                       reportDate: String = "",
                       reportVersion: Option[Int] = None,
                       rawFormat: String = "xml",
-                      menasCredentials: MenasCredentials = InvalidMenasCredentials,
+                      menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
                       charset: Option[String] = None,
                       rowTag: Option[String] = None,
                       csvDelimiter: Option[String] = None,
@@ -53,7 +50,7 @@ case class CmdConfig(
 
 object CmdConfig {
 
-  def getCmdLineArguments(args: Array[String])(implicit spark: SparkSession): CmdConfig = {
+  def getCmdLineArguments(args: Array[String]): CmdConfig = {
     val parser = new CmdParser("spark-submit [spark options] StandardizationBundle.jar")
 
     val optionCmd = parser.parse(args, CmdConfig(args))
@@ -64,9 +61,7 @@ object CmdConfig {
     optionCmd.get
   }
 
-  private class CmdParser(programName: String)(implicit spark: SparkSession) extends OptionParser[CmdConfig](programName) {
-    private val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-
+  private class CmdParser(programName: String) extends OptionParser[CmdConfig](programName) {
     head("\nStandardization", "")
     var rawFormat: Option[String] = None
 
@@ -93,36 +88,24 @@ object CmdConfig {
 
     private var credsFile: Option[String] = None
     private var keytabFile: Option[String] = None
-    opt[String]("menas-credentials-file").hidden.optional().action({ (path, config) =>
-      val credential = MenasPlainCredentials.fromFile(path)
-      credsFile = Some(path)
-      config.copy(menasCredentials = credential)
+    opt[String]("menas-credentials-file").hidden.optional().action({ (file, config) =>
+      credsFile = Some(file)
+      config.copy(menasCredentialsFactory = new MenasPlainCredentialsFactory(file))
     }).text("Path to Menas credentials config file.").validate(path =>
       if (keytabFile.isDefined) {
         failure("Only one authentication method is allow at a time")
-      } else if (MenasPlainCredentials.exists(MenasPlainCredentials.replaceHome(path))) {
-        success
       } else {
-        failure("Credentials file not found.")
+        success
       })
 
     opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
       keytabFile = Some(file)
-      val localPath = if (!fsUtils.localExists(file) && fsUtils.hdfsExists(file)) {
-        fsUtils.hdfsFileToLocalTempFile(file)
-      } else {
-        file
-      }
-      val keytab = KeyTab.getInstance(localPath)
-      val username = keytab.getOneName.getName
-      config.copy(menasCredentials = MenasKerberosCredentials(username, localPath))
+      config.copy(menasCredentialsFactory = new MenasKerberosCredentialsFactory(file))
     }).text("Path to keytab file used for authenticating to menas").validate({ file =>
       if (credsFile.isDefined) {
         failure("Only one authentication method is allowed at a time")
-      } else if (fsUtils.exists(file)) {
+      } else  {
         success
-      } else {
-        failure("Keytab file doesn't exist")
       }
     })
 
@@ -229,9 +212,9 @@ object CmdConfig {
     help("help").text("prints this usage text")
 
     checkConfig { config =>
-      config.menasCredentials match {
-        case InvalidMenasCredentials => failure("No authentication method specified (e.g. --menas-auth-keytab)")
-        case _                       => success
+      config.menasCredentialsFactory match {
+        case InvalidMenasCredentialsFactory => failure("No authentication method specified (e.g. --menas-auth-keytab)")
+        case _ => success
       }
     }
 

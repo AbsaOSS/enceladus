@@ -19,8 +19,8 @@ import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.menasplugin.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.menasplugin.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.LPadCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset
@@ -43,8 +43,8 @@ object CustomRuleSample2 {
     val conf = ConfigFactory.load()
     val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
     val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
-    implicit val progArgs: CmdConfig = CmdConfig(menasCredentials = meansCredentials) // here we may need to specify some parameters (for certain rules)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(progArgs.menasCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
+    implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
 
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true

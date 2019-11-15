@@ -29,11 +29,12 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.menasplugin.MenasPlugin
-import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasPlugin}
+import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
@@ -53,10 +54,11 @@ object DynamicConformanceJob {
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   def main(args: Array[String]) {
-    implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+    implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(cmd.menasCredentials, menasBaseUrls)
+    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
 
     val enableCF: Boolean = true
 
@@ -93,9 +95,9 @@ object DynamicConformanceJob {
       val result = conform(conformance, inputData, enableCF)
 
       PerformanceMetricTools.addJobInfoToAtumMetadata("conform",
-        pathCfg.stdPath, pathCfg.publishPath, cmd.menasCredentials.username, args.mkString(" "))
+        pathCfg.stdPath, pathCfg.publishPath, menasCredentials.username, args.mkString(" "))
 
-      processResult(result, performance, pathCfg, reportVersion, args.mkString(" "))
+      processResult(result, performance, pathCfg, reportVersion, args.mkString(" "), menasCredentials)
 
       log.info("Conformance finished successfully")
     } finally {
@@ -162,9 +164,12 @@ object DynamicConformanceJob {
     enabled
   }
 
-  private def obtainSparkSession(): SparkSession = {
+  private def obtainSparkSession()(implicit cmd: CmdConfig): SparkSession = {
+    val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
+    log.info(s"Enceladus version $enceladusVersion")
+    val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
     val spark: SparkSession = SparkSession.builder()
-      .appName("Dynamic Conformance")
+      .appName(s"Dynamic Conformance $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
       .getOrCreate()
 
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
@@ -234,7 +239,8 @@ object DynamicConformanceJob {
                             performance: PerformanceMeasurer,
                             pathCfg: PathCfg,
                             reportVersion: Int,
-                            cmdLineArgs: String)
+                            cmdLineArgs: String,
+                            menasCredentials: MenasCredentials)
                            (implicit spark: SparkSession, cmd: CmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
     val withPartCols = result
@@ -256,7 +262,7 @@ object DynamicConformanceJob {
     val publishDirSize = fsUtils.getDirectorySize(pathCfg.publishPath)
     performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "conform",
-      pathCfg.stdPath, pathCfg.publishPath, cmd.menasCredentials.username, cmdLineArgs)
+      pathCfg.stdPath, pathCfg.publishPath, menasCredentials.username, cmdLineArgs)
 
     withPartCols.writeInfoFile(pathCfg.publishPath)
     cmd.performanceMetricsFile.foreach(fileName => {

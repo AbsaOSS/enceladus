@@ -15,34 +15,25 @@
 
 package za.co.absa.enceladus.menas
 
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanFactory
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.springframework.context.annotation.{Bean, Configuration}
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
+import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
+import org.springframework.security.config.annotation.web.configuration.{EnableWebSecurity, WebSecurityConfigurerAdapter}
 import org.springframework.security.core.Authentication
 import org.springframework.security.kerberos.web.authentication.SpnegoEntryPoint
-import org.springframework.security.web.authentication.AuthenticationFailureHandler
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler
-import org.springframework.security.web.authentication.logout.LogoutSuccessHandler
+import org.springframework.security.web.authentication._
+import org.springframework.security.web.authentication.logout.{HttpStatusReturningLogoutSuccessHandler, LogoutSuccessHandler}
 import org.springframework.security.web.csrf.CsrfToken
 import org.springframework.stereotype.Component
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import org.springframework.security.authentication.AuthenticationManager
-import za.co.absa.enceladus.menas.auth.InMemoryMenasAuthentication
-import za.co.absa.enceladus.menas.auth.MenasAuthentication
 import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication
+import za.co.absa.enceladus.menas.auth.{InMemoryMenasAuthentication, MenasAuthentication, MenasAuthenticationFailureHandler}
 
 @EnableWebSecurity
 class WebSecurityConfig {
@@ -60,7 +51,7 @@ class WebSecurityConfig {
 
   @Bean
   def authenticationFailureHandler(): AuthenticationFailureHandler = {
-    new SimpleUrlAuthenticationFailureHandler()
+    new MenasAuthenticationFailureHandler
   }
 
   @Bean

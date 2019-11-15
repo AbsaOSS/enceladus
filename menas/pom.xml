@@ -20,7 +20,7 @@
     <parent>
         <groupId>za.co.absa</groupId>
         <artifactId>enceladus-parent</artifactId>
-        <version>1.4.0</version>
+        <version>1.5.0</version>
     </parent>
 
     <properties>
@@ -215,6 +215,12 @@
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-client</artifactId>
             <version>${oozie.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.oozie</groupId>
+                    <artifactId>oozie-hadoop-auth</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- Plot -->
         <dependency>
