@@ -28,21 +28,11 @@ object BroadcastUtils {
   }
 
   /**
-    * Registers a UDF that takes values of join keys and returns the value of the target attribute or null
-    * if there is no mapping for the specified keys.
-    *
-    * @param udfName      An UDF name.
-    * @param mappingTable A mapping table broadcasted to executors.
-    */
-  def registerMappingUdf(udfName: String, mappingTable: Broadcast[LocalMappingTable])(implicit spark: SparkSession): Unit = {
-    spark.udf.register(udfName, getMappingUdf(mappingTable))
-  }
-
-  /**
     * Returns a UDF that takes values of join keys and returns the value of the target attribute or null
     * if there is no mapping for the specified keys.
     *
     * @param mappingTable A mapping table broadcasted to executors.
+    * @return A UDF that maps joins keys to a target attribute value.
     */
   def getMappingUdf(mappingTable: Broadcast[LocalMappingTable])(implicit spark: SparkSession): UserDefinedFunction = {
     val numberOfArgments = mappingTable.value.keyTypes.size
@@ -62,21 +52,10 @@ object BroadcastUtils {
   }
 
   /**
-    * Registers a UDF that takes values of join keys and returns a join error or null if the join is successful.
-    *
-    * @param udfName      An UDF name.
-    * @param mappingTable A mapping table broadcasted to executors.
-    */
-  def registerErrorUdf(udfName: String, mappingTable: Broadcast[LocalMappingTable],
-                       outputColumn: String,
-                       mappings: Seq[Mapping])(implicit spark: SparkSession): Unit = {
-    spark.udf.register(udfName, getErrorUdf(mappingTable, outputColumn, mappings))
-  }
-
-  /**
     * Returns a UDF that takes values of join keys and returns a join error or null if the join is successful.
     *
     * @param mappingTable A mapping table broadcasted to executors.
+    * @return A UDF that returns an error column if join keys are not found in the mapping.
     */
   def getErrorUdf(mappingTable: Broadcast[LocalMappingTable],
                        outputColumn: String,
