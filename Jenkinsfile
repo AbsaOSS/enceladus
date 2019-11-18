@@ -21,7 +21,7 @@ def mavenSettingsId = getMavenSettingsId()
 def mavenAdditionalSettingsBuild = getMavenAdditionalSettingsBuild()
 def mavenAdditionalSettingsDeploy = getMavenAdditionalSettingsDeploy()
 def artifactoryURL = getArtifactoryUrl()
-
+def analysisId = getCodebaseAnalysisId()
 
 pipeline {
     agent {
@@ -42,6 +42,15 @@ pipeline {
                 configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
                     sh "mvn -s $MAVEN_SETTINGS_XML ${mavenAdditionalSettingsBuild} clean package -PgenerateComponentPreload"
                 }
+            }
+        }
+        stage ('Codebase analysis') {
+            steps {
+                configFileProvider([configFile(fileId: "${analysisId}", variable: 'SONARCLOUD_ANALYSIS_PROPERTIES')]) {
+                    script {
+                        def sonarProps = readFile("${SONARCLOUD_ANALYSIS_PROPERTIES}")
+                    }
+                    sh "mvn verify sonar:sonar $sonarProps"
             }
         }
         stage ('Deploy Snapshot Version to Repository') {
