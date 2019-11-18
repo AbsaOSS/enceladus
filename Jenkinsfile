@@ -22,7 +22,6 @@ def mavenAdditionalSettingsBuild = getMavenAdditionalSettingsBuild()
 def mavenAdditionalSettingsDeploy = getMavenAdditionalSettingsDeploy()
 def artifactoryURL = getArtifactoryUrl()
 
-
 pipeline {
     agent {
         label "${enceladusSlaveLabel}"
@@ -42,6 +41,11 @@ pipeline {
                 configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
                     sh "mvn -s $MAVEN_SETTINGS_XML ${mavenAdditionalSettingsBuild} clean package -PgenerateComponentPreload"
                 }
+            }
+        }
+        stage ('Codebase analysis') {
+            steps {
+                sh "mvn verify sonar:sonar"
             }
         }
         stage ('Deploy Snapshot Version to Repository') {
