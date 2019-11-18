@@ -51,6 +51,7 @@ pipeline {
                         def sonarProps = readFile("${SONARCLOUD_ANALYSIS_PROPERTIES}")
                     }
                     sh "mvn verify sonar:sonar $sonarProps"
+                }
             }
         }
         stage ('Deploy Snapshot Version to Repository') {
