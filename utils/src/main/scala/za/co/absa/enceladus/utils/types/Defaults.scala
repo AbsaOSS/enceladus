@@ -25,7 +25,7 @@ import za.co.absa.enceladus.utils.numeric.DecimalSymbols
 
 import scala.util.{Success, Try}
 
-abstract class Defaults {
+abstract class Defaults extends Serializable {
   /** A function which defines default values for primitive types */
   def getDataTypeDefaultValue(dt: DataType): Any
 

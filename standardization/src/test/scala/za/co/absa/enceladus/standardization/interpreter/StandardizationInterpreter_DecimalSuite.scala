@@ -272,8 +272,6 @@ class StandardizationInterpreter_DecimalSuite extends FunSuite with SparkTestBas
       ("06-Negative", "~54 123,789", BigDecimal("-54123.790000000000000000"), BigDecimal("-54123.789000000000000000"), Seq.empty)
     )
 
-    std.show(false)
-
     assertResult(exp)(std.as[(String, String, BigDecimal, BigDecimal, Seq[ErrorMessage])].collect().toList)
   }
 

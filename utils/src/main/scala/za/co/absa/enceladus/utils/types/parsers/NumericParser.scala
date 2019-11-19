@@ -22,7 +22,8 @@ import scala.util.{Failure, Success, Try}
 
 abstract class NumericParser[N: Ordering](val pattern: NumericPattern,
                                           val min: Option[N],
-                                          val max: Option[N]) {
+                                          val max: Option[N])
+  extends Serializable {
 
   protected val stringConversion: String => N
 

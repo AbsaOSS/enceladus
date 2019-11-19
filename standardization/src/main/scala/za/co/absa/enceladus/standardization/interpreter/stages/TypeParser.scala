@@ -21,6 +21,7 @@ import java.util.Date
 import java.util.regex.Pattern
 
 import org.apache.spark.sql.Column
+import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.schema.SchemaUtils
@@ -33,7 +34,7 @@ import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.TypedStructField._
-import za.co.absa.enceladus.utils.udf.UDFResult
+import za.co.absa.enceladus.utils.udf.UDFBuilder
 
 import scala.reflect.runtime.universe._
 import scala.util.Random
@@ -283,13 +284,9 @@ object TypeParser {
     }
 
     private def standardizeUsingUdf(): ParseOutput = {
-      val udfFnc = udf[UDFResult[N], String](udfParsing)
+      //TODO #1047 val udfFnc: UserDefinedFunction = UDFBuilder.typedStructFieldStringUdf(field, columnIdForUdf, defaultValue)
+      val udfFnc: UserDefinedFunction = UDFBuilder.stringUdfViaNumericParser(field.parser.get, field.nullable, columnIdForUdf, defaultValue)
       ParseOutput(udfFnc(column)("result").cast(field.dataType).as(fieldOutputName), udfFnc(column)("error"))
-    }
-
-    private def udfParsing(input: String): UDFResult[N] = {
-      val result = field.stringToTyped(input)
-      UDFResult.fromTry(result, columnIdForUdf, input, defaultValue)
     }
   }
 

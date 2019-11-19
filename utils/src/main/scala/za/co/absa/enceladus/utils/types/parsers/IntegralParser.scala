@@ -78,10 +78,10 @@ object IntegralParser {
     Try(Radix(string))
   }
 
-  private class RadixIntegralParser[N: LongLike] (override val radix: Radix,
-                                                  decimalSymbols: DecimalSymbols,
-                                    override val min: Option[N],
-                                    override val max: Option[N])
+  final class RadixIntegralParser[N: LongLike] (override val radix: Radix,
+                                                decimalSymbols: DecimalSymbols,
+                                                override val min: Option[N],
+                                                override val max: Option[N])
     extends IntegralParser(NumericPattern(decimalSymbols), min, max) {
 
     private val minBI = BigInteger.valueOf(min.map(ev.toLong).getOrElse(Long.MinValue))
@@ -148,9 +148,9 @@ object IntegralParser {
 
   }
 
-  private class PatternIntegralParser[N: LongLike](override val pattern: NumericPattern,
-                                                   override val min: Option[N],
-                                                   override val max: Option[N])
+  final class PatternIntegralParser[N: LongLike](override val pattern: NumericPattern,
+                                                 override val min: Option[N],
+                                                 override val max: Option[N])
     extends IntegralParser(pattern, min, max) with ParseViaDecimalFormat[N] {
     override val radix: Radix = Radix.DefaultRadix
 

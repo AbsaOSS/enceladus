@@ -29,7 +29,7 @@ import za.co.absa.enceladus.utils.validation.field._
 import scala.util.{Failure, Success, Try}
 
 sealed abstract class TypedStructField(structField: StructField)(implicit defaults: Defaults)
-  extends StructFieldEnhancements(structField) {
+  extends StructFieldEnhancements(structField) with Serializable {
 
   type BaseType
 

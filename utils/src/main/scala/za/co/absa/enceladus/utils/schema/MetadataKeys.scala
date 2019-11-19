@@ -24,11 +24,11 @@ object MetadataKeys {
   // date & timestamp & all numeric
   val Pattern = "pattern"
   // all numeric
+  val DecimalSeparator = "decimal_separator"
+  val GroupingSeparator = "grouping_separator"
   val MinusSign = "minus_sign"
   // float and double
   val AllowInfinity = "allow_infinity"
-  val DecimalSeparator = "decimal_separator"
-  val GroupingSeparator = "grouping_separator"
   // integral types
-  val Radix = "Radix"
+  val Radix = "radix"
 }

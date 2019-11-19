@@ -15,11 +15,21 @@
 
 package za.co.absa.enceladus.standardization.interpreter.stages
 
+import java.io.ObjectOutputStream
+
+import org.apache.commons.io.output.ByteArrayOutputStream
+import org.apache.spark.sql.functions.udf
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.standardization.interpreter.stages.TypeParser.IntegralParser
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.types.TypedStructField.TypedStructFieldTagged
+import za.co.absa.enceladus.utils.types.parsers.NumericParser
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.enceladus.utils.udf.UDFResult
+
+import scala.util.Success
 
 class TypeParserSuite extends FunSuite with SparkTestBase {
 
@@ -50,4 +60,46 @@ class TypeParserSuite extends FunSuite with SparkTestBase {
     assertResult(true)(parseOutputStructFieldWithMetadataSourceColumn.errors.expr.toString().contains("path.override_c"))
     assertResult(false)(parseOutputStructFieldWithMetadataSourceColumn.errors.expr.toString().replaceAll("path.override_c", "").contains("path"))
   }
+}
+
+object Foo {
+  def myFnc(s: String): UDFResult[Long] = {
+    UDFResult(None,Seq.empty)
+  }
+
+  def myFnc2[T](s: String): UDFResult[T] = {
+    UDFResult(None,Seq.empty)
+  }
+
+  def myFnc3[T](input: String,
+                columnIdForUdf: String,
+                fieldDef: TypedStructFieldTagged[T],
+                fieldDefaultValue: Option[T]): UDFResult[T] = {
+    val result = fieldDef.stringToTyped(input)
+    UDFResult.fromTry(result, columnIdForUdf, input, fieldDefaultValue)
+  }
+
+  def myFnc4[T](input: String,
+                columnIdForUdf: String,
+                parser: NumericParser[T],
+                fieldDefaultValue: Option[T]): UDFResult[T] = {
+    val result = parser.parse(input).map(Option(_))
+    UDFResult.fromTry(result, columnIdForUdf, input, fieldDefaultValue)
+  }
+
+  def myFnc5[T](input: String,
+                columnIdForUdf: String,
+                value: Option[T],
+                fieldDefaultValue: Option[T]): UDFResult[T] = {
+    val result = Success(value)
+    UDFResult.fromTry(result, columnIdForUdf, input, fieldDefaultValue)
+  }
+
+  def myFnc6[T](input: String,
+                columnIdForUdf: String,
+                value: Option[T],
+                fieldDefaultValue: Option[T]): UDFResult[T] = {
+    UDFResult(None,Seq.empty)
+  }
+
 }
