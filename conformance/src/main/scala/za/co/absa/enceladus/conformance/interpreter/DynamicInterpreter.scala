@@ -55,7 +55,7 @@ object DynamicInterpreter {
 
     val conformedDf = applyConformanceRules(ensureErrorColumnExists(inputDf))
 
-    applyCheckpoint(inputDf, "End")
+    applyCheckpoint(conformedDf, "End")
     logExecutionPlan(conformedDf)
 
     conformedDf
