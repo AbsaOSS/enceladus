@@ -185,7 +185,6 @@
         <log.level.testcode>ERROR</log.level.testcode>
         <log.pattern>[%p] %d{yy/MM/dd HH:mm:ss} %c{4}: %m%n</log.pattern>
         <log.specialfilters.acceptonmatch>false</log.specialfilters.acceptonmatch>
-        <sonar.projectKey>AbsaOSS_enceladus_project</sonar.projectKey>
         <sonar.organization>absaoss</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.login>df0b1360db96da22d43d2d7d6a1d7b321137357a</sonar.login>
