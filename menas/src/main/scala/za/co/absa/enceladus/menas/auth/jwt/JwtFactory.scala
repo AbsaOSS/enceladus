@@ -25,10 +25,10 @@ import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component
 
 @Component
-class JwtFactory @Autowired()(@Value("${za.co.absa.enceladus.menas.auth.signing-key}")
-                             signingKey: String) {
+class JwtFactory @Autowired()(@Value("${za.co.absa.enceladus.menas.auth.jwt.secret}")
+                             secret: String) {
 
-  private lazy val secretKey = Keys.hmacShaKeyFor(signingKey.getBytes)
+  private lazy val signingKey = Keys.hmacShaKeyFor(secret.getBytes)
 
   private val objectMapper = new ObjectMapper()
     .registerModule(new JavaTimeModule())
@@ -38,14 +38,14 @@ class JwtFactory @Autowired()(@Value("${za.co.absa.enceladus.menas.auth.signing-
   @Bean
   def jwtParser(): JwtParser = {
     Jwts.parser
-      .setSigningKey(secretKey)
+      .setSigningKey(signingKey)
       .deserializeJsonWith(new JacksonDeserializer(objectMapper))
   }
 
   @Bean
   def jwtBuilder(): JwtBuilder = {
     Jwts.builder()
-      .signWith(secretKey)
+      .signWith(signingKey)
       .serializeToJsonWith(new JacksonSerializer(objectMapper))
   }
 
