@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories
 
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.mockito.Mockito.{mock, when => mockWhen}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
@@ -33,11 +33,13 @@ object SimpleTestCaseFactory {
   private val testCaseName = "SimpleTestCase"
   private val emptyMappingTableName = "empty_mapping_table"
   private val nonExistentMappingTableName = "non_existent_mapping_table"
+  private val simpleMappingTableName = "simple_mapping_table"
 
   // These are conformance rules available for this example.
-  // Currently, only 2 mapping rules are available.
+  // Currently, only 3 mapping rules are available.
   // * A mapping rule that points to an empty directory.
   // * A mapping rule that points to a path that does not exists.
+  // * A simple mapping rule (1 -> a, 2 -> b)
   // But the intent is to extend available conformance rules.
   val emptyTableMappingRule: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "conformedIntNum",
@@ -53,11 +55,28 @@ object SimpleTestCaseFactory {
     attributeMappings = Map[String, String](),
     targetAttribute = "targetNum")
 
+  val simpleMappingRule: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "conformedIntNum",
+    controlCheckpoint = false,
+    mappingTable = simpleMappingTableName,
+    attributeMappings = Map[String, String]("key" -> "int_num"),
+    targetAttribute = "val")
+
   private val emptyMT = MappingTableFactory.getDummyMappingTable(name = emptyMappingTableName,
     hdfsPath = "src/test/testData/emptyMT")
 
   private val nonExistentMT = MappingTableFactory.getDummyMappingTable(name = nonExistentMappingTableName,
     hdfsPath = "src/test/testData/nonExistentMT")
+
+  private val simpleMT = MappingTableFactory.getDummyMappingTable(name = simpleMappingTableName,
+    schemaName = simpleMappingTableName,
+    hdfsPath = "simpleMT")
+
+  private val simpleMappingTableSchema = StructType(
+    Array(
+      StructField("key", IntegerType),
+      StructField("val", StringType)
+    ))
 
   private val testCaseDataset = DatasetFactory.getDummyDataset(name = testCaseName,
     schemaName = testCaseName,
@@ -88,6 +107,7 @@ object SimpleTestCaseFactory {
 class SimpleTestCaseFactory(implicit spark: SparkSession) {
 
   import SimpleTestCaseFactory._
+  import spark.implicits._
 
   private val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
   private val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
@@ -103,7 +123,6 @@ class SimpleTestCaseFactory(implicit spark: SparkSession) {
     */
   def getTestCase(experimentalMappingRule: Boolean,
                   conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, CmdConfig, FeatureSwitches) = {
-    import spark.implicits._
     val inputDf = spark.read.schema(testCaseSchema).json(testCaseDataJson.toDS)
     val dataset = getDataSetWithConformanceRules(testCaseDataset, conformanceRules: _*)
     val cmdConfig  = CmdConfig(reportDate = reportDate)
@@ -112,6 +131,8 @@ class SimpleTestCaseFactory(implicit spark: SparkSession) {
     mockWhen(dao.getDataset(testCaseName, 1)) thenReturn testCaseDataset
     mockWhen(dao.getMappingTable(emptyMappingTableName, 1)) thenReturn fixPathsInMappingTable(emptyMT)
     mockWhen(dao.getMappingTable(nonExistentMappingTableName, 1)) thenReturn fixPathsInMappingTable(nonExistentMT)
+    mockWhen(dao.getMappingTable(simpleMappingTableName, 1)) thenReturn fixPathsInMappingTable(simpleMT)
+    mockWhen(dao.getSchema(simpleMappingTableName, 1)) thenReturn simpleMappingTableSchema
 
     val featureSwitches: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(experimentalMappingRule)
@@ -126,21 +147,25 @@ class SimpleTestCaseFactory(implicit spark: SparkSession) {
     */
   def createMappingTables(): Unit = {
     createEmptyMappingTable()
+    createSimpleMappingTable()
   }
 
   /**
     * This method should be invoked after all tests in a test suite so that mapping tables are deleted.
     */
   def deleteMappingTables(): Unit = {
-    deleteEmptyMappingTable()
     fsUtils.deleteDirectoryRecursively(tempDir)
   }
 
   private def createEmptyMappingTable(): Unit =
     fs.mkdirs(new Path(s"$tempDir/${emptyMT.hdfsPath}/reportDate=$reportDate"))
 
-  private def deleteEmptyMappingTable(): Unit =
-    fs.delete(new Path(s"$tempDir/${emptyMT.hdfsPath}/reportDate=$reportDate"), true)
+  private def createSimpleMappingTable(): Unit = {
+    val pathName = s"$tempDir/${simpleMT.hdfsPath}/reportDate=$reportDate"
+    fs.mkdirs(new Path(pathName))
+    val simpleMappingTableDf = List(1 -> "a", 2 -> "b").toDF("key", "val")
+    createTempMappingTable(pathName, simpleMappingTableDf)
+  }
 
   /**
     * Arranges conformance rules according to the order they are provided in the argument list.
@@ -156,6 +181,13 @@ class SimpleTestCaseFactory(implicit spark: SparkSession) {
       .map { case (rule, idx) => rule.withUpdatedOrder(idx) }
       .toList
     dataset.copy(conformance = updatedRules)
+  }
+
+  private def createTempMappingTable(path: String, mappingTableDf: DataFrame): Unit = {
+    mappingTableDf
+      .write
+      .mode(SaveMode.Overwrite)
+      .parquet(path)
   }
 
   private def fixPathsInMappingTable(mt: MappingTable): MappingTable = {
