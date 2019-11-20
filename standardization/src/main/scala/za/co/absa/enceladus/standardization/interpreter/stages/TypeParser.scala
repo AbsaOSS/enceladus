@@ -284,7 +284,6 @@ object TypeParser {
     }
 
     private def standardizeUsingUdf(): ParseOutput = {
-      //TODO #1047 val udfFnc: UserDefinedFunction = UDFBuilder.typedStructFieldStringUdf(field, columnIdForUdf, defaultValue)
       val udfFnc: UserDefinedFunction = UDFBuilder.stringUdfViaNumericParser(field.parser.get, field.nullable, columnIdForUdf, defaultValue)
       ParseOutput(udfFnc(column)("result").cast(field.dataType).as(fieldOutputName), udfFnc(column)("error"))
     }

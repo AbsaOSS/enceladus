@@ -39,8 +39,7 @@ case class DecimalSymbols(
                            permillSign: Char,
                            exponentSeparator: String,
                            infinityValue: String,
-                           naNValue: String
-) extends Serializable {
+                           naNValue: String) {
   val negativeInfinityValue = s"$minusSign$infinityValue"
 
   def toDecimalFormatSymbols: DecimalFormatSymbols = {

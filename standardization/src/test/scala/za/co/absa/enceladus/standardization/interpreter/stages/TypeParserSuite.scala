@@ -15,20 +15,14 @@
 
 package za.co.absa.enceladus.standardization.interpreter.stages
 
-import java.io.ObjectOutputStream
-
-import org.apache.commons.io.output.ByteArrayOutputStream
-import org.apache.spark.sql.functions.udf
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.standardization.interpreter.stages.TypeParser.IntegralParser
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.types.TypedStructField.TypedStructFieldTagged
 import za.co.absa.enceladus.utils.types.parsers.NumericParser
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFResult
-
 import scala.util.Success
 
 class TypeParserSuite extends FunSuite with SparkTestBase {

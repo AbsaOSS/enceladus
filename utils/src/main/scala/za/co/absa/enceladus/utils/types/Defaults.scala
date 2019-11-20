@@ -25,7 +25,7 @@ import za.co.absa.enceladus.utils.numeric.DecimalSymbols
 
 import scala.util.{Success, Try}
 
-abstract class Defaults extends Serializable {
+abstract class Defaults {
   /** A function which defines default values for primitive types */
   def getDataTypeDefaultValue(dt: DataType): Any
 
@@ -57,7 +57,7 @@ object GlobalDefaults extends Defaults {
       case _: BooleanType   => false
       case t: DecimalType   =>
         val rest = t.precision - t.scale
-        new java.math.BigDecimal(("0" * rest) + "." + ("0" * t.scale))
+        BigDecimal(("0" * rest) + "." + ("0" * t.scale))
       case _                => throw new IllegalStateException(s"No default value defined for data type ${dt.typeName}")
     }
 

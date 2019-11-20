@@ -23,19 +23,6 @@ import scala.reflect.runtime.universe._
 import scala.util.{Failure, Success}
 
 object UDFBuilder {
-  /* TODO Make UDFBuilder work with TypedStructField #1047
-  def stringUdfViaTypedStructField[T: TypeTag](field: TypedStructFieldTagged[T],
-                                               columnNameForError: String,
-                                               defaultValue: Option[T]): UserDefinedFunction = {
-    // ensuring all values sent to the UDFBuilder are instantiated
-    val vField = field
-    val vColumnNameForError = columnNameForError
-    val vDefaultValue = defaultValue
-
-    udf[UDFResult[T], String](fieldStringToTyped(_, vField, vColumnNameForError, vDefaultValue))
-  }
-  */
-
   def stringUdfViaNumericParser[T: TypeTag](parser: NumericParser[T],
                                             columnNullable: Boolean,
                                             columnNameForError: String,
@@ -50,16 +37,6 @@ object UDFBuilder {
     udf[UDFResult[T], String](numericParserToTyped(_, vParser, vColumnNullable,  vColumnNameForError, vDefaultValue))
   }
 
-  /* TODO Make UDFBuilder work with TypedStructField #1047
-  private def fieldStringToTyped[T](input: String,
-                                    field: TypedStructFieldTagged[T],
-                                    columnNameForError: String,
-                                    defaultValue: Option[T]): UDFResult[T] = {
-    val result = field.stringToTyped(input)
-    UDFResult.fromTry(result, columnNameForError, input, defaultValue)
-  }
-  */
-
   private def numericParserToTyped[T](input: String,
                                       parser: NumericParser[T],
                                       columnNullable: Boolean,
@@ -73,5 +50,5 @@ object UDFBuilder {
     UDFResult.fromTry(result, columnNameForError, input, defaultValue)
   }
 
-private val nullException = new NumericParserException("Null value on input for non-nullable field")
+  private val nullException = new NumericParserException("Null value on input for non-nullable field")
 }

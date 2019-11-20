@@ -56,7 +56,7 @@ object CustomRuleSample4 {
 
     opt[String]("row-tag").optional.action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")
-      .validate(value =>
+      .validate(_ =>
         if (inputFormat.isDefined && inputFormat.get.equalsIgnoreCase("xml")) {
           success
         } else {
@@ -66,7 +66,7 @@ object CustomRuleSample4 {
 
     opt[String]("delimiter").optional.action((value, config) =>
       config.copy(csvDelimiter = Some(value))).text("use the specific delimiter instead of ',' for CSV format")
-      .validate(value =>
+      .validate(_ =>
         if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv")) {
           success
         } else {
@@ -77,7 +77,7 @@ object CustomRuleSample4 {
     // no need for validation for boolean since scopt itself will do
     opt[Boolean]("header").optional.action((value, config) =>
       config.copy(csvHeader = Some(value))).text("use the header option to consider CSV header")
-      .validate(value =>
+      .validate(_ =>
         if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv")) {
           success
         } else {
@@ -144,10 +144,6 @@ object CustomRuleSample4 {
     val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
     implicit val progArgs: CmdConfig = CmdConfig(menasCredentials = meansCredentials) // here we may need to specify some parameters (for certain rules)
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(progArgs.menasCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
-
-    val experimentalMR= true
-    val isCatalystWorkaroundEnabled = true
-    val enableCF: Boolean = false
 
     val dfReader: DataFrameReader = {
       val dfReader0 = spark.read

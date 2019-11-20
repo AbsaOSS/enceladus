@@ -67,7 +67,7 @@ class DefaultsSuite extends FunSuite {
   }
 
   test("DecimalType") {
-    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(DecimalType(6, 3), nullable = false) === Success(Some(new java.math.BigDecimal("000.000"))))
+    assert(GlobalDefaults.getDataTypeDefaultValueWithNull(DecimalType(6, 3), nullable = false) === Success(Some(BigDecimal("000.000"))))
   }
 
   test("ArrayType") {
