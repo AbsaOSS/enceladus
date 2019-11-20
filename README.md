@@ -52,6 +52,11 @@ Ensure the properties there fit your environment.
 - With integration tests: `mvn clean package -Pintegration`
 - With component preload file generated: `mvn clean package -PgenerateComponentPreload`
 
+#### Test coverage:
+- Test coverage: `mvn scoverage:report`
+
+The coverage reports are written in each module's `target` directory and aggregated in the root `target` directory.
+
 ## <a name="run"/>How to run
 #### Menas requirements:
 - [**Tomcat 8.5/9.0** installation](https://tomcat.apache.org/download-90.cgi)
