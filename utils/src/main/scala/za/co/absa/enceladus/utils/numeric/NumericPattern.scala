@@ -13,22 +13,25 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.schema
+package za.co.absa.enceladus.utils.numeric
 
-object MetadataKeys {
-  // all
-  val SourceColumn = "sourcecolumn"
-  val DefaultValue = "default"
-  // date & timestamp
-  val DefaultTimeZone = "timezone"
-  // date & timestamp & all numeric
-  val Pattern = "pattern"
-  // all numeric
-  val DecimalSeparator = "decimal_separator"
-  val GroupingSeparator = "grouping_separator"
-  val MinusSign = "minus_sign"
-  // float and double
-  val AllowInfinity = "allow_infinity"
-  // integral types
-  val Radix = "radix"
+import za.co.absa.enceladus.utils.types.TypePattern
+import NumericPattern._
+
+case class NumericPattern (override val pattern: String, val decimalSymbols: DecimalSymbols)
+  extends TypePattern(pattern, isDefault = (pattern == DefaultPatternValue)) {
+
+  def specifiedPattern: Option[String] = {
+    if (isDefault) {
+      None
+    } else {
+      Option(pattern)
+    }
+  }
+}
+
+object NumericPattern {
+  val DefaultPatternValue = ""
+
+  def apply(decimalSymbols: DecimalSymbols): NumericPattern = NumericPattern(DefaultPatternValue, decimalSymbols)
 }

@@ -13,22 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.schema
+package za.co.absa.enceladus.utils.implicits
 
-object MetadataKeys {
-  // all
-  val SourceColumn = "sourcecolumn"
-  val DefaultValue = "default"
-  // date & timestamp
-  val DefaultTimeZone = "timezone"
-  // date & timestamp & all numeric
-  val Pattern = "pattern"
-  // all numeric
-  val DecimalSeparator = "decimal_separator"
-  val GroupingSeparator = "grouping_separator"
-  val MinusSign = "minus_sign"
-  // float and double
-  val AllowInfinity = "allow_infinity"
-  // integral types
-  val Radix = "radix"
+import scala.util.{Failure, Success, Try}
+
+object OptionImplicits {
+  implicit class OptionEnhancements[T](option: Option[T]) {
+    def toTry(failure: Exception): Try[T] = {
+      option.fold[Try[T]](Failure(failure))(Success(_))
+    }
+  }
 }
