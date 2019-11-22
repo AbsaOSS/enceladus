@@ -40,7 +40,6 @@ pipeline {
             steps {
                 configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
                     sh "mvn -s $MAVEN_SETTINGS_XML ${mavenAdditionalSettingsBuild} clean package -PgenerateComponentPreload"
-                    sh "mvn verify sonar:sonar --no-transfer-progress"
                 }
             }
         }
