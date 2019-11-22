@@ -18,21 +18,25 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.commons.io.IOUtils
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
-import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory
+import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.NestedTestCaseFactory._
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
+import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.{NestedTestCaseFactory, SimpleTestCaseFactory}
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll {
-  private val testCaseFactory = new SimpleTestCaseFactory()
+  private val simpleTestCaseFactory = new SimpleTestCaseFactory()
+  private val nestedTestCaseFactory = new NestedTestCaseFactory()
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    testCaseFactory.createMappingTables()
+    simpleTestCaseFactory.createMappingTables()
+    nestedTestCaseFactory.createMappingTables()
   }
 
   override def afterAll(): Unit = {
-    testCaseFactory.deleteMappingTables()
+    simpleTestCaseFactory.deleteMappingTables()
+    nestedTestCaseFactory.deleteMappingTables()
     super.afterAll()
   }
 
@@ -41,7 +45,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     val expectedResults = getRecourceString("/interpreter/mappingCases/simpleResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      testCaseFactory.getTestCase(true, simpleMappingRule)
+      simpleTestCaseFactory.getTestCase(true, simpleMappingRule)
 
     val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
 
@@ -57,7 +61,23 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     val expectedResults = getRecourceString("/interpreter/mappingCases/simpleDefValResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      testCaseFactory.getTestCase(true, simpleMappingRuleWithDefaultValue)
+      simpleTestCaseFactory.getTestCase(true, simpleMappingRuleWithDefaultValue)
+
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test broadcasting rule can output a struct column") {
+    val expectedSchema = getRecourceString("/interpreter/mappingCases/nestedSchema.txt")
+    val expectedResults = getRecourceString("/interpreter/mappingCases/nestedResults.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, nestedMappingRule1)
 
     val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
 
