@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.commons.io.IOUtils
-import org.apache.spark.sql.functions._
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory
@@ -35,26 +34,6 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   override def afterAll(): Unit = {
     testCaseFactory.deleteMappingTables()
     super.afterAll()
-  }
-
-  test("Test broadcasting mapping rule works on a simple mapping rule (no structs or arrays)") {
-    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      testCaseFactory.getTestCase(true, simpleMappingRule)
-
-    val df = DynamicInterpreter.interpret(dataset, inputDf).cache
-
-    // Make sure the schema is correct
-    assert(df.schema.fields.length == 6)
-    assert(df.schema.fields.exists(_.name == "id"))
-    assert(df.schema.fields.exists(_.name == "int_num"))
-    assert(df.schema.fields.exists(_.name == "long_num"))
-    assert(df.schema.fields.exists(_.name == "str_val"))
-    assert(df.schema.fields.exists(_.name == "errCol"))
-    assert(df.schema.fields.exists(_.name == "conformedIntNum"))
-
-    // Make sure the number of errors is as expected
-    assert(df.filter(size(col("errCol")) === 0).count == 3)
-    assert(df.filter(size(col("errCol")) !== 0).count == 2)
   }
 
   test("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe") {
