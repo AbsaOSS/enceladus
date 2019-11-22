@@ -5,7 +5,7 @@
 | ------------- | ------------- |
 | [![Build Status](https://opensource.bigusdatus.com/jenkins/buildStatus/icon?job=Absa-OSS-Projects%2Fenceladus%2Fmaster)](https://opensource.bigusdatus.com/jenkins/job/Absa-OSS-Projects/job/enceladus/job/master/) | [![Build Status](https://opensource.bigusdatus.com/jenkins/buildStatus/icon?job=Absa-OSS-Projects%2Fenceladus%2Fdevelop)](https://opensource.bigusdatus.com/jenkins/job/Absa-OSS-Projects/job/enceladus/job/develop/) |
 ### <a name="code_quality_status"/>Code Quality Status
-| [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_enceladus&metric=alert_status)](https://sonarcloud.io/dashboard?id=AbsaOSS_enceladus) |
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_enceladus&metric=alert_status)](https://sonarcloud.io/dashboard?id=AbsaOSS_enceladus)
 
 ___
 
