@@ -120,6 +120,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     )
     collection
       .aggregate[RunSummary](pipeline)
+      .allowDiskUse(true)
       .toFuture()
   }
 
