@@ -15,11 +15,13 @@
 
 package za.co.absa.enceladus.utils.broadcast
 
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.WordSpec
 import za.co.absa.enceladus.utils.error.Mapping
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+
+import scala.collection.mutable
 
 class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBase {
 
@@ -298,6 +300,40 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
         assert(dfOut.filter(col("errCol").isNull).count == 2)
         assert(error.errCol.mappings.size == 5)
         assert(error.errCol.rawValues.size == 5)
+      }
+    }
+
+    "getValueOfSparkExpression()" should {
+      "return default values of proper types" when {
+        "the expression returns a primitive" in {
+          val v = BroadcastUtils.getValueOfSparkExpression("\"str\"")
+
+          assert(v.isInstanceOf[String])
+          assert(v.asInstanceOf[String] == "str")
+        }
+
+        "the expression returns a struct" in {
+          val v = BroadcastUtils.getValueOfSparkExpression("struct(\"str1\" as a, \"str2\" as b) as s")
+
+          assert(v.isInstanceOf[Row])
+          assert(v.asInstanceOf[Row](0).toString == "str1")
+          assert(v.asInstanceOf[Row](1).toString == "str2")
+        }
+
+        "the expression returns an array" in {
+          val v = BroadcastUtils.getValueOfSparkExpression("array(struct(\"str1\" as a, \"str2\" as b)) as s")
+
+          assert(v.isInstanceOf[mutable.WrappedArray[_]])
+        }
+
+      }
+
+      "throw an exception" when {
+        "an invalid expression is specified" in {
+          intercept[Exception] {
+            BroadcastUtils.getValueOfSparkExpression(";invalid+expression))")
+          }
+        }
       }
     }
   }
