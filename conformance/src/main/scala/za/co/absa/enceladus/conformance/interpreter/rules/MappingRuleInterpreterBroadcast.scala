@@ -60,7 +60,7 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
 
     val mt = LocalMappingTable(mapTable, mappingTableFields, rule.targetAttribute)
     val broadcastedMt = spark.sparkContext.broadcast(mt)
-    val mappingUDF = BroadcastUtils.getMappingUdf(broadcastedMt)
+    val mappingUDF = BroadcastUtils.getMappingUdf(broadcastedMt, defaultValueOpt)
 
     val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, rule.outputColumn, mappings)
 
