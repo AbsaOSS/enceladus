@@ -63,7 +63,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
       }
     }
 
-    "return and empty List asynchronously" when {
+    "return an empty List asynchronously" when {
       "there are no Runs" in {
         val actual = await(runMongoRepository.getAllLatest())
 

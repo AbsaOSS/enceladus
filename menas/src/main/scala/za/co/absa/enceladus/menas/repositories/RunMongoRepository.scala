@@ -15,25 +15,27 @@
 
 package za.co.absa.enceladus.menas.repositories
 
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.Accumulators._
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model._
-import org.mongodb.scala.{Completed, MapReduceObservable, MongoDatabase}
+import org.mongodb.scala.{Completed, MongoDatabase, Observable}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.model.{Run, SplineReference}
-import za.co.absa.enceladus.menas.models.{RunSummary, RunWrapper}
+import za.co.absa.enceladus.menas.models.RunSummary
 import za.co.absa.enceladus.model
+import za.co.absa.enceladus.model.{Run, SplineReference}
 
 import scala.concurrent.Future
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 object RunMongoRepository {
   val collectionBaseName: String = "run"
@@ -62,11 +64,11 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   private def getTodayRunsCount(filters: List[Bson]): Future[Int] = {
     val pipeline = Seq(
-      filter(and((getTodaysFilter :: filters) :_*)),
+      filter(and((getTodaysFilter :: filters): _*)),
       Aggregates.count("count"))
     collection.aggregate[BsonDocument](pipeline).headOption().map({
-        case Some(doc) => doc.getInt32("count").getValue
-        case None => 0
+      case Some(doc) => doc.getInt32("count").getValue
+      case None => 0
     })
   }
 
@@ -92,25 +94,24 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   def getTodaysSuccessWithErrors(): Future[Int] = {
     getTodayRunsCount(List(
-        Filters.eq("runStatus.status", "allSucceeded"),
-        or(
+      Filters.eq("runStatus.status", "allSucceeded"),
+      or(
         and(Filters.exists("controlMeasure.metadata.additionalInfo.std_errors_count"),
-            Filters.notEqual("controlMeasure.metadata.additionalInfo.std_errors_count", "0")),
+          Filters.notEqual("controlMeasure.metadata.additionalInfo.std_errors_count", "0")),
         and(Filters.exists("controlMeasure.metadata.additionalInfo.conform_errors_count"),
-            Filters.notEqual("controlMeasure.metadata.additionalInfo.conform_errors_count", "0")))))
+          Filters.notEqual("controlMeasure.metadata.additionalInfo.conform_errors_count", "0")))))
   }
 
   def getAllLatest(): Future[Seq[Run]] = {
     getLatestOfEach()
       .toFuture()
-      .map(_.map(bson => ControlUtils.fromJson[RunWrapper](bson.toJson).value))
+      .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
   }
 
   def getByStartDate(startDate: String): Future[Seq[Run]] = {
-    getLatestOfEach()
-      .filter(regex("startDateTime", s"^$startDate"))
+    getLatestOfEach(Option(startDate))
       .toFuture()
-      .map(_.map(bson => ControlUtils.fromJson[RunWrapper](bson.toJson).value))
+      .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
   }
 
   def getAllSummaries(): Future[Seq[RunSummary]] = {
@@ -136,6 +137,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .aggregate[RunSummary](pipeline)
       .toFuture()
   }
+
   def getSummariesByDatasetNameAndVersion(datasetName: String, datasetVersion: Int): Future[Seq[RunSummary]] = {
     val pipeline = Seq(
       filter(and(
@@ -150,28 +152,44 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .toFuture()
   }
 
-  private def getLatestOfEach(): MapReduceObservable[BsonDocument] = {
-    val mapFn =
-      """function() {
-        |  emit(this.dataset, this)
-        |}""".stripMargin
-    val reduceFn =
-      """function(key, values) {
-        |  var latestVersion = Math.max.apply(Math, values.map(x => {return x.datasetVersion;}))
-        |  var latestVersionRuns = values.filter(x => x.datasetVersion == latestVersion)
-        |  var latestRunId = Math.max.apply(Math, latestVersionRuns.map(x => {return x.runId;}))
-        |  return latestVersionRuns.filter(x => x.runId == latestRunId)[0]
-        |}""".stripMargin
-    val finalizeFn =
-      """function(key, reducedValue) {
-        |  return reducedValue
-        |}""".stripMargin
+  private def getLatestOfEach(startDateOpt: Option[String] = None): Observable[BsonDocument] = {
+    val pipeline = startDateOpt.map { startDate =>
+      filter(regex("startDateTime", s"^$startDate"))
+    }.toList :::
+      List(
+        group(BsonDocument("""{"dataset": "$dataset", "datasetVersion": "$datasetVersion"}"""), max("latestRun", "$runId")),
+        group("""$_id.dataset""",
+          max("latestVersion", """$_id.datasetVersion"""),
+          push("versionRunMap", BsonDocument("""{ "datasetVersion": "$_id.datasetVersion", "latestRun": "$latestRun" }"""))),
+        unwind("$versionRunMap"),
+        filter(BsonDocument("""{"$expr": {"$eq": ["$latestVersion", "$versionRunMap.datasetVersion"]}}""")),
+        lookup(from = collectionName,
+          let = Seq(
+            Variable("datasetName", "$_id"),
+            Variable("latestVersion", "$latestVersion"),
+            Variable("latestRunId", "$versionRunMap.latestRun")
+          ),
+          pipeline = Seq(
+            filter(BsonDocument(
+              """
+                |{ $expr:
+                |    { $and:
+                |        [
+                |            {$eq: ["$dataset", "$$datasetName"]},
+                |            {$eq: ["$datasetVersion", "$$latestVersion"]},
+                |            {$eq: ["$runId", "$$latestRunId"]}
+                |        ]
+                |    }
+                |}
+                |""".stripMargin))
+          ),
+          as = "latestRun"),
+        replaceRoot(BsonDocument("""{$arrayElemAt: ["$latestRun", 0]}""")),
+        sort(ascending("dataset"))
+      )
 
     collection
-      .mapReduce[BsonDocument](mapFn, reduceFn)
-      .finalizeFunction(finalizeFn)
-      .jsMode(true)
-      .sort(ascending("dataset"))
+      .aggregate[BsonDocument](pipeline)
   }
 
   def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Option[Run]] = {
