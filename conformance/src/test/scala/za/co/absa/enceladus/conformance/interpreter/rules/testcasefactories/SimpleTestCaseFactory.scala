@@ -24,7 +24,7 @@ import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory}
-import za.co.absa.enceladus.model.{Dataset, MappingTable}
+import za.co.absa.enceladus.model.{Dataset, DefaultValue, MappingTable}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 
@@ -34,12 +34,14 @@ object SimpleTestCaseFactory {
   private val emptyMappingTableName = "empty_mapping_table"
   private val nonExistentMappingTableName = "non_existent_mapping_table"
   private val simpleMappingTableName = "simple_mapping_table"
+  private val simpleMappingTableWithDefaultName = "simple_mapping_table_def"
 
   // These are conformance rules available for this example.
-  // Currently, only 3 mapping rules are available.
+  // Currently, only 4 mapping rules are available.
   // * A mapping rule that points to an empty directory.
   // * A mapping rule that points to a path that does not exists.
   // * A simple mapping rule (1 -> a, 2 -> b)
+  // * A simple mapping rule with a default value (1 -> a, 2 -> b, * -> z)
   // But the intent is to extend available conformance rules.
   val emptyTableMappingRule: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "conformedIntNum",
@@ -62,6 +64,13 @@ object SimpleTestCaseFactory {
     attributeMappings = Map[String, String]("key" -> "int_num"),
     targetAttribute = "val")
 
+  val simpleMappingRuleWithDefaultValue: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "conformedIntNum",
+    controlCheckpoint = false,
+    mappingTable = simpleMappingTableWithDefaultName,
+    attributeMappings = Map[String, String]("key" -> "int_num"),
+    targetAttribute = "val")
+
   private val emptyMT = MappingTableFactory.getDummyMappingTable(name = emptyMappingTableName,
     hdfsPath = "src/test/testData/emptyMT")
 
@@ -71,6 +80,11 @@ object SimpleTestCaseFactory {
   private val simpleMT = MappingTableFactory.getDummyMappingTable(name = simpleMappingTableName,
     schemaName = simpleMappingTableName,
     hdfsPath = "simpleMT")
+
+  private val simpleDefaultMT = MappingTableFactory.getDummyMappingTable(name = simpleMappingTableWithDefaultName,
+    schemaName = simpleMappingTableWithDefaultName,
+    hdfsPath = "simpleMT",
+    defaultMappingValue = List(DefaultValue("*", "\"z\"")))
 
   private val simpleMappingTableSchema = StructType(
     Array(
@@ -132,6 +146,7 @@ class SimpleTestCaseFactory(implicit spark: SparkSession) {
     mockWhen(dao.getMappingTable(emptyMappingTableName, 1)) thenReturn fixPathsInMappingTable(emptyMT)
     mockWhen(dao.getMappingTable(nonExistentMappingTableName, 1)) thenReturn fixPathsInMappingTable(nonExistentMT)
     mockWhen(dao.getMappingTable(simpleMappingTableName, 1)) thenReturn fixPathsInMappingTable(simpleMT)
+    mockWhen(dao.getMappingTable(simpleMappingTableWithDefaultName, 1)) thenReturn fixPathsInMappingTable(simpleDefaultMT)
     mockWhen(dao.getSchema(simpleMappingTableName, 1)) thenReturn simpleMappingTableSchema
 
     val featureSwitches: FeatureSwitches = FeatureSwitches()

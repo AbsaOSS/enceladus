@@ -15,11 +15,13 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
+import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.functions._
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory
-import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory.simpleMappingRule
+import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
+import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll {
@@ -53,6 +55,61 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     // Make sure the number of errors is as expected
     assert(df.filter(size(col("errCol")) === 0).count == 3)
     assert(df.filter(size(col("errCol")) !== 0).count == 2)
+  }
+
+  test("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe") {
+    val expectedSchema = getRecourceString("/interpreter/mappingCases/simpleSchema.txt")
+    val expectedResults = getRecourceString("/interpreter/mappingCases/simpleResults.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      testCaseFactory.getTestCase(true, simpleMappingRule)
+
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test broadcasting mapping rule works exactly like the original mapping rule when a default value is used") {
+    val expectedSchema = getRecourceString("/interpreter/mappingCases/simpleSchema.txt")
+    val expectedResults = getRecourceString("/interpreter/mappingCases/simpleDefValResults.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      testCaseFactory.getTestCase(true, simpleMappingRuleWithDefaultValue)
+
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  private def getRecourceString(name: String): String =
+    IOUtils.toString(getClass.getResourceAsStream(name), "UTF-8")
+
+  private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
+    if (actualSchema != expectedSchema) {
+      logger.error("EXPECTED:")
+      logger.error(expectedSchema)
+      logger.error("ACTUAL:")
+      logger.error(actualSchema)
+      fail("Actual conformed schema does not match the expected schema (see above).")
+    }
+  }
+
+  private def assertResults(actualResults: String, expectedResults: String): Unit = {
+    if (!expectedResults.startsWith(actualResults)) {
+      logger.error("EXPECTED:")
+      logger.error(expectedResults)
+      logger.error("ACTUAL:")
+      logger.error(actualResults)
+      fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
+    }
   }
 
 }
