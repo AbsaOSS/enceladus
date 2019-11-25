@@ -1,9 +1,0 @@
-<row schemaVersion="1.0.0"><id>1</id><id2>1</id2><ckey><key>a</key><value>b1</value></ckey><name>AAA</name><value>77.1</value></row>
-<row schemaVersion="1.0.0"><id>1</id><id2>2</id2><ckey><key>a</key><value>b2</value></ckey><name>BBB</name><value>11.1</value></row>
-<row schemaVersion="1.0.0"><id>1</id><id2>1</id2><ckey><key>a</key><value>b3</value></ckey><name>CCC</name><value>18.998</value></row>
-<row schemaVersion="1.0.0"><id>2</id><id2>1</id2><ckey><key>a</key><value>b4</value></ckey><name>DDD1</name><value>1000000.1</value></row>
-<row schemaVersion="1.0.0"><id>2</id><id2>2</id2><ckey><key>a</key><value>b5</value></ckey><name>EEE2</name><value>-9123</value></row>
-<row schemaVersion="1.0.0"><id>2</id><id2>1</id2><ckey><key>a</key><value>b6</value></ckey><name>FFF</name><value>0</value></row>
-<row schemaVersion="1.0.0"><id>3</id><id2>1</id2><ckey><key>a</key><value>b7</value></ckey><name>GGG</name><value>-1</value></row>
-<row schemaVersion="1.0.0"><id>3</id><id2>2</id2><ckey><key>a</key><value>b8</value></ckey><name>GGG</name><value>14.122334</value></row>
-<row schemaVersion="1.0.0"><id>3</id><id2>1</id2><ckey><key>a</key><value>b10</value></ckey><name>GGG</name><value>812</value></row>
