@@ -73,7 +73,7 @@ za.co.absa.enceladus.menas.spark.master=local[1]
 za.co.absa.enceladus.spline.urlTemplate=//localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s
 
 #system-wide time zone
-timezone="UTC"
+timezone=UTC
 
 #---------- Actuator
 management.endpoints.web.base-path=/admin
