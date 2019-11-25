@@ -10,81 +10,52 @@ Schema
 
 <!-- toc -->
 - [Intro](#intro)
-
+- [Automatically added columns](#automatically-added-columns)
 - [Data types](#data-types)
-
   - [String](#string)
-
   - [Boolean](#boolean)
-
   - [Decimal](#decimal)
-
   - [Long](#long)
-
   - [Integer](#integer)
-
   - [Short](#short)
-
   - [Byte](#byte)
-
   - [Double](#double)
-
   - [Float](#float)
-
   - [Timestamp](#struct)
-
   - [Date](#timestamp)
-
   - [Struct](#struct)
-
   - [Array](#array)
-
 - [Metadata](#metadata)
-
   - [sourcecolumn](#sourcecolumn)
-
   - [default](#default)
-
   - [pattern](#pattern)
-
   - [timezone](#timezone)
-
   - [decimal_separator](#decimal_separator)
-
   - [grouping_separator](#grouping_separator)
-
   - [minus_sign](#minus_sign)
-
   - [allow_infinity](#allow_infinity)
-
   - [radix](#radix)
-
 - [Parsing](#parsing)
-
   - [Parsing timestamps and dates](#parsing-timestamps-and-dates)
-
   - [Parsing numbers](#parsing-numbers)
-
 - [Defaults](#defaults)
-
   - [Explicit default](#explicit-default)
-
   - [Global default values](#global-default-values)
-
   - [Local default values restrictions](#explicit-default-values-restrictions)
 <!-- tocstop -->
 
 Intro
 -----
 
-Schema is the description of fields in a dataset. Fields are defined in the
-order they are to be in the output table and have three basic common properties:
+Schema is the description of fields in a dataset. All and only the fields defined in the schema will be in the output
+table. That means fields not mentioned in the schema won't be in the input. There's an exception of three fields added
+automatically - [see bellow](#TODO). Fields are defined in the order they are to be in the output table and have three basic common properties:
 
-- Field name: `name`
+- `name` - the field (column) name
 
-- Field data type: `type`
+- `type` - data type of the field 
 
-- Flag if the data can contain the value null (optional, if not specified considered false): `nullable`
+- `nullable` (optional) - flag indicating if the data can contain the value *null*, if not specified considered set to *false* 
 
 Furthermore, some type can have additional properties. The details of each supported type, their meaning and additional
 properties will be described in the following chapters.
@@ -94,7 +65,7 @@ fields within fields.
 
 The mean to provide *Schema* to **Standardization** is a JSON file:
 
-```yaml
+```json
 {
     "type": "struct",
     "fields": [{
@@ -173,6 +144,13 @@ The mean to provide *Schema* to **Standardization** is a JSON file:
     ]
 }
 ```
+
+Automatically added columns
+---------------------------
+
+There is a column automatically added to each **Standardization** output. Its name is `errCol` and it contains information
+on all errors that happened on the particular row *standardization*. If defined in schema its structure there has to 
+adhere exactly to the automatically added one. More on this field [see in dedicated documentation](({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)).  
 
 Data types
 ----------
@@ -374,6 +352,7 @@ will be ignored.
 
 | <sub><sup>Supported by types:</sup></sub> | <sub><sup>[Timestamp](#struct), [Date](#timestamp)</sup></sub> |
 |-------------------------------------------|----------------------------------------------------------------|
+| | |
 
 Time zone of the timestamp or date (for later it's generally not recommended). For details see the chapter
 [Parsing timestamps and dates](#parsing-timestamps-and-dates).
@@ -438,7 +417,7 @@ The string representing infinity on input is *"∞"* and *"-∞"* respectively.
 
 The base (radix) of the numbers entered. Accepted values are numbers between 1
 and 36. Also accepted are the following keywords (case insensitive): *"dec"*,
-*"decimal"*, *"hex"*, *"hexadecimal"*, *"bin"*`, *"binary"*, *"oct"*, *"octal"*.
+*"decimal"*, *"hex"*, *"hexadecimal"*, *"bin"*, *"binary"*, *"oct"*, *"octal"*.
 
 For higher bases, letters (A, B, C etc.) are used for digits, case insensitive
 again.

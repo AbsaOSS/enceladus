@@ -7,4 +7,10 @@ categories:
 ---
 Usage
 =====
+
 * [Schema]({{ site.baseurl }}/docs/{{ page.version }}/usage-schema)
+
+Details
+-------
+
+* [Error columns]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)
