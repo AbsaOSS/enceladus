@@ -63,6 +63,17 @@ class EntityService {
     return message;
   }
 
+  static withBusyControl(oControl, promise) {
+    if (oControl) {
+      oControl.setBusyIndicatorDelay(0);
+      oControl.setBusy(true);
+    }
+
+    promise.always(() => {
+      oControl.setBusy(false);
+    })
+  }
+
   constructor(eventBus, restDAO, messageProvider, modelBinder) {
     this._eventBus = eventBus;
     this._restDAO = restDAO;
@@ -87,20 +98,22 @@ class EntityService {
   }
 
   getList(oControl, sModelName, sSearchQuery) {
-    return this.restDAO.getList(sSearchQuery).then((oData) => {
+    const promise = this.restDAO.getList(sSearchQuery).then((oData) => {
       oControl.setModel(new sap.ui.model.json.JSONModel(oData), sModelName);
       return oData
     }).fail(() => {
       sap.m.MessageBox.error(this.messageProvider.failedToGetList())
-    })
+    });
+
+    return EntityService.withBusyControl(oControl, promise)
   }
 
   getSearchSuggestions(oModel, sEntityType) {
     return this.restDAO.getSearchSuggestions().then((oData) => {
-      if(Array.isArray(oData)) {
+      if (Array.isArray(oData)) {
         let wrapped = oData.map(s => {
           return {"name": s}
-        })
+        });
         oModel.setProperty(`/${sEntityType}SearchSuggestions`, wrapped)
         return wrapped
       }
@@ -139,32 +152,29 @@ class EntityService {
   }
 
   getAllVersions(sName, oControl, oModel, sProperty) {
-    if (oControl) {
-      oControl.setBusy(true);
-    }
-
-    return this.restDAO.getAllVersionsByName(sName).then((oData) => {
+    const promise = this.restDAO.getAllVersionsByName(sName).then((oData) => {
       this.modelBinder.setProperty(oData, "Versions");
-      if (oControl) {
-        oControl.setBusy(false);
-      }
+
       if (oModel && sProperty) {
         oModel.setProperty(sProperty, oData[oData.length - 1].version)
       }
       return oData
     }).fail(() => {
       sap.m.MessageBox.error(this.messageProvider.failedToGetAllVersionsByName());
-      oControl.setBusy(false);
-    })
+    });
+
+    return EntityService.withBusyControl(oControl, promise)
   }
 
   getAuditTrail(sName, oControl) {
-    return this.restDAO.getAuditTrail(sName).then((oData) => {
+    const promise = this.restDAO.getAuditTrail(sName).then((oData) => {
       oControl.setModel(new sap.ui.model.json.JSONModel(oData), "auditTrail");
       return oData
     }).fail(() => {
       sap.m.MessageBox.error(this.messageProvider.failedToGetAuditTrail())
-    })
+    });
+
+    return EntityService.withBusyControl(oControl, promise)
   }
 
   create(entity) {
@@ -193,7 +203,7 @@ class EntityService {
       try {
         const errParsed = JSON.parse(err.responseText);
         sap.m.MessageBox.error(`${errParsed.message}\nError id: ${errParsed.id}`);
-      } catch(e) {
+      } catch (e) {
         sap.m.MessageBox.error(this.messageProvider.failedToUpdateEntity())
       }
     })
@@ -221,7 +231,7 @@ class DependentEntityService extends EntityService {
   }
 
   getByNameAndVersion(sName, iVersion, sModelPath, sHash) {
-    return super.getByNameAndVersion(sName, iVersion, sModelPath, sHash).then((oData) =>{
+    return super.getByNameAndVersion(sName, iVersion, sModelPath, sHash).then((oData) => {
       this.getUsedIn(oData.name, oData.version);
       return oData
     })
@@ -298,8 +308,8 @@ class DatasetService extends EntityService {
       hdfsPublishPath: oEntity.hdfsPublishPath,
       schemaName: oEntity.schemaName,
       schemaVersion: oEntity.schemaVersion,
-      schedule: oEntity.schedule, 
-      conformance: ( oEntity.conformance || [] )
+      schedule: oEntity.schedule,
+      conformance: (oEntity.conformance || [])
     }
   }
 
