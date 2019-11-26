@@ -132,7 +132,7 @@ class LocalMappingTableSuite extends WordSpec with SparkTestBase {
         }
       }
 
-      "a target attribute provided does not exists in the schema" in {
+      "a target attribute provided does not exist in the schema" in {
         intercept[IllegalArgumentException] {
           LocalMappingTable(dfMt, Seq("id"), "dummy")
         }

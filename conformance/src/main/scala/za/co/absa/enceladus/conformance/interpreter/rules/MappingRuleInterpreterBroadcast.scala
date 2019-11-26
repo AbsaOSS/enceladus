@@ -65,7 +65,6 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     val tempErrorColName = SchemaUtils.getUniqueName("err", Some(df.schema))
 
     val withMappedFieldsDf = df.withColumn(rule.outputColumn, mappingUDF(inputDfFields.map(a => col(a)): _ *))
-      .withColumn(rule.outputColumn, mappingUDF(inputDfFields.map(a => col(a)): _ *))
       .withColumn(tempErrorColName, array(errorUDF(inputDfFields.map(a => col(a)): _ *)))
 
     DeepArrayTransformations.gatherErrors(withMappedFieldsDf, tempErrorColName, ErrorMessage.errorColumnName)
