@@ -283,18 +283,18 @@ Metadata
 *Standardization* can be influenced by `metadata` in the schema of the data. The `metadata` are optional properties.
 Here are the recognized ones with the description of their purpose (with detailed description below):
 
-| Property                                  | Target data type           | Description                                                                                                                                            | Example      | Default[\*](#metadata-star)              |
-|-------------------------------------------|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|------------------------------------------|
-| [sourcecolumn](#sourcecolumn)             | any                        | The source column to provide data of the described column                                                                                              | *id*         | `-`[\*\*](#metadata-star-star)            |
-| [default](#default)                       | any atomic type            | Default value to use in case data are missing                                                                                                          | *0*          | `-`[\*\*](#metadata-star-star)            |
-| [pattern](#pattern)                       | timestamp & date           | Pattern for the timestamp or date representation                                                                                                       | *dd.MM.yy*   | *yyyy-MM-dd HH:mm:ss* **/** *yyyy-MM-dd* |
-| [timezone](#timezone)                     | timestamp (also date)      | The time zone of the timestamp when that is not part of the pattern (NB! for date it can return unexpected results)                                    | *US/Pacific* | *UTC*[\*\*\*](#metadata-star-star-star)    |
-| [pattern](#pattern)                       | any numeric type           | Pattern for the number representation                                                                                                                  | \#,\#\#0.\#  | `-`[\*\*](#metadata-star-star)            |
-| [decimal_separator](#decimal_separator)   | any numeric type           | The character separating the integer and the fractional parts of the number                                                                            | *,*          | *.*                                      |
-| [grouping_separator](#grouping_separator) | any numeric type           | Character to mark boundaries between orders of magnitude, usually to mark thousands, millions etc.                                                     | *\_*         | *,*                                      |
-| [minus_sign](#minus_sign)                 | any numeric type           | Character to mark the number is negative.                                                                                                              | *N*          | *-*                                      |
-| [allow_infinity](#allow_infinity)         | float & double             | Flag indicating if the column accepts infinity as a value (also positive/negative numbers which are too large are converted to *infinity*/*-infinity*) | *true*       | *false*                                  |
-| [radix](#radix)                           | long, integer, short, byte | The base of the numbers provided                                                                                                                       | *hex*        | *10*                                     |
+| Property                                  | Target data type           | Description                                                                                                                                           | Example      | Default[\*](#metadata-star)              |
+|-------------------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|------------------------------------------|
+| [sourcecolumn](#sourcecolumn)             | any                        | The source column to provide data of the described column                                                                                             | *id*         | `-`[\*\*](#metadata-star-star)            |
+| [default](#default)                       | any atomic type            | Default value to use in case data are missing                                                                                                         | *0*          | `-`[\*\*](#metadata-star-star)            |
+| [pattern](#pattern)                       | timestamp & date           | Pattern for the timestamp or date representation                                                                                                      | *dd.MM.yy*   | *yyyy-MM-dd HH:mm:ss* **/** *yyyy-MM-dd* |
+| [timezone](#timezone)                     | timestamp (also date)      | The time zone of the timestamp when that is not part of the pattern (NB! for date it can return unexpected results)                                   | *US/Pacific* | *UTC*[\*\*\*](#metadata-star-star-star)    |
+| [pattern](#pattern)                       | any numeric type           | Pattern for the number representation                                                                                                                 | \#,\#\#0.\#  | `-`[\*\*](#metadata-star-star)            |
+| [decimal_separator](#decimal_separator)   | any numeric type           | The character separating the integer and the fractional parts of the number                                                                           | *,*          | *.*                                      |
+| [grouping_separator](#grouping_separator) | any numeric type           | Character to mark boundaries between orders of magnitude, usually to mark thousands, millions etc.                                                    | *\_*         | *,*                                      |
+| [minus_sign](#minus_sign)                 | any numeric type           | Character to mark the number is negative.                                                                                                             | *N*          | *-*                                      |
+| [allow_infinity](#allow_infinity)         | float & double             | Flag indicating if the column accepts infinity as a value (and positive/negative numbers which are too large are converted to *infinity*/*-infinity*) | *true*       | *false*                                  |
+| [radix](#radix)                           | long, integer, short, byte | The base of the numbers provided                                                                                                                      | *hex*        | *10*                                     |
 
 **NB!** All values in _metadata_ have to be entered as *string*. Even if they would conform to other types, like number
 or boolean.
@@ -339,10 +339,10 @@ For more about the topic see chapter [Defaults](#defaults).
 | | |
 
 The format the input adheres to. Mostly used for timestamp and date entries but
-it can also be leveraged for numeric types. Details for valid patterns are in
+it can be leveraged for numeric types too. Details for valid patterns are in
 the chapter [Parsing](#parsing).
 
-In case ``default`` value is also specified in _metadata_, it needs to adhere to
+In case ``default`` value is  specified in _metadata_, it needs to adhere to
 the pattern.
 
 If [radix](#radix) is specified and differs from the default 10, `pattern` value
@@ -402,11 +402,10 @@ sign (*"-"*).
 |-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | | |
 
-Flag indicating if the column accepts infinity as a value. When set to true, positive and negative numbers with values
-that are too large are converted to *infinity* and *-infinity*, respectively. Also the string for infinity _"∞"_ is 
-recognized and accepted.
-
-The string representing infinity on input is *"∞"* and *"-∞"* respectively.
+Flag indicating if the column accepts infinity as a value. When set to true *infinity*/*-infinity* are recognized as a 
+valid value, instead of failing with casting error ([see here](({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol))).
+The string representing infinity on input is *"∞"* and *"-∞"* respectively. Positive and negative numbers with values 
+that are too large are converted to *infinity* and *-infinity*, respectively.
 
 ### radix
 
