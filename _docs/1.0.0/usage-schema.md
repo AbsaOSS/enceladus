@@ -145,7 +145,7 @@ You provide *Schema* to **Standardization** in a JSON file:
 }
 ```
 
-Example of data adhering to the above schema can be find [here](https://github.com/AbsaOSS/enceladus/blob/develop/standardization/src/test/scala/za/co/absa/enceladus/standardization/samples/TestSamples.scala).
+Example of data adhering to the above schema can be found [here](https://github.com/AbsaOSS/enceladus/blob/develop/standardization/src/test/scala/za/co/absa/enceladus/standardization/samples/TestSamples.scala).
 
 Automatically added columns
 ---------------------------
@@ -613,7 +613,7 @@ The value used when _explicit default_ was not defined in the schema:
 
 ### Explicit default values restrictions
 
-- The value has to be a string convertible to the the field's type and fitting withing its size limitations (e.g._"200"_
+- The value has to be a string convertible to the field's type and fitting within its size limitations (e.g._"200"_
 cannot be a `default` for the type [`Short`](#short), or _"∞"_ if `allow_infinity` is _"false"_ for [`Double`](#double)/
 [`Float`](#float))
 - If it's a type supporting [`pattern`](#pattern) and it is defined, the default value has to adhere to the `pattern`
