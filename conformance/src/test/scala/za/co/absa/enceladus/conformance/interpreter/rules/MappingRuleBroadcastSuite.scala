@@ -41,8 +41,8 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   }
 
   test("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe") {
-    val expectedSchema = getRecourceString("/interpreter/mappingCases/simpleSchema.txt")
-    val expectedResults = getRecourceString("/interpreter/mappingCases/simpleResults.json")
+    val expectedSchema = getResourceString("/interpreter/mappingCases/simpleSchema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/simpleResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       simpleTestCaseFactory.getTestCase(true, simpleMappingRule)
@@ -57,8 +57,8 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   }
 
   test("Test broadcasting mapping rule works exactly like the original mapping rule when a default value is used") {
-    val expectedSchema = getRecourceString("/interpreter/mappingCases/simpleSchema.txt")
-    val expectedResults = getRecourceString("/interpreter/mappingCases/simpleDefValResults.json")
+    val expectedSchema = getResourceString("/interpreter/mappingCases/simpleSchema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/simpleDefValResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       simpleTestCaseFactory.getTestCase(true, simpleMappingRuleWithDefaultValue)
@@ -73,8 +73,8 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   }
 
   test("Test broadcasting rule can output a struct column") {
-    val expectedSchema = getRecourceString("/interpreter/mappingCases/nestedSchema.txt")
-    val expectedResults = getRecourceString("/interpreter/mappingCases/nestedResults.json")
+    val expectedSchema = getResourceString("/interpreter/mappingCases/nestedSchema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/nestedResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, nestedMappingRule1)
@@ -88,7 +88,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     assertResults(actualResults, expectedResults)
   }
 
-  private def getRecourceString(name: String): String =
+  private def getResourceString(name: String): String =
     IOUtils.toString(getClass.getResourceAsStream(name), "UTF-8")
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {

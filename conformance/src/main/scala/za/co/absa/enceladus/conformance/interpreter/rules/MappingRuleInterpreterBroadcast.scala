@@ -35,8 +35,6 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
   def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule to conform ${rule.outputColumn} (broadcast strategy)...")
 
-    val datasetSchema = dao.getSchema(conformance.schemaName, conformance.schemaVersion)
-
     val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
@@ -66,11 +64,11 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
 
     val tempErrorColName = SchemaUtils.getUniqueName("err", Some(df.schema))
 
-    val res1 = df.withColumn(rule.outputColumn, mappingUDF(inputDfFields.map(a => col(a)): _ *))
+    val withMappedFieldsDf = df.withColumn(rule.outputColumn, mappingUDF(inputDfFields.map(a => col(a)): _ *))
       .withColumn(rule.outputColumn, mappingUDF(inputDfFields.map(a => col(a)): _ *))
       .withColumn(tempErrorColName, array(errorUDF(inputDfFields.map(a => col(a)): _ *)))
 
-    DeepArrayTransformations.gatherErrors(res1, tempErrorColName, ErrorMessage.errorColumnName)
+    DeepArrayTransformations.gatherErrors(withMappedFieldsDf, tempErrorColName, ErrorMessage.errorColumnName)
   }
 
   private def getDefaultValue(mappingTableDef: MappingTable)

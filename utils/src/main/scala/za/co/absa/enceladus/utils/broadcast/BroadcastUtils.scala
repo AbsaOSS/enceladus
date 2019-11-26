@@ -36,14 +36,14 @@ object BroadcastUtils {
     *
     * The returned value is one of primitives, or a Row for structs, or an array of Row(s) for an array of struct.
     *
-    * @param expession A Spark expression.
+    * @param expression A Spark expression.
     * @return A UDF that maps joins keys to a target attribute value.
     */
-  def getValueOfSparkExpression(expession: String)(implicit spark: SparkSession): Any = {
+  def getValueOfSparkExpression(expression: String)(implicit spark: SparkSession): Any = {
     import spark.implicits._
 
     List(1).toDF()
-      .withColumn("a", expr(expession))
+      .withColumn("a", expr(expression))
       .collect()(0)(1)
   }
 
@@ -83,9 +83,9 @@ object BroadcastUtils {
   def getErrorUdf(mappingTable: Broadcast[LocalMappingTable],
                   outputColumn: String,
                   mappings: Seq[Mapping])(implicit spark: SparkSession): UserDefinedFunction = {
-    val numberOfArgments = mappingTable.value.keyTypes.size
+    val numberOfArguments = mappingTable.value.keyTypes.size
 
-    val lambda = numberOfArgments match {
+    val lambda = numberOfArguments match {
       case 1 => getErrorLambdaParam1(mappingTable, outputColumn, mappings)
       case 2 => getErrorLambdaParam2(mappingTable, outputColumn, mappings)
       case 3 => getErrorLambdaParam3(mappingTable, outputColumn, mappings)
@@ -110,12 +110,11 @@ object BroadcastUtils {
           val mt = mappingTable.value.map
           mt.getOrElse(Seq(param1), null)
         }
-      case Some(defaultValue) => {
+      case Some(defaultValue) =>
         param1: Any => {
           val mt = mappingTable.value.map
           mt.getOrElse(Seq(param1), defaultValue)
         }
-      }
     }
   }
 
@@ -126,12 +125,11 @@ object BroadcastUtils {
           val mt = mappingTable.value.map
           mt.getOrElse(Seq(param1, param2), null)
         }
-      case Some(defaultValue) => {
+      case Some(defaultValue) =>
         (param1: Any, param2: Any) => {
           val mt = mappingTable.value.map
           mt.getOrElse(Seq(param1, param2), defaultValue)
         }
-      }
     }
   }
 
@@ -142,12 +140,11 @@ object BroadcastUtils {
           val mt = mappingTable.value.map
           mt.getOrElse(Seq(param1, param2, param3), null)
         }
-      case Some(defaultValue) => {
+      case Some(defaultValue) =>
         (param1: Any, param2: Any, param3: Any) => {
           val mt = mappingTable.value.map
           mt.getOrElse(Seq(param1, param2, param3), defaultValue)
         }
-      }
     }
   }
 
@@ -158,12 +155,11 @@ object BroadcastUtils {
           val mt = mappingTable.value.map
           mt.getOrElse(Seq(param1, param2, param3, param4), null)
         }
-      case Some(defaultValue) => {
+      case Some(defaultValue) =>
         (param1: Any, param2: Any, param3: Any, param4: Any) => {
           val mt = mappingTable.value.map
           mt.getOrElse(Seq(param1, param2, param3, param4), defaultValue)
         }
-      }
     }
   }
 
@@ -174,12 +170,11 @@ object BroadcastUtils {
           val mt = mappingTable.value.map
           mt.getOrElse(Seq(param1, param2, param3, param4, param5), null)
         }
-      case Some(defaultValue) => {
+      case Some(defaultValue) =>
         (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
           val mt = mappingTable.value.map
           mt.getOrElse(Seq(param1, param2, param3, param4, param5), defaultValue)
         }
-      }
     }
   }
 

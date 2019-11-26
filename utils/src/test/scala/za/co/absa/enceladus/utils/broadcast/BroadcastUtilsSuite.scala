@@ -57,7 +57,7 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
       .stripMargin.replace("\r\n", "\n")
 
   // Expected dataframe when 'out' field contains the results of a failed join and a default value is specified
-  private val expectedResultsMatchNotFoundDefautlt =
+  private val expectedResultsMatchNotFoundDefault =
     """{"key1":1,"key2":2,"key3":4,"out":"z"}
       |{"key1":2,"key2":3,"key3":4,"out":"z"}
       |{"key1":3,"key2":4,"key3":4,"out":"z"}"""
@@ -90,7 +90,7 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
         val dfOut2 = df.withColumn("out", mappingUdf1($"key3")).orderBy("key1")
 
         assertResults(dfOut1, expectedResultsMatchFound)
-        assertResults(dfOut2, expectedResultsMatchNotFoundDefautlt)
+        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
       }
 
       "2 UDF parameters are used without a default value" in {
@@ -116,7 +116,7 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
         val dfOut2 = df.withColumn("out", mappingUdf2($"key1", $"key2")).orderBy("key1")
 
         assertResults(dfOut1, expectedResultsMatchFound)
-        assertResults(dfOut2, expectedResultsMatchNotFoundDefautlt)
+        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
       }
 
       "3 UDF parameters are used without a default value" in {
@@ -142,7 +142,7 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
         val dfOut2 = df.withColumn("out", mappingUdf3($"key1", $"key1", $"key2")).orderBy("key1")
 
         assertResults(dfOut1, expectedResultsMatchFound)
-        assertResults(dfOut2, expectedResultsMatchNotFoundDefautlt)
+        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
       }
 
       "4 UDF parameters are used without a default value" in {
@@ -168,7 +168,7 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
         val dfOut2 = df.withColumn("out", mappingUdf4($"key1", $"key1", $"key1", $"key2")).orderBy("key1")
 
         assertResults(dfOut1, expectedResultsMatchFound)
-        assertResults(dfOut2, expectedResultsMatchNotFoundDefautlt)
+        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
       }
 
       "5 UDF parameters are used without a default value" in {
@@ -194,7 +194,7 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
         val dfOut2 = df.withColumn("out", mappingUdf5($"key1", $"key1", $"key1", $"key1", $"key2")).orderBy("key1")
 
         assertResults(dfOut1, expectedResultsMatchFound)
-        assertResults(dfOut2, expectedResultsMatchNotFoundDefautlt)
+        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
       }
     }
 
@@ -202,7 +202,7 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
 
       "a join without key fields is attempted" in {
         intercept[IllegalArgumentException] {
-          val localMt = LocalMappingTable(dfMt, Nil, "val")
+          LocalMappingTable(dfMt, Nil, "val")
         }
       }
 
