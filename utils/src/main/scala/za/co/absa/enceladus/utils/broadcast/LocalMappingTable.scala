@@ -25,13 +25,13 @@ import scala.collection.mutable.ListBuffer
 /**
   * This class contains all necessary information to apply a mapping rule locally on executors.
   */
-case class LocalMappingTable(
-                              map: Map[Seq[Any], Any],
-                              keyFields: Seq[String],
-                              targetAttribute: String,
-                              keyTypes: Seq[DataType],
-                              valueType: DataType
-                            )
+final case class LocalMappingTable(
+                                    map: Map[Seq[Any], Any],
+                                    keyFields: Seq[String],
+                                    targetAttribute: String,
+                                    keyTypes: Seq[DataType],
+                                    valueType: DataType
+                                  )
 
 object LocalMappingTable {
 

@@ -118,12 +118,12 @@ object DeepArrayTransformations {
     * Same as `nestedStructMap` plus an error column handling.
     */
   def nestedStructAndErrorMap(df: DataFrame,
-                                 inputStructField: String,
-                                 outputChildField: String,
-                                 errorColumnName: String,
-                                 expression: TransformFunction,
-                                 errorCondition: TransformFunction
-                                ): DataFrame = {
+                              inputStructField: String,
+                              outputChildField: String,
+                              errorColumnName: String,
+                              expression: TransformFunction,
+                              errorCondition: TransformFunction
+                             ): DataFrame = {
     val updatedStructField = if (inputStructField.nonEmpty) inputStructField + ".*" else ""
     nestedWithColumnAndErrorMap(df, updatedStructField, outputChildField, errorColumnName, expression, errorCondition)
   }

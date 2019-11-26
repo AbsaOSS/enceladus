@@ -23,6 +23,8 @@ import org.apache.spark.sql.functions.expr
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
 
 object BroadcastUtils {
+  // scalastyle:off null
+  // scalastyle:off magic.number
 
   def broadcastMappingTable(localMappingTable: LocalMappingTable)(implicit spark: SparkSession): Broadcast[LocalMappingTable] = {
     spark.sparkContext.broadcast(localMappingTable)
@@ -42,8 +44,17 @@ object BroadcastUtils {
   def getValueOfSparkExpression(expression: String)(implicit spark: SparkSession): Any = {
     import spark.implicits._
 
+    // In order to convert a Spark expression to a value, a DataFrame is created with a single row and a column
+    // that we will ignore. It cannot be an empty DataFrame since we need one row to be able to add a column
+    // with the expression there.
+    //
+    // Then we add another column, named 'dummy' (but the name is not important since we are going to ignore it),
+    // and the value of the Spark expression provided by the user.
+    //
+    // Then we collect the DataFrame '.collect()', take the first row '(0)' and the second column '(1)', which is
+    // the value of our expression.
     List(1).toDF()
-      .withColumn("a", expr(expression))
+      .withColumn("dummy", expr(expression))
       .collect()(0)(1)
   }
 

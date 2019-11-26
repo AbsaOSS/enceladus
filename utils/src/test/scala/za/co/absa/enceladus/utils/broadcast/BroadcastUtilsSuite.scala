@@ -38,6 +38,7 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
   // root
   //  |-- key1: integer
   //  |-- key2: integer
+  //  |-- key3: integer
   private val df = List((1, 2, 4), (2, 3, 4), (3, 4, 4)).toDF("key1", "key2", "key3")
 
   private val defaultValExpr = "\"z\""
