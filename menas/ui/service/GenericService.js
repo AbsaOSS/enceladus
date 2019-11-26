@@ -88,6 +88,7 @@ var GenericService = new function () {
   this.clearSession = function (sLogoutMessage) {
     model().setProperty("/userInfo", {});
     localStorage.clear();
+    document.cookie = `JWT=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=${window.location.pathname.slice(0, -1)}`;
     eventBus.publish("nav", "logout");
     if (sLogoutMessage) {
       sap.m.MessageToast.show(sLogoutMessage, {
@@ -97,9 +98,7 @@ var GenericService = new function () {
   };
 
   this.logout = function (sLogoutMessage) {
-    RestClient.post("api/logout", {}).always(() => {
-      this.clearSession(sLogoutMessage);
-    })
+    this.clearSession(sLogoutMessage);
   };
 
   this.isEmpty = function (str) {
