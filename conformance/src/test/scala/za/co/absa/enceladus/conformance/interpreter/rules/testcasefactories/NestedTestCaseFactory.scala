@@ -71,6 +71,20 @@ object NestedTestCaseFactory {
     attributeMappings = Map[String, String]("lkey" -> "key1"),
     targetAttribute = "val")
 
+  val nestedMappingRule2: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "conformedNum2",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "struct1.key3"),
+    targetAttribute = "val")
+
+  val nestedMappingRule3: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array1.conformedNum3",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array1.key7"),
+    targetAttribute = "val")
+
   private val nestedMT = MappingTableFactory.getDummyMappingTable(name = nestedMappingTableName,
     schemaName = nestedMappingTableName,
     hdfsPath = "nestedMT")
