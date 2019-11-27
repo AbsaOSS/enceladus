@@ -17,7 +17,6 @@ package za.co.absa.enceladus.menas.auth
 
 import java.util.UUID
 
-import io.jsonwebtoken.JwtBuilder
 import javax.servlet.http.{Cookie, HttpServletRequest, HttpServletResponse}
 import org.joda.time.{DateTime, DateTimeZone, Hours}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
@@ -26,11 +25,12 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
 import org.springframework.stereotype.Component
 import za.co.absa.enceladus.menas.auth.AuthConstants._
+import za.co.absa.enceladus.menas.auth.jwt.JwtFactory
 
 import scala.collection.JavaConverters._
 
 @Component
-class MenasAuthenticationSuccessHandler @Autowired()(jwtBuilder: JwtBuilder,
+class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
                                                      @Value("${za.co.absa.enceladus.menas.auth.jwt.lifespan.hours}")
                                                      jwtLifespanHours: Int,
                                                      @Value("${timezone}")
@@ -52,7 +52,8 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtBuilder: JwtBuilder,
       .getAuthorities.asScala
       .map(_.getAuthority).asJava
 
-    val jwt = jwtBuilder
+    val jwt = jwtFactory
+      .jwtBuilder()
       .setSubject(user.getUsername)
       .setExpiration(jwtExpirationTime)
       .claim(CsrfTokenKey, csrfToken)
