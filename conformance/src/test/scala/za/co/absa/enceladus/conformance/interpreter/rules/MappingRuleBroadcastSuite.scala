@@ -73,11 +73,43 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   }
 
   test("Test broadcasting rule can output a struct column") {
-    val expectedSchema = getResourceString("/interpreter/mappingCases/nestedSchema.txt")
-    val expectedResults = getResourceString("/interpreter/mappingCases/nestedResults.json")
+    val expectedSchema = getResourceString("/interpreter/mappingCases/nested1Schema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/nested1Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, nestedMappingRule1)
+
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test broadcasting rule can work for fields in side a struct") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/nested2Schema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/nested2Results.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, nestedMappingRule2)
+
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test broadcasting rule can work on arrays") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/array1Schema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/array1Results.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, nestedMappingRule3)
 
     val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
 
