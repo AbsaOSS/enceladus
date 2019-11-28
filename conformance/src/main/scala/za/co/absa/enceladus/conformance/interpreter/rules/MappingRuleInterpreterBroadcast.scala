@@ -17,6 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
@@ -62,12 +63,42 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
 
     val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, rule.outputColumn, mappings)
 
-    val tempErrorColName = SchemaUtils.getUniqueName("err", Some(df.schema))
+    val arrayPath = splitArrayPath(df.schema, inputDfFields.head)._1
+    val keySubPaths = inputDfFields.map(colNam => splitArrayPath(df.schema, colNam)._2)
+    val outputSubPath = splitArrayPath(df.schema, rule.outputColumn)._2
 
-    val withMappedFieldsDf = df.withColumn(rule.outputColumn, mappingUDF(inputDfFields.map(a => col(a)): _ *))
-      .withColumn(tempErrorColName, array(errorUDF(inputDfFields.map(a => col(a)): _ *)))
+    val withMappedFieldsDf = DeepArrayTransformations.nestedStructAndErrorMap(
+      df, arrayPath, outputSubPath, ErrorMessage.errorColumnName, structCol => {
+        if (structCol == null) {
+          mappingUDF(keySubPaths.map(a => col(a)): _ *)
+        } else {
+          mappingUDF(keySubPaths.map(a => structCol.getField(a)): _ *)
+        }
+      }, structCol => {
+        if (structCol == null) {
+          errorUDF(keySubPaths.map(a => col(a)): _ *)
+        } else {
+          errorUDF(keySubPaths.map(a => structCol.getField(a)): _ *)
+        }
+      })
 
-    DeepArrayTransformations.gatherErrors(withMappedFieldsDf, tempErrorColName, ErrorMessage.errorColumnName)
+    withMappedFieldsDf
+  }
+
+  /**
+    * Splits a fully qualified column name into a deepest array subpath and the
+    * rest of the path.
+    *
+    * @param schema     The schema of a DataFrame
+    * @param columnName A fully qualified column name
+    */
+  private def splitArrayPath(schema: StructType, columnName: String): (String, String) = {
+    val arraySubPathOpt = SchemaUtils.getDeepestArrayPath(schema, columnName)
+
+    arraySubPathOpt match {
+      case Some(arraySubPath) => (arraySubPath, columnName.drop(arraySubPath.length + 1))
+      case None => ("", columnName)
+    }
   }
 
   private def getDefaultValue(mappingTableDef: MappingTable)

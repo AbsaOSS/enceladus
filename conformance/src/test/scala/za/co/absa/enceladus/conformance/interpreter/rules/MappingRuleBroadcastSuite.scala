@@ -25,6 +25,8 @@ import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll {
+  import spark.implicits._
+
   private val simpleTestCaseFactory = new SimpleTestCaseFactory()
   private val nestedTestCaseFactory = new NestedTestCaseFactory()
 
@@ -111,13 +113,24 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, nestedMappingRule3)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
+      .cache
 
-    val actualSchema = dfOut.schema.treeString
+    val actualSchema = cleanupSchema(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
+  }
+
+  private def cleanupSchema(inputSchemaTree: String): String = {
+    // This cleanup is needed since when a struct is processed via nestedStructMap() or nestedStructAndErrorMap(),
+    // the new version of the struct always has the flag containsNull = false.
+    inputSchemaTree
+      .replaceAll("\\ \\(containsNull = true\\)", "")
+      .replaceAll("\\ \\(containsNull = false\\)", "")
+      .trim
   }
 
   private def getResourceString(name: String): String =
