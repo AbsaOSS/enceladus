@@ -18,12 +18,19 @@ package za.co.absa.enceladus.menas.integration
 import za.co.absa.enceladus.menas.models.RunSummary
 import za.co.absa.enceladus.model.Run
 
-object RunImplcits {
+object RunImplicits {
 
   implicit class RunExtensions(run: Run) {
 
     def toSummary: RunSummary = {
-      RunSummary(run.dataset, run.datasetVersion, run.runId, run.runStatus.status.toString, run.startDateTime)
+      RunSummary(
+        run.dataset,
+        run.datasetVersion,
+        run.runId,
+        run.runStatus.status.toString,
+        run.startDateTime,
+        run.controlMeasure.runUniqueId.getOrElse("NotSpecifiedYet")
+      )
     }
 
   }

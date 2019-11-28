@@ -33,7 +33,7 @@ import za.co.absa.enceladus.model.test.factories.RunFactory
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
-  import za.co.absa.enceladus.menas.integration.RunImplcits.RunExtensions
+  import za.co.absa.enceladus.menas.integration.RunImplicits.RunExtensions
 
   @Autowired
   private val runFixture: RunFixtureService = null

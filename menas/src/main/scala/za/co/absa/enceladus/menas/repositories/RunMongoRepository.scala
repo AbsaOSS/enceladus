@@ -53,6 +53,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
   private val summaryProjection: Bson = project(fields(
     computed("datasetName", "$dataset"),
     computed("status", "$runStatus.status"),
+    computed("runUniqueId", "$controlMeasure.runUniqueId"),
     include("datasetVersion", "runId", "startDateTime"),
     excludeId()
   ))
