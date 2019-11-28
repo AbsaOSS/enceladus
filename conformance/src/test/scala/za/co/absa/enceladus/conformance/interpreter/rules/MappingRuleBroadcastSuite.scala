@@ -49,7 +49,9 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       simpleTestCaseFactory.getTestCase(true, simpleMappingRule)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+      .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
+      .cache
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -65,7 +67,9 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       simpleTestCaseFactory.getTestCase(true, simpleMappingRuleWithDefaultValue)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+      .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
+      .cache
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -81,7 +85,9 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, nestedMappingRule1)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum1")
+      .cache
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -97,7 +103,9 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, nestedMappingRule2)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf).cache
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum2")
+      .cache
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
