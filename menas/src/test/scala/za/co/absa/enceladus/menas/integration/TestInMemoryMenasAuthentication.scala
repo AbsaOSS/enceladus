@@ -16,8 +16,7 @@
 package za.co.absa.enceladus.menas.integration
 
 import org.springframework.context.annotation.Primary
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
-import org.springframework.security.crypto.password.NoOpPasswordEncoder
+import org.springframework.security.config.annotation.authentication.configurers.provisioning.InMemoryUserDetailsManagerConfigurer
 import org.springframework.stereotype.Component
 import za.co.absa.enceladus.menas.auth.InMemoryMenasAuthentication
 
@@ -25,19 +24,16 @@ import za.co.absa.enceladus.menas.auth.InMemoryMenasAuthentication
 @Primary
 class TestInMemoryMenasAuthentication extends InMemoryMenasAuthentication {
 
-  override def configure(auth: AuthenticationManagerBuilder): Unit = {
-    super.configure(auth)
-
-    val inMemoryAuth = auth
-      .inMemoryAuthentication()
-      .passwordEncoder(NoOpPasswordEncoder.getInstance())
+  override protected def addUsers(auth: InMemoryUserDetailsManagerConfigurer[_]): Unit = {
+    super.addUsers(auth)
 
     InMemoryUsers.users.foreach {
-      case (user, pass) =>
-        inMemoryAuth
-          .withUser(user)
-          .password(pass)
+      case (username, password) =>
+        auth
+          .withUser(username)
+          .password(passwordEncoder.encode(password))
           .authorities("ROLE_USER")
     }
   }
+
 }
