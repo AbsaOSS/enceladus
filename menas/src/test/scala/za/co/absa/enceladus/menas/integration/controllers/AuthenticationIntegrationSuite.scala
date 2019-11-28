@@ -39,7 +39,7 @@ class AuthenticationIntegrationSuite extends BaseRestApiTest {
   private val jwtRegex = "JWT=([^;]+);?.*".r
 
   "Username and password authentication" should {
-    "handle multiple users loggin in concurrently" in {
+    "handle multiple users login in concurrently" in {
       val futures = Future.sequence {
         InMemoryUsers.users.map {
           case (username, password) => Future(getAuthHeaders(username, password))
