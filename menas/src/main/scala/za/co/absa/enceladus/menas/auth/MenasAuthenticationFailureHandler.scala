@@ -20,11 +20,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
+import org.springframework.stereotype.Component
 import za.co.absa.enceladus.menas.auth.exceptions.{AuthHostTimeoutException, BadKrbHostException, BadLdapHostException}
 
 /**
   * This class is responsible for mapping authentication exceptions to status codes in HTTP responses.
   */
+@Component
 class MenasAuthenticationFailureHandler extends AuthenticationFailureHandler {
 
   private val log = LoggerFactory.getLogger(this.getClass)

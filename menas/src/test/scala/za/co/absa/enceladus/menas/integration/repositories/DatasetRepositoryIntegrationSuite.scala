@@ -595,9 +595,9 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
     }
     "return datasets witch matching coordinator ID" when {
       "such datasets exist" in {
-        val schedule = OozieSchedule(scheduleTiming = ScheduleTiming(Seq(), Seq(), Seq(), Seq(), Seq()), 
+        val schedule = OozieSchedule(scheduleTiming = ScheduleTiming(Seq(), Seq(), Seq(), Seq(), Seq()),
             runtimeParams = RuntimeConfig(sysUser = "user", menasKeytabFile = "/a/b/c"), datasetVersion = 0,
-            mappingTablePattern = None, rawFormat = ParquetDataFormat(), 
+            mappingTablePattern = None, rawFormat = ParquetDataFormat(),
             activeInstance = Some(OozieScheduleInstance("/abc", "/def", "SomeCoordId")))
         val ds1 = DatasetFactory.getDummyDataset().copy(name = "ds1", schedule = Some(schedule))
         val ds2 = DatasetFactory.getDummyDataset().copy(name = "ds2", schedule = Some(schedule))

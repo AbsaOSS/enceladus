@@ -18,7 +18,7 @@ package za.co.absa.enceladus.utils.validation
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.types.TypedStructField
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults, TypedStructField}
 import za.co.absa.enceladus.utils.validation.field.FieldValidationFailure
 
 import scala.collection.mutable.ListBuffer
@@ -27,6 +27,8 @@ import scala.collection.mutable.ListBuffer
   * Object responsible for Spark schema validation against self inconsistencies (not against the actual data)
   */
 object SchemaValidator {
+  private implicit val defaults: Defaults = GlobalDefaults
+
   /**
     * Validate a schema
     *

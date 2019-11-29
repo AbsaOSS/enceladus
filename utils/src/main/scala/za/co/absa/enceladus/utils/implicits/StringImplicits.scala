@@ -16,11 +16,26 @@
 package za.co.absa.enceladus.utils.implicits
 
 import java.security.InvalidParameterException
-
 import scala.annotation.tailrec
 
 object StringImplicits {
   implicit class StringEnhancements(string: String) {
+
+    /**
+      * Replaces all occurrences of the provided characters with their mapped values
+      * @param replacements the map of replacements where key's are chars to search for and values are their replacements
+      * @return             a string with characters replaced
+      */
+    def replaceChars(replacements: Map[Char, Char]): String = {
+      if (replacements.isEmpty) {
+       string
+      } else {
+        val result = new StringBuilder(string.length)
+        string.foreach(char => result.append(replacements.getOrElse(char, char)))
+        result.toString
+      }
+    }
+
     /**
       * Function to find the first occurrence of any of the characters from the charsToFind in the string. The
       * occurrence is not considered if the character is part of a sequence within a pair of quote characters specified

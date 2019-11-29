@@ -33,6 +33,6 @@ class ScalarFieldValidator extends FieldValidator {
   }
 
   override def validate(field: TypedStructField): Seq[ValidationIssue] = {
-    tryToValidationIssues(validateDefaultValue(field))
+    super.validate(field) ++ tryToValidationIssues(validateDefaultValue(field))
   }
 }

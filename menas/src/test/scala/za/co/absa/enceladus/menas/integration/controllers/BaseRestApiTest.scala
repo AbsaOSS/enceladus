@@ -44,10 +44,10 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   @Value("${za.co.absa.enceladus.menas.auth.inmemory.user}")
   val user: String = ""
   @Value("${za.co.absa.enceladus.menas.auth.inmemory.password}")
-  val password: String = ""
+  val passwd: String = ""
 
   private lazy val baseUrl = s"http://localhost:$port/api"
-  private lazy val authHeaders = getAuthHeaders()
+  private lazy val authHeaders = getAuthHeaders(user, passwd)
 
   private val objectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
@@ -65,8 +65,8 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     templateBuilder
   }
 
-  def getAuthHeaders(): HttpHeaders = {
-    val loginUrl = s"$baseUrl/login?username=$user&password=$password&submit=Login"
+  def getAuthHeaders(username: String, password: String): HttpHeaders = {
+    val loginUrl = s"$baseUrl/login?username=$username&password=$password&submit=Login"
 
     val response = restTemplate.postForEntity(loginUrl, HttpEntity.EMPTY, classOf[String])
 

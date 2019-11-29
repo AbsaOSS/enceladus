@@ -26,6 +26,10 @@ spring.resources.chain.strategy.fixed.enabled=true
 spring.resources.chain.strategy.fixed.paths=/components/**,/css/**,/generic/**,/service/**
 spring.resources.chain.strategy.fixed.version=@project.version@
 
+# Generate your own secret, must be be at least 256-bit
+za.co.absa.enceladus.menas.auth.jwt.secret=u7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+KbPeShVmYq3t6w9z$C&E)H@McQfTjWn
+za.co.absa.enceladus.menas.auth.jwt.lifespan.hours=8
+
 # How will users authenticate to menas. Available options: inmemory, kerberos
 za.co.absa.enceladus.menas.auth.mechanism = inmemory
 
@@ -69,7 +73,7 @@ za.co.absa.enceladus.menas.spark.master=local[1]
 za.co.absa.enceladus.spline.urlTemplate=//localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s
 
 #system-wide time zone
-timezone="UTC"
+timezone=UTC
 
 #---------- Actuator
 management.endpoints.web.base-path=/admin

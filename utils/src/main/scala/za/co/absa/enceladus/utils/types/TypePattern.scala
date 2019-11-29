@@ -22,7 +22,7 @@ import scala.language.implicitConversions
   * @param pattern  actual pattern to format the type conversion
   * @param isDefault  marks if the pattern is actually an assigned value or taken for global defaults
   */
-abstract class TypePattern(val pattern: String, val isDefault: Boolean = false)
+abstract class TypePattern(val pattern: String, val isDefault: Boolean = false) extends Serializable
 
 object TypePattern {
   implicit def patternToString(pattern: TypePattern): String = pattern.pattern

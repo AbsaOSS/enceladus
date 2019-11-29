@@ -33,7 +33,7 @@ import za.co.absa.enceladus.model.test.factories.RunFactory
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
-  import za.co.absa.enceladus.menas.integration.RunImplcits.RunExtensions
+  import za.co.absa.enceladus.menas.integration.RunImplicits.RunExtensions
 
   @Autowired
   private val runFixture: RunFixtureService = null
@@ -63,7 +63,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
       }
     }
 
-    "return and empty List asynchronously" when {
+    "return an empty List asynchronously" when {
       "there are no Runs" in {
         val actual = await(runMongoRepository.getAllLatest())
 

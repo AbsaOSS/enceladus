@@ -21,7 +21,30 @@ import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
 
 class StringImplicitsSuite extends FunSuite {
-  test("StringImprovements.findFirstUnquoted - empty string") {
+  test("StringEnhancements.replaceChars - empty replacements") {
+    val s = "supercalifragilisticexpialidocious"
+    assert(s.replaceChars(Map.empty) == s)
+  }
+
+  test("StringEnhancements.replaceChars - no hits") {
+    val s = "supercalifragilisticexpialidocious"
+    val map = Map('1' -> '5', '2' -> '6', '3' -> '7')
+    assert(s.replaceChars(map) == s)
+  }
+
+  test("StringEnhancements.replaceChars - replace all to same char") {
+    val s: String = "abcba"
+    val map = Map('a' -> 'x', 'b' -> 'x', 'c' -> 'x', 'd' -> 'x')
+    assert(s.replaceChars(map) == "xxxxx")
+  }
+
+  test("StringEnhancements.replaceChars - swap characters") {
+    val s: String = "abcba"
+    val map = Map('a' -> 'b', 'b' -> 'a')
+    assert(s.replaceChars(map) == "bacab")
+  }
+
+  test("StringEnhancements.findFirstUnquoted - empty string") {
     var result = "".findFirstUnquoted(Set.empty, Set.empty)
     assert(result.isEmpty)
     result = "".findFirstUnquoted(Set('a'), Set.empty)
@@ -32,7 +55,7 @@ class StringImplicitsSuite extends FunSuite {
     assert(result.isEmpty)
   }
 
-  test("StringImprovements.findFirstUnquoted - no quotes") {
+  test("StringEnhancements.findFirstUnquoted - no quotes") {
     var result = "Hello world".findFirstUnquoted(Set('x', 'y', 'z'), Set.empty)
     assert(result.isEmpty)
     result = "Hello world".findFirstUnquoted(Set('w'), Set.empty)
@@ -41,7 +64,7 @@ class StringImplicitsSuite extends FunSuite {
     assert(result.contains(1))
   }
 
-  test("StringImprovements.findFirstUnquoted - simple quotes") {
+  test("StringEnhancements.findFirstUnquoted - simple quotes") {
     val quotes = Set(''')
     var result = "Hello 'world'".findFirstUnquoted(Set('w'), quotes)
     assert(result.isEmpty)
@@ -51,7 +74,7 @@ class StringImplicitsSuite extends FunSuite {
     assert(result.contains(8))
   }
 
-  test("StringImprovements.findFirstUnquoted - multiple quotes") {
+  test("StringEnhancements.findFirstUnquoted - multiple quotes") {
     val charsToFind = Set('w', 'e', 'l')
     val quotes = Set(''', '`')
     var result = "`Hello` 'world'".findFirstUnquoted(charsToFind, quotes)
@@ -62,7 +85,7 @@ class StringImplicitsSuite extends FunSuite {
     assert(result.contains(14))
   }
 
-  test("StringImprovements.findFirstUnquoted - using escape character") {
+  test("StringEnhancements.findFirstUnquoted - using escape character") {
     val charsToFind = Set('w', 'e', 'l')
     val quotes = Set(''', '`')
     var result = "`Hello` \\'world".findFirstUnquoted(charsToFind, quotes) //hasn't started
@@ -77,7 +100,7 @@ class StringImplicitsSuite extends FunSuite {
     assert(result.isEmpty)
   }
 
-  test("StringImprovements.findFirstUnquoted - quote between search characters") {
+  test("StringEnhancements.findFirstUnquoted - quote between search characters") {
     val charsToFind = Set('w', 'e', 'l', ''')
     val quotes = Set(''', '`')
     var result = "Hello \\'world".findFirstUnquoted(charsToFind, quotes) //simple
@@ -92,7 +115,7 @@ class StringImplicitsSuite extends FunSuite {
     assert(result.isEmpty)
   }
 
-  test("StringImprovements.findFirstUnquoted - custom escape character") {
+  test("StringEnhancements.findFirstUnquoted - custom escape character") {
     val charsToFind = Set('w', 'e', 'l')
     val quotes = Set(''', '`')
     val escapeChar = '~'
@@ -108,7 +131,7 @@ class StringImplicitsSuite extends FunSuite {
     assert(result.contains(16))
   }
 
-  test("StringImprovements.findFirstUnquoted - many escapes") { //better to do with other then \
+  test("StringEnhancements.findFirstUnquoted - many escapes") { //better to do with other then \
     val charsToFind = Set('w')
     val quotes = Set(''')
     val escapeChar = '~'
@@ -124,7 +147,7 @@ class StringImplicitsSuite extends FunSuite {
     assert(result.isEmpty)
   }
 
-  test("StringImprovements.findFirstUnquoted - escape in search chars") { //better to do with other then \
+  test("StringEnhancements.findFirstUnquoted - escape in search chars") { //better to do with other then \
     val escapeChar = '~'
     val quotes = Set(''')
     val charsToFind = Set('w', escapeChar)
@@ -138,7 +161,7 @@ class StringImplicitsSuite extends FunSuite {
     assert(result.contains(13))
   }
 
-  test("StringImprovements.findFirstUnquoted - escape in quote chars") { //better to do with other then \
+  test("StringEnhancements.findFirstUnquoted - escape in quote chars") { //better to do with other then \
     val escapeChar = '~'
     val quotes = Set(''', escapeChar)
     val charsToFind = Set('w', 'e', 'l')
@@ -154,7 +177,7 @@ class StringImplicitsSuite extends FunSuite {
     assert(result.contains(14))
   }
 
-  test("StringImprovements.findFirstUnquoted - escape in search and quote chars") { //better to do with other then \
+  test("StringEnhancements.findFirstUnquoted - escape in search and quote chars") { //better to do with other then \
     val escapeChar = '!'
     val quotes = Set(''', escapeChar)
     val charsToFind = Set('w', 'e', 'l', escapeChar)
@@ -165,14 +188,14 @@ class StringImplicitsSuite extends FunSuite {
     assert(caught.getMessage == expectedMessage)
   }
 
-  test("StringImprovements.hasUnquoted") {
+  test("StringEnhancements.hasUnquoted") {
     assert(!"".hasUnquoted(Set.empty, Set.empty))
     assert(!"Hello world".hasUnquoted(Set('x'), Set.empty))
     assert("Hello world".hasUnquoted(Set('w', 'e', 'l'), Set('`')))
     assert(!"`Hello world`".hasUnquoted(Set('w', 'e', 'l'), Set('`')))
   }
 
-  test("StringImprovements.countUnquoted: empty variants") {
+  test("StringEnhancements.countUnquoted: empty variants") {
     val expected = Map(
       'x'->0,
       'y'->0,
@@ -185,7 +208,7 @@ class StringImplicitsSuite extends FunSuite {
     assert("Hello world".countUnquoted(empty, Set('|')) == Map.empty)
   }
 
-  test("StringImprovements.countUnquoted: simple test") {
+  test("StringEnhancements.countUnquoted: simple test") {
     val charsToFind = Set('x', 'y', 'z')
     val expected1 = Map(
       'x'->0,
@@ -208,7 +231,7 @@ class StringImplicitsSuite extends FunSuite {
     assert("x-xxy-yyzzz|zyyy|zz".countUnquoted(charsToFind, Set('-', '|')) == expected3)
   }
 
-  test("StringImprovements.countUnquoted: escape involved") {
+  test("StringEnhancements.countUnquoted: escape involved") {
     val charsToFind = Set('x', 'y', 'z')
     val expected = Map(
       'x'->3,
@@ -218,7 +241,7 @@ class StringImplicitsSuite extends FunSuite {
     assert("x~yz~'xxyyzz 'xxxx~'zzzz'~''yyyy".countUnquoted(charsToFind, Set('''),'~') == expected)
   }
 
-  test("StringImprovements.countUnquoted: search and quote chars overlap") {
+  test("StringEnhancements.countUnquoted: search and quote chars overlap") {
     val charsToFind = Set('a', '#', '$', '%')
     val quoteChars = Set('$', '%', '^')
     val expected = Map(
@@ -230,7 +253,7 @@ class StringImplicitsSuite extends FunSuite {
     assert("#^##^|$%%%%".countUnquoted(charsToFind, quoteChars, '|') == expected)
   }
 
-  test("StringImprovements.countUnquoted: escape in search for chars") {
+  test("StringEnhancements.countUnquoted: escape in search for chars") {
     val charsToFind = Set('a', 'b', 'c', 'd', '|')
     val quoteChars = Set('%', '^')
     val expected = Map(
@@ -243,7 +266,7 @@ class StringImplicitsSuite extends FunSuite {
     assert("aa||%bb%|^cc^a|cd||d|^b^".countUnquoted(charsToFind, quoteChars, '|') == expected)
   }
 
-  test("StringImprovements.countUnquoted: escape in quote chars") {
+  test("StringEnhancements.countUnquoted: escape in quote chars") {
     val charsToFind = Set('a', 'b', 'c')
     val quoteChars = Set('$', '%', '^')
     val expected = Map(

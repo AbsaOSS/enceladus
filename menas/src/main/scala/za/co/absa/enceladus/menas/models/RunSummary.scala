@@ -15,4 +15,11 @@
 
 package za.co.absa.enceladus.menas.models
 
-case class RunSummary(datasetName: String, datasetVersion: Int, runId: Int, status: String, startDateTime: String)
+case class RunSummary(
+                       datasetName: String,
+                       datasetVersion: Int,
+                       runId: Int,
+                       status: String,
+                       startDateTime: String,
+                       runUniqueId: String
+                     )
