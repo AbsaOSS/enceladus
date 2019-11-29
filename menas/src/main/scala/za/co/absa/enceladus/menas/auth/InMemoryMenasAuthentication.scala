@@ -17,29 +17,40 @@ package za.co.absa.enceladus.menas.auth
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
-import org.springframework.security.crypto.password.NoOpPasswordEncoder
+import org.springframework.security.config.annotation.authentication.configurers.provisioning.InMemoryUserDetailsManagerConfigurer
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Component
 
 @Component
 class InMemoryMenasAuthentication extends MenasAuthentication {
   @Value("${za.co.absa.enceladus.menas.auth.inmemory.user:}")
-  val username: String = ""
+  private val username: String = ""
   @Value("${za.co.absa.enceladus.menas.auth.inmemory.password:}")
-  val password: String = ""
+  private val password: String = ""
 
-  def validateParams() {
+  protected val passwordEncoder = new BCryptPasswordEncoder()
+
+  def validateParams(): Unit = {
     if (username.isEmpty || password.isEmpty) {
       throw new IllegalArgumentException("Both username and password have to configured for inmemory authentication.")
     }
   }
 
-  override def configure(auth: AuthenticationManagerBuilder) {
+  override def configure(auth: AuthenticationManagerBuilder): Unit = {
     this.validateParams()
-    auth
+
+    val inMemoryAuth = auth
       .inMemoryAuthentication()
-      .passwordEncoder(NoOpPasswordEncoder.getInstance())
+      .passwordEncoder(passwordEncoder)
+
+    addUsers(inMemoryAuth)
+  }
+
+  protected def addUsers(auth: InMemoryUserDetailsManagerConfigurer[_]): Unit = {
+    auth
       .withUser(username)
-      .password(password)
+      .password(passwordEncoder.encode(password))
       .authorities("ROLE_USER")
   }
+
 }

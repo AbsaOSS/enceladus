@@ -34,7 +34,7 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 @Component
-class JwtAuthenticationFilter @Autowired()(jwtParser: JwtParser) extends OncePerRequestFilter {
+class JwtAuthenticationFilter @Autowired()(jwtFactory: JwtFactory) extends OncePerRequestFilter {
 
   override def doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain): Unit = {
     getAuthentication(request)
@@ -46,7 +46,8 @@ class JwtAuthenticationFilter @Autowired()(jwtParser: JwtParser) extends OncePer
   private def getAuthentication(request: HttpServletRequest): Option[Authentication] = {
     getJwtCookie(request).flatMap { jwt =>
       Try {
-        jwtParser
+        jwtFactory
+          .jwtParser()
           .parseClaimsJws(jwt)
           .getBody
       } match {

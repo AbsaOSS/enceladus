@@ -21,7 +21,6 @@ import io.jsonwebtoken.io.{JacksonDeserializer, JacksonSerializer}
 import io.jsonwebtoken.security.Keys
 import io.jsonwebtoken.{JwtBuilder, JwtParser, Jwts}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
-import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component
 
 @Component
@@ -35,14 +34,12 @@ class JwtFactory @Autowired()(@Value("${za.co.absa.enceladus.menas.auth.jwt.secr
     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-  @Bean
   def jwtParser(): JwtParser = {
     Jwts.parser
       .setSigningKey(signingKey)
       .deserializeJsonWith(new JacksonDeserializer(objectMapper))
   }
 
-  @Bean
   def jwtBuilder(): JwtBuilder = {
     Jwts.builder()
       .signWith(signingKey)
