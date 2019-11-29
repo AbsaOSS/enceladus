@@ -327,8 +327,8 @@ This is the value to be used in case the input is missing (and nulls are not
 allowed) or when the casting (*standardization*) fails.
 You can think of this as a *fallback value*.
 
-It should be noted, that this is the only _metadata_ key which accepts the
-`null` value (written without quotes) next to string values.
+It should be noted, that this is the only _metadata_ key which accepts the `null` value (written without quotes) next to
+string values (of course such field has to be nullable: `"nullable": true`)
 
 For more about the topic see chapter [Defaults](#defaults).
 
