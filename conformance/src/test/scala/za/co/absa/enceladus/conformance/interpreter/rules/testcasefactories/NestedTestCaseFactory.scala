@@ -57,6 +57,9 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
   * |    |    |    |-- element: struct
   * |    |    |    |    |-- key9: long
   * |    |    |    |    |-- key10: long
+  * |    |    |    |    |-- struct3: struct
+  * |    |    |    |    |    |-- k1: integer
+  * |    |    |    |    |    |-- k2: integer
   */
 
 object NestedTestCaseFactory {
@@ -79,10 +82,52 @@ object NestedTestCaseFactory {
     targetAttribute = "val")
 
   val nestedMappingRule3: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "conformedNum3",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("ikey" -> "key1", "lkey" -> "struct1.key3"),
+    targetAttribute = "val")
+
+  val arrayMappingRule1: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "array1.conformedNum3",
     controlCheckpoint = false,
     mappingTable = nestedMappingTableName,
     attributeMappings = Map[String, String]("lkey" -> "array1.key7"),
+    targetAttribute = "val")
+
+  val arrayMappingRule2: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array2.inner2.conformedNum4",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9"),
+    targetAttribute = "val")
+
+  val arrayMappingRule3: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array1.conformedNum4",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array1.key7", "ikey" -> "key1"),
+    targetAttribute = "val")
+
+  val arrayMappingRule4: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array2.inner2.struct3.conformedNum5",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9", "ikey" -> "key1"),
+    targetAttribute = "val")
+
+  val arrayMappingRule5: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array2.inner2.conformedNum6",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9", "ikey" -> "array2.inner2.struct3.k1"),
+    targetAttribute = "val")
+
+  val wrongMappingRule1: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array2.inner2.wrongNum1",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9", "ikey" -> "array1.key7"),
     targetAttribute = "val")
 
   private val nestedMT = MappingTableFactory.getDummyMappingTable(name = nestedMappingTableName,
@@ -130,7 +175,11 @@ object NestedTestCaseFactory {
       StructField("array2", types.ArrayType(StructType(Array(
         StructField("inner2", types.ArrayType(StructType(Array(
           StructField("key9", LongType),
-          StructField("key10", LongType)
+          StructField("key10", LongType),
+          StructField("struct3", StructType(Array(
+            StructField("k1", IntegerType),
+            StructField("k2", IntegerType)
+          )))
         ))))
       ))))
     ))
