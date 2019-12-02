@@ -152,7 +152,7 @@ Automatically added columns
 
 There is a column automatically added to each **Standardization** output. Its name is `errCol` and it contains information
 on all errors that happened on the particular row *standardization*. If defined in schema its structure there has to 
-adhere exactly to the automatically added one. More on this field [see in dedicated documentation](({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)).  
+adhere exactly to the automatically added one. More on this field [see in dedicated documentation]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol).  
 
 Data types
 ----------
@@ -327,8 +327,8 @@ This is the value to be used in case the input is missing (and nulls are not
 allowed) or when the casting (*standardization*) fails.
 You can think of this as a *fallback value*.
 
-It should be noted, that this is the only _metadata_ key which accepts the
-`null` value (written without quotes) next to string values.
+It should be noted, that this is the only _metadata_ key which accepts the `null` value (written without quotes) next to
+string values (of course such field has to be nullable: `"nullable": true`)
 
 For more about the topic see chapter [Defaults](#defaults).
 
@@ -403,7 +403,7 @@ sign (*"-"*).
 | | |
 
 Flag indicating if the column accepts infinity as a value. When set to true *infinity*/*-infinity* are recognized as a 
-valid value, instead of failing with casting error ([see here](({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol))).
+valid value, instead of failing with casting error ([see here]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)).
 The string representing infinity on input is *"∞"* and *"-∞"* respectively. Positive and negative numbers with values 
 that are too large are converted to *infinity* and *-infinity*, respectively.
 
