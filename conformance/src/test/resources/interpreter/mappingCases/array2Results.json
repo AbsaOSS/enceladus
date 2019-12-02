@@ -33,6 +33,10 @@
       "struct3" : {
         "k1" : 1,
         "k2" : 2
+      },
+      "conformedNum4" : {
+        "id" : 1,
+        "name" : "foo"
       }
     }, {
       "key9" : 1,
@@ -40,6 +44,10 @@
       "struct3" : {
         "k1" : 2,
         "k2" : 2
+      },
+      "conformedNum4" : {
+        "id" : 1,
+        "name" : "foo"
       }
     } ]
   }, {
@@ -49,6 +57,10 @@
       "struct3" : {
         "k1" : 1,
         "k2" : 2
+      },
+      "conformedNum4" : {
+        "id" : 3,
+        "name" : "xyz"
       }
     }, {
       "key9" : 2,
@@ -56,14 +68,14 @@
       "struct3" : {
         "k1" : 3,
         "k2" : 3
+      },
+      "conformedNum4" : {
+        "id" : 2,
+        "name" : "bar"
       }
     } ]
   } ],
-  "errCol" : [ ],
-  "conformedNum2" : {
-    "id" : 3,
-    "name" : "xyz"
-  }
+  "errCol" : [ ]
 }, {
   "id" : 2,
   "key1" : 2,
@@ -99,6 +111,10 @@
       "struct3" : {
         "k1" : 1,
         "k2" : 1
+      },
+      "conformedNum4" : {
+        "id" : 1,
+        "name" : "foo"
       }
     }, {
       "key9" : 1,
@@ -106,6 +122,10 @@
       "struct3" : {
         "k1" : 1,
         "k2" : 1
+      },
+      "conformedNum4" : {
+        "id" : 1,
+        "name" : "foo"
       }
     } ]
   }, {
@@ -115,6 +135,10 @@
       "struct3" : {
         "k1" : 2,
         "k2" : 1
+      },
+      "conformedNum4" : {
+        "id" : 3,
+        "name" : "xyz"
       }
     }, {
       "key9" : 4,
@@ -125,11 +149,17 @@
       }
     } ]
   } ],
-  "errCol" : [ ],
-  "conformedNum2" : {
-    "id" : 2,
-    "name" : "bar"
-  }
+  "errCol" : [ {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array2.inner2.conformedNum4",
+    "rawValues" : [ "4" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array2.inner2.key9"
+    } ]
+  } ]
 }, {
   "id" : 3,
   "key1" : 3,
@@ -153,10 +183,18 @@
       "struct3" : {
         "k1" : 2,
         "k2" : 2
+      },
+      "conformedNum4" : {
+        "id" : 2,
+        "name" : "bar"
       }
     }, {
       "key9" : 2,
-      "key10" : 1
+      "key10" : 1,
+      "conformedNum4" : {
+        "id" : 2,
+        "name" : "bar"
+      }
     } ]
   }, {
     "inner2" : [ {
@@ -165,6 +203,10 @@
       "struct3" : {
         "k1" : 1,
         "k2" : 2
+      },
+      "conformedNum4" : {
+        "id" : 3,
+        "name" : "xyz"
       }
     }, {
       "key9" : 2,
@@ -172,14 +214,14 @@
       "struct3" : {
         "k1" : 1,
         "k2" : 1
+      },
+      "conformedNum4" : {
+        "id" : 2,
+        "name" : "bar"
       }
     } ]
   } ],
-  "errCol" : [ ],
-  "conformedNum2" : {
-    "id" : 1,
-    "name" : "foo"
-  }
+  "errCol" : [ ]
 }, {
   "id" : 4,
   "key1" : 2,
@@ -205,14 +247,14 @@
       "struct3" : {
         "k1" : 1,
         "k2" : 1
+      },
+      "conformedNum4" : {
+        "id" : 2,
+        "name" : "bar"
       }
     } ]
   } ],
-  "errCol" : [ ],
-  "conformedNum2" : {
-    "id" : 2,
-    "name" : "bar"
-  }
+  "errCol" : [ ]
 }, {
   "id" : 5,
   "key1" : 4,
@@ -230,11 +272,7 @@
   },
   "array1" : [ ],
   "array2" : [ ],
-  "errCol" : [ ],
-  "conformedNum2" : {
-    "id" : 3,
-    "name" : "xyz"
-  }
+  "errCol" : [ ]
 }, {
   "id" : 6,
   "key1" : 1,
@@ -252,11 +290,7 @@
   },
   "array1" : [ ],
   "array2" : [ ],
-  "errCol" : [ ],
-  "conformedNum2" : {
-    "id" : 1,
-    "name" : "foo"
-  }
+  "errCol" : [ ]
 }, {
   "id" : 7,
   "key1" : 1,
@@ -272,20 +306,12 @@
   },
   "array1" : [ ],
   "array2" : [ ],
-  "errCol" : [ ],
-  "conformedNum2" : {
-    "id" : 1,
-    "name" : "foo"
-  }
+  "errCol" : [ ]
 }, {
   "id" : 8,
   "key1" : 1,
   "struct1" : {
     "key3" : 1
   },
-  "errCol" : [ ],
-  "conformedNum2" : {
-    "id" : 1,
-    "name" : "foo"
-  }
+  "errCol" : [ ]
 } ]
