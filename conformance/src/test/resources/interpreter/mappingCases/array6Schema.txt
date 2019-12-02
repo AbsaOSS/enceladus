@@ -25,7 +25,7 @@ root
  |    |    |    |    |-- struct3: struct (nullable = true)
  |    |    |    |    |    |-- k1: integer (nullable = true)
  |    |    |    |    |    |-- k2: integer (nullable = true)
- |    |    |    |    |-- conformedNum4: struct (nullable = true)
+ |    |    |    |    |-- conformedNum7: struct (nullable = true)
  |    |    |    |    |    |-- id: long (nullable = true)
  |    |    |    |    |    |-- name: string (nullable = true)
  |-- errCol: array (nullable = true)

@@ -186,7 +186,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule failure if key fields are in different array levels for an array of array") {
+  test("Test broadcasting rule when key fields are in different array levels for an array of array") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array4Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array4Results.json")
 
@@ -204,12 +204,30 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule failure if key fields are in different struct levels in a array of arrays") {
+  test("Test broadcasting rule when key fields are in different struct levels in a array of arrays") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array5Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array5Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, arrayMappingRule5)
+
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
+      .cache
+
+    val actualSchema = cleanupSchema(dfOut.schema.treeString)
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test broadcasting rule when 3 key fields are at different array levels") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/array6Schema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/array6Results.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, arrayMappingRule6)
 
     val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
