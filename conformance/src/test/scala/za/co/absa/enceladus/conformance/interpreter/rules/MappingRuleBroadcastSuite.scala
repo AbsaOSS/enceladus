@@ -169,6 +169,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   }
 
   test("Test broadcasting rule failure if key fields are in different array levels") {
+    // ToDo The support for this mode of broadcasting rule is to be implemented in #1078
     val expectedSchema = getResourceString("/interpreter/mappingCases/array3Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array3Results.json")
 
@@ -187,6 +188,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   }
 
   test("Test broadcasting rule when key fields are in different array levels for an array of array") {
+    // ToDo The support for this mode of broadcasting rule is to be implemented in #1078
     val expectedSchema = getResourceString("/interpreter/mappingCases/array4Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array4Results.json")
 
@@ -205,6 +207,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   }
 
   test("Test broadcasting rule when key fields are in different struct levels in a array of arrays") {
+    // ToDo The support for this mode of broadcasting rule is to be implemented in #1078
     val expectedSchema = getResourceString("/interpreter/mappingCases/array5Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array5Results.json")
 
@@ -223,6 +226,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   }
 
   test("Test broadcasting rule when 3 key fields are at different array levels") {
+    // ToDo The support for this mode of broadcasting rule is to be implemented in #1078
     val expectedSchema = getResourceString("/interpreter/mappingCases/array6Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array6Results.json")
 

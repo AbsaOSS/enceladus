@@ -89,7 +89,7 @@ object DeepArrayTransformations {
     * Here is an example demonstrating how to handle both root and nested cases:
     *
     * {{{
-    * val dfOut = nestedWithColumnMap(df, columnPath, "combinedField", c => {
+    * val dfOut = nestedStructMap(df, columnPath, "combinedField", c => {
     * if (c==null) {
     *   // The columns are at the root level
     *   concat(col("city"), col("street"))
@@ -126,7 +126,7 @@ object DeepArrayTransformations {
     * Here is an example demonstrating how to handle both root and nested cases:
     *
     * {{{
-    * val dfOut = nestedWithColumnMap(df, columnPath, "combinedField", c => {
+    * val dfOut = nestedStructAndErrorMap(df, columnPath, "combinedField", c => {
     * // Struct transformation
     * if (c==null) {
     *   // The columns are at the root level
