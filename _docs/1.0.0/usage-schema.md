@@ -328,7 +328,7 @@ allowed) or when the casting (*standardization*) fails.
 You can think of this as a *fallback value*.
 
 It should be noted, that this is the only _metadata_ key which accepts the `null` value (written without quotes) next to
-string values (of course such field has to be nullable: `"nullable": true`)
+string values (of course, such a field has to be nullable: `"nullable": true`)
 
 For more about the topic see chapter [Defaults](#defaults).
 
