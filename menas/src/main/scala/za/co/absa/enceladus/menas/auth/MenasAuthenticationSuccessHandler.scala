@@ -48,16 +48,11 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
     val jwtExpirationTime = DateTime.now(DateTimeZone.forID(timezone)).plus(expiry).toDate
     val cookieLifetime = expiry.getSeconds
 
-    val groups = authentication
-      .getAuthorities.asScala
-      .map(_.getAuthority).asJava
-
     val jwt = jwtFactory
       .jwtBuilder()
       .setSubject(user.getUsername)
       .setExpiration(jwtExpirationTime)
       .claim(CsrfTokenKey, csrfToken)
-      .claim(GroupsKey, groups)
       .compact()
 
     val cookie = new Cookie(JwtCookieKey, jwt)
