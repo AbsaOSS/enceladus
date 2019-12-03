@@ -69,7 +69,7 @@ class EntityService {
       oControl.setBusy(true);
     }
 
-    promise.always(() => {
+    return promise.always(() => {
       oControl.setBusy(false);
     })
   }
