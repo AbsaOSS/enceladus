@@ -29,7 +29,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
-import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
+import za.co.absa.enceladus.utils.explode.ExplosionContext
 import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
@@ -74,7 +74,7 @@ object DynamicInterpreter {
     implicit val progArgs: CmdConfig = ictx.progArgs
     implicit val udfLib: UDFLibrary = new UDFLibrary
 
-    var explodeContext = ExplosionContext()
+    val explosionState: ExplosionState = new ExplosionState()
 
     val steps = getConformanceSteps
     val optimizerTimeTracker = new OptimizerTimeTracker(inputDf, ictx.featureSwitches.catalystWorkaroundEnabled)
@@ -84,24 +84,24 @@ object DynamicInterpreter {
     var rulesApplied = 0
     val conformedDf = steps.foldLeft(dfInputWithIdForWorkaround)({
       case (df, rule) =>
-        val (ruleAppliedDf, ec) = applyConformanceRule(df, rule, explodeContext)
+        val explosionStateCopy = new ExplosionState(explosionState.explodeContext)
+        val ruleAppliedDf = applyConformanceRule(df, rule, explosionStateCopy)
 
-        val conformedDf = if (explodeContext.explosions.isEmpty &&
+        val conformedDf = if (explosionState.explodeContext.explosions.isEmpty &&
           optimizerTimeTracker.isCatalystWorkaroundRequired(ruleAppliedDf, rulesApplied)) {
           // Apply a workaround BEFORE applying the rule so that the execution plan generation still runs fast
-          val (workAroundDf, ecInner) = applyConformanceRule(
+          val workAroundDf = applyConformanceRule(
             optimizerTimeTracker.applyCatalystWorkaround(df),
             rule,
-            explodeContext)
-          explodeContext = ecInner
+            explosionState)
           optimizerTimeTracker.recordExecutionPlanOptimizationTime(workAroundDf)
           workAroundDf
         } else {
-          explodeContext = ec
+          explosionState.explodeContext = explosionStateCopy.explodeContext
           ruleAppliedDf
         }
         rulesApplied += 1
-        applyRuleCheckpoint(rule, conformedDf, progArgs.persistStorageLevel, explodeContext)
+        applyRuleCheckpoint(rule, conformedDf, progArgs.persistStorageLevel, explosionState.explodeContext)
     })
     optimizerTimeTracker.cleanupWorkaroundDf(conformedDf)
   }
@@ -122,13 +122,11 @@ object DynamicInterpreter {
 
   private def applyConformanceRule(df: DataFrame,
                                    rule: ConformanceRule,
-                                   ec: ExplosionContext)
-                                  (implicit ictx: InterpreterContext): (DataFrame, ExplosionContext) = {
+                                   explosionState: ExplosionState)
+                                  (implicit ictx: InterpreterContext): DataFrame = {
     implicit val spark: SparkSession = ictx.spark
     implicit val dao: MenasDAO = ictx.dao
     implicit val progArgs: CmdConfig = ictx.progArgs
-
-    var explodeContext = ec
 
     val confd = rule match {
       case r: DropConformanceRule             => DropRuleInterpreter(r).conform(df)
@@ -142,24 +140,16 @@ object DynamicInterpreter {
       case r: CustomConformanceRule           => r.getInterpreter().conform(df)
       case r: MappingConformanceRule          =>
         if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
-          MappingRuleInterpreterGroupExplode(r, ictx.conformance, explodeContext).conform(df)
+          MappingRuleInterpreterGroupExplode(r, ictx.conformance, explosionState).conform(df)
         } else {
           MappingRuleInterpreter(r, ictx.conformance).conform(df)
         }
-      // Array explode and collect pseudo rules apply array explosions for mapping rule groups that operate on
-      // the same arrays
-      case r: ArrayExplodePseudoRule          =>
-        val (dfOut, ctx) = ExplodeTools.explodeAllArraysInPath(r.outputColumn, df, explodeContext)
-        explodeContext = ctx
-        dfOut
-      case _: ArrayCollectPseudoRule          =>
-        val dfOut = ExplodeTools.revertAllExplosions(df, explodeContext, Some(ErrorMessage.errorColumnName))
-        explodeContext = ExplosionContext()
-        dfOut
+      case r: ArrayExplodePseudoRule          => new ArrayExplodeInterpreter(r.outputColumn, explosionState).conform(df)
+      case _: ArrayCollectPseudoRule          => new ArrayCollapseInterpreter(explosionState).conform(df)
       case _ => throw new IllegalStateException(s"Unrecognized rule class: ${rule.getClass.getName}")
     }
 
-    (confd, explodeContext)
+    confd
   }
 
   /**

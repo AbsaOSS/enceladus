@@ -21,8 +21,8 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreterGroupExplode._
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
@@ -37,7 +37,7 @@ import scala.util.control.NonFatal
 
 case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
                                               conformance: ConfDataset,
-                                              explodeContext: ExplosionContext)
+                                              explodeState: ExplosionState)
   extends RuleInterpreter {
 
   private val conf = ConfigFactory.load()
@@ -83,15 +83,15 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
   }
 
   private def explodeIfNeeded(df: Dataset[Row]): (Dataset[Row], ExplosionContext) = {
-    if (explodeContext.explosions.isEmpty) {
+    if (explodeState.explodeContext.explosions.isEmpty) {
       ExplodeTools.explodeAllArraysInPath(rule.outputColumn, df)
     } else {
-      (df, explodeContext)
+      (df, explodeState.explodeContext)
     }
   }
 
   private def collectIfNeeded(expCtx: ExplosionContext, errorsDf: DataFrame): DataFrame = {
-    if (explodeContext.explosions.isEmpty) {
+    if (explodeState.explodeContext.explosions.isEmpty) {
       ExplodeTools.revertAllExplosions(errorsDf, expCtx, Some(ErrorMessage.errorColumnName))
     } else {
       errorsDf
