@@ -26,5 +26,12 @@ import za.co.absa.enceladus.utils.explode.ExplosionContext
   */
 class ExplosionState (ec: ExplosionContext = ExplosionContext()) {
 
-  var explodeContext: ExplosionContext = ec
+  private var _explodeContext: ExplosionContext = ec
+
+  def explodeContext: ExplosionContext = _explodeContext
+
+  def explodeContext_=(ec: ExplosionContext): Unit = _explodeContext = ec
+
+  def isNoExplosionsApplied: Boolean = explodeContext.explosions.isEmpty
+
 }

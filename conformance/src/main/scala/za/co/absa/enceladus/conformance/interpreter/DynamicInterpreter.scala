@@ -73,27 +73,24 @@ object DynamicInterpreter {
     implicit val dao: MenasDAO = ictx.dao
     implicit val progArgs: CmdConfig = ictx.progArgs
     implicit val udfLib: UDFLibrary = new UDFLibrary
-
-    val explosionState: ExplosionState = new ExplosionState()
+    implicit val explosionState: ExplosionState = new ExplosionState()
 
     val steps = getConformanceSteps
+    val interpreters = getInterpreters(steps, inputDf.schema)
     val optimizerTimeTracker = new OptimizerTimeTracker(inputDf, ictx.featureSwitches.catalystWorkaroundEnabled)
     val dfInputWithIdForWorkaround = optimizerTimeTracker.getWorkaroundDataframe
 
     // Fold left on rules
     var rulesApplied = 0
-    val conformedDf = steps.foldLeft(dfInputWithIdForWorkaround)({
-      case (df, rule) =>
+    val conformedDf = interpreters.foldLeft(dfInputWithIdForWorkaround)({
+      case (df, interpreter) =>
         val explosionStateCopy = new ExplosionState(explosionState.explodeContext)
-        val ruleAppliedDf = applyConformanceRule(df, rule, explosionStateCopy)
+        val ruleAppliedDf =  interpreter.conform(df)(spark, explosionStateCopy, dao, progArgs)
 
-        val conformedDf = if (explosionState.explodeContext.explosions.isEmpty &&
+        val conformedDf = if (explosionState.isNoExplosionsApplied &&
           optimizerTimeTracker.isCatalystWorkaroundRequired(ruleAppliedDf, rulesApplied)) {
           // Apply a workaround BEFORE applying the rule so that the execution plan generation still runs fast
-          val workAroundDf = applyConformanceRule(
-            optimizerTimeTracker.applyCatalystWorkaround(df),
-            rule,
-            explosionState)
+          val workAroundDf = interpreter.conform(optimizerTimeTracker.applyCatalystWorkaround(df))
           optimizerTimeTracker.recordExecutionPlanOptimizationTime(workAroundDf)
           workAroundDf
         } else {
@@ -101,9 +98,109 @@ object DynamicInterpreter {
           ruleAppliedDf
         }
         rulesApplied += 1
-        applyRuleCheckpoint(rule, conformedDf, progArgs.persistStorageLevel, explosionState.explodeContext)
+        interpreter.conformanceRule match {
+          case Some(rule) => applyRuleCheckpoint(rule, conformedDf, progArgs.persistStorageLevel, explosionState.explodeContext)
+          case None => conformedDf
+        }
     })
     optimizerTimeTracker.cleanupWorkaroundDf(conformedDf)
+  }
+
+  private def getInterpreters(rules: List[ConformanceRule], schema: StructType)
+                             (implicit ictx: InterpreterContext): List[RuleInterpreter] = {
+
+    val groupedRules = groupMappingRules(rules, schema)
+
+    // Get unoptimized list of interpreters
+    getOptimizedInterpreters(groupedRules, schema)
+  }
+
+  private def getOptimizedInterpreters(ruleGroups: List[List[ConformanceRule]],
+                                       schema: StructType)
+                                      (implicit ictx: InterpreterContext): List[RuleInterpreter] = {
+    val explosionState: ExplosionState = new ExplosionState()
+
+    ruleGroups.flatMap(rules => {
+      val interpreters = rules.map(rule => getInterpreter(rule, schema, explosionState))
+      if (isGroupExploisonCanBeUsed(rules, schema) &&
+        ictx.featureSwitches.experimentalMappingRuleEnabled) {
+        // Inserting an explosion and a collapse between a group of mapping rules operating on a common array
+        val optArray = SchemaUtils.getDeepestArrayPath(schema, rules.head.outputColumn)
+        optArray match {
+          case Some(arrayColumn) =>
+            new ArrayExplodeInterpreter(arrayColumn) ::
+              (interpreters :+ new ArrayCollapseInterpreter())
+          case None =>
+            throw new IllegalStateException("Unexpectedly unable to find common array amound fields: " +
+              rules.map(_.outputColumn).mkString(", "))
+        }
+      } else {
+        interpreters
+      }
+    })
+  }
+
+  private def getInterpreter(rule: ConformanceRule,
+                             schema: StructType,
+                             explosionState: ExplosionState)
+                            (implicit ictx: InterpreterContext): RuleInterpreter = {
+    rule match {
+      case r: DropConformanceRule             => DropRuleInterpreter(r)
+      case r: ConcatenationConformanceRule    => ConcatenationRuleInterpreter(r)
+      case r: LiteralConformanceRule          => LiteralRuleInterpreter(r)
+      case r: SingleColumnConformanceRule     => SingleColumnRuleInterpreter(r)
+      case r: SparkSessionConfConformanceRule => SparkSessionConfRuleInterpreter(r)
+      case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r)
+      case r: CastingConformanceRule          => CastingRuleInterpreter(r)
+      case r: NegationConformanceRule         => NegationRuleInterpreter(r)
+      case r: MappingConformanceRule          => getMappingRuleInterpreter(r, schema)
+      case r: CustomConformanceRule           => r.getInterpreter()
+      case r: ArrayExplodePseudoRule          => new ArrayExplodeInterpreter(r.outputColumn)
+      case _: ArrayCollectPseudoRule          => new ArrayCollapseInterpreter()
+      case r => throw new IllegalStateException(s"Unrecognized rule class: ${r.getClass.getName}")
+    }
+  }
+
+  private def getMappingRuleInterpreter(rule: MappingConformanceRule,
+                                        schema: StructType)
+                                       (implicit ictx: InterpreterContext): RuleInterpreter = {
+    if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
+      if (canMappingRuleBroadcast(rule, schema)) {
+        MappingRuleInterpreterBroadcast(rule, ictx.conformance)
+      } else{
+        MappingRuleInterpreterGroupExplode(rule, ictx.conformance)
+      }
+    } else {
+      MappingRuleInterpreter(rule, ictx.conformance)
+    }
+  }
+
+  /**
+    * An explosion is needed for a group of mapping rules if the number of mapping rules inside the group
+    * for which broadcasting strategy is not applicable is bigger than 1.
+    *
+    * @param rules  A list of conformance rules grouped by output field being in the same array
+    * @param schema A schema of a dataset
+    * @return true if a group explosion optimization can be used
+    */
+  private def isGroupExploisonCanBeUsed(rules: List[ConformanceRule], schema: StructType): Boolean = {
+    rules.map {
+      case rule: MappingConformanceRule => if (canMappingRuleBroadcast(rule, schema)) 1 else 0
+      case _ => 0
+    }.sum > 1
+  }
+
+  /**
+    * Returns true if broadcasting strategy is applicable for the specified mapping rule.
+    *
+    * @param rule   A mapping conformance rule
+    * @param schema A schema of a dataset
+    * @return true if a group explosion optimization can be used
+    */
+  private def canMappingRuleBroadcast(rule: MappingConformanceRule, schema: StructType): Boolean = {
+    // ToDo Currently, the broadcasting strategy is turned off. The decision when to use it should
+    //      be implemented as part of #1017.
+    false
   }
 
   /**
@@ -118,38 +215,6 @@ object DynamicInterpreter {
     } else {
       steps
     }
-  }
-
-  private def applyConformanceRule(df: DataFrame,
-                                   rule: ConformanceRule,
-                                   explosionState: ExplosionState)
-                                  (implicit ictx: InterpreterContext): DataFrame = {
-    implicit val spark: SparkSession = ictx.spark
-    implicit val dao: MenasDAO = ictx.dao
-    implicit val progArgs: CmdConfig = ictx.progArgs
-
-    val confd = rule match {
-      case r: DropConformanceRule             => DropRuleInterpreter(r).conform(df)
-      case r: ConcatenationConformanceRule    => ConcatenationRuleInterpreter(r).conform(df)
-      case r: LiteralConformanceRule          => LiteralRuleInterpreter(r).conform(df)
-      case r: SingleColumnConformanceRule     => SingleColumnRuleInterpreter(r).conform(df)
-      case r: SparkSessionConfConformanceRule => SparkSessionConfRuleInterpreter(r).conform(df)
-      case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r).conform(df)
-      case r: CastingConformanceRule          => CastingRuleInterpreter(r).conform(df)
-      case r: NegationConformanceRule         => NegationRuleInterpreter(r).conform(df)
-      case r: CustomConformanceRule           => r.getInterpreter().conform(df)
-      case r: MappingConformanceRule          =>
-        if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
-          MappingRuleInterpreterGroupExplode(r, ictx.conformance, explosionState).conform(df)
-        } else {
-          MappingRuleInterpreter(r, ictx.conformance).conform(df)
-        }
-      case r: ArrayExplodePseudoRule          => new ArrayExplodeInterpreter(r.outputColumn, explosionState).conform(df)
-      case _: ArrayCollectPseudoRule          => new ArrayCollapseInterpreter(explosionState).conform(df)
-      case _ => throw new IllegalStateException(s"Unrecognized rule class: ${rule.getClass.getName}")
-    }
-
-    confd
   }
 
   /**
