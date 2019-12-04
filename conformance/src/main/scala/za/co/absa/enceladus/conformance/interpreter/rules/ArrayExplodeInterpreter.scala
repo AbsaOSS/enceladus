@@ -19,15 +19,19 @@ import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.ExplosionState
 import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.utils.explode.ExplodeTools
 
 /**
   * This conformance interpreter explodes a given array.
   */
-class ArrayExplodeInterpreter(columnName: String, explodeState: ExplosionState) extends RuleInterpreter {
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
-    val (dfOut, ctx) = ExplodeTools.explodeAllArraysInPath(columnName, df, explodeState.explodeContext)
-    explodeState.explodeContext = ctx
+class ArrayExplodeInterpreter(columnName: String) extends RuleInterpreter {
+  override def conformanceRule: Option[ConformanceRule] = None
+
+  override def conform(df: Dataset[Row])
+                      (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+    val (dfOut, ctx) = ExplodeTools.explodeAllArraysInPath(columnName, df, explosionState.explodeContext)
+    explosionState.explodeContext = ctx
     dfOut
   }
 }

@@ -21,8 +21,9 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
+import za.co.absa.enceladus.conformance.interpreter.ExplosionState
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
+import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.broadcast.{BroadcastUtils, LocalMappingTable}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
@@ -33,7 +34,10 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
 
   private val conf = ConfigFactory.load()
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+  override def conformanceRule: Option[ConformanceRule] = Some(rule)
+
+  def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule to conform ${rule.outputColumn} (broadcast strategy)...")
 
     val mapPartitioning = conf.getString("conformance.mappingtable.pattern")

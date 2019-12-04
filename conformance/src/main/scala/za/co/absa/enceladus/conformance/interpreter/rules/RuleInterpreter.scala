@@ -15,20 +15,37 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import org.slf4j.{Logger, LoggerFactory}
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.conformance.CmdConfig
-import org.apache.spark.sql.Column
-
-import scala.util.Try
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
+import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.interpreter.ExplosionState
+import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 
+import scala.util.Try
+
 trait RuleInterpreter {
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row]
+
+
+  /**
+    * Returns the conformance rule the interpreter is intended to interpret.
+    * The return value is optional since some interpreters are generated during conformance rules processing optimization
+    * and such intermediate interpreters are not associated with any conformance rule.
+    *
+    * @return A conformance rule
+    */
+  def conformanceRule: Option[ConformanceRule]
+
+  /**
+    * Conforms a DataFrame according to a conformance rule.
+    *
+    * @param df An input DataFrame
+    * @return A conformed DataFrame
+    */
+  def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row]
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
 
@@ -46,12 +63,12 @@ trait RuleInterpreter {
     })
     val longTry = Try({
       val parsed = input.toLong
-      assert(parsed.toString() == input)
+      assert(parsed.toString == input)
       lit(parsed)
     })
     val doubleTry = Try({
       val parsed = input.toDouble
-      assert(parsed.toString() == input)
+      assert(parsed.toString == input)
       lit(parsed)
     })
     val boolTry = Try(lit(input.toBoolean))
