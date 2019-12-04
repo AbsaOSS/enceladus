@@ -24,7 +24,7 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreterGroupExplode._
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
+import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
@@ -36,13 +36,15 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
-                                              conformance: ConfDataset,
-                                              explodeState: ExplosionState)
+                                              conformance: ConfDataset)
   extends RuleInterpreter {
 
   private val conf = ConfigFactory.load()
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+  override def conformanceRule: Option[ConformanceRule] = Some(rule)
+
+  def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule (explode-optimized) to conform ${rule.outputColumn}...")
     val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
@@ -59,7 +61,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     logJoinCondition(mapTable.schema, joinConditionStr)
     validateMappingRule(df, dao, mappingTableDef, mapTable, joinConditionStr)
 
-    val (explodedDf, expCtx) = explodeIfNeeded(df)
+    val (explodedDf, expCtx) = explodeIfNeeded(df, explosionState)
 
     val joined = explodedDf.as(MappingRuleInterpreterGroupExplode.inputDfAlias)
       .join(mapTable.as(MappingRuleInterpreterGroupExplode.mappingTableAlias),
@@ -79,19 +81,19 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     val errorsDf = addErrorsToErrCol(placedDf, rule.attributeMappings.values.toSeq, rule.outputColumn,
       defaultValueOpt, mappingErrUdfCall, arrayErrorCondition)
 
-    collectIfNeeded(expCtx, errorsDf)
+    collectIfNeeded(expCtx, explosionState, errorsDf)
   }
 
-  private def explodeIfNeeded(df: Dataset[Row]): (Dataset[Row], ExplosionContext) = {
-    if (explodeState.explodeContext.explosions.isEmpty) {
+  private def explodeIfNeeded(df: Dataset[Row], explosionState: ExplosionState): (Dataset[Row], ExplosionContext) = {
+    if (explosionState.explodeContext.explosions.isEmpty) {
       ExplodeTools.explodeAllArraysInPath(rule.outputColumn, df)
     } else {
-      (df, explodeState.explodeContext)
+      (df, explosionState.explodeContext)
     }
   }
 
-  private def collectIfNeeded(expCtx: ExplosionContext, errorsDf: DataFrame): DataFrame = {
-    if (explodeState.explodeContext.explosions.isEmpty) {
+  private def collectIfNeeded(expCtx: ExplosionContext, explosionState: ExplosionState, errorsDf: DataFrame): DataFrame = {
+    if (explosionState.explodeContext.explosions.isEmpty) {
       ExplodeTools.revertAllExplosions(errorsDf, expCtx, Some(ErrorMessage.errorColumnName))
     } else {
       errorsDf

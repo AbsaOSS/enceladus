@@ -19,16 +19,21 @@ import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.ExplosionState
 import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
 
 /**
   * This conformance interpreter collapses previously exploded array(s) back.
   */
-class ArrayCollapseInterpreter(explodeState: ExplosionState) extends RuleInterpreter {
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
-    val dfOut = ExplodeTools.revertAllExplosions(df,explodeState.explodeContext, Some(ErrorMessage.errorColumnName))
-    explodeState.explodeContext = ExplosionContext()
+class ArrayCollapseInterpreter extends RuleInterpreter {
+
+  override def conformanceRule: Option[ConformanceRule] = None
+
+  override def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+    val dfOut = ExplodeTools.revertAllExplosions(df,explosionState.explodeContext, Some(ErrorMessage.errorColumnName))
+    explosionState.explodeContext = ExplosionContext()
     dfOut
   }
 }
