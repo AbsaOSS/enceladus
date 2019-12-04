@@ -30,13 +30,14 @@ import scala.util.control.NonFatal
 
 abstract class DateTimeFieldValidator extends FieldValidator {
   override def validate(field: TypedStructField): Seq[ValidationIssue] = {
+    super.validate(field) ++ (
     field match {
-      case dateTimeField: DateTimeTypeStructField => validateDateTimeTypeStructField(dateTimeField)
+      case dateTimeField: DateTimeTypeStructField[_] => validateDateTimeTypeStructField(dateTimeField)
       case _ => Seq(ValidationError("DateTimeFieldValidator can validate only fields of type Date or Timestamp"))
-    }
+    })
   }
 
-  private def validateDateTimeTypeStructField(field: DateTimeTypeStructField): Seq[ValidationIssue] = {
+  private def validateDateTimeTypeStructField(field: DateTimeTypeStructField[_]): Seq[ValidationIssue] = {
     val result = for {
       parser <- field.parser
       defaultValue: Option[String] = field.getMetadataString(MetadataKeys.DefaultValue)
@@ -48,7 +49,7 @@ abstract class DateTimeFieldValidator extends FieldValidator {
     tryToValidationIssues(result)
   }
 
-  private def patternConversionIssues(field: DateTimeTypeStructField, parser: DateTimeParser): Option[ValidationIssue] = {
+  private def patternConversionIssues(field: DateTimeTypeStructField[_], parser: DateTimeParser): Option[ValidationIssue] = {
 
     try {
       implicit val implicitParser: DateTimeParser = parser

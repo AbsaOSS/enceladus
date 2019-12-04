@@ -15,8 +15,10 @@
 
 package za.co.absa.enceladus.utils.fs
 
-import java.io.File
+import java.io.{File, FileNotFoundException}
 import java.net.ConnectException
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
 
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
@@ -72,6 +74,17 @@ class FileSystemVersionUtils(conf: Configuration) {
   }
 
   /**
+    * Creates a temporary directory in the local filesystem.
+    *
+    * @param prefix A prefix to use for the temporary directory.
+    * @return A path to a temporary directory.
+    */
+  def getLocalTemporaryDirectory(prefix: String): String = {
+    val tmpPath = Files.createTempDirectory(prefix)
+    tmpPath.toAbsolutePath.toString
+  }
+
+  /**
    * Check if a given path exists on HDFS
    */
   def hdfsExists(path: String): Boolean = {
@@ -113,6 +126,54 @@ class FileSystemVersionUtils(conf: Configuration) {
       }
       hdfs
     }
+  }
+
+  /**
+    * Checks if a file is located on HDFS or the local file system.
+    * If the file is in HDFS, it is copied to a temporary location.
+    *
+    * @param path A path to a file.  Can be either local or HDFS location.
+    * @return A path to a file in the local filesystem.
+    */
+  @throws[FileNotFoundException]
+  def getLocalPathToFile(path: String): String = {
+    val absolutePath = replaceHome(path)
+    if (localExists(absolutePath)) {
+      absolutePath
+    } else if (hdfsExists(path)) {
+      hdfsFileToLocalTempFile(path)
+    } else {
+      throw new FileNotFoundException(s"File not found: $path.")
+    }
+  }
+
+  /**
+    * Reads a file fully and returns its content.
+    * The file can be either in a HDFS or in a local file system.
+    *
+    * @param path A path to a file.  Can be either local or HDFS location.
+    * @return The file's content.
+    */
+  @throws[FileNotFoundException]
+  def getFileContent(path: String): String = {
+    val absolutePath = replaceHome(path)
+    if (localExists(absolutePath)) {
+      readLocalFile(absolutePath)
+    } else if (hdfsExists(path)) {
+      hdfsRead(path)
+    } else {
+      throw new FileNotFoundException(s"File not found: $path.")
+    }
+  }
+
+  /**
+    * Reads a local file fully and returns its content.
+    *
+    * @param path A path to a file.
+    * @return The file's content.
+    */
+  def readLocalFile(path: String): String = {
+    Files.readAllLines(Paths.get(path), StandardCharsets.UTF_8).toArray.mkString("\n")
   }
 
   /**
@@ -235,6 +296,21 @@ class FileSystemVersionUtils(conf: Configuration) {
         })
         if(versions.isEmpty) 0 else versions.max
       case None => 0
+    }
+  }
+
+  /**
+    * Replaces tilde ('~') with the home dir.
+    *
+    * @param path An input path.
+    * @return An absolute output path.
+    */
+  def replaceHome(path: String): String = {
+    if (path.matches("^~.*")) {
+      //not using replaceFirst as it interprets the backslash in Windows path as escape character mangling the result
+      System.getProperty("user.home") + path.substring(1)
+    } else {
+      path
     }
   }
 }

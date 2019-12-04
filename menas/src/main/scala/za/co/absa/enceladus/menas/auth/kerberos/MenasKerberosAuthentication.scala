@@ -15,10 +15,11 @@
 
 package za.co.absa.enceladus.menas.auth.kerberos
 
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.apache.log4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.core.io.FileSystemResource
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
@@ -28,35 +29,30 @@ import org.springframework.security.kerberos.authentication.sun.SunJaasKerberosT
 import org.springframework.security.kerberos.client.config.SunJaasKrb5LoginConfig
 import org.springframework.security.kerberos.client.ldap.KerberosLdapContextSource
 import org.springframework.security.kerberos.web.authentication.SpnegoAuthenticationProcessingFilter
-import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider
-import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper
-import org.springframework.security.ldap.userdetails.LdapUserDetailsService
-import org.springframework.security.web.authentication.AuthenticationFailureHandler
+import org.springframework.security.ldap.userdetails.{LdapUserDetailsMapper, LdapUserDetailsService}
+import org.springframework.security.web.authentication.{AuthenticationFailureHandler, AuthenticationSuccessHandler}
 import org.springframework.stereotype.Component
-
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 import za.co.absa.enceladus.menas.auth.MenasAuthentication
-import MenasKerberosAuthentication._
+import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication._
 
 @Component("kerberosMenasAuthentication")
-class MenasKerberosAuthentication extends MenasAuthentication with InitializingBean {
-  @Value("${za.co.absa.enceladus.menas.auth.ad.domain:}")
-  val adDomain: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.ad.server:}")
-  val adServer: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.servicename.principal:}")
-  val servicePrincipal: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.servicename.keytab.location:}")
-  val keytabLocation: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.ldap.search.base:}")
-  val ldapSearchBase: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.ldap.search.filter:}")
-  val ldapSearchFilter: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.kerberos.debug:false}")
-  val kerberosDebug: Boolean = false
-  @Value("${za.co.absa.enceladus.menas.auth.kerberos.krb5conf:}")
-  val krb5conf: String = ""
+class MenasKerberosAuthentication @Autowired()(@Value("${za.co.absa.enceladus.menas.auth.ad.domain:}")
+                                               adDomain: String,
+                                               @Value("${za.co.absa.enceladus.menas.auth.ad.server:}")
+                                               adServer: String,
+                                               @Value("${za.co.absa.enceladus.menas.auth.servicename.principal:}")
+                                               servicePrincipal: String,
+                                               @Value("${za.co.absa.enceladus.menas.auth.servicename.keytab.location:}")
+                                               keytabLocation: String,
+                                               @Value("${za.co.absa.enceladus.menas.auth.ldap.search.base:}")
+                                               ldapSearchBase: String,
+                                               @Value("${za.co.absa.enceladus.menas.auth.ldap.search.filter:}")
+                                               ldapSearchFilter: String,
+                                               @Value("${za.co.absa.enceladus.menas.auth.kerberos.debug:false}")
+                                               kerberosDebug: Boolean,
+                                               @Value("${za.co.absa.enceladus.menas.auth.kerberos.krb5conf:}")
+                                               krb5conf: String)
+  extends MenasAuthentication with InitializingBean {
 
   private lazy val requiredParameters = Seq((adDomain, "za.co.absa.enceladus.menas.auth.ad.domain"),
     (adServer, "za.co.absa.enceladus.menas.auth.ad.server"),
@@ -83,14 +79,6 @@ class MenasKerberosAuthentication extends MenasAuthentication with InitializingB
 
   private def validateParams() {
     requiredParameters.foreach(p => this.validateParam(p._1, p._2))
-  }
-
-  private def activeDirectoryLdapAuthenticationProvider() = {
-    val prov = new ActiveDirectoryLdapAuthenticationProvider(adDomain, adServer, ldapSearchBase)
-    prov.setSearchFilter(ldapSearchFilter)
-    prov.setUseAuthenticationRequestCredentials(true)
-    prov.setConvertSubErrorCodesToExceptions(true)
-    prov
   }
 
   private def sunJaasKerberosTicketValidator() = {
@@ -140,7 +128,6 @@ class MenasKerberosAuthentication extends MenasAuthentication with InitializingB
     //something here changes the log level to WARN
     auth
       .authenticationProvider(new MenasKerberosAuthenticationProvider(adServer, ldapSearchFilter, ldapSearchBase))
-      .authenticationProvider(activeDirectoryLdapAuthenticationProvider())
       .authenticationProvider(kerberosServiceAuthenticationProvider())
     Logger.getRootLogger.setLevel(originalLogLevel)
   }
@@ -149,10 +136,12 @@ class MenasKerberosAuthentication extends MenasAuthentication with InitializingB
 object MenasKerberosAuthentication {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager): SpnegoAuthenticationProcessingFilter = {
+  def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager,
+                                           authenticationSuccessHandler: AuthenticationSuccessHandler): SpnegoAuthenticationProcessingFilter = {
     val filter = new SpnegoAuthenticationProcessingFilter()
     filter.setAuthenticationManager(authenticationManager)
     filter.setSkipIfAlreadyAuthenticated(true)
+    filter.setSuccessHandler(authenticationSuccessHandler)
     filter.setFailureHandler(new AuthenticationFailureHandler {
       override def onAuthenticationFailure(request: HttpServletRequest, response: HttpServletResponse, exception: AuthenticationException): Unit = {
         logger.error(exception.getStackTrace.toString)

@@ -17,68 +17,43 @@ package za.co.absa.enceladus.menas
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanFactory
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.core.annotation.Order
-import org.springframework.http.HttpStatus
+import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.springframework.context.annotation.{Bean, Configuration}
+import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
-import org.springframework.security.core.Authentication
-import org.springframework.security.kerberos.web.authentication.SpnegoEntryPoint
-import org.springframework.security.web.authentication.AuthenticationFailureHandler
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler
-import org.springframework.security.web.authentication.logout.LogoutSuccessHandler
-import org.springframework.security.web.csrf.CsrfToken
-import org.springframework.stereotype.Component
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import org.springframework.security.authentication.AuthenticationManager
-import za.co.absa.enceladus.menas.auth.InMemoryMenasAuthentication
-import za.co.absa.enceladus.menas.auth.MenasAuthentication
+import org.springframework.security.config.annotation.web.configuration.{EnableWebSecurity, WebSecurityConfigurerAdapter}
+import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.kerberos.web.authentication.{SpnegoAuthenticationProcessingFilter, SpnegoEntryPoint}
+import org.springframework.security.web.authentication._
+import za.co.absa.enceladus.menas.auth._
+import za.co.absa.enceladus.menas.auth.jwt.JwtAuthenticationFilter
 import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication
 
 @EnableWebSecurity
-class WebSecurityConfig {
+class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
+                                     jwtAuthFilter: JwtAuthenticationFilter,
+                                     @Value("${za.co.absa.enceladus.menas.auth.mechanism:}")
+                                     authMechanism: String,
+                                     @Value("${za.co.absa.enceladus.menas.version}")
+                                     menasVersion: String) {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  @Value("${za.co.absa.enceladus.menas.auth.mechanism:}")
-  val authMechanism: String = ""
-
-  @Value("${za.co.absa.enceladus.menas.version}")
-  val menasVersion: String = ""
-
-  @Autowired
-  val beanFactory: BeanFactory = null // scalastyle:ignore null
-
-  @Bean
-  def authenticationFailureHandler(): AuthenticationFailureHandler = {
-    new SimpleUrlAuthenticationFailureHandler()
-  }
-
-  @Bean
-  def logoutSuccessHandler(): LogoutSuccessHandler = {
-    new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK)
-  }
-
   @Configuration
-  @Order(1)
-  class ApiWebSecurityConfigurationAdapter @Autowired() (authenticationSuccessHandler: AuthSuccessHandler,
-      authenticationFailureHandler: AuthenticationFailureHandler,
-      logoutSuccessHandler: LogoutSuccessHandler)
+  class ApiWebSecurityConfigurationAdapter @Autowired()(authenticationFailureHandler: AuthenticationFailureHandler,
+                                                        authenticationSuccessHandler: AuthenticationSuccessHandler)
     extends WebSecurityConfigurerAdapter {
 
     override def configure(http: HttpSecurity) {
+      val kerberosFilter = MenasKerberosAuthentication
+        .spnegoAuthenticationProcessingFilter(authenticationManager, authenticationSuccessHandler)
+
       http
         .csrf()
-          .ignoringAntMatchers("/api/login")
+          .disable()
+        .sessionManagement()
+          .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
         .exceptionHandling()
           .authenticationEntryPoint(spnegoEntryPoint())
@@ -97,15 +72,8 @@ class WebSecurityConfig {
           .failureHandler(authenticationFailureHandler)
           .permitAll()
         .and()
-          .logout()
-          .logoutUrl("/api/logout")
-          .logoutSuccessHandler(logoutSuccessHandler)
-          .permitAll()
-          .clearAuthentication(true)
-          .deleteCookies("JSESSIONID")
-          .invalidateHttpSession(true)
-        .and
-        .addFilterBefore(MenasKerberosAuthentication.spnegoAuthenticationProcessingFilter(authenticationManagerBean()), classOf[UsernamePasswordAuthenticationFilter])
+          .addFilterBefore(kerberosFilter, classOf[UsernamePasswordAuthenticationFilter])
+          .addFilterAfter(jwtAuthFilter, classOf[SpnegoAuthenticationProcessingFilter])
     }
 
     @Bean
@@ -119,17 +87,14 @@ class WebSecurityConfig {
 
     private def getMenasAuthentication(): MenasAuthentication = {
       authMechanism.toLowerCase match {
-        case "inmemory" => {
+        case "inmemory" =>
           logger.info("Using InMemory Menas authentication")
           beanFactory.getBean(classOf[InMemoryMenasAuthentication])
-        }
-        case "kerberos" => {
+        case "kerberos" =>
           logger.info("Using Kerberos Menas Authentication")
           beanFactory.getBean(classOf[MenasKerberosAuthentication])
-        }
-        case _ => {
+        case _          =>
           throw new IllegalArgumentException("Invalid authentication mechanism - use one of: inmemory, kerberos")
-        }
       }
     }
 
@@ -137,20 +102,6 @@ class WebSecurityConfig {
     override def authenticationManagerBean(): AuthenticationManager = {
       super.authenticationManagerBean()
     }
-  }
-
-  @Component
-  class AuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
-
-    override def onAuthenticationSuccess(request: HttpServletRequest,
-        response: HttpServletResponse,
-        authentication: Authentication): Unit = {
-      val csrfToken = request.getAttribute("_csrf").asInstanceOf[CsrfToken]
-      response.addHeader(csrfToken.getHeaderName, csrfToken.getToken)
-
-      clearAuthenticationAttributes(request)
-    }
-
   }
 
 }

@@ -18,9 +18,10 @@ package za.co.absa.enceladus.standardization.interpreter
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Locale
 
-import org.apache.spark.sql.types.{ByteType, IntegerType, LongType, ShortType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{ByteType, IntegerType, LongType, MetadataBuilder, ShortType, StringType, StructField, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBase with LoggerTestBase{
@@ -45,6 +46,12 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
     StructField("integersize", IntegerType, nullable = true),
     StructField("longsize", LongType, nullable = true)
   ))
+
+  private def err(value: String, cnt: Int): Seq[ErrorMessage] = {
+    val item = ErrorMessage.stdCastErr("src",value)
+    val array = Array.fill(cnt) (item)
+    array.toList
+  }
 
   test("Under-/overflow from CSV") {
     val src = spark.read
@@ -349,5 +356,197 @@ class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBa
 
     assertResult(exp)(std.as[IntegralRow].collect().sortBy(_.description).toList)
   }
+
+  test("No pattern, but altered symbols") {
+    val input = Seq(
+      ("01-Normal", "3"),
+      ("02-Null", null),
+      ("03-Far negative", "^100000000"),
+      ("04-Wrong", "hello")
+    )
+    val decimalSeparator = ","
+    val groupingSeparator = "."
+    val minusSign = "^"
+    val srcField = "src"
+
+    val src = input.toDF("description", srcField)
+
+    val desiredSchemaWithAlters = StructType(Seq(
+      StructField("description", StringType, nullable = false),
+      StructField("src", StringType, nullable = true),
+      StructField("bf", ByteType, nullable = false, new MetadataBuilder()
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.GroupingSeparator, groupingSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build()),
+      StructField("sf", ShortType, nullable = true, new MetadataBuilder()
+        .putString(MetadataKeys.DefaultValue, "^1")
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.GroupingSeparator, groupingSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build()),
+      StructField("if", IntegerType, nullable = true, new MetadataBuilder()
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.GroupingSeparator, groupingSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build()),
+      StructField("lf", LongType, nullable = false, new MetadataBuilder()
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.DefaultValue, "1000")
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.GroupingSeparator, groupingSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build())
+    ))
+
+    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithAlters, "").cache()
+    logDataFrameContent(std)
+
+    val exp = List(
+      ("01-Normal", "3", 3, Some(3), Some(3), 3, Seq.empty),
+      ("02-Null", null, 0, None, None, 1000, Array.fill(2)(ErrorMessage.stdNullErr(srcField)).toList),
+      ("03-Far negative", "^100000000", 0, Some(-1), Some(-100000000), -100000000, err("^100000000", 2)),
+      ("04-Wrong", "hello", 0, Some(-1), None, 1000, err("hello", 4))
+    )
+
+    assertResult(exp)(std.as[(String, String, Byte, Option[Short], Option[Int], Long, Seq[ErrorMessage])].collect().toList)
+  }
+
+  test("Using patterns") {
+    val input = Seq(
+      ("01-Normal", "3 feet"),
+      ("02-Null", null),
+      ("03-Far negative", "^100.000.000 feet"),
+      ("04-Wrong", "hello"),
+      ("05-Not adhering to pattern", "123,456,789 feet")
+    )
+    val pattern = "#,##0 feet"
+    val decimalSeparator = ","
+    val groupingSeparator = "."
+    val minusSign = "^"
+    val srcField = "src"
+
+    val src = input.toDF("description", srcField)
+
+    val desiredSchemaWithPatterns = StructType(Seq(
+      StructField("description", StringType, nullable = false),
+      StructField("src", StringType, nullable = true),
+      StructField("bf", ByteType, nullable = false, new MetadataBuilder()
+        .putString(MetadataKeys.Pattern, pattern)
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.GroupingSeparator, groupingSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build()),
+      StructField("sf", ShortType, nullable = true, new MetadataBuilder()
+        .putString(MetadataKeys.Pattern, pattern)
+        .putString(MetadataKeys.DefaultValue, "^1 feet")
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.GroupingSeparator, groupingSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build()),
+      StructField("if", IntegerType, nullable = true, new MetadataBuilder()
+        .putString(MetadataKeys.Pattern, pattern)
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.GroupingSeparator, groupingSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build()),
+      StructField("lf", LongType, nullable = false, new MetadataBuilder()
+        .putString(MetadataKeys.Pattern, pattern)
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.DefaultValue, "1.000 feet")
+        .putString(MetadataKeys.DecimalSeparator, decimalSeparator)
+        .putString(MetadataKeys.GroupingSeparator, groupingSeparator)
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build())
+    ))
+
+    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithPatterns, "").cache()
+    logDataFrameContent(std)
+
+    val exp = List(
+      ("01-Normal", "3 feet", 3, Some(3), Some(3), 3, Seq.empty),
+      ("02-Null", null, 0, None, None, 1000, Array.fill(2)(ErrorMessage.stdNullErr(srcField)).toList),
+      ("03-Far negative", "^100.000.000 feet", 0, Some(-1), Some(-100000000), -100000000, err("^100.000.000 feet", 2)),
+      ("04-Wrong", "hello", 0, Some(-1), None, 1000, err("hello", 4)),
+      ("05-Not adhering to pattern", "123,456,789 feet", 0, Some(-1), None, 1000, err("123,456,789 feet", 4))
+    )
+
+    assertResult(exp)(std.as[(String, String, Byte, Option[Short], Option[Int], Long, Seq[ErrorMessage])].collect().toList)
+  }
+
+  test("Changed Radix") {
+    val input = Seq(
+      ("00-Null", null),
+      ("01-Binary", "+1101"),
+      ("02-Binary negative", "§1001"),
+      ("03-Septary", "35"),
+      ("04-Septary negative", "§103"),
+      ("05-Hex", "FF"),
+      ("06-Hex negative", "§A1"),
+      ("07-Hex 0x", "+0xB6"),
+      ("08-Hex 0x negative", "§0x3c"),
+      ("09-Radix 27", "Hello"),
+      ("10-Radix 27 negative", "§Mail"),
+      ("11-Wrong for all", "0XoXo")
+    )
+    val srcField = "src"
+    val minusSign = "§"
+
+    val src = input.toDF("description", srcField)
+
+    val desiredSchemaWithAlters = StructType(Seq(
+      StructField("description", StringType, nullable = false),
+      StructField("src", StringType, nullable = true),
+      StructField("bf", ByteType, nullable = false, new MetadataBuilder()
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.Radix, "2")
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build()),
+      StructField("sf", ShortType, nullable = true, new MetadataBuilder()
+        .putString(MetadataKeys.DefaultValue, "§13") //NB 13 is 10 in decimal base
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.Radix, "7")
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build()),
+      StructField("if", IntegerType, nullable = true, new MetadataBuilder()
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.Radix, "16")
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build()),
+      StructField("lf", LongType, nullable = false, new MetadataBuilder()
+        .putString(MetadataKeys.SourceColumn, srcField)
+        .putString(MetadataKeys.DefaultValue, "Ada") // NB Ada is 7651 in decimal base
+        .putString(MetadataKeys.Radix, "27")
+        .putString(MetadataKeys.MinusSign, minusSign)
+        .build())
+    ))
+
+    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithAlters, "").cache()
+    logDataFrameContent(std)
+
+    val exp = List(
+      ("00-Null"             , null   , 0 , None      , None       , 7651   , Array.fill(2)(ErrorMessage.stdNullErr(srcField)).toList),
+      ("01-Binary"           , "+1101", 13, Some(393) , Some(4353) , 20413  , Seq.empty),
+      ("02-Binary negative"  , "§1001", -9, Some(-344), Some(-4097), -19684 , Seq.empty),
+      ("03-Septary"          , "35"   , 0 , Some(26)  , Some(53)   , 86     , err("35", 1)),
+      ("04-Septary negative" , "§103" , 0 , Some(-52) , Some(-259) , -732   , err("§103", 1)),
+      ("05-Hex"              , "FF"   , 0 , Some(-10) , Some(255)  , 420    , err("FF", 2)),
+      ("06-Hex negative"     , "§A1"  , 0 , Some(-10) , Some(-161) , -271   , err("§A1", 2)),
+      ("07-Hex 0x"           , "+0xB6", 0 , Some(-10) , Some(182)  , 7651   , err("+0xB6", 3)),
+      ("08-Hex 0x negative"  , "§0x3c", 0 , Some(-10) , Some(-60)  , 7651   , err("§0x3c", 3)),
+      ("09-Radix 27"         , "Hello" , 0, Some(-10) , None       , 9325959, err("Hello", 3)),
+      ("10-Radix 27 negative", "§Mail", 0 , Some(-10) , None       , -440823, err("§Mail", 3)),
+      ("11-Wrong for all"    , "0XoXo", 0 , Some(-10) , None       , 7651   , err("0XoXo", 4))
+    )
+
+    assertResult(exp)(std.as[(String, String, Byte, Option[Short], Option[Int], Long, Seq[ErrorMessage])].collect().toList)
+  }
+
 
 }

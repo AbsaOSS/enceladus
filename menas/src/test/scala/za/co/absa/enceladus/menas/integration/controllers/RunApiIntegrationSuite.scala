@@ -30,7 +30,7 @@ import za.co.absa.enceladus.model.{Run, SplineReference}
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class RunApiIntegrationSuite extends BaseRestApiTest {
 
-  import za.co.absa.enceladus.menas.integration.RunImplcits.RunExtensions
+  import za.co.absa.enceladus.menas.integration.RunImplicits.RunExtensions
   import za.co.absa.enceladus.menas.models.Validation._
 
   @Autowired

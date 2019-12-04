@@ -127,7 +127,6 @@ class DatasetDialog extends EntityDialog {
 class AddDatasetDialog extends DatasetDialog {
 
   onPress() {
-    this.oDialog.setBusy(true);
     this.oDialog.open();
 
     this.schemaService.getList(this.oDialog).then(oData => {
@@ -141,8 +140,6 @@ class AddDatasetDialog extends DatasetDialog {
         isEdit: false,
         title: "Add"
       }), "entity");
-
-      this.oDialog.setBusy(false);
     })
   }
 
@@ -151,7 +148,6 @@ class AddDatasetDialog extends DatasetDialog {
 class EditDatasetDialog extends DatasetDialog {
 
   onPress() {
-    this.oDialog.setBusy(true);
     this.oDialog.open();
 
     this.schemaService.getList(this.oDialog).then(() => {
@@ -162,7 +158,6 @@ class EditDatasetDialog extends DatasetDialog {
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 
       this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
-      this.oDialog.setBusy(false);
     });
   }
 
@@ -281,7 +276,6 @@ class MappingTableDialog extends EntityDialog {
 class AddMappingTableDialog extends MappingTableDialog {
 
   onPress() {
-    this.oDialog.setBusy(true);
     this.oDialog.open();
 
     this.schemaService.getList(this.oDialog).then(oData => {
@@ -294,8 +288,6 @@ class AddMappingTableDialog extends MappingTableDialog {
         isEdit: false,
         title: "Add"
       }), "entity");
-
-      this.oDialog.setBusy(false);
     })
   }
 
@@ -304,7 +296,6 @@ class AddMappingTableDialog extends MappingTableDialog {
 class EditMappingTableDialog extends MappingTableDialog {
 
   onPress() {
-    this.oDialog.setBusy(true);
     this.oDialog.open();
 
     this.schemaService.getList(this.oDialog).then(() => {
@@ -315,7 +306,6 @@ class EditMappingTableDialog extends MappingTableDialog {
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 
       this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
-      this.oDialog.setBusy(false);
     });
   }
 

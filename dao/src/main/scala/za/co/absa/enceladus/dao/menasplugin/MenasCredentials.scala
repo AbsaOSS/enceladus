@@ -15,13 +15,10 @@
 
 package za.co.absa.enceladus.dao.menasplugin
 
-import java.io.File
-
-import org.apache.spark.sql.SparkSession
-import org.slf4j.LoggerFactory
 
 import com.typesafe.config.ConfigFactory
-
+import org.apache.spark.sql.SparkSession
+import sun.security.krb5.internal.ktab.KeyTab
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 sealed abstract class MenasCredentials {
@@ -37,36 +34,34 @@ case object InvalidMenasCredentials extends MenasCredentials {
 }
 
 object MenasPlainCredentials {
-
-  private val logger = LoggerFactory.getLogger(this.getClass)
-
   /**
-   * Retrieves Menas Credentials from file either on local file system or on HDFS
-   */
+    * Instantiates [[MenasCredentials]] from a credentials file located either on the local file system or on HDFS.
+    *
+    * @param path A path to a Menas Credentials file.
+    * @return An instance of Menas Credentials.
+    */
   def fromFile(path: String)(implicit spark: SparkSession): MenasPlainCredentials = {
-    val conf = if(path.startsWith("hdfs://")) {
-     val file = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration).hdfsRead(path)
-     ConfigFactory.parseString(file)
-    } else {
-     ConfigFactory.parseFile(new File(replaceHome(path)))
-    }
+    val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+
+    val conf = ConfigFactory.parseString(fsUtils.getFileContent(path))
     MenasPlainCredentials(conf.getString("username"), conf.getString("password"))
   }
+}
 
+object MenasKerberosCredentials {
   /**
-   * Checks whether the file exists either on HDFS or on the local file system
-   */
-  def exists(path: String)(implicit spark: SparkSession): Boolean = {
-    new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration).exists(path)
-  }
+    * Instantiates [[MenasCredentials]] from file either on the local file system or on HDFS.
+    *
+    * @param path A path to a Kerberos keytab file.
+    * @return An instance of Menas Credentials.
+    */
+  def fromFile(path: String)(implicit spark: SparkSession): MenasKerberosCredentials = {
+    val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
 
-  def replaceHome(path: String): String = {
-    if (path.matches("^~.*")) {
-      //not using replaceFirst as it interprets the backslash in Windows path as escape character mangling the result
-      System.getProperty("user.home") + path.substring(1)
-    } else {
-      path
-    }
-  }
+    val localKeyTabPath = fsUtils.getLocalPathToFile(path)
+    val keytab = KeyTab.getInstance(localKeyTabPath)
+    val username = keytab.getOneName.getName
 
+    MenasKerberosCredentials(username, localKeyTabPath)
+  }
 }

@@ -20,7 +20,7 @@ import org.mockito.Mockito
 import org.mockito.stubbing.OngoingStubbing
 import org.springframework.http._
 import org.springframework.web.client.RestTemplate
-import za.co.absa.enceladus.dao.{AuthClient, RestClient, UnauthorizedException}
+import za.co.absa.enceladus.dao.UnauthorizedException
 
 abstract class RestClientBaseSuite extends BaseTestSuite {
 

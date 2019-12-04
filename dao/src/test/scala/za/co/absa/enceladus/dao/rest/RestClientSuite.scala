@@ -101,10 +101,10 @@ class RestClientSuite() extends RestClientBaseSuite {
     "throw an error on 404 Not Found" in {
       stubNotFoundGetRequest(url)
 
-      val exception = intercept[DaoException] {
+      val exception = intercept[NotFoundException] {
         restClient.sendGet[String](url)
       }
-      exception shouldBe DaoException("Entity not found - 404")
+      exception shouldBe NotFoundException("Entity not found - 404")
     }
 
     "throw an error on 500 Internal Server Error" in {
@@ -170,10 +170,10 @@ class RestClientSuite() extends RestClientBaseSuite {
     "throw an error on 404 Not Found" in {
       stubNotFoundPostRequest(url, requestBody)
 
-      val exception = intercept[DaoException] {
+      val exception = intercept[NotFoundException] {
         restClient.sendPost[String, String](url, requestBody)
       }
-      exception shouldBe DaoException("Entity not found - 404")
+      exception shouldBe NotFoundException("Entity not found - 404")
     }
 
     "throw an error on 500 Internal Server Error" in {

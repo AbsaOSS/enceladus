@@ -386,7 +386,7 @@ sap.ui.define([
             mappingTableField: key,
             datasetField: oAttributeMappings[key],
             datasetName: this._model.getProperty("/currentDataset/name"),
-            mappingTableName: this._model.getProperty("/currentDataset/name")
+            mappingTableName: oContext.getProperty("mappingTable")
           });
         }
 
@@ -467,13 +467,13 @@ sap.ui.define([
         this._clearBusy(oCtl);
       }
     },
-    
+
     scheduleActionCall: function(fnServiceCall) {
       this._setBusy(this._scheduleActionMenu);
       const prom = fnServiceCall();
       this._clearBusyPromise(this._scheduleActionMenu, prom)
     },
-    
+
     scheduleRunNow: function() {
       this.scheduleActionCall(OozieService.runNow);
     },

@@ -17,17 +17,19 @@ package za.co.absa.enceladus.utils.validation.field
 
 import org.apache.spark.sql.types.{DateType, MetadataBuilder, StructField}
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
-import za.co.absa.enceladus.utils.types.TypedStructField
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults, TypedStructField}
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue, ValidationWarning}
 
 class DateFieldValidatorSuite extends FunSuite  {
   TimeZoneNormalizer.normalizeJVMTimeZone()
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private def field(pattern: String, defaultValue: Option[String] = None, defaultTimeZone: Option[String] = None): TypedStructField = {
-    val builder = new MetadataBuilder().putString("pattern",pattern)
-    val builder2 = defaultValue.map(builder.putString("default", _)).getOrElse(builder)
-    val builder3 = defaultTimeZone.map(builder2.putString("timezone", _)).getOrElse(builder2)
+    val builder = new MetadataBuilder().putString(MetadataKeys.Pattern, pattern)
+    val builder2 = defaultValue.map(builder.putString(MetadataKeys.DefaultValue, _)).getOrElse(builder)
+    val builder3 = defaultTimeZone.map(builder2.putString(MetadataKeys.DefaultTimeZone, _)).getOrElse(builder2)
     val result = StructField("test_field", DateType,  nullable = false, builder3.build())
     TypedStructField(result)
   }

@@ -22,7 +22,6 @@ def mavenAdditionalSettingsBuild = getMavenAdditionalSettingsBuild()
 def mavenAdditionalSettingsDeploy = getMavenAdditionalSettingsDeploy()
 def artifactoryURL = getArtifactoryUrl()
 
-
 pipeline {
     agent {
         label "${enceladusSlaveLabel}"

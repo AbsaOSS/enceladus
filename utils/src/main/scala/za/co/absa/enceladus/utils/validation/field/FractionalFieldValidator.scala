@@ -16,19 +16,12 @@
 package za.co.absa.enceladus.utils.validation.field
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.TypedStructField
-import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
+import za.co.absa.enceladus.utils.validation.ValidationIssue
 
-object FractionalFieldValidator extends ScalarFieldValidator {
-  private def validateAllowInfinity(field: TypedStructField): Seq[ValidationIssue] = {
-    if (field.hasMetadataKey(MetadataKeys.allowInfinity) && field.getMetadataStringAsBoolean(MetadataKeys.allowInfinity).isEmpty) {
-      Seq(ValidationError(s"allowInfinity metadata value of field '${field.name}' is not Boolean in String format"))
-    } else {
-      Nil
-    }
-  }
-
+object FractionalFieldValidator extends NumericFieldValidator {
   override def validate(field: TypedStructField): Seq[ValidationIssue] = {
-    validateAllowInfinity(field) ++ super.validate(field)
+    super.validate(field) ++
+      this.checkMetadataKey[Boolean](field, MetadataKeys.AllowInfinity)
   }
 }
 

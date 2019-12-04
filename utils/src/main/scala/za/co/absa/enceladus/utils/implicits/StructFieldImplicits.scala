@@ -24,9 +24,21 @@ object StructFieldImplicits {
       Try(structField.metadata.getString(key)).toOption
     }
 
+    def getMetadataChar(key: String): Option[Char] = {
+      val resultString = Try(structField.metadata.getString(key)).toOption
+      resultString.flatMap { s =>
+        if (s.length == 1) {
+          Option(s(0))
+        } else {
+          None
+        }
+      }
+    }
+
     def getMetadataStringAsBoolean(key: String): Option[Boolean] = {
       Try(structField.metadata.getString(key).toBoolean).toOption
     }
+
 
     def hasMetadataKey(key: String): Boolean = {
       structField.metadata.contains(key)

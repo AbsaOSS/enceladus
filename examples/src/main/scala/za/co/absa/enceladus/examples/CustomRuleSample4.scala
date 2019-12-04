@@ -21,8 +21,9 @@ import org.apache.spark.sql.{DataFrame, DataFrameReader, SparkSession}
 import scopt.OptionParser
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.menasplugin.MenasKerberosCredentials
-import za.co.absa.enceladus.dao.{MenasDAO, MenasRestDAO, RestDaoFactory}
+import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
@@ -55,7 +56,7 @@ object CustomRuleSample4 {
 
     opt[String]("row-tag").optional.action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")
-      .validate(value =>
+      .validate(_ =>
         if (inputFormat.isDefined && inputFormat.get.equalsIgnoreCase("xml")) {
           success
         } else {
@@ -65,7 +66,7 @@ object CustomRuleSample4 {
 
     opt[String]("delimiter").optional.action((value, config) =>
       config.copy(csvDelimiter = Some(value))).text("use the specific delimiter instead of ',' for CSV format")
-      .validate(value =>
+      .validate(_ =>
         if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv")) {
           success
         } else {
@@ -76,7 +77,7 @@ object CustomRuleSample4 {
     // no need for validation for boolean since scopt itself will do
     opt[Boolean]("header").optional.action((value, config) =>
       config.copy(csvHeader = Some(value))).text("use the header option to consider CSV header")
-      .validate(value =>
+      .validate(_ =>
         if (inputFormat.isEmpty || inputFormat.get.equalsIgnoreCase("csv")) {
           success
         } else {
@@ -139,14 +140,10 @@ object CustomRuleSample4 {
     implicit val spark: SparkSession = buildSparkSession()
 
     val conf = ConfigFactory.load()
-    val menasApiBaseUrl = conf.getString("menas.rest.uri")
+    val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
     val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
-    implicit val progArgs: CmdConfig = CmdConfig(menasCredentials = meansCredentials) // here we may need to specify some parameters (for certain rules)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(progArgs.menasCredentials, menasApiBaseUrl) // you may have to hard-code your own implementation here (if not working with menas)
-
-    val experimentalMR= true
-    val isCatalystWorkaroundEnabled = true
-    val enableCF: Boolean = false
+    implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
 
     val dfReader: DataFrameReader = {
       val dfReader0 = spark.read
