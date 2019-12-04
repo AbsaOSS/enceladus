@@ -121,20 +121,6 @@ package object conformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
   }
 
-  /** This is a pseudo conformance rule for doing array explosions between groups of mapping rules. */
-  case class ArrayExplodePseudoRule(order: Int,
-                                    outputColumn: String,
-                                    controlCheckpoint: Boolean) extends ConformanceRule {
-    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
-  }
-
-  /** This is a pseudo conformance rule for doing array collect() between groups of mapping rules. */
-  case class ArrayCollectPseudoRule(order: Int,
-                                    outputColumn: String,
-                                    controlCheckpoint: Boolean) extends ConformanceRule {
-    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
-  }
-
   abstract class ExtensibleConformanceRule() extends ConformanceRule
 
   object MappingConformanceRule {
