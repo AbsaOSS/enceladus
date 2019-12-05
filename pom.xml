@@ -115,7 +115,7 @@
         <module>migrations</module>
         <module>migrations-cli</module>
         <module>external/kafka</module>
-        <module>external/fixedWidth</module>
+        <module>external/fixed-width</module>
     </modules>
 
     <properties>
