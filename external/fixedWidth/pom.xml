@@ -15,12 +15,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>enceladus-fixedWidth</artifactId>
+    <artifactId>fixedWidth</artifactId>
     <packaging>jar</packaging>
 
     <parent>
-        <artifactId>enceladus-parent</artifactId>
-        <groupId>za.co.absa</groupId>
+        <artifactId>parent</artifactId>
+        <groupId>za.co.absa.enceladus</groupId>
         <version>2.0.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
@@ -31,8 +31,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>za.co.absa</groupId>
-            <artifactId>enceladus-utils</artifactId>
+            <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>utils</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
