@@ -33,8 +33,24 @@ HDP_VERSION="2.7.3"
 STD_CLASS="za.co.absa.enceladus.standardization.StandardizationJob"
 STD_JAR="enceladus-standardization.jar"
 
+# Environment-specific resource defaults for Standardization.
+# If empty and not specified explicitly, Spark configuration defaults will be used.
+STD_DEFAULT_DRIVER_MEMORY=""
+STD_DEFAULT_DRIVER_CORES=""
+STD_DEFAULT_EXECUTOR_MEMORY=""
+STD_DEFAULT_EXECUTOR_CORES=""
+
 CONF_CLASS="za.co.absa.enceladus.conformance.DynamicConformanceJob"
 CONF_JAR="enceladus-conformance.jar"
+
+# Environment-specific resource defaults for Conformance.
+# If empty and not specified explicitly, Spark configuration defaults will be used.
+CONF_DEFAULT_DRIVER_MEMORY=""
+CONF_DEFAULT_DRIVER_CORES=""
+CONF_DEFAULT_EXECUTOR_MEMORY=""
+CONF_DEFAULT_EXECUTOR_CORES=""
+
+DEFAULT_DEPLOY_MODE="client"
 
 LOG_DIR="/tmp"
 
