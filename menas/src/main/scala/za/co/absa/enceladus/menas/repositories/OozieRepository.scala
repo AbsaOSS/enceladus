@@ -182,12 +182,6 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
         case err: Throwable =>
           hadoopFS.delete(hdfsConfPath, true)
       }
-
-      //For some reason these downloads were always cut half-way.. The blocking
-      //request is only made once per version (this step is skipped if jars are loaded already)
-      Await.ready(resFutureStd, Duration.Inf)
-      Await.ready(resFutureConf, Duration.Inf)
-
     }
   }
 
