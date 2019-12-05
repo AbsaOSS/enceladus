@@ -177,7 +177,7 @@
         <!-- Application -->
         <dependency>
             <groupId>za.co.absa.enceladus</groupId>
-            <artifactId>dataModel</artifactId>
+            <artifactId>data-model</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

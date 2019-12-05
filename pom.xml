@@ -108,7 +108,7 @@
         <module>utils</module>
         <module>conformance</module>
         <module>standardization</module>
-        <module>dataModel</module>
+        <module>data-model</module>
         <module>examples</module>
         <module>dao</module>
         <module>menas</module>
