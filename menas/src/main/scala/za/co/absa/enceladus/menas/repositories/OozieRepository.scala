@@ -32,6 +32,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
@@ -197,12 +198,13 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
         }
 
         val in = connection.getInputStream
-        val targetArray = Array.fill(in.available)(0.toByte)
-        in.read(targetArray)
         val os = hadoopFS.create(hadoopPath, true)
-        os.write(targetArray)
+
+        IOUtils.copy(in, os)
+
         os.flush()
         os.close()
+        in.close()
       }
     }
   }
