@@ -31,8 +31,8 @@ class ArrayCollapseInterpreter extends RuleInterpreter {
   override def conformanceRule: Option[ConformanceRule] = None
 
   override def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
-    val dfOut = ExplodeTools.revertAllExplosions(df,explosionState.explodeContext, Some(ErrorMessage.errorColumnName))
+                      (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+    val dfOut = ExplodeTools.revertAllExplosions(df, explosionState.explodeContext, Some(ErrorMessage.errorColumnName))
     explosionState.explodeContext = ExplosionContext()
     dfOut
   }

@@ -107,14 +107,14 @@ object DynamicInterpreter {
   }
 
   /**
-    * Transforms a list of conformance rules to a list of conformance rules interpreters.
+    * Transforms a list of conformance rules to a list of conformance rule interpreters.
     * For most conformance rules there is only one interpreter to apply. But mapping rule
     * has several strategies. Optimizer chooses which strategy to use and provides an
     * interpreter for each strategy.
     *
     * @param rules  A list of conformance rules.
     * @param schema A schema of a DataFrame to be conformed.
-    * @return A list of conformance rules interpreters.
+    * @return A list of conformance rule interpreters.
     */
   def getInterpreters(rules: List[ConformanceRule], schema: StructType)
                      (implicit ictx: InterpreterContext): List[RuleInterpreter] = {
@@ -140,20 +140,17 @@ object DynamicInterpreter {
   private def getOptimizedInterpreters(ruleGroups: List[List[ConformanceRule]],
                                        schema: StructType)
                                       (implicit ictx: InterpreterContext): List[RuleInterpreter] = {
-    val explosionState: ExplosionState = new ExplosionState()
-
     ruleGroups.flatMap(rules => {
       val interpreters = rules.map(rule => getInterpreter(rule, schema))
-      if (isGroupExploisonCanBeUsed(rules, schema) &&
+      if (isGroupExplosionUsable(rules, schema) &&
         ictx.featureSwitches.experimentalMappingRuleEnabled) {
         // Inserting an explosion and a collapse between a group of mapping rules operating on a common array
         val optArray = SchemaUtils.getDeepestArrayPath(schema, rules.head.outputColumn)
         optArray match {
           case Some(arrayColumn) =>
-            new ArrayExplodeInterpreter(arrayColumn) ::
-              (interpreters :+ new ArrayCollapseInterpreter())
+            new ArrayExplodeInterpreter(arrayColumn) :: (interpreters :+ new ArrayCollapseInterpreter())
           case None              =>
-            throw new IllegalStateException("Unexpectedly unable to find common array amound fields: " +
+            throw new IllegalStateException("Unexpectedly unable to find a common array between fields: " +
               rules.map(_.outputColumn).mkString(", "))
         }
       } else {
@@ -217,11 +214,15 @@ object DynamicInterpreter {
     * @param schema A schema of a dataset
     * @return true if a group explosion optimization can be used
     */
-  private def isGroupExploisonCanBeUsed(rules: List[ConformanceRule], schema: StructType): Boolean = {
-    rules.map {
+  private def isGroupExplosionUsable(rules: List[ConformanceRule],
+                                        schema: StructType)
+                                       (implicit ictx: InterpreterContext): Boolean = {
+    val eligibleRulesCount = rules.map {
       case rule: MappingConformanceRule => if (canMappingRuleBroadcast(rule, schema)) 0 else 1
       case _                            => 0
-    }.sum > 1
+    }.sum
+
+    eligibleRulesCount > 1
   }
 
   /**
@@ -231,11 +232,17 @@ object DynamicInterpreter {
     * @param schema A schema of a dataset
     * @return true if a group explosion optimization can be used
     */
-  private def canMappingRuleBroadcast(rule: MappingConformanceRule, schema: StructType): Boolean = {
+  private def canMappingRuleBroadcast(rule: MappingConformanceRule,
+                                      schema: StructType)
+                                     (implicit ictx: InterpreterContext): Boolean = {
     // ToDo Currently, the broadcasting strategy is turned off. The decision when to use it should
     //      be implemented as part of #1017.
     false
   }
+
+  private def getMappingTableSizeMb(rule: MappingConformanceRule)
+                                   (implicit ictx: InterpreterContext): Int = 0
+  //val fsUtils = new FileSystemVersionUtils(ictx.spark.sparkContext.hadoopConfiguration)
 
   /**
     * Gets the list of conformance rules from the context
