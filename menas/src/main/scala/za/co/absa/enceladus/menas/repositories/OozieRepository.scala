@@ -75,49 +75,49 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  @Value("${za.co.absa.enceladus.menas.oozie.schedule.hdfs.path:}")
+  @Value("${menas.oozie.schedule.hdfs.path:}")
   val oozieScheduleHDFSPath: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.timeZone:Africa/Ceuta}")
+  @Value("${menas.oozie.timeZone:Africa/Ceuta}")
   val oozieTimezone: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.sharelibForSpark:spark}")
+  @Value("${menas.oozie.sharelibForSpark:spark}")
   val oozieShareLib: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.libpath:}")
+  @Value("${menas.oozie.libpath:}")
   val oozieLibPath: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.enceladusJarLocation:}")
+  @Value("${menas.oozie.enceladusJarLocation:}")
   val enceladusJarLocation: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.mavenStandardizationJarLocation:}")
+  @Value("${menas.oozie.mavenStandardizationJarLocation:}")
   val standardizationJarPath: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.mavenConformanceJarLocation:}")
+  @Value("${menas.oozie.mavenConformanceJarLocation:}")
   val conformanceJarPath: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.mavenRepoLocation:}")
+  @Value("${menas.oozie.mavenRepoLocation:}")
   val mavenRepoLocation: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.menasApiURL:}")
+  @Value("${menas.oozie.menasApiURL:}")
   val menasApiURL: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.splineMongoURL:}")
+  @Value("${menas.oozie.splineMongoURL:}")
   val splineMongoURL: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.sparkConf.surroundingQuoteChar:}")
+  @Value("${menas.oozie.sparkConf.surroundingQuoteChar:}")
   val sparkConfQuotes: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.proxyUser:}")
+  @Value("${menas.oozie.proxyUser:}")
   val oozieProxyUser: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.proxyUserKeytab:}")
+  @Value("${menas.oozie.proxyUserKeytab:}")
   val oozieProxyUserKeytab: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.auth.kerberos.krb5conf:}")
+  @Value("${menas.auth.kerberos.krb5conf:}")
   val krb5conf: String = ""
 
-  @Value("#{${za.co.absa.enceladus.menas.oozie.extraSparkConfigs:{'spark.ui.enabled': 'true'}}}")
+  @Value("#{${menas.oozie.extraSparkConfigs:{'spark.ui.enabled': 'true'}}}")
   val sparkExtraConfigs: JavaMap[String, String] = new HashMap[String, String]()
 
   private val classLoader = Thread.currentThread().getContextClassLoader
@@ -223,13 +223,13 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
 
   /**
    * This is a helper function for impersonating oozie calls using the proper proxy user if configured
-   * 
+   *
    * @param user User to impersonate
    * @fn Oozie action to perform - Important to note that this should be Oozie action only (only wrap the call to oozieclient)
    */
   private def impersonateWrapper[T](user: String)(fn: () => T) = {
     if (oozieProxyUser.isEmpty || oozieProxyUserKeytab.isEmpty) {
-      logger.info("Oozie impersonation disabled. missing required configuration parameters 'za.co.absa.enceladus.menas.oozie.proxyUser'" + 
+      logger.info("Oozie impersonation disabled. missing required configuration parameters 'za.co.absa.enceladus.menas.oozie.proxyUser'" +
           " and/or 'za.co.absa.enceladus.menas.oozie.proxyUserKeytab'")
       fn()
     } else {

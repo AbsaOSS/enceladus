@@ -27,7 +27,7 @@ import za.co.absa.enceladus.model.user.UserInfo
 @RequestMapping(Array("/api/user"))
 class UserInfoController extends BaseController {
 
-  @Value("${za.co.absa.enceladus.menas.version}")
+  @Value("${menas.version}")
   val menasVersion: String = ""
 
   @GetMapping(path = Array("/info"))

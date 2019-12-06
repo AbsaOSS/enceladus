@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.{GetMapping, RequestMapping, Rest
 @RestController
 @RequestMapping(Array("/api/configuration"))
 class ConfigurationController extends BaseController {
-  @Value("${za.co.absa.enceladus.menas.environment}")
+  @Value("${menas.environment}")
   val menasEnvironment: String = ""
 
   @GetMapping(path = Array("/environment"))
