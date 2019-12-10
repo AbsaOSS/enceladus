@@ -200,11 +200,14 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
         val in = connection.getInputStream
         val os = hadoopFS.create(hadoopPath, true)
 
-        IOUtils.copy(in, os)
+        try {
+          IOUtils.copy(in, os)
+        } finally {
+          os.flush()
+          os.close()
+          in.close()
+        }
 
-        os.flush()
-        os.close()
-        in.close()
       }
     }
   }
