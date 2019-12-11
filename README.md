@@ -18,12 +18,12 @@ $> bundle exec jekyll serve
 
 #### Generate new docs
 ```ruby
-ruby create_docs.rb <version>
+ruby utils/create_docs.rb <version>
 ```
 
 #### Generate release notes
 ```bash
-Usage: ruby get_release_notes.rb [options]
+Usage: ruby utils/get_release_notes.rb [options]
 
 Specific options:
         --github-token TOKEN         Github token.
