@@ -63,8 +63,85 @@ fields within fields.
 
 You provide *Schema* to **Standardization** in a JSON file:
 
-{% gist 394d2fe3a23366c081af4aa54441fe8b %}
-
+```json
+{
+    "type": "struct",
+    "fields": [{
+        "name": "name",
+        "type": "string",
+        "nullable": false,
+        "metadata": {
+        }
+    },
+    {
+        "name": "surname",
+        "type": "string",
+        "nullable": false,
+        "metadata": {
+            "default": "Unknown Surname"
+        }
+    },
+    {
+        "name": "hoursWorked",
+        "type": {
+            "type": "array",
+            "elementType": "integer",
+            "containsNull": false
+        },
+        "nullable": false,
+        "metadata": {
+        }
+    },
+{
+        "name": "employeeNumbers",
+        "type": {
+            "type": "array",
+            "elementType": {
+                "type": "struct",
+                "fields": [{
+                    "name": "numberType",
+                    "type": "string",
+                    "nullable": true,
+                    "metadata": {
+                    }
+                },
+                {
+                    "name": "numbers",
+                    "type": {
+                        "type": "array",
+                        "elementType": "integer",
+                        "containsNull": true
+                    },
+                    "nullable": true,
+                    "metadata": {
+                    }
+                }]
+            },
+            "containsNull": true
+        },
+        "nullable": true,
+        "metadata": {
+        }
+    },
+        {
+        "name": "startDate",
+        "type": "date",
+        "nullable": false,
+        "metadata": {
+            "pattern": "yyyy-MM-dd"
+        }
+    },
+        {
+        "name": "updated",
+        "type": "timestamp",
+        "nullable": true,
+        "metadata": {
+            "pattern": "yyyyMMdd.HHmmss"
+        }
+    }
+    ]
+}
+```
 
 Example of data adhering to the above schema can be found [here](https://github.com/AbsaOSS/enceladus/blob/develop/standardization/src/test/scala/za/co/absa/enceladus/standardization/samples/TestSamples.scala).
 
