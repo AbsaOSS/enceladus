@@ -67,11 +67,13 @@ class EntityService {
     if (oControl) {
       oControl.setBusyIndicatorDelay(0);
       oControl.setBusy(true);
+
+      return promise.always(() => {
+        oControl.setBusy(false);
+      })
     }
 
-    return promise.always(() => {
-      oControl.setBusy(false);
-    })
+    return promise;
   }
 
   constructor(eventBus, restDAO, messageProvider, modelBinder) {
