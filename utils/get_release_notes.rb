@@ -1,15 +1,29 @@
+# Copyright 2018-2019 ABSA Group Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 require 'uri'
 require 'net/http'
 require 'openssl'
 require 'json'
+require_relative 'get_release_notes/issue'
+require_relative 'get_release_notes/opt_parser'
+require_relative 'get_release_notes/release_notes'
+require_relative 'get_release_notes/release'
 
-PATH_TO_ZENHUB_TOKEN = 'token'
-RN_OUT_PATH_PREFIX = ''
+OptParser.parse(ARGV)
 
-ZENHUB_URL = 'https://api.zenhub.io'
-GITHUB_URL = 'https://api.github.com/repos/AbsaOss/enceladus'
-REPO_ID = '154513089' # ENCELADUS REPO ID
-ZENHUB_TOKEN = File.read(PATH_TO_ZENHUB_TOKEN).strip
+PAGES_ROOT = File.expand_path('..', __dir__)
+POST_FOLDER = "#{PAGES_ROOT}/_posts"
 
 class String
   def remove_first_line
@@ -19,86 +33,14 @@ class String
   end
 end
 
-class Release
-  attr_accessor :release_id, :title, :description, :start_date, :desired_end_date
-  attr_accessor :created_at, :closed_at, :state, :issues
-
-  def initialize(release_id:, title:, description:, start_date:, desired_end_date:, created_at:, closed_at:, state:)
-    @release_id = release_id
-    @title = title
-    @description = description
-    @start_date = start_date
-    @desired_end_date = desired_end_date
-    @created_at = created_at
-    @closed_at = closed_at
-    @state= state
-    @date = Time.now
-    @liquid = {
-        layout: 'default',
-        title: "Release v#{title}",
-        tags: ["v#{title}", 'changelog'],
-        excerpt_separator: '<!--more-->'
-    }
-    @liquid[:tags] << "hotfix" if title.split('.').last != '0'
-  end
-
-  def get_file_name
-    "#{RN_OUT_PATH_PREFIX}#{@date.strftime('%Y-%m-%d')}-release-#{@title}.md"
-  end
-
-  def get_issues
-    issues = call(URI("#{ZENHUB_URL}/p1/reports/release/#{release_id}/issues"))
-    @issues = issues.inject([]) { |acc, v| acc << Issue.new(v[:issue_number]) }
-  end
-
-  def get_release_notes
-    issue_list = ""
-    issues.map do |issue|
-      issue.get_release_notes
-      issue_list << issue.make_release_note_string
-    end
-
-    release_notes = ""
-    release_notes << "---\n"
-    @liquid.each do |key, value|
-      release_notes << "#{key}: #{value}\n"
-    end
-    release_notes << "---\n"
-    release_notes << "As of #{@date.strftime('%d/%m %Y')} the new version #{@title} is out\n"
-    release_notes << "<!--more-->\n\n"
-    release_notes << issue_list
-  end
-end
-
-class Issue
-  attr_accessor :number, :release_comment
-
-  def initialize(number)
-    @number = number
-  end
-
-  def get_release_notes
-    comments = call(URI("#{GITHUB_URL}/issues/#{@number}/comments"))
-    release_notes = comments.select { |comment| comment[:body] =~ /^Release Notes.*/ }
-    if release_notes.nil? || release_notes.empty?
-      @release_comment = "Couldn't find Release Notes for #{number}"
-    else
-      @release_comment = release_notes.inject('') { |acc, note| "#{acc}#{note[:body].remove_first_line}\n" }
-    end
-  end
-
-  def make_release_note_string
-    "- [##{@number}]({{ site.github.issues_url }}/#{@number}) #{@release_comment}\n"
-  end
-end
-
 def call(url)
   http = Net::HTTP.new(url.host, url.port)
   http.use_ssl = true
   http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
   request = Net::HTTP::Get.new(url)
-  request["x-authentication-token"] = ZENHUB_TOKEN if url.host == 'api.zenhub.io'
+  request["x-authentication-token"] = OptParser.options.zenhub_token
+  request["Authorization"] = OptParser.options.github_token
   request["content-type"] = 'application/json'
   response = http.request(request)
   body_json = JSON.parse(response.body)
@@ -121,9 +63,21 @@ def keys_to_symbols(whatever)
   end
 end
 
+choosen_release = if OptParser.options.use_zenhub
+  all_releases = call(URI("#{OptParser.options.zenhub_url}/p1/repositories/#{OptParser.options.repository_id}/reports/releases"))
+  needed_release = all_releases.select { |r| r[:title] == OptParser.options.version }.last
+  raise ArgumentError, 'Version Not Found in Zenhub Releases', caller if needed_release.nil?
+  ZenhubRelease.create(needed_release)
+else
+  milestones = call(URI("#{OptParser.options.github_url}/milestones"))
+  needed_milestone = milestones.select { |m| m[:title] == OptParser.options.version }.last
+  raise ArgumentError, 'Version Not Found in Github Milestones', caller if needed_milestone.nil?
+  GithubRelease.create(needed_milestone)
+end
 
-all_releases = call(URI("#{ZENHUB_URL}/p1/repositories/#{REPO_ID}/reports/releases"))
-latest_release = Release.new(all_releases.last)
-latest_release.get_issues
-release_notes = latest_release.get_release_notes
-File.open(latest_release.get_file_name, 'w') { |file| file.write(release_notes) }
+release_notes = ReleaseNotes.new(version: OptParser.options.version,
+                                 release: choosen_release,
+                                 print_empty: OptParser.options.print_empty)
+
+release_notes.write(POST_FOLDER)
+
