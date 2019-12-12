@@ -30,9 +30,17 @@ class OptParser
     options.github_url = "https://api.github.com/repos/#{options.organization}/#{options.repository}"
     options.github_token = ENV['GITHUB_TOKEN']
     options.zenhub_token = ENV['ZENHUB_TOKEN']
+    options.version = args.shift
+
+    # Version string can start with a small v, then version numbers X.Y.Z, after that you can follow
+    # with -RCX where dash is mandatory, RC can be downcase or uppercase and X represents any number
+    # higher then zero
+    unless options.version =~ /\Av?([0-9]+\.){2}[0-9]+(-(R|r)(C|c)[1-9][0-9]*)?\Z/
+      raise OptionParser::InvalidArgument, "Invalid Version argument - #{options.version}", caller
+    end
 
     opt_parser = OptionParser.new do |opts|
-      opts.banner = "Usage: ruby utils/get_release_notes.rb [options]"
+      opts.banner = "Usage: ruby utils/get_release_notes.rb VERSION [options]"
 
       opts.separator ""
       opts.separator "Specific options:"
@@ -99,7 +107,6 @@ class OptParser
 
     opt_parser.parse!(args)
 
-    raise OptionParser::MissingArgument, 'Missing version argument', caller if options[:version].nil?
     if options.github_token.nil? || options.github_token.empty?
       raise OptionParser::MissingArgument, 'Missing Github token argument or environment variable', caller
     end

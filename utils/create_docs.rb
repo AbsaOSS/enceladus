@@ -19,7 +19,7 @@ PAGES_ROOT = File.expand_path('..', __dir__)
 DOC_FOLDER = "#{PAGES_ROOT}/_docs"
 VERSIONS_YAML = "#{PAGES_ROOT}/_data/versions.yaml"
 
-unless NEW_VERSION =~ /[0-9]+\.[0-9]+\.[0-9]+/
+unless NEW_VERSION =~ /\Av?([0-9]+\.){2}[0-9]+(-(R|r)(C|c)[1-9][0-9]*)?\Z/
   raise ArgumentError, "Version not in correct format", caller
 end
 
