@@ -32,17 +32,19 @@ class OptParser
     options.zenhub_token = ENV['ZENHUB_TOKEN']
 
     opt_parser = OptionParser.new do |opts|
-      opts.banner = "Usage: get_release_notes.rb [options]"
+      opts.banner = "Usage: ruby utils/get_release_notes.rb [options]"
 
       opts.separator ""
       opts.separator "Specific options:"
 
-      opts.on("--github-token TOKEN", 'Github token.') do |gt|
+      opts.on("--github-token TOKEN", 'Github token. Can be specified using environment variable GITHUB_TOKEN') do |gt|
         options.github_token = "token #{gt}"
       end
 
       opts.on("--zenhub-token TOKEN", 'Zenhub token. This means we will use ' +
-                                      'Release object for release notes.') do |zt|
+                                      'Release object for release notes. You don\'t '+
+                                      'have to use --use-zenhub in case you use this. ' +
+                                      'Can be specified using environment variable ZENHUB_TOKEN') do |zt|
         options.use_zenhub = true
         options.zenhub_token = zt
       end
@@ -84,7 +86,8 @@ class OptParser
         options.github_url = url
       end
 
-      opts.on('-p', '--print_empty', 'Github API URL') do |p|
+      opts.on('-p', '--[no-]print-empty', 'Should Issue with no release notes comment be ' +
+                                          'included in the output file') do |p|
         options.print_empty = p
       end
 

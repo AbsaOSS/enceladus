@@ -23,6 +23,9 @@ class Issue
   def get_release_notes
     comments = call(URI("#{OptParser.options.github_url}/issues/#{@number}/comments"))
     release_notes = comments.select do |comment|
+      # First line of a comment can start by blanks (spaces, tabs), then Release Notes eaither
+      # capitalized or all lower case. Then any combination of blanks, dashes or columns followed
+      # by a new line. The first line is going to be removed, so the new line is important.
       comment[:body] =~ /\A[[:blank:]]*(R|r)elease (N|n)otes([[:blank:]]|-|:)*\n/
     end
 

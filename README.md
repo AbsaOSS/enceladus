@@ -26,8 +26,8 @@ ruby utils/create_docs.rb <version>
 Usage: ruby utils/get_release_notes.rb [options]
 
 Specific options:
-        --github-token TOKEN         Github token.
-        --zenhub-token TOKEN         Zenhub token. This means we will use Release object for release notes.
+        --github-token TOKEN         Github token. Can be specified using environment variable GITHUB_TOKEN
+        --zenhub-token TOKEN         Zenhub token. This means we will use Release object for release notes. You don't have to use --use-zenhub in case you use this. Can be specified using environment variable ZENHUB_TOKEN
     -z, --use-zenhub                 Run using zenhub. IT needs environment variable ZENHUB_TOKEN. If you use --zenhub-token option, you don't need to use this. This means we will use Release object for release notes.
     -v, --version VERSION            Version of release notes
         --organization ORGANIZATION  Github Organization
@@ -35,6 +35,6 @@ Specific options:
         --repository-id REPOSITORYID Zenhub Repository ID
         --zenhub-url ZENURL          Zenhub API URL
         --github-url GITURL          Github API URL
-    -p, --print_empty                Github API URL
+    -p, --[no-]print-empty           Should Issue with no release notes comment be included in the output file
     -h, --help                       Show this message
 ```
