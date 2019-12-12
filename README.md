@@ -23,7 +23,7 @@ ruby utils/create_docs.rb <version>
 
 #### Generate release notes
 ```bash
-Usage: ruby utils/get_release_notes.rb [options]
+Usage: ruby utils/get_release_notes.rb VERSION [options]
 
 Specific options:
         --github-token TOKEN         Github token. Can be specified using environment variable GITHUB_TOKEN
