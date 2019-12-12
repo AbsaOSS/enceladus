@@ -67,13 +67,6 @@ class OptParser
         options.zenhub_token = options.zenhub_token
       end
 
-      opts.on('-v', '--version VERSION', 'Version of release notes') do |v|
-        unless v =~ /[0-9]+\.[0-9]+\.[0-9]+/
-          raise OptionParser::InvalidArgument, 'Wrong version format', caller
-        end
-        options.version = v
-      end
-
       opts.on('--organization ORGANIZATION', 'Github Organization') do |org|
         options.organization = org
       end
