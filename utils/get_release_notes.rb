@@ -63,16 +63,20 @@ def keys_to_symbols(whatever)
   end
 end
 
+def get_release_object(uri:, klass:)
+  all_releases = call(uri)
+  needed_release = all_releases.select { |v| v[:title] == OptParser.options.version }.last
+  raise ArgumentError, 'Version Not Found for release notes', caller if needed_release.nil?
+  klass.create(needed_release)
+end
+
 choosen_release = if OptParser.options.use_zenhub
-  all_releases = call(URI("#{OptParser.options.zenhub_url}/p1/repositories/#{OptParser.options.repository_id}/reports/releases"))
-  needed_release = all_releases.select { |r| r[:title] == OptParser.options.version }.last
-  raise ArgumentError, 'Version Not Found in Zenhub Releases', caller if needed_release.nil?
-  ZenhubRelease.create(needed_release)
+  get_release_object(uri: URI("#{OptParser.options.zenhub_url}/p1/repositories/" +
+                          "#{OptParser.options.repository_id}/reports/releases")
+                     klass: ZenhubRelease)
 else
-  milestones = call(URI("#{OptParser.options.github_url}/milestones"))
-  needed_milestone = milestones.select { |m| m[:title] == OptParser.options.version }.last
-  raise ArgumentError, 'Version Not Found in Github Milestones', caller if needed_milestone.nil?
-  GithubRelease.create(needed_milestone)
+  get_release_object(uri: URI("#{OptParser.options.github_url}/milestones"))
+                     klass: GithubRelease)
 end
 
 release_notes = ReleaseNotes.new(version: OptParser.options.version,

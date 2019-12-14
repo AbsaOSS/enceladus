@@ -12,7 +12,7 @@
 # limitations under the License.
 
 class Release
-  attr_accessor :id, :title, :description, :issues
+  attr_reader :id, :title, :description, :issues
 
   def initialize(id:, title:, description:)
     @id = id
@@ -20,7 +20,7 @@ class Release
     @description = description
   end
 
-  def get_issues(issues: [])
+  def get_issues(issues:)
     @issues = issues.inject([]) { |acc, v| acc << Issue.new(number: v[:number], title: v[:title]) }
     @issues
   end
@@ -42,8 +42,8 @@ end
 class GithubRelease < Release
   def self.create(args)
     puts "WARN You have #{args[:open_issues]} issues open" if args[:open_issues] > 0
-    GithubRelease.new(title: args[:title],
-                      id: args[:number],
+    GithubRelease.new(id: args[:number],
+                      title: args[:title],
                       description: args[:description])
   end
 

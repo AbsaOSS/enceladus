@@ -64,7 +64,6 @@ class OptParser
           raise ArgumentError, "Can't find ZENHUB_TOKEN environemnt variable", caller
         end
         options.use_zenhub = z
-        options.zenhub_token = options.zenhub_token
       end
 
       opts.on('--organization ORGANIZATION', 'Github Organization') do |org|

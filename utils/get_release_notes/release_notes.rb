@@ -28,7 +28,7 @@ class ReleaseNotes
       excerpt_separator: '<!--more-->'
     }
 
-    liquid[:tags] << "hotfix" if @version.split('.').last != '0'
+    liquid[:tags] << "hotfix" unless @version.split('.').last =~ /\A0.*/
     liquid
   end
 

@@ -31,7 +31,7 @@ class Issue
 
     if release_notes.nil? || release_notes.empty?
       @title = call(URI("#{OptParser.options.github_url}/issues/1102"))[:title] if @title.nil?
-      @release_comment = "Couldn't find Release Notes for #{number} - #{@title}"
+      @release_comment = "Couldn't find Release Notes for #{@number} - #{@title}"
     else
       @empty = false
       @release_comment = release_notes.inject('') { |acc, note| "#{acc}#{note[:body].remove_first_line}" }
