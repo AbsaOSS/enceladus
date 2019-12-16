@@ -215,8 +215,8 @@ object DynamicInterpreter {
     * @return true if a group explosion optimization can be used
     */
   private def isGroupExplosionUsable(rules: List[ConformanceRule],
-                                        schema: StructType)
-                                       (implicit ictx: InterpreterContext): Boolean = {
+                                     schema: StructType)
+                                    (implicit ictx: InterpreterContext): Boolean = {
     val eligibleRulesCount = rules.map {
       case rule: MappingConformanceRule => if (canMappingRuleBroadcast(rule, schema)) 0 else 1
       case _                            => 0
@@ -241,8 +241,11 @@ object DynamicInterpreter {
   }
 
   private def getMappingTableSizeMb(rule: MappingConformanceRule)
-                                   (implicit ictx: InterpreterContext): Int = 0
-  //val fsUtils = new FileSystemVersionUtils(ictx.spark.sparkContext.hadoopConfiguration)
+                                   (implicit ictx: InterpreterContext): Int = {
+    // ToDo Currently, the broadcasting strategy is turned off. The decision when to use it should
+    //      be implemented as part of #1017.
+    0
+  }
 
   /**
     * Gets the list of conformance rules from the context
