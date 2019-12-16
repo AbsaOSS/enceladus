@@ -32,13 +32,6 @@ class OptParser
     options.zenhub_token = ENV['ZENHUB_TOKEN']
     options.version = args.shift
 
-    # Version string can start with a small v, then version numbers X.Y.Z, after that you can follow
-    # with -RCX where dash is mandatory, RC can be downcase or uppercase and X represents any number
-    # higher then zero
-    unless options.version =~ /\Av?([0-9]+\.){2}[0-9]+(-(R|r)(C|c)[1-9][0-9]*)?\Z/
-      raise OptionParser::InvalidArgument, "Invalid Version argument - #{options.version}", caller
-    end
-
     opt_parser = OptionParser.new do |opts|
       opts.banner = "Usage: ruby utils/get_release_notes.rb VERSION [options]"
 
@@ -95,6 +88,15 @@ class OptParser
         puts opts
         exit
       end
+    end
+
+    opt_parser.parse!(['-h']) if options.version =~ /\A(-h|--help)/
+
+    # Version string can start with a small v, then version numbers X.Y.Z, after that you can follow
+    # with -RCX where dash is mandatory, RC can be downcase or uppercase and X represents any number
+    # higher then zero
+    unless options.version =~ /\Av?([0-9]+\.){2}[0-9]+(-(R|r)(C|c)[1-9][0-9]*)?\Z/
+      raise OptionParser::InvalidArgument, "Invalid Version argument - #{options.version}", caller
     end
 
     opt_parser.parse!(args)
