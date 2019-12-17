@@ -27,7 +27,6 @@ class OptParser
     options.repository = 'enceladus'
     options.repository_id = '154513089' # ENCELADUS REPO ID
     options.zenhub_url = 'https://api.zenhub.io'
-    options.github_url = "https://api.github.com/repos/#{options.organization}/#{options.repository}"
     options.github_token = ENV['GITHUB_TOKEN']
     options.zenhub_token = ENV['ZENHUB_TOKEN']
     options.version = args.shift
@@ -104,6 +103,11 @@ class OptParser
     if options.github_token.nil? || options.github_token.empty?
       raise OptionParser::MissingArgument, 'Missing Github token argument or environment variable', caller
     end
+
+    if options.github_url.nil? || options.github_url.empty?
+      options.github_url = "https://api.github.com/repos/#{options.organization}/#{options.repository}"
+    end
+
     @@options = options
     options
   end
