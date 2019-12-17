@@ -21,16 +21,10 @@ import za.co.absa.enceladus.utils.explode.ExplosionContext
   * This class is used to encapsulate a state of exploded arrays during processing of dynamic conformance steps
   * by interpreters.
   *
-  * Interpreters such as MappingRuleInterpretedGroupExplode, ExplosionInterpreted and CollapseInterpreter
+  * Interpreters such as MappingRuleInterpreterGroupExplode, ExplosionInterpreter and CollapseInterpreter
   * can change this state.
   */
-class ExplosionState (ec: ExplosionContext = ExplosionContext()) {
-
-  private var _explodeContext: ExplosionContext = ec
-
-  def explodeContext: ExplosionContext = _explodeContext
-
-  def explodeContext_=(ec: ExplosionContext): Unit = _explodeContext = ec
+class ExplosionState (var explodeContext: ExplosionContext = ExplosionContext()) {
 
   def isNoExplosionsApplied: Boolean = explodeContext.explosions.isEmpty
 
