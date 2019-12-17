@@ -105,7 +105,7 @@
         </dependency>
         <dependency>
             <groupId>za.co.absa.enceladus</groupId>
-            <artifactId>fixedWidth</artifactId>
+            <artifactId>fixed-width</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
