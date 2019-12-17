@@ -20,15 +20,25 @@ class OptParser
   end
 
   def self.parse(args)
+    app_conf_file_path = "#{File.expand_path('..', __dir__)}/resources/get_release_notes.json"
+    app_conf = if (File.exist?(app_conf_file_path))
+      file = File.read(app_conf_file_path)
+      JSON.parse(file, symbolize_names: true)
+    else
+      {}
+    end
+
     options = OpenStruct.new
-    options.use_zenhub = false
-    options.print_empty = true
-    options.organization = 'AbsaOss'
-    options.repository = 'enceladus'
-    options.repository_id = '154513089' # ENCELADUS REPO ID
-    options.zenhub_url = 'https://api.zenhub.io'
-    options.github_token = ENV['GITHUB_TOKEN']
-    options.zenhub_token = ENV['ZENHUB_TOKEN']
+    options.use_zenhub = app_conf[:use_zenhub]
+    options.print_empty = app_conf[:print_empty]
+    options.print_only_tile = app_conf[:print_only_tile]
+    options.organization = app_conf[:organization]
+    options.repository = app_conf[:repository]
+    options.repository_id = app_conf[:repository_id]
+    options.zenhub_url = app_conf[:zenhub_url]
+    options.github_url = app_conf[:github_url]
+    options.github_token = ENV['GITHUB_TOKEN'] || app_conf[:github_token]
+    options.zenhub_token = ENV['ZENHUB_TOKEN'] || app_conf[:zenhub_token]
     options.version = args.shift
 
     opt_parser = OptionParser.new do |opts|
@@ -37,19 +47,21 @@ class OptParser
       opts.separator ""
       opts.separator "Specific options:"
 
-      opts.on("--github-token TOKEN", 'Github token. Can be specified using environment variable GITHUB_TOKEN') do |gt|
+      opts.on("--github-token TOKEN", 'Github token. Can be specified using environment variable GITHUB_TOKEN ' +
+                                      'or in get_release_notes.json in resources using github_token key') do |gt|
         options.github_token = "token #{gt}"
       end
 
       opts.on("--zenhub-token TOKEN", 'Zenhub token. This means we will use ' +
                                       'Release object for release notes. You don\'t '+
-                                      'have to use --use-zenhub in case you use this. ' +
-                                      'Can be specified using environment variable ZENHUB_TOKEN') do |zt|
+                                      'have to use --use-zenhub in case you do this. ' +
+                                      'Can be specified using environment variable ZENHUB_TOKEN ' +
+                                      'or in get_release_notes.json in resources using zenhub_token key') do |zt|
         options.use_zenhub = true
         options.zenhub_token = zt
       end
 
-      opts.on("-z", "--use-zenhub", 'Run using zenhub. IT needs environment variable ZENHUB_TOKEN.' +
+      opts.on("-z", "--use-zenhub", 'Run using zenhub. It needs zenhub token set.' +
                                     ' If you use --zenhub-token option, you don\'t need to use this.' +
                                     ' This means we will use Release object for release notes.') do |z|
         if options.zenhub_token.nil? || options.zenhub_token.empty?
@@ -83,13 +95,23 @@ class OptParser
         options.print_empty = p
       end
 
+      opts.on('--[no-]print-only-title', 'Should Issue with no release notes comment be ' +
+                                         'preceeded with \'Couldn\'t find comment\'') do |p|
+        options.print_only_tile = p
+      end
+
       opts.on_tail("-h", "--help", "Show this message") do
         puts opts
         exit
       end
     end
 
-    opt_parser.parse!(['-h']) if options.version =~ /\A(-h|--help)/
+    if options.version =~ /\A(-h|--help)/
+      opt_parser.parse!(['-h'])
+    elsif options.version.nil? || options.version.empty?
+      puts 'WARN You did not specifie mandatory version parameter. Here is --help'
+      opt_parser.parse!(['-h'])
+    end
 
     # Version string can start with a small v, then version numbers X.Y.Z, after that you can follow
     # with -RCX where dash is mandatory, RC can be downcase or uppercase and X represents any number
@@ -100,12 +122,20 @@ class OptParser
 
     opt_parser.parse!(args)
 
-    if options.github_token.nil? || options.github_token.empty?
-      raise OptionParser::MissingArgument, 'Missing Github token argument or environment variable', caller
+    if options.organization.nil? || options.organization.empty?
+      raise OptionParser::InvalidArgument, "Organization needs to be set either in the config file" +
+                                            " or as and argument", caller
+    end
+
+    if options.repository.nil? || options.repository.empty?
+      raise OptionParser::InvalidArgument, "Repository needs to be set either in the config file" +
+                                            " or as and argument", caller
     end
 
     if options.github_url.nil? || options.github_url.empty?
       options.github_url = "https://api.github.com/repos/#{options.organization}/#{options.repository}"
+    elsif options.github_url =~ /\Ahttps:\/\/api.github.com\Z/
+      options.github_url = "#{options.github_url}/repos/#{options.organization}/#{options.repository}"
     end
 
     @@options = options
