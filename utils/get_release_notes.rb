@@ -72,10 +72,10 @@ end
 
 choosen_release = if OptParser.options.use_zenhub
   get_release_object(uri: URI("#{OptParser.options.zenhub_url}/p1/repositories/" +
-                          "#{OptParser.options.repository_id}/reports/releases"),
+                          "#{OptParser.options.repository_id}/reports/releases") ,
                      klass: ZenhubRelease)
 else
-  get_release_object(uri: URI("#{OptParser.options.github_url}/milestones"),
+  get_release_object(uri: URI("#{OptParser.options.github_url}/milestones?state=all"),
                      klass: GithubRelease)
 end
 

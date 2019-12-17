@@ -48,7 +48,7 @@ class GithubRelease < Release
   end
 
   def get_issues
-    issues_with_prs = call(URI("#{OptParser.options.github_url}/issues?milestone=#{id}"))
+    issues_with_prs = call(URI("#{OptParser.options.github_url}/issues?milestone=#{id}&state=all"))
     issues = issues_with_prs.select { |issue| issue[:pull_request].nil? }
     super(issues: issues)
   end
