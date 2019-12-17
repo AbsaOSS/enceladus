@@ -116,7 +116,7 @@ object DeepArrayTransformations {
   }
 
   /**
-    * A nested struct map with error column ort. Given a struct field the method will create a new child field of that
+    * A nested struct map with error column support. Given a struct field the method will create a new child field of that
     * struct as a transformation of struct fields and will update the error column according to a specified transformation.
     * This is useful for transformations that require combining several fields of a struct in an array.
     *

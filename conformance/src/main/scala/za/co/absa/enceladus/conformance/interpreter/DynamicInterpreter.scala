@@ -121,7 +121,6 @@ object DynamicInterpreter {
 
     val groupedRules = groupMappingRules(rules, schema)
 
-    // Get unoptimized list of interpreters
     getOptimizedInterpreters(groupedRules, schema)
   }
 
