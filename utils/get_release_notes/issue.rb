@@ -12,11 +12,17 @@
 # limitations under the License.
 
 class Issue
-  attr_accessor :number, :release_comment, :empty
+  attr_accessor :number, :release_comment, :empty, :state
 
   def initialize(number:, title: nil)
+    issue_call = call(URI("#{OptParser.options.github_url}/issues/#{number}"))
     @number = number
-    @title = title
+    @title = if title.nil?
+      issue_call[:title]
+    else
+      title
+    end
+    @state = issue_call[:state]
     @empty = true
   end
 
@@ -30,7 +36,6 @@ class Issue
     end
 
     if release_notes.nil? || release_notes.empty?
-      @title = call(URI("#{OptParser.options.github_url}/issues/1102"))[:title] if @title.nil?
       @release_comment = ''
       @release_comment << "Couldn't find Release Notes for #{@number} - " unless OptParser.options.print_only_tile
       @release_comment << "#{@title}"

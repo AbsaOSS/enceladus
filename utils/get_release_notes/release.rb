@@ -14,6 +14,15 @@
 class Release
   attr_reader :id, :title, :description, :issues
 
+  def post_init
+    get_issues
+    open_issues = @issues.select { |issue| issue.state == 'open' }
+    p open_issues
+    if OptParser.options.strict && open_issues.size > 0
+      raise StandardError, "Release has open issues #{open_issues.map(&:number)}", caller
+    end
+  end
+
   def initialize(id:, title:, description:)
     @id = id
     @title = title
@@ -28,12 +37,15 @@ end
 
 class ZenhubRelease < Release
   def self.create(args)
-    ZenhubRelease.new(id: args[:release_id],
-                      title: args[:title],
-                      description: args[:description])
+    release = ZenhubRelease.new(id: args[:release_id],
+                                title: args[:title],
+                                description: args[:description])
+    release.post_init
+    release
   end
 
   def get_issues
+    return @issues unless @issues.nil?
     issues = call(URI("#{OptParser.options.zenhub_url}/p1/reports/release/#{id}/issues"))
     super(issues: issues)
   end
@@ -42,12 +54,15 @@ end
 class GithubRelease < Release
   def self.create(args)
     puts "WARN You have #{args[:open_issues]} issues open" if args[:open_issues] > 0
-    GithubRelease.new(id: args[:number],
-                      title: args[:title],
-                      description: args[:description])
+    release = GithubRelease.new(id: args[:number],
+                                title: args[:title],
+                                description: args[:description])
+    release.post_init
+    release
   end
 
   def get_issues
+    return @issues unless @issues.nil?
     issues_with_prs = call(URI("#{OptParser.options.github_url}/issues?milestone=#{id}&state=all"))
     issues = issues_with_prs.select { |issue| issue[:pull_request].nil? }
     super(issues: issues)

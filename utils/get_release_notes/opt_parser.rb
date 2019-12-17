@@ -15,6 +15,14 @@ require 'optparse'
 
 class OptParser
 
+  ROOT_PATH = "#{File.expand_path('../..', __dir__)}"
+  GIT_PATH = "#{ROOT_PATH}/.git"
+
+  if File.exist?(GIT_PATH)
+    require 'bundler/inline'
+    gemfile { source 'https://rubygems.org'; gem 'git' }
+  end
+
   def self.options
     @@options
   end
@@ -37,9 +45,16 @@ class OptParser
     options.repository_id = app_conf[:repository_id]
     options.zenhub_url = app_conf[:zenhub_url]
     options.github_url = app_conf[:github_url]
+    options.strict = app_conf[:strict]
     options.github_token = ENV['GITHUB_TOKEN'] || app_conf[:github_token]
     options.zenhub_token = ENV['ZENHUB_TOKEN'] || app_conf[:zenhub_token]
     options.version = args.shift
+
+    if File.exist?(GIT_PATH)
+      remote_url = Git.open(ROOT_PATH).remote.url
+      options.organization = remote_url[/(?<=:)\w*/] if options.organization.nil?
+      options.repository = remote_url[/(?<=\/)\w*/] if options.repository.nil?
+    end
 
     opt_parser = OptionParser.new do |opts|
       opts.banner = "Usage: ruby utils/get_release_notes.rb VERSION [options]"
@@ -64,7 +79,7 @@ class OptParser
       opts.on("-z", "--use-zenhub", 'Run using zenhub. It needs zenhub token set.' +
                                     ' If you use --zenhub-token option, you don\'t need to use this.' +
                                     ' This means we will use Release object for release notes.') do |z|
-        if options.zenhub_token.nil? || options.zenhub_token.empty?
+        if options.zenhub_token.nil?
           raise ArgumentError, "Can't find ZENHUB_TOKEN environemnt variable", caller
         end
         options.use_zenhub = z
@@ -100,6 +115,10 @@ class OptParser
         options.print_only_tile = p
       end
 
+      opts.on('-s', '--[no-]strict', 'Treats warnings as errors') do |s|
+        options.strict = s
+      end
+
       opts.on_tail("-h", "--help", "Show this message") do
         puts opts
         exit
@@ -108,7 +127,7 @@ class OptParser
 
     if options.version =~ /\A(-h|--help)/
       opt_parser.parse!(['-h'])
-    elsif options.version.nil? || options.version.empty?
+    elsif options.version.nil?
       puts 'WARN You did not specifie mandatory version parameter. Here is --help'
       opt_parser.parse!(['-h'])
     end
@@ -122,17 +141,17 @@ class OptParser
 
     opt_parser.parse!(args)
 
-    if options.organization.nil? || options.organization.empty?
+    if options.organization.nil?
       raise OptionParser::InvalidArgument, "Organization needs to be set either in the config file" +
                                             " or as and argument", caller
     end
 
-    if options.repository.nil? || options.repository.empty?
+    if options.repository.nil?
       raise OptionParser::InvalidArgument, "Repository needs to be set either in the config file" +
                                             " or as and argument", caller
     end
 
-    if options.github_url.nil? || options.github_url.empty?
+    if options.github_url.nil?
       options.github_url = "https://api.github.com/repos/#{options.organization}/#{options.repository}"
     elsif options.github_url =~ /\Ahttps:\/\/api.github.com\Z/
       options.github_url = "#{options.github_url}/repos/#{options.organization}/#{options.repository}"
