@@ -17,4 +17,4 @@ menas.mongo.connection.string=mongodb://localhost:27017
 menas.mongo.connection.database=menas
 
 # Timeout (in seconds) for MongoDB migration queries
-migration.mongo.query.timeout.seconds=300
+migrations.mongo.query.timeout.seconds=300

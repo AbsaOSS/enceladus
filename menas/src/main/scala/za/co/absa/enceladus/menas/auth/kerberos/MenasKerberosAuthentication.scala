@@ -42,7 +42,7 @@ class MenasKerberosAuthentication @Autowired()(@Value("${menas.auth.ad.domain:}"
                                                adServer: String,
                                                @Value("${menas.auth.servicename.principal:}")
                                                servicePrincipal: String,
-                                               @Value("${menas.auth.servicename.principal:}")
+                                               @Value("${menas.auth.servicename.keytab.location:}")
                                                keytabLocation: String,
                                                @Value("${menas.auth.ldap.search.base:}")
                                                ldapSearchBase: String,
@@ -57,7 +57,7 @@ class MenasKerberosAuthentication @Autowired()(@Value("${menas.auth.ad.domain:}"
   private lazy val requiredParameters = Seq((adDomain, "menas.auth.ad.domain"),
     (adServer, "menas.auth.ad.server"),
     (servicePrincipal, "menas.auth.servicename.principal"),
-    (keytabLocation, "menas.auth.servicename.principal"),
+    (keytabLocation, "menas.auth.servicename.keytab.location"),
     (ldapSearchBase, "menas.auth.ldap.search.base"),
     (ldapSearchFilter, "menas.auth.ldap.search.filter"))
 
