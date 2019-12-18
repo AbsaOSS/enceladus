@@ -39,7 +39,7 @@ class OptParser
     options = OpenStruct.new
     options.use_zenhub = app_conf[:use_zenhub]
     options.print_empty = app_conf[:print_empty]
-    options.print_only_tile = app_conf[:print_only_tile]
+    options.print_only_title = app_conf[:print_only_title]
     options.organization = app_conf[:organization]
     options.repository = app_conf[:repository]
     options.repository_id = app_conf[:repository_id]
@@ -112,7 +112,7 @@ class OptParser
 
       opts.on('--[no-]print-only-title', 'Should Issue with no release notes comment be ' +
                                          'preceeded with \'Couldn\'t find comment\'') do |p|
-        options.print_only_tile = p
+        options.print_only_title = p
       end
 
       opts.on('-s', '--[no-]strict', 'Treats warnings as errors') do |s|

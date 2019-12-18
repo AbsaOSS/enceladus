@@ -37,7 +37,7 @@ class Issue
 
     if release_notes.nil? || release_notes.empty?
       @release_comment = ''
-      @release_comment << "Couldn't find Release Notes for #{@number} - " unless OptParser.options.print_only_tile
+      @release_comment << "Couldn't find Release Notes for #{@number} - " unless OptParser.options.print_only_title
       @release_comment << "#{@title}"
     else
       @empty = false

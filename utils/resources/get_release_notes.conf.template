@@ -1,7 +1,7 @@
 {
   "use_zenhub" : false,
   "print_empty" : true,
-  "print_only_tile" : true,
+  "print_only_title" : true,
   "organization" : "AbsaOss",
   "repository" : "enceladus",
   "repository_id" : "154513089",
