@@ -52,10 +52,8 @@ table. That means fields not mentioned in the schema won't be in the input. Ther
 automatically - [see bellow](#TODO). Fields are defined in the order they are to be in the output table and have three basic common properties:
 
 - `name` - the field (column) name
-
-- `type` - data type of the field 
-
-- `nullable` (optional) - flag indicating if the data can contain the value *null*, if not specified considered set to *false* 
+- `type` - data type of the field
+- `nullable` (optional) - flag indicating if the data can contain the value *null*, if not specified considered set to *false*
 
 Furthermore, some type can have additional properties. The details of each supported type, their meaning and additional
 properties will be described in the following chapters.
