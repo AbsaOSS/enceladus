@@ -26,7 +26,6 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -89,7 +88,7 @@ object DynamicConformanceJob {
     val performance = initPerformanceMeasurer(pathCfg.stdPath)
 
     // load data for input and mapping tables
-    val inputData = DataSource.getData(pathCfg.stdPath, dateTokens(0), dateTokens(1), dateTokens(2), "")
+    val inputData = spark.read.parquet(pathCfg.stdPath)
 
     try {
       val result = conform(conformance, inputData, enableCF)

@@ -23,7 +23,7 @@ class DatasourceSuite extends FunSuite with SparkTestBase {
 
   test("Data Source loads all data needed for test sample") {
 
-    val inputDf = DataSource.getData(EmployeeConformance.employeeDS.hdfsPath, "2017", "11", "01", "{0}/{1}/{2}")
+    val inputDf = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath, "2017-11-01", "{0}/{1}/{2}")
 
     assert(inputDf.columns.toList.sorted === List("employee_id", "name", "surname", "dept", "role", "country").sorted)
 

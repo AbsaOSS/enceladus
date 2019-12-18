@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
@@ -39,14 +38,11 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
                                               conformance: ConfDataset)
   extends RuleInterpreter {
 
-  private val conf = ConfigFactory.load()
-
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
              (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule (explode-optimized) to conform ${rule.outputColumn}...")
-    val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
     //A fix for cases, where the join condition only uses columns previously created by a literal rule
@@ -54,7 +50,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     spark.conf.set("spark.sql.crossJoin.enabled", "true")
 
     // find the data frame from the mapping table
-    val mapTable = DataSource.getData(mappingTableDef.hdfsPath, progArgs.reportDate, mapPartitioning)
+    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.reportDate)
     val joinConditionStr = getJoinCondition(rule).toString
     val defaultValueOpt = getDefaultValue(mappingTableDef)
 

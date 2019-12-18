@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
+import org.json4s._
+import org.json4s.native.JsonParser._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.atum.model.ControlMeasure
@@ -22,10 +24,8 @@ import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.samples.{ConformedEmployee, EmployeeConformance, TradeConformance}
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-import org.json4s._
-import org.json4s.native.JsonParser._
 import za.co.absa.enceladus.utils.fs.FileReader
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase {
 
@@ -56,7 +56,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     import spark.implicits._
     val mappingTablePattern = "{0}/{1}/{2}"
 
-    val dfs = DataSource.getData(EmployeeConformance.employeeDS.hdfsPath, "2017", "11", "01", mappingTablePattern)
+    val dfs = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath, "2017-11-01", mappingTablePattern)
 
     mockWhen(dao.getDataset("Employee Conformance", 1)) thenReturn EmployeeConformance.employeeDS
     mockWhen(dao.getMappingTable("country", 0)) thenReturn EmployeeConformance.countryMT
@@ -110,7 +110,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     import spark.implicits._
     val mappingTablePattern = "{0}/{1}/{2}"
 
-    val dfs = DataSource.getData(TradeConformance.tradeDS.hdfsPath, "2017", "11", "01", mappingTablePattern)
+    val dfs = DataSource.getDataFrame(TradeConformance.tradeDS.hdfsPath, "2017-11-01", mappingTablePattern)
 
     mockWhen(dao.getDataset("Trade Conformance", 1)) thenReturn TradeConformance.tradeDS
     mockWhen(dao.getMappingTable("country", 0)) thenReturn TradeConformance.countryMT

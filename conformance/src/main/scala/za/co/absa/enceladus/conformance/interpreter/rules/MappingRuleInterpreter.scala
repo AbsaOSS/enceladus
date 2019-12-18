@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.api.java.UDF1
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
@@ -37,8 +36,6 @@ import scala.util.control.NonFatal
 
 case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: ConfDataset) extends RuleInterpreter {
 
-  private val conf = ConfigFactory.load()
-
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
@@ -55,11 +52,10 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     val idField = rule.outputColumn.replace(".", "_") + "_arrayConformanceId"
     val withUniqueId = df.withColumn(idField, monotonically_increasing_id())
 
-    val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
     // find the data frame from the mapping table
-    val mapTable = DataSource.getData(mappingTableDef.hdfsPath, progArgs.reportDate, mapPartitioning)
+    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.reportDate)
 
     // join & perform projection on the target attribute
     val joinConditionStr = MappingRuleInterpreter.getJoinCondition(rule).toString

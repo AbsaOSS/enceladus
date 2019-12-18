@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
@@ -32,19 +31,16 @@ import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conformance: ConfDataset) extends RuleInterpreter {
 
-  private val conf = ConfigFactory.load()
-
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
              (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule to conform ${rule.outputColumn} (broadcast strategy)...")
 
-    val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
     // find the data frame from the mapping table
-    val mapTable = DataSource.getData(mappingTableDef.hdfsPath, progArgs.reportDate, mapPartitioning)
+    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.reportDate)
 
     // join & perform projection on the target attribute
     val joinConditionStr = MappingRuleInterpreter.getJoinCondition(rule).toString

@@ -18,16 +18,16 @@ package za.co.absa.enceladus.conformance.interpreter.fixtures
 import java.io.File
 
 import org.apache.commons.io.{FileUtils, IOUtils}
-import org.slf4j.{Logger, LoggerFactory}
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, SaveMode}
+import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, Suite}
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import org.mockito.Mockito.{mock, when => mockWhen}
 
 import scala.util.control.NonFatal
 
@@ -178,7 +178,7 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
   }
 
   private def prepareDataFrame(): Unit = {
-    standardizedDf = DataSource.getData(nestedStructsDS.hdfsPath, "2017", "11", "01", mappingTablePattern)
+    standardizedDf = DataSource.getDataFrame(nestedStructsDS.hdfsPath, "2017-11-01", mappingTablePattern)
   }
 
   private def prepareDao(): Unit = {
