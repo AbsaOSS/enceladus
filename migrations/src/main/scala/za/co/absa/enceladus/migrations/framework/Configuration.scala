@@ -23,7 +23,7 @@ object Configuration {
   /**
     * A configuration key for setting up MongoDB query timeouts.
     */
-  private val migrationQueryTimeoutSecondsKey = "za.co.absa.enceladus.migration.mongo.query.timeout.seconds"
+  private val migrationQueryTimeoutSecondsKey = "migration.mongo.query.timeout.seconds"
 
   /**
     * The name of the collection that keeps the latest usable database schema version.

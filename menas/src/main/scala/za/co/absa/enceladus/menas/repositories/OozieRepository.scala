@@ -136,13 +136,13 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   }
 
   private def validateProperties(logWarnings: Boolean = false): Boolean = {
-    Seq((oozieScheduleHDFSPath, "za.co.absa.enceladus.menas.oozie.schedule.hdfs.path"),
-      (enceladusJarLocation, "zza.co.absa.enceladus.menas.oozie.enceladusJarLocation"),
-      (standardizationJarPath, "za.co.absa.enceladus.menas.oozie.mavenStandardizationJarLocation"),
-      (conformanceJarPath, "za.co.absa.enceladus.menas.oozie.mavenConformanceJarLocation"),
-      (mavenRepoLocation, "za.co.absa.enceladus.menas.oozie.mavenRepoLocation"),
-      (menasApiURL, "za.co.absa.enceladus.menas.oozie.menasApiURL"),
-      (splineMongoURL, "za.co.absa.enceladus.menas.oozie.splineMongoURL")).map(p => validateProperty(p._1, p._2, logWarnings)).reduce(_ && _)
+    Seq((oozieScheduleHDFSPath, "menas.oozie.schedule.hdfs.path"),
+      (enceladusJarLocation, "menas.oozie.enceladusJarLocation"),
+      (standardizationJarPath, "menas.oozie.mavenStandardizationJarLocation"),
+      (conformanceJarPath, "menas.oozie.mavenConformanceJarLocation"),
+      (mavenRepoLocation, "menas.oozie.mavenRepoLocation"),
+      (menasApiURL, "menas.oozie.menasApiURL"),
+      (splineMongoURL, "menas.oozie.splineMongoURL")).map(p => validateProperty(p._1, p._2, logWarnings)).reduce(_ && _)
   }
 
   private def validateProperty(prop: String, propName: String, logWarnings: Boolean = false): Boolean = {
