@@ -17,7 +17,6 @@ class Release
   def post_init
     get_issues
     open_issues = @issues.select { |issue| issue.state == 'open' }
-    p open_issues
     if OptParser.options.strict && open_issues.size > 0
       raise StandardError, "Release has open issues #{open_issues.map(&:number)}", caller
     end

@@ -18,10 +18,7 @@ class OptParser
   ROOT_PATH = "#{File.expand_path('../..', __dir__)}"
   GIT_PATH = "#{ROOT_PATH}/.git"
 
-  if File.exist?(GIT_PATH)
-    require 'bundler/inline'
-    gemfile { source 'https://rubygems.org'; gem 'git' }
-  end
+  require 'git' if File.exist?(GIT_PATH)
 
   def self.options
     @@options
