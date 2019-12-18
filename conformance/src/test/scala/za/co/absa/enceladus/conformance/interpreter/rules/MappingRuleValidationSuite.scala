@@ -26,9 +26,9 @@ class MappingRuleValidationSuite extends FunSuite with SparkTestBase {
 
   test("Mapping rule fields existence validation test") {
 
-    val df = DataSource.getData(EmployeeConformance.employeeDS.hdfsPath, "2017", "11", "01", "{0}/{1}/{2}")
+    val df = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath, "2017-11-01", "{0}/{1}/{2}")
     val mappingTable = EmployeeConformance.countryMT
-    val mapTable = DataSource.getData(mappingTable.hdfsPath, "2017", "11", "01", "reportDate={0}-{1}-{2}")
+    val mapTable = DataSource.getDataFrame(mappingTable.hdfsPath, "2017-11-01", "reportDate={0}-{1}-{2}")
 
     val rule1 = new MappingConformanceRule(order = 0, mappingTable = "country", controlCheckpoint = false,
       mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"), targetAttribute = "country_name", outputColumn =

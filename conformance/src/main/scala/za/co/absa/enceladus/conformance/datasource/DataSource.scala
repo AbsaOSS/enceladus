@@ -15,61 +15,63 @@
 
 package za.co.absa.enceladus.conformance.datasource
 
-import java.text.MessageFormat
-
-import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.{AnalysisException, DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.sql._
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable.HashMap
+import scala.collection.mutable
 import scala.util.control.NonFatal
 
 /**
- * Utility object to provide access to data in HDFS (including partitioning and caching)
- */
+  * Utility object to provide access to data in HDFS (including partitioning and caching)
+  */
 object DataSource {
   private val log = LoggerFactory.getLogger("enceladus.conformance.DataSource")
-  private val dfs = HashMap[String, Dataset[Row]]()
+  private val dfs = mutable.HashMap[String, Dataset[Row]]()
 
   /**
-   * Get loaded dataframe or load data given the report date and partitioning pattern
-   *
-   * @param path The base path in HDFS of the data
-   * @param reportYear String representing the year in `yyyy` format
-   * @param reportMonth String representing the month in `MM` format
-   * @param reportDay String representing the day in `dd` format
-   * @param partitioningPattern Pattern representing the date partitioning where {0} stands for year, {1} for month, {2} for day
-   * @return Dataframe with the required data (cached if requested more than once)
-   */
-  def getData(path: String,
-              reportYear: String,
-              reportMonth: String,
-              reportDay: String,
-              partitioningPattern: String)
-             (implicit spark: SparkSession): Dataset[Row] = {
+    * Get loaded dataframe or load data given the report date.
+    * The partitioning pattern is determined by the current configuration.
+    *
+    * @param path       The base path in HDFS of the data
+    * @param reportDate A string representing a report date in `yyyy-mm-dd` format
+    * @return Dataframe with the required data (cached if requested more than once)
+    */
+  def getDataFrame(path: String,
+                   reportDate: String)
+                  (implicit spark: SparkSession): Dataset[Row] = {
+    getDataFrame(path, reportDate, PartitioningUtils.mappingTablePattern)
+  }
+
+
+  /**
+    * Get loaded dataframe or load data given the report date and partitioning pattern.
+    *
+    * @param path                The base path in HDFS of the data
+    * @param reportDate          A string representing a report date in `yyyy-mm-dd` format
+    * @param partitioningPattern Pattern representing the date partitioning where {0} stands for year, {1} for month, {2} for day
+    * @return Dataframe with the required data (cached if requested more than once)
+    */
+  def getDataFrame(path: String,
+                   reportDate: String,
+                   partitioningPattern: String)
+                  (implicit spark: SparkSession): Dataset[Row] = {
     if (dfs.contains(path)) {
       dfs(path)
     } else {
-      val subPath = MessageFormat.format(partitioningPattern, reportYear, reportMonth, reportDay)
-      val fillPath = if (subPath.isEmpty) new Path(path).toUri.toString else new Path(path, subPath).toUri.toString
-      log.info(s"Mapping table used: $fillPath")
-      val df = loadMappingTable(fillPath)
+      val fullPath = PartitioningUtils.getPartitionedPathName(path, reportDate, partitioningPattern)
+      log.info(s"Use partitioned path for: '$path' -> '$fullPath'")
+      val df = loadDataFrame(fullPath)
       dfs += (path -> df)
       df
     }
-  }
-
-  def getData(path: String, reportDate: String, partitioningPattern: String)(implicit spark: SparkSession): Dataset[Row] = {
-    val dateTokens = reportDate.split("-")
-    getData(path, dateTokens(0), dateTokens(1), dateTokens(2), partitioningPattern)
   }
 
   private[conformance] def setData(path: String, data: Dataset[Row]) {
     dfs += (path -> data)
   }
 
-  private def loadMappingTable(path: String)
-                              (implicit spark: SparkSession): DataFrame = {
+  private def loadDataFrame(path: String)
+                           (implicit spark: SparkSession): DataFrame = {
     try {
       spark.read.parquet(path)
     } catch {
