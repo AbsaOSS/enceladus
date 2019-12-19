@@ -23,9 +23,9 @@ import org.springframework.stereotype.Component
 
 @Component
 class InMemoryMenasAuthentication extends MenasAuthentication {
-  @Value("${za.co.absa.enceladus.menas.auth.inmemory.user:}")
+  @Value("${menas.auth.inmemory.user:}")
   private val username: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.inmemory.password:}")
+  @Value("${menas.auth.inmemory.password:}")
   private val password: String = ""
 
   protected val passwordEncoder = new BCryptPasswordEncoder()

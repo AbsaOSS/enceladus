@@ -41,9 +41,9 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   @LocalServerPort
   private val port = 0
 
-  @Value("${za.co.absa.enceladus.menas.auth.inmemory.user}")
+  @Value("${menas.auth.inmemory.user}")
   val user: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.inmemory.password}")
+  @Value("${menas.auth.inmemory.password}")
   val passwd: String = ""
 
   private lazy val baseUrl = s"http://localhost:$port/api"

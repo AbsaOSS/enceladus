@@ -46,7 +46,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   import scala.concurrent.ExecutionContext.Implicits.global
   import za.co.absa.enceladus.menas.models.Validation._
 
-  @Value("${za.co.absa.enceladus.spline.urlTemplate}")
+  @Value("${spline.urlTemplate}")
   val splineUrlTemplate: String = ""
 
   def getAllLatest(): Future[Seq[Run]] = {

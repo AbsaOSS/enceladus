@@ -23,7 +23,7 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 @Configuration
 class SparkConfig {
 
-  @Value("${za.co.absa.enceladus.menas.spark.master}")
+  @Value("${menas.spark.master}")
   val master: String = ""
 
   @Bean
