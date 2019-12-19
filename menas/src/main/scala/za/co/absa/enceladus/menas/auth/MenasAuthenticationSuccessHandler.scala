@@ -31,7 +31,7 @@ import scala.collection.JavaConverters._
 
 @Component
 class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
-                                                     @Value("${za.co.absa.enceladus.menas.auth.jwt.lifespan.hours}")
+                                                     @Value("${menas.auth.jwt.lifespan.hours}")
                                                      jwtLifespanHours: Int,
                                                      @Value("${timezone}")
                                                      timezone: String)

@@ -33,9 +33,9 @@ import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication
 @EnableWebSecurity
 class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
                                      jwtAuthFilter: JwtAuthenticationFilter,
-                                     @Value("${za.co.absa.enceladus.menas.auth.mechanism:}")
+                                     @Value("${menas.auth.mechanism:}")
                                      authMechanism: String,
-                                     @Value("${za.co.absa.enceladus.menas.version}")
+                                     @Value("${menas.version}")
                                      menasVersion: String) {
 
   private val logger = LoggerFactory.getLogger(this.getClass)

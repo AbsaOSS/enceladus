@@ -37,7 +37,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   private[menas] override def collectionBaseName: String = MonitoringMongoRepository.collectionBaseName
 
-  @Value("${za.co.absa.enceladus.menas.monitoring.fetch.limit}")
+  @Value("${menas.monitoring.fetch.limit}")
   private val fetchLimit: Integer = null // scalastyle:ignore null
 
 
