@@ -149,7 +149,7 @@ object DynamicInterpreter {
           case Some(arrayColumn) =>
             new ArrayExplodeInterpreter(arrayColumn) :: (interpreters :+ new ArrayCollapseInterpreter())
           case None              =>
-            throw new IllegalStateException("Unexpectedly unable to find a common array between fields: " +
+            throw new IllegalStateException("Unable to find a common array between fields: " +
               rules.map(_.outputColumn).mkString(", "))
         }
       } else {
