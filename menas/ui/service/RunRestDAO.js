@@ -19,4 +19,32 @@ class RunRestDAO {
     return RestClient.getSync(`api/runs/splineUrlTemplate`)
   }
 
+  getAllRunSummaries() {
+    return RestClient.get("api/runs/summaries")
+  }
+
+  getRunsGroupedByDatasetName() {
+    return RestClient.get("api/runs/grouped")
+  }
+
+  getRunsGroupedByDatasetVersion(datasetName) {
+    return RestClient.get(`api/runs/grouped/${encodeURI(datasetName)}`)
+  }
+
+  getRunSummariesByDatasetNameAndVersion(datasetName, datasetVersion) {
+    return RestClient.get(`api/runs/${encodeURI(datasetName)}/${encodeURI(datasetVersion)}`)
+  }
+
+  getRun(datasetName, datasetVersion, runId) {
+    return RestClient.get(`api/runs/${encodeURI(datasetName)}/${encodeURI(datasetVersion)}/${encodeURI(runId)}`)
+  }
+
+  getLatestRun(datasetName, datasetVersion){
+    return RestClient.get(`api/runs/${encodeURI(datasetName)}/${encodeURI(datasetVersion)}/latestrun`)
+  }
+
+  getLatestRunOfLatestVersion(datasetName){
+    return RestClient.get(`api/runs/${encodeURI(datasetName)}/latestrun`)
+  }
+
 }

@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation._
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.model.{Run, SplineReference}
-import za.co.absa.enceladus.menas.models.RunSummary
+import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
 import za.co.absa.enceladus.menas.services.RunService
 
 @RestController
@@ -58,6 +58,18 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   @ResponseStatus(HttpStatus.OK)
   def getSummariesByDatasetName(@PathVariable datasetName: String): CompletableFuture[Seq[RunSummary]] = {
     runService.getSummariesByDatasetName(datasetName)
+  }
+
+  @GetMapping(Array("/grouped"))
+  @ResponseStatus(HttpStatus.OK)
+  def getRunSummariesPerDatasetName(): CompletableFuture[Seq[RunDatasetNameGroupedSummary]] = {
+    runService.getRunSummariesPerDatasetName()
+  }
+
+  @GetMapping(Array("/grouped/{datasetName}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getRunSummariesPerDatasetVersion(@PathVariable datasetName: String): CompletableFuture[Seq[RunDatasetVersionGroupedSummary]] = {
+    runService.getRunSummariesPerDatasetVersion(datasetName)
   }
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}"))

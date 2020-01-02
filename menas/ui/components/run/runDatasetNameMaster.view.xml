@@ -14,27 +14,27 @@
   -->
 
 <core:View id="runMasterView" xmlns:core="sap.ui.core" xmlns="sap.m"
-           controllerName="components.run.runMaster"
+           controllerName="components.run.runDatasetNameMaster"
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <Page id="masterPage" title="{dataset>/name}(v{dataset>/version}) Runs" showNavButton="true" navButtonPress="onPressMasterBack">
+    <Page id="masterPage" title="Dataset Runs" showNavButton="true" navButtonPress="onPressMasterBack">
         <content>
-            <List items="{runs>/}"
+            <List items="{datasets>/}"
                   mode="SingleSelectMaster"
-                  selectionChange="runSelected"
+                  selectionChange="nameSelected"
                   growing="true"
-                  noDataText="No Runs">
-                <StandardListItem title="Run {runs>runId}"
-                                  description="{
-                                                    path: 'runs>startDateTime',
+                  noDataText="No Datasets">
+                <StandardListItem title="{datasets>datasetName} ({datasets>numberOfRuns} runs)"
+                                  description="latest run: {
+                                                    path: 'datasets>latestRunStartDateTime',
                                                     type: 'sap.ui.model.type.DateTime',
                                                     formatOptions: {
                                                         source: {
                                                             pattern: 'dd-MM-yyyy HH:mm:ss ZZZ'
                                                         }
                                                     }
-                                                }: {runs>status}"
-                                  cust:dataset="{runs>datasetName}" cust:version="{runs>datasetVersion}"
-                                  cust:runId="{runs>runId}" type="Active">
+                                                }"
+                                  type="Active"
+                                  cust:name="{datasets>datasetName}">
                 </StandardListItem>
             </List>
         </content>

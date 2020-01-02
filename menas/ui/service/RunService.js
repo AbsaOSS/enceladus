@@ -17,74 +17,74 @@ jQuery.sap.require("sap.m.MessageBox");
 
 var RunService = new function () {
 
-  this.getRuns = function (oMasterPage) {
-    Functions.ajax("api/runs/summaries", "GET", {},
-      oData => {
-        this._bindRunSummaries(oData, oMasterPage);
-      },
-      () => {
-        sap.m.MessageBox
-          .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
-      })
+  this.getRunsGroupedByDatasetName = function (oMasterPage) {
+    new RunRestDAO().getRunsGroupedByDatasetName()
+      .then(oData => oMasterPage.setModel(new sap.ui.model.json.JSONModel(oData), "datasets"))
+      .fail(() => sap.m.MessageBox
+        .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
+      )
   };
 
-  this.getFirstRun = function(oControl, oTable) {
-    Functions.ajax("api/runs/summaries", "GET", {},
-      oData => {
+  this.getRunsGroupedByDatasetVersion = function (oMasterPage, datasetName) {
+    new RunRestDAO().getRunsGroupedByDatasetVersion(datasetName)
+      .then(oData => oMasterPage.setModel(new sap.ui.model.json.JSONModel(oData), "datasetVersions"))
+      .fail(() => sap.m.MessageBox
+        .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
+      )
+  };
+
+  this.getRunsByDatasetNameAndVersion = function (oMasterPage, datasetName, datasetVersion) {
+    new RunRestDAO().getRunSummariesByDatasetNameAndVersion(datasetName, datasetVersion)
+      .then(oData => this._bindRunSummaries(oData, oMasterPage))
+      .fail(() => sap.m.MessageBox
+        .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
+      )
+  };
+
+  this.getFirstRun = function (oControl, oTable) {
+    new RunRestDAO().getAllRunSummaries()
+      .then(oData => {
         if (oData.length > 0 && oControl) {
           let firstDataset = oData[0];
           this.getRun(oControl, oTable, firstDataset.datasetName, firstDataset.datasetVersion, firstDataset.runId)
         }
-      },
-      () => {
-        sap.m.MessageBox
-          .error("Failed to get any run. Please wait a moment and try reloading the application")
       })
+      .fail(() => sap.m.MessageBox
+        .error("Failed to get any run. Please wait a moment and try reloading the application")
+      )
   };
 
   this.getDatasetRuns = function (oControl, sDatasetName, sDatasetVersion) {
-    Functions.ajax("api/runs/" + encodeURI(sDatasetName) + "/" + encodeURI(sDatasetVersion), "GET", {},
-      oData => {
-        this._bindRunSummaries(oData, oControl);
-      },
-      () => {
-        sap.m.MessageBox
-          .error("Failed to get the list of runs for '" + sDatasetName + " (v" + sDatasetVersion +
-            ")'. Please wait a moment and try reloading the application")
-      })
+    new RunRestDAO().getRunSummariesByDatasetNameAndVersion(sDatasetName, sDatasetVersion)
+      .then(oData => this._bindRunSummaries(oData, oControl))
+      .fail(() => sap.m.MessageBox
+        .error(`Failed to get the list of runs for '${sDatasetName}(v${sDatasetVersion})'.` +
+          "Please wait a moment and try reloading the application")
+      )
   };
 
   this.getRun = function (oControl, oTable, sDatasetName, sDatasetVersion, sRunId) {
-    Functions.ajax("api/runs/" + encodeURI(sDatasetName) + "/" + encodeURI(sDatasetVersion) + "/" + encodeURI(sRunId), "GET", {},
-      oData => {
-        this.setCurrentRun(oControl, oTable, oData);
-      },
-      () => {
-        sap.m.MessageBox
-          .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
-      })
+    new RunRestDAO().getRun(sDatasetName, sDatasetVersion, sRunId)
+      .then(oData => this.setCurrentRun(oControl, oTable, oData))
+      .fail(() => sap.m.MessageBox
+        .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
+      )
   };
 
   this.getLatestRun = function (oControl, oTable, sDatasetName, sDatasetVersion) {
-    Functions.ajax("api/runs/" + encodeURI(sDatasetName) + "/" + encodeURI(sDatasetVersion) + "/latestrun", "GET", {},
-      oData => {
-        this.setCurrentRun(oControl, oTable, oData);
-      },
-      () => {
-        sap.m.MessageBox
-          .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
-      })
+    new RunRestDAO().getLatestRun(sDatasetName, sDatasetVersion)
+      .then(oData => this.setCurrentRun(oControl, oTable, oData))
+      .fail(() => sap.m.MessageBox
+        .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
+      )
   };
 
   this.getLatestRunForLatestVersion = function (oControl, oTable, datasetName) {
-    Functions.ajax("api/runs/" + encodeURI(datasetName) + "/latestrun", "GET", {},
-      oData => {
-        this.setCurrentRun(oControl, oTable, oData);
-      },
-      () => {
-        sap.m.MessageBox
-          .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
-      })
+    new RunRestDAO().getLatestRunOfLatestVersion(datasetName)
+      .then(oData => this.setCurrentRun(oControl, oTable, oData))
+      .fail(() => sap.m.MessageBox
+        .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
+      )
   };
 
   this.setCurrentRun = function (oControl, oTable, oRun) {
@@ -99,7 +99,7 @@ var RunService = new function () {
     this._updateLineageIframeSrc(oRun.splineUrl)
   };
 
-  this._bindRunSummaries = function(oRunSummaries, oControl) {
+  this._bindRunSummaries = function (oRunSummaries, oControl) {
     oRunSummaries.forEach(run => {
       run.status = Formatters.statusToPrettyString(run.status)
     });
@@ -107,9 +107,11 @@ var RunService = new function () {
     oControl.setModel(new sap.ui.model.json.JSONModel(oRunSummaries), "runs");
   };
 
-  this._nameExists = function(aCheckpoints, sName) {
-    const aRes = aCheckpoints.find((el) => {return el.name === sName})
-    return typeof(aRes) !== "undefined";
+  this._nameExists = function (aCheckpoints, sName) {
+    const aRes = aCheckpoints.find((el) => {
+      return el.name === sName
+    })
+    return typeof (aRes) !== "undefined";
   }
 
   this._preprocessRun = function (oRun, aCheckpoints) {
@@ -125,13 +127,13 @@ var RunService = new function () {
     oRun.cfmTime = this._getTimeSummary(aCheckpoints, "Conformance - Start", "Conformance - End");
   };
 
-  this._buildSplineUrl = function(outputPath, applicationId) {
+  this._buildSplineUrl = function (outputPath, applicationId) {
     return this._getSplineUrlTemplate()
       .replace("%s", outputPath)
       .replace("%s", applicationId)
   };
 
-  this._getSplineUrlTemplate = function() {
+  this._getSplineUrlTemplate = function () {
     if (!this.splineUrlTemplate) {
       const runRestDAO = new RunRestDAO();
       runRestDAO.getSplineUrlTemplate()

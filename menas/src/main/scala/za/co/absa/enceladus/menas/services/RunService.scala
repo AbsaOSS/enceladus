@@ -16,24 +16,32 @@
 package za.co.absa.enceladus.menas.services
 
 import java.util.UUID
+import java.util.concurrent.CompletableFuture
 
 import com.mongodb.MongoWriteException
 import org.joda.time.format.DateTimeFormat
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
-import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.menas.exceptions.{NotFoundException, ValidationException}
-import za.co.absa.enceladus.menas.models.{RunSummary, Validation}
+import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary, TodaysRunsStatistics, Validation}
 import za.co.absa.enceladus.menas.repositories.RunMongoRepository
+import za.co.absa.enceladus.model.{Run, SplineReference}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
-import za.co.absa.enceladus.menas.models.TodaysRunsStatistics
 
 @Service
 class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   extends ModelService(runMongoRepository) {
+
+  def getRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
+    runMongoRepository.getRunSummariesPerDatasetName()
+  }
+
+  def getRunSummariesPerDatasetVersion(datasetName: String): Future[Seq[RunDatasetVersionGroupedSummary]] = {
+    runMongoRepository.getRunSummariesPerDatasetVersion(datasetName)
+  }
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import za.co.absa.enceladus.menas.models.Validation._
