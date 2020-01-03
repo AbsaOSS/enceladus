@@ -96,7 +96,7 @@ var RunService = new function () {
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun), "run");
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun.controlMeasure.metadata), "metadata");
     //the core:HTML data binding doesn't update properly for iframe for some reason, we try to update manually therefore
-    this._updateLineageIframeSrc(oRun.splineUrl)
+    this._updateLineageIframeSrc(oRun.lineageUrl)
   };
 
   this._bindRunSummaries = function(oRunSummaries, oControl) {
@@ -117,7 +117,7 @@ var RunService = new function () {
     oRun.controlMeasure.metadata.additionalInfo = this._mapAdditionalInfo(info);
 
     oRun.status = Formatters.statusToPrettyString(oRun.runStatus.status);
-    oRun.splineUrl = this._buildSplineUrl(oRun.splineRef.outputPath, oRun.splineRef.sparkApplicationId);
+    oRun.lineageUrl = this._buildLineageUrl(oRun.splineRef.outputPath, oRun.splineRef.sparkApplicationId);
 
     const sStdName = this._nameExists(aCheckpoints, "Standardization Finish") ? "Standardization Finish" : "Standardization - End";
 
@@ -125,19 +125,30 @@ var RunService = new function () {
     oRun.cfmTime = this._getTimeSummary(aCheckpoints, "Conformance - Start", "Conformance - End");
   };
 
-  this._buildSplineUrl = function(outputPath, applicationId) {
-    return this._getSplineUrlTemplate()
-      .replace("%s", outputPath)
-      .replace("%s", applicationId)
-  };
+  this._buildLineageUrl = function(outputPath, applicationId) {
+    //const urlTemplate = "//localhost:8080/spline-ui/app/lineage-overview?executionEventId=%s"; //TODO unused after #1115 or #1116
+    //const urlTemplate = "//localhost:8080/menas/lineage/app/lineage-overview?executionEventId=%s";
+    //const urlTemplate = "lineage/app/lineage-overview?executionEventId=%s";
+    const urlTemplate = sap.ui.getCore().getModel().getProperty("/lineageService");
+    if (urlTemplate) {
+      const runRestDAO = new RunRestDAO(sap.ui.getCore().getModel().getProperty("/lineageExecutionIdApiTemplate"));
+      const lineageIdInfo = runRestDAO.getLineageId(outputPath, applicationId);
 
-  this._getSplineUrlTemplate = function() {
-    if (!this.splineUrlTemplate) {
-      const runRestDAO = new RunRestDAO();
-      runRestDAO.getSplineUrlTemplate()
-        .then(urlTemplate => this.splineUrlTemplate = urlTemplate)
+      if (lineageIdInfo.totalCount === 1) {
+        return urlTemplate.replace("%s", lineageIdInfo.executionEventId);
+      } else {
+        var errorMessage = "";
+        if (!lineageIdInfo.totalCount) {
+          errorMessage = "No lineage found";
+        } else {
+          errorMessage = "Multiple lineage records found";
+        }
+        sap.m.MessageBox.error(errorMessage);
+        return "";
+      }
+    } else {
+      return "";
     }
-    return this.splineUrlTemplate
   };
 
   this._mapAdditionalInfo = function (info) {
