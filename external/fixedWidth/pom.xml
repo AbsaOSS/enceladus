@@ -21,7 +21,7 @@
     <parent>
         <artifactId>enceladus-parent</artifactId>
         <groupId>za.co.absa</groupId>
-        <version>1.6.2</version>
+        <version>1.6.3</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
