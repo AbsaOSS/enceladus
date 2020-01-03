@@ -220,4 +220,12 @@ class ConfigRestClient {
   static getEnvironmentName() {
     return RestClient.get(`api/configuration/environment`)
   }
+
+  static getLineageExecutionIdApiTemplate() {
+    return RestClient.get(`api/configuration/lineageExecutionIdApiTemplate`)
+  }
+
+  static getLineageService() {
+    return RestClient.get(`api/configuration/lineageService`)
+  }
 }

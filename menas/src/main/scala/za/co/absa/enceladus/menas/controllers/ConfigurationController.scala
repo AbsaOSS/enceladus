@@ -15,17 +15,31 @@
 
 package za.co.absa.enceladus.menas.controllers
 
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.web.bind.annotation.{GetMapping, RequestMapping, RestController}
+import za.co.absa.enceladus.menas.LineageConfig
 
 @RestController
 @RequestMapping(Array("/api/configuration"))
 class ConfigurationController extends BaseController {
   @Value("${menas.environment}")
-  val menasEnvironment: String = ""
+  private val menasEnvironment: String = ""
+
+  @Value("${lineageService}")
+  private val lineageService: String = ""
 
   @GetMapping(path = Array("/environment"))
   def getEnvironment(): String = {
     menasEnvironment
+  }
+
+  @GetMapping(path = Array("/lineageExecutionIdApiTemplate"))
+  def getLineageExecutionIdApiTemplate(): String = {
+    LineageConfig.executionIdApiTemplate.getOrElse("")
+  }
+
+  @GetMapping(path = Array("/lineageService"))
+  def getLineageService(): String = {
+    lineageService
   }
 }
