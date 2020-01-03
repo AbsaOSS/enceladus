@@ -18,9 +18,8 @@
 # Uncomment the following lines to override corresponding Hadoop environment configuration properties.
 #
 #
-# Spline mode (default is BEST_EFFORT)
+# Spline mode, possible values: DISABLED|REQUIRED|BEST_EFFORT (default is BEST_EFFORT)
+spline.mode=BEST_EFFORT
 #
-# spline.mode=DISABLED|REQUIRED|BEST_EFFORT
 #
-#
-# spline.producer.url=http://localhost:8080/spline
+spline.producer.url=http://localhost:8080/spline/producer
