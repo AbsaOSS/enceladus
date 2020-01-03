@@ -26,6 +26,9 @@ spring.resources.chain.strategy.fixed.enabled=true
 spring.resources.chain.strategy.fixed.paths=/components/**,/css/**,/generic/**,/service/**
 spring.resources.chain.strategy.fixed.version=@project.version@
 
+# Disable second security filter chain passes for ASYNC requests
+spring.security.filter.dispatcher-types=REQUEST,ERROR
+
 # Generate your own secret, must be be at least 256-bit
 za.co.absa.enceladus.menas.auth.jwt.secret=u7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+KbPeShVmYq3t6w9z$C&E)H@McQfTjWn
 za.co.absa.enceladus.menas.auth.jwt.lifespan.hours=8
