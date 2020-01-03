@@ -102,8 +102,8 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   @Value("${menas.oozie.menasApiURL:}")
   val menasApiURL: String = ""
 
-  @Value("${menas.oozie.splineMongoURL:}")
-  val splineMongoURL: String = ""
+  @Value("${menas.oozie.lineageWriteApiUrl:}")
+  val lineageWriteApiUrl: String = ""
 
   @Value("${menas.oozie.sparkConf.surroundingQuoteChar:}")
   val sparkConfQuotes: String = ""
@@ -142,7 +142,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       (conformanceJarPath, "menas.oozie.mavenConformanceJarLocation"),
       (mavenRepoLocation, "menas.oozie.mavenRepoLocation"),
       (menasApiURL, "menas.oozie.menasApiURL"),
-      (splineMongoURL, "menas.oozie.splineMongoURL")).map(p => validateProperty(p._1, p._2, logWarnings)).reduce(_ && _)
+      (lineageWriteApiUrl, "menas.oozie.lineageWriteApiUrl")).map(p => validateProperty(p._1, p._2, logWarnings)).reduce(_ && _)
   }
 
   private def validateProperty(prop: String, propName: String, logWarnings: Boolean = false): Boolean = {
@@ -354,7 +354,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       .replaceAllLiterally("$sharelibForSpark", shareLibConfig)
       .replaceAllLiterally("$nameNode", namenode)
       .replaceAllLiterally("$menasRestURI", menasApiURL)
-      .replaceAllLiterally("$splineMongoURL", splineMongoURL)
+      .replaceAllLiterally("$lineageWriteApiUrl", lineageWriteApiUrl)
       .replaceAllLiterally("$stdNumExecutors", runtimeParams.stdNumExecutors.toString)
       .replaceAllLiterally("$stdExecutorMemory", s"${runtimeParams.stdExecutorMemory}g")
       .replaceAllLiterally("$confNumExecutors", runtimeParams.confNumExecutors.toString)
