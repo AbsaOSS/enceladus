@@ -20,9 +20,10 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
+import java.util
 import java.util.Date
 import java.util.HashMap
-import java.util.{ Map => JavaMap }
+import java.util.{Map => JavaMap}
 import java.util.Properties
 import java.util.TimeZone
 import java.util.concurrent.Callable
@@ -31,7 +32,6 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
@@ -44,11 +44,10 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Repository
-
 import OozieRepository.dateFormat
 import javax.security.auth.kerberos.KerberosPrincipal
 import javax.security.auth.kerberos.KeyTab
-import sun.security.krb5.{ Config => Krb5Config }
+import sun.security.krb5.{Config => Krb5Config}
 import sun.security.krb5.KrbAsReqBuilder
 import sun.security.krb5.PrincipalName
 import sun.security.krb5.internal.KDCOptions
@@ -105,6 +104,9 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   @Value("${menas.oozie.lineageWriteApiUrl:}")
   val lineageWriteApiUrl: String = ""
 
+  @Value("${menas.oozie.spline.mode:}")
+  val splineMode: String = ""
+
   @Value("${menas.oozie.sparkConf.surroundingQuoteChar:}")
   val sparkConfQuotes: String = ""
 
@@ -118,7 +120,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   val krb5conf: String = ""
 
   @Value("#{${menas.oozie.extraSparkConfigs:{'spark.ui.enabled': 'true'}}}")
-  val sparkExtraConfigs: JavaMap[String, String] = new HashMap[String, String]()
+  val sparkExtraConfigs: JavaMap[String, String] = new util.HashMap[String, String]()
 
   private val classLoader = Thread.currentThread().getContextClassLoader
   private val workflowTemplate = getTemplateFile("scheduling/oozie/workflow_template.xml")
@@ -168,7 +170,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
         case _ => logger.info(s"Standardization jar loaded to $hdfsStdPath")
       }
       resFutureStd.onFailure {
-        case err: Throwable =>
+        case _: Throwable =>
           hadoopFS.delete(hdfsStdPath, true)
       }
 
@@ -177,7 +179,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
         case _ => logger.info(s"Conformance jar loaded to $hdfsConfPath")
       }
       resFutureConf.onFailure {
-        case err: Throwable =>
+        case _: Throwable =>
           hadoopFS.delete(hdfsConfPath, true)
       }
 
@@ -224,8 +226,10 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   /**
    * This is a helper function for impersonating oozie calls using the proper proxy user if configured
    *
-   * @param user User to impersonate
-   * @fn Oozie action to perform - Important to note that this should be Oozie action only (only wrap the call to oozieclient)
+   * @param  user User to impersonate
+   * @param  fn Oozie action to perform - Important to note that this should be Oozie action only (only wrap the call to oozieclient)
+   * @tparam T  The action result type
+   * @return result of the provided action
    */
   private def impersonateWrapper[T](user: String)(fn: () => T) = {
     if (oozieProxyUser.isEmpty || oozieProxyUserKeytab.isEmpty) {
@@ -241,18 +245,18 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       logger.info(s"impersonateWrapper Creating credentials cache.")
       val cache = CredentialsCache.create(principal)
 
-      logger.info(s"impersonateWrapper Reading keytab file ${oozieProxyUserKeytab}")
+      logger.info(s"impersonateWrapper Reading keytab file $oozieProxyUserKeytab")
       val kt = KeyTab.getInstance(new KerberosPrincipal(oozieProxyUser), new java.io.File(oozieProxyUserKeytab))
-      val builder = new KrbAsReqBuilder(principal, kt);
-      val opt = new KDCOptions();
+      val builder = new KrbAsReqBuilder(principal, kt)
+      val opt = new KDCOptions()
       opt.set(KDCOptions.RENEWABLE, true)
       builder.setOptions(opt)
 
       val realm = Krb5Config.getInstance.getDefaultRealm
-      logger.info(s"impersonateWrapper Using realm ${realm}")
+      logger.info(s"impersonateWrapper Using realm $realm")
 
       val serviceName = PrincipalName.tgsService(realm, realm)
-      logger.info(s"impersonateWrapper Target ${serviceName}")
+      logger.info(s"impersonateWrapper Target $serviceName")
       builder.setTarget(serviceName)
 
       logger.info(s"impersonateWrapper Logging in")
@@ -261,13 +265,13 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       val creds = builder.getCCreds
       builder.destroy()
 
-      logger.info(s"impersonateWrapper Updating ticket cache ${cache.toString()}")
+      logger.info(s"impersonateWrapper Updating ticket cache ${cache.toString}")
       cache.update(creds)
       cache.save()
 
       OozieClient.doAs(user, new Callable[T] {
         override def call(): T = {
-          logger.info(s"impersonateWrapper using Oozie impersonation, doAs(${user})")
+          logger.info(s"impersonateWrapper using Oozie impersonation, doAs($user)")
           //call the user-specified function
           fn()
         }
@@ -328,7 +332,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    */
   private def getWorkflowFromTemplate(ds: Dataset): Array[Byte] = {
     //Here libpath takes precedence over sharelib
-    val shareLibConfig = if(oozieLibPath.nonEmpty) "" else
+    val shareLibConfig = if (oozieLibPath.isEmpty) {
       s"""
          |<parameters>
          |  <property>
@@ -337,17 +341,20 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
          |  </property>
          |</parameters>
       """.stripMargin
+    } else {""}
     import scala.collection.JavaConversions._
     val extraSparkConfString = sparkExtraConfigs.map({case (k, v) => s"--conf $sparkConfQuotes$k=$v$sparkConfQuotes"}).mkString("\n")
     val schedule = ds.schedule.get
     val runtimeParams = schedule.runtimeParams
+    val mappingTablePattern = schedule.mappingTablePattern.map(_.trim).filter(_.nonEmpty).getOrElse("reportDate={0}-{1}-{2}")
+    val splineModeConf = Option(splineMode).collect{case s if s.trim.nonEmpty => s"-Dspline.mode=$s"}.getOrElse("")
     workflowTemplate.replaceAllLiterally("$stdAppName", s"Menas Schedule Standardization ${ds.name} (${ds.version})")
       .replaceAllLiterally("$confAppName", s"Menas Schedule Conformance ${ds.name} (${ds.version})")
       .replaceAllLiterally("$stdJarPath", s"$enceladusJarLocation$standardizationJarPath")
       .replaceAllLiterally("$confJarPath", s"$enceladusJarLocation$conformanceJarPath")
       .replaceAllLiterally("$datasetVersion", schedule.datasetVersion.toString)
       .replaceAllLiterally("$datasetName", ds.name)
-      .replaceAllLiterally("$mappingTablePattern", schedule.mappingTablePattern.map(_.trim).filter(_.nonEmpty).getOrElse("reportDate={0}-{1}-{2}").trim)
+      .replaceAllLiterally("$mappingTablePattern", mappingTablePattern)
       .replaceAllLiterally("$dataFormat", schedule.rawFormat.name)
       .replaceAllLiterally("$otherDFArguments", schedule.rawFormat.getArguments.map(arg => s"<arg>$arg</arg>").mkString("\n"))
       .replaceAllLiterally("$jobTracker", resourceManager)
@@ -363,6 +370,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       .replaceAllLiterally("$menasKeytabFile", s"${getCredsOrKeytabArgument(runtimeParams.menasKeytabFile, namenode)}")
       .replaceAllLiterally("$sparkConfQuotes", sparkConfQuotes)
       .replaceAllLiterally("$extraSparkConfString", extraSparkConfString)
+      .replaceAllLiterally("$splineModeConf", splineModeConf)
       .getBytes("UTF-8")
   }
 
@@ -403,7 +411,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     val conf = oozieClient.createConfiguration()
     conf.setProperty("jobTracker", resourceManager)
     conf.setProperty("nameNode", namenode)
-    if (oozieLibPath.isEmpty()) {
+    if (oozieLibPath.isEmpty) {
       conf.setProperty(OozieClient.USE_SYSTEM_LIBPATH, "True")
     } else {
       conf.setProperty(OozieClient.USE_SYSTEM_LIBPATH, "False")
