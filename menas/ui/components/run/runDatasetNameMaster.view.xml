@@ -33,7 +33,7 @@
                                                         }
                                                     }
                                                 }"
-                                  type="Active"
+                                  type="Navigation"
                                   cust:name="{datasets>datasetName}">
                 </StandardListItem>
             </List>

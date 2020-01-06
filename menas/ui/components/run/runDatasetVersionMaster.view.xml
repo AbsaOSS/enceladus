@@ -33,7 +33,7 @@
                                                         }
                                                     }
                                                 }"
-                                  type="Active"
+                                  type="Navigation"
                                   cust:name="{datasetVersions>datasetName}"
                                   cust:version="{datasetVersions>datasetVersion}">
                 </StandardListItem>
