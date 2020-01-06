@@ -49,12 +49,6 @@ sap.ui.define([
         })
         .fail( () => console.log("Failed to get Lineage API address"));
 
-      ConfigRestClient.getLineageService()
-        .then( sUrl => {
-          sap.ui.getCore().getModel().setProperty("/lineageService", sUrl);
-        })
-        .fail( () => console.log("Failed to get Lineage API address"));
-
     },
 
     tileNumberFormatter: function(nNum) {
