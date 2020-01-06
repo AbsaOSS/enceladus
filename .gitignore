@@ -73,3 +73,5 @@ Component-preload.js
 _site
 .sass-cache
 .jekyll-metadata
+
+utils/resources/*.conf
