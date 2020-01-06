@@ -380,7 +380,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           val body = response.getBody
           val dataset1v1Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 1, 2, "04-12-2018 13:00:00 +0200")
           val dataset1v2Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 2, 1, "04-12-2018 16:19:17 +0200")
-          val expected = List(dataset1v1Summary, dataset1v2Summary)
+          val expected = List(dataset1v2Summary, dataset1v1Summary)
           assert(body.sameElements(expected))
         }
 
@@ -397,7 +397,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           val body = response.getBody
           val dataset1v1Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 1, 1, "03-12-2018 12:00:00 +0200")
           val dataset1v2Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 2, 1, "04-12-2018 16:19:17 +0200")
-          val expected = List(dataset1v1Summary, dataset1v2Summary)
+          val expected = List(dataset1v2Summary, dataset1v1Summary)
           assert(body.sameElements(expected))
         }
       }

@@ -273,7 +273,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
                    |}},""".stripMargin),
         excludeId()
       )),
-      sort(ascending("datasetVersion"))
+      sort(descending("datasetVersion"))
     )
 
     collection
