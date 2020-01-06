@@ -1,4 +1,4 @@
-# Copyright 2018-2019 ABSA Group Limited
+# Copyright 2018-2020 ABSA Group Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,11 +27,6 @@ class Release
     @title = title
     @description = description
   end
-
-  def get_issues(issues:)
-    @issues = issues.inject([]) { |acc, v| acc << Issue.new(number: v[:number], title: v[:title]) }
-    @issues
-  end
 end
 
 class ZenhubRelease < Release
@@ -46,7 +41,8 @@ class ZenhubRelease < Release
   def get_issues
     return @issues unless @issues.nil?
     issues = call(URI("#{OptParser.options.zenhub_url}/p1/reports/release/#{id}/issues"))
-    super(issues: issues)
+    @issues = issues.inject([]) { |acc, v| acc << Issue.new(number: v[:issue_number], title: v[:title]) }
+    @issues
   end
 end
 
@@ -64,6 +60,7 @@ class GithubRelease < Release
     return @issues unless @issues.nil?
     issues_with_prs = call(URI("#{OptParser.options.github_url}/issues?milestone=#{id}&state=all"))
     issues = issues_with_prs.select { |issue| issue[:pull_request].nil? }
-    super(issues: issues)
+    @issues = issues.inject([]) { |acc, v| acc << Issue.new(number: v[:number], title: v[:title]) }
+    @issues
   end
 end
