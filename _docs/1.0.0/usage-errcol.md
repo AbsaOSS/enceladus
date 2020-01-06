@@ -12,12 +12,6 @@ Error Column
 <!-- toc -->
 - [Description](#description)
 - [Error Types](#error-types)
-  - [stdCastError](#stdcasterror)
-  - [stdNullErr](#stdnullerr)
-  - [confMappingErr](#confmappingerr)
-  - [confCastErr](#confcasterr)
-  - [confNegErr](#confnegerr)
-  - [confLitErr](#confliterr)
 - [Notes](#notes)
 <!-- tocstop -->
 
@@ -41,29 +35,14 @@ The array member is a structured information itself:
 Error Types
 -----------
 
-### `stdCastError`
-
-When column value fails to standardize to the expected type
-
-### `stdNullErr`
-
-When column value is `null` in non-nullable column during standardization 
-
-### `confMappingErr`
-
-Mapping of the value failed during conformance
-
-### `confCastErr`
-
-When casting fails during conformance
-
-### `confNegErr`
-
-When negation of numeric type with minimum value overflows during conformance
-
-### `confLitErr`
-
-When during Conformance special column value has changed
+| Error type      | Description |
+|-----------------|-------------|
+| `stdCastError`  | When column value fails to standardize to the expected type |
+| `stdNullErr`    | When column value is `null` in non-nullable column during standardization |
+| `confMappingErr`| Mapping of the value failed during conformance |
+| `confCastErr`   | When casting fails during conformance |
+| `confNegErr`    | When negation of numeric type with minimum value overflows during conformance |
+| `confLitErr`    | When during Conformance special column value has changed |
 
 Notes
 -----
