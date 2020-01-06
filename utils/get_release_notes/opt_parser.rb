@@ -1,4 +1,4 @@
-# Copyright 2018-2019 ABSA Group Limited
+# Copyright 2018-2020 ABSA Group Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ class OptParser
   end
 
   def self.parse(args)
-    app_conf_file_path = "#{File.expand_path('..', __dir__)}/resources/get_release_notes.json"
+    app_conf_file_path = "#{File.expand_path('..', __dir__)}/resources/get_release_notes.conf"
     app_conf = if (File.exist?(app_conf_file_path))
       file = File.read(app_conf_file_path)
       JSON.parse(file, symbolize_names: true)
