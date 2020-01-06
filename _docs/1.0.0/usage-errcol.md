@@ -22,7 +22,7 @@ Description
 during **Standardization** and **Conformance** of the particular row.
 
 It's an array, where each member represents one error that happened on the particular row during its processing.
-he array element is structured as follows:
+The array element is structured as follows:
 
 * `errType` - string representation of the type of the error
 * `errCode` - code representation of the type of the error in the form of _E#####_, where # is a digit (e.g. E00001)
