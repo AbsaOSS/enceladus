@@ -22,12 +22,12 @@ Description
 during **Standardization** and **Conformance** of the particular row.
 
 It's an array, where each member represents one error that happened on the particular row during its processing.
-The array member is a structured information itself:
+he array element is structured as follows:
 
 * `errType` - string representation of the type of the error
 * `errCode` - code representation of the type of the error in the form of _E#####_, where # is a digit (e.g. E00001)
 * `errMsg` - description of the error
-* `errCol` - name of the column, in which the error happened [\*](#notes-star)
+* `errCol` - name of the column, in which the error occurred [\*](#notes-star)
 * `rawValues` - the input values for the error
 * `mappings` - ???
 
@@ -37,12 +37,12 @@ Error Types
 
 | Error type      | Description |
 |-----------------|-------------|
-| `stdCastError`  | When column value fails to standardize to the expected type |
-| `stdNullErr`    | When column value is `null` in non-nullable column during standardization |
+| `stdCastError`  | Column value failed to standardize to the expected type |
+| `stdNullErr`    | Column value was `null` in non-nullable column during standardization |
 | `confMappingErr`| Mapping of the value failed during conformance |
-| `confCastErr`   | When casting fails during conformance |
-| `confNegErr`    | When negation of numeric type with minimum value overflows during conformance |
-| `confLitErr`    | When during Conformance special column value has changed |
+| `confCastErr`   | Casting failed during conformance |
+| `confNegErr`    | Negation of numeric type with minimum value overflowed during conformance |
+| `confLitErr`    | During Conformance special column value has changed |
 
 Notes
 -----
