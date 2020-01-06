@@ -13,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-#
-# Spline properties template.
-# Uncomment the following lines to override corresponding Hadoop environment configuration properties.
-#
-#
-# Spline mode, possible values: DISABLED|REQUIRED|BEST_EFFORT (default is BEST_EFFORT)
+# Spline mode - the way how Spline is integrated. For details see Spline documentation
+# possible values (default is BEST_EFFORT):
+#  DISABLED - no Spline integration (no lineage will be recorded)
+#  REQUIRED - Spline service has to be running on the spline.producer.url address; if not, job exits without execution
+#  BEST_EFFORT - job tries to connect to the provided Spline service (spline.producer.url address); but if that fails, job will still execute
 spline.mode=BEST_EFFORT
 #
 #
