@@ -21,12 +21,23 @@ import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations.split
 
 import scala.collection.mutable.ArrayBuffer
 
-class ArrayContext {
-  private val arrays = new ArrayBuffer[String]
-  private val lambdas = new ArrayBuffer[Column]
+/**
+  * The class provides a storage for array transformation context for a transformation of a dataframe field.
+  * The context contains all arrays in the path of the field and their corresponding lambda variables
+  * provided by 'transform()' function of Spark SQL.
+  */
+class ArrayContext(val arrays: ArrayBuffer[String] = new ArrayBuffer[String],
+                   val lambdas: ArrayBuffer[Column] = new ArrayBuffer[Column]) {
 
+  /**
+    * Returns a new context by appending the current context with a new array/lambda combination.
+    *
+    * @param arr A fully-qualified array field name.
+    * @param lam A lambda variable provided by 'transform()' function of Spark SQL.
+    * @return A column that corresponds to the field name.
+    */
   def withArraysUpdated(arr: String, lam: Column): ArrayContext = {
-    val ctx = new ArrayContext
+    val ctx = new ArrayContext(arrays, lambdas)
     ctx.arrays.append(arr)
     ctx.lambdas.append(lam)
     ctx
@@ -44,7 +55,13 @@ class ArrayContext {
       col(childField)
     } else {
       val i = arrays.indexOf(parentArray)
-      lambdas(i).getField(childField)
+      if (fieldName == arrays(i)) {
+        // If the array itself is specified - return the array
+        lambdas(i)
+      } else {
+        // If a field inside an array is specified - return the field
+        lambdas(i).getField(childField)
+      }
     }
   }
 }
