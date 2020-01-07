@@ -18,36 +18,30 @@ sap.ui.define([
 ], function (Controller) {
   "use strict";
 
-  return Controller.extend("components.run.runMaster", {
+  return Controller.extend("components.run.runDatasetNameMaster", {
 
     onInit: function () {
       this._eventBus = sap.ui.getCore().getEventBus();
-      this._eventBus.subscribe("runs", "list", this.list, this);
+      this._eventBus.subscribe("runs", "list-grouped-name", this.list, this);
 
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
     },
 
-    list: function (channel, event, dataset) {
+    list: function () {
       let masterPage = this.byId("masterPage");
-      masterPage.setModel(new sap.ui.model.json.JSONModel(dataset), "dataset");
-      RunService.getRunsByDatasetNameAndVersion(masterPage, dataset.name, dataset.version);
+      RunService.getRunsGroupedByDatasetName(masterPage);
     },
 
     onPressMasterBack: function () {
       this._eventBus.publish("nav", "back");
     },
 
-    runSelected: function (oEv) {
+    nameSelected: function (oEv) {
       let selectedItem = oEv.getParameter("listItem");
-      let datasetName = selectedItem.data("dataset");
-      let datasetVersion = selectedItem.data("version");
-      let runId = selectedItem.data("runId");
+      let datasetName = selectedItem.data("name");
 
-      this._router.navTo("runs", {
-        dataset: datasetName,
-        version: datasetVersion,
-        id: runId
-      });
+      this._eventBus.publish("runs", "dataset-name-selected", {name: datasetName});
+      selectedItem.setSelected(false)
     },
 
   });

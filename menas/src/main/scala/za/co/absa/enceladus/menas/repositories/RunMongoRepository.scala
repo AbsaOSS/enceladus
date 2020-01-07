@@ -26,12 +26,12 @@ import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model._
-import org.mongodb.scala.{Completed, MongoDatabase, Observable}
+import org.mongodb.scala.{Completed, Document, MongoDatabase, Observable}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.menas.models.RunSummary
+import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
 import za.co.absa.enceladus.model
 import za.co.absa.enceladus.model.{Run, SplineReference}
 
@@ -191,6 +191,94 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
     collection
       .aggregate[BsonDocument](pipeline)
+  }
+
+  def getRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
+    val pipeline = Seq(
+      project(fields(
+        include("dataset"),
+        Document("""{start: {
+                   |  $dateFromString: {
+                   |    dateString: "$startDateTime",
+                   |    format: "%d-%m-%Y %H:%M:%S %z"
+                   |  }
+                   |}},""".stripMargin),
+        Document(
+          """{timezone: {
+            |  $substrBytes: [
+            |    "$startDateTime", 20, 5
+            |  ]
+            |}}""".stripMargin),
+        excludeId()
+      )),
+      group("$dataset",
+        Accumulators.sum("numberOfRuns", 1),
+        Accumulators.max("latestStart", "$start"),
+        Accumulators.first("timezone", "$timezone")
+      ),
+      project(fields(
+        computed("datasetName", "$_id"),
+        include("numberOfRuns"),
+        Document("""{latestRunStartDateTime: {
+                   |  $dateToString: {
+                   |    date: "$latestStart",
+                   |    format: "%d-%m-%Y %H:%M:%S %z",
+                   |    timezone: "$timezone"
+                   |  }
+                   |}},""".stripMargin),
+        excludeId()
+      )),
+      sort(ascending("datasetName"))
+    )
+
+    collection
+      .aggregate[RunDatasetNameGroupedSummary](pipeline)
+      .toFuture()
+  }
+
+  def getRunSummariesPerDatasetVersion(datasetName: String): Future[Seq[RunDatasetVersionGroupedSummary]] = {
+    val pipeline = Seq(
+      filter(equal("dataset", datasetName)),
+      project(fields(
+        include("dataset", "datasetVersion"),
+        Document("""{start: {
+                   |  $dateFromString: {
+                   |    dateString: "$startDateTime",
+                   |    format: "%d-%m-%Y %H:%M:%S %z"
+                   |  }
+                   |}},""".stripMargin),
+        Document(
+          """{timezone: {
+            |  $substrBytes: [
+            |    "$startDateTime", 20, 5
+            |  ]
+            |}}""".stripMargin),
+        excludeId()
+      )),
+      group("$datasetVersion",
+        Accumulators.first("datasetName", "$dataset"),
+        Accumulators.sum("numberOfRuns", 1),
+        Accumulators.max("latestStart", "$start"),
+        Accumulators.first("timezone", "$timezone")
+      ),
+      project(fields(
+        computed("datasetVersion", "$_id"),
+        include("datasetName", "numberOfRuns"),
+        Document("""{latestRunStartDateTime: {
+                   |  $dateToString: {
+                   |    date: "$latestStart",
+                   |    format: "%d-%m-%Y %H:%M:%S %z",
+                   |    timezone: "$timezone"
+                   |  }
+                   |}},""".stripMargin),
+        excludeId()
+      )),
+      sort(descending("datasetVersion"))
+    )
+
+    collection
+      .aggregate[RunDatasetVersionGroupedSummary](pipeline)
+      .toFuture()
   }
 
   def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Option[Run]] = {

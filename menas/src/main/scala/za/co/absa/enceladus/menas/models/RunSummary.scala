@@ -23,3 +23,16 @@ case class RunSummary(
                        startDateTime: String,
                        runUniqueId: String
                      )
+
+case class RunDatasetNameGroupedSummary(
+                                         datasetName: String,
+                                         numberOfRuns: Int,
+                                         latestRunStartDateTime: String
+                                       )
+
+case class RunDatasetVersionGroupedSummary(
+                                            datasetName: String,
+                                            datasetVersion: Int,
+                                            numberOfRuns: Int,
+                                            latestRunStartDateTime: String
+                                          )

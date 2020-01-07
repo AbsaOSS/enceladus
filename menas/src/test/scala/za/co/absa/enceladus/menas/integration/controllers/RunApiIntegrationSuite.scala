@@ -22,7 +22,7 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.menas.integration.fixtures.{FixtureService, RunFixtureService}
-import za.co.absa.enceladus.menas.models.{RunSummary, Validation}
+import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary, Validation}
 import za.co.absa.enceladus.model.test.factories.RunFactory
 import za.co.absa.enceladus.model.{Run, SplineReference}
 
@@ -286,6 +286,125 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
       "there are no Run entities stored in the database" should {
         "return an empty collection" in {
           val response = sendGet[Array[RunSummary]](s"$apiUrl/summaries")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body.isEmpty)
+        }
+      }
+    }
+  }
+
+  s"GET $apiUrl/grouped" can {
+    "return 200" when {
+      "there are Run entities in the database" should {
+        "return a Summary of each Run" in {
+          val dataset1v1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "03-12-2018 12:00:00 +0200")
+          val dataset1v1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "04-12-2018 13:00:00 +0200")
+          val dataset1v2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "04-12-2018 16:19:17 +0200")
+          val dataset2v1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = "03-12-2018 06:00:00 +0200")
+          val dataset2v2run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 2, runId = 1, startDateTime = "04-12-2018 06:00:00 +0200")
+          val dataset2v2run2 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 2, runId = 2, startDateTime = "05-12-2018 06:00:00 +0200")
+          runFixture.add(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1, dataset2v2run1, dataset2v2run2)
+
+          val response = sendGet[Array[RunDatasetNameGroupedSummary]](s"$apiUrl/grouped")
+
+          assertOk(response)
+
+          val body = response.getBody
+          val dataset1Summary = RunDatasetNameGroupedSummary("dataset1", 3, "04-12-2018 16:19:17 +0200")
+          val dataset2Summary = RunDatasetNameGroupedSummary("dataset2", 3, "05-12-2018 06:00:00 +0200")
+          val expected = List(dataset1Summary, dataset2Summary)
+          assert(body.sameElements(expected))
+        }
+
+        "order RunSummaries by Dataset Name (ASC)" in {
+          val dataset2v2run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 2, runId = 1, startDateTime = "04-12-2018 06:00:00 +0200")
+          runFixture.add(dataset2v2run1)
+          val dataset2v2run2 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 2, runId = 2, startDateTime = "05-12-2018 06:00:00 +0200")
+          runFixture.add(dataset2v2run2)
+          val dataset2v1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = "03-12-2018 06:00:00 +0200")
+          runFixture.add(dataset2v1run1)
+          val dataset1v2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "04-12-2018 16:19:17 +0200")
+          runFixture.add(dataset1v2run1)
+          val dataset1v1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "03-12-2018 12:00:00 +0200")
+          runFixture.add(dataset1v1run1)
+          val dataset1v1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "04-12-2018 13:00:00 +0200")
+          runFixture.add(dataset1v1run2)
+
+          val response = sendGet[Array[RunDatasetNameGroupedSummary]](s"$apiUrl/grouped")
+
+          assertOk(response)
+
+          val body = response.getBody
+          val dataset1Summary = RunDatasetNameGroupedSummary("dataset1", 3, "04-12-2018 16:19:17 +0200")
+          val dataset2Summary = RunDatasetNameGroupedSummary("dataset2", 3, "05-12-2018 06:00:00 +0200")
+          val expected = List(dataset1Summary, dataset2Summary)
+          assert(body.sameElements(expected))
+        }
+      }
+
+      "there are no Run entities stored in the database" should {
+        "return an empty collection" in {
+          val response = sendGet[Array[RunDatasetNameGroupedSummary]](s"$apiUrl/grouped")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body.isEmpty)
+        }
+      }
+    }
+  }
+
+  s"GET $apiUrl/grouped/{datasetName}" can {
+    val queriedDatasetName = "dataset1"
+    val wrongDatasetName = "dataset2"
+
+    "return 200" when {
+      "there are Run entities in the database" should {
+        "return a Summary of each Run" in {
+          val dataset1v1run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 1, runId = 1, startDateTime = "03-12-2018 12:00:00 +0200")
+          val dataset1v1run2 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 1, runId = 2, startDateTime = "04-12-2018 13:00:00 +0200")
+          val dataset1v2run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 2, runId = 1, startDateTime = "04-12-2018 16:19:17 +0200")
+          val dataset2v1run1 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = 1, runId = 1, startDateTime = "03-12-2018 06:00:00 +0200")
+          val dataset2v2run1 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = 2, runId = 1, startDateTime = "04-12-2018 06:00:00 +0200")
+          val dataset2v2run2 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = 2, runId = 2, startDateTime = "05-12-2018 06:00:00 +0200")
+          runFixture.add(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1, dataset2v2run1, dataset2v2run2)
+
+          val response = sendGet[Array[RunDatasetVersionGroupedSummary]](s"$apiUrl/grouped/$queriedDatasetName")
+
+          assertOk(response)
+
+          val body = response.getBody
+          val dataset1v1Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 1, 2, "04-12-2018 13:00:00 +0200")
+          val dataset1v2Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 2, 1, "04-12-2018 16:19:17 +0200")
+          val expected = List(dataset1v2Summary, dataset1v1Summary)
+          assert(body.sameElements(expected))
+        }
+
+        "order RunSummaries by Dataset Version (ASC)" in {
+          val dataset1v2run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 2, runId = 1, startDateTime = "04-12-2018 16:19:17 +0200")
+          runFixture.add(dataset1v2run1)
+          val dataset1v1run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 1, runId = 1, startDateTime = "03-12-2018 12:00:00 +0200")
+          runFixture.add(dataset1v1run1)
+
+          val response = sendGet[Array[RunDatasetVersionGroupedSummary]](s"$apiUrl/grouped/$queriedDatasetName")
+
+          assertOk(response)
+
+          val body = response.getBody
+          val dataset1v1Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 1, 1, "03-12-2018 12:00:00 +0200")
+          val dataset1v2Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 2, 1, "04-12-2018 16:19:17 +0200")
+          val expected = List(dataset1v2Summary, dataset1v1Summary)
+          assert(body.sameElements(expected))
+        }
+      }
+
+      "there are no Run entities stored in the database" should {
+        "return an empty collection" in {
+          val response = sendGet[Array[RunDatasetVersionGroupedSummary]](s"$apiUrl/grouped/dataset1")
 
           assertOk(response)
 
