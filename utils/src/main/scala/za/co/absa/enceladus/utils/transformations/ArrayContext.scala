@@ -60,7 +60,8 @@ class ArrayContext(val arrays: ArrayBuffer[String] = new ArrayBuffer[String],
         lambdas(i)
       } else {
         // If a field inside an array is specified - return the field
-        lambdas(i).getField(childField)
+        childField.split('.')
+          .foldLeft(lambdas(i))((parent, column) => parent.getField(column))
       }
     }
   }
