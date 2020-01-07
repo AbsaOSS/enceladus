@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.utils.transformations
 
-import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
-import DeepArraySamples._
+import org.scalatest.FunSuite
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.transformations.DeepArraySamples._
 
 // Examples for constructing dataframes containing arrays of various levels of nesting
 
@@ -171,7 +171,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
         |""".stripMargin.replace("\r\n", "\n")
     val expectedResults =
       """{"id":1,"person":[{"firstName":"John","lastName":"Smith","conformedName":"JOHN"},{"firstName":"Jack","lastName":"Brown","conformedName":"JACK"}]}
-        |{"id":1,"person":[{"firstName":"Merry","lastName":"Cook","conformedName":"MERRY"},{"firstName":"Jane","lastName":"Clark","conformedName":"JANE"}]}"""
+        |{"id":2,"person":[{"firstName":"Merry","lastName":"Cook","conformedName":"MERRY"},{"firstName":"Jane","lastName":"Clark","conformedName":"JANE"}]}"""
         .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
@@ -327,7 +327,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
         |""".stripMargin.replace("\r\n", "\n")
     val expectedResults =
       """{"id":1,"person":[{"firstName":"John","lastName":"Smith","conformedType":"Person"},{"firstName":"Jack","lastName":"Brown","conformedType":"Person"}]}
-        |{"id":1,"person":[{"firstName":"Merry","lastName":"Cook","conformedType":"Person"},{"firstName":"Jane","lastName":"Clark","conformedType":"Person"}]}"""
+        |{"id":2,"person":[{"firstName":"Merry","lastName":"Cook","conformedType":"Person"},{"firstName":"Jane","lastName":"Clark","conformedType":"Person"}]}"""
         .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
@@ -354,7 +354,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
         |""".stripMargin.replace("\r\n", "\n")
     val expectedResults =
       """{"id":1,"person":[{"firstName":"John","lastName":"Smith","department":"IT"},{"firstName":"Jack","lastName":"Brown","department":"IT"}]}
-        |{"id":1,"person":[{"firstName":"Merry","lastName":"Cook","department":"IT"},{"firstName":"Jane","lastName":"Clark","department":"IT"}]}"""
+        |{"id":2,"person":[{"firstName":"Merry","lastName":"Cook","department":"IT"},{"firstName":"Jane","lastName":"Clark","department":"IT"}]}"""
         .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
@@ -521,7 +521,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
         |""".stripMargin.replace("\r\n", "\n")
     val expectedResults =
       """{"id":1,"person":[{"firstName":"John"},{"firstName":"Jack"}]}
-        |{"id":1,"person":[{"firstName":"Merry"},{"firstName":"Jane"}]}"""
+        |{"id":2,"person":[{"firstName":"Merry"},{"firstName":"Jane"}]}"""
         .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
@@ -725,7 +725,7 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
         |""".stripMargin.replace("\r\n", "\n")
     val expectedResults =
       """{"id":1,"person":[{"firstName":"John","lastName":"Smith","combinedName":"John Smith"},{"firstName":"Jack","lastName":"Brown","combinedName":"Jack Brown"}]}
-        |{"id":1,"person":[{"firstName":"Merry","lastName":"Cook","combinedName":"Merry Cook"},{"firstName":"Jane","lastName":"Clark","combinedName":"Jane Clark"}]}"""
+        |{"id":2,"person":[{"firstName":"Merry","lastName":"Cook","combinedName":"Merry Cook"},{"firstName":"Jane","lastName":"Clark","combinedName":"Jane Clark"}]}"""
         .stripMargin.replace("\r\n", "\n")
 
     assertSchema(actualSchema, expectedSchema)
@@ -828,6 +828,71 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
   }
+
+  test("Test splitParentField()") {
+    import DeepArrayTransformations._
+
+    assert(splitParentField("a.b.c", "") == ("", "a.b.c"))
+    assert(splitParentField("a.b.c", "b") == ("", "a.b.c"))
+    assert(splitParentField("a.b.c", "c") == ("", "a.b.c"))
+    assert(splitParentField("aa.bb.cc", "a") == ("", "aa.bb.cc"))
+    assert(splitParentField("aa.bb.cc", "aa.b") == ("", "aa.bb.cc"))
+    assert(splitParentField("aa.bb.cc", "aa.bb") == ("aa.bb", "cc"))
+    assert(splitParentField("a.b.c", "a") == ("a", "b.c"))
+    assert(splitParentField("a.b.c", "a.b") == ("a.b", "c"))
+    assert(splitParentField("a.b.c", "a.b.c") == ("a.b.c", ""))
+  }
+
+  test("Test splitByLongestParent()") {
+    import DeepArrayTransformations._
+
+    val parentFields = Seq("a", "a.b", "a.b.c", "a.b.d", "aa.bb.cc")
+
+    assert(splitByLongestParent("a.b.c", Nil) == ("", "a.b.c"))
+    assert(splitByLongestParent("a.b.c", parentFields) == ("a.b.c", ""))
+
+    assert(splitByLongestParent("a.b.c.e.f", parentFields) == ("a.b.c", "e.f"))
+    assert(splitByLongestParent("a.b.d.e.f", parentFields) == ("a.b.d", "e.f"))
+    assert(splitByLongestParent("a.b.e.f", parentFields) == ("a.b", "e.f"))
+    assert(splitByLongestParent("a.e.f", parentFields) == ("a", "e.f"))
+    assert(splitByLongestParent("e.f", parentFields) == ("", "e.f"))
+    assert(splitByLongestParent("a", parentFields) == ("a", ""))
+    assert(splitByLongestParent("e", parentFields) == ("", "e"))
+    assert(splitByLongestParent("aa", parentFields) == ("", "aa"))
+    assert(splitByLongestParent("aa.bb", parentFields) == ("", "aa.bb"))
+    assert(splitByLongestParent("aa.bb.cc", parentFields) == ("aa.bb.cc", ""))
+    assert(splitByLongestParent("aa.bb.cc.dd", parentFields) == ("aa.bb.cc", "dd"))
+  }
+
+  test("Test extended concat of a field inside an array of structs") {
+    // Array of struct
+    val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
+
+    val dfOut = DeepArrayTransformations.nestedExtendedStructMap(df, "person", "combinedName", (c, getField) => {
+      concat(getField("id"), lit(" "), getField("person.firstName"), lit(" "), c.getField("lastName"))
+    })
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = dfOut.toJSON.collect.mkString("\n")
+
+    val expectedSchema =
+      """root
+        | |-- id: integer (nullable = false)
+        | |-- person: array (nullable = true)
+        | |    |-- element: struct (containsNull = false)
+        | |    |    |-- firstName: string (nullable = true)
+        | |    |    |-- lastName: string (nullable = true)
+        | |    |    |-- combinedName: string (nullable = true)
+        |""".stripMargin.replace("\r\n", "\n")
+    val expectedResults =
+      """{"id":1,"person":[{"firstName":"John","lastName":"Smith","combinedName":"1 John Smith"},{"firstName":"Jack","lastName":"Brown","combinedName":"1 Jack Brown"}]}
+        |{"id":2,"person":[{"firstName":"Merry","lastName":"Cook","combinedName":"2 Merry Cook"},{"firstName":"Jane","lastName":"Clark","combinedName":"2 Jane Clark"}]}"""
+        .stripMargin.replace("\r\n", "\n")
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
     if (actualSchema != expectedSchema) {
