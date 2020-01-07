@@ -104,8 +104,6 @@ sap.ui.define([
     },
 
     onRunsDatasetVersionPress: function (channel, event, dataset) {
-      console.log(dataset)
-
       this._eventBus.publish("runs", "list", dataset);
       this._app.toMaster(this.createId("runsPage"));
     },
