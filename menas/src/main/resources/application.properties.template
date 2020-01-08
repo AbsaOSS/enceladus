@@ -70,7 +70,7 @@ menas.spark.master=local[1]
 
 # The api gateway for Lineage (Spline) display. If empty Lineage button is not shown.
 # Avoiding the http(s) protocol will cause that the same protocol will be used as for Menas itself, avoiding issues
-lineageReadApiUrl=//localhost:8080/spline-gw/consumer
+menas.lineage.readApiUrl=//localhost:8080/spline-gw/consumer
 lineageService=//localhost:8080/spline-ui/app/lineage-overview?executionEventId=%s
 
 #system-wide time zone
