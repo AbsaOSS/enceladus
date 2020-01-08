@@ -143,7 +143,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
       .cache
 
-    val actualSchema = cleanupSchema(dfOut.schema.treeString)
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -161,7 +161,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupSchema(dfOut.schema.treeString)
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -169,7 +169,6 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   }
 
   test("Test broadcasting rule failure if key fields are in different array levels") {
-    // ToDo The support for this mode of broadcasting rule is to be implemented in #1078
     val expectedSchema = getResourceString("/interpreter/mappingCases/array3Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array3Results.json")
 
@@ -180,7 +179,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupSchema(dfOut.schema.treeString)
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -199,7 +198,8 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupSchema(dfOut.schema.treeString)
+    //val actualSchema = cleanupFieldNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -207,7 +207,6 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   }
 
   test("Test broadcasting rule when key fields are in different struct levels in a array of arrays") {
-    // ToDo The support for this mode of broadcasting rule is to be implemented in #1078
     val expectedSchema = getResourceString("/interpreter/mappingCases/array5Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array5Results.json")
 
@@ -218,7 +217,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupSchema(dfOut.schema.treeString)
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -237,7 +236,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupSchema(dfOut.schema.treeString)
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -253,7 +252,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     }
   }
 
-  private def cleanupSchema(inputSchemaTree: String): String = {
+  private def cleanupContainsNullProperty(inputSchemaTree: String): String = {
     // This cleanup is needed since when a struct is processed via nestedStructMap() or nestedStructAndErrorMap(),
     // the new version of the struct always has the flag containsNull = false.
     inputSchemaTree
