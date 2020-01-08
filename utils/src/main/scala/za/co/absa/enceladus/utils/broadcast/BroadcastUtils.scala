@@ -197,7 +197,7 @@ object BroadcastUtils {
       if (mt.contains(Seq(param1))) {
         null
       } else {
-        ErrorMessage.confMappingErr(outputColumn, Seq(param1.toString), mappings)
+        ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1)), mappings)
       }
     }
   }
@@ -210,7 +210,7 @@ object BroadcastUtils {
       if (mt.contains(Seq(param1, param2))) {
         null
       } else {
-        ErrorMessage.confMappingErr(outputColumn, Seq(param1.toString, param2.toString), mappings)
+        ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2)), mappings)
       }
     }
   }
@@ -223,7 +223,7 @@ object BroadcastUtils {
       if (mt.contains(Seq(param1, param2, param3))) {
         null
       } else {
-        ErrorMessage.confMappingErr(outputColumn, Seq(param1.toString, param2.toString, param3.toString), mappings)
+        ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3)), mappings)
       }
     }
   }
@@ -236,8 +236,8 @@ object BroadcastUtils {
       if (mt.contains(Seq(param1, param2, param3, param4))) {
         null
       } else {
-        ErrorMessage.confMappingErr(outputColumn, Seq(param1.toString, param2.toString, param3.toString,
-          param4.toString), mappings)
+        ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
+          safeToString(param4)), mappings)
       }
     }
   }
@@ -250,9 +250,17 @@ object BroadcastUtils {
       if (mt.contains(Seq(param1, param2, param3, param4, param5))) {
         null
       } else {
-        ErrorMessage.confMappingErr(outputColumn, Seq(param1.toString, param2.toString, param3.toString,
-          param4.toString, param5.toString), mappings)
+        ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
+          safeToString(param4), safeToString(param5)), mappings)
       }
+    }
+  }
+
+  private final def safeToString(a: Any): String = {
+    if (a == null) {
+      null
+    } else {
+      a.toString
     }
   }
 

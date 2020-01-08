@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
@@ -26,7 +24,6 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConfo
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.broadcast.{BroadcastUtils, LocalMappingTable}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conformance: ConfDataset) extends RuleInterpreter {
@@ -51,8 +48,8 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     // validate the default value against the mapping table schema
     val defaultValueOpt = getDefaultValue(mappingTableDef)
 
-    val mappingTableFields = rule.attributeMappings.keys.toSeq
-    val inputDfFields = rule.attributeMappings.values.toSeq
+    val mappingTableFields = rule.attributeMappings.keys.toSeq.toList
+    val inputDfFields = rule.attributeMappings.values.toSeq.toList
     val mappings = rule.attributeMappings.map {
       case (mappingTableField, dataframeField) => Mapping(mappingTableField, dataframeField)
     }.toSeq
@@ -63,41 +60,28 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
 
     val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, rule.outputColumn, mappings)
 
-    val arrayPath = splitArrayPath(df.schema, inputDfFields.head)._1
-    val keySubPaths = inputDfFields.map(colNam => splitArrayPath(df.schema, colNam)._2)
-    val outputSubPath = splitArrayPath(df.schema, rule.outputColumn)._2
+    val parentPath = getParentPath(rule.outputColumn)
 
-    val withMappedFieldsDf = DeepArrayTransformations.nestedStructAndErrorMap(
-      df, arrayPath, outputSubPath, ErrorMessage.errorColumnName, structCol => {
-        if (structCol == null) {
-          mappingUDF(keySubPaths.map(a => col(a)): _ *)
-        } else {
-          mappingUDF(keySubPaths.map(a => structCol.getField(a)): _ *)
-        }
-      }, structCol => {
-        if (structCol == null) {
-          errorUDF(keySubPaths.map(a => col(a)): _ *)
-        } else {
-          errorUDF(keySubPaths.map(a => structCol.getField(a)): _ *)
-        }
+    val withMappedFieldsDf = DeepArrayTransformations.nestedExtendedStructAndErrorMap(
+      df, parentPath, rule.outputColumn, ErrorMessage.errorColumnName, (_, getField) => {
+        mappingUDF(inputDfFields.map(a => getField(a)): _ *)
+      }, (_, getField) => {
+        errorUDF(inputDfFields.map(a => getField(a)): _ *)
       })
 
     withMappedFieldsDf
   }
 
   /**
-    * Splits a fully qualified column name into a deepest array subpath and the
-    * rest of the path.
+    * Returns the parent path of a field. Returns an empty string if a root level field name is provided.
     *
-    * @param schema     The schema of a DataFrame
     * @param columnName A fully qualified column name
     */
-  private def splitArrayPath(schema: StructType, columnName: String): (String, String) = {
-    val arraySubPathOpt = SchemaUtils.getDeepestArrayPath(schema, columnName)
-
-    arraySubPathOpt match {
-      case Some(arraySubPath) => (arraySubPath, columnName.drop(arraySubPath.length + 1))
-      case None => ("", columnName)
+  private def getParentPath(columnName: String): String = {
+    if (columnName.contains(".")) {
+      columnName.split('.').dropRight(1).mkString(".")
+    } else {
+      ""
     }
   }
 
