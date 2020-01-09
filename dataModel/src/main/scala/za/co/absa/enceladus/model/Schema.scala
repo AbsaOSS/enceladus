@@ -44,6 +44,8 @@ case class Schema(name: String,
   override def setUserCreated(user: String): VersionedModel = this.copy(userCreated = user)
   override def setUpdatedUser(user: String): VersionedModel = this.copy(userUpdated = user)
   override def setDescription(desc: Option[String]): VersionedModel = this.copy(description = desc)
+  override def setDateDisabled(time: Option[ZonedDateTime]): VersionedModel = this.copy(dateDisabled = time)
+  override def setUserDisabled(user: Option[String]): VersionedModel = this.copy(userDisabled = user)
   override def setParent(newParent: Option[MenasReference]): Schema = this.copy(parent = newParent)
 
   override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),

@@ -115,6 +115,9 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         assert(actual.isEmpty)
       }
+    }
+
+    "return an Option of the specified Dataset" when {
       "the specified Dataset is disabled" in {
         val dataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1,
           disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
@@ -122,11 +125,8 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         val actual = await(datasetMongoRepository.getVersion("dataset", 1))
 
-        assert(actual.isEmpty)
+        assert(actual.contains(dataset))
       }
-    }
-
-    "return an Option of the specified Dataset" when {
       "it exists in the database without any conformance rules" in {
         testGetVersion(List())
       }
@@ -609,6 +609,38 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         datasetFixture.add(ds2)
         assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")).size == 2)
+      }
+    }
+  }
+
+  "DatasetMongoRepository::isDisabled" should {
+    val datasetName = "dataset"
+    "return false" when {
+      "the dataset does not exist" in {
+        assert(!await(datasetMongoRepository.isDisabled(datasetName)))
+      }
+      "there all versions of the dataset are enabled" in {
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset(name = datasetName, version = 1),
+          DatasetFactory.getDummyDataset(name = datasetName, version = 2)
+        )
+        assert(!await(datasetMongoRepository.isDisabled(datasetName)))
+      }
+      "there some versions of the dataset are enabled" in {
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset(name = datasetName, version = 1),
+          DatasetFactory.getDummyDataset(name = datasetName, version = 2, disabled = true)
+        )
+        assert(!await(datasetMongoRepository.isDisabled(datasetName)))
+      }
+    }
+    "return true" when {
+      "all versions of the dataset are disabled" in {
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset(name = datasetName, version = 1, disabled = true),
+          DatasetFactory.getDummyDataset(name = datasetName, version = 2, disabled = true)
+        )
+        assert(await(datasetMongoRepository.isDisabled(datasetName)))
       }
     }
   }
