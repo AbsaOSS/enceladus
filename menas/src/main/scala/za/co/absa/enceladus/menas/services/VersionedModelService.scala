@@ -142,7 +142,10 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   }
 
   def recreate(username: String, item: C): Future[Option[C]] = {
-    update(username, item)
+    for {
+      latestVersion <- getLatestVersionNumber(item.name)
+      update <- update(username, item.setVersion(latestVersion).asInstanceOf[C])
+    } yield update
   }
 
   def update(username: String, item: C): Future[Option[C]]
