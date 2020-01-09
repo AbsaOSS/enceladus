@@ -17,7 +17,7 @@ package za.co.absa.enceladus.utils.transformations
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions.col
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations.splitByLongestParent
+import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations.splitByDeepestParent
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -50,7 +50,7 @@ class ArrayContext(val arrayPaths: ArrayBuffer[String] = new ArrayBuffer[String]
     * @return A column that corresponds to the field name.
     */
   def getField(fieldName: String): Column = {
-    val (parentArray, childField) = splitByLongestParent(fieldName, arrayPaths)
+    val (parentArray, childField) = splitByDeepestParent(fieldName, arrayPaths)
     if (parentArray.isEmpty) {
       col(childField)
     } else {

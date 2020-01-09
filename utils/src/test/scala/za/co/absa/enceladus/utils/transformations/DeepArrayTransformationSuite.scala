@@ -841,27 +841,33 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     assert(splitParentField("a.b.c", "a") == ("a", "b.c"))
     assert(splitParentField("a.b.c", "a.b") == ("a.b", "c"))
     assert(splitParentField("a.b.c", "a.b.c") == ("a.b.c", ""))
+    assert(splitParentField(" a.b.c ", "a.b") == ("a.b", "c"))
+    assert(splitParentField("a.b.c", " a.b ") == ("a.b", "c"))
+    assert(splitParentField(" a.b.c ", " a.b ") == ("a.b", "c"))
+    assert(splitParentField(" a.b.c ", "a.b.c") == ("a.b.c", ""))
+    assert(splitParentField("a.b.c", " a.b.c ") == ("a.b.c", ""))
+    assert(splitParentField(" a.b.c ", " a.b.c ") == ("a.b.c", ""))
   }
 
-  test("Test splitByLongestParent()") {
+  test("Test splitByDeepestParent()") {
     import DeepArrayTransformations._
 
     val parentFields = Seq("a", "a.b", "a.b.c", "a.b.d", "aa.bb.cc")
 
-    assert(splitByLongestParent("a.b.c", Nil) == ("", "a.b.c"))
-    assert(splitByLongestParent("a.b.c", parentFields) == ("a.b.c", ""))
+    assert(splitByDeepestParent("a.b.c", Nil) == ("", "a.b.c"))
+    assert(splitByDeepestParent("a.b.c", parentFields) == ("a.b.c", ""))
 
-    assert(splitByLongestParent("a.b.c.e.f", parentFields) == ("a.b.c", "e.f"))
-    assert(splitByLongestParent("a.b.d.e.f", parentFields) == ("a.b.d", "e.f"))
-    assert(splitByLongestParent("a.b.e.f", parentFields) == ("a.b", "e.f"))
-    assert(splitByLongestParent("a.e.f", parentFields) == ("a", "e.f"))
-    assert(splitByLongestParent("e.f", parentFields) == ("", "e.f"))
-    assert(splitByLongestParent("a", parentFields) == ("a", ""))
-    assert(splitByLongestParent("e", parentFields) == ("", "e"))
-    assert(splitByLongestParent("aa", parentFields) == ("", "aa"))
-    assert(splitByLongestParent("aa.bb", parentFields) == ("", "aa.bb"))
-    assert(splitByLongestParent("aa.bb.cc", parentFields) == ("aa.bb.cc", ""))
-    assert(splitByLongestParent("aa.bb.cc.dd", parentFields) == ("aa.bb.cc", "dd"))
+    assert(splitByDeepestParent("a.b.c.e.f", parentFields) == ("a.b.c", "e.f"))
+    assert(splitByDeepestParent("a.b.d.e.f", parentFields) == ("a.b.d", "e.f"))
+    assert(splitByDeepestParent("a.b.e.f", parentFields) == ("a.b", "e.f"))
+    assert(splitByDeepestParent("a.e.f", parentFields) == ("a", "e.f"))
+    assert(splitByDeepestParent("e.f", parentFields) == ("", "e.f"))
+    assert(splitByDeepestParent("a", parentFields) == ("a", ""))
+    assert(splitByDeepestParent("e", parentFields) == ("", "e"))
+    assert(splitByDeepestParent("aa", parentFields) == ("", "aa"))
+    assert(splitByDeepestParent("aa.bb", parentFields) == ("", "aa.bb"))
+    assert(splitByDeepestParent("aa.bb.cc", parentFields) == ("aa.bb.cc", ""))
+    assert(splitByDeepestParent("aa.bb.cc.dd", parentFields) == ("aa.bb.cc", "dd"))
   }
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
