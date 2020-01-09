@@ -198,7 +198,6 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    //val actualSchema = cleanupFieldNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
