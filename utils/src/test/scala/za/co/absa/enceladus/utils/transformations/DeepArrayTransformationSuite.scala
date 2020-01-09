@@ -864,36 +864,6 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     assert(splitByLongestParent("aa.bb.cc.dd", parentFields) == ("aa.bb.cc", "dd"))
   }
 
-  test("Test extended concat of a field inside an array of structs") {
-    // Array of struct
-    val df = spark.sparkContext.parallelize(arraysOfStructsSampleN).toDF
-
-    val dfOut = DeepArrayTransformations.nestedExtendedStructMap(df, "person", "combinedName", (c, getField) => {
-      concat(getField("id"), lit(" "), getField("person.firstName"), lit(" "), c.getField("lastName"))
-    })
-
-    val actualSchema = dfOut.schema.treeString
-    val actualResults = dfOut.toJSON.collect.mkString("\n")
-
-    val expectedSchema =
-      """root
-        | |-- id: integer (nullable = false)
-        | |-- person: array (nullable = true)
-        | |    |-- element: struct (containsNull = false)
-        | |    |    |-- firstName: string (nullable = true)
-        | |    |    |-- lastName: string (nullable = true)
-        | |    |    |-- combinedName: string (nullable = true)
-        |""".stripMargin.replace("\r\n", "\n")
-    val expectedResults =
-      """{"id":1,"person":[{"firstName":"John","lastName":"Smith","combinedName":"1 John Smith"},{"firstName":"Jack","lastName":"Brown","combinedName":"1 Jack Brown"}]}
-        |{"id":2,"person":[{"firstName":"Merry","lastName":"Cook","combinedName":"2 Merry Cook"},{"firstName":"Jane","lastName":"Clark","combinedName":"2 Jane Clark"}]}"""
-        .stripMargin.replace("\r\n", "\n")
-
-    assertSchema(actualSchema, expectedSchema)
-    assertResults(actualResults, expectedResults)
-  }
-
-
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
     if (actualSchema != expectedSchema) {
       logger.error("EXPECTED:")

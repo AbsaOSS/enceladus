@@ -48,8 +48,8 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     // validate the default value against the mapping table schema
     val defaultValueOpt = getDefaultValue(mappingTableDef)
 
-    val mappingTableFields = rule.attributeMappings.keys.toSeq.toList
-    val inputDfFields = rule.attributeMappings.values.toSeq.toList
+    val mappingTableFields = rule.attributeMappings.keys.toSeq
+    val inputDfFields = rule.attributeMappings.values.toSeq
     val mappings = rule.attributeMappings.map {
       case (mappingTableField, dataframeField) => Mapping(mappingTableField, dataframeField)
     }.toSeq
@@ -76,6 +76,7 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     * Returns the parent path of a field. Returns an empty string if a root level field name is provided.
     *
     * @param columnName A fully qualified column name
+    * @return The parent column name or an empty string if the input column is a root level column
     */
   private def getParentPath(columnName: String): String = {
     if (columnName.contains(".")) {
@@ -85,6 +86,19 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     }
   }
 
+  /**
+    * Returns a default value of the output column, if specified, for a particular mapping rule.
+    * Default values may be specified for each target attribute in a mapping table and must have the same type as
+    * the target attribute and must be presented as a Spark expression string.
+    *
+    * When a mapping table definition has a default value for the target attribute "*", this value acts as a default
+    * value for all target attributes, for which the default value is not set.
+    *
+    * A target attribute used is specified in a mapping rule definition in the list of conformance rules in the dataset.
+    *
+    * @param mappingTableDef A mapping rule definition
+    * @return A default value, if available, as a Spark expression represented as a string.
+    */
   private def getDefaultValue(mappingTableDef: MappingTable)
                              (implicit spark: SparkSession, dao: MenasDAO): Option[String] = {
     val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues

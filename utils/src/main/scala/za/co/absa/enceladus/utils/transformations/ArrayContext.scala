@@ -23,23 +23,23 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
   * The class provides a storage for array transformation context for a transformation of a dataframe field.
-  * The context contains all arrays in the path of the field and their corresponding lambda variables
+  * The context contains all arrays in the path of the field and their corresponding array element lambda variables
   * provided by 'transform()' function of Spark SQL.
   */
-class ArrayContext(val arrays: ArrayBuffer[String] = new ArrayBuffer[String],
-                   val lambdas: ArrayBuffer[Column] = new ArrayBuffer[Column]) {
+class ArrayContext(val arrayPaths: ArrayBuffer[String] = new ArrayBuffer[String],
+                   val lambdaVars: ArrayBuffer[Column] = new ArrayBuffer[Column]) {
 
   /**
     * Returns a new context by appending the current context with a new array/lambda combination.
     *
-    * @param arr A fully-qualified array field name.
-    * @param lam A lambda variable provided by 'transform()' function of Spark SQL.
+    * @param arrayPath A fully-qualified array field name.
+    * @param lambdaVar A lambda variable of the array element provided by 'transform()' function of Spark SQL.
     * @return A column that corresponds to the field name.
     */
-  def withArraysUpdated(arr: String, lam: Column): ArrayContext = {
-    val ctx = new ArrayContext(arrays, lambdas)
-    ctx.arrays.append(arr)
-    ctx.lambdas.append(lam)
+  def withArraysUpdated(arrayPath: String, lambdaVar: Column): ArrayContext = {
+    val ctx = new ArrayContext(arrayPaths, lambdaVars)
+    ctx.arrayPaths.append(arrayPath)
+    ctx.lambdaVars.append(lambdaVar)
     ctx
   }
 
@@ -50,18 +50,19 @@ class ArrayContext(val arrays: ArrayBuffer[String] = new ArrayBuffer[String],
     * @return A column that corresponds to the field name.
     */
   def getField(fieldName: String): Column = {
-    val (parentArray, childField) = splitByLongestParent(fieldName, arrays)
+    val (parentArray, childField) = splitByLongestParent(fieldName, arrayPaths)
     if (parentArray.isEmpty) {
       col(childField)
     } else {
-      val i = arrays.indexOf(parentArray)
-      if (fieldName == arrays(i)) {
+      val i = arrayPaths.indexOf(parentArray)
+      if (fieldName == arrayPaths(i)) {
         // If the array itself is specified - return the array
-        lambdas(i)
+        lambdaVars(i)
       } else {
         // If a field inside an array is specified - return the field
+        // by using '.getField()' on each child (which could be a nested struct
         childField.split('.')
-          .foldLeft(lambdas(i))((parent, column) => parent.getField(column))
+          .foldLeft(lambdaVars(i))((parent, column) => parent.getField(column))
       }
     }
   }
