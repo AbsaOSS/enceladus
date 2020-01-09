@@ -54,6 +54,8 @@ case class Dataset(
   override def setDescription(desc: Option[String]): VersionedModel = this.copy(description = desc)
   override def setDateCreated(time: ZonedDateTime): VersionedModel = this.copy(dateCreated = time)
   override def setUserCreated(user: String): VersionedModel = this.copy(userCreated = user)
+  override def setDateDisabled(time: Option[ZonedDateTime]): VersionedModel = this.copy(dateDisabled = time)
+  override def setUserDisabled(user: Option[String]): VersionedModel = this.copy(userDisabled = user)
   def setSchemaName(newName: String): Dataset = this.copy(schemaName = newName)
   def setSchemaVersion(newVersion: Int): Dataset = this.copy(schemaVersion = newVersion)
   def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)

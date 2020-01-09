@@ -37,6 +37,8 @@ trait VersionedModel {
 
   def setVersion(value: Int): VersionedModel
   def setDisabled(disabled: Boolean) : VersionedModel
+  def setDateDisabled(time: Option[ZonedDateTime]): VersionedModel
+  def setUserDisabled(user: Option[String]): VersionedModel
   def setLastUpdated(time: ZonedDateTime) : VersionedModel
   def setUpdatedUser(user: String): VersionedModel
   def setDescription(desc: Option[String]): VersionedModel
@@ -49,7 +51,11 @@ trait VersionedModel {
   }
 
   def setUpdatedInfo(username: String): VersionedModel = {
-    setLastUpdated(ZonedDateTime.now).setUpdatedUser(username)
+    setLastUpdated(ZonedDateTime.now)
+      .setUpdatedUser(username)
+      .setDisabled(false)
+      .setDateDisabled(None)
+      .setUserDisabled(None)
   }
 
 }

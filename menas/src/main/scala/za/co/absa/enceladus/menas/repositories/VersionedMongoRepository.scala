@@ -75,13 +75,12 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
   }
 
   def getVersion(name: String, version: Int): Future[Option[C]] = {
-    collection.find(getNameVersionFilterEnabled(name, Some(version))).headOption()
+    collection.find(getNameVersionFilter(name, Some(version))).headOption()
   }
 
-  def getLatestVersionValue(name: String): Future[Option[Int]] = {
+  def getLatestVersionValue(name: String, includeDisabled: Boolean = false): Future[Option[Int]] = {
     val pipeline = Seq(
       filter(getNameFilter(name)),
-      filter(getNotDisabledFilter),
       Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
     )
     collection.aggregate[VersionedSummary](pipeline).headOption().map(_.map(_.latestVersion))
@@ -124,6 +123,20 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       set("disabled", true),
       set("dateDisabled", ZonedDateTime.now()),
       set("userDisabled", username))).toFuture()
+  }
+
+  def isDisabled(name: String): Future[Boolean] = {
+    val pipeline = Seq(filter(getNameFilter(name)),
+      Aggregates.addFields(Field("enabled", BsonDocument("""{$toInt: {$not: "$disabled"}}"""))),
+      Aggregates.group("$name", BsonField("enabledCount", BsonDocument("""{$sum: "$enabled"}"""))))
+
+    collection.aggregate[Document](pipeline).toFuture().map { results =>
+      if (results.isEmpty) {
+        false
+      } else {
+        results.head("enabledCount").asNumber().intValue() == 0
+      }
+    }
   }
 
   def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = {

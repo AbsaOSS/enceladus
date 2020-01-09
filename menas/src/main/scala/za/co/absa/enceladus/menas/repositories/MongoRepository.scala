@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.menas.repositories
 
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.model.Filters.{equal, and}
 import org.mongodb.scala.{Completed, MongoDatabase}
 import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.model
@@ -33,9 +33,14 @@ abstract class MongoRepository[C](mongoDb: MongoDatabase)(implicit ct: ClassTag[
 
   private[menas] def collectionName: String = collectionBaseName + model.CollectionSuffix
 
-  def isUniqueName(name: String): Future[Boolean] = {
-    val res = collection.countDocuments(getNameFilter(name))
-    res.map( _ <= 0 ).head()
+  def isUniqueName(name: String, includeDisabled: Boolean = false): Future[Boolean] = {
+    val res = if (includeDisabled) {
+      collection.countDocuments(getNameFilter(name))
+    } else {
+      collection.countDocuments(and(getNameFilter(name), equal("disabled", false)))
+    }
+
+    res.map(_ <= 0).head()
   }
 
   def create(item: C): Future[Completed] = {

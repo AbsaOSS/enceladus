@@ -66,10 +66,24 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           assert(actual == expected)
         }
       }
+      "all prior versions of the Schema are disabled" should {
+        "return the recreated Schema" in {
+          val schema = SchemaFactory.getDummySchema()
+          schemaFixture.add(schema.copy(disabled = true))
+
+          val response = sendPost[Schema, Schema](s"$apiUrl/create", bodyOpt = Some(schema))
+
+          assertCreated(response)
+
+          val actual = response.getBody
+          val expected = toExpected(schema.setVersion(2), actual).copy(parent = Some(SchemaFactory.toParent(schema)))
+          assert(actual == expected)
+        }
+      }
     }
 
     "return 400" when {
-      "a Schema with that name already exists" in {
+      "an enabled Schema with that name already exists" in {
         val schema = SchemaFactory.getDummySchema()
         schemaFixture.add(schema)
 

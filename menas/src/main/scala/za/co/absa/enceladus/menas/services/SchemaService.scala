@@ -45,6 +45,14 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
     })
   }
 
+  override def recreate(username: String, schema: Schema): Future[Option[Schema]] = {
+    super.update(username, schema.name, schema.version) { latest =>
+      latest
+        .copy(fields = List())
+        .setDescription(schema.description).asInstanceOf[Schema]
+    }
+  }
+
   override def update(username: String, schema: Schema): Future[Option[Schema]] = {
     super.update(username, schema.name, schema.version) { latest =>
       latest.setDescription(schema.description).asInstanceOf[Schema]
