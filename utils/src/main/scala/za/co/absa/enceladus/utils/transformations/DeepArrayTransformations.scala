@@ -142,7 +142,7 @@ object DeepArrayTransformations {
                       outputChildField: String,
                       expression: TransformFunction
                      ): DataFrame = {
-    val updatedStructField = if (inputStructField.nonEmpty) inputStructField + ".*" else ""
+    val updatedStructField = if (inputStructField.nonEmpty) s"$inputStructField.*" else ""
     nestedWithColumnMap(df, updatedStructField, outputChildField, expression)
   }
 
@@ -172,7 +172,7 @@ object DeepArrayTransformations {
                       outputChildField: String,
                       expression: ExtendedTransformFunction
                      ): DataFrame = {
-    val updatedStructField = if (inputStructField.nonEmpty) inputStructField + ".*" else ""
+    val updatedStructField = if (inputStructField.nonEmpty) s"$inputStructField.*" else ""
     nestedWithColumnMapHelper(df, updatedStructField, outputChildField, Some(expression))._1
   }
 
@@ -223,7 +223,7 @@ object DeepArrayTransformations {
                               expression: TransformFunction,
                               errorCondition: TransformFunction
                              ): DataFrame = {
-    val updatedStructField = if (inputStructField.nonEmpty) inputStructField + ".*" else ""
+    val updatedStructField = if (inputStructField.nonEmpty) s"$inputStructField.*" else ""
     nestedWithColumnAndErrorMap(df, updatedStructField, outputChildField, errorColumnName, expression, errorCondition)
   }
 
@@ -262,7 +262,7 @@ object DeepArrayTransformations {
                               expression: ExtendedTransformFunction,
                               errorCondition: ExtendedTransformFunction
                              ): DataFrame = {
-    val updatedStructField = if (inputStructField.nonEmpty) inputStructField + ".*" else ""
+    val updatedStructField = if (inputStructField.nonEmpty) s"$inputStructField.*" else ""
     nestedExtendedWithColumnAndErrorMap(df, updatedStructField, outputChildField, errorColumnName, expression, errorCondition)
   }
 
@@ -831,14 +831,19 @@ object DeepArrayTransformations {
     * @return A pair consisting of the parent and the child field parts
     */
   private[transformations] def splitParentField(field: String, parentField: String): (String, String) = {
-    if (field == parentField) {
-      (field, "")
+    val fixedField = field.trim
+    val fixedParentField = parentField.trim
+
+    if (fixedField == fixedParentField) {
+      (fixedField, "")
     } else {
-      val parentFieldWithDot = if (parentField.endsWith(".")) parentField else parentField + "."
-      if (field.startsWith(parentFieldWithDot)) {
-        (parentField, field.substring(parentFieldWithDot.length))
+      val parentFieldWithDot = if (fixedParentField.endsWith(".")) fixedParentField else fixedParentField + "."
+      val parentFieldWithoutDot = if (fixedParentField.endsWith(".")) fixedParentField.dropRight(1) else fixedParentField
+
+      if (fixedField.startsWith(parentFieldWithDot)) {
+        (parentFieldWithoutDot, fixedField.substring(parentFieldWithDot.length))
       } else {
-        ("", field)
+        ("", fixedField)
       }
     }
   }
@@ -846,7 +851,7 @@ object DeepArrayTransformations {
   /**
     * The method takes a field and a list of parent fields, all fully qualified. The method does the following:
     * <ul>
-    *  <li>If the input field is a child of any of the parent fields, a longest parent is selected, and the path is
+    *  <li>If the input field is a child of any of the parent fields, a deepest parent is selected, and the path is
     *  split into parent and child parts and these parts are returned as a pair.</li>
     *  <li>If the input field is not a child of any of the listed parents the method returns a pair of empty string and
     *  the full qualified input field name.</li>
@@ -856,12 +861,12 @@ object DeepArrayTransformations {
     * @param parentFields A parent field to split in case the input field is its child
     * @return A pair consisting of the parent and the child field parts
     */
-  private[transformations] def splitByLongestParent(field: String, parentFields: Seq[String]): (String, String) = {
+  private[transformations] def splitByDeepestParent(field: String, parentFields: Seq[String]): (String, String) = {
     if (parentFields.isEmpty) {
       ("", field)
     } else {
       parentFields.map(parentField => splitParentField(field, parentField))
-        .maxBy { case (parent, _) => parent.length }
+        .maxBy { case (parent, _) => parent.count(_ == '.') }
     }
   }
 }
