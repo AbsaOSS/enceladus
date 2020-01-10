@@ -1,0 +1,54 @@
+[ {
+  "id" : 1,
+  "int_num" : 1,
+  "long_num" : 1,
+  "str_val" : "1",
+  "errCol" : [ ],
+  "conformedIntNum" : "a"
+}, {
+  "id" : 2,
+  "int_num" : 2,
+  "long_num" : 2,
+  "str_val" : "10",
+  "errCol" : [ ],
+  "conformedIntNum" : "b"
+}, {
+  "id" : 3,
+  "int_num" : 2,
+  "long_num" : 3,
+  "str_val" : "100",
+  "errCol" : [ ],
+  "conformedIntNum" : "b"
+}, {
+  "id" : 4,
+  "int_num" : 3,
+  "long_num" : 2,
+  "str_val" : "1000",
+  "errCol" : [ {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "conformedIntNum",
+    "rawValues" : [ "3" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "key",
+      "mappedDatasetColumn" : "int_num"
+    } ]
+  } ]
+}, {
+  "id" : 5,
+  "int_num" : 3,
+  "long_num" : 3,
+  "str_val" : "10000",
+  "errCol" : [ {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "conformedIntNum",
+    "rawValues" : [ "3" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "key",
+      "mappedDatasetColumn" : "int_num"
+    } ]
+  } ]
+} ]

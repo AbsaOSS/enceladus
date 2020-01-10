@@ -30,6 +30,8 @@ sap.ui.define([
       this._eventBus.subscribe("schemas", "created", this.onEntityCreated, this);
       this._eventBus.subscribe("datasets", "created", this.onEntityCreated, this);
       this._eventBus.subscribe("mappingTables", "created", this.onEntityCreated, this);
+      this._eventBus.subscribe("runs", "dataset-name-selected", this.onRunsDatasetNamePress, this);
+      this._eventBus.subscribe("runs", "dataset-version-selected", this.onRunsDatasetVersionPress, this);
 
       this._app = this.byId("menasApp");
 
@@ -92,7 +94,17 @@ sap.ui.define([
     },
 
     onRunsPress: function (oEv) {
-      this._eventBus.publish("runs", "list");
+      this._eventBus.publish("runs", "list-grouped-name");
+      this._app.toMaster(this.createId("runsDatasetNamePage"));
+    },
+
+    onRunsDatasetNamePress: function (channel, event, data) {
+      this._eventBus.publish("runs", "list-grouped-version", data);
+      this._app.toMaster(this.createId("runsDatasetVersionPage"));
+    },
+
+    onRunsDatasetVersionPress: function (channel, event, dataset) {
+      this._eventBus.publish("runs", "list", dataset);
       this._app.toMaster(this.createId("runsPage"));
     },
 

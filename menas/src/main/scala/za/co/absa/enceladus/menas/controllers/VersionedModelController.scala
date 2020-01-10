@@ -101,7 +101,13 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
   def create(@AuthenticationPrincipal principal: UserDetails, @RequestBody item: C): CompletableFuture[C] = {
-    versionedModelService.create(item, principal.getUsername).map {
+    versionedModelService.isDisabled(item.name).flatMap { isDisabled =>
+      if (isDisabled) {
+        versionedModelService.recreate(principal.getUsername, item)
+      } else {
+        versionedModelService.create(item, principal.getUsername)
+      }
+    }.map {
       case Some(entity) => entity
       case None         => throw notFound()
     }

@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.utils.transformations
 
-import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, DataType, StructField, StructType}
+import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.spark.hofs._
 
@@ -112,6 +112,20 @@ object DeepArrayTransformations {
                      ): DataFrame = {
     val updatedStructField = if (inputStructField.nonEmpty) inputStructField + ".*" else ""
     nestedWithColumnMap(df, updatedStructField, outputChildField, expression)
+  }
+
+  /**
+    * Same as `nestedStructMap` plus an error column handling.
+    */
+  def nestedStructAndErrorMap(df: DataFrame,
+                              inputStructField: String,
+                              outputChildField: String,
+                              errorColumnName: String,
+                              expression: TransformFunction,
+                              errorCondition: TransformFunction
+                             ): DataFrame = {
+    val updatedStructField = if (inputStructField.nonEmpty) inputStructField + ".*" else ""
+    nestedWithColumnAndErrorMap(df, updatedStructField, outputChildField, errorColumnName, expression, errorCondition)
   }
 
   /**

@@ -35,6 +35,8 @@
                     </Bar>
                 </footer>
             </Page>
+            <mvc:XMLView id="runsDatasetNamePage" viewName="components.run.runDatasetNameMaster"/>
+            <mvc:XMLView id="runsDatasetVersionPage" viewName="components.run.runDatasetVersionMaster"/>
             <mvc:XMLView id="runsPage" viewName="components.run.runMaster"/>
             <mvc:XMLView id="schemasPage" viewName="components.schema.schemaMaster"/>
             <mvc:XMLView id="datasetsPage" viewName="components.dataset.datasetMaster"/>

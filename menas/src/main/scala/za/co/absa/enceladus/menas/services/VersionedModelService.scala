@@ -54,12 +54,11 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     versionedMongoRepository.getAllVersions(name)
   }
 
-  def getLatestVersion(name: String): Future[Option[C]] = {
-    versionedMongoRepository.getLatestVersionValue(name).flatMap({
+  def getLatestVersion(name: String, includeDisabled: Boolean = false): Future[Option[C]] = {
+    versionedMongoRepository.getLatestVersionValue(name, includeDisabled).flatMap({
       case Some(version) => getVersion(name, version)
       case _ => throw NotFoundException()
     })
-
   }
 
   def getLatestVersionNumber(name: String): Future[Int] = {
@@ -142,11 +141,18 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     } yield detail
   }
 
+  def recreate(username: String, item: C): Future[Option[C]] = {
+    for {
+      latestVersion <- getLatestVersionNumber(item.name)
+      update <- update(username, item.setVersion(latestVersion).asInstanceOf[C])
+    } yield update
+  }
+
   def update(username: String, item: C): Future[Option[C]]
 
   private[services] def updateFuture(username: String, itemName: String, itemVersion: Int)(transform: C => Future[C]): Future[Option[C]] = {
     for {
-      versionToUpdate <- getLatestVersion(itemName)
+      versionToUpdate <- getLatestVersion(itemName, includeDisabled = true)
       transformed <- if (versionToUpdate.isEmpty) {
         Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
       } else if (versionToUpdate.get.version != itemVersion) {
@@ -190,6 +196,10 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     } else {
       versionedMongoRepository.disableVersion(name, version, principal.getUsername)
     }
+  }
+
+  def isDisabled(name: String): Future[Boolean] = {
+    versionedMongoRepository.isDisabled(name)
   }
 
   def validate(item: C): Future[Validation] = {

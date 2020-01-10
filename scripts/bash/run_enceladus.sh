@@ -20,12 +20,12 @@ DRY_RUN=""
 
 # Command line defaults for 'spark-submit'
 MASTER="yarn"
-DEPLOY_MODE="client"
-NUM_EXECUTORS=""
-EXECUTOR_MEMORY="4G"
-EXECUTOR_CORES=""
-DRIVER_CORES="4"
-DRIVER_MEMORY="8G"
+DEPLOY_MODE="$DEFAULT_DEPLOY_MODE"
+EXECUTOR_MEMORY="$DEFAULT_EXECUTOR_MEMORY"
+DRIVER_CORES="$DEFAULT_DRIVER_CORES"
+DRIVER_MEMORY="$DEFAULT_DRIVER_MEMORY"
+EXECUTOR_CORES="$DEFAULT_EXECUTOR_CORES"
+NUM_EXECUTORS="$DEFAULT_NUM_EXECUTORS"
 
 # Command like default for the job
 DATASET_NAME=""
@@ -237,7 +237,6 @@ validate_either() {
     fi
 }
 
-validate "--num-executors" "$NUM_EXECUTORS"
 validate "--dataset-name" "$DATASET_NAME"
 validate "--dataset-version" "$DATASET_VERSION"
 validate "--report-date" "$REPORT_DATE"

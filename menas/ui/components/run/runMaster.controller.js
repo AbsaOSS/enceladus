@@ -27,9 +27,10 @@ sap.ui.define([
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
     },
 
-    list: function () {
+    list: function (channel, event, dataset) {
       let masterPage = this.byId("masterPage");
-      RunService.getRuns(masterPage);
+      masterPage.setModel(new sap.ui.model.json.JSONModel(dataset), "dataset");
+      RunService.getRunsByDatasetNameAndVersion(masterPage, dataset.name, dataset.version);
     },
 
     onPressMasterBack: function () {
