@@ -868,6 +868,10 @@ class DeepArrayTransformationSuite extends FunSuite with SparkTestBase with Logg
     assert(splitByDeepestParent("aa.bb", parentFields) == ("", "aa.bb"))
     assert(splitByDeepestParent("aa.bb.cc", parentFields) == ("aa.bb.cc", ""))
     assert(splitByDeepestParent("aa.bb.cc.dd", parentFields) == ("aa.bb.cc", "dd"))
+
+    // This test will fail if the depth of a parent is calculated by the number of dots in a subfield,
+    // but will succeed when such depth is calculated by parent field length.
+    assert(splitByDeepestParent("a.b", Seq("", "a")) == ("a", "b"))
   }
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {

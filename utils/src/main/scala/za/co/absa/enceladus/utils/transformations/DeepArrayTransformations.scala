@@ -866,7 +866,7 @@ object DeepArrayTransformations {
       ("", field)
     } else {
       parentFields.map(parentField => splitParentField(field, parentField))
-        .maxBy { case (parent, _) => parent.count(_ == '.') }
+        .maxBy { case (parent, _) => parent.length }
     }
   }
 }
