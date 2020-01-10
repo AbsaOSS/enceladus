@@ -19,15 +19,14 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions.col
 import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations.splitByDeepestParent
 
-import scala.collection.mutable.ArrayBuffer
-
 /**
   * The class provides a storage for array transformation context for a transformation of a dataframe field.
   * The context contains all arrays in the path of the field and their corresponding array element lambda variables
   * provided by 'transform()' function of Spark SQL.
   */
-class ArrayContext(val arrayPaths: ArrayBuffer[String] = new ArrayBuffer[String],
-                   val lambdaVars: ArrayBuffer[Column] = new ArrayBuffer[Column]) {
+private[transformations]
+class ArrayContext(val arrayPaths: Seq[String] = new Array[String](0),
+                   val lambdaVars: Seq[Column] = new Array[Column](0)) {
 
   /**
     * Returns a new context by appending the current context with a new array/lambda combination.
@@ -37,10 +36,7 @@ class ArrayContext(val arrayPaths: ArrayBuffer[String] = new ArrayBuffer[String]
     * @return A column that corresponds to the field name.
     */
   def withArraysUpdated(arrayPath: String, lambdaVar: Column): ArrayContext = {
-    val ctx = new ArrayContext(arrayPaths, lambdaVars)
-    ctx.arrayPaths.append(arrayPath)
-    ctx.lambdaVars.append(lambdaVar)
-    ctx
+    new ArrayContext(arrayPaths :+ arrayPath, lambdaVars :+ lambdaVar)
   }
 
   /**
@@ -60,7 +56,7 @@ class ArrayContext(val arrayPaths: ArrayBuffer[String] = new ArrayBuffer[String]
         lambdaVars(i)
       } else {
         // If a field inside an array is specified - return the field
-        // by using '.getField()' on each child (which could be a nested struct
+        // by using '.getField()' on each child (which could be a nested struct)
         childField.split('.')
           .foldLeft(lambdaVars(i))((parent, column) => parent.getField(column))
       }
