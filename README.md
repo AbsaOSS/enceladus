@@ -66,7 +66,7 @@ The coverage reports are written in each module's `target` directory and aggrega
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
 The _Spline service_ can be omitted; in such case the **Standardization** and **Conformance** `spline.producer.url` setting
-as well as **Menas** `lineageReadApiUrl` and `menas.oozie.lineageWriteApiUrl` settings should be all set to empty string. 
+as well as **Menas** `menas.lineage.readApiUrl` and `menas.oozie.lineageWriteApiUrl` settings should be all set to empty string. 
 
 #### Deploying Menas
 Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
@@ -101,7 +101,7 @@ password=changeme
 --deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.producer.url=<url_for_spline_consumer> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.producer.url=<url_for_spline_consumer> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
 <standardization_<build_version>.jar> \
 --menas-auth-keytab <path_to_keytab_file> \
@@ -125,7 +125,7 @@ password=changeme
 --driver-cores <num> \
 --driver-memory <num>G \
 --conf 'spark.ui.port=29000' \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.producer.url=<url_for_spline_consumer> -Dspline.mongodb.name=<spline_database_name>" -Dhdp.version=<hadoop_version> \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.producer.url=<url_for_spline_consumer> -Dhdp.version=<hadoop_version>" \
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
 <conformance_<build_version>.jar> \
