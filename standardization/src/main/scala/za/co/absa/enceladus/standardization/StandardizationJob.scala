@@ -30,8 +30,9 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasPlugin}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.standardization.cmd.{StdCmdConfig, _}
+import za.co.absa.enceladus.standardization.sinterpreter.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.standardization.sinterpreter.{CobolOptions, StandardizationInterpreter}
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
@@ -54,7 +55,7 @@ object StandardizationJob {
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
-    implicit val cmd: CmdConfig = CmdConfig.getCmdLineArguments(args)
+    implicit val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     implicit val udfLib: UDFLibrary = new UDFLibrary
@@ -127,7 +128,7 @@ object StandardizationJob {
     }
   }
 
-  private def getReportVersion(cmd: CmdConfig, dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {
+  private def getReportVersion(cmd: StdCmdConfig, dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {
     cmd.reportVersion match {
       case Some(version) => version
       case None          =>
@@ -140,7 +141,7 @@ object StandardizationJob {
     }
   }
 
-  private def getPathCfg(cmd: CmdConfig, dataset: Dataset, reportVersion: Int): PathCfg = {
+  private def getPathCfg(cmd: StdCmdConfig, dataset: Dataset, reportVersion: Int): PathCfg = {
     val dateTokens = cmd.reportDate.split("-")
     PathCfg(
       inputPath = buildRawPath(cmd, dataset, dateTokens, reportVersion),
@@ -152,7 +153,7 @@ object StandardizationJob {
     )
   }
 
-  private def obtainSparkSession()(implicit cmd: CmdConfig): SparkSession = {
+  private def obtainSparkSession()(implicit cmd: StdCmdConfig): SparkSession = {
     val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
@@ -173,7 +174,7 @@ object StandardizationJob {
     *                        larger than Spark default
     * @return The updated dataframe reader
     */
-  def getFormatSpecificReader(cmd: CmdConfig, dataset: Dataset, numberOfColumns: Int = 0)
+  def getFormatSpecificReader(cmd: StdCmdConfig, dataset: Dataset, numberOfColumns: Int = 0)
                              (implicit spark: SparkSession, dao: MenasDAO): DataFrameReader = {
     val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
@@ -199,11 +200,11 @@ object StandardizationJob {
     }
   }
 
-  private def getGenericOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+  private def getGenericOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
     HashMap("charset" -> cmd.charset.map(StringParameter))
   }
 
-  private def getXmlOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+  private def getXmlOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("xml")) {
       HashMap("rowtag" -> cmd.rowTag.map(StringParameter))
     } else {
@@ -211,7 +212,7 @@ object StandardizationJob {
     }
   }
 
-  private def getCsvOptions(cmd: CmdConfig, numberOfColumns: Int = 0): HashMap[String,Option[RawFormatParameter]] = {
+  private def getCsvOptions(cmd: StdCmdConfig, numberOfColumns: Int = 0): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
         "delimiter" -> cmd.csvDelimiter.map(StringParameter),
@@ -227,7 +228,7 @@ object StandardizationJob {
     }
   }
 
-  private def getFixedWidthOptions(cmd: CmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+  private def getFixedWidthOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
       HashMap("trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter))
     } else {
@@ -235,7 +236,7 @@ object StandardizationJob {
     }
   }
 
-  private def getCobolOptions(cmd: CmdConfig, dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
+  private def getCobolOptions(cmd: StdCmdConfig, dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
       val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
       HashMap(
@@ -262,7 +263,7 @@ object StandardizationJob {
   }
 
   private def prepareDataFrame(schema: StructType,
-                               cmd: CmdConfig,
+                               cmd: StdCmdConfig,
                                path: String,
                                dataset: Dataset)
                               (implicit spark: SparkSession,
@@ -282,7 +283,7 @@ object StandardizationJob {
   private def executeStandardization(performance: PerformanceMeasurer,
                                      dfAll: DataFrame,
                                      schema: StructType,
-                                     cmd: CmdConfig,
+                                     cmd: StdCmdConfig,
                                      menasCredentials: MenasCredentials,
                                      pathCfg: PathCfg)
                                     (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
@@ -404,7 +405,7 @@ object StandardizationJob {
     }
   }
 
-  def buildRawPath(cmd: CmdConfig, dataset: Dataset, dateTokens: Array[String], reportVersion: Int): String = {
+  def buildRawPath(cmd: StdCmdConfig, dataset: Dataset, dateTokens: Array[String], reportVersion: Int): String = {
     cmd.rawPathOverride match {
       case None                  =>
         val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"

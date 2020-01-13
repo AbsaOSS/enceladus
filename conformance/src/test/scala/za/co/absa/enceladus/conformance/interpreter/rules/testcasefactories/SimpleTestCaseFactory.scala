@@ -19,7 +19,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.mockito.Mockito.{mock, when => mockWhen}
-import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
@@ -136,10 +136,10 @@ class SimpleTestCaseFactory(implicit spark: SparkSession) {
     * @return A dataframe, a dataset, a Menas DAO, a Cmd Config and feature switches prepared to run conformance interpreter
     */
   def getTestCase(experimentalMappingRule: Boolean,
-                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, CmdConfig, FeatureSwitches) = {
+                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, ConformanceCmdConfig, FeatureSwitches) = {
     val inputDf = spark.read.schema(testCaseSchema).json(testCaseDataJson.toDS)
     val dataset = getDataSetWithConformanceRules(testCaseDataset, conformanceRules: _*)
-    val cmdConfig  = CmdConfig(reportDate = reportDate)
+    val cmdConfig  = ConformanceCmdConfig(reportDate = reportDate)
 
     val dao = mock(classOf[MenasDAO])
     mockWhen(dao.getDataset(testCaseName, 1)) thenReturn testCaseDataset

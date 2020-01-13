@@ -18,13 +18,13 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql.types._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.CmdConfig
+import org.slf4j.event.Level.ERROR
+import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.samples.CastingRuleSamples
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-import org.slf4j.event.Level.ERROR
 
 class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase {
   private val ruleName = "Casting rule"
@@ -36,7 +36,7 @@ class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase {
     val inputDf = spark.read.schema(CastingRuleSamples.ordersSchema).json(CastingRuleSamples.ordersData.toDS)
 
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
-    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2017-11-01")
+    implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(reportDate = "2017-11-01")
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false

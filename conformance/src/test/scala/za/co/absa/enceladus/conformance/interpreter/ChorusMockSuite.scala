@@ -15,15 +15,14 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import org.mockito.Mockito.{mock, when => mockWhen}
+import org.scalatest.FunSuite
+import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
-import za.co.absa.enceladus.model.MappingTable
+import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 case class MyMappingTable(id: Int, mappedAttr: MyMappingTableInner)
 case class MyMappingTableInner(description: String, name: String)
@@ -44,7 +43,7 @@ class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
     val inputDf = spark.createDataFrame(d)
     val mappingDf = spark.createDataFrame(mapping)
 
-    implicit val progArgs: CmdConfig = CmdConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
+    implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
     implicit val dao: MenasDAO = mock(classOf[MenasDAO]) // you may have to hard-code your own implementation here (if not working with menas)
     val enableCF = false
     val isCatalystWorkaroundEnabled = true
