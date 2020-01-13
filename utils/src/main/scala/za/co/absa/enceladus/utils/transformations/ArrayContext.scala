@@ -25,8 +25,8 @@ import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations.split
   * provided by 'transform()' function of Spark SQL.
   */
 private[transformations]
-class ArrayContext(val arrayPaths: Seq[String] = new Array[String](0),
-                   val lambdaVars: Seq[Column] = new Array[Column](0)) {
+class ArrayContext(val arrayPaths: Seq[String] = Array[String](),
+                   val lambdaVars: Seq[Column] = Array[Column]()) {
 
   /**
     * Returns a new context by appending the current context with a new array/lambda combination.
