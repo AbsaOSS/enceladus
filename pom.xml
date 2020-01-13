@@ -114,8 +114,6 @@
         <module>menas</module>
         <module>migrations</module>
         <module>migrations-cli</module>
-        <module>external/kafka</module>
-        <module>external/fixed-width</module>
     </modules>
 
     <properties>
