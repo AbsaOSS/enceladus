@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ class OozieService @Autowired() (oozieRepository: OozieRepository, datasetMongoR
         susp <- oozieRepository.suspend(coordinatorId, runtimeParams)
         status <- oozieRepository.getCoordinatorStatus(coordinatorId, runtimeParams)
       } yield status
-    } 
+    }
   }
 
   def resume(coordinatorId: String): Future[OozieCoordinatorStatus] = {
@@ -86,6 +86,6 @@ class OozieService @Autowired() (oozieRepository: OozieRepository, datasetMongoR
         susp <- oozieRepository.resume(coordinatorId, runtimeParams)
         status <- oozieRepository.getCoordinatorStatus(coordinatorId, runtimeParams)
       } yield status
-    } 
+    }
   }
 }

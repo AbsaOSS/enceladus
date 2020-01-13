@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ package object dataFormats {
     override def getArguments: Seq[String] = Seq("--row-tag", rowTag)
   }
 
-  case class CSVDataFormat(@JsonDeserialize(using = classOf[OptCharDeserializer]) csvDelimiter: Option[Char], 
+  case class CSVDataFormat(@JsonDeserialize(using = classOf[OptCharDeserializer]) csvDelimiter: Option[Char],
       @JsonDeserialize(using = classOf[NonNullOptBooleanDeserializer]) csvHeader: Option[Boolean]) extends DataFormat {
     val name: String = "csv"
     private val delimiter = csvDelimiter.map(d => Seq("--delimiter", d.toString)).getOrElse(Seq[String]())
