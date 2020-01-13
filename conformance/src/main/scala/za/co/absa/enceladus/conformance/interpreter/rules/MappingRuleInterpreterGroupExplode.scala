@@ -15,16 +15,15 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.conformance.CmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.conformance.interpreter.RuleValidators
 import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreterGroupExplode._
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
+import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
@@ -36,15 +35,14 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
-                                              conformance: ConfDataset,
-                                              explodeContext: ExplosionContext)
+                                              conformance: ConfDataset)
   extends RuleInterpreter {
 
-  private val conf = ConfigFactory.load()
+  override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule (explode-optimized) to conform ${rule.outputColumn}...")
-    val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
     //A fix for cases, where the join condition only uses columns previously created by a literal rule
@@ -52,14 +50,14 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     spark.conf.set("spark.sql.crossJoin.enabled", "true")
 
     // find the data frame from the mapping table
-    val mapTable = DataSource.getData(mappingTableDef.hdfsPath, progArgs.reportDate, mapPartitioning)
+    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.reportDate)
     val joinConditionStr = getJoinCondition(rule).toString
     val defaultValueOpt = getDefaultValue(mappingTableDef)
 
     logJoinCondition(mapTable.schema, joinConditionStr)
     validateMappingRule(df, dao, mappingTableDef, mapTable, joinConditionStr)
 
-    val (explodedDf, expCtx) = explodeIfNeeded(df)
+    val (explodedDf, expCtx) = explodeIfNeeded(df, explosionState)
 
     val joined = explodedDf.as(MappingRuleInterpreterGroupExplode.inputDfAlias)
       .join(mapTable.as(MappingRuleInterpreterGroupExplode.mappingTableAlias),
@@ -79,19 +77,19 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     val errorsDf = addErrorsToErrCol(placedDf, rule.attributeMappings.values.toSeq, rule.outputColumn,
       defaultValueOpt, mappingErrUdfCall, arrayErrorCondition)
 
-    collectIfNeeded(expCtx, errorsDf)
+    collectIfNeeded(expCtx, explosionState, errorsDf)
   }
 
-  private def explodeIfNeeded(df: Dataset[Row]): (Dataset[Row], ExplosionContext) = {
-    if (explodeContext.explosions.isEmpty) {
+  private def explodeIfNeeded(df: Dataset[Row], explosionState: ExplosionState): (Dataset[Row], ExplosionContext) = {
+    if (explosionState.explodeContext.explosions.isEmpty) {
       ExplodeTools.explodeAllArraysInPath(rule.outputColumn, df)
     } else {
-      (df, explodeContext)
+      (df, explosionState.explodeContext)
     }
   }
 
-  private def collectIfNeeded(expCtx: ExplosionContext, errorsDf: DataFrame): DataFrame = {
-    if (explodeContext.explosions.isEmpty) {
+  private def collectIfNeeded(expCtx: ExplosionContext, explosionState: ExplosionState, errorsDf: DataFrame): DataFrame = {
+    if (explosionState.explodeContext.explosions.isEmpty) {
       ExplodeTools.revertAllExplosions(errorsDf, expCtx, Some(ErrorMessage.errorColumnName))
     } else {
       errorsDf

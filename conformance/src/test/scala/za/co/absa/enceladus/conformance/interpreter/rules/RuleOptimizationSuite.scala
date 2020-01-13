@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import org.apache.spark.sql.types.{DataType, StructField, StructType}
+import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
-import za.co.absa.enceladus.model.conformanceRule.{ArrayCollectPseudoRule, ArrayExplodePseudoRule, ConformanceRule, MappingConformanceRule}
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, InterpreterContext}
+import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.samples.TradeConformance._
 
 class RuleOptimizationSuite extends FunSuite {
@@ -101,64 +101,67 @@ class RuleOptimizationSuite extends FunSuite {
       |""".stripMargin
   private val schema = DataType.fromJson(schemaJson).asInstanceOf[StructType]
 
+  private implicit val ictxDummy: InterpreterContext = InterpreterContext(schema,
+    null,
+    FeatureSwitches().setExperimentalMappingRuleEnabled(true),
+    "dummy",
+    null,
+    null,
+    null)
+
   test("Test non-mapping rules are not grouped") {
     val rules: List[ConformanceRule] = List(litRule, upperRule, lit2Rule)
 
-    // The expected output rule list is just the original rule list with the order field recalculated
-    val rulesExpected: List[ConformanceRule] = List(litRule.withUpdatedOrder(1),
-      upperRule.withUpdatedOrder(2), lit2Rule.withUpdatedOrder(3))
+    val actualInterpreters = DynamicInterpreter.getInterpreters(rules, schema)
 
-    val optimizedRules: List[ConformanceRule] = DynamicInterpreter.getExplosionOptimizedSteps(rules, schema)
-
-    assert(optimizedRules == rulesExpected)
+    assert(actualInterpreters.length == 3)
+    assert(actualInterpreters.head.isInstanceOf[LiteralRuleInterpreter])
+    assert(actualInterpreters(1).isInstanceOf[UppercaseRuleInterpreter])
+    assert(actualInterpreters(2).isInstanceOf[LiteralRuleInterpreter])
   }
 
   test("Test mapping rules having the same array are grouped") {
     val rules: List[ConformanceRule] = List(litRule, countryRule, productRule, lit2Rule)
 
-    val explodeRule = ArrayExplodePseudoRule(2, "legs.conditions", controlCheckpoint = false)
-    val collectRule = ArrayCollectPseudoRule(5, "", controlCheckpoint = false)
+    val actualInterpreters = DynamicInterpreter.getInterpreters(rules, schema)
 
-    // The expected output rule list is just the original rule list with the order field recalculated
-    val rulesExpected: List[ConformanceRule] = List(litRule.withUpdatedOrder(1), explodeRule,
-      countryRule.withUpdatedOrder(3), productRule.withUpdatedOrder(4), collectRule,
-      lit2Rule.withUpdatedOrder(6))
-
-    val optimizedRules: List[ConformanceRule] = DynamicInterpreter.getExplosionOptimizedSteps(rules, schema)
-
-    assert(optimizedRules == rulesExpected)
+    assert(actualInterpreters.length == 6)
+    assert(actualInterpreters.head.isInstanceOf[LiteralRuleInterpreter])
+    assert(actualInterpreters(1).isInstanceOf[ArrayExplodeInterpreter])
+    assert(actualInterpreters(2).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(3).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(4).isInstanceOf[ArrayCollapseInterpreter])
+    assert(actualInterpreters(5).isInstanceOf[LiteralRuleInterpreter])
   }
 
   test("Test single arrays in the beginning and at the end") {
     val rules: List[ConformanceRule] = List(countryRule, litRule, lit2Rule, productRule)
 
-    // The expected output rule list is just the original rule list with the order field recalculated
-    val rulesExpected: List[ConformanceRule] = List(countryRule.withUpdatedOrder(1),
-      litRule.withUpdatedOrder(2), lit2Rule.withUpdatedOrder(3),
-      productRule.withUpdatedOrder(4))
+    val actualInterpreters = DynamicInterpreter.getInterpreters(rules, schema)
 
-    val optimizedRules: List[ConformanceRule] = DynamicInterpreter.getExplosionOptimizedSteps(rules, schema)
-
-    assert(optimizedRules == rulesExpected)
+    assert(actualInterpreters.length == 4)
+    assert(actualInterpreters.head.isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(1).isInstanceOf[LiteralRuleInterpreter])
+    assert(actualInterpreters(2).isInstanceOf[LiteralRuleInterpreter])
+    assert(actualInterpreters(3).isInstanceOf[MappingRuleInterpreterGroupExplode])
   }
 
   test("Test several arrays in the beginning and at the end") {
     val rules: List[ConformanceRule] = List(countryRule, productRule, litRule, lit2Rule, productRule, countryRule)
 
-    val explodeRule1 = ArrayExplodePseudoRule(1, "legs.conditions", controlCheckpoint = false)
-    val collectRule1 = ArrayCollectPseudoRule(4, "", controlCheckpoint = false)
-    val explodeRule2 = ArrayExplodePseudoRule(7, "legs.conditions", controlCheckpoint = false)
-    val collectRule2 = ArrayCollectPseudoRule(10, "", controlCheckpoint = false)
+    val actualInterpreters = DynamicInterpreter.getInterpreters(rules, schema)
 
-    // The expected output rule list is just the original rule list with the order field recalculated
-    val rulesExpected: List[ConformanceRule] = List(explodeRule1, countryRule.withUpdatedOrder(2),
-      productRule.withUpdatedOrder(3), collectRule1, litRule.withUpdatedOrder(5),
-      lit2Rule.withUpdatedOrder(6), explodeRule2, productRule.withUpdatedOrder(8),
-      countryRule.withUpdatedOrder(9), collectRule2)
-
-    val optimizedRules: List[ConformanceRule] = DynamicInterpreter.getExplosionOptimizedSteps(rules, schema)
-
-    assert(optimizedRules == rulesExpected)
+    assert(actualInterpreters.length == 10)
+    assert(actualInterpreters.head.isInstanceOf[ArrayExplodeInterpreter])
+    assert(actualInterpreters(1).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(2).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(3).isInstanceOf[ArrayCollapseInterpreter])
+    assert(actualInterpreters(4).isInstanceOf[LiteralRuleInterpreter])
+    assert(actualInterpreters(5).isInstanceOf[LiteralRuleInterpreter])
+    assert(actualInterpreters(6).isInstanceOf[ArrayExplodeInterpreter])
+    assert(actualInterpreters(7).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(8).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(9).isInstanceOf[ArrayCollapseInterpreter])
   }
 
   test("Test mapping different arrays in sequence") {
@@ -170,24 +173,24 @@ class RuleOptimizationSuite extends FunSuite {
     val rules: List[ConformanceRule] = List(countryRule, productRule, legIdRule, countryRule, legIdRule,
       countryRule, productRule, legIdRule, legIdRule)
 
-    val explodeRule1 = ArrayExplodePseudoRule(1, "legs.conditions", controlCheckpoint = false)
-    val collectRule1 = ArrayCollectPseudoRule(4, "", controlCheckpoint = false)
-    val explodeRule2 = ArrayExplodePseudoRule(8, "legs.conditions", controlCheckpoint = false)
-    val collectRule2 = ArrayCollectPseudoRule(11, "", controlCheckpoint = false)
-    val explodeRule3 = ArrayExplodePseudoRule(12, "legs", controlCheckpoint = false)
-    val collectRule4 = ArrayCollectPseudoRule(15, "", controlCheckpoint = false)
+    val actualInterpreters = DynamicInterpreter.getInterpreters(rules, schema)
 
-    // The expected output rule list is just the original rule list with the order field recalculated
-    val rulesExpected: List[ConformanceRule] = List(explodeRule1, countryRule.withUpdatedOrder(2),
-      productRule.withUpdatedOrder(3), collectRule1, legIdRule.withUpdatedOrder(5),
-      countryRule.withUpdatedOrder(6), legIdRule.withUpdatedOrder(7), explodeRule2,
-      countryRule.withUpdatedOrder(9), productRule.withUpdatedOrder(10), collectRule2,
-      explodeRule3, legIdRule.withUpdatedOrder(13), legIdRule.withUpdatedOrder(14),
-      collectRule4)
-
-    val optimizedRules: List[ConformanceRule] = DynamicInterpreter.getExplosionOptimizedSteps(rules, schema)
-
-    assert(optimizedRules == rulesExpected)
+    assert(actualInterpreters.length == 15)
+    assert(actualInterpreters.head.isInstanceOf[ArrayExplodeInterpreter])
+    assert(actualInterpreters(1).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(2).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(3).isInstanceOf[ArrayCollapseInterpreter])
+    assert(actualInterpreters(4).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(5).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(6).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(7).isInstanceOf[ArrayExplodeInterpreter])
+    assert(actualInterpreters(8).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(9).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(10).isInstanceOf[ArrayCollapseInterpreter])
+    assert(actualInterpreters(11).isInstanceOf[ArrayExplodeInterpreter])
+    assert(actualInterpreters(12).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(13).isInstanceOf[MappingRuleInterpreterGroupExplode])
+    assert(actualInterpreters(14).isInstanceOf[ArrayCollapseInterpreter])
   }
 
 }

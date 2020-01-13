@@ -56,7 +56,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     import spark.implicits._
     val mappingTablePattern = "{0}/{1}/{2}"
 
-    val dfs = DataSource.getData(EmployeeConformance.employeeDS.hdfsPath, "2017", "11", "01", mappingTablePattern)
+    val dfs = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath, "2017-11-01", mappingTablePattern)
 
     mockWhen(dao.getDataset("Employee Conformance", 1)) thenReturn EmployeeConformance.employeeDS
     mockWhen(dao.getMappingTable("country", 0)) thenReturn EmployeeConformance.countryMT
@@ -110,7 +110,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     import spark.implicits._
     val mappingTablePattern = "{0}/{1}/{2}"
 
-    val dfs = DataSource.getData(TradeConformance.tradeDS.hdfsPath, "2017", "11", "01", mappingTablePattern)
+    val dfs = DataSource.getDataFrame(TradeConformance.tradeDS.hdfsPath, "2017-11-01", mappingTablePattern)
 
     mockWhen(dao.getDataset("Trade Conformance", 1)) thenReturn TradeConformance.tradeDS
     mockWhen(dao.getMappingTable("country", 0)) thenReturn TradeConformance.countryMT

@@ -13,20 +13,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.conformance.datasource
+package za.co.absa.enceladus.conformance.interpreter
 
-import org.scalatest.FunSuite
-import za.co.absa.enceladus.samples.EmployeeConformance
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.explode.ExplosionContext
 
-class DatasourceSuite extends FunSuite with SparkTestBase {
+/**
+  * This class is used to encapsulate a state of exploded arrays during processing of dynamic conformance steps
+  * by interpreters.
+  *
+  * Interpreters such as MappingRuleInterpreterGroupExplode, ExplosionInterpreter and CollapseInterpreter
+  * can change this state.
+  */
+class ExplosionState (var explodeContext: ExplosionContext = ExplosionContext()) {
 
-  test("Data Source loads all data needed for test sample") {
-
-    val inputDf = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath, "2017-11-01", "{0}/{1}/{2}")
-
-    assert(inputDf.columns.toList.sorted === List("employee_id", "name", "surname", "dept", "role", "country").sorted)
-
-  }
+  def isNoExplosionsApplied: Boolean = explodeContext.explosions.isEmpty
 
 }

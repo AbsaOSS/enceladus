@@ -29,7 +29,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
-import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
+import za.co.absa.enceladus.utils.explode.ExplosionContext
 import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
@@ -37,12 +37,12 @@ object DynamicInterpreter {
   private val log = LoggerFactory.getLogger(this.getClass)
 
   /**
-    * interpret The dynamic conformance interpreter function
+    * Interpret conformance rules defined in a dataset.
     *
-    * @param conformance                 The dataset object - this represents a data conformance workflow
-    * @param inputDf                     The dataset to be conformed
-    * @param jobShortName                A job name used for checkpoints
-    * @return The conformed dataframe
+    * @param conformance  The dataset object - this represents a data conformance workflow.
+    * @param inputDf      The dataset to be conformed.
+    * @param jobShortName A job name used for checkpoints.
+    * @return The conformed DataFrame.
     *
     */
   def interpret(conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
@@ -62,10 +62,10 @@ object DynamicInterpreter {
   }
 
   /**
-    * Applies conformance rules and corresponding optimizations and workarounds
+    * Applies conformance rules applying a workaround for the Catalyst optimizer bug.
     *
-    * @param inputDf The dataset to be conformed
-    * @return The conformed dataframe
+    * @param inputDf The dataset to be conformed.
+    * @return The conformed DataFrame.
     */
   private def applyConformanceRules(inputDf: DataFrame)
                                    (implicit ictx: InterpreterContext): DataFrame = {
@@ -73,112 +73,186 @@ object DynamicInterpreter {
     implicit val dao: MenasDAO = ictx.dao
     implicit val progArgs: CmdConfig = ictx.progArgs
     implicit val udfLib: UDFLibrary = new UDFLibrary
-
-    var explodeContext = ExplosionContext()
+    implicit val explosionState: ExplosionState = new ExplosionState()
 
     val steps = getConformanceSteps
+    val interpreters = getInterpreters(steps, inputDf.schema)
     val optimizerTimeTracker = new OptimizerTimeTracker(inputDf, ictx.featureSwitches.catalystWorkaroundEnabled)
     val dfInputWithIdForWorkaround = optimizerTimeTracker.getWorkaroundDataframe
 
     // Fold left on rules
     var rulesApplied = 0
-    val conformedDf = steps.foldLeft(dfInputWithIdForWorkaround)({
-      case (df, rule) =>
-        val (ruleAppliedDf, ec) = applyConformanceRule(df, rule, explodeContext)
+    val conformedDf = interpreters.foldLeft(dfInputWithIdForWorkaround)({
+      case (df, interpreter) =>
+        val explosionStateCopy = new ExplosionState(explosionState.explodeContext)
+        val ruleAppliedDf = interpreter.conform(df)(spark, explosionStateCopy, dao, progArgs)
 
-        val conformedDf = if (explodeContext.explosions.isEmpty &&
+        val conformedDf = if (explosionState.isNoExplosionsApplied &&
           optimizerTimeTracker.isCatalystWorkaroundRequired(ruleAppliedDf, rulesApplied)) {
           // Apply a workaround BEFORE applying the rule so that the execution plan generation still runs fast
-          val (workAroundDf, ecInner) = applyConformanceRule(
-            optimizerTimeTracker.applyCatalystWorkaround(df),
-            rule,
-            explodeContext)
-          explodeContext = ecInner
+          val workAroundDf = interpreter.conform(optimizerTimeTracker.applyCatalystWorkaround(df))
           optimizerTimeTracker.recordExecutionPlanOptimizationTime(workAroundDf)
           workAroundDf
         } else {
-          explodeContext = ec
+          explosionState.explodeContext = explosionStateCopy.explodeContext
           ruleAppliedDf
         }
         rulesApplied += 1
-        applyRuleCheckpoint(rule, conformedDf, progArgs.persistStorageLevel, explodeContext)
+        interpreter.conformanceRule match {
+          case Some(rule) => applyRuleCheckpoint(rule, conformedDf, progArgs.persistStorageLevel, explosionState.explodeContext)
+          case None       => conformedDf
+        }
     })
     optimizerTimeTracker.cleanupWorkaroundDf(conformedDf)
   }
 
   /**
-    * Gets the list of conformance rules from the context and applies optimization rearrangements if needed
+    * Transforms a list of conformance rules to a list of conformance rule interpreters.
+    * For most conformance rules there is only one interpreter to apply. But mapping rule
+    * has several strategies. Optimizer chooses which strategy to use and provides an
+    * interpreter for each strategy.
+    *
+    * @param rules  A list of conformance rules.
+    * @param schema A schema of a DataFrame to be conformed.
+    * @return A list of conformance rule interpreters.
+    */
+  def getInterpreters(rules: List[ConformanceRule], schema: StructType)
+                     (implicit ictx: InterpreterContext): List[RuleInterpreter] = {
+
+    val groupedRules = groupMappingRules(rules, schema)
+
+    getOptimizedInterpreters(groupedRules, schema)
+  }
+
+  /**
+    * Optimizes a list of groups of conformance rules and returns a list of interpreters as the result.
+    *
+    * The input conformance rules are expected to be grouped. Only mapping rules are grouped. Each group of
+    * mapping rules has the output field in the same array. This makes it possible to apply an optimization of
+    * exploding the array only once. The optimization is done by inserting `ArrayExplodeInterpreter` and
+    * `ArrayCollapseInterpreter` for each group of mapping rules.
+    *
+    * @param ruleGroups Conformance rules grouped by output field being in the same array.
+    * @param schema     A schema of a DataFrame to be conformed.
+    * @return A list of conformance rules interpreters.
+    */
+  private def getOptimizedInterpreters(ruleGroups: List[List[ConformanceRule]],
+                                       schema: StructType)
+                                      (implicit ictx: InterpreterContext): List[RuleInterpreter] = {
+    ruleGroups.flatMap(rules => {
+      val interpreters = rules.map(rule => getInterpreter(rule, schema))
+      if (isGroupExplosionUsable(rules, schema) &&
+        ictx.featureSwitches.experimentalMappingRuleEnabled) {
+        // Inserting an explosion and a collapse between a group of mapping rules operating on a common array
+        val optArray = SchemaUtils.getDeepestArrayPath(schema, rules.head.outputColumn)
+        optArray match {
+          case Some(arrayColumn) =>
+            new ArrayExplodeInterpreter(arrayColumn) :: (interpreters :+ new ArrayCollapseInterpreter())
+          case None              =>
+            throw new IllegalStateException("Unable to find a common array between fields: " +
+              rules.map(_.outputColumn).mkString(", "))
+        }
+      } else {
+        interpreters
+      }
+    })
+  }
+
+  /**
+    * Returns an interpreter for a conformance rule. Most conformance rules correspond to one interpreter.
+    * The exception is the mapping rule for which there are several interpreters based on the strategy used.
+    *
+    * @param rule   A conformance rule.
+    * @param schema A schema of a DataFrame to be conformed.
+    * @return A conformance rules interpreter.
+    */
+  private def getInterpreter(rule: ConformanceRule,
+                             schema: StructType)
+                            (implicit ictx: InterpreterContext): RuleInterpreter = {
+    rule match {
+      case r: DropConformanceRule             => DropRuleInterpreter(r)
+      case r: ConcatenationConformanceRule    => ConcatenationRuleInterpreter(r)
+      case r: LiteralConformanceRule          => LiteralRuleInterpreter(r)
+      case r: SingleColumnConformanceRule     => SingleColumnRuleInterpreter(r)
+      case r: SparkSessionConfConformanceRule => SparkSessionConfRuleInterpreter(r)
+      case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r)
+      case r: CastingConformanceRule          => CastingRuleInterpreter(r)
+      case r: NegationConformanceRule         => NegationRuleInterpreter(r)
+      case r: MappingConformanceRule          => getMappingRuleInterpreter(r, schema)
+      case r: CustomConformanceRule           => r.getInterpreter()
+      case r                                  => throw new IllegalStateException(s"Unrecognized rule class: ${r.getClass.getName}")
+    }
+  }
+
+  /**
+    * Returns an interpreter for a mapping rule based on which strategy is applicable.
+    *
+    * @param rule   A conformance rule.
+    * @param schema A schema of a DataFrame to be conformed.
+    * @return A mapping rule interpreter.
+    */
+  private def getMappingRuleInterpreter(rule: MappingConformanceRule,
+                                        schema: StructType)
+                                       (implicit ictx: InterpreterContext): RuleInterpreter = {
+    if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
+      if (canMappingRuleBroadcast(rule, schema)) {
+        MappingRuleInterpreterBroadcast(rule, ictx.conformance)
+      } else {
+        MappingRuleInterpreterGroupExplode(rule, ictx.conformance)
+      }
+    } else {
+      MappingRuleInterpreter(rule, ictx.conformance)
+    }
+  }
+
+  /**
+    * An explosion is needed for a group of mapping rules if the number of mapping rules inside the group
+    * for which broadcasting strategy is not applicable is bigger than 1.
+    *
+    * @param rules  A list of conformance rules grouped by output field being in the same array
+    * @param schema A schema of a dataset
+    * @return true if a group explosion optimization can be used
+    */
+  private def isGroupExplosionUsable(rules: List[ConformanceRule],
+                                     schema: StructType)
+                                    (implicit ictx: InterpreterContext): Boolean = {
+    val eligibleRulesCount = rules.map {
+      case rule: MappingConformanceRule => if (canMappingRuleBroadcast(rule, schema)) 0 else 1
+      case _                            => 0
+    }.sum
+
+    eligibleRulesCount > 1
+  }
+
+  /**
+    * Returns true if broadcasting strategy is applicable for the specified mapping rule.
+    *
+    * @param rule   A mapping conformance rule
+    * @param schema A schema of a dataset
+    * @return true if a group explosion optimization can be used
+    */
+  private def canMappingRuleBroadcast(rule: MappingConformanceRule,
+                                      schema: StructType)
+                                     (implicit ictx: InterpreterContext): Boolean = {
+    // ToDo Currently, the broadcasting strategy is turned off. The decision when to use it should
+    //      be implemented as part of #1017.
+    false
+  }
+
+  private def getMappingTableSizeMb(rule: MappingConformanceRule)
+                                   (implicit ictx: InterpreterContext): Int = {
+    // ToDo Currently, the broadcasting strategy is turned off. The decision when to use it should
+    //      be implemented as part of #1017.
+    0
+  }
+
+  /**
+    * Gets the list of conformance rules from the context
     *
     * @return A list of conformance rules
     */
   def getConformanceSteps(implicit ictx: InterpreterContext): List[ConformanceRule] = {
-    val steps = ictx.conformance.conformance.sortBy(_.order)
-    if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
-      getExplosionOptimizedSteps(steps, ictx.schema)
-    } else {
-      steps
-    }
-  }
-
-  private def applyConformanceRule(df: DataFrame,
-                                   rule: ConformanceRule,
-                                   ec: ExplosionContext)
-                                  (implicit ictx: InterpreterContext): (DataFrame, ExplosionContext) = {
-    implicit val spark: SparkSession = ictx.spark
-    implicit val dao: MenasDAO = ictx.dao
-    implicit val progArgs: CmdConfig = ictx.progArgs
-
-    var explodeContext = ec
-
-    val confd = rule match {
-      case r: DropConformanceRule             => DropRuleInterpreter(r).conform(df)
-      case r: ConcatenationConformanceRule    => ConcatenationRuleInterpreter(r).conform(df)
-      case r: LiteralConformanceRule          => LiteralRuleInterpreter(r).conform(df)
-      case r: SingleColumnConformanceRule     => SingleColumnRuleInterpreter(r).conform(df)
-      case r: SparkSessionConfConformanceRule => SparkSessionConfRuleInterpreter(r).conform(df)
-      case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r).conform(df)
-      case r: CastingConformanceRule          => CastingRuleInterpreter(r).conform(df)
-      case r: NegationConformanceRule         => NegationRuleInterpreter(r).conform(df)
-      case r: CustomConformanceRule           => r.getInterpreter().conform(df)
-      case r: MappingConformanceRule          =>
-        if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
-          MappingRuleInterpreterGroupExplode(r, ictx.conformance, explodeContext).conform(df)
-        } else {
-          MappingRuleInterpreter(r, ictx.conformance).conform(df)
-        }
-      // Array explode and collect pseudo rules apply array explosions for mapping rule groups that operate on
-      // the same arrays
-      case r: ArrayExplodePseudoRule          =>
-        val (dfOut, ctx) = ExplodeTools.explodeAllArraysInPath(r.outputColumn, df, explodeContext)
-        explodeContext = ctx
-        dfOut
-      case _: ArrayCollectPseudoRule          =>
-        val dfOut = ExplodeTools.revertAllExplosions(df, explodeContext, Some(ErrorMessage.errorColumnName))
-        explodeContext = ExplosionContext()
-        dfOut
-      case _ => throw new IllegalStateException(s"Unrecognized rule class: ${rule.getClass.getName}")
-    }
-
-    (confd, explodeContext)
-  }
-
-  /**
-    * Transforms a list of steps (conformance rules) such as mapping rules operating on the same array will
-    * grouped by a single explosion. The explode/collect pairs will be added between conformance rules
-    * as corresponding pseudo-rules.
-    *
-    * @param inputSteps       The list of the rules to apply in the order of how they should be applied
-    * @param schema The schema of the original dataframe to check which fields are arrays
-    *
-    * @return The transformed list of conformance rules
-    */
-  private[interpreter] def getExplosionOptimizedSteps(inputSteps: List[ConformanceRule],
-                                                      schema: StructType): List[ConformanceRule] = {
-    reorderConformanceRules(
-      addExplosionsToMappingRuleGroups(
-        groupMappingRules(inputSteps, schema), schema
-      )
-    )
+    ictx.conformance.conformance.sortBy(_.order)
   }
 
   /**
@@ -213,7 +287,7 @@ object DynamicInterpreter {
       // Cache the data first since Atum will execute an action for each control metric
       val cachedDf = persistStorageLevel match {
         case Some(level) => df.persist(level)
-        case None => df.cache
+        case None        => df.cache
       }
       cachedDf.filter(explodeFilter)
         .setCheckpoint(s"${ictx.jobShortName} (${rule.order}) - ${rule.outputColumn}")
@@ -255,47 +329,8 @@ object DynamicInterpreter {
   private def groupMappingRules(rules: List[ConformanceRule], schema: StructType): List[List[ConformanceRule]] = {
     Algorithms.stableGroupByOption[ConformanceRule, String](rules, {
       case m: MappingConformanceRule => SchemaUtils.getDeepestArrayPath(schema, m.outputColumn)
-      case _ => None
+      case _                         => None
     }).map(_.toList).toList
   }
 
-  /**
-    * Adds an explosion pseudo-rule before each group of more than 1 mapping rule.
-    * Adds a collection pseudo-rule after each group of more than 1 mapping rule
-    *
-    * @param ruleGroups A list of rules grouped together if they are mapping rules operating at the same array level
-    * @param schema     A schema of a dataset
-    * @return The new list of rules that might contain pseudo-rules
-    */
-  private def addExplosionsToMappingRuleGroups(ruleGroups: List[List[ConformanceRule]],
-                                               schema: StructType): List[ConformanceRule] = {
-    ruleGroups.flatMap(rules => {
-      if (rules.lengthCompare(1) > 0) {
-        val optArray = SchemaUtils.getDeepestArrayPath(schema, rules.head.outputColumn)
-        optArray match {
-          case Some(arr) =>
-            (ArrayExplodePseudoRule(0, arr, controlCheckpoint = false) :: rules) :+
-              ArrayCollectPseudoRule(0, "", controlCheckpoint = false)
-          case None =>
-            throw new IllegalStateException("")
-        }
-      } else {
-        rules
-      }
-    })
-  }
-
-  /**
-    * Reorders a list of conformance rules according to their appearance in the list.
-    *
-    * @param rules A list of rules to reorder
-    * @return A reordered list of rules
-    */
-  private def reorderConformanceRules(rules: List[ConformanceRule]): List[ConformanceRule] = {
-    var index = 0
-    rules.map(rule => {
-      index += 1
-      rule.withUpdatedOrder(index)
-    })
-  }
 }

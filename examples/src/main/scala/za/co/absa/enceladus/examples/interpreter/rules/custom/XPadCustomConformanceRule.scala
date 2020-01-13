@@ -17,12 +17,14 @@ package za.co.absa.enceladus.examples.interpreter.rules.custom
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.interpreter.ExplosionState
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.utils.transformations.ArrayTransformations
-import ColumnFunctionCustomConformanceRule.RuleFunc
+import za.co.absa.enceladus.examples.interpreter.rules.custom.ColumnFunctionCustomConformanceRule.RuleFunc
 import za.co.absa.enceladus.model.conformanceRule
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
+import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 
 trait ColumnFunctionCustomConformanceRule extends CustomConformanceRule {
   def inputColumn: String
@@ -35,9 +37,12 @@ object ColumnFunctionCustomConformanceRule {
 }
 
 case class StringFuncInterpreter(rule: ColumnFunctionCustomConformanceRule) extends RuleInterpreter {
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+  override def conformanceRule: Option[ConformanceRule] = Some(rule)
+
+  def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     handleArrays(rule.outputColumn, df) { flattened =>
-      import spark.implicits._
+
       // we have to do this if this rule is to support arrays
       ArrayTransformations.nestedWithColumn(flattened)(rule.outputColumn, rule.func(col(rule.inputColumn)))
     }

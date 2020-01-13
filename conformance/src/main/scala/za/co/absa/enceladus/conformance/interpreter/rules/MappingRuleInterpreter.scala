@@ -15,34 +15,31 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.api.java.UDF1
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.MenasDAO
+import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.datasource.DataSource
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
+import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
+import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
+import za.co.absa.enceladus.utils.error._
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
-import org.apache.spark.sql.functions._
-import com.typesafe.config.ConfigFactory
-import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.utils.schema.SchemaUtils
-import org.apache.spark.sql.api.java.UDF1
-import za.co.absa.enceladus.utils.error._
-import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
+import za.co.absa.enceladus.utils.validation._
 
 import scala.util.Try
 import scala.util.control.NonFatal
-import org.apache.spark.sql.Column
-import za.co.absa.enceladus.conformance.interpreter.RuleValidators
-import za.co.absa.enceladus.utils.validation._
 
 case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: ConfDataset) extends RuleInterpreter {
 
-  private val conf = ConfigFactory.load()
+  override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule to conform ${rule.outputColumn}...")
     import spark.implicits._
 
@@ -55,11 +52,10 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     val idField = rule.outputColumn.replace(".", "_") + "_arrayConformanceId"
     val withUniqueId = df.withColumn(idField, monotonically_increasing_id())
 
-    val mapPartitioning = conf.getString("conformance.mappingtable.pattern")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
     // find the data frame from the mapping table
-    val mapTable = DataSource.getData(mappingTableDef.hdfsPath, progArgs.reportDate, mapPartitioning)
+    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.reportDate)
 
     // join & perform projection on the target attribute
     val joinConditionStr = MappingRuleInterpreter.getJoinCondition(rule).toString
