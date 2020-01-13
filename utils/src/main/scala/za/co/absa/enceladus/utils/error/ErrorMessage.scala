@@ -36,36 +36,36 @@ object ErrorMessage {
 
   def stdCastErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(
     errType = "stdCastError",
-    errCode = "E00000",
+    errCode = ErrorCodes.stdCastError,
     errMsg = "Standardization Error - Type cast",
     errCol = errCol,
     rawValues = Seq(rawValue))
   def stdNullErr(errCol: String): ErrorMessage = ErrorMessage(
     errType = "stdNullError",
-    errCode = "E00002",
+    errCode = ErrorCodes.stdNullError,
     errMsg = "Standardization Error - Null detected in non-nullable attribute",
     errCol = errCol,
     rawValues = Seq("null"))
   def confMappingErr(errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]): ErrorMessage = ErrorMessage(
     errType = "confMapError",
-    errCode = "E00001",
+    errCode = ErrorCodes.confMapError,
     errMsg = "Conformance Error - Null produced by mapping conformance rule",
     errCol = errCol, rawValues = rawValues, mappings = mappings)
   def confCastErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(
     errType = "confCastError",
-    errCode = "E00003",
+    errCode = ErrorCodes.confCastErr,
     errMsg = "Conformance Error - Null returned by casting conformance rule",
     errCol = errCol,
     rawValues = Seq(rawValue))
   def confNegErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(
     errType = "confNegError",
-    errCode = "E00004",
+    errCode = ErrorCodes.confNegErr,
     errMsg = "Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged",
     errCol = errCol,
     rawValues = Seq(rawValue))
   def confLitErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(
     errType = "confLitError",
-    errCode = "E00005",
+    errCode = ErrorCodes.confLitErr,
     errMsg = "Conformance Error - Special column value has changed",
     errCol = errCol,
     rawValues = Seq(rawValue))
@@ -75,5 +75,16 @@ object ErrorMessage {
     spark.emptyDataset[ErrorMessage].schema
   }
 
+  /**
+    * This object purpose it to group the error codes together to decrease a chance of them being in conflict
+    */
+  object ErrorCodes {
+    final val stdCastError = "E00000"
+    final val confMapError = "E00001"
+    final val stdNullError = "E00002"
+    final val confCastErr  = "E00003"
+    final val confNegErr   = "E00004"
+    final val confLitErr   = "E00005"
+  }
 }
 
