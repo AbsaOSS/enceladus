@@ -15,21 +15,22 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.conformance.CmdConfig
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
-import za.co.absa.enceladus.conformance.interpreter.RuleValidators
-import za.co.absa.enceladus.model.conformanceRule.ConcatenationConformanceRule
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
+import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.model.conformanceRule.{ConcatenationConformanceRule, ConformanceRule}
 import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class ConcatenationRuleInterpreter(rule: ConcatenationConformanceRule) extends RuleInterpreter {
   final val ruleName = "Concatenation rule"
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+  override def conformanceRule: Option[ConformanceRule] = Some(rule)
+
+  def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumns :+ rule.outputColumn: _*)
 

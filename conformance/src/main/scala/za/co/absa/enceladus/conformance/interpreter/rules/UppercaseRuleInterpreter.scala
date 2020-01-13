@@ -15,18 +15,21 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import za.co.absa.enceladus.model.conformanceRule.UppercaseConformanceRule
 import org.apache.spark.sql._
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
 import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.conformance.interpreter.RuleValidators
+import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
+import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, UppercaseConformanceRule}
+import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class UppercaseRuleInterpreter(rule: UppercaseConformanceRule) extends RuleInterpreter {
   final val ruleName = "Uppercase rule"
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+  override def conformanceRule: Option[ConformanceRule] = Some(rule)
+
+  def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateInputField(progArgs.datasetName, ruleName, df.schema, rule.inputColumn)
     RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)

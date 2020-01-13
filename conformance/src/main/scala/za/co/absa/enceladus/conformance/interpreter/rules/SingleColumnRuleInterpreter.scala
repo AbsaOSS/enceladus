@@ -15,21 +15,22 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.utils.transformations.{ArrayTransformations, DeepArrayTransformations}
 import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.conformance.interpreter.RuleValidators
-import za.co.absa.enceladus.model.conformanceRule.SingleColumnConformanceRule
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
+import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, SingleColumnConformanceRule}
+import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class SingleColumnRuleInterpreter(rule: SingleColumnConformanceRule) extends RuleInterpreter {
 
   final val ruleName = "Single column rule"
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+  override def conformanceRule: Option[ConformanceRule] = Some(rule)
+
+  def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateFieldExistence(progArgs.datasetName,ruleName, df.schema, rule.inputColumn)
     RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)

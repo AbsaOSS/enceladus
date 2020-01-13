@@ -20,16 +20,19 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.CmdConfig
-import za.co.absa.enceladus.conformance.interpreter.RuleValidators
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.model.conformanceRule.CastingConformanceRule
+import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, ConformanceRule}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInterpreter {
   final val ruleName = "Casting rule"
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+  override def conformanceRule: Option[ConformanceRule] = Some(rule)
+
+  def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateInputField(progArgs.datasetName, ruleName, df.schema, rule.inputColumn)
     RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)

@@ -20,7 +20,11 @@
   }, {
     "key7" : 1,
     "key8" : 2,
-    "skey2" : "2"
+    "skey2" : "2",
+    "conformedNum4" : {
+      "id" : 1,
+      "name" : "foo"
+    }
   }, {
     "key7" : 3,
     "key8" : 3,
@@ -61,11 +65,33 @@
       }
     } ]
   } ],
-  "errCol" : [ ],
-  "conformedNum1" : {
-    "id" : 1,
-    "name" : "foo"
-  }
+  "errCol" : [ {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array1.conformedNum4",
+    "rawValues" : [ "2", "1" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array1.key7"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "key1"
+    } ]
+  }, {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array1.conformedNum4",
+    "rawValues" : [ "3", "1" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array1.key7"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "key1"
+    } ]
+  } ]
 }, {
   "id" : 2,
   "key1" : 2,
@@ -129,11 +155,33 @@
       }
     } ]
   } ],
-  "errCol" : [ ],
-  "conformedNum1" : {
-    "id" : 2,
-    "name" : "bar"
-  }
+  "errCol" : [ {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array1.conformedNum4",
+    "rawValues" : [ "4", "2" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array1.key7"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "key1"
+    } ]
+  }, {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array1.conformedNum4",
+    "rawValues" : [ "3", "2" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array1.key7"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "key1"
+    } ]
+  } ]
 }, {
   "id" : 3,
   "key1" : 3,
@@ -181,11 +229,7 @@
       }
     } ]
   } ],
-  "errCol" : [ ],
-  "conformedNum1" : {
-    "id" : 3,
-    "name" : "xyz"
-  }
+  "errCol" : [ ]
 }, {
   "id" : 4,
   "key1" : 2,
@@ -216,11 +260,7 @@
       }
     } ]
   } ],
-  "errCol" : [ ],
-  "conformedNum1" : {
-    "id" : 2,
-    "name" : "bar"
-  }
+  "errCol" : [ ]
 }, {
   "id" : 5,
   "key1" : 4,
@@ -238,17 +278,7 @@
   },
   "array1" : [ ],
   "array2" : [ ],
-  "errCol" : [ {
-    "errType" : "confMapError",
-    "errCode" : "E00001",
-    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "conformedNum1",
-    "rawValues" : [ "4" ],
-    "mappings" : [ {
-      "mappingTableColumn" : "lkey",
-      "mappedDatasetColumn" : "key1"
-    } ]
-  } ]
+  "errCol" : [ ]
 }, {
   "id" : 6,
   "key1" : 1,
@@ -266,11 +296,7 @@
   },
   "array1" : [ ],
   "array2" : [ ],
-  "errCol" : [ ],
-  "conformedNum1" : {
-    "id" : 1,
-    "name" : "foo"
-  }
+  "errCol" : [ ]
 }, {
   "id" : 7,
   "key1" : 1,
@@ -286,20 +312,12 @@
   },
   "array1" : [ ],
   "array2" : [ ],
-  "errCol" : [ ],
-  "conformedNum1" : {
-    "id" : 1,
-    "name" : "foo"
-  }
+  "errCol" : [ ]
 }, {
   "id" : 8,
   "key1" : 1,
   "struct1" : {
     "key3" : 1
   },
-  "errCol" : [ ],
-  "conformedNum1" : {
-    "id" : 1,
-    "name" : "foo"
-  }
+  "errCol" : [ ]
 } ]

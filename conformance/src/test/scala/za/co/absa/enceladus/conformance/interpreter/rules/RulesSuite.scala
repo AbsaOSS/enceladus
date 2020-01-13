@@ -15,20 +15,24 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import za.co.absa.enceladus.samples.EmployeeConformance
-import org.apache.spark.sql.functions._
 import org.apache.spark.sql._
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import za.co.absa.enceladus.dao.MenasDAO
+import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.interpreter.ExplosionState
+import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
+import za.co.absa.enceladus.samples.EmployeeConformance
+import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 
 class RulesSuite extends FunSuite with SparkTestBase {
 
-  val dummyInterpreter = new RuleInterpreter {
-    def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = df
+  private val dummyInterpreter = new RuleInterpreter {
+    override def conformanceRule: Option[ConformanceRule] = None
+    def conform(df: Dataset[Row])
+               (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = df
   }
 
   test("Test country code join condition") {

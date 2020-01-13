@@ -89,7 +89,7 @@ object DeepArrayTransformations {
     * Here is an example demonstrating how to handle both root and nested cases:
     *
     * {{{
-    * val dfOut = nestedWithColumnMap(df, columnPath, "combinedField", c => {
+    * val dfOut = nestedStructMap(df, columnPath, "combinedField", c => {
     * if (c==null) {
     *   // The columns are at the root level
     *   concat(col("city"), col("street"))
@@ -100,6 +100,7 @@ object DeepArrayTransformations {
     * })
     * }}}
     *
+    * @param df               An input DataFrame
     * @param inputStructField A struct column name for which to apply the transformation
     * @param outputChildField The output column name that will be added as a child of the source struct.
     * @param expression       A function that applies a transformation to a column as a Spark expression
@@ -115,7 +116,44 @@ object DeepArrayTransformations {
   }
 
   /**
-    * Same as `nestedStructMap` plus an error column handling.
+    * A nested struct map with error column support. Given a struct field the method will create a new child field of that
+    * struct as a transformation of struct fields and will update the error column according to a specified transformation.
+    * This is useful for transformations that require combining several fields of a struct in an array.
+    *
+    * To use root of the schema as the input struct pass "" as the `inputStructField`.
+    * In this case `null` will be passed to the lambda function.
+    *
+    * Here is an example demonstrating how to handle both root and nested cases:
+    *
+    * {{{
+    * val dfOut = nestedStructAndErrorMap(df, columnPath, "combinedField", c => {
+    * // Struct transformation
+    * if (c==null) {
+    *   // The columns are at the root level
+    *   concat(col("city"), col("street"))
+    * } else {
+    *   // The columns are inside nested structs/arrays
+    *   concat(c.getField("city"), c.getField("street"))
+    * }
+    * }, c => {
+    * // Error column transformation
+    * if (c==null) {
+    *   // The columns are at the root level
+    *   if (isError(col("city")) ErrorCaseClsss("Some error") else null
+    * } else {
+    *   // The columns are inside nested structs/arrays
+    *   if (isError(c.getField("city")) ErrorCaseClsss("Some error") else null
+    * }
+    * })
+    * }}}
+    *
+    * @param df               An input DataFrame
+    * @param inputStructField A struct column name for which to apply the transformation
+    * @param outputChildField The output column name that will be added as a child of the source struct.
+    * @param errorColumnName  An error column name
+    * @param expression       A function that applies a transformation to a column as a Spark expression
+    * @param errorCondition   A function that should check error conditions and return an error column in case such conditions are met
+    * @return A dataframe with a new field that contains transformed values.
     */
   def nestedStructAndErrorMap(df: DataFrame,
                               inputStructField: String,
@@ -334,8 +372,13 @@ object DeepArrayTransformations {
         }
       })
 
-      if (isLeaf && !fieldFound) {
-        handleInputFieldDoesNotExist(fieldName)
+      if (isLeaf) {
+        if (inputColumnName=="") {
+          // A transformation is requested on the root level of the schema as a struct field (nestedStructAndErrorMap(...))
+          handleStructLevelMap()
+        } else if (!fieldFound) {
+          handleInputFieldDoesNotExist(fieldName)
+        }
       }
 
       newColumns ++ mappedFields
