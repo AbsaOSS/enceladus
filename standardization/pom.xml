@@ -104,9 +104,9 @@
             <version>${mongo.java.driver.version}</version>
         </dependency>
         <dependency>
-            <groupId>za.co.absa.enceladus</groupId>
-            <artifactId>fixed-width</artifactId>
-            <version>${project.version}</version>
+            <groupId>za.co.absa</groupId>
+            <artifactId>enceladus-fixedWidth</artifactId>
+            <version>1.7.0</version>
         </dependency>
         <dependency>
             <groupId>za.co.absa.cobrix</groupId>
