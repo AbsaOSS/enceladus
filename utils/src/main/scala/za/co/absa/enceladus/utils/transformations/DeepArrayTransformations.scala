@@ -60,6 +60,7 @@ object DeepArrayTransformations {
     * @param df               Dataframe to be transformed
     * @param inputColumnName  A column name for which to apply the transformation, e.g. `company.employee.firstName`.
     * @param outputColumnName The output column name. The path is optional, e.g. you can use `conformedName` instead of `company.employee.conformedName`.
+    * @param errorColumnName  The name of the error column.
     * @param expression       A function that applies a transformation to a column as a Spark expression.
     * @param errorCondition   A function that takes an input column and returns an expression for an error column.
     * @return A dataframe with a new field that contains transformed values.
@@ -89,6 +90,7 @@ object DeepArrayTransformations {
     * @param df               Dataframe to be transformed
     * @param inputColumnName  A column name for which to apply the transformation, e.g. `company.employee.firstName`.
     * @param outputColumnName The output column name. The path is optional, e.g. you can use `conformedName` instead of `company.employee.conformedName`.
+    * @param errorColumnName  The name of the error column.
     * @param expression       A function that applies a transformation to a column as a Spark expression.
     * @param errorCondition   A function that takes an input column and returns an expression for an error column.
     * @return A dataframe with a new field that contains transformed values.
@@ -142,7 +144,7 @@ object DeepArrayTransformations {
                       outputChildField: String,
                       expression: TransformFunction
                      ): DataFrame = {
-    val updatedStructField = if (inputStructField.nonEmpty) s"$inputStructField.*" else ""
+    val updatedStructField = toStructNotation(inputStructField)
     nestedWithColumnMap(df, updatedStructField, outputChildField, expression)
   }
 
@@ -163,7 +165,7 @@ object DeepArrayTransformations {
     *
     * @param df               An input DataFrame
     * @param inputStructField A struct column name for which to apply the transformation
-    * @param outputChildField The output column name that will be added as a child of the source struct.
+    * @param outputChildField The output column name that will be added as a child of the input struct.
     * @param expression       A function that applies a transformation to a column as a Spark expression
     * @return A dataframe with a new field that contains transformed values.
     */
@@ -172,7 +174,7 @@ object DeepArrayTransformations {
                       outputChildField: String,
                       expression: ExtendedTransformFunction
                      ): DataFrame = {
-    val updatedStructField = if (inputStructField.nonEmpty) s"$inputStructField.*" else ""
+    val updatedStructField = toStructNotation(inputStructField)
     nestedWithColumnMapHelper(df, updatedStructField, outputChildField, Some(expression))._1
   }
 
@@ -211,7 +213,7 @@ object DeepArrayTransformations {
     * @param df               An input DataFrame
     * @param inputStructField A struct column name for which to apply the transformation
     * @param outputChildField The output column name that will be added as a child of the source struct.
-    * @param errorColumnName  An error column name
+    * @param errorColumnName  The name of the error column.
     * @param expression       A function that applies a transformation to a column as a Spark expression
     * @param errorCondition   A function that should check error conditions and return an error column in case such conditions are met
     * @return A dataframe with a new field that contains transformed values.
@@ -223,7 +225,7 @@ object DeepArrayTransformations {
                               expression: TransformFunction,
                               errorCondition: TransformFunction
                              ): DataFrame = {
-    val updatedStructField = if (inputStructField.nonEmpty) s"$inputStructField.*" else ""
+    val updatedStructField = toStructNotation(inputStructField)
     nestedWithColumnAndErrorMap(df, updatedStructField, outputChildField, errorColumnName, expression, errorCondition)
   }
 
@@ -250,7 +252,7 @@ object DeepArrayTransformations {
     * @param df               An input DataFrame
     * @param inputStructField A struct column name for which to apply the transformation
     * @param outputChildField The output column name that will be added as a child of the source struct.
-    * @param errorColumnName  An error column name
+    * @param errorColumnName  The name of the error column.
     * @param expression       A function that applies a transformation to a column as a Spark expression
     * @param errorCondition   A function that should check error conditions and return an error column in case such conditions are met
     * @return A dataframe with a new field that contains transformed values.
@@ -262,7 +264,7 @@ object DeepArrayTransformations {
                               expression: ExtendedTransformFunction,
                               errorCondition: ExtendedTransformFunction
                              ): DataFrame = {
-    val updatedStructField = if (inputStructField.nonEmpty) s"$inputStructField.*" else ""
+    val updatedStructField = toStructNotation(inputStructField)
     nestedExtendedWithColumnAndErrorMap(df, updatedStructField, outputChildField, errorColumnName, expression, errorCondition)
   }
 
@@ -806,11 +808,22 @@ object DeepArrayTransformations {
   private def isLeafElement(path: Seq[String]): Boolean = path.lengthCompare(2) < 0
 
   /**
+    * Converts s struct field path into a notation that `nestedWithColumnMapHelper()` expects for struct transformations.
+    * (see the documentation for `nestedWithColumnMapHelper()` for details)
+    *
+    * @param inputStructField A fully-qualified struct field name.
+    * @return A modified path prepared to be used in `nestedWithColumnMapHelper()`.
+    */
+  private def toStructNotation(inputStructField: String): String = {
+    if (inputStructField.nonEmpty) s"$inputStructField.*" else ""
+  }
+
+  /**
     * Converts from a simple transformation to en extended transformation.
-    * In the extended expression a function for getting columns by fully qualified names is ignored.
+    * In the extended expression the function for getting a column by fully qualified names is ignored.
     *
     * @param transformation A transformation function that takes a column and returns a column.
-    * @return An extended transformation that takes a column and a function hat returns columns from fully qualified
+    * @return An extended transformation that takes a column and a function that returns columns from fully qualified
     *         names and returns a column.
     */
   private def toExtendedTransformation(transformation: TransformFunction): ExtendedTransformFunction = {
