@@ -28,12 +28,6 @@ class WebJarsResourceFuzzyResolver(webJarAssetLocator: WebJarAssetLocator)
       .orElse(findFullPath(path))
       .flatMap(webjarPartialPathExtractor.findFirstMatchIn(_).map(_.group(1)))
       .orNull
-
-    val a = Option(super.findWebJarResourcePath(path))
-    val b = a.orElse(findFullPath(path))
-    val c = b.flatMap(webjarPartialPathExtractor.findFirstMatchIn(_).map(_.group(1)))
-    val d = c.orNull
-    d
   }
 
   private def findFullPath(path: String): Option[String] =
