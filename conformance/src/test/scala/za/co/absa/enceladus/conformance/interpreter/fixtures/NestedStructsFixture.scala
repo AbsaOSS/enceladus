@@ -22,7 +22,7 @@ import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset

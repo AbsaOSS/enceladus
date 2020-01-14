@@ -19,11 +19,11 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.ExplosionState
+import za.co.absa.enceladus.conformance.samples.EmployeeConformance
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
-import za.co.absa.enceladus.samples.EmployeeConformance
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 

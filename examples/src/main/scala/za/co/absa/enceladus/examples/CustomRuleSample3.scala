@@ -17,7 +17,7 @@ package za.co.absa.enceladus.examples
 
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.menasplugin.MenasKerberosCredentials

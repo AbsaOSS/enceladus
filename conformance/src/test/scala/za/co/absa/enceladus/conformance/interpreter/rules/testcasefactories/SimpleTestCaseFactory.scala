@@ -19,7 +19,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.mockito.Mockito.{mock, when => mockWhen}
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}

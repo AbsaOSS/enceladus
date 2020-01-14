@@ -22,7 +22,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits._
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
 import za.co.absa.enceladus.dao.MenasDAO

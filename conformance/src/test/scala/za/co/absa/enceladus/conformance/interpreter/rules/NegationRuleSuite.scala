@@ -19,11 +19,11 @@ import org.apache.spark.sql.Dataset
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import org.slf4j.event.Level.ERROR
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
+import za.co.absa.enceladus.conformance.samples.NegationRuleSamples
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
-import za.co.absa.enceladus.samples.NegationRuleSamples
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{

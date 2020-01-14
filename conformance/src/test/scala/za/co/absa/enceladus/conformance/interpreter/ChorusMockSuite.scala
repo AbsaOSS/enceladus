@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter
 
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule

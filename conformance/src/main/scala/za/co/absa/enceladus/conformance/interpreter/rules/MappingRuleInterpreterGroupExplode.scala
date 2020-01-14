@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreterGroupExplode._
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}

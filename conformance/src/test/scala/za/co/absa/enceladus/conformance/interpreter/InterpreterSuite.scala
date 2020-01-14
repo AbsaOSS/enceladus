@@ -20,10 +20,10 @@ import org.json4s.native.JsonParser._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.atum.model.ControlMeasure
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.samples.{ConformedEmployee, EmployeeConformance, TradeConformance}
+import za.co.absa.enceladus.conformance.samples._
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 

@@ -19,7 +19,7 @@ import org.apache.spark.sql
 import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
 import org.scalatest.mockito.MockitoSugar
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset

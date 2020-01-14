@@ -17,8 +17,8 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.datasource.DataSource
+import za.co.absa.enceladus.conformance.samples.EmployeeConformance
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
-import za.co.absa.enceladus.samples.EmployeeConformance
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class MappingRuleValidationSuite extends FunSuite with SparkTestBase {

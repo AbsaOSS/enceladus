@@ -19,7 +19,7 @@ import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, InterpreterContext}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
-import za.co.absa.enceladus.samples.TradeConformance._
+import za.co.absa.enceladus.conformance.samples.TradeConformance._
 
 class RuleOptimizationSuite extends FunSuite {
 

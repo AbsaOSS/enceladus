@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.conformance.datasource
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.samples.EmployeeConformance
+import za.co.absa.enceladus.conformance.samples.EmployeeConformance
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class DatasourceSuite extends FunSuite with SparkTestBase {

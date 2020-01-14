@@ -19,10 +19,10 @@ import org.apache.spark.sql.types._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import org.slf4j.event.Level.ERROR
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, RuleValidators}
+import za.co.absa.enceladus.conformance.samples.CastingRuleSamples
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.samples.CastingRuleSamples
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 

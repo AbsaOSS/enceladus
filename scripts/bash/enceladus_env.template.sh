@@ -32,7 +32,7 @@ HDP_VERSION="2.7.3"
 
 ENCELADUS_JAR="enceladus-conformance.jar"
 
-STD_CLASS="za.co.absa.enceladus.conformance.StandardizationJob"
+STD_CLASS="za.co.absa.enceladus.standardization.StandardizationJob"
 
 # Environment-specific resource defaults for Standardization.
 # If empty and not specified explicitly, Spark configuration defaults will be used.

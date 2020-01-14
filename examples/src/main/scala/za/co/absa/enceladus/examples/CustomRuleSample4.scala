@@ -19,7 +19,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.functions.{col, concat, concat_ws, lit}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, SparkSession}
 import scopt.OptionParser
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.menasplugin.MenasKerberosCredentials

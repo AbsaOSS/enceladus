@@ -17,9 +17,9 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.conformance.samples.DeepArraySamples
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.UppercaseConformanceRule
-import za.co.absa.enceladus.samples.DeepArraySamples
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class UppercaseRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {

@@ -19,7 +19,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.mockito.Mockito.mock
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, ExplosionState, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO

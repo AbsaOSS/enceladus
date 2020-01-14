@@ -26,7 +26,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO

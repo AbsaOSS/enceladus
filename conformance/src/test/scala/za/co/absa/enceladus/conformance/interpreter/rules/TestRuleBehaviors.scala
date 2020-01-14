@@ -19,7 +19,7 @@ import org.apache.spark.sql.DataFrame
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import org.slf4j.event.Level._
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset

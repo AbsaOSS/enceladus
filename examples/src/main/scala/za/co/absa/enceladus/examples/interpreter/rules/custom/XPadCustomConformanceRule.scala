@@ -16,7 +16,7 @@ package za.co.absa.enceladus.examples.interpreter.rules.custom
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.ExplosionState
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule

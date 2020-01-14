@@ -18,10 +18,10 @@ package za.co.absa.enceladus.conformance.interpreter
 import org.apache.spark.sql.functions._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
-import za.co.absa.enceladus.conformance.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.samples._
+import za.co.absa.enceladus.conformance.samples._
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll {
@@ -101,7 +101,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   }
 
   def testConformanceMatchingEmptyArrays(useExperimentalMappingRule: Boolean): Unit = {
-    import za.co.absa.enceladus.samples.EmtpyArraySamples
+    import za.co.absa.enceladus.conformance.samples.EmtpyArraySamples
 
     val df = spark.createDataFrame(EmtpyArraySamples.testData)
     mockWhen(dao.getSchema("test", 0)) thenReturn df.schema
