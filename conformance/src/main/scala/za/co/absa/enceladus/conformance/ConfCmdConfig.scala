@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common.cmd
+package za.co.absa.enceladus.conformance
 
 import org.apache.spark.storage.StorageLevel
 import scopt.OptionParser
@@ -27,25 +27,25 @@ import scala.util.matching.Regex
  * Note: scopt requires all fields to have default values.
  *       Even if a field is mandatory it needs a default value.
  */
-case class ConformanceCmdConfig(datasetName: String = "",
-                                datasetVersion: Int = 1,
-                                reportDate: String = "",
-                                reportVersion: Option[Int] = None,
-                                menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
-                                performanceMetricsFile: Option[String] = None,
-                                publishPathOverride: Option[String] = None,
-                                folderPrefix: Option[String] = None,
-                                experimentalMappingRule: Option[Boolean] = None,
-                                isCatalystWorkaroundEnabled: Option[Boolean] = None,
-                                autocleanStandardizedFolder: Option[Boolean] = None,
-                                persistStorageLevel: Option[StorageLevel] = None)
+case class ConfCmdConfig(datasetName: String = "",
+                         datasetVersion: Int = 1,
+                         reportDate: String = "",
+                         reportVersion: Option[Int] = None,
+                         menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
+                         performanceMetricsFile: Option[String] = None,
+                         publishPathOverride: Option[String] = None,
+                         folderPrefix: Option[String] = None,
+                         experimentalMappingRule: Option[Boolean] = None,
+                         isCatalystWorkaroundEnabled: Option[Boolean] = None,
+                         autocleanStandardizedFolder: Option[Boolean] = None,
+                         persistStorageLevel: Option[StorageLevel] = None)
 
-object ConformanceCmdConfig {
+object ConfCmdConfig {
 
-  def getCmdLineArguments(args: Array[String]): ConformanceCmdConfig = {
+  def getCmdLineArguments(args: Array[String]): ConfCmdConfig = {
     val parser = new CmdParser("spark-submit [spark options] ConformanceBundle.jar")
 
-    val optionCmd = parser.parse(args, ConformanceCmdConfig())
+    val optionCmd = parser.parse(args, ConfCmdConfig())
     if (optionCmd.isEmpty) {
       // Wrong arguments provided, the message is already displayed
       System.exit(1)
@@ -53,7 +53,7 @@ object ConformanceCmdConfig {
     optionCmd.get
   }
 
-  private class CmdParser(programName: String) extends OptionParser[ConformanceCmdConfig](programName) {
+  private class CmdParser(programName: String) extends OptionParser[ConfCmdConfig](programName) {
     head("Dynamic Conformance", "")
 
     opt[String]('D', "dataset-name").required().action((value, config) =>

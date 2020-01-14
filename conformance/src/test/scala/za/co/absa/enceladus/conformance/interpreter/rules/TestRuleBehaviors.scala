@@ -19,7 +19,7 @@ import org.apache.spark.sql.DataFrame
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import org.slf4j.event.Level._
-import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
@@ -30,7 +30,7 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
 
   def conformanceRuleShouldMatchExpected(inputDf: DataFrame, inputDataset: Dataset, expectedJSON: String) {
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
-    implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(reportDate = "2017-11-01")
+    implicit val progArgs: ConfCmdConfig = ConfCmdConfig(reportDate = "2017-11-01")
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false

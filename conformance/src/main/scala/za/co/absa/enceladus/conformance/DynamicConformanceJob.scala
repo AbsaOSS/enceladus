@@ -26,7 +26,6 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -54,7 +53,7 @@ object DynamicConformanceJob {
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   def main(args: Array[String]) {
-    implicit val cmd: ConformanceCmdConfig = ConformanceCmdConfig.getCmdLineArguments(args)
+    implicit val cmd: ConfCmdConfig = ConfCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
@@ -114,7 +113,7 @@ object DynamicConformanceJob {
     }
   }
 
-  private def isExperimentalRuleEnabled()(implicit cmd: ConformanceCmdConfig): Boolean = {
+  private def isExperimentalRuleEnabled()(implicit cmd: ConfCmdConfig): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.experimentalMappingRule,
       "conformance.mapping.rule.experimental.implementation",
       defaultValue = false)
@@ -122,7 +121,7 @@ object DynamicConformanceJob {
     enabled
   }
 
-  private def isCatalystWorkaroundEnabled()(implicit cmd: ConformanceCmdConfig): Boolean = {
+  private def isCatalystWorkaroundEnabled()(implicit cmd: ConfCmdConfig): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.isCatalystWorkaroundEnabled,
       "conformance.catalyst.workaround",
       defaultValue = true)
@@ -130,7 +129,7 @@ object DynamicConformanceJob {
     enabled
   }
 
-  private def isAutocleanStdFolderEnabled()(implicit cmd: ConformanceCmdConfig): Boolean = {
+  private def isAutocleanStdFolderEnabled()(implicit cmd: ConfCmdConfig): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.autocleanStandardizedFolder,
       "conformance.autoclean.standardized.hdfs.folder",
       defaultValue = false)
@@ -164,7 +163,7 @@ object DynamicConformanceJob {
     enabled
   }
 
-  private def obtainSparkSession()(implicit cmd: ConformanceCmdConfig): SparkSession = {
+  private def obtainSparkSession()(implicit cmd: ConfCmdConfig): SparkSession = {
     val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
@@ -186,7 +185,7 @@ object DynamicConformanceJob {
     newVersion
   }
 
-  private def initFunctionalExtensions()(implicit spark: SparkSession, dao: MenasDAO, cmd: ConformanceCmdConfig): Unit = {
+  private def initFunctionalExtensions()(implicit spark: SparkSession, dao: MenasDAO, cmd: ConfCmdConfig): Unit = {
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
@@ -215,7 +214,7 @@ object DynamicConformanceJob {
   }
 
   private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean)
-                     (implicit spark: SparkSession, cmd: ConformanceCmdConfig, fsUtils: FileSystemVersionUtils, dao: MenasDAO): DataFrame = {
+                     (implicit spark: SparkSession, cmd: ConfCmdConfig, fsUtils: FileSystemVersionUtils, dao: MenasDAO): DataFrame = {
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled())
@@ -241,7 +240,7 @@ object DynamicConformanceJob {
                             reportVersion: Int,
                             cmdLineArgs: String,
                             menasCredentials: MenasCredentials)
-                           (implicit spark: SparkSession, cmd: ConformanceCmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
+                           (implicit spark: SparkSession, cmd: ConfCmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
     val withPartCols = result
       .withColumnIfDoesNotExist(infoDateColumn, to_date(lit(cmd.reportDate), reportDateFormat))
@@ -299,7 +298,7 @@ object DynamicConformanceJob {
 
   def buildPublishPath(infoDateCol: String,
                        infoVersionCol: String,
-                       cmd: ConformanceCmdConfig,
+                       cmd: ConfCmdConfig,
                        ds: Dataset,
                        reportVersion: Int): String = {
     (cmd.publishPathOverride, cmd.folderPrefix) match {

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common.cmd
+package za.co.absa.enceladus.standardization
 
 import org.apache.spark.storage.StorageLevel
 import scopt.OptionParser

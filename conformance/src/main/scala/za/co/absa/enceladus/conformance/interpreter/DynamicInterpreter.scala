@@ -22,7 +22,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits._
-import za.co.absa.enceladus.common.cmd.ConformanceCmdConfig
+import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
 import za.co.absa.enceladus.dao.MenasDAO
@@ -46,7 +46,7 @@ object DynamicInterpreter {
     *
     */
   def interpret(conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
-               (implicit spark: SparkSession, dao: MenasDAO, progArgs: ConformanceCmdConfig, featureSwitches: FeatureSwitches): DataFrame = {
+               (implicit spark: SparkSession, dao: MenasDAO, progArgs: ConfCmdConfig, featureSwitches: FeatureSwitches): DataFrame = {
 
     implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
       featureSwitches, jobShortName, spark, dao, progArgs)
@@ -71,7 +71,7 @@ object DynamicInterpreter {
                                    (implicit ictx: InterpreterContext): DataFrame = {
     implicit val spark: SparkSession = ictx.spark
     implicit val dao: MenasDAO = ictx.dao
-    implicit val progArgs: ConformanceCmdConfig = ictx.progArgs
+    implicit val progArgs: ConfCmdConfig = ictx.progArgs
     implicit val udfLib: UDFLibrary = new UDFLibrary
     implicit val explosionState: ExplosionState = new ExplosionState()
 

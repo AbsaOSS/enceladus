@@ -18,7 +18,6 @@ package za.co.absa.enceladus.standardization
 import java.time.ZonedDateTime
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.common.cmd.StdCmdConfig
 import za.co.absa.enceladus.dao.menasplugin.{MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase

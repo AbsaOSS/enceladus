@@ -21,7 +21,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
-import za.co.absa.enceladus.common.cmd.StdCmdConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
