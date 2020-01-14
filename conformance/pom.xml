@@ -28,6 +28,36 @@
     </properties>
 
     <dependencies>
+        <!-- Dependent modules -->
+        <dependency>
+            <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>dao</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Data formats support -->
+        <dependency>
+            <groupId>com.databricks</groupId>
+            <artifactId>spark-xml_${scala.compat.version}</artifactId>
+            <version>${spark.xml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>enceladus-fixedWidth</artifactId>
+            <version>1.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.cobrix</groupId>
+            <artifactId>spark-cobol</artifactId>
+            <version>${cobrix.version}</version>
+        </dependency>
+
+        <!-- Libraries -->
         <dependency>
             <groupId>com.typesafe</groupId>
             <artifactId>config</artifactId>
@@ -39,15 +69,12 @@
             <version>${scopt.version}</version>
         </dependency>
         <dependency>
-            <groupId>za.co.absa.enceladus</groupId>
-            <artifactId>utils</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>${mongo.java.driver.version}</version>
         </dependency>
-        <dependency>
-            <groupId>za.co.absa.enceladus</groupId>
-            <artifactId>dao</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+
+        <!-- Lineage tracking -->
         <dependency>
             <groupId>za.co.absa.spline</groupId>
             <artifactId>spline-core</artifactId>
@@ -92,11 +119,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongo-java-driver</artifactId>
-            <version>${mongo.java.driver.version}</version>
-        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -121,6 +143,7 @@
                         <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                             <resource>application.conf</resource>
                         </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                     </transformers>
                     <filters>
                         <filter>

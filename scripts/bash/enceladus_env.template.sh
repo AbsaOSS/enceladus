@@ -30,8 +30,8 @@ SPARK_SUBMIT="$SPARK_HOME/bin/spark-submit"
 
 HDP_VERSION="2.7.3"
 
-STD_CLASS="za.co.absa.enceladus.standardization.StandardizationJob"
-STD_JAR="enceladus-standardization.jar"
+STD_CLASS="za.co.absa.enceladus.conformance.StandardizationJob"
+STD_JAR="enceladus-conformance.jar"
 
 # Environment-specific resource defaults for Standardization.
 # If empty and not specified explicitly, Spark configuration defaults will be used.
