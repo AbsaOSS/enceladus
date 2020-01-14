@@ -17,7 +17,6 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.standardization.interpreter.stages.TypeParser
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.types.TypedStructField.TypedStructFieldTagged
