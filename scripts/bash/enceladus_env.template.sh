@@ -30,8 +30,9 @@ SPARK_SUBMIT="$SPARK_HOME/bin/spark-submit"
 
 HDP_VERSION="2.7.3"
 
+ENCELADUS_JAR="enceladus-conformance.jar"
+
 STD_CLASS="za.co.absa.enceladus.conformance.StandardizationJob"
-STD_JAR="enceladus-conformance.jar"
 
 # Environment-specific resource defaults for Standardization.
 # If empty and not specified explicitly, Spark configuration defaults will be used.
@@ -42,7 +43,6 @@ STD_DEFAULT_EXECUTOR_CORES=""
 STD_DEFAULT_NUM_EXECUTORS=""
 
 CONF_CLASS="za.co.absa.enceladus.conformance.DynamicConformanceJob"
-CONF_JAR="enceladus-conformance.jar"
 
 # Environment-specific resource defaults for Conformance.
 # If empty and not specified explicitly, Spark configuration defaults will be used.

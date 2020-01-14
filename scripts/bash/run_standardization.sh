@@ -18,7 +18,7 @@ SRC_DIR=`dirname "$0"`
 source ${SRC_DIR}/enceladus_env.sh
 
 export CLASS=${STD_CLASS}
-export JAR=${STD_JAR}
+export JAR=${ENCELADUS_JAR}
 
 export DEFAULT_DRIVER_MEMORY="$STD_DEFAULT_DRIVER_MEMORY"
 export DEFAULT_DRIVER_CORES="$STD_DEFAULT_DRIVER_CORES"
