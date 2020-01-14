@@ -156,6 +156,9 @@
                         </filter>
                     </filters>
                     <artifactSet>
+                        <includes>
+                            <include>*:*</include>
+                        </includes>
                         <excludes>
                             <exclude>com.fasterxml.jackson.*:*</exclude>
                             <exclude>org.apache.spark:*</exclude>
@@ -164,6 +167,7 @@
                             <exclude>org.scala-lang:scala-compiler</exclude>
                             <exclude>org.scala-lang:scala-reflect</exclude>
                             <exclude>org.scala-lang:scala-library</exclude>
+                            <exclude>net.jpountz.lz4:*</exclude>
                         </excludes>
                     </artifactSet>
                 </configuration>
