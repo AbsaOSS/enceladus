@@ -12,7 +12,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>menas</artifactId>
     <packaging>war</packaging>
@@ -258,7 +259,16 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
+    <dependencyManagement>
+        <dependencies>
+            <!-- Sring/Spark compatibility -->
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>4.0.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <build>
         <plugins>
             <plugin>
@@ -324,7 +334,9 @@
                         <phase>validate</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.basedir}/src/main/resources/application.properties.template" tofile="${project.basedir}/src/main/resources/application.properties" overwrite="false" />
+                                <copy file="${project.basedir}/src/main/resources/application.properties.template"
+                                      tofile="${project.basedir}/src/main/resources/application.properties"
+                                      overwrite="false"/>
                             </target>
                         </configuration>
                         <goals>
@@ -386,8 +398,8 @@
                                 <phase>generate-resources</phase>
                                 <configuration>
                                     <target>
-                                        <delete dir="${project.basedir}/ui/node_modules" />
-                                        <delete dir="${project.basedir}/ui/node" />
+                                        <delete dir="${project.basedir}/ui/node_modules"/>
+                                        <delete dir="${project.basedir}/ui/node"/>
                                     </target>
                                 </configuration>
                                 <goals>
