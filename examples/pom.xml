@@ -31,7 +31,7 @@
     <dependencies>
         <dependency>
             <groupId>za.co.absa.enceladus</groupId>
-            <artifactId>conformance</artifactId>
+            <artifactId>spark-jobs</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
