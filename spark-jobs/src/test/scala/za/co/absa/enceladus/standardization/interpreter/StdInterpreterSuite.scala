@@ -13,14 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.standardization.interpreter
 
 import java.sql.{Date, Timestamp}
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 

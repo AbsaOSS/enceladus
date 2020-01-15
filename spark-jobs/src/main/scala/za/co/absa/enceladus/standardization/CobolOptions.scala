@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization.interpreter
+package za.co.absa.enceladus.standardization
 
 /**
   * This is a class for COBOL format loading properties

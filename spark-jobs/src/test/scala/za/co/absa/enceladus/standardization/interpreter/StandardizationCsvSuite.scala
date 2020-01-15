@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.standardization.interpreter
 
 import java.nio.charset.StandardCharsets
 
@@ -21,9 +21,10 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
-import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
+import za.co.absa.enceladus.standardization.{StandardizationJob, StdCmdConfig}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar {

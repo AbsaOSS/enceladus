@@ -25,7 +25,6 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.enceladus.standardization.interpreter.dataTypes
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
@@ -157,7 +156,7 @@ object TypeParser {
         )
       val stdCols = transform(column, lambdaStdCols, lambdaVariableName)
       logger.info(s"Finished standardization plan for Array $inputFullPathName")
-      dataTypes.ParseOutput(stdCols as (fieldOutputName, metadata), finalErrs)
+      ParseOutput(stdCols as (fieldOutputName, metadata), finalErrs)
     }
   }
 
@@ -189,7 +188,7 @@ object TypeParser {
       // rebuild the struct
       val outputColumn = struct(cols: _*) as (fieldOutputName, metadata)
 
-      dataTypes.ParseOutput(outputColumn, errs1)
+      ParseOutput(outputColumn, errs1)
     }
   }
 
@@ -224,7 +223,7 @@ object TypeParser {
       ) //.otherwise(null) - no need to explicitly mention
       ) as (fieldOutputName, metadata)
 
-      dataTypes.ParseOutput(std, err)
+      ParseOutput(std, err)
     }
 
     protected def assemblePrimitiveCastLogic: Column //this differs based on the field data type
@@ -286,7 +285,7 @@ object TypeParser {
 
     private def standardizeUsingUdf(): ParseOutput = {
       val udfFnc: UserDefinedFunction = UDFBuilder.stringUdfViaNumericParser(field.parser.get, field.nullable, columnIdForUdf, defaultValue)
-      dataTypes.ParseOutput(udfFnc(column)("result").cast(field.dataType).as(fieldOutputName), udfFnc(column)("error"))
+      ParseOutput(udfFnc(column)("result").cast(field.dataType).as(fieldOutputName), udfFnc(column)("error"))
     }
   }
 

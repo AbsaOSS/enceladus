@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.standardization.interpreter
 
 import java.nio.charset.StandardCharsets
 
@@ -22,10 +22,10 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
-import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
+import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
+import za.co.absa.enceladus.standardization.{StandardizationJob, StdCmdConfig}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.validation.ValidationException

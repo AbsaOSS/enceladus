@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.standardization.interpreter
 
 import java.sql.{Date, Timestamp}
 

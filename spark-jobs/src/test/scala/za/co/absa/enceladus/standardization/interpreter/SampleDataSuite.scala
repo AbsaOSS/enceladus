@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.standardization.interpreter
 
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.samples.{StdEmployee, TestSamples}
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileReader
