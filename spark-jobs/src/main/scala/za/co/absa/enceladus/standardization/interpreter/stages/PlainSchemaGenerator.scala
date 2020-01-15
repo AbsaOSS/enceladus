@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.standardization.interpreter.stages
 
-import org.apache.spark.sql.types.{DataType, _}
+import org.apache.spark.sql.types._
 
 /**
  * This component is used in the standardization job. We've got a strongly typed (target) schema. When reading the data however, we do not want spark to apply casts
