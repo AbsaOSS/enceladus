@@ -71,9 +71,14 @@ sap.ui.define([
       } else if(sTarget === "mappingTables") {
         viewBase = `${viewBase}--mappingTablesPage`;
       } else if(sTarget === "runs") {
-        viewBase = `${viewBase}--runsPage`;
+        viewBase = `${viewBase}--runsDatasetNamePage`;
       }
-      this._eventBus.publish(sTarget, "list");
+
+      if (sTarget === "runs") {
+        this._eventBus.publish(sTarget, "list-grouped-name");
+      } else {
+        this._eventBus.publish(sTarget, "list");
+      }
 
       this._app.backToTopMaster();
       this._app.toMaster(viewBase);
