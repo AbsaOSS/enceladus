@@ -77,7 +77,7 @@ object StandardizationJob {
     }
 
     // Enable Spline
-    import za.co.absa.spline.core.SparkLineageInitializer._
+    import za.co.absa.spline.harvester.SparkLineageInitializer._
     spark.enableLineageTracking()
 
     // Enable Control Framework

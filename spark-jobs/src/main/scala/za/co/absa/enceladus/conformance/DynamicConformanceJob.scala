@@ -193,7 +193,7 @@ object DynamicConformanceJob {
 
   private def initFunctionalExtensions(reportVersion: Int)(implicit spark: SparkSession, dao: MenasDAO, cmd: ConfCmdConfig): Unit = {
     // Enable Spline
-    import za.co.absa.spline.core.SparkLineageInitializer._
+    import za.co.absa.spline.harvester.SparkLineageInitializer._
     spark.enableLineageTracking()
 
     // Enable Control Framework

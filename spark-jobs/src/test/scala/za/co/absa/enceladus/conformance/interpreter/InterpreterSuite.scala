@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.json4s._
-import org.json4s.native.JsonParser._
+import org.json4s.jackson._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.atum.model.ControlMeasure
@@ -83,7 +83,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 
-    val checkpoints = parse(infoFile).extract[ControlMeasure].checkpoints
+    val checkpoints = parseJson(infoFile).extract[ControlMeasure].checkpoints
 
     assertResult(expected)(data)
     // test drop
@@ -145,7 +145,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 
-    val checkpoints = parse(infoFile).extract[ControlMeasure].checkpoints
+    val checkpoints = parseJson(infoFile).extract[ControlMeasure].checkpoints
 
     if (data != expected) {
       logger.error("EXPECTED:")
