@@ -28,7 +28,7 @@ import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
+import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 import za.co.absa.enceladus.utils.validation._
 
 import scala.util.Try
@@ -103,7 +103,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
                                 mappingErrUdfCall: Column,
                                 errorCondition: Column): DataFrame = {
 
-    val errorsDf = DeepArrayTransformations.nestedWithColumnAndErrorMap(df, outputCol, outputCol,
+    val errorsDf = NestedArrayTransformations.nestedWithColumnAndErrorMap(df, outputCol, outputCol,
       ErrorMessage.errorColumnName,
       c => {
         defaultMappingValue match {

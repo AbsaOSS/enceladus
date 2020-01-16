@@ -22,9 +22,10 @@ import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConcatenationConformanceRule, ConformanceRule}
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class ConcatenationRuleInterpreter(rule: ConcatenationConformanceRule) extends RuleInterpreter {
+  import za.co.absa.spark.hats.Extensions._
+
   final val ruleName = "Concatenation rule"
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
@@ -44,13 +45,9 @@ case class ConcatenationRuleInterpreter(rule: ConcatenationConformanceRule) exte
   /** Handles uppercase conformance rule for nested fields. */
   private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
     val parent = rule.inputColumns.head.split('.').dropRight(1).mkString(".")
-    DeepArrayTransformations.nestedStructMap(df, parent, rule.outputColumn, c =>
-      if (c == null) {
-        concat(rule.inputColumns.map(col): _*)
-      } else {
-        concat(rule.inputColumns.map(a => c.getField(a.split('.').last).cast(StringType)): _*)
-      }
-    )
+    df.nestedWithColumnExtended(rule.outputColumn, getField => {
+      concat(rule.inputColumns.map(a => getField(a).cast(StringType)): _*)
+    })
   }
 
   /** Handles uppercase conformance rule for root (non-nested) fields. */
@@ -59,12 +56,4 @@ case class ConcatenationRuleInterpreter(rule: ConcatenationConformanceRule) exte
     df.withColumn(rule.outputColumn, concat(rule.inputColumns.map(a => col(a).cast(StringType)): _*))
   }
 
-
-  /*
-  // This is the original implementation. Left it here since it supports concat of fields that have different levels of nesting
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
-    handleArrays(rule.outputColumn, df) { flattened =>
-      ArrayTransformations.nestedWithColumn(flattened)(rule.outputColumn, concat(rule.inputColumns.map(col _): _*))
-    }
-  }*/
 }

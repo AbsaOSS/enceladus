@@ -19,7 +19,7 @@ import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
+import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 
 /**
@@ -75,7 +75,7 @@ object SparkUtils {
       .withColumn(tmpErrColumn, array(when(col(tmpColumn) =!= colExpr, litErrUdfCall).otherwise(null))) // scalastyle:ignore null
 
     // Gather all errors in errCol
-    val dfWithAggregatedErrColumn = DeepArrayTransformations
+    val dfWithAggregatedErrColumn = NestedArrayTransformations
       .gatherErrors(dfWithErrorColumn, tmpErrColumn, ErrorMessage.errorColumnName)
 
     // Drop the temporary column

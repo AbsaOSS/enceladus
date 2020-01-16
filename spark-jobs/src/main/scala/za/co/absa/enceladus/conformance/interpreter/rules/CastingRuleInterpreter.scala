@@ -24,9 +24,11 @@ import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidat
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, ConformanceRule}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
+import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInterpreter {
+  import za.co.absa.spark.hats.Extensions._
+
   final val ruleName = "Casting rule"
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
@@ -46,11 +48,11 @@ case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInte
 
     if (SchemaUtils.isCastAlwaysSucceeds(sourceDataType, targetDataType)) {
       // Casting to string does not generate errors
-      DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c =>
+      df.nestedMapColumn(rule.inputColumn, rule.outputColumn, c =>
         c.cast(rule.outputDataType)
       )
     } else {
-      DeepArrayTransformations.nestedWithColumnAndErrorMap(df, rule.inputColumn, rule.outputColumn, "errCol",
+      NestedArrayTransformations.nestedWithColumnAndErrorMap(df, rule.inputColumn, rule.outputColumn, "errCol",
         c => {
           c.cast(rule.outputDataType)
         }, c => {

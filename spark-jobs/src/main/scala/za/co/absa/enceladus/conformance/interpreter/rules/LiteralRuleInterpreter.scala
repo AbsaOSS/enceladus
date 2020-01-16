@@ -20,9 +20,10 @@ import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, LiteralConformanceRule}
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class LiteralRuleInterpreter(rule: LiteralConformanceRule) extends RuleInterpreter {
+  import za.co.absa.spark.hats.Extensions._
+
   final val ruleName = "Literal rule"
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
@@ -41,7 +42,7 @@ case class LiteralRuleInterpreter(rule: LiteralConformanceRule) extends RuleInte
 
   /** Handles literal conformance rule for nested fields. */
   private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
-    DeepArrayTransformations.nestedAddColumn(df, rule.outputColumn, inferStrictestType(rule.value))
+    df.nestedWithColumn(rule.outputColumn, inferStrictestType(rule.value))
   }
 
   /** Handles literal conformance rule for root (non-nested) fields. */

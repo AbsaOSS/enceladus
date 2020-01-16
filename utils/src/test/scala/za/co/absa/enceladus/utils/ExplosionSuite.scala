@@ -23,9 +23,9 @@ import za.co.absa.enceladus.utils.explode.ExplodeTools
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 class ExplosionSuite extends FunSuite with SparkTestBase {
+  import za.co.absa.spark.hats.Extensions._
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -700,7 +700,7 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("a.c", explodedDf1, explodeContext1)
 
     // Manipulate the exploded structs
-    val changedDf = DeepArrayTransformations.nestedDropColumn(explodedDf2, "a.c.toDrop")
+    val changedDf = explodedDf2.nestedDropColumn("a.c.toDrop")
 
     val restoredDf = ExplodeTools.revertAllExplosions(changedDf, explodeContext2)
 

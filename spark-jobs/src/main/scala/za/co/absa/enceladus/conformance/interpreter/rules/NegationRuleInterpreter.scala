@@ -23,11 +23,12 @@ import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidat
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, NegationConformanceRule}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 import za.co.absa.enceladus.utils.types.GlobalDefaults
 import za.co.absa.enceladus.utils.validation.SchemaPathValidator
+import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleInterpreter {
+  import za.co.absa.spark.hats.Extensions._
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
@@ -43,17 +44,17 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
     field.dataType match {
       case _: DecimalType =>
         // Negating decimal cannot fail
-        DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => negate(c))
+        df.nestedMapColumn(rule.inputColumn, rule.outputColumn, c => negate(c))
       case _: BooleanType =>
         // Negating Boolean cannot fail
-        DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => not(c))
+        df.nestedMapColumn(rule.inputColumn, rule.outputColumn, c => not(c))
       case _: DoubleType | _: FloatType =>
         // Negating floating point numbers cannot fail, but we need to account
         // for signed zeros (see the note for getNegator()).
-        DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => getNegator(c, field))
+        df.nestedMapColumn(rule.inputColumn, rule.outputColumn, c => getNegator(c, field))
       case dt =>
         // The generic negation with checking for error conditions
-        DeepArrayTransformations.nestedWithColumnAndErrorMap(df, rule.inputColumn, rule.outputColumn, errCol,
+        NestedArrayTransformations.nestedWithColumnAndErrorMap(df, rule.inputColumn, rule.outputColumn, errCol,
           c => getNegator(c, field), c => getError(c, negationErrUdfCall, dt))
     }
   }
