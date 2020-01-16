@@ -19,13 +19,13 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.scalatest.FunSuite
 import org.slf4j.LoggerFactory
+import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.utils.explode.ExplodeTools
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class ExplosionSuite extends FunSuite with SparkTestBase {
-  import za.co.absa.spark.hats.Extensions._
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 

@@ -17,13 +17,13 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, SingleColumnConformanceRule}
 
 case class SingleColumnRuleInterpreter(rule: SingleColumnConformanceRule) extends RuleInterpreter {
-  import za.co.absa.spark.hats.Extensions._
 
   final val ruleName = "Single column rule"
 
