@@ -225,7 +225,4 @@ class ConfigRestClient {
     return RestClient.get(`api/configuration/lineageExecutionIdApiTemplate`)
   }
 
-  static getLineageService() {
-    return RestClient.get(`api/configuration/lineageService`)
-  }
 }
