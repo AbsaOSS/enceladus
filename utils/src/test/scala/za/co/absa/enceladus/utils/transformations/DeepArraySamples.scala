@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ object DeepArraySamples {
   // Arrays of structs
   val arraysOfStructsSampleN: Seq[Team] = Seq(
     Team(1, Seq(Person("John", "Smith"), Person("Jack", "Brown"))),
-    Team(1, Seq(Person("Merry", "Cook"), Person("Jane", "Clark")))
+    Team(2, Seq(Person("Merry", "Cook"), Person("Jane", "Clark")))
   )
 
   // Arrays of arrays of struct

@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2018-2019 ABSA Group Limited
+  ~ Copyright 2018 ABSA Group Limited
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@
             <MenuButton id="scheduleActionMenuButton" class="scheduleMenuButton sapUiTinyMarginBegin" icon="sap-icon://menu" type="Transparent">
                 <Menu>
                         <MenuItem text="Run Now!" icon="sap-icon://physical-activity" press="scheduleRunNow" />
-                        <MenuItem text="Suspend" icon="sap-icon://pause" press="scheduleSuspend" 
+                        <MenuItem text="Suspend" icon="sap-icon://pause" press="scheduleSuspend"
                             visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' }"/>
-                        <MenuItem text="Resume" icon="sap-icon://play" press="scheduleResume" 
+                        <MenuItem text="Resume" icon="sap-icon://play" press="scheduleResume"
                             visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'SUSPENDED' }" />
                 </Menu>
             </MenuButton>
@@ -34,7 +34,7 @@
         <Label text="Workflow Path" />
         <Text text="{/currentDataset/schedule/activeInstance/workflowPath}" />
         <Label text="Next Materialization Time" visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' }"/>
-        <Text text="{path:'/currentDataset/schedule/activeInstance/status/nextMaterializedTime', formatter: 'Formatters.stringDateShortFormatter'}" 
+        <Text text="{path:'/currentDataset/schedule/activeInstance/status/nextMaterializedTime', formatter: 'Formatters.stringDateShortFormatter'}"
             visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' }" />
         <Label text="Schedule Status" />
         <ObjectStatus class="sapMObjectStatusLarge"

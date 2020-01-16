@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2018-2019 ABSA Group Limited
+  ~ Copyright 2018 ABSA Group Limited
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>enceladus-migrations-cli</artifactId>
+    <artifactId>migrations-cli</artifactId>
     <packaging>jar</packaging>
 
     <parent>
-        <groupId>za.co.absa</groupId>
-        <artifactId>enceladus-parent</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <groupId>za.co.absa.enceladus</groupId>
+        <artifactId>parent</artifactId>
+        <version>2.0.0-SNAPSHOT</version>
     </parent>
 
     <properties>
@@ -33,8 +33,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>za.co.absa</groupId>
-            <artifactId>enceladus-migrations</artifactId>
+            <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>migrations</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

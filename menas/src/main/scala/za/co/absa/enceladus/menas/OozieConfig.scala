@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,13 @@ import org.slf4j.LoggerFactory
 @Configuration
 class OozieConfig {
 
-  @Value("${za.co.absa.enceladus.menas.oozie.oozieUrl:}")
+  @Value("${menas.oozie.oozieUrl:}")
   val oozieUrl: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.proxyUser:}")
+  @Value("${menas.oozie.proxyUser:}")
   val oozieProxyUser: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.proxyUserKeytab:}")
+  @Value("${menas.oozie.proxyUserKeytab:}")
   val oozieProxyUserKeytab: String = ""
 
   private val logger = LoggerFactory.getLogger(this.getClass)

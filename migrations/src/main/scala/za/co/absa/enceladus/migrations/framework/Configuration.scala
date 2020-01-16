@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ object Configuration {
   /**
     * A configuration key for setting up MongoDB query timeouts.
     */
-  private val migrationQueryTimeoutSecondsKey = "za.co.absa.enceladus.migration.mongo.query.timeout.seconds"
+  private val migrationQueryTimeoutSecondsKey = "migrations.mongo.query.timeout.seconds"
 
   /**
     * The name of the collection that keeps the latest usable database schema version.

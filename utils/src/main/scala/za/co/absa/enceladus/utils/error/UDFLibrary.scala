@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.utils.error
 
-import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.api.java._
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{Row, SparkSession}
 
 import scala.collection.mutable
 
@@ -46,7 +46,13 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
   })
 
   spark.udf.register("arrayDistinctErrors",
-    (arr: mutable.WrappedArray[ErrorMessage]) => arr.distinct.filter((a: AnyRef) => a != null))
+    (arr: mutable.WrappedArray[ErrorMessage]) =>
+      if (arr != null) {
+        arr.distinct.filter((a: AnyRef) => a != null)
+      } else {
+        Seq[ErrorMessage]()
+      }
+  )
 
   private val cleanErrCol = new UDF1[Seq[Row], Seq[Row]] {
     override def call(t1: Seq[Row]): Seq[Row] = {

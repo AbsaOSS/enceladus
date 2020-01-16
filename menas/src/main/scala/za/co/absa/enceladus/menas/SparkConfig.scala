@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 @Configuration
 class SparkConfig {
 
-  @Value("${za.co.absa.enceladus.menas.spark.master}")
+  @Value("${menas.spark.master}")
   val master: String = ""
 
   @Bean

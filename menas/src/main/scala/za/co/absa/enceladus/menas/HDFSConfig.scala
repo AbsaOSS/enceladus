@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,19 +29,19 @@ import org.springframework.context.annotation.{Bean, Configuration}
 class HDFSConfig @Autowired() (spark: SparkSession) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.method}")
+  @Value("${menas.hadoop.auth.method}")
   val authMethod: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.user:}")
+  @Value("${menas.hadoop.auth.user:}")
   val authUser: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.debug:}")
+  @Value("${menas.hadoop.auth.krb5.debug:}")
   val krb5debug: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.realm:}")
+  @Value("${menas.hadoop.auth.krb5.realm:}")
   val krb5realm: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.kdc:}")
+  @Value("${menas.hadoop.auth.krb5.kdc:}")
   val krb5kdc: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.username:}")
+  @Value("${menas.hadoop.auth.krb5.username:}")
   val krb5username: String = ""
-  @Value("${za.co.absa.enceladus.menas.hadoop.auth.krb5.keytab:}")
+  @Value("${menas.hadoop.auth.krb5.keytab:}")
   val krb5keytab: String = ""
 
   private val hadoopConfDir = sys.env.getOrElse("HADOOP_CONF_DIR",

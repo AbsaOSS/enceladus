@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,9 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   @LocalServerPort
   private val port = 0
 
-  @Value("${za.co.absa.enceladus.menas.auth.inmemory.user}")
+  @Value("${menas.auth.inmemory.user}")
   val user: String = ""
-  @Value("${za.co.absa.enceladus.menas.auth.inmemory.password}")
+  @Value("${menas.auth.inmemory.password}")
   val passwd: String = ""
 
   private lazy val baseUrl = s"http://localhost:$port/api"
@@ -136,7 +136,7 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
     val url = s"$baseUrl/$urlPath"
     headers.addAll(authHeaders)
-    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE)
+    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
     val httpEntity = bodyOpt match {
       case Some(body) => new HttpEntity[B](body, headers)
       case None       => new HttpEntity[B](headers)

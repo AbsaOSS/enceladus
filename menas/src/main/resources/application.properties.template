@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2019 ABSA Group Limited
+# Copyright 2018 ABSA Group Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,50 +30,50 @@ spring.resources.chain.strategy.fixed.version=@project.version@
 spring.security.filter.dispatcher-types=REQUEST,ERROR
 
 # Generate your own secret, must be be at least 256-bit
-za.co.absa.enceladus.menas.auth.jwt.secret=u7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+KbPeShVmYq3t6w9z$C&E)H@McQfTjWn
-za.co.absa.enceladus.menas.auth.jwt.lifespan.hours=8
+menas.auth.jwt.secret=u7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+KbPeShVmYq3t6w9z$C&E)H@McQfTjWn
+menas.auth.jwt.lifespan.hours=8
 
 # How will users authenticate to menas. Available options: inmemory, kerberos
-za.co.absa.enceladus.menas.auth.mechanism = inmemory
+menas.auth.mechanism=inmemory
 
-#za.co.absa.enceladus.menas.auth.kerberos.debug=false
-#za.co.absa.enceladus.menas.auth.kerberos.krb5conf=/etc/krb5.conf
-#za.co.absa.enceladus.menas.auth.ad.domain=ad.domain.com
-#za.co.absa.enceladus.menas.auth.ad.server=ldap://ad.domain.com
-#za.co.absa.enceladus.menas.auth.servicename.principal=HTTP/host@AD.DOMAIN.COM
-#za.co.absa.enceladus.menas.auth.servicename.keytab.location=/path/to/sysuser.keytab
-#za.co.absa.enceladus.menas.auth.ldap.search.base=DC=AD,DC=DOMAIN,DC=com
-#za.co.absa.enceladus.menas.auth.ldap.search.filter=(&(objectClass=top)(sAMAccountName={0}))
+#menas.auth.kerberos.debug=false
+#menas.auth.kerberos.krb5conf=/etc/krb5.conf
+#menas.auth.ad.domain=ad.domain.com
+#menas.auth.ad.server=ldap://ad.domain.com
+#menas.auth.servicename.principal=HTTP/host@AD.DOMAIN.COM
+#menas.auth.servicename.principal=/path/to/sysuser.keytab
+#menas.auth.ldap.search.base=DC=AD,DC=DOMAIN,DC=com
+#menas.auth.ldap.search.filter=(&(objectClass=top)(sAMAccountName={0}))
 
-za.co.absa.enceladus.menas.auth.inmemory.user=user
-za.co.absa.enceladus.menas.auth.inmemory.password=changeme
+menas.auth.inmemory.user=user
+menas.auth.inmemory.password=changeme
 
 # Define how menas authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system
 #  "simple" -> will use authentication by a user name
 #  "krb5" -> menas will use specified kerberos configurations to authenticate via kerberos using specified username & keytab
-za.co.absa.enceladus.menas.hadoop.auth.method=default
-za.co.absa.enceladus.menas.hadoop.auth.user=hdfs
-za.co.absa.enceladus.menas.hadoop.auth.krb5.debug=true
-za.co.absa.enceladus.menas.hadoop.auth.krb5.realm=EXAMPLE.COM
-za.co.absa.enceladus.menas.hadoop.auth.krb5.kdc=localhost
-za.co.absa.enceladus.menas.hadoop.auth.krb5.username=hdfs@EXAMPLE.COM
-za.co.absa.enceladus.menas.hadoop.auth.krb5.keytab=hdfs.keytab
+menas.hadoop.auth.method=default
+menas.hadoop.auth.user=hdfs
+menas.hadoop.auth.krb5.debug=true
+menas.hadoop.auth.krb5.realm=EXAMPLE.COM
+menas.hadoop.auth.krb5.kdc=localhost
+menas.hadoop.auth.krb5.username=hdfs@EXAMPLE.COM
+menas.hadoop.auth.krb5.keytab=hdfs.keytab
 
-za.co.absa.enceladus.menas.mongo.connection.string=mongodb://localhost:27017
-za.co.absa.enceladus.menas.mongo.connection.database=menas
+menas.mongo.connection.string=mongodb://localhost:27017
+menas.mongo.connection.database=menas
 
 # Timeout (in seconds) for MongoDB migration queries
-za.co.absa.enceladus.migration.mongo.query.timeout.seconds=300
+migrations.mongo.query.timeout.seconds=300
 
-za.co.absa.enceladus.menas.version=@project.version@
-za.co.absa.enceladus.menas.environment=Dev
+menas.version=@project.version@
+menas.environment=Dev
 
-za.co.absa.enceladus.menas.spark.master=local[1]
+menas.spark.master=local[1]
 
 # The template for Lineage (Spline) display. If empty Lineage button is not shown.
 # Avoiding the http(s) protocol will cause that the same protocol will be used as for Menas itself, avoiding issues
-za.co.absa.enceladus.spline.urlTemplate=//localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s
+spline.urlTemplate=//localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s
 
 #system-wide time zone
 timezone=UTC
@@ -95,50 +95,50 @@ management.health.jms.enabled=false
 
 #---------- Monitoring
 # Limit on the number of documents to be fetch in a single mongodb query and shown in UI
-za.co.absa.enceladus.menas.monitoring.fetch.limit=500
+menas.monitoring.fetch.limit=500
 
 #--------Oozie
-#za.co.absa.enceladus.menas.oozie.oozieUrl=http://localhost:11000/oozie/
+#menas.oozie.oozieUrl=http://localhost:11000/oozie/
 
 #Path where oozie coordinators and workflows are stored on HDFS
-#za.co.absa.enceladus.menas.oozie.schedule.hdfs.path=/tmp
-#za.co.absa.enceladus.menas.oozie.timeZone=Africa/Ceuta
+#menas.oozie.schedule.hdfs.path=/tmp
+#menas.oozie.timeZone=Africa/Ceuta
 
 #This is passed into oozie.action.sharelib.for.spark
 #This ensures that schedules are run with correct version of spark without updating oozie sharelibs globally
-za.co.absa.enceladus.menas.oozie.sharelibForSpark=spark-menas
+menas.oozie.sharelibForSpark=spark-menas
 
 #This parameter disables sharelibForSpark. It's the absolute path to a location containing all relevant spark sharelibs
-#za.co.absa.enceladus.menas.oozie.libpath=/some/path/libpath
+#menas.oozie.libpath=/some/path/libpath
 
 #Enceladus jars are going to be loaded into this location
-za.co.absa.enceladus.menas.oozie.enceladusJarLocation=hdfs:///tmp/enceladus-jars
+menas.oozie.enceladusJarLocation=hdfs:///tmp/enceladus-jars
 
 #Maven repo from which to resolve enceladus jars.. Can be local repo, maven central, nexus
-za.co.absa.enceladus.menas.oozie.mavenRepoLocation=https://repo.maven.apache.org/maven2/
+menas.oozie.mavenRepoLocation=https://repo.maven.apache.org/maven2/
 
 #standardization and conformance path in the repo
-za.co.absa.enceladus.menas.oozie.mavenStandardizationJarLocation=/za/co/absa/enceladus-standardization/@project.version@/enceladus-standardization-@project.version@.jar
-za.co.absa.enceladus.menas.oozie.mavenConformanceJarLocation=/za/co/absa/enceladus-conformance/@project.version@/enceladus-conformance-@project.version@.jar
+menas.oozie.mavenStandardizationJarLocation=/za/co/absa/enceladus-standardization/@project.version@/enceladus-standardization-@project.version@.jar
+menas.oozie.mavenConformanceJarLocation=/za/co/absa/enceladus-conformance/@project.version@/enceladus-conformance-@project.version@.jar
 
 #Menas URL for submitted std and conf jobs
-za.co.absa.enceladus.menas.oozie.menasApiURL=http://menasHostname:8080/menas/api
+menas.oozie.menasApiURL=http://menasHostname:8080/menas/api
 
 #Mongo address for spline for the submitted jobs
-za.co.absa.enceladus.menas.oozie.splineMongoURL=mongodb://localhost:27017
+menas.oozie.splineMongoURL=mongodb://localhost:27017
 
 #In some cases extra driver options need to be surrounded by double quotes
 #This seems to depend of the version of oozie
-#za.co.absa.enceladus.menas.oozie.sparkConf.surroundingQuoteChar="
+#menas.oozie.sparkConf.surroundingQuoteChar="
 
 #Configure the following three parameters to use oozie impersonation
-#za.co.absa.enceladus.menas.oozie.proxyUser=oozieProxyUser
-#za.co.absa.enceladus.menas.oozie.proxyGroup=oozieProxyGroup
-#za.co.absa.enceladus.menas.oozie.proxyUserKeytab=/path/to/keytab
+#menas.oozie.proxyUser=oozieProxyUser
+#menas.oozie.proxyGroup=oozieProxyGroup
+#menas.oozie.proxyUserKeytab=/path/to/keytab
 
 #The following property allows customization of the error message presented to the user if they're missing the impersonation group
-#za.co.absa.enceladus.menas.oozie.customImpersonationExceptionMessage="Please add the system user into the '${za.co.absa.enceladus.menas.oozie.proxyGroup}' group to use this feature."
+#menas.oozie.customImpersonationExceptionMessage="Please add the system user into the '${menas.oozie.proxyGroup}' group to use this feature."
 
 #Provide optional spark config options to be passed onto standardization and conformance jobs
-#za.co.absa.enceladus.menas.oozie.extraSparkConfigs={"spark.eventLog.dir" : "hdfs:///spark2-history/", \
+#menas.oozie.extraSparkConfigs={"spark.eventLog.dir" : "hdfs:///spark2-history/", \
 #"spark.history.fs.logDirectory": "hdfs:///spark2-history" }

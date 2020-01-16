@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   private[menas] override def collectionBaseName: String = MonitoringMongoRepository.collectionBaseName
 
-  @Value("${za.co.absa.enceladus.menas.monitoring.fetch.limit}")
+  @Value("${menas.monitoring.fetch.limit}")
   private val fetchLimit: Integer = null // scalastyle:ignore null
 
 

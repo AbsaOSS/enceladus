@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.{GetMapping, RequestMapping, Rest
 @RestController
 @RequestMapping(Array("/api/configuration"))
 class ConfigurationController extends BaseController {
-  @Value("${za.co.absa.enceladus.menas.environment}")
+  @Value("${menas.environment}")
   val menasEnvironment: String = ""
 
   @GetMapping(path = Array("/environment"))

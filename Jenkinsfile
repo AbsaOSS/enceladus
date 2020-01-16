@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,8 @@ pipeline {
         }
         stage ('Deploy to Test Server') {
             when {
-                expression { 
-                    env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'master' 
+                expression {
+                    env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'master'
                 }
             }
             steps {
