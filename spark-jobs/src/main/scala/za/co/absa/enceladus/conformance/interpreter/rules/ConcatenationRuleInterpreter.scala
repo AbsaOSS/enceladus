@@ -44,7 +44,6 @@ case class ConcatenationRuleInterpreter(rule: ConcatenationConformanceRule) exte
 
   /** Handles uppercase conformance rule for nested fields. */
   private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
-    val parent = rule.inputColumns.head.split('.').dropRight(1).mkString(".")
     df.nestedWithColumnExtended(rule.outputColumn, getField => {
       concat(rule.inputColumns.map(a => getField(a).cast(StringType)): _*)
     })
