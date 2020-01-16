@@ -106,8 +106,7 @@
 
     <modules>
         <module>utils</module>
-        <module>conformance</module>
-        <module>standardization</module>
+        <module>spark-jobs</module>
         <module>data-model</module>
         <module>examples</module>
         <module>dao</module>

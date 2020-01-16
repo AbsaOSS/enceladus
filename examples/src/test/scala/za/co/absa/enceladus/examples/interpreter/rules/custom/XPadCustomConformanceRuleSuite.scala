@@ -20,7 +20,7 @@ import org.apache.spark.sql
 import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
 import org.scalatest.mockito.MockitoSugar
-import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.menasplugin.MenasKerberosCredentials
@@ -37,7 +37,7 @@ object XPadTestOutputRow {
 class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase with MockitoSugar {
   import spark.implicits._
 
-  implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
+  implicit val progArgs: ConfCmdConfig = ConfCmdConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: MenasDAO = mock[MenasDAO] // you may have to hard-code your own implementation here (if not working with menas)
 
   val experimentalMR = true
@@ -185,7 +185,7 @@ class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
   private val conf = ConfigFactory.load()
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
   private val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/test/resources/user.keytab.example")
-  implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
+  implicit val progArgs: ConfCmdConfig = ConfCmdConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
 
   val experimentalMR = true
