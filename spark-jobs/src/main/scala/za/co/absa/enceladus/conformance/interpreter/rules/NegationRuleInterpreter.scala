@@ -18,6 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
+import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -28,7 +29,6 @@ import za.co.absa.enceladus.utils.validation.SchemaPathValidator
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleInterpreter {
-  import za.co.absa.spark.hats.Extensions._
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 

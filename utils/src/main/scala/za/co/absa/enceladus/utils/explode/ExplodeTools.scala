@@ -19,11 +19,11 @@ import org.apache.log4j.LogManager
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
+import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils._
 
 object ExplodeTools {
-  import za.co.absa.spark.hats.Extensions._
   // scalastyle:off null
 
   private val log = LogManager.getLogger(this.getClass)

@@ -19,6 +19,7 @@ import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -27,7 +28,6 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInterpreter {
-  import za.co.absa.spark.hats.Extensions._
 
   final val ruleName = "Casting rule"
 
