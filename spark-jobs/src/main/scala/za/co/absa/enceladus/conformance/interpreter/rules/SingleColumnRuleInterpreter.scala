@@ -21,9 +21,9 @@ import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, SingleColumnConformanceRule}
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class SingleColumnRuleInterpreter(rule: SingleColumnConformanceRule) extends RuleInterpreter {
+  import za.co.absa.spark.hats.Extensions._
 
   final val ruleName = "Single column rule"
 
@@ -45,7 +45,7 @@ case class SingleColumnRuleInterpreter(rule: SingleColumnConformanceRule) extend
 
   /** Handles single column conformance rule for nested fields. */
   private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
-    DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c =>
+    df.nestedMapColumn(rule.inputColumn, rule.outputColumn, c =>
       struct(c as rule.inputColumnAlias)
     )
   }

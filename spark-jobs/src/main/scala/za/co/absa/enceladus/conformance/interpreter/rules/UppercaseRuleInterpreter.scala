@@ -21,9 +21,10 @@ import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, UppercaseConformanceRule}
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class UppercaseRuleInterpreter(rule: UppercaseConformanceRule) extends RuleInterpreter {
+  import za.co.absa.spark.hats.Extensions._
+
   final val ruleName = "Uppercase rule"
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
@@ -44,7 +45,7 @@ case class UppercaseRuleInterpreter(rule: UppercaseConformanceRule) extends Rule
 
   /** Handles uppercase conformance rule for nested fields. */
   private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
-    DeepArrayTransformations.nestedWithColumnMap(df, rule.inputColumn, rule.outputColumn, c => upper(c))
+    df.nestedMapColumn(rule.inputColumn, rule.outputColumn, c => upper(c))
   }
 
   /** Handles uppercase conformance rule for root (non-nested) fields. */

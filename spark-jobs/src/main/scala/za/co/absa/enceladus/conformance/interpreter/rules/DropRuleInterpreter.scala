@@ -21,9 +21,9 @@ import za.co.absa.enceladus.conformance.interpreter.ExplosionState
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, DropConformanceRule}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 case class DropRuleInterpreter(rule: DropConformanceRule) extends RuleInterpreter {
+  import za.co.absa.spark.hats.Extensions._
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
@@ -43,7 +43,7 @@ case class DropRuleInterpreter(rule: DropConformanceRule) extends RuleInterprete
 
   /** Handles drop conformance rule for nested fields. */
   private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
-    DeepArrayTransformations.nestedDropColumn(df, rule.outputColumn)
+    df.nestedDropColumn(rule.outputColumn)
   }
 
   /** Handles drop conformance rule for root (non-nested) fields. */

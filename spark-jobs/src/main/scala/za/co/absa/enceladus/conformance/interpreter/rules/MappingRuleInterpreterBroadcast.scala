@@ -24,7 +24,7 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConfo
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.broadcast.{BroadcastUtils, LocalMappingTable}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
+import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conformance: ConfDataset) extends RuleInterpreter {
 
@@ -62,7 +62,7 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
 
     val parentPath = getParentPath(rule.outputColumn)
 
-    val withMappedFieldsDf = DeepArrayTransformations.nestedExtendedStructAndErrorMap(
+    val withMappedFieldsDf = NestedArrayTransformations.nestedExtendedStructAndErrorMap(
       df, parentPath, rule.outputColumn, ErrorMessage.errorColumnName, (_, getField) => {
         mappingUDF(inputDfFields.map(a => getField(a)): _ *)
       }, (_, getField) => {
