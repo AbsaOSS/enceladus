@@ -25,9 +25,6 @@ class ConfigurationController extends BaseController {
   @Value("${menas.environment}")
   private val menasEnvironment: String = ""
 
-  @Value("${lineageService}")
-  private val lineageService: String = ""
-
   @GetMapping(path = Array("/environment"))
   def getEnvironment(): String = {
     menasEnvironment
@@ -36,10 +33,5 @@ class ConfigurationController extends BaseController {
   @GetMapping(path = Array("/lineageExecutionIdApiTemplate"))
   def getLineageExecutionIdApiTemplate(): String = {
     LineageConfig.executionIdApiTemplate.getOrElse("")
-  }
-
-  @GetMapping(path = Array("/lineageService"))
-  def getLineageService(): String = {
-    lineageService
   }
 }

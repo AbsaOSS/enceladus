@@ -37,13 +37,13 @@ class LineageController @Autowired()(webJarAssetLocator: WebJarAssetLocator) {
 
     val baseUrl = LineageConfig.baseUrl(httpRequest.getContextPath)
     // TODO: Don't use string replaces #1116
-     IOUtils.toString(resource.getInputStream, "UTF-8")
+   IOUtils.toString(resource.getInputStream, "UTF-8")
       .replaceAllLiterally(
         "/*[[${embeddedMode}]]*/",
         "true; //")
       .replaceAllLiterally(
         "/*[[${apiUrl}]]*/",
-        s"'${LineageConfig.apiUrl}'; //")
+        s"'${LineageConfig.apiUrl.getOrElse("")}'; //")
       .replaceAllLiterally(
         """<base href="/" th:href="@{/}">""",
         s"""<base href="$baseUrl">""")
