@@ -118,8 +118,7 @@ menas.oozie.enceladusJarLocation=hdfs:///tmp/enceladus-jars
 menas.oozie.mavenRepoLocation=https://repo.maven.apache.org/maven2/
 
 #standardization and conformance path in the repo
-menas.oozie.mavenStandardizationJarLocation=/za/co/absa/enceladus-standardization/@project.version@/enceladus-standardization-@project.version@.jar
-menas.oozie.mavenConformanceJarLocation=/za/co/absa/enceladus-conformance/@project.version@/enceladus-conformance-@project.version@.jar
+menas.oozie.mavenSparkJobsJarLocation=/za/co/absa/enceladus/spark-jobs/@project.version@/spark-jobs-@project.version@.jar
 
 #Menas URL for submitted std and conf jobs
 menas.oozie.menasApiURL=http://menasHostname:8080/menas/api

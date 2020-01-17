@@ -27,7 +27,7 @@
             <mode>cluster</mode>
             <name>$stdAppName</name>
             <class>za.co.absa.enceladus.standardization.StandardizationJob</class>
-            <jar>$stdJarPath</jar>
+            <jar>$sparkJobsJarPath</jar>
             <spark-opts>
                 --num-executors $stdNumExecutors
                 --executor-memory $stdExecutorMemory
@@ -57,7 +57,7 @@
             <mode>cluster</mode>
             <name>$confAppName</name>
             <class>za.co.absa.enceladus.conformance.DynamicConformanceJob</class>
-            <jar>$confJarPath</jar>
+            <jar>$sparkJobsJarPath</jar>
             <spark-opts>
                 --num-executors $confNumExecutors
                 --executor-memory $confExecutorMemory
