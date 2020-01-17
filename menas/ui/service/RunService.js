@@ -129,18 +129,26 @@ var RunService = new function () {
 
   this._buildLineageUrl = function(outputPath, applicationId) {
     const urlTemplate = "lineage/app/lineage-overview?executionEventId=%s";
-    const runRestDAO = new RunRestDAO(sap.ui.getCore().getModel().getProperty("/lineageExecutionIdApiTemplate"));
-    const lineageIdInfo = runRestDAO.getLineageId(outputPath, applicationId);
+    const lineageExecutionIdApiTemplate = sap.ui.getCore().getModel().getProperty("/lineageExecutionIdApiTemplate");
+    if (lineageExecutionIdApiTemplate) {
+      const runRestDAO = new RunRestDAO(lineageExecutionIdApiTemplate);
+      const lineageIdInfo = runRestDAO.getLineageId(outputPath, applicationId);
 
-    if (lineageIdInfo.totalCount === 1) {
-      return {
-        lineageUrl: urlTemplate.replace("%s", lineageIdInfo.executionEventId),
-        lineageError: ""
-      };
+      if (lineageIdInfo.totalCount === 1) {
+        return {
+          lineageUrl: urlTemplate.replace("%s", lineageIdInfo.executionEventId),
+          lineageError: ""
+        };
+      } else {
+        return {
+          lineageUrl: "",
+          lineageError: !!lineageIdInfo.totalCount ? "Multiple lineage records found" : "No lineage found"
+        };
+      }
     } else {
       return {
         lineageUrl: "",
-        lineageError: !!lineageIdInfo.totalCount ? "Multiple lineage records found" : "No lineage found"
+        lineageError: "Lineage service not configured"
       };
     }
   };
