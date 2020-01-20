@@ -20,7 +20,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession, types}
 import org.mockito.Mockito.{mock, when => mockWhen}
 import za.co.absa.enceladus.conformance.ConfCmdConfig
-import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
+import za.co.absa.enceladus.conformance.interpreter.{Always, FeatureSwitches, Never}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory}
@@ -210,6 +210,7 @@ object NestedTestCaseFactory {
 }
 
 class NestedTestCaseFactory(implicit spark: SparkSession) {
+
   import NestedTestCaseFactory._
 
   private val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
@@ -220,11 +221,13 @@ class NestedTestCaseFactory(implicit spark: SparkSession) {
     * This method returns all objects necessary to run a dynamic conformance job.
     * You can customize conformance features used and a list of conformance rules to apply.
     *
-    * @param experimentalMappingRule If true, the experimental mapping rule will be used.
-    * @param conformanceRules        Zero or more conformance rules to be applied as the part of conformance.
+    * @param experimentalMappingRule       If true, the experimental mapping rule will be used.
+    * @param enableMappingRuleBroadcasting Specify if the broadcasting strategy will be used for the mapping rule.
+    * @param conformanceRules              Zero or more conformance rules to be applied as the part of conformance.
     * @return A dataframe, a dataset, a Menas DAO, a Cmd Config and feature switches prepared to run conformance interpreter
     */
   def getTestCase(experimentalMappingRule: Boolean,
+                  enableMappingRuleBroadcasting: Boolean,
                   conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, ConfCmdConfig, FeatureSwitches) = {
 
     val inputDf = spark.read
@@ -243,6 +246,7 @@ class NestedTestCaseFactory(implicit spark: SparkSession) {
       .setExperimentalMappingRuleEnabled(experimentalMappingRule)
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
+      .setBroadcastStrategyMode(if (enableMappingRuleBroadcasting) Always else Never)
 
     (inputDf, dataset, dao, cmdConfig, featureSwitches)
   }

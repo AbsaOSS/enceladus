@@ -16,25 +16,36 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 /**
- * Class bundling together switched for features to be used during Conformance
- * It's a sealed abstract case class to enforce the the provided constructor (apply). This way values can be
- * changed only via the setters. This way enforces setting them by name only instead of by position like it would be in
- * the case of classical constructor.
- * @param experimentalMappingRuleEnabled  If true the new explode-optimized conformance mapping rule interpreter will be used
- * @param catalystWorkaroundEnabled       If true the Catalyst optimizer workaround is enabled
- * @param controlFrameworkEnabled         If true sets the checkpoints on the dataset upon conforming
- */
+  * Class bundling together switched for features to be used during Conformance
+  * It's a sealed abstract case class to enforce the the provided constructor (apply). This way values can be
+  * changed only via the setters. This way enforces setting them by name only instead of by position like it would be in
+  * the case of classical constructor.
+  *
+  * @param experimentalMappingRuleEnabled If true the new explode-optimized conformance mapping rule interpreter will be used
+  * @param catalystWorkaroundEnabled      If true the Catalyst optimizer workaround is enabled
+  * @param controlFrameworkEnabled        If true sets the checkpoints on the dataset upon conforming
+  * @param broadcastStrategyMode          Specifies the mode of operation of the broadcasting strategy for mapping rules
+  * @param broadcastMaxSizeMb             Specifies the maximum size of a mapping table for which the broadcasting strategy can be used.
+  */
 sealed abstract case class FeatureSwitches(
                                             experimentalMappingRuleEnabled: Boolean = false,
                                             catalystWorkaroundEnabled: Boolean = false,
-                                            controlFrameworkEnabled: Boolean = false
+                                            controlFrameworkEnabled: Boolean = false,
+                                            broadcastStrategyMode: ThreeStateSwitch = Auto,
+                                            broadcastMaxSizeMb: Int = 0
                                           ) {
   private def copy(
                     experimentalMappingRuleEnabled: Boolean = this.experimentalMappingRuleEnabled,
                     catalystWorkaroundEnabled: Boolean = this.catalystWorkaroundEnabled,
-                    controlFrameworkEnabled: Boolean = this.controlFrameworkEnabled
-          ): FeatureSwitches = {
-    new FeatureSwitches(experimentalMappingRuleEnabled, catalystWorkaroundEnabled, controlFrameworkEnabled) {}
+                    controlFrameworkEnabled: Boolean = this.controlFrameworkEnabled,
+                    broadcastStrategyMode: ThreeStateSwitch = this.broadcastStrategyMode,
+                    broadcastMaxSizeMb: Int = this.broadcastMaxSizeMb
+                  ): FeatureSwitches = {
+    new FeatureSwitches(experimentalMappingRuleEnabled,
+      catalystWorkaroundEnabled,
+      controlFrameworkEnabled,
+      broadcastStrategyMode,
+      broadcastMaxSizeMb) {}
   }
 
   def setExperimentalMappingRuleEnabled(value: Boolean): FeatureSwitches = {
@@ -47,6 +58,14 @@ sealed abstract case class FeatureSwitches(
 
   def setControlFrameworkEnabled(value: Boolean): FeatureSwitches = {
     copy(controlFrameworkEnabled = value)
+  }
+
+  def setBroadcastStrategyMode(value: ThreeStateSwitch): FeatureSwitches = {
+    copy(broadcastStrategyMode = value)
+  }
+
+  def setBroadcastMaxSizeMb(value: Int): FeatureSwitches = {
+    copy(broadcastMaxSizeMb = value)
   }
 
 }

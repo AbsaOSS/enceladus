@@ -67,6 +67,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
       .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
+      .setBroadcastStrategyMode(Never)
 
     val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs)
 
@@ -121,6 +122,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
       .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
+      .setBroadcastStrategyMode(Never)
 
     val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs).cache
 

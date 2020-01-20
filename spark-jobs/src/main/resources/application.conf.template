@@ -27,6 +27,15 @@ conformance.mappingtable.pattern="reportDate={0}-{1}-{2}"
 # operating on the same array
 conformance.mapping.rule.experimental.implementation=false
 
+# Specify when to use the broadcasting strategy for mapping rules.
+# Can be one of: auto, never, always (warning! use 'always' with caution)
+# When set to 'auto' the strategy will be used for mapping tables that have size
+# bigger than specified in 'conformance.mapping.rule.max.broadcast.size.mb'
+conformance.mapping.rule.broadcast=never
+
+# Maximum size (in MB) of a mapping table to use the efficient broadcasting mapping rule strategy
+conformance.mapping.rule.max.broadcast.size.mb=50
+
 # Enable workaround for Catalyst execution plan optimization freeze
 conformance.catalyst.workaround=true
 

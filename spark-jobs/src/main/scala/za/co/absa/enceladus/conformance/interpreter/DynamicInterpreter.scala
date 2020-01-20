@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
+import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
@@ -23,6 +24,7 @@ import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
 import za.co.absa.enceladus.dao.MenasDAO
@@ -30,11 +32,13 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.explode.ExplosionContext
+import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 object DynamicInterpreter {
   private val log = LoggerFactory.getLogger(this.getClass)
+  private val config: Config = ConfigFactory.load()
 
   /**
     * Interpret conformance rules defined in a dataset.
@@ -194,14 +198,17 @@ object DynamicInterpreter {
   private def getMappingRuleInterpreter(rule: MappingConformanceRule,
                                         schema: StructType)
                                        (implicit ictx: InterpreterContext): RuleInterpreter = {
-    if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
-      if (canMappingRuleBroadcast(rule, schema)) {
-        MappingRuleInterpreterBroadcast(rule, ictx.conformance)
-      } else {
-        MappingRuleInterpreterGroupExplode(rule, ictx.conformance)
-      }
+    if (canMappingRuleBroadcast(rule, schema)) {
+      log.info("Broadcast strategy for mapping rules is used")
+      MappingRuleInterpreterBroadcast(rule, ictx.conformance)
     } else {
-      MappingRuleInterpreter(rule, ictx.conformance)
+      if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
+        log.info("Group explode strategy for mapping rules used")
+        MappingRuleInterpreterGroupExplode(rule, ictx.conformance)
+      } else {
+        log.info("Explode strategy for mapping rules used")
+        MappingRuleInterpreter(rule, ictx.conformance)
+      }
     }
   }
 
@@ -234,16 +241,25 @@ object DynamicInterpreter {
   private def canMappingRuleBroadcast(rule: MappingConformanceRule,
                                       schema: StructType)
                                      (implicit ictx: InterpreterContext): Boolean = {
-    // ToDo Currently, the broadcasting strategy is turned off. The decision when to use it should
-    //      be implemented as part of #1017.
-    false
+    ictx.featureSwitches.broadcastStrategyMode match {
+      case Always => true
+      case Never => false
+      case Auto =>
+        val maxBroadcastSizeMb = ictx.featureSwitches.broadcastMaxSizeMb
+        val mappingTableSize = getMappingTableSizeMb(rule)
+        log.info(s"Mapping table (${rule.mappingTable}) size = $mappingTableSize MB (threshold = $maxBroadcastSizeMb MB)")
+        mappingTableSize <= maxBroadcastSizeMb
+    }
   }
 
   private def getMappingTableSizeMb(rule: MappingConformanceRule)
                                    (implicit ictx: InterpreterContext): Int = {
-    // ToDo Currently, the broadcasting strategy is turned off. The decision when to use it should
-    //      be implemented as part of #1017.
-    0
+    val fsUtils = new FileSystemVersionUtils(ictx.spark.sparkContext.hadoopConfiguration)
+
+    val mappingTableDef = ictx.dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
+    val mappingTablePath = PartitioningUtils.getPartitionedPathName(mappingTableDef.hdfsPath, ictx.progArgs.reportDate)
+    val mappingTableSize = fsUtils.getDirectorySizeNoHidden(mappingTablePath)
+    (mappingTableSize / (1024 * 1024)).toInt
   }
 
   /**

@@ -56,6 +56,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
       .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
+      .setBroadcastStrategyMode(Never)
 
     val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef,
       df)
@@ -80,6 +81,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
       .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
+      .setBroadcastStrategyMode(Never)
 
     val conformedDf = DynamicInterpreter.interpret(NullArraySamples.mappingOnlyConformanceDef,
       df)
@@ -109,6 +111,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
       .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
+      .setBroadcastStrategyMode(Never)
 
     val conformedDf = DynamicInterpreter.interpret(EmtpyArraySamples.mappingOnlyConformanceDef,
       df)
