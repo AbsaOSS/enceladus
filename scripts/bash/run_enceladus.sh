@@ -290,7 +290,7 @@ fi
 SPARK_CONF="--conf spark.logConf=true"
 
 JVM_CONF="spark.driver.extraJavaOptions=-Dmenas.rest.uri=$MENAS_URI -Dstandardized.hdfs.path=$STD_HDFS_PATH \
--Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=$HDP_VERSION \
+-Dspline.producer.url=$SPLINE_PRODUCER_URL -Dhdp.version=$HDP_VERSION \
 $MT_PATTERN"
 
 CMD_LINE="$SPARK_SUBMIT"

@@ -52,12 +52,6 @@
             <groupId>za.co.absa.spline</groupId>
             <artifactId>spark-agent</artifactId>
             <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mongodb</groupId>

@@ -12,7 +12,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-  
+
 <workflow-app name="$stdAppName" xmlns="uri:oozie:workflow:0.5">
     $sharelibForSpark
     <start to="standardization" />
@@ -29,10 +29,10 @@
             <class>za.co.absa.enceladus.standardization.StandardizationJob</class>
             <jar>$stdJarPath</jar>
             <spark-opts>
-                --num-executors $stdNumExecutors 
-                --executor-memory $stdExecutorMemory 
+                --num-executors $stdNumExecutors
+                --executor-memory $stdExecutorMemory
                 --driver-cores $driverCores
-                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties'$sparkConfQuotes
+                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.producer.url='$lineageWriteApiUrl' -Dlog4j.configuration='spark-log4j.properties'$sparkConfQuotes $splineMode
                 $extraSparkConfString
             </spark-opts>
             <arg>-D</arg>
@@ -59,10 +59,10 @@
             <class>za.co.absa.enceladus.conformance.DynamicConformanceJob</class>
             <jar>$confJarPath</jar>
             <spark-opts>
-                --num-executors $confNumExecutors 
-                --executor-memory $confExecutorMemory 
+                --num-executors $confNumExecutors
+                --executor-memory $confExecutorMemory
                 --driver-cores $driverCores
-                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties' -Dconformance.mappingtable.pattern='$mappingTablePattern'$sparkConfQuotes
+                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.producer.url='$lineageWriteApiUrl' -Dlog4j.configuration='spark-log4j.properties' -Dconformance.mappingtable.pattern='$mappingTablePattern'$sparkConfQuotes $splineModeConf
                 $extraSparkConfString
             </spark-opts>
             <arg>-D</arg>
