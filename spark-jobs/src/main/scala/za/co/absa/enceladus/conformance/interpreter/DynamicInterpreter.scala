@@ -144,8 +144,8 @@ object DynamicInterpreter {
                                        schema: StructType)
                                       (implicit ictx: InterpreterContext): List[RuleInterpreter] = {
     ruleGroups.flatMap(rules => {
-      val interpreters = rules.map(rule => getInterpreter(rule, schema))
-      if (isGroupExplosionUsable(rules, schema) &&
+      val interpreters = rules.map(rule => getInterpreter(rule))
+      if (isGroupExplosionUsable(rules) &&
         ictx.featureSwitches.experimentalMappingRuleEnabled) {
         // Inserting an explosion and a collapse between a group of mapping rules operating on a common array
         val optArray = SchemaUtils.getDeepestArrayPath(schema, rules.head.outputColumn)
@@ -167,11 +167,9 @@ object DynamicInterpreter {
     * The exception is the mapping rule for which there are several interpreters based on the strategy used.
     *
     * @param rule   A conformance rule.
-    * @param schema A schema of a DataFrame to be conformed.
     * @return A conformance rules interpreter.
     */
-  private def getInterpreter(rule: ConformanceRule,
-                             schema: StructType)
+  private def getInterpreter(rule: ConformanceRule)
                             (implicit ictx: InterpreterContext): RuleInterpreter = {
     rule match {
       case r: DropConformanceRule             => DropRuleInterpreter(r)
@@ -182,7 +180,7 @@ object DynamicInterpreter {
       case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r)
       case r: CastingConformanceRule          => CastingRuleInterpreter(r)
       case r: NegationConformanceRule         => NegationRuleInterpreter(r)
-      case r: MappingConformanceRule          => getMappingRuleInterpreter(r, schema)
+      case r: MappingConformanceRule          => getMappingRuleInterpreter(r)
       case r: CustomConformanceRule           => r.getInterpreter()
       case r                                  => throw new IllegalStateException(s"Unrecognized rule class: ${r.getClass.getName}")
     }
@@ -192,11 +190,9 @@ object DynamicInterpreter {
     * Returns an interpreter for a mapping rule based on which strategy is applicable.
     *
     * @param rule   A conformance rule.
-    * @param schema A schema of a DataFrame to be conformed.
     * @return A mapping rule interpreter.
     */
-  private def getMappingRuleInterpreter(rule: MappingConformanceRule,
-                                        schema: StructType)
+  private def getMappingRuleInterpreter(rule: MappingConformanceRule)
                                        (implicit ictx: InterpreterContext): RuleInterpreter = {
     if (canMappingRuleBroadcast(rule)) {
       log.info("Broadcast strategy for mapping rules is used")
@@ -217,11 +213,9 @@ object DynamicInterpreter {
     * for which broadcasting strategy is not applicable is bigger than 1.
     *
     * @param rules  A list of conformance rules grouped by output field being in the same array
-    * @param schema A schema of a dataset
     * @return true if a group explosion optimization can be used
     */
-  private def isGroupExplosionUsable(rules: List[ConformanceRule],
-                                     schema: StructType)
+  private def isGroupExplosionUsable(rules: List[ConformanceRule])
                                     (implicit ictx: InterpreterContext): Boolean = {
     val eligibleRulesCount = rules.map {
       case rule: MappingConformanceRule => if (canMappingRuleBroadcast(rule)) 0 else 1
