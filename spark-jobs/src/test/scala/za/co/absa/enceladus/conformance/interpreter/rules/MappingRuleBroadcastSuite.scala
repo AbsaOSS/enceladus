@@ -16,11 +16,13 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.commons.io.IOUtils
+import org.apache.spark.sql.functions._
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.NestedTestCaseFactory._
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.{NestedTestCaseFactory, SimpleTestCaseFactory}
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
@@ -230,6 +232,26 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
       nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule6)
 
     val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
+      .cache
+
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test broadcasting rule when there are errors in the error column") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/array7Schema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/array7Results.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule2)
+
+    val inputDf2 = inputDf.withColumn("errCol", array(typedLit(ErrorMessage("Initial", "000", "ErrMsg", "id", Seq(), Seq()))))
+
+    val dfOut = DynamicInterpreter.interpret(dataset, inputDf2)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
