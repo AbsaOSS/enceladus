@@ -198,7 +198,7 @@ object DynamicInterpreter {
   private def getMappingRuleInterpreter(rule: MappingConformanceRule,
                                         schema: StructType)
                                        (implicit ictx: InterpreterContext): RuleInterpreter = {
-    if (canMappingRuleBroadcast(rule, schema)) {
+    if (canMappingRuleBroadcast(rule)) {
       log.info("Broadcast strategy for mapping rules is used")
       MappingRuleInterpreterBroadcast(rule, ictx.conformance)
     } else {
@@ -224,7 +224,7 @@ object DynamicInterpreter {
                                      schema: StructType)
                                     (implicit ictx: InterpreterContext): Boolean = {
     val eligibleRulesCount = rules.map {
-      case rule: MappingConformanceRule => if (canMappingRuleBroadcast(rule, schema)) 0 else 1
+      case rule: MappingConformanceRule => if (canMappingRuleBroadcast(rule)) 0 else 1
       case _                            => 0
     }.sum
 
@@ -234,24 +234,38 @@ object DynamicInterpreter {
   /**
     * Returns true if broadcasting strategy is applicable for the specified mapping rule.
     *
-    * @param rule   A mapping conformance rule
-    * @param schema A schema of a dataset
-    * @return true if a group explosion optimization can be used
+    * @param rule   A mapping conformance rule.
+    * @return true if the broadcasting mapping rule strategy can be used.
     */
-  private def canMappingRuleBroadcast(rule: MappingConformanceRule,
-                                      schema: StructType)
+  private def canMappingRuleBroadcast(rule: MappingConformanceRule)
                                      (implicit ictx: InterpreterContext): Boolean = {
     ictx.featureSwitches.broadcastStrategyMode match {
       case Always => true
       case Never => false
-      case Auto =>
-        val maxBroadcastSizeMb = ictx.featureSwitches.broadcastMaxSizeMb
-        val mappingTableSize = getMappingTableSizeMb(rule)
-        log.info(s"Mapping table (${rule.mappingTable}) size = $mappingTableSize MB (threshold = $maxBroadcastSizeMb MB)")
-        mappingTableSize <= maxBroadcastSizeMb
+      case Auto => isMappingTableSmallEnough(rule)
     }
   }
 
+  /**
+    * Returns true if the mapping table size is small enough for the broadcasting strategy to be used.
+    *
+    * @param rule   A mapping conformance rule.
+    * @return true if the mapping table size is small enough.
+    */
+  private def isMappingTableSmallEnough(rule: MappingConformanceRule)
+                                       (implicit ictx: InterpreterContext): Boolean = {
+    val maxBroadcastSizeMb = ictx.featureSwitches.broadcastMaxSizeMb
+    val mappingTableSize = getMappingTableSizeMb(rule)
+    log.info(s"Mapping table (${rule.mappingTable}) size = $mappingTableSize MB (threshold = $maxBroadcastSizeMb MB)")
+    mappingTableSize <= maxBroadcastSizeMb
+  }
+
+  /**
+    * Returns the size of the mapping table in megabytes.
+    *
+    * @param rule   A mapping conformance rule.
+    * @return The size of the mapping table in megabytes.
+    */
   private def getMappingTableSizeMb(rule: MappingConformanceRule)
                                    (implicit ictx: InterpreterContext): Int = {
     val fsUtils = new FileSystemVersionUtils(ictx.spark.sparkContext.hadoopConfiguration)
