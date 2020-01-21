@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, InterpreterContext}
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, InterpreterContext, Never}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.conformance.samples.TradeConformance._
 
@@ -103,7 +103,7 @@ class RuleOptimizationSuite extends FunSuite {
 
   private implicit val ictxDummy: InterpreterContext = InterpreterContext(schema,
     null,
-    FeatureSwitches().setExperimentalMappingRuleEnabled(true),
+    FeatureSwitches().setExperimentalMappingRuleEnabled(true).setBroadcastStrategyMode(Never),
     "dummy",
     null,
     null,

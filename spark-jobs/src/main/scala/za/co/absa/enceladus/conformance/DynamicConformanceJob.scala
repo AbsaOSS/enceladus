@@ -27,7 +27,7 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
-import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, ThreeStateSwitch}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasPlugin}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
@@ -137,6 +137,14 @@ object DynamicConformanceJob {
     enabled
   }
 
+  private def broadcastingStrategyMode: ThreeStateSwitch = {
+    ThreeStateSwitch(conf.getString("conformance.mapping.rule.broadcast"))
+  }
+
+  private def broadcastingMaxSizeMb: Int = {
+    conf.getInt("conformance.mapping.rule.max.broadcast.size.mb")
+  }
+
   /**
     * Returns an effective value of a parameter according to the following priorities:
     * - Command line arguments [highest]
@@ -219,6 +227,8 @@ object DynamicConformanceJob {
       .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled())
       .setControlFrameworkEnabled(enableCF)
+      .setBroadcastStrategyMode(broadcastingStrategyMode)
+      .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
     try {
       DynamicInterpreter.interpret(conformance, inputData)

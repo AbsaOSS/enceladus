@@ -65,6 +65,7 @@ class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with Logger
       .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
+      .setBroadcastStrategyMode(Never)
 
     val confd = DynamicInterpreter.interpret(conformanceDef, inputDf).repartition(2)
 

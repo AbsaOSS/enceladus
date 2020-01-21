@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
+import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
@@ -23,6 +24,7 @@ import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
 import za.co.absa.enceladus.dao.MenasDAO
@@ -30,11 +32,13 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.enceladus.utils.explode.ExplosionContext
+import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 object DynamicInterpreter {
   private val log = LoggerFactory.getLogger(this.getClass)
+  private val config: Config = ConfigFactory.load()
 
   /**
     * Interpret conformance rules defined in a dataset.
@@ -140,8 +144,8 @@ object DynamicInterpreter {
                                        schema: StructType)
                                       (implicit ictx: InterpreterContext): List[RuleInterpreter] = {
     ruleGroups.flatMap(rules => {
-      val interpreters = rules.map(rule => getInterpreter(rule, schema))
-      if (isGroupExplosionUsable(rules, schema) &&
+      val interpreters = rules.map(rule => getInterpreter(rule))
+      if (isGroupExplosionUsable(rules) &&
         ictx.featureSwitches.experimentalMappingRuleEnabled) {
         // Inserting an explosion and a collapse between a group of mapping rules operating on a common array
         val optArray = SchemaUtils.getDeepestArrayPath(schema, rules.head.outputColumn)
@@ -163,11 +167,9 @@ object DynamicInterpreter {
     * The exception is the mapping rule for which there are several interpreters based on the strategy used.
     *
     * @param rule   A conformance rule.
-    * @param schema A schema of a DataFrame to be conformed.
     * @return A conformance rules interpreter.
     */
-  private def getInterpreter(rule: ConformanceRule,
-                             schema: StructType)
+  private def getInterpreter(rule: ConformanceRule)
                             (implicit ictx: InterpreterContext): RuleInterpreter = {
     rule match {
       case r: DropConformanceRule             => DropRuleInterpreter(r)
@@ -178,7 +180,7 @@ object DynamicInterpreter {
       case r: UppercaseConformanceRule        => UppercaseRuleInterpreter(r)
       case r: CastingConformanceRule          => CastingRuleInterpreter(r)
       case r: NegationConformanceRule         => NegationRuleInterpreter(r)
-      case r: MappingConformanceRule          => getMappingRuleInterpreter(r, schema)
+      case r: MappingConformanceRule          => getMappingRuleInterpreter(r)
       case r: CustomConformanceRule           => r.getInterpreter()
       case r                                  => throw new IllegalStateException(s"Unrecognized rule class: ${r.getClass.getName}")
     }
@@ -188,20 +190,21 @@ object DynamicInterpreter {
     * Returns an interpreter for a mapping rule based on which strategy is applicable.
     *
     * @param rule   A conformance rule.
-    * @param schema A schema of a DataFrame to be conformed.
     * @return A mapping rule interpreter.
     */
-  private def getMappingRuleInterpreter(rule: MappingConformanceRule,
-                                        schema: StructType)
+  private def getMappingRuleInterpreter(rule: MappingConformanceRule)
                                        (implicit ictx: InterpreterContext): RuleInterpreter = {
-    if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
-      if (canMappingRuleBroadcast(rule, schema)) {
-        MappingRuleInterpreterBroadcast(rule, ictx.conformance)
-      } else {
-        MappingRuleInterpreterGroupExplode(rule, ictx.conformance)
-      }
+    if (canMappingRuleBroadcast(rule)) {
+      log.info("Broadcast strategy for mapping rules is used")
+      MappingRuleInterpreterBroadcast(rule, ictx.conformance)
     } else {
-      MappingRuleInterpreter(rule, ictx.conformance)
+      if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
+        log.info("Group explode strategy for mapping rules used")
+        MappingRuleInterpreterGroupExplode(rule, ictx.conformance)
+      } else {
+        log.info("Explode strategy for mapping rules used")
+        MappingRuleInterpreter(rule, ictx.conformance)
+      }
     }
   }
 
@@ -210,14 +213,12 @@ object DynamicInterpreter {
     * for which broadcasting strategy is not applicable is bigger than 1.
     *
     * @param rules  A list of conformance rules grouped by output field being in the same array
-    * @param schema A schema of a dataset
     * @return true if a group explosion optimization can be used
     */
-  private def isGroupExplosionUsable(rules: List[ConformanceRule],
-                                     schema: StructType)
+  private def isGroupExplosionUsable(rules: List[ConformanceRule])
                                     (implicit ictx: InterpreterContext): Boolean = {
     val eligibleRulesCount = rules.map {
-      case rule: MappingConformanceRule => if (canMappingRuleBroadcast(rule, schema)) 0 else 1
+      case rule: MappingConformanceRule => if (canMappingRuleBroadcast(rule)) 0 else 1
       case _                            => 0
     }.sum
 
@@ -227,23 +228,46 @@ object DynamicInterpreter {
   /**
     * Returns true if broadcasting strategy is applicable for the specified mapping rule.
     *
-    * @param rule   A mapping conformance rule
-    * @param schema A schema of a dataset
-    * @return true if a group explosion optimization can be used
+    * @param rule   A mapping conformance rule.
+    * @return true if the broadcasting mapping rule strategy can be used.
     */
-  private def canMappingRuleBroadcast(rule: MappingConformanceRule,
-                                      schema: StructType)
+  private def canMappingRuleBroadcast(rule: MappingConformanceRule)
                                      (implicit ictx: InterpreterContext): Boolean = {
-    // ToDo Currently, the broadcasting strategy is turned off. The decision when to use it should
-    //      be implemented as part of #1017.
-    false
+    ictx.featureSwitches.broadcastStrategyMode match {
+      case Always => true
+      case Never => false
+      case Auto => isMappingTableSmallEnough(rule)
+    }
   }
 
+  /**
+    * Returns true if the mapping table size is small enough for the broadcasting strategy to be used.
+    *
+    * @param rule   A mapping conformance rule.
+    * @return true if the mapping table size is small enough.
+    */
+  private def isMappingTableSmallEnough(rule: MappingConformanceRule)
+                                       (implicit ictx: InterpreterContext): Boolean = {
+    val maxBroadcastSizeMb = ictx.featureSwitches.broadcastMaxSizeMb
+    val mappingTableSize = getMappingTableSizeMb(rule)
+    log.info(s"Mapping table (${rule.mappingTable}) size = $mappingTableSize MB (threshold = $maxBroadcastSizeMb MB)")
+    mappingTableSize <= maxBroadcastSizeMb
+  }
+
+  /**
+    * Returns the size of the mapping table in megabytes.
+    *
+    * @param rule   A mapping conformance rule.
+    * @return The size of the mapping table in megabytes.
+    */
   private def getMappingTableSizeMb(rule: MappingConformanceRule)
                                    (implicit ictx: InterpreterContext): Int = {
-    // ToDo Currently, the broadcasting strategy is turned off. The decision when to use it should
-    //      be implemented as part of #1017.
-    0
+    val fsUtils = new FileSystemVersionUtils(ictx.spark.sparkContext.hadoopConfiguration)
+
+    val mappingTableDef = ictx.dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
+    val mappingTablePath = PartitioningUtils.getPartitionedPathName(mappingTableDef.hdfsPath, ictx.progArgs.reportDate)
+    val mappingTableSize = fsUtils.getDirectorySizeNoHidden(mappingTablePath)
+    (mappingTableSize / (1024 * 1024)).toInt
   }
 
   /**

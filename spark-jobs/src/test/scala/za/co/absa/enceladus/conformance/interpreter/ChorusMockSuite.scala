@@ -69,6 +69,7 @@ class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
       .setExperimentalMappingRuleEnabled(useExperimentalMappingRule)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
+      .setBroadcastStrategyMode(Never)
 
     val confd = DynamicInterpreter.interpret(conformanceDef, inputDf).repartition(2)
 
