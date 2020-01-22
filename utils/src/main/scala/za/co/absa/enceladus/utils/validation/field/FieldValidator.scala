@@ -21,6 +21,11 @@ import scala.util.{Failure, Success, Try}
 import scala.reflect.runtime.universe._
 
 class FieldValidator {
+
+  def validate(field: TypedStructField): Seq[ValidationIssue] = {
+    Nil
+  }
+
   /**
    * Function to convert a Try type to sequence of ValidationIssue. Naming by the patter StringToInt; Try is a noun here
    * @param tryValue Try value to convert to ValidationIssue - Failure is converted to ValidationError, any ValidationIssue
@@ -28,7 +33,7 @@ class FieldValidator {
    * @return         sequence of ValidationIssue, that were either part the input or if the input was a failure, then
    *                 it converted into ValidationError
    */
-  protected def tryToValidationIssues(tryValue: Try[Any]): Seq[ValidationIssue] = {
+  def tryToValidationIssues(tryValue: Try[Any]): Seq[ValidationIssue] = {
     tryValue match {
       case Failure(e)                      => Seq(ValidationError(e.getMessage))
       case Success(seq: Seq[_])            => seq.collect{case x:ValidationIssue => x} //have to use collect because of type erasure
@@ -57,10 +62,6 @@ class FieldValidator {
     } else {
       Nil
     }
-  }
-
-  def validate(field: TypedStructField): Seq[ValidationIssue] = {
-    Nil
   }
 }
 

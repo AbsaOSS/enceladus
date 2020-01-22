@@ -416,7 +416,21 @@ object TypedStructField {
 
   final class ArrayTypeStructField private[TypedStructField](structField: StructField, override val dataType: ArrayType)
                                                             (implicit defaults: Defaults)
-    extends TypedStructFieldTagged[Any](structField) with WeakSupport[Any]
+    extends TypedStructFieldTagged[Any](structField) with WeakSupport[Any] {
+
+    override def validate(): Seq[ValidationIssue] = {
+      val typedSubField = Try {
+        val subField = StructField(name, dataType.elementType, dataType.containsNull, structField.metadata)
+        TypedStructField(subField)
+      }
+
+      super.validate() ++ FieldValidator.tryToValidationIssues(typedSubField.map(_.validate()))
+    }
+
+    override def ownDefaultValue: Try[Option[Option[Any]]] = {
+      Success(None) // array type doesn't have own default value, if defined it is to be applied to element type
+    }
+  }
 
   final class StructTypeStructField(structField: StructField, override val dataType: StructType)(implicit defaults: Defaults)
     extends TypedStructFieldTagged[Any](structField) with WeakSupport[Any]
