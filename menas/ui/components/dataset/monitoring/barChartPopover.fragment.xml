@@ -19,7 +19,7 @@
     xmlns:form="sap.ui.layout.form"
     xmlns:layout="sap.ui.layout">
     <Popover
-        class="monitoringRecordspopover"
+        class="monitoringRecordsPopover"
         title="{=${infoDateString} + ' v' + ${controlMeasure/metadata/version}}"
         showHeader="true"
         placement="PreferredTopOrFlip"
