@@ -237,7 +237,7 @@ object TypeParser {
       SchemaUtils.getFieldType(inputFullPathName, origSchema).get
     }
 
-    protected def origTypeButArray: DataType = {
+    protected def underlyingType: DataType = {
       origType match {
         case arrayType: ArrayType => arrayType.elementType
         case anyOther => anyOther
@@ -260,7 +260,7 @@ object TypeParser {
     }
 
     override def assemblePrimitiveCastLogic: Column = {
-      if (origTypeButArray == StringType) {
+      if (underlyingType == StringType) {
         // in case of string as source some adjustments might be needed
         val decimalSymbols = field.pattern.toOption.flatten.map(
           _.decimalSymbols
@@ -304,7 +304,7 @@ object TypeParser {
     override protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
       val basicLogic: Column = super.assemblePrimitiveCastErrorLogic(castedCol)
 
-      origTypeButArray match {
+      underlyingType match {
         case  dt: DecimalType =>
           // decimal can be too big, to catch overflow or imprecision  issues compare to original
           basicLogic or (column =!= castedCol.cast(dt))
@@ -405,7 +405,7 @@ object TypeParser {
 
     private def castWithPattern(): Column = {
       // sadly with parquet support, incoming might not be all `plain`
-      origTypeButArray match {
+      underlyingType match {
         case _: DateType                  => castDateColumn(column)
         case _: TimestampType             => castTimestampColumn(column)
         case _: StringType                => castStringColumn(column)

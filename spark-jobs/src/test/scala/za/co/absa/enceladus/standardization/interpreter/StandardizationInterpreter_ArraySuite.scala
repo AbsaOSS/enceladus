@@ -17,7 +17,7 @@ package za.co.absa.enceladus.standardization.interpreter
 
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.error.UDFLibrary
+import za.co.absa.enceladus.utils.error.{ErrorMessageFactory, UDFLibrary}
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
@@ -30,19 +30,6 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
 
   private val fieldName = "arrayField"
-
-  private val errColSchema =  "\n |-- errCol: array (nullable = true)\n"+
-    " |    |-- element: struct (containsNull = false)\n"+
-    " |    |    |-- errType: string (nullable = true)\n"+
-    " |    |    |-- errCode: string (nullable = true)\n"+
-    " |    |    |-- errMsg: string (nullable = true)\n"+
-    " |    |    |-- errCol: string (nullable = true)\n"+
-    " |    |    |-- rawValues: array (nullable = true)\n"+
-    " |    |    |    |-- element: string (containsNull = true)\n"+
-    " |    |    |-- mappings: array (nullable = true)\n"+
-    " |    |    |    |-- element: struct (containsNull = true)\n"+
-    " |    |    |    |    |-- mappingTableColumn: string (nullable = true)\n"+
-    " |    |    |    |    |-- mappedDatasetColumn: string (nullable = true)\n"
 
   private def generateDesiredSchema(arrayElementType: String, metadata: String): StructType = {
     val jsonField: String =  s"""{"name": "$fieldName", "type": { "type": "array", "elementType": $arrayElementType, "containsNull": true}, "nullable": true, "metadata": {$metadata} }"""
@@ -77,7 +64,7 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
       "root\n"+
       " |-- arrayField: array (nullable = true)\n" +
       " |    |-- element: timestamp (containsNull = true)" +
-      errColSchema
+      ErrorMessageFactory.errColSchema
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     assert(std.schema.treeString == expectedSchema)
@@ -86,9 +73,9 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
 
   test("Array of timestamps with pattern defined") {
     val seq  = Seq(
-      Array("00:00:00 01.12.2018", "00:10:00 02.12.2018","00:20:00 03.12.2018"),
-      Array("00:00:00 01.12.2019", "00:10:00 02.12.2019","00:20:00 03.12.2019"),
-      Array("2020-01-12 00:00:00" ,"2020-12-02 00:10:00","2020-12-03 00:20:00")
+      Array("00:00:00 01.12.2008", "00:10:00 02.12.2008","00:20:00 03.12.2008"),
+      Array("00:00:00 01.12.2009", "00:10:00 02.12.2009","00:20:00 03.12.2009"),
+      Array("2010-01-12 00:00:00" ,"2010-12-02 00:10:00","2010-12-03 00:20:00")
     )
     val src = seq.toDF(fieldName)
     val desiredSchema = generateDesiredSchema(TimestampType, s""""${MetadataKeys.Pattern}": "HH:mm:ss dd.MM.yyyy"""")
@@ -97,9 +84,9 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
       """+---------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
         ||arrayField                                                     |errCol                                                                                                                                                                                                                                                                                                         |
         |+---------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-        ||[2018-12-01 00:00:00, 2018-12-02 00:10:00, 2018-12-03 00:20:00]|[]                                                                                                                                                                                                                                                                                                             |
-        ||[2019-12-01 00:00:00, 2019-12-02 00:10:00, 2019-12-03 00:20:00]|[]                                                                                                                                                                                                                                                                                                             |
-        ||[,,]                                                           |[[stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [2020-01-12 00:00:00], []], [stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [2020-12-02 00:10:00], []], [stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [2020-12-03 00:20:00], []]]|
+        ||[2008-12-01 00:00:00, 2008-12-02 00:10:00, 2008-12-03 00:20:00]|[]                                                                                                                                                                                                                                                                                                             |
+        ||[2009-12-01 00:00:00, 2009-12-02 00:10:00, 2009-12-03 00:20:00]|[]                                                                                                                                                                                                                                                                                                             |
+        ||[,,]                                                           |[[stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [2010-01-12 00:00:00], []], [stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [2010-12-02 00:10:00], []], [stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [2010-12-03 00:20:00], []]]|
         |+---------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
@@ -107,7 +94,7 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
     "root\n"+
       " |-- arrayField: array (nullable = true)\n" +
       " |    |-- element: timestamp (containsNull = true)" +
-      errColSchema
+      ErrorMessageFactory.errColSchema
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     assert(std.schema.treeString == expectedSchema)
     assert(std.dataAsString(false) == expectedData)
@@ -115,9 +102,9 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
 
   test("Array of timestamps with invalid pattern") {
     val seq  = Seq(
-      Array("00:00:00 01.12.2018", "00:10:00 02.12.2018","00:20:00 03.12.2018"),
-      Array("00:00:00 01.12.2019", "00:10:00 02.12.2019","00:20:00 03.12.2019"),
-      Array("2020-01-12 00:00:00" ,"2020-12-02 00:10:00","2020-12-03 00:20:00")
+      Array("00:00:00 01.12.2013", "00:10:00 02.12.2013","00:20:00 03.12.2013"),
+      Array("00:00:00 01.12.2014", "00:10:00 02.12.2014","00:20:00 03.12.2014"),
+      Array("2015-01-12 00:00:00" ,"2015-12-02 00:10:00","2015-12-03 00:20:00")
     )
     val src = seq.toDF(fieldName)
     val desiredSchema = generateDesiredSchema(TimestampType, s""""${MetadataKeys.Pattern}": "fubar"""")
@@ -149,7 +136,7 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
       "root\n"+
         " |-- arrayField: array (nullable = true)\n" +
         " |    |-- element: integer (containsNull = true)" +
-        errColSchema
+        ErrorMessageFactory.errColSchema
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     assert(std.schema.treeString == expectedSchema)
@@ -179,7 +166,7 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
       "root\n"+
         " |-- arrayField: array (nullable = true)\n" +
         " |    |-- element: float (containsNull = true)" +
-        errColSchema
+        ErrorMessageFactory.errColSchema
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     assert(std.schema.treeString == expectedSchema)
@@ -208,7 +195,7 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
         " |-- arrayField: array (nullable = true)\n" +
         " |    |-- element: array (containsNull = true)\n" +
         " |    |    |-- element: string (containsNull = true)" +
-        errColSchema
+        ErrorMessageFactory.errColSchema
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
 
