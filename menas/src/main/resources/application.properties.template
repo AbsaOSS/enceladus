@@ -121,8 +121,11 @@ menas.oozie.mavenConformanceJarLocation=/za/co/absa/enceladus-conformance/@proje
 #Menas URL for submitted std and conf jobs
 menas.oozie.menasApiURL=http://menasHostname:8080/menas/api
 
-#Mongo address for spline for the submitted jobs
-menas.oozie.splineMongoURL=mongodb://localhost:27017
+#The URL address of Spline for the submitted jobs
+menas.oozie.lineageWriteApiUrl=http://localhost:8080/spline-gw/producer
+
+#In case the spline.mode is to be configured from default (see Spline documentation for details)
+#menas.oozie.spline.mode=
 
 #In some cases extra driver options need to be surrounded by double quotes
 #This seems to depend of the version of oozie
