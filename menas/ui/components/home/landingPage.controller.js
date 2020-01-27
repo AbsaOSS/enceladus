@@ -42,13 +42,6 @@ sap.ui.define([
           document.title = `Menas ${sEnvironmentName}`;
         })
         .fail( () => console.log("Failed to get Environment name"));
-
-      ConfigRestClient.getLineageExecutionIdApiTemplate()
-        .then( sApiTemplate => {
-          sap.ui.getCore().getModel().setProperty("/lineageExecutionIdApiTemplate", sApiTemplate);
-        })
-        .fail( () => console.log("Failed to get Lineage API address"));
-
     },
 
     tileNumberFormatter: function(nNum) {

@@ -99,6 +99,18 @@ var RunService = new function () {
     this._updateLineageIframeSrc(oControl, oRun.lineageUrl, oRun.lineageError)
   };
 
+  this._getLineageExecutionIdApiTemplate = function() {
+    return sap.ui.getCore().getModel().getProperty("/lineageExecutionIdApiTemplate");
+  };
+
+  if (this._getLineageExecutionIdApiTemplate() === undefined) {
+    ConfigRestClient.getLineageExecutionIdApiTemplate()
+      .then( sApiTemplate => {
+        sap.ui.getCore().getModel().setProperty("/lineageExecutionIdApiTemplate", sApiTemplate);
+      })
+      .fail( () => console.log("Failed to get Lineage API address"));
+  }
+
   this._bindRunSummaries = function(oRunSummaries, oControl) {
     oRunSummaries.forEach(run => {
       run.status = Formatters.statusToPrettyString(run.status)
@@ -129,7 +141,7 @@ var RunService = new function () {
 
   this._buildLineageUrl = function(outputPath, applicationId) {
     const urlTemplate = "lineage/app/lineage-overview?executionEventId=%s";
-    const lineageExecutionIdApiTemplate = sap.ui.getCore().getModel().getProperty("/lineageExecutionIdApiTemplate");
+    const lineageExecutionIdApiTemplate = this._getLineageExecutionIdApiTemplate();
     if (lineageExecutionIdApiTemplate) {
       const runRestDAO = new RunRestDAO(lineageExecutionIdApiTemplate);
       const lineageIdInfo = runRestDAO.getLineageId(outputPath, applicationId);
