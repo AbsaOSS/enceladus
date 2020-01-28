@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.error
+package za.co.absa.enceladus.shared.error
 
 object ErrorMessageFactory {
   val errColSchema: String =  "\n |-- errCol: array (nullable = true)\n"+
@@ -28,4 +28,8 @@ object ErrorMessageFactory {
     " |    |    |    |-- element: struct (containsNull = true)\n"+
     " |    |    |    |    |-- mappingTableColumn: string (nullable = true)\n"+
     " |    |    |    |    |-- mappedDatasetColumn: string (nullable = true)\n"
+
+  def attachErrColToSchemaPrint(schemaPrint: String): String = {
+    schemaPrint + errColSchema
+  }
 }

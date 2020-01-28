@@ -17,7 +17,8 @@ package za.co.absa.enceladus.standardization.interpreter
 
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.error.{ErrorMessageFactory, UDFLibrary}
+import za.co.absa.enceladus.shared.error.ErrorMessageFactory
+import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
@@ -60,11 +61,11 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
         |+---------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
-    val expectedSchema =
+    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(
       "root\n"+
       " |-- arrayField: array (nullable = true)\n" +
-      " |    |-- element: timestamp (containsNull = true)" +
-      ErrorMessageFactory.errColSchema
+      " |    |-- element: timestamp (containsNull = true)"
+    )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     assert(std.schema.treeString == expectedSchema)
@@ -90,11 +91,11 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
         |+---------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
-    val expectedSchema =
+    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(
     "root\n"+
       " |-- arrayField: array (nullable = true)\n" +
-      " |    |-- element: timestamp (containsNull = true)" +
-      ErrorMessageFactory.errColSchema
+      " |    |-- element: timestamp (containsNull = true)"
+    )
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     assert(std.schema.treeString == expectedSchema)
     assert(std.dataAsString(false) == expectedData)
@@ -132,11 +133,11 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
         |+----------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
-    val expectedSchema =
+    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(
       "root\n"+
         " |-- arrayField: array (nullable = true)\n" +
-        " |    |-- element: integer (containsNull = true)" +
-        ErrorMessageFactory.errColSchema
+        " |    |-- element: integer (containsNull = true)"
+    )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     assert(std.schema.treeString == expectedSchema)
@@ -162,11 +163,11 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
         |+---------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
-    val expectedSchema =
+    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(
       "root\n"+
         " |-- arrayField: array (nullable = true)\n" +
-        " |    |-- element: float (containsNull = true)" +
-        ErrorMessageFactory.errColSchema
+        " |    |-- element: float (containsNull = true)"
+    )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     assert(std.schema.treeString == expectedSchema)
@@ -190,12 +191,12 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
         |+---------------------------------------------+--------------------------------------------------------------------------------------------------------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
-    val expectedSchema =
+    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(
       "root\n"+
         " |-- arrayField: array (nullable = true)\n" +
         " |    |-- element: array (containsNull = true)\n" +
-        " |    |    |-- element: string (containsNull = true)" +
-        ErrorMessageFactory.errColSchema
+        " |    |    |-- element: string (containsNull = true)"
+    )
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
 
