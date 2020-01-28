@@ -180,7 +180,7 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
     val src = JsonUtils.getDataFrameFromJson(spark, seq)
 
     val subArrayJson = """{"type": "array", "elementType": "string", "containsNull": false}"""
-    val desiredSchema = this.generateDesiredSchema(subArrayJson, s""""${MetadataKeys.DefaultValue}": "Nope"""")
+    val desiredSchema = generateDesiredSchema(subArrayJson, s""""${MetadataKeys.DefaultValue}": "Nope"""")
 
     val expectedData =
       """+---------------------------------------------+--------------------------------------------------------------------------------------------------------------------+
