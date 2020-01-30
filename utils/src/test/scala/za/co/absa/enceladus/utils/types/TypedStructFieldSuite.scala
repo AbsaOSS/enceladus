@@ -127,14 +127,6 @@ class TypedStructFieldSuite extends FunSuite {
     checkField(typed, fieldType, Success(Some(None)), Success(None), nullable)
   }
 
-  test("Array type, nullable") {
-    val fieldType = ArrayType(IntegerType)
-    val nullable = true
-    val field = createField(fieldType, nullable)
-    val typed = TypedStructField(field)
-    checkField(typed, fieldType, Success(None), Success(None), nullable)
-  }
-
   test("StructType, not nullable") {
     val innerField = createField(FloatType)
     val fieldType = StructType(Seq(innerField))
@@ -213,5 +205,22 @@ class TypedStructFieldSuite extends FunSuite {
       ValidationError(errMsg),
       ValidationError(s"${MetadataKeys.AllowInfinity} metadata value of field 'test_field' is not Boolean in String format")
     ))
+  }
+
+  test("Array type with long element data type and correct associated metadata") {
+    val fieldType = ArrayType(LongType)
+    val nullable = true
+    val field = createField(fieldType, nullable, Some("9999"), Map( MetadataKeys.MinusSign->"$"))
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(None), Success(None), nullable)
+  }
+
+  test("Array type with date element data type and incorrect associated metadata") {
+    val fieldType = ArrayType(DateType)
+    val nullable = true
+    val field = createField(fieldType, nullable, None, Map( MetadataKeys.Pattern->"Fubar"))
+    val typed = TypedStructField(field)
+    val errMsg = "Illegal pattern character 'b'"
+    checkField(typed, fieldType, Success(None), Success(None), nullable, Seq(ValidationError(errMsg)))
   }
 }
