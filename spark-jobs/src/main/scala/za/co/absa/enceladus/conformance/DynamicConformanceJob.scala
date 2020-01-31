@@ -37,17 +37,13 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.common.Constants._
 
 import scala.util.Try
 import scala.util.control.NonFatal
 
 object DynamicConformanceJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
-
-  private val infoDateColumn = "enceladus_info_date"
-  private val infoDateColumnString = s"${infoDateColumn}_string"
-  private val reportDateFormat = "yyyy-MM-dd"
-  private val infoVersionColumn = "enceladus_info_version"
 
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()

@@ -16,66 +16,83 @@
 package za.co.absa.enceladus.conformance
 
 import org.apache.commons.configuration2.Configuration
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{lit, to_date}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.menasplugin.{MenasCredentialsFactory, MenasKerberosCredentials, MenasKerberosCredentialsFactory, MenasPlainCredentials, MenasPlainCredentialsFactory}
+import za.co.absa.enceladus.dao.menasplugin.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
-import scala.util.control.NonFatal
 
 class HyperConformance (implicit cmd: ConfCmdConfig,
                         featureSwitches: FeatureSwitches,
                         menasBaseUrls: List[String]) extends StreamTransformer {
-  private val infoDateColumn = "enceladus_info_date"
-  private val infoDateColumnString = s"${infoDateColumn}_string"
-  private val reportDateFormat = "yyyy-MM-dd"
-  private val infoVersionColumn = "enceladus_info_version"
+  val log: Logger = LoggerFactory.getLogger(this.getClass)
 
+  @throws[IllegalArgumentException]
   def transform(streamData: DataFrame): DataFrame = {
-    import HyperConformanceImpl.log
+    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
     implicit val spark: SparkSession = streamData.sparkSession
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
 
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
-
     dao.authenticate()
 
-    // ToDo - fix this
-    val reportVersion = cmd.reportVersion.get
+    val reportVersion = getReportVersion
 
-    log.info(s"URL: ${menasBaseUrls.mkString(",")}, dataset=${cmd.datasetName}, version=${cmd.datasetVersion}")
-    log.info(s"Schema: ${streamData.schema.prettyJson}")
+    logPreConformanceInfo(streamData)
 
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
 
-    val result = DynamicInterpreter.interpret(conformance, streamData)
-
-    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
-    result
+    DynamicInterpreter.interpret(conformance, streamData)
       .withColumnIfDoesNotExist(infoDateColumn, to_date(lit(cmd.reportDate), reportDateFormat))
       .withColumnIfDoesNotExist(infoDateColumnString, lit(cmd.reportDate))
       .withColumnIfDoesNotExist(infoVersionColumn, lit(reportVersion))
   }
+
+  private def logPreConformanceInfo(streamData: DataFrame): Unit = {
+    log.info(s"Menas URLs: ${menasBaseUrls.mkString(",")}, dataset=${cmd.datasetName}, version=${cmd.datasetVersion}")
+    log.info(s"Input schema: ${streamData.schema.prettyJson}")
+  }
+
+  @throws[IllegalArgumentException]
+  private def getReportVersion(implicit cmd: ConfCmdConfig): Int = {
+    cmd.reportVersion match {
+      case Some(version) => version
+      case None => throw new IllegalArgumentException("Report version is not provided.")
+    }
+  }
 }
 
-object HyperConformanceImpl extends StreamTransformerFactory {
+object HyperConformance extends StreamTransformerFactory {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
+  // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
+  val menasUriKey = "menas.rest.uri"
+  val menasCredentialsFileKey = "menas.credentials.file"
+  val menasAuthKeytabKey = "menas.auth.keytab"
+  val datasetNameKey = "dataset.name"
+  val datasetVersionKey = "dataset.version"
+  val reportDateKey = "report.date"
+  val reportVersionKey = "report.version"
+
+  @throws[IllegalArgumentException]
   override def apply(conf: Configuration): StreamTransformer = {
     log.info("Building HyperConformance")
+
+    validateConfiguration(conf)
 
     val menasCredentialsFactory = getMenasCredentialsFactory(conf: Configuration)
 
     implicit val cmd: ConfCmdConfig = ConfCmdConfig(
-      datasetName = conf.getString("dataset.name"),
-      datasetVersion = conf.getInt("dataset.version"),
-      reportDate = conf.getString("report.date"),
-      reportVersion = Option(conf.getInt("report.version")),
+      datasetName = conf.getString(datasetNameKey),
+      datasetVersion = conf.getInt(datasetVersionKey),
+      reportDate = conf.getString(reportDateKey),
+      reportVersion = Option(conf.getInt(reportVersionKey)),
       menasCredentialsFactory = menasCredentialsFactory,
       performanceMetricsFile = None,
       publishPathOverride = None,
@@ -93,24 +110,34 @@ object HyperConformanceImpl extends StreamTransformerFactory {
       .setBroadcastStrategyMode(Always)
       .setBroadcastMaxSizeMb(0)
 
-    implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
+    implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
 
     new HyperConformance()
   }
 
-  def getMenasCredentialsFactory(conf: Configuration): MenasCredentialsFactory = {
-    val menasCredentialsFileKey = "menas.credentials.file"
-    val menasAuthKeytabKey = "menas.auth.keytab"
+  @throws[IllegalArgumentException]
+  def validateConfiguration(conf: Configuration): Unit = {
+    val mandatoryKeys = List(menasUriKey, datasetNameKey, datasetVersionKey, reportDateKey, reportVersionKey)
 
+    val missingKeys = mandatoryKeys.filterNot(key => conf.containsKey(key))
+
+    if (missingKeys.nonEmpty) {
+      throw new IllegalArgumentException(s"Missing mandatory configuration parameters for keys: ${missingKeys.mkString(", ")}.")
+    }
+  }
+
+  @throws[IllegalArgumentException]
+  private def getMenasCredentialsFactory(conf: Configuration): MenasCredentialsFactory = {
     val hasCredentialsFile = conf.containsKey(menasCredentialsFileKey)
     val hasKeytab = conf.containsKey(menasAuthKeytabKey)
 
     (hasCredentialsFile, hasKeytab) match {
-      case (false, false) => throw new IllegalStateException("No authentication method is specified.")
+      case (false, false) => throw new IllegalArgumentException("No authentication method is specified.")
       case (true, false)  => new MenasPlainCredentialsFactory(conf.getString(menasCredentialsFileKey))
       case (false, true)  => new MenasKerberosCredentialsFactory(conf.getString(menasCredentialsFileKey))
-      case (true, true)   => throw new IllegalStateException("Either a credentials file or a keytab should be specified, but not both.")
+      case (true, true)   => throw new IllegalArgumentException("Either a credentials file or a keytab should be specified, but not both.")
     }
   }
+
 }
 
