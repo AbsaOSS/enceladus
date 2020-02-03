@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import org.springframework.context.annotation.{Bean, Configuration}
 class MongoConfig {
   import za.co.absa.enceladus.menas.utils.implicits._
 
-  @Value("${za.co.absa.enceladus.menas.mongo.connection.string}")
+  @Value("${menas.mongo.connection.string}")
   val connectionString: String = ""
-  @Value("${za.co.absa.enceladus.menas.mongo.connection.database}")
+  @Value("${menas.mongo.connection.database}")
   val database: String = ""
 
   @Bean

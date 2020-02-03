@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2018-2019 ABSA Group Limited
+# Copyright 2018 ABSA Group Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ SRC_DIR=`dirname "$0"`
 source ${SRC_DIR}/enceladus_env.sh
 
 export CLASS=${CONF_CLASS}
-export JAR=${CONF_JAR}
+export JAR=${SPARK_JOBS_JAR}
 
 export DEFAULT_DRIVER_MEMORY="$CONF_DEFAULT_DRIVER_MEMORY"
 export DEFAULT_DRIVER_CORES="$CONF_DEFAULT_DRIVER_CORES"

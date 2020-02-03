@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2018-2019 ABSA Group Limited
+# Copyright 2018 ABSA Group Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,8 +30,9 @@ SPARK_SUBMIT="$SPARK_HOME/bin/spark-submit"
 
 HDP_VERSION="2.7.3"
 
+SPARK_JOBS_JAR="enceladus-spark-jobs.jar"
+
 STD_CLASS="za.co.absa.enceladus.standardization.StandardizationJob"
-STD_JAR="enceladus-standardization.jar"
 
 # Environment-specific resource defaults for Standardization.
 # If empty and not specified explicitly, Spark configuration defaults will be used.
@@ -42,7 +43,6 @@ STD_DEFAULT_EXECUTOR_CORES=""
 STD_DEFAULT_NUM_EXECUTORS=""
 
 CONF_CLASS="za.co.absa.enceladus.conformance.DynamicConformanceJob"
-CONF_JAR="enceladus-conformance.jar"
 
 # Environment-specific resource defaults for Conformance.
 # If empty and not specified explicitly, Spark configuration defaults will be used.

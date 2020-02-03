@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,10 @@ import org.springframework.beans.factory.annotation.Value
 @ControllerAdvice(annotations = Array(classOf[RestController]))
 class RestExceptionHandler {
 
-  @Value("${za.co.absa.enceladus.menas.oozie.customImpersonationExceptionMessage:}")
+  @Value("${menas.oozie.customImpersonationExceptionMessage:}")
   val oozieImpersonationExceptionMessage: String = ""
 
-  @Value("${za.co.absa.enceladus.menas.oozie.proxyGroup:}")
+  @Value("${menas.oozie.proxyGroup:}")
   val oozieProxyGroup: String = ""
 
   private val logger = LoggerFactory.getLogger(this.getClass)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import org.apache.spark.sql
 import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
 import org.scalatest.mockito.MockitoSugar
-import za.co.absa.enceladus.conformance.CmdConfig
+import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
@@ -35,7 +35,7 @@ object TestOutputRow {
 class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase with MockitoSugar {
   import spark.implicits._
 
-  implicit val progArgs: CmdConfig = CmdConfig() // here we may need to specify some parameters (for certain rules)
+  implicit val progArgs: ConfCmdConfig = ConfCmdConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: MenasDAO = mock[MenasDAO] // you may have to hard-code your own implementation here (if not working with menas)
 
   val experimentalMR = true

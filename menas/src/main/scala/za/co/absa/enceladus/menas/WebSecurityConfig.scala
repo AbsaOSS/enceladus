@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,9 @@ import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication
 @EnableWebSecurity
 class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
                                      jwtAuthFilter: JwtAuthenticationFilter,
-                                     @Value("${za.co.absa.enceladus.menas.auth.mechanism:}")
+                                     @Value("${menas.auth.mechanism:}")
                                      authMechanism: String,
-                                     @Value("${za.co.absa.enceladus.menas.version}")
+                                     @Value("${menas.version}")
                                      menasVersion: String) {
 
   private val logger = LoggerFactory.getLogger(this.getClass)

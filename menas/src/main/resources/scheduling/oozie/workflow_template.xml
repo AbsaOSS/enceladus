@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2018-2019 ABSA Group Limited
+  ~ Copyright 2018 ABSA Group Limited
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-  
+
 <workflow-app name="$stdAppName" xmlns="uri:oozie:workflow:0.5">
     $sharelibForSpark
     <start to="standardization" />
@@ -27,10 +27,10 @@
             <mode>cluster</mode>
             <name>$stdAppName</name>
             <class>za.co.absa.enceladus.standardization.StandardizationJob</class>
-            <jar>$stdJarPath</jar>
+            <jar>$sparkJobsJarPath</jar>
             <spark-opts>
-                --num-executors $stdNumExecutors 
-                --executor-memory $stdExecutorMemory 
+                --num-executors $stdNumExecutors
+                --executor-memory $stdExecutorMemory
                 --driver-cores $driverCores
                 --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties'$sparkConfQuotes
                 $extraSparkConfString
@@ -57,10 +57,10 @@
             <mode>cluster</mode>
             <name>$confAppName</name>
             <class>za.co.absa.enceladus.conformance.DynamicConformanceJob</class>
-            <jar>$confJarPath</jar>
+            <jar>$sparkJobsJarPath</jar>
             <spark-opts>
-                --num-executors $confNumExecutors 
-                --executor-memory $confExecutorMemory 
+                --num-executors $confNumExecutors
+                --executor-memory $confExecutorMemory
                 --driver-cores $driverCores
                 --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Dmenas.rest.uri='$menasRestURI' -Dspline.mongodb.url='$splineMongoURL' -Dlog4j.configuration='spark-log4j.properties' -Dconformance.mappingtable.pattern='$mappingTablePattern'$sparkConfQuotes
                 $extraSparkConfString

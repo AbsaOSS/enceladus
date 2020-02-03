@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import org.apache.log4j.LogManager
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
+import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils._
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 object ExplodeTools {
   // scalastyle:off null
@@ -195,7 +195,7 @@ object ExplodeTools {
       transientColumn)
 
     val dfTransientRestored = explosion.superTransientFieldName match {
-      case Some(transientField) => DeepArrayTransformations.nestedDropColumn(dfArraysRestored, transientField)
+      case Some(transientField) => dfArraysRestored.nestedDropColumn(transientField)
       case None => dfArraysRestored
     }
 
@@ -338,7 +338,7 @@ object ExplodeTools {
   private def addSuperTransientField(inputDf: DataFrame, arrayColPathName: String): (DataFrame, String) = {
     val colName = SchemaUtils.getUniqueName(superTransientColumnName, Some(inputDf.schema))
     val nestedColName = (arrayColPathName.split('.').dropRight(1) :+ colName).mkString(".")
-    val df = DeepArrayTransformations.nestedAddColumn(inputDf, nestedColName, lit(null))
+    val df = inputDf.nestedWithColumn(nestedColName, lit(null))
     (df, nestedColName)
   }
 

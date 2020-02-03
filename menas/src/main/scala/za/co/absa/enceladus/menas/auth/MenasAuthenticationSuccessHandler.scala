@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import scala.collection.JavaConverters._
 
 @Component
 class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
-                                                     @Value("${za.co.absa.enceladus.menas.auth.jwt.lifespan.hours}")
+                                                     @Value("${menas.auth.jwt.lifespan.hours}")
                                                      jwtLifespanHours: Int,
                                                      @Value("${timezone}")
                                                      timezone: String)

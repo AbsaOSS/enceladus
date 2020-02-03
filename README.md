@@ -66,7 +66,7 @@ The coverage reports are written in each module's `target` directory and aggrega
  in your Tomcat webapps directory (rename after downloading to _spline.war_); NB! don't forget to set up the `spline.mongodb.url` configuration for the _war_
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
-The _Spline UI_ can be omitted; in such case the **Menas** `za.co.absa.enceladus.spline.urlTemplate` setting should be set to empty string. 
+The _Spline UI_ can be omitted; in such case the **Menas** `spline.urlTemplate` setting should be set to empty string. 
 
 #### Deploying Menas
 Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 

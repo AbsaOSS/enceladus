@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   import scala.concurrent.ExecutionContext.Implicits.global
   import za.co.absa.enceladus.menas.models.Validation._
 
-  @Value("${za.co.absa.enceladus.spline.urlTemplate}")
+  @Value("${spline.urlTemplate}")
   val splineUrlTemplate: String = ""
 
   def getAllLatest(): Future[Seq[Run]] = {

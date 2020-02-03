@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset1v1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1,
           runStatus = RunStatus(RunState.failed, Option(RunFactory.getDummyRunError())))
         val dataset1v1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2,
-          runStatus = RunStatus(RunState.running, None))
+          runStatus = RunStatus(RunState.running, None), controlMeasure = RunFactory.getDummyControlMeasure(runUniqueId = None))
         val dataset1v2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1,
           runStatus = RunStatus(RunState.stageSucceeded, None))
         val dataset2v1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1,

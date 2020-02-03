@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2018-2019 ABSA Group Limited
+  ~ Copyright 2018 ABSA Group Limited
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@
             <table:Column width="10%">
                 <Label text="Metadata"/>
                 <table:template>
-                    <Button id="metadataButton" icon="sap-icon://message-information" 
+                    <Button id="metadataButton" icon="sap-icon://message-information"
                         visible="{path:'schema>metadata', formatter:'Formatters.nonEmptyObject'}"/>
                 </table:template>
             </table:Column>
