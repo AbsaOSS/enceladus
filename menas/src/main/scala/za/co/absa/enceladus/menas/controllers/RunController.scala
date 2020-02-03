@@ -72,6 +72,12 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
     runService.getRunSummariesPerDatasetVersion(datasetName)
   }
 
+  @GetMapping(Array("/bySparkAppId/{appId}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getRunBySparkAppId(@PathVariable appId: String): CompletableFuture[String] = {
+    runService.getRunBySparkAppId(appId).map(ControlUtils.asJson)
+  }
+
   @GetMapping(Array("/{datasetName}/{datasetVersion}"))
   @ResponseStatus(HttpStatus.OK)
   def getSummariesByDatasetNameAndVersion(@PathVariable datasetName: String,
