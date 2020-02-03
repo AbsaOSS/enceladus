@@ -15,7 +15,7 @@ class Release
   attr_reader :id, :title, :description, :issues
 
   def post_init
-    get_issues
+    get_issues.each { |issue| issue.get_release_notes }
     open_issues = @issues.select { |issue| issue.state == 'open' }
     if OptParser.options.strict && open_issues.size > 0
       raise StandardError, "Release has open issues #{open_issues.map(&:number)}", caller
