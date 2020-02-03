@@ -29,7 +29,7 @@ object RunImplicits {
         run.runId,
         run.runStatus.status.toString,
         run.startDateTime,
-        run.controlMeasure.runUniqueId.getOrElse("NotSpecifiedYet")
+        run.uniqueId.getOrElse("")
       )
     }
 
