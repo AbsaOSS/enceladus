@@ -283,7 +283,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   def getRunBySparkAppId(appId: String): Future[Option[Run]] = {
     val stdAppIdFilter = equal("controlMeasure.metadata.additionalInfo.std_application_id", appId)
-    val conformAppIdFilter =  equal("controlMeasure.metadata.additionalInfo.conform_application_id", appId)
+    val conformAppIdFilter = equal("controlMeasure.metadata.additionalInfo.conform_application_id", appId)
 
     collection
       .find[BsonDocument](or(stdAppIdFilter, conformAppIdFilter))
