@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.json4s._
-import org.json4s.jackson._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.atum.model.ControlMeasure
@@ -24,8 +22,10 @@ import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.samples._
-import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import org.json4s._
+import org.json4s.jackson._
+import za.co.absa.enceladus.utils.fs.FileReader
 
 class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase {
 
