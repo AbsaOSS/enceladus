@@ -114,6 +114,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   val krb5conf: String = ""
 
   @Value("#{${menas.oozie.extraSparkConfigs:{'spark.ui.enabled': 'true'}}}")
+  val sparkExtraConfigs: JavaMap[String, String] = new util.HashMap[String, String]()
 
   private val classLoader = Thread.currentThread().getContextClassLoader
   private val workflowTemplate = getTemplateFile("scheduling/oozie/workflow_template.xml")
