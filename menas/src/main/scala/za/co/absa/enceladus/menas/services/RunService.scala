@@ -89,11 +89,8 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
     runMongoRepository.getSummariesByDatasetNameAndVersion(datasetName, datasetVersion)
   }
 
-  def getRunBySparkAppId(appId: String): Future[Run] = {
-    runMongoRepository.getRunBySparkAppId(appId).map {
-      case Some(run) => run
-      case None      => throw NotFoundException()
-    }
+  def getRunBySparkAppId(appId: String): Future[Seq[Run]] = {
+    runMongoRepository.getRunBySparkAppId(appId)
   }
 
   def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Run] = {

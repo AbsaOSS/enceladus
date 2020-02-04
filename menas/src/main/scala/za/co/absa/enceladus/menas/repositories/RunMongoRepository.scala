@@ -281,13 +281,13 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .toFuture()
   }
 
-  def getRunBySparkAppId(appId: String): Future[Option[Run]] = {
+  def getRunBySparkAppId(appId: String): Future[Seq[Run]] = {
     val stdAppIdFilter = equal("controlMeasure.metadata.additionalInfo.std_application_id", appId)
     val conformAppIdFilter = equal("controlMeasure.metadata.additionalInfo.conform_application_id", appId)
 
     collection
       .find[BsonDocument](or(stdAppIdFilter, conformAppIdFilter))
-      .headOption()
+      .toFuture()
       .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
   }
 
