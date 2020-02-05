@@ -1058,21 +1058,6 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     run
   }
 
-  private def setUpRunWithAppIds(stdAppId: String, cnfrmAppId: String = "", runId: Int = 1): Run = {
-
-    val additionalInfo: Map[String, String] = if (cnfrmAppId == "") {
-      Map("std_application_id" -> stdAppId)
-    } else{
-      Map("std_application_id" -> stdAppId, "conform_application_id" -> cnfrmAppId)
-    }
-
-    val metadata = RunFactory.getDummyMetadata(additionalInfo = additionalInfo)
-    val controlMeasure = RunFactory.getDummyControlMeasure(metadata=metadata)
-    val run = RunFactory.getDummyRun(runId = runId, controlMeasure = controlMeasure)
-    runFixture.add(run)
-    run
-  }
-
   private def getDummyRunJson(dataset: String,
                               datasetVersion: Int,
                               runId: Int,
@@ -1085,6 +1070,19 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
       """"controlMeasure":{"metadata":{"sourceApplication":"dummySourceApplication","country":"dummyCountry","historyType":"dummyHistoryType",""" +
       """"dataFilename":"dummyDataFilename","sourceType":"dummySourceType","version":1,"informationDate":"04-12-2017 16:19:17 +0200","additionalInfo":{}},""" +
       s""""runUniqueId":"$runUniqueId","checkpoints":[]}}"""
+  }
+
+  private def setUpRunWithAppIds(stdAppId: String, cnfrmAppId: String = "", runId: Int = 1): Run = {
+    val additionalInfo: Map[String, String] = if (cnfrmAppId == "") {
+      Map("std_application_id" -> stdAppId)
+    } else{
+      Map("std_application_id" -> stdAppId, "conform_application_id" -> cnfrmAppId)
+    }
+    val metadata = RunFactory.getDummyMetadata(additionalInfo = additionalInfo)
+    val controlMeasure = RunFactory.getDummyControlMeasure(metadata=metadata)
+    val run = RunFactory.getDummyRun(runId = runId, controlMeasure = controlMeasure)
+    runFixture.add(run)
+    run
   }
 
 }
