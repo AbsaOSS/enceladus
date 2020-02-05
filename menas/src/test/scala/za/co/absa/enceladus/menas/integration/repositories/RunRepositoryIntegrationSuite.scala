@@ -861,25 +861,24 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
     val sampleAppId3 = "driver-20170926223339-0001"     // MESOS
     "return []" when {
       "there are no runs" in {
-        assert(await(runMongoRepository.getRunBySparkAppId(sampleAppId1)).isEmpty)
+        val actual = await(runMongoRepository.getRunBySparkAppId(sampleAppId1))
+        assert(actual.isEmpty)
       }
 
       "there are runs with different spark app_id" in{
-        val run = setupRunWithAppIds(sampleAppId1)
-        await(runMongoRepository.create(run))
-        assert(await(runMongoRepository.getRunBySparkAppId(sampleAppId2)).isEmpty)
+        val run = setUpRunWithAppIds(sampleAppId1)
+        val actual = await(runMongoRepository.getRunBySparkAppId(sampleAppId2))
+        assert(actual.isEmpty)
       }
     }
 
-    "return [correctRun]" when {
+    "return Seq(correctRun)" when {
       "there are 2 runs with different app_ids" in {
         // std app_id only
-        val run1 = setupRunWithAppIds(sampleAppId1, runId = 1)
-        await(runMongoRepository.create(run1))
+        val run1 = setUpRunWithAppIds(sampleAppId1, runId = 1)
 
         // both std and cnfrm app_ids
-        val run2 = setupRunWithAppIds(sampleAppId2, sampleAppId3, runId = 2)
-        await(runMongoRepository.create(run2))
+        val run2 = setUpRunWithAppIds(sampleAppId2, sampleAppId3, runId = 2)
 
         // get run1 by std app_id
         val actual1 = await(runMongoRepository.getRunBySparkAppId(sampleAppId1))
@@ -895,13 +894,11 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
       }
     }
 
-    "return [run1, run2]" when {
+    "return Seq(run1, run2)" when {
       "there are 2 runs with the same std app_id" in {
-        val run1 = setupRunWithAppIds(sampleAppId1, runId = 1)
-        await(runMongoRepository.create(run1))
+        val run1 = setUpRunWithAppIds(sampleAppId1, runId = 1)
 
-        val run2 = setupRunWithAppIds(sampleAppId1, runId = 2)
-        await(runMongoRepository.create(run2))
+        val run2 = setUpRunWithAppIds(sampleAppId1, runId = 2)
 
         // get run1 by std app_id
         val actual = await(runMongoRepository.getRunBySparkAppId(sampleAppId1))
@@ -917,7 +914,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
     run
   }
 
-  private def setupRunWithAppIds(stdAppId: String, cnfrmAppId: String = "", runId: Int = 1): Run = {
+  private def setUpRunWithAppIds(stdAppId: String, cnfrmAppId: String = "", runId: Int = 1): Run = {
 
     val additionalInfo: Map[String, String] = if (cnfrmAppId == "") {
       Map("std_application_id" -> stdAppId)
@@ -927,7 +924,9 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
     val metadata = RunFactory.getDummyMetadata(additionalInfo = additionalInfo)
     val controlMeasure = RunFactory.getDummyControlMeasure(metadata=metadata)
-    RunFactory.getDummyRun(runId = runId, controlMeasure = controlMeasure)
+    val run = RunFactory.getDummyRun(runId = runId, controlMeasure = controlMeasure)
+    runFixture.add(run)
+    run
   }
 
 }
