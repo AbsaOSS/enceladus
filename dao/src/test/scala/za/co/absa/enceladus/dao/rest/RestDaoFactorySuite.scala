@@ -17,7 +17,7 @@ package za.co.absa.enceladus.dao.rest
 
 import org.scalatest.{Matchers, WordSpec}
 import za.co.absa.enceladus.dao.UnauthorizedException
-import za.co.absa.enceladus.dao.menasplugin.{InvalidMenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
+import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
 
 class RestDaoFactorySuite extends WordSpec with Matchers {
 

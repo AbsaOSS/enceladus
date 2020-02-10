@@ -19,7 +19,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.menasplugin.MenasKerberosCredentials
+import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.examples.interpreter.rules.custom.UppercaseCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset

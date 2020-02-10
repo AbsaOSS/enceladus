@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.dao.rest
 
-import za.co.absa.enceladus.dao.menasplugin.MenasCredentials
+import za.co.absa.enceladus.dao.auth.MenasCredentials
 
 object RestDaoFactory {
 
