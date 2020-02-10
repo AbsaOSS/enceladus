@@ -13,8 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao.menasplugin
-
+package za.co.absa.enceladus.dao.auth
 
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.SparkSession

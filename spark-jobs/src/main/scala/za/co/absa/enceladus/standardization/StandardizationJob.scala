@@ -26,8 +26,9 @@ import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.{Atum, Constants}
 import za.co.absa.enceladus.common._
+import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.menasplugin.{MenasCredentials, MenasPlugin}
+import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
