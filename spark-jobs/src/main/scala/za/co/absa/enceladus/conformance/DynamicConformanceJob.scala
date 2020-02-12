@@ -70,7 +70,7 @@ object DynamicConformanceJob {
     }
 
     val pathCfg = PathCfg(
-      publishPath = buildPublishPath(infoDateColumn, infoVersionColumn, cmd, conformance, reportVersion),
+      publishPath = buildPublishPath(InfoDateColumn, InfoVersionColumn, cmd, conformance, reportVersion),
       stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName,
         cmd.datasetVersion.toString, cmd.reportDate, reportVersion.toString)
     )
@@ -250,9 +250,9 @@ object DynamicConformanceJob {
                            (implicit spark: SparkSession, cmd: ConfCmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
     val withPartCols = result
-      .withColumnIfDoesNotExist(infoDateColumn, to_date(lit(cmd.reportDate), reportDateFormat))
-      .withColumnIfDoesNotExist(infoDateColumnString, lit(cmd.reportDate))
-      .withColumnIfDoesNotExist(infoVersionColumn, lit(reportVersion))
+      .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.reportDate), ReportDateFormat))
+      .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))
+      .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
 
     val recordCount = result.lastCheckpointRowCount match {
       case None    => withPartCols.count

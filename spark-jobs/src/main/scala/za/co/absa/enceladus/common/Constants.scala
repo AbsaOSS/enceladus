@@ -16,8 +16,8 @@
 package za.co.absa.enceladus.common
 
 object Constants {
-  val infoDateColumn = "enceladus_info_date"
-  val infoDateColumnString = s"${infoDateColumn}_string"
-  val reportDateFormat = "yyyy-MM-dd"
-  val infoVersionColumn = "enceladus_info_version"
+  final val InfoDateColumn = "enceladus_info_date"
+  final val InfoDateColumnString = s"${InfoDateColumn}_string"
+  final val ReportDateFormat = "yyyy-MM-dd"
+  final val InfoVersionColumn = "enceladus_info_version"
 }

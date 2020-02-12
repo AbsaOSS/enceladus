@@ -49,9 +49,9 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
 
     DynamicInterpreter.interpret(conformance, streamData)
-      .withColumnIfDoesNotExist(infoDateColumn, to_date(lit(cmd.reportDate), reportDateFormat))
-      .withColumnIfDoesNotExist(infoDateColumnString, lit(cmd.reportDate))
-      .withColumnIfDoesNotExist(infoVersionColumn, lit(reportVersion))
+      .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.reportDate), ReportDateFormat))
+      .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))
+      .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
   }
 
   private def logPreConformanceInfo(streamData: DataFrame): Unit = {
@@ -68,17 +68,35 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
   }
 }
 
+/**
+ * This is the definition of Dynamic Conformance as a component of Hyperdrive.
+ *
+ * In order to use it in hyperdrive the component needs to be configured in 'ingestion.properties' as follows:
+ * {{{
+ * transformer.hyperconformance.menas.rest.uri=http://localhost:8080
+ * transformer.hyperconformance.dataset.name=example
+ * transformer.hyperconformance.dataset.version=1
+ * transformer.hyperconformance.report.date=2020-01-29
+ * transformer.hyperconformance.report.version=1
+ *
+ * # Either plain credentials
+ * transformer.hyperconformance.menas.credentials.file=/path/menas.credentials
+ *
+ * # Or a keytab
+ * transformer.hyperconformance.menas.auth.keytab=/path/to/keytab
+ * }}}
+ */
 object HyperConformance extends StreamTransformerFactory {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
-  val menasUriKey = "menas.rest.uri"
-  val menasCredentialsFileKey = "menas.credentials.file"
-  val menasAuthKeytabKey = "menas.auth.keytab"
-  val datasetNameKey = "dataset.name"
-  val datasetVersionKey = "dataset.version"
-  val reportDateKey = "report.date"
-  val reportVersionKey = "report.version"
+  val menasUriKey = "transformer.hyperconformance.menas.rest.uri"
+  val menasCredentialsFileKey = "transformer.hyperconformance.menas.credentials.file"
+  val menasAuthKeytabKey = "transformer.hyperconformance.menas.auth.keytab"
+  val datasetNameKey = "transformer.hyperconformance.dataset.name"
+  val datasetVersionKey = "transformer.hyperconformance.dataset.version"
+  val reportDateKey = "transformer.hyperconformance.report.date"
+  val reportVersionKey = "transformer.hyperconformance.report.version"
 
   @throws[IllegalArgumentException]
   override def apply(conf: Configuration): StreamTransformer = {
