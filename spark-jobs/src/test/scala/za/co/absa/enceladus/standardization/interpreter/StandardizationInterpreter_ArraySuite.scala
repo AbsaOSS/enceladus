@@ -17,7 +17,7 @@ package za.co.absa.enceladus.standardization.interpreter
 
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.shared.error.ErrorMessageFactory
+import za.co.absa.enceladus.common.error.ErrorMessageFactory
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
