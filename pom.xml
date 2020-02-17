@@ -105,6 +105,7 @@
     </repositories>
 
     <modules>
+        <module>api</module>
         <module>utils</module>
         <module>spark-jobs</module>
         <module>data-model</module>
