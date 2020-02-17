@@ -22,7 +22,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.menasplugin.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
+import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
