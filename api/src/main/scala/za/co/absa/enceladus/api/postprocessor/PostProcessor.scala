@@ -13,13 +13,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.api
+package za.co.absa.enceladus.api.postprocessor
 
-import org.apache.commons.configuration.Configuration
+import org.apache.spark.sql.DataFrame
 
 /**
- * Base class for Enceladus plugin factories.
+ * Base class for all Enceladus external plugins that process output of Standardization/Conformance.
  */
-trait EnceladusPluginFactory {
-  def apply(config: Configuration): EnceladusPlugin
+abstract class PostProcessor {
+
+  /**
+   * This callback function will be invoked when the output data is ready.
+   *
+   * @param dataFrame A DataFrame containing the output data.
+   * @param params Additional key/value parameters provided by Enceladus.
+   * @return A dataframe with post processing applied
+   */
+  def onDataReady(dataFrame: DataFrame, params: Map[String, String]): DataFrame
+
 }

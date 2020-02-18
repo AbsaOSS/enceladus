@@ -32,6 +32,11 @@
         <!-- Dependent modules -->
         <dependency>
             <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.enceladus</groupId>
             <artifactId>utils</artifactId>
             <version>${project.version}</version>
         </dependency>
