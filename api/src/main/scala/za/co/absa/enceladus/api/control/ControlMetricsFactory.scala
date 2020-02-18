@@ -13,21 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.api
+package za.co.absa.enceladus.api.control
 
-import za.co.absa.enceladus.model.Run
+import org.apache.commons.configuration.Configuration
 
 /**
- * Base class for all Enceladus plugins.
+ * Base class for Enceladus Control Metrics plugin factories.
  */
-abstract class EnceladusPlugin {
-
-  /**
-   * This callback function will be invoked each time a checkpoint is created or a job status changes.
-   *
-   * @param run    A run object containing all control metrics (aka INFO file).
-   * @param params Additional key/value parameters provided by Enceladus.
-   */
-  def onCheckpoint(run: Run, params: Map[String, String]): Unit
-
+trait ControlMetricsFactory {
+  def apply(config: Configuration): ControlMetricsPlugin
 }
