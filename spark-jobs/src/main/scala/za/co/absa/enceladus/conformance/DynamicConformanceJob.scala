@@ -37,17 +37,13 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.common.Constants._
 
 import scala.util.Try
 import scala.util.control.NonFatal
 
 object DynamicConformanceJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
-
-  private val infoDateColumn = "enceladus_info_date"
-  private val infoDateColumnString = s"${infoDateColumn}_string"
-  private val reportDateFormat = "yyyy-MM-dd"
-  private val infoVersionColumn = "enceladus_info_version"
 
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
@@ -74,7 +70,7 @@ object DynamicConformanceJob {
     }
 
     val pathCfg = PathCfg(
-      publishPath = buildPublishPath(infoDateColumn, infoVersionColumn, cmd, conformance, reportVersion),
+      publishPath = buildPublishPath(InfoDateColumn, InfoVersionColumn, cmd, conformance, reportVersion),
       stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName,
         cmd.datasetVersion.toString, cmd.reportDate, reportVersion.toString)
     )
@@ -254,9 +250,9 @@ object DynamicConformanceJob {
                            (implicit spark: SparkSession, cmd: ConfCmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
     val withPartCols = result
-      .withColumnIfDoesNotExist(infoDateColumn, to_date(lit(cmd.reportDate), reportDateFormat))
-      .withColumnIfDoesNotExist(infoDateColumnString, lit(cmd.reportDate))
-      .withColumnIfDoesNotExist(infoVersionColumn, lit(reportVersion))
+      .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.reportDate), ReportDateFormat))
+      .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))
+      .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
 
     val recordCount = result.lastCheckpointRowCount match {
       case None    => withPartCols.count

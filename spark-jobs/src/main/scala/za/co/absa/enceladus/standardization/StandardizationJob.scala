@@ -24,7 +24,7 @@ import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits
-import za.co.absa.atum.core.{Atum, Constants}
+import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.dao.MenasDAO
@@ -94,8 +94,8 @@ object StandardizationJob {
     MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true, generateNewRun = true)
 
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
-    Atum.setAdditionalInfo("enceladus_info_date" -> cmd.reportDate)
-    Atum.setAdditionalInfo("enceladus_info_version" -> reportVersion.toString)
+    Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)
+    Atum.setAdditionalInfo(Constants.InfoVersionColumn -> reportVersion.toString)
 
     // Add the raw format of the input file(s) to Atum's metadta as well
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
@@ -441,6 +441,7 @@ object StandardizationJob {
     * @return The number of records in a checkpoint corresponding to raw data (if available)
     */
   private def getRawRecordCountFromCheckpoints: Option[Long] = {
+    import za.co.absa.atum.core.Constants._
     val controlMeasure = Atum.getControlMeasure
 
     val rawCheckpoint = controlMeasure
@@ -448,7 +449,7 @@ object StandardizationJob {
       .find(c => c.name.equalsIgnoreCase("raw") || c.workflowName.equalsIgnoreCase("raw"))
 
     val measurement = rawCheckpoint.flatMap(chk => {
-      chk.controls.find(m => m.controlType.equalsIgnoreCase(Constants.controlTypeRecordCount))
+      chk.controls.find(m => m.controlType.equalsIgnoreCase(controlTypeRecordCount))
     })
 
     measurement.flatMap(m =>
