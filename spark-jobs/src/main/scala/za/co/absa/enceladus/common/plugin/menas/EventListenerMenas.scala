@@ -50,9 +50,9 @@ class EventListenerMenas(config: Config,
   private var _controlMeasure: Option[ControlMeasure] = None
 
   private val pluginKey = if (isJobStageOnly) {
-    "standardization.plugins.control.metrics"
+    "standardization.plugin.control.metrics"
   } else {
-    "conformance.plugins.control.metrics"
+    "conformance.plugin.control.metrics"
   }
 
   private val controlMetricPlugins: Seq[ControlMetricsPlugin] = ControlMetricsPluginsLoader.loadPlugins(config, pluginKey)

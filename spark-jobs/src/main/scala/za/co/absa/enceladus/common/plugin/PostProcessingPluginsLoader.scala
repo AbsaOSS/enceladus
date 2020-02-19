@@ -33,7 +33,7 @@ object PostProcessingPluginsLoader {
    *
    * @param config          A configuration.
    * @param configKeyPrefix A key prefix to be used to search for plugins.
-   *                        For example, 'standardization.plugins.postprocessing' or 'conformance.plugins.postprocessing'
+   *                        For example, 'standardization.plugin.postprocessing' or 'conformance.plugin.postprocessing'
    * @return A list of loaded postprocessing plugins.
    */
   def loadPlugins(config: Config, configKeyPrefix: String): Seq[PostProcessor] = {
