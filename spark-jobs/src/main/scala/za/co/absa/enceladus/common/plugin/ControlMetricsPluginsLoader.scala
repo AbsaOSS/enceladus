@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.common.plugin
 
-import org.apache.commons.configuration.Configuration
+import com.typesafe.config.Config
 import org.apache.log4j.{LogManager, Logger}
-import za.co.absa.enceladus.api.control.{ControlMetricsPlugin, ControlMetricsFactory}
+import za.co.absa.enceladus.api.control.{ControlMetricsFactory, ControlMetricsPlugin}
 import za.co.absa.enceladus.utils.general.ClassLoaderUtils
 
 import scala.collection.mutable.ListBuffer
@@ -36,11 +36,11 @@ object ControlMetricsPluginsLoader {
    *                        For example, 'standardization.plugins.control.metrics' or 'conformance.plugins.control.metrics'
    * @return A list of loaded postprocessing plugins.
    */
-  def loadPlugins(config: Configuration, configKeyPrefix: String): Seq[ControlMetricsPlugin] = {
+  def loadPlugins(config: Config, configKeyPrefix: String): Seq[ControlMetricsPlugin] = {
     val plugins = new ListBuffer[ControlMetricsPlugin]
     var i = 1
 
-    while (config.containsKey(s"$configKeyPrefix.$i")) {
+    while (config.hasPath(s"$configKeyPrefix.$i")) {
       val key = s"$configKeyPrefix.$i"
       val factoryName = config.getString(key)
       log.info(s"Going to load a metrics plugin factory for configuration: '$key'. Factory name: $factoryName")
@@ -50,7 +50,7 @@ object ControlMetricsPluginsLoader {
     plugins
   }
 
-  private def buildPlugin(factoryName: String, config: Configuration): ControlMetricsPlugin = {
+  private def buildPlugin(factoryName: String, config: Config): ControlMetricsPlugin = {
     val factory = ClassLoaderUtils.loadSingletonClassOfType[ControlMetricsFactory](factoryName)
     factory.apply(config)
   }

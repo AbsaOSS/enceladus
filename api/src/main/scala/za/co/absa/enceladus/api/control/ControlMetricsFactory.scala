@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.api.control
 
-import org.apache.commons.configuration.Configuration
+import com.typesafe.config.Config
 
 /**
  * Base class for Enceladus Control Metrics plugin factories.
  */
 trait ControlMetricsFactory {
-  def apply(config: Configuration): ControlMetricsPlugin
+  def apply(config: Config): ControlMetricsPlugin
 }

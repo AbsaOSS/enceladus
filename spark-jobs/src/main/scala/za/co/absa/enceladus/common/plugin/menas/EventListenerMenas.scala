@@ -15,22 +15,30 @@
 
 package za.co.absa.enceladus.common.plugin.menas
 
+import com.typesafe.config.Config
+import org.apache.commons.configuration.Configuration
 import org.apache.log4j.LogManager
 import za.co.absa.atum.core.Atum
 import za.co.absa.atum.model._
 import za.co.absa.atum.plugins.EventListener
 import za.co.absa.atum.utils.ControlUtils
+import za.co.absa.enceladus.api.control.ControlMetricsPlugin
+import za.co.absa.enceladus.common.plugin.ControlMetricsPluginsLoader
 import za.co.absa.enceladus.dao.{DaoException, MenasDAO}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 
+import scala.collection.mutable
 import scala.util.control.NonFatal
 
 /**
   * This is Menas plugin. The plugin listens to Control Framework events and sends information to Menas using REST API.
   */
-class EventListenerMenas(dao: MenasDAO,
+class EventListenerMenas(config: Config,
+                         dao: MenasDAO,
                          datasetName: String,
                          datasetVersion: Int,
+                         reportDate: String,
+                         reportVersion: Int,
                          isJobStageOnly: Boolean,
                          generateNewRun: Boolean) extends EventListener {
 
@@ -39,6 +47,15 @@ class EventListenerMenas(dao: MenasDAO,
   private var _runUniqueId: Option[String] = None
   private var _runNumber: Option[Int] = None
   private var _runStatus: RunStatus = RunStatus(RunState.running, None)
+  private var _controlMeasure: Option[ControlMeasure] = None
+
+  private val pluginKey = if (isJobStageOnly) {
+    "standardization.plugins.control.metrics"
+  } else {
+    "conformance.plugins.control.metrics"
+  }
+
+  private val controlMetricPlugins: Seq[ControlMetricsPlugin] = ControlMetricsPluginsLoader.loadPlugins(config, pluginKey)
 
   def runUniqueId: Option[String] = _runUniqueId
   def runNumber: Option[Int] = _runNumber
@@ -73,6 +90,7 @@ class EventListenerMenas(dao: MenasDAO,
       val storedRun = dao.updateRunStatus(_runUniqueId.get, _runStatus)
       _runNumber = Option(storedRun.runId)
     }
+    _controlMeasure = Option(controlMeasure)
   }
 
   /** Called when a checkpoint has been completed. */
@@ -80,7 +98,9 @@ class EventListenerMenas(dao: MenasDAO,
     // This approach makes run object correspond to _INFO file. It just replaces previous runs of the same job
     for (uniqueId <- _runUniqueId) {
       try {
+        _controlMeasure = Option(controlMeasure)
         dao.updateControlMeasure(uniqueId, controlMeasure)
+        notifyPlugins()
       } catch {
         case NonFatal(e) => throw DaoException((s"Unable to update control measurements for a Run object ($uniqueId) in the database"), e)
       }
@@ -97,6 +117,7 @@ class EventListenerMenas(dao: MenasDAO,
       }
       try {
         dao.updateRunStatus(uniqueId, statusToSave)
+        notifyPlugins()
       } catch {
         case NonFatal(e) => throw DaoException(s"Unable to update status of a run object ($uniqueId) in the database", e)
       }
@@ -131,5 +152,19 @@ class EventListenerMenas(dao: MenasDAO,
     } else {
       true
     }
+  }
+
+  private def notifyPlugins(): Unit = {
+    val additionalParams = Map[String, String]("datasetName" -> datasetName,
+      "datasetVersion" -> datasetVersion.toString,
+      "reportDate" -> reportDate,
+      "reportVersion" -> reportVersion.toString,
+      "runStatus" -> _runStatus.toString
+    )
+    _controlMeasure.foreach(measures =>
+      controlMetricPlugins.foreach(plugin => {
+        plugin.onCheckpoint(measures, additionalParams)
+      })
+    )
   }
 }
