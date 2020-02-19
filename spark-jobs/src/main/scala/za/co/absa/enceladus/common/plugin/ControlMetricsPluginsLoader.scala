@@ -34,7 +34,7 @@ object ControlMetricsPluginsLoader {
    * @param config          A configuration.
    * @param configKeyPrefix A key prefix to be used to search for plugins.
    *                        For example, 'standardization.plugin.control.metrics' or 'conformance.plugin.control.metrics'
-   * @return A list of loaded postprocessing plugins.
+   * @return A list of loaded postprocessor plugins.
    */
   def loadPlugins(config: Config, configKeyPrefix: String): Seq[ControlMetricsPlugin] = {
     val plugins = new ListBuffer[ControlMetricsPlugin]

@@ -47,10 +47,10 @@ timezone="UTC"
 
 # Control plugins
 # Several plugins can be used. In this case the last element of the key needs to be incremented for each plugin.
-#standardization.plugin.control.metrics.1=za.co.absa.enceladus.KafkaPlugin
-#conformance.plugin.control.metrics.1=za.co.absa.enceladus.KafkaPlugin
+#standardization.plugin.control.metrics.1=za.co.absa.enceladus.KafkaPluginFactory
+#conformance.plugin.control.metrics.1=za.co.absa.enceladus.KafkaPluginFactory
 
 # Postprocessing plugins
 # Several plugins can be chained. In this case the last element of the key needs to be incremented for each plugin.
-#standardization.plugin.postprocessing.1=za.co.absa.enceladus.KafkaErrColumnsPlugin
-#conformance.plugin.postprocessing.1=za.co.absa.enceladus.KafkaErrColumnsPlugin
+#standardization.plugin.postprocessor.1=za.co.absa.enceladus.KafkaErrColumnsPluginFactory
+#conformance.plugin.postprocessor.1=za.co.absa.enceladus.KafkaErrColumnsPluginFactory

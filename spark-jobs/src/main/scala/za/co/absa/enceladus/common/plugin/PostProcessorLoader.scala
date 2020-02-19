@@ -25,16 +25,16 @@ import scala.collection.mutable.ListBuffer
 /**
  * This object is responsible for instantiating a chain of plugins that process output data before it is saved.
  */
-object PostProcessingPluginsLoader {
+object PostProcessorLoader {
   private val log: Logger = LogManager.getLogger(this.getClass)
 
   /**
-   * Loads postprocessing plugins according to configuration.
+   * Loads postprocessor plugins according to configuration.
    *
    * @param config          A configuration.
    * @param configKeyPrefix A key prefix to be used to search for plugins.
-   *                        For example, 'standardization.plugin.postprocessing' or 'conformance.plugin.postprocessing'
-   * @return A list of loaded postprocessing plugins.
+   *                        For example, 'standardization.plugin.postprocessor' or 'conformance.plugin.postprocessor'
+   * @return A list of loaded postprocessor plugins.
    */
   def loadPlugins(config: Config, configKeyPrefix: String): Seq[PostProcessor] = {
     val plugins = new ListBuffer[PostProcessor]
