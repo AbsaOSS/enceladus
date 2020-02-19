@@ -13,13 +13,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.api.control
+package za.co.absa.enceladus.common.plugin.dummy
 
 import com.typesafe.config.Config
+import za.co.absa.enceladus.api.postprocessor.{PostProcessor, PostProcessorFactory}
 
-/**
- * Base class for Enceladus Control Metrics plugin factories.
- */
-trait ControlMetricsFactory {
-  def apply(config: Config): ControlMetricsPlugin
+object DummyPostProcessorFactory2 extends PostProcessorFactory {
+  override def apply(config: Config): PostProcessor = {
+    if (config.hasPath("dummy.param")) {
+      new DummyPostProcessor2(config.getString("dummy.param"))
+    } else {
+      new DummyPostProcessor2("")
+    }
+  }
 }

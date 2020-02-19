@@ -17,7 +17,7 @@ package za.co.absa.enceladus.common.plugin
 
 import com.typesafe.config.Config
 import org.apache.log4j.{LogManager, Logger}
-import za.co.absa.enceladus.api.control.{ControlMetricsFactory, ControlMetricsPlugin}
+import za.co.absa.enceladus.api.control.{ControlMetricsPluginFactory, ControlMetricsPlugin}
 import za.co.absa.enceladus.utils.general.ClassLoaderUtils
 
 import scala.collection.mutable.ListBuffer
@@ -51,7 +51,7 @@ object ControlMetricsPluginsLoader {
   }
 
   private def buildPlugin(factoryName: String, config: Config): ControlMetricsPlugin = {
-    val factory = ClassLoaderUtils.loadSingletonClassOfType[ControlMetricsFactory](factoryName)
+    val factory = ClassLoaderUtils.loadSingletonClassOfType[ControlMetricsPluginFactory](factoryName)
     factory.apply(config)
   }
 }
