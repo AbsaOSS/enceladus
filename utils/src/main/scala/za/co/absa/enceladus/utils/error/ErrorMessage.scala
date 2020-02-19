@@ -36,36 +36,43 @@ object ErrorMessage {
 
   def stdCastErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(
     errType = "stdCastError",
-    errCode = ErrorCodes.stdCastError,
+    errCode = ErrorCodes.StdCastError,
     errMsg = "Standardization Error - Type cast",
     errCol = errCol,
     rawValues = Seq(rawValue))
   def stdNullErr(errCol: String): ErrorMessage = ErrorMessage(
     errType = "stdNullError",
-    errCode = ErrorCodes.stdNullError,
+    errCode = ErrorCodes.StdNullError,
     errMsg = "Standardization Error - Null detected in non-nullable attribute",
     errCol = errCol,
     rawValues = Seq("null"))
+  def stdTypeError(errCol: String, sourceType: String, targetType: String): ErrorMessage = ErrorMessage(
+    errType = "stdTypeError",
+    errCode = ErrorCodes.StdTypeError,
+    errMsg = s"Standardization Error - Type '$sourceType' cannot be cast to '$targetType'",
+    errCol = errCol,
+    rawValues = Seq.empty)
   def confMappingErr(errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]): ErrorMessage = ErrorMessage(
     errType = "confMapError",
-    errCode = ErrorCodes.confMapError,
+    errCode = ErrorCodes.ConfMapError,
     errMsg = "Conformance Error - Null produced by mapping conformance rule",
-    errCol = errCol, rawValues = rawValues, mappings = mappings)
+    errCol = errCol,
+    rawValues = rawValues, mappings = mappings)
   def confCastErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(
     errType = "confCastError",
-    errCode = ErrorCodes.confCastErr,
+    errCode = ErrorCodes.ConfCastErr,
     errMsg = "Conformance Error - Null returned by casting conformance rule",
     errCol = errCol,
     rawValues = Seq(rawValue))
   def confNegErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(
     errType = "confNegError",
-    errCode = ErrorCodes.confNegErr,
+    errCode = ErrorCodes.ConfNegErr,
     errMsg = "Conformance Error - Negation of numeric type with minimum value overflows and remains unchanged",
     errCol = errCol,
     rawValues = Seq(rawValue))
   def confLitErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(
     errType = "confLitError",
-    errCode = ErrorCodes.confLitErr,
+    errCode = ErrorCodes.ConfLitErr,
     errMsg = "Conformance Error - Special column value has changed",
     errCol = errCol,
     rawValues = Seq(rawValue))
@@ -79,12 +86,13 @@ object ErrorMessage {
     * This object purpose it to group the error codes together to decrease a chance of them being in conflict
     */
   object ErrorCodes {
-    final val stdCastError = "E00000"
-    final val confMapError = "E00001"
-    final val stdNullError = "E00002"
-    final val confCastErr  = "E00003"
-    final val confNegErr   = "E00004"
-    final val confLitErr   = "E00005"
+    final val StdCastError = "E00000"
+    final val ConfMapError = "E00001"
+    final val StdNullError = "E00002"
+    final val ConfCastErr  = "E00003"
+    final val ConfNegErr   = "E00004"
+    final val ConfLitErr   = "E00005"
+    final val StdTypeError = "E00006"
   }
 }
 

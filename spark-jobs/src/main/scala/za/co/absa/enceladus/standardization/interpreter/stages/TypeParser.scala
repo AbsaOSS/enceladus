@@ -35,7 +35,7 @@ import za.co.absa.enceladus.utils.types.TypedStructField._
 import za.co.absa.enceladus.utils.types.{Defaults, TypedStructField}
 import za.co.absa.enceladus.utils.udf.UDFBuilder
 import za.co.absa.spark.hofs.transform
-
+import org.apache.spark.sql.functions.lit
 import scala.reflect.runtime.universe._
 import scala.util.Random
 
@@ -73,6 +73,18 @@ sealed trait TypeParser[T] {
     } else {
       inputFullPathName
     }
+
+  @NoSuchElementException(s"The type of '$inputFullPathName' cannot be determined")
+  protected def origType: DataType = {
+    SchemaUtils.getFieldType(inputFullPathName, origSchema).get
+  }
+
+  protected def underlyingType: DataType = {
+    origType match {
+      case arrayType: ArrayType => arrayType.elementType
+      case anyOther => anyOther
+    }
+  }
 }
 
 object TypeParser {
@@ -140,23 +152,30 @@ object TypeParser {
 
     override def standardize(): ParseOutput = {
       logger.info(s"Creating standardization plan for Array $inputFullPathName")
+      if (origType.isInstanceOf[ArrayType]) {
+        val lambdaVariableName = s"${SchemaUtils.unpath(inputFullPathName)}_${Random.nextLong().abs}"
+        val lambda = (forCol: Column) => TypeParser(arrayField, path, origSchema, Option(ArrayParent(forCol)))
+          .standardize()
 
-      val lambdaVariableName = s"${SchemaUtils.unpath(inputFullPathName)}_${Random.nextLong().abs}"
-      val lambda = (forCol: Column) => TypeParser(arrayField, path, origSchema, Option(ArrayParent(forCol)))
-        .standardize()
+        val lambdaErrCols = lambda.andThen(_.errors)
+        val lambdaStdCols = lambda.andThen(_.stdCol)
+        val nullErrCond = column.isNull and lit(!field.nullable)
 
-      val lambdaErrCols = lambda.andThen(_.errors)
-      val lambdaStdCols = lambda.andThen(_.stdCol)
-      val nullErrCond = column.isNull and lit(!field.nullable)
-
-      val finalErrs = when(nullErrCond,
-        array(typedLit(ErrorMessage.stdNullErr(inputFullPathName))))
-        .otherwise(
-          typedLit(flatten(transform(column, lambdaErrCols, lambdaVariableName)))
+        val finalErrs = when(nullErrCond,
+          array(typedLit(ErrorMessage.stdNullErr(inputFullPathName))))
+          .otherwise(
+            typedLit(flatten(transform(column, lambdaErrCols, lambdaVariableName)))
+          )
+        val stdCols = transform(column, lambdaStdCols, lambdaVariableName)
+        logger.info(s"Finished standardization plan for Array $inputFullPathName")
+        ParseOutput(stdCols as (fieldOutputName, metadata), finalErrs)
+      } else {
+        logger.info(s"Cannot standardize type ${origType.typeName} into Array $inputFullPathName")
+        ParseOutput(
+          lit(null).cast(fieldType) as (fieldOutputName, metadata), //scalastyle:ignore null
+          typedLit(Seq(ErrorMessage.stdTypeError(inputFullPathName, origType.typeName, fieldType.typeName)))
         )
-      val stdCols = transform(column, lambdaStdCols, lambdaVariableName)
-      logger.info(s"Finished standardization plan for Array $inputFullPathName")
-      ParseOutput(stdCols as (fieldOutputName, metadata), finalErrs)
+      }
     }
   }
 
@@ -230,18 +249,6 @@ object TypeParser {
 
     protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
       castedCol.isNull  //this one is sufficient for most primitive data types
-    }
-
-    @NoSuchElementException(s"The type of '$inputFullPathName' cannot be determined")
-    protected def origType: DataType = {
-      SchemaUtils.getFieldType(inputFullPathName, origSchema).get
-    }
-
-    protected def underlyingType: DataType = {
-      origType match {
-        case arrayType: ArrayType => arrayType.elementType
-        case anyOther => anyOther
-      }
     }
   }
 
