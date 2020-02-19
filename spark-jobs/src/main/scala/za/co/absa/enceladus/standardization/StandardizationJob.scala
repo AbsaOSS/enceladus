@@ -91,7 +91,7 @@ object StandardizationJob {
     cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
 
     // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(cmd.datasetName, cmd.datasetVersion, isJobStageOnly = true, generateNewRun = true)
+    MenasPlugin.enableMenas(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate, reportVersion, isJobStageOnly = true, generateNewRun = true)
 
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
     Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)

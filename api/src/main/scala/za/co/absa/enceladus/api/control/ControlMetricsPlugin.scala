@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.api.control
 
-import za.co.absa.enceladus.model.Run
+import za.co.absa.atum.model.ControlMeasure
 
 /**
  * Base class for all Enceladus external plugins that process control measurements.
@@ -25,9 +25,9 @@ abstract class ControlMetricsPlugin {
   /**
    * This callback function will be invoked each time a checkpoint is created or a job status changes.
    *
-   * @param run    A run object containing all control metrics (aka INFO file).
-   * @param params Additional key/value parameters provided by Enceladus.
+   * @param measurements An object containing all control measurements (aka INFO file).
+   * @param params       Additional key/value parameters provided by Enceladus.
    */
-  def onCheckpoint(run: Run, params: Map[String, String]): Unit
+  def onCheckpoint(measurements: ControlMeasure, params: Map[String, String]): Unit
 
 }

@@ -15,9 +15,8 @@
 
 package za.co.absa.enceladus.common.plugin
 
-import org.apache.commons.configuration.Configuration
+import com.typesafe.config.Config
 import org.apache.log4j.{LogManager, Logger}
-import za.co.absa.enceladus.api.control.{ControlMetricsFactory, ControlMetricsPlugin}
 import za.co.absa.enceladus.api.postprocessor.{PostProcessor, PostProcessorFactory}
 import za.co.absa.enceladus.utils.general.ClassLoaderUtils
 
@@ -37,11 +36,11 @@ object PostProcessingPluginsLoader {
    *                        For example, 'standardization.plugins.postprocessing' or 'conformance.plugins.postprocessing'
    * @return A list of loaded postprocessing plugins.
    */
-  def loadPlugins(config: Configuration, configKeyPrefix: String): Seq[PostProcessor] = {
+  def loadPlugins(config: Config, configKeyPrefix: String): Seq[PostProcessor] = {
     val plugins = new ListBuffer[PostProcessor]
     var i = 1
 
-    while (config.containsKey(s"$configKeyPrefix.$i")) {
+    while (config.hasPath(s"$configKeyPrefix.$i")) {
       val key = s"$configKeyPrefix.$i"
       val factoryName = config.getString(key)
       log.info(s"Going to load a post processing plugin factory for configuration: '$key'. Factory name: $factoryName")
@@ -51,7 +50,7 @@ object PostProcessingPluginsLoader {
     plugins
   }
 
-  private def buildPlugin(factoryName: String, config: Configuration): PostProcessor = {
+  private def buildPlugin(factoryName: String, config: Config): PostProcessor = {
     val factory = ClassLoaderUtils.loadSingletonClassOfType[PostProcessorFactory](factoryName)
     factory.apply(config)
   }

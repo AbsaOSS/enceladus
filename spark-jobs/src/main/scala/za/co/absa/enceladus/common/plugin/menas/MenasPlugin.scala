@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.common.plugin.menas
 
+import com.typesafe.config.Config
 import za.co.absa.atum.plugins.PluginManager
 import za.co.absa.enceladus.dao.MenasDAO
 
@@ -28,19 +29,26 @@ object MenasPlugin {
   /**
     * This is Menas plugin for Conformance Framework
     *
+    * @param config         A configuration of the application plugins could use to init themselves.
     * @param datasetName    The name of the Dataset
     * @param datasetVersion The version of the Dataset
     * @param isJobStageOnly true if the Spark job is only a stage of some job chain
     * @param generateNewRun true if a new run needs to be generated for the Spark job
     */
-  def enableMenas(datasetName: String = "",
-                  datasetVersion: Int = 1,
+  def enableMenas(config: Config,
+                  datasetName: String,
+                  datasetVersion: Int,
+                  reportDate: String,
+                  reportVersion: Int,
                   isJobStageOnly: Boolean = false,
                   generateNewRun: Boolean = false)
                  (implicit dao: MenasDAO): Unit = {
-    val eventListener = new EventListenerMenas(dao,
+    val eventListener = new EventListenerMenas(config,
+      dao,
       datasetName,
       datasetVersion,
+      reportDate,
+      reportVersion,
       isJobStageOnly,
       generateNewRun)
     listener = Option(eventListener)

@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.api.postprocessor
 
-import org.apache.commons.configuration.Configuration
+import com.typesafe.config.Config
 
 /**
  * Base class for Enceladus plugin factories.
  */
 trait PostProcessorFactory {
-  def apply(config: Configuration): PostProcessor
+  def apply(config: Config): PostProcessor
 }
