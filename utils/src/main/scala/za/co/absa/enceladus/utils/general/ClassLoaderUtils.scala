@@ -21,6 +21,7 @@ import scala.util.{Failure, Success, Try}
 
 object ClassLoaderUtils {
 
+  @throws[IllegalArgumentException]
   def loadSingletonClassOfType[T:ClassTag:ru.TypeTag](fullyQualifiedName: String): T = {
     val mirror = ru.runtimeMirror(getClass.getClassLoader)
     Try(mirror.staticModule(fullyQualifiedName)) match {

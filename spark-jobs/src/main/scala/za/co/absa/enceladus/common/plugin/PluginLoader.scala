@@ -23,6 +23,7 @@ import za.co.absa.enceladus.utils.general.ClassLoaderUtils
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe
+import scala.util.control.NonFatal
 
 class PluginLoader[+A <: Plugin:ClassTag:universe.TypeTag] {
   private val log: Logger = LogManager.getLogger(this.getClass)
@@ -35,6 +36,8 @@ class PluginLoader[+A <: Plugin:ClassTag:universe.TypeTag] {
    *                        For example, 'standardization.plugin...' or 'conformance.plugin...'
    * @return A list of loaded plugins.
    */
+  @throws[IllegalStateException]
+  @throws[IllegalArgumentException]
   def loadPlugins(config: Config, configKeyPrefix: String): Seq[A] = {
     val plugins = new ListBuffer[A]
     var i = 1
@@ -49,8 +52,14 @@ class PluginLoader[+A <: Plugin:ClassTag:universe.TypeTag] {
     plugins
   }
 
+  @throws[IllegalStateException]
+  @throws[IllegalArgumentException]
   private def buildPlugin(factoryName: String, config: Config): A = {
     val factory = ClassLoaderUtils.loadSingletonClassOfType[PluginFactory[A]](factoryName)
-    factory.apply(config)
+    try {
+      factory.apply(config)
+    } catch {
+      case NonFatal(ex) => throw new IllegalStateException(s"Unable to build a plugin using its factory: $factoryName", ex)
+    }
   }
 }
