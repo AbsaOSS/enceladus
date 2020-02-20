@@ -100,7 +100,7 @@ class EventListenerMenas(config: Config,
         dao.updateControlMeasure(uniqueId, controlMeasure)
         notifyPlugins()
       } catch {
-        case NonFatal(e) => throw DaoException((s"Unable to update control measurements for a Run object ($uniqueId) in the database"), e)
+        case NonFatal(e) => throw DaoException(s"Unable to update control measurements for a Run object ($uniqueId) in the database", e)
       }
     }
   }
@@ -161,7 +161,13 @@ class EventListenerMenas(config: Config,
     )
     _controlMeasure.foreach(measures =>
       controlMetricPlugins.foreach(plugin => {
-        plugin.onCheckpoint(measures, additionalParams)
+        try {
+          plugin.onCheckpoint(measures, additionalParams)
+        } catch {
+          case NonFatal(ex) =>
+            val className = plugin.getClass.getName
+            log.error(s"A plugin has thrown an exception: $className", ex)
+        }
       })
     )
   }
