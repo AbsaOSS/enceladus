@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.api.control
+package za.co.absa.enceladus.plugins.api.control
 
 import za.co.absa.atum.model.ControlMeasure
 

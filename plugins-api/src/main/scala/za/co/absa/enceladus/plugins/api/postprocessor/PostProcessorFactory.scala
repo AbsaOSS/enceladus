@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.api.postprocessor
+package za.co.absa.enceladus.plugins.api.postprocessor
 
 import com.typesafe.config.Config
 
