@@ -16,18 +16,16 @@
 package za.co.absa.enceladus.common.plugin.menas
 
 import com.typesafe.config.Config
-import org.apache.commons.configuration.Configuration
 import org.apache.log4j.LogManager
 import za.co.absa.atum.core.Atum
 import za.co.absa.atum.model._
 import za.co.absa.atum.plugins.EventListener
 import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.api.control.ControlMetricsPlugin
 import za.co.absa.enceladus.common.plugin.ControlMetricsPluginsLoader
 import za.co.absa.enceladus.dao.{DaoException, MenasDAO}
 import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
 
-import scala.collection.mutable
 import scala.util.control.NonFatal
 
 /**

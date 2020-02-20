@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.common.plugin.dummy
 
 import com.typesafe.config.Config
-import za.co.absa.enceladus.api.postprocessor.{PostProcessor, PostProcessorFactory}
+import za.co.absa.enceladus.plugins.api.postprocessor.{PostProcessor, PostProcessorFactory}
 
 object DummyPostProcessorFactory2 extends PostProcessorFactory {
   override def apply(config: Config): PostProcessor = {

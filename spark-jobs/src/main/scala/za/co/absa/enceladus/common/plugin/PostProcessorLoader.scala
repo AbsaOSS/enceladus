@@ -17,7 +17,7 @@ package za.co.absa.enceladus.common.plugin
 
 import com.typesafe.config.Config
 import org.apache.log4j.{LogManager, Logger}
-import za.co.absa.enceladus.api.postprocessor.{PostProcessor, PostProcessorFactory}
+import za.co.absa.enceladus.plugins.api.postprocessor.{PostProcessor, PostProcessorFactory}
 import za.co.absa.enceladus.utils.general.ClassLoaderUtils
 
 import scala.collection.mutable.ListBuffer
