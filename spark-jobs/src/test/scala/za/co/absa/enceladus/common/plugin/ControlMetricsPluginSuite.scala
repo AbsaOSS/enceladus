@@ -15,17 +15,18 @@
 
 package za.co.absa.enceladus.common.plugin
 
-import com.typesafe.config.{Config, ConfigFactory}
-
-import scala.collection.JavaConverters._
+import com.typesafe.config.ConfigFactory
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.common.plugin.dummy.{DummyControlMetricsPlugin1, DummyControlMetricsPlugin2}
+import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
+
+import scala.collection.JavaConverters._
 
 class ControlMetricsPluginSuite extends FunSuite {
 
   test("Test the control plugin loader loads nothing if no class is specified") {
     val conf = ConfigFactory.parseMap(Map[String, String]().asJava)
-    val plugins = ControlMetricsPluginsLoader.loadPlugins(conf, "dummy")
+    val plugins = new PluginLoader[ControlMetricsPlugin].loadPlugins(conf, "dummy")
 
     assert(plugins.isEmpty)
   }
@@ -34,7 +35,7 @@ class ControlMetricsPluginSuite extends FunSuite {
     val conf = ConfigFactory.parseMap(
       Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyControlMetricsPluginFactory1")
         .asJava)
-    val plugins = ControlMetricsPluginsLoader.loadPlugins(conf, "dummy")
+    val plugins = new PluginLoader[ControlMetricsPlugin].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 1)
     assert(plugins.head.isInstanceOf[DummyControlMetricsPlugin1])
@@ -45,7 +46,7 @@ class ControlMetricsPluginSuite extends FunSuite {
       Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyControlMetricsPluginFactory2",
         "dummy.param" -> "Hello")
         .asJava)
-    val plugins = ControlMetricsPluginsLoader.loadPlugins(conf, "dummy")
+    val plugins = new PluginLoader[ControlMetricsPlugin].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 1)
     assert(plugins.head.isInstanceOf[DummyControlMetricsPlugin2])
@@ -57,7 +58,7 @@ class ControlMetricsPluginSuite extends FunSuite {
       Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyControlMetricsPluginFactory1",
         "dummy.2" -> "za.co.absa.enceladus.common.plugin.dummy.DummyControlMetricsPluginFactory2")
         .asJava)
-    val plugins = ControlMetricsPluginsLoader.loadPlugins(conf, "dummy")
+    val plugins = new PluginLoader[ControlMetricsPlugin].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 2)
     assert(plugins.head.isInstanceOf[DummyControlMetricsPlugin1])
@@ -69,7 +70,7 @@ class ControlMetricsPluginSuite extends FunSuite {
       Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyControlMetricsPluginFactory1",
         "dummy.3" -> "za.co.absa.enceladus.common.plugin.dummy.DummyControlMetricsPluginFactory2")
         .asJava)
-    val plugins = ControlMetricsPluginsLoader.loadPlugins(conf, "dummy")
+    val plugins = new PluginLoader[ControlMetricsPlugin].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 1)
     assert(plugins.head.isInstanceOf[DummyControlMetricsPlugin1])
@@ -81,7 +82,7 @@ class ControlMetricsPluginSuite extends FunSuite {
         .asJava)
 
     intercept[IllegalArgumentException] {
-      ControlMetricsPluginsLoader.loadPlugins(conf, "dummy")
+      new PluginLoader[ControlMetricsPlugin].loadPlugins(conf, "dummy")
     }
   }
 

@@ -18,6 +18,7 @@ package za.co.absa.enceladus.common.plugin
 import com.typesafe.config.ConfigFactory
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.common.plugin.dummy.{DummyPostProcessor1, DummyPostProcessor2}
+import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 
 import scala.collection.JavaConverters._
 
@@ -25,7 +26,7 @@ class PostProcessorPluginSuite extends FunSuite {
 
   test("Test the postprocessor loader loads nothing if no class is specified") {
     val conf = ConfigFactory.parseMap(Map[String, String]().asJava)
-    val plugins = PostProcessorLoader.loadPlugins(conf, "dummy")
+    val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
 
     assert(plugins.isEmpty)
   }
@@ -34,7 +35,7 @@ class PostProcessorPluginSuite extends FunSuite {
     val conf = ConfigFactory.parseMap(
       Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory1")
         .asJava)
-    val plugins = PostProcessorLoader.loadPlugins(conf, "dummy")
+    val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 1)
     assert(plugins.head.isInstanceOf[DummyPostProcessor1])
@@ -45,7 +46,7 @@ class PostProcessorPluginSuite extends FunSuite {
       Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory2",
         "dummy.param" -> "Hello")
         .asJava)
-    val plugins = PostProcessorLoader.loadPlugins(conf, "dummy")
+    val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 1)
     assert(plugins.head.isInstanceOf[DummyPostProcessor2])
@@ -57,7 +58,7 @@ class PostProcessorPluginSuite extends FunSuite {
       Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory1",
         "dummy.2" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory2")
         .asJava)
-    val plugins = PostProcessorLoader.loadPlugins(conf, "dummy")
+    val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 2)
     assert(plugins.head.isInstanceOf[DummyPostProcessor1])
@@ -69,7 +70,7 @@ class PostProcessorPluginSuite extends FunSuite {
       Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory1",
         "dummy.3" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory2")
         .asJava)
-    val plugins = PostProcessorLoader.loadPlugins(conf, "dummy")
+    val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 1)
     assert(plugins.head.isInstanceOf[DummyPostProcessor1])
@@ -81,7 +82,7 @@ class PostProcessorPluginSuite extends FunSuite {
         .asJava)
 
     intercept[IllegalArgumentException] {
-      PostProcessorLoader.loadPlugins(conf, "dummy")
+      new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
     }
   }
 

@@ -21,7 +21,7 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.atum.model._
 import za.co.absa.atum.plugins.EventListener
 import za.co.absa.atum.utils.ControlUtils
-import za.co.absa.enceladus.common.plugin.ControlMetricsPluginsLoader
+import za.co.absa.enceladus.common.plugin.PluginLoader
 import za.co.absa.enceladus.dao.{DaoException, MenasDAO}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
@@ -53,7 +53,7 @@ class EventListenerMenas(config: Config,
     "conformance.plugin.control.metrics"
   }
 
-  private val controlMetricPlugins: Seq[ControlMetricsPlugin] = ControlMetricsPluginsLoader.loadPlugins(config, pluginKey)
+  private val controlMetricPlugins: Seq[ControlMetricsPlugin] = new PluginLoader[ControlMetricsPlugin].loadPlugins(config, pluginKey)
 
   def runUniqueId: Option[String] = _runUniqueId
   def runNumber: Option[Int] = _runNumber
