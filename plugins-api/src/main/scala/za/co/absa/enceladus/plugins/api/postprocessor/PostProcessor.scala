@@ -16,11 +16,12 @@
 package za.co.absa.enceladus.plugins.api.postprocessor
 
 import org.apache.spark.sql.DataFrame
+import za.co.absa.enceladus.plugins.api.Plugin
 
 /**
  * Base class for all Enceladus external plugins that process output of Standardization/Conformance.
  */
-abstract class PostProcessor {
+abstract class PostProcessor extends Plugin {
 
   /**
    * This callback function will be invoked when the output data is ready.

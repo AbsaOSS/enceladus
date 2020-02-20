@@ -13,14 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.api.postprocessor
+package za.co.absa.enceladus.plugins.api
 
 import com.typesafe.config.Config
-import za.co.absa.enceladus.plugins.api.PluginFactory
 
 /**
- * Base class for Enceladus plugin factories.
+ * Base interface for all Enceladus plugin factories.
  */
-trait PostProcessorFactory extends PluginFactory[PostProcessor] {
-  def apply(config: Config): PostProcessor
+trait PluginFactory[+A <: Plugin] {
+  def apply(conf: Config): A
 }

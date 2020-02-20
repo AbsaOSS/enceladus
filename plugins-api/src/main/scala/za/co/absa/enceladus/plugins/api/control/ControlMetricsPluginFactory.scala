@@ -16,10 +16,11 @@
 package za.co.absa.enceladus.plugins.api.control
 
 import com.typesafe.config.Config
+import za.co.absa.enceladus.plugins.api.PluginFactory
 
 /**
  * Base class for Enceladus Control Metrics plugin factories.
  */
-trait ControlMetricsPluginFactory {
+trait ControlMetricsPluginFactory extends PluginFactory[ControlMetricsPlugin] {
   def apply(config: Config): ControlMetricsPlugin
 }

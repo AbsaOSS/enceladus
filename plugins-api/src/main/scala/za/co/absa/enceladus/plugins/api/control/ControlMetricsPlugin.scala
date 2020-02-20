@@ -16,11 +16,12 @@
 package za.co.absa.enceladus.plugins.api.control
 
 import za.co.absa.atum.model.ControlMeasure
+import za.co.absa.enceladus.plugins.api.Plugin
 
 /**
  * Base class for all Enceladus external plugins that process control measurements.
  */
-abstract class ControlMetricsPlugin {
+abstract class ControlMetricsPlugin extends Plugin {
 
   /**
    * This callback function will be invoked each time a checkpoint is created or a job status changes.
