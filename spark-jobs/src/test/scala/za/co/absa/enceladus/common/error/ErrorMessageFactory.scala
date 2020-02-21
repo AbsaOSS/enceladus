@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.shared.error
+package za.co.absa.enceladus.common.error
 
 object ErrorMessageFactory {
   val errColSchema: String =  "\n |-- errCol: array (nullable = true)\n"+

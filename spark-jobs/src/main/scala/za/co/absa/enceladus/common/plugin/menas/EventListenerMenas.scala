@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao.menasplugin
+package za.co.absa.enceladus.common.plugin.menas
 
 import org.apache.log4j.LogManager
 import za.co.absa.atum.core.Atum

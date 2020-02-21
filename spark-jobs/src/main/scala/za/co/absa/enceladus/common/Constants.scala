@@ -13,19 +13,11 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao.rest
+package za.co.absa.enceladus.common
 
-import za.co.absa.enceladus.dao.auth.MenasCredentials
-
-object RestDaoFactory {
-
-  private val restTemplate = RestTemplateSingleton.instance
-
-  def getInstance(authCredentials: MenasCredentials, apiBaseUrls: List[String]): MenasRestDAO = {
-    val apiCaller = CrossHostApiCaller(apiBaseUrls)
-    val authClient = AuthClient(authCredentials, apiCaller)
-    val restClient = new RestClient(authClient, restTemplate)
-    new MenasRestDAO(apiCaller, restClient)
-  }
-
+object Constants {
+  final val InfoDateColumn = "enceladus_info_date"
+  final val InfoDateColumnString = s"${InfoDateColumn}_string"
+  final val ReportDateFormat = "yyyy-MM-dd"
+  final val InfoVersionColumn = "enceladus_info_version"
 }

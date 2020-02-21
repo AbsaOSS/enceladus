@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao.menasplugin
+package za.co.absa.enceladus.dao.rest.auth
 
 import org.scalatest.WordSpec
+import za.co.absa.enceladus.dao.auth.MenasPlainCredentials
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
