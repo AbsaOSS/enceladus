@@ -47,13 +47,13 @@ class EventListenerMenas(config: Config,
   private var _runStatus: RunStatus = RunStatus(RunState.running, None)
   private var _controlMeasure: Option[ControlMeasure] = None
 
-  private val pluginKey = if (isJobStageOnly) {
+  private val metricsPluginKey = if (isJobStageOnly) {
     "standardization.plugin.control.metrics"
   } else {
     "conformance.plugin.control.metrics"
   }
 
-  private val controlMetricPlugins: Seq[ControlMetricsPlugin] = new PluginLoader[ControlMetricsPlugin].loadPlugins(config, pluginKey)
+  private val controlMetricPlugins: Seq[ControlMetricsPlugin] = new PluginLoader[ControlMetricsPlugin].loadPlugins(config, metricsPluginKey)
 
   def runUniqueId: Option[String] = _runUniqueId
   def runNumber: Option[Int] = _runNumber
@@ -159,10 +159,10 @@ class EventListenerMenas(config: Config,
       "reportVersion" -> reportVersion.toString,
       "runStatus" -> _runStatus.toString
     )
-    _controlMeasure.foreach(measures =>
+    _controlMeasure.foreach(measure =>
       controlMetricPlugins.foreach(plugin => {
         try {
-          plugin.onCheckpoint(measures, additionalParams)
+          plugin.onCheckpoint(measure, additionalParams)
         } catch {
           case NonFatal(ex) =>
             val className = plugin.getClass.getName

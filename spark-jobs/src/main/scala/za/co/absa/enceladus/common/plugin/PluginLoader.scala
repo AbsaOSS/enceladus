@@ -45,7 +45,7 @@ class PluginLoader[+A <: Plugin:ClassTag:universe.TypeTag] {
     while (config.hasPath(s"$configKeyPrefix.$i")) {
       val key = s"$configKeyPrefix.$i"
       val factoryName = config.getString(key)
-      log.info(s"Going to load a metrics plugin factory for configuration: '$key'. Factory name: $factoryName")
+      log.info(s"Going to load a plugin factory for configuration: '$key'. Factory name: $factoryName")
       plugins += buildPlugin(factoryName, config)
       i += 1
     }
