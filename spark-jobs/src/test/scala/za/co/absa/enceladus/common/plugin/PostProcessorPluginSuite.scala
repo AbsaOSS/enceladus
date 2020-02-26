@@ -76,6 +76,15 @@ class PostProcessorPluginSuite extends FunSuite {
     assert(plugins.head.isInstanceOf[DummyPostProcessor1])
   }
 
+  test("Test the postprocessor loader skips plugins if the factory returns null") {
+    val conf = ConfigFactory.parseMap(
+      Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.StubPostProcessorFactory")
+        .asJava)
+    val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
+
+    assert(plugins.isEmpty)
+  }
+
   test("Test the postprocessor loader throws if no plugin class found") {
     val conf = ConfigFactory.parseMap(
       Map[String, String]("dummy.1" -> "za.co.absa.NoSuchClass")
