@@ -76,6 +76,15 @@ class ControlMetricsPluginSuite extends FunSuite {
     assert(plugins.head.isInstanceOf[DummyControlMetricsPlugin1])
   }
 
+  test("Test the control plugin loader skips plugins if the factory returns null") {
+    val conf = ConfigFactory.parseMap(
+      Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.StubControlMetricsPluginFactory")
+        .asJava)
+    val plugins = new PluginLoader[ControlMetricsPlugin].loadPlugins(conf, "dummy")
+
+    assert(plugins.isEmpty)
+  }
+
   test("Test the control plugin loader throws if no plugin class found") {
     val conf = ConfigFactory.parseMap(
       Map[String, String]("dummy.1" -> "za.co.absa.NoSuchClass")

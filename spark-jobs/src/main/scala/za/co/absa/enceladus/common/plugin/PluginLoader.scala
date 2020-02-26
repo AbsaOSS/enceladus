@@ -46,7 +46,13 @@ class PluginLoader[+A <: Plugin:ClassTag:universe.TypeTag] {
       val key = s"$configKeyPrefix.$i"
       val factoryName = config.getString(key)
       log.info(s"Going to load a plugin factory for configuration: '$key'. Factory name: $factoryName")
-      plugins += buildPlugin(factoryName, config)
+      val plugin = buildPlugin(factoryName, config)
+      if (plugin == null) {
+        log.error(s"A NULL is returned when building a plugin: '$key'. Factory name: $factoryName")
+      } else {
+        plugins += plugin
+      }
+
       i += 1
     }
     plugins
