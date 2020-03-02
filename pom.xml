@@ -102,18 +102,26 @@
             <name>OpenUI5-Absa</name>
             <url>https://dl.bintray.com/absa/openui5</url>
         </repository>
+        <repository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+            <releases>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+        </repository>
     </repositories>
 
     <modules>
-        <module>plugins-api</module>
-        <module>utils</module>
-        <module>spark-jobs</module>
+        <module>dao</module>
         <module>data-model</module>
         <module>examples</module>
-        <module>dao</module>
         <module>menas</module>
-        <module>migrations</module>
         <module>migrations-cli</module>
+        <module>migrations</module>
+        <module>plugins-api</module>
+        <module>plugins-builtin</module>
+        <module>spark-jobs</module>
+        <module>utils</module>
     </modules>
 
     <properties>
