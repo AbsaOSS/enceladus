@@ -34,8 +34,11 @@ class KafkaInfoPlugin(producer: ControlInfoProducer) extends ControlMetricsPlugi
 }
 
 object KafkaInfoPlugin extends ControlMetricsPluginFactory {
+  val ClientIdKey = "kafka.info.metrics.client.id"
+  val ControlMetricsKafkaTopicKey = "kafka.info.metrics.topic.name"
+
   override def apply(config: Config): ControlMetricsPlugin = {
-    val connectionParams = KafkaConnectionParams.fromConfig(config)
+    val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ControlMetricsKafkaTopicKey)
     val producer = new ControlInfoProducerKafka(connectionParams)
     new KafkaInfoPlugin(producer)
   }

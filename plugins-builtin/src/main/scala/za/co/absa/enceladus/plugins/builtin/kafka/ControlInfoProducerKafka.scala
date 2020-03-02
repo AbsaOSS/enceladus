@@ -39,6 +39,12 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
   private val recordAvroSchema = getAvroSchema()
   private val kafkaProducer = getKafkaProducer()
 
+  /**
+   * Sends control info measurements to a Kafka topic.
+   *
+   * @param controlInfo  An instance of Atum control measurements plus information identifying the dataset and
+   *                     the state of the job.
+   */
   def send(controlInfo: DceControlInfo): Unit = {
     val avroKey = toAvroKey(controlInfo.datasetName)
     val avroRecordOpt = toAvroRecord(controlInfo)
