@@ -157,7 +157,7 @@ class EventListenerMenas(config: Config,
       "datasetVersion" -> datasetVersion.toString,
       "reportDate" -> reportDate,
       "reportVersion" -> reportVersion.toString,
-      "runStatus" -> _runStatus.toString
+      "runStatus" -> _runStatus.status.toString
     )
     _controlMeasure.foreach(measure =>
       controlMetricPlugins.foreach(plugin => {

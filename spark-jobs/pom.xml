@@ -32,7 +32,7 @@
         <!-- Dependent modules -->
         <dependency>
             <groupId>za.co.absa.enceladus</groupId>
-            <artifactId>plugins-api</artifactId>
+            <artifactId>plugins-builtin</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
