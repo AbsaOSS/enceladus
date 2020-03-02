@@ -72,11 +72,17 @@ div .main-content {
 }
 
 :not(pre) > code {
-  background-color: lightgrey;
   padding: .2em .4em;
   font-size: 80%;
   border-radius: 5px;
-  background-color:rgba(39, 42, 46, 0.116);
+  background-color:rgba(44, 48, 53, 0.1);
   color:rgb(43, 49, 54);
   font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+}
+
+
+pre.highlight  {
+  background-color:rgba(44, 48, 53, 0.1);
+  border-radius: 8px;
+  padding: .2em .4em;
 }
