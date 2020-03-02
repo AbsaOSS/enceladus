@@ -18,29 +18,48 @@ package za.co.absa.enceladus.plugins.builtin.kafka
 import com.typesafe.config.Config
 
 case class KafkaConnectionParams(
-                          bootstrapServers: String,
-                          schemaRegistryUrl: String,
-                          clientId: String,
-                          topicName: String
-                          )
+                                  bootstrapServers: String,
+                                  schemaRegistryUrl: String,
+                                  clientId: String,
+                                  topicName: String
+                                )
 
 object KafkaConnectionParams {
   val BootstrapServersKey = "kafka.bootstrap.servers"
   val SchemaRegistryUrlKey = "kafka.schema.registry.url"
-  val ClientIdKey = "kafka.client.id"
-  val TopicNameKey = "kafka.topic.name"
 
-  def fromConfig(conf: Config): KafkaConnectionParams = {
-    validate(conf)
+
+  /**
+   * Creates an instance of connection parameters base on the provided configuration.
+   * The client Id and the topic name keys are required to be provided explicitly.
+   * This is since we can have other plugins that use Kafka and they
+   * can reuse Kafka connection endpoints while having their own
+   * client id and topic name.
+   *
+   * @param conf         A configuration.
+   * @param clientIdKey  A configuration key that specifies a client Id.
+   * @param topicNameKey A configuration key that specifies a topic name.
+   * @return An instance of Kafka connection parameters.
+   */
+  @throws[IllegalArgumentException]
+  def fromConfig(conf: Config, clientIdKey: String, topicNameKey: String): KafkaConnectionParams = {
+    validate(conf, clientIdKey, topicNameKey)
 
     KafkaConnectionParams(conf.getString(BootstrapServersKey),
       conf.getString(SchemaRegistryUrlKey),
-      conf.getString(ClientIdKey),
-      conf.getString(TopicNameKey)
+      conf.getString(clientIdKey),
+      conf.getString(topicNameKey)
     )
   }
 
-  private def validate(config: Config): Unit = {
+  @throws[IllegalArgumentException]
+  private def validate(conf: Config, clientIdKey: String, topicNameKey: String): Unit = {
+    val requiredFields = BootstrapServersKey :: SchemaRegistryUrlKey :: clientIdKey :: topicNameKey :: Nil
 
+    val missingKeys = requiredFields.filterNot(conf.hasPath)
+
+    if (missingKeys.nonEmpty) {
+      throw new IllegalArgumentException(s"Missing Kafka configuration keys: ${missingKeys.mkString(", ")}.")
+    }
   }
 }
