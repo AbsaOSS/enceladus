@@ -53,3 +53,20 @@ i {
 #search_results {
   margin-top: 1rem;
 }
+
+div .main-content {
+  table {
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+
+  td, th {
+    border: 1px solid #999;
+    padding: 0.5rem;
+    text-align: left;
+  }
+
+  th {
+    background: lightgrey;
+  }
+}

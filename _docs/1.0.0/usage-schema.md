@@ -65,81 +65,77 @@ You provide *Schema* to **Standardization** in a JSON file:
 
 ```json
 {
-    "type": "struct",
-    "fields": [{
-        "name": "name",
-        "type": "string",
-        "nullable": false,
-        "metadata": {
-        }
+  "type": "struct",
+  "fields": [{
+      "name": "name",
+      "type": "string",
+      "nullable": false,
+      "metadata": {}
     },
     {
-        "name": "surname",
-        "type": "string",
-        "nullable": false,
-        "metadata": {
-            "default": "Unknown Surname"
-        }
+      "name": "surname",
+      "type": "string",
+      "nullable": false,
+      "metadata": {
+        "default": "Unknown Surname"
+      }
     },
     {
-        "name": "hoursWorked",
-        "type": {
-            "type": "array",
-            "elementType": "integer",
-            "containsNull": false
-        },
-        "nullable": false,
-        "metadata": {
-        }
+      "name": "hoursWorked",
+      "type": {
+        "type": "array",
+        "elementType": "integer",
+        "containsNull": false
+      },
+      "nullable": false,
+      "metadata": {}
     },
-{
-        "name": "employeeNumbers",
-        "type": {
-            "type": "array",
-            "elementType": {
-                "type": "struct",
-                "fields": [{
-                    "name": "numberType",
-                    "type": "string",
-                    "nullable": true,
-                    "metadata": {
-                    }
-                },
-                {
-                    "name": "numbers",
-                    "type": {
-                        "type": "array",
-                        "elementType": "integer",
-                        "containsNull": true
-                    },
-                    "nullable": true,
-                    "metadata": {
-                    }
-                }]
+    {
+      "name": "employeeNumbers",
+      "type": {
+        "type": "array",
+        "elementType": {
+          "type": "struct",
+          "fields": [{
+              "name": "numberType",
+              "type": "string",
+              "nullable": true,
+              "metadata": {}
             },
-            "containsNull": true
+            {
+              "name": "numbers",
+              "type": {
+                "type": "array",
+                "elementType": "integer",
+                "containsNull": true
+              },
+              "nullable": true,
+              "metadata": {}
+            }
+          ]
         },
-        "nullable": true,
-        "metadata": {
-        }
+        "containsNull": true
+      },
+      "nullable": true,
+      "metadata": {}
     },
-        {
-        "name": "startDate",
-        "type": "date",
-        "nullable": false,
-        "metadata": {
-            "pattern": "yyyy-MM-dd"
-        }
+    {
+      "name": "startDate",
+      "type": "date",
+      "nullable": false,
+      "metadata": {
+        "pattern": "yyyy-MM-dd"
+      }
     },
-        {
-        "name": "updated",
-        "type": "timestamp",
-        "nullable": true,
-        "metadata": {
-            "pattern": "yyyyMMdd.HHmmss"
-        }
+    {
+      "name": "updated",
+      "type": "timestamp",
+      "nullable": true,
+      "metadata": {
+        "pattern": "yyyyMMdd.HHmmss"
+      }
     }
-    ]
+  ]
 }
 ```
 
@@ -159,17 +155,13 @@ Data types
 
 The data type representing *String* values.
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn), [default](#default)</sup></sub> |
-|--------------------------------------|--------------------------------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default)</sup>
 
 ### Boolean
 
 The data type representing *Boolean* values.
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn), [default](#default)</sup></sub> |
-|--------------------------------------|--------------------------------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default)</sup>
 
 ### Decimal
 
@@ -179,73 +171,55 @@ specifies the number of digits after the decimal point and has to be equal or le
 
 The type is specified as `decimal(`*precision*, *scale*`)`, for example: `decimal(15, 3)`
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign)</sup></sub> |
-|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign)</sup>
 
 ### Long
 
 The data type representing *Long* values. That is a whole number between -9223372036854775808 and 9223372036854775807.
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup></sub> |
-|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup>
 
 ### Integer
 
 The data type representing *Integer* values. That is a whole number between -2147483648 and 2147483647.
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup></sub> |
-|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup>
 
 ### Short
 
 The data type representing *Short* values. That is a whole number between  -32768 and 32767.
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup></sub> |
-|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup>
 
 ### Byte
 
 The data type representing *Byte* values. That is a whole number between -128 and 127.
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup></sub> |
-|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup>
 
 ### Double
 
 The data type representing *Double* values, 64-bit (IEEE 754) double-precision float.
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [allow_infinity](#allow_infinity)</sup></sub> |
-|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [allow_infinity](#allow_infinity)</sup>
 
 ### Float
 
 The data type representing *Float* values, 32-bit (IEEE 754) single-precision float.
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [allow_infinity](#allow_infinity)</sup></sub> |
-|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [allow_infinity](#allow_infinity)</sup>
 
 ### Timestamp
 
 The data type representing *java.sql.Timestamp* values. Upon entry they are normalized to UTC time zone.
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone)</sup></sub> |
-|--------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone)</sup>
 
 ### Date
 
 The data type representing *java.sql.Date* values. If time zone is specified the date is adjusted to UTC.
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone)</sup></sub> |
-|--------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone)</sup>
 
 ### Struct
 
@@ -256,9 +230,7 @@ The type is specified as struct of the following properties:
 - `type` - string value *"array"*
 - `fields` - array of fields
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn)</sup></sub> |
-|--------------------------------------|-----------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn)</sup>
 
 ### Array
 
@@ -271,9 +243,7 @@ The type is specified as struct of following properties:
 [`array`](#array)
 - `containsNull`- boolean value
 
-| <sub><sup>Metadata keys:</sup></sub> | <sub><sup>[sourcecolumn](#sourcecolumn)</sup></sub> |
-|--------------------------------------|-----------------------------------------------------|
-| | |
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn)</sup>
 
 Metadata
 --------
@@ -306,9 +276,7 @@ or boolean.
 
 ### sourcecolumn
 
-| <sub><sup>Supported by types:</sup></sub> | <sub><sup>[String](#string), [Boolean](#boolean), [Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float), [Timestamp](#struct), [Date](#timestamp), [Struct](#struct), [Array](#array)</sup></sub> |
-|-------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Supported by types:** [String](#string), [Boolean](#boolean), [Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float), [Timestamp](#struct), [Date](#timestamp), [Struct](#struct), [Array](#array)</sup>
 
 The name of the column to get the data from (so it only makes sense if it's different
 from field name). The most common use case is when the original column
@@ -317,9 +285,7 @@ when the column needs to be standardized into more fields and/or different types
 
 ### default
 
-| <sub><sup>Supported by types:</sup></sub> | <sub><sup>[String](#string), [Boolean](#boolean), [Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float), [Timestamp](#struct), [Date](#timestamp)</sup></sub> |
-|-------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Supported by types:** [String](#string), [Boolean](#boolean), [Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float), [Timestamp](#struct), [Date](#timestamp)</sup>
 
 This is the value to be used in case the input is missing (and nulls are not
 allowed) or when the casting (*standardization*) fails.
@@ -332,9 +298,7 @@ For more about the topic see chapter [Defaults](#defaults).
 
 ### pattern
 
-| <sub><sup>Supported by types:</sup></sub> | <sub><sup>[Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float), [Timestamp](#struct), [Date](#timestamp)</sup></sub> |
-|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Supported by types:** [Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float), [Timestamp](#struct), [Date](#timestamp)</sup>
 
 The format the input adheres to. Mostly used for timestamp and date entries but
 it can be leveraged for numeric types too. Details for valid patterns are in
@@ -348,9 +312,7 @@ will be ignored.
 
 ### timezone
 
-| <sub><sup>Supported by types:</sup></sub> | <sub><sup>[Timestamp](#struct), [Date](#timestamp)</sup></sub> |
-|-------------------------------------------|----------------------------------------------------------------|
-| | |
+<sup>**Supported by types:** [Timestamp](#struct), [Date](#timestamp)</sup>
 
 Time zone of the timestamp or date (not recommended for the latter). For details see the chapter
 [Parsing timestamps and dates](#parsing-timestamps-and-dates).
@@ -365,9 +327,7 @@ be ignored. Namely if the pattern includes the *"z"*, *"Z"* or *"X"* placeholder
 
 ### decimal_separator
 
-| <sub><sup>Supported by types:</sup></sub> | <sub><sup>[Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float)</sup></sub> |
-|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Supported by types:** [Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float)</sup>
 
 The character separating the integer and the fractional parts of the number.
 
@@ -376,9 +336,7 @@ redefined, to avoid conflict.
 
 ### grouping_separator
 
-| <sub><sup>Supported by types:</sup></sub> | <sub><sup>[Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float)</sup></sub> |
-|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Supported by types:** [Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float)</sup>
 
 Character to mark boundaries between orders of magnitude, usually to mark
 thousands, millions etc.
@@ -387,18 +345,14 @@ It has to be used in the pattern to be taken into consideration.
 
 ### minus_sign
 
-| <sub><sup>Supported by types:</sup></sub> | <sub><sup>[Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float)</sup></sub> |
-|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Supported by types:** [Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float)</sup>
 
 Character to mark the number is negative. By default, it’s the standard minus
 sign (*"-"*).
 
 ### allow_infinity
 
-| <sub><sup>Supported by types:</sup></sub> | <sub><sup>[Double](#double), [Float](#float)</sup></sub> |
-|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>Supported by types:** [Double](#double), [Float](#float)</sup>
 
 Flag indicating if the column accepts infinity as a value. When set to true *infinity*/*-infinity* are recognized as a 
 valid value, instead of failing with casting error ([see here]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)).
@@ -407,9 +361,7 @@ that are too large are converted to *infinity* and *-infinity*, respectively.
 
 ### radix
 
-| <sub><sup>Supported by types:</sup></sub> | <sub><sup>[Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte)</sup></sub> |
-|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| | |
+<sup>**Supported by types:** [Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte)</sup>
 
 The radix (base) of the numbers entered. Accepted values are numbers between 1
 and 36, as well as the following keywords (case insensitive): *"dec"*,
