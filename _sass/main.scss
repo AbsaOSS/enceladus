@@ -53,3 +53,36 @@ i {
 #search_results {
   margin-top: 1rem;
 }
+
+div .main-content {
+  table {
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+
+  td, th {
+    border: 1px solid #999;
+    padding: 0.5rem;
+    text-align: left;
+  }
+
+  th {
+    background: lightgrey;
+  }
+}
+
+:not(pre) > code {
+  padding: .2em .4em;
+  font-size: 80%;
+  border-radius: 5px;
+  background-color:rgba(44, 48, 53, 0.1);
+  color:rgb(43, 49, 54);
+  font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+}
+
+
+pre.highlight  {
+  background-color:rgba(44, 48, 53, 0.1);
+  border-radius: 8px;
+  padding: .2em .4em;
+}
