@@ -42,8 +42,8 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
   /**
    * Sends control info measurements to a Kafka topic.
    *
-   * @param controlInfo  An instance of Atum control measurements plus information identifying the dataset and
-   *                     the state of the job.
+   * @param controlInfo An instance of Atum control measurements plus information identifying the dataset and
+   *                    the state of the job.
    */
   def send(controlInfo: DceControlInfo): Unit = {
     val avroKey = toAvroKey(controlInfo.datasetName)
@@ -78,6 +78,11 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
     props.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConnectionParams.clientId)
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
+
+    kafkaConnectionParams.security.foreach(sec => {
+      props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, sec.securityProtocol)
+      sec.saslMechanism.foreach(saslMechanism => props.put("sasl.mechanism", saslMechanism))
+    })
 
     new KafkaProducer[GenericRecord, GenericRecord](props)
   }
@@ -166,11 +171,11 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
   }
 
   private def toAvroKey(datasetName: String): GenericRecord = {
-    val keyAvroSchemaJson = """{"type": "record", "name": "infoKey", "fields": [{"type": "string", "name": "key"}]}}"""
+    val keyAvroSchemaJson = IOUtils.toString(getClass.getResourceAsStream("/info_file_key_avro_schema.avsc"), "UTF-8")
     val keyAvroSchema = new Schema.Parser().parse(keyAvroSchemaJson)
     val avroKey = new GenericData.Record(keyAvroSchema)
 
-    avroKey.put("key", datasetName)
+    avroKey.put("datasetName", datasetName)
 
     avroKey
   }

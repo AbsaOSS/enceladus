@@ -65,3 +65,6 @@ timezone="UTC"
 #kafka.bootstrap.servers="127.0.0.1:9092"
 #kafka.info.metrics.client.id="controlInfo"
 #kafka.info.metrics.topic.name="control.info"
+# Optional security settings
+#kafka.security.protocol="SASL_SSL"
+#kafka.sasl.mechanism="GSSAPI"

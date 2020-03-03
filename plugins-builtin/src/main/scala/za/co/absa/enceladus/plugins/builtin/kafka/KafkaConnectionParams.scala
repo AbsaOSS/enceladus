@@ -21,13 +21,13 @@ case class KafkaConnectionParams(
                                   bootstrapServers: String,
                                   schemaRegistryUrl: String,
                                   clientId: String,
+                                  security: Option[KafkaSecurityParams],
                                   topicName: String
                                 )
 
 object KafkaConnectionParams {
   val BootstrapServersKey = "kafka.bootstrap.servers"
   val SchemaRegistryUrlKey = "kafka.schema.registry.url"
-
 
   /**
    * Creates an instance of connection parameters base on the provided configuration.
@@ -48,6 +48,7 @@ object KafkaConnectionParams {
     KafkaConnectionParams(conf.getString(BootstrapServersKey),
       conf.getString(SchemaRegistryUrlKey),
       conf.getString(clientIdKey),
+      KafkaSecurityParams.fromConfig(conf),
       conf.getString(topicNameKey)
     )
   }
