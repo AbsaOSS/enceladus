@@ -232,6 +232,55 @@ The list of additional options available for running Conformance:
 | --catalyst-workaround **true/false**       | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. It is `true` by default. Turn this off only is you encounter timing freeze issues when running Conformance. | 
 | --autoclean-std-folder **true/false**      | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job. |
 
+## Plugins
+
+Standardization and Conformance support plugins that allow executing additional actions any time a checkpoint is created
+or job status changes. In order to write a plugin to Enceladus you need to implement `ControlMetricsPlugin` interfaces and
+`ControlMetricsPluginFactory` interfaces.
+
+The way it works is like this. A plugin factory (a class that overrides `ControlMetricsPluginFactory`) overrides the
+apply method. Standardization and Conformance will invoke this method when job starts and provides a configuration that
+includes all settings from `application.conf` plus settings passed to JVM via `spark-submit`. The factory then
+instantiates a plugin and returns it to the caller. If the factory throws an exception the Spark application
+(Standardization or Conformance) will be stopped. If the factory returns `null` an error will be logged by the application,
+but it will continue to run.
+
+An Enceladus plugin is invoked each time a job status changes (e.g. from `running` to `succeeded`) or when a checkpoint
+is created. Checkpoint is an Atum (https://github.com/AbsaOSS/atum) concept to ensure accuracy and completeness of data.
+A checkpoint is created at the end of Standardization and Conformance, and also after a conformance rule is applied if
+the rule is configured to create control measurements. At this point `onCheckpoint()` callback passing an instance of
+control measurements is called. It is up to the plugin to decide what to do at this point. All exceptions thrown from
+a plugin will be logged, but the spark application will continue to run.
+
+A plugin can be externally developed. In this case, in order to use the plugin a plugin jar needs to be supplied to
+`spark-submit` using `--jars` option. Also, plugins can be built-in. In order to use a built-in plugin you need to
+enable them in `application.conf` or pass configuration information directly to `spark-submit`.
+
+### Control Info Kafka Plugin
+The purpose of this plugin is to send control measurements to a Kafka topic each time a checkpoint is created or job
+status is changed. This can help monitoring production issues and react on errors as quickly as possible. 
+Control measurements are send in `Avro` format and the schema is automatically registered in a schema registry.
+
+This plugin is a built-in one. In order to enable it you need to uncomment the following configuration settings in
+`application.conf`:
+```
+standardization.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.kafka.KafkaInfoPlugin
+conformance.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.kafka.KafkaInfoPlugin
+kafka.schema.registry.url:"http://127.0.0.1:8081"
+kafka.bootstrap.servers="127.0.0.1:9092"
+kafka.info.metrics.client.id="controlInfo"
+kafka.info.metrics.topic.name="control.info"
+# Optional security settings
+#kafka.security.protocol="SASL_SSL"
+#kafka.sasl.mechanism="GSSAPI"
+```
+
+The plugin class name is specified for Standardization and Conformance separately since some plugins need to run only
+during execution of one of these jobs. Plugin class name keys have numeric suffixes (`.1` in this example). The nuberic
+suffix specifies the order at which plugins are invoked. It should always start with `1` and be incremented by 1 without
+gaps.
+
+
 ## How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
 
