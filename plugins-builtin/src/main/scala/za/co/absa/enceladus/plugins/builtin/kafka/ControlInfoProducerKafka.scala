@@ -32,7 +32,7 @@ import scala.util.control.NonFatal
 class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) extends ControlInfoProducer {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  private val kafkaProducer = getKafkaProducer()
+  private val kafkaProducer = getKafkaProducer
 
   /**
    * Sends control info measurements to a Kafka topic.
@@ -60,7 +60,7 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
     }
   }
 
-  private def getKafkaProducer(): KafkaProducer[GenericRecord, GenericRecord] = {
+  private def getKafkaProducer: KafkaProducer[GenericRecord, GenericRecord] = {
     val props = new Properties()
 
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConnectionParams.bootstrapServers)

@@ -19,8 +19,11 @@ import com.typesafe.config.Config
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.plugins.api.control.{ControlMetricsPlugin, ControlMetricsPluginFactory}
 
+/**
+ * Implementation of a plugin that sends control information to a Kafka topic when
+ * a checkpoint is created or when run status is changed.
+ */
 class KafkaInfoPlugin(producer: ControlInfoProducer) extends ControlMetricsPlugin {
-
   override def onCheckpoint(measurements: ControlMeasure, params: Map[String, String]): Unit = {
     val dceControlInfo = DceControlInfo(measurements,
       params("datasetName"),
@@ -33,6 +36,10 @@ class KafkaInfoPlugin(producer: ControlInfoProducer) extends ControlMetricsPlugi
   }
 }
 
+/**
+ * Implementation of a plugin factory that creates the above plugin based on configuration passed from
+ * Enceladus Spark application.
+ */
 object KafkaInfoPlugin extends ControlMetricsPluginFactory {
   val ClientIdKey = "kafka.info.metrics.client.id"
   val ControlMetricsKafkaTopicKey = "kafka.info.metrics.topic.name"
