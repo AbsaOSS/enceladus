@@ -17,6 +17,9 @@ package za.co.absa.enceladus.plugins.builtin.kafka
 
 import com.typesafe.config.Config
 
+/**
+ * This case class contains parameters required to create a Kafka Producer.
+ */
 case class KafkaConnectionParams(
                                   bootstrapServers: String,
                                   schemaRegistryUrl: String,

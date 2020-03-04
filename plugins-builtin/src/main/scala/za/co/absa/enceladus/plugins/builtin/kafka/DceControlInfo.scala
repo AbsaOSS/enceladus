@@ -17,6 +17,10 @@ package za.co.absa.enceladus.plugins.builtin.kafka
 
 import za.co.absa.atum.model.ControlMeasure
 
+/**
+ * This case class contains information that is needed to pass to data quality Kafka topics.
+ * Note: DCE means Dynamic Conformance Engine.
+ */
 case class DceControlInfo(controlMeasure: ControlMeasure,
                           datasetName: String,
                           datasetVersion: Int,
