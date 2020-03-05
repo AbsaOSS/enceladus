@@ -21,8 +21,8 @@ package za.co.absa.enceladus.migrations.continuous
   *
   * It is used for a conflict resolution when doing a continuous migration.
   * A conflict happens when an entity from the old version of the database has an object id that does not exist
-  * in the new version of the database, but the ‘name - version’ pair of the entity already exists.
-  * Indexes should not allow for ‘name - version’ duplicates to be created.
+  * in the new version of the database, but the 'name - version' pair of the entity already exists.
+  * Indexes should not allow for 'name - version' duplicates to be created.
   *
   * * When a conflict happens a new version of the imported entity is created and the mapping between the entity
   *   in the old database and the new one is created.

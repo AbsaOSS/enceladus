@@ -284,7 +284,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     IOUtils.toString(getClass.getResourceAsStream(name), "UTF-8")
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
-    if (actualSchema != expectedSchema) {
+    if ( fixLineEnding(actualSchema) != fixLineEnding(expectedSchema)) {
       logger.error("EXPECTED:")
       logger.error(expectedSchema)
       logger.error("ACTUAL:")
@@ -294,7 +294,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
   }
 
   private def assertResults(actualResults: String, expectedResults: String): Unit = {
-    if (!expectedResults.startsWith(actualResults)) {
+    if (!fixLineEnding(expectedResults).startsWith(fixLineEnding(actualResults))) {
       logger.error("EXPECTED:")
       logger.error(expectedResults)
       logger.error("ACTUAL:")
@@ -302,5 +302,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
       fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
     }
   }
+
+  private def fixLineEnding(s: String): String = s.replace("\r\n", "\n")
 
 }
