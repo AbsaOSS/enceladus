@@ -151,8 +151,8 @@
         <scopt.version>3.7.0</scopt.version>
         <kafka.spark.version>0-10</kafka.spark.version>
         <abris.version>2.1.0</abris.version>
-        <spring.version>2.2.2.RELEASE</spring.version>
-        <spring.ldap.version>5.2.1.RELEASE</spring.ldap.version>
+        <spring.version>2.0.0.RELEASE</spring.version>
+        <spring.ldap.version>5.0.14.RELEASE</spring.ldap.version>
         <spring.kerberos.version>1.0.1.RELEASE</spring.kerberos.version>
         <jjwt.version>0.10.7</jjwt.version>
         <mongo.scala.driver.version>2.7.0</mongo.scala.driver.version>
