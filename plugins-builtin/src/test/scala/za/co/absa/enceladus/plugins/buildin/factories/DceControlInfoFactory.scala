@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.plugins.buildin.factories
 
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, Measurement}
-import za.co.absa.enceladus.plugins.builtin.kafka.DceControlInfo
+import za.co.absa.enceladus.plugins.builtin.controlinfo.DceControlInfo
 
 object DceControlInfoFactory {
 
@@ -51,7 +51,7 @@ object DceControlInfoFactory {
                              reportVersion: Int = 1,
                              runStatus: String = "running")
   : DceControlInfo = {
-    DceControlInfo(controlMeasure, datasetName, datasetVersion, reportDate, reportVersion, runStatus)
+    DceControlInfo(datasetName, datasetVersion, reportDate, reportVersion, runStatus, controlMeasure)
   }
 
 }

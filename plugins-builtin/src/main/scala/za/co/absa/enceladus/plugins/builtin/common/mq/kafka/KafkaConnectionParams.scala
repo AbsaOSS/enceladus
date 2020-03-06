@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.kafka
+package za.co.absa.enceladus.plugins.builtin.common.mq.kafka
 
 import com.typesafe.config.Config
 

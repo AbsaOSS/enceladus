@@ -101,6 +101,9 @@
             <id>openui5-absa</id>
             <name>OpenUI5-Absa</name>
             <url>https://dl.bintray.com/absa/openui5</url>
+            <releases>
+                <updatePolicy>never</updatePolicy>
+            </releases>
         </repository>
         <repository>
             <id>confluent</id>

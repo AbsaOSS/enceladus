@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.kafka
+package za.co.absa.enceladus.plugins.builtin.controlinfo
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}

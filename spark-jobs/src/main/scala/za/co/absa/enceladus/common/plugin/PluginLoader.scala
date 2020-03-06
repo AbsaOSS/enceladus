@@ -46,13 +46,10 @@ class PluginLoader[+A <: Plugin:ClassTag:universe.TypeTag] {
       val key = s"$configKeyPrefix.$i"
       val factoryName = config.getString(key)
       log.info(s"Going to load a plugin factory for configuration: '$key'. Factory name: $factoryName")
-      val plugin = buildPlugin(factoryName, config)
-      if (plugin == null) {
-        log.error(s"A NULL is returned when building a plugin: '$key'. Factory name: $factoryName")
-      } else {
-        plugins += plugin
+      buildPlugin(factoryName, config) match {
+        case None => log.warn(s"A NULL is returned when building a plugin: '$key'. Factory name: $factoryName")
+        case Some(plugin) => plugins += plugin
       }
-
       i += 1
     }
     plugins
@@ -60,10 +57,10 @@ class PluginLoader[+A <: Plugin:ClassTag:universe.TypeTag] {
 
   @throws[IllegalStateException]
   @throws[IllegalArgumentException]
-  private def buildPlugin(factoryName: String, config: Config): A = {
+  private def buildPlugin(factoryName: String, config: Config): Option[A] = {
     val factory = ClassLoaderUtils.loadSingletonClassOfType[PluginFactory[A]](factoryName)
     try {
-      factory.apply(config)
+      Option(factory.apply(config))
     } catch {
       case NonFatal(ex) => throw new IllegalStateException(s"Unable to build a plugin using its factory: $factoryName", ex)
     }

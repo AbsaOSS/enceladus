@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.kafka
+package za.co.absa.enceladus.plugins.builtin.common.mq.kafka
 
 import com.typesafe.config.Config
 
@@ -37,7 +37,7 @@ object KafkaSecurityParams {
    * @return An instance of Kafka security parameters.
    */
   def fromConfig(conf: Config): Option[KafkaSecurityParams] = {
-    getOptionConf(conf, SaslMechanismKey).map { securityProtocol =>
+    getOptionConf(conf, SecurityProtocolKey).map { securityProtocol =>
       KafkaSecurityParams(securityProtocol,
         getOptionConf(conf, SaslMechanismKey))
     }
