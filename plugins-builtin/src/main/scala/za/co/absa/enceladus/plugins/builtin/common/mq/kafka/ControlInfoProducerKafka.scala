@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.kafka
+package za.co.absa.enceladus.plugins.builtin.common.mq.kafka
 
 import java.util.Properties
 
@@ -22,6 +22,8 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.slf4j.LoggerFactory
+import za.co.absa.enceladus.plugins.builtin.common.mq.ControlInfoProducer
+import za.co.absa.enceladus.plugins.builtin.controlinfo.{ControlInfoAvroSerializer, DceControlInfo}
 
 import scala.util.control.NonFatal
 

@@ -13,17 +13,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.kafka
+package za.co.absa.enceladus.plugins.builtin.controlinfo
+
+import za.co.absa.atum.model.ControlMeasure
 
 /**
- * Base interface for control info metrics (aka INFO file) producer for messaging queues.
+ * This case class contains information that is needed to pass to data quality Kafka topics.
+ * Note: DCE means Dynamic Conformance Engine.
  */
-trait ControlInfoProducer {
-
-  /**
-   * Send control metrics to a messaging queue.
-   *
-   * @param controlInfo Control info metrics to send.
-   */
-  def send(controlInfo: DceControlInfo): Unit
-}
+case class DceControlInfo(datasetName: String,
+                          datasetVersion: Int,
+                          reportDate: String,
+                          reportVersion: Int,
+                          runStatus: String,
+                          controlMeasure: ControlMeasure)

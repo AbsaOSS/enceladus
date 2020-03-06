@@ -15,7 +15,8 @@
 
 package za.co.absa.enceladus.plugins.buildin.kafka.dummy
 
-import za.co.absa.enceladus.plugins.builtin.kafka.{ControlInfoProducer, DceControlInfo}
+import za.co.absa.enceladus.plugins.builtin.common.mq.ControlInfoProducer
+import za.co.absa.enceladus.plugins.builtin.controlinfo.DceControlInfo
 
 class DummyControlInfoProducer extends ControlInfoProducer {
 

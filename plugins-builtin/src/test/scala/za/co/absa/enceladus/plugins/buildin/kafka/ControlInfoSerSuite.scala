@@ -18,7 +18,7 @@ package za.co.absa.enceladus.plugins.buildin.kafka
 import org.apache.commons.io.IOUtils
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.plugins.buildin.factories.DceControlInfoFactory
-import za.co.absa.enceladus.plugins.builtin.kafka.ControlInfoAvroSerializer
+import za.co.absa.enceladus.plugins.builtin.controlinfo.ControlInfoAvroSerializer
 
 class ControlInfoSerSuite extends FunSuite {
   test ("Control info key serialize to Avro") {
