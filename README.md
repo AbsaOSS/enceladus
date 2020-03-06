@@ -264,8 +264,8 @@ Control measurements are sent in `Avro` format and the schema is automatically r
 This plugin is a built-in one. In order to enable it, you need to provide the following configuration settings in
 `application.conf`:
 ```
-standardization.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.kafka.KafkaInfoPlugin
-conformance.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.kafka.KafkaInfoPlugin
+standardization.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin
+conformance.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin
 kafka.schema.registry.url:"http://127.0.0.1:8081"
 kafka.bootstrap.servers="127.0.0.1:9092"
 kafka.info.metrics.client.id="controlInfo"

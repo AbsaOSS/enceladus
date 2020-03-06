@@ -13,37 +13,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.controlinfo.kafka
+package za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka
 
 import com.typesafe.config.Config
-import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.plugins.api.control.{ControlMetricsPlugin, ControlMetricsPluginFactory}
-import za.co.absa.enceladus.plugins.builtin.common.mq.ControlInfoProducer
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{ControlInfoProducerKafka, KafkaConnectionParams}
-import za.co.absa.enceladus.plugins.builtin.controlinfo
-
-/**
- * Implementation of a plugin that sends control information to a Kafka topic when
- * a checkpoint is created or when run status is changed.
- */
-class KafkaInfoPlugin(producer: ControlInfoProducer) extends ControlMetricsPlugin {
-
-  val DatasetNameParam = "datasetName"
-  val DatasetVersionParam = "datasetVersion"
-  val ReportDateParam = "reportDate"
-  val ReportVersionParam = "reportVersion"
-  val RunStatusParam = "runStatus"
-
-  override def onCheckpoint(measurements: ControlMeasure, params: Map[String, String]): Unit = {
-    val dceControlInfo = controlinfo.DceControlInfo(params(DatasetNameParam),
-      params(DatasetVersionParam).toInt,
-      params(ReportDateParam),
-      params(ReportVersionParam).toInt,
-      params(RunStatusParam),
-      measurements)
-    producer.send(dceControlInfo)
-  }
-}
+import za.co.absa.enceladus.plugins.builtin.controlinfo.mq.ControlInfoSenderPlugin
 
 /**
  * Implementation of a plugin factory that creates the above plugin based on configuration passed from
@@ -56,6 +31,6 @@ object KafkaInfoPlugin extends ControlMetricsPluginFactory {
   override def apply(config: Config): ControlMetricsPlugin = {
     val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ControlMetricsKafkaTopicKey)
     val producer = new ControlInfoProducerKafka(connectionParams)
-    new KafkaInfoPlugin(producer)
+    new ControlInfoSenderPlugin(producer)
   }
 }
