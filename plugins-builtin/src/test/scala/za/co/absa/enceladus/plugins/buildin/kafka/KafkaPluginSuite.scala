@@ -20,15 +20,15 @@ import org.scalatest.FunSuite
 import za.co.absa.enceladus.plugins.buildin.factories.DceControlInfoFactory
 import za.co.absa.enceladus.plugins.buildin.kafka.dummy.DummyControlInfoProducer
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams}
-import za.co.absa.enceladus.plugins.builtin.controlinfo.kafka.KafkaInfoPlugin
+import za.co.absa.enceladus.plugins.builtin.controlinfo.mq.ControlInfoSenderPlugin
 
-import collection.JavaConverters._
+import scala.collection.JavaConverters._
 
 class KafkaPluginSuite extends FunSuite {
   test("Test Kafka plugin sends control measurements") {
     val producer = new DummyControlInfoProducer
     val dceControlInfo = DceControlInfoFactory.getDummyDceControlInfo()
-    val kafkaPlugin = new KafkaInfoPlugin(producer)
+    val kafkaPlugin = new ControlInfoSenderPlugin(producer)
 
     kafkaPlugin.onCheckpoint(dceControlInfo.controlMeasure, Map[String, String](
       "datasetName" -> dceControlInfo.datasetName,
