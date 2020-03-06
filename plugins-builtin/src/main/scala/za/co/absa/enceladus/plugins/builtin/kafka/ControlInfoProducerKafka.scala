@@ -32,7 +32,22 @@ import scala.util.control.NonFatal
 class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) extends ControlInfoProducer {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  private val kafkaProducer = getKafkaProducer
+  private val kafkaProducer: KafkaProducer[GenericRecord, GenericRecord] = {
+    val props = new Properties()
+
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConnectionParams.bootstrapServers)
+    props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, kafkaConnectionParams.schemaRegistryUrl)
+    props.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConnectionParams.clientId)
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
+
+    kafkaConnectionParams.security.foreach(sec => {
+      props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, sec.securityProtocol)
+      sec.saslMechanism.foreach(saslMechanism => props.put("sasl.mechanism", saslMechanism))
+    })
+
+    new KafkaProducer[GenericRecord, GenericRecord](props)
+  }
 
   /**
    * Sends control info measurements to a Kafka topic.
@@ -58,23 +73,6 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
     } catch {
       case NonFatal(ex) => logger.error("Error sending control info metrics to Kafka.", ex)
     }
-  }
-
-  private def getKafkaProducer: KafkaProducer[GenericRecord, GenericRecord] = {
-    val props = new Properties()
-
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConnectionParams.bootstrapServers)
-    props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, kafkaConnectionParams.schemaRegistryUrl)
-    props.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConnectionParams.clientId)
-    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
-    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
-
-    kafkaConnectionParams.security.foreach(sec => {
-      props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, sec.securityProtocol)
-      sec.saslMechanism.foreach(saslMechanism => props.put("sasl.mechanism", saslMechanism))
-    })
-
-    new KafkaProducer[GenericRecord, GenericRecord](props)
   }
 
 }

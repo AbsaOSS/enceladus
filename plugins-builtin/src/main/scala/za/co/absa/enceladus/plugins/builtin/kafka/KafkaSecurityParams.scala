@@ -37,11 +37,9 @@ object KafkaSecurityParams {
    * @return An instance of Kafka security parameters.
    */
   def fromConfig(conf: Config): Option[KafkaSecurityParams] = {
-    if (conf.hasPath(SecurityProtocolKey)) {
-      Option(KafkaSecurityParams(conf.getString(SecurityProtocolKey),
-        getOptionConf(conf, SaslMechanismKey)))
-    } else {
-      None
+    getOptionConf(conf, SaslMechanismKey).map { securityProtocol =>
+      KafkaSecurityParams(securityProtocol,
+        getOptionConf(conf, SaslMechanismKey))
     }
   }
 
