@@ -33,7 +33,7 @@ object KafkaConnectionParams {
   val SchemaRegistryUrlKey = "kafka.schema.registry.url"
 
   /**
-   * Creates an instance of connection parameters base on the provided configuration.
+   * Creates an instance of connection parameters based on the provided configuration.
    * The client Id and the topic name keys are required to be provided explicitly.
    * This is since we can have other plugins that use Kafka and they
    * can reuse Kafka connection endpoints while having their own

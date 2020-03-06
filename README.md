@@ -235,26 +235,26 @@ The list of additional options available for running Conformance:
 ## Plugins
 
 Standardization and Conformance support plugins that allow executing additional actions any time a checkpoint is created
-or job status changes. In order to write a plugin to Enceladus you need to implement `ControlMetricsPlugin` interfaces and
+or job status changes. In order to write a plugin to Enceladus you need to implement the `ControlMetricsPlugin` and
 `ControlMetricsPluginFactory` interfaces.
 
-The way it works is like this. A plugin factory (a class that overrides `ControlMetricsPluginFactory`) overrides the
+The way it works is like this. A plugin factory (a class that implements `ControlMetricsPluginFactory`) overrides the
 apply method. Standardization and Conformance will invoke this method when job starts and provides a configuration that
 includes all settings from `application.conf` plus settings passed to JVM via `spark-submit`. The factory then
 instantiates a plugin and returns it to the caller. If the factory throws an exception the Spark application
 (Standardization or Conformance) will be stopped. If the factory returns `null` an error will be logged by the application,
 but it will continue to run.
 
-An Enceladus plugin is invoked each time a job status changes (e.g. from `running` to `succeeded`) or when a checkpoint
-is created. Checkpoint is an Atum (https://github.com/AbsaOSS/atum) concept to ensure accuracy and completeness of data.
-A checkpoint is created at the end of Standardization and Conformance, and also after a conformance rule is applied if
-the rule is configured to create control measurements. At this point `onCheckpoint()` callback passing an instance of
-control measurements is called. It is up to the plugin to decide what to do at this point. All exceptions thrown from
-a plugin will be logged, but the spark application will continue to run.
+Enceladus plugins are invoked each time a job status changes (e.g. from `running` to `succeeded`) or when a checkpoint
+is reached. A `Checkpoint` is an Atum (https://github.com/AbsaOSS/atum) concept to ensure accuracy and completeness of data.
+A checkpoint is created at the end of Standardization and Conformance, and after each conformance rule
+configured to create control measurements. At this point the `onCheckpoint()` callback is called with an instance of control
+measurements. It is up to the plugin to decide what to do at this point. All exceptions thrown from a plugin will be
+logged, but the spark application will continue to run.
 
 A plugin can be externally developed. In this case, in order to use the plugin a plugin jar needs to be supplied to
-`spark-submit` using `--jars` option. Also, plugins can be built-in. In order to use a built-in plugin you need to
-enable them in `application.conf` or pass configuration information directly to `spark-submit`.
+`spark-submit` using the `--jars` option. You can also use built-in plugins by enabling them in `application.conf` 
+or passing configuration information directly to `spark-submit`.
 
 ### Control Info Kafka Plugin
 The purpose of this plugin is to send control measurements to a Kafka topic each time a checkpoint is created or job
