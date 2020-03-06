@@ -303,6 +303,14 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     }
   }
 
+  /**
+   * When the project is git cloned on Windows all text files might end up having CR LF line ending.
+   * (This depends on git settings)
+   * In order to make the tests line ending agnostic we need to replace CR LF with Unix line endings (LF).
+   *
+   * @param s A multiline string.
+   * @return The string with line endings fixed.
+   * */
   private def fixLineEnding(s: String): String = s.replace("\r\n", "\n")
 
 }
