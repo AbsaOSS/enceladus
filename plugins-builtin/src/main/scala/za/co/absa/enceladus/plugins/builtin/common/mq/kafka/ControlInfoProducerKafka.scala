@@ -77,4 +77,11 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
     }
   }
 
+  /**
+   * This method is called when the Kafka producer is no longer needed.
+   */
+  override def close(): Unit = {
+    kafkaProducer.flush()
+    kafkaProducer.close()
+  }
 }

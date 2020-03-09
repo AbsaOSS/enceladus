@@ -40,4 +40,5 @@ class ControlInfoSenderPlugin(producer: ControlInfoProducer) extends ControlMetr
       measurements)
     producer.send(dceControlInfo)
   }
+  override def close(): Unit = producer.close()
 }

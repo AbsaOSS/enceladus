@@ -139,6 +139,10 @@ class EventListenerMenas(config: Config,
     }
   }
 
+  def close(): Unit = {
+    controlMetricPlugins.foreach(plugin => plugin.close())
+  }
+
   private def needToSendStatusChange(oldStatus: RunStatus, newStatus: RunStatus): Boolean = {
     // Only send an error status if it hasn't been done so already or if the previous error's failed status doesn't have error details
     if (oldStatus.status == RunState.failed && oldStatus.error.isEmpty && newStatus.status == RunState.failed) {

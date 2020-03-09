@@ -28,4 +28,9 @@ trait ControlInfoProducer {
    * @param controlInfo Control info metrics to send.
    */
   def send(controlInfo: DceControlInfo): Unit
+
+  /**
+   * This method should be called when the producer is no longer needed.
+   */
+  def close(): Unit
 }

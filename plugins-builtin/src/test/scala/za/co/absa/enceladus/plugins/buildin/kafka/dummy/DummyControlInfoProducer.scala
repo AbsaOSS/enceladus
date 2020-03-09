@@ -25,4 +25,5 @@ class DummyControlInfoProducer extends ControlInfoProducer {
   override def send(controlInfo: DceControlInfo): Unit = {
     lastControlInfoSent = controlInfo
   }
+  override def close(): Unit = {}
 }
