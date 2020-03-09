@@ -17,9 +17,9 @@ Built-in Plugins
 What are built-in plugins
 -------------------------
 
-Built-in plugins provide some additional but relatively elementary functionality. And also serve as example how plugins 
+Built-in plugins provide some additional but relatively elementary functionality. And also serve as an example how plugins 
 are written. Unlike externally created plugins they are automatically included in the `SparkJobs.jar` file and therefore 
-doesn't need to be included using the `--jars` option.
+don't need to be included using the `--jars` option.
 
 Existing built-in plugins
 -------------------------
@@ -27,7 +27,7 @@ Existing built-in plugins
 ### KafkaInfoPlugin
 
 The purpose of this plugin is to send control measurements to a Kafka topic each time a checkpoint is reached or job
-status is changed. This can help monitoring production issues and react on errors as quickly as possible.
+status is changed. This can help to monitor production issues and react to errors as quickly as possible.
 Control measurements are sent in `Avro` format and the schema is automatically registered in a schema registry.
 
 This plugin is a built-in one. In order to enable it, you need to provide the following configuration settings in
