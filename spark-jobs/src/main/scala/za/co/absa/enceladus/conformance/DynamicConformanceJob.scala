@@ -81,7 +81,7 @@ object DynamicConformanceJob {
         s"Path ${pathCfg.publishPath} already exists. Increment the run version, or delete ${pathCfg.publishPath}")
     }
 
-    initFunctionalExtensions()
+    initFunctionalExtensions(reportVersion)
     val performance = initPerformanceMeasurer(pathCfg.stdPath)
 
     // load data for input and mapping tables
@@ -190,7 +190,7 @@ object DynamicConformanceJob {
     newVersion
   }
 
-  private def initFunctionalExtensions()(implicit spark: SparkSession, dao: MenasDAO, cmd: ConfCmdConfig): Unit = {
+  private def initFunctionalExtensions(reportVersion: Int)(implicit spark: SparkSession, dao: MenasDAO, cmd: ConfCmdConfig): Unit = {
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
@@ -206,7 +206,7 @@ object DynamicConformanceJob {
     cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
 
     // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas()
+    MenasPlugin.enableMenas(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate, reportVersion)
   }
 
   private def initPerformanceMeasurer(stdPath: String)

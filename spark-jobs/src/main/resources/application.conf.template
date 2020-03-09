@@ -44,3 +44,13 @@ conformance.autoclean.standardized.hdfs.folder=false
 
 # system-wide time zone
 timezone="UTC"
+
+# Control plugins
+# Several plugins can be used. In this case the last element of the key needs to be incremented for each plugin.
+#standardization.plugin.control.metrics.1=za.co.absa.enceladus.KafkaPluginFactory
+#conformance.plugin.control.metrics.1=za.co.absa.enceladus.KafkaPluginFactory
+
+# Postprocessing plugins
+# Several plugins can be chained. In this case the last element of the key needs to be incremented for each plugin.
+#standardization.plugin.postprocessor.1=za.co.absa.enceladus.KafkaErrColumnsPluginFactory
+#conformance.plugin.postprocessor.1=za.co.absa.enceladus.KafkaErrColumnsPluginFactory
