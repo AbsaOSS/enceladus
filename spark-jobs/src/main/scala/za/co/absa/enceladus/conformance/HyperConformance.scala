@@ -18,7 +18,9 @@ package za.co.absa.enceladus.conformance
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.enceladus.common.Constants
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -98,6 +100,8 @@ object HyperConformance extends StreamTransformerFactory {
   val reportDateKey = "transformer.hyperconformance.report.date"
   val reportVersionKey = "transformer.hyperconformance.report.version"
 
+  val defaultReportVersion = 1
+
   @throws[IllegalArgumentException]
   override def apply(conf: Configuration): StreamTransformer = {
     log.info("Building HyperConformance")
@@ -109,8 +113,8 @@ object HyperConformance extends StreamTransformerFactory {
     implicit val cmd: ConfCmdConfig = ConfCmdConfig(
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
-      reportDate = conf.getString(reportDateKey),
-      reportVersion = Option(conf.getInt(reportVersionKey)),
+      reportDate = getReportDate(conf),
+      reportVersion = Option(1),
       menasCredentialsFactory = menasCredentialsFactory,
       performanceMetricsFile = None,
       publishPathOverride = None,
@@ -135,7 +139,7 @@ object HyperConformance extends StreamTransformerFactory {
 
   @throws[IllegalArgumentException]
   def validateConfiguration(conf: Configuration): Unit = {
-    val mandatoryKeys = List(menasUriKey, datasetNameKey, datasetVersionKey, reportDateKey, reportVersionKey)
+    val mandatoryKeys = List(menasUriKey, datasetNameKey, datasetVersionKey)
 
     val missingKeys = mandatoryKeys.filterNot(key => conf.containsKey(key))
 
@@ -154,6 +158,22 @@ object HyperConformance extends StreamTransformerFactory {
       case (true, false)  => new MenasPlainCredentialsFactory(conf.getString(menasCredentialsFileKey))
       case (false, true)  => new MenasKerberosCredentialsFactory(conf.getString(menasCredentialsFileKey))
       case (true, true)   => throw new IllegalArgumentException("Either a credentials file or a keytab should be specified, but not both.")
+    }
+  }
+
+  private def getReportDate(conf: Configuration): String = {
+    if (conf.containsKey(reportDateKey)) {
+      conf.getString(reportDateKey)
+    } else {
+      DateTime.now().toLocalDate.toString(Constants.ReportDateFormat)
+    }
+  }
+
+  private def getReportVersion(conf: Configuration): Int = {
+    if (conf.containsKey(reportVersionKey)) {
+      conf.getInt(reportVersionKey)
+    } else {
+      defaultReportVersion
     }
   }
 
