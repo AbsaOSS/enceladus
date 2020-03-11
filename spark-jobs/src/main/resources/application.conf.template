@@ -54,3 +54,17 @@ timezone="UTC"
 # Several plugins can be chained. In this case the last element of the key needs to be incremented for each plugin.
 #standardization.plugin.postprocessor.1=za.co.absa.enceladus.KafkaErrColumnsPluginFactory
 #conformance.plugin.postprocessor.1=za.co.absa.enceladus.KafkaErrColumnsPluginFactory
+
+# Built-in plugins
+
+# 1. Push Control Info measurements to a Kafka topic
+# (uncomment to enable)
+#standardization.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin
+#conformance.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin
+#kafka.schema.registry.url:"http://127.0.0.1:8081"
+#kafka.bootstrap.servers="127.0.0.1:9092"
+#kafka.info.metrics.client.id="controlInfo"
+#kafka.info.metrics.topic.name="control.info"
+# Optional security settings
+#kafka.security.protocol="SASL_SSL"
+#kafka.sasl.mechanism="GSSAPI"

@@ -13,13 +13,24 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common.plugin.dummy
+package za.co.absa.enceladus.plugins.builtin.common.mq
 
-import za.co.absa.atum.model.ControlMeasure
-import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
+import za.co.absa.enceladus.plugins.builtin.controlinfo.DceControlInfo
 
-class DummyControlMetricsPlugin2(dummyParam: String) extends ControlMetricsPlugin {
-  def getParam: String = dummyParam
-  override def onCheckpoint(measurements: ControlMeasure, params: Map[String, String]): Unit = {}
-  override def close(): Unit = {}
+/**
+ * Base interface for control info metrics (aka INFO file) producer for messaging queues.
+ */
+trait ControlInfoProducer {
+
+  /**
+   * Send control metrics to a messaging queue.
+   *
+   * @param controlInfo Control info metrics to send.
+   */
+  def send(controlInfo: DceControlInfo): Unit
+
+  /**
+   * This method should be called when the producer is no longer needed.
+   */
+  def close(): Unit
 }

@@ -13,13 +13,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common.plugin.dummy
+package za.co.absa.enceladus.plugins.builtin.controlinfo
 
 import za.co.absa.atum.model.ControlMeasure
-import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
 
-class DummyControlMetricsPlugin2(dummyParam: String) extends ControlMetricsPlugin {
-  def getParam: String = dummyParam
-  override def onCheckpoint(measurements: ControlMeasure, params: Map[String, String]): Unit = {}
-  override def close(): Unit = {}
-}
+/**
+ * This case class contains information that is needed to pass to data quality Kafka topics.
+ * Note: DCE means Dynamic Conformance Engine.
+ */
+case class DceControlInfo(datasetName: String,
+                          datasetVersion: Int,
+                          reportDate: String,
+                          reportVersion: Int,
+                          runStatus: String,
+                          controlMeasure: ControlMeasure)

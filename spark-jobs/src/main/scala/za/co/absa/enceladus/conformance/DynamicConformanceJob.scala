@@ -107,6 +107,7 @@ object DynamicConformanceJob {
           log.info(s"Menas UI Run URL: $menasBaseUrl/#/runs/$name/$version/$runNumber")
         }
       }
+      MenasPlugin.close()
     }
   }
 

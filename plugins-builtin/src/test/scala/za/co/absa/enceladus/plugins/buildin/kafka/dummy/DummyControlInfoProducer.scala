@@ -13,13 +13,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common.plugin.dummy
+package za.co.absa.enceladus.plugins.buildin.kafka.dummy
 
-import za.co.absa.atum.model.ControlMeasure
-import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
+import za.co.absa.enceladus.plugins.builtin.common.mq.ControlInfoProducer
+import za.co.absa.enceladus.plugins.builtin.controlinfo.DceControlInfo
 
-class DummyControlMetricsPlugin2(dummyParam: String) extends ControlMetricsPlugin {
-  def getParam: String = dummyParam
-  override def onCheckpoint(measurements: ControlMeasure, params: Map[String, String]): Unit = {}
+class DummyControlInfoProducer extends ControlInfoProducer {
+
+  var lastControlInfoSent: DceControlInfo = _
+
+  override def send(controlInfo: DceControlInfo): Unit = {
+    lastControlInfoSent = controlInfo
+  }
   override def close(): Unit = {}
 }

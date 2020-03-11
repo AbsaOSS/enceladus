@@ -125,6 +125,7 @@ object StandardizationJob {
           log.info(s"Menas UI Run URL: $menasBaseUrl/#/runs/$name/$version/$runNumber")
         }
       }
+      MenasPlugin.close()
     }
   }
 

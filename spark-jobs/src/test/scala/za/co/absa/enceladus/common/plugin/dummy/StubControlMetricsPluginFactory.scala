@@ -15,11 +15,9 @@
 
 package za.co.absa.enceladus.common.plugin.dummy
 
-import za.co.absa.atum.model.ControlMeasure
-import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
+import com.typesafe.config.Config
+import za.co.absa.enceladus.plugins.api.control.{ControlMetricsPlugin, ControlMetricsPluginFactory}
 
-class DummyControlMetricsPlugin2(dummyParam: String) extends ControlMetricsPlugin {
-  def getParam: String = dummyParam
-  override def onCheckpoint(measurements: ControlMeasure, params: Map[String, String]): Unit = {}
-  override def close(): Unit = {}
+object StubControlMetricsPluginFactory extends ControlMetricsPluginFactory {
+  override def apply(config: Config): ControlMetricsPlugin = null
 }

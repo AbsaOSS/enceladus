@@ -16,6 +16,8 @@ ___
     - [Conformance](#conformance)
 - [How to build](#how-to-build)
 - [How to run](#how-to-run)
+- [Plugins](#plugins)
+    - [Built-in Plugins](#built-in-plugins)
 - [How to contribute](#how-to-contribute)
 - [Documentation](#documentation)
 <!-- tocstop -->
@@ -231,6 +233,17 @@ The list of additional options available for running Conformance:
 | --experimental-mapping-rule **true/false** | If `true`, the experimental optimized mapping rule implementation is used. The default value is build-specific and is set in 'application.properties'. |
 | --catalyst-workaround **true/false**       | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. It is `true` by default. Turn this off only is you encounter timing freeze issues when running Conformance. | 
 | --autoclean-std-folder **true/false**      | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job. |
+
+## Plugins
+
+Standardization and Conformance support plugins that allow executing additional actions at certain times of the computation.
+To learn how plugins work, when and how their logic is executed, please 
+refer to the [documentation](https://absaoss.github.io/enceladus/docs/2.0.0/plugins).
+
+### Built-in Plugins
+The purpose of this module is to provide some plugins of additional but relatively elementary functionality. And also to
+serve as an example how plugins are written: 
+[detailed description](https://absaoss.github.io/enceladus/docs/2.0.0/plugins-built-in)  
 
 ## How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
