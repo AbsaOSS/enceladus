@@ -140,7 +140,15 @@ class EventListenerMenas(config: Config,
   }
 
   def close(): Unit = {
-    controlMetricPlugins.foreach(plugin => plugin.close())
+    controlMetricPlugins.foreach(plugin => {
+      try {
+        plugin.close()
+      } catch {
+        case NonFatal(ex) =>
+          val className = plugin.getClass.getName
+          log.error(s"A plugin has thrown an exception on close: $className", ex)
+      }
+    })
   }
 
   private def needToSendStatusChange(oldStatus: RunStatus, newStatus: RunStatus): Boolean = {
