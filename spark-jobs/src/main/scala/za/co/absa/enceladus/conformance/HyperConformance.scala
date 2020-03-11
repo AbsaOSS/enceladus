@@ -15,12 +15,13 @@
 
 package za.co.absa.enceladus.conformance
 
+import java.text.SimpleDateFormat
+import java.util.Date
+
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.enceladus.common.Constants
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -100,7 +101,7 @@ object HyperConformance extends StreamTransformerFactory {
   val reportDateKey = "transformer.hyperconformance.report.date"
   val reportVersionKey = "transformer.hyperconformance.report.version"
 
-  val defaultReportVersion = 1
+  private val defaultReportVersion = 1
 
   @throws[IllegalArgumentException]
   override def apply(conf: Configuration): StreamTransformer = {
@@ -114,7 +115,7 @@ object HyperConformance extends StreamTransformerFactory {
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
       reportDate = getReportDate(conf),
-      reportVersion = Option(1),
+      reportVersion = Option(getReportVersion(conf)),
       menasCredentialsFactory = menasCredentialsFactory,
       performanceMetricsFile = None,
       publishPathOverride = None,
@@ -165,7 +166,7 @@ object HyperConformance extends StreamTransformerFactory {
     if (conf.containsKey(reportDateKey)) {
       conf.getString(reportDateKey)
     } else {
-      DateTime.now().toLocalDate.toString(Constants.ReportDateFormat)
+      new SimpleDateFormat(ReportDateFormat).format(new Date())
     }
   }
 
