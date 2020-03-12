@@ -553,7 +553,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
 
           assertOk(response)
 
-          val body = response.getBody
+          val body = response.getBody.replace("\r\n", "\n") // this will make it work on Windows (CRLF->LF), too.
           val expected = """|{
                             |  "type" : "struct",
                             |  "fields" : [ {

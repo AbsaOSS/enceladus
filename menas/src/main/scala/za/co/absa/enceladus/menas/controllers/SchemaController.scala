@@ -126,7 +126,7 @@ class SchemaController @Autowired() (
     * @param structTypeJson A StructType JSON string.
     * @return The parsed schema as an instance of [[StructType]].
     */
-  private def parseStructType(structTypeJson: String): StructType = {
+  private[controllers] def parseStructType(structTypeJson: String): StructType = {
     try {
       sparkMenasConvertor.convertAnyToStructType(structTypeJson)
     } catch {
@@ -141,7 +141,7 @@ class SchemaController @Autowired() (
     * @param copybookContents A COBOL copybook contents.
     * @return The parsed schema as an instance of [[StructType]].
     */
-  private def parseCopybook(copybookContents: String): StructType = {
+  private[controllers] def parseCopybook(copybookContents: String): StructType = {
     try {
       val parsedSchema = CopybookParser.parseTree(copybookContents)
       val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
