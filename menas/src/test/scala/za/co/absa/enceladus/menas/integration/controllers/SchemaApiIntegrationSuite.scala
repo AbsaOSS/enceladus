@@ -718,6 +718,24 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           assert(actual.fields.length == 2)
         }
       }
+
+      "an avro schema has no errors" should {
+        "return a new version of the schema" in {
+          val schema = SchemaFactory.getDummySchema()
+          schemaFixture.add(schema)
+
+          val schemaParams = HashMap[String, Any] (
+            "name" -> schema.name, "version" -> schema.version, "format" -> "avro")
+          val responseUploaded = sendPostUploadFile[Schema](
+            s"$apiUrl/upload", "/test_data/schemas/avro/avroschema_json_ok.avsc", schemaParams)
+          assertCreated(responseUploaded)
+
+          val actual = responseUploaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 7)
+        }
+      }
     }
 
     "return 400" when {
@@ -754,6 +772,24 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
               assert(e.errorType == "schema_parsing")
               assert(e.schemaType == "struct")
               assert(body.message.contains("StructType serializer: Failed to convert the JSON string"))
+            case e => fail(s"Expected an instance of SchemaParsingError, got $e.")
+          }
+        }
+      }
+
+      "an avro-schema with a syntax error" should {
+        "return a response containing a schema parsing error encountered during avro schema parsing" in {
+          val schemaParams = HashMap[String, Any] ("version" -> 1, "name" -> "MySchema", "format" -> "avro")
+          val response = sendPostUploadFile[RestResponse](
+            s"$apiUrl/upload", "/test_data/schemas/avro/avroschema_json_bogus.avsc", schemaParams)
+          val body = response.getBody
+
+          assertBadRequest(response)
+          body.error match {
+            case Some(e: SchemaParsingError) =>
+              assert(e.errorType == "schema_parsing")
+              assert(e.schemaType == "avro")
+              assert(body.message.contains("Record has no fields"))
             case e => fail(s"Expected an instance of SchemaParsingError, got $e.")
           }
         }
