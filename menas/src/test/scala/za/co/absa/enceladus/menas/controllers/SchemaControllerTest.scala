@@ -15,27 +15,29 @@
 
 package za.co.absa.enceladus.menas.controllers
 
-import org.apache.spark.sql.types.{DataTypes, StructField, StructType}
+import org.apache.avro.SchemaParseException
+import org.apache.spark.sql.types.{DataType, DataTypes, StructField, StructType}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Matchers, WordSpec}
-import za.co.absa.enceladus.menas.controllers.SchemaController.SchemaTypeStruct
+import org.scalatest.{Inside, Matchers, WordSpec}
+import za.co.absa.enceladus.menas.controllers.SchemaController._
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 
-class SchemaControllerTest extends WordSpec with Matchers with MockitoSugar {
+import scala.io.Source
+
+class SchemaControllerTest extends WordSpec with Matchers with MockitoSugar with Inside {
 
   val mockSchemaConvertor: SparkMenasSchemaConvertor = mock[SparkMenasSchemaConvertor]
-  val someStructType: StructType = StructType(Seq(StructField(name = "field1", dataType = DataTypes.IntegerType)))
+  val schemaController = new SchemaController(null, null, mockSchemaConvertor) // SUT
 
   "SchemaController" should {
     "parseStructType correctly" when {
       "menasSchemaConverter suceeds" in {
+        val someStructType: StructType = StructType(Seq(StructField(name = "field1", dataType = DataTypes.IntegerType)))
         Mockito.when(mockSchemaConvertor.convertAnyToStructType(any[String])).thenReturn(someStructType)
-
-        (new SchemaController(null, null, mockSchemaConvertor)
-          .parseStructType("some struct type def")) shouldBe someStructType
+        schemaController.parseStructType("some struct type def") shouldBe someStructType
       }
     }
 
@@ -45,10 +47,35 @@ class SchemaControllerTest extends WordSpec with Matchers with MockitoSugar {
         Mockito.when(mockSchemaConvertor.convertAnyToStructType(any[String])).thenThrow(someException)
 
         val caughtException = the[SchemaParsingException] thrownBy {
-          new SchemaController(null, null, mockSchemaConvertor).parseStructType("bad struct type def")
+          schemaController.parseStructType("bad struct type def")
         }
         caughtException shouldBe SchemaParsingException(SchemaTypeStruct, someException.getMessage, cause = someException)
       }
     }
   }
+
+  "parse avro schema to StructType" when {
+    "correct avsc file content is given" in {
+      val expectedJsonFormatSchema = Source.fromFile("src/test/resources/test_data/schemas/avro/equivalent-to-avroschema.json").mkString
+      val expectedStructType = DataType.fromJson(expectedJsonFormatSchema).asInstanceOf[StructType]
+
+      val schemaContent = Source.fromFile("src/test/resources/test_data/schemas/avro/avroschema_json_ok.avsc").mkString
+
+      schemaController.parseAvro(schemaContent) shouldBe expectedStructType
+    }
+  }
+
+  "throw SchemaParsingException at parseAvro" when {
+    "given unparsable avsc content" in {
+      val caughtException = the[SchemaParsingException] thrownBy {
+        schemaController.parseAvro("invalid avsc")
+      }
+
+      inside (caughtException) { case SchemaParsingException(SchemaTypeAvro, msg, _, _, _, cause) =>
+        msg should include ("expected a valid value")
+        cause shouldBe a [SchemaParseException]
+      }
+    }
+  }
+
 }

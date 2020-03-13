@@ -19,6 +19,8 @@ import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
 import javax.servlet.http.HttpServletResponse
+import org.apache.avro.{Schema => AvroSchema}
+import org.apache.spark.sql.avro.SchemaConverters
 import org.apache.spark.sql.types.StructType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -36,18 +38,21 @@ import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
 
+import scala.util.control.NonFatal
 
+// TODO: use enumeration instead to type-force the schema types?
 object SchemaController {
   val SchemaTypeStruct = "struct"
   val SchemaTypeCopybook = "copybook"
+  val SchemaTypeAvro = "avro"
 }
 
 @RestController
 @RequestMapping(Array("/api/schema"))
-class SchemaController @Autowired() (
-  schemaService:     SchemaService,
-  attachmentService: AttachmentService,
-  sparkMenasConvertor: SparkMenasSchemaConvertor)
+class SchemaController @Autowired()(
+                                     schemaService: SchemaService,
+                                     attachmentService: AttachmentService,
+                                     sparkMenasConvertor: SparkMenasSchemaConvertor)
   extends VersionedModelController(schemaService) {
 
   import SchemaController._
@@ -67,6 +72,7 @@ class SchemaController @Autowired() (
     val (sparkStruct, schemaType) = origFormat match {
       case Some(SchemaTypeStruct) | Some("") | None => (parseStructType(fileContent), SchemaTypeStruct)
       case Some(SchemaTypeCopybook) => (parseCopybook(fileContent), SchemaTypeCopybook)
+      case Some(SchemaTypeAvro) => (parseAvro(fileContent), SchemaTypeAvro)
       case Some(schemaType) =>
         throw SchemaFormatException(schemaType, s"'$schemaType' is not a recognized schema format. " +
           s"Menas currently supports: '$SchemaTypeStruct' and '$SchemaTypeCopybook'.")
@@ -115,17 +121,17 @@ class SchemaController @Autowired() (
 
         val sparkStruct = StructType(sparkMenasConvertor.convertMenasToSparkFields(schema.fields))
         if (pretty) sparkStruct.prettyJson else sparkStruct.json
-      case None         =>
+      case None =>
         throw notFound()
     }
   }
 
   /**
-    * Parses an StructType JSON file contents and converts it to Spark [[StructType]].
-    *
-    * @param structTypeJson A StructType JSON string.
-    * @return The parsed schema as an instance of [[StructType]].
-    */
+   * Parses an StructType JSON file contents and converts it to Spark [[StructType]].
+   *
+   * @param structTypeJson A StructType JSON string.
+   * @return The parsed schema as an instance of [[StructType]].
+   */
   private[controllers] def parseStructType(structTypeJson: String): StructType = {
     try {
       sparkMenasConvertor.convertAnyToStructType(structTypeJson)
@@ -136,12 +142,28 @@ class SchemaController @Autowired() (
   }
 
   /**
-    * Parses a COBOL copybook file contents and converts it to Spark [[StructType]].
-    *
-    * @param copybookContents A COBOL copybook contents.
-    * @return The parsed schema as an instance of [[StructType]].
-    */
-  private[controllers] def parseCopybook(copybookContents: String): StructType = {
+   * Parses an Avro file content and converts it to Spark [[StructType]].
+   *
+   * @param avroFileContent An Avro-schema JSON string.
+   * @return The parsed schema as an instance of [[StructType]].
+   */
+  private[controllers] def parseAvro(avroFileContent: String): StructType = {
+    try {
+      val schema = new AvroSchema.Parser().parse(avroFileContent)
+      SchemaConverters.toSqlType(schema).dataType.asInstanceOf[StructType]
+    } catch {
+      case NonFatal(e) =>
+        throw SchemaParsingException(SchemaTypeAvro, e.getMessage, cause = e)
+    }
+  }
+
+  /**
+   * Parses a COBOL copybook file contents and converts it to Spark [[StructType]].
+   *
+   * @param copybookContents A COBOL copybook contents.
+   * @return The parsed schema as an instance of [[StructType]].
+   */
+  private def parseCopybook(copybookContents: String): StructType = {
     try {
       val parsedSchema = CopybookParser.parseTree(copybookContents)
       val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
