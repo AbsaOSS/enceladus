@@ -157,7 +157,7 @@ object HyperConformance extends StreamTransformerFactory {
     (hasCredentialsFile, hasKeytab) match {
       case (false, false) => throw new IllegalArgumentException("No authentication method is specified.")
       case (true, false)  => new MenasPlainCredentialsFactory(conf.getString(menasCredentialsFileKey))
-      case (false, true)  => new MenasKerberosCredentialsFactory(conf.getString(menasCredentialsFileKey))
+      case (false, true)  => new MenasKerberosCredentialsFactory(conf.getString(menasAuthKeytabKey))
       case (true, true)   => throw new IllegalArgumentException("Either a credentials file or a keytab should be specified, but not both.")
     }
   }
