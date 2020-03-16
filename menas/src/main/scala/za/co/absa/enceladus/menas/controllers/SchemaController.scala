@@ -40,7 +40,7 @@ import za.co.absa.enceladus.model.menas._
 
 import scala.util.control.NonFatal
 
-// TODO: use enumeration instead to type-force the schema types?
+// TODO: use enumeration instead to type-force the schema types? #1228
 object SchemaController {
   val SchemaTypeStruct = "struct"
   val SchemaTypeCopybook = "copybook"
@@ -127,11 +127,11 @@ class SchemaController @Autowired()(
   }
 
   /**
-   * Parses an StructType JSON file contents and converts it to Spark [[StructType]].
-   *
-   * @param structTypeJson A StructType JSON string.
-   * @return The parsed schema as an instance of [[StructType]].
-   */
+    * Parses an StructType JSON file contents and converts it to Spark [[StructType]].
+    *
+    * @param structTypeJson A StructType JSON string.
+    * @return The parsed schema as an instance of [[StructType]].
+    */
   private[controllers] def parseStructType(structTypeJson: String): StructType = {
     try {
       sparkMenasConvertor.convertAnyToStructType(structTypeJson)
@@ -158,11 +158,11 @@ class SchemaController @Autowired()(
   }
 
   /**
-   * Parses a COBOL copybook file contents and converts it to Spark [[StructType]].
-   *
-   * @param copybookContents A COBOL copybook contents.
-   * @return The parsed schema as an instance of [[StructType]].
-   */
+    * Parses a COBOL copybook file contents and converts it to Spark [[StructType]].
+    *
+    * @param copybookContents A COBOL copybook contents.
+    * @return The parsed schema as an instance of [[StructType]].
+    */
   private def parseCopybook(copybookContents: String): StructType = {
     try {
       val parsedSchema = CopybookParser.parseTree(copybookContents)

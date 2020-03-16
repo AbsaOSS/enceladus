@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.menas.controllers
 
 import org.apache.avro.SchemaParseException
+import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.types.{DataType, DataTypes, StructField, StructType}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
@@ -25,10 +26,7 @@ import za.co.absa.enceladus.menas.controllers.SchemaController._
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 
-import scala.io.Source
-
-class SchemaControllerTest extends WordSpec with Matchers with MockitoSugar with Inside {
-
+class SchemaControllerSuite extends WordSpec with Matchers with MockitoSugar with Inside {
   val mockSchemaConvertor: SparkMenasSchemaConvertor = mock[SparkMenasSchemaConvertor]
   val schemaController = new SchemaController(null, null, mockSchemaConvertor) // SUT
 
@@ -56,10 +54,10 @@ class SchemaControllerTest extends WordSpec with Matchers with MockitoSugar with
 
   "parse avro schema to StructType" when {
     "correct avsc file content is given" in {
-      val expectedJsonFormatSchema = Source.fromFile("src/test/resources/test_data/schemas/avro/equivalent-to-avroschema.json").mkString
+      val expectedJsonFormatSchema = IOUtils.toString(getClass.getResourceAsStream("/test_data/schemas/avro/equivalent-to-avroschema.json"))
       val expectedStructType = DataType.fromJson(expectedJsonFormatSchema).asInstanceOf[StructType]
 
-      val schemaContent = Source.fromFile("src/test/resources/test_data/schemas/avro/avroschema_json_ok.avsc").mkString
+      val schemaContent = IOUtils.toString(getClass.getResourceAsStream("/test_data/schemas/avro/avroschema_json_ok.avsc"))
 
       schemaController.parseAvro(schemaContent) shouldBe expectedStructType
     }
@@ -73,7 +71,7 @@ class SchemaControllerTest extends WordSpec with Matchers with MockitoSugar with
 
       inside (caughtException) { case SchemaParsingException(SchemaTypeAvro, msg, _, _, _, cause) =>
         msg should include ("expected a valid value")
-        cause shouldBe a [SchemaParseException]
+        cause shouldBe a[SchemaParseException]
       }
     }
   }

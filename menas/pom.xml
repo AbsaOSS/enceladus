@@ -71,16 +71,6 @@
             <artifactId>spark-avro_${scala.compat.version}</artifactId>
             <version>${spark.version}</version>
             <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>javax.validation</groupId>
-                    <artifactId>validation-api</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
