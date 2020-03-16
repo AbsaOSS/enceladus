@@ -19,8 +19,6 @@ import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
 import javax.servlet.http.HttpServletResponse
-import org.apache.avro.{Schema => AvroSchema}
-import org.apache.spark.sql.avro.SchemaConverters
 import org.apache.spark.sql.types.StructType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -28,17 +26,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
-import za.co.absa.cobrix.cobol.parser.CopybookParser
-import za.co.absa.cobrix.cobol.parser.exceptions.SyntaxErrorException
-import za.co.absa.cobrix.spark.cobol.schema.{CobolSchema, SchemaRetentionPolicy}
 import za.co.absa.enceladus.menas.models.rest.exceptions.{SchemaFormatException, SchemaParsingException}
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaService}
+import za.co.absa.enceladus.menas.utils.SchemaParsers
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
-
-import scala.util.control.NonFatal
 
 // TODO: use enumeration instead to type-force the schema types? #1228
 object SchemaController {
@@ -52,11 +46,13 @@ object SchemaController {
 class SchemaController @Autowired()(
                                      schemaService: SchemaService,
                                      attachmentService: AttachmentService,
-                                     sparkMenasConvertor: SparkMenasSchemaConvertor)
+                                     sparkMenasConvertor: SparkMenasSchemaConvertor,
+                                     schemaParsers: SchemaParsers)
   extends VersionedModelController(schemaService) {
 
   import SchemaController._
   import za.co.absa.enceladus.menas.utils.implicits._
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   @PostMapping(Array("/upload"))
@@ -70,9 +66,9 @@ class SchemaController @Autowired()(
     val fileContent = new String(file.getBytes)
 
     val (sparkStruct, schemaType) = origFormat match {
-      case Some(SchemaTypeStruct) | Some("") | None => (parseStructType(fileContent), SchemaTypeStruct)
-      case Some(SchemaTypeCopybook) => (parseCopybook(fileContent), SchemaTypeCopybook)
-      case Some(SchemaTypeAvro) => (parseAvro(fileContent), SchemaTypeAvro)
+      case Some(SchemaTypeStruct) | Some("") | None => (schemaParsers.parseStructType(fileContent), SchemaTypeStruct)
+      case Some(SchemaTypeCopybook) => (schemaParsers.parseCopybook(fileContent), SchemaTypeCopybook)
+      case Some(SchemaTypeAvro) => (schemaParsers.parseAvro(fileContent), SchemaTypeAvro)
       case Some(schemaType) =>
         throw SchemaFormatException(schemaType, s"'$schemaType' is not a recognized schema format. " +
           s"Menas currently supports: '$SchemaTypeStruct' and '$SchemaTypeCopybook'.")
@@ -123,58 +119,6 @@ class SchemaController @Autowired()(
         if (pretty) sparkStruct.prettyJson else sparkStruct.json
       case None =>
         throw notFound()
-    }
-  }
-
-  /**
-    * Parses an StructType JSON file contents and converts it to Spark [[StructType]].
-    *
-    * @param structTypeJson A StructType JSON string.
-    * @return The parsed schema as an instance of [[StructType]].
-    */
-  private[controllers] def parseStructType(structTypeJson: String): StructType = {
-    try {
-      sparkMenasConvertor.convertAnyToStructType(structTypeJson)
-    } catch {
-      case e: IllegalStateException =>
-        throw SchemaParsingException(SchemaTypeStruct, e.getMessage, cause = e)
-    }
-  }
-
-  /**
-   * Parses an Avro file content and converts it to Spark [[StructType]].
-   *
-   * @param avroFileContent An Avro-schema JSON string.
-   * @return The parsed schema as an instance of [[StructType]].
-   */
-  private[controllers] def parseAvro(avroFileContent: String): StructType = {
-    try {
-      val schema = new AvroSchema.Parser().parse(avroFileContent)
-      SchemaConverters.toSqlType(schema).dataType.asInstanceOf[StructType]
-    } catch {
-      case NonFatal(e) =>
-        throw SchemaParsingException(SchemaTypeAvro, e.getMessage, cause = e)
-    }
-  }
-
-  /**
-    * Parses a COBOL copybook file contents and converts it to Spark [[StructType]].
-    *
-    * @param copybookContents A COBOL copybook contents.
-    * @return The parsed schema as an instance of [[StructType]].
-    */
-  private def parseCopybook(copybookContents: String): StructType = {
-    try {
-      val parsedSchema = CopybookParser.parseTree(copybookContents)
-      val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
-      cobolSchema.getSparkSchema
-    } catch {
-      case e: SyntaxErrorException =>
-        throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, Some(e.lineNumber), None, Some(e.field), e)
-      case e: IllegalStateException =>
-        // Cobrix can throw this exception if an unknown AST object is encountered.
-        // This might be considered a parsing error.
-        throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, cause = e)
     }
   }
 }

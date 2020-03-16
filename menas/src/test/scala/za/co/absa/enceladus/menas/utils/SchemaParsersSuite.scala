@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.controllers
+package za.co.absa.enceladus.menas.utils
 
 import org.apache.avro.SchemaParseException
 import org.apache.commons.io.IOUtils
@@ -22,20 +22,25 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Inside, Matchers, WordSpec}
+import za.co.absa.cobrix.cobol.parser.exceptions.SyntaxErrorException
 import za.co.absa.enceladus.menas.controllers.SchemaController._
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 
-class SchemaControllerSuite extends WordSpec with Matchers with MockitoSugar with Inside {
+class SchemaParsersSuite extends WordSpec with Matchers with MockitoSugar with Inside {
   val mockSchemaConvertor: SparkMenasSchemaConvertor = mock[SparkMenasSchemaConvertor]
-  val schemaController = new SchemaController(null, null, mockSchemaConvertor) // SUT
+  val schemaParsers = new SchemaParsers(mockSchemaConvertor) // SUT
 
-  "SchemaController" should {
+  private def readTestResourceAsString(path: String) = IOUtils.toString(getClass.getResourceAsStream(path))
+
+  private def readTestResourceAsDataType(path: String) = DataType.fromJson(readTestResourceAsString(path)).asInstanceOf[StructType]
+
+  "SchemaParsers" should {
     "parseStructType correctly" when {
       "menasSchemaConverter suceeds" in {
         val someStructType: StructType = StructType(Seq(StructField(name = "field1", dataType = DataTypes.IntegerType)))
         Mockito.when(mockSchemaConvertor.convertAnyToStructType(any[String])).thenReturn(someStructType)
-        schemaController.parseStructType("some struct type def") shouldBe someStructType
+        schemaParsers.parseStructType("some struct type def") shouldBe someStructType
       }
     }
 
@@ -45,7 +50,7 @@ class SchemaControllerSuite extends WordSpec with Matchers with MockitoSugar wit
         Mockito.when(mockSchemaConvertor.convertAnyToStructType(any[String])).thenThrow(someException)
 
         val caughtException = the[SchemaParsingException] thrownBy {
-          schemaController.parseStructType("bad struct type def")
+          schemaParsers.parseStructType("bad struct type def")
         }
         caughtException shouldBe SchemaParsingException(SchemaTypeStruct, someException.getMessage, cause = someException)
       }
@@ -54,24 +59,47 @@ class SchemaControllerSuite extends WordSpec with Matchers with MockitoSugar wit
 
   "parse avro schema to StructType" when {
     "correct avsc file content is given" in {
-      val expectedJsonFormatSchema = IOUtils.toString(getClass.getResourceAsStream("/test_data/schemas/avro/equivalent-to-avroschema.json"))
-      val expectedStructType = DataType.fromJson(expectedJsonFormatSchema).asInstanceOf[StructType]
+      val expectedStructType = readTestResourceAsDataType("/test_data/schemas/avro/equivalent-to-avroschema.json")
 
-      val schemaContent = IOUtils.toString(getClass.getResourceAsStream("/test_data/schemas/avro/avroschema_json_ok.avsc"))
-
-      schemaController.parseAvro(schemaContent) shouldBe expectedStructType
+      val schemaContent = readTestResourceAsString("/test_data/schemas/avro/avroschema_json_ok.avsc")
+      schemaParsers.parseAvro(schemaContent) shouldBe expectedStructType
     }
   }
 
   "throw SchemaParsingException at parseAvro" when {
     "given unparsable avsc content" in {
       val caughtException = the[SchemaParsingException] thrownBy {
-        schemaController.parseAvro("invalid avsc")
+        schemaParsers.parseAvro("invalid avsc")
       }
 
-      inside (caughtException) { case SchemaParsingException(SchemaTypeAvro, msg, _, _, _, cause) =>
-        msg should include ("expected a valid value")
+      inside(caughtException) { case SchemaParsingException(SchemaTypeAvro, msg, _, _, _, cause) =>
+        msg should include("expected a valid value")
         cause shouldBe a[SchemaParseException]
+      }
+    }
+  }
+
+  "parse cobol copybook schema to StructType" when {
+    "correct cob file content is given" in {
+      val expectedCopybookType = readTestResourceAsDataType("/test_data/schemas/copybook/equivalent-to-copybook.json")
+
+      val schemaContent = readTestResourceAsString("/test_data/schemas/copybook/copybook_ok.cob")
+      schemaParsers.parseCopybook(schemaContent) shouldBe expectedCopybookType
+    }
+  }
+
+  "throw SchemaParsingException at parseCopybook" when {
+    "given unparsable cob content" in {
+      val schemaContent = readTestResourceAsString("/test_data/schemas/copybook/copybook_bogus.cob")
+
+      val caughtException = the[SchemaParsingException] thrownBy {
+        schemaParsers.parseCopybook(schemaContent)
+      }
+
+      inside(caughtException) {
+        case SchemaParsingException(SchemaTypeCopybook, msg, Some(22), None, Some("B1"), cause) =>
+          msg should include("Syntax error in the copybook")
+          cause shouldBe a[SyntaxErrorException]
       }
     }
   }
