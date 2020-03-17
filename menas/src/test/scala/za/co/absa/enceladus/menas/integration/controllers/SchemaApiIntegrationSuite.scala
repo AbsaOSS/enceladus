@@ -553,7 +553,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
 
           assertOk(response)
 
-          val body = response.getBody
+          val body = response.getBody.replace("\r\n", "\n") // this will make it work on Windows (CRLF->LF), too.
           val expected = """|{
                             |  "type" : "struct",
                             |  "fields" : [ {
@@ -655,7 +655,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           val schemaParams = HashMap[String, Any] (
             "name" -> schema.name, "version" -> schema.version, "format" -> "copybook")
           val responseUploaded = sendPostUploadFile[Schema](
-            s"$apiUrl/upload", "/test_data/schemas/copybook_ok.cob", schemaParams)
+            s"$apiUrl/upload", "/test_data/schemas/copybook/copybook_ok.cob", schemaParams)
           assertCreated(responseUploaded)
 
           val actual = responseUploaded.getBody
@@ -673,7 +673,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           val schemaParams = HashMap[String, Any] (
             "name" -> schema.name, "version" -> schema.version, "format" -> "struct")
           val responseUploaded = sendPostUploadFile[Schema](
-            s"$apiUrl/upload", "/test_data/schemas/schema_json_ok.json", schemaParams)
+            s"$apiUrl/upload", "/test_data/schemas/json/schema_json_ok.json", schemaParams)
           assertCreated(responseUploaded)
 
           val actual = responseUploaded.getBody
@@ -691,7 +691,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           val schemaParams = HashMap[String, Any] (
             "name" -> schema.name, "version" -> schema.version, "format" -> "")
           val responseUploaded = sendPostUploadFile[Schema](
-            s"$apiUrl/upload", "/test_data/schemas/schema_json_ok.json", schemaParams)
+            s"$apiUrl/upload", "/test_data/schemas/json/schema_json_ok.json", schemaParams)
           assertCreated(responseUploaded)
 
           val actual = responseUploaded.getBody
@@ -709,13 +709,31 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           val schemaParams = HashMap[String, Any] (
             "name" -> schema.name, "version" -> schema.version)
           val responseUploaded = sendPostUploadFile[Schema](
-            s"$apiUrl/upload", "/test_data/schemas/schema_json_ok.json", schemaParams)
+            s"$apiUrl/upload", "/test_data/schemas/json/schema_json_ok.json", schemaParams)
           assertCreated(responseUploaded)
 
           val actual = responseUploaded.getBody
           assert(actual.name == schema.name)
           assert(actual.version == schema.version + 1)
           assert(actual.fields.length == 2)
+        }
+      }
+
+      "an avro schema has no errors" should {
+        "return a new version of the schema" in {
+          val schema = SchemaFactory.getDummySchema()
+          schemaFixture.add(schema)
+
+          val schemaParams = HashMap[String, Any] (
+            "name" -> schema.name, "version" -> schema.version, "format" -> "avro")
+          val responseUploaded = sendPostUploadFile[Schema](
+            s"$apiUrl/upload", "/test_data/schemas/avro/avroschema_json_ok.avsc", schemaParams)
+          assertCreated(responseUploaded)
+
+          val actual = responseUploaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 7)
         }
       }
     }
@@ -725,7 +743,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
         "return a response containing a schema parsing error with syntax error specific fields" in {
           val schemaParams = HashMap[String, Any] ("version" -> 1, "name" -> "MySchema", "format" -> "copybook")
           val response = sendPostUploadFile[RestResponse](
-            s"$apiUrl/upload", "/test_data/schemas/copybook_bogus.cob", schemaParams)
+            s"$apiUrl/upload", "/test_data/schemas/copybook/copybook_bogus.cob", schemaParams)
           val body = response.getBody
 
           assertBadRequest(response)
@@ -745,7 +763,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
         "return a response containing a schema parsing error returned by the StructType parser" in {
           val schemaParams = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "struct")
           val response = sendPostUploadFile[RestResponse](
-            s"$apiUrl/upload", "/test_data/schemas/schema_json_bogus.json", schemaParams)
+            s"$apiUrl/upload", "/test_data/schemas/json/schema_json_bogus.json", schemaParams)
           val body = response.getBody
 
           assertBadRequest(response)
@@ -759,11 +777,29 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
         }
       }
 
+      "an avro-schema with a syntax error" should {
+        "return a response containing a schema parsing error encountered during avro schema parsing" in {
+          val schemaParams = HashMap[String, Any] ("version" -> 1, "name" -> "MySchema", "format" -> "avro")
+          val response = sendPostUploadFile[RestResponse](
+            s"$apiUrl/upload", "/test_data/schemas/avro/avroschema_json_bogus.avsc", schemaParams)
+          val body = response.getBody
+
+          assertBadRequest(response)
+          body.error match {
+            case Some(e: SchemaParsingError) =>
+              assert(e.errorType == "schema_parsing")
+              assert(e.schemaType == "avro")
+              assert(body.message.contains("Record has no fields"))
+            case e => fail(s"Expected an instance of SchemaParsingError, got $e.")
+          }
+        }
+      }
+
       "a wrong format has been specified" should {
         "return a response containing a schema format error" in {
           val schemaParams = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "foo")
           val response = sendPostUploadFile[RestResponse](
-            s"$apiUrl/upload", "/test_data/schemas/schema_json_bogus.json", schemaParams)
+            s"$apiUrl/upload", "/test_data/schemas/json/schema_json_bogus.json", schemaParams)
           val body = response.getBody
 
           assertBadRequest(response)
@@ -783,7 +819,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
         val schemaParams = HashMap[String, Any](
           "name" -> "dummy", "version" -> 1, "format" -> "copybook")
         val responseUploaded = sendPostUploadFile[Schema](
-          s"$apiUrl/upload", "/test_data/schemas/copybook_ok.cob", schemaParams)
+          s"$apiUrl/upload", "/test_data/schemas/copybook/copybook_ok.cob", schemaParams)
         assertNotFound(responseUploaded)
       }
     }

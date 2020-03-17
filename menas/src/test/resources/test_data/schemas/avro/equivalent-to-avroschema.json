@@ -1,0 +1,163 @@
+{
+  "type" : "struct",
+  "fields" : [ {
+    "name" : "datasetName",
+    "type" : "string",
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "datasetVersion",
+    "type" : "integer",
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "reportDate",
+    "type" : "string",
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "reportVersion",
+    "type" : "integer",
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "runStatus",
+    "type" : "string",
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "metadata",
+    "type" : {
+      "type" : "struct",
+      "fields" : [ {
+        "name" : "sourceApplication",
+        "type" : "string",
+        "nullable" : false,
+        "metadata" : { }
+      }, {
+        "name" : "country",
+        "type" : "string",
+        "nullable" : false,
+        "metadata" : { }
+      }, {
+        "name" : "historyType",
+        "type" : "string",
+        "nullable" : false,
+        "metadata" : { }
+      }, {
+        "name" : "dataFilename",
+        "type" : "string",
+        "nullable" : false,
+        "metadata" : { }
+      }, {
+        "name" : "sourceType",
+        "type" : "string",
+        "nullable" : false,
+        "metadata" : { }
+      }, {
+        "name" : "version",
+        "type" : "integer",
+        "nullable" : false,
+        "metadata" : { }
+      }, {
+        "name" : "informationDate",
+        "type" : "string",
+        "nullable" : false,
+        "metadata" : { }
+      }, {
+        "name" : "additionalInfo",
+        "type" : {
+          "type" : "array",
+          "elementType" : {
+            "type" : "struct",
+            "fields" : [ {
+              "name" : "key",
+              "type" : "string",
+              "nullable" : false,
+              "metadata" : { }
+            }, {
+              "name" : "value",
+              "type" : "string",
+              "nullable" : false,
+              "metadata" : { }
+            } ]
+          },
+          "containsNull" : false
+        },
+        "nullable" : false,
+        "metadata" : { }
+      } ]
+    },
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "checkpoints",
+    "type" : {
+      "type" : "array",
+      "elementType" : {
+        "type" : "struct",
+        "fields" : [ {
+          "name" : "name",
+          "type" : "string",
+          "nullable" : false,
+          "metadata" : { }
+        }, {
+          "name" : "processStartTime",
+          "type" : "string",
+          "nullable" : false,
+          "metadata" : { }
+        }, {
+          "name" : "processEndTime",
+          "type" : "string",
+          "nullable" : false,
+          "metadata" : { }
+        }, {
+          "name" : "workflowName",
+          "type" : "string",
+          "nullable" : false,
+          "metadata" : { }
+        }, {
+          "name" : "order",
+          "type" : "integer",
+          "nullable" : false,
+          "metadata" : { }
+        }, {
+          "name" : "controls",
+          "type" : {
+            "type" : "array",
+            "elementType" : {
+              "type" : "struct",
+              "fields" : [ {
+                "name" : "controlName",
+                "type" : "string",
+                "nullable" : false,
+                "metadata" : { }
+              }, {
+                "name" : "controlType",
+                "type" : "string",
+                "nullable" : false,
+                "metadata" : { }
+              }, {
+                "name" : "controlCol",
+                "type" : "string",
+                "nullable" : false,
+                "metadata" : { }
+              }, {
+                "name" : "controlValue",
+                "type" : "string",
+                "nullable" : false,
+                "metadata" : { }
+              } ]
+            },
+            "containsNull" : false
+          },
+          "nullable" : false,
+          "metadata" : { }
+        } ]
+      },
+      "containsNull" : false
+    },
+    "nullable" : false,
+    "metadata" : { }
+  } ]
+}

@@ -42,6 +42,7 @@
                                 selectedKey="{/currentSchema/schemaFormat}">
                             <core:Item key="struct" text="Spark StructType JSON"/>
                             <core:Item key="copybook" text="COBOL Copybook"/>
+                            <core:Item key="avro" text="Avro Schema (avsc)"/>
                         </Select>
                         <u:FileUploader id="fileUploader" name="file" uploadUrl="api/schema/upload"
                                         tooltip="Upload new version of the schema" uploadComplete="handleUploadComplete"
