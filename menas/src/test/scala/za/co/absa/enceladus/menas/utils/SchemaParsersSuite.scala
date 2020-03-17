@@ -23,7 +23,7 @@ import org.mockito.Mockito
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Inside, Matchers, WordSpec}
 import za.co.absa.cobrix.cobol.parser.exceptions.SyntaxErrorException
-import za.co.absa.enceladus.menas.controllers.SchemaController._
+import za.co.absa.enceladus.menas.controllers.SchemaType
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 
@@ -52,7 +52,7 @@ class SchemaParsersSuite extends WordSpec with Matchers with MockitoSugar with I
         val caughtException = the[SchemaParsingException] thrownBy {
           schemaParsers.parseStructType("bad struct type def")
         }
-        caughtException shouldBe SchemaParsingException(SchemaTypeStruct, someException.getMessage, cause = someException)
+        caughtException shouldBe SchemaParsingException(SchemaType.Struct, someException.getMessage, cause = someException)
       }
     }
   }
@@ -72,7 +72,7 @@ class SchemaParsersSuite extends WordSpec with Matchers with MockitoSugar with I
         schemaParsers.parseAvro("invalid avsc")
       }
 
-      inside(caughtException) { case SchemaParsingException(SchemaTypeAvro, msg, _, _, _, cause) =>
+      inside(caughtException) { case SchemaParsingException(SchemaType.Avro, msg, _, _, _, cause) =>
         msg should include("expected a valid value")
         cause shouldBe a[SchemaParseException]
       }
@@ -97,7 +97,7 @@ class SchemaParsersSuite extends WordSpec with Matchers with MockitoSugar with I
       }
 
       inside(caughtException) {
-        case SchemaParsingException(SchemaTypeCopybook, msg, Some(22), None, Some("B1"), cause) =>
+        case SchemaParsingException(SchemaType.Copybook, msg, Some(22), None, Some("B1"), cause) =>
           msg should include("Syntax error in the copybook")
           cause shouldBe a[SyntaxErrorException]
       }

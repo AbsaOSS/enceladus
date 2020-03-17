@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.menas.models.rest.errors
 
+import za.co.absa.enceladus.menas.controllers.SchemaType
 import za.co.absa.enceladus.menas.models.rest.ResponseError
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 
@@ -23,7 +24,7 @@ import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
   */
 case class SchemaParsingError(
                                errorType: String,
-                               schemaType: String,
+                               schemaType: SchemaType.Value,
                                line: Option[Int],
                                column: Option[Int],
                                field: Option[String]

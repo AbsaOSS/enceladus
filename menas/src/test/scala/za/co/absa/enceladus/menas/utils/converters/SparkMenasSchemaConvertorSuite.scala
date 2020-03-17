@@ -95,7 +95,7 @@ class SparkMenasSchemaConvertorSuite extends FunSuite with SparkTestBase {
       sparkConvertor.convertSparkToMenasFields(sparkDefinition)
     }
 
-    assert(caught == SchemaParsingException(schemaType = "", message = "Value for metadata key 'default' (of value 0) to be a string or null", field = Option(fieldName)))
+    assert(caught == SchemaParsingException(schemaType = null, message = "Value for metadata key 'default' (of value 0) to be a string or null", field = Option(fieldName))) // scalastyle:ignore null
   }
 
   test("convertSparkToMenasFields and convertMenasToSparkFields with nulls in values of metadata") {

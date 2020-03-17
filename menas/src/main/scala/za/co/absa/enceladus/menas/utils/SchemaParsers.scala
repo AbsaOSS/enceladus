@@ -20,11 +20,11 @@ import org.apache.spark.sql.types.StructType
 import za.co.absa.cobrix.cobol.parser.CopybookParser
 import za.co.absa.cobrix.cobol.parser.exceptions.SyntaxErrorException
 import za.co.absa.cobrix.spark.cobol.schema.{CobolSchema, SchemaRetentionPolicy}
-import za.co.absa.enceladus.menas.controllers.SchemaController.{SchemaTypeAvro, SchemaTypeCopybook, SchemaTypeStruct}
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import org.apache.avro.{Schema => AvroSchema}
 import org.springframework.stereotype.Component
+import za.co.absa.enceladus.menas.controllers.SchemaType
 
 import scala.util.control.NonFatal
 
@@ -41,7 +41,7 @@ class SchemaParsers(sparkMenasConvertor: SparkMenasSchemaConvertor) {
       sparkMenasConvertor.convertAnyToStructType(structTypeJson)
     } catch {
       case e: IllegalStateException =>
-        throw SchemaParsingException(SchemaTypeStruct, e.getMessage, cause = e)
+        throw SchemaParsingException(SchemaType.Struct, e.getMessage, cause = e)
     }
   }
 
@@ -57,7 +57,7 @@ class SchemaParsers(sparkMenasConvertor: SparkMenasSchemaConvertor) {
       SchemaConverters.toSqlType(schema).dataType.asInstanceOf[StructType]
     } catch {
       case NonFatal(e) =>
-        throw SchemaParsingException(SchemaTypeAvro, e.getMessage, cause = e)
+        throw SchemaParsingException(SchemaType.Avro, e.getMessage, cause = e)
     }
   }
 
@@ -74,11 +74,11 @@ class SchemaParsers(sparkMenasConvertor: SparkMenasSchemaConvertor) {
       cobolSchema.getSparkSchema
     } catch {
       case e: SyntaxErrorException =>
-        throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, Some(e.lineNumber), None, Some(e.field), e)
+        throw SchemaParsingException(SchemaType.Copybook, e.getMessage, Some(e.lineNumber), None, Some(e.field), e)
       case e: IllegalStateException =>
         // Cobrix can throw this exception if an unknown AST object is encountered.
         // This might be considered a parsing error.
-        throw SchemaParsingException(SchemaTypeCopybook, e.getMessage, cause = e)
+        throw SchemaParsingException(SchemaType.Copybook, e.getMessage, cause = e)
     }
   }
 }

@@ -34,11 +34,27 @@ import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
 
-// TODO: use enumeration instead to type-force the schema types? #1228
-object SchemaController {
-  val SchemaTypeStruct = "struct"
-  val SchemaTypeCopybook = "copybook"
-  val SchemaTypeAvro = "avro"
+object SchemaType extends Enumeration {
+  val Struct = Value("struct")
+  val Copybook = Value("copybook")
+  val Avro = Value("avro")
+
+  /**
+   * Conversion from a sting-based name to [[SchemaType.Value]] that throws correct [[SchemaFormatException]] on error.
+   * Basically, this is [[SchemaType#withName]] with exception wrapping
+   *
+   * @param schemaName
+   * @return converted schema format
+   * @throws SchemaFormatException if a schema not resolvable by [[SchemaType#withName]] is supplied
+   */
+  def fromSchemaName(schemaName: String): SchemaType.Value =
+    try {
+      SchemaType.withName(schemaName)
+    } catch {
+      case e: NoSuchElementException =>
+        throw SchemaFormatException(schemaName, s"'$schemaName' is not a recognized schema format. " +
+          s"Menas currently supports: ${SchemaType.values.mkString(", ")}.", cause = e)
+    }
 }
 
 @RestController
@@ -50,7 +66,7 @@ class SchemaController @Autowired()(
                                      schemaParsers: SchemaParsers)
   extends VersionedModelController(schemaService) {
 
-  import SchemaController._
+  import SchemaType._
   import za.co.absa.enceladus.menas.utils.implicits._
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -62,16 +78,18 @@ class SchemaController @Autowired()(
                        @RequestParam version: Int,
                        @RequestParam name: String,
                        @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
-    val origFormat: Option[String] = format
+
     val fileContent = new String(file.getBytes)
+    val origFormat: Option[String] = format
 
     val (sparkStruct, schemaType) = origFormat match {
-      case Some(SchemaTypeStruct) | Some("") | None => (schemaParsers.parseStructType(fileContent), SchemaTypeStruct)
-      case Some(SchemaTypeCopybook) => (schemaParsers.parseCopybook(fileContent), SchemaTypeCopybook)
-      case Some(SchemaTypeAvro) => (schemaParsers.parseAvro(fileContent), SchemaTypeAvro)
-      case Some(schemaType) =>
-        throw SchemaFormatException(schemaType, s"'$schemaType' is not a recognized schema format. " +
-          s"Menas currently supports: '$SchemaTypeStruct' and '$SchemaTypeCopybook'.")
+      case Some("") | None => (schemaParsers.parseStructType(fileContent), SchemaType.Struct) // legacy compatibility cases
+      case Some(explicitSchemaName) =>
+        SchemaType.fromSchemaName(explicitSchemaName) match {
+          case Struct => (schemaParsers.parseStructType(fileContent), Struct)
+          case Copybook => (schemaParsers.parseCopybook(fileContent), Copybook)
+          case Avro => (schemaParsers.parseAvro(fileContent), Avro)
+        }
     }
 
     val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
