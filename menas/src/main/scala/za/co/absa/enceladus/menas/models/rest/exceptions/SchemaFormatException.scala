@@ -19,7 +19,7 @@ package za.co.absa.enceladus.menas.models.rest.exceptions
   * This exception is thrown when a wrong schema format is specified.
   */
 case class SchemaFormatException(
-                                  schemaType: String, // deliberately not SchemaType, because format exception can hold invalid values, too.
+                                  schemaType: String, // deliberately not SchemaType.Value, because format exception can hold invalid values, too.
                                   message: String,
                                   cause: Throwable = null
                                 ) extends Exception(message, cause)

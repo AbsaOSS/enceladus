@@ -34,11 +34,11 @@ trait SchemaParser {
 object SchemaParser {
 
   trait SchemaParserFactory {
-    def getParser(schemaType: SchemaType): SchemaParser
+    def getParser(schemaType: SchemaType.Value): SchemaParser
   }
 
   def getFactory(sparkMenasConvertor: SparkMenasSchemaConvertor): SchemaParserFactory = new SchemaParserFactory {
-    override def getParser(schemaType: SchemaType): SchemaParser = schemaType match {
+    override def getParser(schemaType: SchemaType.Value): SchemaParser = schemaType match {
       case SchemaType.Struct => new StructSchemaParser(sparkMenasConvertor)
       case SchemaType.Copybook => CopybookSchemaParser
       case SchemaType.Avro => AvroSchemaParser

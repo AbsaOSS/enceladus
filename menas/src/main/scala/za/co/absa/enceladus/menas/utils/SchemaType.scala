@@ -15,76 +15,39 @@
 
 package za.co.absa.enceladus.menas.utils
 
-import com.fasterxml.jackson.core.{JsonGenerator, JsonParser}
-import com.fasterxml.jackson.databind.{DeserializationContext, SerializerProvider}
-import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonSerialize}
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer
-import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaFormatException
 
-
-@JsonSerialize(using = classOf[DirectionJsonSerializer])
-@JsonDeserialize(using = classOf[DirectionJsonDeserializer])
-sealed trait SchemaType {
-  def name: String
-}
-
-object SchemaType {
-
-  case object Struct extends SchemaType {
-    val name = "struct"
-  }
-
-  case object Copybook extends SchemaType {
-    val name = "copybook"
-  }
-
-  case object Avro extends SchemaType {
-    val name = "avro"
-  }
-
-  private val values = Seq(Struct, Copybook, Avro)
+object SchemaType extends Enumeration {
+  val Struct: SchemaType.Value = Value("struct")
+  val Copybook: SchemaType.Value = Value("copybook")
+  val Avro: SchemaType.Value = Value("avro")
 
   /**
-   * Enum-like `withName` with exception wrapping
-   * @param name name of the schema to be converted to [[SchemaType]] object
+   * Conversion from a string-based name to [[SchemaType.Value]] that throws correct [[SchemaFormatException]] on error.
+   * Basically, this is [[SchemaType#withName]] with exception wrapping
+   *
+   * @param schemaName string-based schema name
    * @return converted schema format
    * @throws SchemaFormatException if a schema not resolvable by [[SchemaType#withName]] is supplied
    */
-  def withName(name: String): SchemaType = name match {
-    case Struct.name => SchemaType.Struct
-    case Copybook.name => SchemaType.Copybook
-    case Avro.name => SchemaType.Avro
-    case schemaName =>
-      throw SchemaFormatException(schemaName, s"'$schemaName' is not a recognized schema format. " +
-        s"Menas currently supports: ${SchemaType.values.mkString(", ")}.")
-  }
+  def fromSchemaName(schemaName: String): SchemaType.Value =
+    try {
+      SchemaType.withName(schemaName)
+    } catch {
+      case e: NoSuchElementException =>
+        throw SchemaFormatException(schemaName, s"'$schemaName' is not a recognized schema format. " +
+          s"Menas currently supports: ${SchemaType.values.mkString(", ")}.", cause = e)
+    }
 
   /**
-   * Conversion from a sting-based name to [[SchemaType]] that throws correct [[SchemaFormatException]] on invalid.
+   * Conversion from a optional-string-based name to [[SchemaType.Value]] that throws correct [[SchemaFormatException]] on invalid.
    *
    * @param optSchemaName Option of the schema name
-   * @return SchemaType instance based on the name; with special cases: empty string and None -> [[SchemaType.Struct]]
+   * @return SchemaType.Value instance based on the name; with special cases: `Some("")` and `None` -> [[SchemaType.Struct]]
+   * @throws SchemaFormatException if a schema not resolvable by [[SchemaType#withName]] is supplied or it is not one of the special cases
    */
-  def fromOptSchemaName(optSchemaName: Option[String]): SchemaType = optSchemaName match {
+  def fromOptSchemaName(optSchemaName: Option[String]): SchemaType.Value = optSchemaName match {
     case Some("") | None => SchemaType.Struct // legacy compatibility cases
-    case Some(schemaName) => SchemaType.withName(schemaName)
-  }
-
-}
-
-// needed because of the case objects instead of "classic" case classes:
-// https://doc.akka.io/docs/akka/current/serialization-jackson.html#adt-with-trait-and-case-object
-class DirectionJsonSerializer extends StdSerializer[SchemaType](classOf[SchemaType]) {
-
-  override def serialize(value: SchemaType, gen: JsonGenerator, provider: SerializerProvider): Unit = {
-    gen.writeString(value.name)
-  }
-}
-
-class DirectionJsonDeserializer extends StdDeserializer[SchemaType](classOf[SchemaType]) {
-
-  override def deserialize(p: JsonParser, ctxt: DeserializationContext): SchemaType = {
-    SchemaType.withName(p.getText)
+    case Some(schemaName) => SchemaType.fromSchemaName(schemaName)
   }
 }

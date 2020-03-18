@@ -21,7 +21,7 @@ import za.co.absa.enceladus.menas.utils.SchemaType
   * This exception is thrown when a syntax error parsing a schema file is encountered.
   */
 case class SchemaParsingException(
-                                   schemaType: SchemaType,
+                                   schemaType: SchemaType.Value,
                                    message: String,
                                    line: Option[Int] = None,
                                    column: Option[Int] = None,

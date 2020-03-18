@@ -24,7 +24,7 @@ import za.co.absa.enceladus.menas.utils.SchemaType
   */
 case class SchemaParsingError(
                                errorType: String,
-                               schemaType: SchemaType,
+                               schemaType: SchemaType.Value,
                                line: Option[Int],
                                column: Option[Int],
                                field: Option[String]
