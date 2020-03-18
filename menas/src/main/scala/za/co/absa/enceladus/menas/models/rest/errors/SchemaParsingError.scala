@@ -15,16 +15,16 @@
 
 package za.co.absa.enceladus.menas.models.rest.errors
 
-import za.co.absa.enceladus.menas.controllers.SchemaType
 import za.co.absa.enceladus.menas.models.rest.ResponseError
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
+import za.co.absa.enceladus.menas.utils.SchemaType
 
 /**
   * This error is produced when a parsing error is occurred when uploading a schema.
   */
 case class SchemaParsingError(
                                errorType: String,
-                               schemaType: SchemaType.Value,
+                               schemaType: SchemaType,
                                line: Option[Int],
                                column: Option[Int],
                                field: Option[String]

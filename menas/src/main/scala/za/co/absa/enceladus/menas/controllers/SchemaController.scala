@@ -26,47 +26,24 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
-import za.co.absa.enceladus.menas.models.rest.exceptions.{SchemaFormatException, SchemaParsingException}
+import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaService}
-import za.co.absa.enceladus.menas.utils.SchemaParsers
+import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.menas.utils.parsers.SchemaParser
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
 
-object SchemaType extends Enumeration {
-  val Struct = Value("struct")
-  val Copybook = Value("copybook")
-  val Avro = Value("avro")
-
-  /**
-   * Conversion from a sting-based name to [[SchemaType.Value]] that throws correct [[SchemaFormatException]] on error.
-   * Basically, this is [[SchemaType#withName]] with exception wrapping
-   *
-   * @param schemaName
-   * @return converted schema format
-   * @throws SchemaFormatException if a schema not resolvable by [[SchemaType#withName]] is supplied
-   */
-  def fromSchemaName(schemaName: String): SchemaType.Value =
-    try {
-      SchemaType.withName(schemaName)
-    } catch {
-      case e: NoSuchElementException =>
-        throw SchemaFormatException(schemaName, s"'$schemaName' is not a recognized schema format. " +
-          s"Menas currently supports: ${SchemaType.values.mkString(", ")}.", cause = e)
-    }
-}
 
 @RestController
 @RequestMapping(Array("/api/schema"))
 class SchemaController @Autowired()(
                                      schemaService: SchemaService,
                                      attachmentService: AttachmentService,
-                                     sparkMenasConvertor: SparkMenasSchemaConvertor,
-                                     schemaParsers: SchemaParsers)
+                                     sparkMenasConvertor: SparkMenasSchemaConvertor)
   extends VersionedModelController(schemaService) {
 
-  import SchemaType._
   import za.co.absa.enceladus.menas.utils.implicits._
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -82,15 +59,8 @@ class SchemaController @Autowired()(
     val fileContent = new String(file.getBytes)
     val origFormat: Option[String] = format
 
-    val (sparkStruct, schemaType) = origFormat match {
-      case Some("") | None => (schemaParsers.parseStructType(fileContent), SchemaType.Struct) // legacy compatibility cases
-      case Some(explicitSchemaName) =>
-        SchemaType.fromSchemaName(explicitSchemaName) match {
-          case Struct => (schemaParsers.parseStructType(fileContent), Struct)
-          case Copybook => (schemaParsers.parseCopybook(fileContent), Copybook)
-          case Avro => (schemaParsers.parseAvro(fileContent), Avro)
-        }
-    }
+    val schemaType = SchemaType.fromOptSchemaName(origFormat)
+    val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
 
     val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,

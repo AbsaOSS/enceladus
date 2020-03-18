@@ -15,13 +15,13 @@
 
 package za.co.absa.enceladus.menas.models.rest.exceptions
 
-import za.co.absa.enceladus.menas.controllers.SchemaType
+import za.co.absa.enceladus.menas.utils.SchemaType
 
 /**
   * This exception is thrown when a syntax error parsing a schema file is encountered.
   */
 case class SchemaParsingException(
-                                   schemaType: SchemaType.Value,
+                                   schemaType: SchemaType,
                                    message: String,
                                    line: Option[Int] = None,
                                    column: Option[Int] = None,

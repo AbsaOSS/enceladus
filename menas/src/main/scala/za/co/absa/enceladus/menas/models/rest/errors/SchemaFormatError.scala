@@ -23,7 +23,7 @@ import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaFormatException
   */
 case class SchemaFormatError(
                               errorType: String,
-                              schemaType: String // deliberately not SchemaType.Value, because format exception can hold invalid values, too.
+                              schemaType: String // deliberately not SchemaType, because format exception can hold invalid values, too.
                             ) extends ResponseError
 
 object SchemaFormatError {
