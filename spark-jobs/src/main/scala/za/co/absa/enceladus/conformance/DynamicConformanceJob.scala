@@ -19,7 +19,7 @@ import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.spark.sql
+import org.apache.spark.{SPARK_VERSION, sql}
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
@@ -38,6 +38,7 @@ import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.common.Constants._
+import za.co.absa.enceladus.common.version.SparkVersionGuard
 
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -50,6 +51,8 @@ object DynamicConformanceJob {
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   def main(args: Array[String]) {
+    SparkVersionGuard("2.4.2", "3.0.0").checkSparkVersionCompatibility(SPARK_VERSION) // TODO load form config?
+
     implicit val cmd: ConfCmdConfig = ConfCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)

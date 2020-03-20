@@ -26,6 +26,7 @@
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <hyperdrive.version>2.0.0</hyperdrive.version>
+        <commons.version>0.0.9</commons.version>
     </properties>
 
     <dependencies>
@@ -69,6 +70,13 @@
             <artifactId>api</artifactId>
             <version>${hyperdrive.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- Commons - for Version utilities -->
+        <dependency>
+            <groupId>za.co.absa.commons</groupId>
+            <artifactId>commons_${scala.compat.version}</artifactId>
+            <version>${commons.version}</version>
         </dependency>
 
         <!-- Libraries -->
