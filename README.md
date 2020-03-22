@@ -211,19 +211,20 @@ The list of all options for running both Standardization and Conformance:
 
 The list of additional options available for running Standardization:
 
-|            Option             |                           Description                                                                                           |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| --raw-format **format**       | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`.                                 |
-| --charset **charset**         | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.                                                      |
-| --row-tag **tag**             | A row tag if the input format is `xml`.                                                                                         |
-| --header **true/false**       | Indicates if in the input CSV data has headers as the first row of each file.                                                   |
-| --delimiter **character**     | Specifies a delimiter character to use for CSV format. By default `,` is used.                                                  |
-| --csv-quote **character**     | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. |
-| --csv-escape **character**    | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.                         |
-| --trimValues **true/false**   | Indicates if string fields of fixed with text data should be trimmed.                                                           |
-| --is-xcom **true/false**      | If `true` a mainframe input file is expected to have XCOM RDW headers.                                                          |
-| --folder-prefix **prefix**    | Adds a folder prefix before the date tokens.                                                                                    |
-| --debug-set-raw-path **path** | Override the path of the raw data (used for testing purposes).                                                                  |
+|            Option                        |                           Description                                                                                                              |
+|------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| --raw-format **format**                  | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`.                                                    |
+| --charset **charset**                    | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.                                                                         |
+| --row-tag **tag**                        | A row tag if the input format is `xml`.                                                                                                            |
+| --header **true/false**                  | Indicates if in the input CSV data has headers as the first row of each file.                                                                      |
+| --delimiter **character**                | Specifies a delimiter character to use for CSV format. By default `,` is used.                                                                     |
+| --csv-quote **character**                | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used.                    |
+| --csv-escape **character**               | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.                                            |
+| --trimValues **true/false**              | Indicates if string fields of fixed with text data should be trimmed.                                                                              |
+| --is-xcom **true/false**                 | If `true` a mainframe input file is expected to have XCOM RDW headers.                                                                             |
+| --folder-prefix **prefix**               | Adds a folder prefix before the date tokens.                                                                                                       |
+| --debug-set-raw-path **path**            | Override the path of the raw data (used for testing purposes).                                                                                     |
+| --failOnInputNotPerSchema **true/false** | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` (default) proceeds over it with an entry in _errCol_ | 
 
 The list of additional options available for running Conformance:
 

@@ -52,6 +52,12 @@ object ErrorMessage {
     errMsg = s"Standardization Error - Type '$sourceType' cannot be cast to '$targetType'",
     errCol = errCol,
     rawValues = Seq.empty)
+  def stdSchemaError(errRow: String): ErrorMessage = ErrorMessage(
+    errType = "stdSchemaError",
+    errCode = ErrorCodes.StdSchemaError,
+    errMsg = s"The input data does not adhere to requested schema",
+    errCol = null, // scalastyle:ignore null
+    rawValues = Seq(errRow))
   def confMappingErr(errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]): ErrorMessage = ErrorMessage(
     errType = "confMapError",
     errCode = ErrorCodes.ConfMapError,
@@ -86,13 +92,14 @@ object ErrorMessage {
     * This object purpose it to group the error codes together to decrease a chance of them being in conflict
     */
   object ErrorCodes {
-    final val StdCastError = "E00000"
-    final val ConfMapError = "E00001"
-    final val StdNullError = "E00002"
-    final val ConfCastErr  = "E00003"
-    final val ConfNegErr   = "E00004"
-    final val ConfLitErr   = "E00005"
-    final val StdTypeError = "E00006"
+    final val StdCastError    = "E00000"
+    final val ConfMapError    = "E00001"
+    final val StdNullError    = "E00002"
+    final val ConfCastErr     = "E00003"
+    final val ConfNegErr      = "E00004"
+    final val ConfLitErr      = "E00005"
+    final val StdTypeError    = "E00006"
+    final val StdSchemaError  = "E00007"
   }
 }
 

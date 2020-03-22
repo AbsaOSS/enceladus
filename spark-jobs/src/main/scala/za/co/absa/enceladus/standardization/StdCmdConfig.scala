@@ -28,25 +28,27 @@ import scala.util.matching.Regex
  * Even if a field is mandatory it needs a default value.
  */
 case class StdCmdConfig(
-                      cmdLineArgs: Array[String],
-                      datasetName: String = "",
-                      datasetVersion: Int = 1,
-                      reportDate: String = "",
-                      reportVersion: Option[Int] = None,
-                      rawFormat: String = "xml",
-                      menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
-                      charset: Option[String] = None,
-                      rowTag: Option[String] = None,
-                      csvDelimiter: Option[String] = None,
-                      csvHeader: Option[Boolean] = Some(false),
-                      csvQuote: Option[String] = None,
-                      csvEscape: Option[String] = None,
-                      cobolOptions: Option[CobolOptions] = None,
-                      fixedWidthTrimValues: Option[Boolean] = Some(false),
-                      performanceMetricsFile: Option[String] = None,
-                      rawPathOverride: Option[String] = None,
-                      folderPrefix: Option[String] = None,
-                      persistStorageLevel: Option[StorageLevel] = None)
+                        cmdLineArgs: Array[String],
+                        datasetName: String = "",
+                        datasetVersion: Int = 1,
+                        reportDate: String = "",
+                        reportVersion: Option[Int] = None,
+                        rawFormat: String = "xml",
+                        menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
+                        charset: Option[String] = None,
+                        rowTag: Option[String] = None,
+                        csvDelimiter: Option[String] = None,
+                        csvHeader: Option[Boolean] = Some(false),
+                        csvQuote: Option[String] = None,
+                        csvEscape: Option[String] = None,
+                        cobolOptions: Option[CobolOptions] = None,
+                        fixedWidthTrimValues: Option[Boolean] = Some(false),
+                        performanceMetricsFile: Option[String] = None,
+                        rawPathOverride: Option[String] = None,
+                        folderPrefix: Option[String] = None,
+                        persistStorageLevel: Option[StorageLevel] = None,
+                        failOnInputNotPerSchema: Boolean = false
+                       )
 
 object StdCmdConfig {
 
@@ -193,6 +195,10 @@ object StdCmdConfig {
         } else {
           failure("The --trimValues option is supported only for fixed-width files ")
         })
+
+    opt[Boolean]("failOnInputNotPerSchema").optional().action((value, config) =>
+      config.copy(failOnInputNotPerSchema = value))
+      .text("use --failOnInputNotPerSchema option to fail or proceed over rows not adhering to the schema (with error in errCol)")
 
     processCobolCmdOptions()
 

@@ -48,7 +48,7 @@ class CounterPartySuite extends FunSuite with SparkTestBase with LoggerTestBase 
       Root(Party(5, Seq(), null)),
       Root(Party(6, null, null))))
 
-    val std = StandardizationInterpreter.standardize(input, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(input, desiredSchema, "", failFast = false).cache()
 
     logDataFrameContent(std)
 

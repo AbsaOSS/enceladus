@@ -24,7 +24,6 @@ import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits
-import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -77,7 +76,9 @@ object StandardizationJob {
     log.info(s"output path: ${pathCfg.outputPath}")
     // die if the output path exists
     if (fsUtils.hdfsExists(pathCfg.outputPath)) {
-      throw new IllegalStateException(s"Path ${pathCfg.outputPath} already exists. Increment the run version, or delete ${pathCfg.outputPath}")
+      throw new IllegalStateException(
+        s"Path ${pathCfg.outputPath} already exists. Increment the run version, or delete ${pathCfg.outputPath}"
+      )
     }
 
     // Enable Spline
@@ -110,25 +111,9 @@ object StandardizationJob {
 
     try {
       executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg)
-      cmd.performanceMetricsFile.foreach { fileName =>
-        try {
-          performance.writeMetricsToFile(fileName)
-        } catch {
-          case NonFatal(e) => log.error(s"Unable to write performance metrics to file '$fileName': ${e.getMessage}")
-        }
-      }
       log.info("Standardization finished successfully")
     } finally {
-      Atum.getControlMeasure.runUniqueId
-
-      MenasPlugin.runNumber.foreach { runNumber =>
-        val name = cmd.datasetName
-        val version = cmd.datasetVersion
-        menasBaseUrls.foreach { menasBaseUrl =>
-          log.info(s"Menas API Run URL: $menasBaseUrl/api/runs/$name/$version/$runNumber")
-          log.info(s"Menas UI Run URL: $menasBaseUrl/#/runs/$name/$version/$runNumber")
-        }
-      }
+      postStandardizationSteps(cmd)
       MenasPlugin.close()
     }
   }
@@ -206,7 +191,15 @@ object StandardizationJob {
   }
 
   private def getGenericOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
-    HashMap("charset" -> cmd.charset.map(StringParameter))
+    val mode = if (cmd.failOnInputNotPerSchema) {
+      "FAILFAST"
+    } else {
+      "PERMISSIVE"
+    }
+    HashMap(
+      "charset" -> cmd.charset.map(StringParameter),
+      "mode" -> Option(StringParameter(mode))
+    )
   }
 
   private def getXmlOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
@@ -277,7 +270,8 @@ object StandardizationJob {
     val numberOfColumns = schema.fields.length
     val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, numberOfColumns)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
-      val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
+      val corruptRecordFieldName = ensureUniqueCorruptRecordFieldName(schema, cmd)
+      val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, corruptRecordFieldName)
       dfReaderConfigured.schema(inputSchema)
     } else {
       dfReaderConfigured
@@ -285,6 +279,7 @@ object StandardizationJob {
     ensureSplittable(dfWithSchema, path, schema)
   }
 
+  //scalastyle:off parameter.number
   private def executeStandardization(performance: PerformanceMeasurer,
                                      dfAll: DataFrame,
                                      schema: StructType,
@@ -292,6 +287,7 @@ object StandardizationJob {
                                      menasCredentials: MenasCredentials,
                                      pathCfg: PathCfg)
                                     (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
+    //scalastyle:on parameter.number
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
     performance.startMeasurement(rawDirSize)
 
@@ -300,7 +296,7 @@ object StandardizationJob {
     PerformanceMetricTools.addJobInfoToAtumMetadata("std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     val standardizedDF = try {
-      StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
+      StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat, cmd.failOnInputNotPerSchema)
     } catch {
       case e@ValidationException(msg, errors)                  =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
@@ -411,6 +407,27 @@ object StandardizationJob {
     }
   }
 
+  private def writePerformanceMetrics(performance: PerformanceMeasurer, fileName: String): Unit = {
+    try {
+      performance.writeMetricsToFile(fileName)
+    } catch {
+      case NonFatal(e) => log.error(s"Unable to write performance metrics to file '$fileName': ${e.getMessage}")
+    }
+  }
+
+  private def postStandardizationSteps(cmd: StdCmdConfig): Unit = {
+    Atum.getControlMeasure.runUniqueId
+
+    val name = cmd.datasetName
+    val version = cmd.datasetVersion
+    MenasPlugin.runNumber.foreach { runNumber =>
+      menasBaseUrls.foreach { menasBaseUrl =>
+        log.info(s"Menas API Run URL: $menasBaseUrl/api/runs/$name/$version/$runNumber")
+        log.info(s"Menas UI Run URL: $menasBaseUrl/#/runs/$name/$version/$runNumber")
+      }
+    }
+  }
+
   def buildRawPath(cmd: StdCmdConfig, dataset: Dataset, dateTokens: Array[String], reportVersion: Int): String = {
     cmd.rawPathOverride match {
       case None                  =>
@@ -473,5 +490,34 @@ object StandardizationJob {
     )
   }
 
+  /**
+    * Ensures that the 'spark.sql.columnNameOfCorruptRecord' Spark setting is set to field name not present in the
+    * output schema
+    * @param desiredSchema the desired output schema
+    * @param cmd           program settings
+    * @param spark         current Spark session
+    * @return              if columnNameOfCorruptRecord is to be used then the name of the column, if not and rather
+    *                      fail fast, function returns None
+    */
+  private def ensureUniqueCorruptRecordFieldName(desiredSchema: StructType, cmd: StdCmdConfig)
+                                                (implicit spark: SparkSession): Option[String] = {
+    val defaultResult = spark.conf.get(ColumnNameOfCorruptRecordConf)
+    var result = defaultResult
+    var i = 1
+    while (SchemaUtils.getField(result, desiredSchema).nonEmpty) {
+      result = defaultResult + i.toString
+      i += 1
+    }
+    if (defaultResult != result) {
+      spark.conf.set(ColumnNameOfCorruptRecordConf, result)
+    }
+    if (cmd.failOnInputNotPerSchema) {
+      None
+    } else {
+      Some(result)
+    }
+  }
+
+  private final val ColumnNameOfCorruptRecordConf = "spark.sql.columnNameOfCorruptRecord"
   private final case class PathCfg(inputPath: String, outputPath: String)
 }

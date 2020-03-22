@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.standardization.interpreter.stages
 
 import org.apache.spark.sql.types._
+import za.co.absa.enceladus.utils.schema.MetadataKeys
 
 /**
  * This component is used in the standardization job. We've got a strongly typed (target) schema. When reading the data however, we do not want spark to apply casts
@@ -24,18 +25,29 @@ import org.apache.spark.sql.types._
  */
 object PlainSchemaGenerator {
 
-  def generateInputSchema(inp: DataType): DataType = {
-    inp match {
-      case i: StructType => StructType(i.fields.map(field =>
-        // If the meta data value sourcecolumn is set override the field name
-        if (field.metadata.contains("sourcecolumn")) {
-          StructField(name = field.metadata.getString("sourcecolumn"), nullable = true, metadata = field.metadata, dataType = generateInputSchema(field.dataType))
-        } else {
-          StructField(name = field.name, nullable = true, metadata = field.metadata, dataType = generateInputSchema(field.dataType))
-        }
-      ))
-      case i: ArrayType => ArrayType.apply(generateInputSchema(i.elementType), i.containsNull)
-      case _: DataType => StringType
+  private def structTypeFieldsConversion(fields: Array[StructField]):  Array[StructField] = {
+    import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldEnhancements
+    fields.map { field =>
+      // If the meta data value sourcecolumn is set override the field name
+      val fieldName = field.getMetadataString(MetadataKeys.SourceColumn).getOrElse(field.name)
+      val dataType = inputSchemaAsStringTypes(field.dataType)
+      StructField(fieldName, dataType, nullable = true) //metadata not needed to be transferred
     }
   }
+
+  private def inputSchemaAsStringTypes(inp: DataType): DataType = {
+    inp match {
+      case st: StructType => StructType(structTypeFieldsConversion(st.fields))
+      case at: ArrayType  => ArrayType(inputSchemaAsStringTypes(at.elementType), containsNull = true)
+      case _: DataType    => StringType
+    }
+  }
+
+  def generateInputSchema(structType: StructType, columnNameOfCorruptRecord: Option[String] = None): StructType = {
+    val inputSchema = structTypeFieldsConversion(structType.fields)
+    val corruptRecordField = columnNameOfCorruptRecord.map(StructField(_, StringType)).toArray
+    StructType(inputSchema ++ corruptRecordField)
+  }
+
+
 }

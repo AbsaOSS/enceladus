@@ -81,6 +81,6 @@ object CustomRuleSample1 {
     val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
 
     outputData.show(false)
-    //scalastyleon: magicnumber
+    //scalastyle:on magicnumber
   }
 }

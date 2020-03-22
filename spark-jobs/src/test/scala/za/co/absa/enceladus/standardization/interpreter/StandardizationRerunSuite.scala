@@ -55,9 +55,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
 
   def withFixture(test: OneArgTest): Outcome = {
     val tmpFile = createTempFile(tmpFilePrefix, tmpFileSuffix, StandardCharsets.UTF_8, csvContent)
-    val outcome = test(tmpFile.getAbsolutePath)
-    tmpFile.delete()
-    outcome
+    test(tmpFile.getAbsolutePath)
   }
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
