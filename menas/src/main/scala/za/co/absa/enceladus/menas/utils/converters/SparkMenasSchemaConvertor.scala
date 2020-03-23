@@ -123,7 +123,7 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
           case (key: String, value: String) => (key, value)
           case (key: String, null) => (key, null) // scalastyle:ignore null - some values can be null, particularly default, can be null
           case (key, value) => throw SchemaParsingException(
-            schemaType = "",
+            schemaType = null,  //scalastyle:ignore null - unknown value = null
             message = s"Value for metadata key '$key' (of value $value) to be a string or null",
             field = Option(field.name)
           )
