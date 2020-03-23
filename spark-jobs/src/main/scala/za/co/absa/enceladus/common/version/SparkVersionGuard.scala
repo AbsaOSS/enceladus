@@ -14,21 +14,8 @@
  */
 
 package za.co.absa.enceladus.common.version
-
-import org.slf4j.LoggerFactory
 import za.co.absa.commons.version.Version
 
-object SparkVersionGuard {
-
-  object Defaults {
-    def messageGuardFailed(minVersionInclusive: String, maxVersionExclusive: String)(yourVersion: String): String =
-      s"This SparkJob can only be ran on Spark version ${minVersionInclusive}+ (but < $maxVersionExclusive). " +
-        s"Your detected version was s$yourVersion."
-
-    val loggingFn: String => Unit = LoggerFactory.getLogger(classOf[SparkVersionGuard]).warn(_: String)
-  }
-
-}
 
 /**
  * Setup Spark version guard with allowed min & max sem-ver version. Note that:
