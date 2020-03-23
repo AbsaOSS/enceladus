@@ -57,7 +57,7 @@ object StandardizationJob {
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
-    SparkVersionGuard("2.4.2", "3.0.0").checkSparkVersionCompatibility(SPARK_VERSION) // TODO load form config?
+    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.checkSparkVersionCompatibility(SPARK_VERSION)
 
     implicit val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()

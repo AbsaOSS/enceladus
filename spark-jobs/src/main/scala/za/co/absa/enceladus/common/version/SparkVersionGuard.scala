@@ -14,34 +14,51 @@
  */
 
 package za.co.absa.enceladus.common.version
-import za.co.absa.commons.version.Version
 
+import za.co.absa.commons.version.Version
+import za.co.absa.enceladus.common.SparkCompatibility
+
+object SparkVersionGuard {
+
+  /**
+   * Populates the version guard with the defaults from [[za.co.absa.enceladus.common.SparkCompatibility]]
+   */
+  def fromDefaultSparkCompatibilitySettings: SparkVersionGuard =
+    SparkVersionGuard(SparkCompatibility.minSparkVersionIncluded, SparkCompatibility.maxSparkVersionExcluded)
+}
 
 /**
  * Setup Spark version guard with allowed min & max sem-ver version. Note that:
  *  - min version is included to be allowed and may be non-final
  *  - max version is excluded from allowed (supremum) and may be non-final
+ *
  * @param minVersionInclusive
  * @param maxVersionExclusive
  */
-case class SparkVersionGuard(minVersionInclusive: String, maxVersionExclusive: String) {
+case class SparkVersionGuard(minVersionInclusive: Version, maxVersionExclusive: Version) {
+
+  /**
+   * String wrapper for [[SparkVersionGuard#checkSparkVersionCompatibility(Version)]]
+   *
+   * @param yourVersion provided spark version
+   */
+  def checkSparkVersionCompatibility(yourVersion: String): Unit =
+    checkSparkVersionCompatibility(Version.asSemVer(yourVersion))
+
   /**
    * Supplied version will be checked against the [[SparkVersionGuard]]'s. Note, `yourVersion` is
    * finalized when comparing to max in order to disallow non-final versions againt a final guard (3.0.0-rc.1
    * would be allowed when 3.0.0 is disallowed)
+   *
    * @param yourVersion provided spark version
    */
-  def checkSparkVersionCompatibility(yourVersion: String): Unit = {
+  def checkSparkVersionCompatibility(yourVersion: Version): Unit = {
     import VersionExt._
-    object Typed {
-      val your = Version.asSemVer(yourVersion)
-      val min = Version.asSemVer(minVersionInclusive)
-      val max = Version.asSemVer(maxVersionExclusive)
-    }
 
-    // `Typed.your.finalVersion < Typed.max` will guard against e.g. 3.0.0-rc.1 being allowed when 3.0.0 should not be
-    assert(Typed.your >= Typed.min && Typed.your.finalVersion < Typed.max,
-      s"This SparkJob can only be ran on Spark version ${minVersionInclusive}+ (but < $maxVersionExclusive). " +
+    // `someVersion.finalVersion < maxExclusive` will guard against e.g. 3.0.0-rc.1 being allowed when 3.0.0 should not be
+    assert(yourVersion >= minVersionInclusive && yourVersion.finalVersion < maxVersionExclusive,
+      // todo use Version.asString for better error message!
+      s"This SparkJob can only be ran on Spark version [$minVersionInclusive, $maxVersionExclusive) (min inclusive, max exclusive). " +
         s"Your detected version was $yourVersion.")
   }
 
