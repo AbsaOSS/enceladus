@@ -21,13 +21,18 @@ object VersionExt {
 
   implicit class RichVersion(version: Version) {
     /**
-     * This strips the version to what the final version should look like - only keeping the leading numeric components, e.g.
-     * `1.2.3-rc.2` -> `1.2.3`
-     * @return
+     * This strips the version to what the final version should look like - only keeping the 3 first numeric components,
+     * e.g. `1.2.3-rc.2+567` -> `1.2.3`
+     *
+     * @return version object with 3 leading numeric values.
      */
     def finalVersion: Version = {
-      val leadingNumericComponents = version.components.takeWhile(_.isInstanceOf[NumericComponent])
-      Version(leadingNumericComponents: _*)
+      val leadingComponents = version.components.take(3)
+      require(leadingComponents.forall(_.isInstanceOf[NumericComponent]),
+        s"The $version is not a valid SemVer - expected 3 numeric components first to derive final version, but got: $leadingComponents")
+      // TODO simplify this using version.truncateLabels as suggested in issue "commons#13"
+
+      Version(leadingComponents: _*)
     }
   }
 

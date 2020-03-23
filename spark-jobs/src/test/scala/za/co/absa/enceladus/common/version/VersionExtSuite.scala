@@ -17,16 +17,18 @@ package za.co.absa.enceladus.common.version
 
 import org.scalatest.{FlatSpec, Matchers}
 import za.co.absa.commons.version.Version
+import za.co.absa.commons.version.Version._
 
 class VersionExtSuite extends FlatSpec with Matchers {
 
   import VersionExt._
 
-  "VersionExt" should "correctly derive final version" in {
-    val expectedFinalVersion = Version.asSemVer("1.2.3")
+  val expectedFinalVersion = Version.asSemVer("1.2.3")
+
+  "VersionExt" should "correctly derive final version for SemVers" in {
     val toBeFinalized = Seq(
       "1.2.3-alpha", "1.2.3-alpha.1", "1.2.3-0.3.7", "1.2.3-x.7.z.92",
-      "1.2.3-dev", "1.2.3-rc.1", "1.2.3-alpha.beta", "1.2.3"
+      "1.2.3-dev", "1.2.3-rc.1", "1.2.3-alpha.beta", "1.2.3-alpha.beta+222", "1.2.3"
     )
 
     toBeFinalized.foreach { toFinalize =>
@@ -34,5 +36,15 @@ class VersionExtSuite extends FlatSpec with Matchers {
     }
   }
 
+  it should "only work with compatible simple versions (having first 3 numeric values)" in {
+    ver"1.2.3".finalVersion shouldBe expectedFinalVersion
+    ver"1.2.3.4.5".finalVersion shouldBe expectedFinalVersion
+    ver"1.2.3.foo.bar".finalVersion shouldBe expectedFinalVersion
+
+    val caughtException = the[IllegalArgumentException] thrownBy {
+      ver"1.2.3-dev".finalVersion // 3rd component is "3-dev" for simple Version
+    }
+    caughtException.getMessage should include("is not a valid SemVer - expected 3 numeric components first to derive final version")
+  }
 
 }

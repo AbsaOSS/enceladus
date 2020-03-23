@@ -51,7 +51,7 @@ object DynamicConformanceJob {
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   def main(args: Array[String]) {
-    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.checkSparkVersionCompatibility(SPARK_VERSION)
+    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
     implicit val cmd: ConfCmdConfig = ConfCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark

@@ -42,8 +42,8 @@ case class SparkVersionGuard(minVersionInclusive: Version, maxVersionExclusive: 
    *
    * @param yourVersion provided spark version
    */
-  def checkSparkVersionCompatibility(yourVersion: String): Unit =
-    checkSparkVersionCompatibility(Version.asSemVer(yourVersion))
+  def ensureSparkVersionCompatibility(yourVersion: String): Unit =
+    ensureSparkVersionCompatibility(Version.asSemVer(yourVersion))
 
   /**
    * Supplied version will be checked against the [[SparkVersionGuard]]'s. Note, `yourVersion` is
@@ -52,18 +52,17 @@ case class SparkVersionGuard(minVersionInclusive: Version, maxVersionExclusive: 
    *
    * @param yourVersion provided spark version
    */
-  def checkSparkVersionCompatibility(yourVersion: Version): Unit = {
+  def ensureSparkVersionCompatibility(yourVersion: Version): Unit = {
     import VersionExt._
 
     // `someVersion.finalVersion < maxExclusive` will guard against e.g. 3.0.0-rc.1 being allowed when 3.0.0 should not be
     assert(yourVersion >= minVersionInclusive && yourVersion.finalVersion < maxVersionExclusive,
       // todo use Version.asString for better error message!
-      s"This SparkJob can only be ran on Spark version [$minVersionInclusive, $maxVersionExclusive) (min inclusive, max exclusive). " +
+      s"This SparkJob can only run on Spark version [$minVersionInclusive, $maxVersionExclusive) (min inclusive, max exclusive). " +
         s"Your detected version was $yourVersion.")
   }
 
 }
-
 
 
 
