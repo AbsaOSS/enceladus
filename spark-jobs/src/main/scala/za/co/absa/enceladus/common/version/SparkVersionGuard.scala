@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.common.version
 
 import za.co.absa.commons.version.Version
+import za.co.absa.commons.version.impl.SemVer20Impl.SemanticVersion
 import za.co.absa.enceladus.common.SparkCompatibility
 
 object SparkVersionGuard {
@@ -35,10 +36,10 @@ object SparkVersionGuard {
  * @param minVersionInclusive
  * @param maxVersionExclusive
  */
-case class SparkVersionGuard(minVersionInclusive: Version, maxVersionExclusive: Version) {
+case class SparkVersionGuard(minVersionInclusive: SemanticVersion, maxVersionExclusive: SemanticVersion) {
 
   /**
-   * String wrapper for [[SparkVersionGuard#checkSparkVersionCompatibility(Version)]]
+   * String wrapper for [[SparkVersionGuard#checkSparkVersionCompatibility(SemanticVersion)]]
    *
    * @param yourVersion provided spark version
    */
@@ -52,14 +53,12 @@ case class SparkVersionGuard(minVersionInclusive: Version, maxVersionExclusive: 
    *
    * @param yourVersion provided spark version
    */
-  def ensureSparkVersionCompatibility(yourVersion: Version): Unit = {
-    import VersionExt._
+  def ensureSparkVersionCompatibility(yourVersion: SemanticVersion): Unit = {
 
-    // `someVersion.finalVersion < maxExclusive` will guard against e.g. 3.0.0-rc.1 being allowed when 3.0.0 should not be
-    assert(yourVersion >= minVersionInclusive && yourVersion.finalVersion < maxVersionExclusive,
-      // todo use Version.asString for better error message!
-      s"""This SparkJob can only run on Spark version [$minVersionInclusive, $maxVersionExclusive) (min inclusive, max exclusive).
-          |Your detected version was $yourVersion.""".stripMargin)
+    // `someVersion.core < maxExclusive` guards against e.g. 3.0.0-rc.1 being allowed when 3.0.0 should not be
+    assert(yourVersion >= minVersionInclusive && yourVersion.core < maxVersionExclusive,
+      s"""This SparkJob can only run on Spark version [${minVersionInclusive.asString}., ${maxVersionExclusive.asString}) (min inclusive, max exclusive).
+          |Your detected version was ${yourVersion.asString}""".stripMargin)
   }
 
 }

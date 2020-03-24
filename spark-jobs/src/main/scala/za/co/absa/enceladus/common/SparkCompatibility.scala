@@ -22,10 +22,10 @@ package za.co.absa.enceladus.common
  * Expected to be used by [[version.SparkVersionGuard]]
  */
 
-import za.co.absa.commons.version.Version
 import za.co.absa.commons.version.Version._
+import za.co.absa.commons.version.impl.SemVer20Impl.SemanticVersion
 
 object SparkCompatibility {
-  val minSparkVersionIncluded: Version = semver"2.4.2"
-  val maxSparkVersionExcluded: Version = semver"3.0.0"
+  val minSparkVersionIncluded: SemanticVersion = semver"2.4.2"
+  val maxSparkVersionExcluded: SemanticVersion = semver"3.0.0"
 }

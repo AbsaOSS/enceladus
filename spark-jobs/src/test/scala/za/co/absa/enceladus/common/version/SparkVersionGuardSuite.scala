@@ -55,6 +55,7 @@ class SparkVersionGuardSuite extends FlatSpec with Matchers {
   it should "handle some special cases, too" in {
     // allow non-final in-between
     SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.5.0-alpha.beta-2")
+    SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.5.0+20130313144700") // bigInt suffix
 
     // non-final guards can be used
     SparkVersionGuard(semver"2.4.0-milestone.6", semver"3.0.2-rc.9").ensureSparkVersionCompatibility(semver"3.0.1")

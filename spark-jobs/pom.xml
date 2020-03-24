@@ -26,7 +26,7 @@
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <hyperdrive.version>2.0.0</hyperdrive.version>
-        <commons.version>0.0.9</commons.version>
+        <commons.version>0.0.10</commons.version>
     </properties>
 
     <dependencies>
