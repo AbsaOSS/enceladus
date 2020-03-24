@@ -58,8 +58,8 @@ case class SparkVersionGuard(minVersionInclusive: Version, maxVersionExclusive: 
     // `someVersion.finalVersion < maxExclusive` will guard against e.g. 3.0.0-rc.1 being allowed when 3.0.0 should not be
     assert(yourVersion >= minVersionInclusive && yourVersion.finalVersion < maxVersionExclusive,
       // todo use Version.asString for better error message!
-      s"This SparkJob can only run on Spark version [$minVersionInclusive, $maxVersionExclusive) (min inclusive, max exclusive). " +
-        s"Your detected version was $yourVersion.")
+      s"""This SparkJob can only run on Spark version [$minVersionInclusive, $maxVersionExclusive) (min inclusive, max exclusive).
+          |Your detected version was $yourVersion.""".stripMargin)
   }
 
 }
