@@ -15,41 +15,58 @@
 
 package za.co.absa.enceladus.common.version
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{Assertion, FlatSpec, Matchers}
 import za.co.absa.commons.version.Version._
 
+import scala.reflect.ClassTag
+
 class SparkVersionGuardSuite extends FlatSpec with Matchers {
+
+  private def ensureThrowsWithMessageIncluding[T <: Throwable](messageSubstringToAppear: String)(fun: => scala.Any)
+                                                              (implicit ev: ClassTag[T]): Assertion = {
+    val caught = the[T] thrownBy (fun)
+    caught.getMessage should include(messageSubstringToAppear)
+  }
+
+  /**
+   * Specific check for the [[SparkVersionGuard]]
+   */
+  private def ensureFailsSparkVersionGuard =
+    ensureThrowsWithMessageIncluding[AssertionError]("This SparkJob can only run on Spark version") _
 
   "SparkVersionGuard" should "check basic version compatibility" in {
     SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.4.5")
     SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.4.4") // min is inclusive
     SparkVersionGuard(semver"1.6.0", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.4.4")
 
-    assertThrows[AssertionError] {
-      SparkVersionGuard(semver"2.4.0", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.3.1")
+    ensureFailsSparkVersionGuard {
+      SparkVersionGuard(semver"2.4.0", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.3.1") // below min
     }
 
-    assertThrows[AssertionError] {
+    ensureFailsSparkVersionGuard {
       SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"3.0.0") // max is exclusive
     }
 
-    assertThrows[AssertionError] {
-      SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"3.1.0")
+    ensureFailsSparkVersionGuard {
+      SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"3.1.0") // above max
     }
   }
 
   it should "handle some special cases, too" in {
-    SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.5.0-alpha.beta-2") // allow non-final in-between
+    // allow non-final in-between
+    SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.5.0-alpha.beta-2")
 
-    SparkVersionGuard(semver"2.4.0-milestone.6", semver"3.0.2-rc.9").ensureSparkVersionCompatibility(semver"3.0.1") // non-final guards can be used
+    // non-final guards can be used
+    SparkVersionGuard(semver"2.4.0-milestone.6", semver"3.0.2-rc.9").ensureSparkVersionCompatibility(semver"3.0.1")
 
-    assertThrows[AssertionError] {
+    ensureFailsSparkVersionGuard {
       SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"3.0.0-alpha") // do not allow 3.x
     }
 
-    assertThrows[AssertionError] {
+    ensureFailsSparkVersionGuard {
       SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.4.4-rc.7") // do not allow pre-min version
     }
+
   }
 
   it should "work with strings, too" in {
