@@ -265,6 +265,20 @@
             <version>${spring.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- WireMock - to act as SchemaRegistry for IntegTest-->
+        <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock-jre8</artifactId>
+            <version>2.26.3</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- guava 27 for wire mock -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>27.0.1-jre</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

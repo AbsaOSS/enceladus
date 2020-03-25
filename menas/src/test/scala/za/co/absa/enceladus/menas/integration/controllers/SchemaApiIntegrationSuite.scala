@@ -15,10 +15,15 @@
 
 package za.co.absa.enceladus.menas.integration.controllers
 
+import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration
+import org.apache.commons.io.IOUtils
 import org.junit.runner.RunWith
+import org.scalatest.BeforeAndAfterAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
+import za.co.absa.enceladus.menas.TestResourcePath
 import za.co.absa.enceladus.menas.integration.fixtures._
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.models.rest.RestResponse
@@ -33,7 +38,20 @@ import scala.collection.immutable.HashMap
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class SchemaApiIntegrationSuite extends BaseRestApiTest {
+class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
+
+  private val port = 8877
+  private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
+
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    wireMockServer.start()
+  }
+
+  override def afterAll(): Unit = {
+    super.afterAll()
+    wireMockServer.stop()
+  }
 
   @Autowired
   private val schemaFixture: SchemaFixtureService = null
@@ -555,15 +573,16 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody.replace("\r\n", "\n") // this will make it work on Windows (CRLF->LF), too.
-          val expected = """|{
-                            |  "type" : "struct",
-                            |  "fields" : [ {
-                            |    "name" : "dummyFieldName",
-                            |    "type" : "string",
-                            |    "nullable" : true,
-                            |    "metadata" : { }
-                            |  } ]
-                            |}""".stripMargin
+          val expected =
+            """|{
+               |  "type" : "struct",
+               |  "fields" : [ {
+               |    "name" : "dummyFieldName",
+               |    "type" : "string",
+               |    "nullable" : true,
+               |    "metadata" : { }
+               |  } ]
+               |}""".stripMargin
           assert(body == expected)
         }
       }
@@ -653,10 +672,10 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           val schema = SchemaFactory.getDummySchema()
           schemaFixture.add(schema)
 
-          val schemaParams = HashMap[String, Any] (
+          val schemaParams = HashMap[String, Any](
             "name" -> schema.name, "version" -> schema.version, "format" -> "copybook")
           val responseUploaded = sendPostUploadFile[Schema](
-            s"$apiUrl/upload", "/test_data/schemas/copybook/copybook_ok.cob", schemaParams)
+            s"$apiUrl/upload", TestResourcePath.Copybook.ok, schemaParams)
           assertCreated(responseUploaded)
 
           val actual = responseUploaded.getBody
@@ -671,10 +690,10 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           val schema = SchemaFactory.getDummySchema()
           schemaFixture.add(schema)
 
-          val schemaParams = HashMap[String, Any] (
+          val schemaParams = HashMap[String, Any](
             "name" -> schema.name, "version" -> schema.version, "format" -> "struct")
           val responseUploaded = sendPostUploadFile[Schema](
-            s"$apiUrl/upload", "/test_data/schemas/json/schema_json_ok.json", schemaParams)
+            s"$apiUrl/upload", TestResourcePath.Json.ok, schemaParams)
           assertCreated(responseUploaded)
 
           val actual = responseUploaded.getBody
@@ -689,10 +708,10 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           val schema = SchemaFactory.getDummySchema()
           schemaFixture.add(schema)
 
-          val schemaParams = HashMap[String, Any] (
+          val schemaParams = HashMap[String, Any](
             "name" -> schema.name, "version" -> schema.version, "format" -> "")
           val responseUploaded = sendPostUploadFile[Schema](
-            s"$apiUrl/upload", "/test_data/schemas/json/schema_json_ok.json", schemaParams)
+            s"$apiUrl/upload", TestResourcePath.Json.ok, schemaParams)
           assertCreated(responseUploaded)
 
           val actual = responseUploaded.getBody
@@ -707,10 +726,10 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           val schema = SchemaFactory.getDummySchema()
           schemaFixture.add(schema)
 
-          val schemaParams = HashMap[String, Any] (
+          val schemaParams = HashMap[String, Any](
             "name" -> schema.name, "version" -> schema.version)
           val responseUploaded = sendPostUploadFile[Schema](
-            s"$apiUrl/upload", "/test_data/schemas/json/schema_json_ok.json", schemaParams)
+            s"$apiUrl/upload", TestResourcePath.Json.ok, schemaParams)
           assertCreated(responseUploaded)
 
           val actual = responseUploaded.getBody
@@ -725,10 +744,10 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           val schema = SchemaFactory.getDummySchema()
           schemaFixture.add(schema)
 
-          val schemaParams = HashMap[String, Any] (
+          val schemaParams = HashMap[String, Any](
             "name" -> schema.name, "version" -> schema.version, "format" -> "avro")
           val responseUploaded = sendPostUploadFile[Schema](
-            s"$apiUrl/upload", "/test_data/schemas/avro/avroschema_json_ok.avsc", schemaParams)
+            s"$apiUrl/upload", TestResourcePath.Avro.ok, schemaParams)
           assertCreated(responseUploaded)
 
           val actual = responseUploaded.getBody
@@ -742,9 +761,9 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
     "return 400" when {
       "a copybook with a syntax error" should {
         "return a response containing a schema parsing error with syntax error specific fields" in {
-          val schemaParams = HashMap[String, Any] ("version" -> 1, "name" -> "MySchema", "format" -> "copybook")
+          val schemaParams = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "copybook")
           val response = sendPostUploadFile[RestResponse](
-            s"$apiUrl/upload", "/test_data/schemas/copybook/copybook_bogus.cob", schemaParams)
+            s"$apiUrl/upload", TestResourcePath.Copybook.bogus, schemaParams)
           val body = response.getBody
 
           assertBadRequest(response)
@@ -764,7 +783,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
         "return a response containing a schema parsing error returned by the StructType parser" in {
           val schemaParams = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "struct")
           val response = sendPostUploadFile[RestResponse](
-            s"$apiUrl/upload", "/test_data/schemas/json/schema_json_bogus.json", schemaParams)
+            s"$apiUrl/upload", TestResourcePath.Json.bogus, schemaParams)
           val body = response.getBody
 
           assertBadRequest(response)
@@ -780,9 +799,9 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
 
       "an avro-schema with a syntax error" should {
         "return a response containing a schema parsing error encountered during avro schema parsing" in {
-          val schemaParams = HashMap[String, Any] ("version" -> 1, "name" -> "MySchema", "format" -> "avro")
+          val schemaParams = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "avro")
           val response = sendPostUploadFile[RestResponse](
-            s"$apiUrl/upload", "/test_data/schemas/avro/avroschema_json_bogus.avsc", schemaParams)
+            s"$apiUrl/upload", TestResourcePath.Avro.bogus, schemaParams)
           val body = response.getBody
 
           assertBadRequest(response)
@@ -800,7 +819,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
         "return a response containing a schema format error" in {
           val schemaParams = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "foo")
           val response = sendPostUploadFile[RestResponse](
-            s"$apiUrl/upload", "/test_data/schemas/json/schema_json_bogus.json", schemaParams)
+            s"$apiUrl/upload", TestResourcePath.Json.bogus, schemaParams)
           val body = response.getBody
 
           assertBadRequest(response)
@@ -820,8 +839,145 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
         val schemaParams = HashMap[String, Any](
           "name" -> "dummy", "version" -> 1, "format" -> "copybook")
         val responseUploaded = sendPostUploadFile[Schema](
-          s"$apiUrl/upload", "/test_data/schemas/copybook/copybook_ok.cob", schemaParams)
+          s"$apiUrl/upload", TestResourcePath.Copybook.ok, schemaParams)
         assertNotFound(responseUploaded)
+      }
+    }
+  }
+
+  def readTestResourceAsString(path: String): String = IOUtils.toString(getClass.getResourceAsStream(path))
+
+  s"POST $apiUrl/remote" should {
+    import com.github.tomakehurst.wiremock.client.WireMock._
+
+    val remoteFilePath = "/remote-test/someRemoteFile.ext"
+    val remoteUrl = s"http://localhost:$port$remoteFilePath"
+
+    "return 201" when {
+      "a copybook has no errors" should {
+        "return a new version of the schema" in {
+          val schema = SchemaFactory.getDummySchema()
+          schemaFixture.add(schema)
+
+          wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
+            .willReturn(ok(readTestResourceAsString(TestResourcePath.Copybook.ok))))
+
+          val params = HashMap[String, Any](
+            "name" -> schema.name, "version" -> schema.version, "format" -> "copybook", "remoteUrl" -> remoteUrl) // TODO string value from somewhere?
+          val responseRemoteLoaded = sendPostRemoteFile[Schema](s"$apiUrl/remote", params)
+          assertCreated(responseRemoteLoaded)
+
+          val actual = responseRemoteLoaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 3)
+        }
+      }
+
+      Seq(
+        ("explicit JSON struct format", Some("format" -> "struct")),
+        ("implicit JSON struct (by empty string format)", Some("format" -> "")),
+        ("implicit JSON struct (by no format at all)", None)
+      ).foreach { case (name, formatSpec) =>
+        s"an $name schema has no errors" should {
+          "return a new version of the schema" in {
+            val schema = SchemaFactory.getDummySchema()
+            schemaFixture.add(schema)
+
+            wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
+              .willReturn(ok(readTestResourceAsString(TestResourcePath.Json.ok))))
+
+            // conditionally adding ("format" -> "struct"/"") or no format at all
+            val params = HashMap("name" -> schema.name, "version" -> schema.version, "remoteUrl" -> remoteUrl) ++ formatSpec
+            val responseRemoteLoaded = sendPostRemoteFile[Schema](s"$apiUrl/remote", params)
+            assertCreated(responseRemoteLoaded)
+
+            val actual = responseRemoteLoaded.getBody
+            assert(actual.name == schema.name)
+            assert(actual.version == schema.version + 1)
+            assert(actual.fields.length == 2)
+          }
+        }
+      }
+
+      "an avro schema has no errors" should {
+        "return a new version of the schema" in {
+          val schema = SchemaFactory.getDummySchema()
+          schemaFixture.add(schema)
+
+          wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
+            .willReturn(ok(readTestResourceAsString(TestResourcePath.Avro.ok))))
+
+          val params = HashMap[String, Any](
+            "name" -> schema.name, "version" -> schema.version, "format" -> "avro", "remoteUrl" -> remoteUrl)
+          val responseRemoteLoaded = sendPostRemoteFile[Schema](s"$apiUrl/remote", params)
+          assertCreated(responseRemoteLoaded)
+
+          val actual = responseRemoteLoaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 7)
+        }
+      }
+    }
+
+    "return 400" when {
+      Seq(
+        (SchemaType.Copybook, TestResourcePath.Copybook.bogus, "Syntax error in the copybook"),
+        (SchemaType.Struct, TestResourcePath.Json.bogus, "StructType serializer: Failed to convert the JSON string"),
+        (SchemaType.Avro, TestResourcePath.Avro.bogus, "Record has no fields")
+      ).foreach { case (schemaType, testResourcePath, expectedErrorMessage) =>
+
+        s"a $schemaType with a syntax error" should {
+          "return a response containing a schema parsing error with syntax error specific fields" in {
+            wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
+              .willReturn(ok(readTestResourceAsString(testResourcePath))))
+
+            val params = HashMap("name" -> "MySchema", "version" -> 1, "format" -> schemaType.toString, "remoteUrl" -> remoteUrl)
+            val response = sendPostRemoteFile[RestResponse](s"$apiUrl/remote", params)
+            val body = response.getBody
+
+            assertBadRequest(response)
+            body.error match {
+              case Some(e: SchemaParsingError) =>
+                assert(e.errorType == "schema_parsing")
+                assert(e.schemaType == schemaType)
+                assert(body.message.contains(expectedErrorMessage))
+              case e => fail(s"Expected an instance of SchemaParsingError, got $e.")
+            }
+          }
+        }
+      }
+
+      "a wrong format has been specified" should {
+        "return a response containing a schema format error" in {
+          wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
+            .willReturn(ok(readTestResourceAsString(TestResourcePath.Json.ok))))
+
+          val params = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "foo", "remoteUrl" -> remoteUrl)
+          val response = sendPostRemoteFile[RestResponse](s"$apiUrl/remote", params)
+          val body = response.getBody
+
+          assertBadRequest(response)
+          body.error match {
+            case Some(e: SchemaFormatError) =>
+              assert(e.errorType == "schema_format")
+              assert(e.schemaType == "foo")
+              assert(body.message.contains("'foo' is not a recognized schema format."))
+            case e => fail(s"Expected an instance of SchemaFormatError, got $e.")
+          }
+        }
+      }
+    }
+
+    "return 404" when {
+      "a schema file is loaded from remote url, but no schema exists for the specified name and version" in {
+        wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
+          .willReturn(ok(readTestResourceAsString(TestResourcePath.Copybook.ok))))
+
+        val params = HashMap[String, Any]("version" -> 1, "name" -> "dummy", "format" -> "copybook", "remoteUrl" -> remoteUrl)
+        val response = sendPostRemoteFile[Schema](s"$apiUrl/remote", params)
+        assertNotFound(response)
       }
     }
   }

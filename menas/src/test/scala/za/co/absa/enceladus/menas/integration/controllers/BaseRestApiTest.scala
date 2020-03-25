@@ -102,6 +102,15 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     upload(urlPath, headers, fileParamName, fileName, parameters)
   }
 
+  def sendPostRemoteFile[T](urlPath: String,
+                            parameters: Map[String, Any],
+                            headers: HttpHeaders = new HttpHeaders())
+                           (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    require(parameters.keySet.contains("remoteUrl"), s"parameters map must contain the 'remoteUrl' entry, but only $parameters was found")
+
+    fromRemote(urlPath, headers, parameters)
+  }
+
   def sendPostAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): Future[ResponseEntity[T]] = {
     sendAsync(HttpMethod.POST, urlPath, headers, bodyOpt)
@@ -168,6 +177,27 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     val httpEntity = new HttpEntity[LinkedMultiValueMap[String, Any]](parameters, headers)
     restTemplate.exchange(url, HttpMethod.POST, httpEntity, clazz)
   }
+
+  def fromRemote[T](urlPath: String,
+                    headers: HttpHeaders = HttpHeaders.EMPTY,
+                    params: Map[String, Any])
+               (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+
+    val parameters = new LinkedMultiValueMap[String, Any]
+    params.foreach {
+      case (key, value) => parameters.add(key, value) // TODO convert to Map<K, List<V>> and pass to LMVM directly?
+    }
+
+    val url = s"$baseUrl/$urlPath"
+    headers.addAll(authHeaders)
+    headers.setContentType(MediaType.MULTIPART_FORM_DATA) // no payload transfer besides the form data? application/x-www-form-urlencoded?
+
+    val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
+
+    val httpEntity = new HttpEntity[LinkedMultiValueMap[String, Any]](parameters, headers)
+    restTemplate.exchange(url, HttpMethod.POST, httpEntity, clazz)
+  }
+
 
   def assertOk(responseEntity: ResponseEntity[_]): Unit = {
     assert(responseEntity.getStatusCode == HttpStatus.OK)

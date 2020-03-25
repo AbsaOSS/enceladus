@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.menas.controllers
 
+import java.net.URL
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
@@ -35,6 +36,8 @@ import za.co.absa.enceladus.menas.utils.parsers.SchemaParser
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
 
+import scala.io.Source
+
 
 @RestController
 @RequestMapping(Array("/api/schema"))
@@ -47,6 +50,45 @@ class SchemaController @Autowired()(
   import za.co.absa.enceladus.menas.utils.implicits._
 
   import scala.concurrent.ExecutionContext.Implicits.global
+
+  @PostMapping(Array("/remote"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def handleRemoteFile(@AuthenticationPrincipal principal: UserDetails,
+                       @RequestParam remoteUrl: String,
+                       @RequestParam version: Int,
+                       @RequestParam name: String,
+                       @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
+
+    val url = new URL(remoteUrl)
+    val fileStream = Source.fromURL(url)
+    val fileContent = fileStream.mkString
+    fileStream.close()
+
+    val origFormat: Option[String] = format
+
+    val schemaType = SchemaType.fromOptSchemaName(origFormat)
+    val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
+
+    // TODO generalize with [[handleFileUpload]]
+    val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
+      refName = name,
+      refVersion = version + 1,
+      attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
+      filename = url.getFile,
+      fileContent = fileContent.getBytes,
+      fileMIMEType = "application/octet-stream")
+
+    try {
+
+      for {
+        // the parsing of sparkStruct can fail, therefore we try to save it first before saving the attachment
+        update <- schemaService.schemaUpload(principal.getUsername, name, version, sparkStruct)
+        _ <- attachmentService.uploadAttachment(origFile)
+      } yield update
+    } catch {
+      case e: SchemaParsingException => throw e.copy(schemaType = schemaType) //adding schema type
+    }
+  }
 
   @PostMapping(Array("/upload"))
   @ResponseStatus(HttpStatus.CREATED)
