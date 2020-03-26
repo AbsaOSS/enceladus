@@ -97,7 +97,7 @@ class SchemaParsersSuite extends WordSpec with Matchers with MockitoSugar with I
       }
 
       inside(caughtException) {
-        case SchemaParsingException(SchemaTypeCopybook, msg, Some(22), None, Some("B1"), cause) =>
+        case SchemaParsingException(SchemaTypeCopybook, msg, Some(22), None, Some("B1"), cause) => // scalastyle:ignore magic.number
           msg should include("Syntax error in the copybook")
           cause shouldBe a[SyntaxErrorException]
       }
