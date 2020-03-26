@@ -28,55 +28,60 @@ class SparkVersionGuardSuite extends FlatSpec with Matchers {
     caught.getMessage should include(messageSubstringToAppear)
   }
 
-  /**
-   * Specific check for the [[SparkVersionGuard]]
-   */
-  private def ensureFailsSparkVersionGuard =
-    ensureThrowsWithMessageIncluding[AssertionError]("This SparkJob can only run on Spark version") _
+   // Specific checks for the [[SparkVersionGuard]]
+  private def ensureFailsVersionTooLow =
+    ensureThrowsWithMessageIncluding[AssertionError]("Your Spark version is too low.") _
+
+  private def ensureFailsVersionTooHigh =
+    ensureThrowsWithMessageIncluding[AssertionError]("Your Spark version is too high.") _
+
 
   "SparkVersionGuard" should "check basic version compatibility" in {
-    SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.4.5")
-    SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.4.4") // min is inclusive
-    SparkVersionGuard(semver"1.6.0", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.4.4")
+    SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"2.4.5")
+    SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"2.4.4") // min is inclusive
+    SparkVersionGuard(semver"1.6.0", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"2.4.4")
 
-    ensureFailsSparkVersionGuard {
-      SparkVersionGuard(semver"2.4.0", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.3.1") // below min
+    SparkVersionGuard(semver"1.6.0", None).ensureSparkVersionCompatibility(semver"2.4.4")
+
+    ensureFailsVersionTooLow {
+      SparkVersionGuard(semver"2.4.0", None).ensureSparkVersionCompatibility(semver"2.3.1") // below min
     }
 
-    ensureFailsSparkVersionGuard {
-      SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"3.0.0") // max is exclusive
+    ensureFailsVersionTooHigh {
+      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"3.0.0") // max is exclusive
     }
 
-    ensureFailsSparkVersionGuard {
-      SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"3.1.0") // above max
+    ensureFailsVersionTooHigh {
+      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"3.1.0") // above max
     }
   }
 
   it should "handle some special cases, too" in {
     // allow non-final in-between
-    SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.5.0-alpha.beta-2")
-    SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.5.0+20130313144700") // bigInt suffix
+    SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"2.5.0-alpha.beta-2")
+    SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"2.5.0+20130313144700") // bigInt suffix
 
     // non-final guards can be used
-    SparkVersionGuard(semver"2.4.0-milestone.6", semver"3.0.2-rc.9").ensureSparkVersionCompatibility(semver"3.0.1")
+    SparkVersionGuard(semver"2.4.0-milestone.6", Some(semver"3.0.2-rc.9")).ensureSparkVersionCompatibility(semver"3.0.1")
 
-    ensureFailsSparkVersionGuard {
-      SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"3.0.0-alpha") // do not allow 3.x
+    ensureFailsVersionTooHigh {
+      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"3.0.0-alpha") // do not allow 3.x
     }
 
-    ensureFailsSparkVersionGuard {
-      SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility(semver"2.4.4-rc.7") // do not allow pre-min version
+    ensureFailsVersionTooLow {
+      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"2.4.4-rc.7") // pre-min version
     }
 
   }
 
   it should "work with strings, too" in {
-    SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility("2.5.1")
-    SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility("2.5.1-SNAPSHOT")
-    SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility("2.5.1-dev+99")
+    SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility("2.5.1")
+    SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility("2.5.1-SNAPSHOT")
+    SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility("2.5.1-dev+99")
+    SparkVersionGuard(semver"2.4.4", None).ensureSparkVersionCompatibility("3.4.5")
 
     val caughtBogus1 = intercept[IllegalArgumentException] {
-      SparkVersionGuard(semver"2.4.4", semver"3.0.0").ensureSparkVersionCompatibility("bogus")
+      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility("bogus")
     }
     caughtBogus1.getMessage should include("does not correspond to the SemVer")
 
