@@ -72,7 +72,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Commons - for Version utilities -->
         <dependency>
             <groupId>za.co.absa.commons</groupId>
             <artifactId>commons_${scala.compat.version}</artifactId>
