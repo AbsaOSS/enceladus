@@ -15,7 +15,11 @@
 
 package za.co.absa.enceladus.menas.integration.controllers
 
+import java.io.File
+import java.nio.file.{Files, Path}
+
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import org.apache.commons.io.IOUtils
 import org.junit.runner.RunWith
@@ -845,10 +849,23 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
     }
   }
 
-  def readTestResourceAsString(path: String): String = IOUtils.toString(getClass.getResourceAsStream(path))
 
   s"POST $apiUrl/remote" should {
     import com.github.tomakehurst.wiremock.client.WireMock._
+
+    def readTestResourceAsString(path: String): String = IOUtils.toString(getClass.getResourceAsStream(path))
+
+    /**
+     * will prepare the a response from file with correct `ContentType`
+     */
+    def readTestResourceAsResponseWithContentType(path: String): ResponseDefinitionBuilder = {
+      // this is crazy, but it works better than hardcoding mime-types
+      val filePath: Path = new File(getClass.getResource(path).toURI()).toPath
+      val mime = Option(Files.probeContentType(filePath)).getOrElse("application/octet-stream") // default for e.g. cob
+
+      val content = readTestResourceAsString(path)
+      okForContentType(mime, content)
+    }
 
     val remoteFilePath = "/remote-test/someRemoteFile.ext"
     val remoteUrl = s"http://localhost:$port$remoteFilePath"
@@ -860,7 +877,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
           schemaFixture.add(schema)
 
           wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-            .willReturn(ok(readTestResourceAsString(TestResourcePath.Copybook.ok))))
+            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Copybook.ok)))
 
           val params = HashMap[String, Any](
             "name" -> schema.name, "version" -> schema.version, "format" -> "copybook", "remoteUrl" -> remoteUrl) // TODO string value from somewhere?
@@ -885,7 +902,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
             schemaFixture.add(schema)
 
             wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-              .willReturn(ok(readTestResourceAsString(TestResourcePath.Json.ok))))
+              .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Json.ok)))
 
             // conditionally adding ("format" -> "struct"/"") or no format at all
             val params = HashMap("name" -> schema.name, "version" -> schema.version, "remoteUrl" -> remoteUrl) ++ formatSpec
@@ -906,7 +923,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
           schemaFixture.add(schema)
 
           wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-            .willReturn(ok(readTestResourceAsString(TestResourcePath.Avro.ok))))
+            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
 
           val params = HashMap[String, Any](
             "name" -> schema.name, "version" -> schema.version, "format" -> "avro", "remoteUrl" -> remoteUrl)
@@ -931,7 +948,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
         s"a $schemaType with a syntax error" should {
           "return a response containing a schema parsing error with syntax error specific fields" in {
             wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-              .willReturn(ok(readTestResourceAsString(testResourcePath))))
+              .willReturn(readTestResourceAsResponseWithContentType(testResourcePath)))
 
             val params = HashMap("name" -> "MySchema", "version" -> 1, "format" -> schemaType.toString, "remoteUrl" -> remoteUrl)
             val response = sendPostRemoteFile[RestResponse](s"$apiUrl/remote", params)
@@ -952,7 +969,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
       "a wrong format has been specified" should {
         "return a response containing a schema format error" in {
           wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-            .willReturn(ok(readTestResourceAsString(TestResourcePath.Json.ok))))
+            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Json.ok)))
 
           val params = HashMap[String, Any]("version" -> 1, "name" -> "MySchema", "format" -> "foo", "remoteUrl" -> remoteUrl)
           val response = sendPostRemoteFile[RestResponse](s"$apiUrl/remote", params)
@@ -973,7 +990,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
     "return 404" when {
       "a schema file is loaded from remote url, but no schema exists for the specified name and version" in {
         wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-          .willReturn(ok(readTestResourceAsString(TestResourcePath.Copybook.ok))))
+          .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Copybook.ok)))
 
         val params = HashMap[String, Any]("version" -> 1, "name" -> "dummy", "format" -> "copybook", "remoteUrl" -> remoteUrl)
         val response = sendPostRemoteFile[Schema](s"$apiUrl/remote", params)

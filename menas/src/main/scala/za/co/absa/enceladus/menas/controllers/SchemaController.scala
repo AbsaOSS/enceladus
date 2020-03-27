@@ -60,13 +60,13 @@ class SchemaController @Autowired()(
                        @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
 
     val url = new URL(remoteUrl)
-    val fileStream = Source.fromURL(url)
+    val connection = url.openConnection()
+    val mimeType = connection.getContentType
+    val fileStream = Source.fromInputStream(connection.getInputStream)
     val fileContent = fileStream.mkString
     fileStream.close()
 
-    val origFormat: Option[String] = format
-
-    val schemaType = SchemaType.fromOptSchemaName(origFormat)
+    val schemaType = SchemaType.fromOptSchemaName(format)
     val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
 
     // TODO generalize with [[handleFileUpload]]
@@ -76,7 +76,7 @@ class SchemaController @Autowired()(
       attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = url.getFile,
       fileContent = fileContent.getBytes,
-      fileMIMEType = "application/octet-stream")
+      fileMIMEType = mimeType)
 
     try {
 
@@ -99,9 +99,8 @@ class SchemaController @Autowired()(
                        @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
 
     val fileContent = new String(file.getBytes)
-    val origFormat: Option[String] = format
 
-    val schemaType = SchemaType.fromOptSchemaName(origFormat)
+    val schemaType = SchemaType.fromOptSchemaName(format)
     val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
 
     val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,

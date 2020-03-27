@@ -181,16 +181,16 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   def fromRemote[T](urlPath: String,
                     headers: HttpHeaders = HttpHeaders.EMPTY,
                     params: Map[String, Any])
-               (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+                   (implicit ct: ClassTag[T]): ResponseEntity[T] = {
 
     val parameters = new LinkedMultiValueMap[String, Any]
     params.foreach {
-      case (key, value) => parameters.add(key, value) // TODO convert to Map<K, List<V>> and pass to LMVM directly?
+      case (key, value) => parameters.add(key, value)
     }
 
     val url = s"$baseUrl/$urlPath"
     headers.addAll(authHeaders)
-    headers.setContentType(MediaType.MULTIPART_FORM_DATA) // no payload transfer besides the form data? application/x-www-form-urlencoded?
+    headers.setContentType(MediaType.MULTIPART_FORM_DATA)
 
     val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
 
