@@ -26,31 +26,24 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
-import za.co.absa.enceladus.menas.models.rest.exceptions.{SchemaFormatException, SchemaParsingException}
+import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaService}
-import za.co.absa.enceladus.menas.utils.SchemaParsers
+import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.menas.utils.parsers.SchemaParser
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
 
-// TODO: use enumeration instead to type-force the schema types? #1228
-object SchemaController {
-  val SchemaTypeStruct = "struct"
-  val SchemaTypeCopybook = "copybook"
-  val SchemaTypeAvro = "avro"
-}
 
 @RestController
 @RequestMapping(Array("/api/schema"))
 class SchemaController @Autowired()(
                                      schemaService: SchemaService,
                                      attachmentService: AttachmentService,
-                                     sparkMenasConvertor: SparkMenasSchemaConvertor,
-                                     schemaParsers: SchemaParsers)
+                                     sparkMenasConvertor: SparkMenasSchemaConvertor)
   extends VersionedModelController(schemaService) {
 
-  import SchemaController._
   import za.co.absa.enceladus.menas.utils.implicits._
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -62,17 +55,12 @@ class SchemaController @Autowired()(
                        @RequestParam version: Int,
                        @RequestParam name: String,
                        @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
-    val origFormat: Option[String] = format
-    val fileContent = new String(file.getBytes)
 
-    val (sparkStruct, schemaType) = origFormat match {
-      case Some(SchemaTypeStruct) | Some("") | None => (schemaParsers.parseStructType(fileContent), SchemaTypeStruct)
-      case Some(SchemaTypeCopybook) => (schemaParsers.parseCopybook(fileContent), SchemaTypeCopybook)
-      case Some(SchemaTypeAvro) => (schemaParsers.parseAvro(fileContent), SchemaTypeAvro)
-      case Some(schemaType) =>
-        throw SchemaFormatException(schemaType, s"'$schemaType' is not a recognized schema format. " +
-          s"Menas currently supports: '$SchemaTypeStruct' and '$SchemaTypeCopybook'.")
-    }
+    val fileContent = new String(file.getBytes)
+    val origFormat: Option[String] = format
+
+    val schemaType = SchemaType.fromOptSchemaName(origFormat)
+    val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
 
     val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,

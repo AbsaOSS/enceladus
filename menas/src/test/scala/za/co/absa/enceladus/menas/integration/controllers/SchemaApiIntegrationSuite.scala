@@ -24,6 +24,7 @@ import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.models.rest.RestResponse
 import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.menas.repositories.RefCollection
+import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Schema, UsedIn}
@@ -750,7 +751,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           body.error match {
             case Some(e: SchemaParsingError) =>
               assert(e.errorType == "schema_parsing")
-              assert(e.schemaType == "copybook")
+              assert(e.schemaType == SchemaType.Copybook)
               assert(e.line.contains(22))
               assert(e.field.contains("B1"))
               assert(body.message.contains("Syntax error in the copybook"))
@@ -770,7 +771,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           body.error match {
             case Some(e: SchemaParsingError) =>
               assert(e.errorType == "schema_parsing")
-              assert(e.schemaType == "struct")
+              assert(e.schemaType == SchemaType.Struct)
               assert(body.message.contains("StructType serializer: Failed to convert the JSON string"))
             case e => fail(s"Expected an instance of SchemaParsingError, got $e.")
           }
@@ -788,7 +789,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest {
           body.error match {
             case Some(e: SchemaParsingError) =>
               assert(e.errorType == "schema_parsing")
-              assert(e.schemaType == "avro")
+              assert(e.schemaType == SchemaType.Avro)
               assert(body.message.contains("Record has no fields"))
             case e => fail(s"Expected an instance of SchemaParsingError, got $e.")
           }
