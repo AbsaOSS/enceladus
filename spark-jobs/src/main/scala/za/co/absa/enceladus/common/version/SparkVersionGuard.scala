@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.common.version
 
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.commons.version.Version
 import za.co.absa.commons.version.impl.SemVer20Impl.SemanticVersion
 import za.co.absa.enceladus.common.SparkCompatibility
@@ -32,9 +33,10 @@ object SparkVersionGuard {
  * Setup Spark version guard with allowed min & max sem-ver version.
  *
  * @param minVersionInclusive lowest acceptable spark version (may be non-final)
- * @param maxVersionExclusive version supremum - first disallowed spark version (this and higher cannot be used) if not None
+ * @param maxVersionExclusive version supremum - first discouraged spark version (this and higher version usage issues a warning) if not None
  */
-case class SparkVersionGuard(minVersionInclusive: SemanticVersion, maxVersionExclusive: Option[SemanticVersion]) {
+case class SparkVersionGuard(minVersionInclusive: SemanticVersion, maxVersionExclusive: Option[SemanticVersion])
+                            (implicit log:Logger = LoggerFactory.getLogger(SparkVersionGuard.getClass)) {
 
   /**
    * String wrapper for [[SparkVersionGuard#checkSparkVersionCompatibility(SemanticVersion)]]
@@ -46,8 +48,8 @@ case class SparkVersionGuard(minVersionInclusive: SemanticVersion, maxVersionExc
 
   /**
    * Supplied version will be checked against the [[SparkVersionGuard]]'s. Note, `yourVersion` is
-   * finalized when comparing to max in order to disallow non-final versions against a final guard (3.0.0-rc.1
-   * would be allowed when 3.0.0 is disallowed)
+   * finalized when comparing to max in order to warn about non-final versions against a final guard (3.0.0-rc.1
+   * would issue a warning when 3.0.0 is the max bound)
    *
    * @param yourVersion provided spark version
    */
@@ -57,10 +59,11 @@ case class SparkVersionGuard(minVersionInclusive: SemanticVersion, maxVersionExc
          |Your detected version was ${yourVersion.asString}""".stripMargin)
 
     maxVersionExclusive.foreach { max =>
-      // `someVersion.core < max` guards against e.g. 3.0.0-rc.1 being allowed when 3.0.0 should not be
-      assert(yourVersion.core < max,
-        s"""Your Spark version is too high. This SparkJob can only run on Spark version core lower than $max
+      // `someVersion.core >= max` guards against e.g. 3.0.0-rc.1 being allowed when 3.0.0 should not be
+      if(yourVersion.core >= max) {
+        log.warn(s"""Your Spark version may be too high. This SparkJob is developed to run on Spark version core lower than ${max.asString}
            |Your detected version was ${yourVersion.asString}""".stripMargin)
+      }
     }
 
   }

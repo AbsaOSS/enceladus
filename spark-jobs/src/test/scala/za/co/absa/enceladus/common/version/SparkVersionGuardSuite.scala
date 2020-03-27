@@ -15,12 +15,16 @@
 
 package za.co.absa.enceladus.common.version
 
+import org.mockito.ArgumentMatchers._
+import org.mockito.Mockito
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.slf4j.Logger
 import za.co.absa.commons.version.Version._
 
 import scala.reflect.ClassTag
 
-class SparkVersionGuardSuite extends FlatSpec with Matchers {
+class SparkVersionGuardSuite extends FlatSpec with Matchers with MockitoSugar {
 
   private def ensureThrowsWithMessageIncluding[T <: Throwable](messageSubstringToAppear: String)(fun: => scala.Any)
                                                               (implicit ev: ClassTag[T]): Assertion = {
@@ -32,9 +36,11 @@ class SparkVersionGuardSuite extends FlatSpec with Matchers {
   private def ensureFailsVersionTooLow =
     ensureThrowsWithMessageIncluding[AssertionError]("Your Spark version is too low.") _
 
-  private def ensureFailsVersionTooHigh =
-    ensureThrowsWithMessageIncluding[AssertionError]("Your Spark version is too high.") _
-
+  private def ensureLogsVersionTooHigh(fun: Logger => scala.Any): Unit = {
+    val testLogger: Logger = mock[Logger]
+    fun(testLogger)
+    Mockito.verify(testLogger).warn(contains("Your Spark version may be too high"))
+  }
 
   "SparkVersionGuard" should "check basic version compatibility" in {
     SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"2.4.5")
@@ -47,12 +53,12 @@ class SparkVersionGuardSuite extends FlatSpec with Matchers {
       SparkVersionGuard(semver"2.4.0", None).ensureSparkVersionCompatibility(semver"2.3.1") // below min
     }
 
-    ensureFailsVersionTooHigh {
-      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"3.0.0") // max is exclusive
+    ensureLogsVersionTooHigh {
+      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0"))(_).ensureSparkVersionCompatibility(semver"3.0.0") // max is exclusive
     }
 
-    ensureFailsVersionTooHigh {
-      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"3.1.0") // above max
+    ensureLogsVersionTooHigh {
+      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0"))(_).ensureSparkVersionCompatibility(semver"3.1.0") // above max
     }
   }
 
@@ -64,12 +70,14 @@ class SparkVersionGuardSuite extends FlatSpec with Matchers {
     // non-final guards can be used
     SparkVersionGuard(semver"2.4.0-milestone.6", Some(semver"3.0.2-rc.9")).ensureSparkVersionCompatibility(semver"3.0.1")
 
-    ensureFailsVersionTooHigh {
-      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"3.0.0-alpha") // do not allow 3.x
+    // warn about 3.x
+    ensureLogsVersionTooHigh {
+      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0"))(_).ensureSparkVersionCompatibility(semver"3.0.0-alpha")
     }
 
+    // pre-min version
     ensureFailsVersionTooLow {
-      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"2.4.4-rc.7") // pre-min version
+      SparkVersionGuard(semver"2.4.4", Some(semver"3.0.0")).ensureSparkVersionCompatibility(semver"2.4.4-rc.7")
     }
 
   }
