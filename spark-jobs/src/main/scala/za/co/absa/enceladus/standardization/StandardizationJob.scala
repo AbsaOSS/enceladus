@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits
+import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -86,24 +87,7 @@ object StandardizationJob {
     spark.enableLineageTracking()
 
     // Enable Control Framework
-    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking(s"${pathCfg.inputPath}/_INFO").setControlMeasuresWorkflow("Standardization")
-
-    // Enable control framework performance optimization for pipeline-like jobs
-    Atum.setAllowUnpersistOldDatasets(true)
-
-    // Enable non-default persistence storage level if provided in the command line
-    cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
-
-    // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate, reportVersion, isJobStageOnly = true, generateNewRun = true)
-
-    // Add report date and version (aka Enceladus info date and version) to Atum's metadata
-    Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)
-    Atum.setAdditionalInfo(Constants.InfoVersionColumn -> reportVersion.toString)
-
-    // Add the raw format of the input file(s) to Atum's metadta as well
-    Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
+    enableControlFramework(pathCfg, cmd, reportVersion)
 
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
@@ -111,6 +95,7 @@ object StandardizationJob {
 
     try {
       executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg)
+      cmd.performanceMetricsFile.foreach(this.writePerformanceMetrics(performance, _))
       log.info("Standardization finished successfully")
     } finally {
       postStandardizationSteps(cmd)
@@ -405,6 +390,29 @@ object StandardizationJob {
     } else {
       df.col(field.name)
     }
+  }
+
+  private def enableControlFramework(pathCfg: PathCfg, cmd: StdCmdConfig, reportVersion: Int)
+                                    (implicit spark: SparkSession, dao: MenasDAO): Unit = {
+    // Enable Control Framework
+    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
+    spark.enableControlMeasuresTracking(s"${pathCfg.inputPath}/_INFO").setControlMeasuresWorkflow("Standardization")
+
+    // Enable control framework performance optimization for pipeline-like jobs
+    Atum.setAllowUnpersistOldDatasets(true)
+
+    // Enable non-default persistence storage level if provided in the command line
+    cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
+
+    // Enable Menas plugin for Control Framework
+    MenasPlugin.enableMenas(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate, reportVersion, isJobStageOnly = true, generateNewRun = true)
+
+    // Add report date and version (aka Enceladus info date and version) to Atum's metadata
+    Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)
+    Atum.setAdditionalInfo(Constants.InfoVersionColumn -> reportVersion.toString)
+
+    // Add the raw format of the input file(s) to Atum's metadta as well
+    Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
   }
 
   private def writePerformanceMetrics(performance: PerformanceMeasurer, fileName: String): Unit = {
