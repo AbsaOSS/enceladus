@@ -163,7 +163,7 @@ sap.ui.define([
     },
 
     handleRemoteUrlSubmit: function (oParams) {
-      const schemaType = this.byId("schemaFormatUploadSelect").getSelectedKey(); // same as getSelectedItem().getKey();
+      const schemaType = this.byId("remoteSchemaFormatSelect").getSelectedKey(); // same as getSelectedItem().getKey();
       const remoteUrl = this.byId("remoteUrl").getValue();
       const schema = this._model.getProperty("/currentSchema");
 
@@ -181,17 +181,50 @@ sap.ui.define([
         type: 'POST',
         data: $.param(data),
         contentType: 'application/x-www-form-urlencoded',
+        context: this, // "this" in callbacks will be this!
         headers: {
           'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
         },
         success: function(data){
-          console.log("success: " + data);
+          console.log("success: " + JSON.stringify(data));
         },
         error: function(e){
-          console.log("error: " + e);
-        }
+          console.log("error: " + JSON.stringify(e));
+        },
+        complete: this.handleRemoteLoadComplete
       });
 
+    },
+
+    handleRemoteLoadComplete: function (ajaxResponse) {
+      sap.ui.core.BusyIndicator.hide(); // todo show indicator to being with or remove
+      let status = ajaxResponse.status;
+
+      if (status === 201) {
+        this.byId("remoteUrl").setValue("");
+        MessageToast.show("Schema successfully loaded.");
+        let oData = JSON.parse(ajaxResponse.responseText);
+        model.setProperty("/currentSchema", oData);
+        this.load();
+        // update the list as well - may be cheaper in future to update locally
+        this._eventBus.publish("schemas", "list");
+        // nav back to info
+        this.byId("schemaIconTabBar").setSelectedKey("info");
+      } else if (status === 400) {
+        const sSchemaType = this.byId("remoteSchemaFormatSelect").getSelectedItem().getText();
+        const errorMessage = ResponseUtils.getBadRequestErrorMessage(ajaxResponse.responseText);
+        const errorMessageDetails = errorMessage ? `\n\nDetails:\n${errorMessage}` : "";
+        MessageBox.error(`Error parsing the schema file. Ensure that the file is a valid ${sSchemaType} schema and ` +
+          `try again.${errorMessageDetails}`)
+      } else if (status === 500) {
+        MessageBox.error("Failed to load new schema. An internal server error has been occurred.")
+      } else if (status === 401 || status === 403) {
+        GenericService.clearSession("Session has expired");
+      } else if (status === 0) {
+        MessageBox.error(`Failed to load new schema. The connectivity to the server has been lost.`)
+      } else {
+        MessageBox.error(`Unexpected status=${status} error occurred. Please, check your connectivity to the server.`)
+      }
     },
 
     handleUploadProgress: function (oParams) {
