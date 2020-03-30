@@ -272,12 +272,11 @@
             <version>2.26.3</version>
             <scope>test</scope>
         </dependency>
-        <!-- guava 27 for wire mock -->
+        <!-- guava 27 for wire mock test, but not just test scope, because guava is needed for spring, too -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>27.0.1-jre</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>

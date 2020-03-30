@@ -162,6 +162,38 @@ sap.ui.define([
       }
     },
 
+    handleRemoteUrlSubmit: function (oParams) {
+      const schemaType = this.byId("schemaFormatUploadSelect").getSelectedKey(); // same as getSelectedItem().getKey();
+      const remoteUrl = this.byId("remoteUrl").getValue();
+      const schema = this._model.getProperty("/currentSchema");
+
+      console.log("format = " + schemaType + ", remoteUrl = " + remoteUrl + ", version = " + schema.version + ", name = " + schema.name);
+
+      let data = {
+        "format" : schemaType,
+        "remoteUrl" : remoteUrl,
+        "name" : schema.name,
+        "version" :  schema.version
+      };
+
+      jQuery.ajax({
+        url: "api/schema/remote",
+        type: 'POST',
+        data: $.param(data),
+        contentType: 'application/x-www-form-urlencoded',
+        headers: {
+          'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
+        },
+        success: function(data){
+          console.log("success: " + data);
+        },
+        error: function(e){
+          console.log("error: " + e);
+        }
+      });
+
+    },
+
     handleUploadProgress: function (oParams) {
       console.log((oParams.getParameter("loaded") / oParams.getParameter("total")) * 100)
     },

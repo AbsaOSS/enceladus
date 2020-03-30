@@ -26,7 +26,7 @@ import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.context.annotation.Bean
 import org.springframework.http._
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
-import org.springframework.util.LinkedMultiValueMap
+import org.springframework.util.{LinkedMultiValueMap, MultiValueMap}
 import za.co.absa.enceladus.menas.integration.repositories.BaseRepositoryTest
 
 import scala.concurrent.Future
@@ -183,18 +183,18 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
                     params: Map[String, Any])
                    (implicit ct: ClassTag[T]): ResponseEntity[T] = {
 
-    val parameters = new LinkedMultiValueMap[String, Any]
+    val parameters: MultiValueMap[String, String] = new LinkedMultiValueMap()
     params.foreach {
-      case (key, value) => parameters.add(key, value)
+      case (key, value) => parameters.add(key, value.toString)
     }
 
     val url = s"$baseUrl/$urlPath"
     headers.addAll(authHeaders)
-    headers.setContentType(MediaType.MULTIPART_FORM_DATA)
+    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED)
 
     val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
 
-    val httpEntity = new HttpEntity[LinkedMultiValueMap[String, Any]](parameters, headers)
+    val httpEntity = new HttpEntity(parameters, headers)
     restTemplate.exchange(url, HttpMethod.POST, httpEntity, clazz)
   }
 
