@@ -57,13 +57,20 @@
                         <Button text="Upload File" press="handleUploadPress"/>
                     </IconTabFilter>
                     <IconTabFilter id="LoadRemote" icon="sap-icon://internet-browser" text="Load from URL">
-                        <Select id="remoteSchemaFormatSelect" forceSelection="true" selectedKey="{/currentSchema/schemaFormat}">
-                            <core:Item key="struct" text="Spark StructType JSON"/>
-                            <core:Item key="copybook" text="COBOL Copybook"/>
-                            <core:Item key="avro" text="Avro Schema (avsc)"/>
-                        </Select>
-                        <Input id="remoteUrl" type="Text" placeholder="Enter URL"/>
-                        <Button text="Submit URL" press="handleRemoteUrlSubmit"/>
+                        <HBox alignItems="Center">
+                            <Select id="remoteSchemaFormatSelect" forceSelection="true"
+                                    selectedKey="{/currentSchema/schemaFormat}">
+                                <core:Item key="struct" text="Spark StructType JSON"/>
+                                <core:Item key="copybook" text="COBOL Copybook"/>
+                                <core:Item key="avro" text="Avro Schema (avsc)"/>
+                            </Select>
+                            <Input id="remoteUrl" type="Text" placeholder="Enter URL of the new schema">
+                                <layoutData>
+                                    <FlexItemData growFactor="1"/>
+                                </layoutData>
+                            </Input>
+                            <Button text="Submit URL" press="handleRemoteUrlSubmit"/>
+                        </HBox>
                     </IconTabFilter>
                     <IconTabFilter id="UsedIn" icon="sap-icon://detail-view" text="Used In">
                         <Panel headerText="Datasets" height="50%">

@@ -198,7 +198,6 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     restTemplate.exchange(url, HttpMethod.POST, httpEntity, clazz)
   }
 
-
   def assertOk(responseEntity: ResponseEntity[_]): Unit = {
     assert(responseEntity.getStatusCode == HttpStatus.OK)
   }

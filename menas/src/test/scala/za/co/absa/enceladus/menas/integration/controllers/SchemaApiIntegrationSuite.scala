@@ -880,7 +880,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Copybook.ok)))
 
           val params = HashMap[String, Any](
-            "name" -> schema.name, "version" -> schema.version, "format" -> "copybook", "remoteUrl" -> remoteUrl) // TODO string value from somewhere?
+            "name" -> schema.name, "version" -> schema.version, "format" -> "copybook", "remoteUrl" -> remoteUrl)
           val responseRemoteLoaded = sendPostRemoteFile[Schema](s"$apiUrl/remote", params)
           assertCreated(responseRemoteLoaded)
 

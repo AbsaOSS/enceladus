@@ -163,41 +163,37 @@ sap.ui.define([
     },
 
     handleRemoteUrlSubmit: function (oParams) {
-      const schemaType = this.byId("remoteSchemaFormatSelect").getSelectedKey(); // same as getSelectedItem().getKey();
-      const remoteUrl = this.byId("remoteUrl").getValue();
-      const schema = this._model.getProperty("/currentSchema");
+      if (this.validateSchemaRemoteLoad()) {
+        const schemaType = this.byId("remoteSchemaFormatSelect").getSelectedKey(); // same as getSelectedItem().getKey();
+        const remoteUrl = this.byId("remoteUrl").getValue();
+        const schema = this._model.getProperty("/currentSchema");
 
-      console.log("format = " + schemaType + ", remoteUrl = " + remoteUrl + ", version = " + schema.version + ", name = " + schema.name);
+        sap.ui.core.BusyIndicator.show();
 
-      let data = {
-        "format" : schemaType,
-        "remoteUrl" : remoteUrl,
-        "name" : schema.name,
-        "version" :  schema.version
-      };
+        let data = {
+          "format": schemaType,
+          "remoteUrl": remoteUrl,
+          "name": schema.name,
+          "version": schema.version
+        };
 
-      jQuery.ajax({
-        url: "api/schema/remote",
-        type: 'POST',
-        data: $.param(data),
-        contentType: 'application/x-www-form-urlencoded',
-        context: this, // "this" in callbacks will be this!
-        headers: {
-          'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
-        },
-        success: function(data){
-          console.log("success: " + JSON.stringify(data));
-        },
-        error: function(e){
-          console.log("error: " + JSON.stringify(e));
-        },
-        complete: this.handleRemoteLoadComplete
-      });
-
+        jQuery.ajax({
+          url: "api/schema/remote",
+          type: 'POST',
+          data: $.param(data),
+          contentType: 'application/x-www-form-urlencoded',
+          context: this, // becomes the result of "this" in handleRemoteLoadComplete
+          headers: {
+            'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
+          },
+          complete: this.handleRemoteLoadComplete
+        });
+      }
     },
 
     handleRemoteLoadComplete: function (ajaxResponse) {
-      sap.ui.core.BusyIndicator.hide(); // todo show indicator to being with or remove
+      // *very* similar as handleUploadComplete, but the response object is a bit different
+      sap.ui.core.BusyIndicator.hide();
       let status = ajaxResponse.status;
 
       if (status === 201) {
@@ -225,6 +221,19 @@ sap.ui.define([
       } else {
         MessageBox.error(`Unexpected status=${status} error occurred. Please, check your connectivity to the server.`)
       }
+    },
+
+    validateSchemaRemoteLoad: function () {
+      let isOk = true;
+      let schemaUrlInput = this.byId("remoteUrl");
+
+      if (!this.isHttpUrl(schemaUrlInput.getValue())) {
+        schemaUrlInput.setValueState(sap.ui.core.ValueState.Error);
+        schemaUrlInput.setValueStateText("The URL appear to be invalid. Please check it.");
+        isOk = false;
+      }
+
+      return isOk;
     },
 
     handleUploadProgress: function (oParams) {
@@ -277,7 +286,7 @@ sap.ui.define([
       const currentSchema = this._model.getProperty("/currentSchema");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentSchema), "schema");
 
-      if(currentSchema) {
+      if (currentSchema) {
         this._schemaTable.model = this._model.getProperty("/currentSchema");
         const auditTable = this.byId("auditTrailTable");
         this._schemaService.getAuditTrail(currentSchema.name, auditTable);
@@ -286,6 +295,12 @@ sap.ui.define([
         this._schemaRestDAO.getLatestVersionByName(currentSchema.name)
           .then(version => this._model.setProperty("/editingEnabled", currentSchema.version === version));
       }
+    },
+
+    isHttpUrl: function (url) {
+      if (!url) return false;
+      const pattern = new RegExp('^https?://[^ ]+$', 'i');
+      return pattern.test(url);
     }
 
   });
