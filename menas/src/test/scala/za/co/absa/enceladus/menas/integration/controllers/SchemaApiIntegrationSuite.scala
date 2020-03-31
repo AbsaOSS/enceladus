@@ -26,6 +26,7 @@ import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfterAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.MediaType
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.TestResourcePath
 import za.co.absa.enceladus.menas.integration.fixtures._
@@ -626,13 +627,13 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
         refVersion = 2,
         refCollection = schemaRefCollection,
         fileContent = Array(2, 3, 4),
-        fileMIMEType = "application/octet-stream")
+        fileMIMEType = MediaType.APPLICATION_OCTET_STREAM_VALUE)
       val attachment4 = AttachmentFactory.getDummyAttachment(
         refName = "schemaName",
         refVersion = 4,
         refCollection = schemaRefCollection,
         fileContent = Array(4, 5, 6),
-        fileMIMEType = "application/json")
+        fileMIMEType = MediaType.APPLICATION_JSON_VALUE)
       val attachment5 = AttachmentFactory.getDummyAttachment(
         refName = "schemaName",
         refVersion = 5,
@@ -646,7 +647,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
 
           assertOk(response)
           assert(response.getHeaders.containsKey("mime-type"))
-          assert(response.getHeaders.get("mime-type").get(0) == "application/octet-stream")
+          assert(response.getHeaders.get("mime-type").get(0) == MediaType.APPLICATION_OCTET_STREAM_VALUE)
 
           val body = response.getBody
           assert(body.sameElements(attachment2.fileContent))
@@ -861,7 +862,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
     def readTestResourceAsResponseWithContentType(path: String): ResponseDefinitionBuilder = {
       // this is crazy, but it works better than hardcoding mime-types
       val filePath: Path = new File(getClass.getResource(path).toURI()).toPath
-      val mime = Option(Files.probeContentType(filePath)).getOrElse("application/octet-stream") // default for e.g. cob
+      val mime = Option(Files.probeContentType(filePath)).getOrElse(MediaType.APPLICATION_OCTET_STREAM_VALUE) // default for e.g. cob
 
       val content = readTestResourceAsString(path)
       okForContentType(mime, content)
