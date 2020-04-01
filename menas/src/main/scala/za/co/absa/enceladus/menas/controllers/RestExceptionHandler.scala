@@ -28,6 +28,7 @@ import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaP
 import za.co.absa.enceladus.menas.models.rest.exceptions.{SchemaFormatException, SchemaParsingException}
 import org.apache.oozie.client.OozieClientException
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException
 
 @ControllerAdvice(annotations = Array(classOf[RestController]))
 class RestExceptionHandler {
@@ -39,6 +40,11 @@ class RestExceptionHandler {
   val oozieProxyGroup: String = ""
 
   private val logger = LoggerFactory.getLogger(this.getClass)
+
+  @ExceptionHandler(value = Array(classOf[AsyncRequestTimeoutException]))
+  def handleAsyncRequestTimeoutException(exception: AsyncRequestTimeoutException): ResponseEntity[Any] = {
+    ResponseEntity.status(HttpStatus.BANDWIDTH_LIMIT_EXCEEDED).build[Any]()
+  }
 
   @ExceptionHandler(value = Array(classOf[NotFoundException]))
   def handleNotFoundException(exception: NotFoundException): ResponseEntity[Any] = {
