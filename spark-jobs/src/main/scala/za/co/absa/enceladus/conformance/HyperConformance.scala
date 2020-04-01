@@ -89,17 +89,8 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
  * transformer.hyperconformance.menas.auth.keytab=/path/to/keytab
  * }}}
  */
-object HyperConformance extends StreamTransformerFactory {
+object HyperConformance extends StreamTransformerFactory with HyperConformanceAttributes {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
-
-  // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
-  val menasUriKey = "transformer.hyperconformance.menas.rest.uri"
-  val menasCredentialsFileKey = "transformer.hyperconformance.menas.credentials.file"
-  val menasAuthKeytabKey = "transformer.hyperconformance.menas.auth.keytab"
-  val datasetNameKey = "transformer.hyperconformance.dataset.name"
-  val datasetVersionKey = "transformer.hyperconformance.dataset.version"
-  val reportDateKey = "transformer.hyperconformance.report.date"
-  val reportVersionKey = "transformer.hyperconformance.report.version"
 
   private val defaultReportVersion = 1
 
@@ -177,6 +168,5 @@ object HyperConformance extends StreamTransformerFactory {
       defaultReportVersion
     }
   }
-
 }
 
