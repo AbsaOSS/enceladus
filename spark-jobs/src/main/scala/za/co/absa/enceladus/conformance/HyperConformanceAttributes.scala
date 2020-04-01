@@ -38,6 +38,9 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
     menasUriKey -> PropertyMetadata("Menas API URL", Some("http://localhost:8080/menas"), required = true),
     datasetNameKey -> PropertyMetadata("A dataset name", None, required = true),
     datasetVersionKey -> PropertyMetadata("A dataset version", None, required = true),
+    reportDateKey -> PropertyMetadata("A report date, the current date is used by default", None, required = false),
+    reportVersionKey -> PropertyMetadata("A report version, will be determined automatically by default if not specified",
+      None, required = false),
     menasCredentialsFileKey -> PropertyMetadata("A path to a Menas credentials file", None, required = false),
     menasAuthKeytabKey -> PropertyMetadata("A path to a keytab", None, required = false)
   )
