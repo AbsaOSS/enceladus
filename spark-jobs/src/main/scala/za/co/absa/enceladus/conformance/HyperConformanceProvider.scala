@@ -21,6 +21,6 @@ import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformerFactory,
 /**
  * This is the Conformance service provider for Hyperdrive.
  */
-class HyperConformanceLoader extends StreamTransformerFactoryProvider {
+class HyperConformanceProvider extends StreamTransformerFactoryProvider {
   override def getComponentFactory: StreamTransformerFactory = HyperConformance
 }
