@@ -59,10 +59,10 @@
                     <IconTabFilter id="LoadRemote" icon="sap-icon://internet-browser" text="Load from URL">
                         <HBox alignItems="Center">
                             <Select id="remoteSchemaFormatSelect" forceSelection="true"
-                                    selectedKey="{/currentSchema/schemaFormat}">
+                                    selectedKey="avro"> <!-- schema registry default is avro -->
                                 <core:Item key="struct" text="Spark StructType JSON"/>
                                 <core:Item key="copybook" text="COBOL Copybook"/>
-                                <core:Item key="avro" text="Avro Schema (avsc)"/>
+                                <core:Item key="avro" text="Avro Schema (avsc)" />
                             </Select>
                             <Input id="remoteUrl" type="Text" placeholder="Enter URL of the new schema">
                                 <layoutData>
