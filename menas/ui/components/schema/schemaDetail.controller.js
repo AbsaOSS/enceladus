@@ -211,7 +211,7 @@ sap.ui.define([
         isOkToSubmit = false; // may get submitted by the MessageBox
         const fixedUrl = this.fixSchemaRegistryUrl(schemaUrl);
 
-        sap.m.MessageBox.show(`The schema url should probably end with "/schema" \nDo you want use ${fixedUrl} instead?`, {
+        sap.m.MessageBox.show(`The schema url should probably end with "/schema". \nDo you want use ${fixedUrl} instead?`, {
           icon: sap.m.MessageBox.Icon.WARNING,
           title: "Auto-correct schema repository URL?",
           actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO, sap.m.MessageBox.Action.CANCEL],
@@ -333,7 +333,7 @@ sap.ui.define([
       return pattern.test(url);
     },
 
-    // this is what the schema registry url should look like to be "fixable", e.g. http://zapalnrapp1079.corp.dsarena.com:8081/subjects/somename/versions/1
+    // this is what the schema registry url should look like to be "fixable", e.g. http://example.schemaregistry.org/subjects/somename/versions/1
     schemaRegistryRx: /^(https?:\/\/[^ ]+\/versions\/\d+)\/?$/,
 
     isFixableSchemaRegistryUrl: function(str) {
