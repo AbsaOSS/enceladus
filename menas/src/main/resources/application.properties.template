@@ -17,6 +17,9 @@
 # unlimited set the property to -1.
 spring.servlet.multipart.max-file-size=16MB
 
+# Set the timeout a single connection request can wait for a controller to return a value (in milliseconds)
+spring.mvc.async.request-timeout=600000
+
 # Set the total request size for a multipart/form-data (default 10Mb)
 spring.servlet.multipart.max-request-size=16MB
 
