@@ -27,7 +27,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
-import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
+import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaParsingException}
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaService}
 import za.co.absa.enceladus.menas.utils.SchemaType
@@ -37,6 +37,7 @@ import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
 
 import scala.io.Source
+import scala.util.control.NonFatal
 
 @RestController
 @RequestMapping(Array("/api/schema"))
@@ -57,14 +58,24 @@ class SchemaController @Autowired()(
                        @RequestParam name: String,
                        @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
 
-    val url = new URL(remoteUrl)
-    val connection = url.openConnection()
-    val mimeType = connection.getContentType
-    val fileStream = Source.fromInputStream(connection.getInputStream)
-    val fileContent = fileStream.mkString
-    fileStream.close()
-
     val schemaType = SchemaType.fromOptSchemaName(format)
+    val (url, fileContent, mimeType) = {
+      try {
+        val url = new URL(remoteUrl)
+        val connection = url.openConnection()
+        val mimeType = connection.getContentType
+        val fileStream = Source.fromInputStream(connection.getInputStream)
+        val fileContent = fileStream.mkString
+        fileStream.close()
+
+        (url, fileContent, mimeType)
+
+      } catch {
+        case NonFatal(e) =>
+          throw RemoteSchemaRetrievalException(schemaType, s"$remoteUrl is currently unreachable to download a schema file from.", e)
+      }
+    }
+
     val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
 
     val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,

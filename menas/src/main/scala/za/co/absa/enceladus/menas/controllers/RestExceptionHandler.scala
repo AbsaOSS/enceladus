@@ -24,8 +24,8 @@ import za.co.absa.enceladus.menas.models.{RestError, Validation}
 import org.springframework.http.HttpStatus
 import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.menas.models.rest.RestResponse
-import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
-import za.co.absa.enceladus.menas.models.rest.exceptions.{SchemaFormatException, SchemaParsingException}
+import za.co.absa.enceladus.menas.models.rest.errors.{RemoteSchemaRetrievalError, SchemaFormatError, SchemaParsingError}
+import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
 import org.apache.oozie.client.OozieClientException
 import org.springframework.beans.factory.annotation.Value
 
@@ -55,6 +55,13 @@ class RestExceptionHandler {
   @ExceptionHandler(value = Array(classOf[SchemaFormatException]))
   def handleBadRequestException(exception: SchemaFormatException): ResponseEntity[Any] = {
     val response = RestResponse(exception.message, Option(SchemaFormatError.fromException(exception)))
+    logger.error(s"Exception: $response", exception)
+    ResponseEntity.badRequest().body(response)
+  }
+
+  @ExceptionHandler(value = Array(classOf[RemoteSchemaRetrievalException]))
+  def handleBadRequestException(exception: RemoteSchemaRetrievalException): ResponseEntity[Any] = {
+    val response = RestResponse(exception.message, Option(RemoteSchemaRetrievalError.fromException(exception)))
     logger.error(s"Exception: $response", exception)
     ResponseEntity.badRequest().body(response)
   }

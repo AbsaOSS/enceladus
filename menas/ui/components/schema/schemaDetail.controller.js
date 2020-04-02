@@ -169,14 +169,13 @@ sap.ui.define([
     },
 
     submitRemoteUrl: function () {
-      const schemaType = this.byId("remoteSchemaFormatSelect").getSelectedKey();
       const remoteUrl = this.byId("remoteUrl").getValue();
       const schema = this._model.getProperty("/currentSchema");
 
       sap.ui.core.BusyIndicator.show();
 
       let data = {
-        "format": schemaType,
+        "format": "avro", // the only supported Schema registry type
         "remoteUrl": remoteUrl,
         "name": schema.name,
         "version": schema.version
@@ -200,14 +199,12 @@ sap.ui.define([
       let schemaUrlInput = this.byId("remoteUrl");
 
       const schemaUrl = schemaUrlInput.getValue();
-      const schemaType = this.byId("remoteSchemaFormatSelect").getSelectedKey();
-
       if (!this.isHttpUrl(schemaUrl)) {
         schemaUrlInput.setValueState(sap.ui.core.ValueState.Error);
         schemaUrlInput.setValueStateText("The URL appear to be invalid. Please check it.");
         isOkToSubmit = false;
 
-      } else if (schemaType === "avro" && this.isFixableSchemaRegistryUrl(schemaUrl)) {
+      } else if (this.isFixableSchemaRegistryUrl(schemaUrl)) {
         isOkToSubmit = false; // may get submitted by the MessageBox
         const fixedUrl = this.fixSchemaRegistryUrl(schemaUrl);
 
@@ -250,11 +247,19 @@ sap.ui.define([
         this.byId("remoteUrl").setValueState(sap.ui.core.ValueState.None);
         this.byId("remoteUrl").setValueStateText("");
       } else if (status === 400) {
-        const sSchemaType = this.byId("remoteSchemaFormatSelect").getSelectedItem().getText();
-        const errorMessage = ResponseUtils.getBadRequestErrorMessage(ajaxResponse.responseText);
+        const errorMessage = ajaxResponse.responseJSON.message;
         const errorMessageDetails = errorMessage ? `\n\nDetails:\n${errorMessage}` : "";
-        MessageBox.error(`Error parsing the schema file. Ensure that the file is a valid ${sSchemaType} schema and ` +
-          `try again.${errorMessageDetails}`)
+        const errorType = ajaxResponse.responseJSON.error.errorType;
+
+        let msg;
+        if (errorType === "schema_retrieval_error") {
+          msg = `Error retrieving the schema file from ${this.byId("remoteUrl").getValue()}${errorMessageDetails}`
+        } else {
+          msg = `Error parsing the schema file. Ensure that the file is a valid avro schema and ` +
+            `try again.${errorMessageDetails}`
+        }
+
+        MessageBox.error(msg)
       } else if (status === 500) {
         MessageBox.error("Failed to load new schema. An internal server error has been occurred.")
       } else if (status === 401 || status === 403) {
@@ -336,7 +341,7 @@ sap.ui.define([
     // this is what the schema registry url should look like to be "fixable", e.g. http://example.schemaregistry.org/subjects/somename/versions/1
     schemaRegistryRx: /^(https?:\/\/[^ ]+\/versions\/\d+)\/?$/,
 
-    isFixableSchemaRegistryUrl: function(str) {
+    isFixableSchemaRegistryUrl: function (str) {
       return this.schemaRegistryRx.test(str)
     },
 
