@@ -5,8 +5,10 @@ version: '2.0.0'
 categories:
     - '2.0.0'
 ---
-# API
-## Monitoring endpoints
+## API
+
+### Monitoring endpoints
+
 All `/admin` endpoints except `/admin/health` require authentication (and will require strict permissions once [Authorization]({{ site.github.issues_url }}/30) is implemented)
 * `GET /admin` - list of all monitoring endpoints
 * `GET /admin/heapdump` - downloads a heapdump of the application
