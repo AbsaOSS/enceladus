@@ -43,7 +43,7 @@ class RestExceptionHandler {
 
   @ExceptionHandler(value = Array(classOf[AsyncRequestTimeoutException]))
   def handleAsyncRequestTimeoutException(exception: AsyncRequestTimeoutException): ResponseEntity[Any] = {
-    ResponseEntity.status(HttpStatus.BANDWIDTH_LIMIT_EXCEEDED).build[Any]()
+    ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build[Any]()
   }
 
   @ExceptionHandler(value = Array(classOf[NotFoundException]))
