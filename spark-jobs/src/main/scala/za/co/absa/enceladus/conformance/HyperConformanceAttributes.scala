@@ -35,14 +35,20 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
   override def getDescription: String = "Dynamic Conformance - a transformer component for Hyperdrive"
 
   override def getProperties: Map[String, PropertyMetadata] = Map(
-    menasUriKey -> PropertyMetadata("Menas API URL", Some("http://localhost:8080/menas"), required = true),
-    datasetNameKey -> PropertyMetadata("A dataset name", None, required = true),
-    datasetVersionKey -> PropertyMetadata("A dataset version", None, required = true),
-    reportDateKey -> PropertyMetadata("A report date, the current date is used by default", None, required = false),
-    reportVersionKey -> PropertyMetadata("A report version, will be determined automatically by default if not specified",
-      None, required = false),
-    menasCredentialsFileKey -> PropertyMetadata("A path to a Menas credentials file", None, required = false),
-    menasAuthKeytabKey -> PropertyMetadata("A path to a keytab", None, required = false)
+    menasUriKey ->
+      PropertyMetadata("Menas API URL", Some("E.g. http://localhost:8080/menas"), required = true),
+    datasetNameKey ->
+      PropertyMetadata("Dataset name", None, required = true),
+    datasetVersionKey ->
+      PropertyMetadata("Dataset version", None, required = true),
+    reportDateKey ->
+      PropertyMetadata("Report date", Some("The current date is used by default0"), required = false),
+    reportVersionKey ->
+      PropertyMetadata("Report version", Some("Will be determined automatically by default if not specified"), required = false),
+    menasCredentialsFileKey ->
+      PropertyMetadata("Menas credentials file", Some("Relative or absolute path to the file on local FS or HDFS"), required = false),
+    menasAuthKeytabKey ->
+      PropertyMetadata("Keytab", Some("Relative or absolute path to the file on local FS or HDFS"), required = false)
   )
 
   override def getExtraConfigurationPrefix: Option[String] = None
