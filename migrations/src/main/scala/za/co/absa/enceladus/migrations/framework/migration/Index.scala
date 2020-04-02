@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.migration
 
-case class Index(collection: String, key: Seq[IndexField], unique: Boolean = false)
+case class Index(collection: String, key: Seq[IndexField], unique: Boolean = false, sparse: Boolean = false)
 
 case class IndexField(field: String, sort: Sort) {
 

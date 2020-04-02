@@ -113,13 +113,17 @@ trait CollectionMigration extends Migration {
     * @param collectionName A collection for setting up an index
     * @param fields         A list of fields that the index should contain
     * @param unique         A boolean specifying whether the index should enforce uniqueness
+    * @param sparse         If true, allows index keys to contain many instances of the similar value.
+    *                       This is good for optional fields. An index that is both sparse and unique
+    *                       prevents collection from having documents with duplicate values for a field
+    *                       but allows multiple documents that omit the key.
     */
-  def createIndex(collectionName: String, fields: Seq[IndexField], unique: Boolean = false): Unit = {
+  def createIndex(collectionName: String, fields: Seq[IndexField], unique: Boolean = false, sparse: Boolean = false): Unit = {
     if (collectionsToDrop.contains(collectionName)) {
       throw new IllegalArgumentException(s"Collection '$collectionName' is in the removal list. " +
         s"Cannot create an index on it.")
     }
-    indexesToCreate.append(Index(collectionName, fields, unique))
+    indexesToCreate.append(Index(collectionName, fields, unique, sparse))
   }
 
   /**
@@ -232,10 +236,10 @@ trait CollectionMigration extends Migration {
     */
   private def applyIndexCreate(db: DocumentDb): Unit = {
     indexesToCreate.foreach {
-      case Index(collectionName, keys, unique) =>
+      case Index(collectionName, keys, unique, sparse) =>
         val collection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
         log.info(s"Creating index '${keys.mkString(", ")}' in '$collection'")
-        db.createIndex(collection, keys, unique)
+        db.createIndex(collection, keys, unique, sparse)
     }
   }
 
@@ -244,7 +248,7 @@ trait CollectionMigration extends Migration {
     */
   private def applyIndexDrop(db: DocumentDb): Unit = {
     indexesToDrop.foreach {
-      case Index(collectionName, keys, _) =>
+      case Index(collectionName, keys, _, _) =>
         val collection = MigrationUtils.getVersionedCollectionName(collectionName, targetVersion)
         log.info(s"Removing index '${keys.mkString(", ")}' from '$collection'")
         db.dropIndex(collection, keys)
