@@ -72,7 +72,7 @@ class SchemaController @Autowired()(
 
       } catch {
         case NonFatal(e) =>
-          throw RemoteSchemaRetrievalException(schemaType, s"$remoteUrl is currently unreachable to download a schema file from.", e)
+          throw RemoteSchemaRetrievalException(schemaType, s"Could not retrieve a schema file from $remoteUrl. Please check the correctness of the URL and a presence of the schema at the mentioned endpoint", e)
       }
     }
 
