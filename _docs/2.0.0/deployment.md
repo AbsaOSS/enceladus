@@ -11,7 +11,7 @@ categories:
 ### Prerequisits to deploying Menas are
 
 - Tomcat 8.5+ to deploy the war to
-- HADOOP_CONF_DIR environment variable. This variable should point to a folder containing hoodp configuration files (core-site.xml, hdfs-site.xml and yarn-site.xml). These are used to querry HDFS for folder locations
+- `HADOOP_CONF_DIR` environment variable. This variable should point to a folder containing Hadoop configuration files (`core-site.xml`, `hdfs-site.xml` and `yarn-site.xml`). These are used to query the HDFS for folder locations.
 - MongoDB 4.0+ used as a storage
 
 ### Deploying Menas
