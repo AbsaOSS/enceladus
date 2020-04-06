@@ -26,7 +26,7 @@ import org.springframework.boot.web.server.LocalServerPort
 import org.springframework.context.annotation.Bean
 import org.springframework.http._
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
-import org.springframework.util.LinkedMultiValueMap
+import org.springframework.util.{LinkedMultiValueMap, MultiValueMap}
 import za.co.absa.enceladus.menas.integration.repositories.BaseRepositoryTest
 
 import scala.concurrent.Future
@@ -102,6 +102,15 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     upload(urlPath, headers, fileParamName, fileName, parameters)
   }
 
+  def sendPostRemoteFile[T](urlPath: String,
+                            parameters: Map[String, Any],
+                            headers: HttpHeaders = new HttpHeaders())
+                           (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    require(parameters.keySet.contains("remoteUrl"), s"parameters map must contain the 'remoteUrl' entry, but only $parameters was found")
+
+    fromRemote(urlPath, headers, parameters)
+  }
+
   def sendPostAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): Future[ResponseEntity[T]] = {
     sendAsync(HttpMethod.POST, urlPath, headers, bodyOpt)
@@ -166,6 +175,26 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
 
     val httpEntity = new HttpEntity[LinkedMultiValueMap[String, Any]](parameters, headers)
+    restTemplate.exchange(url, HttpMethod.POST, httpEntity, clazz)
+  }
+
+  def fromRemote[T](urlPath: String,
+                    headers: HttpHeaders = HttpHeaders.EMPTY,
+                    params: Map[String, Any])
+                   (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+
+    val parameters: MultiValueMap[String, String] = new LinkedMultiValueMap()
+    params.foreach {
+      case (key, value) => parameters.add(key, value.toString)
+    }
+
+    val url = s"$baseUrl/$urlPath"
+    headers.addAll(authHeaders)
+    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED)
+
+    val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
+
+    val httpEntity = new HttpEntity(parameters, headers)
     restTemplate.exchange(url, HttpMethod.POST, httpEntity, clazz)
   }
 

@@ -29,6 +29,8 @@
         <scala.xml.version>1.0.4</scala.xml.version>
         <webui.basedir>${project.basedir}/ui</webui.basedir>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
+        <guava.version>27.0.1-jre</guava.version>
+        <wiremock.version>2.26.3</wiremock.version>
     </properties>
 
     <dependencies>
@@ -258,11 +260,24 @@
             <artifactId>spark-cobol</artifactId>
             <version>${cobrix.version}</version>
         </dependency>
+        <!-- guava 27 for spring & wire mock testing, too -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <version>${spring.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- WireMock - to act as SchemaRegistry for IntegTest-->
+        <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock-jre8</artifactId>
+            <version>${wiremock.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
