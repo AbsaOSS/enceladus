@@ -43,7 +43,8 @@ class RestExceptionHandler {
 
   @ExceptionHandler(value = Array(classOf[AsyncRequestTimeoutException]))
   def handleAsyncRequestTimeoutException(exception: AsyncRequestTimeoutException): ResponseEntity[Any] = {
-    val response = RestResponse(exception.getMessage, Option(RequestTimeoutExpiredError()))
+    val message = Option(exception.getMessage).getOrElse("Request timeout expired.")
+    val response = RestResponse(message, Option(RequestTimeoutExpiredError()))
     logger.error(s"Exception: $response", exception)
     ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response)
   }
