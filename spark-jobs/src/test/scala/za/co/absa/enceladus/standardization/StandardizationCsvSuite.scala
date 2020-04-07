@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization.interpreter
+package za.co.absa.enceladus.standardization
 
 import java.nio.charset.StandardCharsets
 
@@ -25,7 +25,6 @@ import org.scalatest.{Outcome, fixture}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
-import za.co.absa.enceladus.standardization.{StandardizationJob, StdCmdConfig}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
@@ -152,7 +151,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
     // When reading a different encoding invalid UTF-8 characters will be translated as unrecognized
     val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
       "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false --failOnInputNotPerSchema false").split(" ")
+      "--raw-format csv --header false --strict-schema-check false").split(" ")
 
     val expected =
       """+--------------------------------+----+----+----+----+--------------------------------+
@@ -205,7 +204,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
     // When reading a different encoding invalid UTF-8 characters will be translated as unrecognized
     val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
       "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false --failOnInputNotPerSchema true").split(" ")
+      "--raw-format csv --header false --strict-schema-check true").split(" ")
 
     val exception = intercept[SparkException] {
       val df = getTestDataFrame(tmpFileName, args)
@@ -220,7 +219,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
     // But one field contains an opening double quote character without a closing one.
     val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
       "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false --failOnInputNotPerSchema false " +
+      "--raw-format csv --header false --strict-schema-check false " +
       "--charset ISO-8859-1 --delimiter ¡").split(" ")
 
     val expected =
@@ -249,7 +248,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
     // For this case it is '$'
     val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
       "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false --failOnInputNotPerSchema false " +
+      "--raw-format csv --header false --strict-schema-check false " +
       "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
 
     val expected =

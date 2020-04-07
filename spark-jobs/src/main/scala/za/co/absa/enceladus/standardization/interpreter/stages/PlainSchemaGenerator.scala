@@ -43,9 +43,9 @@ object PlainSchemaGenerator {
     }
   }
 
-  def generateInputSchema(structType: StructType, columnNameOfCorruptRecord: Option[String] = None): StructType = {
+  def generateInputSchema(structType: StructType, corruptRecordFieldName: Option[String] = None): StructType = {
     val inputSchema = structTypeFieldsConversion(structType.fields)
-    val corruptRecordField = columnNameOfCorruptRecord.map(StructField(_, StringType)).toArray
+    val corruptRecordField = corruptRecordFieldName.map(StructField(_, StringType)).toArray
     StructType(inputSchema ++ corruptRecordField)
   }
 

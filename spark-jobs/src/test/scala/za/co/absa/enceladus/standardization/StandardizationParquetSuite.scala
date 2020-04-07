@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization.interpreter
-
-import java.io.File
+package za.co.absa.enceladus.standardization
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
@@ -24,20 +22,17 @@ import org.scalatest.{Outcome, fixture}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
+import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
-import za.co.absa.enceladus.standardization.{StandardizationJob, StdCmdConfig}
 import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-
-import scala.reflect.io.Directory
 
 class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar  {
   type FixtureParam = String
 
 
   import spark.implicits._
-
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private implicit val dao: MenasDAO = mock[MenasDAO]
@@ -282,7 +277,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failFast = true)
+      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
     }
     assert(exception.getMessage == "Cannot standardize field 'id' from type integer into array")
   }
@@ -314,7 +309,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failFast = true)
+      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
     }
     assert(exception.getMessage == "Cannot standardize field 'id' from type integer into struct")
   }
@@ -333,7 +328,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failFast = true)
+      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
     }
     assert(exception.getMessage == "Cannot standardize field 'letters' from type array into struct")
   }

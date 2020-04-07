@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.utils.error
 
-object UDFunctionNames {
+object UDFNames {
   final val stdCastErr = "stdCastErr"
   final val stdNullErr = "stdNullErr"
   final val stdSchemaErr = "stdSchemaErr"

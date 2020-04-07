@@ -224,7 +224,7 @@ The list of additional options available for running Standardization:
 | --is-xcom **true/false**                 | If `true` a mainframe input file is expected to have XCOM RDW headers.                                                                             |
 | --folder-prefix **prefix**               | Adds a folder prefix before the date tokens.                                                                                                       |
 | --debug-set-raw-path **path**            | Override the path of the raw data (used for testing purposes).                                                                                     |
-| --failOnInputNotPerSchema **true/false** | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` (default) proceeds over it with an entry in _errCol_ | 
+| ----strict-schema-check **true/false**   | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` (default) proceeds over it with an entry in _errCol_ | 
 
 The list of additional options available for running Conformance:
 

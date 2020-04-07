@@ -38,7 +38,7 @@ import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
-import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils}
+import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 import org.apache.spark.SPARK_VERSION
@@ -255,8 +255,14 @@ object StandardizationJob {
     val numberOfColumns = schema.fields.length
     val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, numberOfColumns)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
-      val corruptRecordFieldName = ensureUniqueCorruptRecordFieldName(schema, cmd)
-      val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, corruptRecordFieldName)
+      // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
+      val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
+      val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {
+        None
+      } else {
+        Option(columnNameOfCorruptRecord)
+      }
+      val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, optColumnNameOfCorruptRecord)
       dfReaderConfigured.schema(inputSchema)
     } else {
       dfReaderConfigured
@@ -498,34 +504,5 @@ object StandardizationJob {
     )
   }
 
-  /**
-    * Ensures that the 'spark.sql.columnNameOfCorruptRecord' Spark setting is set to field name not present in the
-    * output schema
-    * @param desiredSchema the desired output schema
-    * @param cmd           program settings
-    * @param spark         current Spark session
-    * @return              if columnNameOfCorruptRecord is to be used then the name of the column, if not and rather
-    *                      fail fast, function returns None
-    */
-  private def ensureUniqueCorruptRecordFieldName(desiredSchema: StructType, cmd: StdCmdConfig)
-                                                (implicit spark: SparkSession): Option[String] = {
-    val defaultResult = spark.conf.get(ColumnNameOfCorruptRecordConf)
-    var result = defaultResult
-    var i = 1
-    while (SchemaUtils.getField(result, desiredSchema).nonEmpty) {
-      result = defaultResult + i.toString
-      i += 1
-    }
-    if (defaultResult != result) {
-      spark.conf.set(ColumnNameOfCorruptRecordConf, result)
-    }
-    if (cmd.failOnInputNotPerSchema) {
-      None
-    } else {
-      Some(result)
-    }
-  }
-
-  private final val ColumnNameOfCorruptRecordConf = "spark.sql.columnNameOfCorruptRecord"
   private final case class PathCfg(inputPath: String, outputPath: String)
 }

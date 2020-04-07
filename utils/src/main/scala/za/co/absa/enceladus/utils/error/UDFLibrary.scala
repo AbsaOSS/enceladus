@@ -19,35 +19,36 @@ import org.apache.spark.sql.api.java._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SparkSession}
 import scala.collection.mutable
+import UDFNames._
 
 
 case class UDFLibrary()(implicit val spark: SparkSession) {
 
-  spark.udf.register(UDFunctionNames.stdCastErr, { (errCol: String, rawValue: String) =>
+  spark.udf.register(stdCastErr, { (errCol: String, rawValue: String) =>
     ErrorMessage.stdCastErr(errCol, rawValue)
   })
 
-  spark.udf.register(UDFunctionNames.stdNullErr, { errCol: String => ErrorMessage.stdNullErr(errCol)})
+  spark.udf.register(stdNullErr, { errCol: String => ErrorMessage.stdNullErr(errCol)})
 
-  spark.udf.register(UDFunctionNames.stdSchemaErr, { errRow: String => ErrorMessage.stdSchemaError(errRow)})
+  spark.udf.register(stdSchemaErr, { errRow: String => ErrorMessage.stdSchemaError(errRow)})
 
-  spark.udf.register(UDFunctionNames.confMappingErr, { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
+  spark.udf.register(confMappingErr, { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
     ErrorMessage.confMappingErr(errCol, rawValues, mappings)
   })
 
-  spark.udf.register(UDFunctionNames.confCastErr, { (errCol: String, rawValue: String) =>
+  spark.udf.register(confCastErr, { (errCol: String, rawValue: String) =>
     ErrorMessage.confCastErr(errCol, rawValue)
   })
 
-  spark.udf.register(UDFunctionNames.confNegErr, { (errCol: String, rawValue: String) =>
+  spark.udf.register(confNegErr, { (errCol: String, rawValue: String) =>
     ErrorMessage.confNegErr(errCol, rawValue)
   })
 
-  spark.udf.register(UDFunctionNames.confLitErr, { (errCol: String, rawValue: String) =>
+  spark.udf.register(confLitErr, { (errCol: String, rawValue: String) =>
     ErrorMessage.confLitErr(errCol, rawValue)
   })
 
-  spark.udf.register(UDFunctionNames.arrayDistinctErrors, // this UDF is registered for _spark-hats_ library sake
+  spark.udf.register(arrayDistinctErrors, // this UDF is registered for _spark-hats_ library sake
     (arr: mutable.WrappedArray[ErrorMessage]) =>
       if (arr != null) {
         arr.distinct.filter((a: AnyRef) => a != null)
@@ -56,11 +57,11 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
       }
   )
 
-  spark.udf.register(UDFunctionNames.cleanErrCol,
+  spark.udf.register(cleanErrCol,
                      UDFLibrary.cleanErrCol,
                      ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
 
-  spark.udf.register(UDFunctionNames.errorColumnAppend,
+  spark.udf.register(errorColumnAppend,
                      UDFLibrary.errorColumnAppend,
                      ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
 }
