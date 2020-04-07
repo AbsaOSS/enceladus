@@ -169,11 +169,11 @@ class MongoDb(db: MongoDatabase) extends DocumentDb {
   /**
     * Creates an index for a given list of fields.
     */
-  override def createIndex(collectionName: String, keys: Seq[IndexField], unique: Boolean = false): Unit = {
+  override def createIndex(collectionName: String, keys: Seq[IndexField], unique: Boolean = false, sparse: Boolean = false): Unit = {
     log.info(s"Creating an index for $collectionName, unique: $unique, keys: ${keys.mkString(", ")}...")
     val collection = getCollection(collectionName)
     try {
-      collection.createIndex(fieldsToBsonKeys(keys), IndexOptions().unique(unique))
+      collection.createIndex(fieldsToBsonKeys(keys), IndexOptions().unique(unique).sparse(sparse))
         .execute()
     } catch {
       case NonFatal(e) => log.warn(s"Unable to create an index for $collectionName, keys: ${keys.mkString(", ")}: "
