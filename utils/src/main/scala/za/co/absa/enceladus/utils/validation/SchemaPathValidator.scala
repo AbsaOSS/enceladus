@@ -20,55 +20,55 @@ import org.apache.spark.sql.types._
 import scala.annotation.tailrec
 
 /**
- * Object responsible for validating paths to fields, it's existence and case sensitivity
- */
+  * Object responsible for validating paths to fields, it's existence and case sensitivity
+  */
 object SchemaPathValidator {
 
   /**
-   * Validate path existence
-   *
-   * @param schema    A Spark schema
-   * @param fieldPath A path to a field (e.g. "data.employees.employee.name")
-   * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
-   */
+    * Validate path existence
+    *
+    * @param schema      A Spark schema
+    * @param fieldPath   A path to a field (e.g. "data.employees.employee.name")
+    * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
+    */
   def validateSchemaPath(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
     validateSchemaPathArray(schema, fieldPath.split('.'))
   }
 
   /**
-   * Validate path for an output field.
-   * The parent path must exist and be a struct. The full path should not exist.
-   *
-   * @param schema    A Spark schema
-   * @param fieldPath A path to a field (e.g. "data.employees.employee.name")
-   * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
-   */
+    * Validate path for an output field.
+    * The parent path must exist and be a struct. The full path should not exist.
+    *
+    * @param schema      A Spark schema
+    * @param fieldPath   A path to a field (e.g. "data.employees.employee.name")
+    * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
+    */
   def validateSchemaPathOutput(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
     validateSchemaPathArray(schema, fieldPath.split('.'), parentOnly = true, fullPathNew = true)
   }
 
   /**
-   * Validate parent path existence (e.g. for data.field.value the path data.field must exist)
-   *
-   * @param schema    A Spark schema
-   * @param fieldPath A path to a field (e.g. "data.employees.employee.name")
-   * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
-   */
+    * Validate parent path existence (e.g. for data.field.value the path data.field must exist)
+    *
+    * @param schema      A Spark schema
+    * @param fieldPath   A path to a field (e.g. "data.employees.employee.name")
+    * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
+    */
   def validateSchemaPathParent(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
     validateSchemaPathArray(schema, fieldPath.split('.'), parentOnly = true)
   }
 
 
   /**
-   * Validate two paths have the same parent
-   *
-   * For example, `structFoo.field1` and `structFoo.field2` have the same parent,
-   * while `structFoo.field1` and `structBar.field2` have different parents,
-   *
-   * @param fieldPath1 A path to the first field (e.g. "data.employees.employee.name2")
-   * @param fieldPath2 A path to the second field (e.g. "data.employees.employee.name2")
-   * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
-   */
+    * Validate two paths have the same parent
+    *
+    * For example, `structFoo.field1` and `structFoo.field2` have the same parent,
+    * while `structFoo.field1` and `structBar.field2` have different parents,
+    *
+    * @param fieldPath1  A path to the first field (e.g. "data.employees.employee.name2")
+    * @param fieldPath2  A path to the second field (e.g. "data.employees.employee.name2")
+    * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
+    */
   def validatePathSameParent(fieldPath1: String, fieldPath2: String): Seq[ValidationIssue] = {
     val path1 = fieldPath1.split('.')
     val path2 = fieldPath2.split('.')
@@ -81,12 +81,12 @@ object SchemaPathValidator {
   }
 
   /**
-   * Validate schema path data type is primitive
-   *
-   * @param schema    A Spark schema
-   * @param fieldPath A path to a field (e.g. "data.employees.employee.name")
-   * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
-   */
+    * Validate schema path data type is primitive
+    *
+    * @param schema      A Spark schema
+    * @param fieldPath   A path to a field (e.g. "data.employees.employee.name")
+    * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
+    */
   def validateSchemaPathPrimitive(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
     validateSchemaPathType(schema, fieldPath) {
       case _: NumericType | _: StringType | _: BooleanType | _: DateType | _: TimestampType => Seq.empty[ValidationIssue]
@@ -95,12 +95,12 @@ object SchemaPathValidator {
   }
 
   /**
-   * Validate schema path data type is numeric
-   *
-   * @param schema    A Spark schema
-   * @param fieldPath A path to a field (e.g. "data.employees.employee.age")
-   * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
-   */
+    * Validate schema path data type is numeric
+    *
+    * @param schema      A Spark schema
+    * @param fieldPath   A path to a field (e.g. "data.employees.employee.age")
+    * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
+    */
   def validateSchemaPathNumeric(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
     validateSchemaPathType(schema, fieldPath) {
       case _: NumericType => Seq.empty[ValidationIssue]
@@ -109,15 +109,15 @@ object SchemaPathValidator {
   }
 
   /**
-   * Validate schema path data type is algebraic
-   *
-   * @param schema    A Spark schema
-   * @param fieldPath A path to a field (e.g. "data.employees.employee.age")
-   * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
-   */
+    * Validate schema path data type is algebraic
+    *
+    * @param schema      A Spark schema
+    * @param fieldPath   A path to a field (e.g. "data.employees.employee.age")
+    * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
+    */
   def validateSchemaPathAlgebraic(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
     validateSchemaPathType(schema, fieldPath) {
-      case _: NumericType | _: BooleanType => Seq.empty[ValidationIssue]
+      case _: NumericType |  _: BooleanType => Seq.empty[ValidationIssue]
       case k => Seq(ValidationError(s"The datatype '${k.typeName}' of '$fieldPath' field " +
         "is neither NumericType nor BooleanType"))
     }
@@ -141,50 +141,50 @@ object SchemaPathValidator {
                                       parentOnly: Boolean = false,
                                       fullPathNew: Boolean = false,
                                       parentPath: String = ""): Seq[ValidationIssue] = {
-    if (path.isEmpty) {}
-
-    val currentField = path(0)
-    val fullPath = s"$parentPath${path.mkString(".")}"
-
-    if (parentOnly && path.length == 1) {
-      if (fullPathNew) {
-        val exactMatch = schema.fields.find(field => field.name == currentField)
-        if (exactMatch.nonEmpty) {
-          Seq(ValidationError(s"Column '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
-        }
-        val caseInsensitiveMatch = schema.fields.find(field => field.name.compareToIgnoreCase(currentField) == 0)
-        if (caseInsensitiveMatch.nonEmpty) {
-          Seq(ValidationError(s"Case insensitive variant of a cloumn '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
-        }
-      }
+    if (path.isEmpty) {
       Nil
-    } else {
+    }
+    else {
 
-      val exactMatch = schema.fields.find(field => field.name == currentField)
-      val failures = exactMatch match {
-        case Some(field) =>
-          val dataType = getUnderlyingType(field.dataType)
-          dataType match {
-            case st: StructType =>
-              validateSchemaPathArray(st, path.drop(1), parentOnly, fullPathNew, s"$parentPath${field.name}.")
-            case _ =>
-              if (path.length > 1) {
+      val currentField = path(0)
+      val fullPath = s"$parentPath${path.mkString(".")}"
+      if (parentOnly && path.length == 1) {
+        schema.fields match {
+          case f if fullPathNew && f.exists(field => field.name == currentField) =>
+            Seq(ValidationError(s"Column '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
+          case f if fullPathNew && f.exists(field => field.name.compareToIgnoreCase(currentField) == 0) =>
+            Seq(ValidationError(s"Case insensitive variant of a cloumn '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
+          case _ => Nil
+        }
+      } else {
+
+        val exactMatch = schema.fields.find(field => field.name == currentField)
+        val failures = exactMatch match {
+          case Some(field) =>
+            val dataType = getUnderlyingType(field.dataType)
+            dataType match {
+              case st: StructType =>
+                validateSchemaPathArray(st, path.drop(1), parentOnly, fullPathNew, s"$parentPath${field.name}.")
+              case _ if path.length > 1 =>
                 Seq(ValidationError(s"Column '$parentPath$currentField' is a primitive type and can't contain child fields '$fullPath'."))
-              } else {
-                Nil
-              }
-          }
-        case None =>
-          val caseInsensitiveMatch = schema.fields.find(field => field.name.compareToIgnoreCase(currentField) == 0)
-          caseInsensitiveMatch match {
-            case Some(field) =>
-              Seq(ValidationError(s"Column name '$parentPath$currentField' does not case-sensitively match '$parentPath${field.name}'."))
-            case None =>
-              Seq(ValidationError(s"Column name '$parentPath$currentField' does not exist."))
-          }
+              case _ => Nil
+            }
 
+          case None => caseInsensitiveErrors(schema, parentPath, currentField)
+        }
+        failures
       }
-      failures
+    }
+
+  }
+
+  def caseInsensitiveErrors(schema: StructType, parentPath: String, currentField: String): Seq[ValidationError] = {
+    val caseInsensitiveMatch = schema.fields.find(field => field.name.compareToIgnoreCase(currentField) == 0)
+    caseInsensitiveMatch match {
+      case Some(field) =>
+        Seq(ValidationError(s"Column name '$parentPath$currentField' does not case-sensitively match '$parentPath${field.name}'."))
+      case None =>
+        Seq(ValidationError(s"Column name '$parentPath$currentField' does not exist."))
     }
   }
 
