@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -994,6 +994,64 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
     }
   }
 
+  s"GET $apiUrl/bySparkAppId/{appId}" can {
+    val sampleAppId1 = "application_1578585424019_0008" // YARN
+    val sampleAppId2 = "local-1433865536131"            // local
+    val sampleAppId3 = "driver-20170926223339-0001"     // MESOS
+
+    "return 200" when {
+      "there are no Run entities stored in the database" should {
+        "return an empty collection" in{
+          val response = sendGet[Array[Run]](s"$apiUrl/bySparkAppId/$sampleAppId1")
+          assertOk(response)
+          val body = response.getBody
+          assert(body.isEmpty)
+        }
+      }
+
+      "there are Run entities stored in the database" should{
+        "return empty collection when searching for missing app_id" in {
+          val run1 = setUpRunWithAppIds(sampleAppId1, runId = 1)
+          val wrongAppId = "missing-100500777-0042"     // MESOS
+          val response = sendGet[Array[Run]](s"$apiUrl/bySparkAppId/$wrongAppId")
+          assertOk(response)
+          val body = response.getBody
+          assert(body.isEmpty)
+        }
+
+        "return [correctRun] when searching for unique app_id" in {
+          // std app_id only
+          val run1 = setUpRunWithAppIds(sampleAppId1, runId = 1)
+          // both std and cnfrm app_ids
+          val run2 = setUpRunWithAppIds(sampleAppId2, sampleAppId3, runId = 2)
+          // get run1 by std app_id
+          val response1 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId1")
+          val body1 = response1.getBody
+          assert(body1 == ControlUtils.asJson(Seq(run1)))
+          // get run2 by std app_id
+          val response2 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId2")
+          val body2 = response2.getBody
+          assert(body2 == ControlUtils.asJson(Seq(run2)))
+          // get run2 by conform app_id
+          val response3 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId3")
+          val body3 = response3.getBody
+          assert(body3 == ControlUtils.asJson(Seq(run2)))
+        }
+
+        "return [run1, run2] when there are 2 runs with the same app_ids" in {
+          val run1 = setUpRunWithAppIds(sampleAppId1, runId = 1)
+          val run2 = setUpRunWithAppIds(sampleAppId1, runId = 2)
+
+          // get run1 by std app_id
+          val response = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId1")
+          val actual = response.getBody
+          val expected = ControlUtils.asJson(Seq(run1, run2))
+          assert(actual == expected)
+        }
+      }
+    }
+  }
+
   private def setUpSimpleRun(): Run = {
     val run = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
     runFixture.add(run)
@@ -1012,6 +1070,19 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
       """"controlMeasure":{"metadata":{"sourceApplication":"dummySourceApplication","country":"dummyCountry","historyType":"dummyHistoryType",""" +
       """"dataFilename":"dummyDataFilename","sourceType":"dummySourceType","version":1,"informationDate":"04-12-2017 16:19:17 +0200","additionalInfo":{}},""" +
       s""""runUniqueId":"$runUniqueId","checkpoints":[]}}"""
+  }
+
+  private def setUpRunWithAppIds(stdAppId: String, cnfrmAppId: String = "", runId: Int = 1): Run = {
+    val additionalInfo: Map[String, String] = if (cnfrmAppId == "") {
+      Map("std_application_id" -> stdAppId)
+    } else{
+      Map("std_application_id" -> stdAppId, "conform_application_id" -> cnfrmAppId)
+    }
+    val metadata = RunFactory.getDummyMetadata(additionalInfo = additionalInfo)
+    val controlMeasure = RunFactory.getDummyControlMeasure(metadata=metadata)
+    val run = RunFactory.getDummyRun(runId = runId, controlMeasure = controlMeasure)
+    runFixture.add(run)
+    run
   }
 
 }

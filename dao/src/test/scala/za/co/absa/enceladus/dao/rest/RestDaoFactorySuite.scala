@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package za.co.absa.enceladus.dao.rest
 
 import org.scalatest.{Matchers, WordSpec}
 import za.co.absa.enceladus.dao.UnauthorizedException
-import za.co.absa.enceladus.dao.menasplugin.{InvalidMenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
+import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
 
 class RestDaoFactorySuite extends WordSpec with Matchers {
 

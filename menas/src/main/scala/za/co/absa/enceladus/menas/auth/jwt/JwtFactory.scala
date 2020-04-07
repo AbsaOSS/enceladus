@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Component
 
 @Component
-class JwtFactory @Autowired()(@Value("${za.co.absa.enceladus.menas.auth.jwt.secret}")
+class JwtFactory @Autowired()(@Value("${menas.auth.jwt.secret}")
                              secret: String) {
 
   private lazy val signingKey = Keys.hmacShaKeyFor(secret.getBytes)

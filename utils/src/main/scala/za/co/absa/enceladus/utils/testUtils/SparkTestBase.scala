@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ object SparkTestBase {
     sparkConfigIn
       .entrySet()
       .filter(_.getKey != "spark.yarn.jars")
-      .map(entry => (entry.getKey, entry.getValue.unwrapped().toString()))
+      .map(entry => (entry.getKey, entry.getValue.unwrapped().toString))
       .toMap
   }
 
@@ -120,7 +120,7 @@ object SparkTestBase {
    */
   def getDepsFromClassPath(inclPattern: String): Seq[String] = {
     val cl = this.getClass.getClassLoader
-    cl.asInstanceOf[java.net.URLClassLoader].getURLs.filter(c => c.toString().contains(inclPattern)).map(_.toString())
+    cl.asInstanceOf[java.net.URLClassLoader].getURLs.filter(c => c.toString.contains(inclPattern)).map(_.toString())
   }
 
   /**
@@ -128,6 +128,9 @@ object SparkTestBase {
    */
   def getCurrentProjectJars: Seq[String] = {
     val targetDir = new File(s"${System.getProperty("user.dir")}/target")
-    targetDir.listFiles().filter(f => f.getName.split("\\.").last.toLowerCase() == "jar" && f.getName.contains("original")).map(_.getAbsolutePath)
+    targetDir
+      .listFiles()
+      .filter(f => f.getName.split("\\.").last.toLowerCase() == "jar" && f.getName.contains("original"))
+      .map(_.getAbsolutePath)
   }
 }

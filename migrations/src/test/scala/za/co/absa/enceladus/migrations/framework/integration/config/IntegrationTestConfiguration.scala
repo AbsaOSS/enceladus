@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import java.util.Properties
   */
 object IntegrationTestConfiguration {
   private val properties = new Properties()
-  private val connectionStringKey = "za.co.absa.enceladus.menas.mongo.connection.string"
-  private val databaseKey = "za.co.absa.enceladus.migrations.mongo.connection.database"
+  private val connectionStringKey = "menas.mongo.connection.string"
+  private val databaseKey = "migrations.mongo.connection.database"
 
   loadConfig()
 

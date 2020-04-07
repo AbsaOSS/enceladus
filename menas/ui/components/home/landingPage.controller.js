@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,9 +71,14 @@ sap.ui.define([
       } else if(sTarget === "mappingTables") {
         viewBase = `${viewBase}--mappingTablesPage`;
       } else if(sTarget === "runs") {
-        viewBase = `${viewBase}--runsPage`;
+        viewBase = `${viewBase}--runsDatasetNamePage`;
       }
-      this._eventBus.publish(sTarget, "list");
+
+      if (sTarget === "runs") {
+        this._eventBus.publish(sTarget, "list-grouped-name");
+      } else {
+        this._eventBus.publish(sTarget, "list");
+      }
 
       this._app.backToTopMaster();
       this._app.toMaster(viewBase);

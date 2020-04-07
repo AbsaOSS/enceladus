@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2018-2019 ABSA Group Limited
+  ~ Copyright 2018 ABSA Group Limited
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
   data-sap-ui-libs="sap.m,sap.ui.table,sap.ui.layout"
   data-sap-ui-bindingSyntax="complex"
   data-sap-ui-theme='sap_belize'></script>
-  
+
 <script src="webjars/momentjs/min/moment.min.js"></script>
 <script src="webjars/lodash/lodash.js"></script>
 <script src="webjars/cronstrue-webjar/cronstrue-webjar.js"></script>
@@ -43,7 +43,7 @@
         }
         document.getElementsByTagName("head").item(0).append(el);
       }
-      
+
       fetch("api/user/version").then((resp) => {
         resp.body.getReader().read().then((versionEnc) => {
           const decoder = new TextDecoder("utf-8")

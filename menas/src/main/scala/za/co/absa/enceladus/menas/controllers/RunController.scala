@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,12 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   @ResponseStatus(HttpStatus.OK)
   def getRunSummariesPerDatasetVersion(@PathVariable datasetName: String): CompletableFuture[Seq[RunDatasetVersionGroupedSummary]] = {
     runService.getRunSummariesPerDatasetVersion(datasetName)
+  }
+
+  @GetMapping(Array("/bySparkAppId/{appId}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getRunBySparkAppId(@PathVariable appId: String): CompletableFuture[String] = {
+    runService.getRunBySparkAppId(appId).map(ControlUtils.asJson)
   }
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}"))

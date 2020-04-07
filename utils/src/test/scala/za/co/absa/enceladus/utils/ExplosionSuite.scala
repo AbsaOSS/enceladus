@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.scalatest.FunSuite
 import org.slf4j.LoggerFactory
+import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.utils.explode.ExplodeTools
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import za.co.absa.enceladus.utils.transformations.DeepArrayTransformations
 
 class ExplosionSuite extends FunSuite with SparkTestBase {
 
@@ -700,7 +700,7 @@ class ExplosionSuite extends FunSuite with SparkTestBase {
     val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("a.c", explodedDf1, explodeContext1)
 
     // Manipulate the exploded structs
-    val changedDf = DeepArrayTransformations.nestedDropColumn(explodedDf2, "a.c.toDrop")
+    val changedDf = explodedDf2.nestedDropColumn("a.c.toDrop")
 
     val restoredDf = ExplodeTools.revertAllExplosions(changedDf, explodeContext2)
 

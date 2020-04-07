@@ -66,7 +66,7 @@ The coverage reports are written in each module's `target` directory and aggrega
  in your Tomcat webapps directory (rename after downloading to _spline.war_); NB! don't forget to set up the `spline.mongodb.url` configuration for the _war_
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
-The _Spline UI_ can be omitted; in such case the **Menas** `za.co.absa.enceladus.spline.urlTemplate` setting should be set to empty string. 
+The _Spline UI_ can be omitted; in such case the **Menas** `spline.urlTemplate` setting should be set to empty string. 
 
 #### Deploying Menas
 Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
@@ -103,7 +103,7 @@ password=changeme
 --driver-memory <num>G \
 --conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
-<standardization_<build_version>.jar> \
+<spark-jobs_<build_version>.jar> \
 --menas-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
@@ -128,7 +128,7 @@ password=changeme
 --conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name>" -Dhdp.version=<hadoop_version> \
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
-<conformance_<build_version>.jar> \
+<spark-jobs_<build_version>.jar> \
 --menas-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \

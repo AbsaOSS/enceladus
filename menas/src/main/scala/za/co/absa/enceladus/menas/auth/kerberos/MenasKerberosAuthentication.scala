@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,30 +36,30 @@ import za.co.absa.enceladus.menas.auth.MenasAuthentication
 import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication._
 
 @Component("kerberosMenasAuthentication")
-class MenasKerberosAuthentication @Autowired()(@Value("${za.co.absa.enceladus.menas.auth.ad.domain:}")
+class MenasKerberosAuthentication @Autowired()(@Value("${menas.auth.ad.domain:}")
                                                adDomain: String,
-                                               @Value("${za.co.absa.enceladus.menas.auth.ad.server:}")
+                                               @Value("${menas.auth.ad.server:}")
                                                adServer: String,
-                                               @Value("${za.co.absa.enceladus.menas.auth.servicename.principal:}")
+                                               @Value("${menas.auth.servicename.principal:}")
                                                servicePrincipal: String,
-                                               @Value("${za.co.absa.enceladus.menas.auth.servicename.keytab.location:}")
+                                               @Value("${menas.auth.servicename.keytab.location:}")
                                                keytabLocation: String,
-                                               @Value("${za.co.absa.enceladus.menas.auth.ldap.search.base:}")
+                                               @Value("${menas.auth.ldap.search.base:}")
                                                ldapSearchBase: String,
-                                               @Value("${za.co.absa.enceladus.menas.auth.ldap.search.filter:}")
+                                               @Value("${menas.auth.ldap.search.filter:}")
                                                ldapSearchFilter: String,
-                                               @Value("${za.co.absa.enceladus.menas.auth.kerberos.debug:false}")
+                                               @Value("${menas.auth.kerberos.debug:false}")
                                                kerberosDebug: Boolean,
-                                               @Value("${za.co.absa.enceladus.menas.auth.kerberos.krb5conf:}")
+                                               @Value("${menas.auth.kerberos.krb5conf:}")
                                                krb5conf: String)
   extends MenasAuthentication with InitializingBean {
 
-  private lazy val requiredParameters = Seq((adDomain, "za.co.absa.enceladus.menas.auth.ad.domain"),
-    (adServer, "za.co.absa.enceladus.menas.auth.ad.server"),
-    (servicePrincipal, "za.co.absa.enceladus.menas.auth.servicename.principal"),
-    (keytabLocation, "za.co.absa.enceladus.menas.auth.servicename.keytab.location"),
-    (ldapSearchBase, "za.co.absa.enceladus.menas.auth.ldap.search.base"),
-    (ldapSearchFilter, "za.co.absa.enceladus.menas.auth.ldap.search.filter"))
+  private lazy val requiredParameters = Seq((adDomain, "menas.auth.ad.domain"),
+    (adServer, "menas.auth.ad.server"),
+    (servicePrincipal, "menas.auth.servicename.principal"),
+    (keytabLocation, "menas.auth.servicename.keytab.location"),
+    (ldapSearchBase, "menas.auth.ldap.search.base"),
+    (ldapSearchFilter, "menas.auth.ldap.search.filter"))
 
   override def afterPropertiesSet() {
     System.setProperty("javax.net.debug", kerberosDebug.toString)

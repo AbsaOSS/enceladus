@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import org.springframework.http.{HttpHeaders, HttpStatus, ResponseEntity}
 import org.springframework.security.kerberos.client.KerberosRestTemplate
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
-import za.co.absa.enceladus.dao.menasplugin._
+import za.co.absa.enceladus.dao.auth._
 import za.co.absa.enceladus.dao.UnauthorizedException
 
 object AuthClient {

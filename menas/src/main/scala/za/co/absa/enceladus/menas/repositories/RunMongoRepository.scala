@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
   private val summaryProjection: Bson = project(fields(
     computed("datasetName", "$dataset"),
     computed("status", "$runStatus.status"),
-    computed("runUniqueId", "$controlMeasure.runUniqueId"),
+    computed("runUniqueId", "$uniqueId"),
     include("datasetVersion", "runId", "startDateTime"),
     excludeId()
   ))
@@ -279,6 +279,16 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     collection
       .aggregate[RunDatasetVersionGroupedSummary](pipeline)
       .toFuture()
+  }
+
+  def getRunBySparkAppId(appId: String): Future[Seq[Run]] = {
+    val stdAppIdFilter = equal("controlMeasure.metadata.additionalInfo.std_application_id", appId)
+    val conformAppIdFilter = equal("controlMeasure.metadata.additionalInfo.conform_application_id", appId)
+
+    collection
+      .find[BsonDocument](or(stdAppIdFilter, conformAppIdFilter))
+      .toFuture()
+      .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
   }
 
   def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Option[Run]] = {

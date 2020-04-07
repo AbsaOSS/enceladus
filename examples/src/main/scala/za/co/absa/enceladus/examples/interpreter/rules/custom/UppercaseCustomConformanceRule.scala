@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  */
 package za.co.absa.enceladus.examples.interpreter.rules.custom
 
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.conformance.CmdConfig
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.interpreter.ExplosionState
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.utils.transformations.ArrayTransformations
-import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.model.conformanceRule
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
+import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 
 case class UppercaseCustomConformanceRule(
   order: Int,
@@ -37,10 +37,12 @@ case class UppercaseCustomConformanceRule(
 }
 
 case class UppercaseCustomRuleInterpreter(rule: UppercaseCustomConformanceRule) extends RuleInterpreter {
+  override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, dao: MenasDAO, progArgs: CmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfig): Dataset[Row] = {
     handleArrays(rule.outputColumn, df) { flattened =>
-      import spark.implicits._
+
       // we have to do this if this rule is to support arrays
       ArrayTransformations.nestedWithColumn(flattened)(rule.outputColumn, upper(col(rule.inputColumn)))
     }

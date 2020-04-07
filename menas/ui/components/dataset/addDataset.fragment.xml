@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2018-2019 ABSA Group Limited
+  ~ Copyright 2018 ABSA Group Limited
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@
                             <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%"
                                           busyControl="addDatasetDialog"
                                           pathInput ="selectedRawHDFSPathLabel" restURI="api/hdfs/list"
-                                          HDFSPath="{entity>/hdfsPath}"/>                       
+                                          HDFSPath="{entity>/hdfsPath}"/>
                         </VBox>
                         <Label text="HDFS conformed data publish folder path"/>
                         <VBox>
@@ -41,7 +41,7 @@
                             <hdfs:HDFSBrowser id="newDatasetPublishHDFSBrowser" height="300px" width="100%"
                                           busyControl="addDatasetDialog"
                                           pathInput="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
-                                          HDFSPath="{entity>/hdfsPublishPath}"/>                            
+                                          HDFSPath="{entity>/hdfsPublishPath}"/>
                         </VBox>
                     </form:content>
                 </form:SimpleForm>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 ABSA Group Limited
+ * Copyright 2018 ABSA Group Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import za.co.absa.enceladus.model.user.UserInfo
 @RequestMapping(Array("/api/user"))
 class UserInfoController extends BaseController {
 
-  @Value("${za.co.absa.enceladus.menas.version}")
+  @Value("${menas.version}")
   val menasVersion: String = ""
 
   @GetMapping(path = Array("/info"))
