@@ -17,21 +17,19 @@ package za.co.absa.enceladus.menas.integration.repositories
 
 import java.util.concurrent.TimeUnit
 
-import org.mongodb.scala.{MongoClient, MongoDatabase}
+import org.mongodb.scala.MongoDatabase
 import org.scalatest.{BeforeAndAfter, WordSpec}
 import org.springframework.beans.factory.annotation.Autowired
 import za.co.absa.enceladus.menas.integration.TestContextManagement
 import za.co.absa.enceladus.menas.integration.fixtures.FixtureService
-import za.co.absa.enceladus.menas.integration.mongo.EmbeddedMongoSuite
 import za.co.absa.enceladus.menas.services.MigrationService
-import za.co.absa.enceladus.menas.utils.implicits.codecRegistry
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-abstract class BaseRepositoryTest extends WordSpec with TestContextManagement with BeforeAndAfter with EmbeddedMongoSuite {
+abstract class BaseRepositoryTest extends WordSpec with TestContextManagement with BeforeAndAfter {
 
-  val awaitDuration: Duration = Duration(500, TimeUnit.MILLISECONDS)
+  val awaitDuration: Duration = Duration(800, TimeUnit.MILLISECONDS)
 
   def fixtures: List[FixtureService[_]]
 
@@ -42,15 +40,10 @@ abstract class BaseRepositoryTest extends WordSpec with TestContextManagement wi
   @Autowired
   val migrator: MigrationService = null
 
-  //  @Autowired // TODO cleanup
-  //  val mongoDb: MongoDatabase = null
-
-  // most naive variant: make the mongo run at fixed port 27077 and have it use it from config
-  var mongoDb: MongoDatabase = null
+  @Autowired
+  val mongoDb: MongoDatabase = null
 
   override def beforeAll(): Unit = {
-    runDummyMongo()
-    mongoDb = MongoClient(getMongoUri).getDatabase("someDb").withCodecRegistry(codecRegistry)
     super.beforeAll()
     migrator.init()
   }
@@ -58,7 +51,6 @@ abstract class BaseRepositoryTest extends WordSpec with TestContextManagement wi
   override def afterAll(): Unit = {
     super.afterAll()
     await(mongoDb.drop().toFuture())
-    shutdownDummyMongo()
   }
 
   after {

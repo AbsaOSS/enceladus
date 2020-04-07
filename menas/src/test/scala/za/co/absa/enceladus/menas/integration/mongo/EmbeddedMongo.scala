@@ -15,29 +15,40 @@
 
 package za.co.absa.enceladus.menas.integration.mongo
 
-
 import de.flapdoodle.embed.mongo.config.{MongodConfigBuilder, Net}
 import de.flapdoodle.embed.mongo.distribution.Version
-import de.flapdoodle.embed.mongo.{MongodExecutable, MongodProcess, MongodStarter}
+import de.flapdoodle.embed.mongo.{MongodExecutable, MongodStarter}
 import de.flapdoodle.embed.process.runtime.Network
-import org.scalatest.{BeforeAndAfter, Suite}
+import javax.annotation.{PostConstruct, PreDestroy}
+import org.mongodb.scala.{MongoClient, MongoDatabase}
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.{Bean, Configuration, Primary, Profile}
+import za.co.absa.enceladus.menas.utils.implicits.codecRegistry
 
 /**
  * Provides an embedded local mongo. Spawn it before tests and shutdown after
  */
-trait EmbeddedMongoSuite /*extends BeforeAndAfter*/ { /*this: Suite =>*/
+@Configuration
+@Profile(Array("withEmbeddedMongo"))
+class EmbeddedMongo {
+  private val logger = LoggerFactory.getLogger(this.getClass)
   private var mongodExecutable: MongodExecutable = _
-  //private var mongoPort: Int = _
-  val mongoPort = 27077
+  private var mongoPort: Int = _
 
   def getMongoUri: String = s"mongodb://localhost:$mongoPort/?ssl=false"
+
   def getMongoPort: Int = mongoPort
 
-  def runDummyMongo(): MongodProcess = {
+  @Value("${menas.mongo.connection.database}")
+  val database: String = ""
+
+  @PostConstruct
+  def runDummyMongo(): Unit = {
     val starter = MongodStarter.getDefaultInstance
 
     synchronized {
-      // mongoPort = Network.getFreeServerPort()
+      mongoPort = Network.getFreeServerPort()
       val mongodConfig = new MongodConfigBuilder()
         .version(Version.Main.V4_0)
         .net(new Net("localhost", mongoPort, Network.localhostIsIPv6()))
@@ -47,21 +58,18 @@ trait EmbeddedMongoSuite /*extends BeforeAndAfter*/ { /*this: Suite =>*/
     }
 
     mongodExecutable.start()
+    logger.debug(s"*** mongod started at port $mongoPort")
   }
 
+  @PreDestroy
   def shutdownDummyMongo(): Unit = {
     mongodExecutable.stop()
   }
 
-  /*
-  before {
-    runDummyMongo()
+  @Primary // will override non-primary MongoDatabase-typed bean when in scope - here: the 'defaultMongoDb' bean
+  @Bean
+  def embeddedMongoDb: MongoDatabase = {
+    MongoClient(getMongoUri).getDatabase(database).withCodecRegistry(codecRegistry)
   }
-
-  after {
-    shutdownDummyMongo()
-  }
-
-   */
 
 }

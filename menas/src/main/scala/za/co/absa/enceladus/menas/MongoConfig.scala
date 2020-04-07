@@ -31,6 +31,6 @@ class MongoConfig {
   def mongoClient: MongoClient = MongoClient(connectionString)
 
   @Bean
-  def mongoDb: MongoDatabase = mongoClient.getDatabase(database).withCodecRegistry(codecRegistry)
+  def defaultMongoDb: MongoDatabase = mongoClient.getDatabase(database).withCodecRegistry(codecRegistry)
 
 }
