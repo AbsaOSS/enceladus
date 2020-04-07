@@ -27,6 +27,7 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
@@ -40,6 +41,7 @@ import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceM
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
+import org.apache.spark.SPARK_VERSION
 
 import scala.collection.immutable.HashMap
 import scala.util.Try
@@ -55,6 +57,8 @@ object StandardizationJob {
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
+    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
+
     implicit val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
@@ -125,6 +129,7 @@ object StandardizationJob {
           log.info(s"Menas UI Run URL: $menasBaseUrl/#/runs/$name/$version/$runNumber")
         }
       }
+      MenasPlugin.close()
     }
   }
 

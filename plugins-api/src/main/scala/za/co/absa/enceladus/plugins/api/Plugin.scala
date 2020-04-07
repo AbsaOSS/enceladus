@@ -18,4 +18,9 @@ package za.co.absa.enceladus.plugins.api
 /**
  * Base [marker] interface for all Enceladus plugins.
  */
-trait Plugin
+trait Plugin {
+  /**
+   * This method will be called when a plugin is no longer needed.
+   */
+  def close(): Unit
+}

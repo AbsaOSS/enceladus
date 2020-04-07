@@ -20,4 +20,5 @@ import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
 
 class DummyControlMetricsPlugin1 extends ControlMetricsPlugin {
   override def onCheckpoint(measurements: ControlMeasure, params: Map[String, String]): Unit = {}
+  override def close(): Unit = {}
 }

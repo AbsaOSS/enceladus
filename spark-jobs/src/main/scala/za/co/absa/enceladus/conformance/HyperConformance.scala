@@ -15,6 +15,9 @@
 
 package za.co.absa.enceladus.conformance
 
+import java.text.SimpleDateFormat
+import java.util.Date
+
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -86,17 +89,10 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
  * transformer.hyperconformance.menas.auth.keytab=/path/to/keytab
  * }}}
  */
-object HyperConformance extends StreamTransformerFactory {
+object HyperConformance extends StreamTransformerFactory with HyperConformanceAttributes {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
-  val menasUriKey = "transformer.hyperconformance.menas.rest.uri"
-  val menasCredentialsFileKey = "transformer.hyperconformance.menas.credentials.file"
-  val menasAuthKeytabKey = "transformer.hyperconformance.menas.auth.keytab"
-  val datasetNameKey = "transformer.hyperconformance.dataset.name"
-  val datasetVersionKey = "transformer.hyperconformance.dataset.version"
-  val reportDateKey = "transformer.hyperconformance.report.date"
-  val reportVersionKey = "transformer.hyperconformance.report.version"
+  private val defaultReportVersion = 1
 
   @throws[IllegalArgumentException]
   override def apply(conf: Configuration): StreamTransformer = {
@@ -109,8 +105,8 @@ object HyperConformance extends StreamTransformerFactory {
     implicit val cmd: ConfCmdConfig = ConfCmdConfig(
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
-      reportDate = conf.getString(reportDateKey),
-      reportVersion = Option(conf.getInt(reportVersionKey)),
+      reportDate = getReportDate(conf),
+      reportVersion = Option(getReportVersion(conf)),
       menasCredentialsFactory = menasCredentialsFactory,
       performanceMetricsFile = None,
       publishPathOverride = None,
@@ -135,7 +131,7 @@ object HyperConformance extends StreamTransformerFactory {
 
   @throws[IllegalArgumentException]
   def validateConfiguration(conf: Configuration): Unit = {
-    val mandatoryKeys = List(menasUriKey, datasetNameKey, datasetVersionKey, reportDateKey, reportVersionKey)
+    val mandatoryKeys = List(menasUriKey, datasetNameKey, datasetVersionKey)
 
     val missingKeys = mandatoryKeys.filterNot(key => conf.containsKey(key))
 
@@ -152,10 +148,25 @@ object HyperConformance extends StreamTransformerFactory {
     (hasCredentialsFile, hasKeytab) match {
       case (false, false) => throw new IllegalArgumentException("No authentication method is specified.")
       case (true, false)  => new MenasPlainCredentialsFactory(conf.getString(menasCredentialsFileKey))
-      case (false, true)  => new MenasKerberosCredentialsFactory(conf.getString(menasCredentialsFileKey))
+      case (false, true)  => new MenasKerberosCredentialsFactory(conf.getString(menasAuthKeytabKey))
       case (true, true)   => throw new IllegalArgumentException("Either a credentials file or a keytab should be specified, but not both.")
     }
   }
 
+  private def getReportDate(conf: Configuration): String = {
+    if (conf.containsKey(reportDateKey)) {
+      conf.getString(reportDateKey)
+    } else {
+      new SimpleDateFormat(ReportDateFormat).format(new Date())
+    }
+  }
+
+  private def getReportVersion(conf: Configuration): Int = {
+    if (conf.containsKey(reportVersionKey)) {
+      conf.getInt(reportVersionKey)
+    } else {
+      defaultReportVersion
+    }
+  }
 }
 

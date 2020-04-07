@@ -1,0 +1,7 @@
+{
+  "name": "infoFile",
+  "type": "record",
+  "namespace": "co.za.absa.dataquality.avro.schema-infofile",
+  "bogus-no-fields": [
+  ]
+}

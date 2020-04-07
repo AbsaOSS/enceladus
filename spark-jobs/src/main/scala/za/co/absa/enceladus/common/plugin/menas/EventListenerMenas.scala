@@ -139,6 +139,18 @@ class EventListenerMenas(config: Config,
     }
   }
 
+  def close(): Unit = {
+    controlMetricPlugins.foreach(plugin => {
+      try {
+        plugin.close()
+      } catch {
+        case NonFatal(ex) =>
+          val className = plugin.getClass.getName
+          log.error(s"A plugin has thrown an exception on close: $className", ex)
+      }
+    })
+  }
+
   private def needToSendStatusChange(oldStatus: RunStatus, newStatus: RunStatus): Boolean = {
     // Only send an error status if it hasn't been done so already or if the previous error's failed status doesn't have error details
     if (oldStatus.status == RunState.failed && oldStatus.error.isEmpty && newStatus.status == RunState.failed) {
@@ -157,7 +169,7 @@ class EventListenerMenas(config: Config,
       "datasetVersion" -> datasetVersion.toString,
       "reportDate" -> reportDate,
       "reportVersion" -> reportVersion.toString,
-      "runStatus" -> _runStatus.toString
+      "runStatus" -> _runStatus.status.toString
     )
     _controlMeasure.foreach(measure =>
       controlMetricPlugins.foreach(plugin => {

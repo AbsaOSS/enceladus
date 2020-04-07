@@ -1,0 +1,144 @@
+{
+  "name": "infoFile",
+  "type": "record",
+  "namespace": "co.za.absa.dataquality.avro.schema-infofile",
+  "fields": [
+    {
+      "name": "datasetName",
+      "type": "string"
+    },
+    {
+      "name": "datasetVersion",
+      "type": "int"
+    },
+    {
+      "name": "reportDate",
+      "type": "string"
+    },
+    {
+      "name": "reportVersion",
+      "type": "int"
+    },
+    {
+      "name": "runStatus",
+      "type": "string"
+    },
+    {
+      "name": "metadata",
+      "type": {
+        "name": "metadata",
+        "type": "record",
+        "fields": [
+          {
+            "name": "sourceApplication",
+            "type": "string"
+          },
+          {
+            "name": "country",
+            "type": "string"
+          },
+          {
+            "name": "historyType",
+            "type": "string"
+          },
+          {
+            "name": "dataFilename",
+            "type": "string"
+          },
+          {
+            "name": "sourceType",
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "type": "int"
+          },
+          {
+            "name": "informationDate",
+            "type": "string"
+          },
+          {
+            "name": "additionalInfo",
+            "type": {
+              "type": "array",
+              "items": {
+                "name": "detail",
+                "type": "record",
+                "fields": [
+                  {
+                    "name": "key",
+                    "type": "string"
+                  },
+                  {
+                    "name": "value",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "checkpoints",
+      "type": {
+        "type": "array",
+        "items": {
+          "name": "checkpoints_record",
+          "type": "record",
+          "fields": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "processStartTime",
+              "type": "string"
+            },
+            {
+              "name": "processEndTime",
+              "type": "string"
+            },
+            {
+              "name": "workflowName",
+              "type": "string"
+            },
+            {
+              "name": "order",
+              "type": "int"
+            },
+            {
+              "name": "controls",
+              "type": {
+                "type": "array",
+                "items": {
+                  "name": "controls_record",
+                  "type": "record",
+                  "fields": [
+                    {
+                      "name": "controlName",
+                      "type": "string"
+                    },
+                    {
+                      "name": "controlType",
+                      "type": "string"
+                    },
+                    {
+                      "name": "controlCol",
+                      "type": "string"
+                    },
+                    {
+                      "name": "controlValue",
+                      "type": "string"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
