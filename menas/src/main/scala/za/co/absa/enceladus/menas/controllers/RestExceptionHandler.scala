@@ -24,10 +24,11 @@ import za.co.absa.enceladus.menas.models.{RestError, Validation}
 import org.springframework.http.HttpStatus
 import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.menas.models.rest.RestResponse
-import za.co.absa.enceladus.menas.models.rest.errors.{RemoteSchemaRetrievalError, SchemaFormatError, SchemaParsingError}
+import za.co.absa.enceladus.menas.models.rest.errors.{RequestTimeoutExpiredError, RemoteSchemaRetrievalError, SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
 import org.apache.oozie.client.OozieClientException
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException
 
 @ControllerAdvice(annotations = Array(classOf[RestController]))
 class RestExceptionHandler {
@@ -39,6 +40,14 @@ class RestExceptionHandler {
   val oozieProxyGroup: String = ""
 
   private val logger = LoggerFactory.getLogger(this.getClass)
+
+  @ExceptionHandler(value = Array(classOf[AsyncRequestTimeoutException]))
+  def handleAsyncRequestTimeoutException(exception: AsyncRequestTimeoutException): ResponseEntity[Any] = {
+    val message = Option(exception.getMessage).getOrElse("Request timeout expired.")
+    val response = RestResponse(message, Option(RequestTimeoutExpiredError()))
+    logger.error(s"Exception: $response", exception)
+    ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response)
+  }
 
   @ExceptionHandler(value = Array(classOf[NotFoundException]))
   def handleNotFoundException(exception: NotFoundException): ResponseEntity[Any] = {
