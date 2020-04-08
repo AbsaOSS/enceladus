@@ -4,15 +4,17 @@ title: Usage
 version: '2.0.0'
 categories:
     - '2.0.0'
+redirect_from: /docs/usage-errcol
 ---
 
 Error Column
 ============
 
 <!-- toc -->
-- [Description](#description)
-- [Error Types](#error-types)
-- [Notes](#notes)
+- [Error Column](#error-column)
+  - [Description](#description)
+  - [Error Types](#error-types)
+  - [Notes](#notes)
 <!-- tocstop -->
 
 Description

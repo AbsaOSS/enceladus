@@ -4,6 +4,7 @@ title: Menas
 version: '2.0.0'
 categories:
     - '2.0.0'
+redirect_from: /docs/menas
 ---
 ## API
 

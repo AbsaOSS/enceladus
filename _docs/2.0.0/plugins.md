@@ -1,11 +1,11 @@
 ---
 layout: docs
-title: Built-in Plugins
+title: Plugins
 version: '2.0.0'
 categories:
     - '2.0.0'
+redirect_from: /docs/plugins-built-in
 ---
-# Plugins
 
 **Standardization** and **Conformance** support plugins that allow executing additional actions at certain times of the computation.
 

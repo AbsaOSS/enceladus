@@ -1,12 +1,6 @@
 <nav class="main-nav">
   <h3>Navigation</h3>
 
-  {% if page.version %}
-    {% assign v = page.version %}
-  {% else %}
-    {% assign v = site.data.versions.last %}
-  {% endif %}
-
   <ul class="nav flex-column nav-pills nav-fill">
     <li class="nav-item ">
       <a class="nav-link {% if page.url == "/" %}active{% endif %}"
