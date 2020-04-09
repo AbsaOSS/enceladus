@@ -136,6 +136,7 @@ object SchemaPathValidator {
     }
   }
 
+  @tailrec
   private def validateSchemaPathArray(schema: StructType,
                                       path: Array[String],
                                       parentOnly: Boolean = false,
@@ -143,24 +144,20 @@ object SchemaPathValidator {
                                       parentPath: String = ""): Seq[ValidationIssue] = {
     if (path.isEmpty) {
       Nil
-    }
-    else {
+    } else {
 
       val currentField = path(0)
       val fullPath = s"$parentPath${path.mkString(".")}"
       if (parentOnly && path.length == 1) {
-        val matched = checkMatchType(schema, currentField)
-        matched match {
-          case ExactMatch(_) if fullPathNew =>
-            Seq(ValidationError(s"Column '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
-          case CaseInsensitiveMatch(_) if fullPathNew =>
-            Seq(ValidationError(s"Case insensitive variant of a cloumn '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
-          case _ => Nil
+        if (fullPathNew) {
+          handleParentMatch(schema, parentPath, currentField, fullPath)
+        } else {
+          Nil
         }
       } else {
 
         val matched = checkMatchType(schema, currentField)
-        val failures = matched match {
+        matched match {
           case ExactMatch(field) =>
             val dataType = getUnderlyingType(field.dataType)
             dataType match {
@@ -175,12 +172,22 @@ object SchemaPathValidator {
           case _ =>
             Seq(ValidationError(s"Column name '$parentPath$currentField' does not exist."))
         }
-        failures
       }
     }
   }
 
-  trait Match
+  private def handleParentMatch(schema: StructType, parentPath: String, currentField: String, fullPath: String) = {
+    val matched = checkMatchType(schema, currentField)
+    matched match {
+      case ExactMatch(_) =>
+        Seq(ValidationError(s"Column '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
+      case CaseInsensitiveMatch(_) =>
+        Seq(ValidationError(s"Case insensitive variant of a cloumn '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
+      case _ => Nil
+    }
+  }
+
+  sealed trait Match
 
   case class ExactMatch(field: StructField) extends Match
 
