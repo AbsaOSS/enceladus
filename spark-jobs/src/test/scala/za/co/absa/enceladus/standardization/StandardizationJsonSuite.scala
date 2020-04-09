@@ -30,7 +30,7 @@ import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancem
 class StandardizationJsonSuite extends FunSuite with SparkTestBase with MockitoSugar{
   private implicit val udfLibrary:UDFLibrary = UDFLibrary()
 
-  test("REading data from JSON input, also such that don't adhere to desired schema") {
+  test("Reading data from JSON input, also such that don't adhere to desired schema") {
 
     implicit val dao: MenasDAO = mock[MenasDAO]
 
@@ -51,28 +51,12 @@ class StandardizationJsonSuite extends FunSuite with SparkTestBase with MockitoS
 
     val sourceDF = reader.load("src/test/resources/data/standardization_json_suite_data.json")
 
-    val expected =
-      """|+--------------------+----------------+-------+-------+----------+------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-         ||description         |string          |boolean|integer|date      |array                                     |errCol                                                                                                                                                                                                                                                                        |
-         |+--------------------+----------------+-------+-------+----------+------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-         ||Having data         |Hello world     |true   |1      |2005-07-31|[2005-07-31 08:22:31, 2005-07-31 18:22:44]|[]                                                                                                                                                                                                                                                                            |
-         ||Typed data          |Lorem Ipsum     |true   |1000   |2005-08-07|[]                                        |[]                                                                                                                                                                                                                                                                            |
-         ||Nulls               |null            |null   |null   |null      |null                                      |[]                                                                                                                                                                                                                                                                            |
-         ||Missing fields      |null            |null   |null   |null      |null                                      |[]                                                                                                                                                                                                                                                                            |
-         ||ERROR               |null            |null   |null   |null      |null                                      |[[stdSchemaError, E00007, The input data does not adhere to requested schema,, [{"description":"Object in atomic type","string":{"foo":bar}},], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, description, [null], []]]        |
-         ||Array in atomic type|null            |null   |null   |null      |null                                      |[[stdCastError, E00000, Standardization Error - Type cast, boolean, [[false,true]], []]]                                                                                                                                                                                      |
-         ||Array in string type|["a","bb","ccc"]|null   |null   |null      |null                                      |[]                                                                                                                                                                                                                                                                            |
-         ||ERROR               |null            |null   |null   |null      |null                                      |[[stdSchemaError, E00007, The input data does not adhere to requested schema,, [{"description":"Object in array type","array":{"foo":bar}},], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, description, [null], []]]          |
-         ||ERROR               |null            |null   |null   |null      |null                                      |[[stdSchemaError, E00007, The input data does not adhere to requested schema,, [{"description":"Atomic type in array","array":"25/09/2005 11:22:33"},], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, description, [null], []]]|
-         |+--------------------+----------------+-------+-------+----------+------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-         |
-         |""".stripMargin.replace("\r\n", "\n")
+    val expected = FileReader.readFileAsString("src/test/resources/data/standardization_json_suite_expected.txt")
+      .replace("\r\n", "\n")
 
     val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
-    println(actual)
-    println(expected)
     assert(actual == expected)
   }
 }
