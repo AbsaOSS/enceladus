@@ -4,7 +4,7 @@ title: Enceladus
 ---
 
 Enceladus is an open source project under the [ABSA Group Limited][absa] designed for transforming
-any data format into a standardized and strongly type `parquet` format and applying a number of
+any data format into a standardized and strongly typed `parquet` format and applying a number of
 conformance rules on top of said data.
 
 Enceladus laverages [Apache Spark][spark] to read and transform the data. On top of that it also
