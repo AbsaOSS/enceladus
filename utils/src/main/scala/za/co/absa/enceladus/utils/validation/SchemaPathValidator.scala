@@ -145,7 +145,6 @@ object SchemaPathValidator {
     if (path.isEmpty) {
       Nil
     } else {
-
       val currentField = path(0)
       val fullPath = s"$parentPath${path.mkString(".")}"
       if (parentOnly && path.length == 1) {
@@ -155,7 +154,6 @@ object SchemaPathValidator {
           Nil
         }
       } else {
-
         val matched = checkMatchType(schema, currentField)
         matched match {
           case ExactMatch(field) =>
@@ -176,13 +174,13 @@ object SchemaPathValidator {
     }
   }
 
-  private def handleParentMatch(schema: StructType, parentPath: String, currentField: String, fullPath: String) = {
+  private def handleParentMatch(schema: StructType, parentPath: String, currentField: String, fullPath: String): Seq[ValidationError] = {
     val matched = checkMatchType(schema, currentField)
     matched match {
       case ExactMatch(_) =>
         Seq(ValidationError(s"Column '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
       case CaseInsensitiveMatch(_) =>
-        Seq(ValidationError(s"Case insensitive variant of a cloumn '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
+        Seq(ValidationError(s"Case insensitive variant of a cloumn '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))//scalastyle:ignore line.size.limit
       case _ => Nil
     }
   }
