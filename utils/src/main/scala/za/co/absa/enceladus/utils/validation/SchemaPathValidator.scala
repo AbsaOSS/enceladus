@@ -185,13 +185,13 @@ object SchemaPathValidator {
     }
   }
 
-  sealed trait Match
+  private sealed trait Match
 
-  case class ExactMatch(field: StructField) extends Match
+  private case class ExactMatch(field: StructField) extends Match
 
-  case class CaseInsensitiveMatch(field: StructField) extends Match
+  private case class CaseInsensitiveMatch(field: StructField) extends Match
 
-  case object NoMatch extends Match
+  private case object NoMatch extends Match
 
   private def checkMatchType(schema: StructType, currentField: String): Match = {
 
