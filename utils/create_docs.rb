@@ -23,10 +23,27 @@ unless NEW_VERSION =~ /\Av?([0-9]+\.){2}[0-9]+(-(R|r)(C|c)[1-9][0-9]*)?\Z/
   raise ArgumentError, "Version not in correct format", caller
 end
 
+def remove_redirect(content)
+  front_matter = []
+  content.split("\n").each do |line|
+    front_matter << line unless line =~ /^redirect_from/
+  end
+  front_matter.join("\n")
+end
+
 FileUtils.cd(DOC_FOLDER, verbose: true) do
   last_version = Dir.glob('*').sort_by { |v| Gem::Version.new(v) }.last
 
   FileUtils.cp_r(last_version, NEW_VERSION, verbose: true)
+
+  Dir.glob("#{last_version}/*").each do |file_path|
+    puts "Removing redirects for #{file_path}"
+    file_content = File.read(file_path).partition( /---.*?(---)/m )
+    new_content = file_content[0]
+    new_content << remove_redirect(file_content[1])
+    new_content << file_content[2]
+    File.open(file_path, 'w') { |file| file.puts(new_content) }
+  end
 
   Dir.glob("#{NEW_VERSION}/*").each do |file_path|
     puts "Updating version for #{file_path}"
