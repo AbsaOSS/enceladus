@@ -54,8 +54,8 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     versionedMongoRepository.getAllVersions(name)
   }
 
-  def getLatestVersion(name: String, includeDisabled: Boolean = false): Future[Option[C]] = {
-    versionedMongoRepository.getLatestVersionValue(name, includeDisabled).flatMap({
+  def getLatestVersion(name: String): Future[Option[C]] = {
+    versionedMongoRepository.getLatestVersionValue(name).flatMap({
       case Some(version) => getVersion(name, version)
       case _ => throw NotFoundException()
     })
@@ -152,7 +152,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private[services] def updateFuture(username: String, itemName: String, itemVersion: Int)(transform: C => Future[C]): Future[Option[C]] = {
     for {
-      versionToUpdate <- getLatestVersion(itemName, includeDisabled = true)
+      versionToUpdate <- getLatestVersion(itemName)
       transformed <- if (versionToUpdate.isEmpty) {
         Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
       } else if (versionToUpdate.get.version != itemVersion) {
