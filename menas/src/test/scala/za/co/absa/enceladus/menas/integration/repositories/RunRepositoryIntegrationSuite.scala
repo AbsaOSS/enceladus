@@ -22,6 +22,7 @@ import com.mongodb.MongoWriteException
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{RunState, RunStatus}
 import za.co.absa.enceladus.menas.integration.fixtures.{FixtureService, RunFixtureService}
@@ -32,6 +33,7 @@ import za.co.absa.enceladus.model.test.factories.RunFactory
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles(Array("withEmbeddedMongo"))
 class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
   import za.co.absa.enceladus.menas.integration.RunImplicits.RunExtensions

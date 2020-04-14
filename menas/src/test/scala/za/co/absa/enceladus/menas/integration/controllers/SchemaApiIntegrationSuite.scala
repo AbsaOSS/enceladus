@@ -26,6 +26,7 @@ import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfterAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.http.MediaType
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.TestResourcePath
@@ -43,6 +44,7 @@ import scala.collection.immutable.HashMap
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles(Array("withEmbeddedMongo"))
 class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
 
   private val port = 8877
