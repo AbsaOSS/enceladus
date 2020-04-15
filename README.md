@@ -238,12 +238,12 @@ The list of additional options available for running Conformance:
 
 Standardization and Conformance support plugins that allow executing additional actions at certain times of the computation.
 To learn how plugins work, when and how their logic is executed, please 
-refer to the [documentation](https://absaoss.github.io/enceladus/docs/2.0.0/plugins).
+refer to the [documentation](https://absaoss.github.io/enceladus/docs/plugins).
 
 ### Built-in Plugins
 The purpose of this module is to provide some plugins of additional but relatively elementary functionality. And also to
 serve as an example how plugins are written: 
-[detailed description](https://absaoss.github.io/enceladus/docs/2.0.0/plugins-built-in)  
+[detailed description](https://absaoss.github.io/enceladus/docs/plugins-built-in)  
 
 ## How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
