@@ -22,8 +22,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.slf4j.LoggerFactory
-import za.co.absa.enceladus.plugins.builtin.common.mq.ControlInfoProducer
-import za.co.absa.enceladus.plugins.builtin.controlinfo.{ControlInfoAvroSerializer, DceControlInfo}
+import za.co.absa.enceladus.plugins.builtin.common.mq.{InfoAvroSerializer, InfoProducer}
 
 import scala.util.control.NonFatal
 
@@ -31,7 +30,8 @@ import scala.util.control.NonFatal
 /**
  * This class is responsible for sending control measurements to Kafka.
  */
-class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) extends ControlInfoProducer {
+class InfoProducerKafka[T](kafkaConnectionParams: KafkaConnectionParams)
+                          (implicit serializer: InfoAvroSerializer[T]) extends InfoProducer[T] {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   private val kafkaProducer: KafkaProducer[GenericRecord, GenericRecord] = {
@@ -54,12 +54,12 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
   /**
    * Sends control info measurements to a Kafka topic.
    *
-   * @param controlInfo An instance of Atum control measurements plus information identifying the dataset and
+   * @param infoRecord An instance of Atum control measurements plus information identifying the dataset and
    *                    the state of the job.
    */
-  def send(controlInfo: DceControlInfo): Unit = {
-    val avroKey = ControlInfoAvroSerializer.convertControlInfoKey(controlInfo.datasetName)
-    val avroRecordOpt = ControlInfoAvroSerializer.convertControlInfoRecord(controlInfo)
+  def send(infoRecord: T): Unit = {
+    val avroKey = serializer.convertInfoKey(infoRecord)
+    val avroRecordOpt = serializer.convertInfoRecord(infoRecord)
 
     try {
       avroRecordOpt match {

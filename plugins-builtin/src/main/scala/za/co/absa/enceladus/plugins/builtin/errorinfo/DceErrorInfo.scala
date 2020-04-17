@@ -13,17 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.buildin.kafka.dummy
+package za.co.absa.enceladus.plugins.builtin.errorinfo
 
-import za.co.absa.enceladus.plugins.builtin.common.mq.InfoProducer
-import za.co.absa.enceladus.plugins.builtin.controlinfo.DceControlInfo
-
-class DummyControlInfoProducer extends InfoProducer[DceControlInfo] {
-
-  var lastControlInfoSent: DceControlInfo = _
-
-  override def send(controlInfo: DceControlInfo): Unit = {
-    lastControlInfoSent = controlInfo
-  }
-  override def close(): Unit = {}
-}
+case class DceErrorInfo(sourceSystem: String,
+                        sourceDataset: String,
+                        informationDate: String,
+                        processingDate: String,
+                        recordId: String,
+                        errorCode: String
+                        // todo add other fields
+                         )

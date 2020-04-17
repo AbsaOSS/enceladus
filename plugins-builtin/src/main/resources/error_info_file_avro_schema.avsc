@@ -1,0 +1,31 @@
+{
+  "name": "infoFile",
+  "type": "record",
+  "namespace": "co.za.absa.dataquality.avro.schema-errorinfofile",
+  "fields": [
+    {
+      "name": "sourceSystem",
+      "type": "string"
+    },
+    {
+      "name": "sourceDataset",
+      "type": "string"
+    },
+    {
+      "name": "informationDate",
+      "type": "string"
+    },
+    {
+      "name": "processingDate",
+      "type": "string"
+    },
+    {
+      "name": "recordId",
+      "type": "string"
+    },
+    {
+      "name": "errorCode",
+      "type": "string"
+    }
+  ]
+}

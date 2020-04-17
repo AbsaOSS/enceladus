@@ -15,19 +15,14 @@
 
 package za.co.absa.enceladus.plugins.builtin.common.mq
 
-import za.co.absa.enceladus.plugins.builtin.controlinfo.DceControlInfo
-
-/**
- * Base interface for control info metrics (aka INFO file) producer for messaging queues.
- */
-trait ControlInfoProducer {
+trait InfoProducer[T] { // <: Product with Serializable?
 
   /**
-   * Send control metrics to a messaging queue.
+   * Send a record to a messaging queue.
    *
-   * @param controlInfo Control info metrics to send.
+   * @param infoRecord Control info metrics to send.
    */
-  def send(controlInfo: DceControlInfo): Unit
+  def send(infoRecord: T): Unit
 
   /**
    * This method should be called when the producer is no longer needed.

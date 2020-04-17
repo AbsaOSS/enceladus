@@ -13,25 +13,25 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka
+package za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka
 
 import com.typesafe.config.Config
-import za.co.absa.enceladus.plugins.api.control.{ControlMetricsPlugin, ControlMetricsPluginFactory}
+import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorFactory
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{InfoProducerKafka, KafkaConnectionParams}
-import za.co.absa.enceladus.plugins.builtin.controlinfo.ControlInfoAvroSerializer
-import za.co.absa.enceladus.plugins.builtin.controlinfo.mq.ControlInfoSenderPlugin
+import za.co.absa.enceladus.plugins.builtin.errorinfo.ErrorInfoAvroSerializer
+import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin
 
 /**
  * Implementation of a plugin factory that creates the above plugin based on configuration passed from
  * Enceladus Spark application.
  */
-object KafkaInfoPlugin extends ControlMetricsPluginFactory {
-  val ClientIdKey = "kafka.info.metrics.client.id"
-  val ControlMetricsKafkaTopicKey = "kafka.info.metrics.topic.name"
+object KafkaErrorInfoPlugin extends PostProcessorFactory {
+  val ClientIdKey = "kafka.errorinfo.client.id"
+  val ControlMetricsKafkaTopicKey = "kafka.errorinfo.topic.name"
 
-  override def apply(config: Config): ControlMetricsPlugin = {
+  override def apply(config: Config): ErrorInfoSenderPlugin = {
     val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ControlMetricsKafkaTopicKey)
-    val producer = new InfoProducerKafka(connectionParams)(ControlInfoAvroSerializer)
-    new ControlInfoSenderPlugin(producer)
+    val producer = new InfoProducerKafka(connectionParams)(ErrorInfoAvroSerializer)
+    new ErrorInfoSenderPlugin(producer)
   }
 }

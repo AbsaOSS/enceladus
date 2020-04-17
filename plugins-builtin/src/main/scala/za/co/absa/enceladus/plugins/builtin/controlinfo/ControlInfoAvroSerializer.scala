@@ -20,24 +20,25 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata}
+import za.co.absa.enceladus.plugins.builtin.common.mq.InfoAvroSerializer
 
 import scala.util.control.NonFatal
 
-object ControlInfoAvroSerializer {
+object ControlInfoAvroSerializer extends InfoAvroSerializer[DceControlInfo] {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * Converts a control info key represented by a name of a dataset to an Avro record.
    *
-   * @param datasetName A name of a dataset.
+   * @param controlInfo An instance of control measurements.
    * @return An Avro record representing a key to control info topic.
    */
-  def convertControlInfoKey(datasetName: String): GenericRecord = {
+  override def convertInfoKey(controlInfo: DceControlInfo): GenericRecord = {
     val keyAvroSchemaJson = IOUtils.toString(getClass.getResourceAsStream("/info_file_key_avro_schema.avsc"), "UTF-8")
     val keyAvroSchema = new Schema.Parser().parse(keyAvroSchemaJson)
     val avroKey = new GenericData.Record(keyAvroSchema)
 
-    avroKey.put("datasetName", datasetName)
+    avroKey.put("datasetName", controlInfo.datasetName)
 
     avroKey
   }
@@ -48,7 +49,7 @@ object ControlInfoAvroSerializer {
    * @param controlInfo An instance of control measurements.
    * @return An Avro record representing a key to control info topic.
    */
-  def convertControlInfoRecord(controlInfo: DceControlInfo): Option[GenericRecord] = {
+  override def convertInfoRecord(controlInfo: DceControlInfo): Option[GenericRecord] = {
     val recordAvroSchema = getAvroSchema
     val avroDceControlInfo = new GenericData.Record(recordAvroSchema)
 

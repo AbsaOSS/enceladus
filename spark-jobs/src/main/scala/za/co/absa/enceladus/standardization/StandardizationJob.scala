@@ -42,6 +42,7 @@ import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 import org.apache.spark.SPARK_VERSION
+import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
 
 import scala.collection.immutable.HashMap
 import scala.util.Try
@@ -109,7 +110,7 @@ object StandardizationJob {
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 
     try {
-      executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg)
+      val standardized = executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg)
       cmd.performanceMetricsFile.foreach { fileName =>
         try {
           performance.writeMetricsToFile(fileName)
@@ -118,6 +119,21 @@ object StandardizationJob {
         }
       }
       log.info("Standardization finished successfully")
+
+      // naively extracting errColumn data
+      log.info("Extracting error cols")
+      val stdCount = standardized.count()
+
+      import org.apache.spark.sql.functions.size
+      import spark.sqlContext.implicits._ // $
+      val stdErrors = standardized.filter(size($"errCol") > 0)
+      val errCount = stdErrors.count()
+      log.info(s"*** STD count = $stdCount, errCount = $errCount") // debug
+
+      // init post processor here and send - very rudimentary, just to show it works "somehow". // todo redo properly
+      val errorplugin = KafkaErrorInfoPlugin(conf)
+      errorplugin.onDataReady(stdErrors, Map.empty)
+
     } finally {
       Atum.getControlMeasure.runUniqueId
 
@@ -291,7 +307,7 @@ object StandardizationJob {
                                      cmd: StdCmdConfig,
                                      menasCredentials: MenasCredentials,
                                      pathCfg: PathCfg)
-                                    (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
+                                    (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): DataFrame = {
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
     performance.startMeasurement(rawDirSize)
 
@@ -341,6 +357,8 @@ object StandardizationJob {
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     standardizedDF.writeInfoFile(pathCfg.outputPath)
+
+    standardizedDF
   }
 
   private def handleEmptyOutputAfterStandardization()(implicit spark: SparkSession): Unit = {
