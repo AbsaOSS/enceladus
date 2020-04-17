@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.plugins.builtin.common.mq
 
-trait InfoProducer[T] { // <: Product with Serializable?
+trait InfoProducer[T] {
 
   /**
    * Send a record to a messaging queue.

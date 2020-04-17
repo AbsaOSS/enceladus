@@ -28,7 +28,7 @@ import scala.util.control.NonFatal
 
 
 /**
- * This class is responsible for sending control measurements to Kafka.
+ * This class is responsible for sending info records to Kafka.
  */
 class InfoProducerKafka[T](kafkaConnectionParams: KafkaConnectionParams)
                           (implicit serializer: InfoAvroSerializer[T]) extends InfoProducer[T] {
@@ -52,10 +52,9 @@ class InfoProducerKafka[T](kafkaConnectionParams: KafkaConnectionParams)
   }
 
   /**
-   * Sends control info measurements to a Kafka topic.
+   * Sends info records to a Kafka topic.
    *
-   * @param infoRecord An instance of Atum control measurements plus information identifying the dataset and
-   *                    the state of the job.
+   * @param infoRecord a value class serializable with acorresponding InfoAvroSerializer to Avro to be sent to kafka.
    */
   def send(infoRecord: T): Unit = {
     val avroKey = serializer.convertInfoKey(infoRecord)
@@ -64,16 +63,16 @@ class InfoProducerKafka[T](kafkaConnectionParams: KafkaConnectionParams)
     try {
       avroRecordOpt match {
         case Some(avroRecord) =>
-          logger.info(s"Sending control measurements to ${kafkaConnectionParams.topicName}...")
+          logger.info(s"Sending info records ${infoRecord.getClass.getName} to ${kafkaConnectionParams.topicName}...")
           val producerRecord = new ProducerRecord[GenericRecord, GenericRecord](kafkaConnectionParams.topicName,
             avroKey, avroRecord)
           kafkaProducer.send(producerRecord)
-          logger.info("Control measurements were sent successfully to the Kafka topic.")
+          logger.info("Info records were sent successfully to the Kafka topic.")
         case None =>
-          logger.error(s"No Avro records generated from control measurements.")
+          logger.error(s"No Avro records generated from info record $infoRecord.")
       }
     } catch {
-      case NonFatal(ex) => logger.error("Error sending control info metrics to Kafka.", ex)
+      case NonFatal(ex) => logger.error(s"Error sending info record $infoRecord to Kafka.", ex)
     }
   }
 

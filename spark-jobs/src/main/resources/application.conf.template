@@ -61,6 +61,10 @@ timezone="UTC"
 # (uncomment to enable)
 #standardization.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin
 #conformance.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin
+
+# 2. Push Error Info to a Kafka topic
+# standardization.plugin.postprocessor.1=za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
+
 #kafka.schema.registry.url:"http://127.0.0.1:8081"
 #kafka.bootstrap.servers="127.0.0.1:9092"
 #kafka.info.metrics.client.id="controlInfo"

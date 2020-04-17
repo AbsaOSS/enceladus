@@ -42,7 +42,7 @@ import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 import org.apache.spark.SPARK_VERSION
-import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
+import za.co.absa.enceladus.common.plugin.PostProcessingService
 
 import scala.collection.immutable.HashMap
 import scala.util.Try
@@ -56,6 +56,7 @@ object StandardizationJob {
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
+  private var postProcessingService: PostProcessingService = _
 
   def main(args: Array[String]) {
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
@@ -97,6 +98,7 @@ object StandardizationJob {
 
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate, reportVersion, isJobStageOnly = true, generateNewRun = true)
+    postProcessingService = new PostProcessingService(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate, reportVersion, isJobStageOnly = true, generateNewRun = true)
 
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
     Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)
@@ -119,21 +121,7 @@ object StandardizationJob {
         }
       }
       log.info("Standardization finished successfully")
-
-      // naively extracting errColumn data
-      log.info("Extracting error cols")
-      val stdCount = standardized.count()
-
-      import org.apache.spark.sql.functions.size
-      import spark.sqlContext.implicits._ // $
-      val stdErrors = standardized.filter(size($"errCol") > 0)
-      val errCount = stdErrors.count()
-      log.info(s"*** STD count = $stdCount, errCount = $errCount") // debug
-
-      // init post processor here and send - very rudimentary, just to show it works "somehow". // todo redo properly
-      val errorplugin = KafkaErrorInfoPlugin(conf)
-      errorplugin.onDataReady(stdErrors, Map.empty)
-
+      postProcessingService.onSaveOutput(standardized) // all enabled postProcessors will be run with the std df
     } finally {
       Atum.getControlMeasure.runUniqueId
 

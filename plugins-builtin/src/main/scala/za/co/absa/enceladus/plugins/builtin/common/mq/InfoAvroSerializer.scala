@@ -17,7 +17,7 @@ package za.co.absa.enceladus.plugins.builtin.common.mq
 
 import org.apache.avro.generic.GenericRecord
 
-trait InfoAvroSerializer[T] { //  <: Product with Serializable
+trait InfoAvroSerializer[T] {
 
   def convertInfoKey(infoRecord: T): GenericRecord
 
