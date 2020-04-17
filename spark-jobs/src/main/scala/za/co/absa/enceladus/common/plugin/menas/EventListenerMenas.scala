@@ -139,7 +139,7 @@ class EventListenerMenas(config: Config,
     }
   }
 
-  def close(): Unit = {
+  override def onApplicationEnd(): Unit = {
     controlMetricPlugins.foreach(plugin => {
       try {
         plugin.close()
