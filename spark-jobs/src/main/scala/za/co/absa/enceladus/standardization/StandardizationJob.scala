@@ -42,6 +42,7 @@ import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 import org.apache.spark.SPARK_VERSION
+import za.co.absa.atum.model.{Checkpoint, Measurement}
 
 import scala.collection.immutable.HashMap
 import scala.util.Try
@@ -295,7 +296,7 @@ object StandardizationJob {
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
     performance.startMeasurement(rawDirSize)
 
-    addRawRecordCountToMetadata(dfAll)
+    addRawAndSourceRecordCountsToMetadata
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
@@ -424,20 +425,23 @@ object StandardizationJob {
   }
 
   /**
-    * Adds metadata about the number of records in raw data by checking Atum's checkpoints first.
-    * If raw record count is not available in checkpoints the method will calculate that count
-    * based on the provided raw dataframe.
+    * Adds metadata about the number of records in raw and source data by checking Atum's checkpoints first.
     *
     * @return The number of records in a checkpoint corresponding to raw data (if available)
     */
-  private def addRawRecordCountToMetadata(df: DataFrame): Unit = {
+  private def addRawAndSourceRecordCountsToMetadata: Unit = {
     val checkpointRawRecordCount = getRawRecordCountFromCheckpoints
+    val checkpointSourceRecordCount = getSourceRecordCountFromCheckpoints
 
-    val rawRecordCount = checkpointRawRecordCount match {
-      case Some(num) => num
-      case None      => df.count
+    (checkpointRawRecordCount, checkpointSourceRecordCount) match {
+      case (Right(x), Right(y)) => {
+        Atum.setAdditionalInfo(s"raw_record_count" -> x.toString)
+        Atum.setAdditionalInfo(s"source_record_count" -> y.toString)
+      }
+      case (Right(_), Left(er)) => throw new ValidationException("Field errors", Seq(er))
+      case (Left(er), Right(_)) => throw new ValidationException("Field errors", Seq(er))
+      case (Left(er1), Left(er2)) => throw new ValidationException("Field errors", Seq(er1,er2))
     }
-    Atum.setAdditionalInfo(s"raw_record_count" -> rawRecordCount.toString)
   }
 
   /**
@@ -445,32 +449,34 @@ object StandardizationJob {
     *
     * @return The number of records in a checkpoint corresponding to raw data (if available)
     */
-  private def getRawRecordCountFromCheckpoints: Option[Long] = {
+  private def getRawRecordCountFromCheckpoints: Either[String, Long] = {
+    getFieldRawRecordFromCheckpoints("row")
+  }
+
+  /**
+   * Gets the number of records in source data by traversing Atum's checkpoints.
+   *
+   * @return The number of records in a checkpoint corresponding to source data (if available)
+   */
+  private def getSourceRecordCountFromCheckpoints: Either[String, Long] = {
+    getFieldRawRecordFromCheckpoints("source")
+  }
+
+  private def getFieldRawRecordFromCheckpoints(field: String) = {
     import za.co.absa.atum.core.Constants._
-    val controlMeasure = Atum.getControlMeasure
+    val optionResult = for {
+      checkpoint <- Atum.getControlMeasure
+        .checkpoints
+        .find(c => c.name.equalsIgnoreCase(field) || c.workflowName.equalsIgnoreCase(field))
 
-    val rawCheckpoint = controlMeasure
-      .checkpoints
-      .find(c => c.name.equalsIgnoreCase("raw") || c.workflowName.equalsIgnoreCase("raw"))
+      measurement <- checkpoint.controls.find(m => m.controlType.equalsIgnoreCase(controlTypeRecordCount))
+      result <- Try({
+        val rowCount = measurement.controlValue.toString.toLong
+        if (rowCount >= 0) rowCount else throw new Exception("negative rowcount")
+      }).toOption
+    } yield result
 
-    val measurement = rawCheckpoint.flatMap(chk => {
-      chk.controls.find(m => m.controlType.equalsIgnoreCase(controlTypeRecordCount))
-    })
-
-    measurement.flatMap(m =>
-      try {
-        val rawCount = m.controlValue.toString.toLong
-        // Basic sanity check
-        if (rawCount >= 0) {
-          Some(rawCount)
-        } else {
-          None
-        }
-      }
-      catch {
-        case NonFatal(_) => None
-      }
-    )
+    if (optionResult.isDefined) Right(optionResult.get) else Left(s"Invalid field ${field}")
   }
 
   private final case class PathCfg(inputPath: String, outputPath: String)
