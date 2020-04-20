@@ -37,9 +37,9 @@ object DceControlInfoFactory {
       version,
       informationDate,
       additionalInfo), None, List(
-      Checkpoint("Source", "2019-12-21 10:21:33", "2019-12-21 12:10:57", "Source", 1,
+      Checkpoint("Source", None, None, "2019-12-21 10:21:33", "2019-12-21 12:10:57", "Source", 1,
         List(Measurement("recordCount", "controlType.count", "*", "223929"))),
-      Checkpoint("Raw", "2019-12-21 12:11:22", "2019-12-21 13:20:21", "Raw", 2,
+      Checkpoint("Raw", None, None, "2019-12-21 12:11:22", "2019-12-21 13:20:21", "Raw", 2,
         List(Measurement("recordCount", "controlType.count", "*", "223929")))
     ))
   }
