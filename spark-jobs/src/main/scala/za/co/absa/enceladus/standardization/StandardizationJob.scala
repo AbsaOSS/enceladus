@@ -44,8 +44,9 @@ import za.co.absa.enceladus.utils.validation.ValidationException
 import org.apache.spark.SPARK_VERSION
 import za.co.absa.atum.model.{Checkpoint, Measurement}
 
+import scala.collection.immutable
 import scala.collection.immutable.HashMap
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 object StandardizationJob {
@@ -56,6 +57,9 @@ object StandardizationJob {
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
+
+  private val rawFieldName = "raw"
+  private val sourceFieldName = "source"
 
   def main(args: Array[String]) {
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
@@ -103,7 +107,7 @@ object StandardizationJob {
     Atum.setAdditionalInfo(Constants.InfoVersionColumn -> reportVersion.toString)
 
     // Add the raw format of the input file(s) to Atum's metadta as well
-    Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
+    Atum.setAdditionalInfo(rawFieldName + "_format" -> cmd.rawFormat)
 
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
@@ -429,18 +433,22 @@ object StandardizationJob {
     *
     * @return The number of records in a checkpoint corresponding to raw data (if available)
     */
-  private def addRawAndSourceRecordCountsToMetadata: Unit = {
-    val checkpointRawRecordCount = getRawRecordCountFromCheckpoints
-    val checkpointSourceRecordCount = getSourceRecordCountFromCheckpoints
+  def addRawAndSourceRecordCountsToMetadata: Unit = {
+    val checkpoints: immutable.Seq[Checkpoint] = Atum.getControlMeasure.checkpoints
+
+    val checkpointRawRecordCount = getRawRecordCountFromCheckpoints(checkpoints)
+    val checkpointSourceRecordCount = getSourceRecordCountFromCheckpoints(checkpoints)
+
+    val errorMessage = "Checkpoint validation failed:"
 
     (checkpointRawRecordCount, checkpointSourceRecordCount) match {
       case (Right(x), Right(y)) => {
-        Atum.setAdditionalInfo(s"raw_record_count" -> x.toString)
-        Atum.setAdditionalInfo(s"source_record_count" -> y.toString)
+        Atum.setAdditionalInfo(s"${rawFieldName}_record_count" -> x.toString)
+        Atum.setAdditionalInfo(s"${sourceFieldName}_record_count" -> y.toString)
       }
-      case (Right(_), Left(er)) => throw new ValidationException("Field errors", Seq(er))
-      case (Left(er), Right(_)) => throw new ValidationException("Field errors", Seq(er))
-      case (Left(er1), Left(er2)) => throw new ValidationException("Field errors", Seq(er1,er2))
+      case (Right(_), Left(er)) => throw new ValidationException(errorMessage, Seq(er))
+      case (Left(er), Right(_)) => throw new ValidationException(errorMessage, Seq(er))
+      case (Left(er1), Left(er2)) => throw new ValidationException(errorMessage, Seq(er1,er2))
     }
   }
 
@@ -449,8 +457,8 @@ object StandardizationJob {
     *
     * @return The number of records in a checkpoint corresponding to raw data (if available)
     */
-  private def getRawRecordCountFromCheckpoints: Either[String, Long] = {
-    getFieldRawRecordFromCheckpoints("row")
+  def getRawRecordCountFromCheckpoints(checkpoints: immutable.Seq[Checkpoint]): Either[String, Long] = {
+    getFieldRawRecordFromCheckpoints(rawFieldName, checkpoints)
   }
 
   /**
@@ -458,25 +466,38 @@ object StandardizationJob {
    *
    * @return The number of records in a checkpoint corresponding to source data (if available)
    */
-  private def getSourceRecordCountFromCheckpoints: Either[String, Long] = {
-    getFieldRawRecordFromCheckpoints("source")
+  def getSourceRecordCountFromCheckpoints(checkpoints: immutable.Seq[Checkpoint]): Either[String, Long] = {
+    getFieldRawRecordFromCheckpoints(sourceFieldName, checkpoints)
   }
 
-  private def getFieldRawRecordFromCheckpoints(field: String) = {
+  private def getFieldRawRecordFromCheckpoints(checkpointName: String, checkpoints: immutable.Seq[Checkpoint]) = {
     import za.co.absa.atum.core.Constants._
-    val optionResult = for {
-      checkpoint <- Atum.getControlMeasure
-        .checkpoints
-        .find(c => c.name.equalsIgnoreCase(field) || c.workflowName.equalsIgnoreCase(field))
 
-      measurement <- checkpoint.controls.find(m => m.controlType.equalsIgnoreCase(controlTypeRecordCount))
-      result <- Try({
-        val rowCount = measurement.controlValue.toString.toLong
-        if (rowCount >= 0) rowCount else throw new Exception("negative rowcount")
-      }).toOption
-    } yield result
+    val checkPoint = checkpoints
+      .find(c => c.name.equalsIgnoreCase(checkpointName) || c.workflowName.equalsIgnoreCase(checkpointName))
+      .toRight(s"Missing $checkpointName checkpoint")
 
-    if (optionResult.isDefined) Right(optionResult.get) else Left(s"Invalid field ${field}")
+    val measurement: Either[String, Measurement] = checkPoint match {
+      case Right(checkpoint) => {
+        checkpoint.controls.find(m => m.controlType.equalsIgnoreCase(controlTypeRecordCount))
+          .toRight(s"$checkpointName checkpoint does not have a $controlTypeRecordCount control")
+      }
+      case Left(x) => Left(x)
+    }
+
+    measurement match {
+      case Right(m) =>
+        val trial = Try({
+          val rowCount = m.controlValue.toString.toLong
+          if (rowCount >= 0) rowCount else throw new Exception(s"Negative value")
+        })
+        trial match {
+        case Success(value) => Right(value)
+        case Failure(ex) => Left(s"Wrong $checkpointName $controlTypeRecordCount value: ${ex.getMessage}")
+      }
+      case Left(a) => Left(a)
+    }
+
   }
 
   private final case class PathCfg(inputPath: String, outputPath: String)
