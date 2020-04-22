@@ -98,7 +98,7 @@ object StandardizationJob {
 
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate, reportVersion, isJobStageOnly = true, generateNewRun = true)
-    postProcessingService = new PostProcessingService(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate, reportVersion, isJobStageOnly = true, generateNewRun = true)
+    postProcessingService = PostProcessingService.forStandardization(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate, reportVersion, pathCfg.outputPath)
 
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
     Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)

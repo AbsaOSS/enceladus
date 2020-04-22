@@ -16,37 +16,63 @@
 package za.co.absa.enceladus.common.plugin
 
 import com.typesafe.config.Config
+import org.apache.log4j.LogManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
+import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorPluginParams.ErrorSourceId._
+import za.co.absa.enceladus.plugins.api.postprocessor.{PostProcessor, PostProcessorPluginParams}
+import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin
 
-class PostProcessingService(config: Config,
-                            datasetName: String,
-                            datasetVersion: Int,
-                            reportDate: String,
-                            reportVersion: Int,
-                            isJobStageOnly: Boolean,
-                            generateNewRun: Boolean) /*extends EventListener*/ {
+object PostProcessingService {
+  def forStandardization(config: Config,
+                         datasetName: String,
+                         datasetVersion: Int,
+                         reportDate: String,
+                         reportVersion: Int,
+                         outputPath: String): PostProcessingService = {
+    val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath, Standardization)
+    PostProcessingService(config, params)
+  }
 
-  private val postProcessorPluginKey = if (isJobStageOnly) {
-    "standardization.plugin.postprocessor"
-  } else {
-    "conformance.plugin.postprocessor" // todo check it also for standardization
+  def forConformance(config: Config,
+                     datasetName: String,
+                     datasetVersion: Int,
+                     reportDate: String,
+                     reportVersion: Int,
+                     outputPath: String): PostProcessingService = {
+    val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath, Conformance)
+    PostProcessingService(config, params)
+  }
+
+}
+
+case class PostProcessingService private(config: Config,
+                                         additionalParams: PostProcessorPluginParams) {
+
+  private val log = LogManager.getLogger(classOf[ErrorInfoSenderPlugin])
+
+  log.info(s"PostProcessingService initialized with config=$config and additionalParams=$additionalParams")
+
+  private val postProcessorPluginKey = additionalParams.sourceId match {
+    case Standardization => "standardization.plugin.postprocessor"
+    case Conformance => "conformance.plugin.postprocessor"
   }
 
   private val postProcessingPlugins: Seq[PostProcessor] = new PluginLoader[PostProcessor].loadPlugins(config, postProcessorPluginKey)
-
+  log.info(s"PostProcessingService loaded plugins: $postProcessingPlugins")
 
   /** Called when a dataset is saved. */
   def onSaveOutput(dataFrame: DataFrame)(implicit spark: SparkSession): Unit = {
-    val additionalParams = Map[String, String]("datasetName" -> datasetName,
-      "datasetVersion" -> datasetVersion.toString,
-      "reportDate" -> reportDate,
-      "reportVersion" -> reportVersion.toString //,
-      //      "runStatus" -> _runStatus.status.toString // todo needed?
+    val params = Map[String, String](
+      "datasetName" -> additionalParams.datasetName,
+      "datasetVersion" -> additionalParams.datasetVersion.toString,
+      "reportDate" -> additionalParams.reportDate,
+      "reportVersion" -> additionalParams.reportVersion.toString,
+      "outputPath" -> additionalParams.outputPath,
+      "sourceId" -> additionalParams.sourceId.toString
     )
 
     postProcessingPlugins.foreach { plugin =>
-      plugin.onDataReady(dataFrame, additionalParams)
+      plugin.onDataReady(dataFrame, params)
     }
   }
 

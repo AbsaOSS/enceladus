@@ -33,7 +33,7 @@ object ErrorInfoAvroSerializer extends InfoAvroSerializer[DceErrorInfo] {
    * @return An Avro record representing a key to error info topic.
    */
   override def convertInfoKey(errorInfo: DceErrorInfo): GenericRecord = {
-    // todo what should be the key; key now shared with info file
+    // todo what should be the key?; key now shared with info file
     val keyAvroSchemaJson = IOUtils.toString(getClass.getResourceAsStream("/info_file_key_avro_schema.avsc"), "UTF-8")
     val keyAvroSchema = new Schema.Parser().parse(keyAvroSchemaJson)
     val avroKey = new GenericData.Record(keyAvroSchema)
@@ -53,14 +53,22 @@ object ErrorInfoAvroSerializer extends InfoAvroSerializer[DceErrorInfo] {
     val recordAvroSchema = getAvroSchema
     val avroErrorInfo = new GenericData.Record(recordAvroSchema)
 
+    import AvroFieldNames._
+
     try {
-      // todo just some small subset of desired fields => extend as needed
-      avroErrorInfo.put("sourceSystem", errorInfo.sourceSystem)
-      avroErrorInfo.put("sourceDataset", errorInfo.sourceDataset)
-      avroErrorInfo.put("informationDate", errorInfo.informationDate)
-      avroErrorInfo.put("processingDate", errorInfo.processingDate)
-      avroErrorInfo.put("recordId", errorInfo.recordId)
-      avroErrorInfo.put("errorCode", errorInfo.errorCode)
+      avroErrorInfo.put(sourceSystem, errorInfo.sourceSystem)
+      avroErrorInfo.put(sourceDataset, errorInfo.sourceDataset)
+      avroErrorInfo.put(processingTimestamp, errorInfo.processingTimestamp)
+      avroErrorInfo.put(informationDate, errorInfo.informationDate)
+      avroErrorInfo.put(outputFileName, errorInfo.outputFileName)
+      avroErrorInfo.put(recordId, errorInfo.recordId)
+      avroErrorInfo.put(errorSourceId, errorInfo.errorSourceId.toString)
+      avroErrorInfo.put(errorType, errorInfo.errorType)
+      avroErrorInfo.put(errorCode, errorInfo.errorCode)
+      avroErrorInfo.put(errorColumn, errorInfo.errorColumn)
+      avroErrorInfo.put(errorValue, errorInfo.errorValue)
+      avroErrorInfo.put(errorDescription, errorInfo.errorDescription)
+      avroErrorInfo.put(additionalDetails, errorInfo.additionalDetails)
 
       Option(avroErrorInfo)
     } catch {
@@ -76,5 +84,20 @@ object ErrorInfoAvroSerializer extends InfoAvroSerializer[DceErrorInfo] {
   }
 
 
+  object AvroFieldNames {
+    val sourceSystem = "sourceSystem"
+    val sourceDataset = "sourceDataset"
+    val processingTimestamp = "processingTimestamp"
+    val informationDate = "informationDate"
+    val outputFileName = "outputFileName"
+    val recordId = "recordId"
+    val errorSourceId = "errorSourceId"
+    val errorType = "errorType"
+    val errorCode = "errorCode"
+    val errorColumn = "errorColumn"
+    val errorValue = "errorValue"
+    val errorDescription = "errorDescription"
+    val additionalDetails = "additionalDetails"
+  }
 
 }

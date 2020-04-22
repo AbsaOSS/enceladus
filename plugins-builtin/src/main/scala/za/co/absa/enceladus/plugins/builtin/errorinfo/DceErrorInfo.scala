@@ -17,9 +17,15 @@ package za.co.absa.enceladus.plugins.builtin.errorinfo
 
 case class DceErrorInfo(sourceSystem: String,
                         sourceDataset: String,
+                        processingTimestamp: String,
                         informationDate: String,
-                        processingDate: String,
+                        outputFileName: String,
                         recordId: String,
-                        errorCode: String
-                        // todo add other fields
-                         )
+                        errorSourceId: String, //ErrorSourceId.Value ?
+                        errorType: String,
+                        errorCode: String,
+                        errorColumn: String,
+                        errorValue: String,
+                        errorDescription: String,
+                        additionalDetails: String
+                       )

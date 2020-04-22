@@ -3,29 +3,59 @@
   "type": "record",
   "namespace": "co.za.absa.dataquality.avro.schema-errorinfofile",
   "fields": [
-    {
+   {
       "name": "sourceSystem",
       "type": "string"
     },
-    {
+   {
       "name": "sourceDataset",
       "type": "string"
     },
-    {
+   {
+      "name": "processingTimestamp",
+      "type": "string"
+    },
+   {
       "name": "informationDate",
       "type": "string"
     },
-    {
-      "name": "processingDate",
+   {
+      "name": "outputFileName",
       "type": "string"
     },
-    {
+   {
       "name": "recordId",
       "type": "string"
     },
-    {
+   {
+      "name": "errorSourceId",
+      "type": "string"
+    },
+   {
+      "name": "errorType",
+      "type": "string"
+    },
+   {
       "name": "errorCode",
+      "type": "string"
+    },
+   {
+      "name": "errorColumn",
+      "type": "string"
+    },
+   {
+      "name": "errorValue",
+      "type": "string"
+    },
+   {
+      "name": "errorDescription",
+      "type": "string"
+    },
+   {
+      "name": "additionalDetails",
       "type": "string"
     }
   ]
 }
+
+
