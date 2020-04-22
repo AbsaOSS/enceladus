@@ -58,8 +58,6 @@ case class PostProcessingService private(config: Config,
   }
 
   private val postProcessingPlugins: Seq[PostProcessor] = new PluginLoader[PostProcessor].loadPlugins(config, postProcessorPluginKey)
-  log.info(s"PostProcessingService loaded plugins: $postProcessingPlugins")
-
   /** Called when a dataset is saved. */
   def onSaveOutput(dataFrame: DataFrame)(implicit spark: SparkSession): Unit = {
     val params = Map[String, String](

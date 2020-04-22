@@ -31,7 +31,7 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
 
   override def apply(config: Config): ErrorInfoSenderPlugin = {
     val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ControlMetricsKafkaTopicKey)
-    val producer = new InfoProducerKafka(connectionParams)(ErrorInfoAvroSerializer)
-    new ErrorInfoSenderPlugin(producer)
+    //val producer = new InfoProducerKafka(connectionParams)(ErrorInfoAvroSerializer)
+    new ErrorInfoSenderPlugin(connectionParams)
   }
 }
