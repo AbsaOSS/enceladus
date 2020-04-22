@@ -58,9 +58,6 @@ object StandardizationJob {
 
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
-  private val rawFieldName = "raw"
-  private val sourceFieldName = "source"
-
   def main(args: Array[String]) {
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
@@ -107,7 +104,7 @@ object StandardizationJob {
     Atum.setAdditionalInfo(Constants.InfoVersionColumn -> reportVersion.toString)
 
     // Add the raw format of the input file(s) to Atum's metadta as well
-    Atum.setAdditionalInfo(rawFieldName + "_format" -> cmd.rawFormat)
+    Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
@@ -300,7 +297,7 @@ object StandardizationJob {
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
     performance.startMeasurement(rawDirSize)
 
-    addRawAndSourceRecordCountsToMetadata
+    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata()
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
@@ -426,78 +423,6 @@ object StandardizationJob {
         }
       case Some(rawPathOverride) => rawPathOverride
     }
-  }
-
-  /**
-    * Adds metadata about the number of records in raw and source data by checking Atum's checkpoints first.
-    *
-    * @return The number of records in a checkpoint corresponding to raw data (if available)
-    */
-  def addRawAndSourceRecordCountsToMetadata: Unit = {
-    val checkpoints: immutable.Seq[Checkpoint] = Atum.getControlMeasure.checkpoints
-
-    val checkpointRawRecordCount = getRawRecordCountFromCheckpoints(checkpoints)
-    val checkpointSourceRecordCount = getSourceRecordCountFromCheckpoints(checkpoints)
-
-    val errorMessage = "Checkpoint validation failed:"
-
-    (checkpointRawRecordCount, checkpointSourceRecordCount) match {
-      case (Right(x), Right(y)) => {
-        Atum.setAdditionalInfo(s"${rawFieldName}_record_count" -> x.toString)
-        Atum.setAdditionalInfo(s"${sourceFieldName}_record_count" -> y.toString)
-      }
-      case (Right(_), Left(er)) => throw new ValidationException(errorMessage, Seq(er))
-      case (Left(er), Right(_)) => throw new ValidationException(errorMessage, Seq(er))
-      case (Left(er1), Left(er2)) => throw new ValidationException(errorMessage, Seq(er1,er2))
-    }
-  }
-
-  /**
-    * Gets the number of records in raw data by traversing Atum's checkpoints.
-    *
-    * @return The number of records in a checkpoint corresponding to raw data (if available)
-    */
-  def getRawRecordCountFromCheckpoints(checkpoints: immutable.Seq[Checkpoint]): Either[String, Long] = {
-    getFieldRawRecordFromCheckpoints(rawFieldName, checkpoints)
-  }
-
-  /**
-   * Gets the number of records in source data by traversing Atum's checkpoints.
-   *
-   * @return The number of records in a checkpoint corresponding to source data (if available)
-   */
-  def getSourceRecordCountFromCheckpoints(checkpoints: immutable.Seq[Checkpoint]): Either[String, Long] = {
-    getFieldRawRecordFromCheckpoints(sourceFieldName, checkpoints)
-  }
-
-  private def getFieldRawRecordFromCheckpoints(checkpointName: String, checkpoints: immutable.Seq[Checkpoint]) = {
-    import za.co.absa.atum.core.Constants._
-
-    val checkPoint = checkpoints
-      .find(c => c.name.equalsIgnoreCase(checkpointName) || c.workflowName.equalsIgnoreCase(checkpointName))
-      .toRight(s"Missing $checkpointName checkpoint")
-
-    val measurement: Either[String, Measurement] = checkPoint match {
-      case Right(checkpoint) => {
-        checkpoint.controls.find(m => m.controlType.equalsIgnoreCase(controlTypeRecordCount))
-          .toRight(s"$checkpointName checkpoint does not have a $controlTypeRecordCount control")
-      }
-      case Left(x) => Left(x)
-    }
-
-    measurement match {
-      case Right(m) =>
-        val trial = Try({
-          val rowCount = m.controlValue.toString.toLong
-          if (rowCount >= 0) rowCount else throw new Exception(s"Negative value")
-        })
-        trial match {
-        case Success(value) => Right(value)
-        case Failure(ex) => Left(s"Wrong $checkpointName $controlTypeRecordCount value: ${ex.getMessage}")
-      }
-      case Left(a) => Left(a)
-    }
-
   }
 
   private final case class PathCfg(inputPath: String, outputPath: String)
