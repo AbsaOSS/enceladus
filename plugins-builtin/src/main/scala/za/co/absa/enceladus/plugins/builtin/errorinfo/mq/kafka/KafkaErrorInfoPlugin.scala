@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka
 
 import com.typesafe.config.Config
+import za.co.absa.abris.avro.read.confluent.SchemaManager
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorFactory
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{InfoProducerKafka, KafkaConnectionParams}
 import za.co.absa.enceladus.plugins.builtin.errorinfo.ErrorInfoAvroSerializer
@@ -27,11 +28,19 @@ import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin
  */
 object KafkaErrorInfoPlugin extends PostProcessorFactory {
   val ClientIdKey = "kafka.errorinfo.client.id"
-  val ControlMetricsKafkaTopicKey = "kafka.errorinfo.topic.name"
+  val ErrorInfoKafkaTopicKey = "kafka.errorinfo.topic.name"
 
   override def apply(config: Config): ErrorInfoSenderPlugin = {
-    val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ControlMetricsKafkaTopicKey)
-    //val producer = new InfoProducerKafka(connectionParams)(ErrorInfoAvroSerializer)
-    new ErrorInfoSenderPlugin(connectionParams)
+    val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ErrorInfoKafkaTopicKey)
+
+    val schemaRegistryConfig = Map(
+      SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> connectionParams.schemaRegistryUrl,
+      SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> connectionParams.topicName,
+      SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_RECORD_NAME,
+      SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> "error.info.strategy1", // todo what should this be set to?
+      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "co.za.absa.dataquality.avro.schema-errorinfo"
+    )
+
+    new ErrorInfoSenderPlugin(connectionParams, schemaRegistryConfig)
   }
 }

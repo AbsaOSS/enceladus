@@ -25,9 +25,11 @@ import za.co.absa.enceladus.plugins.builtin.common.mq.InfoProducer
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
 import za.co.absa.enceladus.plugins.builtin.errorinfo.DceErrorInfo
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin.SingleErrorStardardized
-import org.apache.spark.sql.functions.{col, explode, size}
+import org.apache.spark.sql.functions.{col, explode, size, struct}
+import za.co.absa.abris.avro.read.confluent.SchemaManager
+import za.co.absa.abris.examples.utils.ExamplesUtils.SchemaRegistryConfiguration
 
-class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams) extends PostProcessor {
+class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegistryConfig: Map[String, String]) extends PostProcessor {
 
   private val log = LogManager.getLogger(classOf[ErrorInfoSenderPlugin])
 
@@ -42,7 +44,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams) extends Pos
    */
   override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): DataFrame = {
     val dfWithErrors = getIndividualErrors(dataFrame, params)
-    sendErrorsToKafka(dfWithErrors, params)
+    sendErrorsToKafka(dfWithErrors, params, schemaRegistryConfig)
     dfWithErrors
   }
 
@@ -55,7 +57,8 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams) extends Pos
 
     val stdErrors = dataFrame
       .filter(size(col("errCol")) > 0)
-      .select(col("tradeId"), col("reportDate"), explode(col("errCol")).as("singleError"))
+      // only keep columns that are needed for the actual error pusblishing // todo which are those?
+      .select(col("tradeId"), /*col("reportDate"), */explode(col("errCol")).as("singleError"))
       .as[SingleErrorStardardized]
       .map(_.toErrorInfo(params))
       .toDF()
@@ -65,11 +68,15 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams) extends Pos
     stdErrors
   }
 
-  def sendErrorsToKafka(stdErrors: DataFrame, params: Map[String, String]): Unit = {
+  def sendErrorsToKafka(stdErrors: DataFrame, params: Map[String, String], schemaRegistryConfig: Map[String, String]): Unit = {
+
+    val allValueColumns = struct(stdErrors.columns.head, stdErrors.columns.tail: _*)
+
     // todo change columns that are used here for key and value
+    import za.co.absa.abris.avro.functions.{to_avro, to_confluent_avro}
     stdErrors.limit(10).select(
       col("recordId").as("key").cast(DataTypes.StringType),
-      col("errorDescription").as("value").cast(DataTypes.StringType)
+      to_confluent_avro(allValueColumns, schemaRegistryConfig).as("value").cast(DataTypes.StringType)
     )
       .write
       .format("kafka")
@@ -78,33 +85,6 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams) extends Pos
       .option("kafka.client.id", connectionParams.clientId)
       .option("path", "notReallyUsedButAtumExpectsItToBePresent") // TODO unhook atum in SparkQueryExecutionListener for kafka format?
       .save()
-
-    //    kafka.schema.registry.url:"http://127.0.0.1:8081"
-    //    kafka.bootstrap.servers="127.0.0.1:9092"
-    //    kafka.info.metrics.client.id="controlInfo"
-    //    kafka.info.metrics.topic.name="control.info"
-    //
-    //    # todo change clientId to a proper value
-    //    kafka.errorinfo.client.id="errorId123"
-    //    kafka.errorinfo.topic.name="error.info"
-
-    // works
-    //    producer.send(DceErrorInfo(
-    //      sourceSystem = "testSystem",
-    //      sourceDataset = params("datasetName"),
-    //      processingTimestamp = LocalDate.now().toString, // todo where to get this from?
-    //      informationDate = params("reportDate"),
-    //      outputFileName = params("outputPath"),
-    //      recordId = "item.tradeId.toString",
-    //      errorSourceId = params("sourceId"),
-    //      errorType = "singleError.errType",
-    //      errorCode = "singleError.errCode",
-    //      errorColumn = "singleError.errCol",
-    //      errorValue = "singleError.rawValues.toString()", // todo is this ok?
-    //      errorDescription = "singleError.errMsg",
-    //      additionalDetails = s"no details, but errCount=$errCount"
-    //    ))
-
 
   }
 }
