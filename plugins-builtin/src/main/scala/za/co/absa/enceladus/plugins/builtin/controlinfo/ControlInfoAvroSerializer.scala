@@ -25,9 +25,8 @@ import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata}
 import za.co.absa.enceladus.plugins.builtin.common.mq.InfoAvroSerializer
 
 import scala.util.control.NonFatal
-import org.apache.kafka.common.serialization.Serializer
 
-object ControlInfoAvroSerializer extends InfoAvroSerializer[DceControlInfo] with Serializer[DceControlInfo] {
+object ControlInfoAvroSerializer extends InfoAvroSerializer[DceControlInfo] {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
@@ -141,9 +140,4 @@ object ControlInfoAvroSerializer extends InfoAvroSerializer[DceControlInfo] with
     avroCheckpoints
   }
 
-  override def configure(map: util.Map[String, _], b: Boolean): Unit = ???
-
-  override def serialize(s: String, t: DceControlInfo): Array[Byte] = ???
-
-  override def close(): Unit = ???
 }

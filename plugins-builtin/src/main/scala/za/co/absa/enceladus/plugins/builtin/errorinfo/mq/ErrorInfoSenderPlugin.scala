@@ -18,16 +18,13 @@ package za.co.absa.enceladus.plugins.builtin.errorinfo.mq
 import java.time.LocalDate
 
 import org.apache.log4j.LogManager
+import org.apache.spark.sql.functions.{col, explode, size, struct}
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.{DataFrame, Encoders}
-import za.co.absa.enceladus.plugins.api.postprocessor.{PostProcessor, PostProcessorPluginParams}
-import za.co.absa.enceladus.plugins.builtin.common.mq.InfoProducer
+import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
 import za.co.absa.enceladus.plugins.builtin.errorinfo.DceErrorInfo
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin.SingleErrorStardardized
-import org.apache.spark.sql.functions.{col, explode, size, struct}
-import za.co.absa.abris.avro.read.confluent.SchemaManager
-import za.co.absa.abris.examples.utils.ExamplesUtils.SchemaRegistryConfiguration
 
 class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegistryConfig: Map[String, String]) extends PostProcessor {
 
@@ -57,12 +54,13 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
 
     val stdErrors = dataFrame
       .filter(size(col("errCol")) > 0)
-      // only keep columns that are needed for the actual error pusblishing // todo which are those?
+      // only keep columns that are needed for the actual error publishing // todo which are those?
       .select(col("tradeId"), /*col("reportDate"), */explode(col("errCol")).as("singleError"))
       .as[SingleErrorStardardized]
       .map(_.toErrorInfo(params))
       .toDF()
 
+    // debug output
     val errCount = stdErrors.count()
     log.info(s"*** STD count = $stdCount, errCount = $errCount") // debug
     stdErrors
@@ -73,7 +71,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
     val allValueColumns = struct(stdErrors.columns.head, stdErrors.columns.tail: _*)
 
     // todo change columns that are used here for key and value
-    import za.co.absa.abris.avro.functions.{to_avro, to_confluent_avro}
+    import za.co.absa.abris.avro.functions.to_confluent_avro
     stdErrors.limit(10).select(
       col("recordId").as("key").cast(DataTypes.StringType),
       to_confluent_avro(allValueColumns, schemaRegistryConfig).as("value").cast(DataTypes.StringType)

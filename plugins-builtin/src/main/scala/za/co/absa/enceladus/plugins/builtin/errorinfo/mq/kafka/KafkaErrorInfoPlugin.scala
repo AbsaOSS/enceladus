@@ -18,8 +18,7 @@ package za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka
 import com.typesafe.config.Config
 import za.co.absa.abris.avro.read.confluent.SchemaManager
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorFactory
-import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{InfoProducerKafka, KafkaConnectionParams}
-import za.co.absa.enceladus.plugins.builtin.errorinfo.ErrorInfoAvroSerializer
+import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin
 
 /**
