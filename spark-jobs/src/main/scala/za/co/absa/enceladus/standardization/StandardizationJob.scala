@@ -42,11 +42,8 @@ import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
 import org.apache.spark.SPARK_VERSION
-import za.co.absa.atum.model.{Checkpoint, Measurement}
-
-import scala.collection.immutable
 import scala.collection.immutable.HashMap
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 import scala.util.control.NonFatal
 
 object StandardizationJob {

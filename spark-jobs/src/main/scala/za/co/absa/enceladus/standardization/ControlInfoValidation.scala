@@ -16,8 +16,9 @@
 package za.co.absa.enceladus.standardization
 
 import za.co.absa.atum.core.Atum
-import za.co.absa.atum.model.{Checkpoint, Measurement}
+import za.co.absa.atum.model.Checkpoint
 import za.co.absa.enceladus.utils.validation.ValidationException
+import za.co.absa.enceladus.utils.implicits.OptionImplicits._
 
 import scala.util.{Failure, Success, Try}
 
@@ -37,8 +38,8 @@ object ControlInfoValidation {
   }
 
   def getFieldCounts(checkpoints: Seq[Checkpoint]): FieldCounts = {
-    val checkpointRawRecordCount = getFieldRecordFromCheckpoints(rawFieldName, checkpoints)
-    val checkpointSourceRecordCount = getFieldRecordFromCheckpoints(sourceFieldName, checkpoints)
+    val checkpointRawRecordCount = getCountFromGivenCheckpoint(rawFieldName, checkpoints)
+    val checkpointSourceRecordCount = getCountFromGivenCheckpoint(sourceFieldName, checkpoints)
     val errorMessage = "Checkpoint validation failed:"
 
     (checkpointRawRecordCount, checkpointSourceRecordCount) match {
@@ -51,26 +52,22 @@ object ControlInfoValidation {
   }
 
 
-  def getFieldRecordFromCheckpoints(checkpointName: String, checkpoints: Seq[Checkpoint]): Try[Long] = {
+  def getCountFromGivenCheckpoint(checkpointName: String, checkpoints: Seq[Checkpoint]): Try[Long] = {
     import za.co.absa.atum.core.Constants._
 
     for {
-      checkpoint <- Try(
-        checkpoints
-          .find(c => c.name.equalsIgnoreCase(checkpointName) || c.workflowName.equalsIgnoreCase(checkpointName))
-          .getOrElse(throw new Exception(s"Missing $checkpointName checkpoint"))
-      )
-      measurement <- Try(
-        checkpoint.controls.find(m => m.controlType.equalsIgnoreCase(controlTypeRecordCount))
-          .getOrElse(throw new Exception(s"$checkpointName checkpoint does not have a $controlTypeRecordCount control"))
-      )
+      checkpoint <- checkpoints
+        .find(c => c.name.equalsIgnoreCase(checkpointName) || c.workflowName.equalsIgnoreCase(checkpointName))
+        .toTry(new Exception(s"Missing $checkpointName checkpoint"))
+      measurement <- checkpoint.controls.find(m => m.controlType.equalsIgnoreCase(controlTypeRecordCount))
+        .toTry(new Exception(s"$checkpointName checkpoint does not have a $controlTypeRecordCount control"))
       res <- Try {
         val rowCount = measurement.controlValue.toString.toLong
         if (rowCount >= 0) rowCount else throw new Exception(s"Negative value")
-      }.recoverWith({
+      }.recoverWith {
         case t: Throwable =>
           Failure(new Exception(s"Wrong $checkpointName $controlTypeRecordCount value: ${t.getMessage}"))
-      })
+      }
     } yield res
 
   }

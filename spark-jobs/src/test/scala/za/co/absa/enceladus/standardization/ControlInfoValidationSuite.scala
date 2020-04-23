@@ -26,7 +26,7 @@ class ControlInfoValidationSuite extends FunSuite {
 
   import za.co.absa.atum.core.Constants._
 
-  val checkpoints1 = List(
+  private val checkpoints1 = List(
     Checkpoint("raw", "", "", "", 0, List(
       Measurement("", controlTypeAbsAggregatedTotal, "", 0),
       Measurement("", controlTypeRecordCount, "", 11)
@@ -38,14 +38,14 @@ class ControlInfoValidationSuite extends FunSuite {
     )
   )
 
-  val checkpoints2 = List(
+  private val checkpoints2 = List(
     Checkpoint("source", "", "", "", 1, List(
       Measurement("", controlTypeDistinctCount, "", 1)
     )
     )
   )
 
-  val checkpoints3 = List(
+  private val checkpoints3 = List(
     Checkpoint("raw", "", "", "", 0, List(
       Measurement("", controlTypeRecordCount, "", -3)
     )
@@ -57,8 +57,8 @@ class ControlInfoValidationSuite extends FunSuite {
   )
 
   test("Correct values") {
-    val rawResult = ControlInfoValidation.getFieldRecordFromCheckpoints("raw", checkpoints1)
-    val sourceResult = ControlInfoValidation.getFieldRecordFromCheckpoints("source", checkpoints1)
+    val rawResult = ControlInfoValidation.getCountFromGivenCheckpoint("raw", checkpoints1)
+    val sourceResult = ControlInfoValidation.getCountFromGivenCheckpoint("source", checkpoints1)
     val counts = ControlInfoValidation.getFieldCounts(checkpoints1)
 
     assert(rawResult == Success(11))
@@ -67,8 +67,8 @@ class ControlInfoValidationSuite extends FunSuite {
   }
 
   test("Errors in parsing") {
-    val rawResult = ControlInfoValidation.getFieldRecordFromCheckpoints("raw", checkpoints2)
-    val sourceResult = ControlInfoValidation.getFieldRecordFromCheckpoints("source", checkpoints2)
+    val rawResult = ControlInfoValidation.getCountFromGivenCheckpoint("raw", checkpoints2)
+    val sourceResult = ControlInfoValidation.getCountFromGivenCheckpoint("source", checkpoints2)
     assertThrows[ValidationException](ControlInfoValidation.getFieldCounts(checkpoints2))
 
     rawResult.failed.get.getMessage
@@ -77,8 +77,8 @@ class ControlInfoValidationSuite extends FunSuite {
   }
 
   test("Wrong controlValue values") {
-    val rawResult = ControlInfoValidation.getFieldRecordFromCheckpoints("raw", checkpoints3)
-    val sourceResult = ControlInfoValidation.getFieldRecordFromCheckpoints("source", checkpoints3)
+    val rawResult = ControlInfoValidation.getCountFromGivenCheckpoint("raw", checkpoints3)
+    val sourceResult = ControlInfoValidation.getCountFromGivenCheckpoint("source", checkpoints3)
     assertThrows[ValidationException](ControlInfoValidation.getFieldCounts(checkpoints3))
 
     assert(rawResult.failed.get.getMessage == s"Wrong raw $controlTypeRecordCount value: Negative value")
