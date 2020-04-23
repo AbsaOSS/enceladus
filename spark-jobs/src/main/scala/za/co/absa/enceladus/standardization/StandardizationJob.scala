@@ -112,8 +112,9 @@ object StandardizationJob {
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 
     try {
-      // todo persist?
       val standardized = executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg)
+      //standardized.persist() // todo persist?
+
       cmd.performanceMetricsFile.foreach { fileName =>
         try {
           performance.writeMetricsToFile(fileName)
@@ -122,6 +123,7 @@ object StandardizationJob {
         }
       }
       log.info("Standardization finished successfully")
+      // todo do spark.disableControlMeasuresTracking()?
       postProcessingService.onSaveOutput(standardized) // all enabled postProcessors will be run with the std df
     } finally {
       Atum.getControlMeasure.runUniqueId

@@ -35,7 +35,7 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
     val schemaRegistryConfig = Map(
       SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> connectionParams.schemaRegistryUrl,
       SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> connectionParams.topicName,
-      SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_RECORD_NAME,
+      SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
       SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> "error.info.strategy1", // todo what should this be set to?
       SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "co.za.absa.dataquality.avro.schema-errorinfo"
     )

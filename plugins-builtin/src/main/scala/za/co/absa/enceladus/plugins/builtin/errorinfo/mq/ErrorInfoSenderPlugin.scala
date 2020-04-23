@@ -47,7 +47,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
 
   def getIndividualErrors(dataFrame: DataFrame, params: Map[String, String]): DataFrame = {
 
-    val stdCount = dataFrame.count()
+    //val stdCount = dataFrame.count()
 
     implicit val singleErrorStardardizedEncoder = Encoders.product[SingleErrorStardardized]
     implicit val dceErrorInfoEncoder = Encoders.product[DceErrorInfo]
@@ -61,15 +61,16 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
       .toDF()
 
     // debug output
-    val errCount = stdErrors.count()
-    log.info(s"*** STD count = $stdCount, errCount = $errCount") // debug
+    //val errCount = stdErrors.count()
+    //log.info(s"*** STD count = $stdCount, errCount = $errCount") // debug
     stdErrors
   }
 
   def sendErrorsToKafka(stdErrors: DataFrame, params: Map[String, String], schemaRegistryConfig: Map[String, String]): Unit = {
 
-    val allValueColumns = struct(stdErrors.columns.head, stdErrors.columns.tail: _*)
+    log.info(s"Sending errors to kafka topic ${connectionParams.topicName} ...")
 
+    val allValueColumns = struct(stdErrors.columns.head, stdErrors.columns.tail: _*)
     // todo change columns that are used here for key and value
     import za.co.absa.abris.avro.functions.to_confluent_avro
     stdErrors.limit(10).select(
@@ -81,7 +82,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
       .option("kafka.bootstrap.servers", connectionParams.bootstrapServers)
       .option("topic", connectionParams.topicName)
       .option("kafka.client.id", connectionParams.clientId)
-      .option("path", "notReallyUsedButAtumExpectsItToBePresent") // TODO unhook atum in SparkQueryExecutionListener for kafka format?
+      .option("path", "notReallyUsedButAtumExpectsItToBePresent") // TODO Atum issue #32
       .save()
 
   }
