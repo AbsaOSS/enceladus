@@ -27,6 +27,12 @@ object SparkVersionGuard {
    */
   def fromDefaultSparkCompatibilitySettings: SparkVersionGuard =
     SparkVersionGuard(SparkCompatibility.minSparkVersionIncluded, SparkCompatibility.maxSparkVersionExcluded)
+
+  /**
+   * Populates the guard with the HyperConformance requirement from [[za.co.absa.enceladus.common.SparkCompatibility]]
+   */
+  def fromHyperConformanceSparkCompatibilitySettings: SparkVersionGuard =
+    SparkVersionGuard(SparkCompatibility.minSparkHyperConformanceIncluded, SparkCompatibility.maxSparkVersionExcluded)
 }
 
 /**
