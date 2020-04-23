@@ -112,6 +112,7 @@ object StandardizationJob {
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 
     try {
+      // todo persist?
       val standardized = executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg)
       cmd.performanceMetricsFile.foreach { fileName =>
         try {

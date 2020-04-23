@@ -55,7 +55,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
     val stdErrors = dataFrame
       .filter(size(col("errCol")) > 0)
       // only keep columns that are needed for the actual error publishing // todo which are those?
-      .select(col("tradeId"), /*col("reportDate"), */explode(col("errCol")).as("singleError"))
+      .select(col("tradeId"), explode(col("errCol")).as("singleError"))
       .as[SingleErrorStardardized]
       .map(_.toErrorInfo(params))
       .toDF()
