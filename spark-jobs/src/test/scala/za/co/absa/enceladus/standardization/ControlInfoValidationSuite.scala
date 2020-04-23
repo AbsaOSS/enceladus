@@ -27,30 +27,30 @@ class ControlInfoValidationSuite extends FunSuite {
   import za.co.absa.atum.core.Constants._
 
   private val checkpoints1 = List(
-    Checkpoint("raw", "", "", "", 0, List(
+    Checkpoint("raw", None, None, "", "", "", 0, List(
       Measurement("", controlTypeAbsAggregatedTotal, "", 0),
       Measurement("", controlTypeRecordCount, "", 11)
     )
     ),
-    Checkpoint("source", "", "", "", 1, List(
+    Checkpoint("source", None, None, "", "", "", 1, List(
       Measurement("", controlTypeRecordCount, "", 3)
     )
     )
   )
 
   private val checkpoints2 = List(
-    Checkpoint("source", "", "", "", 1, List(
+    Checkpoint("source", None, None, "", "", "", 1, List(
       Measurement("", controlTypeDistinctCount, "", 1)
     )
     )
   )
 
   private val checkpoints3 = List(
-    Checkpoint("raw", "", "", "", 0, List(
+    Checkpoint("raw", None, None, "", "", "", 0, List(
       Measurement("", controlTypeRecordCount, "", -3)
     )
     ),
-    Checkpoint("source", "", "", "", 1, List(
+    Checkpoint("source", None, None, "", "", "", 1, List(
       Measurement("", controlTypeRecordCount, "", "")
     )
     )
