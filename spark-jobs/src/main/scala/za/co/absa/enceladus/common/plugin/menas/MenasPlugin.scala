@@ -59,6 +59,4 @@ object MenasPlugin {
 
   def runNumber: Option[Int] = listener.flatMap(_.runNumber)
 
-  def close(): Unit = listener.foreach(_.close())
-
 }
