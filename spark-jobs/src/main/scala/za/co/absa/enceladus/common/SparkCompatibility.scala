@@ -27,5 +27,6 @@ import za.co.absa.commons.version.impl.SemVer20Impl.SemanticVersion
 
 object SparkCompatibility {
   val minSparkVersionIncluded: SemanticVersion = semver"2.4.2"
+  val minSparkHyperConformanceIncluded: SemanticVersion = semver"2.4.3"
   val maxSparkVersionExcluded: Option[SemanticVersion] = Some(semver"3.0.0")
 }

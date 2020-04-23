@@ -28,10 +28,9 @@ class MongoConfig {
   @Value("${menas.mongo.connection.database}")
   val database: String = ""
 
-  @Bean
-  def mongoClient(): MongoClient = MongoClient(connectionString)
+  def mongoClient: MongoClient = MongoClient(connectionString)
 
   @Bean
-  def mongoDb(mongoClient: MongoClient): MongoDatabase = mongoClient.getDatabase(database).withCodecRegistry(codecRegistry)
+  def defaultMongoDb: MongoDatabase = mongoClient.getDatabase(database).withCodecRegistry(codecRegistry)
 
 }

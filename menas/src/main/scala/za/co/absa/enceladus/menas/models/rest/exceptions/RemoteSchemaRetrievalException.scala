@@ -13,24 +13,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.migrations.framework.migration
+package za.co.absa.enceladus.menas.models.rest.exceptions
 
-case class Index(collection: String, key: Seq[IndexField], unique: Boolean = false, sparse: Boolean = false)
+import za.co.absa.enceladus.menas.utils.SchemaType
 
-case class IndexField(field: String, sort: Sort) {
-
-  def toPair: (String, Int) = field -> sort.order
-
-  override def toString: String = s"($field: $sort)"
-
-}
-
-sealed abstract class Sort(val order: Int)
-
-case object ASC extends Sort(1) {
-  override def toString: String = "ASC"
-}
-
-case object DESC extends Sort(-1) {
-  override def toString: String = "DESC"
-}
+/**
+ * This exception is thrown if there is problem loading a remote schema (not an issue with format but with the retrieval itself)
+ */
+case class RemoteSchemaRetrievalException(
+                                           schemaType: SchemaType.Value,
+                                           message: String,
+                                           cause: Throwable = null
+                                         ) extends Exception(message, cause)

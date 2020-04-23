@@ -136,59 +136,71 @@ object SchemaPathValidator {
     }
   }
 
+  @tailrec
   private def validateSchemaPathArray(schema: StructType,
                                       path: Array[String],
                                       parentOnly: Boolean = false,
                                       fullPathNew: Boolean = false,
                                       parentPath: String = ""): Seq[ValidationIssue] = {
-    // scalastyle:off  return Covered in Issue #730
     if (path.isEmpty) {
-      return Nil
-    }
-
-    val currentField = path(0)
-    val fullPath = s"$parentPath${path.mkString(".")}"
-
-    if (parentOnly && path.length == 1) {
-      if (fullPathNew) {
-        val exactMatch = schema.fields.find(field => field.name == currentField)
-        if (exactMatch.nonEmpty) {
-          return Seq(ValidationError(s"Column '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
+      Nil
+    } else {
+      val currentField = path(0)
+      val fullPath = s"$parentPath${path.mkString(".")}"
+      if (parentOnly && path.length == 1) {
+        if (fullPathNew) {
+          handleParentMatch(schema, parentPath, currentField, fullPath)
+        } else {
+          Nil
         }
-        val caseInsensitiveMatch = schema.fields.find(field => field.name.compareToIgnoreCase(currentField) == 0)
-        if (caseInsensitiveMatch.nonEmpty) {
-          return Seq(ValidationError(s"Case insensitive variant of a cloumn '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
-        }
-      }
-      return Nil
-    }
-
-    val exactMatch = schema.fields.find(field => field.name == currentField)
-    val failures = exactMatch match {
-      case Some(field) =>
-        val dataType = getUnderlyingType(field.dataType)
-        dataType match {
-          case st: StructType =>
-            validateSchemaPathArray(st, path.drop(1), parentOnly, fullPathNew, s"$parentPath${field.name}.")
-          case _ =>
-            if (path.length > 1) {
-              Seq(ValidationError(s"Column '$parentPath$currentField' is a primitive type and can't contain child fields '$fullPath'."))
-            } else {
-              Nil
+      } else {
+        val matched = checkMatchType(schema, currentField)
+        matched match {
+          case ExactMatch(field) =>
+            val dataType = getUnderlyingType(field.dataType)
+            dataType match {
+              case st: StructType =>
+                validateSchemaPathArray(st, path.drop(1), parentOnly, fullPathNew, s"$parentPath${field.name}.")
+              case _ if path.length > 1 =>
+                Seq(ValidationError(s"Column '$parentPath$currentField' is a primitive type and can't contain child fields '$fullPath'."))
+              case _ => Nil
             }
-        }
-      case None =>
-        val caseInsensitiveMatch = schema.fields.find(field => field.name.compareToIgnoreCase(currentField) == 0)
-        caseInsensitiveMatch match {
-          case Some(field) =>
+          case CaseInsensitiveMatch(field) =>
             Seq(ValidationError(s"Column name '$parentPath$currentField' does not case-sensitively match '$parentPath${field.name}'."))
-          case None =>
+          case _ =>
             Seq(ValidationError(s"Column name '$parentPath$currentField' does not exist."))
         }
-
+      }
     }
-    failures
-    // scalastyle:on return
+  }
+
+  private def handleParentMatch(schema: StructType, parentPath: String, currentField: String, fullPath: String): Seq[ValidationError] = {
+    val matched = checkMatchType(schema, currentField)
+    matched match {
+      case ExactMatch(_) =>
+        Seq(ValidationError(s"Column '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
+      case CaseInsensitiveMatch(_) =>
+        Seq(ValidationError(s"Case insensitive variant of a cloumn '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))//scalastyle:ignore line.size.limit
+      case _ => Nil
+    }
+  }
+
+  private sealed trait Match
+
+  private case class ExactMatch(field: StructField) extends Match
+
+  private case class CaseInsensitiveMatch(field: StructField) extends Match
+
+  private case object NoMatch extends Match
+
+  private def checkMatchType(schema: StructType, currentField: String): Match = {
+
+    val maybeField = schema.fields.find(field => field.name.compareToIgnoreCase(currentField) == 0)
+    maybeField match {
+      case Some(field) if field.name == currentField => ExactMatch(field)
+      case Some(field) => CaseInsensitiveMatch(field)
+      case _ => NoMatch
+    }
   }
 
   /** Returns underlying data type of a field after traversing nested arrays. */

@@ -4,6 +4,7 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
@@ -13,15 +14,4 @@
 # limitations under the License.
 #
 
-# Set everything to be logged to the console
-log4j.rootCategory=@log.level.base@, general
-
-log4j.appender.general=org.apache.log4j.ConsoleAppender
-log4j.appender.general.target=System.err
-log4j.appender.general.layout=org.apache.log4j.PatternLayout
-log4j.appender.general.layout.ConversionPattern=@log.pattern@
-
-log4j.logger.menas.services.RunService=@log.level.testcode@
-
-# (useful) uncomment to see spring beans wiring and related information:
-# log4j.logger.org.springframework.beans.factory.support.DefaultListableBeanFactory=DEBUG
+za.co.absa.enceladus.conformance.HyperConformanceProvider

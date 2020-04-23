@@ -23,6 +23,7 @@ import org.mockito.Mockito
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Inside, Matchers, WordSpec}
 import za.co.absa.cobrix.cobol.parser.exceptions.SyntaxErrorException
+import za.co.absa.enceladus.menas.TestResourcePath
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
@@ -65,9 +66,9 @@ class SchemaParserSuite extends WordSpec with Matchers with MockitoSugar with In
     val avroParser = schemaParserFactory.getParser(Avro)
     "parse avro schema to StructType" when {
       "correct avsc file content is given" in {
-        val expectedStructType = readTestResourceAsDataType("/test_data/schemas/avro/equivalent-to-avroschema.json")
+        val expectedStructType = readTestResourceAsDataType(TestResourcePath.Avro.okJsonEquivalent)
 
-        val schemaContent = readTestResourceAsString("/test_data/schemas/avro/avroschema_json_ok.avsc")
+        val schemaContent = readTestResourceAsString(TestResourcePath.Avro.ok)
         avroParser.parse(schemaContent) shouldBe expectedStructType
       }
     }
@@ -88,16 +89,16 @@ class SchemaParserSuite extends WordSpec with Matchers with MockitoSugar with In
     val copybookParser = schemaParserFactory.getParser(Copybook)
     "parse cobol copybook schema to StructType" when {
       "correct cob file content is given" in {
-        val expectedCopybookType = readTestResourceAsDataType("/test_data/schemas/copybook/equivalent-to-copybook.json")
+        val expectedCopybookType = readTestResourceAsDataType(TestResourcePath.Copybook.okJsonEquivalent)
 
-        val schemaContent = readTestResourceAsString("/test_data/schemas/copybook/copybook_ok.cob")
+        val schemaContent = readTestResourceAsString(TestResourcePath.Copybook.ok)
         copybookParser.parse(schemaContent) shouldBe expectedCopybookType
       }
     }
 
     "throw SchemaParsingException at parse copybook" when {
       "given unparsable cob content" in {
-        val schemaContent = readTestResourceAsString("/test_data/schemas/copybook/copybook_bogus.cob")
+        val schemaContent = readTestResourceAsString(TestResourcePath.Copybook.bogus)
 
         val caughtException = the[SchemaParsingException] thrownBy {
           copybookParser.parse(schemaContent)

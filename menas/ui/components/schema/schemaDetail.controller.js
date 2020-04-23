@@ -162,6 +162,115 @@ sap.ui.define([
       }
     },
 
+    handleRemoteUrlSubmit: function (oParams) {
+      if (this.validateSchemaRemoteLoad()) { // marks errors or shows prompt if form not valid
+        this.submitRemoteUrl();
+      }
+    },
+
+    submitRemoteUrl: function () {
+      const remoteUrl = this.byId("remoteUrl").getValue();
+      const schema = this._model.getProperty("/currentSchema");
+
+      sap.ui.core.BusyIndicator.show();
+
+      let data = {
+        "format": "avro", // the only supported Schema registry type
+        "remoteUrl": remoteUrl,
+        "name": schema.name,
+        "version": schema.version
+      };
+
+      jQuery.ajax({
+        url: "api/schema/remote",
+        type: 'POST',
+        data: $.param(data),
+        contentType: 'application/x-www-form-urlencoded',
+        context: this, // becomes the result of "this" in handleRemoteLoadComplete
+        headers: {
+          'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
+        },
+        complete: this.handleRemoteLoadComplete
+      });
+    },
+
+    validateSchemaRemoteLoad: function () {
+      let isOkToSubmit = true;
+      let schemaUrlInput = this.byId("remoteUrl");
+
+      const schemaUrl = schemaUrlInput.getValue();
+      if (!this.isHttpUrl(schemaUrl)) {
+        schemaUrlInput.setValueState(sap.ui.core.ValueState.Error);
+        schemaUrlInput.setValueStateText("The URL appear to be invalid. Please check it.");
+        isOkToSubmit = false;
+
+      } else if (this.isFixableSchemaRegistryUrl(schemaUrl)) {
+        isOkToSubmit = false; // may get submitted by the MessageBox
+        const fixedUrl = this.fixSchemaRegistryUrl(schemaUrl);
+
+        sap.m.MessageBox.show(`The schema url should probably end with "/schema". \nDo you want use ${fixedUrl} instead?`, {
+          icon: sap.m.MessageBox.Icon.WARNING,
+          title: "Auto-correct schema repository URL?",
+          actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO, sap.m.MessageBox.Action.CANCEL],
+          onClose: (oAction) => {
+            if (oAction === sap.m.MessageBox.Action.YES) {
+              schemaUrlInput.setValue(fixedUrl);
+              this.submitRemoteUrl()
+            } else if (oAction === sap.m.MessageBox.Action.NO) {
+              this.submitRemoteUrl()
+            } else {
+              MessageToast.show(`Upload cancelled. Consider appending "/schema" to the URL`);
+            }
+          }
+        });
+      }
+
+      return isOkToSubmit;
+    },
+
+    handleRemoteLoadComplete: function (ajaxResponse) {
+      // *very* similar as handleUploadComplete, but the response object is a bit different
+      sap.ui.core.BusyIndicator.hide();
+      let status = ajaxResponse.status;
+
+      if (status === 201) {
+        this.byId("remoteUrl").setValue("");
+        MessageToast.show("Schema successfully loaded.");
+        let oData = JSON.parse(ajaxResponse.responseText);
+        model.setProperty("/currentSchema", oData);
+        this.load();
+        // update the list as well - may be cheaper in future to update locally
+        this._eventBus.publish("schemas", "list");
+        // nav back to info
+        this.byId("schemaIconTabBar").setSelectedKey("info");
+        // clear error if present
+        this.byId("remoteUrl").setValueState(sap.ui.core.ValueState.None);
+        this.byId("remoteUrl").setValueStateText("");
+      } else if (status === 400) {
+        const errorMessage = ajaxResponse.responseJSON.message;
+        const errorMessageDetails = errorMessage ? `\n\nDetails:\n${errorMessage}` : "";
+        const errorType = ajaxResponse.responseJSON.error.errorType;
+
+        let msg;
+        if (errorType === "schema_retrieval_error") {
+          msg = `Error retrieving the schema file from ${this.byId("remoteUrl").getValue()}${errorMessageDetails}`
+        } else {
+          msg = `Error parsing the schema file. Ensure that the file is a valid avro schema and ` +
+            `try again.${errorMessageDetails}`
+        }
+
+        MessageBox.error(msg)
+      } else if (status === 500) {
+        MessageBox.error("Failed to load new schema. An internal server error has been occurred.")
+      } else if (status === 401 || status === 403) {
+        GenericService.clearSession("Session has expired");
+      } else if (status === 0) {
+        MessageBox.error(`Failed to load new schema. The connectivity to the server has been lost.`)
+      } else {
+        MessageBox.error(`Unexpected status=${status} error occurred. Please, check your connectivity to the server.`)
+      }
+    },
+
     handleUploadProgress: function (oParams) {
       console.log((oParams.getParameter("loaded") / oParams.getParameter("total")) * 100)
     },
@@ -212,7 +321,7 @@ sap.ui.define([
       const currentSchema = this._model.getProperty("/currentSchema");
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentSchema), "schema");
 
-      if(currentSchema) {
+      if (currentSchema) {
         this._schemaTable.model = this._model.getProperty("/currentSchema");
         const auditTable = this.byId("auditTrailTable");
         this._schemaService.getAuditTrail(currentSchema.name, auditTable);
@@ -221,6 +330,24 @@ sap.ui.define([
         this._schemaRestDAO.getLatestVersionByName(currentSchema.name)
           .then(version => this._model.setProperty("/editingEnabled", currentSchema.version === version));
       }
+    },
+
+    isHttpUrl: function (url) {
+      if (!url) return false;
+      const pattern = new RegExp('^https?://[^ ]+$', 'i');
+      return pattern.test(url);
+    },
+
+    // this is what the schema registry url should look like to be "fixable", e.g. http://example.schemaregistry.org/subjects/somename/versions/1
+    schemaRegistryRx: /^(https?:\/\/[^ ]+\/versions\/\d+)\/?$/,
+
+    isFixableSchemaRegistryUrl: function (str) {
+      return this.schemaRegistryRx.test(str)
+    },
+
+    fixSchemaRegistryUrl: function (str) {
+      // trailing slash gets stripped
+      return str.replace(this.schemaRegistryRx, '$1/schema');
     }
 
   });
