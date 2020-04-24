@@ -17,6 +17,7 @@ package za.co.absa.enceladus.utils.schema
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{BooleanType, LongType, StructField, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
@@ -28,6 +29,20 @@ class SparkUtilsSuite extends FunSuite with SparkTestBase {
     import spark.implicits._
 
     Seq(1, 1, 1, 2, 1).toDF("value")
+  }
+
+  test("Test setUniqueColumnNameOfCorruptRecord") {
+    val expected1 = "_corrupt_record"
+    val schema1 = StructType(Seq(StructField("id", LongType)))
+    val result1 = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema1)
+    assert(result1 == expected1)
+    assert(spark.conf.get(SparkUtils.ColumnNameOfCorruptRecordConf) == expected1)
+    //two tests in series as the function has side-effects (on provided spark session) and it might collide in parallel run
+    val expected2 = "_corrupt_record_1"
+    val schema2 = StructType(Seq(StructField("id", LongType), StructField(expected1, BooleanType)))
+    val result2 = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema2)
+    assert(result2 == expected2)
+    assert(spark.conf.get(SparkUtils.ColumnNameOfCorruptRecordConf) == expected2)
   }
 
   test("Test withColumnIfNotExist() when the column does not exist") {

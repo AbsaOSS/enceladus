@@ -124,7 +124,11 @@ object SchemaUtils {
     */
   def getRenamesInSchema(schema: StructType, includeIfPredecessorChanged: Boolean = true): Map[String, String] = {
 
-    def getRenamesRecursively(path: String, sourcePath: String, struct: StructType, renamesAcc: Map[String, String], predecessorChanged: Boolean): Map[String, String] = {
+    def getRenamesRecursively(path: String,
+                              sourcePath: String,
+                              struct: StructType,
+                              renamesAcc: Map[String, String],
+                              predecessorChanged: Boolean): Map[String, String] = {
       import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldEnhancements
 
       struct.fields.foldLeft(renamesAcc) { (renamesSoFar, field) =>
@@ -194,7 +198,7 @@ object SchemaUtils {
     val currPath = appendPath(path, name)
     dt match {
       case s: StructType => s.fields.flatMap(f => getAllArraySubPaths(currPath, f.name, f.dataType))
-      case a@ArrayType(elType, nullable) => getAllArraySubPaths(path, name, elType) :+ currPath
+      case _@ArrayType(elType, _) => getAllArraySubPaths(path, name, elType) :+ currPath
       case _ => Seq()
     }
   }
@@ -320,7 +324,7 @@ object SchemaUtils {
     } else if (fieldName.isEmpty) {
       path
     } else {
-      s"$path.${fieldName}"
+      s"$path.$fieldName"
     }
   }
 
@@ -328,7 +332,19 @@ object SchemaUtils {
     * Determine if a datatype is a primitive one
     */
   def isPrimitive(dt: DataType): Boolean = dt match {
-    case _: BinaryType | _: BooleanType | _: ByteType | _: DateType | _: DecimalType | _: DoubleType | _: FloatType | _: IntegerType | _: LongType | _: NullType | _: ShortType | _: StringType | _: TimestampType => true
+    case _: BinaryType
+       | _: BooleanType
+       | _: ByteType
+       | _: DateType
+       | _: DecimalType
+       | _: DoubleType
+       | _: FloatType
+       | _: IntegerType
+       | _: LongType
+       | _: NullType
+       | _: ShortType
+       | _: StringType
+       | _: TimestampType => true
     case _ => false
   }
 
@@ -498,7 +514,7 @@ object SchemaUtils {
               if (!isLeaf) {
                 isArray = structHelper(st, path.tail)
               }
-            case ar: ArrayType =>
+            case _: ArrayType =>
               if (isLeaf) {
                 isArray = true
               }
@@ -562,6 +578,12 @@ object SchemaUtils {
   def unpath(path: String): String = {
     path.replace("_", "__")
         .replace('.', '_')
+  }
+
+  implicit class FieldWithSource(val structField: StructField) {
+    def sourceName: String = {
+      SchemaUtils.getFieldNameOverriddenByMetadata(structField.structField)
+    }
   }
 
 }

@@ -17,6 +17,7 @@ package za.co.absa.enceladus.utils.schema
 
 import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
@@ -27,6 +28,26 @@ import za.co.absa.spark.hats.transformations.NestedArrayTransformations
   */
 object SparkUtils {
   private val log: Logger = LogManager.getLogger(this.getClass)
+  private final val DefaultColumnNameOfCorruptRecord = "_corrupt_record"
+
+  final val ColumnNameOfCorruptRecordConf = "spark.sql.columnNameOfCorruptRecord"
+
+  /**
+    * Ensures that the 'spark.sql.columnNameOfCorruptRecord' Spark setting is set to unique field name not present in the
+    * provided schema
+    * @param spark  the spark session to set the
+    * @param schema the schema to check uniqueness against
+    * @return the field name set
+    */
+  def setUniqueColumnNameOfCorruptRecord(spark: SparkSession, schema: StructType): String = {
+    val result = if (SchemaUtils.fieldExists(DefaultColumnNameOfCorruptRecord, schema)) {
+     SchemaUtils.getClosestUniqueName(DefaultColumnNameOfCorruptRecord, schema)
+    } else {
+      DefaultColumnNameOfCorruptRecord
+    }
+    spark.conf.set(ColumnNameOfCorruptRecordConf, result)
+    result
+  }
 
   /**
     * Adds a column to a dataframe if it does not exist

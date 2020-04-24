@@ -26,18 +26,19 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary, UDFNames}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-import za.co.absa.enceladus.utils.schema.SchemaUtils.appendPath
+import za.co.absa.enceladus.utils.schema.SchemaUtils.FieldWithSource
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.TypedStructField._
 import za.co.absa.enceladus.utils.types.{Defaults, TypedStructField}
 import za.co.absa.enceladus.utils.udf.UDFBuilder
 import za.co.absa.spark.hofs.transform
-
+import org.apache.spark.sql.functions.lit
 import scala.reflect.runtime.universe._
 import scala.util.Random
+import scala.util.Try
 
 /**
   * Base trait for standardization function
@@ -56,41 +57,84 @@ import scala.util.Random
   *         DateParser !
   */
 sealed trait TypeParser[T] {
-  def standardize(): ParseOutput
 
-  protected val origSchema: StructType
+  def standardize()(implicit logger: Logger): ParseOutput = {
+    checkSetupForFailure().getOrElse(
+      standardizeAfterCheck()
+    )
+  }
+
+  protected val failOnInputNotPerSchema: Boolean
   protected val field: TypedStructField
   protected val metadata: Metadata = field.structField.metadata
   protected val path: String
-  protected val parent: Option[TypeParser.Parent]
-  protected val fieldInputName: String = SchemaUtils.getFieldNameOverriddenByMetadata(field.structField)
+  protected val origType: DataType
+  protected val fieldInputName: String = field.structField.sourceName
   protected val fieldOutputName: String = field.name
-  protected val inputFullPathName: String = appendPath(path, fieldInputName)
-  protected val column: Column = parent.map(_.childColumn(fieldInputName)).getOrElse(col(inputFullPathName)) // no parent
-  protected val isArrayElement: Boolean = parent.exists(_.isInstanceOf[TypeParser.ArrayParent])
+  protected val inputFullPathName: String = SchemaUtils.appendPath(path, fieldInputName)
+  protected val isArrayElement: Boolean
   protected val columnIdForUdf: String = if (isArrayElement) {
       s"$inputFullPathName[*]"
     } else {
       inputFullPathName
     }
+
+  protected val column: Column
+
+  protected def fieldType: DataType = field.dataType
+
+  // Error should never appear here due to validation
+  protected def defaultValue: Option[field.BaseType] = field.defaultValueWithGlobal.get
+
+  protected def checkSetupForFailure()(implicit logger: Logger): Option[ParseOutput] = {
+    def noCastingPossible: Option[ParseOutput] = {
+      val message = s"Cannot standardize field '$inputFullPathName' from type ${origType.typeName} into ${fieldType.typeName}"
+      if (failOnInputNotPerSchema) {
+        throw new TypeParserException(message)
+      } else {
+        logger.info(message)
+        Option(ParseOutput(
+          lit(defaultValue.orNull).cast(fieldType) as(fieldOutputName, metadata),
+          typedLit(Seq(ErrorMessage.stdTypeError(inputFullPathName, origType.typeName, fieldType.typeName)))
+        ))
+      }
+    }
+
+    (origType, fieldType) match {
+      case (ArrayType(_, _), ArrayType(_, _)) => None
+      case (StructType(_), StructType(_)) => None
+      case (ArrayType(_, _), _) => noCastingPossible
+      case (_, ArrayType(_, _)) => noCastingPossible
+      case (StructType(_), _) => noCastingPossible
+      case (_, StructType(_)) => noCastingPossible
+      case _ => None
+    }
+  }
+
+  protected def standardizeAfterCheck()(implicit logger: Logger): ParseOutput
 }
 
 object TypeParser {
   import za.co.absa.enceladus.utils.implicits.ColumnImplicits.ColumnEnhancements
 
   private val decimalType = DecimalType(30,9) // scalastyle:ignore magic.number
-  private val logger: Logger = LoggerFactory.getLogger(this.getClass)
+  private implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   private val MillisecondsPerSecond = 1000
   private val MicrosecondsPerSecond = 1000000
   private val NanosecondsPerSecond  = 1000000000
   private val InfinityStr = "Infinity"
+  private val nullColumn = lit(null) //scalastyle:ignore null
 
 
-  def standardize(field: StructField, path: String, origSchema: StructType)
+  def standardize(field: StructField, path: String, origSchema: StructType, failOnInputNotPerSchema: Boolean = true)
                  (implicit udfLib: UDFLibrary, defaults: Defaults): ParseOutput = {
     // udfLib implicit is present for error column UDF implementation
-    TypeParser(field, path, origSchema).standardize()
+    val sourceName = SchemaUtils.appendPath(path, field.sourceName)
+    val origField = SchemaUtils.getField(sourceName, origSchema)
+    val origFieldType = origField.map(_.dataType).getOrElse(NullType)
+    val column = origField.fold(nullColumn)(_ => col(sourceName))
+    TypeParser(field, path, column, origFieldType, failOnInputNotPerSchema).standardize()
   }
 
   sealed trait Parent {
@@ -107,42 +151,50 @@ object TypeParser {
 
   private def apply(field: StructField,
                     path: String,
-                    origSchema: StructType,
-                    parent: Option[Parent] = None)
+                    column: Column,
+                    origType: DataType,
+                    failOnInputNotPerSchema: Boolean,
+                    isArrayElement: Boolean = false)
                    (implicit defaults: Defaults): TypeParser[_] = {
-    val parserClass: (String, StructType, Option[Parent]) => TypeParser[_] = field.dataType match {
-      case _: ArrayType     => ArrayParser(TypedStructField.asArrayTypeStructField(field), _, _, _)
-      case _: StructType    => StructParser(TypedStructField.asStructTypeStructField(field), _, _, _)
+    val parserClass: (String, Column, DataType, Boolean, Boolean) => TypeParser[_] = field.dataType match {
+      case _: ArrayType     => ArrayParser(TypedStructField.asArrayTypeStructField(field), _, _, _, _, _)
+      case _: StructType    => StructParser(TypedStructField.asStructTypeStructField(field), _, _, _, _, _)
       case _: ByteType      =>
-        IntegralParser(TypedStructField.asNumericTypeStructField[Byte](field), _, _, _, Set(ShortType, IntegerType, LongType))
-      case _: ShortType     => IntegralParser(TypedStructField.asNumericTypeStructField[Short](field), _, _, _, Set(IntegerType, LongType))
-      case _: IntegerType   => IntegralParser(TypedStructField.asNumericTypeStructField[Int](field), _, _, _, Set(LongType))
-      case _: LongType      => IntegralParser(TypedStructField.asNumericTypeStructField[Long](field), _, _, _, Set.empty)
-      case _: FloatType     => FractionalParser(TypedStructField.asNumericTypeStructField[Float](field), _, _, _)
-      case _: DoubleType    => FractionalParser(TypedStructField.asNumericTypeStructField[Double](field), _, _, _)
-      case _: DecimalType   => DecimalParser(TypedStructField.asNumericTypeStructField[BigDecimal](field), _, _, _)
-      case _: StringType    => StringParser(TypedStructField(field), _, _, _)
-      case _: BooleanType   => BooleanParser(TypedStructField(field), _, _, _)
-      case _: DateType      => DateParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _)
-      case _: TimestampType => TimestampParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _)
+        IntegralParser(TypedStructField.asNumericTypeStructField[Byte](field), _, _, _, _, _, Set(ShortType, IntegerType, LongType))
+      case _: ShortType     =>
+        IntegralParser(TypedStructField.asNumericTypeStructField[Short](field), _, _, _, _, _, Set(IntegerType, LongType))
+      case _: IntegerType   => IntegralParser(TypedStructField.asNumericTypeStructField[Int](field), _, _, _, _, _, Set(LongType))
+      case _: LongType      => IntegralParser(TypedStructField.asNumericTypeStructField[Long](field), _, _, _, _, _, Set.empty)
+      case _: FloatType     => FractionalParser(TypedStructField.asNumericTypeStructField[Float](field), _, _, _, _, _)
+      case _: DoubleType    => FractionalParser(TypedStructField.asNumericTypeStructField[Double](field), _, _, _, _, _)
+      case _: DecimalType   => DecimalParser(TypedStructField.asNumericTypeStructField[BigDecimal](field), _, _, _, _, _)
+      case _: StringType    => StringParser(TypedStructField(field), _, _, _, _, _)
+      case _: BooleanType   => BooleanParser(TypedStructField(field), _, _, _, _, _)
+      case _: DateType      => DateParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _, _, _)
+      case _: TimestampType => TimestampParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _, _, _)
       case t                => throw new IllegalStateException(s"${t.typeName} is not a supported type in this version of Enceladus")
     }
-    parserClass(path, origSchema, parent)
+    parserClass(path, column, origType, failOnInputNotPerSchema, isArrayElement)
   }
 
   private final case class ArrayParser(override val field: ArrayTypeStructField,
                                        path: String,
-                                       origSchema: StructType,
-                                       parent: Option[Parent])
+                                       column: Column,
+                                       origType: DataType,
+                                       failOnInputNotPerSchema: Boolean,
+                                       isArrayElement: Boolean)
                                       (implicit defaults: Defaults) extends TypeParser[Any] {
-    private val fieldType = field.dataType
-    private val arrayField = StructField(fieldInputName, fieldType.elementType, fieldType.containsNull, field.structField.metadata)
 
-    override def standardize(): ParseOutput = {
+    override def fieldType: ArrayType = {
+      field.dataType
+    }
+
+    override protected def standardizeAfterCheck()(implicit logger: Logger): ParseOutput = {
       logger.info(s"Creating standardization plan for Array $inputFullPathName")
-
+      val origArrayType = origType.asInstanceOf[ArrayType] // this should never throw an exception because of `checkSetupForFailure`
+      val arrayField = StructField(fieldInputName, fieldType.elementType, fieldType.containsNull, field.structField.metadata)
       val lambdaVariableName = s"${SchemaUtils.unpath(inputFullPathName)}_${Random.nextLong().abs}"
-      val lambda = (forCol: Column) => TypeParser(arrayField, path, origSchema, Option(ArrayParent(forCol)))
+      val lambda = (forCol: Column) => TypeParser(arrayField, path, forCol, origArrayType.elementType, failOnInputNotPerSchema, isArrayElement = true)
         .standardize()
 
       val lambdaErrCols = lambda.andThen(_.errors)
@@ -162,14 +214,22 @@ object TypeParser {
 
   private final case class StructParser(override val field: StructTypeStructField,
                                         path: String,
-                                        origSchema: StructType,
-                                        parent: Option[Parent])
+                                        column: Column,
+                                        origType: DataType,
+                                        failOnInputNotPerSchema: Boolean,
+                                        isArrayElement: Boolean)
                                        (implicit defaults: Defaults) extends TypeParser[Any] {
-    private val fieldType = field.dataType
+    override def fieldType: StructType = {
+      field.dataType
+    }
 
-    override def standardize(): ParseOutput = {
-      val out =  fieldType.fields.map(TypeParser(_, inputFullPathName, origSchema, Option(StructParent(column)))
-        .standardize())
+    override protected def standardizeAfterCheck()(implicit logger: Logger): ParseOutput = {
+      val origStructType = origType.asInstanceOf[StructType] // this should never throw an exception because of `checkSetupForFailure`
+      val out =  fieldType.fields.map{f =>
+        val origSubField = Try{origStructType(f.sourceName)}.toOption
+        val origSubFieldType = origSubField.map(_.dataType).getOrElse(NullType)
+        val subColumn = origSubField.map(x => column(x.name)).getOrElse(nullColumn)
+        TypeParser(f, inputFullPathName, subColumn, origSubFieldType, failOnInputNotPerSchema).standardize()}
       val cols = out.map(_.stdCol)
       val errs = out.map(_.errors)
       // condition for nullable error of the struct itself
@@ -180,7 +240,7 @@ object TypeParser {
         flatten(array(errs.map(x => when(dropChildrenErrsCond, typedLit(Seq[ErrorMessage]())).otherwise(x)): _*)),
         // then add an error if this one is null
         when(nullErrCond,
-          array(callUDF("stdNullErr", lit(inputFullPathName))))
+          array(callUDF(UDFNames.stdNullErr, lit(inputFullPathName))))
           .otherwise(
             typedLit(Seq[ErrorMessage]())
           )
@@ -193,24 +253,21 @@ object TypeParser {
   }
 
   private abstract class PrimitiveParser[T](implicit defaults: Defaults) extends TypeParser[T] {
-    // Error should never appear here due to validation
-    protected val defaultValue: Option[field.BaseType] = field.defaultValueWithGlobal.get
-
-    override def standardize(): ParseOutput = {
+    override protected def standardizeAfterCheck()(implicit logger: Logger): ParseOutput = {
       val castedCol: Column = assemblePrimitiveCastLogic
       val castHasError: Column = assemblePrimitiveCastErrorLogic(castedCol)
 
       val err: Column  = if (field.nullable) {
         when(column.isNotNull and castHasError, // cast failed
-          array(callUDF("stdCastErr", lit(columnIdForUdf), column.cast(StringType)))
+          array(callUDF(UDFNames.stdCastErr, lit(columnIdForUdf), column.cast(StringType)))
         ).otherwise( // everything is OK
           typedLit(Seq.empty[ErrorMessage])
         )
       } else {
         when(column.isNull, // NULL not allowed
-          array(callUDF("stdNullErr", lit(columnIdForUdf)))
+          array(callUDF(UDFNames.stdNullErr, lit(columnIdForUdf)))
         ).otherwise( when(castHasError, // cast failed
-          array(callUDF("stdCastErr", lit(columnIdForUdf), column.cast(StringType)))
+          array(callUDF(UDFNames.stdCastErr, lit(columnIdForUdf), column.cast(StringType)))
         ).otherwise( // everything is OK
           typedLit(Seq.empty[ErrorMessage])
         ))
@@ -231,18 +288,6 @@ object TypeParser {
     protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
       castedCol.isNull  //this one is sufficient for most primitive data types
     }
-
-    @NoSuchElementException(s"The type of '$inputFullPathName' cannot be determined")
-    protected def origType: DataType = {
-      SchemaUtils.getFieldType(inputFullPathName, origSchema).get
-    }
-
-    protected def underlyingType: DataType = {
-      origType match {
-        case arrayType: ArrayType => arrayType.elementType
-        case anyOther => anyOther
-      }
-    }
   }
 
   private abstract class ScalarParser[T](implicit defaults: Defaults) extends PrimitiveParser[T] {
@@ -251,16 +296,16 @@ object TypeParser {
 
   private abstract class NumericParser[N: TypeTag](override val field: NumericTypeStructField[N])
                                                   (implicit defaults: Defaults) extends ScalarParser[N] {
-    override def standardize(): ParseOutput = {
+    override protected def standardizeAfterCheck()(implicit logger: Logger): ParseOutput = {
       if (field.needsUdfParsing) {
         standardizeUsingUdf()
       } else {
-        super.standardize()
+        super.standardizeAfterCheck()
       }
     }
 
     override def assemblePrimitiveCastLogic: Column = {
-      if (underlyingType == StringType) {
+      if (origType == StringType) {
         // in case of string as source some adjustments might be needed
         val decimalSymbols = field.pattern.toOption.flatten.map(
           _.decimalSymbols
@@ -297,14 +342,16 @@ object TypeParser {
 
   private final case class IntegralParser[N: LongLike: TypeTag](override val field: NumericTypeStructField[N],
                                                                 path: String,
-                                                                origSchema: StructType,
-                                                                parent: Option[Parent],
+                                                                column: Column,
+                                                                origType: DataType,
+                                                                failOnInputNotPerSchema: Boolean,
+                                                                isArrayElement: Boolean,
                                                                 overflowableTypes: Set[DataType])
                                                                (implicit defaults: Defaults) extends NumericParser[N](field) {
     override protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
       val basicLogic: Column = super.assemblePrimitiveCastErrorLogic(castedCol)
 
-      underlyingType match {
+      origType match {
         case  dt: DecimalType =>
           // decimal can be too big, to catch overflow or imprecision  issues compare to original
           basicLogic or (column =!= castedCol.cast(dt))
@@ -326,8 +373,10 @@ object TypeParser {
 
   private final case class DecimalParser(override val field: NumericTypeStructField[BigDecimal],
                                          path: String,
-                                         origSchema: StructType,
-                                         parent: Option[Parent])
+                                         column: Column,
+                                         origType: DataType,
+                                         failOnInputNotPerSchema: Boolean,
+                                         isArrayElement: Boolean)
                                         (implicit defaults: Defaults)
     extends NumericParser[BigDecimal](field)
     // NB! loss of precision is not addressed for any DecimalType
@@ -335,8 +384,10 @@ object TypeParser {
 
   private final case class FractionalParser[N: DoubleLike: TypeTag](override val field: NumericTypeStructField[N],
                                                                     path: String,
-                                                                    origSchema: StructType,
-                                                                    parent: Option[Parent])
+                                                                    column: Column,
+                                                                    origType: DataType,
+                                                                    failOnInputNotPerSchema: Boolean,
+                                                                    isArrayElement: Boolean)
                                                                    (implicit defaults: Defaults)
     extends NumericParser[N](field) {
     override protected def assemblePrimitiveCastErrorLogic(castedCol: Column): Column = {
@@ -351,14 +402,18 @@ object TypeParser {
 
   private final case class StringParser(field: TypedStructField,
                                         path: String,
-                                        origSchema: StructType,
-                                        parent: Option[Parent])
+                                        column: Column,
+                                        origType: DataType,
+                                        failOnInputNotPerSchema: Boolean,
+                                        isArrayElement: Boolean)
                                        (implicit defaults: Defaults) extends ScalarParser[String]
 
   private final case class BooleanParser(field: TypedStructField,
                                          path: String,
-                                         origSchema: StructType,
-                                         parent: Option[Parent])
+                                         column: Column,
+                                         origType: DataType,
+                                         failOnInputNotPerSchema: Boolean,
+                                         isArrayElement: Boolean)
                                         (implicit defaults: Defaults) extends ScalarParser[Boolean]
 
   /**
@@ -405,7 +460,9 @@ object TypeParser {
 
     private def castWithPattern(): Column = {
       // sadly with parquet support, incoming might not be all `plain`
-      underlyingType match {
+//      underlyingType match {
+      origType match {
+        case _: NullType                  => nullColumn
         case _: DateType                  => castDateColumn(column)
         case _: TimestampType             => castTimestampColumn(column)
         case _: StringType                => castStringColumn(column)
@@ -454,8 +511,10 @@ object TypeParser {
 
   private final case class DateParser(field: DateTimeTypeStructField[Date],
                                       path: String,
-                                      origSchema: StructType,
-                                      parent: Option[Parent])
+                                      column: Column,
+                                      origType: DataType,
+                                      failOnInputNotPerSchema: Boolean,
+                                      isArrayElement: Boolean)
                                      (implicit defaults: Defaults) extends DateTimeParser[Date] {
     private val defaultTimeZone: Option[String] = if (pattern.isTimeZoned) {
       pattern.defaultTimeZone
@@ -507,8 +566,10 @@ object TypeParser {
 
   private final case class TimestampParser(field: DateTimeTypeStructField[Timestamp],
                                            path: String,
-                                           origSchema: StructType,
-                                           parent: Option[Parent])
+                                           column: Column,
+                                           origType: DataType,
+                                           failOnInputNotPerSchema: Boolean,
+                                           isArrayElement: Boolean)
                                           (implicit defaults: Defaults) extends DateTimeParser[Timestamp] {
 
     private val defaultTimeZone: Option[String] = if (pattern.isTimeZoned) {
@@ -565,3 +626,5 @@ object TypeParser {
     }
   }
 }
+
+class TypeParserException(message: String) extends Exception(message: String)
