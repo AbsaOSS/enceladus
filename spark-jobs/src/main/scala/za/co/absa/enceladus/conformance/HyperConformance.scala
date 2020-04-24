@@ -99,9 +99,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
   override def apply(conf: Configuration): StreamTransformer = {
     log.info("Building HyperConformance")
 
-    SparkVersionGuard
-      .fromHyperConformanceSparkCompatibilitySettings
-      .ensureSparkVersionCompatibility(SPARK_VERSION)
+    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
     validateConfiguration(conf)
 
