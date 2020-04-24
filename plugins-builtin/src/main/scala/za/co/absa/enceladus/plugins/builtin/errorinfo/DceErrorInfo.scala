@@ -29,3 +29,26 @@ case class DceErrorInfo(sourceSystem: String,
                         errorDescription: String,
                         additionalDetails: String
                        )
+
+
+/*
+
+import java.time.LocalDate
+
+case class DceErrorInfo(
+                         sourceSystem: String,
+                         sourceSystemId: String,
+                         dataset: String,
+                         ingestionNumber: Long,
+                         processingTimestamp: Long,
+                         informationDate: LocalDate,
+                         outputFileName: String,
+                         recordId: String,
+                         errorSourceId: String,  //ErrorSourceId.Value ?
+                         errorType: String,
+                         errorCode: String,
+                         errorDescription: String,
+                         additionalInfo: Map[String, String]
+                       )
+
+ */

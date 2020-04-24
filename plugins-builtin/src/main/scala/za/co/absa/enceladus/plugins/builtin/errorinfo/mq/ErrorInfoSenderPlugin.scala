@@ -25,6 +25,7 @@ import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
 import za.co.absa.enceladus.plugins.builtin.errorinfo.DceErrorInfo
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin.SingleErrorStardardized
+import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
 
 class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegistryConfig: Map[String, String]) extends PostProcessor {
 
@@ -73,9 +74,12 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
     val allValueColumns = struct(stdErrors.columns.head, stdErrors.columns.tail: _*)
     // todo change columns that are used here for key and value
     import za.co.absa.abris.avro.functions.to_confluent_avro
+
+    val valueSchemaString = KafkaErrorInfoPlugin.getAvroSchemaString
+
     stdErrors.limit(10).select(
       col("recordId").as("key").cast(DataTypes.StringType),
-      to_confluent_avro(allValueColumns, schemaRegistryConfig).as("value").cast(DataTypes.StringType)
+      to_confluent_avro(allValueColumns, valueSchemaString, schemaRegistryConfig).as("value")
     )
       .write
       .format("kafka")

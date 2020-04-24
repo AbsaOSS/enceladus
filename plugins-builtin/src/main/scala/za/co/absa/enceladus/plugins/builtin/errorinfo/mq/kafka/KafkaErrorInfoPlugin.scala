@@ -16,9 +16,12 @@
 package za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka
 
 import com.typesafe.config.Config
+import org.apache.avro.Schema
+import org.apache.commons.io.IOUtils
 import za.co.absa.abris.avro.read.confluent.SchemaManager
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorFactory
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
+import za.co.absa.enceladus.plugins.builtin.controlinfo.ControlInfoAvroSerializer.getClass
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin
 
 /**
@@ -41,5 +44,14 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
     )
 
     new ErrorInfoSenderPlugin(connectionParams, schemaRegistryConfig)
+  }
+
+  def getAvroSchemaString: String = {
+    val schemaStream = getClass.getResourceAsStream("/dqe-old.avsc")
+    //val schemaStream = getClass.getResourceAsStream("/dq_errors_avro_schema.avsc") // todo update the case class for this
+    val schemaString = IOUtils.toString(schemaStream, "UTF-8")
+    schemaStream.close()
+
+    schemaString
   }
 }
