@@ -1,7 +1,7 @@
 {
+  "name": "dataError",
   "type": "record",
-  "name": "strategy1",
-  "namespace": "error.info",
+  "namespace": "za.co.absa.dataquality.errors.avro.schema",
   "fields": [
     {
       "name": "sourceSystem",

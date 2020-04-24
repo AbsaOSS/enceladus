@@ -39,8 +39,9 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
       SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> connectionParams.schemaRegistryUrl,
       SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> connectionParams.topicName,
       SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
-      SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> "error.info.strategy1", // todo what should this be set to?
-      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "co.za.absa.dataquality.avro.schema-errorinfo"
+      // these must match the name/namespace in dq_errors_avro_schema
+      SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> "dataError",
+      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.schema" // todo what about this?
     )
 
     new ErrorInfoSenderPlugin(connectionParams, schemaRegistryConfig)
