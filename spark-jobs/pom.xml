@@ -201,7 +201,7 @@
                         -->
                         <relocation>
                             <pattern>com.fasterxml.jackson</pattern>
-                            <shadedPattern>com.shaded.fasterxml.jackson</shadedPattern>
+                            <shadedPattern>za.co.absa.shaded.com.fasterxml.jackson</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
