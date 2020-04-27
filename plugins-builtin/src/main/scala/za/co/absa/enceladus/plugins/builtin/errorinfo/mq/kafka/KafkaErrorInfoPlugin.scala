@@ -33,36 +33,65 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
   val ClientIdKey = "kafka.errorinfo.client.id"
   val ErrorInfoKafkaTopicKey = "kafka.errorinfo.topic.name"
 
-  val valueAvroSchemaResource = "/dq_errors_avro_schema.avsc"
+  // todo: load all these data from the avsc files programmatically, both times (key+value) in the same fashion?
+  object Key {
+    val avroSchemaResource = "/dq_errors_key_avro_schema.avsc"
 
-  // values these must match the name/namespace in the avsc above
-  val recordName = "dataError"
-  val namespaceName = "za.co.absa.dataquality.errors.avro.schema"
+    // values these must match the name/namespace in the avsc above
+    val recordName = "dataErrorKey"
+    val namespaceName = "za.co.absa.dataquality.errors.avro.key.schema"
+  }
+
+  object Value {
+    val avroSchemaResource = "/dq_errors_avro_schema.avsc"
+
+    // values these must match the name/namespace in the avsc above
+    val recordName = "dataError"
+    val namespaceName = "za.co.absa.dataquality.errors.avro.schema"
+  }
+
 
   override def apply(config: Config): ErrorInfoSenderPlugin = {
     val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ErrorInfoKafkaTopicKey)
 
-    val schemaRegistryConfig = Map(
+    val commonSchemaRegistryConfig = Map(
       SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> connectionParams.schemaRegistryUrl,
-      SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> connectionParams.topicName,
-      SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
-      SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> recordName,
-      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> namespaceName
+      SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> connectionParams.topicName
     )
 
-    new ErrorInfoSenderPlugin(connectionParams, schemaRegistryConfig)
+    val valueSchemaRegistryConfig = commonSchemaRegistryConfig ++ Map(
+      SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
+      SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> Value.recordName,
+      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> Value.namespaceName
+    )
+
+    val keySchemaRegistryConfig = commonSchemaRegistryConfig ++ Map(
+      SchemaManager.PARAM_KEY_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
+      SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> Key.recordName,
+      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> Key.namespaceName
+    )
+
+    new ErrorInfoSenderPlugin(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig)
   }
 
-  def getAvroSchemaString: String = {
-    val schemaStream = getClass.getResourceAsStream(valueAvroSchemaResource)
+  private def getAvroSchemaString(resourcePath: String): String = {
+    val schemaStream = getClass.getResourceAsStream(resourcePath)
     val schemaString = IOUtils.toString(schemaStream, "UTF-8")
     schemaStream.close()
 
     schemaString
   }
 
-  def getStructTypeSchema: StructType = {
-    val schema = new AvroSchema.Parser().parse(getAvroSchemaString)
+  def getKeyAvroSchemaString: String = getAvroSchemaString(Key.avroSchemaResource)
+
+  def getValueAvroSchemaString: String = getAvroSchemaString(Value.avroSchemaResource)
+
+  private def getStructTypeSchema(avroSchemaString: String): StructType = {
+    val schema = new AvroSchema.Parser().parse(avroSchemaString)
     SchemaConverters.toSqlType(schema).dataType.asInstanceOf[StructType]
   }
+
+  def getValueStructTypeSchema: StructType = getStructTypeSchema(getValueAvroSchemaString)
+
+  def getKeyStructTypeSchema: StructType = getStructTypeSchema(getKeyAvroSchemaString)
 }

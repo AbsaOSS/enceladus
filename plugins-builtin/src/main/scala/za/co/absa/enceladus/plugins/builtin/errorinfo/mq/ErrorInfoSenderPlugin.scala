@@ -18,7 +18,7 @@ package za.co.absa.enceladus.plugins.builtin.errorinfo.mq
 import java.time.Instant
 
 import org.apache.log4j.LogManager
-import org.apache.spark.sql.functions.{col, explode, size, struct}
+import org.apache.spark.sql.functions.{col, explode, size, struct, lit}
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.{DataFrame, Encoders}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
@@ -27,7 +27,9 @@ import za.co.absa.enceladus.plugins.builtin.errorinfo.DceErrorInfo
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin.SingleErrorStardardized
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
 
-class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegistryConfig: Map[String, String]) extends PostProcessor {
+class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
+                            keySchemaRegistryConfig: Map[String, String],
+                            valueSchemaRegistryConfig: Map[String, String]) extends PostProcessor {
 
   private val log = LogManager.getLogger(classOf[ErrorInfoSenderPlugin])
 
@@ -42,7 +44,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
    */
   override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): DataFrame = {
     val dfWithErrors = getIndividualErrors(dataFrame, params)
-    sendErrorsToKafka(dfWithErrors, params, schemaRegistryConfig)
+    sendErrorsToKafka(dfWithErrors, params)
     dfWithErrors
   }
 
@@ -61,22 +63,25 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
     stdErrors
   }
 
-  def sendErrorsToKafka(stdErrors: DataFrame, params: Map[String, String], schemaRegistryConfig: Map[String, String]): Unit = {
+  def sendErrorsToKafka(stdErrors: DataFrame, params: Map[String, String]): Unit = {
 
     log.info(s"Sending errors to kafka topic ${connectionParams.topicName} ...")
 
+    val valueAvroSchemaString = KafkaErrorInfoPlugin.getValueAvroSchemaString
+    val valueSchemaType = KafkaErrorInfoPlugin.getValueStructTypeSchema
+
+    val keyAvroSchemaString = KafkaErrorInfoPlugin.getKeyAvroSchemaString
+
     val allValueColumns = struct(stdErrors.columns.head, stdErrors.columns.tail: _*)
-    // todo change columns that are used here for key and value
     import za.co.absa.abris.avro.functions.to_confluent_avro
 
-    val avroValueSchemaString = KafkaErrorInfoPlugin.getAvroSchemaString
-    val schemaType = KafkaErrorInfoPlugin.getStructTypeSchema
-
-    stdErrors.sqlContext.createDataFrame(stdErrors.rdd, schemaType) // force avsc schema to assure compatible nullability of the DF
-      .limit(10)
+    stdErrors.sqlContext.createDataFrame(stdErrors.rdd, valueSchemaType) // forces avsc schema to assure compatible nullability of the DF
+      .limit(10) // todo remove when done
       .select(
-        col("recordId").as("key").cast(DataTypes.StringType), // todo to_confluent_avro, too?
-        to_confluent_avro(allValueColumns, avroValueSchemaString, schemaRegistryConfig).as("value")
+        to_confluent_avro(
+          struct(lit("sourceSystem1").as("sourceSystem")), keyAvroSchemaString, keySchemaRegistryConfig
+        ).as("key"),
+        to_confluent_avro(allValueColumns, valueAvroSchemaString, valueSchemaRegistryConfig).as("value")
       )
       .write
       .format("kafka")

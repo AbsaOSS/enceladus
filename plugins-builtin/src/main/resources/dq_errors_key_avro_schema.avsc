@@ -1,0 +1,11 @@
+{
+  "name": "dataErrorKey",
+  "type": "record",
+  "namespace": "za.co.absa.dataquality.errors.avro.key.schema",
+  "fields": [
+    {
+      "name": "sourceSystem",
+      "type": "string"
+    }
+  ]
+}
