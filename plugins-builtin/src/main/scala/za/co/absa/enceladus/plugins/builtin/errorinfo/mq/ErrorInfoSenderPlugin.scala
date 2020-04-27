@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.plugins.builtin.errorinfo.mq
 
-import java.time.LocalDate
+import java.time.Instant
 
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.functions.{col, explode, size, struct}
@@ -56,7 +56,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
     val stdErrors = dataFrame
       .filter(size(col("errCol")) > 0)
       // only keep columns that are needed for the actual error publishing // todo which are those?
-      .select(col("tradeId"), explode(col("errCol")).as("singleError"))
+      .select(col("tradeId"), col("reportDate"), explode(col("errCol")).as("singleError"))
       .as[SingleErrorStardardized]
       .map(_.toErrorInfo(params))
       .toDF()
@@ -75,12 +75,16 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
     // todo change columns that are used here for key and value
     import za.co.absa.abris.avro.functions.to_confluent_avro
 
-    val valueSchemaString = KafkaErrorInfoPlugin.getAvroSchemaString
+    val avroValueSchemaString = KafkaErrorInfoPlugin.getAvroSchemaString
+    val schemaType = KafkaErrorInfoPlugin.getCompatibleSchema(avroValueSchemaString)
 
-    stdErrors.limit(10).select(
-      col("recordId").as("key").cast(DataTypes.StringType),
-      to_confluent_avro(allValueColumns, valueSchemaString, schemaRegistryConfig).as("value")
-    )
+    stdErrors.sqlContext.createDataFrame(stdErrors.rdd, schemaType) // force new schema
+
+      .limit(10)
+      .select(
+        col("recordId").as("key").cast(DataTypes.StringType),
+        to_confluent_avro(allValueColumns, avroValueSchemaString, schemaRegistryConfig).as("value")
+      )
       .write
       .format("kafka")
       .option("kafka.bootstrap.servers", connectionParams.bootstrapServers)
@@ -96,21 +100,29 @@ object ErrorInfoSenderPlugin {
 
   case class ErrorRecord(errType: String, errCode: String, errMsg: String, errCol: String, rawValues: Seq[String])
 
-  case class SingleErrorStardardized(tradeId: Double, singleError: ErrorRecord) {
+  case class SingleErrorStardardized(tradeId: Double, reportDate: java.sql.Date, singleError: ErrorRecord) {
     def toErrorInfo(additionalParams: Map[String, String]): DceErrorInfo = DceErrorInfo(
-      sourceSystem = "testSystem",
-      sourceDataset = additionalParams("datasetName"),
-      processingTimestamp = LocalDate.now().toString, // todo where to get this from?
-      informationDate = additionalParams("reportDate"),
-      outputFileName = additionalParams("outputPath"),
-      recordId = tradeId.toString,
+      sourceSystem = "testSystem", // todo load from ATUM
+      sourceSystemId = Some("testSystemId"),
+      dataset = additionalParams.get("datasetName"),
+      ingestionNumber = Some(1L), // todo from where?
+      processingTimestamp = Instant.now.toEpochMilli, // todo where to get this from?
+      informationDate = Some(reportDate.toLocalDate.toEpochDay.toInt), // todo test it
+      outputFileName = additionalParams.get("outputPath"),
+      recordId = tradeId.toString, // todo enceladus_record_id
       errorSourceId = additionalParams("sourceId"),
       errorType = singleError.errType,
       errorCode = singleError.errCode,
-      errorColumn = singleError.errCol,
-      errorValue = singleError.rawValues.toString(), // todo is this ok?
       errorDescription = singleError.errMsg,
-      additionalDetails = s"???"
+      additionalInfo = Map(
+        "uniqueRunId" -> "runId1", // todo replace all these values with actual values it should contain
+        "Run URL" -> "url1",
+        "reportDate" -> additionalParams("reportDate"),
+        "reportVersion" -> "reportVersion1",
+        "runId" -> "runId1",
+        "datasetName" -> additionalParams("datasetName"),
+        "datasetVersion" -> "DatasetVersion1"
+      )
     )
   }
 

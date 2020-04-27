@@ -15,40 +15,18 @@
 
 package za.co.absa.enceladus.plugins.builtin.errorinfo
 
+import java.time.LocalDate
+
 case class DceErrorInfo(sourceSystem: String,
-                        sourceDataset: String,
-                        processingTimestamp: String,
-                        informationDate: String,
-                        outputFileName: String,
+                        sourceSystemId: Option[String],
+                        dataset: Option[String],
+                        ingestionNumber: Option[Long],
+                        processingTimestamp: Long,
+                        informationDate: Option[Int],
+                        outputFileName: Option[String],
                         recordId: String,
                         errorSourceId: String, //ErrorSourceId.Value ?
                         errorType: String,
                         errorCode: String,
-                        errorColumn: String,
-                        errorValue: String,
                         errorDescription: String,
-                        additionalDetails: String
-                       )
-
-
-/*
-
-import java.time.LocalDate
-
-case class DceErrorInfo(
-                         sourceSystem: String,
-                         sourceSystemId: String,
-                         dataset: String,
-                         ingestionNumber: Long,
-                         processingTimestamp: Long,
-                         informationDate: LocalDate,
-                         outputFileName: String,
-                         recordId: String,
-                         errorSourceId: String,  //ErrorSourceId.Value ?
-                         errorType: String,
-                         errorCode: String,
-                         errorDescription: String,
-                         additionalInfo: Map[String, String]
-                       )
-
- */
+                        additionalInfo: Map[String, String])

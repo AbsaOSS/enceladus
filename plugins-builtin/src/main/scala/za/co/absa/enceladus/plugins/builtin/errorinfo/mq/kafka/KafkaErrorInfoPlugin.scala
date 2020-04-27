@@ -16,12 +16,13 @@
 package za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka
 
 import com.typesafe.config.Config
-import org.apache.avro.Schema
+import org.apache.avro.{Schema => AvroSchema}
 import org.apache.commons.io.IOUtils
+import org.apache.spark.sql.avro.SchemaConverters
+import org.apache.spark.sql.types.StructType
 import za.co.absa.abris.avro.read.confluent.SchemaManager
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorFactory
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
-import za.co.absa.enceladus.plugins.builtin.controlinfo.ControlInfoAvroSerializer.getClass
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin
 
 /**
@@ -48,11 +49,15 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
   }
 
   def getAvroSchemaString: String = {
-    val schemaStream = getClass.getResourceAsStream("/dqe-old.avsc")
-    //val schemaStream = getClass.getResourceAsStream("/dq_errors_avro_schema.avsc") // todo update the case class for this
+    val schemaStream = getClass.getResourceAsStream("/dq_errors_avro_schema.avsc") // todo update the case class for this
     val schemaString = IOUtils.toString(schemaStream, "UTF-8")
     schemaStream.close()
 
     schemaString
+  }
+
+  def getCompatibleSchema(avroSchemaString: String): StructType = {
+    val schema = new AvroSchema.Parser().parse(avroSchemaString)
+    SchemaConverters.toSqlType(schema).dataType.asInstanceOf[StructType]
   }
 }
