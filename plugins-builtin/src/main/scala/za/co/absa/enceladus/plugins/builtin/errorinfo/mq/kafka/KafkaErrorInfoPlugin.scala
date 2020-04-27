@@ -33,6 +33,12 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
   val ClientIdKey = "kafka.errorinfo.client.id"
   val ErrorInfoKafkaTopicKey = "kafka.errorinfo.topic.name"
 
+  val valueAvroSchemaResource = "/dq_errors_avro_schema.avsc"
+
+  // these must match the name/namespace in the avsc above
+  val recordName = "dataError"
+  val namespaceName = "za.co.absa.dataquality.errors.avro.schema"
+
   override def apply(config: Config): ErrorInfoSenderPlugin = {
     val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ErrorInfoKafkaTopicKey)
 
@@ -40,24 +46,23 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
       SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> connectionParams.schemaRegistryUrl,
       SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> connectionParams.topicName,
       SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
-      // these must match the name/namespace in dq_errors_avro_schema
-      SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> "dataError",
-      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.schema" // todo what about this?
+      SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> recordName,
+      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> namespaceName
     )
 
     new ErrorInfoSenderPlugin(connectionParams, schemaRegistryConfig)
   }
 
   def getAvroSchemaString: String = {
-    val schemaStream = getClass.getResourceAsStream("/dq_errors_avro_schema.avsc") // todo update the case class for this
+    val schemaStream = getClass.getResourceAsStream(valueAvroSchemaResource)
     val schemaString = IOUtils.toString(schemaStream, "UTF-8")
     schemaStream.close()
 
     schemaString
   }
 
-  def getCompatibleSchema(avroSchemaString: String): StructType = {
-    val schema = new AvroSchema.Parser().parse(avroSchemaString)
+  def getStructTypeSchema: StructType = {
+    val schema = new AvroSchema.Parser().parse(getAvroSchemaString)
     SchemaConverters.toSqlType(schema).dataType.asInstanceOf[StructType]
   }
 }

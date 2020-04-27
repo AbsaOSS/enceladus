@@ -47,9 +47,6 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
   }
 
   def getIndividualErrors(dataFrame: DataFrame, params: Map[String, String]): DataFrame = {
-
-    //val stdCount = dataFrame.count()
-
     implicit val singleErrorStardardizedEncoder = Encoders.product[SingleErrorStardardized]
     implicit val dceErrorInfoEncoder = Encoders.product[DceErrorInfo]
 
@@ -61,9 +58,6 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
       .map(_.toErrorInfo(params))
       .toDF()
 
-    // debug output
-    //val errCount = stdErrors.count()
-    //log.info(s"*** STD count = $stdCount, errCount = $errCount") // debug
     stdErrors
   }
 
@@ -76,7 +70,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
     import za.co.absa.abris.avro.functions.to_confluent_avro
 
     val avroValueSchemaString = KafkaErrorInfoPlugin.getAvroSchemaString
-    val schemaType = KafkaErrorInfoPlugin.getCompatibleSchema(avroValueSchemaString)
+    val schemaType = KafkaErrorInfoPlugin.getStructTypeSchema
 
     stdErrors.sqlContext.createDataFrame(stdErrors.rdd, schemaType) // force new schema
 
