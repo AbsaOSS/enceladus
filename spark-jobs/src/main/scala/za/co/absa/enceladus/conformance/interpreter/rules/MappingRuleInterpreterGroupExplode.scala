@@ -66,7 +66,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
         col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn)
 
     val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
-    val mappingErrUdfCall = callUDF("confMappingErr", lit(rule.outputColumn),
+    val mappingErrUdfCall = callUDF(UDFNames.confMappingErr, lit(rule.outputColumn),
       array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
       typedLit(mappings))
 

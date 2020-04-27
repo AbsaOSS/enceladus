@@ -19,16 +19,17 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import org.apache.commons.configuration2.Configuration
+import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
+import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
-
 
 class HyperConformance (implicit cmd: ConfCmdConfig,
                         featureSwitches: FeatureSwitches,
@@ -98,6 +99,8 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
   override def apply(conf: Configuration): StreamTransformer = {
     log.info("Building HyperConformance")
 
+    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
+
     validateConfiguration(conf)
 
     val menasCredentialsFactory = getMenasCredentialsFactory(conf: Configuration)
@@ -125,7 +128,6 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       .setBroadcastMaxSizeMb(0)
 
     implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
-
     new HyperConformance()
   }
 

@@ -22,7 +22,7 @@ import za.co.absa.enceladus.utils.validation.{SchemaPathValidator, ValidationErr
 /**
   * A test suite for validation of schema path fields existence.
   */
-class SchemaPathValidationSuite extends FunSuite {
+class SchemaPathValidatorSuite extends FunSuite {
 
   private val schema = StructType(
     Array(

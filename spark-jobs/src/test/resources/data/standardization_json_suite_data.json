@@ -1,0 +1,11 @@
+{"description":"Having data","string":"Hello world","boolean":"true","integer":"1","date":"31/07/2005","array":["31/07/2005 08:22:31","31/07/2005 18:22:44"]},
+{"description":"Typed data","string":"Lorem Ipsum","boolean":true,"integer":1000,"date":"07/08/2005","array":[]},
+{"description":"Nulls","string":null,"boolean":null,"integer":null,"date":null,"array":null},
+{"description":"Missing fields"},
+{"description":"Object in atomic type","string":{"foo":bar}},
+{"description":"Array in atomic type","boolean":[false, true]},
+{"description":"Array in string type","string":["a", "bb","ccc"]},
+{"description":"Object in array type","array":{"foo":bar}},
+{"description":"Atomic type in array","array":"25/09/2005 11:22:33"},
+
+

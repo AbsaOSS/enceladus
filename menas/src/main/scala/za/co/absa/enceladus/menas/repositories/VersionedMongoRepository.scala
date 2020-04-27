@@ -78,7 +78,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.find(getNameVersionFilter(name, Some(version))).headOption()
   }
 
-  def getLatestVersionValue(name: String, includeDisabled: Boolean = false): Future[Option[Int]] = {
+  def getLatestVersionValue(name: String): Future[Option[Int]] = {
     val pipeline = Seq(
       filter(getNameFilter(name)),
       Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))

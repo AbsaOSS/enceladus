@@ -21,7 +21,8 @@ import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.standardization.interpreter.dataTypes._
 import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, SparkXMLHack, TypeParser}
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary, UDFNames}
+import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.validation.ValidationException
@@ -35,10 +36,12 @@ object StandardizationInterpreter{
 
   /**
     * Perform the standardization of the dataframe given the expected schema
-    * @param df         Dataframe to be standardized
-    * @param expSchema  The schema for the df to be standardized into
+    * @param df                       Dataframe to be standardized
+    * @param expSchema                The schema for the df to be standardized into
+    * @param failOnInputNotPerSchema  if true a discrepancy between expSchema and input data throws an exception
+    *                                 if false the error is marked in the error column
     */
-  def standardize(df: Dataset[Row], expSchema: StructType, inputType: String)
+  def standardize(df: Dataset[Row], expSchema: StructType, inputType: String, failOnInputNotPerSchema: Boolean = false)
                  (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
 
     logger.info(s"Step 1: Schema validation")
@@ -54,7 +57,7 @@ object StandardizationInterpreter{
     }
 
     logger.info(s"Step 2: Standardization")
-    val std = standardizeDataset(dfXmlSafe, expSchema)
+    val std = standardizeDataset(dfXmlSafe, expSchema, failOnInputNotPerSchema)
 
     logger.info(s"Step 3: Clean the final error column")
     val cleanedStd = cleanTheFinalErrorColumn(std)
@@ -70,17 +73,18 @@ object StandardizationInterpreter{
     }
   }
 
-  private def standardizeDataset(df: Dataset[Row], expSchema: StructType)
+  private def standardizeDataset(df: Dataset[Row], expSchema: StructType, failOnInputNotPerSchema: Boolean)
                                 (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame  = {
 
-    val (stdCols, errorCols, oldErrorColumn) = expSchema.fields.foldLeft(List.empty[Column], List.empty[Column], None: Option[Column]) {
+    val rowErrors: List[Column] = gatherRowErrors(df.schema)
+    val (stdCols, errorCols, oldErrorColumn) = expSchema.fields.foldLeft(List.empty[Column], rowErrors, None: Option[Column]) {
       (acc, field) =>
         logger.info(s"Standardizing field: ${field.name}")
         val (accCols, accErrorCols, accOldErrorColumn) = acc
         if (field.name == ErrorMessage.errorColumnName) {
           (accCols, accErrorCols, Option(df.col(field.name)))
         } else {
-          val ParseOutput(stdColumn, errColumn) = TypeParser.standardize(field, "", df.schema)
+          val ParseOutput(stdColumn, errColumn) = TypeParser.standardize(field, "", df.schema, failOnInputNotPerSchema)
           logger.info(s"Applying standardization plan for ${field.name}")
           (stdColumn :: accCols, errColumn :: accErrorCols, accOldErrorColumn)
         }
@@ -94,6 +98,18 @@ object StandardizationInterpreter{
   private def cleanTheFinalErrorColumn(dataFrame: DataFrame)
                                       (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     ArrayTransformations.flattenArrays(dataFrame, ErrorMessage.errorColumnName)
-      .withColumn(ErrorMessage.errorColumnName, callUDF("cleanErrCol", col(ErrorMessage.errorColumnName)))
+      .withColumn(ErrorMessage.errorColumnName, callUDF(UDFNames.cleanErrCol, col(ErrorMessage.errorColumnName)))
+  }
+
+  private def gatherRowErrors(origSchema: StructType)(implicit spark: SparkSession): List[Column] = {
+    val corruptRecordColumn = spark.conf.get(SparkUtils.ColumnNameOfCorruptRecordConf)
+    SchemaUtils.getField(corruptRecordColumn, origSchema).map {_ =>
+      val column = col(corruptRecordColumn)
+      when(column.isNotNull, // input row was not per expected schema
+        array(callUDF(UDFNames.stdSchemaErr, column.cast(StringType)) //column should be StringType but better to be sure
+      )).otherwise( // schema is OK
+        typedLit(Seq.empty[ErrorMessage])
+      )
+    }.toList
   }
 }

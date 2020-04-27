@@ -18,6 +18,7 @@ package za.co.absa.enceladus.menas.integration.controllers
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.auth.jwt.JwtFactory
 import za.co.absa.enceladus.menas.integration.InMemoryUsers
@@ -27,6 +28,7 @@ import scala.concurrent.{Await, Future}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles(Array("withEmbeddedMongo"))
 class AuthenticationIntegrationSuite extends BaseRestApiTest {
 
   import scala.concurrent.ExecutionContext.Implicits.global
