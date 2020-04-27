@@ -35,7 +35,7 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
 
   val valueAvroSchemaResource = "/dq_errors_avro_schema.avsc"
 
-  // these must match the name/namespace in the avsc above
+  // values these must match the name/namespace in the avsc above
   val recordName = "dataError"
   val namespaceName = "za.co.absa.dataquality.errors.avro.schema"
 

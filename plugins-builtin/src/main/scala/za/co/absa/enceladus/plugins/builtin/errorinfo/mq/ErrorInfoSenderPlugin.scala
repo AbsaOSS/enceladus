@@ -72,11 +72,10 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams, schemaRegis
     val avroValueSchemaString = KafkaErrorInfoPlugin.getAvroSchemaString
     val schemaType = KafkaErrorInfoPlugin.getStructTypeSchema
 
-    stdErrors.sqlContext.createDataFrame(stdErrors.rdd, schemaType) // force new schema
-
+    stdErrors.sqlContext.createDataFrame(stdErrors.rdd, schemaType) // force avsc schema to assure compatible nullability of the DF
       .limit(10)
       .select(
-        col("recordId").as("key").cast(DataTypes.StringType),
+        col("recordId").as("key").cast(DataTypes.StringType), // todo to_confluent_avro, too?
         to_confluent_avro(allValueColumns, avroValueSchemaString, schemaRegistryConfig).as("value")
       )
       .write
