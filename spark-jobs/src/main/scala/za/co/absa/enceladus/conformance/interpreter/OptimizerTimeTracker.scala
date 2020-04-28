@@ -127,8 +127,8 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
    * `df.queryExecution.optimized` can return a cached of an already calculated value.
    * This method ensures that the optimizer actually runs.
    *
-   * @param df A dataframe to calculate execution plan optimization time
-   * @return Elapsed time in milliseconds
+   * @param df A dataframe to calculate execution plan
+   * @return An instance of an optimized execution plan
    */
   private def getOptimizedPlanNoCache(df: DataFrame): LogicalPlan = {
     df.sparkSession.sessionState.optimizer.execute(df.queryExecution.analyzed)
