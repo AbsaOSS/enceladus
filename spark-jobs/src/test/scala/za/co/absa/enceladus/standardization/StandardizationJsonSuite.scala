@@ -22,10 +22,10 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationJsonSuite extends FunSuite with SparkTestBase with MockitoSugar{
   private implicit val udfLibrary:UDFLibrary = UDFLibrary()

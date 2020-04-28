@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.standardization
 
+import java.util.UUID
+
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
 import org.scalatest.mockito.MockitoSugar
@@ -23,10 +25,11 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
+import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter.UuidType
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
-import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar  {
   type FixtureParam = String
@@ -331,6 +334,70 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
       StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
     }
     assert(exception.getMessage == "Cannot standardize field 'letters' from type array into struct")
+  }
+
+  test("PseudoUuids are used") { tmpFileName =>
+    val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
+      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format parquet").split(" ")
+
+    val expected =
+      """+---+-------+-------+------+------------------------------------+
+        ||id |letters|struct |errCol|enceladus_record_id                 |
+        |+---+-------+-------+------+------------------------------------+
+        ||1  |[A, B] |[false]|[]    |4d003feb-bc72-3ded-abf4-5215912b1db3|
+        ||2  |[C]    |[true] |[]    |f57fa92e-1037-3411-8c49-012b422e9bc2|
+        |+---+-------+-------+------+------------------------------------+
+        |
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
+    val seq = Seq(
+      StructField("id", LongType, nullable = false),
+      StructField("letters", ArrayType(StringType), nullable = false),
+      StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
+    )
+    val schema = StructType(seq)
+    // PseudoUuids will always yield the same ids
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, addUuids = UuidType.PseudoUuids)
+
+    val actual = destDF.dataAsString(truncate = false)
+    assert(actual == expected)
+  }
+
+  test("True uuids are used") { tmpFileName =>
+    val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
+      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format parquet").split(" ")
+
+    val expected =
+      """+---+-------+-------+------+
+        ||id |letters|struct |errCol|
+        |+---+-------+-------+------+
+        ||1  |[A, B] |[false]|[]    |
+        ||2  |[C]    |[true] |[]    |
+        |+---+-------+-------+------+
+        |
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
+    val seq = Seq(
+      StructField("id", LongType, nullable = false),
+      StructField("letters", ArrayType(StringType), nullable = false),
+      StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
+    )
+    val schema = StructType(seq)
+    // PseudoUuids will always yield the same ids
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, addUuids = UuidType.TrueUuids)
+
+    // same except for the record id
+    val actual = destDF.drop("enceladus_record_id").dataAsString(truncate = false)
+    assert(actual == expected)
+
+    val destIds = destDF.select('enceladus_record_id ).collect().map(_.getAs[String](0)).toSet
+    assert(destIds.size == 2)
+    destIds.foreach(UUID.fromString) // check uuid validity
+
   }
 }
 

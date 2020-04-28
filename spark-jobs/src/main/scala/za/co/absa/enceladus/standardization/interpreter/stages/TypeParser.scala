@@ -22,23 +22,22 @@ import java.util.regex.Pattern
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{lit, _}
 import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary, UDFNames}
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils.FieldWithSource
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.TypedStructField._
 import za.co.absa.enceladus.utils.types.{Defaults, TypedStructField}
-import za.co.absa.enceladus.utils.udf.UDFBuilder
+import za.co.absa.enceladus.utils.udf.{UDFBuilder, UDFLibrary, UDFNames}
 import za.co.absa.spark.hofs.transform
-import org.apache.spark.sql.functions.lit
+
 import scala.reflect.runtime.universe._
-import scala.util.Random
-import scala.util.Try
+import scala.util.{Random, Try}
 
 /**
   * Base trait for standardization function

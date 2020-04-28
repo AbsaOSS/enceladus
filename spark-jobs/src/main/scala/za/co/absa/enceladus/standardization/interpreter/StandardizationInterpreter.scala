@@ -19,29 +19,39 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.enceladus.common.Constants
 import za.co.absa.enceladus.standardization.interpreter.dataTypes._
 import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, SparkXMLHack, TypeParser}
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary, UDFNames}
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFNames}
 import za.co.absa.enceladus.utils.validation.ValidationException
 
 /**
-  * Object representing set of tools for performing the actual standardization
-  */
-object StandardizationInterpreter{
+ * Object representing set of tools for performing the actual standardization
+ */
+object StandardizationInterpreter {
   private implicit val defaults: Defaults = GlobalDefaults
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
+  object UuidType extends Enumeration {
+    val TrueUuids, PseudoUuids, NoUuids = Value
+  }
+
   /**
-    * Perform the standardization of the dataframe given the expected schema
-    * @param df                       Dataframe to be standardized
-    * @param expSchema                The schema for the df to be standardized into
-    * @param failOnInputNotPerSchema  if true a discrepancy between expSchema and input data throws an exception
-    *                                 if false the error is marked in the error column
-    */
-  def standardize(df: Dataset[Row], expSchema: StructType, inputType: String, failOnInputNotPerSchema: Boolean = false)
+   * Perform the standardization of the dataframe given the expected schema
+   *
+   * @param df                      Dataframe to be standardized
+   * @param expSchema               The schema for the df to be standardized into
+   * @param failOnInputNotPerSchema if true a discrepancy between expSchema and input data throws an exception
+   *                                if false the error is marked in the error column
+   * @param addUuids                Decides if true uuid, pseudo (always the same) is used for the
+   *                                [[Constants.EnceladusRecordId]] or if the column is not added at all [[UuidType.NoUuids]] (default).
+   */
+  def standardize(df: Dataset[Row], expSchema: StructType, inputType: String, failOnInputNotPerSchema: Boolean = false,
+                  addUuids: UuidType.Value = UuidType.NoUuids)
                  (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
 
     logger.info(s"Step 1: Schema validation")
@@ -61,8 +71,18 @@ object StandardizationInterpreter{
 
     logger.info(s"Step 3: Clean the final error column")
     val cleanedStd = cleanTheFinalErrorColumn(std)
+
+    val idedStd = addUuids match {
+      case UuidType.NoUuids => cleanedStd
+      case other => {
+        val udfName = if (other == UuidType.TrueUuids) UDFNames.uuid else UDFNames.pseudoUuid
+        logger.info(s"Step 4: Adding uuids to the records")
+        cleanedStd.withColumn(Constants.EnceladusRecordId, callUDF(udfName))
+      }
+    }
+
     logger.info(s"Standardization process finished, returning to the application...")
-    cleanedStd
+    idedStd
   }
 
   private def validateSchemaAgainstSelfInconsistencies(expSchema: StructType)

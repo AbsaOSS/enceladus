@@ -20,4 +20,5 @@ object Constants {
   final val InfoDateColumnString = s"${InfoDateColumn}_string"
   final val ReportDateFormat = "yyyy-MM-dd"
   final val InfoVersionColumn = "enceladus_info_version"
+  final val EnceladusRecordId = "enceladus_record_id"
 }

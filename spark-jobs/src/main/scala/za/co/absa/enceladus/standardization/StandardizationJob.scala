@@ -20,6 +20,7 @@ import java.text.MessageFormat
 import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
+import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.slf4j.LoggerFactory
@@ -33,15 +34,16 @@ import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
+import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter._
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
-import org.apache.spark.SPARK_VERSION
+
 import scala.collection.immutable.HashMap
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -71,6 +73,7 @@ object StandardizationJob {
     val schema: StructType = dao.getSchema(dataset.schemaName, dataset.schemaVersion)
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg = getPathCfg(cmd, dataset, reportVersion)
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategy(conf)
 
     log.info(s"input path: ${pathCfg.inputPath}")
     log.info(s"output path: ${pathCfg.outputPath}")
@@ -93,7 +96,7 @@ object StandardizationJob {
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 
     try {
-      executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg)
+      executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg, recordIdGenerationStrategy)
       cmd.performanceMetricsFile.foreach(this.writePerformanceMetrics(performance, _))
       log.info("Standardization finished successfully")
     } finally {
@@ -209,7 +212,7 @@ object StandardizationJob {
     }
   }
 
-  private def getFixedWidthOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+  private def getFixedWidthOptions(cmd: StdCmdConfig): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
       HashMap("trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter))
     } else {
@@ -274,7 +277,8 @@ object StandardizationJob {
                                      schema: StructType,
                                      cmd: StdCmdConfig,
                                      menasCredentials: MenasCredentials,
-                                     pathCfg: PathCfg)
+                                     pathCfg: PathCfg,
+                                     recordIdGenerationStrategy: UuidType.Value)
                                     (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
     //scalastyle:on parameter.number
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
@@ -285,7 +289,7 @@ object StandardizationJob {
     PerformanceMetricTools.addJobInfoToAtumMetadata("std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     val standardizedDF = try {
-      StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat, cmd.failOnInputNotPerSchema)
+      StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat, cmd.failOnInputNotPerSchema, recordIdGenerationStrategy)
     } catch {
       case e@ValidationException(msg, errors)                  =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
@@ -449,10 +453,10 @@ object StandardizationJob {
 
   def buildRawPath(cmd: StdCmdConfig, dataset: Dataset, dateTokens: Array[String], reportVersion: Int): String = {
     cmd.rawPathOverride match {
-      case None                  =>
+      case None =>
         val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
         cmd.folderPrefix match {
-          case None               => s"${dataset.hdfsPath}$folderSuffix"
+          case None => s"${dataset.hdfsPath}$folderSuffix"
           case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
         }
       case Some(rawPathOverride) => rawPathOverride

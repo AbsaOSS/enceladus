@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.error
+package za.co.absa.enceladus.utils.udf
 
 object UDFNames {
   final val stdCastErr = "stdCastErr"
@@ -28,4 +28,7 @@ object UDFNames {
   final val arrayDistinctErrors = "arrayDistinctErrors"
   final val cleanErrCol = "cleanErrCol"
   final val errorColumnAppend = "errorColumnAppend"
+
+  final val uuid = "uuid"
+  final val pseudoUuid = "pseudoUuid"
 }

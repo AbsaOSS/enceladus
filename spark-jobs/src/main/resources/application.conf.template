@@ -17,6 +17,10 @@ enceladus.version=${project.version}
 # each can have multiple comma-separated hosts, these are used for fault-tolerance
 menas.rest.uri="http://localhost:8080,host2:9000/menas;https://localhost:8080,host2:9000/menas"
 
+# 'enceladus_record_id' with an id can be added containing either true UUID, always the same UUIDs (pseudo) or the column
+# will not be added at all. Allowed values: "no", "pseudo", "true"
+enceladus.recordid.generation.strategy="true"
+
 standardized.hdfs.path="/tmp/conformance-output/standardized-{0}-{1}-{2}-{3}"
 
 # Pattern to look for mapping table for the specified date
