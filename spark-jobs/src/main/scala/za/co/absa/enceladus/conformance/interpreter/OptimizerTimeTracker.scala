@@ -27,7 +27,7 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
   private val log = LoggerFactory.getLogger(this.getClass)
 
   private val maxToleratedPlanGenerationPerRuleMs = 100L
-  private val initialElapsedTimeBaselineMs = 300L
+  private val initialElapsedTimeBaselineMs = 250L
   private var baselineTimeMs = initialElapsedTimeBaselineMs
   private var lastExecutionPlanOptimizationTime = 0L
 
@@ -64,10 +64,10 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
       val currentExecutionPlanOptimizationTime = getExecutionPlanGenerationTimeMs(df)
 
       // The algorithm for determining when to apply a workaround is based on 2 triggers.
-      // 1. If it takes 5 times longer to optimize an execution plan now in comparison to the execution plan
+      // 1. If it takes 4 times longer to optimize an execution plan now in comparison to the execution plan
       //    optimization time  before the last conformance rules was applied, then it is too much.
       val tooBigTimeDifference = if (lastExecutionPlanOptimizationTime > 0) {
-        currentExecutionPlanOptimizationTime / lastExecutionPlanOptimizationTime > 5
+        currentExecutionPlanOptimizationTime / lastExecutionPlanOptimizationTime > 4
       } else {
         false
       }
