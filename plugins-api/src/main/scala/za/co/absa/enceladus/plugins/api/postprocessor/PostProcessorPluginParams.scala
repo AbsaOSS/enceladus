@@ -22,7 +22,8 @@ case class PostProcessorPluginParams(datasetName: String,
                                      reportDate: String,
                                      reportVersion: Int,
                                      outputPath: String,
-                                     sourceId: ErrorSourceId.Value)
+                                     sourceId: ErrorSourceId.Value,
+                                     sourceSystem: String)
 
 object PostProcessorPluginParams {
   object ErrorSourceId extends Enumeration {

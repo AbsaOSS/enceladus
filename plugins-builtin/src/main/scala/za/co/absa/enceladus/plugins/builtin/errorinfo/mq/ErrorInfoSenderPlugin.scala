@@ -79,7 +79,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
       .limit(10) // todo remove when done
       .select(
         to_confluent_avro(
-          struct(lit("sourceSystem1").as("sourceSystem")), keyAvroSchemaString, keySchemaRegistryConfig
+          struct(lit(params("sourceSystem")).as("sourceSystem")), keyAvroSchemaString, keySchemaRegistryConfig
         ).as("key"),
         to_confluent_avro(allValueColumns, valueAvroSchemaString, valueSchemaRegistryConfig).as("value")
       )
@@ -100,11 +100,11 @@ object ErrorInfoSenderPlugin {
 
   case class SingleErrorStardardized(tradeId: Double, reportDate: java.sql.Date, singleError: ErrorRecord) {
     def toErrorInfo(additionalParams: Map[String, String]): DceErrorInfo = DceErrorInfo(
-      sourceSystem = "testSystem", // todo load from ATUM
-      sourceSystemId = Some("testSystemId"),
+      sourceSystem = additionalParams("sourceSystem"),
+      sourceSystemId = None,
       dataset = additionalParams.get("datasetName"),
-      ingestionNumber = Some(1L), // todo from where?
-      processingTimestamp = Instant.now.toEpochMilli, // todo where to get this from?
+      ingestionNumber = None,
+      processingTimestamp = Instant.now.toEpochMilli,
       informationDate = Some(reportDate.toLocalDate.toEpochDay.toInt), // todo test it
       outputFileName = additionalParams.get("outputPath"),
       recordId = tradeId.toString, // todo enceladus_record_id

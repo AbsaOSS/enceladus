@@ -28,8 +28,10 @@ object PostProcessingService {
                          datasetVersion: Int,
                          reportDate: String,
                          reportVersion: Int,
-                         outputPath: String): PostProcessingService = {
-    val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath, Standardization)
+                         outputPath: String,
+                         sourceSystem: String): PostProcessingService = {
+    val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
+      Standardization, sourceSystem)
     PostProcessingService(config, params)
   }
 
@@ -38,8 +40,10 @@ object PostProcessingService {
                      datasetVersion: Int,
                      reportDate: String,
                      reportVersion: Int,
-                     outputPath: String): PostProcessingService = {
-    val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath, Conformance)
+                     outputPath: String,
+                     sourceSystem: String): PostProcessingService = {
+    val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
+      Conformance, sourceSystem)
     PostProcessingService(config, params)
   }
 
@@ -66,7 +70,8 @@ case class PostProcessingService private(config: Config,
       "reportDate" -> additionalParams.reportDate,
       "reportVersion" -> additionalParams.reportVersion.toString,
       "outputPath" -> additionalParams.outputPath,
-      "sourceId" -> additionalParams.sourceId.toString
+      "sourceId" -> additionalParams.sourceId.toString,
+      "sourceSystem" -> additionalParams.sourceSystem
     )
 
     postProcessingPlugins.foreach { plugin =>
