@@ -29,12 +29,13 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.enceladus.common.RecordIdGeneration.UuidType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter._
+import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
@@ -73,7 +74,7 @@ object StandardizationJob {
     val schema: StructType = dao.getSchema(dataset.schemaName, dataset.schemaVersion)
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg = getPathCfg(cmd, dataset, reportVersion)
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategy(conf)
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     log.info(s"input path: ${pathCfg.inputPath}")
     log.info(s"output path: ${pathCfg.outputPath}")

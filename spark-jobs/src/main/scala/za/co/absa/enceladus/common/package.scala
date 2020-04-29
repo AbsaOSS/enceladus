@@ -15,9 +15,6 @@
 
 package za.co.absa.enceladus
 
-import com.typesafe.config.{Config, ConfigException}
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter.UuidType
-
 package object common {
 
   /**
@@ -33,14 +30,4 @@ package object common {
   case class LongParameter(long: Long) extends RawFormatParameter
 
   case class DoubleParameter(double: Double) extends RawFormatParameter
-
-  def getRecordIdGenerationStrategy(conf: Config): UuidType.Value = {
-    conf.getString("enceladus.recordid.generation.strategy") match {
-      case "true" => UuidType.TrueUuids
-      case "pseudo" => UuidType.PseudoUuids
-      case "no" => UuidType.NoUuids
-      case other =>throw new ConfigException.BadValue("enceladus.recordid.generation.strategy",
-        s"Invalid value $other was encountered for id generation strategy, use one of: true, pseudo, no.")
-    }
-  }
 }

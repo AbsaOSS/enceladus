@@ -19,7 +19,8 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.enceladus.common.Constants
+import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
+import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.standardization.interpreter.dataTypes._
 import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, SparkXMLHack, TypeParser}
 import za.co.absa.enceladus.utils.error.ErrorMessage
@@ -35,10 +36,6 @@ import za.co.absa.enceladus.utils.validation.ValidationException
 object StandardizationInterpreter {
   private implicit val defaults: Defaults = GlobalDefaults
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
-
-  object UuidType extends Enumeration {
-    val TrueUuids, PseudoUuids, NoUuids = Value
-  }
 
   /**
    * Perform the standardization of the dataframe given the expected schema
@@ -72,14 +69,12 @@ object StandardizationInterpreter {
     logger.info(s"Step 3: Clean the final error column")
     val cleanedStd = cleanTheFinalErrorColumn(std)
 
-    val idedStd = addUuids match {
-      case UuidType.NoUuids => cleanedStd
-      case other => {
-        val udfName = if (other == UuidType.TrueUuids) UDFNames.uuid else UDFNames.pseudoUuid
-        logger.info(s"Step 4: Adding uuids to the records")
-        cleanedStd.withColumn(Constants.EnceladusRecordId, callUDF(udfName))
-      }
+    addUuids match {
+      case UuidType.NoUuids =>      logger.info("Step 4: Record id generation is off.")
+      case UuidType.PseudoUuids =>  logger.info("Step 4: Record id generation is set to 'pseudo' - all runs will yield the same IDs.")
+      case UuidType.TrueUuids =>    logger.info("Step 4: Record id generation is on and true UUIDs will be added to output.")
     }
+    val idedStd = RecordIdGeneration.addRecordIdColumnByStrategy(cleanedStd, addUuids)
 
     logger.info(s"Standardization process finished, returning to the application...")
     idedStd

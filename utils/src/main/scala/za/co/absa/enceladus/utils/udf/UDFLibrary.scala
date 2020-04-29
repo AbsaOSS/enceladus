@@ -73,7 +73,15 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
 
   spark.udf.register(uuid, { () => UUID.randomUUID().toString })
 
-  spark.udf.register(pseudoUuid, { () => UDFLibrary.pseudoUuid.toString })
+  private val pseudoRandom = new Random(seed = 22L) // scalastyle:ignore magic.number
+
+  def pseudoUuidFn: UUID = {
+    val arr = new Array[Byte](10) // scalastyle:ignore magic.number
+    pseudoRandom.nextBytes(arr)
+    UUID.nameUUIDFromBytes(arr)
+  }
+
+  spark.udf.register(pseudoUuid, { () => pseudoUuidFn.toString })
 
 }
 
@@ -95,11 +103,5 @@ object UDFLibrary {
     }
   }
 
-  private val pseudoRandom = new Random(seed = 22L) // scalastyle:ignore magic.number
 
-  def pseudoUuid: UUID = {
-    val arr = new Array[Byte](10) // scalastyle:ignore magic.number
-    pseudoRandom.nextBytes(arr)
-    UUID.nameUUIDFromBytes(arr)
-  }
 }

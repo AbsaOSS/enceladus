@@ -21,11 +21,11 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
+import za.co.absa.enceladus.common.RecordIdGeneration.UuidType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter.UuidType
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
