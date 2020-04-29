@@ -58,7 +58,18 @@ class GithubRelease < Release
 
   def get_issues
     return @issues unless @issues.nil?
-    issues_with_prs = call(URI("#{OptParser.options.github_url}/issues?milestone=#{id}&state=all"))
+    issues_with_prs = []
+    call_response = call(URI("#{OptParser.options.github_url}/issues?milestone=#{id}&state=all&page=1"))
+    index = 2
+    until call_response.empty?
+      puts "call_response"
+      p call_response
+      issues_with_prs.push(*call_response)
+      call_response = call(URI("#{OptParser.options.github_url}/issues?milestone=#{id}&state=all&page=#{index}"))
+      index += 1
+    end
+
+
     issues = issues_with_prs.select { |issue| issue[:pull_request].nil? }
     @issues = issues.inject([]) { |acc, v| acc << Issue.new(number: v[:number], title: v[:title]) }
     @issues
