@@ -15,10 +15,9 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.slf4j.LoggerFactory
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{col, lit}
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(implicit spark: SparkSession) {
@@ -117,21 +116,9 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
     */
   def getExecutionPlanGenerationTimeMs(df: DataFrame): Long = {
     val t0 = System.currentTimeMillis()
-    getOptimizedPlanNoCache(df)
+    df.queryExecution.toString()
     val t1 = System.currentTimeMillis()
     t1 - t0
-  }
-
-  /**
-   * Returns the optimized execution plan of a dataframe. Ensures the optimizer is invoked.
-   * `df.queryExecution.optimized` can return a cached of an already calculated value.
-   * This method ensures that the optimizer actually runs.
-   *
-   * @param df A dataframe to calculate execution plan
-   * @return An instance of an optimized execution plan
-   */
-  private def getOptimizedPlanNoCache(df: DataFrame): LogicalPlan = {
-    df.sparkSession.sessionState.optimizer.execute(df.queryExecution.analyzed)
   }
 
   /**
