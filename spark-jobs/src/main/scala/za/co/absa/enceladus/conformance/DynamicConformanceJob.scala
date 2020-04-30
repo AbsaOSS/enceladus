@@ -42,6 +42,7 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
@@ -249,7 +250,7 @@ object DynamicConformanceJob {
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, sw.toString)
         throw e
       case Success(conformedDF) =>
-        if (conformedDF.containsColumn(Constants.EnceladusRecordId)) {
+        if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
           conformedDF // no new id regenereration
         } else {
           recordIdGenerationStrategy match {

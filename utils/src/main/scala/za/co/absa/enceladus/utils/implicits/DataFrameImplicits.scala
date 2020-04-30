@@ -68,13 +68,6 @@ object DataFrameImplicits {
       SparkUtils.withColumnIfDoesNotExist(df, colName, col)
     }
 
-    /**
-     * Check if column exist by name, ignores case
-     * @param colName column to be checked
-     * @return true if found, false otherwise
-     */
-    def containsColumn(colName: String): Boolean = SchemaUtils.fieldExists(colName, df.schema)
-
   }
 
 }
