@@ -279,7 +279,7 @@ object StandardizationJob {
                                      cmd: StdCmdConfig,
                                      menasCredentials: MenasCredentials,
                                      pathCfg: PathCfg,
-                                     recordIdGenerationStrategy: UuidType.Value)
+                                     recordIdGenerationStrategy: UuidType)
                                     (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
     //scalastyle:on parameter.number
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)

@@ -48,7 +48,7 @@ object StandardizationInterpreter {
    *                                [[Constants.EnceladusRecordId]] or if the column is not added at all [[UuidType.NoUuids]] (default).
    */
   def standardize(df: Dataset[Row], expSchema: StructType, inputType: String, failOnInputNotPerSchema: Boolean = false,
-                  addUuids: UuidType.Value = UuidType.NoUuids)
+                  addUuids: UuidType = UuidType.NoUuids)
                  (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
 
     logger.info(s"Step 1: Schema validation")

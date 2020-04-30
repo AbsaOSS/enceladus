@@ -45,7 +45,7 @@ import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceM
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 object DynamicConformanceJob {
@@ -228,7 +228,7 @@ object DynamicConformanceJob {
     performance
   }
 
-  private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean, recordIdGenerationStrategy: UuidType.Value)
+  private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean, recordIdGenerationStrategy: UuidType)
                      (implicit spark: SparkSession, cmd: ConfCmdConfig, fsUtils: FileSystemVersionUtils, dao: MenasDAO): DataFrame = {
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
@@ -237,30 +237,30 @@ object DynamicConformanceJob {
       .setBroadcastStrategyMode(broadcastingStrategyMode)
       .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
-    val conformedDF = try {
+    Try {
       DynamicInterpreter.interpret(conformance, inputData)
-    } catch {
-      case e: ValidationException =>
+    } match {
+      case Failure(e: ValidationException) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, e.techDetails)
         throw e
-      case NonFatal(e)            =>
+      case Failure(NonFatal(e)) =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, sw.toString)
         throw e
-    }
+      case Success(conformedDF) =>
+        if (conformedDF.containsColumn(Constants.EnceladusRecordId)) {
+          conformedDF // no new id regenereration
+        } else {
+          recordIdGenerationStrategy match {
+            case UuidType.NoUuids => log.info("Record id generation is off.")
+            case UuidType.PseudoUuids => log.info("Record id generation is set to 'pseudo' - all runs will yield the same IDs.")
+            case UuidType.TrueUuids => log.info("Record id generation is on and true UUIDs will be added to output.")
+          }
+          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, recordIdGenerationStrategy)(UDFLibrary())
+        }
 
-    if (conformedDF.containsColumn(Constants.EnceladusRecordId)) {
-      conformedDF // no new id regenereration
-    } else {
-      recordIdGenerationStrategy match {
-        case UuidType.NoUuids =>      log.info("Record id generation is off.")
-        case UuidType.PseudoUuids =>  log.info("Record id generation is set to 'pseudo' - all runs will yield the same IDs.")
-        case UuidType.TrueUuids =>    log.info("Record id generation is on and true UUIDs will be added to output.")
-      }
-      RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, recordIdGenerationStrategy)(UDFLibrary())
     }
-
   }
 
   private def processResult(result: DataFrame,

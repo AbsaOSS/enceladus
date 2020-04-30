@@ -23,13 +23,17 @@ import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFNames}
 
 object RecordIdGeneration {
 
-  private val log: Logger = LoggerFactory.getLogger(this.getClass)
+  sealed trait UuidType
 
-  object UuidType extends Enumeration {
-    val TrueUuids, PseudoUuids, NoUuids = Value
+  object UuidType {
+    case object TrueUuids extends UuidType
+    case object PseudoUuids extends UuidType
+    case object NoUuids  extends UuidType
   }
 
-  def getRecordIdGenerationStrategyFromConfig(conf: Config): UuidType.Value = {
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
+
+  def getRecordIdGenerationStrategyFromConfig(conf: Config): UuidType = {
     conf.getString("enceladus.recordid.generation.strategy") match {
       case "true" => UuidType.TrueUuids
       case "pseudo" => UuidType.PseudoUuids
@@ -49,7 +53,7 @@ object RecordIdGeneration {
    * @param udfLib
    * @return possibly updated `origDf`
    */
-  def addRecordIdColumnByStrategy(origDf: DataFrame, strategy: UuidType.Value)
+  def addRecordIdColumnByStrategy(origDf: DataFrame, strategy: UuidType)
                                  (implicit udfLib: UDFLibrary) : DataFrame = {
     strategy match {
       case UuidType.NoUuids => origDf
