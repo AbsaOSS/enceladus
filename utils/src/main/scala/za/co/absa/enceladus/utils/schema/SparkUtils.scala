@@ -67,8 +67,6 @@ object SparkUtils {
     }
   }
 
-  def containsColumn(df: DataFrame, colName: String): Boolean = df.schema.exists(field => field.name.equalsIgnoreCase(colName))
-
   /**
     * Overwrites a column with a value provided by an expression.
     * If the value in the column does not match the one provided by the expression, an error will be

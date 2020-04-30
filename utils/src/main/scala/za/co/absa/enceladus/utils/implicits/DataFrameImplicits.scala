@@ -18,7 +18,7 @@ package za.co.absa.enceladus.utils.implicits
 import java.io.ByteArrayOutputStream
 
 import org.apache.spark.sql.{Column, DataFrame}
-import za.co.absa.enceladus.utils.schema.SparkUtils
+import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
 
 object DataFrameImplicits {
   implicit class DataFrameEnhancements(val df: DataFrame) {
@@ -73,7 +73,7 @@ object DataFrameImplicits {
      * @param colName column to be checked
      * @return true if found, false otherwise
      */
-    def containsColumn(colName: String): Boolean = SparkUtils.containsColumn(df, colName)
+    def containsColumn(colName: String): Boolean = SchemaUtils.fieldExists(colName, df.schema)
 
   }
 

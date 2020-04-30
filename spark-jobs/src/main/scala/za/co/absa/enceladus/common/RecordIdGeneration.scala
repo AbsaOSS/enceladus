@@ -34,12 +34,14 @@ object RecordIdGeneration {
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   def getRecordIdGenerationStrategyFromConfig(conf: Config): UuidType = {
-    conf.getString("enceladus.recordid.generation.strategy") match {
+    val strategyValue = conf.getString("enceladus.recordid.generation.strategy")
+
+    strategyValue.toLowerCase match {
       case "true" => UuidType.TrueUuids
       case "pseudo" => UuidType.PseudoUuids
       case "no" => UuidType.NoUuids
       case other => throw new ConfigException.BadValue("enceladus.recordid.generation.strategy",
-        s"Invalid value $other was encountered for id generation strategy, use one of: true, pseudo, no.")
+        s"Invalid value $strategyValue was encountered for id generation strategy, use one of: true, pseudo, no.")
     }
   }
 

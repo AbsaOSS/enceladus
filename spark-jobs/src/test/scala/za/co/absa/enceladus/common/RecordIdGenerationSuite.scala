@@ -17,13 +17,16 @@ package za.co.absa.enceladus.common
 
 import java.util.UUID
 
+import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueFactory}
 import org.scalatest.{FlatSpec, Matchers}
-import za.co.absa.enceladus.common.RecordIdGeneration.UuidType
 import za.co.absa.enceladus.common.RecordIdGenerationSuite.{SomeData, SomeDataWithId}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase {
+
+  import RecordIdGeneration._
+  import UuidType._
   import spark.implicits._
 
   val data1 = Seq(
@@ -32,43 +35,58 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
     SomeData("xyz", 56)
   )
 
-  "RecordIdColumnByStrategy" should s"do noop with ${UuidType.NoUuids}" in {
+  "RecordIdColumnByStrategy" should s"do noop with $NoUuids" in {
     implicit val udfLib = UDFLibrary()
 
     val df1 = spark.createDataFrame(data1)
-    val updatedDf1 = RecordIdGeneration.addRecordIdColumnByStrategy(df1, UuidType.NoUuids)
+    val updatedDf1 = addRecordIdColumnByStrategy(df1, NoUuids)
 
     df1.collectAsList() shouldBe updatedDf1.collectAsList()
   }
 
-  it should s"always yield the same IDs with ${UuidType.PseudoUuids}" in {
+  it should s"always yield the same IDs with ${PseudoUuids}" in {
 
     val df1 = spark.createDataFrame(data1)
-    val updatedDf1 = RecordIdGeneration.addRecordIdColumnByStrategy(df1, UuidType.PseudoUuids)(UDFLibrary())
-    val updatedDf2 = RecordIdGeneration.addRecordIdColumnByStrategy(df1, UuidType.PseudoUuids)(UDFLibrary())
+    val updatedDf1 = addRecordIdColumnByStrategy(df1, PseudoUuids)(UDFLibrary())
+    val updatedDf2 = addRecordIdColumnByStrategy(df1, PseudoUuids)(UDFLibrary())
 
     updatedDf1.as[SomeDataWithId].collect() should contain theSameElementsInOrderAs updatedDf2.as[SomeDataWithId].collect()
 
-    Seq(updatedDf1, updatedDf2).foreach{ updatedDf =>
+    Seq(updatedDf1, updatedDf2).foreach { updatedDf =>
       val updatedData = updatedDf.as[SomeDataWithId].collect()
       updatedData.size shouldBe 3
       updatedData.foreach(entry => UUID.fromString(entry.enceladus_record_id))
     }
   }
 
-  it should s"yield the different IDs with ${UuidType.TrueUuids}" in {
+  it should s"yield the different IDs with $TrueUuids" in {
 
     val df1 = spark.createDataFrame(data1)
-    val updatedDf1 = RecordIdGeneration.addRecordIdColumnByStrategy(df1, UuidType.TrueUuids)(UDFLibrary())
-    val updatedDf2 = RecordIdGeneration.addRecordIdColumnByStrategy(df1, UuidType.TrueUuids)(UDFLibrary())
+    val updatedDf1 = addRecordIdColumnByStrategy(df1, TrueUuids)(UDFLibrary())
+    val updatedDf2 = addRecordIdColumnByStrategy(df1, TrueUuids)(UDFLibrary())
 
     updatedDf1.as[SomeDataWithId].collect() shouldNot contain theSameElementsAs updatedDf2.as[SomeDataWithId].collect()
 
-    Seq(updatedDf1, updatedDf2).foreach{ updatedDf =>
+    Seq(updatedDf1, updatedDf2).foreach { updatedDf =>
       val updatedData = updatedDf.as[SomeDataWithId].collect()
       updatedData.size shouldBe 3
       updatedData.foreach(entry => UUID.fromString(entry.enceladus_record_id))
     }
+  }
+
+  "RecordIdGenerationStrategyFromConfig" should "correctly load uuidType from config (case insensitive)" in {
+
+    def configWithStrategyValue(value: String): Config =
+      ConfigFactory.empty().withValue("enceladus.recordid.generation.strategy", ConfigValueFactory.fromAnyRef(value))
+
+    getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("TruE")) shouldBe TrueUuids
+    getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("PseUdO")) shouldBe PseudoUuids
+    getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("nO")) shouldBe NoUuids
+
+    val caughtException = the[ConfigException.BadValue] thrownBy {
+      getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("InVaLiD"))
+    }
+    caughtException.getMessage should include("Invalid value at 'enceladus.recordid.generation.strategy'")
   }
 
 }
@@ -76,6 +94,7 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
 object RecordIdGenerationSuite {
 
   case class SomeData(value1: String, value2: Int)
+
   case class SomeDataWithId(value1: String, value2: Int, enceladus_record_id: String)
 
 }
