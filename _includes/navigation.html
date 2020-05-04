@@ -13,19 +13,19 @@
         href="{{ site.baseurl }}/">Home</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link {% if page.title == "Components" %}active{% endif %}"
+      <a class="nav-link {% if page.title == "Components" or page.categories contains "components" %}active{% endif %}"
         href="{{ site.baseurl }}/docs/{{ v }}/components">Components</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link {% if page.title == "Build Process" %}active{% endif %}"
+      <a class="nav-link {% if page.title == "Build Process" or page.categories contains "build-process" %}active{% endif %}"
         href="{{ site.baseurl }}/docs/{{ v }}/build-process">Build Process</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link {% if page.title == "Deployment" %}active{% endif %}"
+      <a class="nav-link {% if page.title == "Deployment" or page.categories contains "deployment" %}active{% endif %}"
         href="{{ site.baseurl }}/docs/{{ v }}/deployment">Deployment</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link {% if page.title == "Usage" %}active{% endif %}"
+      <a class="nav-link {% if page.title == "Usage" or page.categories contains "usage" %}active{% endif %}"
         href="{{ site.baseurl }}/docs/{{ v }}/usage">Usage</a>
     </li>
     <li class="nav-item">
@@ -33,7 +33,7 @@
         href="{{ site.baseurl }}/blog/">News</a>
     </li>
     <li class="nav-item ">
-      <a class="nav-link {% if page.title == "About Us" %}active{% endif %}"
+      <a class="nav-link {% if page.title contains "About Us" %}active{% endif %}"
         href="{{ site.baseurl }}/about">About Us</a>
     </li>
   </ul>

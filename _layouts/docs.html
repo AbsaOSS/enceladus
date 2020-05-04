@@ -1,7 +1,7 @@
 ---
 layout: default
 ---
-<div id="choose-version">
+<div class="float-lg-right" id="choose-version">
   <label>Choose version:</label>
   {% assign urlPostfix = page.title | downcase | replace: ' ','-' %}
   <select id="nav-version" onchange="switchVersion(this.value, '{{ urlPostfix }}')">
@@ -11,4 +11,29 @@ layout: default
   </select>
 </div>
 
+{% capture page_url_without_index_html %}{{ page.url | remove: "/index.html" }}{% endcapture %}
+{% capture split_keyword %}/docs/{{ page.version }}/{% endcapture %}
+{% assign splitted_main_url = page_url_without_index_html | split: split_keyword %}
+{% assign splitted_url_parts = splitted_main_url[1] | split: '/' %}
+{% assign part_done = splitted_url_parts.last %}
+
+{% if splitted_url_parts.size > 1 %}
+<p>
+  {% for part in splitted_url_parts %}
+    {% capture current_breadcrumb_url %}{{next_prepender}}/{{ part }}{% endcapture %}
+    {% capture next_prepender %}{{current_breadcrumb_url}}{% endcapture %}
+    {% capture url_to_find %}/docs/{{ page.version }}{{current_breadcrumb_url}}{% endcapture %}
+    {% for doc in site.docs %}
+        {% if doc.url == url_to_find %}
+          <a href="{{ site.baseurl }}/docs/{{ page.version }}{{current_breadcrumb_url}}">{{ doc.title | split: ' - '  | last }}</a>
+          {% if part != part_done %}
+           >
+          {% endif %}
+        {% endif %}
+    {% endfor %}
+  {% endfor %}
+</p>
+{% endif %}
+
 {{ content }}
+
