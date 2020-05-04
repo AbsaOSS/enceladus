@@ -27,7 +27,7 @@ module Docs
     Dir.glob("#{version}/*").each do |file_path|
       if file_path =~ /\.md$/
         puts "Removing redirects for #{file_path}"
-        file_content = File.read(file_path).partition(/---.*?(---)/m)
+        file_content = partition_liquid(file: File.read(file_path))
         new_content = file_content[0]
         new_content << remove_redirect(file_content[1])
         new_content << file_content[2]
@@ -42,7 +42,7 @@ module Docs
     Dir.glob(path).each do |file_path|
       if file_path =~ /\.md$/
         puts "Updating version for #{file_path}"
-        file_content = File.read(file_path).partition( /---.*?(---)/m )
+        file_content = partition_liquid(file: File.read(file_path))
         new_content = file_content[0]
         new_content << file_content[1].gsub(l_version, n_version)
         new_content << file_content[2]
@@ -51,6 +51,10 @@ module Docs
         updated_versions(path: "#{file_path}/*", l_version: l_version, n_version: n_version)
       end
     end
+  end
+
+  def self.partition_liquid(file:)
+    file.partition( /---.*?(---)/m )
   end
 
   def self.remove_redirect(content)
@@ -104,7 +108,6 @@ module Docs
   end
 
   def self.remove_topic(topic_name:, doc_folder:, yaml_path:)
-    file = "#{topic_name}.md"
     FileUtils.cd(doc_folder, verbose: true) do
       versions = Dir.glob('*')
       versions.each do |version|
