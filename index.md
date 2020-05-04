@@ -16,7 +16,7 @@ More about this in the [components][components-tab] tab.
 
 To see all projects made by the AbsaOSS initiative please visit our main [GH Pages][absaoss]
 
-The whole project is under the MIT license.
+The whole project is under the Apache 2.0 license.
 
 [absa]: https://www.absa.africa/absaafrica/
 [spark]: https://spark.apache.org/

@@ -1,10 +1,11 @@
 ---
 layout: docs
-title: Menas
+title: Components - Menas
 version: '2.0.0'
 categories:
     - '2.0.0'
-redirect_from: /docs/menas
+    - components
+redirect_from: /docs/components/menas
 ---
 ## API
 

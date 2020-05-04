@@ -9,9 +9,9 @@ redirect_from: /docs/usage
 Usage
 =====
 
-* [Schema]({{ site.baseurl }}/docs/{{ page.version }}/usage-schema)
+* [Schema]({{ site.baseurl }}/docs/{{ page.version }}/usage/schema)
 
 Details
 -------
 
-* [Error columns]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)
+* [Error columns]({{ site.baseurl }}/docs/{{ page.version }}/usage/errcol)

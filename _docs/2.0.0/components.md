@@ -11,7 +11,7 @@ redirect_from: /docs/components
 
 Menas is a UI component of the Enceladus project. It is used to define datasets and schemas representing your data. Using dataset definition you define where the data is, where should it land if any conformance rules should be applied. Schema defines how does the data will look (column names, types) after standardization.
 
-[More...]({{ site.baseurl }}/docs/{{ page.version }}/menas)
+[More...]({{ site.baseurl }}/docs/{{ page.version }}/components/menas)
 
 ### SparkJobs
 
