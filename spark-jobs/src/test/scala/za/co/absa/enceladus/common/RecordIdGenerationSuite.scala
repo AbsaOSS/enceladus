@@ -23,11 +23,11 @@ import za.co.absa.enceladus.common.RecordIdGenerationSuite.{SomeData, SomeDataWi
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import RecordIdGeneration._
-import UuidType._
+import IdType._
 
 class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase {
   import spark.implicits._
-  implicit val udfLib: UDFLibrary = UDFLibrary()
+  implicit val udfLib: UDFLibrary = new UDFLibrary()
 
   val data1 = Seq(
     SomeData("abc", 12),
@@ -35,25 +35,24 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
     SomeData("xyz", 56)
   )
 
-  "RecordIdColumnByStrategy" should s"do noop with $NoUuids" in {
+  "RecordIdColumnByStrategy" should s"do noop with $NoId" in {
     val df1 = spark.createDataFrame(data1)
-    val updatedDf1 = addRecordIdColumnByStrategy(df1, NoUuids)
+    val updatedDf1 = addRecordIdColumnByStrategy(df1, NoId)
 
     df1.collectAsList() shouldBe updatedDf1.collectAsList()
   }
 
-  it should s"always yield the same IDs with ${PseudoUuids}" in {
+  it should s"always yield the same IDs with ${StableHashId}" in {
 
     val df1 = spark.createDataFrame(data1)
-    val updatedDf1 = addRecordIdColumnByStrategy(df1, PseudoUuids)
-    val updatedDf2 = addRecordIdColumnByStrategy(df1, PseudoUuids)
+    val updatedDf1 = addRecordIdColumnByStrategy(df1, StableHashId)
+    val updatedDf2 = addRecordIdColumnByStrategy(df1, StableHashId)
 
     updatedDf1.as[SomeDataWithId].collect() should contain theSameElementsInOrderAs updatedDf2.as[SomeDataWithId].collect()
 
     Seq(updatedDf1, updatedDf2).foreach { updatedDf =>
       val updatedData = updatedDf.as[SomeDataWithId].collect()
-      updatedData.size shouldBe 3
-      updatedData.foreach(entry => UUID.fromString(entry.enceladus_record_id))
+      updatedData.length shouldBe 3
     }
   }
 
@@ -67,7 +66,7 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
 
     Seq(updatedDf1, updatedDf2).foreach { updatedDf =>
       val updatedData = updatedDf.as[SomeDataWithId].collect()
-      updatedData.size shouldBe 3
+      updatedData.length shouldBe 3
       updatedData.foreach(entry => UUID.fromString(entry.enceladus_record_id))
     }
   }
@@ -77,9 +76,9 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
     def configWithStrategyValue(value: String): Config =
       ConfigFactory.empty().withValue("enceladus.recordId.generation.strategy", ConfigValueFactory.fromAnyRef(value))
 
-    getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("TruE")) shouldBe TrueUuids
-    getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("PseUdO")) shouldBe PseudoUuids
-    getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("nO")) shouldBe NoUuids
+    getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("UUiD")) shouldBe TrueUuids
+    getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("StaBleHASHiD")) shouldBe StableHashId
+    getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("nOnE")) shouldBe NoId
 
     val caughtException = the[ConfigException.BadValue] thrownBy {
       getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("InVaLiD"))

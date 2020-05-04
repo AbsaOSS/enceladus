@@ -30,7 +30,7 @@ class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase {
 
     logDataFrameContent(data)
 
-    implicit val udfLib: UDFLibrary = UDFLibrary()
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val sourceFile = FileReader.readFileAsString("src/test/resources/data/data1Schema.json")
     val schema = DataType.fromJson(sourceFile).asInstanceOf[StructType]

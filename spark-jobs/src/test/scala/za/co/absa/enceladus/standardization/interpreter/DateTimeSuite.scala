@@ -43,7 +43,7 @@ class DateTimeSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     .getLines().mkString("\n"))
     .asInstanceOf[StructType]
 
-  private implicit val udfLib: UDFLibrary = UDFLibrary()
+  private implicit val udfLib: UDFLibrary = new UDFLibrary()
 
   test("Validation should return critical errors") {
     logger.debug(data.schema.prettyJson)

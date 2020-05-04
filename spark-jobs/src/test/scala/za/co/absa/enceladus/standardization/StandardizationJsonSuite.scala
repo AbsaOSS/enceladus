@@ -28,7 +28,7 @@ import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancem
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationJsonSuite extends FunSuite with SparkTestBase with MockitoSugar{
-  private implicit val udfLibrary:UDFLibrary = UDFLibrary()
+  private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
 
   test("Reading data from JSON input, also such that don't adhere to desired schema") {
 

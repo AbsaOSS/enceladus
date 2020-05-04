@@ -25,7 +25,7 @@ import za.co.absa.enceladus.utils.udf.UDFNames._
 
 import scala.collection.mutable
 
-case class UDFLibrary()(implicit val spark: SparkSession) {
+class UDFLibrary()(implicit val spark: SparkSession) {
 
   spark.udf.register(stdCastErr, { (errCol: String, rawValue: String) =>
     ErrorMessage.stdCastErr(errCol, rawValue)
@@ -69,8 +69,6 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
                      ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
 
   spark.udf.register(uuid, { () => UUID.randomUUID().toString })
-
-  spark.udf.register(pseudoUuidFromHash, { (hash: String) => UDFLibrary.pseudoUuidFromHashFn(hash).toString })
 }
 
 object UDFLibrary {
@@ -89,9 +87,5 @@ object UDFLibrary {
     override def call(t1: Seq[Row], t2: Row): Seq[Row] = {
       t1 :+ t2
     }
-  }
-
-  private def pseudoUuidFromHashFn(hash: String): UUID = {
-    UUID.nameUUIDFromBytes(hash.getBytes())
   }
 }

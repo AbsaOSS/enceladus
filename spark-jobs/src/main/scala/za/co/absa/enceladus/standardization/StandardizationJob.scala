@@ -29,7 +29,7 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.version.SparkVersionGuard
-import za.co.absa.enceladus.common.RecordIdGeneration.UuidType
+import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
@@ -279,7 +279,7 @@ object StandardizationJob {
                                      cmd: StdCmdConfig,
                                      menasCredentials: MenasCredentials,
                                      pathCfg: PathCfg,
-                                     recordIdGenerationStrategy: UuidType)
+                                     recordIdGenerationStrategy: IdType)
                                     (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
     //scalastyle:on parameter.number
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)

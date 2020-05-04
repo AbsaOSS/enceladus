@@ -30,5 +30,4 @@ object UDFNames {
   final val errorColumnAppend = "errorColumnAppend"
 
   final val uuid = "enceladusUuid"
-  final val pseudoUuidFromHash = "enceladusPseudoUuidFromHash"
 }

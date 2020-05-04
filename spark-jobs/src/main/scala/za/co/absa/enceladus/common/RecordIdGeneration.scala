@@ -23,60 +23,55 @@ import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFNames}
 
 object RecordIdGeneration {
 
-  sealed trait UuidType
+  sealed trait IdType
 
-  object UuidType {
-    case object TrueUuids extends UuidType
-    case object PseudoUuids extends UuidType
-    case object NoUuids extends UuidType
+  object IdType {
+    case object TrueUuids extends IdType
+    case object StableHashId extends IdType
+    case object NoId extends IdType
   }
 
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  def getRecordIdGenerationStrategyFromConfig(conf: Config): UuidType = {
+  def getRecordIdGenerationStrategyFromConfig(conf: Config): IdType = {
     val strategyValue = conf.getString("enceladus.recordId.generation.strategy")
 
     strategyValue.toLowerCase match {
-      case "true" => UuidType.TrueUuids
-      case "pseudo" => UuidType.PseudoUuids
-      case "no" => UuidType.NoUuids
+      case "uuid" => IdType.TrueUuids
+      case "stablehashid" => IdType.StableHashId
+      case "none" => IdType.NoId
       case _ => throw new ConfigException.BadValue("enceladus.recordId.generation.strategy",
-        s"Invalid value $strategyValue was encountered for id generation strategy, use one of: true, pseudo, no.")
+        s"Invalid value '$strategyValue' was encountered for id generation strategy, use one of: uuid, stableHashId, none.")
     }
   }
 
   /**
-   * The supplied dataframe `origDf` is either kept as-is (`strategy` = [[UuidType.NoUuids]]) or appended the a column named
-   * [[Constants.EnceladusRecordId]] with an ID for each record. These ID true UUID (`strategy` = [[UuidType.TrueUuids]])
-   * or always the same ones for testing purposes (`strategy` = [[UuidType.PseudoUuids]]
+   * The supplied dataframe `origDf` is either kept as-is (`strategy` = [[IdType.NoId]]) or appended the a column named
+   * [[Constants.EnceladusRecordId]] with an ID for each record. These ID true UUID (`strategy` = [[IdType.TrueUuids]])
+   * or always the same ones for testing purposes (`strategy` = [[IdType.StableHashId]]
    *
-   * @param origDf dataframe to be possibly extended
+   * @param origDf   dataframe to be possibly extended
    * @param strategy decides if and what ids will be appended to the origDf
-   * @param udfLib library that registred UDFs [[UDFNames.pseudoUuidFromHash]] and [[UDFNames.uuid]]
+   * @param udfLib   library that registred UDFs [[UDFNames.uuid]]
    * @return possibly updated `origDf`
    */
-  def addRecordIdColumnByStrategy(origDf: DataFrame, strategy: UuidType)
-                                 (implicit udfLib: UDFLibrary): DataFrame = {
-
+  def addRecordIdColumnByStrategy(origDf: DataFrame, strategy: IdType)(implicit udfLib: UDFLibrary): DataFrame = {
     strategy match {
-      case UuidType.NoUuids =>
+      case IdType.NoId =>
         log.info("Record id generation is off.")
         origDf
-      case UuidType.PseudoUuids =>
-        log.info("Record id generation is set to 'pseudo' - all runs will yield the same IDs.")
 
-        val hashColName = "enceladusTempHashForPseudoUuid"
-        def hashFromAllColumns(df: DataFrame) = df.withColumn(hashColName, hash(df.columns.map(col): _*))
+      case IdType.StableHashId =>
+        log.info(s"Record id generation is set to 'stableHashId' - all runs will yield the same IDs.")
+        origDf.transform(hashFromAllColumns(Constants.EnceladusRecordId, _)) // adds hashId
 
-        import org.apache.spark.sql.functions.col
-        origDf.transform(hashFromAllColumns) // adds hash
-          .withColumn(Constants.EnceladusRecordId, callUDF(UDFNames.pseudoUuidFromHash, col(hashColName)))
-          .drop(hashColName) // hash is no longer needed (pseudo uuids were generated from it)
-
-      case UuidType.TrueUuids =>
+      case IdType.TrueUuids =>
         log.info("Record id generation is on and true UUIDs will be added to output.")
         origDf.withColumn(Constants.EnceladusRecordId, callUDF(UDFNames.uuid))
     }
   }
+
+  private def hashFromAllColumns(hashColName: String, df: DataFrame): DataFrame =
+    df.withColumn(hashColName, hash(df.columns.map(col): _*))
 
 }

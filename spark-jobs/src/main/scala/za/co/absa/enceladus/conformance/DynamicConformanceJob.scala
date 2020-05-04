@@ -228,7 +228,7 @@ object DynamicConformanceJob {
     performance
   }
 
-  private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean, recordIdGenerationStrategy: UuidType)
+  private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean, recordIdGenerationStrategy: IdType)
                      (implicit spark: SparkSession, cmd: ConfCmdConfig, fsUtils: FileSystemVersionUtils, dao: MenasDAO): DataFrame = {
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
@@ -250,9 +250,9 @@ object DynamicConformanceJob {
         throw e
       case Success(conformedDF) =>
         if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
-          conformedDF // no new id regenereration
+          conformedDF // no new id regeneration
         } else {
-          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, recordIdGenerationStrategy)(UDFLibrary())
+          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, recordIdGenerationStrategy)(new UDFLibrary())
         }
 
     }

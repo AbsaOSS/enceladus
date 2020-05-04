@@ -45,10 +45,10 @@ object StandardizationInterpreter {
    * @param failOnInputNotPerSchema    if true a discrepancy between expSchema and input data throws an exception
    *                                   if false the error is marked in the error column
    * @param recordIdGenerationStrategy Decides if true uuid, pseudo (always the same) is used for the
-   *                                   [[Constants.EnceladusRecordId]] or if the column is not added at all [[UuidType.NoUuids]] (default).
+   *                                   [[Constants.EnceladusRecordId]] or if the column is not added at all [[IdType.NoId]] (default).
    */
   def standardize(df: Dataset[Row], expSchema: StructType, inputType: String, failOnInputNotPerSchema: Boolean = false,
-                  recordIdGenerationStrategy: UuidType = UuidType.NoUuids)
+                  recordIdGenerationStrategy: IdType = IdType.NoId)
                  (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
 
     logger.info(s"Step 1: Schema validation")

@@ -242,7 +242,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
     assert(actual == expected)
   }
 
-  test("Test standardizing a CSV file with enabled check of maxColumns limit, permissive read mode explicit, no corrupt record") { tmpFileName => //scalastyle:ignore line.size.limit readability
+  test("Test standardizing a CSV file with enabled check of maxColumns limit, permissive read mode explicit, no corrupt record") { tmpFileName =>
     // The delimiter used is '¡'
     // A quote character should be any character that cannot be encountered in the CSV
     // For this case it is '$'
