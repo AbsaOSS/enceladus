@@ -37,7 +37,6 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter.logger
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
@@ -46,8 +45,8 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 object DynamicConformanceJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
@@ -253,11 +252,6 @@ object DynamicConformanceJob {
         if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
           conformedDF // no new id regenereration
         } else {
-          recordIdGenerationStrategy match {
-            case UuidType.NoUuids => log.info("Record id generation is off.")
-            case UuidType.PseudoUuids => log.info("Record id generation is set to 'pseudo' - all runs will yield the same IDs.")
-            case UuidType.TrueUuids => log.info("Record id generation is on and true UUIDs will be added to output.")
-          }
           RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, recordIdGenerationStrategy)(UDFLibrary())
         }
 

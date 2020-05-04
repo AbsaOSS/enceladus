@@ -24,8 +24,6 @@ import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
 import za.co.absa.enceladus.utils.udf.UDFNames._
 
 import scala.collection.mutable
-import scala.util.Random
-
 
 case class UDFLibrary()(implicit val spark: SparkSession) {
 
@@ -70,19 +68,9 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
                      UDFLibrary.errorColumnAppend,
                      ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
 
-
   spark.udf.register(uuid, { () => UUID.randomUUID().toString })
 
-  private val pseudoRandom = new Random(seed = 22L) // scalastyle:ignore magic.number
-
-  def pseudoUuidFn: UUID = {
-    val arr = new Array[Byte](10) // scalastyle:ignore magic.number
-    pseudoRandom.nextBytes(arr)
-    UUID.nameUUIDFromBytes(arr)
-  }
-
-  spark.udf.register(pseudoUuid, { () => pseudoUuidFn.toString })
-
+  spark.udf.register(pseudoUuidFromHash, { (hash: String) => UDFLibrary.pseudoUuidFromHashFn(hash).toString })
 }
 
 object UDFLibrary {
@@ -103,5 +91,7 @@ object UDFLibrary {
     }
   }
 
-
+  private def pseudoUuidFromHashFn(hash: String): UUID = {
+    UUID.nameUUIDFromBytes(hash.getBytes())
+  }
 }

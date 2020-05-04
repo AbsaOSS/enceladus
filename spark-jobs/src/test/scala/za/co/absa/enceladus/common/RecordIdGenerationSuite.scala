@@ -22,12 +22,12 @@ import org.scalatest.{FlatSpec, Matchers}
 import za.co.absa.enceladus.common.RecordIdGenerationSuite.{SomeData, SomeDataWithId}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import RecordIdGeneration._
+import UuidType._
 
 class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase {
-
-  import RecordIdGeneration._
-  import UuidType._
   import spark.implicits._
+  implicit val udfLib: UDFLibrary = UDFLibrary()
 
   val data1 = Seq(
     SomeData("abc", 12),
@@ -36,8 +36,6 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
   )
 
   "RecordIdColumnByStrategy" should s"do noop with $NoUuids" in {
-    implicit val udfLib = UDFLibrary()
-
     val df1 = spark.createDataFrame(data1)
     val updatedDf1 = addRecordIdColumnByStrategy(df1, NoUuids)
 
@@ -47,8 +45,8 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
   it should s"always yield the same IDs with ${PseudoUuids}" in {
 
     val df1 = spark.createDataFrame(data1)
-    val updatedDf1 = addRecordIdColumnByStrategy(df1, PseudoUuids)(UDFLibrary())
-    val updatedDf2 = addRecordIdColumnByStrategy(df1, PseudoUuids)(UDFLibrary())
+    val updatedDf1 = addRecordIdColumnByStrategy(df1, PseudoUuids)
+    val updatedDf2 = addRecordIdColumnByStrategy(df1, PseudoUuids)
 
     updatedDf1.as[SomeDataWithId].collect() should contain theSameElementsInOrderAs updatedDf2.as[SomeDataWithId].collect()
 
@@ -62,8 +60,8 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
   it should s"yield the different IDs with $TrueUuids" in {
 
     val df1 = spark.createDataFrame(data1)
-    val updatedDf1 = addRecordIdColumnByStrategy(df1, TrueUuids)(UDFLibrary())
-    val updatedDf2 = addRecordIdColumnByStrategy(df1, TrueUuids)(UDFLibrary())
+    val updatedDf1 = addRecordIdColumnByStrategy(df1, TrueUuids)
+    val updatedDf2 = addRecordIdColumnByStrategy(df1, TrueUuids)
 
     updatedDf1.as[SomeDataWithId].collect() shouldNot contain theSameElementsAs updatedDf2.as[SomeDataWithId].collect()
 
@@ -77,7 +75,7 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
   "RecordIdGenerationStrategyFromConfig" should "correctly load uuidType from config (case insensitive)" in {
 
     def configWithStrategyValue(value: String): Config =
-      ConfigFactory.empty().withValue("enceladus.recordid.generation.strategy", ConfigValueFactory.fromAnyRef(value))
+      ConfigFactory.empty().withValue("enceladus.recordId.generation.strategy", ConfigValueFactory.fromAnyRef(value))
 
     getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("TruE")) shouldBe TrueUuids
     getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("PseUdO")) shouldBe PseudoUuids
@@ -86,7 +84,7 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
     val caughtException = the[ConfigException.BadValue] thrownBy {
       getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("InVaLiD"))
     }
-    caughtException.getMessage should include("Invalid value at 'enceladus.recordid.generation.strategy'")
+    caughtException.getMessage should include("Invalid value at 'enceladus.recordId.generation.strategy'")
   }
 
 }

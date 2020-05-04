@@ -19,7 +19,7 @@ menas.rest.uri="http://localhost:8080,host2:9000/menas;https://localhost:8080,ho
 
 # 'enceladus_record_id' with an id can be added containing either true UUID, always the same UUIDs (pseudo) or the column
 # will not be added at all. Allowed values: "true", "pseudo", "no"
-enceladus.recordid.generation.strategy="true"
+enceladus.recordId.generation.strategy="true"
 
 standardized.hdfs.path="/tmp/conformance-output/standardized-{0}-{1}-{2}-{3}"
 

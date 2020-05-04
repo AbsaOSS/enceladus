@@ -29,6 +29,6 @@ object UDFNames {
   final val cleanErrCol = "cleanErrCol"
   final val errorColumnAppend = "errorColumnAppend"
 
-  final val uuid = "uuid"
-  final val pseudoUuid = "pseudoUuid"
+  final val uuid = "enceladusUuid"
+  final val pseudoUuidFromHash = "enceladusPseudoUuidFromHash"
 }

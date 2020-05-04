@@ -345,8 +345,8 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
       """+---+-------+-------+------+------------------------------------+
         ||id |letters|struct |errCol|enceladus_record_id                 |
         |+---+-------+-------+------+------------------------------------+
-        ||1  |[A, B] |[false]|[]    |4d003feb-bc72-3ded-abf4-5215912b1db3|
-        ||2  |[C]    |[true] |[]    |f57fa92e-1037-3411-8c49-012b422e9bc2|
+        ||1  |[A, B] |[false]|[]    |4fb44dab-0e1b-3f7e-8d93-a53862cd85c5|
+        ||2  |[C]    |[true] |[]    |0f25bab5-3150-32eb-a2fd-09ad3d462f90|
         |+---+-------+-------+------+------------------------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
@@ -359,7 +359,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
     )
     val schema = StructType(seq)
     // PseudoUuids will always yield the same ids
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, addUuids = UuidType.PseudoUuids)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, UuidType.PseudoUuids)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -388,7 +388,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
     )
     val schema = StructType(seq)
     // PseudoUuids will always yield the same ids
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, addUuids = UuidType.TrueUuids)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, UuidType.TrueUuids)
 
     // same except for the record id
     val actual = destDF.drop("enceladus_record_id").dataAsString(truncate = false)

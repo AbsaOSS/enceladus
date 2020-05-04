@@ -40,15 +40,15 @@ object StandardizationInterpreter {
   /**
    * Perform the standardization of the dataframe given the expected schema
    *
-   * @param df                      Dataframe to be standardized
-   * @param expSchema               The schema for the df to be standardized into
-   * @param failOnInputNotPerSchema if true a discrepancy between expSchema and input data throws an exception
-   *                                if false the error is marked in the error column
-   * @param addUuids                Decides if true uuid, pseudo (always the same) is used for the
-   *                                [[Constants.EnceladusRecordId]] or if the column is not added at all [[UuidType.NoUuids]] (default).
+   * @param df                         Dataframe to be standardized
+   * @param expSchema                  The schema for the df to be standardized into
+   * @param failOnInputNotPerSchema    if true a discrepancy between expSchema and input data throws an exception
+   *                                   if false the error is marked in the error column
+   * @param recordIdGenerationStrategy Decides if true uuid, pseudo (always the same) is used for the
+   *                                   [[Constants.EnceladusRecordId]] or if the column is not added at all [[UuidType.NoUuids]] (default).
    */
   def standardize(df: Dataset[Row], expSchema: StructType, inputType: String, failOnInputNotPerSchema: Boolean = false,
-                  addUuids: UuidType = UuidType.NoUuids)
+                  recordIdGenerationStrategy: UuidType = UuidType.NoUuids)
                  (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
 
     logger.info(s"Step 1: Schema validation")
@@ -69,12 +69,7 @@ object StandardizationInterpreter {
     logger.info(s"Step 3: Clean the final error column")
     val cleanedStd = cleanTheFinalErrorColumn(std)
 
-    addUuids match {
-      case UuidType.NoUuids =>      logger.info("Step 4: Record id generation is off.")
-      case UuidType.PseudoUuids =>  logger.info("Step 4: Record id generation is set to 'pseudo' - all runs will yield the same IDs.")
-      case UuidType.TrueUuids =>    logger.info("Step 4: Record id generation is on and true UUIDs will be added to output.")
-    }
-    val idedStd = RecordIdGeneration.addRecordIdColumnByStrategy(cleanedStd, addUuids)
+    val idedStd = RecordIdGeneration.addRecordIdColumnByStrategy(cleanedStd, recordIdGenerationStrategy)
 
     logger.info(s"Standardization process finished, returning to the application...")
     idedStd
