@@ -46,9 +46,9 @@ object RecordIdGeneration {
   }
 
   /**
-   * The supplied dataframe `origDf` is either kept as-is (`strategy` = [[IdType.NoId]]) or appended an ID column
-   * with an ID for each record. These ID true UUID (`strategy` = [[IdType.TrueUuids]]) or always the same ones for testing
-   * purposes (`strategy` = [[IdType.StableHashId]]
+   * The supplied dataframe `origDf` is either kept as-is (`strategy` = [[IdType.NoId]]) or has a column appended
+   * with an (presumably) unique value for each record. These are true UUIDs (`strategy` = [[IdType.TrueUuids]]) or
+   * values always the same for the same row, mainly for testing purposes (`strategy` = [[IdType.StableHashId]]
    *
    * @param origDf       dataframe to be possibly extended
    * @param idColumnName name of the id column to be used (usually [[Constants.EnceladusRecordId]])
