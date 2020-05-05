@@ -235,19 +235,6 @@ The list of additional options available for running Conformance:
 | --catalyst-workaround **true/false**       | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. It is `true` by default. Turn this off only is you encounter timing freeze issues when running Conformance. | 
 | --autoclean-std-folder **true/false**      | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job. |
 
-#### Notable config options
-Standardization and Conformance also feature number of config settings read from `application.conf` (Take a look at 
-[the template](spark-jobs/src/main/resources/application.conf.template)). These values can be overridden using the `-D` 
-property values as in:
-```shell script
-spark submit --conf "spark.driver.extraJavaOptions= -Dkey1=value1 -Dkey2=value2" ...
-```
-
-|            Config path                 |                           Description                                                                                                              |
-|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| enceladus.recordId.generation.strategy | If and how a record id generated to the `enceladus_record_id` column. Can be one of `none` (no column with IDs added), `uuid` (default - UUID-based values are generated), `stableHashId` (always-the-same Murmur3 Int hash is generated - for testing)     
-
-
 ## Plugins
 
 Standardization and Conformance support plugins that allow executing additional actions at certain times of the computation.

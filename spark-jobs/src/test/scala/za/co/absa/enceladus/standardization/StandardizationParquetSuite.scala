@@ -387,7 +387,6 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
-    // True UUid will always yield the same ids
     val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
 
     // same except for the record id
