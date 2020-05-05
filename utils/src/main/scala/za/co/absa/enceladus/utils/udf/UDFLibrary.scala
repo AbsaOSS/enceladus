@@ -67,8 +67,6 @@ class UDFLibrary()(implicit val spark: SparkSession) {
   spark.udf.register(errorColumnAppend,
                      UDFLibrary.errorColumnAppend,
                      ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
-
-  spark.udf.register(uuid, { () => UUID.randomUUID().toString })
 }
 
 object UDFLibrary {

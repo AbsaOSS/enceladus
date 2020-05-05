@@ -21,13 +21,11 @@ import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueF
 import org.scalatest.{FlatSpec, Matchers}
 import za.co.absa.enceladus.common.RecordIdGenerationSuite.{SomeData, SomeDataWithId}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import za.co.absa.enceladus.utils.udf.UDFLibrary
 import RecordIdGeneration._
 import IdType._
 
 class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase {
   import spark.implicits._
-  implicit val udfLib: UDFLibrary = new UDFLibrary()
 
   val data1 = Seq(
     SomeData("abc", 12),

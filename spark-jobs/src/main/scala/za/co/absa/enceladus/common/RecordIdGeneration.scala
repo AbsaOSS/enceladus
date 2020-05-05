@@ -17,9 +17,8 @@ package za.co.absa.enceladus.common
 
 import com.typesafe.config.{Config, ConfigException}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{callUDF, col, hash}
+import org.apache.spark.sql.functions.{col, hash, expr}
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFNames}
 
 object RecordIdGeneration {
 
@@ -53,10 +52,9 @@ object RecordIdGeneration {
    * @param origDf       dataframe to be possibly extended
    * @param idColumnName name of the id column to be used (usually [[Constants.EnceladusRecordId]])
    * @param strategy     decides if and what ids will be appended to the origDf
-   * @param udfLib       library that registred UDFs [[UDFNames.uuid]]
    * @return possibly updated `origDf`
    */
-  def addRecordIdColumnByStrategy(origDf: DataFrame, idColumnName: String, strategy: IdType)(implicit udfLib: UDFLibrary): DataFrame = {
+  def addRecordIdColumnByStrategy(origDf: DataFrame, idColumnName: String, strategy: IdType): DataFrame = {
     strategy match {
       case IdType.NoId =>
         log.info("Record id generation is off.")
@@ -68,7 +66,7 @@ object RecordIdGeneration {
 
       case IdType.TrueUuids =>
         log.info("Record id generation is on and true UUIDs will be added to output.")
-        origDf.withColumn(Constants.EnceladusRecordId, callUDF(UDFNames.uuid))
+        origDf.withColumn(Constants.EnceladusRecordId, expr("uuid()"))
     }
   }
 

@@ -43,7 +43,6 @@ import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancem
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
-import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -252,7 +251,7 @@ object DynamicConformanceJob {
         if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
           conformedDF // no new id regeneration
         } else {
-          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, Constants.EnceladusRecordId, recordIdGenerationStrategy)(new UDFLibrary())
+          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, Constants.EnceladusRecordId, recordIdGenerationStrategy)
         }
 
     }
