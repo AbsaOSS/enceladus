@@ -18,7 +18,7 @@ package za.co.absa.enceladus.standardization
 import java.util.UUID
 
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.{StructField, _}
+import org.apache.spark.sql.types._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
 import za.co.absa.enceladus.common.RecordIdGeneration.IdType
@@ -415,7 +415,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
         |""".stripMargin.replace("\r\n", "\n")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
-    import org.apache.spark.sql.functions.{concat, lit, col}
+    import org.apache.spark.sql.functions.{concat, lit}
     val sourceDfWithExistingIds = sourceDF.withColumn("enceladus_record_id", concat(lit("id"), 'id))
     sourceDfWithExistingIds.show(false)
 
