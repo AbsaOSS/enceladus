@@ -46,16 +46,17 @@ object RecordIdGeneration {
   }
 
   /**
-   * The supplied dataframe `origDf` is either kept as-is (`strategy` = [[IdType.NoId]]) or appended the a column named
-   * [[Constants.EnceladusRecordId]] with an ID for each record. These ID true UUID (`strategy` = [[IdType.TrueUuids]])
-   * or always the same ones for testing purposes (`strategy` = [[IdType.StableHashId]]
+   * The supplied dataframe `origDf` is either kept as-is (`strategy` = [[IdType.NoId]]) or appended an ID column
+   * with an ID for each record. These ID true UUID (`strategy` = [[IdType.TrueUuids]]) or always the same ones for testing
+   * purposes (`strategy` = [[IdType.StableHashId]]
    *
-   * @param origDf   dataframe to be possibly extended
-   * @param strategy decides if and what ids will be appended to the origDf
-   * @param udfLib   library that registred UDFs [[UDFNames.uuid]]
+   * @param origDf       dataframe to be possibly extended
+   * @param idColumnName name of the id column to be used (usually [[Constants.EnceladusRecordId]])
+   * @param strategy     decides if and what ids will be appended to the origDf
+   * @param udfLib       library that registred UDFs [[UDFNames.uuid]]
    * @return possibly updated `origDf`
    */
-  def addRecordIdColumnByStrategy(origDf: DataFrame, strategy: IdType)(implicit udfLib: UDFLibrary): DataFrame = {
+  def addRecordIdColumnByStrategy(origDf: DataFrame, idColumnName: String, strategy: IdType)(implicit udfLib: UDFLibrary): DataFrame = {
     strategy match {
       case IdType.NoId =>
         log.info("Record id generation is off.")

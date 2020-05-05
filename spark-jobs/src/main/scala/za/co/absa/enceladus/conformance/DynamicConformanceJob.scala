@@ -252,7 +252,7 @@ object DynamicConformanceJob {
         if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
           conformedDF // no new id regeneration
         } else {
-          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, recordIdGenerationStrategy)(new UDFLibrary())
+          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, Constants.EnceladusRecordId, recordIdGenerationStrategy)(new UDFLibrary())
         }
 
     }

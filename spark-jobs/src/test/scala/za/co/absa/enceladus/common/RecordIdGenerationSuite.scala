@@ -37,7 +37,7 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
 
   "RecordIdColumnByStrategy" should s"do noop with $NoId" in {
     val df1 = spark.createDataFrame(data1)
-    val updatedDf1 = addRecordIdColumnByStrategy(df1, NoId)
+    val updatedDf1 = addRecordIdColumnByStrategy(df1, "idColumnWontBeUsed", NoId)
 
     df1.collectAsList() shouldBe updatedDf1.collectAsList()
   }
@@ -45,8 +45,8 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
   it should s"always yield the same IDs with ${StableHashId}" in {
 
     val df1 = spark.createDataFrame(data1)
-    val updatedDf1 = addRecordIdColumnByStrategy(df1, StableHashId)
-    val updatedDf2 = addRecordIdColumnByStrategy(df1, StableHashId)
+    val updatedDf1 = addRecordIdColumnByStrategy(df1, "stableId", StableHashId)
+    val updatedDf2 = addRecordIdColumnByStrategy(df1, "stableId", StableHashId)
 
     updatedDf1.as[SomeDataWithId].collect() should contain theSameElementsInOrderAs updatedDf2.as[SomeDataWithId].collect()
 
@@ -59,8 +59,8 @@ class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase 
   it should s"yield the different IDs with $TrueUuids" in {
 
     val df1 = spark.createDataFrame(data1)
-    val updatedDf1 = addRecordIdColumnByStrategy(df1, TrueUuids)
-    val updatedDf2 = addRecordIdColumnByStrategy(df1, TrueUuids)
+    val updatedDf1 = addRecordIdColumnByStrategy(df1, "trueId", TrueUuids)
+    val updatedDf2 = addRecordIdColumnByStrategy(df1, "trueId", TrueUuids)
 
     updatedDf1.as[SomeDataWithId].collect() shouldNot contain theSameElementsAs updatedDf2.as[SomeDataWithId].collect()
 
