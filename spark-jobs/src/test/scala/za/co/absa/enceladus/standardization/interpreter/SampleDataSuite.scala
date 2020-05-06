@@ -18,9 +18,9 @@ package za.co.absa.enceladus.standardization.interpreter
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.samples.{StdEmployee, TestSamples}
-import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase {
 
@@ -30,7 +30,7 @@ class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase {
 
     logDataFrameContent(data)
 
-    implicit val udfLib: UDFLibrary = UDFLibrary()
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val sourceFile = FileReader.readFileAsString("src/test/resources/data/data1Schema.json")
     val schema = DataType.fromJson(sourceFile).asInstanceOf[StructType]

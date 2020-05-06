@@ -24,8 +24,8 @@ import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, ConformanceRule}
-import za.co.absa.enceladus.utils.error.UDFNames
 import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.enceladus.utils.udf.UDFNames
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInterpreter {

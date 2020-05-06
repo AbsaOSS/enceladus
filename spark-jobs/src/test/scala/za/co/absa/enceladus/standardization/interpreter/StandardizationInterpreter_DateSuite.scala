@@ -19,8 +19,9 @@ import java.sql.Date
 
 import org.apache.spark.sql.types.{DateType, MetadataBuilder, StructField, StructType}
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationInterpreter_DateSuite extends FunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._

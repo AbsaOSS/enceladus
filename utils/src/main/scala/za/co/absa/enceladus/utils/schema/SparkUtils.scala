@@ -19,7 +19,8 @@ import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 
@@ -78,7 +79,7 @@ object SparkUtils {
     */
   private def overwriteWithErrorColumn(df: DataFrame, colName: String, colExpr: Column): DataFrame = {
     implicit val spark: SparkSession = df.sparkSession
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary
 
 
     val tmpColumn = SchemaUtils.getUniqueName("tmpColumn", Some(df.schema))
