@@ -39,6 +39,7 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
   createIndex("dataset", Seq(IndexField("name", ASC), IndexField("version", ASC)), unique = true)
   createIndex("schema", Seq(IndexField("name", ASC), IndexField("version", ASC)), unique = true)
   createIndex("mapping_table", Seq(IndexField("name", ASC), IndexField("version", ASC)), unique = true)
+
   createIndex("run", Seq(IndexField("dataset", ASC), IndexField("datasetVersion", ASC)))
   createIndex("run", Seq(IndexField("dataset", ASC), IndexField("datasetVersion", ASC), IndexField("runId", ASC)), unique = true)
   createIndex("run", Seq(IndexField("uniqueId", ASC)), unique = true, sparse = true)
