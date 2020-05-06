@@ -39,6 +39,8 @@ import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceM
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.enceladus.standardization.ControlInfoValidation
+import za.co.absa.enceladus.standardization.StandardizationJob.{conf, controlInfoValidation, log}
 
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -49,6 +51,7 @@ object DynamicConformanceJob {
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
+  private val controlInfoValidation = conf.getString("control.info.validation")
 
   def main(args: Array[String]) {
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
@@ -229,6 +232,8 @@ object DynamicConformanceJob {
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(broadcastingStrategyMode)
       .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
+
+    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata(controlInfoValidation, log)
 
     try {
       DynamicInterpreter.interpret(conformance, inputData)
