@@ -27,6 +27,7 @@ object SparkVersionGuard {
    */
   def fromDefaultSparkCompatibilitySettings: SparkVersionGuard =
     SparkVersionGuard(SparkCompatibility.minSparkVersionIncluded, SparkCompatibility.maxSparkVersionExcluded)
+
 }
 
 /**

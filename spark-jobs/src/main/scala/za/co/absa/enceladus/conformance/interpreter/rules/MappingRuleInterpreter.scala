@@ -29,6 +29,7 @@ import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
+import za.co.absa.enceladus.utils.udf.UDFNames
 import za.co.absa.enceladus.utils.validation._
 
 import scala.util.Try
@@ -77,11 +78,11 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
         select(col(s"${MappingRuleInterpreter.inputDfAlias}.*"), col(s"${MappingRuleInterpreter.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn)
 
       val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
-      val mappingErrUdfCall = callUDF("confMappingErr", lit(rule.outputColumn),
+      val mappingErrUdfCall = callUDF(UDFNames.confMappingErr, lit(rule.outputColumn),
         array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
         typedLit(mappings))
 
-      val appendErrUdfCall = callUDF("errorColumnAppend", col(ErrorMessage.errorColumnName), mappingErrUdfCall)
+      val appendErrUdfCall = callUDF(UDFNames.errorColumnAppend, col(ErrorMessage.errorColumnName), mappingErrUdfCall)
 
       errorsDf = joined.withColumn(
         ErrorMessage.errorColumnName,

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization.interpreter
+package za.co.absa.enceladus.standardization
 
 import java.nio.charset.StandardCharsets
 
@@ -25,9 +25,10 @@ import org.scalatest.{Outcome, fixture}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
-import za.co.absa.enceladus.standardization.{StandardizationJob, StdCmdConfig}
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
 class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
@@ -55,9 +56,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
 
   def withFixture(test: OneArgTest): Outcome = {
     val tmpFile = createTempFile(tmpFilePrefix, tmpFileSuffix, StandardCharsets.UTF_8, csvContent)
-    val outcome = test(tmpFile.getAbsolutePath)
-    tmpFile.delete()
-    outcome
+    test(tmpFile.getAbsolutePath)
   }
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */

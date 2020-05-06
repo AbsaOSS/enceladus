@@ -19,14 +19,18 @@ import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.spark.{SPARK_VERSION, sql}
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.{SPARK_VERSION, sql}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.common.Constants._
+import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, ThreeStateSwitch}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -35,13 +39,13 @@ import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactor
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
+import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
-import za.co.absa.enceladus.common.Constants._
-import za.co.absa.enceladus.common.version.SparkVersionGuard
 
-import scala.util.Try
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 object DynamicConformanceJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
@@ -77,6 +81,8 @@ object DynamicConformanceJob {
       stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName,
         cmd.datasetVersion.toString, cmd.reportDate, reportVersion.toString)
     )
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
+
     log.info(s"stdpath = ${pathCfg.stdPath}, publishPath = ${pathCfg.publishPath}")
     // die before performing any computation if the output path already exists
     if (fsUtils.hdfsExists(pathCfg.publishPath)) {
@@ -91,7 +97,7 @@ object DynamicConformanceJob {
     val inputData = spark.read.parquet(pathCfg.stdPath)
 
     try {
-      val result = conform(conformance, inputData, enableCF)
+      val result = conform(conformance, inputData, enableCF, recordIdGenerationStrategy)
 
       PerformanceMetricTools.addJobInfoToAtumMetadata("conform",
         pathCfg.stdPath, pathCfg.publishPath, menasCredentials.username, args.mkString(" "))
@@ -221,7 +227,7 @@ object DynamicConformanceJob {
     performance
   }
 
-  private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean)
+  private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean, recordIdGenerationStrategy: IdType)
                      (implicit spark: SparkSession, cmd: ConfCmdConfig, fsUtils: FileSystemVersionUtils, dao: MenasDAO): DataFrame = {
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
@@ -230,17 +236,24 @@ object DynamicConformanceJob {
       .setBroadcastStrategyMode(broadcastingStrategyMode)
       .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
-    try {
+    Try {
       DynamicInterpreter.interpret(conformance, inputData)
-    } catch {
-      case e: ValidationException =>
+    } match {
+      case Failure(e: ValidationException) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, e.techDetails)
         throw e
-      case NonFatal(e)            =>
+      case Failure(NonFatal(e)) =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, sw.toString)
         throw e
+      case Success(conformedDF) =>
+        if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
+          conformedDF // no new id regeneration
+        } else {
+          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, Constants.EnceladusRecordId, recordIdGenerationStrategy)
+        }
+
     }
   }
 
@@ -251,7 +264,6 @@ object DynamicConformanceJob {
                             cmdLineArgs: String,
                             menasCredentials: MenasCredentials)
                            (implicit spark: SparkSession, cmd: ConfCmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
-    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
     val withPartCols = result
       .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.reportDate), ReportDateFormat))
       .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))

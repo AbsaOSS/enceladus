@@ -20,8 +20,9 @@ import java.sql.{Date, Timestamp}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 case class ErrorPreserve(a: String, b: String, errCol: List[ErrorMessage])
 case class ErrorPreserveStd(a: String, b: Int, errCol: List[ErrorMessage])
@@ -34,7 +35,7 @@ case class Time(id: Int, date: String, timestamp: String)
 case class StdTime(id: Int, date: Date, timestamp: Timestamp, errCol: List[ErrorMessage])
 
 class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBase {
-import spark.implicits._
+  import spark.implicits._
 
   case class subCC(subFieldA: Integer, subFieldB: String)
   case class sub2CC(subSub2FieldA: Integer, subSub2FieldB: String)
@@ -42,7 +43,7 @@ import spark.implicits._
   case class subarrayCC(arrayFieldA: Integer, arrayFieldB: String, arrayStruct: subCC)
   case class rootCC(rootField: String, rootStruct: subCC, rootStruct2: sub1CC, rootArray: Array[subarrayCC])
 
-  val stdExpectedSchema = StructType(
+  private val stdExpectedSchema = StructType(
     Seq(
       StructField("rootField", StringType, nullable = true),
       StructField("rootStruct",
@@ -73,7 +74,7 @@ import spark.implicits._
 
   test("Non-null errors produced for non-nullable attribute in a struct") {
     import spark.implicits._
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val orig = spark.createDataFrame(Seq(
       MyWrapper(MyHolder(null)),
@@ -94,20 +95,20 @@ import spark.implicits._
   }
 
   test("Existing error messages should be preserved") {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
     import spark.implicits._
 
     val df = spark.createDataFrame(Array(
-      new ErrorPreserve("a", "1", null),
-      new ErrorPreserve("b", "2", List()),
-      new ErrorPreserve("c", "3", List(new ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
-      new ErrorPreserve("d", "abc", List(new ErrorMessage("myErrorType2", "E-2", "Testing This stuff blabla", "whatEvColumn2", Seq("some other value"))))))
+      ErrorPreserve("a", "1", null),
+      ErrorPreserve("b", "2", List()),
+      ErrorPreserve("c", "3", List(new ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
+      ErrorPreserve("d", "abc", List(new ErrorMessage("myErrorType2", "E-2", "Testing This stuff blabla", "whatEvColumn2", Seq("some other value"))))))
 
     val exp = Array(
-      new ErrorPreserveStd("a", 1, List()),
-      new ErrorPreserveStd("b", 2, List()),
-      new ErrorPreserveStd("c", 3, List(new ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
-      new ErrorPreserveStd("d", 0, List(ErrorMessage.stdCastErr("b", "abc"),
+      ErrorPreserveStd("a", 1, List()),
+      ErrorPreserveStd("b", 2, List()),
+      ErrorPreserveStd("c", 3, List(new ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
+      ErrorPreserveStd("d", 0, List(ErrorMessage.stdCastErr("b", "abc"),
         new ErrorMessage("myErrorType2", "E-2", "Testing This stuff blabla", "whatEvColumn2", Seq("some other value")))))
 
     val expSchema = spark.emptyDataset[ErrorPreserveStd].schema
@@ -117,7 +118,7 @@ import spark.implicits._
   }
 
   test("Standardize Test") {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val sourceDF = spark.createDataFrame(
       Array(
@@ -140,7 +141,7 @@ import spark.implicits._
   }
 
   test("Standardize Test (JSON source)") {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
     val sourceDF = spark.read.json("src/test/resources/data/standardizeJsonSrc.json")
 
     val expectedSchema = stdExpectedSchema.add(
@@ -160,15 +161,15 @@ import spark.implicits._
   case class RootRecordCC(id: Long, name: Option[String], orders: Option[Array[OrderCC]])
 
   test("Test standardization of non-nullable field of a contains null array") {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val schema = StructType(
       Array(
         StructField("id", LongType, nullable = false),
         StructField("name", StringType, nullable = true),
         StructField("orders", ArrayType(StructType(Array(
-          StructField("ordername", StringType, nullable = false),
-          StructField("delivername", StringType, nullable = true))), containsNull = true), nullable = true)))
+          StructField("orderName", StringType, nullable = false),
+          StructField("deliverName", StringType, nullable = true))), containsNull = true), nullable = true)))
 
     val sourceDF = spark.createDataFrame(
       Array(
@@ -189,7 +190,7 @@ import spark.implicits._
 
   test ("Test standardization of Date and Timestamp fields with default value and pattern")
   {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val schema = StructType(
       Seq(
@@ -216,7 +217,7 @@ import spark.implicits._
 
   test ("Test standardization of Date and Timestamp fields with default value, without pattern")
   {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val schema = StructType(
       Seq(
@@ -243,7 +244,7 @@ import spark.implicits._
 
   test ("Test standardization of Date and Timestamp fields without default value, with pattern")
   {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val schema = StructType(
       Seq(
@@ -270,7 +271,7 @@ import spark.implicits._
 
   test ("Test standardization of Date and Timestamp fields without default value, without pattern")
   {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val schema = StructType(
       Seq(

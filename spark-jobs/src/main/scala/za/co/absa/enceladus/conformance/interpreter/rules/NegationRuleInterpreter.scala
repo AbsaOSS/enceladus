@@ -25,6 +25,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, NegationConformanceRule}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.types.GlobalDefaults
+import za.co.absa.enceladus.utils.udf.UDFNames
 import za.co.absa.enceladus.utils.validation.SchemaPathValidator
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
@@ -38,7 +39,7 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
 
     val field = SchemaUtils.getField(rule.inputColumn, df.schema).get
 
-    val negationErrUdfCall = callUDF("confNegErr", lit(rule.outputColumn), col(rule.inputColumn))
+    val negationErrUdfCall = callUDF(UDFNames.confNegErr, lit(rule.outputColumn), col(rule.inputColumn))
     val errCol = "errCol"
 
     field.dataType match {

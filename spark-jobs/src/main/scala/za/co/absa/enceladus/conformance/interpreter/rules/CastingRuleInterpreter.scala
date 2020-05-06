@@ -25,6 +25,7 @@ import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidat
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, ConformanceRule}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.enceladus.utils.udf.UDFNames
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInterpreter {
@@ -57,7 +58,7 @@ case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInte
           c.cast(rule.outputDataType)
         }, c => {
           when(c.isNotNull.and(c.cast(rule.outputDataType).isNull),
-            callUDF("confCastErr", lit(rule.outputColumn), c.cast(StringType)))
+            callUDF(UDFNames.confCastErr, lit(rule.outputColumn), c.cast(StringType)))
             .otherwise(null) // scalastyle:ignore null
         })
     }

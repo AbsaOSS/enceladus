@@ -13,39 +13,45 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.error
+package za.co.absa.enceladus.utils.udf
+
+import java.util.UUID
 
 import org.apache.spark.sql.api.java._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SparkSession}
+import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
+import za.co.absa.enceladus.utils.udf.UDFNames._
 
 import scala.collection.mutable
 
-case class UDFLibrary()(implicit val spark: SparkSession) {
+class UDFLibrary()(implicit val spark: SparkSession) {
 
-  spark.udf.register("stdCastErr", { (errCol: String, rawValue: String) =>
+  spark.udf.register(stdCastErr, { (errCol: String, rawValue: String) =>
     ErrorMessage.stdCastErr(errCol, rawValue)
   })
 
-  spark.udf.register("stdNullErr", { errCol: String => ErrorMessage.stdNullErr(errCol)})
+  spark.udf.register(stdNullErr, { errCol: String => ErrorMessage.stdNullErr(errCol) })
 
-  spark.udf.register("confMappingErr", { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
+  spark.udf.register(stdSchemaErr, { errRow: String => ErrorMessage.stdSchemaError(errRow) })
+
+  spark.udf.register(confMappingErr, { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
     ErrorMessage.confMappingErr(errCol, rawValues, mappings)
   })
 
-  spark.udf.register("confCastErr", { (errCol: String, rawValue: String) =>
+  spark.udf.register(confCastErr, { (errCol: String, rawValue: String) =>
     ErrorMessage.confCastErr(errCol, rawValue)
   })
 
-  spark.udf.register("confNegErr", { (errCol: String, rawValue: String) =>
+  spark.udf.register(confNegErr, { (errCol: String, rawValue: String) =>
     ErrorMessage.confNegErr(errCol, rawValue)
   })
 
-  spark.udf.register("confLitErr", { (errCol: String, rawValue: String) =>
+  spark.udf.register(confLitErr, { (errCol: String, rawValue: String) =>
     ErrorMessage.confLitErr(errCol, rawValue)
   })
 
-  spark.udf.register("arrayDistinctErrors",
+  spark.udf.register(arrayDistinctErrors, // this UDF is registered for _spark-hats_ library sake
     (arr: mutable.WrappedArray[ErrorMessage]) =>
       if (arr != null) {
         arr.distinct.filter((a: AnyRef) => a != null)
@@ -54,6 +60,16 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
       }
   )
 
+  spark.udf.register(cleanErrCol,
+                     UDFLibrary.cleanErrCol,
+                     ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
+
+  spark.udf.register(errorColumnAppend,
+                     UDFLibrary.errorColumnAppend,
+                     ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
+}
+
+object UDFLibrary {
   private val cleanErrCol = new UDF1[Seq[Row], Seq[Row]] {
     override def call(t1: Seq[Row]): Seq[Row] = {
       t1.filter({ row =>
@@ -65,14 +81,9 @@ case class UDFLibrary()(implicit val spark: SparkSession) {
     }
   }
 
-  spark.udf.register("cleanErrCol", cleanErrCol, ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
-
   private val errorColumnAppend = new UDF2[Seq[Row], Row, Seq[Row]] {
-    override def call(t1: Seq[Row], t2: Row) : Seq[Row] = {
+    override def call(t1: Seq[Row], t2: Row): Seq[Row] = {
       t1 :+ t2
     }
   }
-
-  spark.udf.register("errorColumnAppend", errorColumnAppend, ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
-
 }

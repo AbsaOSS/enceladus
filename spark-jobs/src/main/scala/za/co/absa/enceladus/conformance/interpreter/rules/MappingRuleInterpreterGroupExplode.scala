@@ -28,6 +28,7 @@ import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
+import za.co.absa.enceladus.utils.udf.UDFNames
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 import za.co.absa.enceladus.utils.validation._
 
@@ -66,7 +67,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
         col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn)
 
     val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
-    val mappingErrUdfCall = callUDF("confMappingErr", lit(rule.outputColumn),
+    val mappingErrUdfCall = callUDF(UDFNames.confMappingErr, lit(rule.outputColumn),
       array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
       typedLit(mappings))
 

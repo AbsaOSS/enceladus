@@ -18,10 +18,11 @@ package za.co.absa.enceladus.standardization.interpreter
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreterSuite._
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._
@@ -63,28 +64,28 @@ class StandardizationInterpreterSuite  extends FunSuite with SparkTestBase with 
 
     val actualSchema = std.schema.treeString
     val expectedSchema = "root\n" +
-                         " |-- first_name: string (nullable = true)\n" +
-                         " |-- last_name: string (nullable = true)\n" +
-                         " |-- body_stats: struct (nullable = false)\n" +
-                         " |    |-- height: integer (nullable = true)\n" +
-                         " |    |-- weight: integer (nullable = true)\n" +
-                         " |    |-- miscellaneous: struct (nullable = false)\n" +
-                         " |    |    |-- eye_color: string (nullable = true)\n" +
-                         " |    |    |-- glasses: boolean (nullable = true)\n" +
-                         " |    |-- temperature_measurements: array (nullable = true)\n" +
-                         " |    |    |-- element: double (containsNull = true)\n" +
-                         " |-- errCol: array (nullable = true)\n" +
-                         " |    |-- element: struct (containsNull = false)\n" +
-                         " |    |    |-- errType: string (nullable = true)\n" +
-                         " |    |    |-- errCode: string (nullable = true)\n" +
-                         " |    |    |-- errMsg: string (nullable = true)\n" +
-                         " |    |    |-- errCol: string (nullable = true)\n" +
-                         " |    |    |-- rawValues: array (nullable = true)\n" +
-                         " |    |    |    |-- element: string (containsNull = true)\n" +
-                         " |    |    |-- mappings: array (nullable = true)\n" +
-                         " |    |    |    |-- element: struct (containsNull = true)\n" +
-                         " |    |    |    |    |-- mappingTableColumn: string (nullable = true)\n" +
-                         " |    |    |    |    |-- mappedDatasetColumn: string (nullable = true)\n"
+      " |-- first_name: string (nullable = true)\n" +
+      " |-- last_name: string (nullable = true)\n" +
+      " |-- body_stats: struct (nullable = false)\n" +
+      " |    |-- height: integer (nullable = true)\n" +
+      " |    |-- weight: integer (nullable = true)\n" +
+      " |    |-- miscellaneous: struct (nullable = false)\n" +
+      " |    |    |-- eye_color: string (nullable = true)\n" +
+      " |    |    |-- glasses: boolean (nullable = true)\n" +
+      " |    |-- temperature_measurements: array (nullable = true)\n" +
+      " |    |    |-- element: double (containsNull = true)\n" +
+      " |-- errCol: array (nullable = true)\n" +
+      " |    |-- element: struct (containsNull = false)\n" +
+      " |    |    |-- errType: string (nullable = true)\n" +
+      " |    |    |-- errCode: string (nullable = true)\n" +
+      " |    |    |-- errMsg: string (nullable = true)\n" +
+      " |    |    |-- errCol: string (nullable = true)\n" +
+      " |    |    |-- rawValues: array (nullable = true)\n" +
+      " |    |    |    |-- element: string (containsNull = true)\n" +
+      " |    |    |-- mappings: array (nullable = true)\n" +
+      " |    |    |    |-- element: struct (containsNull = true)\n" +
+      " |    |    |    |    |-- mappingTableColumn: string (nullable = true)\n" +
+      " |    |    |    |    |-- mappedDatasetColumn: string (nullable = true)\n"
     assert(actualSchema == expectedSchema)
 
     val exp = Seq(

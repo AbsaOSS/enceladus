@@ -13,12 +13,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common
+package za.co.absa.enceladus.utils.udf
 
-object Constants {
-  final val InfoDateColumn = "enceladus_info_date"
-  final val InfoDateColumnString = s"${InfoDateColumn}_string"
-  final val ReportDateFormat = "yyyy-MM-dd"
-  final val InfoVersionColumn = "enceladus_info_version"
-  final val EnceladusRecordId = "enceladus_record_id"
+object UDFNames {
+  final val stdCastErr = "stdCastErr"
+  final val stdNullErr = "stdNullErr"
+  final val stdSchemaErr = "stdSchemaErr"
+
+  final val confMappingErr = "confMappingErr"
+  final val confCastErr = "confCastErr"
+  final val confNegErr = "confNegErr"
+  final val confLitErr = "confLitErr"
+
+  final val arrayDistinctErrors = "arrayDistinctErrors"
+  final val cleanErrCol = "cleanErrCol"
+  final val errorColumnAppend = "errorColumnAppend"
 }

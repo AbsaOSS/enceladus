@@ -16,7 +16,11 @@
 package za.co.absa.enceladus.standardization.fixtures
 
 import java.io.{DataOutputStream, File, FileOutputStream}
-import java.nio.charset.{Charset, StandardCharsets}
+import java.nio.charset.Charset
+import java.nio.file.FileSystems
+
+import org.apache.spark.sql.{DataFrame, SaveMode}
+import za.co.absa.commons.io.{TempDirectory, TempFile}
 
 /**
   * This fixture adds ability for a unit test to create temporary files for using them in the tests.
@@ -25,20 +29,47 @@ trait TempFileFixture {
   /**
     * Creates a temporary text file and returns the full path to it
     *
-    * @param prefix  The prefix string to be used in generating the file's name
-    *                must be at least three characters long
-    * @param suffix  The suffix string to be used in generating the file's name
-    *                may be <code>null</code>, in which case the suffix <code>".tmp"</code> will be used
-    * @param charset A charset of the data in the temporaty text file
-    * @param content A contents to put to the file
+    * @param prefix       The prefix string to be used in generating the file's name
+    *                     must be at least three characters long
+    * @param suffix       The suffix string to be used in generating the file's name
+    *                     may be <code>null</code>, in which case the suffix <code>".tmp"</code> will be used
+    * @param charset      A charset of the data in the temporaty text file
+    * @param content      A contents to put to the file
+    * @param deleteOnExit If true the file will be deleted when not referenced anymore
     * @return The full path to the temporary file
     */
-  def createTempFile(prefix: String, suffix: String, charset: Charset, content: String): File = {
-    val tempFile = File.createTempFile(prefix, suffix)
-    val ostream = new DataOutputStream(new FileOutputStream(tempFile))
-    ostream.write(content.getBytes(charset))
-    ostream.close()
-    tempFile
+  def createTempFile(prefix: String, suffix: String, charset: Charset, content: String, deleteOnExit: Boolean = true): File = {
+    val tempFile = TempFile(prefix, suffix)
+    if (deleteOnExit) {
+      tempFile.deleteOnExit()
+    }
+    val result = tempFile.path.toFile
+    val ostream = new DataOutputStream(new FileOutputStream(result))
+    try {
+      ostream.write(content.getBytes(charset))
+    } finally {
+      ostream.close()
+    }
+    result
+  }
+
+  /**
+    * Creates a temporary directory and save the dataFrame data into in parquet format
+    *
+    * @param prefix       The prefix string to be used in generating the file's name
+    *                     must be at least three characters long
+    * @param data         data to be saved
+    * @param deleteOnExit If true the directory will be deleted when not referenced anymore
+    * @return
+    */
+  def createTempParquetFile(prefix: String, data: DataFrame, deleteOnExit: Boolean = true): File = {
+    val tempDir = TempDirectory(prefix, ".parquet", pathOnly = false)
+    if (deleteOnExit) {
+      tempDir.deleteOnExit()
+    }
+    val result = tempDir.path.toFile
+    data.write.mode(SaveMode.Overwrite).parquet(result.getAbsolutePath)
+    result
   }
 
 }
