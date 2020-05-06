@@ -147,7 +147,7 @@ You provide *Schema* to **Standardization** in a JSON file:
 }
 ```
 
-Example of data adhering to the above schema can be found [here](https://github.com/AbsaOSS/enceladus/blob/develop/standardization/src/test/scala/za/co/absa/enceladus/standardization/samples/TestSamples.scala).
+Example of data adhering to the above schema can be found [here](https://github.com/AbsaOSS/enceladus/blob/master/spark-jobs/src/test/scala/za/co/absa/enceladus/standardization/samples/TestSamples.scala).
 
 Automatically added columns
 ---------------------------
