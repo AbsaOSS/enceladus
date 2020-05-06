@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.LoggerFactory
@@ -116,7 +117,12 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
     */
   def getExecutionPlanGenerationTimeMs(df: DataFrame): Long = {
     val t0 = System.currentTimeMillis()
-    df.queryExecution.toString()
+    if (df.isStreaming) {
+      // Ensures the execution plan won't be takes from cache
+      df.sparkSession.sessionState.optimizer.execute(df.queryExecution.analyzed).toString()
+    } else {
+      df.queryExecution.toString()
+    }
     val t1 = System.currentTimeMillis()
     t1 - t0
   }
