@@ -68,14 +68,14 @@ timezone="UTC"
 
 # 2. Push Error Info to a Kafka topic
 # standardization.plugin.postprocessor.1=za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
+# conformance.plugin.postprocessor.1=za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
 
 #kafka.schema.registry.url:"http://127.0.0.1:8081"
 #kafka.bootstrap.servers="127.0.0.1:9092"
 #kafka.info.metrics.client.id="controlInfo"
 #kafka.info.metrics.topic.name="control.info"
 
-# todo change clientId to a proper value
-#kafka.errorinfo.client.id="errorId123"
+#kafka.errorinfo.client.id="errorInfo"
 #kafka.errorinfo.topic.name="error.info"
 
 # Optional security settings
