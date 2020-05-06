@@ -42,6 +42,9 @@ conformance.catalyst.workaround=true
 # Automatically delete standardized data folder after successful run of a Conformance job
 conformance.autoclean.standardized.hdfs.folder=false
 
+#enforce info file validation
+control.info.validation=warning
+
 # system-wide time zone
 timezone="UTC"
 

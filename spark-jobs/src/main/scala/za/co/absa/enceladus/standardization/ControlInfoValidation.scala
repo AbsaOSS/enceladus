@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.standardization
 
+
+import org.slf4j.Logger
 import za.co.absa.atum.core.Atum
 import za.co.absa.atum.model.Checkpoint
 import za.co.absa.enceladus.utils.validation.ValidationException
@@ -26,28 +28,43 @@ object ControlInfoValidation {
   private val rawFieldName = "raw"
   private val sourceFieldName = "source"
 
-  case class FieldCounts(rawCount: Long, sourceCount: Long)
-
   /**
    * Adds metadata about the number of records in raw and source data by checking Atum's checkpoints first.
    */
-  def addRawAndSourceRecordCountsToMetadata(): Unit = {
-    val fields = getFieldCounts(Atum.getControlMeasure.checkpoints)
-    Atum.setAdditionalInfo(s"${rawFieldName}_record_count" -> fields.rawCount.toString)
-    Atum.setAdditionalInfo(s"${sourceFieldName}_record_count" -> fields.sourceCount.toString)
-  }
-
-  def getFieldCounts(checkpoints: Seq[Checkpoint]): FieldCounts = {
+  def addRawAndSourceRecordCountsToMetadata(controlInfoValidation: String, log: Logger): Unit = {
+    val checkpoints = Atum.getControlMeasure.checkpoints
     val checkpointRawRecordCount = getCountFromGivenCheckpoint(rawFieldName, checkpoints)
     val checkpointSourceRecordCount = getCountFromGivenCheckpoint(sourceFieldName, checkpoints)
+
+    try {
+        validateFields(checkpointRawRecordCount, checkpointSourceRecordCount)
+    } catch {
+      case ex: ValidationException => controlInfoValidation match {
+        case "strict" => throw ex
+        case "warning" => log.warn(ex.msg)
+        case _ =>
+      }
+    } finally {
+      checkpointRawRecordCount
+        .foreach(e => Atum.setAdditionalInfo(s"${rawFieldName}_record_count" -> e.toString))
+
+      checkpointSourceRecordCount
+        .foreach(e => Atum.setAdditionalInfo(s"${sourceFieldName}_record_count" -> e.toString))
+    }
+  }
+
+  def validateFields(checkpointRawRecordCount: Try[Long], checkpointSourceRecordCount: Try[Long]) {
     val errorMessage = "Checkpoint validation failed:"
 
     (checkpointRawRecordCount, checkpointSourceRecordCount) match {
-      case (Success(x), Success(y)) => FieldCounts(x, y)
-      case (Success(_), Failure(er)) => throw new ValidationException(errorMessage, Seq(er.getMessage))
-      case (Failure(er), Success(_)) => throw new ValidationException(errorMessage, Seq(er.getMessage))
+      case (Success(_), Failure(er)) =>
+        throw new ValidationException(s"$errorMessage: ${er.getMessage}", Seq(er.getMessage))
+      case (Failure(er), Success(_)) =>
+        throw new ValidationException(s"$errorMessage: ${er.getMessage}", Seq(er.getMessage))
       case (Failure(er1), Failure(er2)) =>
-        throw new ValidationException(errorMessage, Seq(er1.getMessage, er2.getMessage))
+        throw new ValidationException(s"$errorMessage: ${er1.getMessage}, ${er2.getMessage}",
+          Seq(er1.getMessage, er2.getMessage))
+      case (_, _) =>
     }
   }
 
