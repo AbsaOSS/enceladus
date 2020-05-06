@@ -75,6 +75,154 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
     }
 
+    "handle Datasets with conformance rules" when {
+      val datasetJson =
+      """{
+        |  "name": "Test",
+        |  "version": 5,
+        |  "description": "",
+        |  "hdfsPath": "/bigdata/test",
+        |  "hdfsPublishPath": "/bigdata/test2",
+        |  "schemaName": "Cobol1",
+        |  "schemaVersion": 3,
+        |  "dateCreated": "2019-07-22T08:05:57.47Z",
+        |  "userCreated": "system",
+        |  "lastUpdated": "2020-04-02T15:53:02.947Z",
+        |  "userUpdated": "system",
+        |  "disabled": false,
+        |  "dateDisabled": null,
+        |  "userDisabled": null,
+        |  "conformance": [
+        |    {
+        |      "_t": "CastingConformanceRule",
+        |      "order": 0,
+        |      "outputColumn": "ConformedInt",
+        |      "controlCheckpoint": false,
+        |      "inputColumn": "STRING_VAL",
+        |      "outputDataType": "integer"
+        |    },
+        |    {
+        |      "_t": "MappingConformanceRule",
+        |      "order": 1,
+        |      "controlCheckpoint": true,
+        |      "mappingTable": "CurrencyMappingTable",
+        |      "mappingTableVersion": 9,
+        |      "attributeMappings": {
+        |        "InputValue": "STRING_VAL"
+        |      },
+        |      "targetAttribute": "CCC",
+        |      "outputColumn": "ConformedCCC",
+        |      "isNullSafe": true
+        |    },
+        |    {
+        |      "_t": "LiteralConformanceRule",
+        |      "order": 2,
+        |      "outputColumn": "ConformedLiteral",
+        |      "controlCheckpoint": false,
+        |      "value": "AAA"
+        |    }
+        |  ],
+        |  "parent": {
+        |    "collection": "dataset",
+        |    "name": "Test",
+        |    "version": 4
+        |  },
+        |  "schedule": null,
+        |  "createdMessage": {
+        |    "menasRef": {
+        |      "collection": null,
+        |      "name": "Test",
+        |      "version": 5
+        |    },
+        |    "updatedBy": "system",
+        |    "updated": "2020-04-02T15:53:02.947Z",
+        |    "changes": [
+        |      {
+        |        "field": "",
+        |        "oldValue": null,
+        |        "newValue": null,
+        |        "message": "Test"
+        |      }
+        |    ]
+        |  }
+        |}""".stripMargin
+
+      "deserializing should not throw" in {
+        JsonSerializer.fromJson[Dataset](datasetJson)
+      }
+    }
+
+    "handle Datasets with more conformance rules" when {
+      val datasetJson =
+        """{
+          |  "name": "avro_users",
+          |  "version": 3,
+          |  "description": "",
+          |  "hdfsPath": "/opt",
+          |  "hdfsPublishPath": "/opt",
+          |  "schemaName": "avro_users",
+          |  "schemaVersion": 1,
+          |  "dateCreated": "2020-01-29T14:48:58.272Z",
+          |  "userCreated": "user",
+          |  "lastUpdated": "2020-01-30T08:38:59.871Z",
+          |  "userUpdated": "user",
+          |  "disabled": false,
+          |  "dateDisabled": null,
+          |  "userDisabled": null,
+          |  "conformance": [
+          |    {
+          |      "_t": "CastingConformanceRule",
+          |      "order": 0,
+          |      "outputColumn": "conformedRoleId",
+          |      "controlCheckpoint": false,
+          |      "inputColumn": "roleid",
+          |      "outputDataType": "string"
+          |    },
+          |    {
+          |      "_t": "MappingConformanceRule",
+          |      "order": 1,
+          |      "controlCheckpoint": true,
+          |      "mappingTable": "rolemt",
+          |      "mappingTableVersion": 3,
+          |      "attributeMappings": {
+          |        "role": "roleid"
+          |      },
+          |      "targetAttribute": "rolename",
+          |      "outputColumn": "conformedRole",
+          |      "isNullSafe": true
+          |    }
+          |  ],
+          |  "parent": {
+          |    "collection": "dataset",
+          |    "name": "avro_users",
+          |    "version": 2
+          |  },
+          |  "schedule": null,
+          |  "createdMessage": {
+          |    "menasRef": {
+          |      "collection": null,
+          |      "name": "avro_users",
+          |      "version": 3
+          |    },
+          |    "updatedBy": "user",
+          |    "updated": "2020-01-30T08:38:59.871Z",
+          |    "changes": [
+          |      {
+          |        "field": "",
+          |        "oldValue": null,
+          |        "newValue": null,
+          |        "message": "Dataset avro_users created."
+          |      }
+          |    ]
+          |  }
+          |}
+          |""".stripMargin
+
+      "deserializing should not throw" in {
+        JsonSerializer.fromJson[Dataset](datasetJson)
+      }
+    }
+
     "handle MappingTables" when {
       val mappingTableJson =
         """

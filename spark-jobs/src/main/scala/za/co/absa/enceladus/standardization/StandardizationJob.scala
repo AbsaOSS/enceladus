@@ -27,6 +27,7 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
@@ -37,10 +38,10 @@ import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
-import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils}
+import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationException
-
+import org.apache.spark.SPARK_VERSION
 import scala.collection.immutable.HashMap
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -55,6 +56,8 @@ object StandardizationJob {
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
+    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
+
     implicit val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
@@ -73,7 +76,9 @@ object StandardizationJob {
     log.info(s"output path: ${pathCfg.outputPath}")
     // die if the output path exists
     if (fsUtils.hdfsExists(pathCfg.outputPath)) {
-      throw new IllegalStateException(s"Path ${pathCfg.outputPath} already exists. Increment the run version, or delete ${pathCfg.outputPath}")
+      throw new IllegalStateException(
+        s"Path ${pathCfg.outputPath} already exists. Increment the run version, or delete ${pathCfg.outputPath}"
+      )
     }
 
     // Enable Spline
@@ -81,24 +86,7 @@ object StandardizationJob {
     spark.enableLineageTracking()
 
     // Enable Control Framework
-    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking(s"${pathCfg.inputPath}/_INFO").setControlMeasuresWorkflow("Standardization")
-
-    // Enable control framework performance optimization for pipeline-like jobs
-    Atum.setAllowUnpersistOldDatasets(true)
-
-    // Enable non-default persistence storage level if provided in the command line
-    cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
-
-    // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate, reportVersion, isJobStageOnly = true, generateNewRun = true)
-
-    // Add report date and version (aka Enceladus info date and version) to Atum's metadata
-    Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)
-    Atum.setAdditionalInfo(Constants.InfoVersionColumn -> reportVersion.toString)
-
-    // Add the raw format of the input file(s) to Atum's metadta as well
-    Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
+    enableControlFramework(pathCfg, cmd, reportVersion)
 
     // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
@@ -106,26 +94,10 @@ object StandardizationJob {
 
     try {
       executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg)
-      cmd.performanceMetricsFile.foreach { fileName =>
-        try {
-          performance.writeMetricsToFile(fileName)
-        } catch {
-          case NonFatal(e) => log.error(s"Unable to write performance metrics to file '$fileName': ${e.getMessage}")
-        }
-      }
+      cmd.performanceMetricsFile.foreach(this.writePerformanceMetrics(performance, _))
       log.info("Standardization finished successfully")
     } finally {
-      Atum.getControlMeasure.runUniqueId
-
-      MenasPlugin.runNumber.foreach { runNumber =>
-        val name = cmd.datasetName
-        val version = cmd.datasetVersion
-        menasBaseUrls.foreach { menasBaseUrl =>
-          log.info(s"Menas API Run URL: $menasBaseUrl/api/runs/$name/$version/$runNumber")
-          log.info(s"Menas UI Run URL: $menasBaseUrl/#/runs/$name/$version/$runNumber")
-        }
-      }
-      MenasPlugin.close()
+      postStandardizationSteps(cmd)
     }
   }
 
@@ -202,7 +174,15 @@ object StandardizationJob {
   }
 
   private def getGenericOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
-    HashMap("charset" -> cmd.charset.map(StringParameter))
+    val mode = if (cmd.failOnInputNotPerSchema) {
+      "FAILFAST"
+    } else {
+      "PERMISSIVE"
+    }
+    HashMap(
+      "charset" -> cmd.charset.map(StringParameter),
+      "mode" -> Option(StringParameter(mode))
+    )
   }
 
   private def getXmlOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
@@ -273,7 +253,14 @@ object StandardizationJob {
     val numberOfColumns = schema.fields.length
     val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, numberOfColumns)
     val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
-      val inputSchema = PlainSchemaGenerator.generateInputSchema(schema).asInstanceOf[StructType]
+      // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
+      val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
+      val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {
+        None
+      } else {
+        Option(columnNameOfCorruptRecord)
+      }
+      val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, optColumnNameOfCorruptRecord)
       dfReaderConfigured.schema(inputSchema)
     } else {
       dfReaderConfigured
@@ -281,6 +268,7 @@ object StandardizationJob {
     ensureSplittable(dfWithSchema, path, schema)
   }
 
+  //scalastyle:off parameter.number
   private def executeStandardization(performance: PerformanceMeasurer,
                                      dfAll: DataFrame,
                                      schema: StructType,
@@ -288,15 +276,16 @@ object StandardizationJob {
                                      menasCredentials: MenasCredentials,
                                      pathCfg: PathCfg)
                                     (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
+    //scalastyle:on parameter.number
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
     performance.startMeasurement(rawDirSize)
 
-    addRawRecordCountToMetadata(dfAll)
+    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata()
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     val standardizedDF = try {
-      StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat)
+      StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat, cmd.failOnInputNotPerSchema)
     } catch {
       case e@ValidationException(msg, errors)                  =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
@@ -407,6 +396,57 @@ object StandardizationJob {
     }
   }
 
+  private def enableControlFramework(pathCfg: PathCfg, cmd: StdCmdConfig, reportVersion: Int)
+                                    (implicit spark: SparkSession, dao: MenasDAO): Unit = {
+    // Enable Control Framework
+    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
+    spark.enableControlMeasuresTracking(s"${pathCfg.inputPath}/_INFO").setControlMeasuresWorkflow("Standardization")
+
+    // Enable control framework performance optimization for pipeline-like jobs
+    Atum.setAllowUnpersistOldDatasets(true)
+
+    // Enable non-default persistence storage level if provided in the command line
+    cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
+
+    // Enable Menas plugin for Control Framework
+    MenasPlugin.enableMenas(
+      conf,
+      cmd.datasetName,
+      cmd.datasetVersion,
+      cmd.reportDate,
+      reportVersion,
+      isJobStageOnly = true,
+      generateNewRun = true)
+
+    // Add report date and version (aka Enceladus info date and version) to Atum's metadata
+    Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)
+    Atum.setAdditionalInfo(Constants.InfoVersionColumn -> reportVersion.toString)
+
+    // Add the raw format of the input file(s) to Atum's metadta as well
+    Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
+  }
+
+  private def writePerformanceMetrics(performance: PerformanceMeasurer, fileName: String): Unit = {
+    try {
+      performance.writeMetricsToFile(fileName)
+    } catch {
+      case NonFatal(e) => log.error(s"Unable to write performance metrics to file '$fileName': ${e.getMessage}")
+    }
+  }
+
+  private def postStandardizationSteps(cmd: StdCmdConfig): Unit = {
+    Atum.getControlMeasure.runUniqueId
+
+    val name = cmd.datasetName
+    val version = cmd.datasetVersion
+    MenasPlugin.runNumber.foreach { runNumber =>
+      menasBaseUrls.foreach { menasBaseUrl =>
+        log.info(s"Menas API Run URL: $menasBaseUrl/api/runs/$name/$version/$runNumber")
+        log.info(s"Menas UI Run URL: $menasBaseUrl/#/runs/$name/$version/$runNumber")
+      }
+    }
+  }
+
   def buildRawPath(cmd: StdCmdConfig, dataset: Dataset, dateTokens: Array[String], reportVersion: Int): String = {
     cmd.rawPathOverride match {
       case None                  =>
@@ -417,56 +457,6 @@ object StandardizationJob {
         }
       case Some(rawPathOverride) => rawPathOverride
     }
-  }
-
-  /**
-    * Adds metadata about the number of records in raw data by checking Atum's checkpoints first.
-    * If raw record count is not available in checkpoints the method will calculate that count
-    * based on the provided raw dataframe.
-    *
-    * @return The number of records in a checkpoint corresponding to raw data (if available)
-    */
-  private def addRawRecordCountToMetadata(df: DataFrame): Unit = {
-    val checkpointRawRecordCount = getRawRecordCountFromCheckpoints
-
-    val rawRecordCount = checkpointRawRecordCount match {
-      case Some(num) => num
-      case None      => df.count
-    }
-    Atum.setAdditionalInfo(s"raw_record_count" -> rawRecordCount.toString)
-  }
-
-  /**
-    * Gets the number of records in raw data by traversing Atum's checkpoints.
-    *
-    * @return The number of records in a checkpoint corresponding to raw data (if available)
-    */
-  private def getRawRecordCountFromCheckpoints: Option[Long] = {
-    import za.co.absa.atum.core.Constants._
-    val controlMeasure = Atum.getControlMeasure
-
-    val rawCheckpoint = controlMeasure
-      .checkpoints
-      .find(c => c.name.equalsIgnoreCase("raw") || c.workflowName.equalsIgnoreCase("raw"))
-
-    val measurement = rawCheckpoint.flatMap(chk => {
-      chk.controls.find(m => m.controlType.equalsIgnoreCase(controlTypeRecordCount))
-    })
-
-    measurement.flatMap(m =>
-      try {
-        val rawCount = m.controlValue.toString.toLong
-        // Basic sanity check
-        if (rawCount >= 0) {
-          Some(rawCount)
-        } else {
-          None
-        }
-      }
-      catch {
-        case NonFatal(_) => None
-      }
-    )
   }
 
   private final case class PathCfg(inputPath: String, outputPath: String)

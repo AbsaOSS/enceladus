@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.menas.controllers
 
+import java.net.URL
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
@@ -26,34 +27,67 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
-import za.co.absa.enceladus.menas.models.rest.exceptions.{SchemaFormatException, SchemaParsingException}
+import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaParsingException}
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaService}
-import za.co.absa.enceladus.menas.utils.SchemaParsers
+import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.menas.utils.parsers.SchemaParser
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
 
-// TODO: use enumeration instead to type-force the schema types? #1228
-object SchemaController {
-  val SchemaTypeStruct = "struct"
-  val SchemaTypeCopybook = "copybook"
-  val SchemaTypeAvro = "avro"
-}
+import scala.io.Source
+import scala.util.control.NonFatal
 
 @RestController
 @RequestMapping(Array("/api/schema"))
 class SchemaController @Autowired()(
                                      schemaService: SchemaService,
                                      attachmentService: AttachmentService,
-                                     sparkMenasConvertor: SparkMenasSchemaConvertor,
-                                     schemaParsers: SchemaParsers)
+                                     sparkMenasConvertor: SparkMenasSchemaConvertor)
   extends VersionedModelController(schemaService) {
 
-  import SchemaController._
   import za.co.absa.enceladus.menas.utils.implicits._
-
   import scala.concurrent.ExecutionContext.Implicits.global
+
+  @PostMapping(Array("/remote"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def handleRemoteFile(@AuthenticationPrincipal principal: UserDetails,
+                       @RequestParam remoteUrl: String,
+                       @RequestParam version: Int,
+                       @RequestParam name: String,
+                       @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
+
+    val schemaType = SchemaType.fromOptSchemaName(format)
+    val (url, fileContent, mimeType) = {
+      try {
+        val url = new URL(remoteUrl)
+        val connection = url.openConnection()
+        val mimeType = connection.getContentType
+        val fileStream = Source.fromInputStream(connection.getInputStream)
+        val fileContent = fileStream.mkString
+        fileStream.close()
+
+        (url, fileContent, mimeType)
+
+      } catch {
+        case NonFatal(e) =>
+          throw RemoteSchemaRetrievalException(schemaType, s"Could not retrieve a schema file from $remoteUrl. Please check the correctness of the URL and a presence of the schema at the mentioned endpoint", e)
+      }
+    }
+
+    val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
+
+    val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
+      refName = name,
+      refVersion = version + 1,
+      attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
+      filename = url.getFile,
+      fileContent = fileContent.getBytes,
+      fileMIMEType = mimeType)
+
+    uploadSchemaToMenas(principal.getUsername, menasFile, sparkStruct, schemaType)
+  }
 
   @PostMapping(Array("/upload"))
   @ResponseStatus(HttpStatus.CREATED)
@@ -62,19 +96,13 @@ class SchemaController @Autowired()(
                        @RequestParam version: Int,
                        @RequestParam name: String,
                        @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
-    val origFormat: Option[String] = format
+
     val fileContent = new String(file.getBytes)
 
-    val (sparkStruct, schemaType) = origFormat match {
-      case Some(SchemaTypeStruct) | Some("") | None => (schemaParsers.parseStructType(fileContent), SchemaTypeStruct)
-      case Some(SchemaTypeCopybook) => (schemaParsers.parseCopybook(fileContent), SchemaTypeCopybook)
-      case Some(SchemaTypeAvro) => (schemaParsers.parseAvro(fileContent), SchemaTypeAvro)
-      case Some(schemaType) =>
-        throw SchemaFormatException(schemaType, s"'$schemaType' is not a recognized schema format. " +
-          s"Menas currently supports: '$SchemaTypeStruct' and '$SchemaTypeCopybook'.")
-    }
+    val schemaType = SchemaType.fromOptSchemaName(format)
+    val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
 
-    val origFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
+    val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
       refVersion = version + 1,
       attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
@@ -82,12 +110,19 @@ class SchemaController @Autowired()(
       fileContent = file.getBytes,
       fileMIMEType = file.getContentType)
 
-    try {
+    uploadSchemaToMenas(principal.getUsername, menasFile, sparkStruct, schemaType)
+  }
 
+  /**
+   * Common for [[SchemaController#handleFileUpload]] and [[SchemaController#handleRemoteFile]]
+   */
+  private def uploadSchemaToMenas(username: String, menasAttachment: MenasAttachment, sparkStruct: StructType,
+                                  schemaType: SchemaType.Value): CompletableFuture[Option[Schema]] = {
+    try {
       for {
         // the parsing of sparkStruct can fail, therefore we try to save it first before saving the attachment
-        update <- schemaService.schemaUpload(principal.getUsername, name, version, sparkStruct)
-        _ <- attachmentService.uploadAttachment(origFile)
+        update <- schemaService.schemaUpload(username, menasAttachment.refName, menasAttachment.refVersion - 1, sparkStruct)
+        _ <- attachmentService.uploadAttachment(menasAttachment)
       } yield update
     } catch {
       case e: SchemaParsingException => throw e.copy(schemaType = schemaType) //adding schema type

@@ -21,12 +21,13 @@
     <parent>
         <groupId>za.co.absa.enceladus</groupId>
         <artifactId>parent</artifactId>
-        <version>2.3.0-SNAPSHOT</version>
+        <version>2.5.0-SNAPSHOT</version>
     </parent>
 
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <hyperdrive.version>2.0.0</hyperdrive.version>
+        <hyperdrive.version>3.0.0</hyperdrive.version>
+        <commons.version>0.0.10</commons.version>
     </properties>
 
     <dependencies>
@@ -70,6 +71,12 @@
             <artifactId>api</artifactId>
             <version>${hyperdrive.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>za.co.absa.commons</groupId>
+            <artifactId>commons_${scala.compat.version}</artifactId>
+            <version>${commons.version}</version>
         </dependency>
 
         <!-- Libraries -->
@@ -136,7 +143,6 @@
                             <include>*:*</include>
                         </includes>
                         <excludes>
-                            <exclude>com.fasterxml.jackson.*:*</exclude>
                             <exclude>org.apache.spark:*</exclude>
                             <exclude>org.apache.hadoop:*</exclude>
                             <exclude>org.scala-lang:scala-actors</exclude>
@@ -146,6 +152,20 @@
                             <exclude>net.jpountz.lz4:*</exclude>
                         </excludes>
                     </artifactSet>
+                    <relocations>
+                        <!-- This was introduced in #86 Set up Standardization and Conformance Menas auth.
+                             If not shaded the following exception will be thrown:
+                               Caused by: java.lang.ClassNotFoundException: za.co.absa.atum.model.RunState
+	                           at java.net.URLClassLoader.findClass(URLClassLoader.java:382)
+	                           ...
+	                           at com.fasterxml.jackson.module.scala.deser.EnumerationDeserializer.deserialize(EnumerationDeserializerModule.scala:40)
+                               java.lang.NoClassDefFoundError: com/fasterxml/jackson/datatype/jsr310/JavaTimeModule
+                        -->
+                        <relocation>
+                            <pattern>com.fasterxml.jackson</pattern>
+                            <shadedPattern>za.co.absa.shaded.com.fasterxml.jackson</shadedPattern>
+                        </relocation>
+                    </relocations>
                 </configuration>
             </plugin>
             <plugin>

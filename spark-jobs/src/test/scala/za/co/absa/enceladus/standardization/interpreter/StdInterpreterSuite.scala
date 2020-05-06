@@ -34,7 +34,7 @@ case class Time(id: Int, date: String, timestamp: String)
 case class StdTime(id: Int, date: Date, timestamp: Timestamp, errCol: List[ErrorMessage])
 
 class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBase {
-import spark.implicits._
+  import spark.implicits._
 
   case class subCC(subFieldA: Integer, subFieldB: String)
   case class sub2CC(subSub2FieldA: Integer, subSub2FieldB: String)
@@ -42,7 +42,7 @@ import spark.implicits._
   case class subarrayCC(arrayFieldA: Integer, arrayFieldB: String, arrayStruct: subCC)
   case class rootCC(rootField: String, rootStruct: subCC, rootStruct2: sub1CC, rootArray: Array[subarrayCC])
 
-  val stdExpectedSchema = StructType(
+  private val stdExpectedSchema = StructType(
     Seq(
       StructField("rootField", StringType, nullable = true),
       StructField("rootStruct",
@@ -98,16 +98,16 @@ import spark.implicits._
     import spark.implicits._
 
     val df = spark.createDataFrame(Array(
-      new ErrorPreserve("a", "1", null),
-      new ErrorPreserve("b", "2", List()),
-      new ErrorPreserve("c", "3", List(new ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
-      new ErrorPreserve("d", "abc", List(new ErrorMessage("myErrorType2", "E-2", "Testing This stuff blabla", "whatEvColumn2", Seq("some other value"))))))
+      ErrorPreserve("a", "1", null),
+      ErrorPreserve("b", "2", List()),
+      ErrorPreserve("c", "3", List(new ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
+      ErrorPreserve("d", "abc", List(new ErrorMessage("myErrorType2", "E-2", "Testing This stuff blabla", "whatEvColumn2", Seq("some other value"))))))
 
     val exp = Array(
-      new ErrorPreserveStd("a", 1, List()),
-      new ErrorPreserveStd("b", 2, List()),
-      new ErrorPreserveStd("c", 3, List(new ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
-      new ErrorPreserveStd("d", 0, List(ErrorMessage.stdCastErr("b", "abc"),
+      ErrorPreserveStd("a", 1, List()),
+      ErrorPreserveStd("b", 2, List()),
+      ErrorPreserveStd("c", 3, List(new ErrorMessage("myErrorType", "E-1", "Testing This stuff", "whatEvColumn", Seq("some value")))),
+      ErrorPreserveStd("d", 0, List(ErrorMessage.stdCastErr("b", "abc"),
         new ErrorMessage("myErrorType2", "E-2", "Testing This stuff blabla", "whatEvColumn2", Seq("some other value")))))
 
     val expSchema = spark.emptyDataset[ErrorPreserveStd].schema
@@ -167,8 +167,8 @@ import spark.implicits._
         StructField("id", LongType, nullable = false),
         StructField("name", StringType, nullable = true),
         StructField("orders", ArrayType(StructType(Array(
-          StructField("ordername", StringType, nullable = false),
-          StructField("delivername", StringType, nullable = true))), containsNull = true), nullable = true)))
+          StructField("orderName", StringType, nullable = false),
+          StructField("deliverName", StringType, nullable = true))), containsNull = true), nullable = true)))
 
     val sourceDF = spark.createDataFrame(
       Array(

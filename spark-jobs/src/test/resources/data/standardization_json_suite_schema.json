@@ -1,0 +1,44 @@
+{
+    "type":"struct",
+    "fields":[{
+        "name":"description",
+        "type":"string",
+        "nullable":false,
+        "metadata":{
+          "default":"ERROR"
+        }
+    },{
+        "name":"string",
+        "type":"string",
+        "nullable":true,
+        "metadata":{}
+    },{
+        "name":"boolean",
+        "type":"boolean",
+        "nullable":true,
+        "metadata":{}
+    },{
+        "name":"integer",
+        "type":"integer",
+        "nullable":true,
+        "metadata":{}
+    },{
+        "name":"date",
+        "type":"date",
+        "nullable":true,
+        "metadata":{
+            "pattern": "dd/MM/yyyy"
+        }
+    },{
+        "name":"array",
+        "type":{
+            "type": "array",
+            "elementType": "timestamp",
+            "containsNull": false
+        },
+        "nullable":true,
+        "metadata":{
+            "pattern": "dd/MM/yyyy HH:mm:ss"
+        }
+    }]
+}

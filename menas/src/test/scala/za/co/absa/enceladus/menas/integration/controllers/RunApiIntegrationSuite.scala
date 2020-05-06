@@ -18,6 +18,7 @@ package za.co.absa.enceladus.menas.integration.controllers
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
@@ -28,6 +29,7 @@ import za.co.absa.enceladus.model.{Run, SplineReference}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles(Array("withEmbeddedMongo"))
 class RunApiIntegrationSuite extends BaseRestApiTest {
 
   import za.co.absa.enceladus.menas.integration.RunImplicits.RunExtensions

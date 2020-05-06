@@ -11,6 +11,9 @@ indent_size = 4
 indent_style = space
 insert_final_newline = true
 
+[*.properties]
+insert_final_newline = true
+
 [*.{java,scala,js,json,css}]
 indent_size = 2
 indent_style = space

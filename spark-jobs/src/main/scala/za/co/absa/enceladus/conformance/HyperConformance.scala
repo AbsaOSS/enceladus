@@ -19,16 +19,17 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import org.apache.commons.configuration2.Configuration
+import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
+import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
-
 
 class HyperConformance (implicit cmd: ConfCmdConfig,
                         featureSwitches: FeatureSwitches,
@@ -89,23 +90,16 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
  * transformer.hyperconformance.menas.auth.keytab=/path/to/keytab
  * }}}
  */
-object HyperConformance extends StreamTransformerFactory {
+object HyperConformance extends StreamTransformerFactory with HyperConformanceAttributes {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
-
-  // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
-  val menasUriKey = "transformer.hyperconformance.menas.rest.uri"
-  val menasCredentialsFileKey = "transformer.hyperconformance.menas.credentials.file"
-  val menasAuthKeytabKey = "transformer.hyperconformance.menas.auth.keytab"
-  val datasetNameKey = "transformer.hyperconformance.dataset.name"
-  val datasetVersionKey = "transformer.hyperconformance.dataset.version"
-  val reportDateKey = "transformer.hyperconformance.report.date"
-  val reportVersionKey = "transformer.hyperconformance.report.version"
 
   private val defaultReportVersion = 1
 
   @throws[IllegalArgumentException]
   override def apply(conf: Configuration): StreamTransformer = {
     log.info("Building HyperConformance")
+
+    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
     validateConfiguration(conf)
 
@@ -134,7 +128,6 @@ object HyperConformance extends StreamTransformerFactory {
       .setBroadcastMaxSizeMb(0)
 
     implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
-
     new HyperConformance()
   }
 
@@ -177,6 +170,5 @@ object HyperConformance extends StreamTransformerFactory {
       defaultReportVersion
     }
   }
-
 }
 

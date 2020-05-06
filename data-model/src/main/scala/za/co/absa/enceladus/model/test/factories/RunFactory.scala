@@ -85,7 +85,7 @@ object RunFactory {
                          workflowName: String = "dummyWorkFlowName",
                          order: Int = 0,
                          controls: List[Measurement] = List()): Checkpoint = {
-    Checkpoint(name, processStartTime, processEndTime, workflowName, order, controls)
+    Checkpoint(name, None, None, processStartTime, processEndTime, workflowName, order, controls)
   }
 
   def getDummyMeasurement(controlName: String = "dummyControlName",
