@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.plugins.builtin.common.mq.kafka
 
 import com.typesafe.config.Config
-import za.co.absa.enceladus.plugins.builtin.utils.ConfigUtils
+import za.co.absa.enceladus.plugins.builtin.utils.{ConfigUtils, SecureKafka}
 
 /**
  * This case class contains parameters required to create a Kafka Producer.
@@ -49,7 +49,7 @@ object KafkaConnectionParams {
   def fromConfig(conf: Config, clientIdKey: String, topicNameKey: String): KafkaConnectionParams = {
     validate(conf, clientIdKey, topicNameKey)
 
-    setSecureKafkaProperties(conf)
+    SecureKafka.setSecureKafkaProperties(conf)
 
     KafkaConnectionParams(conf.getString(BootstrapServersKey),
       conf.getString(SchemaRegistryUrlKey),
@@ -57,20 +57,6 @@ object KafkaConnectionParams {
       KafkaSecurityParams.fromConfig(conf),
       conf.getString(topicNameKey)
     )
-  }
-
-  /**
-   * Moves Kafka security configuration from the config to system properties
-   * if it is not defined there already.
-   *
-   * @param conf A configuration.
-   */
-  private def setSecureKafkaProperties(conf: Config): Unit = {
-    ConfigUtils.setSystemPropertyFileFallback(conf, "javax.net.ssl.trustStore")
-    ConfigUtils.setSystemPropertyStringFallback(conf, "javax.net.ssl.trustStorePassword")
-    ConfigUtils.setSystemPropertyFileFallback(conf, "javax.net.ssl.keyStore")
-    ConfigUtils.setSystemPropertyStringFallback(conf, "javax.net.ssl.keyStorePassword")
-    ConfigUtils.setSystemPropertyFileFallback(conf, "java.security.auth.login.config")
   }
 
   @throws[IllegalArgumentException]
