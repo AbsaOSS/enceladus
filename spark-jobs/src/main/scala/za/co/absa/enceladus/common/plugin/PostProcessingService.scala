@@ -29,9 +29,12 @@ object PostProcessingService {
                          reportDate: String,
                          reportVersion: Int,
                          outputPath: String,
-                         sourceSystem: String): PostProcessingService = {
+                         sourceSystem: String,
+                         runUrls: Option[String],
+                         runId: Option[Int],
+                         uniqueRunId: Option[String]): PostProcessingService = {
     val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
-      Standardization, sourceSystem)
+      Standardization, sourceSystem, runUrls, runId, uniqueRunId)
     PostProcessingService(config, params)
   }
 
@@ -41,9 +44,12 @@ object PostProcessingService {
                      reportDate: String,
                      reportVersion: Int,
                      outputPath: String,
-                     sourceSystem: String): PostProcessingService = {
+                     sourceSystem: String,
+                     runUrls: Option[String],
+                     runId: Option[Int],
+                     uniqueRunId: Option[String]): PostProcessingService = {
     val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
-      Conformance, sourceSystem)
+      Conformance, sourceSystem, runUrls, runId, uniqueRunId)
     PostProcessingService(config, params)
   }
 
@@ -64,6 +70,8 @@ case class PostProcessingService private(config: Config,
   private val postProcessingPlugins: Seq[PostProcessor] = new PluginLoader[PostProcessor].loadPlugins(config, postProcessorPluginKey)
   /** Called when a dataset is saved. */
   def onSaveOutput(dataFrame: DataFrame)(implicit spark: SparkSession): Unit = {
+
+    // todo redo map to typed case class?
     val params = Map[String, String](
       "datasetName" -> additionalParams.datasetName,
       "datasetVersion" -> additionalParams.datasetVersion.toString,
@@ -72,7 +80,10 @@ case class PostProcessingService private(config: Config,
       "outputPath" -> additionalParams.outputPath,
       "sourceId" -> additionalParams.sourceId.toString,
       "sourceSystem" -> additionalParams.sourceSystem
-    )
+    ) ++
+      additionalParams.uniqueRunId.fold(Map.empty[String, String])(runId => Map("uniqueRunId" -> runId)) ++
+      additionalParams.runId.fold(Map.empty[String, String])(runId => Map("runId" -> runId.toString)) ++
+      additionalParams.runUrls.fold(Map.empty[String, String])(runUrl => Map("runUrl" -> runUrl))
 
     postProcessingPlugins.foreach { plugin =>
       plugin.onDataReady(dataFrame, params)

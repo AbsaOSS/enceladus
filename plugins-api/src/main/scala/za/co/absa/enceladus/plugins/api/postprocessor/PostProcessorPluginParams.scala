@@ -23,9 +23,14 @@ case class PostProcessorPluginParams(datasetName: String,
                                      reportVersion: Int,
                                      outputPath: String,
                                      sourceId: ErrorSourceId.Value,
-                                     sourceSystem: String)
+                                     sourceSystem: String,
+                                     runUrls: Option[String],
+                                     runId: Option[Int],
+                                     uniqueRunId: Option[String]
+                                    )
 
 object PostProcessorPluginParams {
+
   object ErrorSourceId extends Enumeration {
     val Standardization = Value("standardizaton")
     val Conformance = Value("conformance")

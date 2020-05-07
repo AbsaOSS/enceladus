@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common._
-import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
@@ -58,7 +58,6 @@ object StandardizationJob {
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
-  private var postProcessingService: PostProcessingService = _
 
   def main(args: Array[String]) {
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
@@ -104,16 +103,41 @@ object StandardizationJob {
       cmd.performanceMetricsFile.foreach(this.writePerformanceMetrics(performance, _))
       log.info("Standardization finished successfully")
       // todo do spark.disableControlMeasuresTracking()?
+
+      // todo check that std contians enceladus_record_id!
+
+      val postProcessingService = getPostProcessingService(cmd, pathCfg, dataset, MenasPlugin.runNumber, Atum.getControlMeasure.runUniqueId)
       postProcessingService.onSaveOutput(standardized) // all enabled postProcessors will be run with the std df
     } finally {
       postStandardizationSteps(cmd)
     }
   }
 
+  private def getPostProcessingService(cmd: StdCmdConfig, pathCfg: PathCfg, dataset: Dataset,
+                                        runNumber: Option[Int], uniqueRunId: Option[String]
+                                       )(implicit fsUtils: FileSystemVersionUtils): PostProcessingService = {
+    val runId = MenasPlugin.runNumber
+
+    if (runId.isEmpty) {
+      log.warn("No run number found, the Run URL cannot be properly reported!")
+    }
+
+    // reporting the UI url(s) - if more than one, its comma-separated
+    val runUrl: Option[String] = runId.map { runNumber =>
+      menasBaseUrls.map { menasBaseUrl =>
+        MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, dataset.name, dataset.version, runNumber)
+      }.mkString(",")
+    }
+
+    PostProcessingService.forStandardization(conf, dataset.name, dataset.version, cmd.reportDate,
+      getReportVersion(cmd, dataset), pathCfg.outputPath, Atum.getControlMeasure.metadata.sourceApplication, runUrl,
+      runId, uniqueRunId)
+  }
+
   private def getReportVersion(cmd: StdCmdConfig, dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {
     cmd.reportVersion match {
       case Some(version) => version
-      case None          =>
+      case None =>
         val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, cmd.reportDate) + 1
         log.warn(s"Report version not provided, inferred report version: $newVersion")
         log.warn("This is an EXPERIMENTAL feature.")
@@ -182,7 +206,7 @@ object StandardizationJob {
     }
   }
 
-  private def getGenericOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+  private def getGenericOptions(cmd: StdCmdConfig): HashMap[String, Option[RawFormatParameter]] = {
     val mode = if (cmd.failOnInputNotPerSchema) {
       "FAILFAST"
     } else {
@@ -194,7 +218,7 @@ object StandardizationJob {
     )
   }
 
-  private def getXmlOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+  private def getXmlOptions(cmd: StdCmdConfig): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("xml")) {
       HashMap("rowtag" -> cmd.rowTag.map(StringParameter))
     } else {
@@ -202,7 +226,7 @@ object StandardizationJob {
     }
   }
 
-  private def getCsvOptions(cmd: StdCmdConfig, numberOfColumns: Int = 0): HashMap[String,Option[RawFormatParameter]] = {
+  private def getCsvOptions(cmd: StdCmdConfig, numberOfColumns: Int = 0): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
         "delimiter" -> cmd.csvDelimiter.map(StringParameter),
@@ -429,8 +453,6 @@ object StandardizationJob {
       reportVersion,
       isJobStageOnly = true,
       generateNewRun = true)
-    postProcessingService = PostProcessingService.forStandardization(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate,
-      reportVersion, pathCfg.outputPath, Atum.getControlMeasure.metadata.sourceApplication)
 
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
     Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)
@@ -455,8 +477,11 @@ object StandardizationJob {
     val version = cmd.datasetVersion
     MenasPlugin.runNumber.foreach { runNumber =>
       menasBaseUrls.foreach { menasBaseUrl =>
-        log.info(s"Menas API Run URL: $menasBaseUrl/api/runs/$name/$version/$runNumber")
-        log.info(s"Menas UI Run URL: $menasBaseUrl/#/runs/$name/$version/$runNumber")
+        val apiUrl = MenasRunUrl.getMenasApiRunUrl(menasBaseUrl, name, version, runNumber)
+        val uiUrl = MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, name, version, runNumber)
+
+        log.info(s"Menas API Run URL: $apiUrl")
+        log.info(s"Menas UI Run URL: $uiUrl")
       }
     }
   }

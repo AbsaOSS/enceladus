@@ -187,7 +187,6 @@
                             <include>*:*</include>
                         </includes>
                         <excludes>
-                            <exclude>com.fasterxml.jackson.*:*</exclude>
 <!--  org.apache.spark:* should not be excluded. Otherwise, the spark-submit would have to be called with
 spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0
 -->

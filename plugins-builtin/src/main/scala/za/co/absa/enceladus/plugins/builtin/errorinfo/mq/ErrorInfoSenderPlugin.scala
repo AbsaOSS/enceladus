@@ -54,8 +54,12 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
 
     val stdErrors = dataFrame
       .filter(size(col("errCol")) > 0)
-      // only keep columns that are needed for the actual error publishing // todo which are those?
-      .select(col("tradeId"), col("reportDate"), explode(col("errCol")).as("singleError"))
+      // only keep columns that are needed for the actual error publishing
+      .select(
+        col("enceladus_record_id").cast(DataTypes.StringType).as("recordId"), // todo from Constans.enceladus_recordId?
+        col("reportDate"),
+        explode(col("errCol")).as("singleError")
+      )
       .as[SingleErrorStardardized]
       .map(_.toErrorInfo(params))
       .toDF()
@@ -98,29 +102,33 @@ object ErrorInfoSenderPlugin {
 
   case class ErrorRecord(errType: String, errCode: String, errMsg: String, errCol: String, rawValues: Seq[String])
 
-  case class SingleErrorStardardized(tradeId: Double, reportDate: java.sql.Date, singleError: ErrorRecord) {
+  case class SingleErrorStardardized(recordId: String, reportDate: java.sql.Date, singleError: ErrorRecord) {
     def toErrorInfo(additionalParams: Map[String, String]): DceErrorInfo = DceErrorInfo(
       sourceSystem = additionalParams("sourceSystem"),
       sourceSystemId = None,
       dataset = additionalParams.get("datasetName"),
       ingestionNumber = None,
       processingTimestamp = Instant.now.toEpochMilli,
-      informationDate = Some(reportDate.toLocalDate.toEpochDay.toInt), // todo test it
+      informationDate = Some(reportDate.toLocalDate.toEpochDay.toInt),
       outputFileName = additionalParams.get("outputPath"),
-      recordId = tradeId.toString, // todo enceladus_record_id
+      recordId = recordId,
       errorSourceId = additionalParams("sourceId"),
       errorType = singleError.errType,
       errorCode = singleError.errCode,
       errorDescription = singleError.errMsg,
-      additionalInfo = Map(
-        "uniqueRunId" -> "runId1", // todo replace all these values with actual values it should contain
-        "Run URL" -> "url1",
-        "reportDate" -> additionalParams("reportDate"),
-        "reportVersion" -> "reportVersion1",
-        "runId" -> "runId1",
-        "datasetName" -> additionalParams("datasetName"),
-        "datasetVersion" -> "DatasetVersion1"
-      )
+      additionalInfo =
+        Map(
+          "uniqueRunId" -> additionalParams("uniqueRunId"),
+          "runUrl" -> additionalParams("runUrl"),
+          "reportDate" -> additionalParams("reportDate"),
+          "reportVersion" -> additionalParams("reportVersion"),
+          "datasetName" -> additionalParams("datasetName"),
+          "datasetVersion" -> additionalParams("datasetVersion")
+        ) ++ additionalParams.get("uniqueRunId").fold(Map.empty[String, String])(runId => Map("uniqueRunId" -> runId))
+          ++ additionalParams.get("runId").fold(Map.empty[String, String])(runId => Map("runId" -> runId))
+          ++ additionalParams.get("runUrl").fold(Map.empty[String, String])(runUrl => Map("runUrl" -> runUrl))
+
+
     )
   }
 
