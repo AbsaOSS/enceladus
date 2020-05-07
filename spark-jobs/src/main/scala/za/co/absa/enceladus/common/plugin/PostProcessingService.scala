@@ -23,6 +23,7 @@ import za.co.absa.enceladus.plugins.api.postprocessor.{PostProcessor, PostProces
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin
 
 object PostProcessingService {
+  //scalastyle:off parameter.number
   def forStandardization(config: Config,
                          datasetName: String,
                          datasetVersion: Int,
@@ -51,6 +52,7 @@ object PostProcessingService {
     val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
       Conformance, sourceSystem, runUrls, runId, uniqueRunId)
     PostProcessingService(config, params)
+    //scalastyle:on parameter.number
   }
 
 }

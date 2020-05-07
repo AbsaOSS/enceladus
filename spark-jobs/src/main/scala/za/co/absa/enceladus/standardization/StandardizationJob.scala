@@ -99,12 +99,9 @@ object StandardizationJob {
 
     try {
       val standardized = executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg, recordIdGenerationStrategy)
-      //standardized.persist() // todo persist?
+      standardized.persist()
       cmd.performanceMetricsFile.foreach(this.writePerformanceMetrics(performance, _))
       log.info("Standardization finished successfully")
-      // todo do spark.disableControlMeasuresTracking()?
-
-      // todo check that std contians enceladus_record_id!
 
       val postProcessingService = getPostProcessingService(cmd, pathCfg, dataset, MenasPlugin.runNumber, Atum.getControlMeasure.runUniqueId)
       postProcessingService.onSaveOutput(standardized) // all enabled postProcessors will be run with the std df

@@ -18,7 +18,7 @@ package za.co.absa.enceladus.plugins.builtin.errorinfo.mq
 import java.time.Instant
 
 import org.apache.log4j.LogManager
-import org.apache.spark.sql.functions.{col, explode, size, struct, lit}
+import org.apache.spark.sql.functions.{col, explode, lit, size, struct}
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.{DataFrame, Encoders}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
@@ -26,6 +26,9 @@ import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParam
 import za.co.absa.enceladus.plugins.builtin.errorinfo.DceErrorInfo
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin.SingleErrorStardardized
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
+import za.co.absa.enceladus.utils.schema.SchemaUtils
+import ErrorInfoSenderPlugin._
+
 
 class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
                             keySchemaRegistryConfig: Map[String, String],
@@ -43,6 +46,12 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
    * @return A dataframe with post processing applied
    */
   override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): DataFrame = {
+    if(!SchemaUtils.fieldExists(ColumnNames.enceladusRecordId, dataFrame.schema)){
+      throw new IllegalStateException(
+        s"${this.getClass.getName} requires ${ColumnNames.enceladusRecordId} column to be present in the dataframe!"
+      )
+    }
+
     val dfWithErrors = getIndividualErrors(dataFrame, params)
     sendErrorsToKafka(dfWithErrors, params)
     dfWithErrors
@@ -56,9 +65,9 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
       .filter(size(col("errCol")) > 0)
       // only keep columns that are needed for the actual error publishing
       .select(
-        col("enceladus_record_id").cast(DataTypes.StringType).as("recordId"), // todo from Constans.enceladus_recordId?
-        col("reportDate"),
-        explode(col("errCol")).as("singleError")
+        col(ColumnNames.enceladusRecordId).cast(DataTypes.StringType).as("recordId"),
+        col(ColumnNames.reportDate),
+        explode(col(ColumnNames.errCol)).as("singleError")
       )
       .as[SingleErrorStardardized]
       .map(_.toErrorInfo(params))
@@ -99,6 +108,13 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
 }
 
 object ErrorInfoSenderPlugin {
+
+  // columns from the original datafram (post Stdardardization/Conformance) to be addressed
+  object ColumnNames {
+    val enceladusRecordId = "enceladus_record_id"
+    val reportDate = "reportDate"
+    val errCol = "errCol"
+  }
 
   case class ErrorRecord(errType: String, errCode: String, errMsg: String, errCol: String, rawValues: Seq[String])
 
