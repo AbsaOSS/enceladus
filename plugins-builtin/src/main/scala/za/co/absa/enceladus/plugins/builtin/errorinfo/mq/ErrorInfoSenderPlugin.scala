@@ -21,7 +21,7 @@ import org.apache.log4j.LogManager
 import org.apache.spark.sql.functions.{col, explode, lit, size, struct}
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.{DataFrame, Encoders}
-import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
+import za.co.absa.enceladus.plugins.api.postprocessor.{PostProcessor, PostProcessorPluginParams}
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
 import za.co.absa.enceladus.plugins.builtin.errorinfo.DceErrorInfo
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin.SingleErrorStardardized
@@ -45,8 +45,8 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
    * @param params    Additional key/value parameters provided by Enceladus.
    * @return A dataframe with post processing applied
    */
-  override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): DataFrame = {
-    if(!SchemaUtils.fieldExists(ColumnNames.enceladusRecordId, dataFrame.schema)){
+  override def onDataReady(dataFrame: DataFrame, params: PostProcessorPluginParams): DataFrame = {
+    if (!SchemaUtils.fieldExists(ColumnNames.enceladusRecordId, dataFrame.schema)) {
       throw new IllegalStateException(
         s"${this.getClass.getName} requires ${ColumnNames.enceladusRecordId} column to be present in the dataframe!"
       )
@@ -57,7 +57,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
     dfWithErrors
   }
 
-  def getIndividualErrors(dataFrame: DataFrame, params: Map[String, String]): DataFrame = {
+  def getIndividualErrors(dataFrame: DataFrame, params: PostProcessorPluginParams): DataFrame = {
     implicit val singleErrorStardardizedEncoder = Encoders.product[SingleErrorStardardized]
     implicit val dceErrorInfoEncoder = Encoders.product[DceErrorInfo]
 
@@ -76,7 +76,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
     stdErrors
   }
 
-  def sendErrorsToKafka(stdErrors: DataFrame, params: Map[String, String]): Unit = {
+  def sendErrorsToKafka(stdErrors: DataFrame, params: PostProcessorPluginParams): Unit = {
 
     log.info(s"Sending errors to kafka topic ${connectionParams.topicName} ...")
 
@@ -92,7 +92,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
       .limit(10) // todo remove when done
       .select(
         to_confluent_avro(
-          struct(lit(params("sourceSystem")).as("sourceSystem")), keyAvroSchemaString, keySchemaRegistryConfig
+          struct(lit(params.sourceSystem).as("sourceSystem")), keyAvroSchemaString, keySchemaRegistryConfig
         ).as("key"),
         to_confluent_avro(allValueColumns, valueAvroSchemaString, valueSchemaRegistryConfig).as("value")
       )
@@ -119,30 +119,27 @@ object ErrorInfoSenderPlugin {
   case class ErrorRecord(errType: String, errCode: String, errMsg: String, errCol: String, rawValues: Seq[String])
 
   case class SingleErrorStardardized(recordId: String, reportDate: java.sql.Date, singleError: ErrorRecord) {
-    def toErrorInfo(additionalParams: Map[String, String]): DceErrorInfo = DceErrorInfo(
-      sourceSystem = additionalParams("sourceSystem"),
+    def toErrorInfo(additionalParams: PostProcessorPluginParams): DceErrorInfo = DceErrorInfo(
+      sourceSystem = additionalParams.sourceSystem,
       sourceSystemId = None,
-      dataset = additionalParams.get("datasetName"),
+      dataset = Some(additionalParams.datasetName),
       ingestionNumber = None,
       processingTimestamp = Instant.now.toEpochMilli,
       informationDate = Some(reportDate.toLocalDate.toEpochDay.toInt),
-      outputFileName = additionalParams.get("outputPath"),
+      outputFileName = Some(additionalParams.outputPath),
       recordId = recordId,
-      errorSourceId = additionalParams("sourceId"),
+      errorSourceId = additionalParams.sourceId.toString,
       errorType = singleError.errType,
       errorCode = singleError.errCode,
       errorDescription = singleError.errMsg,
-      additionalInfo =
-        Map(
-          "uniqueRunId" -> additionalParams("uniqueRunId"),
-          "runUrl" -> additionalParams("runUrl"),
-          "reportDate" -> additionalParams("reportDate"),
-          "reportVersion" -> additionalParams("reportVersion"),
-          "datasetName" -> additionalParams("datasetName"),
-          "datasetVersion" -> additionalParams("datasetVersion")
-        ) ++ additionalParams.get("uniqueRunId").fold(Map.empty[String, String])(runId => Map("uniqueRunId" -> runId))
-          ++ additionalParams.get("runId").fold(Map.empty[String, String])(runId => Map("runId" -> runId))
-          ++ additionalParams.get("runUrl").fold(Map.empty[String, String])(runUrl => Map("runUrl" -> runUrl))
+      additionalInfo = Map(
+        "reportDate" -> additionalParams.reportDate,
+        "reportVersion" -> additionalParams.reportVersion.toString,
+        "datasetName" -> additionalParams.datasetName,
+        "datasetVersion" -> additionalParams.datasetVersion.toString
+      ) ++ additionalParams.uniqueRunId.fold(Map.empty[String, String])(runId => Map("uniqueRunId" -> runId))
+        ++ additionalParams.runId.fold(Map.empty[String, String])(runId => Map("runId" -> runId.toString))
+        ++ additionalParams.runUrls.fold(Map.empty[String, String])(runUrls => Map("runUrl" -> runUrls))
 
 
     )

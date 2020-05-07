@@ -16,9 +16,9 @@
 package za.co.absa.enceladus.common.plugin.dummy
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
+import za.co.absa.enceladus.plugins.api.postprocessor.{PostProcessor, PostProcessorPluginParams}
 
 class DummyPostProcessor1 extends PostProcessor {
-  override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): DataFrame = dataFrame
+  override def onDataReady(dataFrame: DataFrame, params: PostProcessorPluginParams): DataFrame = dataFrame
   override def close(): Unit = {}
 }
