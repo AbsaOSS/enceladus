@@ -19,13 +19,15 @@ import java.util.Properties
 
 import io.confluent.kafka.serializers.{AbstractKafkaAvroSerDeConfig, KafkaAvroSerializer}
 import org.apache.avro.generic.GenericRecord
-import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
+import org.apache.kafka.clients.{CommonClientConfigs, Metadata}
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
 import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.plugins.builtin.common.mq.ControlInfoProducer
 import za.co.absa.enceladus.plugins.builtin.controlinfo.{ControlInfoAvroSerializer, DceControlInfo}
 
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
+import scala.concurrent.Future
 
 
 /**
@@ -58,6 +60,8 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
    *                    the state of the job.
    */
   def send(controlInfo: DceControlInfo): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     val avroKey = ControlInfoAvroSerializer.convertControlInfoKey(controlInfo.datasetName)
     val avroRecordOpt = ControlInfoAvroSerializer.convertControlInfoRecord(controlInfo)
 
@@ -67,8 +71,16 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
           logger.info(s"Sending control measurements to ${kafkaConnectionParams.topicName}...")
           val producerRecord = new ProducerRecord[GenericRecord, GenericRecord](kafkaConnectionParams.topicName,
             avroKey, avroRecord)
-          kafkaProducer.send(producerRecord)
-          logger.info("Control measurements were sent successfully to the Kafka topic.")
+          // Java Future to Scala Future
+          Future[RecordMetadata] {
+            kafkaProducer.send(producerRecord).get
+          }.onComplete {
+            case Success(metadata) =>
+              logger.info(s"Control measurements were sent successfully to the Kafka topic, offset=${metadata.offset()}.")
+            case Failure(ex) =>
+              logger.error(s"Failed to send control measurements to Kafka.", ex)
+          }
+
         case None =>
           logger.error(s"No Avro records generated from control measurements.")
       }
