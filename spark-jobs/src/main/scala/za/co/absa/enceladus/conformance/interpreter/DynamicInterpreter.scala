@@ -30,11 +30,12 @@ import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConforman
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.explode.ExplosionContext
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 object DynamicInterpreter {
   private val log = LoggerFactory.getLogger(this.getClass)
@@ -323,9 +324,12 @@ object DynamicInterpreter {
   }
 
   private def logExecutionPlan(df: DataFrame)(implicit spark: SparkSession): Unit = {
-    val explain = ExplainCommand(df.queryExecution.logical, extended = true)
-    spark.sessionState.executePlan(explain).executedPlan.executeCollect().foreach {
-      r => log.debug("Output Dataset plan: \n" + r.getString(0))
+    // Need to check this explicitly since the execution plan generation can take significant amount of time
+    if (log.isDebugEnabled) {
+      val explain = ExplainCommand(df.queryExecution.logical, extended = true)
+      spark.sessionState.executePlan(explain).executedPlan.executeCollect().foreach {
+        r => log.debug("Output Dataset plan: \n" + r.getString(0))
+      }
     }
   }
 

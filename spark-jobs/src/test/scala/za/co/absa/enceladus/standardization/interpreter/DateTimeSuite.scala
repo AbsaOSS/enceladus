@@ -22,8 +22,9 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.standardization.interpreter.stages.SchemaChecker
 import za.co.absa.enceladus.standardization.samples.TestSamples
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.field.FieldValidationFailure
 import za.co.absa.enceladus.utils.validation.{SchemaValidator, ValidationError, ValidationException, ValidationWarning}
 
@@ -42,7 +43,7 @@ class DateTimeSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     .getLines().mkString("\n"))
     .asInstanceOf[StructType]
 
-  private implicit val udfLib: UDFLibrary = UDFLibrary()
+  private implicit val udfLib: UDFLibrary = new UDFLibrary()
 
   test("Validation should return critical errors") {
     logger.debug(data.schema.prettyJson)

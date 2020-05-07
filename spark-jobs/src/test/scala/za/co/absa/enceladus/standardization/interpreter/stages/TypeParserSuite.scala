@@ -17,18 +17,17 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.types.TypedStructField.TypedStructFieldTagged
 import za.co.absa.enceladus.utils.types.parsers.NumericParser
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
-import za.co.absa.enceladus.utils.udf.UDFResult
+import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFResult}
 
 import scala.util.Success
 
 class TypeParserSuite extends FunSuite with SparkTestBase {
 
-  private implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+  private implicit val udfLib: UDFLibrary = new UDFLibrary
   private implicit val defaults: Defaults = GlobalDefaults
 
   test("Test standardize with sourcecolumn metadata") {
