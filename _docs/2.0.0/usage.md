@@ -10,6 +10,7 @@ Usage
 =====
 
 * [Schema]({{ site.baseurl }}/docs/{{ page.version }}/usage/schema)
+* [Configuration]({{ site.baseurl }}/docs/{{ page.version }}/usage/config)
 
 Details
 -------
