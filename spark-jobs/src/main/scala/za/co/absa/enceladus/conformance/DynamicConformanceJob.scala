@@ -37,6 +37,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.ControlInfoValidation
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
@@ -53,7 +54,6 @@ object DynamicConformanceJob {
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
-  private val controlInfoValidation = conf.getString("control.info.validation")
 
   def main(args: Array[String]) {
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
@@ -237,9 +237,9 @@ object DynamicConformanceJob {
       .setBroadcastStrategyMode(broadcastingStrategyMode)
       .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
-    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata(controlInfoValidation, log)
 
     Try {
+      ControlInfoValidation.addRawAndSourceRecordCountsToMetadata(conf, log)
       DynamicInterpreter.interpret(conformance, inputData)
     } match {
       case Failure(e: ValidationException) =>

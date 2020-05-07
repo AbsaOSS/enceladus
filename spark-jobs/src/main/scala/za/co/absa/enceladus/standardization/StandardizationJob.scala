@@ -55,8 +55,6 @@ object StandardizationJob {
   private val log = LoggerFactory.getLogger(this.getClass)
   private val conf = ConfigFactory.load()
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
-  private val controlInfoValidation = conf.getString("control.info.validation")
-
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
@@ -286,7 +284,7 @@ object StandardizationJob {
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
     performance.startMeasurement(rawDirSize)
 
-    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata(controlInfoValidation, log)
+    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata(conf, log)
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))

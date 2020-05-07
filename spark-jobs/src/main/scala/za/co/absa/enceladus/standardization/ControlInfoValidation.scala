@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.standardization
 
 
+import com.typesafe.config.Config
 import org.slf4j.Logger
 import za.co.absa.atum.core.Atum
 import za.co.absa.atum.model.Checkpoint
@@ -27,11 +28,13 @@ import scala.util.{Failure, Success, Try}
 object ControlInfoValidation {
   private val rawFieldName = "raw"
   private val sourceFieldName = "source"
+  private val configEntry = "control.info.validation"
 
   /**
    * Adds metadata about the number of records in raw and source data by checking Atum's checkpoints first.
    */
-  def addRawAndSourceRecordCountsToMetadata(controlInfoValidation: String, log: Logger): Unit = {
+  def addRawAndSourceRecordCountsToMetadata(conf: Config, log: Logger): Unit = {
+    val validationType = conf.getString(configEntry)
     val checkpoints = Atum.getControlMeasure.checkpoints
     val checkpointRawRecordCount = getCountFromGivenCheckpoint(rawFieldName, checkpoints)
     val checkpointSourceRecordCount = getCountFromGivenCheckpoint(sourceFieldName, checkpoints)
@@ -39,7 +42,7 @@ object ControlInfoValidation {
     try {
         validateFields(checkpointRawRecordCount, checkpointSourceRecordCount)
     } catch {
-      case ex: ValidationException => controlInfoValidation match {
+      case ex: ValidationException => validationType match {
         case "strict" => throw ex
         case "warning" => log.warn(ex.msg)
         case _ =>
@@ -54,15 +57,15 @@ object ControlInfoValidation {
   }
 
   def validateFields(checkpointRawRecordCount: Try[Long], checkpointSourceRecordCount: Try[Long]) {
-    val errorMessage = "Checkpoint validation failed:"
+    val errorMessage = "Checkpoint validation failed: "
 
     (checkpointRawRecordCount, checkpointSourceRecordCount) match {
       case (Success(_), Failure(er)) =>
-        throw new ValidationException(s"$errorMessage: ${er.getMessage}", Seq(er.getMessage))
+        throw new ValidationException(s"$errorMessage ${er.getMessage}", Seq(er.getMessage))
       case (Failure(er), Success(_)) =>
-        throw new ValidationException(s"$errorMessage: ${er.getMessage}", Seq(er.getMessage))
+        throw new ValidationException(s"$errorMessage ${er.getMessage}", Seq(er.getMessage))
       case (Failure(er1), Failure(er2)) =>
-        throw new ValidationException(s"$errorMessage: ${er1.getMessage}, ${er2.getMessage}",
+        throw new ValidationException(s"$errorMessage ${er1.getMessage}, ${er2.getMessage}",
           Seq(er1.getMessage, er2.getMessage))
       case (_, _) =>
     }
