@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.plugins.builtin.utils
 
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, Paths}
 
 import com.typesafe.config.Config
 import org.slf4j.LoggerFactory
@@ -44,7 +44,6 @@ object ConfigUtils {
    *
    * - The exact path pased (/home/aabb/file.conf).
    * - The file in the current directory, when spark-submit uses --files with aliases (file.conf).
-   * - The file in the distribution directoty
    *
    * @param conf  A configuration.
    * @param key   Configuration key.
@@ -62,21 +61,8 @@ object ConfigUtils {
           log.info(s"File exists: ${fileNameInCurDir.toString}")
           System.setProperty(key, fileNameInCurDir.toString)
         } else {
-          log.warn(s"File does not exist: ${fileNameInCurDir.toString}")
+          log.error(s"File does not exist: ${fileNameInCurDir.toString}")
           val sparkRoot = System.getProperty("spark.dist.files.location")
-          if (sparkRoot == null) {
-            log.warn(s"'spark.dist.files.location' is not set. Cannot relink filed to the distribution location in cluster mode.")
-          } else {
-            val fileName = Paths.get(pathFileName).getFileName.toString
-            val newPath = Paths.get(sparkRoot, fileName).toAbsolutePath
-            if (Files.exists(newPath)) {
-              log.warn(s"File exists: ${newPath.toString}")
-              System.setProperty(key, newPath.toString)
-            } else {
-              log.error(s"File does not exist: ${newPath.toString}")
-              System.setProperty(key, newPath.toString)
-            }
-          }
         }
       }
     }
