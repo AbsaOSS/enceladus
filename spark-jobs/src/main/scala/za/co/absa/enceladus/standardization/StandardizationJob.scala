@@ -20,7 +20,7 @@ import java.text.MessageFormat
 import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
-import org.apache.spark.SPARK_VERSION
+import org.apache.spark.{SPARK_VERSION, SparkFiles}
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.slf4j.LoggerFactory
@@ -66,6 +66,8 @@ object StandardizationJob {
     implicit val udfLib: UDFLibrary = new UDFLibrary
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
+
+    System.setProperty("spark.dist.files.location", SparkFiles.getRootDirectory())
 
     dao.authenticate()
 
