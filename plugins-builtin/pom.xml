@@ -40,11 +40,6 @@
             <artifactId>kafka-avro-serializer</artifactId>
             <version>${kafka.avro.serializer.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.typesafe</groupId>
-            <artifactId>config</artifactId>
-            <version>${typesafe.config.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
