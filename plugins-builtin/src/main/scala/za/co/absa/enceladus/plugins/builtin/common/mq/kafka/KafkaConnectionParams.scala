@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.plugins.builtin.common.mq.kafka
 
 import com.typesafe.config.Config
-import za.co.absa.enceladus.plugins.builtin.utils.{ConfigUtils, SecureKafka}
+import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
 
 /**
  * This case class contains parameters required to create a Kafka Producer.

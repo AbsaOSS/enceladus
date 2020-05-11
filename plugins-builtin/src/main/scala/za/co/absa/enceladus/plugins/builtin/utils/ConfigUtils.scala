@@ -37,12 +37,12 @@ object ConfigUtils {
   }
 
   /**
-   * Puts a file location from a configuration to the system properties ensusing the file exists.
+   * Puts a file location from a configuration to the system properties ensuring the file exists.
    *
    * A file provided can be at an absolute path (for client mode), e.g. /home/aabb/file.conf,
    * but other locations are investigated as well in this order.
    *
-   * - The exact path pased (/home/aabb/file.conf).
+   * - The exact path passed (/home/aabb/file.conf).
    * - The file in the current directory, when spark-submit uses --files with aliases (file.conf).
    *
    * @param conf  A configuration.
@@ -52,17 +52,16 @@ object ConfigUtils {
     if (System.getProperty(key) == null && conf.hasPath(key)) {
       val pathFileName = conf.getString(key)
       if (Files.exists(Paths.get(pathFileName))) {
-        log.info(s"File exists: ${pathFileName.toString}")
-        System.setProperty(key, conf.getString(key))
+        log.info(s"File exists: $pathFileName")
+        System.setProperty(key, pathFileName)
       } else {
-        log.warn(s"File does not exist: ${pathFileName.toString}")
+        log.info(s"File does not exist: $pathFileName")
         val fileNameInCurDir = Paths.get(pathFileName).getFileName
         if (Files.exists(fileNameInCurDir)) {
-          log.info(s"File exists: ${fileNameInCurDir.toString}")
+          log.info(s"File exists: ${fileNameInCurDir.toString} (in the current directory, not in $pathFileName)")
           System.setProperty(key, fileNameInCurDir.toString)
         } else {
-          log.error(s"File does not exist: ${fileNameInCurDir.toString}")
-          val sparkRoot = System.getProperty("spark.dist.files.location")
+          log.error(s"File does not exist: $pathFileName (nor ${fileNameInCurDir.toString} in the current directory)")
         }
       }
     }
