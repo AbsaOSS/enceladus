@@ -33,7 +33,6 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
   val ClientIdKey = "kafka.errorinfo.client.id"
   val ErrorInfoKafkaTopicKey = "kafka.errorinfo.topic.name"
 
-  // todo: load all these data from the avsc files programmatically, both times (key+value) in the same fashion?
   object Key {
     val avroSchemaResource = "/dq_errors_key_avro_schema.avsc"
 

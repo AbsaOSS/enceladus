@@ -59,6 +59,12 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
     dfWithErrors
   }
 
+  /**
+   * Processes the `dataFrame` - errors are exploded (one error = one line) and filtered to conform to the error source (standardization/conformance)
+   * @param dataFrame
+   * @param params
+   * @return
+   */
   def getIndividualErrors(dataFrame: DataFrame, params: PostProcessorPluginParams): DataFrame = {
     implicit val singleErrorStardardizedEncoder = Encoders.product[SingleErrorStardardized]
     implicit val dceErrorInfoEncoder = Encoders.product[DceErrorInfo]
@@ -74,15 +80,14 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
         explode(col(ColumnNames.errCol)).as("singleError")
       )
       .as[SingleErrorStardardized]
-   //   .filter(entry => allowedErrorCodes.contains(entry.toErrorInfo(params))) // Std xor Conf error codes // todo test this
       .map(_.toErrorInfo(params))
+      .filter(entry => allowedErrorCodes.contains(entry.errorCode)) // Std xor Conf error codes
       .toDF()
 
     stdErrors
   }
 
   def sendErrorsToKafka(stdErrors: DataFrame, params: PostProcessorPluginParams): Unit = {
-
     log.info(s"Sending errors to kafka topic ${connectionParams.topicName} ...")
 
     val valueAvroSchemaString = KafkaErrorInfoPlugin.getValueAvroSchemaString
@@ -94,7 +99,6 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
     import za.co.absa.abris.avro.functions.to_confluent_avro
 
     stdErrors.sqlContext.createDataFrame(stdErrors.rdd, valueSchemaType) // forces avsc schema to assure compatible nullability of the DF
-      .limit(10) // todo remove when done
       .select(
         to_confluent_avro(
           struct(lit(params.sourceSystem).as("sourceSystem")), keyAvroSchemaString, keySchemaRegistryConfig
