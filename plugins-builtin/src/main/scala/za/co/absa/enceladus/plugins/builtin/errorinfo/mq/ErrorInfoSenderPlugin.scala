@@ -28,6 +28,8 @@ import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin.S
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import ErrorInfoSenderPlugin._
+import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorPluginParams.ErrorSourceId
+import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
 
 
 class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
@@ -61,6 +63,8 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
     implicit val singleErrorStardardizedEncoder = Encoders.product[SingleErrorStardardized]
     implicit val dceErrorInfoEncoder = Encoders.product[DceErrorInfo]
 
+    val allowedErrorCodes = ErrorInfoSenderPlugin.errorCodesForSource(params.sourceId)
+
     val stdErrors = dataFrame
       .filter(size(col("errCol")) > 0)
       // only keep columns that are needed for the actual error publishing
@@ -70,6 +74,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
         explode(col(ColumnNames.errCol)).as("singleError")
       )
       .as[SingleErrorStardardized]
+   //   .filter(entry => allowedErrorCodes.contains(entry.toErrorInfo(params))) // Std xor Conf error codes // todo test this
       .map(_.toErrorInfo(params))
       .toDF()
 
@@ -140,9 +145,12 @@ object ErrorInfoSenderPlugin {
       ) ++ additionalParams.uniqueRunId.fold(Map.empty[String, String])(runId => Map("uniqueRunId" -> runId))
         ++ additionalParams.runId.fold(Map.empty[String, String])(runId => Map("runId" -> runId.toString))
         ++ additionalParams.runUrls.fold(Map.empty[String, String])(runUrls => Map("runUrl" -> runUrls))
-
-
     )
+  }
+
+  def errorCodesForSource(sourceId: ErrorSourceId.Value): Seq[String] = sourceId match {
+    case ErrorSourceId.Standardization => ErrorCodes.standardizationErrorCodes
+    case ErrorSourceId.Conformance => ErrorCodes.conformanceErrorCodes
   }
 
 }

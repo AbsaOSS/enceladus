@@ -28,7 +28,8 @@ import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.plugin.PostProcessingService
+import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
@@ -37,6 +38,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.StdCmdConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
@@ -98,13 +100,16 @@ object DynamicConformanceJob {
 
     try {
       val result = conform(conformance, inputData, enableCF, recordIdGenerationStrategy)
+      result.persist()
 
       PerformanceMetricTools.addJobInfoToAtumMetadata("conform",
         pathCfg.stdPath, pathCfg.publishPath, menasCredentials.username, args.mkString(" "))
 
       processResult(result, performance, pathCfg, reportVersion, args.mkString(" "), menasCredentials)
-
       log.info("Conformance finished successfully")
+
+      val postProcessingService = getPostProcessingService(cmd, pathCfg, reportVersion, MenasPlugin.runNumber, Atum.getControlMeasure.runUniqueId)
+      postProcessingService.onSaveOutput(result) // all enabled postProcessors will be run with the std df
     } finally {
       Atum.getControlMeasure.runUniqueId
 
@@ -117,6 +122,27 @@ object DynamicConformanceJob {
         }
       }
     }
+  }
+
+  private def getPostProcessingService(cmd: ConfCmdConfig, pathCfg: PathCfg, reportVersion: Int,
+                                       runNumber: Option[Int], uniqueRunId: Option[String]
+                                      )(implicit fsUtils: FileSystemVersionUtils): PostProcessingService = {
+    val runId = MenasPlugin.runNumber
+
+    if (runId.isEmpty) {
+      log.warn("No run number found, the Run URL cannot be properly reported!")
+    }
+
+    // reporting the UI url(s) - if more than one, its comma-separated
+    val runUrl: Option[String] = runId.map { runNumber =>
+      menasBaseUrls.map { menasBaseUrl =>
+        MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, cmd.datasetName, cmd.datasetVersion, runNumber)
+      }.mkString(",")
+    }
+
+    PostProcessingService.forConformance(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate,
+      reportVersion, pathCfg.publishPath, Atum.getControlMeasure.metadata.sourceApplication, runUrl,
+      runId, uniqueRunId)
   }
 
   private def isExperimentalRuleEnabled()(implicit cmd: ConfCmdConfig): Boolean = {
