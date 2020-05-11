@@ -13,61 +13,51 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.common
 
-
-import com.typesafe.config.Config
-import org.slf4j.Logger
 import za.co.absa.atum.core.Atum
 import za.co.absa.atum.model.Checkpoint
-import za.co.absa.enceladus.utils.validation.ValidationException
 import za.co.absa.enceladus.utils.implicits.OptionImplicits._
+import za.co.absa.enceladus.utils.validation.ValidationException
 
 import scala.util.{Failure, Success, Try}
 
 object ControlInfoValidation {
   private val rawFieldName = "raw"
   private val sourceFieldName = "source"
-  private val configEntry = "control.info.validation"
 
   /**
    * Adds metadata about the number of records in raw and source data by checking Atum's checkpoints first.
+   * @return Validation results
    */
-  def addRawAndSourceRecordCountsToMetadata(conf: Config, log: Logger): Unit = {
-    val validationType = conf.getString(configEntry)
+
+  def addRawAndSourceRecordCountsToMetadata(): Try[Unit] = {
     val checkpoints = Atum.getControlMeasure.checkpoints
     val checkpointRawRecordCount = getCountFromGivenCheckpoint(rawFieldName, checkpoints)
     val checkpointSourceRecordCount = getCountFromGivenCheckpoint(sourceFieldName, checkpoints)
 
-    try {
-        validateFields(checkpointRawRecordCount, checkpointSourceRecordCount)
-    } catch {
-      case ex: ValidationException => validationType match {
-        case "strict" => throw ex
-        case "warning" => log.warn(ex.msg)
-        case _ =>
-      }
-    } finally {
-      checkpointRawRecordCount
-        .foreach(e => Atum.setAdditionalInfo(s"${rawFieldName}_record_count" -> e.toString))
+    checkpointRawRecordCount
+      .foreach(e => Atum.setAdditionalInfo(s"${rawFieldName}_record_count" -> e.toString))
 
-      checkpointSourceRecordCount
-        .foreach(e => Atum.setAdditionalInfo(s"${sourceFieldName}_record_count" -> e.toString))
-    }
+    checkpointSourceRecordCount
+      .foreach(e => Atum.setAdditionalInfo(s"${sourceFieldName}_record_count" -> e.toString))
+
+    validateFields(checkpointRawRecordCount, checkpointSourceRecordCount)
   }
 
-  def validateFields(checkpointRawRecordCount: Try[Long], checkpointSourceRecordCount: Try[Long]) {
+  private def validateFields(checkpointRawRecordCount: Try[Long],
+                             checkpointSourceRecordCount: Try[Long]): Try[Unit] = {
     val errorMessage = "Checkpoint validation failed: "
 
     (checkpointRawRecordCount, checkpointSourceRecordCount) match {
       case (Success(_), Failure(er)) =>
-        throw new ValidationException(s"$errorMessage ${er.getMessage}", Seq(er.getMessage))
+        Failure(new ValidationException(s"$errorMessage ${er.getMessage}", Seq(er.getMessage)))
       case (Failure(er), Success(_)) =>
-        throw new ValidationException(s"$errorMessage ${er.getMessage}", Seq(er.getMessage))
+        Failure(new ValidationException(s"$errorMessage ${er.getMessage}", Seq(er.getMessage)))
       case (Failure(er1), Failure(er2)) =>
-        throw new ValidationException(s"$errorMessage ${er1.getMessage}, ${er2.getMessage}",
-          Seq(er1.getMessage, er2.getMessage))
-      case (_, _) =>
+        Failure(new ValidationException(s"$errorMessage ${er1.getMessage}, ${er2.getMessage}",
+          Seq(er1.getMessage, er2.getMessage)))
+      case (_, _) => Success()
     }
   }
 

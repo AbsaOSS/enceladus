@@ -13,16 +13,13 @@
  * limitations under the License.
  */
 
-
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.common
 
 import org.scalatest.FunSuite
 import za.co.absa.atum.model.{Checkpoint, Measurement}
-import za.co.absa.enceladus.utils.validation.ValidationException
 import scala.util.Success
 
 class ControlInfoValidationSuite extends FunSuite {
-
   import za.co.absa.atum.core.Constants._
 
   private val checkpoints1 = List(
@@ -58,7 +55,6 @@ class ControlInfoValidationSuite extends FunSuite {
   test("Correct values") {
     val rawResult = ControlInfoValidation.getCountFromGivenCheckpoint("raw", checkpoints1)
     val sourceResult = ControlInfoValidation.getCountFromGivenCheckpoint("source", checkpoints1)
-    val validation = ControlInfoValidation.validateFields(rawResult, sourceResult)
 
     assert(rawResult == Success(11))
     assert(sourceResult == Success(3))
@@ -73,10 +69,6 @@ class ControlInfoValidationSuite extends FunSuite {
 
     assert(rawResult.failed.get.getMessage == rawError)
     assert(sourceResult.failed.get.getMessage == sourceError)
-
-    val exception = intercept[ValidationException](ControlInfoValidation.validateFields(rawResult,sourceResult))
-    assert(exception.msg contains rawError)
-    assert(exception.msg contains sourceError)
   }
 
   test("Wrong controlValue values") {
@@ -88,10 +80,6 @@ class ControlInfoValidationSuite extends FunSuite {
 
     assert(rawResult.failed.get.getMessage == rawError)
     assert(sourceResult.failed.get.getMessage == sourceError)
-
-    val exception = intercept[ValidationException](ControlInfoValidation.validateFields(rawResult, sourceResult))
-    assert(exception.msg contains rawError)
-    assert(exception.msg contains sourceError)
   }
 
 }
