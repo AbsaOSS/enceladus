@@ -19,15 +19,15 @@ import java.util.Properties
 
 import io.confluent.kafka.serializers.{AbstractKafkaAvroSerDeConfig, KafkaAvroSerializer}
 import org.apache.avro.generic.GenericRecord
-import org.apache.kafka.clients.{CommonClientConfigs, Metadata}
+import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
 import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.plugins.builtin.common.mq.ControlInfoProducer
 import za.co.absa.enceladus.plugins.builtin.controlinfo.{ControlInfoAvroSerializer, DceControlInfo}
 
-import scala.util.{Failure, Success, Try}
-import scala.util.control.NonFatal
 import scala.concurrent.Future
+import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
 
 
 /**
