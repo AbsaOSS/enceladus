@@ -98,9 +98,9 @@
 
         <!-- Lineage tracking -->
         <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spark-agent</artifactId>
-            <version>${spline.version}</version>
+            <groupId>za.co.absa.spline.agent.spark</groupId>
+            <artifactId>agent-core_${scala.compat.version}</artifactId>
+            <version>0.5.0</version>
         </dependency>
     </dependencies>
     <build>
