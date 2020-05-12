@@ -31,6 +31,7 @@ import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
+import za.co.absa.enceladus.common.ControlInfoValidation
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, ThreeStateSwitch}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -237,6 +238,7 @@ object DynamicConformanceJob {
       .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
     Try {
+      handleControlInfoValidation()
       DynamicInterpreter.interpret(conformance, inputData)
     } match {
       case Failure(e: ValidationException) =>
@@ -315,6 +317,19 @@ object DynamicConformanceJob {
         "while previous checkpoints show non zero record count"
       AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", errMsg, "")
       throw new IllegalStateException(errMsg)
+    }
+  }
+
+  private def handleControlInfoValidation(): Unit = {
+    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata() match {
+      case Failure(ex: za.co.absa.enceladus.utils.validation.ValidationException) =>
+        val confEntry = "control.info.validation"
+        conf.getString(confEntry) match {
+          case "strict" => throw ex
+          case "warning" => log.warn(ex.msg)
+          case "none" =>
+          case _ => throw new RuntimeException(s"Invalid $confEntry value")
+        }
     }
   }
 

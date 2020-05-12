@@ -46,7 +46,7 @@ import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
 import scala.collection.immutable.HashMap
-import scala.util.Try
+import scala.util.{Failure, Try}
 import scala.util.control.NonFatal
 
 object StandardizationJob {
@@ -55,7 +55,6 @@ object StandardizationJob {
   private val log = LoggerFactory.getLogger(this.getClass)
   private val conf = ConfigFactory.load()
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
-
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
@@ -285,7 +284,7 @@ object StandardizationJob {
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
     performance.startMeasurement(rawDirSize)
 
-    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata()
+    handleControlInfoValidation()
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
@@ -331,6 +330,19 @@ object StandardizationJob {
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     standardizedDF.writeInfoFile(pathCfg.outputPath)
+  }
+
+  private def handleControlInfoValidation(): Unit = {
+    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata() match {
+      case Failure(ex: ValidationException) =>
+        val confEntry = "control.info.validation"
+        conf.getString(confEntry) match {
+          case "strict" => throw ex
+          case "warning" => log.warn(ex.msg)
+          case "none" =>
+          case _ => throw new RuntimeException(s"Invalid $confEntry value")
+        }
+    }
   }
 
   private def handleEmptyOutputAfterStandardization()(implicit spark: SparkSession): Unit = {
