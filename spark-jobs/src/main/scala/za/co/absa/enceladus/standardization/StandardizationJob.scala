@@ -334,11 +334,14 @@ object StandardizationJob {
 
   private def handleControlInfoValidation(): Unit = {
     ControlInfoValidation.addRawAndSourceRecordCountsToMetadata() match {
-      case Failure(ex: ValidationException) => conf.getString("control.info.validation") match {
-        case "strict" => throw ex
-        case "warning" => log.warn(ex.msg)
-        case _ =>
-      }
+      case Failure(ex: ValidationException) =>
+        val confEntry = "control.info.validation"
+        conf.getString(confEntry) match {
+          case "strict" => throw ex
+          case "warning" => log.warn(ex.msg)
+          case "none" =>
+          case _ => throw new ValidationException(s"Invalid $confEntry value", Seq())
+        }
     }
   }
 
