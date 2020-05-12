@@ -20,8 +20,9 @@ import java.util.Date
 
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.SPARK_VERSION
-import org.apache.spark.sql.functions.{lit, to_date}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions.{current_timestamp, lit, to_date, col}
+import org.apache.spark.sql.types.DateType
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -33,7 +34,8 @@ import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, Stream
 
 class HyperConformance (implicit cmd: ConfCmdConfig,
                         featureSwitches: FeatureSwitches,
-                        menasBaseUrls: List[String]) extends StreamTransformer {
+                        menasBaseUrls: List[String],
+                        reportDateCol: Column) extends StreamTransformer {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   @throws[IllegalArgumentException]
@@ -53,7 +55,7 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
 
     DynamicInterpreter.interpret(conformance, streamData)
-      .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.reportDate), ReportDateFormat))
+      .withColumnIfDoesNotExist(InfoDateColumn, reportDateCol)
       .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
   }
@@ -82,6 +84,7 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
  * transformer.hyperconformance.dataset.version=1
  * transformer.hyperconformance.report.date=2020-01-29
  * transformer.hyperconformance.report.version=1
+ * transformer.hyperconformance.event.timestamp.column=EV_TIME
  *
  * # Either plain credentials
  * transformer.hyperconformance.menas.credentials.file=/path/menas.credentials
@@ -108,7 +111,6 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     implicit val cmd: ConfCmdConfig = ConfCmdConfig(
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
-      reportDate = getReportDate(conf),
       reportVersion = Option(getReportVersion(conf)),
       menasCredentialsFactory = menasCredentialsFactory,
       performanceMetricsFile = None,
@@ -126,6 +128,8 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       .setControlFrameworkEnabled(false)
       .setBroadcastStrategyMode(Always)
       .setBroadcastMaxSizeMb(0)
+
+    implicit val reportDateCol: Column = getReportDate(conf)
 
     implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
     new HyperConformance()
@@ -155,11 +159,18 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     }
   }
 
-  private def getReportDate(conf: Configuration): String = {
+  private def getReportDate(conf: Configuration): Column = {
     if (conf.containsKey(reportDateKey)) {
-      conf.getString(reportDateKey)
+      val reportDate = conf.getString(reportDateKey)
+      log.info(s"Information date: Explicit from the job configuration = $reportDate")
+      to_date(lit(reportDate), ReportDateFormat)
+    } else if (conf.containsKey(eventTimestampColumnKey)) {
+      val eventTimestampColumnName = conf.getString(eventTimestampColumnKey)
+      log.info(s"Information date: Derived from the event time column = $eventTimestampColumnName")
+      col(eventTimestampColumnName).cast(DateType)
     } else {
-      new SimpleDateFormat(ReportDateFormat).format(new Date())
+      log.info(s"Information date: Processing time is used")
+      current_timestamp().cast(DateType)
     }
   }
 

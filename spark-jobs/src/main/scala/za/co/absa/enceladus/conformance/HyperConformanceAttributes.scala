@@ -29,6 +29,7 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
   val datasetVersionKey = s"$keysPrefix.dataset.version"
   val reportDateKey = s"$keysPrefix.report.date"
   val reportVersionKey = s"$keysPrefix.report.version"
+  val eventTimestampColumnKey = s"$keysPrefix.event.timestamp.column"
 
   override def getName: String = "HyperConformance"
 
@@ -45,6 +46,9 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
       PropertyMetadata("Report date", Some("The current date is used by default0"), required = false),
     reportVersionKey ->
       PropertyMetadata("Report version", Some("Will be determined automatically by default if not specified"), required = false),
+    eventTimestampColumnKey ->
+      PropertyMetadata("Event timestamp column",
+        Some("If specified, the column will be used to generate 'enceladus_info_date'"), required = false),
     menasCredentialsFileKey ->
       PropertyMetadata("Menas credentials file", Some("Relative or absolute path to the file on local FS or HDFS"), required = false),
     menasAuthKeytabKey ->
