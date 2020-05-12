@@ -328,7 +328,7 @@ object DynamicConformanceJob {
           case "strict" => throw ex
           case "warning" => log.warn(ex.msg)
           case "none" =>
-          case _ => throw new ValidationException(s"Invalid $confEntry value")
+          case _ => throw new RuntimeException(s"Invalid $confEntry value")
         }
     }
   }

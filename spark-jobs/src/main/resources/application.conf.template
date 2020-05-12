@@ -47,7 +47,7 @@ conformance.catalyst.workaround=true
 conformance.autoclean.standardized.hdfs.folder=false
 
 # Enforce info file validation
-# Can be one of: strict, warning, off
+# Can be one of: strict, warning, none
 control.info.validation=warning
 
 # system-wide time zone
