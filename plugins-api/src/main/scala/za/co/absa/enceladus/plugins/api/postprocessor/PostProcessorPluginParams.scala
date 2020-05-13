@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.plugins.api.postprocessor
 
+import java.time.Instant
+
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorPluginParams.ErrorSourceId
 
 case class PostProcessorPluginParams(datasetName: String,
@@ -26,7 +28,8 @@ case class PostProcessorPluginParams(datasetName: String,
                                      sourceSystem: String,
                                      runUrls: Option[String],
                                      runId: Option[Int],
-                                     uniqueRunId: Option[String]
+                                     uniqueRunId: Option[String],
+                                     processingTimestamp: Instant
                                     )
 
 object PostProcessorPluginParams {

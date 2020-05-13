@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.common.plugin
 
+import java.time.Instant
+
 import com.typesafe.config.Config
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -33,9 +35,10 @@ object PostProcessingService {
                          sourceSystem: String,
                          runUrls: Option[String],
                          runId: Option[Int],
-                         uniqueRunId: Option[String]): PostProcessingService = {
+                         uniqueRunId: Option[String],
+                         processingTimestamp: Instant): PostProcessingService = {
     val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
-      Standardization, sourceSystem, runUrls, runId, uniqueRunId)
+      Standardization, sourceSystem, runUrls, runId, uniqueRunId, processingTimestamp)
     PostProcessingService(config, params)
   }
 
@@ -48,9 +51,10 @@ object PostProcessingService {
                      sourceSystem: String,
                      runUrls: Option[String],
                      runId: Option[Int],
-                     uniqueRunId: Option[String]): PostProcessingService = {
+                     uniqueRunId: Option[String],
+                     processingTimestamp: Instant): PostProcessingService = {
     val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
-      Conformance, sourceSystem, runUrls, runId, uniqueRunId)
+      Conformance, sourceSystem, runUrls, runId, uniqueRunId, processingTimestamp)
     PostProcessingService(config, params)
     //scalastyle:on parameter.number
   }

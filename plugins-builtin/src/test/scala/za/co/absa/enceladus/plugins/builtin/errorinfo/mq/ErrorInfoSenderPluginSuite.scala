@@ -15,7 +15,12 @@
 
 package za.co.absa.enceladus.plugins.builtin.errorinfo.mq
 
+import java.time.Instant
+
+import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+import org.scalatest.BeforeAndAfterAll
 import za.co.absa.abris.avro.read.confluent.SchemaManager
 import org.scalatest.{FlatSpec, Matchers}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorPluginParams
@@ -25,8 +30,20 @@ import za.co.absa.enceladus.plugins.builtin.errorinfo.DceErrorInfo
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPluginSuite.{TestingErrCol, TestingRecord}
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import org.apache.spark.sql.DataFrame
 
-class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matchers {
+class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matchers with BeforeAndAfterAll {
+
+  private val port = 7081
+  private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
+
+  override def beforeAll(): Unit = {
+    wireMockServer.start()
+  }
+
+  override def afterAll(): Unit = {
+    wireMockServer.stop()
+  }
 
   val testData = Seq(
     TestingRecord("enceladusId1", java.sql.Date.valueOf("2020-02-20"), Seq(
@@ -50,10 +67,11 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
   import spark.implicits._
 
   val testDataDf = testData.toDF
+  val testNow = Instant.now()
 
   val defaultPluginParams = PostProcessorPluginParams(
     "datasetName1", datasetVersion = 1, "2020-03-30", reportVersion = 1, "output/Path1", null,
-    "sourceSystem1", Some("http://runUrls1"), runId = Some(1), Some("uniqueRunId"))
+    "sourceSystem1", Some("http://runUrls1"), runId = Some(1), Some("uniqueRunId"), testNow)
 
   "ErrorInfoSenderPluginSuite" should "getIndividualErrors (exploding, filtering by source for Standardization)" in {
     val plugin = ErrorInfoSenderPlugin(null, Map(), Map())
@@ -110,6 +128,85 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
       SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> "dataError",
       SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.schema")
   }
+
+  it should "Send errors info to kafka as confluent_avro" in {
+    val config = ConfigFactory.empty()
+      .withValue("kafka.errorinfo.client.id", ConfigValueFactory.fromAnyRef("errorId1"))
+      .withValue("kafka.errorinfo.topic.name", ConfigValueFactory.fromAnyRef("errorTopicId1"))
+      .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef("http://localhost:6001")) // default ports for EmbeddedKafka
+      .withValue("kafka.schema.registry.url", ConfigValueFactory.fromAnyRef("http://localhost:7081"))
+
+
+    val connectionParams = KafkaErrorInfoPlugin.kafkaConnectionParamsFromConfig(config)
+    import com.github.tomakehurst.wiremock.client.WireMock._
+
+    object expected {
+      val keySchema = """{"schema":"{\"type\":\"record\",\"name\":\"dataErrorKey\",\"namespace\":\"za.co.absa.dataquality.errors.avro.key.schema\",\"fields\":[{\"name\":\"sourceSystem\",\"type\":\"string\"}]}"}"""
+      val valueSchema = """{"schema" :"{\"type\":\"record\",\"name\":\"dataError\",\"namespace\":\"za.co.absa.dataquality.errors.avro.schema\",\"fields\":[{\"name\":\"sourceSystem\",\"type\":\"string\"},{\"name\":\"sourceSystemId\",\"type\":[\"null\",\"string\"],\"default\":null},{\"name\":\"dataset\",\"type\":[\"null\",\"string\"],\"default\":null},{\"name\":\"ingestionNumber\",\"type\":[\"null\",\"long\"],\"default\":null},{\"name\":\"processingTimestamp\",\"type\":\"long\",\"logicalType\":\"timestamp-millis\"},{\"name\":\"informationDate\",\"type\":[\"null\",\"int\"],\"default\":null,\"logicalType\":\"date\"},{\"name\":\"outputFileName\",\"type\":[\"null\",\"string\"],\"default\":null},{\"name\":\"recordId\",\"type\":\"string\"},{\"name\":\"errorSourceId\",\"type\":\"string\"},{\"name\":\"errorType\",\"type\":\"string\"},{\"name\":\"errorCode\",\"type\":\"string\"},{\"name\":\"errorDescription\",\"type\":\"string\"},{\"name\":\"additionalInfo\",\"type\":{\"type\":\"map\",\"values\":\"string\"}}]}"}"""
+    }
+
+    object aux {
+      val keyId = "1"
+      val valueId = "2"
+      val notFoundBody = """{"error_code":40401,"message":"Subject not found."}"""
+    }
+
+    // first the key is not known
+    wireMockServer.stubFor(get(urlPathEqualTo("/subjects/errorTopicId1-key/versions/latest"))
+      .willReturn(notFound().withBody(aux.notFoundBody)))
+
+    // todo verify instead?, too?
+    // allows to register it
+    wireMockServer.stubFor(
+      post(urlPathEqualTo("/subjects/errorTopicId1-key/versions"))
+        .withRequestBody(equalToJson(expected.keySchema))
+      .willReturn(okJson(s"""{"id":${aux.keyId}}""")))
+
+    wireMockServer.stubFor(get(urlPathEqualTo("/subjects/errorTopicId1-value/versions/latest"))
+      .willReturn(notFound().withBody(aux.notFoundBody)))
+
+    wireMockServer.stubFor(
+      post(urlPathEqualTo("/subjects/errorTopicId1-value/versions"))
+        .withRequestBody(equalToJson(expected.valueSchema))
+        .willReturn(okJson(s"""{"id":${aux.valueId}}""")))
+
+
+    // then the schema would be retrieved when calling back from_confluent_avro
+    wireMockServer.stubFor(get(urlPathEqualTo(s"/schemas/ids/${aux.keyId}"))
+      .willReturn(okJson(expected.keySchema)))
+    wireMockServer.stubFor(get(urlPathEqualTo(s"/schemas/ids/${aux.valueId}"))
+      .willReturn(okJson(expected.valueSchema)))
+
+
+    val smallDf = testDataDf.limit(1).toDF()
+
+    val keySchemaRegistryConfig = KafkaErrorInfoPlugin.avroKeySchemaRegistryConfig(connectionParams)
+      .updated(SchemaManager.PARAM_KEY_SCHEMA_ID, "1")
+    val valueSchemaRegistryConfig = KafkaErrorInfoPlugin.avroValueSchemaRegistryConfig(connectionParams)
+      .updated(SchemaManager.PARAM_VALUE_SCHEMA_ID, "2")
+
+    val errorKafkaPlugin = new ErrorInfoSenderPlugin(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig) {
+      override private[mq] def sendErrorsToKafka(df: DataFrame): Unit = {
+        val dataForKafka = df.collect().toSeq
+
+        import za.co.absa.abris.avro.functions.from_confluent_avro
+        import org.apache.spark.sql.functions.col
+
+        dataForKafka.length shouldBe 2
+        val dataStrings = df.select(from_confluent_avro(col("value"), valueSchemaRegistryConfig)).as("value").collect().toSeq.map(_.toString())
+
+        val expectedStrings = Seq(
+          s"""[[sourceSystem1,null,datasetName1,null,${testNow.toEpochMilli},18312,output/Path1,enceladusId1,standardizaton,stdCastError,E00000,Standardization Error - Type cast,Map(runUrl -> http://runUrls1, datasetVersion -> 1, uniqueRunId -> uniqueRunId, datasetName -> datasetName1, reportVersion -> 1, reportDate -> 2020-03-30, runId -> 1)]]""",
+          s"""[[sourceSystem1,null,datasetName1,null,${testNow.toEpochMilli},18312,output/Path1,enceladusId1,standardizaton,stdNullError,E00002,Standardization Error - Null detected in non-nullable attribute,Map(runUrl -> http://runUrls1, datasetVersion -> 1, uniqueRunId -> uniqueRunId, datasetName -> datasetName1, reportVersion -> 1, reportDate -> 2020-03-30, runId -> 1)]]"""
+        )
+
+        dataStrings should contain theSameElementsAs expectedStrings
+      }
+    }
+
+    errorKafkaPlugin.onDataReady(smallDf, defaultPluginParams.copy(sourceId = ErrorSourceId.Standardization))
+  }
+
 }
 
 object ErrorInfoSenderPluginSuite {

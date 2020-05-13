@@ -17,6 +17,7 @@ package za.co.absa.enceladus.standardization
 
 import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
+import java.time.Instant
 import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
@@ -128,7 +129,7 @@ object StandardizationJob {
 
     PostProcessingService.forStandardization(conf, dataset.name, dataset.version, cmd.reportDate,
       getReportVersion(cmd, dataset), pathCfg.outputPath, Atum.getControlMeasure.metadata.sourceApplication, runUrl,
-      runId, uniqueRunId)
+      runId, uniqueRunId, Instant.now)
   }
 
   private def getReportVersion(cmd: StdCmdConfig, dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {

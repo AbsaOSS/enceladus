@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.plugins.builtin.errorinfo.mq
 
-import java.time.Instant
-
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.functions.{col, explode, lit, size, struct}
 import org.apache.spark.sql.types.DataTypes
@@ -143,7 +141,7 @@ object ErrorInfoSenderPlugin {
       sourceSystemId = None,
       dataset = Some(additionalParams.datasetName),
       ingestionNumber = None,
-      processingTimestamp = Instant.now.toEpochMilli,
+      processingTimestamp = additionalParams.processingTimestamp.toEpochMilli,
       informationDate = Some(reportDate.toLocalDate.toEpochDay.toInt),
       outputFileName = Some(additionalParams.outputPath),
       recordId = recordId,

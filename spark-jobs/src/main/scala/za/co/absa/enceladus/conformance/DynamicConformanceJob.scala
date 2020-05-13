@@ -17,6 +17,7 @@ package za.co.absa.enceladus.conformance
 
 import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
+import java.time.Instant
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.functions.{lit, to_date}
@@ -142,7 +143,7 @@ object DynamicConformanceJob {
 
     PostProcessingService.forConformance(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate,
       reportVersion, pathCfg.publishPath, Atum.getControlMeasure.metadata.sourceApplication, runUrl,
-      runId, uniqueRunId)
+      runId, uniqueRunId, Instant.now)
   }
 
   private def isExperimentalRuleEnabled()(implicit cmd: ConfCmdConfig): Boolean = {
