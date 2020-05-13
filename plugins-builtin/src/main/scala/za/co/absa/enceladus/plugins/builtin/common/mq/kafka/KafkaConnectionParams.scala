@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.plugins.builtin.common.mq.kafka
 
 import com.typesafe.config.Config
-import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
 
 /**
  * This case class contains parameters required to create a Kafka Producer.
@@ -48,8 +47,6 @@ object KafkaConnectionParams {
   @throws[IllegalArgumentException]
   def fromConfig(conf: Config, clientIdKey: String, topicNameKey: String): KafkaConnectionParams = {
     validate(conf, clientIdKey, topicNameKey)
-
-    SecureKafka.setSecureKafkaProperties(conf)
 
     KafkaConnectionParams(conf.getString(BootstrapServersKey),
       conf.getString(SchemaRegistryUrlKey),

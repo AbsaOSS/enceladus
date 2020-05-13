@@ -61,6 +61,7 @@ APPLICATION_PROPERTIES_CLIENT="-Dconfig.file=/absolute/path/application.conf"
 APPLICATION_PROPERTIES_CLUSTER="-Dconfig.file=application.conf"
 
 # Files to send when running in cluster mode (comma separated)
+# Hash is used as the file alias: https://stackoverflow.com/a/49866757/1038282
 ENCELADUS_FILES="/absolute/path/application.conf#application.conf"
 
 # Additional environment-specific Spark options, e.g. "--conf spark.driver.host=myhost"
