@@ -199,10 +199,10 @@ object StandardizationJob {
   private def getCsvOptions(cmd: StdCmdConfig, numberOfColumns: Int = 0): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
-        "delimiter" -> cmd.csvDelimiter.map(StringParameter),
+        "delimiter" -> cmd.csvDelimiter.map(StringParameter(_).includingExtraValues),
         "header" -> cmd.csvHeader.map(BooleanParameter),
-        "quote" -> cmd.csvQuote.map(StringParameter),
-        "escape" -> cmd.csvEscape.map(StringParameter),
+        "quote" -> cmd.csvQuote.map(StringParameter(_).includingExtraValues),
+        "escape" -> cmd.csvEscape.map(StringParameter(_).includingExtraValues),
         // increase the default limit on the number of columns if needed
         // default is set at org.apache.spark.sql.execution.datasources.csv.CSVOptions maxColumns
         "maxColumns" -> {if (numberOfColumns > SparkCSVReaderMaxColumnsDefault) Some(LongParameter(numberOfColumns)) else None}

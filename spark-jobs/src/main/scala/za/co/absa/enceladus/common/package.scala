@@ -24,6 +24,20 @@ package object common {
   sealed trait RawFormatParameter
 
   case class StringParameter(value: String) extends RawFormatParameter
+  implicit class StringParameterExtra(s: StringParameter) {
+    val unicodeElement = """[uU]?\+?([0-9a-fA-F]{4})""".r
+
+    def includingExtraValues: StringParameter = {
+      val value = s.value match {
+        case "none" => ""
+        case "single-quote" => "\'"
+        case "double-quote" => "\""
+        case unicodeElement(hex) => Integer.parseInt(hex, 16).toChar.toString
+        case other => other
+      }
+      StringParameter(value)
+    }
+  }
 
   case class BooleanParameter(value: Boolean) extends RawFormatParameter
 
