@@ -78,7 +78,12 @@ object PartitioningUtils {
     MessageFormat.format(partitioningPattern, reportYear, reportMonth, reportDay)
   }
 
-  private def validateReportDate(reportDate: String): Unit = {
+  /**
+   * Validates the port date to be in tyhe expected format: 'yyyy-MM-dd'.
+   *
+   * @param reportDate          A report date string
+   */
+  def validateReportDate(reportDate: String): Unit = {
     val reportDateRegEx = """\d\d\d\d-\d\d-\d\d""".r
 
     if (!reportDateRegEx.pattern.matcher(reportDate).matches()) {
