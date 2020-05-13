@@ -129,16 +129,14 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
       SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.schema")
   }
 
-  it should "Send errors info to kafka as confluent_avro" in {
+  it should "send standardization errors info to kafka as confluent_avro" in {
+    import com.github.tomakehurst.wiremock.client.WireMock._
+
     val config = ConfigFactory.empty()
       .withValue("kafka.errorinfo.client.id", ConfigValueFactory.fromAnyRef("errorId1"))
       .withValue("kafka.errorinfo.topic.name", ConfigValueFactory.fromAnyRef("errorTopicId1"))
-      .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef("http://localhost:6001")) // default ports for EmbeddedKafka
+      .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef("http://bogus-kafka:9092"))
       .withValue("kafka.schema.registry.url", ConfigValueFactory.fromAnyRef("http://localhost:7081"))
-
-
-    val connectionParams = KafkaErrorInfoPlugin.kafkaConnectionParamsFromConfig(config)
-    import com.github.tomakehurst.wiremock.client.WireMock._
 
     object expected {
       val keySchema = """{"schema":"{\"type\":\"record\",\"name\":\"dataErrorKey\",\"namespace\":\"za.co.absa.dataquality.errors.avro.key.schema\",\"fields\":[{\"name\":\"sourceSystem\",\"type\":\"string\"}]}"}"""
@@ -151,60 +149,66 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
       val notFoundBody = """{"error_code":40401,"message":"Subject not found."}"""
     }
 
-    // first the key is not known
-    wireMockServer.stubFor(get(urlPathEqualTo("/subjects/errorTopicId1-key/versions/latest"))
-      .willReturn(notFound().withBody(aux.notFoundBody)))
+    Seq(
+      "key" -> (expected.keySchema, aux.keyId),
+      "value" -> (expected.valueSchema, aux.valueId)
+    ).foreach { case (item, (schema, id)) =>
+      // first the key/value is not known
+      wireMockServer.stubFor(get(urlPathEqualTo(s"/subjects/errorTopicId1-$item/versions/latest"))
+        .willReturn(notFound().withBody(aux.notFoundBody)))
 
-    // todo verify instead?, too?
-    // allows to register it
-    wireMockServer.stubFor(
-      post(urlPathEqualTo("/subjects/errorTopicId1-key/versions"))
-        .withRequestBody(equalToJson(expected.keySchema))
-      .willReturn(okJson(s"""{"id":${aux.keyId}}""")))
+      // allows to register it in the schema registry, return assigned id
+      wireMockServer.stubFor(
+        post(urlPathEqualTo(s"/subjects/errorTopicId1-$item/versions"))
+          .withRequestBody(equalToJson(schema))
+          .willReturn(okJson(s"""{"id":$id}""")))
 
-    wireMockServer.stubFor(get(urlPathEqualTo("/subjects/errorTopicId1-value/versions/latest"))
-      .willReturn(notFound().withBody(aux.notFoundBody)))
-
-    wireMockServer.stubFor(
-      post(urlPathEqualTo("/subjects/errorTopicId1-value/versions"))
-        .withRequestBody(equalToJson(expected.valueSchema))
-        .willReturn(okJson(s"""{"id":${aux.valueId}}""")))
-
-
-    // then the schema would be retrieved when calling back from_confluent_avro
-    wireMockServer.stubFor(get(urlPathEqualTo(s"/schemas/ids/${aux.keyId}"))
-      .willReturn(okJson(expected.keySchema)))
-    wireMockServer.stubFor(get(urlPathEqualTo(s"/schemas/ids/${aux.valueId}"))
-      .willReturn(okJson(expected.valueSchema)))
-
+      // later, when from_confluent_avro is used to decode from avro, serve the "saved" schema from the registry by id
+      wireMockServer.stubFor(get(urlPathEqualTo(s"/schemas/ids/$id"))
+        .willReturn(okJson(schema)))
+    }
 
     val smallDf = testDataDf.limit(1).toDF()
-
+    val connectionParams = KafkaErrorInfoPlugin.kafkaConnectionParamsFromConfig(config)
     val keySchemaRegistryConfig = KafkaErrorInfoPlugin.avroKeySchemaRegistryConfig(connectionParams)
-      .updated(SchemaManager.PARAM_KEY_SCHEMA_ID, "1")
     val valueSchemaRegistryConfig = KafkaErrorInfoPlugin.avroValueSchemaRegistryConfig(connectionParams)
-      .updated(SchemaManager.PARAM_VALUE_SCHEMA_ID, "2")
 
     val errorKafkaPlugin = new ErrorInfoSenderPlugin(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig) {
       override private[mq] def sendErrorsToKafka(df: DataFrame): Unit = {
-        val dataForKafka = df.collect().toSeq
-
         import za.co.absa.abris.avro.functions.from_confluent_avro
         import org.apache.spark.sql.functions.col
 
-        dataForKafka.length shouldBe 2
-        val dataStrings = df.select(from_confluent_avro(col("value"), valueSchemaRegistryConfig)).as("value").collect().toSeq.map(_.toString())
+        // at the point of usage from_confluent_avro, key/value.schema.id must be part of the SR Config:
+        val keyConfigWithId = keySchemaRegistryConfig.updated(SchemaManager.PARAM_KEY_SCHEMA_ID, aux.keyId)
+        val valueConfigWithId = valueSchemaRegistryConfig.updated(SchemaManager.PARAM_VALUE_SCHEMA_ID, aux.valueId)
 
-        val expectedStrings = Seq(
+        val dataKeyStrings = df.select(from_confluent_avro(col("key"), keyConfigWithId)).collect().toSeq.map(_.toString())
+        val dataValueStrings = df.select(from_confluent_avro(col("value"), valueConfigWithId)).collect().toSeq.map(_.toString())
+
+        val expectedKeyStrings = Seq("[[sourceSystem1]]", "[[sourceSystem1]]")
+        val expectedValueStrings = Seq(
           s"""[[sourceSystem1,null,datasetName1,null,${testNow.toEpochMilli},18312,output/Path1,enceladusId1,standardizaton,stdCastError,E00000,Standardization Error - Type cast,Map(runUrl -> http://runUrls1, datasetVersion -> 1, uniqueRunId -> uniqueRunId, datasetName -> datasetName1, reportVersion -> 1, reportDate -> 2020-03-30, runId -> 1)]]""",
           s"""[[sourceSystem1,null,datasetName1,null,${testNow.toEpochMilli},18312,output/Path1,enceladusId1,standardizaton,stdNullError,E00002,Standardization Error - Null detected in non-nullable attribute,Map(runUrl -> http://runUrls1, datasetVersion -> 1, uniqueRunId -> uniqueRunId, datasetName -> datasetName1, reportVersion -> 1, reportDate -> 2020-03-30, runId -> 1)]]"""
         )
 
-        dataStrings should contain theSameElementsAs expectedStrings
+        dataKeyStrings should contain theSameElementsAs expectedKeyStrings
+        dataValueStrings should contain theSameElementsAs expectedValueStrings
       }
     }
 
+    // commence the confluent_avro processing
     errorKafkaPlugin.onDataReady(smallDf, defaultPluginParams.copy(sourceId = ErrorSourceId.Standardization))
+
+    // verify, that all expected schema registry url has been called once:
+    Seq(
+      "key" -> (expected.keySchema, aux.keyId),
+      "value" -> (expected.valueSchema, aux.valueId)
+    ).foreach { case (item, (schema, id)) =>
+      wireMockServer.verify(1, getRequestedFor(urlPathEqualTo(s"/subjects/errorTopicId1-$item/versions/latest")))
+      wireMockServer.verify(1, postRequestedFor(urlPathEqualTo(s"/subjects/errorTopicId1-$item/versions")).withRequestBody(equalToJson(schema)))
+      wireMockServer.verify(1, getRequestedFor(urlPathEqualTo(s"/schemas/ids/$id")))
+    }
+
   }
 
 }
