@@ -38,6 +38,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
@@ -56,6 +57,10 @@ object DynamicConformanceJob {
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   def main(args: Array[String]) {
+    // This should be the first thing the app does to make secure Kafka work with our CA.
+    // After Spring activates JavaX, it will be too late.
+    SecureKafka.setSecureKafkaProperties(conf)
+
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
     implicit val cmd: ConfCmdConfig = ConfCmdConfig.getCmdLineArguments(args)

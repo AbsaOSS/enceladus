@@ -26,16 +26,16 @@ import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.common.RecordIdGeneration.{IdType, _}
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.version.SparkVersionGuard
-import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
@@ -58,6 +58,10 @@ object StandardizationJob {
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
+    // This should be the first thing the app does to make secure Kafka work with our CA.
+    // After Spring activates JavaX, it will be too late.
+    SecureKafka.setSecureKafkaProperties(conf)
+
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
     implicit val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
