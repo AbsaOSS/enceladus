@@ -32,7 +32,7 @@ import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorPluginParams.
 import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
 
 
-class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
+case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
                             keySchemaRegistryConfig: Map[String, String],
                             valueSchemaRegistryConfig: Map[String, String]) extends PostProcessor {
 
@@ -55,7 +55,9 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
     }
 
     val dfWithErrors = getIndividualErrors(dataFrame, params)
-    sendErrorsToKafka(dfWithErrors, params)
+    val forKafkaDf = prepareDataForKafka(dfWithErrors, params)
+    sendErrorsToKafka(forKafkaDf)
+
     dfWithErrors
   }
 
@@ -87,7 +89,7 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
     stdErrors
   }
 
-  def sendErrorsToKafka(stdErrors: DataFrame, params: PostProcessorPluginParams): Unit = {
+  def prepareDataForKafka(stdErrors: DataFrame, params: PostProcessorPluginParams): DataFrame = {
     log.info(s"Sending errors to kafka topic ${connectionParams.topicName} ...")
 
     val valueAvroSchemaString = KafkaErrorInfoPlugin.getValueAvroSchemaString
@@ -105,14 +107,22 @@ class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
         ).as("key"),
         to_confluent_avro(allValueColumns, valueAvroSchemaString, valueSchemaRegistryConfig).as("value")
       )
-      .write
+  }
+
+  /**
+   * Actual data sending
+   * @param df
+   */
+  private[mq] def sendErrorsToKafka(df: DataFrame): Unit = {
+    require(df.schema.fieldNames.contains("key") && df.schema.fieldNames.contains("value"))
+
+    df.write
       .format("kafka")
       .option("kafka.bootstrap.servers", connectionParams.bootstrapServers)
       .option("topic", connectionParams.topicName)
       .option("kafka.client.id", connectionParams.clientId)
       .option("path", "notReallyUsedButAtumExpectsItToBePresent") // TODO Atum issue #32
       .save()
-
   }
 }
 

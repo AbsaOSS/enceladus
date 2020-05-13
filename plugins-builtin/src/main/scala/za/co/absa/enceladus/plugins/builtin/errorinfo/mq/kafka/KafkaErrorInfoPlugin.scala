@@ -49,28 +49,44 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
     val namespaceName = "za.co.absa.dataquality.errors.avro.schema"
   }
 
-
   override def apply(config: Config): ErrorInfoSenderPlugin = {
-    val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ErrorInfoKafkaTopicKey)
+    val connectionParams = kafkaConnectionParamsFromConfig(config)
+    val valueSchemaRegistryConfig = avroValueSchemaRegistryConfig(connectionParams)
+    val keySchemaRegistryConfig = avroKeySchemaRegistryConfig(connectionParams)
 
-    val commonSchemaRegistryConfig = Map(
+    ErrorInfoSenderPlugin(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig)
+  }
+
+
+  def kafkaConnectionParamsFromConfig(config: Config): KafkaConnectionParams = {
+    KafkaConnectionParams.fromConfig(config, ClientIdKey, ErrorInfoKafkaTopicKey)
+  }
+
+  def avroValueSchemaRegistryConfig(connectionParams: KafkaConnectionParams): Map[String, String] = {
+    Map(
+      // common part
       SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> connectionParams.schemaRegistryUrl,
-      SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> connectionParams.topicName
-    )
+      SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> connectionParams.topicName,
 
-    val valueSchemaRegistryConfig = commonSchemaRegistryConfig ++ Map(
+      // value specific
       SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
       SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> Value.recordName,
       SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> Value.namespaceName
     )
+  }
 
-    val keySchemaRegistryConfig = commonSchemaRegistryConfig ++ Map(
+  def avroKeySchemaRegistryConfig(connectionParams: KafkaConnectionParams): Map[String, String] = {
+
+    Map(
+      // common part
+      SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> connectionParams.schemaRegistryUrl,
+      SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> connectionParams.topicName,
+
+      // key specific
       SchemaManager.PARAM_KEY_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
       SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> Key.recordName,
       SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> Key.namespaceName
     )
-
-    new ErrorInfoSenderPlugin(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig)
   }
 
   private def getAvroSchemaString(resourcePath: String): String = {
