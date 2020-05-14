@@ -46,7 +46,7 @@ import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
 import scala.collection.immutable.HashMap
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 object StandardizationJob {
@@ -334,7 +334,7 @@ object StandardizationJob {
 
   private def handleControlInfoValidation(): Unit = {
     ControlInfoValidation.addRawAndSourceRecordCountsToMetadata() match {
-      case Failure(ex: ValidationException) =>
+      case Failure(ex: za.co.absa.enceladus.utils.validation.ValidationException) => {
         val confEntry = "control.info.validation"
         conf.getString(confEntry) match {
           case "strict" => throw ex
@@ -342,6 +342,9 @@ object StandardizationJob {
           case "none" =>
           case _ => throw new RuntimeException(s"Invalid $confEntry value")
         }
+      }
+      case Failure(ex) => throw ex
+      case Success(_) =>
     }
   }
 

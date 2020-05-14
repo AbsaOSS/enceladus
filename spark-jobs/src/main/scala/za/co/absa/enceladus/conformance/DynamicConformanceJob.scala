@@ -322,7 +322,7 @@ object DynamicConformanceJob {
 
   private def handleControlInfoValidation(): Unit = {
     ControlInfoValidation.addRawAndSourceRecordCountsToMetadata() match {
-      case Failure(ex: za.co.absa.enceladus.utils.validation.ValidationException) =>
+      case Failure(ex: za.co.absa.enceladus.utils.validation.ValidationException) => {
         val confEntry = "control.info.validation"
         conf.getString(confEntry) match {
           case "strict" => throw ex
@@ -330,6 +330,9 @@ object DynamicConformanceJob {
           case "none" =>
           case _ => throw new RuntimeException(s"Invalid $confEntry value")
         }
+      }
+      case Failure(ex) => throw ex
+      case Success(_) =>
     }
   }
 
