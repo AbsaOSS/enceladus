@@ -17,11 +17,10 @@ package za.co.absa.enceladus.conformance.streaming
 
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{DateType, TimestampType, StringType}
+import org.apache.spark.sql.types.{DateType, StringType, TimestampType}
 import org.apache.spark.sql.{Column, DataFrame}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants.ReportDateFormat
-import za.co.absa.enceladus.conformance.HyperConformance.{eventTimestampColumnKey, eventTimestampPatternKey, reportDateKey}
 import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
@@ -66,6 +65,8 @@ class InfoDateFromProcessingTimeFactory extends InfoDateFactory {
 }
 
 object InfoDateFactory {
+  import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
+
   private val defaultEventTimestampPattern = "yyyy-MM-dd'T'HH:mm'Z'"
 
   val log: Logger = LoggerFactory.getLogger(this.getClass)
