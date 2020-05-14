@@ -20,6 +20,6 @@ import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 
 class DummyPostProcessor2(dummyParam: String) extends PostProcessor {
   def getParam: String = dummyParam
-  override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): DataFrame = dataFrame
+  override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): Unit = {}
   override def close(): Unit = {}
 }

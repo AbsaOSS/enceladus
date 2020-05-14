@@ -46,9 +46,8 @@ case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
    *
    * @param dataFrame error data only.
    * @param params    Additional key/value parameters provided by Enceladus.
-   * @return A dataframe with post processing applied
    */
-  override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): DataFrame = {
+  override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): Unit = {
     if (!SchemaUtils.fieldExists(ColumnNames.enceladusRecordId, dataFrame.schema)) {
       throw new IllegalStateException(
         s"${this.getClass.getName} requires ${ColumnNames.enceladusRecordId} column to be present in the dataframe!"
@@ -64,8 +63,6 @@ case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
     val dfWithErrors = getIndividualErrors(dataFrame, errorInfoParams)
     val forKafkaDf = prepareDataForKafka(dfWithErrors, errorInfoParams)
     sendErrorsToKafka(forKafkaDf)
-
-    dfWithErrors
   }
 
   /**
