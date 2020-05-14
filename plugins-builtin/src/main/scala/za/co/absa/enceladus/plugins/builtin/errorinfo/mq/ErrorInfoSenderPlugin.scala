@@ -67,9 +67,9 @@ case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
 
   /**
    * Processes the `dataFrame` - errors are exploded (one error = one line) and filtered to conform to the error source (standardization/conformance)
-   * @param dataFrame
-   * @param params
-   * @return
+   * @param dataFrame standardization/conformance output
+   * @param params plugin processing parameters
+   * @return DF with exploded errors and corresponding to the given error source
    */
   def getIndividualErrors(dataFrame: DataFrame, params: ErrorInfoPluginParams): DataFrame = {
     implicit val singleErrorStardardizedEncoder = Encoders.product[SingleErrorStardardized]
@@ -115,7 +115,7 @@ case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
 
   /**
    * Actual data sending
-   * @param df
+   * @param df Dataframe with confluent_avro columns - key & value
    */
   private[mq] def sendErrorsToKafka(df: DataFrame): Unit = {
     require(df.schema.fieldNames.contains("key") && df.schema.fieldNames.contains("value"))
@@ -142,28 +142,32 @@ object ErrorInfoSenderPlugin {
   case class ErrorRecord(errType: String, errCode: String, errMsg: String, errCol: String, rawValues: Seq[String])
 
   case class SingleErrorStardardized(recordId: String, reportDate: java.sql.Date, singleError: ErrorRecord) {
-    def toErrorInfo(additionalParams: ErrorInfoPluginParams): DceErrorInfo = DceErrorInfo(
-      sourceSystem = additionalParams.sourceSystem,
-      sourceSystemId = None,
-      dataset = Some(additionalParams.datasetName),
-      ingestionNumber = None,
-      processingTimestamp = additionalParams.processingTimestamp.toEpochMilli,
-      informationDate = Some(reportDate.toLocalDate.toEpochDay.toInt),
-      outputFileName = Some(additionalParams.outputPath),
-      recordId = recordId,
-      errorSourceId = additionalParams.sourceId.toString,
-      errorType = singleError.errType,
-      errorCode = singleError.errCode,
-      errorDescription = singleError.errMsg,
-      additionalInfo = Map(
-        "reportDate" -> additionalParams.reportDate,
-        "reportVersion" -> additionalParams.reportVersion.toString,
-        "datasetName" -> additionalParams.datasetName,
-        "datasetVersion" -> additionalParams.datasetVersion.toString
-      ) ++ additionalParams.uniqueRunId.fold(Map.empty[String, String])(runId => Map("uniqueRunId" -> runId))
-        ++ additionalParams.runId.fold(Map.empty[String, String])(runId => Map("runId" -> runId.toString))
-        ++ additionalParams.runUrls.fold(Map.empty[String, String])(runUrls => Map("runUrl" -> runUrls))
-    )
+    def toErrorInfo(additionalParams: ErrorInfoPluginParams): DceErrorInfo = {
+      import DceErrorInfo.{additionalInfoKeys => key}
+
+      DceErrorInfo(
+        sourceSystem = additionalParams.sourceSystem,
+        sourceSystemId = None,
+        dataset = Some(additionalParams.datasetName),
+        ingestionNumber = None,
+        processingTimestamp = additionalParams.processingTimestamp.toEpochMilli,
+        informationDate = Some(reportDate.toLocalDate.toEpochDay.toInt),
+        outputFileName = Some(additionalParams.outputPath),
+        recordId = recordId,
+        errorSourceId = additionalParams.sourceId.toString,
+        errorType = singleError.errType,
+        errorCode = singleError.errCode,
+        errorDescription = singleError.errMsg,
+        additionalInfo = Map(
+          key.reportDate -> additionalParams.reportDate,
+          key.reportVersion -> additionalParams.reportVersion.toString,
+          key.datasetName -> additionalParams.datasetName,
+          key.datasetVersion -> additionalParams.datasetVersion.toString
+        ) ++ additionalParams.uniqueRunId.fold(Map.empty[String, String])(runId => Map(key.uniqueRunId -> runId))
+          ++ additionalParams.runId.fold(Map.empty[String, String])(runId => Map(key.runId -> runId.toString))
+          ++ additionalParams.runUrls.fold(Map.empty[String, String])(runUrls => Map(key.runUrl -> runUrls))
+      )
+    }
   }
 
   def errorCodesForSource(sourceId: ErrorSourceId.Value): Seq[String] = sourceId match {

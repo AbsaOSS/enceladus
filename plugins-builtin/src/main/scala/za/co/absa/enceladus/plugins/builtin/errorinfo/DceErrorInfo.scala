@@ -25,8 +25,22 @@ case class DceErrorInfo(sourceSystem: String,
                         informationDate: Option[Int],
                         outputFileName: Option[String],
                         recordId: String,
-                        errorSourceId: String, //ErrorSourceId.Value ?
+                        errorSourceId: String, // should hold string values of ErrorSourceId
                         errorType: String,
                         errorCode: String,
                         errorDescription: String,
                         additionalInfo: Map[String, String])
+
+object DceErrorInfo {
+
+  object additionalInfoKeys {
+    val reportDate = "reportDate"
+    val reportVersion = "reportVersion"
+    val datasetName = "datasetName"
+    val datasetVersion = "datasetVersion"
+    val uniqueRunId = "uniqueRunId"
+    val runId = "runId"
+    val runUrl = "runUrl"
+  }
+
+}
