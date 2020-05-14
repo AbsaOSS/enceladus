@@ -84,7 +84,7 @@ class RunServiceTest extends BaseServiceTest {
     assert(res == run2)
   }
 
-  test("create multiple runs concurrently successfully with a limited number of retires") {
+  ignore("create multiple runs concurrently successfully with a limited number of retires") {
     val run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
     val run2 = run1.copy(runId = 2)
     val writeException = new MongoWriteException(new WriteError(1, "", new BsonDocument()), new ServerAddress())
