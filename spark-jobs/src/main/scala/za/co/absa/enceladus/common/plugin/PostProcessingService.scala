@@ -20,9 +20,9 @@ import java.time.Instant
 import com.typesafe.config.Config
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorPluginParams.ErrorSourceId._
-import za.co.absa.enceladus.plugins.api.postprocessor.{PostProcessor, PostProcessorPluginParams}
-import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin
+import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams.ErrorSourceId._
+import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
+import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams
 
 object PostProcessingService {
   //scalastyle:off parameter.number
@@ -37,7 +37,7 @@ object PostProcessingService {
                          runId: Option[Int],
                          uniqueRunId: Option[String],
                          processingTimestamp: Instant): PostProcessingService = {
-    val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
+    val params = ErrorInfoPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
       Standardization, sourceSystem, runUrls, runId, uniqueRunId, processingTimestamp)
     PostProcessingService(config, params)
   }
@@ -53,7 +53,7 @@ object PostProcessingService {
                      runId: Option[Int],
                      uniqueRunId: Option[String],
                      processingTimestamp: Instant): PostProcessingService = {
-    val params = PostProcessorPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
+    val params = ErrorInfoPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
       Conformance, sourceSystem, runUrls, runId, uniqueRunId, processingTimestamp)
     PostProcessingService(config, params)
     //scalastyle:on parameter.number
@@ -61,10 +61,9 @@ object PostProcessingService {
 
 }
 
-case class PostProcessingService private(config: Config,
-                                         additionalParams: PostProcessorPluginParams) {
+case class PostProcessingService private(config: Config, additionalParams: ErrorInfoPluginParams) {
 
-  private val log = LogManager.getLogger(classOf[ErrorInfoSenderPlugin])
+  private val log = LogManager.getLogger(classOf[PostProcessingService])
 
   log.info(s"PostProcessingService initialized with config=$config and additionalParams=$additionalParams")
 
@@ -77,7 +76,7 @@ case class PostProcessingService private(config: Config,
   /** Called when a dataset is saved. */
   def onSaveOutput(dataFrame: DataFrame)(implicit spark: SparkSession): Unit = {
     postProcessingPlugins.foreach { plugin =>
-      plugin.onDataReady(dataFrame, additionalParams)
+      plugin.onDataReady(dataFrame, additionalParams.toMap)
     }
   }
 

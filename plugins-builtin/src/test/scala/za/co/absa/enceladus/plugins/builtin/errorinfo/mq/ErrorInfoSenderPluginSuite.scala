@@ -24,14 +24,14 @@ import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import org.scalatest.BeforeAndAfterAll
 import za.co.absa.abris.avro.read.confluent.SchemaManager
 import org.scalatest.{FlatSpec, Matchers}
-import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorPluginParams
-import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorPluginParams.ErrorSourceId
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
 import za.co.absa.enceladus.plugins.builtin.errorinfo.DceErrorInfo
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPluginSuite.{TestingErrCol, TestingRecord}
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import org.apache.spark.sql.DataFrame
+import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams
+import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams.ErrorSourceId
 
 class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matchers with BeforeAndAfterAll {
 
@@ -43,7 +43,7 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
   }
 
   override def afterAll(): Unit = {
-   wireMockServer.stop()
+    wireMockServer.stop()
   }
 
   val testData = Seq(
@@ -68,7 +68,7 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
   val testDataDf = testData.toDF
   val testNow = Instant.now()
 
-  val defaultPluginParams = PostProcessorPluginParams(
+  val defaultPluginParams = ErrorInfoPluginParams(
     "datasetName1", datasetVersion = 1, "2020-03-30", reportVersion = 1, "output/Path1", null,
     "sourceSystem1", Some("http://runUrls1"), runId = Some(1), Some("uniqueRunId"), testNow)
 
@@ -96,19 +96,19 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
     )
   }
 
+  val testClientId = "errorId1"
+  val testTopicName = "errorTopicName1"
+  val testKafkaUrl = "http://example.com:9092"
+  val testSchemaRegUrl = "http://example.com:8081"
+
+  val testConfig = ConfigFactory.empty()
+    .withValue("kafka.errorinfo.client.id", ConfigValueFactory.fromAnyRef(testClientId))
+    .withValue("kafka.errorinfo.topic.name", ConfigValueFactory.fromAnyRef(testTopicName))
+    .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef(testKafkaUrl))
+    .withValue("kafka.schema.registry.url", ConfigValueFactory.fromAnyRef(testSchemaRegUrl))
+
   it should "correctly create the error plugin from config" in {
-    val testClientId = "errorId1"
-    val testTopicName = "errorTopicName1"
-    val testKafkaUrl = "http://example.com:9092"
-    val testSchemaRegUrl = "http://example.com:8081"
-
-    val config = ConfigFactory.empty()
-      .withValue("kafka.errorinfo.client.id", ConfigValueFactory.fromAnyRef(testClientId))
-      .withValue("kafka.errorinfo.topic.name", ConfigValueFactory.fromAnyRef(testTopicName))
-      .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef(testKafkaUrl))
-      .withValue("kafka.schema.registry.url", ConfigValueFactory.fromAnyRef(testSchemaRegUrl))
-
-    val errorPlugin: ErrorInfoSenderPlugin = KafkaErrorInfoPlugin.apply(config)
+    val errorPlugin: ErrorInfoSenderPlugin = KafkaErrorInfoPlugin.apply(testConfig)
 
     errorPlugin.connectionParams shouldBe KafkaConnectionParams(bootstrapServers = testKafkaUrl, schemaRegistryUrl = testSchemaRegUrl,
       clientId = testClientId, security = None, topicName = testTopicName)
@@ -128,6 +128,17 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
       SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.schema")
   }
 
+  it should "fail on incompatible parameters map" in {
+    val errorPlugin: ErrorInfoSenderPlugin = KafkaErrorInfoPlugin.apply(testConfig)
+    val bogusParamMap = Map("bogus" -> "boo")
+
+    val caughtException = the[IllegalArgumentException] thrownBy {
+      errorPlugin.onDataReady(testDataDf, bogusParamMap)
+    }
+    caughtException.getMessage should include ("Incompatible parameter map supplied")
+    caughtException.getCause shouldBe a[NoSuchElementException]
+  }
+
   Seq(
     ErrorSourceId.Standardization -> Seq(
       "standardizaton,stdCastError,E00000,Standardization Error - Type cast",
@@ -140,7 +151,7 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
   ).foreach { case (source, specificErrorParts) =>
     it should s"send $source errors info to kafka as confluent_avro" in {
 
-      val config = ConfigFactory.empty()
+      val configWithMockedRegistry = ConfigFactory.empty()
         .withValue("kafka.errorinfo.client.id", ConfigValueFactory.fromAnyRef("errorId1"))
         .withValue("kafka.errorinfo.topic.name", ConfigValueFactory.fromAnyRef("errorTopicId1"))
         .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef("http://bogus-kafka:9092"))
@@ -177,7 +188,7 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
       }
 
       val smallDf = testDataDf.limit(1).toDF()
-      val connectionParams = KafkaErrorInfoPlugin.kafkaConnectionParamsFromConfig(config)
+      val connectionParams = KafkaErrorInfoPlugin.kafkaConnectionParamsFromConfig(configWithMockedRegistry)
       val keySchemaRegistryConfig = KafkaErrorInfoPlugin.avroKeySchemaRegistryConfig(connectionParams)
       val valueSchemaRegistryConfig = KafkaErrorInfoPlugin.avroValueSchemaRegistryConfig(connectionParams)
 
@@ -204,7 +215,7 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
       }
 
       // commence the confluent_avro processing
-      errorKafkaPlugin.onDataReady(smallDf, defaultPluginParams.copy(sourceId = source))
+      errorKafkaPlugin.onDataReady(smallDf, defaultPluginParams.copy(sourceId = source).toMap)
 
       // verifying, that all expected schema registry url has been called
       // this is, however, imperfect, because we are not checking count and wiremock is being not reset (problematic)

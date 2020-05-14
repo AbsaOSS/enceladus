@@ -19,20 +19,23 @@ import org.apache.log4j.LogManager
 import org.apache.spark.sql.functions.{col, explode, lit, size, struct}
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.{DataFrame, Encoders}
-import za.co.absa.enceladus.plugins.api.postprocessor.{PostProcessor, PostProcessorPluginParams}
+import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
 import za.co.absa.enceladus.plugins.builtin.errorinfo.DceErrorInfo
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin.SingleErrorStardardized
 import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import ErrorInfoSenderPlugin._
-import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorPluginParams.ErrorSourceId
+import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams
+import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams.ErrorSourceId
 import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
+
+import scala.util.{Failure, Success, Try}
 
 
 case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
-                            keySchemaRegistryConfig: Map[String, String],
-                            valueSchemaRegistryConfig: Map[String, String]) extends PostProcessor {
+                                 keySchemaRegistryConfig: Map[String, String],
+                                 valueSchemaRegistryConfig: Map[String, String]) extends PostProcessor {
 
   private val log = LogManager.getLogger(classOf[ErrorInfoSenderPlugin])
 
@@ -45,15 +48,21 @@ case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
    * @param params    Additional key/value parameters provided by Enceladus.
    * @return A dataframe with post processing applied
    */
-  override def onDataReady(dataFrame: DataFrame, params: PostProcessorPluginParams): DataFrame = {
+  override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): DataFrame = {
     if (!SchemaUtils.fieldExists(ColumnNames.enceladusRecordId, dataFrame.schema)) {
       throw new IllegalStateException(
         s"${this.getClass.getName} requires ${ColumnNames.enceladusRecordId} column to be present in the dataframe!"
       )
     }
 
-    val dfWithErrors = getIndividualErrors(dataFrame, params)
-    val forKafkaDf = prepareDataForKafka(dfWithErrors, params)
+    val errorInfoParams = Try(ErrorInfoPluginParams.fromMap(params)) match {
+      case Success(params) => params
+      case Failure(e) =>
+        throw new IllegalArgumentException(s"Incompatible parameter map supplied for ${ErrorInfoSenderPlugin.getClass.getName}: $params", e)
+    }
+
+    val dfWithErrors = getIndividualErrors(dataFrame, errorInfoParams)
+    val forKafkaDf = prepareDataForKafka(dfWithErrors, errorInfoParams)
     sendErrorsToKafka(forKafkaDf)
 
     dfWithErrors
@@ -65,7 +74,7 @@ case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
    * @param params
    * @return
    */
-  def getIndividualErrors(dataFrame: DataFrame, params: PostProcessorPluginParams): DataFrame = {
+  def getIndividualErrors(dataFrame: DataFrame, params: ErrorInfoPluginParams): DataFrame = {
     implicit val singleErrorStardardizedEncoder = Encoders.product[SingleErrorStardardized]
     implicit val dceErrorInfoEncoder = Encoders.product[DceErrorInfo]
 
@@ -87,7 +96,7 @@ case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
     stdErrors
   }
 
-  def prepareDataForKafka(stdErrors: DataFrame, params: PostProcessorPluginParams): DataFrame = {
+  def prepareDataForKafka(stdErrors: DataFrame, params: ErrorInfoPluginParams): DataFrame = {
     log.info(s"Sending errors to kafka topic ${connectionParams.topicName} ...")
 
     val valueAvroSchemaString = KafkaErrorInfoPlugin.getValueAvroSchemaString
@@ -136,7 +145,7 @@ object ErrorInfoSenderPlugin {
   case class ErrorRecord(errType: String, errCode: String, errMsg: String, errCol: String, rawValues: Seq[String])
 
   case class SingleErrorStardardized(recordId: String, reportDate: java.sql.Date, singleError: ErrorRecord) {
-    def toErrorInfo(additionalParams: PostProcessorPluginParams): DceErrorInfo = DceErrorInfo(
+    def toErrorInfo(additionalParams: ErrorInfoPluginParams): DceErrorInfo = DceErrorInfo(
       sourceSystem = additionalParams.sourceSystem,
       sourceSystemId = None,
       dataset = Some(additionalParams.datasetName),

@@ -16,10 +16,10 @@
 package za.co.absa.enceladus.common.plugin.dummy
 
 import org.apache.spark.sql.DataFrame
-import za.co.absa.enceladus.plugins.api.postprocessor.{PostProcessor, PostProcessorPluginParams}
+import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 
 class DummyPostProcessor2(dummyParam: String) extends PostProcessor {
   def getParam: String = dummyParam
-  override def onDataReady(dataFrame: DataFrame, params: PostProcessorPluginParams): DataFrame = dataFrame
+  override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): DataFrame = dataFrame
   override def close(): Unit = {}
 }
