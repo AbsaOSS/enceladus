@@ -17,8 +17,7 @@ package za.co.absa.enceladus.conformance
 
 import za.co.absa.hyperdrive.ingestor.api.{HasComponentAttributes, PropertyMetadata}
 
-trait HyperConformanceAttributes extends HasComponentAttributes {
-
+object HyperConformanceAttributes {
   val keysPrefix = "transformer.hyperconformance"
 
   // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
@@ -31,6 +30,10 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
   val reportVersionKey = s"$keysPrefix.report.version"
   val eventTimestampColumnKey = s"$keysPrefix.event.timestamp.column"
   val eventTimestampPatternKey = s"$keysPrefix.event.timestamp.pattern"
+}
+
+trait HyperConformanceAttributes extends HasComponentAttributes {
+  import HyperConformanceAttributes._
 
   override def getName: String = "HyperConformance"
 

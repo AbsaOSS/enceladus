@@ -15,18 +15,13 @@
 
 package za.co.absa.enceladus.conformance
 
-import java.text.SimpleDateFormat
-import java.util.Date
-
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.SPARK_VERSION
-import org.apache.spark.sql.functions.{col, current_timestamp, lit, to_date}
-import org.apache.spark.sql.types.DateType
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
-import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.InfoDateFactory
 import za.co.absa.enceladus.dao.MenasDAO
@@ -98,6 +93,8 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
  * }}}
  */
 object HyperConformance extends StreamTransformerFactory with HyperConformanceAttributes {
+  import HyperConformanceAttributes._
+
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   private val defaultReportVersion = 1
