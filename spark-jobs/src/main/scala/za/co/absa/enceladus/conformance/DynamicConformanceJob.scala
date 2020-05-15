@@ -205,14 +205,18 @@ object DynamicConformanceJob {
     newVersion
   }
 
-  private def initFunctionalExtensions(reportVersion: Int)(implicit spark: SparkSession, dao: MenasDAO, cmd: ConfCmdConfig): Unit = {
+  private def initFunctionalExtensions(reportVersion: Int)(implicit spark: SparkSession,
+                                                           dao: MenasDAO,
+                                                           cmd: ConfCmdConfig,
+                                                           pathCfg: PathCfg): Unit = {
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
+    spark.enableControlMeasuresTracking(s"${pathCfg.stdPath}/_INFO")
+      .setControlMeasuresWorkflow("Conformance")
 
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
