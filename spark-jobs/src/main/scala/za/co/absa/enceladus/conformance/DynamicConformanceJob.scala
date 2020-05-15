@@ -96,7 +96,7 @@ object DynamicConformanceJob {
         s"Path ${pathCfg.publishPath} already exists. Increment the run version, or delete ${pathCfg.publishPath}")
     }
 
-    initFunctionalExtensions(reportVersion)
+    initFunctionalExtensions(reportVersion, pathCfg)
     val performance = initPerformanceMeasurer(pathCfg.stdPath)
 
     // load data for input and mapping tables
@@ -112,7 +112,6 @@ object DynamicConformanceJob {
 
       log.info("Conformance finished successfully")
     } finally {
-      Atum.getControlMeasure.runUniqueId
 
       MenasPlugin.runNumber.foreach { runNumber =>
         val name = cmd.datasetName
@@ -205,14 +204,17 @@ object DynamicConformanceJob {
     newVersion
   }
 
-  private def initFunctionalExtensions(reportVersion: Int)(implicit spark: SparkSession, dao: MenasDAO, cmd: ConfCmdConfig): Unit = {
+  private def initFunctionalExtensions(reportVersion: Int, pathCfg: PathCfg)(implicit spark: SparkSession,
+                                                                             dao: MenasDAO,
+                                                                             cmd: ConfCmdConfig): Unit = {
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
+    spark.enableControlMeasuresTracking(s"${pathCfg.stdPath}/_INFO")
+      .setControlMeasuresWorkflow("Conformance")
 
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
