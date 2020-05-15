@@ -417,7 +417,6 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     import org.apache.spark.sql.functions.{concat, lit}
     val sourceDfWithExistingIds = sourceDF.withColumn("enceladus_record_id", concat(lit("id"), 'id))
-    sourceDfWithExistingIds.show(false)
 
     val seq = Seq(
       StructField("id", LongType, nullable = false),

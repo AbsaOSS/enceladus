@@ -13,25 +13,25 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.errorinfo
+package za.co.absa.enceladus.plugins.builtin.errorsender
 
 import java.time.LocalDate
 
-case class DceErrorInfo(sourceSystem: String,
-                        sourceSystemId: Option[String],
-                        dataset: Option[String],
-                        ingestionNumber: Option[Long],
-                        processingTimestamp: Long,
-                        informationDate: Option[Int],
-                        outputFileName: Option[String],
-                        recordId: String,
-                        errorSourceId: String, // should hold string values of ErrorSourceId
-                        errorType: String,
-                        errorCode: String,
-                        errorDescription: String,
-                        additionalInfo: Map[String, String])
+case class DceError(sourceSystem: String,
+                    sourceSystemId: Option[String],
+                    dataset: Option[String],
+                    ingestionNumber: Option[Long],
+                    processingTimestamp: Long,
+                    informationDate: Option[Int],
+                    outputFileName: Option[String],
+                    recordId: String,
+                    errorSourceId: String, // should hold string values of ErrorSourceId
+                    errorType: String,
+                    errorCode: String,
+                    errorDescription: String,
+                    additionalInfo: Map[String, String])
 
-object DceErrorInfo {
+object DceError {
 
   object additionalInfoKeys {
     val reportDate = "reportDate"

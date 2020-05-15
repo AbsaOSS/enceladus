@@ -20,9 +20,9 @@ import java.time.Instant
 import com.typesafe.config.Config
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams.ErrorSourceId._
+import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId._
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
-import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams
+import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 
 object PostProcessingService {
   //scalastyle:off parameter.number
@@ -37,7 +37,7 @@ object PostProcessingService {
                          runId: Option[Int],
                          uniqueRunId: Option[String],
                          processingTimestamp: Instant): PostProcessingService = {
-    val params = ErrorInfoPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
+    val params = ErrorSenderPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
       Standardization, sourceSystem, runUrls, runId, uniqueRunId, processingTimestamp)
     PostProcessingService(config, params)
   }
@@ -53,7 +53,7 @@ object PostProcessingService {
                      runId: Option[Int],
                      uniqueRunId: Option[String],
                      processingTimestamp: Instant): PostProcessingService = {
-    val params = ErrorInfoPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
+    val params = ErrorSenderPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
       Conformance, sourceSystem, runUrls, runId, uniqueRunId, processingTimestamp)
     PostProcessingService(config, params)
     //scalastyle:on parameter.number
@@ -61,7 +61,7 @@ object PostProcessingService {
 
 }
 
-case class PostProcessingService private(config: Config, additionalParams: ErrorInfoPluginParams) {
+case class PostProcessingService private(config: Config, additionalParams: ErrorSenderPluginParams) {
 
   private val log = LogManager.getLogger(classOf[PostProcessingService])
 

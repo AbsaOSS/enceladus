@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.errorinfo.mq
+package za.co.absa.enceladus.plugins.builtin.errorsender.mq
 
 import java.time.Instant
 
@@ -25,15 +25,15 @@ import org.scalatest.BeforeAndAfterAll
 import za.co.absa.abris.avro.read.confluent.SchemaManager
 import org.scalatest.{FlatSpec, Matchers}
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
-import za.co.absa.enceladus.plugins.builtin.errorinfo.DceErrorInfo
-import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPluginSuite.{TestingErrCol, TestingRecord}
-import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
+import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
+import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginSuite.{TestingErrCol, TestingRecord}
+import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import org.apache.spark.sql.DataFrame
-import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams
-import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams.ErrorSourceId
+import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
+import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId
 
-class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matchers with BeforeAndAfterAll {
+class KafkaErrorSenderPluginSuite extends FlatSpec with SparkTestBase with Matchers with BeforeAndAfterAll {
 
   private val port = 6081
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
@@ -68,15 +68,15 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
   val testDataDf = testData.toDF
   val testNow = Instant.now()
 
-  val defaultPluginParams = ErrorInfoPluginParams(
+  val defaultPluginParams = ErrorSenderPluginParams(
     "datasetName1", datasetVersion = 1, "2020-03-30", reportVersion = 1, "output/Path1", null,
     "sourceSystem1", Some("http://runUrls1"), runId = Some(1), Some("uniqueRunId"), testNow)
 
-  "ErrorInfoSenderPluginSuite" should "getIndividualErrors (exploding, filtering by source for Standardization)" in {
-    val plugin = ErrorInfoSenderPlugin(null, Map(), Map())
+  "ErrorSenderPluginParams" should "getIndividualErrors (exploding, filtering by source for Standardization)" in {
+    val plugin = KafkaErrorSenderPluginImpl(null, Map(), Map())
 
     plugin.getIndividualErrors(testDataDf, defaultPluginParams.copy(sourceId = ErrorSourceId.Standardization))
-      .as[DceErrorInfo].collect.map(entry => (entry.errorType, entry.errorCode)) should contain theSameElementsAs Seq(
+      .as[DceError].collect.map(entry => (entry.errorType, entry.errorCode)) should contain theSameElementsAs Seq(
       ("stdCastError", "E00000"),
       ("stdNullError", "E00002"),
       ("stdTypeError", "E00006"),
@@ -85,10 +85,10 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
   }
 
   it should "getIndividualErrors (exploding, filtering by source for Conformance)" in {
-    val plugin = ErrorInfoSenderPlugin(null, Map(), Map())
+    val plugin = KafkaErrorSenderPluginImpl(null, Map(), Map())
 
     plugin.getIndividualErrors(testDataDf, defaultPluginParams.copy(sourceId = ErrorSourceId.Conformance))
-      .as[DceErrorInfo].collect.map(entry => (entry.errorType, entry.errorCode)) should contain theSameElementsAs Seq(
+      .as[DceError].collect.map(entry => (entry.errorType, entry.errorCode)) should contain theSameElementsAs Seq(
       ("confMapError", "E00001"),
       ("confCastError", "E00003"),
       ("confNegErr", "E00004"),
@@ -102,13 +102,13 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
   val testSchemaRegUrl = "http://example.com:8081"
 
   val testConfig = ConfigFactory.empty()
-    .withValue("kafka.errorinfo.client.id", ConfigValueFactory.fromAnyRef(testClientId))
-    .withValue("kafka.errorinfo.topic.name", ConfigValueFactory.fromAnyRef(testTopicName))
+    .withValue("kafka.error.client.id", ConfigValueFactory.fromAnyRef(testClientId))
+    .withValue("kafka.error.topic.name", ConfigValueFactory.fromAnyRef(testTopicName))
     .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef(testKafkaUrl))
     .withValue("kafka.schema.registry.url", ConfigValueFactory.fromAnyRef(testSchemaRegUrl))
 
   it should "correctly create the error plugin from config" in {
-    val errorPlugin: ErrorInfoSenderPlugin = KafkaErrorInfoPlugin.apply(testConfig)
+    val errorPlugin: KafkaErrorSenderPluginImpl = KafkaErrorSenderPlugin.apply(testConfig)
 
     errorPlugin.connectionParams shouldBe KafkaConnectionParams(bootstrapServers = testKafkaUrl, schemaRegistryUrl = testSchemaRegUrl,
       clientId = testClientId, security = None, topicName = testTopicName)
@@ -129,7 +129,7 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
   }
 
   it should "fail on incompatible parameters map" in {
-    val errorPlugin: ErrorInfoSenderPlugin = KafkaErrorInfoPlugin.apply(testConfig)
+    val errorPlugin: KafkaErrorSenderPluginImpl = KafkaErrorSenderPlugin.apply(testConfig)
     val bogusParamMap = Map("bogus" -> "boo")
 
     val caughtException = the[IllegalArgumentException] thrownBy {
@@ -149,11 +149,11 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
       "conformance,confLitErr,E00005,Conformance Literal Error"
     )
   ).foreach { case (source, specificErrorParts) =>
-    it should s"send $source errors info to kafka as confluent_avro" in {
+    it should s"send $source errors to kafka as confluent_avro" in {
 
       val configWithMockedRegistry = ConfigFactory.empty()
-        .withValue("kafka.errorinfo.client.id", ConfigValueFactory.fromAnyRef("errorId1"))
-        .withValue("kafka.errorinfo.topic.name", ConfigValueFactory.fromAnyRef("errorTopicId1"))
+        .withValue("kafka.error.client.id", ConfigValueFactory.fromAnyRef("errorId1"))
+        .withValue("kafka.error.topic.name", ConfigValueFactory.fromAnyRef("errorTopicId1"))
         .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef("http://bogus-kafka:9092"))
         .withValue("kafka.schema.registry.url", ConfigValueFactory.fromAnyRef(s"http://localhost:$port"))
 
@@ -188,11 +188,11 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
       }
 
       val smallDf = testDataDf.limit(1).toDF()
-      val connectionParams = KafkaErrorInfoPlugin.kafkaConnectionParamsFromConfig(configWithMockedRegistry)
-      val keySchemaRegistryConfig = KafkaErrorInfoPlugin.avroKeySchemaRegistryConfig(connectionParams)
-      val valueSchemaRegistryConfig = KafkaErrorInfoPlugin.avroValueSchemaRegistryConfig(connectionParams)
+      val connectionParams = KafkaErrorSenderPlugin.kafkaConnectionParamsFromConfig(configWithMockedRegistry)
+      val keySchemaRegistryConfig = KafkaErrorSenderPlugin.avroKeySchemaRegistryConfig(connectionParams)
+      val valueSchemaRegistryConfig = KafkaErrorSenderPlugin.avroValueSchemaRegistryConfig(connectionParams)
 
-      val errorKafkaPlugin = new ErrorInfoSenderPlugin(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig) {
+      val errorKafkaPlugin = new KafkaErrorSenderPluginImpl(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig) {
         override private[mq] def sendErrorsToKafka(df: DataFrame): Unit = {
           import za.co.absa.abris.avro.functions.from_confluent_avro
           import org.apache.spark.sql.functions.col
@@ -235,7 +235,7 @@ class ErrorInfoSenderPluginSuite extends FlatSpec with SparkTestBase with Matche
 
 }
 
-object ErrorInfoSenderPluginSuite {
+object KafkaErrorSenderPluginSuite {
 
   case class TestingRecord(enceladus_record_id: String, reportDate: java.sql.Date, errCol: Seq[TestingErrCol])
 

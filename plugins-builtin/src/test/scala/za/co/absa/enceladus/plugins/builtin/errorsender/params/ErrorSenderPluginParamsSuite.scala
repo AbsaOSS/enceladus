@@ -13,16 +13,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.errorinfo.params
+package za.co.absa.enceladus.plugins.builtin.errorsender.params
 
 import java.time.Instant
 
 import org.scalatest.{FlatSpec, Matchers}
-import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams.ErrorSourceId
+import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId
 
-class ErrorInfoPluginParamsSuite extends FlatSpec with Matchers {
+class ErrorSenderPluginParamsSuite extends FlatSpec with Matchers {
 
-  val params = ErrorInfoPluginParams(
+  val params = ErrorSenderPluginParams(
     datasetName = "datasetName1",
     datasetVersion = 1,
     reportDate = "2020-03-30",
@@ -50,12 +50,12 @@ class ErrorInfoPluginParamsSuite extends FlatSpec with Matchers {
     "processingTimestamp" -> "2020-05-12T10:15:30Z"
   )
 
-  "ErrorInfoPluginParams" should "serialize to Map[String, String]" in {
+  "ErrorSenderPluginParams" should "serialize to Map[String, String]" in {
     params.toMap shouldBe paramsMap
   }
 
   it should "deserialize from Map[String, String]" in {
-    params shouldBe ErrorInfoPluginParams.fromMap(paramsMap)
+    params shouldBe ErrorSenderPluginParams.fromMap(paramsMap)
   }
 
 }

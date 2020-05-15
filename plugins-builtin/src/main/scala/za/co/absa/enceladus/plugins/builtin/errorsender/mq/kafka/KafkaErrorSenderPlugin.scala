@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka
+package za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka
 
 import com.typesafe.config.Config
 import org.apache.avro.{Schema => AvroSchema}
@@ -23,15 +23,15 @@ import org.apache.spark.sql.types.StructType
 import za.co.absa.abris.avro.read.confluent.SchemaManager
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorFactory
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
-import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin
+import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginImpl
 
 /**
  * Implementation of a plugin factory that creates the above plugin based on configuration passed from
  * Enceladus Spark application.
  */
-object KafkaErrorInfoPlugin extends PostProcessorFactory {
-  val ClientIdKey = "kafka.errorinfo.client.id"
-  val ErrorInfoKafkaTopicKey = "kafka.errorinfo.topic.name"
+object KafkaErrorSenderPlugin extends PostProcessorFactory {
+  val ClientIdKey = "kafka.error.client.id"
+  val ErrorKafkaTopicKey = "kafka.error.topic.name"
 
   object Key {
     val avroSchemaResource = "/dq_errors_key_avro_schema.avsc"
@@ -49,17 +49,16 @@ object KafkaErrorInfoPlugin extends PostProcessorFactory {
     val namespaceName = "za.co.absa.dataquality.errors.avro.schema"
   }
 
-  override def apply(config: Config): ErrorInfoSenderPlugin = {
+  override def apply(config: Config): KafkaErrorSenderPluginImpl = {
     val connectionParams = kafkaConnectionParamsFromConfig(config)
     val valueSchemaRegistryConfig = avroValueSchemaRegistryConfig(connectionParams)
     val keySchemaRegistryConfig = avroKeySchemaRegistryConfig(connectionParams)
 
-    ErrorInfoSenderPlugin(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig)
+    KafkaErrorSenderPluginImpl(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig)
   }
 
-
   def kafkaConnectionParamsFromConfig(config: Config): KafkaConnectionParams = {
-    KafkaConnectionParams.fromConfig(config, ClientIdKey, ErrorInfoKafkaTopicKey)
+    KafkaConnectionParams.fromConfig(config, ClientIdKey, ErrorKafkaTopicKey)
   }
 
   def avroValueSchemaRegistryConfig(connectionParams: KafkaConnectionParams): Map[String, String] = {

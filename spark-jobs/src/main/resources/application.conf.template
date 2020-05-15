@@ -66,17 +66,17 @@ timezone="UTC"
 #standardization.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin
 #conformance.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin
 
-# 2. Push Error Info to a Kafka topic
-# standardization.plugin.postprocessor.1=za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
-# conformance.plugin.postprocessor.1=za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
+# 2. Push errors to a Kafka topic
+# standardization.plugin.postprocessor.1=za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
+# conformance.plugin.postprocessor.1=za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 
 #kafka.schema.registry.url:"http://127.0.0.1:8081"
 #kafka.bootstrap.servers="127.0.0.1:9092"
 #kafka.info.metrics.client.id="controlInfo"
 #kafka.info.metrics.topic.name="control.info"
 
-#kafka.errorinfo.client.id="errorInfo"
-#kafka.errorinfo.topic.name="error.info"
+#kafka.error.client.id="DqErrorSender"
+#kafka.error.topic.name="dq.errors"
 
 # Optional security settings
 #kafka.security.protocol="SASL_SSL"

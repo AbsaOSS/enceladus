@@ -13,29 +13,29 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.errorinfo.params
+package za.co.absa.enceladus.plugins.builtin.errorsender.params
 
 import java.time.Instant
 
-import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams.ErrorSourceId
+import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId
 
-case class ErrorInfoPluginParams(datasetName: String,
-                                 datasetVersion: Int,
-                                 reportDate: String,
-                                 reportVersion: Int,
-                                 outputPath: String,
-                                 sourceId: ErrorSourceId.Value,
-                                 sourceSystem: String,
-                                 runUrls: Option[String],
-                                 runId: Option[Int],
-                                 uniqueRunId: Option[String],
-                                 processingTimestamp: Instant
+case class ErrorSenderPluginParams(datasetName: String,
+                                   datasetVersion: Int,
+                                   reportDate: String,
+                                   reportVersion: Int,
+                                   outputPath: String,
+                                   sourceId: ErrorSourceId.Value,
+                                   sourceSystem: String,
+                                   runUrls: Option[String],
+                                   runId: Option[Int],
+                                   uniqueRunId: Option[String],
+                                   processingTimestamp: Instant
                                 ) {
 
-  def toMap: Map[String, String] = ErrorInfoPluginParams.toMap(this)
+  def toMap: Map[String, String] = ErrorSenderPluginParams.toMap(this)
 }
 
-object ErrorInfoPluginParams {
+object ErrorSenderPluginParams {
 
   object ErrorSourceId extends Enumeration {
     val Standardization = Value("standardizaton")
@@ -58,7 +58,7 @@ object ErrorInfoPluginParams {
 
   import fieldNames._
 
-  def toMap(params: ErrorInfoPluginParams): Map[String, String] = {
+  def toMap(params: ErrorSenderPluginParams): Map[String, String] = {
     Map(
       datasetName -> params.datasetName,
       datasetVersion -> params.datasetVersion.toString,
@@ -74,7 +74,7 @@ object ErrorInfoPluginParams {
       params.runUrls.fold(Map.empty[String, String])(urls => Map(runUrls -> urls))
   }
 
-  def fromMap(params: Map[String, String]): ErrorInfoPluginParams = ErrorInfoPluginParams(
+  def fromMap(params: Map[String, String]): ErrorSenderPluginParams = ErrorSenderPluginParams(
     datasetName = params(datasetName),
     datasetVersion = params(datasetVersion).toInt,
     reportDate = params(reportDate),

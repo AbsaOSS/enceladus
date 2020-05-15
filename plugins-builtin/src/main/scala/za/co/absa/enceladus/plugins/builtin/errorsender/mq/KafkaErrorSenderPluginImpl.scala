@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.errorinfo.mq
+package za.co.absa.enceladus.plugins.builtin.errorsender.mq
 
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.functions.{col, explode, lit, size, struct}
@@ -21,28 +21,28 @@ import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.{DataFrame, Encoders}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
-import za.co.absa.enceladus.plugins.builtin.errorinfo.DceErrorInfo
-import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.ErrorInfoSenderPlugin.SingleErrorStardardized
-import za.co.absa.enceladus.plugins.builtin.errorinfo.mq.kafka.KafkaErrorInfoPlugin
+import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
+import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginImpl.SingleErrorStardardized
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-import ErrorInfoSenderPlugin._
-import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams
-import za.co.absa.enceladus.plugins.builtin.errorinfo.params.ErrorInfoPluginParams.ErrorSourceId
+import KafkaErrorSenderPluginImpl._
+import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
+import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
+import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId
 import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
 
 import scala.util.{Failure, Success, Try}
 
 
-case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
-                                 keySchemaRegistryConfig: Map[String, String],
-                                 valueSchemaRegistryConfig: Map[String, String]) extends PostProcessor {
+case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
+                                      keySchemaRegistryConfig: Map[String, String],
+                                      valueSchemaRegistryConfig: Map[String, String]) extends PostProcessor {
 
-  private val log = LogManager.getLogger(classOf[ErrorInfoSenderPlugin])
+  private val log = LogManager.getLogger(classOf[KafkaErrorSenderPluginImpl])
 
   override def close(): Unit = {}
 
   /**
-   * When data is ready, the error info record(s) are pusblished to kafka.
+   * When data is ready, the error record(s) are pusblished to kafka.
    *
    * @param dataFrame error data only.
    * @param params    Additional key/value parameters provided by Enceladus.
@@ -54,14 +54,14 @@ case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
       )
     }
 
-    val errorInfoParams = Try(ErrorInfoPluginParams.fromMap(params)) match {
+    val errorSenderParams = Try(ErrorSenderPluginParams.fromMap(params)) match {
       case Success(params) => params
       case Failure(e) =>
-        throw new IllegalArgumentException(s"Incompatible parameter map supplied for ${ErrorInfoSenderPlugin.getClass.getName}: $params", e)
+        throw new IllegalArgumentException(s"Incompatible parameter map supplied for ${KafkaErrorSenderPluginImpl.getClass.getName}: $params", e)
     }
 
-    val dfWithErrors = getIndividualErrors(dataFrame, errorInfoParams)
-    val forKafkaDf = prepareDataForKafka(dfWithErrors, errorInfoParams)
+    val dfWithErrors = getIndividualErrors(dataFrame, errorSenderParams)
+    val forKafkaDf = prepareDataForKafka(dfWithErrors, errorSenderParams)
     sendErrorsToKafka(forKafkaDf)
   }
 
@@ -71,11 +71,11 @@ case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
    * @param params plugin processing parameters
    * @return DF with exploded errors and corresponding to the given error source
    */
-  def getIndividualErrors(dataFrame: DataFrame, params: ErrorInfoPluginParams): DataFrame = {
+  def getIndividualErrors(dataFrame: DataFrame, params: ErrorSenderPluginParams): DataFrame = {
     implicit val singleErrorStardardizedEncoder = Encoders.product[SingleErrorStardardized]
-    implicit val dceErrorInfoEncoder = Encoders.product[DceErrorInfo]
+    implicit val dceErrorEncoder = Encoders.product[DceError]
 
-    val allowedErrorCodes = ErrorInfoSenderPlugin.errorCodesForSource(params.sourceId)
+    val allowedErrorCodes = KafkaErrorSenderPluginImpl.errorCodesForSource(params.sourceId)
 
     val stdErrors = dataFrame
       .filter(size(col("errCol")) > 0)
@@ -86,20 +86,20 @@ case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
         explode(col(ColumnNames.errCol)).as("singleError")
       )
       .as[SingleErrorStardardized]
-      .map(_.toErrorInfo(params))
+      .map(_.toDceError(params))
       .filter(entry => allowedErrorCodes.contains(entry.errorCode)) // Std xor Conf error codes
       .toDF()
 
     stdErrors
   }
 
-  def prepareDataForKafka(stdErrors: DataFrame, params: ErrorInfoPluginParams): DataFrame = {
+  def prepareDataForKafka(stdErrors: DataFrame, params: ErrorSenderPluginParams): DataFrame = {
     log.info(s"Sending errors to kafka topic ${connectionParams.topicName} ...")
 
-    val valueAvroSchemaString = KafkaErrorInfoPlugin.getValueAvroSchemaString
-    val valueSchemaType = KafkaErrorInfoPlugin.getValueStructTypeSchema
+    val valueAvroSchemaString = KafkaErrorSenderPlugin.getValueAvroSchemaString
+    val valueSchemaType = KafkaErrorSenderPlugin.getValueStructTypeSchema
 
-    val keyAvroSchemaString = KafkaErrorInfoPlugin.getKeyAvroSchemaString
+    val keyAvroSchemaString = KafkaErrorSenderPlugin.getKeyAvroSchemaString
 
     val allValueColumns = struct(stdErrors.columns.head, stdErrors.columns.tail: _*)
     import za.co.absa.abris.avro.functions.to_confluent_avro
@@ -130,7 +130,7 @@ case class ErrorInfoSenderPlugin(connectionParams: KafkaConnectionParams,
   }
 }
 
-object ErrorInfoSenderPlugin {
+object KafkaErrorSenderPluginImpl {
 
   // columns from the original datafram (post Stdardardization/Conformance) to be addressed
   object ColumnNames {
@@ -142,10 +142,10 @@ object ErrorInfoSenderPlugin {
   case class ErrorRecord(errType: String, errCode: String, errMsg: String, errCol: String, rawValues: Seq[String])
 
   case class SingleErrorStardardized(recordId: String, reportDate: java.sql.Date, singleError: ErrorRecord) {
-    def toErrorInfo(additionalParams: ErrorInfoPluginParams): DceErrorInfo = {
-      import DceErrorInfo.{additionalInfoKeys => key}
+    def toDceError(additionalParams: ErrorSenderPluginParams): DceError = {
+      import DceError.{additionalInfoKeys => key}
 
-      DceErrorInfo(
+      DceError(
         sourceSystem = additionalParams.sourceSystem,
         sourceSystemId = None,
         dataset = Some(additionalParams.datasetName),
