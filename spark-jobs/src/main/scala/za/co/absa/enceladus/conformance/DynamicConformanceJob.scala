@@ -82,7 +82,7 @@ object DynamicConformanceJob {
       case None          => inferVersion(conformance.hdfsPublishPath, cmd.reportDate)
     }
 
-    val pathCfg = PathCfg(
+    implicit val pathCfg: PathCfg = PathCfg(
       publishPath = buildPublishPath(InfoDateColumn, InfoVersionColumn, cmd, conformance, reportVersion),
       stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName,
         cmd.datasetVersion.toString, cmd.reportDate, reportVersion.toString)
