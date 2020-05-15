@@ -82,7 +82,7 @@ object DynamicConformanceJob {
       case None          => inferVersion(conformance.hdfsPublishPath, cmd.reportDate)
     }
 
-    implicit val pathCfg: PathCfg = PathCfg(
+    val pathCfg = PathCfg(
       publishPath = buildPublishPath(InfoDateColumn, InfoVersionColumn, cmd, conformance, reportVersion),
       stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName,
         cmd.datasetVersion.toString, cmd.reportDate, reportVersion.toString)
@@ -96,7 +96,7 @@ object DynamicConformanceJob {
         s"Path ${pathCfg.publishPath} already exists. Increment the run version, or delete ${pathCfg.publishPath}")
     }
 
-    initFunctionalExtensions(reportVersion)
+    initFunctionalExtensions(reportVersion, pathCfg)
     val performance = initPerformanceMeasurer(pathCfg.stdPath)
 
     // load data for input and mapping tables
@@ -205,10 +205,9 @@ object DynamicConformanceJob {
     newVersion
   }
 
-  private def initFunctionalExtensions(reportVersion: Int)(implicit spark: SparkSession,
-                                                           dao: MenasDAO,
-                                                           cmd: ConfCmdConfig,
-                                                           pathCfg: PathCfg): Unit = {
+  private def initFunctionalExtensions(reportVersion: Int, pathCfg: PathCfg)(implicit spark: SparkSession,
+                                                                             dao: MenasDAO,
+                                                                             cmd: ConfCmdConfig): Unit = {
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
