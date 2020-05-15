@@ -26,6 +26,7 @@ DRIVER_CORES="$DEFAULT_DRIVER_CORES"
 DRIVER_MEMORY="$DEFAULT_DRIVER_MEMORY"
 EXECUTOR_CORES="$DEFAULT_EXECUTOR_CORES"
 NUM_EXECUTORS="$DEFAULT_NUM_EXECUTORS"
+FILES="$ENCELADUS_FILES"
 
 # Command like default for the job
 DATASET_NAME=""
@@ -94,6 +95,10 @@ case $key in
     ;;
     --driver-memory)
     DRIVER_MEMORY="$2"
+    shift 2 # past argument and value
+    ;;
+    --files)
+    FILES="$ENCELADUS_FILES,$2"
     shift 2 # past argument and value
     ;;
     --conf-spark-executor-memoryOverhead)
@@ -289,7 +294,7 @@ fi
 
 SPARK_CONF="--conf spark.logConf=true"
 
-JVM_CONF="spark.driver.extraJavaOptions=-Dmenas.rest.uri=$MENAS_URI -Dstandardized.hdfs.path=$STD_HDFS_PATH \
+JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH \
 -Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=$HDP_VERSION \
 $MT_PATTERN"
 
@@ -303,12 +308,18 @@ add_to_cmd_line "--executor-memory" ${EXECUTOR_MEMORY}
 add_to_cmd_line "--executor-cores" ${EXECUTOR_CORES}
 add_to_cmd_line "--driver-cores" ${DRIVER_CORES}
 add_to_cmd_line "--driver-memory" ${DRIVER_MEMORY}
+add_to_cmd_line "--files" ${FILES}
 
 # Adding Spark config options
 add_spark_conf_cmd "spark.executor.memoryOverhead" ${CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD}
 add_spark_conf_cmd "spark.memory.fraction" ${CONF_SPARK_MEMORY_FRACTION}
 
 # Adding JVM configuration, entry point class name and the jar file
+if [[ "$DEPLOY_MODE" == "client" ]]; then
+  ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLIENT"
+else
+  ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLUSTER"
+fi
 CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file

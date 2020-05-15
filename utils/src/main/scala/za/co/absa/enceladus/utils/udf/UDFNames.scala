@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.error
+package za.co.absa.enceladus.utils.udf
 
 object UDFNames {
   final val stdCastErr = "stdCastErr"

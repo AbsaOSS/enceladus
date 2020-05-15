@@ -15,18 +15,21 @@
 
 package za.co.absa.enceladus.standardization
 
+import java.util.UUID
+
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
+import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
-import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar  {
   type FixtureParam = String
@@ -36,7 +39,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private implicit val dao: MenasDAO = mock[MenasDAO]
-  private implicit val udfLibrary:UDFLibrary = UDFLibrary()
+  private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
 
   private val tmpFilePrefix = "parquet-data-"
   private val datasetName = "ParquetTest"
@@ -332,6 +335,104 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
     }
     assert(exception.getMessage == "Cannot standardize field 'letters' from type array into struct")
   }
+
+  test("PseudoUuids are used") { tmpFileName =>
+    val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
+      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format parquet").split(" ")
+
+    val expected =
+      """+---+-------+-------+------+-------------------+
+        ||id |letters|struct |errCol|enceladus_record_id|
+        |+---+-------+-------+------+-------------------+
+        ||1  |[A, B] |[false]|[]    |1950798873         |
+        ||2  |[C]    |[true] |[]    |-988631025         |
+        |+---+-------+-------+------+-------------------+
+        |
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
+    val seq = Seq(
+      StructField("id", LongType, nullable = false),
+      StructField("letters", ArrayType(StringType), nullable = false),
+      StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
+    )
+    val schema = StructType(seq)
+    // stableHashId will always yield the same ids
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.StableHashId)
+
+    val actual = destDF.dataAsString(truncate = false)
+    assert(actual == expected)
+  }
+
+  test("True uuids are used") { tmpFileName =>
+    val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
+      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format parquet").split(" ")
+
+    val expected =
+      """+---+-------+-------+------+
+        ||id |letters|struct |errCol|
+        |+---+-------+-------+------+
+        ||1  |[A, B] |[false]|[]    |
+        ||2  |[C]    |[true] |[]    |
+        |+---+-------+-------+------+
+        |
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
+    val seq = Seq(
+      StructField("id", LongType, nullable = false),
+      StructField("letters", ArrayType(StringType), nullable = false),
+      StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
+    )
+    val schema = StructType(seq)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
+
+    // same except for the record id
+    val actual = destDF.drop("enceladus_record_id").dataAsString(truncate = false)
+    assert(actual == expected)
+
+    val destIds = destDF.select('enceladus_record_id ).collect().map(_.getAs[String](0)).toSet
+    assert(destIds.size == 2)
+    destIds.foreach(UUID.fromString) // check uuid validity
+
+  }
+
+  test("Existing enceladus_record_id is kept") { tmpFileName =>
+    val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
+      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format parquet").split(" ")
+
+    val expected =
+      """+---+-------+-------+-------------------+------+
+        ||id |letters|struct |enceladus_record_id|errCol|
+        |+---+-------+-------+-------------------+------+
+        ||1  |[A, B] |[false]|id1                |[]    |
+        ||2  |[C]    |[true] |id2                |[]    |
+        |+---+-------+-------+-------------------+------+
+        |
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
+    import org.apache.spark.sql.functions.{concat, lit}
+    val sourceDfWithExistingIds = sourceDF.withColumn("enceladus_record_id", concat(lit("id"), 'id))
+    sourceDfWithExistingIds.show(false)
+
+    val seq = Seq(
+      StructField("id", LongType, nullable = false),
+      StructField("letters", ArrayType(StringType), nullable = false),
+      StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false),
+      StructField("enceladus_record_id", StringType, nullable = false)
+    )
+    val schema = StructType(seq)
+    val destDF = StandardizationInterpreter.standardize(sourceDfWithExistingIds, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
+
+    // The TrueUuids strategy does not override the existing values
+    val actual = destDF.dataAsString(truncate = false)
+    assert(actual == expected)
+  }
+
 }
 
 private case class FooClass(bar: Boolean)

@@ -20,11 +20,13 @@ import java.text.MessageFormat
 import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
+import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.common.RecordIdGeneration.{IdType, _}
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -32,18 +34,19 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
-import org.apache.spark.SPARK_VERSION
+
 import scala.collection.immutable.HashMap
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 object StandardizationJob {
@@ -52,10 +55,13 @@ object StandardizationJob {
   private val log = LoggerFactory.getLogger(this.getClass)
   private val conf = ConfigFactory.load()
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
-
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
   def main(args: Array[String]) {
+    // This should be the first thing the app does to make secure Kafka work with our CA.
+    // After Spring activates JavaX, it will be too late.
+    SecureKafka.setSecureKafkaProperties(conf)
+
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
     implicit val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
@@ -71,6 +77,7 @@ object StandardizationJob {
     val schema: StructType = dao.getSchema(dataset.schemaName, dataset.schemaVersion)
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg = getPathCfg(cmd, dataset, reportVersion)
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     log.info(s"input path: ${pathCfg.inputPath}")
     log.info(s"output path: ${pathCfg.outputPath}")
@@ -93,7 +100,7 @@ object StandardizationJob {
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 
     try {
-      executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg)
+      executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg, recordIdGenerationStrategy)
       cmd.performanceMetricsFile.foreach(this.writePerformanceMetrics(performance, _))
       log.info("Standardization finished successfully")
     } finally {
@@ -209,7 +216,7 @@ object StandardizationJob {
     }
   }
 
-  private def getFixedWidthOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+  private def getFixedWidthOptions(cmd: StdCmdConfig): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
       HashMap("trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter))
     } else {
@@ -274,18 +281,19 @@ object StandardizationJob {
                                      schema: StructType,
                                      cmd: StdCmdConfig,
                                      menasCredentials: MenasCredentials,
-                                     pathCfg: PathCfg)
+                                     pathCfg: PathCfg,
+                                     recordIdGenerationStrategy: IdType)
                                     (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
     //scalastyle:on parameter.number
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
     performance.startMeasurement(rawDirSize)
 
-    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata()
+    handleControlInfoValidation()
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     val standardizedDF = try {
-      StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat, cmd.failOnInputNotPerSchema)
+      StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat, cmd.failOnInputNotPerSchema, recordIdGenerationStrategy)
     } catch {
       case e@ValidationException(msg, errors)                  =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
@@ -326,6 +334,22 @@ object StandardizationJob {
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     standardizedDF.writeInfoFile(pathCfg.outputPath)
+  }
+
+  private def handleControlInfoValidation(): Unit = {
+    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata() match {
+      case Failure(ex: za.co.absa.enceladus.utils.validation.ValidationException) => {
+        val confEntry = "control.info.validation"
+        conf.getString(confEntry) match {
+          case "strict" => throw ex
+          case "warning" => log.warn(ex.msg)
+          case "none" =>
+          case _ => throw new RuntimeException(s"Invalid $confEntry value")
+        }
+      }
+      case Failure(ex) => throw ex
+      case Success(_) =>
+    }
   }
 
   private def handleEmptyOutputAfterStandardization()(implicit spark: SparkSession): Unit = {
@@ -449,10 +473,10 @@ object StandardizationJob {
 
   def buildRawPath(cmd: StdCmdConfig, dataset: Dataset, dateTokens: Array[String], reportVersion: Int): String = {
     cmd.rawPathOverride match {
-      case None                  =>
+      case None =>
         val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
         cmd.folderPrefix match {
-          case None               => s"${dataset.hdfsPath}$folderSuffix"
+          case None => s"${dataset.hdfsPath}$folderSuffix"
           case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
         }
       case Some(rawPathOverride) => rawPathOverride

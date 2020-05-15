@@ -18,9 +18,9 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
-import za.co.absa.enceladus.utils.error.UDFLibrary
 import za.co.absa.enceladus.utils.schema.SchemaUtils.appendPath
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 /**
  * Hack around spark-xml bug: Null arrays produce array(null) instead of null.

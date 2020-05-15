@@ -14,10 +14,6 @@
 # limitations under the License.
 
 # Environment configuration
-
-# The Menas URI can specify multiple semi-colon-separated base URIs
-# each can have multiple comma-separated hosts, these are used for fault-tolerance
-MENAS_URI="http://localhost:8080/menas;http://remotehost:8080/menas"
 STD_HDFS_PATH="/bigdata/std/std-{0}-{1}-{2}-{3}"
 
 # MongoDB connection configuration for Spline
@@ -56,6 +52,18 @@ DEFAULT_DEPLOY_MODE="client"
 
 LOG_DIR="/tmp"
 
+# Kafka security
+# Path to jaas.config
+#JAAS_CLIENT="-Djava.security.auth.login.config=/path/jaas.config"
+#JAAS_CLUSTER="-Djava.security.auth.login.config=jaas_cluster.config"
+
+APPLICATION_PROPERTIES_CLIENT="-Dconfig.file=/absolute/path/application.conf"
+APPLICATION_PROPERTIES_CLUSTER="-Dconfig.file=application.conf"
+
+# Files to send when running in cluster mode (comma separated)
+# Hash is used as the file alias: https://stackoverflow.com/a/49866757/1038282
+ENCELADUS_FILES="/absolute/path/application.conf#application.conf"
+
 # Additional environment-specific Spark options, e.g. "--conf spark.driver.host=myhost"
 # To specify several configuration options prepend '--conf' to each config key.
 # Example: ADDITIONAL_SPARK_CONF="--conf spark.driver.host=myhost --conf spark.driver.port=12233"
@@ -63,4 +71,8 @@ ADDITIONAL_SPARK_CONF=""
 
 # Additional JVM options
 # Example: ADDITIONAL_JVM_CONF="-Dtimezone=UTC -Dfoo=bar"
-ADDITIONAL_JVM_CONF=""
+# for deployment mode: client
+ADDITIONAL_JVM_CONF_CLIENT="$APPLICATION_PROPERTIES_CLIENT $JAAS_CLIENT"
+
+# for deployment mode: cluster
+ADDITIONAL_JVM_CONF_CLUSTER="$APPLICATION_PROPERTIES_CLUSTER $JAAS_CLUSTER"

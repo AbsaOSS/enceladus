@@ -13,24 +13,27 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.error
+package za.co.absa.enceladus.utils.udf
+
+import java.util.UUID
 
 import org.apache.spark.sql.api.java._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SparkSession}
+import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
+import za.co.absa.enceladus.utils.udf.UDFNames._
+
 import scala.collection.mutable
-import UDFNames._
 
-
-case class UDFLibrary()(implicit val spark: SparkSession) {
+class UDFLibrary()(implicit val spark: SparkSession) {
 
   spark.udf.register(stdCastErr, { (errCol: String, rawValue: String) =>
     ErrorMessage.stdCastErr(errCol, rawValue)
   })
 
-  spark.udf.register(stdNullErr, { errCol: String => ErrorMessage.stdNullErr(errCol)})
+  spark.udf.register(stdNullErr, { errCol: String => ErrorMessage.stdNullErr(errCol) })
 
-  spark.udf.register(stdSchemaErr, { errRow: String => ErrorMessage.stdSchemaError(errRow)})
+  spark.udf.register(stdSchemaErr, { errRow: String => ErrorMessage.stdSchemaError(errRow) })
 
   spark.udf.register(confMappingErr, { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
     ErrorMessage.confMappingErr(errCol, rawValues, mappings)
@@ -79,7 +82,7 @@ object UDFLibrary {
   }
 
   private val errorColumnAppend = new UDF2[Seq[Row], Row, Seq[Row]] {
-    override def call(t1: Seq[Row], t2: Row) : Seq[Row] = {
+    override def call(t1: Seq[Row], t2: Row): Seq[Row] = {
       t1 :+ t2
     }
   }

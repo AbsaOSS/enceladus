@@ -180,7 +180,7 @@ object SchemaPathValidator {
       case ExactMatch(_) =>
         Seq(ValidationError(s"Column '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))
       case CaseInsensitiveMatch(_) =>
-        Seq(ValidationError(s"Case insensitive variant of a cloumn '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'."))//scalastyle:ignore line.size.limit
+        Seq(ValidationError(s"Case insensitive variant of a column '$parentPath$currentField' already exists so it cannot be used as an output column '$fullPath'.")) //scalastyle:ignore line.size.limit
       case _ => Nil
     }
   }

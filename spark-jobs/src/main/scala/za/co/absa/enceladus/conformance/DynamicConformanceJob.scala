@@ -19,29 +19,35 @@ import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.spark.{SPARK_VERSION, sql}
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.{SPARK_VERSION, sql}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.common.Constants._
+import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
+import za.co.absa.enceladus.common.ControlInfoValidation
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, ThreeStateSwitch}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
+import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
-import za.co.absa.enceladus.common.Constants._
-import za.co.absa.enceladus.common.version.SparkVersionGuard
 
-import scala.util.Try
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 object DynamicConformanceJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
@@ -51,6 +57,10 @@ object DynamicConformanceJob {
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   def main(args: Array[String]) {
+    // This should be the first thing the app does to make secure Kafka work with our CA.
+    // After Spring activates JavaX, it will be too late.
+    SecureKafka.setSecureKafkaProperties(conf)
+
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
     implicit val cmd: ConfCmdConfig = ConfCmdConfig.getCmdLineArguments(args)
@@ -77,6 +87,8 @@ object DynamicConformanceJob {
       stdPath = MessageFormat.format(conf.getString("standardized.hdfs.path"), cmd.datasetName,
         cmd.datasetVersion.toString, cmd.reportDate, reportVersion.toString)
     )
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
+
     log.info(s"stdpath = ${pathCfg.stdPath}, publishPath = ${pathCfg.publishPath}")
     // die before performing any computation if the output path already exists
     if (fsUtils.hdfsExists(pathCfg.publishPath)) {
@@ -84,14 +96,14 @@ object DynamicConformanceJob {
         s"Path ${pathCfg.publishPath} already exists. Increment the run version, or delete ${pathCfg.publishPath}")
     }
 
-    initFunctionalExtensions(reportVersion)
+    initFunctionalExtensions(reportVersion, pathCfg)
     val performance = initPerformanceMeasurer(pathCfg.stdPath)
 
     // load data for input and mapping tables
     val inputData = spark.read.parquet(pathCfg.stdPath)
 
     try {
-      val result = conform(conformance, inputData, enableCF)
+      val result = conform(conformance, inputData, enableCF, recordIdGenerationStrategy)
 
       PerformanceMetricTools.addJobInfoToAtumMetadata("conform",
         pathCfg.stdPath, pathCfg.publishPath, menasCredentials.username, args.mkString(" "))
@@ -100,7 +112,6 @@ object DynamicConformanceJob {
 
       log.info("Conformance finished successfully")
     } finally {
-      Atum.getControlMeasure.runUniqueId
 
       MenasPlugin.runNumber.foreach { runNumber =>
         val name = cmd.datasetName
@@ -193,14 +204,17 @@ object DynamicConformanceJob {
     newVersion
   }
 
-  private def initFunctionalExtensions(reportVersion: Int)(implicit spark: SparkSession, dao: MenasDAO, cmd: ConfCmdConfig): Unit = {
+  private def initFunctionalExtensions(reportVersion: Int, pathCfg: PathCfg)(implicit spark: SparkSession,
+                                                                             dao: MenasDAO,
+                                                                             cmd: ConfCmdConfig): Unit = {
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
+    spark.enableControlMeasuresTracking(s"${pathCfg.stdPath}/_INFO")
+      .setControlMeasuresWorkflow("Conformance")
 
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
@@ -221,7 +235,7 @@ object DynamicConformanceJob {
     performance
   }
 
-  private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean)
+  private def conform(conformance: Dataset, inputData: sql.Dataset[Row], enableCF: Boolean, recordIdGenerationStrategy: IdType)
                      (implicit spark: SparkSession, cmd: ConfCmdConfig, fsUtils: FileSystemVersionUtils, dao: MenasDAO): DataFrame = {
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
@@ -230,17 +244,25 @@ object DynamicConformanceJob {
       .setBroadcastStrategyMode(broadcastingStrategyMode)
       .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
-    try {
+    Try {
+      handleControlInfoValidation()
       DynamicInterpreter.interpret(conformance, inputData)
-    } catch {
-      case e: ValidationException =>
+    } match {
+      case Failure(e: ValidationException) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, e.techDetails)
         throw e
-      case NonFatal(e)            =>
+      case Failure(NonFatal(e)) =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Conformance", e.getMessage, sw.toString)
         throw e
+      case Success(conformedDF) =>
+        if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
+          conformedDF // no new id regeneration
+        } else {
+          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, Constants.EnceladusRecordId, recordIdGenerationStrategy)
+        }
+
     }
   }
 
@@ -251,7 +273,6 @@ object DynamicConformanceJob {
                             cmdLineArgs: String,
                             menasCredentials: MenasCredentials)
                            (implicit spark: SparkSession, cmd: ConfCmdConfig, fsUtils: FileSystemVersionUtils): Unit = {
-    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
     val withPartCols = result
       .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.reportDate), ReportDateFormat))
       .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))
@@ -303,6 +324,22 @@ object DynamicConformanceJob {
         "while previous checkpoints show non zero record count"
       AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", errMsg, "")
       throw new IllegalStateException(errMsg)
+    }
+  }
+
+  private def handleControlInfoValidation(): Unit = {
+    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata() match {
+      case Failure(ex: za.co.absa.enceladus.utils.validation.ValidationException) => {
+        val confEntry = "control.info.validation"
+        conf.getString(confEntry) match {
+          case "strict" => throw ex
+          case "warning" => log.warn(ex.msg)
+          case "none" =>
+          case _ => throw new RuntimeException(s"Invalid $confEntry value")
+        }
+      }
+      case Failure(ex) => throw ex
+      case Success(_) =>
     }
   }
 
