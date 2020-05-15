@@ -112,7 +112,6 @@ object DynamicConformanceJob {
 
       log.info("Conformance finished successfully")
     } finally {
-      Atum.getControlMeasure.runUniqueId
 
       MenasPlugin.runNumber.foreach { runNumber =>
         val name = cmd.datasetName
