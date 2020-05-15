@@ -101,7 +101,6 @@ object DynamicConformanceJob {
 
     try {
       val result = conform(conformance, inputData, enableCF, recordIdGenerationStrategy)
-      result.persist()
 
       PerformanceMetricTools.addJobInfoToAtumMetadata("conform",
         pathCfg.stdPath, pathCfg.publishPath, menasCredentials.username, args.mkString(" "))
@@ -109,8 +108,10 @@ object DynamicConformanceJob {
       processResult(result, performance, pathCfg, reportVersion, args.mkString(" "), menasCredentials)
       log.info("Conformance finished successfully")
 
+      // read written data from parquet directly
+      val conformedDf = spark.read.parquet(pathCfg.publishPath)
       val postProcessingService = getPostProcessingService(cmd, pathCfg, reportVersion, MenasPlugin.runNumber, Atum.getControlMeasure.runUniqueId)
-      postProcessingService.onSaveOutput(result) // all enabled postProcessors will be run with the std df
+      postProcessingService.onSaveOutput(conformedDf) // all enabled postProcessors will be run with the std df
     } finally {
       Atum.getControlMeasure.runUniqueId
 

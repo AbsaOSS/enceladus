@@ -99,13 +99,14 @@ object StandardizationJob {
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 
     try {
-      val standardized = executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg, recordIdGenerationStrategy)
-      standardized.persist()
+      executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg, recordIdGenerationStrategy)
       cmd.performanceMetricsFile.foreach(this.writePerformanceMetrics(performance, _))
       log.info("Standardization finished successfully")
 
+      // read written data from parquet directly
+      val standardizedDf = spark.read.parquet(pathCfg.outputPath)
       val postProcessingService = getPostProcessingService(cmd, pathCfg, dataset, MenasPlugin.runNumber, Atum.getControlMeasure.runUniqueId)
-      postProcessingService.onSaveOutput(standardized) // all enabled postProcessors will be run with the std df
+      postProcessingService.onSaveOutput(standardizedDf) // all enabled postProcessors will be run with the std df
     } finally {
       postStandardizationSteps(cmd)
     }
@@ -307,7 +308,7 @@ object StandardizationJob {
                                      menasCredentials: MenasCredentials,
                                      pathCfg: PathCfg,
                                      recordIdGenerationStrategy: IdType)
-                                    (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): DataFrame = {
+                                    (implicit spark: SparkSession, udfLib: UDFLibrary, fsUtils: FileSystemVersionUtils): Unit = {
     //scalastyle:on parameter.number
     val rawDirSize: Long = fsUtils.getDirectorySize(pathCfg.inputPath)
     performance.startMeasurement(rawDirSize)
@@ -358,8 +359,6 @@ object StandardizationJob {
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.cmdLineArgs.mkString(" "))
     standardizedDF.writeInfoFile(pathCfg.outputPath)
-
-    standardizedDF
   }
 
   private def handleEmptyOutputAfterStandardization()(implicit spark: SparkSession): Unit = {
