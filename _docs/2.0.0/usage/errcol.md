@@ -1,25 +1,22 @@
 ---
 layout: docs
-title: Usage - errCol
+title: Usage - Error Column
 version: '2.0.0'
 categories:
     - '2.0.0'
     - usage
 redirect_from: /docs/usage/errcol
 ---
-
-Error Column
-============
-
+## Table Of Content
 <!-- toc -->
-- [Error Column](#error-column)
-  - [Description](#description)
-  - [Error Types](#error-types)
-  - [Notes](#notes)
+- [Table Of Content](#table-of-content)
+- [Description](#description)
+- [Error Types](#error-types)
+- [Notes](#notes)
 <!-- tocstop -->
 
-Description
------------
+## Description
+
 
 `errCol` is a special, automatically created, composite column, that contains descriptions of all the issues encountered
 during **Standardization** and **Conformance** of the particular row.
@@ -35,8 +32,7 @@ The array element is structured as follows:
 * `mappings` - ???
 
 
-Error Types
------------
+## Error Types
 
 | Error type      | Description |
 |-----------------|-------------|
@@ -47,8 +43,7 @@ Error Types
 | `confNegErr`    | Negation of numeric type with minimum value overflowed during conformance |
 | `confLitErr`    | During Conformance special column value has changed |
 
-Notes
------
+## Notes
 
 <a name="#notes-star" />\* When **Standardization** of a value fails and the column has a `sourcecolumn` *metadata* property defined, the
 `sourcecolumn` value, the actual source of the data, will be mentioned in the error. Not the output column name. 

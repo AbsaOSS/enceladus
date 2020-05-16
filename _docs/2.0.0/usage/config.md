@@ -7,18 +7,14 @@ categories:
     - usage
 redirect_from: /docs/usage/config
 ---
-
-Configuration
-============
-
+## Table Of Content
 <!-- toc -->
-- [Configuration](#configuration)
-  - [Intro](#intro) 
-  - [General options](#general-options)
+- [Table Of Content](#table-of-content)
+- [Intro](#intro)
+- [General options](#general-options)
 <!-- tocstop -->
 
-Intro
------------
+## Intro
 
 This page describes the usage of configuration of _Standardization_ and _Conformance_.
 There are number of default options that 
@@ -30,19 +26,8 @@ These values can be overridden using the `-D` property values as in:
 spark-submit --conf "spark.driver.extraJavaOptions= -Dkey1=value1 -Dkey2=value2" ...
 ```
 
-General options
------------
+## General options
 
-|            Config path                   | Possible value(s)                    |        Description        |
-|------------------------------------------|--------------------------------------|---------------------------|
-| `control.info.validation`                |  `strict`                            | Job will fail on failed \_INFO file validation. |
-|                                          |  `warning` (default)                 | A warning message will be displayed on failed validation, but the job will go on. | 
-|                                          |  `none`                              | No validation is done. |
-| `enceladus.recordId.generation.strategy` |  `uuid` (default)                    | `enceladus_record_id` column will be added and will contain a UUID `String` for each row. |
-|                                          |  `stableHashId`                      | `enceladus_record_id` column will be added and populated with an always-the-same `Int` hash (Murmur3-based, for testing). |
-|                                          |  `none`                              | no column will be added to the output. |
-| `menas.rest.uri`                         | string with URLs                    | Comma-separated list of URLs where Menas will be looked for. E.g.: `http://example.com/menas1,http://domain.com:8080/menas2` |
-| `timezone`                               | string with any valid time zone name | The time zone the Spark application will operate in. Strongly recommended to keep it to default _UTC_ |
+{% include config_options.html file="configuration_2_0_0" %}
 
 <!-- specific sections on Standardization & Conformance options may follow in the future -->
-    

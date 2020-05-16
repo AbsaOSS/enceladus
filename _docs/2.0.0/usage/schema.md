@@ -7,53 +7,49 @@ categories:
     - usage
 redirect_from: /docs/usage/schema
 ---
-
-Schema
-======
-
+## Table Of Content
 <!-- toc -->
-- [Schema](#schema)
-  - [Intro](#intro)
-  - [Automatically added columns](#automatically-added-columns)
-  - [Data types](#data-types)
-    - [String](#string)
-    - [Boolean](#boolean)
-    - [Decimal](#decimal)
-    - [Long](#long)
-    - [Integer](#integer)
-    - [Short](#short)
-    - [Byte](#byte)
-    - [Double](#double)
-    - [Float](#float)
-    - [Timestamp](#timestamp)
-    - [Date](#date)
-    - [Struct](#struct)
-    - [Array](#array)
-  - [Metadata](#metadata)
-    - [sourcecolumn](#sourcecolumn)
-    - [default](#default)
-    - [pattern](#pattern)
-    - [timezone](#timezone)
-    - [decimal_separator](#decimalseparator)
-    - [grouping_separator](#groupingseparator)
-    - [minus_sign](#minussign)
-    - [allow_infinity](#allowinfinity)
-    - [radix](#radix)
-  - [Parsing](#parsing)
-    - [Parsing timestamps and dates](#parsing-timestamps-and-dates)
-      - [Time Zone support](#time-zone-support)
-    - [Parsing numbers](#parsing-numbers)
-      - [Radix usage](#radix-usage)
-      - [Pattern parsing](#pattern-parsing)
-      - [Number parsing peculiarities](#number-parsing-peculiarities)
-  - [Defaults](#defaults)
-    - [Explicit default](#explicit-default)
-    - [Global default values](#global-default-values)
-    - [Explicit default values restrictions](#explicit-default-values-restrictions)
+- [Table Of Content](#table-of-content)
+- [Intro](#intro)
+- [Automatically added columns](#automatically-added-columns)
+- [Data types](#data-types)
+  - [String](#string)
+  - [Boolean](#boolean)
+  - [Decimal](#decimal)
+  - [Long](#long)
+  - [Integer](#integer)
+  - [Short](#short)
+  - [Byte](#byte)
+  - [Double](#double)
+  - [Float](#float)
+  - [Timestamp](#timestamp)
+  - [Date](#date)
+  - [Struct](#struct)
+  - [Array](#array)
+- [Metadata](#metadata)
+  - [sourcecolumn](#sourcecolumn)
+  - [default](#default)
+  - [pattern](#pattern)
+  - [timezone](#timezone)
+  - [decimal_separator](#decimalseparator)
+  - [grouping_separator](#groupingseparator)
+  - [minus_sign](#minussign)
+  - [allow_infinity](#allowinfinity)
+  - [radix](#radix)
+- [Parsing](#parsing)
+  - [Parsing timestamps and dates](#parsing-timestamps-and-dates)
+    - [Time Zone support](#time-zone-support)
+  - [Parsing numbers](#parsing-numbers)
+    - [Radix usage](#radix-usage)
+    - [Pattern parsing](#pattern-parsing)
+    - [Number parsing peculiarities](#number-parsing-peculiarities)
+- [Defaults](#defaults)
+  - [Explicit default](#explicit-default)
+  - [Global default values](#global-default-values)
+  - [Explicit default values restrictions](#explicit-default-values-restrictions)
 <!-- tocstop -->
 
-Intro
------
+## Intro
 
 Schema is the description of fields in a dataset. All and only the fields defined in the schema will be in the output
 table. That means fields not mentioned in the schema won't be in the input. There's an exception of three fields added
@@ -149,15 +145,13 @@ You provide *Schema* to **Standardization** in a JSON file:
 
 Example of data adhering to the above schema can be found [here](https://github.com/AbsaOSS/enceladus/blob/master/spark-jobs/src/test/scala/za/co/absa/enceladus/standardization/samples/TestSamples.scala).
 
-Automatically added columns
----------------------------
+## Automatically added columns
 
 There is a column automatically added to each **Standardization** output. Its name is `errCol` and it contains information
 on all errors that happened on the particular row *standardization*. If defined in schema its structure there has to 
 adhere exactly to the automatically added one. More on this field [see in dedicated documentation]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol).  
 
-Data types
-----------
+## Data types
 
 ### String
 
@@ -253,8 +247,7 @@ The type is specified as struct of following properties:
 
 <sup>**Metadata keys:** [sourcecolumn](#sourcecolumn)</sup>
 
-Metadata
---------
+## Metadata
 
 *Standardization* can be influenced by `metadata` in the schema of the data. The `metadata` are optional properties.
 Here are the recognized ones with the description of their purpose (with detailed description below):
@@ -382,8 +375,7 @@ For hexadecimal value entries in the form *"0xFF"* are accepted as well.
 If `radix` is specified as anything other than the default 10, [pattern](#pattern)
 value will be ignored.
 
-Parsing
--------
+## Parsing
 
 ### Parsing timestamps and dates
 
@@ -538,8 +530,7 @@ then they are usually not whole numbers)
 - Even if redefined the standard grouping and decimal separators **need to be used** in the pattern
 - If pattern is used, `e` is not accepted only `E` in the exponential expresion (without a pattern both are recognized)
 
-Defaults
---------
+## Defaults
 
 As described, when a field fails to standardize, either because of missing data in a non-nullable column
 or because it was being cast to the wrong type, the field is populated with a default value and an error is added to 

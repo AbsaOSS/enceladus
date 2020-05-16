@@ -1,0 +1,22 @@
+{% assign tableFileParam = {{include.file}} %}
+{% assign tableFile = site.data[tableFileParam] %}
+
+<table>
+  <tr>
+    <th scope="col">Config Path</th>
+    <th scope="col">Possible Value(s)</th>
+    <th scope="col">Description</th>
+  </tr>
+  {% for entry in tableFile %}
+    {% assign current_name = entry.name %}
+    {% for option in entry.options %}
+    <tr>
+      {% if forloop.first %}
+      <td rowspan="{{ entry.options.size }}">{{ entry.name}}</td>
+      {% endif %}
+      <td>{{option.name}}</td>
+      <td>{{option.description}}</td>
+    </tr>
+    {% endfor %}
+  {% endfor %}
+</table>

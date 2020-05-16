@@ -1,0 +1,30 @@
+---
+  - name: control.info.validation
+    options:
+    - name: strict
+      description: Job will fail on failed _INFO file validation.
+    - name: warning
+      description: "(default) A warning message will be displayed on failed validation,
+        but the job will go on."
+    - name: none
+      description: No validation is done.
+  - name: enceladus.recordId.generation.strategy
+    options:
+    - name: uuid
+      description: "(default) <code>enceladus_record_id</code> column will be added and will contain
+        a UUID <code>String</code> for each row."
+    - name: stableHashId
+      description: "<code>enceladus_record_id</code> column will be added and populated with an
+        always-the-same <code>Int</code> hash (Murmur3-based, for testing)."
+    - name: none
+      description: no column will be added to the output.
+  - name: menas.rest.uri
+    options:
+    - name: string with URLs
+      description: 'Comma-separated list of URLs where Menas will be looked for. E.g.:
+        <code>http://example.com/menas1,http://domain.com:8080/menas2</code>'
+  - name: timezone
+    options:
+    - name: string with any valid time zone name
+      description: The time zone the Spark application will operate in. Strongly recommended
+        to keep it to default _UTC_
