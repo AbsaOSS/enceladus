@@ -28,8 +28,8 @@ via [Atum](https://github.com/AbsaOSS/atum). Example how the file should contain
 Validation
 -----------
 
-The _\_INFO file_ verification consists on checking that it has an array field of name `checkpoints`. The array has to
-have at least to objects one named (field `name`) _"Raw"_ and one _"Source"_. Each of them has the have an array field
+The _\_INFO file_ verification consists of checking that it has an array field of name `checkpoints`. The array has to
+have at least two objects one named (field `name`) _"Raw"_ and one _"Source"_. Each of them has to have an array field
 `controls`. This array has to contain a control of type count (`"controlType": "controlType.Count"`) with control value
 (field `controlValue`) containing a positive integer.
 
