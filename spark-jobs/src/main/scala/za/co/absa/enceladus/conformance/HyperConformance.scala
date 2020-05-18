@@ -15,6 +15,9 @@
 
 package za.co.absa.enceladus.conformance
 
+import java.text.SimpleDateFormat
+import java.util.Date
+
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.functions.lit
@@ -112,6 +115,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     implicit val cmd: ConfCmdConfig = ConfCmdConfig(
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
+      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()), // Still need a report date for mapping table patterns
       reportVersion = Option(getReportVersion(conf)),
       menasCredentialsFactory = menasCredentialsFactory,
       performanceMetricsFile = None,
