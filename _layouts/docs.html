@@ -27,7 +27,7 @@ layout: default
         {% if doc.url == url_to_find %}
           <a href="{{ site.baseurl }}/docs/{{ page.version }}{{current_breadcrumb_url}}">{{ doc.title | split: ' - '  | last }}</a>
           {% if part != part_done %}
-           >
+           &gt;
           {% endif %}
         {% endif %}
     {% endfor %}

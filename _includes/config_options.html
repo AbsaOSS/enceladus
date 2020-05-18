@@ -16,7 +16,7 @@
     {% for option in entry.options %}
     <tr>
       {% if forloop.first %}
-      <td rowspan="{{ entry.options.size }}"><code><a name="{{option.name}}">{{ entry.name}}</a></code></td>
+      <td rowspan="{{ entry.options.size }}"><code><a id="{{entry.name}}">{{ entry.name}}</a></code></td>
       {% endif %}
       <td>{{option.name}}</td>
       <td>{{option.description}}</td>
