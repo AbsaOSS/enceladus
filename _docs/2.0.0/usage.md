@@ -9,8 +9,9 @@ redirect_from: /docs/usage
 Usage
 =====
 
-* [Schema]({{ site.baseurl }}/docs/{{ page.version }}/usage/schema)
 * [Configuration]({{ site.baseurl }}/docs/{{ page.version }}/usage/config)
+* [\_INFO file]({{ site.baseurl }}/docs/{{ page.version }}/usage/info-file)
+* [Schema]({{ site.baseurl }}/docs/{{ page.version }}/usage/schema)
 
 Details
 -------
