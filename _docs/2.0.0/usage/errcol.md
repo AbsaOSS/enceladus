@@ -17,20 +17,18 @@ redirect_from: /docs/usage/errcol
 
 ## Description
 
-
 `errCol` is a special, automatically created, composite column, that contains descriptions of all the issues encountered
 during **Standardization** and **Conformance** of the particular row.
 
 It's an array, where each member represents one error that happened on the particular row during its processing.
 The array element is structured as follows:
 
-* `errType` - string representation of the type of the error
-* `errCode` - code representation of the type of the error in the form of _E#####_, where # is a digit (e.g. E00001)
-* `errMsg` - description of the error
-* `errCol` - name of the column, in which the error occurred [\*](#notes-star)
-* `rawValues` - the input values for the error
-* `mappings` - ???
-
+- `errType` - string representation of the type of the error
+- `errCode` - code representation of the type of the error in the form of _E#####_, where # is a digit (e.g. E00001)
+- `errMsg` - description of the error
+- `errCol` - name of the column, in which the error occurred [*](#notes-star)
+- `rawValues` - the input values for the error
+- `mappings` - ???
 
 ## Error Types
 
@@ -46,4 +44,4 @@ The array element is structured as follows:
 ## Notes
 
 <a name="#notes-star" />\* When **Standardization** of a value fails and the column has a `sourcecolumn` *metadata* property defined, the
-`sourcecolumn` value, the actual source of the data, will be mentioned in the error. Not the output column name. 
+`sourcecolumn` value, the actual source of the data, will be mentioned in the error. Not the output column name.

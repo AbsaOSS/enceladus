@@ -1,22 +1,22 @@
 ---
   - name: control.info.validation
     options:
-    - name: strict
+    - name: <i>strict</i>
       description: Job will fail on failed _INFO file validation.
-    - name: warning
+    - name: <i>warning</i>
       description: "(default) A warning message will be displayed on failed validation,
         but the job will go on."
-    - name: none
+    - name: <i>none</i>
       description: No validation is done.
   - name: enceladus.recordId.generation.strategy
     options:
-    - name: uuid
+    - name: <i>uuid</i>
       description: "(default) <code>enceladus_record_id</code> column will be added and will contain
         a UUID <code>String</code> for each row."
-    - name: stableHashId
+    - name: <i>stableHashId</i>
       description: "<code>enceladus_record_id</code> column will be added and populated with an
         always-the-same <code>Int</code> hash (Murmur3-based, for testing)."
-    - name: none
+    - name: <i>none</i>
       description: no column will be added to the output.
   - name: menas.rest.uri
     options:

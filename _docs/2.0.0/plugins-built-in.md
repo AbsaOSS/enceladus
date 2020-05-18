@@ -12,15 +12,13 @@ redirect_from: /docs/plugins-built-in
   - [KafkaInfoPlugin](#kafkainfoplugin)
 <!-- tocstop -->
 
-What are built-in plugins
--------------------------
+## What are built-in plugins
 
 Built-in plugins provide some additional but relatively elementary functionality. And also serve as an example how plugins 
 are written. Unlike externally created plugins they are automatically included in the `SparkJobs.jar` file and therefore 
 don't need to be included using the `--jars` option.
 
-Existing built-in plugins
--------------------------
+## Existing built-in plugins
 
 ### KafkaInfoPlugin
 
@@ -30,6 +28,7 @@ Control measurements are sent in `Avro` format and the schema is automatically r
 
 This plugin is a built-in one. In order to enable it, you need to provide the following configuration settings in
 `application.conf`:
+
 ```
 standardization.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin
 conformance.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin

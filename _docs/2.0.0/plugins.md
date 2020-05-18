@@ -29,8 +29,10 @@ or job status changes. In order to write such a plugin to Enceladus you need to 
 `ControlMetricsPluginFactory` interfaces.
 
 Controls metrics plugins are invoked each time a job status changes (e.g. from `running` to `succeeded`) or when a checkpoint
-is reached. A `Checkpoint` is an [Atum](https://github.com/AbsaOSS/atum) concept to ensure accuracy and completeness of data.
+is reached. A `Checkpoint` is an [Atum][atum] concept to ensure accuracy and completeness of data.
 A checkpoint is created at the end of Standardization and Conformance, and after each conformance rule
 configured to create control measurements. At this point the `onCheckpoint()` callback is called with an instance of control
 measurements. It is up to the plugin to decide what to do at this point. All exceptions thrown from a plugin will be
 logged, but the spark application will continue to run.
+
+[atum]: https://github.com/AbsaOSS/atum

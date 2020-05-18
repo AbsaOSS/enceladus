@@ -7,26 +7,21 @@ categories:
     - usage
 redirect_from: /docs/usage/info-file
 ---
-
-\_INFO File
-============
+## Table Of Content
 
 <!-- toc -->
-- [\_INFO File](#_info-file)
-  - [Description](#description)
-  - [Validation](#validation)
+- [Table Of Content](#table-of-content)
+- [Description](#description)
+- [Validation](#validation)
 <!-- tocstop -->
 
-Description
------------
+## Description
 
 File named `\_INFO` placed within the source directory together with the raw data is a JSON file tracking control measures 
-via [Atum](https://github.com/AbsaOSS/atum). Example how the file should contain can be found
-[in the code](https://github.com/AbsaOSS/enceladus/blob/master/examples/data/input/_INFO).
+via [Atum][atum]. Example how the file should contain can be found
+[in the code][info-file].
 
-
-Validation
------------
+## Validation
 
 The _\_INFO file_ verification consists of checking that it has an array field of name `checkpoints`. The array has to
 have at least two objects one named (field `name`) _"Raw"_ and one _"Source"_. Each of them has to have an array field
@@ -34,6 +29,7 @@ have at least two objects one named (field `name`) _"Raw"_ and one _"Source"_. E
 (field `controlValue`) containing a positive integer.
 
 E.g.
+
 ```json
 {
   ...
@@ -72,4 +68,7 @@ E.g.
 }
 ```
 
-For a fully expanded example go [here](https://github.com/AbsaOSS/enceladus/blob/master/examples/data/input/_INFO).
+For a fully expanded example go [here][info-file].
+
+[atum]: https://github.com/AbsaOSS/atum
+[info-file]: https://github.com/AbsaOSS/enceladus/blob/master/examples/data/input/_INFO
