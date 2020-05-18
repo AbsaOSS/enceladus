@@ -20,7 +20,7 @@ import java.util.Date
 
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.SPARK_VERSION
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
@@ -58,7 +58,7 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
 
     DynamicInterpreter.interpret(conformance, streamData)
       .withColumnIfDoesNotExist(InfoDateColumn, infoDateColumn)
-      .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))
+      .withColumnIfDoesNotExist(InfoDateColumnString, date_format(infoDateColumn,"yyyy-MM-dd"))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
   }
 
