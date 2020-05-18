@@ -16,21 +16,12 @@
 package za.co.absa.enceladus.standardization
 
 import org.apache.spark.SparkException
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.standardization.fixtures.{CsvFileFixture, TempFileFixture}
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.standardization.fixtures.CsvFileFixture
 
-class StandardizationCsvSuite extends fixture.FunSuite
-  with SparkTestBase with TempFileFixture with CsvFileFixture with MockitoSugar {
+class StandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture{
 
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
-
-  private implicit val dao: MenasDAO = mock[MenasDAO]
-
-  private val tmpFilePrefix = "csv-special-chars-"
-  private val tmpFileSuffix = ".csv"
 
   private val csvContent: String =
     """1¡2¡3¡4¡5
@@ -40,10 +31,8 @@ class StandardizationCsvSuite extends fixture.FunSuite
       |"Text15¡Text16¡Text17¡1000¡2000"""
       .stripMargin
 
-  type FixtureParam = String
-
   def withFixture(test: OneArgTest): Outcome = {
-    val tmpFile = createTempFile(tmpFilePrefix, tmpFileSuffix, csvCharset, csvContent)
+    val tmpFile = createTempCsvFile(csvContent)
     test(tmpFile.getAbsolutePath)
   }
 
@@ -77,9 +66,6 @@ class StandardizationCsvSuite extends fixture.FunSuite
   }
 
   test("Test standardizing a CSV file with format-specific options, fail fast read mode set") { tmpFileName =>
-    // The delimiter used is '¡'
-    // A quote character should be any character that cannot be encountered in the CSV
-    // For this case it is '$'
     val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
       "--menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format csv --header false " +
