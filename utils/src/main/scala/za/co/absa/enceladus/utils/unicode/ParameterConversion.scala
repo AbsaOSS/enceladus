@@ -13,21 +13,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus
+package za.co.absa.enceladus.utils.unicode
 
-package object common {
+object ParameterConversion {
 
-  /**
-    * The trait and the case classes are used for type-safely applying
-    * command line parameters as Spark reader options.
-    */
-  sealed trait RawFormatParameter
+  implicit class UnicodeValueString(s: String) {
+    val unicodeElement = """[uU]?\+?([0-9a-fA-F]{4})""".r
 
-  case class StringParameter(value: String) extends RawFormatParameter
-
-  case class BooleanParameter(value: Boolean) extends RawFormatParameter
-
-  case class LongParameter(long: Long) extends RawFormatParameter
-
-  case class DoubleParameter(double: Double) extends RawFormatParameter
+    def includingUnicode: String = s match {
+      case unicodeElement(hex) => Integer.parseInt(hex, 16).toChar.toString
+      case other => other
+    }
+  }
 }

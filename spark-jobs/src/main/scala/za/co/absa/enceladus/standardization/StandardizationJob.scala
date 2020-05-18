@@ -42,6 +42,7 @@ import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.utils.unicode.ParameterConversion._
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
@@ -199,10 +200,10 @@ object StandardizationJob {
   private def getCsvOptions(cmd: StdCmdConfig, numberOfColumns: Int = 0): HashMap[String,Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
-        "delimiter" -> cmd.csvDelimiter.map(StringParameter(_).includingExtraValues),
+        "delimiter" -> cmd.csvDelimiter.map(s => StringParameter(s.includingUnicode)),
         "header" -> cmd.csvHeader.map(BooleanParameter),
-        "quote" -> cmd.csvQuote.map(StringParameter(_).includingExtraValues),
-        "escape" -> cmd.csvEscape.map(StringParameter(_).includingExtraValues),
+        "quote" -> cmd.csvQuote.map(s => StringParameter(s.includingUnicode)),
+        "escape" -> cmd.csvEscape.map(s => StringParameter(s.includingUnicode)),
         // increase the default limit on the number of columns if needed
         // default is set at org.apache.spark.sql.execution.datasources.csv.CSVOptions maxColumns
         "maxColumns" -> {if (numberOfColumns > SparkCSVReaderMaxColumnsDefault) Some(LongParameter(numberOfColumns)) else None}

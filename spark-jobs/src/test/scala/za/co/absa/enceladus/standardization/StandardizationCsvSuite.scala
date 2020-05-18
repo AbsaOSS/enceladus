@@ -15,19 +15,15 @@
 
 package za.co.absa.enceladus.standardization
 
-import java.nio.charset.StandardCharsets
-
 import org.apache.spark.SparkException
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
+import za.co.absa.enceladus.standardization.fixtures.{CsvFileFixture, TempFileFixture}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
+class StandardizationCsvSuite extends fixture.FunSuite
+  with SparkTestBase with TempFileFixture with CsvFileFixture with MockitoSugar {
 
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
@@ -44,49 +40,11 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
       |"Text15¡Text16¡Text17¡1000¡2000"""
       .stripMargin
 
-  private val csvCharset = StandardCharsets.ISO_8859_1
-
-  private val schemaSeq = Seq(
-    StructField("A1", StringType, nullable = true),
-    StructField("A2", StringType, nullable = true),
-    StructField("A3", StringType, nullable = true),
-    StructField("A4", IntegerType, nullable = true),
-    StructField("A5", IntegerType, nullable = true))
-
-  private val schemaWithoutCorruptRecord = StructType(schemaSeq)
-  private val schemaWithCorruptRecord = StructType(schemaSeq ++ Seq(StructField("_corrupt_record", StringType, nullable = true))
-
-  )
-
-  private val dataSet = Dataset("SpecialChars", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
-
   type FixtureParam = String
 
   def withFixture(test: OneArgTest): Outcome = {
     val tmpFile = createTempFile(tmpFilePrefix, tmpFileSuffix, csvCharset, csvContent)
     test(tmpFile.getAbsolutePath)
-  }
-
-  /** Creates a dataframe from an input file name path and command line arguments to Standardization */
-  private def getTestDataFrame(tmpFileName: String,
-                               args: Array[String],
-                               checkMaxColumns: Boolean = false,
-                               useSchemaWithCorruptRecord: Boolean = true
-                              ): DataFrame = {
-    val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
-    val schemaToUse = if (useSchemaWithCorruptRecord) {
-      schemaWithCorruptRecord
-    } else {
-      schemaWithoutCorruptRecord
-    }
-    val csvReader = if (checkMaxColumns) {
-      StandardizationJob.getFormatSpecificReader(cmd, dataSet, schemaToUse.fields.length)
-    } else {
-      StandardizationJob.getFormatSpecificReader(cmd, dataSet)
-    }
-    csvReader
-      .schema(schemaToUse)
-      .load(tmpFileName)
   }
 
   test("Test standardizing a CSV file with format-specific options") { tmpFileName =>
@@ -111,7 +69,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |
         |""".stripMargin.replace("\r\n", "\n")
 
-    val df = getTestDataFrame(tmpFileName, args)
+    val df = getTestCsvDataFrame(tmpFileName, args, dataSet = dataSet, schema = schemaWithCorruptRecord)
 
     val actual = df.dataAsString(truncate = false)
 
@@ -140,7 +98,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |
         |""".stripMargin.replace("\r\n", "\n")
 
-    val df = getTestDataFrame(tmpFileName, args, useSchemaWithCorruptRecord = false)
+    val df = getTestCsvDataFrame(tmpFileName, args, dataSet = dataSet, schema = schemaWithoutCorruptRecord)
 
     val actual = df.dataAsString(truncate = false)
 
@@ -166,7 +124,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |
         |""".stripMargin.replace("\r\n", "\n")
 
-    val df = getTestDataFrame(tmpFileName, args)
+    val df = getTestCsvDataFrame(tmpFileName, args, dataSet = dataSet, schema = schemaWithCorruptRecord)
     val actual = df.dataAsString(truncate = false)
 
     assert(actual == expected)
@@ -193,7 +151,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |
         |""".stripMargin.replace("\r\n", "\n")
 
-    val df = getTestDataFrame(tmpFileName, args)
+    val df = getTestCsvDataFrame(tmpFileName, args, dataSet = dataSet, schema = schemaWithCorruptRecord)
 
     val actual = df.dataAsString(truncate = false)
 
@@ -207,7 +165,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
       "--raw-format csv --header false --strict-schema-check true").split(" ")
 
     val exception = intercept[SparkException] {
-      val df = getTestDataFrame(tmpFileName, args)
+      val df = getTestCsvDataFrame(tmpFileName, args, dataSet = dataSet, schema = schemaWithCorruptRecord)
       df.dataAsString(truncate = false)
     }
     assert(exception.getMessage.contains("Malformed records are detected in record parsing. Parse Mode: FAILFAST."))
@@ -235,7 +193,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |
         |""".stripMargin.replace("\r\n", "\n")
 
-    val df = getTestDataFrame(tmpFileName, args)
+    val df = getTestCsvDataFrame(tmpFileName, args, dataSet = dataSet, schema = schemaWithCorruptRecord)
 
     val actual = df.dataAsString(truncate = false)
 
@@ -264,7 +222,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with SparkTestBase with T
         |
         |""".stripMargin.replace("\r\n", "\n")
 
-    val df = getTestDataFrame(tmpFileName, args, checkMaxColumns = true, useSchemaWithCorruptRecord = false)
+    val df = getTestCsvDataFrame(tmpFileName, args, dataSet = dataSet, schema = schemaWithoutCorruptRecord)
 
     val actual = df.dataAsString(truncate = false)
 
