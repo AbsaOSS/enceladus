@@ -15,9 +15,10 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.slf4j.LoggerFactory
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.functions.{col, lit}
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(implicit spark: SparkSession) {
@@ -26,7 +27,7 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
   private val log = LoggerFactory.getLogger(this.getClass)
 
   private val maxToleratedPlanGenerationPerRuleMs = 100L
-  private val initialElapsedTimeBaselineMs = 300L
+  private val initialElapsedTimeBaselineMs = 250L
   private var baselineTimeMs = initialElapsedTimeBaselineMs
   private var lastExecutionPlanOptimizationTime = 0L
 
@@ -63,10 +64,10 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
       val currentExecutionPlanOptimizationTime = getExecutionPlanGenerationTimeMs(df)
 
       // The algorithm for determining when to apply a workaround is based on 2 triggers.
-      // 1. If it takes 5 times longer to optimize an execution plan now in comparison to the execution plan
+      // 1. If it takes 4 times longer to optimize an execution plan now in comparison to the execution plan
       //    optimization time  before the last conformance rules was applied, then it is too much.
       val tooBigTimeDifference = if (lastExecutionPlanOptimizationTime > 0) {
-        currentExecutionPlanOptimizationTime / lastExecutionPlanOptimizationTime > 5
+        currentExecutionPlanOptimizationTime / lastExecutionPlanOptimizationTime > 4
       } else {
         false
       }
@@ -116,7 +117,12 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
     */
   def getExecutionPlanGenerationTimeMs(df: DataFrame): Long = {
     val t0 = System.currentTimeMillis()
-    df.queryExecution.toString()
+    if (df.isStreaming) {
+      // Ensures the execution plan won't be takes from cache
+      df.sparkSession.sessionState.optimizer.execute(df.queryExecution.analyzed).toString()
+    } else {
+      df.queryExecution.toString()
+    }
     val t1 = System.currentTimeMillis()
     t1 - t0
   }

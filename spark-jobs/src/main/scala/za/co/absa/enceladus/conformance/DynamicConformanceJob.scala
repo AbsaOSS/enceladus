@@ -33,13 +33,14 @@ import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
+import za.co.absa.enceladus.common.ControlInfoValidation
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, ThreeStateSwitch}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.StdCmdConfig
+import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
@@ -58,6 +59,10 @@ object DynamicConformanceJob {
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   def main(args: Array[String]) {
+    // This should be the first thing the app does to make secure Kafka work with our CA.
+    // After Spring activates JavaX, it will be too late.
+    SecureKafka.setSecureKafkaProperties(conf)
+
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
     implicit val cmd: ConfCmdConfig = ConfCmdConfig.getCmdLineArguments(args)
@@ -93,7 +98,7 @@ object DynamicConformanceJob {
         s"Path ${pathCfg.publishPath} already exists. Increment the run version, or delete ${pathCfg.publishPath}")
     }
 
-    initFunctionalExtensions(reportVersion)
+    initFunctionalExtensions(reportVersion, pathCfg)
     val performance = initPerformanceMeasurer(pathCfg.stdPath)
 
     // load data for input and mapping tables
@@ -113,7 +118,6 @@ object DynamicConformanceJob {
       val postProcessingService = getPostProcessingService(cmd, pathCfg, reportVersion, MenasPlugin.runNumber, Atum.getControlMeasure.runUniqueId)
       postProcessingService.onSaveOutput(conformedDf) // all enabled postProcessors will be run with the std df
     } finally {
-      Atum.getControlMeasure.runUniqueId
 
       MenasPlugin.runNumber.foreach { runNumber =>
         val name = cmd.datasetName
@@ -227,14 +231,17 @@ object DynamicConformanceJob {
     newVersion
   }
 
-  private def initFunctionalExtensions(reportVersion: Int)(implicit spark: SparkSession, dao: MenasDAO, cmd: ConfCmdConfig): Unit = {
+  private def initFunctionalExtensions(reportVersion: Int, pathCfg: PathCfg)(implicit spark: SparkSession,
+                                                                             dao: MenasDAO,
+                                                                             cmd: ConfCmdConfig): Unit = {
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking().setControlMeasuresWorkflow("Conformance")
+    spark.enableControlMeasuresTracking(s"${pathCfg.stdPath}/_INFO")
+      .setControlMeasuresWorkflow("Conformance")
 
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
@@ -265,6 +272,7 @@ object DynamicConformanceJob {
       .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
     Try {
+      handleControlInfoValidation()
       DynamicInterpreter.interpret(conformance, inputData)
     } match {
       case Failure(e: ValidationException) =>
@@ -343,6 +351,22 @@ object DynamicConformanceJob {
         "while previous checkpoints show non zero record count"
       AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Standardization", errMsg, "")
       throw new IllegalStateException(errMsg)
+    }
+  }
+
+  private def handleControlInfoValidation(): Unit = {
+    ControlInfoValidation.addRawAndSourceRecordCountsToMetadata() match {
+      case Failure(ex: za.co.absa.enceladus.utils.validation.ValidationException) => {
+        val confEntry = "control.info.validation"
+        conf.getString(confEntry) match {
+          case "strict" => throw ex
+          case "warning" => log.warn(ex.msg)
+          case "none" =>
+          case _ => throw new RuntimeException(s"Invalid $confEntry value")
+        }
+      }
+      case Failure(ex) => throw ex
+      case Success(_) =>
     }
   }
 

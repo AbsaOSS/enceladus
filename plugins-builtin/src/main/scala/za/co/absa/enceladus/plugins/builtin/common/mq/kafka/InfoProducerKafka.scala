@@ -20,11 +20,13 @@ import java.util.Properties
 import io.confluent.kafka.serializers.{AbstractKafkaAvroSerDeConfig, KafkaAvroSerializer}
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
 import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.plugins.builtin.common.mq.{InfoAvroSerializer, InfoProducer}
 
+import scala.concurrent.Future
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
 
 
 /**
@@ -57,6 +59,8 @@ class InfoProducerKafka[T](kafkaConnectionParams: KafkaConnectionParams)
    * @param infoRecord a value class serializable with acorresponding InfoAvroSerializer to Avro to be sent to kafka.
    */
   def send(infoRecord: T): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     val avroKey = serializer.convertInfoKey(infoRecord)
     val avroRecordOpt = serializer.convertInfoRecord(infoRecord)
 
@@ -66,8 +70,15 @@ class InfoProducerKafka[T](kafkaConnectionParams: KafkaConnectionParams)
           logger.info(s"Sending info records ${infoRecord.getClass.getName} to ${kafkaConnectionParams.topicName}...")
           val producerRecord = new ProducerRecord[GenericRecord, GenericRecord](kafkaConnectionParams.topicName,
             avroKey, avroRecord)
-          kafkaProducer.send(producerRecord)
-          logger.info("Info records were sent successfully to the Kafka topic.")
+          // Java Future to Scala Future
+          Future[RecordMetadata] {
+            kafkaProducer.send(producerRecord).get
+          }.onComplete {
+            case Success(metadata) =>
+              logger.info(s"Info records were sent successfully to the Kafka topic, offset=${metadata.offset()}.")
+            case Failure(ex) =>
+              logger.error(s"Failed to send control measurements to Kafka.", ex)
+          }
         case None =>
           logger.error(s"No Avro records generated from info record $infoRecord.")
       }
