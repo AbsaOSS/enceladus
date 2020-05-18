@@ -7,53 +7,49 @@ categories:
     - usage
 redirect_from: /docs/usage/schema
 ---
-
-Schema
-======
-
+## Table Of Content
 <!-- toc -->
-- [Schema](#schema)
-  - [Intro](#intro)
-  - [Automatically added columns](#automatically-added-columns)
-  - [Data types](#data-types)
-    - [String](#string)
-    - [Boolean](#boolean)
-    - [Decimal](#decimal)
-    - [Long](#long)
-    - [Integer](#integer)
-    - [Short](#short)
-    - [Byte](#byte)
-    - [Double](#double)
-    - [Float](#float)
-    - [Timestamp](#timestamp)
-    - [Date](#date)
-    - [Struct](#struct)
-    - [Array](#array)
-  - [Metadata](#metadata)
-    - [sourcecolumn](#sourcecolumn)
-    - [default](#default)
-    - [pattern](#pattern)
-    - [timezone](#timezone)
-    - [decimal_separator](#decimalseparator)
-    - [grouping_separator](#groupingseparator)
-    - [minus_sign](#minussign)
-    - [allow_infinity](#allowinfinity)
-    - [radix](#radix)
-  - [Parsing](#parsing)
-    - [Parsing timestamps and dates](#parsing-timestamps-and-dates)
-      - [Time Zone support](#time-zone-support)
-    - [Parsing numbers](#parsing-numbers)
-      - [Radix usage](#radix-usage)
-      - [Pattern parsing](#pattern-parsing)
-      - [Number parsing peculiarities](#number-parsing-peculiarities)
-  - [Defaults](#defaults)
-    - [Explicit default](#explicit-default)
-    - [Global default values](#global-default-values)
-    - [Explicit default values restrictions](#explicit-default-values-restrictions)
+- [Table Of Content](#table-of-content)
+- [Intro](#intro)
+- [Automatically added columns](#automatically-added-columns)
+- [Data types](#data-types)
+  - [String](#string)
+  - [Boolean](#boolean)
+  - [Decimal](#decimal)
+  - [Long](#long)
+  - [Integer](#integer)
+  - [Short](#short)
+  - [Byte](#byte)
+  - [Double](#double)
+  - [Float](#float)
+  - [Timestamp](#timestamp)
+  - [Date](#date)
+  - [Struct](#struct)
+  - [Array](#array)
+- [Metadata](#metadata)
+  - [sourcecolumn](#sourcecolumn)
+  - [default](#default)
+  - [pattern](#pattern)
+  - [timezone](#timezone)
+  - [decimal_separator](#decimalseparator)
+  - [grouping_separator](#groupingseparator)
+  - [minus_sign](#minussign)
+  - [allow_infinity](#allowinfinity)
+  - [radix](#radix)
+- [Parsing](#parsing)
+  - [Parsing timestamps and dates](#parsing-timestamps-and-dates)
+    - [Time Zone support](#time-zone-support)
+  - [Parsing numbers](#parsing-numbers)
+    - [Radix usage](#radix-usage)
+    - [Pattern parsing](#pattern-parsing)
+    - [Number parsing peculiarities](#number-parsing-peculiarities)
+- [Defaults](#defaults)
+  - [Explicit default](#explicit-default)
+  - [Global default values](#global-default-values)
+  - [Explicit default values restrictions](#explicit-default-values-restrictions)
 <!-- tocstop -->
 
-Intro
------
+## Intro
 
 Schema is the description of fields in a dataset. All and only the fields defined in the schema will be in the output
 table. That means fields not mentioned in the schema won't be in the input. There's an exception of three fields added
@@ -147,17 +143,15 @@ You provide *Schema* to **Standardization** in a JSON file:
 }
 ```
 
-Example of data adhering to the above schema can be found [here](https://github.com/AbsaOSS/enceladus/blob/master/spark-jobs/src/test/scala/za/co/absa/enceladus/standardization/samples/TestSamples.scala).
+Example of data adhering to the above schema can be found [here][test-samples].
 
-Automatically added columns
----------------------------
+## Automatically added columns
 
 There is a column automatically added to each **Standardization** output. Its name is `errCol` and it contains information
 on all errors that happened on the particular row *standardization*. If defined in schema its structure there has to 
 adhere exactly to the automatically added one. More on this field [see in dedicated documentation]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol).  
 
-Data types
-----------
+## Data types
 
 ### String
 
@@ -253,8 +247,7 @@ The type is specified as struct of following properties:
 
 <sup>**Metadata keys:** [sourcecolumn](#sourcecolumn)</sup>
 
-Metadata
---------
+## Metadata
 
 *Standardization* can be influenced by `metadata` in the schema of the data. The `metadata` are optional properties.
 Here are the recognized ones with the description of their purpose (with detailed description below):
@@ -331,7 +324,7 @@ be ignored. Namely if the pattern includes the *"z"*, *"Z"* or *"X"* placeholder
 
 **NB!** Due to a Spark limitation, only time zone IDs are accepted as valid values. To get the full list of supported time
  zone denominators see the output of Java's
-[`TimeZone.getAvailableIDs()` function](https://docs.oracle.com/javase/8/docs/api/java/util/TimeZone.html#getAvailableIDs--).
+[`TimeZone.getAvailableIDs()` function][oracle-tz-ids].
 
 ### decimal_separator
 
@@ -382,14 +375,13 @@ For hexadecimal value entries in the form *"0xFF"* are accepted as well.
 If `radix` is specified as anything other than the default 10, [pattern](#pattern)
 value will be ignored.
 
-Parsing
--------
+## Parsing
 
 ### Parsing timestamps and dates
 
 Dates and especially timestamps (date + time) can be tricky. Currently Spark considers all time entries to be in the
 system's time zone by default. (For more detailed explanation of possible issues with that see
-[Consistent timestamp types in Hadoop SQL engines](https://docs.google.com/document/d/1gNRww9mZJcHvUDCXklzjFEQGpefsuR_akCDfWsdE35Q/edit#heading=h.n699ftkvhjlo).)
+[Consistent timestamp types in Hadoop SQL engines][timestamp-types].)
 
 To address this potential source of discrepancies the following has been implemented:
 
@@ -403,7 +395,7 @@ consequences - namely all dates west from UTC would be shifted to a day earlier
 To enable processing of time entries from other systems **Standardization** offers the possibility to convert
 string and even numeric values to timestamp or date types. This is done using Spark's ability to convert strings to
 timestamp/date with some enhancements. The pattern placeholders and usage is described in Java's
-[`SimpleDateFormat` class description](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html) with
+[`SimpleDateFormat` class description][oracle-simple-date-format] with
 the addition of recognizing some keywords (like `epoch` and `milliepoch` (case insensitive)) to denote the number of
 seconds/milliseconds since epoch (1970/01/01 00:00:00.000 UTC) and some additional placeholders.
 It should be noted explicitly that *"epoch"*, *"epochmilli"*, *"epochmicro"* and *"epochnano"* are considered a pattern
@@ -487,7 +479,7 @@ and 36.
 #### Pattern parsing
 
 When the number is formatted in some non-standard way you can use a pattern. The parsing is executed using
-the *Java* class `DecimalFormat`, whose [documentation](#https://docs.oracle.com/javase/7/docs/api/java/text/DecimalFormat.html)
+the *Java* class `DecimalFormat`, whose [documentation][oracle-decimal-format]
 provides the most comprehensive explanation of patterns and their usage.
 
 Pattern contains a positive and negative subpattern, for example, `#,##0.00;(#,##0.00)`. Each subpattern has a prefix,
@@ -538,8 +530,7 @@ then they are usually not whole numbers)
 - Even if redefined the standard grouping and decimal separators **need to be used** in the pattern
 - If pattern is used, `e` is not accepted only `E` in the exponential expresion (without a pattern both are recognized)
 
-Defaults
---------
+## Defaults
 
 As described, when a field fails to standardize, either because of missing data in a non-nullable column
 or because it was being cast to the wrong type, the field is populated with a default value and an error is added to 
@@ -574,3 +565,9 @@ The value used when _explicit default_ was not defined in the schema:
 cannot be a `default` for the type [`Short`](#short), or _"∞"_ if `allow_infinity` is _"false"_ for [`Double`](#double)/
 [`Float`](#float))
 - If it's a type supporting [`pattern`](#pattern) and it is defined, the default value has to adhere to the `pattern`
+
+[test-samples]: https://github.com/AbsaOSS/enceladus/blob/master/spark-jobs/src/test/scala/za/co/absa/enceladus/standardization/samples/TestSamples.scala
+[oracle-tz-ids]: https://docs.oracle.com/javase/8/docs/api/java/util/TimeZone.html#getAvailableIDs--
+[timestamp-types]: https://docs.google.com/document/d/1gNRww9mZJcHvUDCXklzjFEQGpefsuR_akCDfWsdE35Q/edit#heading=h.n699ftkvhjlo
+[oracle-simple-date-format]: https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
+[oracle-decimal-format]: #https://docs.oracle.com/javase/7/docs/api/java/text/DecimalFormat.html
