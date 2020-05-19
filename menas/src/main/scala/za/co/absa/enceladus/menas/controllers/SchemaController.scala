@@ -58,12 +58,12 @@ class SchemaController @Autowired()(
                        @RequestParam name: String,
                        @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
 
-    val schemaType = SchemaType.fromOptSchemaName(format)
+    val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format)
     val (url, fileContent, mimeType) = {
       try {
         val url = new URL(remoteUrl)
         val connection = url.openConnection()
-        val mimeType = connection.getContentType
+        val mimeType = SchemaController.avscConentType // only AVSC is expected to come from the schema registry
         val fileStream = Source.fromInputStream(connection.getInputStream)
         val fileContent = fileStream.mkString
         fileStream.close()
@@ -80,7 +80,7 @@ class SchemaController @Autowired()(
 
     val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
-      refVersion = version + 1,
+      refVersion = version + 1,  // version is the current one, refVersion is the to-be-created one
       attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = url.getFile,
       fileContent = fileContent.getBytes,
@@ -102,13 +102,20 @@ class SchemaController @Autowired()(
     val schemaType = SchemaType.fromOptSchemaName(format)
     val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
 
+    // for avro schema type, always force the same mime-type to be persisted
+    val mime = if (schemaType == SchemaType.Avro) {
+     SchemaController.avscConentType
+    } else {
+      file.getContentType
+    }
+
     val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
-      refVersion = version + 1,
+      refVersion = version + 1, // version is the current one, refVersion is the to-be-created one
       attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = file.getOriginalFilename,
       fileContent = file.getBytes,
-      fileMIMEType = file.getContentType)
+      fileMIMEType = mime)
 
     uploadSchemaToMenas(principal.getUsername, menasFile, sparkStruct, schemaType)
   }
@@ -156,4 +163,8 @@ class SchemaController @Autowired()(
         throw notFound()
     }
   }
+}
+
+object SchemaController {
+  val avscConentType = "application/vnd.schemaregistry.v1+json"
 }
