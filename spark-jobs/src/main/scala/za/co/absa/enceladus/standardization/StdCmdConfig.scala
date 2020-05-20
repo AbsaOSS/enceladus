@@ -245,6 +245,16 @@ object StdCmdConfig {
           } else {
             failure("The --is-xcom option is supported only for COBOL data format")
           })
+
+      opt[String]("cobol-encoding").optional().action((value, config) => {
+        config.copy(cobolOptions = cobolSetEncoding(config.cobolOptions, value))
+      }).text("Specify encoding of mainframe files (ascii or ebcdic)")
+        .validate(value =>
+          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol")) {
+            success
+          } else {
+            failure("The --cobol-encoding option is supported only for COBOL data format")
+          })
     }
 
     private def cobolSetCopybook(cobolOptions: Option[CobolOptions], newCopybook: String): Option[CobolOptions] = {
@@ -258,6 +268,13 @@ object StdCmdConfig {
       cobolOptions match {
         case Some(a) => Some(a.copy(isXcom = newIsXCom))
         case None => Some(CobolOptions(isXcom = newIsXCom))
+      }
+    }
+
+    private def cobolSetEncoding(cobolOptions: Option[CobolOptions], newEncoding: String): Option[CobolOptions] = {
+      cobolOptions match {
+        case Some(a) => Some(a.copy(encoding = Option(newEncoding)))
+        case None => Some(CobolOptions(encoding = Option(newEncoding)))
       }
     }
   }

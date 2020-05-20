@@ -49,8 +49,8 @@ import org.apache.spark.SPARK_VERSION
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 
 import scala.collection.immutable.HashMap
-import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 object StandardizationJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
@@ -259,6 +259,7 @@ object StandardizationJob {
       HashMap(
         getCopybookOption(cobolOptions, dataset),
         "is_xcom" -> Option(BooleanParameter(cobolOptions.isXcom)),
+        "encoding" -> cobolOptions.encoding.map(StringParameter),
         "schema_retention_policy" -> Some(StringParameter("collapse_root"))
       )
     } else {
