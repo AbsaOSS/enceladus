@@ -63,7 +63,7 @@ class SchemaController @Autowired()(
       try {
         val url = new URL(remoteUrl)
         val connection = url.openConnection()
-        val mimeType = SchemaController.avscConentType // only AVSC is expected to come from the schema registry
+        val mimeType = SchemaController.avscContentType // only AVSC is expected to come from the schema registry
         val fileStream = Source.fromInputStream(connection.getInputStream)
         val fileContent = fileStream.mkString
         fileStream.close()
@@ -104,7 +104,7 @@ class SchemaController @Autowired()(
 
     // for avro schema type, always force the same mime-type to be persisted
     val mime = if (schemaType == SchemaType.Avro) {
-     SchemaController.avscConentType
+     SchemaController.avscContentType
     } else {
       file.getContentType
     }
@@ -166,5 +166,5 @@ class SchemaController @Autowired()(
 }
 
 object SchemaController {
-  val avscConentType = "application/vnd.schemaregistry.v1+json"
+  val avscContentType = "application/vnd.schemaregistry.v1+json"
 }

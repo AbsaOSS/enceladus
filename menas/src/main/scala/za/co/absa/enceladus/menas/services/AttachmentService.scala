@@ -35,8 +35,8 @@ class AttachmentService @Autowired()(attachmentMongoRepository: AttachmentMongoR
 
   def uploadAttachment(attachment: MenasAttachment): Future[Completed] = {
     chooseRepository(attachment.refCollection).getLatestVersionValue(attachment.refName).flatMap {
-      case Some(version) =>
-        // the attachment version should already increased by one from the currently latest by the caller
+      case Some(_) =>
+        // the attachment version should already be increased by one from the currently latest by the caller
         attachmentMongoRepository.create(attachment)
       case _ =>
         throw NotFoundException()
