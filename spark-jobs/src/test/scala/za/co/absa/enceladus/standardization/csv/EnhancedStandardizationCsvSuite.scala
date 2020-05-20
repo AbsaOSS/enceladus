@@ -27,6 +27,7 @@ class EnhancedStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixtu
     """1¡2¡3¡4¡5
       |Text1¡Text2¡Text3¡10¡11
       |Text10"Add¡Text11¡$Text/¡12$¡100¡200
+      |Text10"Add¡Text11¡$Text/$18$¡900¡800
       |$Text/¡15$¡Text16¡$Text/¡17$¡1000¡2000"""
       .stripMargin
 
@@ -36,9 +37,7 @@ class EnhancedStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixtu
   }
 
   test("Test standardizing a CSV file with all format-specific options specified") { tmpFileName =>
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false " +
+    val args = (argumentsBase +
       "--charset ISO-8859-1 --delimiter ¡ --csv-quote $ --csv-escape /").split(" ")
 
     val expected =
@@ -48,6 +47,7 @@ class EnhancedStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixtu
         ||1         |2     |3       |4   |5   |null           |
         ||Text1     |Text2 |Text3   |10  |11  |null           |
         ||Text10"Add|Text11|Text/¡12|100 |200 |null           |
+        ||Text10"Add|Text11|Text$18 |900 |800 |null           |
         ||Text/¡15  |Text16|Text/¡17|1000|2000|null           |
         |+----------+------+--------+----+----+---------------+
         |
@@ -58,9 +58,7 @@ class EnhancedStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixtu
   }
 
   test("Test format-specific options specified as unicode in different ways") { tmpFileName =>
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false " +
+    val args = (argumentsBase +
       "--charset ISO-8859-1 --delimiter U+00A1 --csv-quote u0024 --csv-escape 002F").split(" ")
 
     val expected =
@@ -70,6 +68,7 @@ class EnhancedStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixtu
         ||1         |2     |3       |4   |5   |null           |
         ||Text1     |Text2 |Text3   |10  |11  |null           |
         ||Text10"Add|Text11|Text/¡12|100 |200 |null           |
+        ||Text10"Add|Text11|Text$18 |900 |800 |null           |
         ||Text/¡15  |Text16|Text/¡17|1000|2000|null           |
         |+----------+------+--------+----+----+---------------+
         |

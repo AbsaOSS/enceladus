@@ -1,6 +1,5 @@
 package za.co.absa.enceladus.standardization.csv
 
-import org.apache.spark.SparkException
 import org.scalatest.{Outcome, fixture}
 import za.co.absa.enceladus.standardization.fixtures.CsvFileFixture
 
@@ -21,7 +20,7 @@ class NoneValueStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixt
     test(tmpFile.getAbsolutePath)
   }
   //this will be result in case none quote is provided regardless of escape
-  private val noneQuoteResult =
+  private val expectedNoneQuoteResult =
     """+----------+--------+---------+----+----+----------------------------------+
       ||A1        |A2      |A3       |A4  |A5  |_corrupt_record                   |
       |+----------+--------+---------+----+----+----------------------------------+
@@ -32,23 +31,17 @@ class NoneValueStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixt
       ||null      |null    |null     |null|null|Text13¡Text15¡"Text\¡17"¡1000¡2000|
       |+----------+--------+---------+----+----+----------------------------------+
       |
-      |"""
+      |""".stripMargin.replace("\r\n", "\n")
   test("Test none for quote") { tmpFileName =>
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false " +
+    val args = (argumentsBase +
       "--charset ISO-8859-1 --delimiter ¡ --csv-quote none").split(" ")
 
-    val expected = noneQuoteResult.stripMargin.replace("\r\n", "\n")
     val df = getTestCsvDataFrame(tmpFileName, args, dataSet = dataSet, schema = schemaWithCorruptRecord)
-
-    assert(df.dataAsString(truncate = false) == expected)
+    assert(df.dataAsString(truncate = false) == expectedNoneQuoteResult)
   }
 
   test("Test none for escape") { tmpFileName =>
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false " +
+    val args = (argumentsBase +
       "--charset ISO-8859-1 --delimiter ¡ --csv-escape none").split(" ")
 
     val expected =
@@ -69,21 +62,16 @@ class NoneValueStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixt
   }
 
   test("Test none escape and none quote") { tmpFileName =>
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false " +
-      "--charset ISO-8859-1 --delimiter ¡ --csv-quote none --csv-escape \"").split(" ")
+    val args = (argumentsBase +
+      "--charset ISO-8859-1 --delimiter ¡ --csv-quote none --csv-escape none").split(" ")
 
-    val expected = noneQuoteResult.stripMargin.replace("\r\n", "\n")
     val df = getTestCsvDataFrame(tmpFileName, args, dataSet = dataSet, schema = schemaWithCorruptRecord)
 
-    assert(df.dataAsString(truncate = false) == expected)
+    assert(df.dataAsString(truncate = false) == expectedNoneQuoteResult)
   }
 
   test("Test none delimiter") { tmpFileName =>
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false " +
+    val args = (argumentsBase +
       "--charset ISO-8859-1 --delimiter none").split(" ")
 
     val exception = intercept[IllegalArgumentException] {

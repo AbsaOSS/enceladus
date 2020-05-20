@@ -40,10 +40,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture{
     // The delimiter used is '¡'
     // A quote character should be any character that cannot be encountered in the CSV
     // For this case it is '$'
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false " +
-      "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
+    val args = (argumentsBase + "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
 
     val expected =
       """+----------+------+------+------+-----+---------------+
@@ -66,10 +63,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture{
   }
 
   test("Test standardizing a CSV file with format-specific options, fail fast read mode set") { tmpFileName =>
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false " +
-      "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
+    val args = (argumentsBase + "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
 
     val expected =
       """+----------+------+------+------+-----+
@@ -93,9 +87,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture{
 
   test("Test standardizing a CSV file if a charset is not specified with error column") { tmpFileName =>
     // When reading a different encoding invalid UTF-8 characters will be translated as unrecognized
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false --strict-schema-check false").split(" ")
+    val args = (argumentsBase + "--strict-schema-check false").split(" ")
 
     val expected =
       """+--------------------------------+----+----+----+----+--------------------------------+
@@ -119,10 +111,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture{
 
   test("Test standardizing a CSV file if a delimiter is not specified") { tmpFileName =>
     // This is a case where correct encoding is specified, but the delimiter is the default one.
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false " +
-      "--charset ISO-8859-1").split(" ")
+    val args = (argumentsBase + "--charset ISO-8859-1 ").split(" ")
 
     val expected =
       """+--------------------------------+----+----+----+----+--------------------------------+
@@ -146,9 +135,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture{
 
   test("Test standardizing a CSV file if a charset is not specified, fail fast read mode set") { tmpFileName =>
     // When reading a different encoding invalid UTF-8 characters will be translated as unrecognized
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false --strict-schema-check true").split(" ")
+    val args = (argumentsBase + "--strict-schema-check true").split(" ")
 
     val exception = intercept[SparkException] {
       val df = getTestCsvDataFrame(tmpFileName, args, dataSet = dataSet, schema = schemaWithCorruptRecord)
@@ -161,9 +148,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture{
   test("Test standardizing a CSV file if a quote character is not specified, with corrupt record") { tmpFileName =>
     // This is a case where correct encoding and delimiter are specified.
     // But one field contains an opening double quote character without a closing one.
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false --strict-schema-check false " +
+    val args = (argumentsBase + "--strict-schema-check false " +
       "--charset ISO-8859-1 --delimiter ¡").split(" ")
 
     val expected =
@@ -190,10 +175,7 @@ class StandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture{
     // The delimiter used is '¡'
     // A quote character should be any character that cannot be encountered in the CSV
     // For this case it is '$'
-    val args = ("--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format csv --header false --strict-schema-check false " +
-      "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
+    val args = (argumentsBase + "--charset ISO-8859-1 --delimiter ¡ --csv-quote $").split(" ")
 
     val expected =
       """+----------+------+------+------+-----+
