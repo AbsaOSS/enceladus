@@ -39,10 +39,10 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   @throws[IllegalArgumentException]
-  def transform(streamData: DataFrame): DataFrame = {
+  def transform(rawDf: DataFrame): DataFrame = {
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
-    implicit val spark: SparkSession = streamData.sparkSession
+    implicit val spark: SparkSession = rawDf.sparkSession
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
 
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
@@ -50,16 +50,20 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
 
     val reportVersion = getReportVersion
 
-    logPreConformanceInfo(streamData)
+    logPreConformanceInfo(rawDf)
 
-    val infoDateColumn = infoDateFactory.getInfoDateColumn(streamData)
+    val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
 
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
 
-    DynamicInterpreter.interpret(conformance, streamData)
+    val conformedDf = DynamicInterpreter.interpret(conformance, rawDf)
       .withColumnIfDoesNotExist(InfoDateColumn, infoDateColumn)
       .withColumnIfDoesNotExist(InfoDateColumnString, date_format(infoDateColumn,"yyyy-MM-dd"))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
+
+    log.info(s"Raw schema: ${rawDf.schema.treeString}")
+    log.info(s"Publish schema: ${conformedDf.schema.treeString}")
+    conformedDf
   }
 
   private def logPreConformanceInfo(streamData: DataFrame): Unit = {
