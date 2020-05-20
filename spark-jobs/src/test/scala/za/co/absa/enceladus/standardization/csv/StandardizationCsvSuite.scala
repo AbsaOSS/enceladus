@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.standardization.csv
 
 import org.apache.spark.SparkException
 import org.scalatest.{Outcome, fixture}

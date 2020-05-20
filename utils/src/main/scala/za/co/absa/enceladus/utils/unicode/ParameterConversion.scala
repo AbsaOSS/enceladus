@@ -25,4 +25,11 @@ object ParameterConversion {
       case other => other
     }
   }
+
+  implicit class NoneValueString(s: String) {
+    def includingNone: String = s.toLowerCase() match {
+      case "none" => ""
+      case _ => s
+    }
+  }
 }
