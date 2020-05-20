@@ -56,13 +56,28 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
 
     val errorSenderParams = Try(ErrorSenderPluginParams.fromMap(params)) match {
       case Success(params) => params
-      case Failure(e) =>
-        throw new IllegalArgumentException(s"Incompatible parameter map supplied for ${KafkaErrorSenderPluginImpl.getClass.getName}: $params", e)
+      case Failure(e) =>throw new IllegalArgumentException(
+        s"Incompatible parameter map supplied for ${KafkaErrorSenderPluginImpl.getClass.getName}: $params", e
+      )
     }
 
     val dfWithErrors = getIndividualErrors(dataFrame, errorSenderParams)
-    val forKafkaDf = prepareDataForKafka(dfWithErrors, errorSenderParams)
-    sendErrorsToKafka(forKafkaDf)
+
+    if (dfWithErrors.isEmpty) {
+      log.info("No errors to be sent to kafka.")
+    } else {
+      val count = dfWithErrors.count()
+      log.info(s"Sending $count errors to kafka topic ${connectionParams.topicName} ...")
+
+      Try {
+        val forKafkaDf = prepareDataForKafka(dfWithErrors, errorSenderParams)
+        sendErrorsToKafka(forKafkaDf)
+      } match {
+        case Success(_) => log.info(s"$count errors successfully sent to kafka topic ${connectionParams.topicName}")
+        case Failure(e) =>
+          log.error("Sending errors to kafka unsuccessful due to: ", e)
+      }
+    }
   }
 
   /**
@@ -94,8 +109,6 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
   }
 
   def prepareDataForKafka(stdErrors: DataFrame, params: ErrorSenderPluginParams): DataFrame = {
-    log.info(s"Sending errors to kafka topic ${connectionParams.topicName} ...")
-
     val valueAvroSchemaString = KafkaErrorSenderPlugin.getValueAvroSchemaString
     val valueSchemaType = KafkaErrorSenderPlugin.getValueStructTypeSchema
 

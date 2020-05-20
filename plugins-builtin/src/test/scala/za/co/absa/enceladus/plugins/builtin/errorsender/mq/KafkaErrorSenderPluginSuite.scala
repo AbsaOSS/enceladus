@@ -21,17 +21,17 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-import org.scalatest.BeforeAndAfterAll
+import org.apache.spark.sql.DataFrame
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import za.co.absa.abris.avro.read.confluent.SchemaManager
-import org.scalatest.{FlatSpec, Matchers}
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
 import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginSuite.{TestingErrCol, TestingRecord}
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import org.apache.spark.sql.DataFrame
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId
+import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+
 
 class KafkaErrorSenderPluginSuite extends FlatSpec with SparkTestBase with Matchers with BeforeAndAfterAll {
 
@@ -128,6 +128,26 @@ class KafkaErrorSenderPluginSuite extends FlatSpec with SparkTestBase with Match
       SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.schema")
   }
 
+  it should "skip sending 0 errors to kafka" in {
+    val connectionParams = KafkaErrorSenderPlugin.kafkaConnectionParamsFromConfig(testConfig)
+    val keySchemaRegistryConfig = KafkaErrorSenderPlugin.avroKeySchemaRegistryConfig(connectionParams)
+    val valueSchemaRegistryConfig = KafkaErrorSenderPlugin.avroValueSchemaRegistryConfig(connectionParams)
+
+    var sendErrorsToKafkaWasCalled = false
+    val errorKafkaPlugin = new KafkaErrorSenderPluginImpl(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig) {
+      override private[mq] def sendErrorsToKafka(df: DataFrame): Unit = {
+        sendErrorsToKafkaWasCalled = true
+        fail("Sending should have been skipped for 0 errors")
+      }
+    }
+
+    // onlyConformanceErrorsDataDf should result in 0 std errors
+    val onlyConformanceErrorsDataDf =  Seq(testData(1)).toDF
+    errorKafkaPlugin.onDataReady(onlyConformanceErrorsDataDf, defaultPluginParams.copy(sourceId = ErrorSourceId.Standardization).toMap)
+
+    assert(sendErrorsToKafkaWasCalled == false, "KafkaErrorSenderPluginImpl.sentErrorToKafka should not be called for 0 errors")
+  }
+
   it should "fail on incompatible parameters map" in {
     val errorPlugin: KafkaErrorSenderPluginImpl = KafkaErrorSenderPlugin.apply(testConfig)
     val bogusParamMap = Map("bogus" -> "boo")
@@ -194,8 +214,8 @@ class KafkaErrorSenderPluginSuite extends FlatSpec with SparkTestBase with Match
 
       val errorKafkaPlugin = new KafkaErrorSenderPluginImpl(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig) {
         override private[mq] def sendErrorsToKafka(df: DataFrame): Unit = {
-          import za.co.absa.abris.avro.functions.from_confluent_avro
           import org.apache.spark.sql.functions.col
+          import za.co.absa.abris.avro.functions.from_confluent_avro
 
           // at the point of usage from_confluent_avro, key/value.schema.id must be part of the SR Config:
           val keyConfigWithId = keySchemaRegistryConfig.updated(SchemaManager.PARAM_KEY_SCHEMA_ID, aux.keyId)
