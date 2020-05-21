@@ -6,12 +6,41 @@ categories:
     - '2.0.0'
 redirect_from: /docs/usage
 ---
+{% capture docs_path %}{{ site.baseurl }}/docs/{{ page.version }}{% endcapture %}
+
+## Table Of Content
+
+<!-- toc -->
+- [Table Of Content](#table-of-content)
+- [Intro](#intro)
+- [Quick Start](#quick-start)
+- [Spark Jobs](#spark-jobs)
+- [General](#general)
+- [Details](#details)
+<!-- tocstop -->
+
+## Intro
+
+This part of the documentations will show you how to use Enceladus. How use Menas as its UI and how to run its spark-jobs. This part expects you to have Menas already deployed and running and `spark-jobs.jar` ready at hand. If not, please look at previous parts of [build process][build] and [deployment][deploy]
+
+## Quick Start
+
+- [Menas Quick Start]({{ docs_path }}/usage/menas-quick-start)
+- [Data & Data Quality Quick Start]({{ docs_path }}/usage/data-quick-start)
+- [Spark Jobs Quick Start]({{ docs_path }}/usage/spark-jobs-quick-start)
+
+## Spark Jobs
+
 ## General
 
-* [Configuration]({{ site.baseurl }}/docs/{{ page.version }}/usage/config)
-* [\_INFO file]({{ site.baseurl }}/docs/{{ page.version }}/usage/info-file)
-* [Schema]({{ site.baseurl }}/docs/{{ page.version }}/usage/schema)
+- [Configuration]({{ docs_path }}/usage/config)
+- [\_INFO file]({{ docs_path }}/usage/info-file)
+- [Schema][schema]
 
 ## Details
 
-* [Error columns]({{ site.baseurl }}/docs/{{ page.version }}/usage/errcol)
+- [Error columns]({{ docs_path }}/usage/errcol)
+
+[build]: {{ docs_path }}/build-process
+[deploy]: {{ docs_path }}/deployment
+[schema]: {{ docs_path }}/usage/schema

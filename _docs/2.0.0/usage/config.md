@@ -17,8 +17,7 @@ redirect_from: /docs/usage/config
 ## Intro
 
 This page describes the usage of configuration of _Standardization_ and _Conformance_.
-There are number of default options that 
-[Project's readme][readme] documents.
+There are number of default options that [Project's readme][readme] documents.
 This page describes the configuration values stored in `spark-jobs`'s `application.conf` (or its
 [template][app-conf-template]).
 These values can be overridden using the `-D` property values as in:
