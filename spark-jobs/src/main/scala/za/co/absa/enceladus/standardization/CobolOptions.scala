@@ -28,5 +28,6 @@ case class CobolOptions
 (
   copybook: String = "",
   encoding: Option[String] = None,
+  trimmingPolicy: Option[String] = None,
   isXcom: Boolean = false
 )
