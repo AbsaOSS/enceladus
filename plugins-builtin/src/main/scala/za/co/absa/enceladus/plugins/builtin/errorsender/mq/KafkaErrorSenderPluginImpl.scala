@@ -45,19 +45,19 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
    * When data is ready, the error record(s) are pusblished to kafka.
    *
    * @param dataFrame error data only.
-   * @param params    Additional key/value parameters provided by Enceladus.
+   * @param paramsMap Additional key/value parameters provided by Enceladus.
    */
-  override def onDataReady(dataFrame: DataFrame, params: Map[String, String]): Unit = {
+  override def onDataReady(dataFrame: DataFrame, paramsMap: Map[String, String]): Unit = {
     if (!SchemaUtils.fieldExists(ColumnNames.enceladusRecordId, dataFrame.schema)) {
       throw new IllegalStateException(
         s"${this.getClass.getName} requires ${ColumnNames.enceladusRecordId} column to be present in the dataframe!"
       )
     }
 
-    val errorSenderParams = Try(ErrorSenderPluginParams.fromMap(params)) match {
+    val errorSenderParams = Try(ErrorSenderPluginParams.fromMap(paramsMap)) match {
       case Success(params) => params
       case Failure(e) =>throw new IllegalArgumentException(
-        s"Incompatible parameter map supplied for ${KafkaErrorSenderPluginImpl.getClass.getName}: $params", e
+        s"Incompatible parameter map supplied for ${KafkaErrorSenderPluginImpl.getClass.getName}: $paramsMap", e
       )
     }
 
@@ -93,8 +93,9 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
     val allowedErrorCodes = KafkaErrorSenderPluginImpl.errorCodesForSource(params.sourceId)
 
     val stdErrors = dataFrame
+      // only keep rows with non-empty errCol:
       .filter(size(col("errCol")) > 0)
-      // only keep columns that are needed for the actual error publishing
+      // and only keep columns that are needed for the actual error publishing:
       .select(
         col(ColumnNames.enceladusRecordId).cast(DataTypes.StringType).as("recordId"),
         col(ColumnNames.reportDate),

@@ -29,9 +29,11 @@ object KafkaInfoPlugin extends ControlMetricsPluginFactory {
   val ClientIdKey = "kafka.info.metrics.client.id"
   val ControlMetricsKafkaTopicKey = "kafka.info.metrics.topic.name"
 
+  implicit val serializer = ControlInfoAvroSerializer
+
   override def apply(config: Config): ControlMetricsPlugin = {
     val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ControlMetricsKafkaTopicKey)
-    val producer = new InfoProducerKafka(connectionParams)(ControlInfoAvroSerializer)
+    val producer = new InfoProducerKafka(connectionParams)
     new ControlInfoSenderPlugin(producer)
   }
 }

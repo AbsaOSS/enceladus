@@ -42,7 +42,7 @@ object ErrorSenderPluginParams {
     val Conformance = Value("conformance")
   }
 
-  object fieldNames {
+  object FieldNames {
     val datasetName = "datasetName"
     val datasetVersion = "datasetVersion"
     val reportDate = "reportDate"
@@ -56,7 +56,7 @@ object ErrorSenderPluginParams {
     val processingTimestamp = "processingTimestamp"
   }
 
-  import fieldNames._
+  import FieldNames._
 
   def toMap(params: ErrorSenderPluginParams): Map[String, String] = {
     Map(
