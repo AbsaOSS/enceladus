@@ -132,6 +132,8 @@ sap.ui.define([
           return ".json";
         case "application/octet-stream":
           return ".cob"; //copybook
+        case "application/vnd.schemaregistry.v1+json":
+          return ".avsc";
         default:
           return "";
       }
