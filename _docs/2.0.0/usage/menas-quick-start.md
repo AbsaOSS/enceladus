@@ -76,4 +76,4 @@ _Don't mind the orange color. It only means the paths don't exist at the moment 
 
 {% include image.html name="usage/menas_new_dataset.png" alt="Menas New Dataset" %}
 
-After clicking save we have both Dataset and accompanying Schema and we are able to run standardization and conformance
+After clicking on _Save_, we have both the Dataset and accompanying Schema ready and we are able to run Standardization and Conformance.
