@@ -222,6 +222,8 @@ The list of additional options available for running Standardization:
 | --csv-escape **character**           | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.                                            |
 | --trimValues **true/false**          | Indicates if string fields of fixed with text data should be trimmed.                                                                              |
 | --is-xcom **true/false**             | If `true` a mainframe input file is expected to have XCOM RDW headers.                                                                             |
+| --cobol-encoding **encoding**        | Specifies the encoding of a mainframe file (`ascii` or `ebcdic`). Code page can be specified using `--charset` option.                             |
+| --cobol-trimming-policy **policy**   | Specifies the way leading and trailing spaces should be handled. Can be `none` (do not trim spaces), `left`, `right`, `both`(default).             |
 | --folder-prefix **prefix**           | Adds a folder prefix before the date tokens.                                                                                                       |
 | --debug-set-raw-path **path**        | Override the path of the raw data (used for testing purposes).                                                                                     |
 | --strict-schema-check **true/false** | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` (default) proceeds over it with an entry in _errCol_ | 
