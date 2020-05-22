@@ -12,7 +12,7 @@ First of all, to run anything we will need a dataset and its corresponding schem
 
 {% include image.html name="usage/menas_login.png" alt="Menas Login Page" %}
 
-After login in, you should be greated by the dashboard. In our case we have no entities created yet so everything shows 0, but after we create something numbers will change and after we run something we will be even able to see changes in Today's runs.
+After logging in, you should be greeted by the dashboard. In our case we have no entities created yet so everything shows 0, but after we create something numbers will change and after we run something we will be even able to see changes in Today's runs.
 
 {% include image.html name="usage/menas_dashboard.png" alt="Menas Dashboard" %}
 
