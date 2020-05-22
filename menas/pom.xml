@@ -258,7 +258,7 @@
         <!-- Data formats -->
         <dependency>
             <groupId>za.co.absa.cobrix</groupId>
-            <artifactId>spark-cobol</artifactId>
+            <artifactId>spark-cobol_${scala.compat.version}</artifactId>
             <version>${cobrix.version}</version>
         </dependency>
         <!-- guava 27 for spring & wire mock testing, too -->
