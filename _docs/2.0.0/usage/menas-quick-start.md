@@ -64,7 +64,7 @@ Click button `Browse...` to select schema file from your local disk. When select
 
 {% include image.html name="usage/menas_schema_view.png" alt="Menas Schema View" %}
 
-Moving on to creating a data set. Data set in Menas represents your a general location where your data sets of the same type will be periodically landed. You will have to specify to which schema the data comply to, where they are and where they should be when standardization and conformance are finished.
+Moving on to creating a dataset. Datasets in Menas represent a general location where your datasets of the same type will be periodically landed. You will have to specify which schema the data comply with, where they are and where they should be when Standardization and Conformance are finished.
 
 Creating new Dataset goes the same way as the schema. We open the left menu pane and select Dataset and then click `+ New dataset`.
 
