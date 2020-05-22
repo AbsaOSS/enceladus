@@ -20,7 +20,7 @@ In the top left corner of our current view we can see a button usually called `h
 
 {% include image.html name="usage/menas_navigation.png" alt="Menas Navigation" %}
 
-Firs thing we need to do tobe able to run standardization and conformance is creating of a data schema for the job. Schema represents the data, its types, defaults, etc. If we click on the schema in the navigation pane it will open up all schemas view. This view will be currently empty and at the bottom there is a button `+ New Schema`. Pressing the button will lead to modal window showing up.
+The first thing we need to do to be able to run Standardization and Conformance is creating a data schema for the job. The schema represents the data, its types, defaults, etc. If we click on the schema in the navigation pane it will open up all schemas view. This view will be currently empty and at the bottom there is a button `+ New Schema`. Pressing the button will lead to a modal window showing up.
 
 {% include image.html name="usage/menas_schemas_empty.png" alt="Menas Empty Schemas Pane" %}
 
