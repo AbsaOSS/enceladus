@@ -28,7 +28,7 @@ Creation of a new schema has only `Name` and `Description`. Names in all Menas m
 
 {% include image.html name="usage/menas_new_schema.png" alt="Menas New Schema" %}
 
-Clicking on a Save button, Menas will validate the Name inputed and save the new object.
+Clicking on the _Save_ button, Menas will validate the _Name_ inputted and save the new object.
 
 {% include image.html name="usage/menas_newly_created_schema.png" alt="Menas Newly Created Schema" %}
 
