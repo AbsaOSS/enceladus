@@ -61,7 +61,7 @@
         </dependency>
         <dependency>
             <groupId>za.co.absa.cobrix</groupId>
-            <artifactId>spark-cobol</artifactId>
+            <artifactId>spark-cobol_${scala.compat.version}</artifactId>
             <version>${cobrix.version}</version>
         </dependency>
 
@@ -138,6 +138,10 @@
                 <exclusion>
                     <groupId>net.jpountz.lz4</groupId>
                     <artifactId>lz4</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-common</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

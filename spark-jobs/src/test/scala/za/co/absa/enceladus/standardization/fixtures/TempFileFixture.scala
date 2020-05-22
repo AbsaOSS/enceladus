@@ -38,6 +38,21 @@ trait TempFileFixture {
     * @return The full path to the temporary file
     */
   def createTempFile(prefix: String, suffix: String, charset: Charset, content: String, deleteOnExit: Boolean = true): File = {
+    createTempBinFile(prefix, suffix, content.getBytes(charset), deleteOnExit)
+  }
+
+  /**
+   * Creates a temporary binary file and returns the full path to it
+   *
+   * @param prefix       The prefix string to be used in generating the file's name
+   *                     must be at least three characters long
+   * @param suffix       The suffix string to be used in generating the file's name
+   *                     may be <code>null</code>, in which case the suffix <code>".tmp"</code> will be used
+   * @param content      A contents to put to the file
+   * @param deleteOnExit If true the file will be deleted when not referenced anymore
+   * @return The full path to the temporary file
+   */
+  def createTempBinFile(prefix: String, suffix: String, content: Array[Byte], deleteOnExit: Boolean = true): File = {
     val tempFile = TempFile(prefix, suffix)
     if (deleteOnExit) {
       tempFile.deleteOnExit()
@@ -45,7 +60,7 @@ trait TempFileFixture {
     val result = tempFile.path.toFile
     val ostream = new DataOutputStream(new FileOutputStream(result))
     try {
-      ostream.write(content.getBytes(charset))
+      ostream.write(content)
     } finally {
       ostream.close()
     }

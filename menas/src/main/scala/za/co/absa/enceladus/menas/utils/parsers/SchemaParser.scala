@@ -91,7 +91,7 @@ object SchemaParser {
     def parse(copybookContents: String): StructType = {
       try {
         val parsedSchema = CopybookParser.parseTree(copybookContents)
-        val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
+        val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, "", false)
         cobolSchema.getSparkSchema
       } catch {
         case e: SyntaxErrorException =>

@@ -131,12 +131,12 @@ object StdCmdConfig {
       .validate(value =>
         if (rawFormat.isDefined &&
           (rawFormat.get.equalsIgnoreCase("xml") ||
-          rawFormat.get.equalsIgnoreCase("csv") ||
-          rawFormat.get.equalsIgnoreCase("json")))
-        {
+            rawFormat.get.equalsIgnoreCase("csv") ||
+            rawFormat.get.equalsIgnoreCase("json") ||
+            rawFormat.get.equalsIgnoreCase("cobol"))) {
           success
         } else {
-          failure("The --charset option is supported only for CSV, JSON and XML")
+          failure("The --charset option is supported only for CSV, JSON, XML and COBOL")
         })
 
     opt[String]("row-tag").optional().action((value, config) =>
