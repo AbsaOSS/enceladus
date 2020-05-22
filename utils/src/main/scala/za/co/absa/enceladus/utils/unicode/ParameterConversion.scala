@@ -18,7 +18,7 @@ package za.co.absa.enceladus.utils.unicode
 object ParameterConversion {
 
   implicit class UnicodeValueString(s: String) {
-    val unicodeElement = """[uU]?\+?([0-9a-fA-F]{4})""".r
+    val unicodeElement = """[uU]?\+?([0-9a-fA-F]{4})$""".r
 
     def includingUnicode: String = s match {
       case unicodeElement(hex) => Integer.parseInt(hex, 16).toChar.toString
