@@ -77,7 +77,7 @@ class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase
   }
 
   test("Test ASCII COBOL file having ISO-8851-1 charset with trimming=none") { tmpFileName =>
-    val args = ("--charset ISO-8859-1 --cobol-trimming-policy none").split(" ")
+    val args = "--charset ISO-8859-1 --cobol-trimming-policy none".split(" ")
 
     val expected =
       """{"A1":"1","A2":"Tes  ","A3":"0123456789"}
@@ -92,7 +92,7 @@ class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase
   }
 
   test("Test ASCII COBOL file with trimming=left") { tmpFileName =>
-    val args = ("--cobol-trimming-policy left").split(" ")
+    val args = "--cobol-trimming-policy left".split(" ")
 
     val expected =
       """{"A1":"1","A2":"Tes  ","A3":"0123456789"}
@@ -107,7 +107,7 @@ class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase
   }
 
   test("Test ASCII COBOL file with trimming=right") { tmpFileName =>
-    val args = ("--cobol-trimming-policy right").split(" ")
+    val args = "--cobol-trimming-policy right".split(" ")
 
     val expected =
       """{"A1":"1","A2":"Tes","A3":"0123456789"}
@@ -122,7 +122,7 @@ class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase
   }
 
   test("Test ASCII COBOL file having ISO-8851-1 charset with trimming=both") { tmpFileName =>
-    val args = ("--charset ISO-8859-1").split(" ")
+    val args = "--charset ISO-8859-1".split(" ")
 
     val expected =
       """{"A1":"1","A2":"Tes","A3":"0123456789"}
@@ -134,6 +134,22 @@ class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase
     val actual = df.toJSON.collect.mkString("\n")
 
     assert(actual == expected)
+  }
+
+  test("Test COBOL source throws when a bogus trimming policy is provided") { tmpFileName =>
+    val args = "--cobol-trimming-policy bogus".split(" ")
+
+    intercept[IllegalArgumentException] {
+      getTestDataFrame(tmpFileName, args)
+    }
+  }
+
+  test("Test COBOL source throws when a bogus charset is provided") { tmpFileName =>
+    val args = "--charset bogus".split(" ")
+
+    intercept[IllegalArgumentException] {
+      getTestDataFrame(tmpFileName, args)
+    }
   }
 
 }

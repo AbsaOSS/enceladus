@@ -113,4 +113,12 @@ class StandardizationCobolEbcdicSuite extends fixture.FunSuite with SparkTestBas
     assert(actual == expected)
   }
 
+  test("Test COBOL source throws when a bogus encoding is provided") { tmpFileName =>
+    val args = "--cobol-encoding bogus".split(" ")
+
+    intercept[IllegalArgumentException] {
+      getTestDataFrame(tmpFileName, args)
+    }
+  }
+
 }
