@@ -1,4 +1,5 @@
 // Directly related to Enceladus issue #1347
+// This issue existed since v 1.2.X and was fixed after version 2.5.0 was released.
 // This script attempts to find corresponding documents in schema_v1 and attachment_v1 collections by
 // s.name == a.refName && "datetime from _id being about the same" (about: abs(ts1-ts2) <= epsilon)
 var epsilon = 200; // in millis,
