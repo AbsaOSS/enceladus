@@ -17,7 +17,6 @@ package za.co.absa.enceladus.standardization.fixtures
 
 import java.io.{DataOutputStream, File, FileOutputStream}
 import java.nio.charset.Charset
-import java.nio.file.FileSystems
 
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import za.co.absa.commons.io.{TempDirectory, TempFile}
