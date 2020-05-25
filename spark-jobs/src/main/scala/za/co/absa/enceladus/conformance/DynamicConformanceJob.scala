@@ -119,8 +119,6 @@ object DynamicConformanceJob {
       postProcessingService.onSaveOutput(conformedDf) // all enabled postProcessors will be run with the std df
     } finally {
 
-      spark.sparkContext.applicationAttemptId
-        .foreach(attemptId => Atum.setAdditionalInfo("conf_spark_attempt_id" -> attemptId))
       MenasPlugin.runNumber.foreach { runNumber =>
         val name = cmd.datasetName
         val version = cmd.datasetVersion

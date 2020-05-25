@@ -486,13 +486,11 @@ object StandardizationJob {
     }
   }
 
-  private def postStandardizationSteps(cmd: StdCmdConfig)(implicit spark: SparkSession): Unit = {
+  private def postStandardizationSteps(cmd: StdCmdConfig): Unit = {
     Atum.getControlMeasure.runUniqueId
 
     val name = cmd.datasetName
     val version = cmd.datasetVersion
-    spark.sparkContext.applicationAttemptId
-      .foreach(attemptId => Atum.setAdditionalInfo("std_spark_attempt_id" -> attemptId))
     MenasPlugin.runNumber.foreach { runNumber =>
       menasBaseUrls.foreach { menasBaseUrl =>
         val apiUrl = MenasRunUrl.getMenasApiRunUrl(menasBaseUrl, name, version, runNumber)
