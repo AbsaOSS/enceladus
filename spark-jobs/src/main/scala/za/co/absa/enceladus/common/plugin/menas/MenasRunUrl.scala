@@ -13,24 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.common.mq
+package za.co.absa.enceladus.common.plugin.menas
 
-import za.co.absa.enceladus.plugins.builtin.controlinfo.DceControlInfo
+object MenasRunUrl {
 
-/**
- * Base interface for control info metrics (aka INFO file) producer for messaging queues.
- */
-trait ControlInfoProducer {
+  def getMenasApiRunUrl(menasBaseUrl: String, datasetName: String, datasetVersion: Int, runNumber: Int): String =
+    s"$menasBaseUrl/api/runs/$datasetName/$datasetVersion/$runNumber"
 
-  /**
-   * Send control metrics to a messaging queue.
-   *
-   * @param controlInfo Control info metrics to send.
-   */
-  def send(controlInfo: DceControlInfo): Unit
+  def getMenasUiRunUrl(menasBaseUrl: String, datasetName: String, datasetVersion: Int, runNumber: Int): String =
+    s"$menasBaseUrl/#/runs/$datasetName/$datasetVersion/$runNumber"
 
-  /**
-   * This method should be called when the producer is no longer needed.
-   */
-  def close(): Unit
 }

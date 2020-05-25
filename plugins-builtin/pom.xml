@@ -27,6 +27,7 @@
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <kafka.avro.serializer.version>5.2.2</kafka.avro.serializer.version>
+        <javax.servlet.api.version>3.1.0</javax.servlet.api.version>
     </properties>
 
     <dependencies>
@@ -36,9 +37,39 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>abris_${scala.compat.version}</artifactId>
+            <version>${abris.version}</version>
+        </dependency>
+        <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-avro-serializer</artifactId>
             <version>${kafka.avro.serializer.version}</version>
+        </dependency>
+
+        <!-- WireMock - to act as SchemaRegistry for IntegTest-->
+        <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock-jre8</artifactId>
+            <version>${wiremock.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>${javax.servlet.api.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

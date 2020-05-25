@@ -100,6 +100,9 @@ object ErrorMessage {
     final val ConfLitErr      = "E00005"
     final val StdTypeError    = "E00006"
     final val StdSchemaError  = "E00007"
+
+    val standardizationErrorCodes = Seq(StdCastError, StdNullError, StdTypeError, StdSchemaError)
+    val conformanceErrorCodes = Seq(ConfMapError, ConfCastErr, ConfNegErr, ConfLitErr)
   }
 }
 

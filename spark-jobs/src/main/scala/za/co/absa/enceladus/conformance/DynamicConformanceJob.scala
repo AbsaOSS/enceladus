@@ -17,6 +17,7 @@ package za.co.absa.enceladus.conformance
 
 import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
+import java.time.Instant
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.functions.{lit, to_date}
@@ -28,7 +29,8 @@ import za.co.absa.atum.AtumImplicits.{DataSetWrapper, StringToPath}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.plugin.PostProcessingService
+import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
 import za.co.absa.enceladus.common.ControlInfoValidation
@@ -109,8 +111,12 @@ object DynamicConformanceJob {
         pathCfg.stdPath, pathCfg.publishPath, menasCredentials.username, args.mkString(" "))
 
       processResult(result, performance, pathCfg, reportVersion, args.mkString(" "), menasCredentials)
-
       log.info("Conformance finished successfully")
+
+      // read written data from parquet directly
+      val conformedDf = spark.read.parquet(pathCfg.publishPath)
+      val postProcessingService = getPostProcessingService(cmd, pathCfg, reportVersion, MenasPlugin.runNumber, Atum.getControlMeasure.runUniqueId)
+      postProcessingService.onSaveOutput(conformedDf) // all enabled postProcessors will be run with the std df
     } finally {
 
       MenasPlugin.runNumber.foreach { runNumber =>
@@ -122,6 +128,27 @@ object DynamicConformanceJob {
         }
       }
     }
+  }
+
+  private def getPostProcessingService(cmd: ConfCmdConfig, pathCfg: PathCfg, reportVersion: Int,
+                                       runNumber: Option[Int], uniqueRunId: Option[String]
+                                      )(implicit fsUtils: FileSystemVersionUtils): PostProcessingService = {
+    val runId = MenasPlugin.runNumber
+
+    if (runId.isEmpty) {
+      log.warn("No run number found, the Run URL cannot be properly reported!")
+    }
+
+    // reporting the UI url(s) - if more than one, its comma-separated
+    val runUrl: Option[String] = runId.map { runNumber =>
+      menasBaseUrls.map { menasBaseUrl =>
+        MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, cmd.datasetName, cmd.datasetVersion, runNumber)
+      }.mkString(",")
+    }
+
+    PostProcessingService.forConformance(conf, cmd.datasetName, cmd.datasetVersion, cmd.reportDate,
+      reportVersion, pathCfg.publishPath, Atum.getControlMeasure.metadata.sourceApplication, runUrl,
+      runId, uniqueRunId, Instant.now)
   }
 
   private def isExperimentalRuleEnabled()(implicit cmd: ConfCmdConfig): Boolean = {

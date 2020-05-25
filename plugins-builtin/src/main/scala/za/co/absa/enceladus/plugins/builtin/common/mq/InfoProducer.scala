@@ -13,17 +13,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.buildin.kafka.dummy
+package za.co.absa.enceladus.plugins.builtin.common.mq
 
-import za.co.absa.enceladus.plugins.builtin.common.mq.InfoProducer
-import za.co.absa.enceladus.plugins.builtin.controlinfo.DceControlInfo
+trait InfoProducer[T] {
 
-class DummyControlInfoProducer extends InfoProducer[DceControlInfo] {
+  /**
+   * Send a record to a messaging queue.
+   *
+   * @param infoRecord Control info metrics to send.
+   */
+  def send(infoRecord: T): Unit
 
-  var lastControlInfoSent: DceControlInfo = _
-
-  override def send(controlInfo: DceControlInfo): Unit = {
-    lastControlInfoSent = controlInfo
-  }
-  override def close(): Unit = {}
+  /**
+   * This method should be called when the producer is no longer needed.
+   */
+  def close(): Unit
 }

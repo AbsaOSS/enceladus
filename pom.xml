@@ -161,7 +161,7 @@
         <spark.xml.version>0.5.0</spark.xml.version>
         <scopt.version>3.7.0</scopt.version>
         <kafka.spark.version>0-10</kafka.spark.version>
-        <abris.version>2.1.0</abris.version>
+        <abris.version>3.1.1</abris.version>
         <spring.version>2.0.0.RELEASE</spring.version>
         <spring.ldap.version>5.0.14.RELEASE</spring.ldap.version>
         <spring.kerberos.version>1.0.1.RELEASE</spring.kerberos.version>
@@ -187,6 +187,8 @@
         <htrace.version>3.1.0-incubating</htrace.version>
         <cobrix.version>0.5.3</cobrix.version>
         <cronstrue.version>1.79.0</cronstrue.version>
+        <wiremock.version>2.26.3</wiremock.version>
+        <guava.version>27.0.1-jre</guava.version>
         <!--other properties-->
         <skip.integration.tests>true</skip.integration.tests>
         <quiet.scalastyle.check>true</quiet.scalastyle.check>

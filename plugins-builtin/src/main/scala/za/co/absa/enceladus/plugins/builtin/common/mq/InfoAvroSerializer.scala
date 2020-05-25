@@ -13,17 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.buildin.kafka.dummy
+package za.co.absa.enceladus.plugins.builtin.common.mq
 
-import za.co.absa.enceladus.plugins.builtin.common.mq.InfoProducer
-import za.co.absa.enceladus.plugins.builtin.controlinfo.DceControlInfo
+import org.apache.avro.generic.GenericRecord
 
-class DummyControlInfoProducer extends InfoProducer[DceControlInfo] {
+trait InfoAvroSerializer[T] {
 
-  var lastControlInfoSent: DceControlInfo = _
+  def convertInfoKey(infoRecord: T): GenericRecord
 
-  override def send(controlInfo: DceControlInfo): Unit = {
-    lastControlInfoSent = controlInfo
-  }
-  override def close(): Unit = {}
+  def convertInfoRecord(infoRecord: T): Option[GenericRecord]
 }
