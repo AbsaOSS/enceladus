@@ -245,9 +245,6 @@ sap.ui.define([
         this._eventBus.publish("schemas", "list");
         // nav back to info
         this.byId("schemaIconTabBar").setSelectedKey("info");
-        // clear error if present
-        this.byId("remoteUrl").setValueState(sap.ui.core.ValueState.None);
-        this.byId("remoteUrl").setValueStateText("");
       } else if (status === 400) {
         const errorMessage = ajaxResponse.responseJSON.message;
         const errorMessageDetails = errorMessage ? `\n\nDetails:\n${errorMessage}` : "";
@@ -271,6 +268,10 @@ sap.ui.define([
       } else {
         MessageBox.error(`Unexpected status=${status} error occurred. Please, check your connectivity to the server.`)
       }
+
+      // clear error if present
+      this.byId("remoteUrl").setValueState(sap.ui.core.ValueState.None);
+      this.byId("remoteUrl").setValueStateText("");
     },
 
     handleUploadProgress: function (oParams) {
@@ -334,10 +335,19 @@ sap.ui.define([
       }
     },
 
+    httpUrlRx: new RegExp('^(https?:\\/\\/)?'+ // protocol
+      '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
+      'localhost|'+ // OR localhost
+      '(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|'+ // OR IPv4 address
+      '((?:[a-f0-9]{1,4}:){7}[a-f0-9]{1,4}))' + // OR IPv6 address
+      '(\\:\\d+)?' + // port
+      '(\\/[-a-z\\d%_.~+]*)*'+ // path
+      '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
+      '(\\#[-a-z\\d_]*)?$','i'), // fragment locator
+
     isHttpUrl: function (url) {
       if (!url) return false;
-      const pattern = new RegExp('^https?://[^ ]+$', 'i');
-      return pattern.test(url);
+      return this.httpUrlRx.test(url);
     },
 
     // this is what the schema registry url should look like to be "fixable", e.g. http://example.schemaregistry.org/subjects/somename/versions/1
