@@ -339,7 +339,7 @@ sap.ui.define([
       '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
       'localhost|'+ // OR localhost
       '(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|'+ // OR IPv4 address
-      '((?:[a-f0-9]{1,4}:){7}[a-f0-9]{1,4}))' + // OR IPv6 address
+      '(([0-9a-f]{0,4}:){1,7}[0-9a-f]{0,4}))' + // OR IPv6 address (simplified version, allows ::1 and short other short forms)
       '(\\:\\d+)?' + // port
       '(\\/[-a-z\\d%_.~+]*)*'+ // path
       '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
