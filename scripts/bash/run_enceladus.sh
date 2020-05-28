@@ -28,6 +28,14 @@ EXECUTOR_CORES="$DEFAULT_EXECUTOR_CORES"
 NUM_EXECUTORS="$DEFAULT_NUM_EXECUTORS"
 FILES="$ENCELADUS_FILES"
 
+# DRA related defaults
+DRA_ENABLED="$STD_DEFAULT_DRA_ENABLED"
+
+DRA_MIN_EXECUTORS="$DEFAULT_DRA_MIN_EXECUTORS"
+DRA_MAX_EXECUTORS="$DEFAULT_DRA_MAX_EXECUTORS"
+DRA_ALLOCATION_RATIO="$DEFAULT_DRA_ALLOCATION_RATIO"
+ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE="$DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE"
+
 # Command like default for the job
 DATASET_NAME=""
 DATASET_VERSION=""
@@ -215,6 +223,26 @@ case $key in
     PERSIST_STORAGE_LEVEL="$2"
     shift 2 # past argument and value
     ;;
+    --conf-spark-dynamicAllocation-minExecutors)
+    DRA_MIN_EXECUTORS="$2"
+    shift 2 # past argument and value
+    ;;
+    --conf-spark-dynamicAllocation-maxExecutors)
+    DRA_MAX_EXECUTORS="$2"
+    shift 2 # past argument and value
+    ;;
+    --conf-spark-dynamicAllocation-executorAllocationRatio)
+    DRA_ALLOCATION_RATIO="$2"
+    shift 2 # past argument and value
+    ;;
+    --conf-spark-sql-adaptive-shuffle-targetPostShuffleInputSize)
+    ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE="$2"
+    shift 2 # past argument and value
+    ;;
+    --set-dra)
+    DRA_ENABLED="$2"
+    shift 2 # past argument and value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -293,6 +321,37 @@ if [ ! -z "$MAPPING_TABLE_PATTERN" ]; then
 fi
 
 SPARK_CONF="--conf spark.logConf=true"
+
+# Dynamic Resource Allocation
+# check DRA safe prerequisites
+if [ "$DRA_ENABLED" = true ] ; then
+    if [ ! -z "$NUM_EXECUTORS" ]; then
+        echo "WARNING: num-executors should NOT be set when using Dynamic Resource Allocation. DRA is disabled.";
+        DRA_ENABLED=false
+    fi
+    if [ -z "$DRA_MAX_EXECUTORS" ]; then
+        echo "WARNING: maxExecutors should be set for Dynamic Resource Allocation. DRA is disabled"
+        DRA_ENABLED=false
+    fi
+fi
+
+# configure DRA and adaptive execution if enabled
+if [ "$DRA_ENABLED" = true ] ; then
+    echo "Dynamic Resource Allocation enabled"
+    SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.enabled=true"
+    SPARK_CONF="${SPARK_CONF} --conf spark.shuffle.service.enabled=true"
+    SPARK_CONF="${SPARK_CONF} --conf spark.sql.adaptive.enabled=true"
+    SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.maxExecutors=$DRA_MAX_EXECUTORS"
+    if [ ! -z "$DRA_MIN_EXECUTORS" ]; then
+        SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.minExecutors=$DRA_MIN_EXECUTORS"
+    fi
+    if [ ! -z "$DRA_ALLOCATION_RATIO" ]; then
+        SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.executorAllocationRatio=$DRA_ALLOCATION_RATIO"
+    fi
+    if [ ! -z "$ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE" ]; then
+        SPARK_CONF="${SPARK_CONF} --conf spark.sql.adaptive.shuffle.targetPostShuffleInputSize=$ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE"
+    fi
+fi
 
 JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH \
 -Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=$HDP_VERSION \
