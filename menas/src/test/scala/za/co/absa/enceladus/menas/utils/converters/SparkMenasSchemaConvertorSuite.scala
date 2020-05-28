@@ -32,6 +32,10 @@ class SparkMenasSchemaConvertorSuite extends FunSuite with SparkTestBase {
     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
   private val sparkConvertor = new SparkMenasSchemaConvertor(objectMapper)
 
+  test("convertSparkToMenasFields and vice-versa: empty Seq of fields") {
+    assertResult(sparkConvertor.convertSparkToMenasFields(Seq[StructField]()))(Seq[SchemaField]())
+  }
+
   private val sparkSimleFlat = Seq(
     StructField(name = "a", dataType = IntegerType, nullable = true, metadata = new MetadataBuilder().putString("format", "xyz.abc").putString("precision", "14.56").build),
     StructField(name = "b", dataType = DecimalType.apply(38, 18), nullable = false),
@@ -44,13 +48,15 @@ class SparkMenasSchemaConvertorSuite extends FunSuite with SparkTestBase {
 
   test("convertSparkToMenasFields Simple Test") {
     val res = sparkConvertor.convertSparkToMenasFields(sparkSimleFlat)
-
     assertResult(menasSimpleFlat)(res)
-
-    assertResult(sparkConvertor.convertSparkToMenasFields(Seq[StructField]()))(Seq[SchemaField]())
   }
 
-  test("convertSparkToMenas Complex Test") {
+  test("convertMenasToSpark Simple Test") {
+    val res = sparkConvertor.convertMenasToSparkFields(menasSimpleFlat)
+    assertResult(sparkSimleFlat)(res)
+  }
+
+  test("convertSparkToMenas and vice-versa: Complex Test") {
     val sparkComplex = Seq(
       StructField(name = "a", dataType = IntegerType, nullable = true, metadata = new MetadataBuilder().putString("format", "xyz.abc").putString("precision", "14.56").build),
       StructField(name = "b", nullable = false, dataType = StructType(Seq(
@@ -90,11 +96,61 @@ class SparkMenasSchemaConvertorSuite extends FunSuite with SparkTestBase {
     assertResult(sparkConvertor.convertMenasToSparkFields(menasComplex))(sparkComplex)
   }
 
-  test("convertMenasToSpark Simple Test") {
-    val res = sparkConvertor.convertMenasToSparkFields(menasSimpleFlat)
+  test("convertSparkToMenas and vice-versa: Map Simple Test") {
+    val sparkSimpleMap = Seq(
+      StructField(name = "map1", dataType = MapType(StringType, IntegerType, valueContainsNull = false), nullable = false,
+        metadata = new MetadataBuilder().putString("format", "123.abc").putString("precision", "12.56").build),
+      StructField(name = "stringField1", dataType = StringType))
 
-    assertResult(sparkSimleFlat)(res)
+    val menasSimpleMap = Seq(
+      SchemaField(name = "map1", `type` = "map", path = "", elementType = Some("integer"), containsNull = Some(false), nullable = false, metadata = Map("format" -> "123.abc", "precision" -> "12.56"), children = List()),
+      SchemaField(name = "stringField1", `type` = "string", path = "", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List()))
+
+    assertResult(menasSimpleMap)(sparkConvertor.convertSparkToMenasFields(sparkSimpleMap))
+    assertResult(sparkSimpleMap)(sparkConvertor.convertMenasToSparkFields(menasSimpleMap))
   }
+
+  test("convertSparkToMenas and vice-versa: Map Complex Test") {
+    val sparkComplexMap = Seq(
+      StructField(name = "mm", dataType = MapType(StringType, valueType = MapType(StringType, BooleanType))), // map<K, map>
+      StructField(name = "ma", dataType = MapType(StringType, ArrayType(DoubleType))), // map<K, array>
+      StructField(name = "ms", dataType = MapType(StringType, StructType(Seq( // map<K, struct>
+        StructField(name = "s", dataType = StringType),
+        StructField(name = "d", dataType = DoubleType)
+      )))),
+      StructField(name = "smam", dataType = StructType(Seq( // struct<map<K, array<map>>>
+        StructField(name = "s", dataType =
+          MapType(StringType, valueType =
+            ArrayType(MapType(StringType, valueType = BooleanType))
+          )
+        )
+      ))),
+      StructField(name = "stringField1", dataType = StringType))
+
+    val menasComplexMap = Seq(
+      SchemaField(name = "mm", `type` = "map", path = "", elementType = Some("map"), containsNull = Some(true), nullable = true, metadata = Map(), children = List(
+        SchemaField(name = "", `type` = "map", path = "mm", elementType = Some("boolean"), containsNull = Some(true), nullable = true, metadata = Map(), children = List())
+      )), // ^ map<K, map>
+      SchemaField(name = "ma", `type` = "map", path = "", elementType = Some("array"), containsNull = Some(true), nullable = true, metadata = Map(), children = List(
+        SchemaField(name = "", `type` = "array", path = "ma", elementType = Some("double"), containsNull = Some(true), nullable = true, metadata = Map(), children = List())
+      )), // ^ map<K, array>
+      SchemaField(name = "ms", `type` = "map", path = "", elementType = Some("struct"), containsNull = Some(true), nullable = true, metadata = Map(), children = List(
+        SchemaField(name = "s", `type` = "string", path = "ms", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List()),
+        SchemaField(name = "d", `type` = "double", path = "ms", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List())
+      )), // ^ map<K, struct>
+      SchemaField(name = "smam", `type` = "struct", path = "", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List(
+        SchemaField(name = "s", `type` = "map", path = "smam", elementType = Some("array"), containsNull = Some(true), nullable = true, metadata = Map(), children = List(
+          SchemaField(name = "", `type` = "array", path = "smam.s", elementType = Some("map"), containsNull = Some(true), nullable = true, metadata = Map(), children = List(
+            SchemaField(name = "", `type` = "map", path = "smam.s", elementType = Some("boolean"), containsNull = Some(true), nullable = true, metadata = Map(), children = List())
+          ))
+        ))
+      )), // ^ struct<map<array<map>>>
+      SchemaField(name = "stringField1", `type` = "string", path = "", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List()))
+
+    assertResult(menasComplexMap)(sparkConvertor.convertSparkToMenasFields(sparkComplexMap))
+    assertResult(sparkComplexMap)(sparkConvertor.convertMenasToSparkFields(menasComplexMap))
+  }
+
 
   test("convertSparkToMenasFields with non-string values in metadata") {
     val fieldName = "field_name"
