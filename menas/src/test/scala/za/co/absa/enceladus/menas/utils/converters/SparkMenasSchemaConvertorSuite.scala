@@ -53,13 +53,19 @@ class SparkMenasSchemaConvertorSuite extends FunSuite with SparkTestBase {
   test("convertSparkToMenas Complex Test") {
     val sparkComplex = Seq(
       StructField(name = "a", dataType = IntegerType, nullable = true, metadata = new MetadataBuilder().putString("format", "xyz.abc").putString("precision", "14.56").build),
-      StructField(name = "b", dataType = StructType(Seq(
+      StructField(name = "b", nullable = false, dataType = StructType(Seq(
         StructField(name = "c", dataType = ArrayType.apply(IntegerType)),
         StructField(name = "d", dataType = ArrayType.apply(StructType(Seq(
           StructField(name = "e", dataType = StringType),
           StructField(name = "f", dataType = DoubleType))))),
         StructField(name = "g", dataType = ArrayType.apply(ArrayType.apply(StructType(Seq(
-          StructField(name = "h", dataType = IntegerType)))))))), nullable = false))
+          StructField(name = "h", dataType = IntegerType)
+        ))))),
+        StructField(name = "i", dataType = StructType( // struct<struct>, no array in between
+          Seq(StructField(name = "j", dataType = IntegerType)) // struct<struct<int>>
+        ))
+      )))
+    )
 
     val menasComplex = Seq(
       SchemaField(name = "a", `type` = "integer", path = "", elementType = None, containsNull = None, nullable = true, metadata = Map("format" -> "xyz.abc", "precision" -> "14.56"), children = List()),
@@ -70,7 +76,12 @@ class SparkMenasSchemaConvertorSuite extends FunSuite with SparkTestBase {
           SchemaField(name = "f", `type` = "double", path = "b.d", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List()))),
         SchemaField(name = "g", `type` = "array", path = "b", elementType = Some("array"), containsNull = Some(true), nullable = true, metadata = Map(), children = List(
           SchemaField(name = "", `type` = "array", path = "b.g", elementType = Some("struct"), containsNull = Some(true), nullable = true, metadata = Map(), children = List(
-            SchemaField(name = "h", `type` = "integer", path = "b.g", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List()))))))))
+            SchemaField(name = "h", `type` = "integer", path = "b.g", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List()))))),
+        SchemaField(name = "i", `type` = "struct", path = "b", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List(
+          SchemaField(name = "j", `type` = "integer", path = "b.i", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List())
+        ))
+      ))
+    )
 
     val res = sparkConvertor.convertSparkToMenasFields(sparkComplex)
 

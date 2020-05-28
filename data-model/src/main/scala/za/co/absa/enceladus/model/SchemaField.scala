@@ -36,3 +36,15 @@ case class SchemaField
     if(path.isEmpty) name else s"${path}.${name}"
   }
 }
+
+object SchemaField {
+
+  /**
+   * Important non-exhastive [[SchemaField]] types (does not include primitive types
+   */
+  object TypeNames {
+    val array: String = "array"
+    val struct: String = "struct"
+    val map: String = "map"
+  }
+}
