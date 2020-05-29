@@ -28,9 +28,9 @@ case class SchemaField
   elementType: Option[String] = None, // map/array specific. For map: valueType. KeyType is always String
   containsNull: Option[Boolean] = None,
 
-  nullable: Boolean,
-  metadata: Map[String, String],
-  children: Seq[SchemaField]
+  nullable: Boolean = true,
+  metadata: Map[String, String] = Map.empty,
+  children: Seq[SchemaField] = Seq.empty
 ) {
 
   if (`type` == TypeNames.array || `type` == TypeNames.map) {

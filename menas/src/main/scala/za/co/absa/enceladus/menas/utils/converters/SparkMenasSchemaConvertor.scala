@@ -123,7 +123,15 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
   private def sparkToMenasField(field: StructField, path: String): SchemaField = {
     val containerInfo = field.dataType match {
       case arrayType: ArrayType => Some(arrayType.elementType.typeName, arrayType.containsNull)
-      case mapType: MapType     => Some(mapType.valueType.typeName, mapType.valueContainsNull)
+      case mapType: MapType     =>
+        if (mapType.keyType != StringType) {
+          throw SchemaParsingException(
+            schemaType = null, //scalastyle:ignore null - unknown value = null
+            field = Option(field.name), message =
+            s"Only StringType key is allowed for MapType, but found: ${mapType.keyType}"
+          )
+        }
+        Some(mapType.valueType.typeName, mapType.valueContainsNull)
       case _                    => None
     }
 
