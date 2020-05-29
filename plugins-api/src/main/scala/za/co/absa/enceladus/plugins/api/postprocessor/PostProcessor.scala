@@ -28,8 +28,7 @@ abstract class PostProcessor extends Plugin {
    *
    * @param dataFrame A DataFrame containing the output data.
    * @param params Additional key/value parameters provided by Enceladus.
-   * @return A dataframe with post processing applied
    */
-  def onDataReady(dataFrame: DataFrame, params: Map[String, String]): DataFrame
+  def onDataReady(dataFrame: DataFrame, params: Map[String, String]): Unit
 
 }

@@ -66,6 +66,8 @@ object PerformanceMetricTools {
     addSparkConfig(optionPrefix, "spark.submit.deployMode", "yarn_deploy_mode")
     addSparkConfig(optionPrefix, "spark.master", "spark_master")
 
+    sc.applicationAttemptId
+      .foreach(attemptId => Atum.setAdditionalInfo(s"${optionPrefix}_spark_attempt_id" -> attemptId))
     Atum.setAdditionalInfo(s"${optionPrefix}_cmd_line_args" -> cmdLineArgs)
     Atum.setAdditionalInfo(s"${optionPrefix}_input_dir" -> inputPath)
     Atum.setAdditionalInfo(s"${optionPrefix}_output_dir" -> outputPath)

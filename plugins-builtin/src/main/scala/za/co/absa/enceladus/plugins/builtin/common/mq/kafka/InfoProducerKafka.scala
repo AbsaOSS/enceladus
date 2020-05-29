@@ -22,8 +22,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
 import org.slf4j.LoggerFactory
-import za.co.absa.enceladus.plugins.builtin.common.mq.ControlInfoProducer
-import za.co.absa.enceladus.plugins.builtin.controlinfo.{ControlInfoAvroSerializer, DceControlInfo}
+import za.co.absa.enceladus.plugins.builtin.common.mq.{InfoAvroSerializer, InfoProducer}
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -31,9 +30,10 @@ import scala.util.{Failure, Success}
 
 
 /**
- * This class is responsible for sending control measurements to Kafka.
+ * This class is responsible for sending info records to Kafka.
  */
-class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) extends ControlInfoProducer {
+class InfoProducerKafka[T](kafkaConnectionParams: KafkaConnectionParams)
+                          (implicit serializer: InfoAvroSerializer[T]) extends InfoProducer[T] {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   private val kafkaProducer: KafkaProducer[GenericRecord, GenericRecord] = {
@@ -54,21 +54,20 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
   }
 
   /**
-   * Sends control info measurements to a Kafka topic.
+   * Sends info records to a Kafka topic.
    *
-   * @param controlInfo An instance of Atum control measurements plus information identifying the dataset and
-   *                    the state of the job.
+   * @param infoRecord a value class serializable with acorresponding InfoAvroSerializer to Avro to be sent to kafka.
    */
-  def send(controlInfo: DceControlInfo): Unit = {
+  def send(infoRecord: T): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    val avroKey = ControlInfoAvroSerializer.convertControlInfoKey(controlInfo.datasetName)
-    val avroRecordOpt = ControlInfoAvroSerializer.convertControlInfoRecord(controlInfo)
+    val avroKey = serializer.convertInfoKey(infoRecord)
+    val avroRecordOpt = serializer.convertInfoRecord(infoRecord)
 
     try {
       avroRecordOpt match {
         case Some(avroRecord) =>
-          logger.info(s"Sending control measurements to ${kafkaConnectionParams.topicName}...")
+          logger.info(s"Sending info records ${infoRecord.getClass.getName} to ${kafkaConnectionParams.topicName}...")
           val producerRecord = new ProducerRecord[GenericRecord, GenericRecord](kafkaConnectionParams.topicName,
             avroKey, avroRecord)
           // Java Future to Scala Future
@@ -76,16 +75,15 @@ class ControlInfoProducerKafka(kafkaConnectionParams: KafkaConnectionParams) ext
             kafkaProducer.send(producerRecord).get
           }.onComplete {
             case Success(metadata) =>
-              logger.info(s"Control measurements were sent successfully to the Kafka topic, offset=${metadata.offset()}.")
+              logger.info(s"Info records were sent successfully to the Kafka topic, offset=${metadata.offset()}.")
             case Failure(ex) =>
               logger.error(s"Failed to send control measurements to Kafka.", ex)
           }
-
         case None =>
-          logger.error(s"No Avro records generated from control measurements.")
+          logger.error(s"No Avro records generated from info record $infoRecord.")
       }
     } catch {
-      case NonFatal(ex) => logger.error("Error sending control info metrics to Kafka.", ex)
+      case NonFatal(ex) => logger.error(s"Error sending info record $infoRecord to Kafka.", ex)
     }
   }
 

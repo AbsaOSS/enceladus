@@ -36,7 +36,18 @@ STD_DEFAULT_DRIVER_MEMORY=""
 STD_DEFAULT_DRIVER_CORES=""
 STD_DEFAULT_EXECUTOR_MEMORY=""
 STD_DEFAULT_EXECUTOR_CORES=""
+# setting num executors disables DRA
 STD_DEFAULT_NUM_EXECUTORS=""
+
+# Dynamic Resource Allocation
+# also enables external shuffle service and adaptive execution for consistent setup
+STD_DEFAULT_DRA_ENABLED=false
+# max executors limit is a required parameter
+STD_DEFAULT_DRA_MAX_EXECUTORS=4
+
+STD_DEFAULT_DRA_MIN_EXECUTORS=0
+STD_DEFAULT_DRA_ALLOCATION_RATIO=0.5
+STD_DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE=134217728
 
 CONF_CLASS="za.co.absa.enceladus.conformance.DynamicConformanceJob"
 
@@ -46,7 +57,19 @@ CONF_DEFAULT_DRIVER_MEMORY=""
 CONF_DEFAULT_DRIVER_CORES=""
 CONF_DEFAULT_EXECUTOR_MEMORY=""
 CONF_DEFAULT_EXECUTOR_CORES=""
+CONF_DEFAULT_EXECUTOR_CORES=""
+# setting num executors disables DRA
 CONF_DEFAULT_NUM_EXECUTORS=""
+
+# Dynamic Resource Allocation
+# also enables external shuffle service and adaptive execution for consistent setup
+CONF_DEFAULT_DRA_ENABLED=false
+# max executors limit is a required parameter
+CONF_DEFAULT_DRA_MAX_EXECUTORS=4
+
+CONF_DEFAULT_DRA_MIN_EXECUTORS=0
+CONF_DEFAULT_DRA_ALLOCATION_RATIO=0.5
+CONF_DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE=134217728
 
 DEFAULT_DEPLOY_MODE="client"
 

@@ -17,7 +17,8 @@ package za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka
 
 import com.typesafe.config.Config
 import za.co.absa.enceladus.plugins.api.control.{ControlMetricsPlugin, ControlMetricsPluginFactory}
-import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{ControlInfoProducerKafka, KafkaConnectionParams}
+import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{InfoProducerKafka, KafkaConnectionParams}
+import za.co.absa.enceladus.plugins.builtin.controlinfo.ControlInfoAvroSerializer
 import za.co.absa.enceladus.plugins.builtin.controlinfo.mq.ControlInfoSenderPlugin
 
 /**
@@ -28,9 +29,11 @@ object KafkaInfoPlugin extends ControlMetricsPluginFactory {
   val ClientIdKey = "kafka.info.metrics.client.id"
   val ControlMetricsKafkaTopicKey = "kafka.info.metrics.topic.name"
 
+  implicit val serializer = ControlInfoAvroSerializer
+
   override def apply(config: Config): ControlMetricsPlugin = {
     val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ControlMetricsKafkaTopicKey)
-    val producer = new ControlInfoProducerKafka(connectionParams)
+    val producer = new InfoProducerKafka(connectionParams)
     new ControlInfoSenderPlugin(producer)
   }
 }

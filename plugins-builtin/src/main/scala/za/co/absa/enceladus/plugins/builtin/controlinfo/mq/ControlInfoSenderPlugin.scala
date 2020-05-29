@@ -17,14 +17,15 @@ package za.co.absa.enceladus.plugins.builtin.controlinfo.mq
 
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
-import za.co.absa.enceladus.plugins.builtin.common.mq.ControlInfoProducer
+import za.co.absa.enceladus.plugins.builtin.common.mq.InfoProducer
 import za.co.absa.enceladus.plugins.builtin.controlinfo
+import za.co.absa.enceladus.plugins.builtin.controlinfo.DceControlInfo
 
 /**
  * Implementation of a plugin that sends control information to a messaging system when
  * a checkpoint is created or when run status is changed.
  */
-class ControlInfoSenderPlugin(producer: ControlInfoProducer) extends ControlMetricsPlugin {
+class ControlInfoSenderPlugin(producer: InfoProducer[DceControlInfo]) extends ControlMetricsPlugin {
   val DatasetNameParam = "datasetName"
   val DatasetVersionParam = "datasetVersion"
   val ReportDateParam = "reportDate"

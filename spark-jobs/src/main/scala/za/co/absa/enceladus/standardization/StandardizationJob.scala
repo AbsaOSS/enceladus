@@ -17,10 +17,10 @@ package za.co.absa.enceladus.standardization
 
 import java.io.{PrintWriter, StringWriter}
 import java.text.MessageFormat
+import java.time.Instant
 import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
-import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.slf4j.LoggerFactory
@@ -28,7 +28,7 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.{IdType, _}
 import za.co.absa.enceladus.common._
-import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
@@ -42,12 +42,15 @@ import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.utils.unicode.ParameterConversion._
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
+import org.apache.spark.SPARK_VERSION
+import za.co.absa.enceladus.common.plugin.PostProcessingService
 
 import scala.collection.immutable.HashMap
-import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 object StandardizationJob {
   TimeZoneNormalizer.normalizeJVMTimeZone()
@@ -103,15 +106,41 @@ object StandardizationJob {
       executeStandardization(performance, dfAll, schema, cmd, menasCredentials, pathCfg, recordIdGenerationStrategy)
       cmd.performanceMetricsFile.foreach(this.writePerformanceMetrics(performance, _))
       log.info("Standardization finished successfully")
+
+      // read written data from parquet directly
+      val standardizedDf = spark.read.parquet(pathCfg.outputPath)
+      val postProcessingService = getPostProcessingService(cmd, pathCfg, dataset, MenasPlugin.runNumber, Atum.getControlMeasure.runUniqueId)
+      postProcessingService.onSaveOutput(standardizedDf) // all enabled postProcessors will be run with the std df
     } finally {
       postStandardizationSteps(cmd)
     }
   }
 
+  private def getPostProcessingService(cmd: StdCmdConfig, pathCfg: PathCfg, dataset: Dataset,
+                                        runNumber: Option[Int], uniqueRunId: Option[String]
+                                       )(implicit fsUtils: FileSystemVersionUtils): PostProcessingService = {
+    val runId = MenasPlugin.runNumber
+
+    if (runId.isEmpty) {
+      log.warn("No run number found, the Run URL cannot be properly reported!")
+    }
+
+    // reporting the UI url(s) - if more than one, its comma-separated
+    val runUrl: Option[String] = runId.map { runNumber =>
+      menasBaseUrls.map { menasBaseUrl =>
+        MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, dataset.name, dataset.version, runNumber)
+      }.mkString(",")
+    }
+
+    PostProcessingService.forStandardization(conf, dataset.name, dataset.version, cmd.reportDate,
+      getReportVersion(cmd, dataset), pathCfg.outputPath, Atum.getControlMeasure.metadata.sourceApplication, runUrl,
+      runId, uniqueRunId, Instant.now)
+  }
+
   private def getReportVersion(cmd: StdCmdConfig, dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {
     cmd.reportVersion match {
       case Some(version) => version
-      case None          =>
+      case None =>
         val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, cmd.reportDate) + 1
         log.warn(s"Report version not provided, inferred report version: $newVersion")
         log.warn("This is an EXPERIMENTAL feature.")
@@ -180,7 +209,7 @@ object StandardizationJob {
     }
   }
 
-  private def getGenericOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+  private def getGenericOptions(cmd: StdCmdConfig): HashMap[String, Option[RawFormatParameter]] = {
     val mode = if (cmd.failOnInputNotPerSchema) {
       "FAILFAST"
     } else {
@@ -192,7 +221,7 @@ object StandardizationJob {
     )
   }
 
-  private def getXmlOptions(cmd: StdCmdConfig): HashMap[String,Option[RawFormatParameter]] = {
+  private def getXmlOptions(cmd: StdCmdConfig): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("xml")) {
       HashMap("rowtag" -> cmd.rowTag.map(StringParameter))
     } else {
@@ -200,13 +229,13 @@ object StandardizationJob {
     }
   }
 
-  private def getCsvOptions(cmd: StdCmdConfig, numberOfColumns: Int = 0): HashMap[String,Option[RawFormatParameter]] = {
+  private def getCsvOptions(cmd: StdCmdConfig, numberOfColumns: Int = 0): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
-        "delimiter" -> cmd.csvDelimiter.map(StringParameter),
+        "delimiter" -> cmd.csvDelimiter.map(s => StringParameter(s.includingUnicode.includingNone)),
         "header" -> cmd.csvHeader.map(BooleanParameter),
-        "quote" -> cmd.csvQuote.map(StringParameter),
-        "escape" -> cmd.csvEscape.map(StringParameter),
+        "quote" -> cmd.csvQuote.map(s => StringParameter(s.includingUnicode.includingNone)),
+        "escape" -> cmd.csvEscape.map(s => StringParameter(s.includingUnicode.includingNone)),
         // increase the default limit on the number of columns if needed
         // default is set at org.apache.spark.sql.execution.datasources.csv.CSVOptions maxColumns
         "maxColumns" -> {if (numberOfColumns > SparkCSVReaderMaxColumnsDefault) Some(LongParameter(numberOfColumns)) else None}
@@ -227,9 +256,16 @@ object StandardizationJob {
   private def getCobolOptions(cmd: StdCmdConfig, dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
       val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
+      val isAscii = cobolOptions.encoding.exists(_.equalsIgnoreCase("ascii"))
+      // For ASCII files --charset is converted into Cobrix "ascii_charset" option
+      // For EBCDIC files --charset is converted into Cobrix "ebcdic_code_page" option
       HashMap(
         getCopybookOption(cobolOptions, dataset),
         "is_xcom" -> Option(BooleanParameter(cobolOptions.isXcom)),
+        "string_trimming_policy" -> cobolOptions.trimmingPolicy.map(StringParameter),
+        "encoding" -> cobolOptions.encoding.map(StringParameter),
+        "ascii_charset" -> cmd.charset.flatMap(charset => if (isAscii) Option(StringParameter(charset)) else None),
+        "ebcdic_code_page" -> cmd.charset.flatMap(charset => if (!isAscii) Option(StringParameter(charset)) else None),
         "schema_retention_policy" -> Some(StringParameter("collapse_root"))
       )
     } else {
@@ -465,8 +501,11 @@ object StandardizationJob {
     val version = cmd.datasetVersion
     MenasPlugin.runNumber.foreach { runNumber =>
       menasBaseUrls.foreach { menasBaseUrl =>
-        log.info(s"Menas API Run URL: $menasBaseUrl/api/runs/$name/$version/$runNumber")
-        log.info(s"Menas UI Run URL: $menasBaseUrl/#/runs/$name/$version/$runNumber")
+        val apiUrl = MenasRunUrl.getMenasApiRunUrl(menasBaseUrl, name, version, runNumber)
+        val uiUrl = MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, name, version, runNumber)
+
+        log.info(s"Menas API Run URL: $apiUrl")
+        log.info(s"Menas UI Run URL: $uiUrl")
       }
     }
   }

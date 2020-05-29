@@ -20,7 +20,8 @@ import org.apache.spark.sql.avro.SchemaConverters
 import org.apache.spark.sql.types.StructType
 import za.co.absa.cobrix.cobol.parser.CopybookParser
 import za.co.absa.cobrix.cobol.parser.exceptions.SyntaxErrorException
-import za.co.absa.cobrix.spark.cobol.schema.{CobolSchema, SchemaRetentionPolicy}
+import za.co.absa.cobrix.cobol.reader.policies.SchemaRetentionPolicy
+import za.co.absa.cobrix.spark.cobol.schema.CobolSchema
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
@@ -91,7 +92,7 @@ object SchemaParser {
     def parse(copybookContents: String): StructType = {
       try {
         val parsedSchema = CopybookParser.parseTree(copybookContents)
-        val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, false)
+        val cobolSchema = new CobolSchema(parsedSchema, SchemaRetentionPolicy.CollapseRoot, "", false)
         cobolSchema.getSparkSchema
       } catch {
         case e: SyntaxErrorException =>

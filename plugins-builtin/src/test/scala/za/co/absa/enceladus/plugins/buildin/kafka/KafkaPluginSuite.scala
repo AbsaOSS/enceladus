@@ -25,7 +25,7 @@ import za.co.absa.enceladus.plugins.builtin.controlinfo.mq.ControlInfoSenderPlug
 import scala.collection.JavaConverters._
 
 class KafkaPluginSuite extends FunSuite {
-  test("Test Kafka plugin sends control measurements") {
+  test("Test Kafka info plugin sends control measurements") {
     val producer = new DummyControlInfoProducer
     val dceControlInfo = DceControlInfoFactory.getDummyDceControlInfo()
     val kafkaPlugin = new ControlInfoSenderPlugin(producer)
