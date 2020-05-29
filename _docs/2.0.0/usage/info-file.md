@@ -84,13 +84,13 @@ Addional information regarding the processing of information is added into the \
 | `conform_executors_num`     | How many executors used for conformance |
 | `conform_input_data_size`   | The size of the input data (without metadata) to the Conformance.Usually it is the same as the size of standardized data since Conformance is ran after Standardization |
 | `conform_output_data_size`  | The size of conformed/published data (without metadata such as lineage or _INFO file) |
-| `conform_output_dir_size    | The size of the published directory including metadata |
+| `conform_output_dir_size`   | The size of the published directory including metadata |
 | `conform_records_failed`    | Number of records that has at least one error after Conformance |
 | `conform_size_ratio`        | Size of the conformed/published folder in relation to a standardized folder |
 | `conform_spark_master`      | Spark master of the Conformance job (usually yarn) |
 | `conform_username`          | User account under which Conformance was performed |
 | `csv_delimiter`             | dependant on the input file eg. csv |
-| `raw_format`                | Format of raw data, eg. ‘csv’, ‘json’, ‘xml’, ‘cobol' |
+| `raw_format`                | Format of raw data, eg. `csv`, `json`, `xml`, `cobol` |
 | `source_record_count`       | The number of records in the dataset when it was exported from the source syste |
 | `std_application_id`        | Spark Application unique id of the Standardization Job |
 | `std_errors_count`          | Number of errors after standardization |
