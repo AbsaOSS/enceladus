@@ -13,6 +13,7 @@ redirect_from: /docs/usage/info-file
 - [Table Of Content](#table-of-content)
 - [Description](#description)
 - [Validation](#validation)
+- [Additional Information](#additional-information)
 <!-- tocstop -->
 
 ## Description
@@ -69,6 +70,40 @@ E.g.
 ```
 
 For a fully expanded example go [here][info-file].
+
+## Additional Information 
+
+Addional information regarding the processing of information is added into the \_INFO file during **Standardization** and **Conformance**.
+
+|           Metadata-Key      | Description |
+|-----------------------------|-----------------|
+| `conform_driver_memory`     | The amount of memory used to run Conformance |
+| `conform_enceladus_version` | Which version of Enceladus was used to run Conformance |
+| `conform_errors_count`      | Number of errors after conformance |
+| `conform_executor_memory`   | Number of executors running conformance |
+| `conform_executors_num`     | How many executors used for conformance |
+| `conform_input_data_size`   | The size of the input data (without metadata) to the Conformance.Usually it is the same as the size of standardized data since Conformance is ran after Standardization |
+| `conform_output_data_size`  | The size of conformed/published data (without metadata such as lineage or _INFO file) |
+| `conform_output_dir_size    | The size of the published directory including metadata |
+| `conform_records_failed`    | Number of records that has at least one error after Conformance |
+| `conform_size_ratio`        | Size of the conformed/published folder in relation to a standardized folder |
+| `conform_spark_master`      | Spark master of the Conformance job (usually yarn) |
+| `conform_username`          | User account under which Conformance was performed |
+| `csv_delimiter`             | dependant on the input file eg. csv |
+| `raw_format`                | Format of raw data, eg. ‘csv’, ‘json’, ‘xml’, ‘cobol' |
+| `source_record_count`       | The number of records in the dataset when it was exported from the source syste |
+| `std_application_id`        | Spark Application unique id of the Standardization Job |
+| `std_errors_count`          | Number of errors after standardization |
+| `std_executor_memory`       | Memory requested per executor for Standardization |
+| `std_executors_num`         | How many executors used for Standardization |
+| `std_input_dir_size`        | The size of the raw folder |
+| `std_output_data_size`      | Size of the output data after standardization |
+| `std_output_dir_size`       | The size of the standardized folder |
+| `std_records_failed`        | Number of records that has at least one error after standardization |
+| `std_records_succeeded`     | Number of records that has no errors after standardization |
+| `std_spark_master`          | Spark master of the Standardization job (usually yarn) |
+| `std_username`              | User account under which Standardization was performed |
+| `std_yarn_deploy_mode`      | Yarn deployment mode used (client or cluster) |
 
 [atum]: https://github.com/AbsaOSS/atum
 [info-file]: https://github.com/AbsaOSS/enceladus/blob/master/examples/data/input/_INFO
