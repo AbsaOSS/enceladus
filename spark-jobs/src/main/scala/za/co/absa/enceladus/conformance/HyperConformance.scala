@@ -51,6 +51,8 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
 
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     val conformedDf = applyConformanceTransformations(rawDf, conformance)
+    log.info(s"Raw schema: ${rawDf.schema.treeString}")
+    log.info(s"Publish schema: ${conformedDf.schema.treeString}")
     conformedDf
   }
 

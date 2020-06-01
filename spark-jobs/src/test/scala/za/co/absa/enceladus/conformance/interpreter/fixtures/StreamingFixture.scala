@@ -35,7 +35,7 @@ trait StreamingFixture extends FunSuite with SparkTestBase with MockitoSugar {
   private val interval = 10000
 
   protected def testHyperConformance(input: DataFrame,
-                                     memoryTableName: String,
+                                     sinkTableName: String,
                                      dataset: Dataset,
                                      catalystWorkaround: Boolean = true)
                                     (implicit menasDAO: MenasDAO): DataFrame = {
@@ -51,7 +51,7 @@ trait StreamingFixture extends FunSuite with SparkTestBase with MockitoSugar {
     val sink = conformed
       .writeStream
       .trigger(Trigger.ProcessingTime(interval))
-      .queryName(memoryTableName)
+      .queryName(sinkTableName)
       .outputMode("append")
       .format("memory")
       .start()
@@ -59,7 +59,7 @@ trait StreamingFixture extends FunSuite with SparkTestBase with MockitoSugar {
     input.collect().foreach(e => memoryStream.addData(e))
     sink.awaitTermination(interval)
 
-    val frame: DataFrame = spark.sql(s"select * from $memoryTableName")
+    val frame: DataFrame = spark.sql(s"select * from $sinkTableName")
     frame
   }
 }
