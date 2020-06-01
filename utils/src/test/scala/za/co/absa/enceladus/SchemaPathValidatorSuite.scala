@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus
 
-import org.apache.spark.sql.types.{StructField, _}
+import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.validation.{SchemaPathValidator, ValidationError, ValidationIssue, ValidationWarning}
 
