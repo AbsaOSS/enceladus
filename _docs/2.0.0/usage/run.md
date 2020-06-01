@@ -19,10 +19,10 @@ redirect_from: /docs/usage/run
 
 ## Requirements and deploy
 
-For description of requirements and depploy see the [README.md](https://github.com/AbsaOSS/enceladus/blob/master/README.md#how-to-run)
-in the the project root.
+For description of requirements and deployment see the [README.md][project-readme] in the project root.
 
 ## Running Standardization
+
 ```
 <spark home>/spark-submit \
 --num-executors <num> \
@@ -42,10 +42,12 @@ in the the project root.
 --raw-format <data_format> \
 --row-tag <tag>
 ```
-* Here `row-tag` is a specific option for `raw-format` of type `XML`. For more options for different types please see our WIKI.
+
+* Here `row-tag` is a specific option for `raw-format` of type `XML`. For more options for different types please see bellow.
 * In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
 ## Running Conformance
+
 ```
 <spark home>/spark-submit \
 --num-executors <num> \
@@ -65,6 +67,7 @@ in the the project root.
 --report-date <date> \
 --report-version <data_run_version>
 ```
+
 * In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
 ## Helper scripts
@@ -90,6 +93,7 @@ DRA gets auto-disabled, and spark submit falls back to Spark defaults (preservin
 
 
 The basic command to run **Standardization** becomes:
+
 ```
 <path to scripts>/run_standardization.sh \
 --deploy-mode <client/cluster> \
@@ -103,6 +107,7 @@ The basic command to run **Standardization** becomes:
 ```
 
 The basic command to run **Conformance** becomes:
+
 ```
 <path to scripts>/run_conformance.sh \
 --deploy-mode <client/cluster> \
@@ -133,8 +138,7 @@ The list of options for configuring Spark deployment mode in Yarn and resource s
 | --conf-spark-memory-fraction **value**                               |             | **Advanced**. Fraction of (heap space - 300MB) used for execution and storage (default=`0.6`). Sets `spark.memory.fraction` Spark configuration parameter. See the detailed description [here](http://spark.apache.org/docs/latest/configuration.html#memory-management) |
 
 
-For more information on these options see the official documentation on running Spark on Yarn: 
-[https://spark.apache.org/docs/latest/running-on-yarn.html](https://spark.apache.org/docs/latest/running-on-yarn.html)
+For more information on these options see the official documentation on [running Spark on Yarn] [spark-running-yarn]
 
 The list of all options for running both Standardization and Conformance:
 
@@ -173,3 +177,6 @@ The list of additional options available for running Conformance:
 | --experimental-mapping-rule **true/false** | build-specific and is set in 'application.properties' | If `true`, the experimental optimized mapping rule implementation is used |
 | --catalyst-workaround **true/false**       | `true`                   | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. Turn this off only is you encounter timing freeze issues when running Conformance | 
 | --autoclean-std-folder **true/false**      |                          | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job |
+
+[project-readme]: https://github.com/AbsaOSS/enceladus/blob/master/README.md#how-to-run
+[spark-running-yarn]: https://spark.apache.org/docs/latest/running-on-yarn.html
