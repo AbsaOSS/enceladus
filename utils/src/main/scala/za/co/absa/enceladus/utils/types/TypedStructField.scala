@@ -167,10 +167,23 @@ object TypedStructField {
   }
   // StringTypeStructField
   final class StringTypeStructField private[TypedStructField](structField: StructField)
-                                                              (implicit defaults: Defaults)
+                                                             (implicit defaults: Defaults)
     extends TypedStructFieldTagged[String](structField) {
     override protected def convertString(string: String): Try[String] = {
       Success(string)
+    }
+
+    override def validate(): Seq[ValidationIssue] = {
+      ScalarFieldValidator.validate(this)
+    }
+  }
+
+  // BinaryTypeStructField
+  final class BinaryTypeStructField private[TypedStructField](structField: StructField)
+                                                             (implicit defaults: Defaults)
+    extends TypedStructFieldTagged[Array[Byte]](structField) {
+    override protected def convertString(string: String): Try[Array[Byte]] = {
+      Success(string.getBytes)
     }
 
     override def validate(): Seq[ValidationIssue] = {

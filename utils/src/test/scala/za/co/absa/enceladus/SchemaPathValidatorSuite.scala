@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus
 
-import org.apache.spark.sql.types._
+import org.apache.spark.sql.types.{StructField, _}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.validation.{SchemaPathValidator, ValidationError, ValidationIssue, ValidationWarning}
 
@@ -29,7 +29,9 @@ class SchemaPathValidatorSuite extends FunSuite {
       StructField("id", StringType),
       StructField("person", StructType(Array(
         StructField("firstName", DateType),
-        StructField("lastName", DateType)))),
+        StructField("lastName", DateType),
+        StructField("data", BinaryType)
+      ))),
       StructField("orders", ArrayType(StructType(Array(
         StructField("orderdate", DateType),
         StructField("deliverdate", DateType),
@@ -51,6 +53,7 @@ class SchemaPathValidatorSuite extends FunSuite {
     // These should pass the validation
     assert(SchemaPathValidator.validateSchemaPath(schema, "id").isEmpty)
     assert(SchemaPathValidator.validateSchemaPath(schema, "person.firstName").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPath(schema, "person.data").isEmpty)
     assert(SchemaPathValidator.validateSchemaPath(schema, "orders.orderdate").isEmpty)
     assert(SchemaPathValidator.validateSchemaPath(schema, "orders.deliverdate").isEmpty)
     assert(SchemaPathValidator.validateSchemaPath(schema, "orders.payment.due").isEmpty)
@@ -97,6 +100,7 @@ class SchemaPathValidatorSuite extends FunSuite {
     // These should pass the validation
     assert(SchemaPathValidator.validateSchemaPathPrimitive(schema, "id").isEmpty)
     assert(SchemaPathValidator.validateSchemaPathPrimitive(schema, "person.firstName").isEmpty)
+    assert(SchemaPathValidator.validateSchemaPathPrimitive(schema, "person.data").isEmpty)
     assert(SchemaPathValidator.validateSchemaPathPrimitive(schema, "orders.orderdate").isEmpty)
     assert(SchemaPathValidator.validateSchemaPathPrimitive(schema, "orders.payment.due").isEmpty)
     assert(SchemaPathValidator.validateSchemaPathPrimitive(schema, "matrix.bar").isEmpty)

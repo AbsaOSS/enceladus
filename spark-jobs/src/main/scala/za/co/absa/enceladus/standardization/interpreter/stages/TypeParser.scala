@@ -168,6 +168,7 @@ object TypeParser {
       case _: DoubleType    => FractionalParser(TypedStructField.asNumericTypeStructField[Double](field), _, _, _, _, _)
       case _: DecimalType   => DecimalParser(TypedStructField.asNumericTypeStructField[BigDecimal](field), _, _, _, _, _)
       case _: StringType    => StringParser(TypedStructField(field), _, _, _, _, _)
+      case _: BinaryType    => BinaryParser(TypedStructField(field), _, _, _, _, _)
       case _: BooleanType   => BooleanParser(TypedStructField(field), _, _, _, _, _)
       case _: DateType      => DateParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _, _, _)
       case _: TimestampType => TimestampParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _, _, _)
@@ -406,6 +407,14 @@ object TypeParser {
                                         failOnInputNotPerSchema: Boolean,
                                         isArrayElement: Boolean)
                                        (implicit defaults: Defaults) extends ScalarParser[String]
+
+  private final case class BinaryParser(field: TypedStructField,
+                                        path: String,
+                                        column: Column,
+                                        origType: DataType,
+                                        failOnInputNotPerSchema: Boolean,
+                                        isArrayElement: Boolean)
+                                       (implicit defaults: Defaults) extends ScalarParser[Array[Byte]]
 
   private final case class BooleanParser(field: TypedStructField,
                                          path: String,
