@@ -268,11 +268,11 @@ Here are the recognized ones with the description of their purpose (with detaile
 **NB!** All values in _metadata_ have to be entered as *string*. Even if they would conform to other types, like number
 or boolean.
 
-<a name="#metadata-star" />\* Value used if nothing is specified in _metadata_
+<a id="metadata-star" />\* Value used if nothing is specified in _metadata_
 
-<a name="#metadata-star-star" />\*\* No default exists (as not needed)
+<a id="metadata-star-star" />\*\* No default exists (as not needed)
 
-<a name="#metadata-star-star-star" />\*\*\* Unless a different default time zone is specified via
+<a id="metadata-star-star-star" />\*\*\* Unless a different default time zone is specified via
 `defaultTimestampTimeZone` and `defaultDateTimeZone` application settings
 
 ### sourcecolumn
@@ -435,7 +435,7 @@ Summary:
 | `i`                                        | Microsecond                                      | 111, 321001                            |
 | `n`<sup>[*](#parsing-star)</sup>           | Nanosecond                                       | 999, 542113879                         |
 
-<a name="parsing-star" />"\* While _nanoseconds_ designation is supported on input, it's not supported in storage or further usage. So any
+<a id="parsing-star" />\* While _nanoseconds_ designation is supported on input, it's not supported in storage or further usage. So any
    value behind microseconds precision will be truncated.
 
 **NB!** Spark uses US Locale and because on-the-fly conversion would be complicated, at the moment we stick to this
@@ -509,7 +509,7 @@ be distinct characters, or parsing will be impossible.
 | `'`    | Prefix or suffix      | Used to quote special characters in a prefix or suffix, for example, the "'#'#" pattern allows the value `#123` to be read in as the number `123`. To create a single quote itself, use two in a row: "# o''clock". |                                                                                    |
 | `∞`    | *not part of pattern* | String to represent infinity                                                                                                                                                                                        |                                                                                    |
 
-<a name="pattern-parsing-star"/>\* while these can be changed, in the [`pattern`]($pattern) the default value *must* be 
+<a id="pattern-parsing-star"/>\* while these can be changed, in the [`pattern`]($pattern) the default value *must* be 
 used. E.g. *"."*, *"."* and *"-"*.
 
 **NB!** If there's no special format of the input, it's advised to avoid the usage of patterns due to the added
@@ -570,4 +570,4 @@ cannot be a `default` for the type [`Short`](#short), or _"∞"_ if `allow_infin
 [oracle-tz-ids]: https://docs.oracle.com/javase/8/docs/api/java/util/TimeZone.html#getAvailableIDs--
 [timestamp-types]: https://docs.google.com/document/d/1gNRww9mZJcHvUDCXklzjFEQGpefsuR_akCDfWsdE35Q/edit#heading=h.n699ftkvhjlo
 [oracle-simple-date-format]: https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
-[oracle-decimal-format]: #https://docs.oracle.com/javase/7/docs/api/java/text/DecimalFormat.html
+[oracle-decimal-format]: https://docs.oracle.com/javase/7/docs/api/java/text/DecimalFormat.html

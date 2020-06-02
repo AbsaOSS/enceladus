@@ -18,7 +18,7 @@ redirect_from: /docs/usage/info-file
 
 ## Description
 
-File named `\_INFO` placed within the source directory together with the raw data is a JSON file tracking control measures 
+File named `_INFO` placed within the source directory together with the raw data is a JSON file tracking control measures 
 via [Atum][atum]. Example how the file should contain can be found
 [in the code][info-file].
 
