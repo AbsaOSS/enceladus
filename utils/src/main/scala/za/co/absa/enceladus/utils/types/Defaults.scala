@@ -52,7 +52,7 @@ object GlobalDefaults extends Defaults {
       case _: DoubleType    => 0.0d
       case _: LongType      => 0L
       case _: StringType    => ""
-      case _: BinaryType    => Array[Byte]()
+      case _: BinaryType    => Array.empty[Byte]
       case _: DateType      => new Date(0) //linux epoch
       case _: TimestampType => new Timestamp(0)
       case _: BooleanType   => false
