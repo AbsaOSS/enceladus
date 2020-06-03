@@ -31,4 +31,6 @@ object MetadataKeys {
   val AllowInfinity = "allow_infinity"
   // integral types
   val Radix = "radix"
+  // binary
+  val Encoding = "encoding"
 }

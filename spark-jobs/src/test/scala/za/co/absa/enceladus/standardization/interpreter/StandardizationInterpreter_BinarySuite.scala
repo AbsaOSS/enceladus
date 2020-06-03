@@ -15,8 +15,9 @@
 
 package za.co.absa.enceladus.standardization.interpreter
 
-import org.apache.spark.sql.types.{BinaryType, StructField, StructType}
+import org.apache.spark.sql.types.{BinaryType, MetadataBuilder, StructField, StructType}
 import org.scalatest.{FunSuite, Matchers}
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
@@ -28,7 +29,7 @@ class StandardizationInterpreter_BinarySuite extends FunSuite with SparkTestBase
 
   private val fieldName = "binaryField"
 
-  test("byteArray") {
+  test("byteArray to Binary") {
     val seq = Seq(
       Array(1, 2, 3).map(_.toByte),
       Array('a', 'b', 'c').map(_.toByte)
@@ -42,12 +43,101 @@ class StandardizationInterpreter_BinarySuite extends FunSuite with SparkTestBase
     )
 
     val src = seq.toDF(fieldName)
-
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     logDataFrameContent(std)
 
     val result = std.as[BinaryRow].collect().toList
+    expected.map(_.simpleFields) should contain theSameElementsAs result.map(_.simpleFields)
+  }
 
+  test("Binary from string with base64 encoding") {
+    val seq = Seq(
+      "MTIz",
+      "YWJjZA=="
+    )
+    val desiredSchema = StructType(Seq(
+      StructField(fieldName, BinaryType, nullable = false,
+        new MetadataBuilder().putString("encoding", "base64").build)
+    ))
+
+    val expected = Seq(
+      BinaryRow(Array(49, 50, 51).map(_.toByte)), // "123"
+      BinaryRow(Array(97, 98, 99, 100).map(_.toByte)) // "abcd"
+    )
+
+    val src = seq.toDF(fieldName)
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    logDataFrameContent(std)
+
+    val result = std.as[BinaryRow].collect().toList
+    expected.map(_.simpleFields) should contain theSameElementsAs result.map(_.simpleFields)
+  }
+
+  test("Binary from string with bogus encoding") {
+    val seq = Seq(
+      "does not matter"
+    )
+    val desiredSchema = StructType(Seq(
+      StructField(fieldName, BinaryType, nullable = false,
+        new MetadataBuilder().putString("encoding", "bogus").build)
+    ))
+
+    val src = seq.toDF(fieldName)
+    val caught = intercept[IllegalStateException] (
+      StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    )
+
+    caught.getMessage should startWith ("Unsupported encoding")
+  }
+
+  test("Binary from string with no encoding") {
+    val seq = Seq(
+      "abc",
+      "1234"
+    )
+    val desiredSchema = StructType(Seq(
+      StructField(fieldName, BinaryType, nullable = false)
+    ))
+
+    val expected = Seq(
+      BinaryRow(Array(97, 98, 99).map(_.toByte)), // "123"
+      BinaryRow(Array(49, 50, 51,52).map(_.toByte)) // "abcd"
+    )
+
+    val src = seq.toDF(fieldName)
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    logDataFrameContent(std)
+
+    val result = std.as[BinaryRow].collect().toList
+    expected.map(_.simpleFields) should contain theSameElementsAs result.map(_.simpleFields)
+  }
+
+  test("Binary with defaultValue always uses base64") {
+    val seq = Seq[Option[String]](
+      Some("MTIz"),
+      None
+    )
+    val desiredSchema = StructType(Seq(
+      StructField(fieldName, BinaryType, nullable = false, new MetadataBuilder()
+        .putString("encoding", "base64")
+        .putString("default", "ZW1wdHk=") // "empty"
+          .build)
+    ))
+
+    val expected = Seq(
+      BinaryRow(Array(49, 50, 51).map(_.toByte)), // "123"
+      // ^ std error is written into the errCol and the default (fallback) value "(binary) empty" is used.
+      BinaryRow(Array('e', 'm', 'p', 't', 'y').map(_.toByte),
+        Seq(ErrorMessage("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute",
+          "binaryField", rawValues = Seq("null"), mappings = Seq()))
+      )
+    )
+
+    val src = seq.toDF(fieldName)
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    logDataFrameContent(std)
+
+    val result = std.as[BinaryRow].collect().toList
     expected.map(_.simpleFields) should contain theSameElementsAs result.map(_.simpleFields)
   }
 

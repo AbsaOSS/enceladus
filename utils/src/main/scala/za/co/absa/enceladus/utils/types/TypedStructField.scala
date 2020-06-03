@@ -16,7 +16,10 @@
 package za.co.absa.enceladus.utils.types
 
 import java.sql.{Date, Timestamp}
+import java.util.Base64
+
 import org.apache.spark.sql.types._
+import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldEnhancements
 import za.co.absa.enceladus.utils.numeric._
 import za.co.absa.enceladus.utils.schema.MetadataKeys
@@ -123,6 +126,8 @@ sealed abstract class TypedStructField(structField: StructField)(implicit defaul
 }
 
 object TypedStructField {
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
   /**
    * This is to be the only accessible constructor for TypedStructField sub-classes
    * The point is, that sub-classes have private constructors to prevent their instantiation outside this apply
@@ -134,6 +139,7 @@ object TypedStructField {
   def apply(structField: StructField)(implicit defaults: Defaults): TypedStructField = {
     structField.dataType match {
       case _: StringType    => new StringTypeStructField(structField)
+      case _: BinaryType    => new BinaryTypeStructField(structField)
       case _: BooleanType   => new BooleanTypeStructField(structField)
       case _: ByteType      => new ByteTypeStructField(structField)
       case _: ShortType     => new ShortTypeStructField(structField)
@@ -182,8 +188,11 @@ object TypedStructField {
   final class BinaryTypeStructField private[TypedStructField](structField: StructField)
                                                              (implicit defaults: Defaults)
     extends TypedStructFieldTagged[Array[Byte]](structField) {
+
+    // used to convert the default value from metadata's [[MetadataKeys.DefaultValue]]
     override protected def convertString(string: String): Try[Array[Byte]] = {
-      Success(string.getBytes)
+      //binary's default value is always expected to be in base64
+      Try(Base64.getDecoder.decode(string))
     }
 
     override def validate(): Seq[ValidationIssue] = {

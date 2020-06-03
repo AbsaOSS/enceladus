@@ -166,7 +166,7 @@ class CastingConformanceRuleForm extends ConformanceRuleForm {
       {type: "string"},
       {type: "date"},
       {type: "timestamp"},
-      {type: "binary"},
+      {type: "binary"}
     ]
   }
 
