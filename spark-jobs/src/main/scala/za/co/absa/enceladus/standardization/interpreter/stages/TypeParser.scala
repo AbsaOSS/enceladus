@@ -27,8 +27,9 @@ import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils}
+import za.co.absa.enceladus.utils.schema.{MetadataKeys, MetadataValues, SchemaUtils}
 import za.co.absa.enceladus.utils.schema.SchemaUtils.FieldWithSource
+import za.co.absa.enceladus.utils.implicits.StructFieldImplicits._
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.TypedStructField._
@@ -417,18 +418,18 @@ object TypeParser {
                                        (implicit defaults: Defaults) extends PrimitiveParser[Array[Byte]] {
     override protected def assemblePrimitiveCastLogic: Column = {
       origType match {
-        case BinaryType => column.cast(BinaryType) // binary: just cast
+        case BinaryType => column
         case StringType =>
-          if (field.structField.metadata.contains(MetadataKeys.Encoding)) {
-            val encoding = field.structField.metadata.getString(MetadataKeys.Encoding)
-            encoding.toLowerCase match {
-              case "base64" => org.apache.spark.sql.functions.unbase64(column).cast(BinaryType)
-              case _ => throw new IllegalStateException(s"Unsupported encoding for Binary field ${field.structField.name}: '$encoding'")
-            }
+          val encoding = field.structField.getMetadataString(MetadataKeys.Encoding).map(_.toLowerCase)
 
-          } else {
-            logger.info(s"Binary field ${field.structField.name} does not have encoding setup in metadata. Reading as-is using 'getBytes'")
-            column.cast(field.dataType) // no metadata, just cast
+          encoding match {
+            case Some(MetadataValues.Encoding.Base64) => unbase64(column)
+            case Some(MetadataValues.Encoding.None) | None =>
+              if (encoding.isEmpty) {
+                logger.info(s"Binary field ${field.structField.name} does not have encoding setup in metadata. Reading as-is.")
+              }
+              column.cast(field.dataType) // use as-is
+            case _ => throw new IllegalStateException(s"Unsupported encoding for Binary field ${field.structField.name}: '${encoding.get}'")
           }
         case _ => throw new IllegalStateException(s"Unsupported conversion from BinaryType to ${field.dataType}")
       }

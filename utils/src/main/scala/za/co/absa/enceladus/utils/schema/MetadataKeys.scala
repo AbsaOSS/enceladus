@@ -34,3 +34,10 @@ object MetadataKeys {
   // binary
   val Encoding = "encoding"
 }
+
+object MetadataValues {
+  object Encoding {
+    val Base64 = "base64"
+    val None = "none"
+  }
+}
