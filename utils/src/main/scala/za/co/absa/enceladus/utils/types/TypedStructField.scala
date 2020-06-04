@@ -197,7 +197,7 @@ object TypedStructField {
     }
 
     override def validate(): Seq[ValidationIssue] = {
-      ScalarFieldValidator.validate(this)
+      BinaryFieldValidator.validate(this)
     }
   }
 

@@ -20,6 +20,7 @@ import org.scalatest.{FunSuite, Matchers}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.enceladus.utils.validation.ValidationException
 
 class StandardizationInterpreter_BinarySuite extends FunSuite with SparkTestBase with LoggerTestBase with Matchers {
 
@@ -83,11 +84,12 @@ class StandardizationInterpreter_BinarySuite extends FunSuite with SparkTestBase
     ))
 
     val src = seq.toDF(fieldName)
-    val caught = intercept[IllegalStateException](
+    val caught = intercept[ValidationException](
       StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     )
 
-    caught.getMessage should startWith("Unsupported encoding")
+    caught.errors.length shouldBe 1
+    caught.errors.head should include ("Unsupported encoding for Binary field binaryField: 'bogus'")
   }
 
   // behavior of explicit metadata "none" and lacking metadata should behave identically
