@@ -15,7 +15,8 @@
 
 package za.co.absa.enceladus.utils.validation
 
-class ValidationException(val msg: String, val errors: Seq[String]) extends Exception(msg)
+class ValidationException(val msg: String, val errors: Seq[String])
+  extends Exception(s"$msg Due to errors: ${errors.mkString(",")}")
 
 object ValidationException {
   def unapply(arg: ValidationException): Option[(String, Seq[String])] = Some(arg.msg, arg.errors)
