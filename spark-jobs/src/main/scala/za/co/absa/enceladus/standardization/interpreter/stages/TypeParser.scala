@@ -53,7 +53,7 @@ import scala.util.{Random, Try}
   *         NumericParser !
   *         StringParser !
   *         BooleanParser !
- *        BinaryParser !
+  *       BinaryParser !
   *       DateTimeParser
   *         TimestampParser !
   *         DateParser !

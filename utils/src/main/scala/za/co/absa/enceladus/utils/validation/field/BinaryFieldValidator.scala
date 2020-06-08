@@ -24,32 +24,27 @@ import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
 
 import scala.util.{Failure, Success, Try}
 
-object BinaryFieldValidator extends BinaryFieldValidator
-
-class BinaryFieldValidator extends FieldValidator {
+object BinaryFieldValidator extends FieldValidator {
   private def encodingForField(field: TypedStructField): Option[String] =
     field.structField.getMetadataString(MetadataKeys.Encoding)
 
-  private def validateDefaultValue(field: TypedStructField): Seq[ValidationIssue] = {
+  private def validateDefaultValueWithGlobal(field: TypedStructField): Seq[ValidationIssue] = {
     tryToValidationIssues(field.defaultValueWithGlobal)
   }
 
-  private def validateExplicitDefaultValue(field: TypedStructField): Seq[ValidationIssue] = {
-    val defaultValue = field.structField.getMetadataString(MetadataKeys.DefaultValue)
+  private def validateExplicitBase64DefaultValue(field: TypedStructField): Seq[ValidationIssue] = {
+    val defaultValue: Option[String] = field.structField.getMetadataString(MetadataKeys.DefaultValue)
     val encoding: Option[String] = encodingForField(field)
 
-    (for {
-      enc <- encoding if enc == MetadataValues.Encoding.Base64
-      value <- defaultValue
-    } yield {
-      // only base64 and explicit default value could result in validation issues here:
-      Try {
-        Base64.getDecoder.decode(value)
+    (encoding, defaultValue) match {
+      case (Some(MetadataValues.Encoding.Base64), Some(encodedValue)) => Try {
+        Base64.getDecoder.decode(encodedValue)
       } match {
         case Success(_) => Seq.empty
-        case Failure(_) => Seq(ValidationError(s"Invalid default value $value for Base64 encoding (cannot be decoded)!"))
+        case Failure(_) => Seq(ValidationError(s"Invalid default value $encodedValue for Base64 encoding (cannot be decoded)!"))
       }
-    }).getOrElse(Seq.empty)
+      case _ => Seq.empty
+    }
   }
 
   private def validateEncoding(field: TypedStructField): Seq[ValidationIssue] = {
@@ -64,6 +59,6 @@ class BinaryFieldValidator extends FieldValidator {
   }
 
   override def validate(field: TypedStructField): Seq[ValidationIssue] = {
-    super.validate(field) ++ validateDefaultValue(field) ++ validateExplicitDefaultValue(field) ++ validateEncoding(field)
+    super.validate(field) ++ validateDefaultValueWithGlobal(field) ++ validateExplicitBase64DefaultValue(field) ++ validateEncoding(field)
   }
 }
