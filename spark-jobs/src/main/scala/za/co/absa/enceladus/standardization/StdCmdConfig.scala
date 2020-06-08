@@ -15,11 +15,8 @@
 
 package za.co.absa.enceladus.standardization
 
-import org.apache.spark.storage.StorageLevel
 import scopt.OptionParser
-import za.co.absa.enceladus.dao.auth._
-
-import scala.util.matching.Regex
+import za.co.absa.enceladus.common.JobCmdConfig
 
 /**
  * This is a class for configuration provided by the command line parameters
@@ -27,35 +24,30 @@ import scala.util.matching.Regex
  * Note: scopt requires all fields to have default values.
  * Even if a field is mandatory it needs a default value.
  */
-case class StdCmdConfig(
-                         cmdLineArgs: Array[String],
-                         datasetName: String = "",
-                         datasetVersion: Int = 1,
-                         reportDate: String = "",
-                         reportVersion: Option[Int] = None,
-                         rawFormat: String = "xml",
-                         menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
-                         charset: Option[String] = None,
-                         rowTag: Option[String] = None,
-                         csvDelimiter: Option[String] = None,
-                         csvHeader: Option[Boolean] = Some(false),
-                         csvQuote: Option[String] = None,
-                         csvEscape: Option[String] = None,
-                         cobolOptions: Option[CobolOptions] = None,
-                         fixedWidthTrimValues: Option[Boolean] = Some(false),
-                         performanceMetricsFile: Option[String] = None,
-                         rawPathOverride: Option[String] = None,
-                         folderPrefix: Option[String] = None,
-                         persistStorageLevel: Option[StorageLevel] = None,
-                         failOnInputNotPerSchema: Boolean = false
-                       )
+case class StdCmdConfig(rawFormat: String = "xml",
+                        charset: Option[String] = None,
+                        rowTag: Option[String] = None,
+                        csvDelimiter: Option[String] = None,
+                        csvHeader: Option[Boolean] = Some(false),
+                        csvQuote: Option[String] = None,
+                        csvEscape: Option[String] = None,
+                        cobolOptions: Option[CobolOptions] = None,
+                        fixedWidthTrimValues: Option[Boolean] = Some(false),
+                        rawPathOverride: Option[String] = None,
+                        failOnInputNotPerSchema: Boolean = false,
+                        jobConfig: JobCmdConfig = JobCmdConfig())
 
 object StdCmdConfig {
 
-  def getCmdLineArguments(args: Array[String]): StdCmdConfig = {
-    val parser = new CmdParser("spark-submit [spark options] StandardizationBundle.jar")
+  val stepName = "Standardization"
 
-    val optionCmd = parser.parse(args, StdCmdConfig(args))
+  def getCmdLineArguments(args: Array[String]): StdCmdConfig = {
+    val jobConfig = JobCmdConfig.getCmdLineArguments(args, stepName)
+
+    val parser = new CmdParser(s"spark-submit [spark options] ${stepName}Bundle.jar")
+
+    val config: StdCmdConfig = StdCmdConfig(jobConfig = jobConfig)
+    val optionCmd = parser.parse(args, config)
     if (optionCmd.isEmpty) {
       // Wrong arguments provided, the message is already displayed
       System.exit(1)
@@ -64,62 +56,10 @@ object StdCmdConfig {
   }
 
   private class CmdParser(programName: String) extends OptionParser[StdCmdConfig](programName) {
+    override def errorOnUnknownArgument = false
+
     head("\nStandardization", "")
     var rawFormat: Option[String] = None
-
-    opt[String]('D', "dataset-name").required().action((value, config) =>
-      config.copy(datasetName = value)).text("Dataset name")
-
-    opt[Int]('d', "dataset-version").required().action((value, config) =>
-      config.copy(datasetVersion = value)).text("Dataset version")
-      .validate(value =>
-        if (value > 0) {
-          success
-        } else {
-          failure("Option --dataset-version must be >0")
-        })
-
-    val reportDateMatcher: Regex = "^\\d{4}-\\d{2}-\\d{2}$".r
-    opt[String]('R', "report-date").required().action((value, config) =>
-      config.copy(reportDate = value)).text("Report date in 'yyyy-MM-dd' format")
-      .validate(value =>
-        reportDateMatcher.findFirstIn(value) match {
-          case None => failure(s"Match error in '$value'. Option --report-date expects a date in 'yyyy-MM-dd' format")
-          case _    => success
-        })
-
-    private var credsFile: Option[String] = None
-    private var keytabFile: Option[String] = None
-    opt[String]("menas-credentials-file").hidden.optional().action({ (file, config) =>
-      credsFile = Some(file)
-      config.copy(menasCredentialsFactory = new MenasPlainCredentialsFactory(file))
-    }).text("Path to Menas credentials config file.").validate(path =>
-      if (keytabFile.isDefined) {
-        failure("Only one authentication method is allow at a time")
-      } else {
-        success
-      })
-
-    opt[String]("menas-auth-keytab").optional().action({ (file, config) =>
-      keytabFile = Some(file)
-      config.copy(menasCredentialsFactory = new MenasKerberosCredentialsFactory(file))
-    }).text("Path to keytab file used for authenticating to menas").validate({ file =>
-      if (credsFile.isDefined) {
-        failure("Only one authentication method is allowed at a time")
-      } else  {
-        success
-      }
-    })
-
-    opt[Int]('r', "report-version").optional().action((value, config) =>
-      config.copy(reportVersion = Some(value)))
-      .text("Report version. If not provided, it is inferred based on the publish path (it's an EXPERIMENTAL feature)")
-      .validate(value =>
-        if (value > 0) {
-          success
-        } else {
-          failure("Option --report-version must be >0")
-        })
 
     opt[String]('f', "raw-format").required().action((value, config) => {
       rawFormat = Some(value)
@@ -202,27 +142,10 @@ object StdCmdConfig {
 
     processCobolCmdOptions()
 
-    opt[String]("performance-file").optional().action((value, config) =>
-      config.copy(performanceMetricsFile = Some(value))).text("produce a performance metrics file at the given location (local filesystem)")
-
     opt[String]("debug-set-raw-path").optional().hidden().action((value, config) =>
       config.copy(rawPathOverride = Some(value))).text("override the path of the raw data (used internally for performance tests)")
 
-    opt[String]("folder-prefix").optional().action((value, config) =>
-      config.copy(folderPrefix = Some(value))).text("Adds a folder prefix before the date tokens")
-
-    opt[String]("persist-storage-level").optional().action((value, config) =>
-      config.copy(persistStorageLevel = Some(StorageLevel.fromString(value))))
-      .text("Specifies persistence storage level to use when processing data. Spark's default is MEMORY_AND_DISK.")
-
     help("help").text("prints this usage text")
-
-    checkConfig { config =>
-      config.menasCredentialsFactory match {
-        case InvalidMenasCredentialsFactory => failure("No authentication method specified (e.g. --menas-auth-keytab)")
-        case _ => success
-      }
-    }
 
     private def processCobolCmdOptions(): Unit = {
       opt[String]("copybook").optional().action((value, config) => {

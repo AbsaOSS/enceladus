@@ -19,6 +19,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.mockito.Mockito.mock
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.common.JobCmdConfig
 import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, ExplosionState, FeatureSwitches}

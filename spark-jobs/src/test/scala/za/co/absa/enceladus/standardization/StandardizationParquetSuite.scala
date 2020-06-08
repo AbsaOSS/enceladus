@@ -21,6 +21,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
+import org.slf4j.Logger
 import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
@@ -38,6 +39,8 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
   import spark.implicits._
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
+  private implicit val log: Logger = mock[Logger]
+  private val standardizationReader = new StandardizationReader(log)
   private implicit val dao: MenasDAO = mock[MenasDAO]
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
 
@@ -64,7 +67,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
   private def getTestDataFrame(tmpFileName: String,
                                args: Array[String]): (StdCmdConfig, DataFrame) = {
     val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
-    val csvReader = StandardizationJob.getFormatSpecificReader(cmd, dataSet)
+    val csvReader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
     (cmd, csvReader.load(tmpFileName).orderBy("id"))
   }
 

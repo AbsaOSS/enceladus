@@ -31,7 +31,7 @@ case class SparkSessionConfRuleInterpreter(rule: SparkSessionConfConformanceRule
   def conform(df: Dataset[Row])
              (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfig): Dataset[Row] = {
     // Validate the rule parameters
-    RuleValidators.validateOutputField(ruleName, progArgs.datasetName, df.schema, rule.outputColumn)
+    RuleValidators.validateOutputField(ruleName, progArgs.jobConfig.datasetName, df.schema, rule.outputColumn)
 
     if (rule.outputColumn.contains('.')) {
       conformNestedField(df)

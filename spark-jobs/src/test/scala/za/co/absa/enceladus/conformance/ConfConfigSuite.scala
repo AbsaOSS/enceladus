@@ -54,6 +54,8 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
   private val infoDateColumn = "enceladus_info_date"
   private val infoVersionColumn = "enceladus_info_version"
 
+  private object TestDynamicConformance extends ConformanceExecution
+
   test("Test credentials file parsing "){
     val credentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
 
@@ -76,13 +78,13 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile))
 
-    val actualPlainMenasCredentials = cmdConfigNoFolderPrefix.menasCredentialsFactory.getInstance()
+    val actualPlainMenasCredentials = cmdConfigNoFolderPrefix.jobConfig.menasCredentialsFactory.getInstance()
 
-    assert(cmdConfigNoFolderPrefix.datasetName === datasetName)
-    assert(cmdConfigNoFolderPrefix.datasetVersion === datasetVersion)
-    assert(cmdConfigNoFolderPrefix.reportDate === reportDate)
-    assert(cmdConfigNoFolderPrefix.reportVersion.get === reportVersion)
-    assert(cmdConfigNoFolderPrefix.folderPrefix.isEmpty)
+    assert(cmdConfigNoFolderPrefix.jobConfig.datasetName === datasetName)
+    assert(cmdConfigNoFolderPrefix.jobConfig.datasetVersion === datasetVersion)
+    assert(cmdConfigNoFolderPrefix.jobConfig.reportDate === reportDate)
+    assert(cmdConfigNoFolderPrefix.jobConfig.reportVersion.get === reportVersion)
+    assert(cmdConfigNoFolderPrefix.jobConfig.folderPrefix.isEmpty)
     assert(cmdConfigNoFolderPrefix.publishPathOverride.isEmpty)
     assert(actualPlainMenasCredentials === menasCredentials)
 
@@ -95,14 +97,14 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
         "--menas-auth-keytab", keytabPath,
         "--folder-prefix", folderPrefix))
 
-    val actualMenasKerberosCredentials = cmdConfigFolderPrefix.menasCredentialsFactory.getInstance()
+    val actualMenasKerberosCredentials = cmdConfigFolderPrefix.jobConfig.menasCredentialsFactory.getInstance()
 
-    assert(cmdConfigFolderPrefix.datasetName === datasetName)
-    assert(cmdConfigFolderPrefix.datasetVersion === datasetVersion)
-    assert(cmdConfigFolderPrefix.reportDate === reportDate)
-    assert(cmdConfigFolderPrefix.reportVersion.get === reportVersion)
-    assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
-    assert(cmdConfigFolderPrefix.folderPrefix.get === folderPrefix)
+    assert(cmdConfigFolderPrefix.jobConfig.datasetName === datasetName)
+    assert(cmdConfigFolderPrefix.jobConfig.datasetVersion === datasetVersion)
+    assert(cmdConfigFolderPrefix.jobConfig.reportDate === reportDate)
+    assert(cmdConfigFolderPrefix.jobConfig.reportVersion.get === reportVersion)
+    assert(cmdConfigFolderPrefix.jobConfig.folderPrefix.nonEmpty)
+    assert(cmdConfigFolderPrefix.jobConfig.folderPrefix.get === folderPrefix)
     assert(cmdConfigFolderPrefix.publishPathOverride.isEmpty)
     assert(actualMenasKerberosCredentials === menasKeytab)
 
@@ -116,12 +118,12 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
         "--debug-set-publish-path", hdfsPublishPathOverride,
         "--folder-prefix", folderPrefix))
 
-    assert(cmdConfigPublishPathOverrideAndFolderPrefix.datasetName === datasetName)
-    assert(cmdConfigPublishPathOverrideAndFolderPrefix.datasetVersion === datasetVersion)
-    assert(cmdConfigPublishPathOverrideAndFolderPrefix.reportDate === reportDate)
-    assert(cmdConfigPublishPathOverrideAndFolderPrefix.reportVersion.get === reportVersion)
-    assert(cmdConfigPublishPathOverrideAndFolderPrefix.folderPrefix.nonEmpty)
-    assert(cmdConfigPublishPathOverrideAndFolderPrefix.folderPrefix.get === folderPrefix)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.jobConfig.datasetName === datasetName)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.jobConfig.datasetVersion === datasetVersion)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.jobConfig.reportDate === reportDate)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.jobConfig.reportVersion.get === reportVersion)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.jobConfig.folderPrefix.nonEmpty)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.jobConfig.folderPrefix.get === folderPrefix)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.publishPathOverride.nonEmpty)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.publishPathOverride.get === hdfsPublishPathOverride)
   }
@@ -177,17 +179,18 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
         "--folder-prefix", folderPrefix,
         "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride))
-    val publishPathNoFolderPrefix = DynamicConformanceJob.buildPublishPath(infoDateColumn, infoVersionColumn,
-        cmdConfigNoFolderPrefix, conformanceDataset, cmdConfigNoFolderPrefix.reportVersion.get)
+    val publishPathNoFolderPrefix = TestDynamicConformance.buildPublishPath(cmdConfigNoFolderPrefix,
+      conformanceDataset, cmdConfigNoFolderPrefix.jobConfig.reportVersion.get)
     assert(publishPathNoFolderPrefix === s"$hdfsPublishPath/$infoDateColumn=$reportDate/$infoVersionColumn=$reportVersion")
-    val publishPathFolderPrefix = DynamicConformanceJob.buildPublishPath(infoDateColumn, infoVersionColumn,
-        cmdConfigFolderPrefix, conformanceDataset, cmdConfigFolderPrefix.reportVersion.get)
+    val publishPathFolderPrefix = TestDynamicConformance.buildPublishPath(cmdConfigFolderPrefix,
+      conformanceDataset, cmdConfigFolderPrefix.jobConfig.reportVersion.get)
     assert(publishPathFolderPrefix === s"$hdfsPublishPath/$folderPrefix/$infoDateColumn=$reportDate/$infoVersionColumn=$reportVersion")
-    val publishPathPublishPathOverride = DynamicConformanceJob.buildPublishPath(infoDateColumn, infoVersionColumn,
-        cmdConfigPublishPathOverride, conformanceDataset, cmdConfigPublishPathOverride.reportVersion.get)
+    val publishPathPublishPathOverride = TestDynamicConformance.buildPublishPath(cmdConfigPublishPathOverride, conformanceDataset, cmdConfigPublishPathOverride.jobConfig.reportVersion.get)
     assert(publishPathPublishPathOverride === hdfsPublishPathOverride)
-    val publishPathPublishPathOverrideAndFolderPrefix = DynamicConformanceJob.buildPublishPath(infoDateColumn, infoVersionColumn,
-        cmdConfigPublishPathOverrideAndFolderPrefix, conformanceDataset, cmdConfigPublishPathOverrideAndFolderPrefix.reportVersion.get)
+
+    val publishPathPublishPathOverrideAndFolderPrefix =
+      TestDynamicConformance.buildPublishPath(cmdConfigPublishPathOverrideAndFolderPrefix,
+        conformanceDataset, cmdConfigPublishPathOverrideAndFolderPrefix.jobConfig.reportVersion.get)
     assert(publishPathPublishPathOverrideAndFolderPrefix === hdfsPublishPathOverride)
   }
 

@@ -19,6 +19,7 @@ import org.apache.spark.sql.types._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import org.slf4j.event.Level.ERROR
+import za.co.absa.enceladus.common.JobCmdConfig
 import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, RuleValidators}
 import za.co.absa.enceladus.conformance.samples.CastingRuleSamples
@@ -36,7 +37,7 @@ class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase {
     val inputDf = spark.read.schema(CastingRuleSamples.ordersSchema).json(CastingRuleSamples.ordersData.toDS)
 
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
-    implicit val progArgs: ConfCmdConfig = ConfCmdConfig(reportDate = "2017-11-01")
+    implicit val progArgs: ConfCmdConfig = ConfCmdConfig(jobConfig = JobCmdConfig(reportDate = "2017-11-01"))
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
