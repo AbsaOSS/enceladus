@@ -136,8 +136,7 @@ object TypedStructField {
   def apply(structField: StructField)(implicit defaults: Defaults): TypedStructField = {
     structField.dataType match {
       case _: StringType    => new StringTypeStructField(structField)
-      case _: BinaryType    =>
-        new BinaryTypeStructField(structField, structField.getMetadataString(MetadataKeys.Encoding))
+      case _: BinaryType    => new BinaryTypeStructField(structField)
       case _: BooleanType   => new BooleanTypeStructField(structField)
       case _: ByteType      => new ByteTypeStructField(structField)
       case _: ShortType     => new ShortTypeStructField(structField)
@@ -185,18 +184,18 @@ object TypedStructField {
   }
 
   // BinaryTypeStructField
-  final class BinaryTypeStructField private[TypedStructField](structField: StructField, encoding: Option[String])
+  final class BinaryTypeStructField private[TypedStructField](structField: StructField)
                                                              (implicit defaults: Defaults)
     extends TypedStructFieldTagged[Array[Byte]](structField) {
-
-    def normalizedEncoding: Option[String] = encoding.map(_.toLowerCase)
+    val normalizedEncoding = structField.getMetadataString(MetadataKeys.Encoding).map(_.toLowerCase)
 
     // used to convert the default value from metadata's [[MetadataKeys.DefaultValue]]
     override protected def convertString(string: String): Try[Array[Byte]] = {
       normalizedEncoding match {
         case Some(MetadataValues.Encoding.Base64) => Try(Base64.getDecoder.decode(string))
-        case Some(MetadataValues.Encoding.None) | None => Try{string.getBytes} // use as-is
-        case _ => throw new IllegalStateException(s"Unsupported encoding for Binary field ${structField.name}: '${encoding.get}'")
+        case Some(MetadataValues.Encoding.None) | None => Success(string.getBytes) // use as-is
+        case _ =>
+          Failure(new IllegalStateException(s"Unsupported encoding for Binary field ${structField.name}: '${normalizedEncoding.get}'"))
       }
     }
 
