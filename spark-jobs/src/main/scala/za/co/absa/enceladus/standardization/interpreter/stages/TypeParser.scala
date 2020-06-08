@@ -35,6 +35,7 @@ import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.TypedStructField._
 import za.co.absa.enceladus.utils.types.{Defaults, TypedStructField}
 import za.co.absa.enceladus.utils.udf.{UDFBuilder, UDFLibrary, UDFNames}
+import za.co.absa.enceladus.utils.validation.ValidationIssue
 import za.co.absa.spark.hofs.transform
 
 import scala.reflect.runtime.universe._
@@ -52,6 +53,7 @@ import scala.util.{Random, Try}
   *         NumericParser !
   *         StringParser !
   *         BooleanParser !
+ *        BinaryParser !
   *       DateTimeParser
   *         TimestampParser !
   *         DateParser !
@@ -169,7 +171,7 @@ object TypeParser {
       case _: DoubleType    => FractionalParser(TypedStructField.asNumericTypeStructField[Double](field), _, _, _, _, _)
       case _: DecimalType   => DecimalParser(TypedStructField.asNumericTypeStructField[BigDecimal](field), _, _, _, _, _)
       case _: StringType    => StringParser(TypedStructField(field), _, _, _, _, _)
-      case _: BinaryType    => BinaryParser(TypedStructField(field), _, _, _, _, _)
+      case _: BinaryType    => BinaryParser(TypedStructField.asBinaryTypeStructField(field), _, _, _, _, _)
       case _: BooleanType   => BooleanParser(TypedStructField(field), _, _, _, _, _)
       case _: DateType      => DateParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _, _, _)
       case _: TimestampType => TimestampParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _, _, _)
@@ -409,7 +411,7 @@ object TypeParser {
                                         isArrayElement: Boolean)
                                        (implicit defaults: Defaults) extends ScalarParser[String]
 
-  private final case class BinaryParser(field: TypedStructField,
+  private final case class BinaryParser(field: BinaryTypeStructField,
                                         path: String,
                                         column: Column,
                                         origType: DataType,
@@ -420,20 +422,24 @@ object TypeParser {
       origType match {
         case BinaryType => column
         case StringType =>
-          val encoding = field.structField.getMetadataString(MetadataKeys.Encoding).map(_.toLowerCase)
-
-          encoding match {
-            case Some(MetadataValues.Encoding.Base64) => unbase64(column)
-            case Some(MetadataValues.Encoding.None) | None =>
-              if (encoding.isEmpty) {
-                logger.info(s"Binary field ${field.structField.name} does not have encoding setup in metadata. Reading as-is.")
-              }
-              column.cast(field.dataType) // use as-is
-            case _ => throw new IllegalStateException(s"Unsupported encoding for Binary field ${field.structField.name}: '${encoding.get}'")
+          val validationIssues: Seq[ValidationIssue] = field.validate()
+          if (validationIssues.nonEmpty) {
+            throw new IllegalStateException(s"There are validation issues, cannot continue parsing binary field $field: $validationIssues")
+          } else {
+            field.normalizedEncoding match {
+              case Some(MetadataValues.Encoding.Base64) => unbase64(column)
+              case Some(MetadataValues.Encoding.None) | None =>
+                if (field.normalizedEncoding.isEmpty) {
+                  logger.info(s"Binary field ${field.structField.name} does not have encoding setup in metadata. Reading as-is.")
+                }
+                column.cast(field.dataType) // use as-is
+              case _ => throw new IllegalStateException(s"Unsupported encoding for Binary field ${field.structField.name}:" +
+                s" '${field.normalizedEncoding.get}'")
+            }
           }
+
         case _ => throw new IllegalStateException(s"Unsupported conversion from BinaryType to ${field.dataType}")
       }
-
     }
   }
 
