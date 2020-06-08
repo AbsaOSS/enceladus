@@ -22,10 +22,9 @@ import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits._
-import za.co.absa.enceladus.CommonJobExecution
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration.IdType
-import za.co.absa.enceladus.common.{Constants, PathCfg, RecordIdGeneration}
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, PathCfg, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO

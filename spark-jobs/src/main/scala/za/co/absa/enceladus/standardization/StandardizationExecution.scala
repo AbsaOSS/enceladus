@@ -22,8 +22,7 @@ import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.CommonJobExecution
-import za.co.absa.enceladus.common.PathCfg
+import za.co.absa.enceladus.common.{CommonJobExecution, PathCfg}
 import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
