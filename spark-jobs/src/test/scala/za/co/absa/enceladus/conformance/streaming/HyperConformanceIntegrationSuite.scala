@@ -22,37 +22,30 @@ import za.co.absa.enceladus.conformance.interpreter.fixtures.{NestedStructsFixtu
 
 class HyperConformanceIntegrationSuite extends FunSuite with StreamingFixture with NestedStructsFixture {
 
-  test("Test with catalyst workaround") {
-    val frame: DataFrame = testHyperConformance(standardizedDf,
+  test("Test with catalyst workaround, literal factory") {
+    implicit val infoDateFactory: InfoDateFactory = new InfoDateLiteralFactory("2020-05-23")
+    val df: DataFrame = testHyperConformance(standardizedDf,
       "result",
       nestedStructsDS)
-    frame.show()
-    val fields = frame.schema.fieldNames
-    val data = frame.first().getValuesMap(fields)
+      .orderBy("ID")
 
-    val infoDateStringColumnName = "enceladus_info_date_string"
-    assert(fields.contains(infoDateStringColumnName))
-    assertResult(data("enceladus_info_date_string"))("2020-05-23")
+    assertResult(df.count())(20)
+//        df.coalesce(1).write.json("src/test/testData/nestedStructs/conformed1.json")
+    val conformed = spark.read
+      .textFile("src/test/testData/nestedStructs/conformed1.json")
+      .collect().mkString("\n")
+    val returned = df.toJSON.collect().mkString("\n")
 
-    val infoVersionColumnName = "enceladus_info_version"
-    assert(fields.contains(infoVersionColumnName))
-    assertResult(data(infoVersionColumnName))(1)
-
-    val strings = data("strings").asInstanceOf[GenericRowWithSchema]
-    assertResult(strings.getAs("whitespaces_upper"))("K  C H E   RS Z     ")
-
-    val numerics = data("numerics").asInstanceOf[GenericRowWithSchema]
-    assertResult(numerics.getAs("big_negative_negated"))(783143645497786L)
-
-    assertResult(frame.count())(20)
+    assertResult(returned)(conformed)
   }
 
-  test("Test without catalyst workaround") {
+  /*test("Test without catalyst workaround") {
+  implicit val infoDateFactory: InfoDateFactory = new InfoDateLiteralFactory("2020-05-23")
     val frame: DataFrame = testHyperConformance(standardizedDf,
       "result2",
       nestedStructsDS,
       catalystWorkaround = false)
     frame.show()
     assertResult(frame.count())(0)
-  }
+  }*/
 }

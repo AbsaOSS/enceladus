@@ -31,14 +31,12 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 trait StreamingFixture extends FunSuite with SparkTestBase with MockitoSugar {
   implicit val menasBaseUrls: List[String] = List()
   implicit val cmd: ConfCmdConfig = ConfCmdConfig.apply(reportVersion = Some(1))
-  implicit val infoDateFactory: InfoDateFactory = new InfoDateLiteralFactory("2020-05-23")
-  private val processingTime = 1500
 
   protected def testHyperConformance(input: DataFrame,
                                      sinkTableName: String,
                                      dataset: Dataset,
                                      catalystWorkaround: Boolean = true)
-                                    (implicit menasDAO: MenasDAO): DataFrame = {
+                                    (implicit menasDAO: MenasDAO, infoDateFactory: InfoDateFactory): DataFrame = {
     implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(false)
       .setCatalystWorkaroundEnabled(catalystWorkaround)
@@ -50,7 +48,6 @@ trait StreamingFixture extends FunSuite with SparkTestBase with MockitoSugar {
     val conformed: DataFrame = hyperConformance.applyConformanceTransformations(source, dataset)
     val sink = conformed
       .writeStream
-      .trigger(Trigger.ProcessingTime(processingTime))
       .queryName(sinkTableName)
       .outputMode("append")
       .format("memory")
@@ -58,12 +55,12 @@ trait StreamingFixture extends FunSuite with SparkTestBase with MockitoSugar {
 
     input.collect().foreach(e => {
       memoryStream.addData(e)
-      Thread.sleep(100)
-      spark.sql(s"select * from $sinkTableName").show()
+      sink.processAllAvailable()
     })
-    sink.awaitTermination(processingTime * 3)
 
     val frame: DataFrame = spark.sql(s"select * from $sinkTableName")
+
+    sink.stop()
     frame
   }
 }
