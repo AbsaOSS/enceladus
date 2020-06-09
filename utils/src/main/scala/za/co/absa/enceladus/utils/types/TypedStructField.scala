@@ -187,7 +187,7 @@ object TypedStructField {
   final class BinaryTypeStructField private[TypedStructField](structField: StructField)
                                                              (implicit defaults: Defaults)
     extends TypedStructFieldTagged[Array[Byte]](structField) {
-    val normalizedEncoding = structField.getMetadataString(MetadataKeys.Encoding).map(_.toLowerCase)
+    val normalizedEncoding: Option[String] = structField.getMetadataString(MetadataKeys.Encoding).map(_.toLowerCase)
 
     // used to convert the default value from metadata's [[MetadataKeys.DefaultValue]]
     override protected def convertString(string: String): Try[Array[Byte]] = {

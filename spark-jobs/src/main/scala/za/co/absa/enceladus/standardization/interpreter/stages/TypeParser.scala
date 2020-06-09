@@ -35,7 +35,7 @@ import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.TypedStructField._
 import za.co.absa.enceladus.utils.types.{Defaults, TypedStructField}
 import za.co.absa.enceladus.utils.udf.{UDFBuilder, UDFLibrary, UDFNames}
-import za.co.absa.enceladus.utils.validation.ValidationIssue
+import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
 import za.co.absa.spark.hofs.transform
 
 import scala.reflect.runtime.universe._
@@ -422,9 +422,12 @@ object TypeParser {
       origType match {
         case BinaryType => column
         case StringType =>
-          val validationIssues: Seq[ValidationIssue] = field.validate()
-          if (validationIssues.nonEmpty) {
-            throw new IllegalStateException(s"There are validation issues, cannot continue parsing binary field $field: $validationIssues")
+          val (validationErrors, validationWarnings) = field.validate().span(_.isInstanceOf[ValidationError])
+          if (validationWarnings.nonEmpty){
+            logger.warn(s"There are validation warnings for binary field parsing $field: $validationWarnings")
+          }
+          if (validationErrors.nonEmpty) {
+            throw new IllegalStateException(s"There are validation issues, cannot continue parsing binary field $field: $validationErrors")
           } else {
             field.normalizedEncoding match {
               case Some(MetadataValues.Encoding.Base64) => unbase64(column)

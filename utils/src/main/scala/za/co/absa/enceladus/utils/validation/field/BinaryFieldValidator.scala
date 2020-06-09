@@ -20,23 +20,23 @@ import java.util.Base64
 import za.co.absa.enceladus.utils.implicits.StructFieldImplicits._
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, MetadataValues}
 import za.co.absa.enceladus.utils.types.TypedStructField
-import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
+import za.co.absa.enceladus.utils.types.TypedStructField.BinaryTypeStructField
+import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue, ValidationWarning}
 
 import scala.util.{Failure, Success, Try}
 
 object BinaryFieldValidator extends FieldValidator {
-  private def encodingForField(field: TypedStructField): Option[String] =
-    field.structField.getMetadataString(MetadataKeys.Encoding)
 
-  private def validateDefaultValueWithGlobal(field: TypedStructField): Seq[ValidationIssue] = {
+  private def validateDefaultValueWithGlobal(field: BinaryTypeStructField): Seq[ValidationIssue] = {
     tryToValidationIssues(field.defaultValueWithGlobal)
   }
 
-  private def validateExplicitBase64DefaultValue(field: TypedStructField): Seq[ValidationIssue] = {
+  private def validateExplicitBase64DefaultValue(field: BinaryTypeStructField): Seq[ValidationIssue] = {
     val defaultValue: Option[String] = field.structField.getMetadataString(MetadataKeys.DefaultValue)
-    val encoding: Option[String] = encodingForField(field)
 
-    (encoding, defaultValue) match {
+    (field.normalizedEncoding, defaultValue) match {
+      case (None, Some(encodedDefault)) =>
+        Seq(ValidationWarning(s"Default value of '$encodedDefault' found, but no encoding is specified. Assuming 'none'."))
       case (Some(MetadataValues.Encoding.Base64), Some(encodedValue)) => Try {
         Base64.getDecoder.decode(encodedValue)
       } match {
@@ -47,18 +47,21 @@ object BinaryFieldValidator extends FieldValidator {
     }
   }
 
-  private def validateEncoding(field: TypedStructField): Seq[ValidationIssue] = {
-    val encoding: Option[String] = encodingForField(field)
-
-    encoding.map(_.toLowerCase) match {
+  private def validateEncoding(field: BinaryTypeStructField): Seq[ValidationIssue] = {
+    field.normalizedEncoding match {
       case Some(MetadataValues.Encoding.Base64) | Some(MetadataValues.Encoding.None) =>
         Seq.empty
       case None => Seq.empty
-      case _ => Seq(ValidationError(s"Unsupported encoding for Binary field ${field.structField.name}: '${encoding.get}'"))
+      case _ => Seq(ValidationError(s"Unsupported encoding for Binary field ${field.structField.name}: '${field.normalizedEncoding.get}'"))
     }
   }
 
   override def validate(field: TypedStructField): Seq[ValidationIssue] = {
-    super.validate(field) ++ validateDefaultValueWithGlobal(field) ++ validateExplicitBase64DefaultValue(field) ++ validateEncoding(field)
+    super.validate(field) ++ (
+      field match {
+        case bField: BinaryTypeStructField =>
+          validateDefaultValueWithGlobal(bField) ++ validateExplicitBase64DefaultValue(bField) ++ validateEncoding(bField)
+        case _ => Seq(ValidationError("BinaryFieldValidator can validate only fields of type BinaryTypeStructField"))
+      })
   }
 }

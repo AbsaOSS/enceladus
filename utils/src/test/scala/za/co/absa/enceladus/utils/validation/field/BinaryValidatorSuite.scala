@@ -19,7 +19,7 @@ import org.apache.spark.sql.types.{BinaryType, MetadataBuilder, StructField}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults, TypedStructField}
-import za.co.absa.enceladus.utils.validation.ValidationError
+import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationWarning}
 
 class BinaryValidatorSuite extends FunSuite {
   private implicit val defaults: Defaults = GlobalDefaults
@@ -37,9 +37,12 @@ class BinaryValidatorSuite extends FunSuite {
   }
 
   test("field with explicit default or explicit non-base64 encoding validates") {
-    assert(BinaryFieldValidator.validate(field(defaultValue = Some("abc"))).isEmpty)
     assert(BinaryFieldValidator.validate(field(defaultValue = Some("abc"), encoding = Some("none"))).isEmpty)
     assert(BinaryFieldValidator.validate(field(encoding = Some("none"))).isEmpty)
+
+    assert(BinaryFieldValidator.validate(field(defaultValue = Some("abc"))) == Seq(
+      ValidationWarning("Default value of 'abc' found, but no encoding is specified. Assuming 'none'.")
+    ))
   }
 
   test("field with base64 encoding and with no or correct defaultValue validates") {
