@@ -32,8 +32,7 @@ import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
-import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
-import za.co.absa.enceladus.common.ControlInfoValidation
+import za.co.absa.enceladus.common.{Constants, ControlInfoValidation, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, ThreeStateSwitch}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -42,7 +41,7 @@ import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactor
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.general.ProjectMetadataTools
+import za.co.absa.enceladus.utils.general.{ConfigReader, ProjectMetadataTools}
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
@@ -64,6 +63,8 @@ object DynamicConformanceJob {
     SecureKafka.setSecureKafkaProperties(conf)
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
+
+    ConfigReader.logEffectiveConfig(Constants.SensitiveConfigurationKeys)
 
     implicit val cmd: ConfCmdConfig = ConfCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark

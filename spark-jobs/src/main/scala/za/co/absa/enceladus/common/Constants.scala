@@ -21,4 +21,16 @@ object Constants {
   final val ReportDateFormat = "yyyy-MM-dd"
   final val InfoVersionColumn = "enceladus_info_version"
   final val EnceladusRecordId = "enceladus_record_id"
+
+  final val SensitiveConfigurationKeys = Set(
+    "java.class.path",
+    "java.security.auth.login.config",
+    "javax.net.ssl.keyStorePassword",
+    "javax.net.ssl.trustStorePassword",
+    "spark.driver.extraJavaOptions",
+    "spark.yarn.dist.files",
+    "spline.mongodb.url",
+    "sun.boot.class.path",
+    "sun.java.command"
+  )
 }
