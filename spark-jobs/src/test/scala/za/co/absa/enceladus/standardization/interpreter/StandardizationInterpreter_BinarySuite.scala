@@ -54,7 +54,8 @@ class StandardizationInterpreter_BinarySuite extends FunSuite with SparkTestBase
   test("Binary from string with base64 encoding") {
     val seq = Seq(
       "MTIz",
-      "YWJjZA=="
+      "YWJjZA==",
+      "bogus#$%^" // invalid base64 chars
     )
     val desiredSchema = StructType(Seq(
       StructField(fieldName, BinaryType, nullable = false,
@@ -63,7 +64,11 @@ class StandardizationInterpreter_BinarySuite extends FunSuite with SparkTestBase
 
     val expected = Seq(
       BinaryRow(Array(49, 50, 51).map(_.toByte)), // "123"
-      BinaryRow(Array(97, 98, 99, 100).map(_.toByte)) // "abcd"
+      BinaryRow(Array(97, 98, 99, 100).map(_.toByte)), // "abcd"
+      BinaryRow(Array.emptyByteArray, // default value on error
+        Seq(ErrorMessage("stdCastError", "E00000", "Standardization Error - Type cast", "binaryField",
+          rawValues = Seq("bogus#$%^"), mappings = Seq()))
+      )
     )
 
     val src = seq.toDF(fieldName)
@@ -89,7 +94,7 @@ class StandardizationInterpreter_BinarySuite extends FunSuite with SparkTestBase
     )
 
     caught.errors.length shouldBe 1
-    caught.errors.head should include ("Unsupported encoding for Binary field binaryField: 'bogus'")
+    caught.errors.head should include("Unsupported encoding for Binary field binaryField: 'bogus'")
   }
 
   // behavior of explicit metadata "none" and lacking metadata should behave identically

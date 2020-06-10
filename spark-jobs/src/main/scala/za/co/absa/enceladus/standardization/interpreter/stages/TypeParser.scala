@@ -27,15 +27,13 @@ import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.schema.{MetadataKeys, MetadataValues, SchemaUtils}
 import za.co.absa.enceladus.utils.schema.SchemaUtils.FieldWithSource
-import za.co.absa.enceladus.utils.implicits.StructFieldImplicits._
+import za.co.absa.enceladus.utils.schema.{MetadataValues, SchemaUtils}
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.TypedStructField._
 import za.co.absa.enceladus.utils.types.{Defaults, TypedStructField}
 import za.co.absa.enceladus.utils.udf.{UDFBuilder, UDFLibrary, UDFNames}
-import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
 import za.co.absa.spark.hofs.transform
 
 import scala.reflect.runtime.universe._
@@ -422,23 +420,16 @@ object TypeParser {
       origType match {
         case BinaryType => column
         case StringType =>
-          val (validationErrors, validationWarnings) = field.validate().span(_.isInstanceOf[ValidationError])
-          if (validationWarnings.nonEmpty){
-            logger.warn(s"There are validation warnings for binary field parsing $field: $validationWarnings")
-          }
-          if (validationErrors.nonEmpty) {
-            throw new IllegalStateException(s"There are validation issues, cannot continue parsing binary field $field: $validationErrors")
-          } else {
-            field.normalizedEncoding match {
-              case Some(MetadataValues.Encoding.Base64) => unbase64(column)
-              case Some(MetadataValues.Encoding.None) | None =>
-                if (field.normalizedEncoding.isEmpty) {
-                  logger.info(s"Binary field ${field.structField.name} does not have encoding setup in metadata. Reading as-is.")
-                }
-                column.cast(field.dataType) // use as-is
-              case _ => throw new IllegalStateException(s"Unsupported encoding for Binary field ${field.structField.name}:" +
-                s" '${field.normalizedEncoding.get}'")
-            }
+          // already validated in Standardization
+          field.normalizedEncoding match {
+            case Some(MetadataValues.Encoding.Base64) => callUDF(UDFNames.binaryUnbase64, column)
+            case Some(MetadataValues.Encoding.None) | None =>
+              if (field.normalizedEncoding.isEmpty) {
+                logger.info(s"Binary field ${field.structField.name} does not have encoding setup in metadata. Reading as-is.")
+              }
+              column.cast(field.dataType) // use as-is
+            case _ => throw new IllegalStateException(s"Unsupported encoding for Binary field ${field.structField.name}:" +
+              s" '${field.normalizedEncoding.get}'")
           }
 
         case _ => throw new IllegalStateException(s"Unsupported conversion from BinaryType to ${field.dataType}")
