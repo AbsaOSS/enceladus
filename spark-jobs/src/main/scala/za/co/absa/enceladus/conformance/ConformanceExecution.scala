@@ -55,7 +55,7 @@ trait ConformanceExecution extends CommonJobExecution {
     val infoDateCol: String = InfoDateColumn
     val infoVersionCol: String = InfoVersionColumn
 
-    (cmd.publishPathOverride, cmd.jobConfig.folderPrefix) match {
+    (cmd.confConfig.publishPathOverride, cmd.jobConfig.folderPrefix) match {
       case (None, None) =>
         s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.jobConfig.reportDate}/$infoVersionCol=$reportVersion"
       case (None, Some(folderPrefix)) =>

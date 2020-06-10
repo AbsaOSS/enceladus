@@ -98,7 +98,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.stdConfig.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -130,7 +130,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
       StructField("decimal_field", DecimalType(20,4), nullable = true)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.stdConfig.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -164,7 +164,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
         new MetadataBuilder().putString(MetadataKeys.DefaultValue, "3.14").build())
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.stdConfig.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -193,7 +193,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
         new MetadataBuilder().putString(MetadataKeys.SourceColumn, "letters").build())
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.stdConfig.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -224,7 +224,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
         .build())
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.stdConfig.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -252,7 +252,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
       StructField("struct", ArrayType(StringType), nullable = true)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.stdConfig.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -283,7 +283,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
+      StandardizationInterpreter.standardize(sourceDF, schema, cmd.stdConfig.rawFormat, failOnInputNotPerSchema = true)
     }
     assert(exception.getMessage == "Cannot standardize field 'id' from type integer into array")
   }
@@ -315,7 +315,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
+      StandardizationInterpreter.standardize(sourceDF, schema, cmd.stdConfig.rawFormat, failOnInputNotPerSchema = true)
     }
     assert(exception.getMessage == "Cannot standardize field 'id' from type integer into struct")
   }
@@ -334,7 +334,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
+      StandardizationInterpreter.standardize(sourceDF, schema, cmd.stdConfig.rawFormat, failOnInputNotPerSchema = true)
     }
     assert(exception.getMessage == "Cannot standardize field 'letters' from type array into struct")
   }
@@ -362,7 +362,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
     )
     val schema = StructType(seq)
     // stableHashId will always yield the same ids
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.StableHashId)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.stdConfig.rawFormat, recordIdGenerationStrategy = IdType.StableHashId)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -390,7 +390,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.stdConfig.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
 
     // same except for the record id
     val actual = destDF.drop("enceladus_record_id").dataAsString(truncate = false)
@@ -428,7 +428,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
       StructField("enceladus_record_id", StringType, nullable = false)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDfWithExistingIds, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
+    val destDF = StandardizationInterpreter.standardize(sourceDfWithExistingIds, schema, cmd.stdConfig.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
 
     // The TrueUuids strategy does not override the existing values
     val actual = destDF.dataAsString(truncate = false)

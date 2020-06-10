@@ -64,7 +64,7 @@ object StandardizationJob extends StandardizationExecution {
     Atum.setAdditionalInfo(Constants.InfoVersionColumn -> reportVersion.toString)
 
     // Add the raw format of the input file(s) to Atum's metadata as well
-    Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
+    Atum.setAdditionalInfo("raw_format" -> cmd.stdConfig.rawFormat)
     val schema: StructType = dao.getSchema(dataset.schemaName, dataset.schemaVersion)
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 

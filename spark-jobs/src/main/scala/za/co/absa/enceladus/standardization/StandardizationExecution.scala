@@ -49,7 +49,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
   def buildRawPath(cmd: StdCmdConfig, dataset: Dataset, reportVersion: Int): String = {
     val dateTokens = cmd.jobConfig.reportDate.split("-")
-    cmd.rawPathOverride match {
+    cmd.stdConfig.rawPathOverride match {
       case None =>
         val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
         cmd.jobConfig.folderPrefix match {
@@ -70,10 +70,10 @@ trait StandardizationExecution extends CommonJobExecution {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationReader(log)
     val dfReaderConfigured = standardizationReader.getFormatSpecificReader(cmd, dataset, numberOfColumns)
-    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
+    val dfWithSchema = (if (!cmd.stdConfig.rawFormat.equalsIgnoreCase("parquet")) {
       // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
       val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
-      val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {
+      val optColumnNameOfCorruptRecord = if (cmd.stdConfig.failOnInputNotPerSchema) {
         None
       } else {
         Option(columnNameOfCorruptRecord)
@@ -143,7 +143,8 @@ trait StandardizationExecution extends CommonJobExecution {
 
     try {
       handleControlInfoValidation()
-      StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat, cmd.failOnInputNotPerSchema, recordIdGenerationStrategy)
+      StandardizationInterpreter.standardize(dfAll, schema, cmd.stdConfig.rawFormat,
+        cmd.stdConfig.failOnInputNotPerSchema, recordIdGenerationStrategy)
     } catch {
       case e@ValidationException(msg, errors) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
@@ -190,9 +191,9 @@ trait StandardizationExecution extends CommonJobExecution {
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
       menasCredentials.username, cmd.jobConfig.args.mkString(" "))
 
-    cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
-    if (cmd.csvDelimiter.isDefined) {
-      cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
+    cmd.stdConfig.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
+    if (cmd.stdConfig.csvDelimiter.isDefined) {
+      cmd.stdConfig.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
     }
 
     standardizedDF.writeInfoFile(pathCfg.outputPath)

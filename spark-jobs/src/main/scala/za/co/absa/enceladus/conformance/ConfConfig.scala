@@ -16,24 +16,20 @@
 package za.co.absa.enceladus.conformance
 
 import scopt.OptionParser
-import za.co.absa.enceladus.common.JobCmdConfig
+import za.co.absa.enceladus.conformance.ConfCmdConfig.stepName
 
-/**
- * This is a class for configuration provided by the command line parameters
- *
- * Note: scopt requires all fields to have default values.
- *       Even if a field is mandatory it needs a default value.
- */
-case class ConfCmdConfig(confConfig: ConfConfig = ConfConfig(),
-                         jobConfig: JobCmdConfig = JobCmdConfig())
+case class ConfConfig(publishPathOverride: Option[String] = None,
+                      experimentalMappingRule: Option[Boolean] = None,
+                      isCatalystWorkaroundEnabled: Option[Boolean] = None,
+                      autocleanStandardizedFolder: Option[Boolean] = None)
 
-object ConfCmdConfig {
-  val stepName = "Conformance"
+object ConfConfig {
 
-  def getCmdLineArguments(args: Array[String]): ConfCmdConfig = {
-    val jobConfig = JobCmdConfig.getCmdLineArguments(args, stepName)
-    val confConfig = ConfConfig.getCmdLineArguments(args)
-    ConfCmdConfig(confConfig, jobConfig)
+  def getCmdLineArguments(args: Array[String]): ConfConfig = {
+    val parser = new CmdParser(s"spark-submit [spark options] ${stepName}Bundle.jar")
+
+    val optionCmd = parser.parse(args, ConfConfig())
+    optionCmd.getOrElse(ConfConfig())
   }
 
   private class CmdParser(programName: String) extends OptionParser[ConfConfig](programName) {
@@ -57,5 +53,5 @@ object ConfCmdConfig {
 
     help("help").text("prints this usage text")
   }
-
 }
+

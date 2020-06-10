@@ -81,9 +81,9 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigNoFolderPrefix.jobConfig.datasetVersion === datasetVersion)
     assert(cmdConfigNoFolderPrefix.jobConfig.reportDate === reportDate)
     assert(cmdConfigNoFolderPrefix.jobConfig.reportVersion.get === reportVersion)
-    assert(cmdConfigNoFolderPrefix.rawFormat === rawFormat)
+    assert(cmdConfigNoFolderPrefix.stdConfig.rawFormat === rawFormat)
     assert(cmdConfigNoFolderPrefix.jobConfig.folderPrefix.isEmpty)
-    assert(cmdConfigNoFolderPrefix.rawPathOverride.isEmpty)
+    assert(cmdConfigNoFolderPrefix.stdConfig.rawPathOverride.isEmpty)
     assert(actualPlainMenasCredentials === menasCredentials)
 
     val cmdConfigFolderPrefix = StdCmdConfig.getCmdLineArguments(
@@ -102,10 +102,10 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigFolderPrefix.jobConfig.datasetVersion === datasetVersion)
     assert(cmdConfigFolderPrefix.jobConfig.reportDate === reportDate)
     assert(cmdConfigFolderPrefix.jobConfig.reportVersion.get === reportVersion)
-    assert(cmdConfigFolderPrefix.rawFormat === rawFormat)
+    assert(cmdConfigFolderPrefix.stdConfig.rawFormat === rawFormat)
     assert(cmdConfigFolderPrefix.jobConfig.folderPrefix.nonEmpty)
     assert(cmdConfigFolderPrefix.jobConfig.folderPrefix.get === folderPrefix)
-    assert(cmdConfigFolderPrefix.rawPathOverride.isEmpty)
+    assert(cmdConfigFolderPrefix.stdConfig.rawPathOverride.isEmpty)
     assert(actualMenasKerberosCredentials === menasKeytab)
   }
 

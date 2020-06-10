@@ -85,7 +85,7 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigNoFolderPrefix.jobConfig.reportDate === reportDate)
     assert(cmdConfigNoFolderPrefix.jobConfig.reportVersion.get === reportVersion)
     assert(cmdConfigNoFolderPrefix.jobConfig.folderPrefix.isEmpty)
-    assert(cmdConfigNoFolderPrefix.publishPathOverride.isEmpty)
+    assert(cmdConfigNoFolderPrefix.confConfig.publishPathOverride.isEmpty)
     assert(actualPlainMenasCredentials === menasCredentials)
 
     val cmdConfigFolderPrefix = ConfCmdConfig.getCmdLineArguments(
@@ -105,7 +105,7 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigFolderPrefix.jobConfig.reportVersion.get === reportVersion)
     assert(cmdConfigFolderPrefix.jobConfig.folderPrefix.nonEmpty)
     assert(cmdConfigFolderPrefix.jobConfig.folderPrefix.get === folderPrefix)
-    assert(cmdConfigFolderPrefix.publishPathOverride.isEmpty)
+    assert(cmdConfigFolderPrefix.confConfig.publishPathOverride.isEmpty)
     assert(actualMenasKerberosCredentials === menasKeytab)
 
     val cmdConfigPublishPathOverrideAndFolderPrefix = ConfCmdConfig.getCmdLineArguments(
@@ -124,8 +124,8 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.jobConfig.reportVersion.get === reportVersion)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.jobConfig.folderPrefix.nonEmpty)
     assert(cmdConfigPublishPathOverrideAndFolderPrefix.jobConfig.folderPrefix.get === folderPrefix)
-    assert(cmdConfigPublishPathOverrideAndFolderPrefix.publishPathOverride.nonEmpty)
-    assert(cmdConfigPublishPathOverrideAndFolderPrefix.publishPathOverride.get === hdfsPublishPathOverride)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.confConfig.publishPathOverride.nonEmpty)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.confConfig.publishPathOverride.get === hdfsPublishPathOverride)
   }
 
   test("Test buildPublishPath") {

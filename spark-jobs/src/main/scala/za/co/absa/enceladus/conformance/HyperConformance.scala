@@ -123,13 +123,11 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       menasCredentialsFactory = menasCredentialsFactory,args = Array.empty
     )
 
-    implicit val cmd: ConfCmdConfig = ConfCmdConfig(
-      publishPathOverride = None,
+    val confConfig = ConfConfig(publishPathOverride = None,
       experimentalMappingRule = Some(true),
       isCatalystWorkaroundEnabled = Some(true),
-      autocleanStandardizedFolder = Some(false),
-      jobConfig = jobConfig
-    )
+      autocleanStandardizedFolder = Some(false))
+    implicit val cmd: ConfCmdConfig = ConfCmdConfig(confConfig, jobConfig = jobConfig)
 
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(true)
