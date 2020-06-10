@@ -21,6 +21,7 @@ import java.util.Date
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.DateType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
@@ -64,8 +65,8 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
 
     val conformedDf = DynamicInterpreter.interpret(conformance, rawDf)
-      .withColumnIfDoesNotExist(InfoDateColumn, infoDateColumn)
-      .withColumnIfDoesNotExist(InfoDateColumnString, date_format(infoDateColumn, "yyyy-MM-dd"))
+      .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_timestamp().cast(DateType)))
+      .withColumnIfDoesNotExist(InfoDateColumnString, coalesce(date_format(infoDateColumn,"yyyy-MM-dd"), lit("")))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
     conformedDf
   }

@@ -45,7 +45,7 @@ class InfoDateLiteralFactory(infoDate: String) extends InfoDateFactory {
 class InfoDateFromColumnFactory(columnName: String, pattern: String) extends InfoDateFactory {
   override def getInfoDateColumn(df: DataFrame): Column = {
     val dt = SchemaUtils.getFieldType(columnName, df.schema)
-    val eventDate = dt match {
+    dt match {
       case Some(TimestampType) =>
         col(columnName).cast(DateType)
       case Some(DateType) =>
@@ -57,7 +57,6 @@ class InfoDateFromColumnFactory(columnName: String, pattern: String) extends Inf
       case None =>
         throw new IllegalArgumentException(s"The specified event time column does not exist: $columnName")
     }
-    coalesce(eventDate, current_timestamp().cast(DateType))
   }
 }
 
