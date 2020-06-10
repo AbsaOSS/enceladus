@@ -37,12 +37,13 @@ object BinaryFieldValidator extends FieldValidator {
     (field.normalizedEncoding, defaultValue) match {
       case (None, Some(encodedDefault)) =>
         Seq(ValidationWarning(s"Default value of '$encodedDefault' found, but no encoding is specified. Assuming 'none'."))
-      case (Some(MetadataValues.Encoding.Base64), Some(encodedValue)) => Try {
-        Base64.getDecoder.decode(encodedValue)
-      } match {
-        case Success(_) => Seq.empty
-        case Failure(_) => Seq(ValidationError(s"Invalid default value $encodedValue for Base64 encoding (cannot be decoded)!"))
-      }
+      case (Some(MetadataValues.Encoding.Base64), Some(encodedValue)) =>
+        Try {
+          Base64.getDecoder.decode(encodedValue)
+        } match {
+          case Success(_) => Seq.empty
+          case Failure(_) => Seq(ValidationError(s"Invalid default value $encodedValue for Base64 encoding (cannot be decoded)!"))
+        }
       case _ => Seq.empty
     }
   }
