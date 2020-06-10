@@ -19,7 +19,6 @@ import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
@@ -52,7 +51,6 @@ object StandardizationJob extends StandardizationExecution {
     val dataset = dao.getDataset(jobCmdConfig.datasetName, jobCmdConfig.datasetVersion)
     val reportVersion = getReportVersion(cmd.jobConfig, dataset)
     val pathCfg = getPathCfg(cmd, dataset, reportVersion)
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     log.info(s"input path: ${pathCfg.inputPath}")
     log.info(s"output path: ${pathCfg.outputPath}")
@@ -75,7 +73,7 @@ object StandardizationJob extends StandardizationExecution {
       menasCredentials.username, cmd.jobConfig.args.mkString(" "))
 
     try {
-      val result = standardize(dfAll, schema, cmd, recordIdGenerationStrategy)
+      val result = standardize(dfAll, schema, cmd)
 
       processStandardizationResult(result, performance, pathCfg, schema, cmd, menasCredentials)
       log.info(s"$step finished successfully")

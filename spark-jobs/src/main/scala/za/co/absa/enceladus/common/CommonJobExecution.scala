@@ -1,9 +1,24 @@
+/*
+ * Copyright 2018 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package za.co.absa.enceladus.common
 
 import java.text.MessageFormat
 import java.time.Instant
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.SparkSession
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
@@ -26,10 +41,10 @@ import scala.util.{Failure, Success, Try}
 trait CommonJobExecution {
   TimeZoneNormalizer.normalizeJVMTimeZone()
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
-  protected val conf = ConfigFactory.load()
-  protected val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
+  protected val conf: Config = ConfigFactory.load()
+  protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
-  protected def standardizationPath(jobConfig: JobCmdConfig, reportVersion: Int) =
+  protected def getStandardizationPath(jobConfig: JobCmdConfig, reportVersion: Int): String =
     MessageFormat.format(conf.getString("standardized.hdfs.path"),
     jobConfig.datasetName,
     jobConfig.datasetVersion.toString,
@@ -63,7 +78,6 @@ trait CommonJobExecution {
 
   protected def initPerformanceMeasurer(path: String)
                                        (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils): PerformanceMeasurer = {
-    // init performance measurer
     val performance = new PerformanceMeasurer(spark.sparkContext.appName)
     val stdDirSize = fsUtils.getDirectorySize(path)
     performance.startMeasurement(stdDirSize)
@@ -91,7 +105,7 @@ trait CommonJobExecution {
                                          isJobStageOnly: Boolean = false,
                                          generateNewRun: Boolean = false)
                                         (implicit spark: SparkSession, dao: MenasDAO,
-                                         jobConfig: JobCmdConfig, step: String) = {
+                                         jobConfig: JobCmdConfig, step: String): Unit = {
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
@@ -118,7 +132,7 @@ trait CommonJobExecution {
       generateNewRun)
   }
 
-  protected def validateForExistingOutputPath(fsUtils: FileSystemVersionUtils, pathCfg: PathCfg) = {
+  protected def validateForExistingOutputPath(fsUtils: FileSystemVersionUtils, pathCfg: PathCfg): Unit = {
     if (fsUtils.hdfsExists(pathCfg.outputPath)) {
       throw new IllegalStateException(
         s"Path ${pathCfg.outputPath} already exists. Increment the run version, or delete ${pathCfg.outputPath}"
@@ -126,7 +140,7 @@ trait CommonJobExecution {
     }
   }
 
-  protected def writePerformanceMetrics(performance: PerformanceMeasurer, jobCmdConfig: JobCmdConfig) = {
+  protected def writePerformanceMetrics(performance: PerformanceMeasurer, jobCmdConfig: JobCmdConfig): Unit = {
     jobCmdConfig.performanceMetricsFile.foreach(fileName => try {
       performance.writeMetricsToFile(fileName)
     } catch {
@@ -146,7 +160,7 @@ trait CommonJobExecution {
     if (areCountMeasurementsAllZero) {
       log.warn(s"Empty output after running $step. Previous checkpoints show this is correct.")
     } else {
-      val errMsg = "Empty output after running $step, while previous checkpoints show non zero record count"
+      val errMsg = s"Empty output after running $step, while previous checkpoints show non zero record count"
       AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(step, errMsg, "")
       throw new IllegalStateException(errMsg)
     }

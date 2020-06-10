@@ -23,8 +23,9 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
-import za.co.absa.enceladus.common.RecordIdGeneration.IdType
+import za.co.absa.enceladus.common.RecordIdGeneration.{IdType, getRecordIdGenerationStrategyFromConfig}
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, PathCfg, RecordIdGeneration}
+import za.co.absa.enceladus.conformance.DynamicConformanceJob.conf
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -45,7 +46,7 @@ trait ConformanceExecution extends CommonJobExecution {
   def getPathCfg(cmd: ConfCmdConfig, conformance: Dataset, reportVersion: Int): PathCfg =
     PathCfg(
       outputPath = buildPublishPath(cmd, conformance, reportVersion),
-      inputPath = standardizationPath(cmd.jobConfig, reportVersion)
+      inputPath = getStandardizationPath(cmd.jobConfig, reportVersion)
     )
 
   def buildPublishPath(cmd: ConfCmdConfig,
@@ -64,8 +65,10 @@ trait ConformanceExecution extends CommonJobExecution {
     }
   }
 
-  protected def conform(conformance: Dataset, inputData: sql.Dataset[Row], recordIdGenerationStrategy: IdType)
+  protected def conform(conformance: Dataset, inputData: sql.Dataset[Row])
                        (implicit spark: SparkSession, cmd: ConfCmdConfig, dao: MenasDAO): DataFrame = {
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
+
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
 
     Try {

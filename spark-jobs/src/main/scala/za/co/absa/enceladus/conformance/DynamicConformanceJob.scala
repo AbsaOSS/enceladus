@@ -18,7 +18,6 @@ package za.co.absa.enceladus.conformance
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.common.JobCmdConfig
-import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
@@ -47,7 +46,6 @@ object DynamicConformanceJob extends ConformanceExecution {
     val dataset = dao.getDataset(jobCmdConfig.datasetName, jobCmdConfig.datasetVersion)
     val reportVersion = getReportVersion(cmd.jobConfig, dataset)
     val pathCfg = getPathCfg(cmd, dataset, reportVersion)
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     log.info(s"stdpath = ${pathCfg.inputPath}")
     log.info(s"publishPath = ${pathCfg.outputPath}")
@@ -61,7 +59,7 @@ object DynamicConformanceJob extends ConformanceExecution {
     val inputData = spark.read.parquet(pathCfg.inputPath)
 
     try {
-      val result = conform(dataset, inputData, recordIdGenerationStrategy)
+      val result = conform(dataset, inputData)
 
       processConformanceResult(result, performance, pathCfg, reportVersion, menasCredentials)
       log.info(s"$step finished successfully")

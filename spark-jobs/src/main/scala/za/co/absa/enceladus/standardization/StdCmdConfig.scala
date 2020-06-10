@@ -56,7 +56,7 @@ object StdCmdConfig {
   }
 
   private class CmdParser(programName: String) extends OptionParser[StdCmdConfig](programName) {
-    override def errorOnUnknownArgument = false
+    override def errorOnUnknownArgument: Boolean = false
 
     head("\nStandardization", "")
     var rawFormat: Option[String] = None

@@ -22,8 +22,8 @@ import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.{CommonJobExecution, PathCfg}
-import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
@@ -43,7 +43,7 @@ trait StandardizationExecution extends CommonJobExecution {
   protected def getPathCfg(cmd: StdCmdConfig, dataset: Dataset, reportVersion: Int): PathCfg = {
     PathCfg(
       inputPath = buildRawPath(cmd, dataset, reportVersion),
-      outputPath = standardizationPath(cmd.jobConfig, reportVersion)
+      outputPath = getStandardizationPath(cmd.jobConfig, reportVersion)
     )
   }
 
@@ -136,12 +136,10 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def standardize(dfAll: DataFrame,
-                            schema: StructType,
-                            cmd: StdCmdConfig,
-                            recordIdGenerationStrategy: IdType)
+  protected def standardize(dfAll: DataFrame, schema: StructType, cmd: StdCmdConfig)
                            (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     //scalastyle:on parameter.number
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     try {
       handleControlInfoValidation()

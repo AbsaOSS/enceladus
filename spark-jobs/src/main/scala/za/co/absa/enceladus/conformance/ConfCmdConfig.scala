@@ -17,7 +17,6 @@ package za.co.absa.enceladus.conformance
 
 import scopt.OptionParser
 import za.co.absa.enceladus.common.JobCmdConfig
-import za.co.absa.enceladus.standardization.StdCmdConfig.stepName
 
 /**
  * This is a class for configuration provided by the command line parameters
@@ -48,7 +47,7 @@ object ConfCmdConfig {
   }
 
   private class CmdParser(programName: String) extends OptionParser[ConfCmdConfig](programName) {
-    override def errorOnUnknownArgument = false
+    override def errorOnUnknownArgument: Boolean = false
     head("Dynamic Conformance", "")
 
     opt[String]("debug-set-publish-path").optional().hidden().action((value, config) =>
