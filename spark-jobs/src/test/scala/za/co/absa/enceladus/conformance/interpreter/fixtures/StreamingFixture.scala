@@ -29,7 +29,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 trait StreamingFixture extends FunSuite with SparkTestBase with MockitoSugar {
-  implicit val menasBaseUrls: List[String] = List()
+  implicit val menasBaseUrls: List[String] = List.empty
   implicit val cmd: ConfCmdConfig = ConfCmdConfig.apply(reportVersion = Some(1))
 
   protected def testHyperConformance(input: DataFrame,
