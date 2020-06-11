@@ -394,10 +394,10 @@ treated. This applies for the default value, too:
  - `base64` - the input is considered as Base64-encoded and will get unencoded. Contrary to the basic Spark behavior of
  `unbase64` (which skips characters invalid for Base64), this will result in an error.
 
-If encoding is missing altogether would it be needed (e.g. default value is given), `ValidationWarning` is issued and
- the encoding value is considered to be `none`.
+If `encoding` is missing altogether when it would be needed (e.g. when default value is given), `ValidationWarning` is
+ issued and the encoding value is considered to be `none`.
  
-`encoding` is not considered if BinaryType is already found in the input (so conversion is happening there).
+`encoding` is not considered if BinaryType is already found in the input (no conversion is happening there).
 
 ## Parsing
 
