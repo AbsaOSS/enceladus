@@ -24,6 +24,7 @@ redirect_from: /docs/usage/schema
   - [Float](#float)
   - [Timestamp](#timestamp)
   - [Date](#date)
+  - [Binary](#binary)
   - [Struct](#struct)
   - [Array](#array)
 - [Metadata](#metadata)
@@ -36,6 +37,7 @@ redirect_from: /docs/usage/schema
   - [minus_sign](#minussign)
   - [allow_infinity](#allowinfinity)
   - [radix](#radix)
+  - [encoding](#encoding)
 - [Parsing](#parsing)
   - [Parsing timestamps and dates](#parsing-timestamps-and-dates)
     - [Time Zone support](#time-zone-support)
@@ -223,6 +225,12 @@ The data type representing *java.sql.Date* values. If time zone is specified the
 
 <sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone)</sup>
 
+### Binary
+
+The data type representing *Binary* values.
+
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [encoding](#encoding)</sup>
+
 ### Struct
 
 The data type representing a structure of one or more sub-fields.
@@ -252,18 +260,19 @@ The type is specified as struct of following properties:
 *Standardization* can be influenced by `metadata` in the schema of the data. The `metadata` are optional properties.
 Here are the recognized ones with the description of their purpose (with detailed description below):
 
-| Property                                  | Target data type           | Description                                                                                                                                           | Example      | Default[\*](#metadata-star)              |
-|-------------------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|------------------------------------------|
-| [sourcecolumn](#sourcecolumn)             | any                        | The source column to provide data of the described column                                                                                             | *id*         | `-`[\*\*](#metadata-star-star)            |
-| [default](#default)                       | any atomic type            | Default value to use in case data are missing                                                                                                         | *0*          | `-`[\*\*](#metadata-star-star)            |
-| [pattern](#pattern)                       | timestamp & date           | Pattern for the timestamp or date representation                                                                                                      | *dd.MM.yy*   | *yyyy-MM-dd HH:mm:ss* **/** *yyyy-MM-dd* |
-| [timezone](#timezone)                     | timestamp (also date)      | The time zone of the timestamp when that is not part of the pattern (NB! for date it can return unexpected results)                                   | *US/Pacific* | *UTC*[\*\*\*](#metadata-star-star-star)    |
-| [pattern](#pattern)                       | any numeric type           | Pattern for the number representation                                                                                                                 | \#,\#\#0.\#  | `-`[\*\*](#metadata-star-star)            |
-| [decimal_separator](#decimal_separator)   | any numeric type           | The character separating the integer and the fractional parts of the number                                                                           | *,*          | *.*                                      |
-| [grouping_separator](#grouping_separator) | any numeric type           | Character to mark boundaries between orders of magnitude, usually to mark thousands, millions etc.                                                    | *\_*         | *,*                                      |
-| [minus_sign](#minus_sign)                 | any numeric type           | Character to mark the number is negative.                                                                                                             | *N*          | *-*                                      |
-| [allow_infinity](#allow_infinity)         | float & double             | Flag indicating if the column accepts infinity as a value (and positive/negative numbers which are too large are converted to *infinity*/*-infinity*) | *true*       | *false*                                  |
-| [radix](#radix)                           | long, integer, short, byte | The base of the numbers provided                                                                                                                      | *hex*        | *10*                                     |
+| Property                                  | Target data type           | Description                                                                                                                                           | Example         | Default[\*](#metadata-star)              |
+|-------------------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|------------------------------------------|
+| [sourcecolumn](#sourcecolumn)             | any                        | The source column to provide data of the described column                                                                                             | *id*            | `-`[\*\*](#metadata-star-star)           |
+| [default](#default)                       | any atomic type            | Default value to use in case data are missing                                                                                                         | *0*             | `-`[\*\*](#metadata-star-star)           |
+| [pattern](#pattern)                       | timestamp & date           | Pattern for the timestamp or date representation                                                                                                      | *dd.MM.yy*      | *yyyy-MM-dd HH:mm:ss* **/** *yyyy-MM-dd* |
+| [timezone](#timezone)                     | timestamp (also date)      | The time zone of the timestamp when that is not part of the pattern (NB! for date it can return unexpected results)                                   | *US/Pacific*    | *UTC*[\*\*\*](#metadata-star-star-star)  |
+| [pattern](#pattern)                       | any numeric type           | Pattern for the number representation                                                                                                                 | \#,\#\#0.\#     | `-`[\*\*](#metadata-star-star)           |
+| [decimal_separator](#decimal_separator)   | any numeric type           | The character separating the integer and the fractional parts of the number                                                                           | *,*             | *.*                                      |
+| [grouping_separator](#grouping_separator) | any numeric type           | Character to mark boundaries between orders of magnitude, usually to mark thousands, millions etc.                                                    | *\_*            | *,*                                      |
+| [minus_sign](#minus_sign)                 | any numeric type           | Character to mark the number is negative.                                                                                                             | *N*             | *-*                                      |
+| [allow_infinity](#allow_infinity)         | float & double             | Flag indicating if the column accepts infinity as a value (and positive/negative numbers which are too large are converted to *infinity*/*-infinity*) | *true*          | *false*                                  |
+| [radix](#radix)                           | long, integer, short, byte | The base of the numbers provided                                                                                                                      | *hex*           | *10*                                     |
+| [encoding](#encoding)                     | enumeration(base64, none)  | Encoding used for string->binary conversion                                                                                                           | *base64*,*none* | (no encoding present)                    |
 
 **NB!** All values in _metadata_ have to be entered as *string*. Even if they would conform to other types, like number
 or boolean.
@@ -374,6 +383,21 @@ For hexadecimal value entries in the form *"0xFF"* are accepted as well.
 
 If `radix` is specified as anything other than the default 10, [pattern](#pattern)
 value will be ignored.
+
+### encoding
+
+<sup>**Supported by types:** [Binary](#Binary)</sup>
+
+**When a string value is being converted to binary**, the supplied `encoding` indicates how the values are going to be 
+treated. This applies for the default value, too:
+ - `none` - the input will get cast as-is to binary. E.g. "abc" -> [97, 98, 99]
+ - `base64` - the input is considered as Base64-encoded and will get unencoded. Contrary to the basic Spark behavior of
+ `unbase64` (which skips characters invalid for Base64), this will result in an error.
+
+If encoding is missing altogether would it be needed (e.g. default value is given), `ValidationWarning` is issued and
+ the encoding value is considered to be `none`.
+ 
+`encoding` is not considered if BinaryType is already found in the input (so conversion is happening there).
 
 ## Parsing
 
@@ -549,6 +573,7 @@ The value used when _explicit default_ was not defined in the schema:
 - `0` for numeric column
 - `false` for Boolean column
 - `""` (empty string) for string column
+- `Array.empty[Byte]` (empty array of bytes) for binary column 
 - `1970/01/01` for date column
 - `1970/01/01 00:00:00` for timestamp column
 
