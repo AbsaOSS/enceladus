@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.conformance.streaming
 
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.interpreter.fixtures.{NestedStructsFixture, StreamingFixture}
 
@@ -40,7 +39,7 @@ class HyperConformanceIntegrationSuite extends FunSuite with StreamingFixture wi
 
   test("Test with catalyst workaround, event time factory") {
     implicit val infoDateFactory: InfoDateFactory = new InfoDateFromColumnFactory("dates.date_format5",
-      "dd-MM-yyyy HH:mm")
+      "MM-dd-yyyy HH:mm")
     val df: DataFrame = testHyperConformance(standardizedDf,
       "result2",
       nestedStructsDS)
