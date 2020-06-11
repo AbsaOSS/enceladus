@@ -32,9 +32,9 @@ case class UppercaseRuleInterpreter(rule: UppercaseConformanceRule) extends Rule
   def conform(df: Dataset[Row])
              (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfig): Dataset[Row] = {
     // Validate the rule parameters
-    RuleValidators.validateInputField(progArgs.datasetName, ruleName, df.schema, rule.inputColumn)
-    RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)
-    RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumn, rule.outputColumn)
+    RuleValidators.validateInputField(progArgs.jobConfig.datasetName, ruleName, df.schema, rule.inputColumn)
+    RuleValidators.validateOutputField(progArgs.jobConfig.datasetName, ruleName, df.schema, rule.outputColumn)
+    RuleValidators.validateSameParent(progArgs.jobConfig.datasetName, ruleName, rule.inputColumn, rule.outputColumn)
 
     if (rule.inputColumn.contains('.')) {
       conformNestedField(df)

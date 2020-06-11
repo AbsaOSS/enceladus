@@ -24,6 +24,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
+import za.co.absa.enceladus.common.JobCmdConfig
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.InfoDateFactory
@@ -43,7 +44,7 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
     implicit val spark: SparkSession = rawDf.sparkSession
-    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
+    val menasCredentials = cmd.jobConfig.menasCredentialsFactory.getInstance()
 
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
     dao.authenticate()
@@ -54,7 +55,7 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
 
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
 
-    val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
+    val conformance = dao.getDataset(cmd.jobConfig.datasetName, cmd.jobConfig.datasetVersion)
 
     val conformedDf = DynamicInterpreter.interpret(conformance, rawDf)
       .withColumnIfDoesNotExist(InfoDateColumn, infoDateColumn)
@@ -67,13 +68,13 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
   }
 
   private def logPreConformanceInfo(streamData: DataFrame): Unit = {
-    log.info(s"Menas URLs: ${menasBaseUrls.mkString(",")}, dataset=${cmd.datasetName}, version=${cmd.datasetVersion}")
+    log.info(s"Menas URLs: ${menasBaseUrls.mkString(",")}, dataset=${cmd.jobConfig.datasetName}, version=${cmd.jobConfig.datasetVersion}")
     log.info(s"Input schema: ${streamData.schema.prettyJson}")
   }
 
   @throws[IllegalArgumentException]
   private def getReportVersion(implicit cmd: ConfCmdConfig): Int = {
-    cmd.reportVersion match {
+    cmd.jobConfig.reportVersion match {
       case Some(version) => version
       case None => throw new IllegalArgumentException("Report version is not provided.")
     }
@@ -115,21 +116,18 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     validateConfiguration(conf)
 
     val menasCredentialsFactory = getMenasCredentialsFactory(conf: Configuration)
-
-    implicit val cmd: ConfCmdConfig = ConfCmdConfig(
+    val jobConfig = JobCmdConfig(
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
-      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()), // Still need a report date for mapping table patterns
-      reportVersion = Option(getReportVersion(conf)),
-      menasCredentialsFactory = menasCredentialsFactory,
-      performanceMetricsFile = None,
-      publishPathOverride = None,
-      folderPrefix = None,
+      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()),
+      menasCredentialsFactory = menasCredentialsFactory,args = Array.empty
+    )
+
+    val confConfig = ConfConfig(publishPathOverride = None,
       experimentalMappingRule = Some(true),
       isCatalystWorkaroundEnabled = Some(true),
-      autocleanStandardizedFolder = Some(false),
-      persistStorageLevel = None
-    )
+      autocleanStandardizedFolder = Some(false))
+    implicit val cmd: ConfCmdConfig = ConfCmdConfig(confConfig, jobConfig = jobConfig)
 
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(true)

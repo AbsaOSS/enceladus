@@ -22,6 +22,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
+import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
@@ -37,6 +38,9 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
   private implicit val dao: MenasDAO = mock[MenasDAO]
+
+  private implicit val log: Logger = mock[Logger]
+  private val standardizationReader = new StandardizationReader(log)
 
   private val tmpDirPrefix = "StdRerunTest"
   private val tmpFilePrefix = "test-input-"
@@ -66,7 +70,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
       "--raw-format csv --header false --delimiter |").split(" ")
 
     val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
-    StandardizationJob
+    standardizationReader
       .getFormatSpecificReader(cmd, dataSet, schemaWithStringType.fields.length)
       .schema(schemaWithStringType)
       .load(tmpFileName)

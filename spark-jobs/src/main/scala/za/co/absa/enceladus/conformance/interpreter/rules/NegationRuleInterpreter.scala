@@ -35,7 +35,7 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
 
   override def conform(df: Dataset[Row])
                       (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfig): Dataset[Row] = {
-    NegationRuleInterpreter.validateInputField(progArgs.datasetName, df.schema, rule.inputColumn)
+    NegationRuleInterpreter.validateInputField(progArgs.jobConfig.datasetName, df.schema, rule.inputColumn)
 
     val field = SchemaUtils.getField(rule.inputColumn, df.schema).get
 

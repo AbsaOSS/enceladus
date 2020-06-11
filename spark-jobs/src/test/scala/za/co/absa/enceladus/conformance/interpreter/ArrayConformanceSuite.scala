@@ -18,6 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter
 import org.apache.spark.sql.functions._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import za.co.absa.enceladus.common.JobCmdConfig
 import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
@@ -40,7 +41,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     val mapDF = spark.createDataFrame(MappingsSamples.mapping)
 
     dao = mock(classOf[MenasDAO])
-    progArgs = new ConfCmdConfig(reportDate = "2017-11-01")
+    progArgs = new ConfCmdConfig(jobConfig = JobCmdConfig(reportDate = "2017-11-01"))
 
     mockWhen(dao.getMappingTable("mapping", 0)) thenReturn MappingsSamples.mappingTable
 

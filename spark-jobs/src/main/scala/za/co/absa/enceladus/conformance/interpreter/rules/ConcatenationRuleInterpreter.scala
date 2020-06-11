@@ -33,7 +33,7 @@ case class ConcatenationRuleInterpreter(rule: ConcatenationConformanceRule) exte
   def conform(df: Dataset[Row])
              (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfig): Dataset[Row] = {
     // Validate the rule parameters
-    RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumns :+ rule.outputColumn: _*)
+    RuleValidators.validateSameParent(progArgs.jobConfig.datasetName, ruleName, rule.inputColumns :+ rule.outputColumn: _*)
 
     if (rule.outputColumn.contains('.')) {
       conformNestedField(df)
