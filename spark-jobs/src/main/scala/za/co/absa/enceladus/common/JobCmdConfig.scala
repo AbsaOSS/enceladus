@@ -42,6 +42,7 @@ object JobCmdConfig {
 
   private class CmdParser(programName: String) extends OptionParser[JobCmdConfig](programName) {
     override def errorOnUnknownArgument: Boolean = false
+    override def reportWarning(msg: String): Unit = {}
 
     opt[String]('D', "dataset-name").required().action((value, config) =>
       config.copy(datasetName = value)).text("Dataset name")

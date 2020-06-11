@@ -34,6 +34,7 @@ object ConfConfig {
 
   private class CmdParser(programName: String) extends OptionParser[ConfConfig](programName) {
     override def errorOnUnknownArgument: Boolean = false
+    override def reportWarning(msg: String): Unit = {}
     head("Dynamic Conformance", "")
 
     opt[String]("debug-set-publish-path").optional().hidden().action((value, config) =>
