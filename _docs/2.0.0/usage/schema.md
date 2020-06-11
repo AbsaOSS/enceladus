@@ -272,7 +272,7 @@ Here are the recognized ones with the description of their purpose (with detaile
 | [minus_sign](#minus_sign)                 | any numeric type            | Character to mark the number is negative.                                                                                                             | *N*             | *-*                                      |
 | [allow_infinity](#allow_infinity)         | float & double              | Flag indicating if the column accepts infinity as a value (and positive/negative numbers which are too large are converted to *infinity*/*-infinity*) | *true*          | *false*                                  |
 | [radix](#radix)                           | long, integer, short, byte  | The base of the numbers provided                                                                                                                      | *hex*           | *10*                                     |
-| [encoding](#encoding)                     | string ("base64" or "none") | Encoding used for string->binary conversion                                                                                                           | *base64*,*none* | (no encoding present)                    |
+| [encoding](#encoding)                     | binary                      | Encoding is used for string to binary conversion                                                                                                      | *base64*,*none* | *none*                                   |
 
 **NB!** All values in _metadata_ have to be entered as *string*. Even if they would conform to other types, like number
 or boolean.
