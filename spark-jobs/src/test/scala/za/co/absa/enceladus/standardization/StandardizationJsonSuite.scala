@@ -43,7 +43,7 @@ class StandardizationJsonSuite extends FunSuite with SparkTestBase with MockitoS
       "--raw-format json").split(" ")
 
     val dataSet = Dataset("SpecialChars", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
-    val cmd = StdCmdConfig.getCmdLineArguments(args)
+    val cmd = StdCmdConfigT.getCmdLineArguments(args)
 
     val csvReader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
 

@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.conformance
 
 import scopt.OptionParser
-import za.co.absa.enceladus.conformance.ConfCmdConfig.stepName
+import za.co.absa.enceladus.conformance.ConfCmdConfigT.stepName
 
 case class ConfConfig(publishPathOverride: Option[String] = None,
                       experimentalMappingRule: Option[Boolean] = None,

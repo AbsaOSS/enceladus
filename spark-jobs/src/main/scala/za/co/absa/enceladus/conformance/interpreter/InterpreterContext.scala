@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.ConfCmdConfigT
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 
@@ -29,5 +29,5 @@ case class InterpreterContext (
                                 jobShortName: String,
                                 spark: SparkSession,
                                 dao: MenasDAO,
-                                progArgs: ConfCmdConfig
+                                progArgs: ConfCmdConfigT
                               )

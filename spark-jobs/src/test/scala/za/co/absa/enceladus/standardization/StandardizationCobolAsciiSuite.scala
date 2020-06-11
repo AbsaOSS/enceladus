@@ -73,7 +73,7 @@ class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase
   private def getTestDataFrame(tmpFileName: String,
                                args: Array[String]
                               ): DataFrame = {
-    val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(argumentsBase ++ args)
+    val cmd = StdCmdConfigT.getCmdLineArguments(argumentsBase ++ args)
     val cobolReader = standardizationReader.getFormatSpecificReader(cmd, dataSet, schema.fields.length)
     cobolReader
       .option("copybook_contents", copybook)

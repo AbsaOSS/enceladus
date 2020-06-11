@@ -23,9 +23,8 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
-import za.co.absa.enceladus.common.RecordIdGeneration.{IdType, getRecordIdGenerationStrategyFromConfig}
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants, PathCfg, RecordIdGeneration}
-import za.co.absa.enceladus.conformance.DynamicConformanceJob.conf
+import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, PathConfig, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -40,18 +39,16 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 trait ConformanceExecution extends CommonJobExecution {
-  protected implicit val step = "Conformance"
+  protected implicit val conformanceStepName: String = "Conformance"
   private val conformanceReader = new ConformanceReader(log, conf)
 
-  def getPathCfg(cmd: ConfCmdConfig, conformance: Dataset, reportVersion: Int): PathCfg =
-    PathCfg(
+  def getPathCfg(cmd: ConfCmdConfigT, conformance: Dataset, reportVersion: Int): PathConfig =
+    PathConfig(
       outputPath = buildPublishPath(cmd, conformance, reportVersion),
       inputPath = getStandardizationPath(cmd.jobConfig, reportVersion)
     )
 
-  def buildPublishPath(cmd: ConfCmdConfig,
-                               ds: Dataset,
-                               reportVersion: Int): String = {
+  def buildPublishPath(cmd: ConfCmdConfigT, ds: Dataset, reportVersion: Int): String = {
     val infoDateCol: String = InfoDateColumn
     val infoVersionCol: String = InfoVersionColumn
 
@@ -66,9 +63,8 @@ trait ConformanceExecution extends CommonJobExecution {
   }
 
   protected def conform(conformance: Dataset, inputData: sql.Dataset[Row])
-                       (implicit spark: SparkSession, cmd: ConfCmdConfig, dao: MenasDAO): DataFrame = {
+                       (implicit spark: SparkSession, cmd: ConfCmdConfigT, dao: MenasDAO): DataFrame = {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
-
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
 
     Try {
@@ -76,12 +72,12 @@ trait ConformanceExecution extends CommonJobExecution {
       DynamicInterpreter.interpret(conformance, inputData)
     } match {
       case Failure(e: ValidationException) =>
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(step, e.getMessage, e.techDetails)
+        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(conformanceStepName, e.getMessage, e.techDetails)
         throw e
       case Failure(NonFatal(e)) =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(step, e.getMessage, sw.toString)
+        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(conformanceStepName, e.getMessage, sw.toString)
         throw e
       case Success(conformedDF) =>
         if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
@@ -94,11 +90,11 @@ trait ConformanceExecution extends CommonJobExecution {
 
   protected def processConformanceResult(result: DataFrame,
                                          performance: PerformanceMeasurer,
-                                         pathCfg: PathCfg,
+                                         pathCfg: PathConfig,
                                          reportVersion: Int,
                                          menasCredentials: MenasCredentials)
                                         (implicit spark: SparkSession,
-                                         cmd: ConfCmdConfig,
+                                         cmd: ConfCmdConfigT,
                                          fsUtils: FileSystemVersionUtils): Unit = {
     val cmdLineArgs: String = cmd.jobConfig.args.mkString(" ")
 

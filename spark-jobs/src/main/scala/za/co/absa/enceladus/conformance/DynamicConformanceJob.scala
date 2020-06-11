@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance
 
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.common.JobCmdConfig
+import za.co.absa.enceladus.common.{JobCmdConfig, PathConfig}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
@@ -34,7 +34,7 @@ object DynamicConformanceJob extends ConformanceExecution {
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
-    implicit val cmd: ConfCmdConfig = ConfCmdConfig.getCmdLineArguments(args)
+    implicit val cmd: ConfCmdConfigT = ConfCmdConfigT.getCmdLineArguments(args)
     implicit val jobCmdConfig: JobCmdConfig = cmd.jobConfig
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
@@ -45,7 +45,8 @@ object DynamicConformanceJob extends ConformanceExecution {
     // get the dataset definition
     val dataset = dao.getDataset(jobCmdConfig.datasetName, jobCmdConfig.datasetVersion)
     val reportVersion = getReportVersion(cmd.jobConfig, dataset)
-    val pathCfg = getPathCfg(cmd, dataset, reportVersion)
+    val pathCfg: PathConfig = getPathCfg(cmd, dataset, reportVersion)
+
 
     log.info(s"stdpath = ${pathCfg.inputPath}")
     log.info(s"publishPath = ${pathCfg.outputPath}")
@@ -62,7 +63,7 @@ object DynamicConformanceJob extends ConformanceExecution {
       val result = conform(dataset, inputData)
 
       processConformanceResult(result, performance, pathCfg, reportVersion, menasCredentials)
-      log.info(s"$step finished successfully")
+      log.info(s"$conformanceStepName finished successfully")
 
       runPostProcessors(ErrorSourceId.Conformance, pathCfg, jobCmdConfig, reportVersion)
     } finally {

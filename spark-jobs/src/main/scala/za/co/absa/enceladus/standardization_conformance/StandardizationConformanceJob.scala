@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.standardization_conformance
 
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.enceladus.common.{Constants, JobCmdConfig, PathConfig}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId
@@ -29,17 +29,17 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-object StandardizationJob extends StandardizationExecution {
+object StandardizationConformanceJob extends StandardizationConformanceExecution {
+  override protected implicit val standardizationStepName: String = "Conformance"
 
-  def main(args: Array[String]) {
-    // This should be the first thing the app does to make secure Kafka work with our CA.
-    // After Spring activates JavaX, it will be too late.
+  def main(args: Array[String]): Unit = {
     SecureKafka.setSecureKafkaProperties(conf)
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
-    implicit val cmd: StdCmdConfigT = StdCmdConfigT.getCmdLineArguments(args)
+    implicit val cmd: StdConfCmdConfigT = StdConfCmdConfigT.getCmdLineArguments(args)
     implicit val jobCmdConfig: JobCmdConfig = cmd.jobConfig
+
     implicit val spark: SparkSession = obtainSparkSession()
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     implicit val udfLib: UDFLibrary = new UDFLibrary
@@ -50,11 +50,11 @@ object StandardizationJob extends StandardizationExecution {
 
     val dataset = dao.getDataset(jobCmdConfig.datasetName, jobCmdConfig.datasetVersion)
     val reportVersion = getReportVersion(cmd.jobConfig, dataset)
-    val pathCfg = getPathCfg(cmd, dataset, reportVersion)
+    val pathCfg: PathConfig = getFullPathCfg(cmd, dataset, reportVersion)
 
     log.info(s"input path: ${pathCfg.inputPath}")
-    log.info(s"output path: ${pathCfg.outputPath}")
-    // die if the output path exists
+    log.info(s"publish path: ${pathCfg.outputPath}")
+
     validateForExistingOutputPath(fsUtils, pathCfg)
 
     initFunctionalExtensions(reportVersion, pathCfg, true, true)
@@ -65,6 +65,7 @@ object StandardizationJob extends StandardizationExecution {
 
     // Add the raw format of the input file(s) to Atum's metadata as well
     Atum.setAdditionalInfo("raw_format" -> cmd.stdConfig.rawFormat)
+
     val schema: StructType = dao.getSchema(dataset.schemaName, dataset.schemaVersion)
     val dfAll: DataFrame = prepareDataFrame(schema, cmd, pathCfg.inputPath, dataset)
 
@@ -73,12 +74,19 @@ object StandardizationJob extends StandardizationExecution {
       menasCredentials.username, cmd.jobConfig.args.mkString(" "))
 
     try {
-      val result = standardize(dfAll, schema, cmd)
 
-      processStandardizationResult(result, performance, pathCfg, schema, cmd, menasCredentials)
-      log.info(s"$standardizationStepName finished successfully")
+      val standardizationResult = standardize(dfAll, schema, cmd)
 
+      processStandardizationResult(standardizationResult,performance, pathCfg, schema, cmd, menasCredentials)
+
+      log.info("Standardization finished successfully")
+
+      val result = conform(dataset, standardizationResult)
       runPostProcessors(ErrorSourceId.Standardization, pathCfg, jobCmdConfig, reportVersion)
+
+      processConformanceResult(result, performance, pathCfg, reportVersion, menasCredentials)
+      log.info(s"Conformance finished successfully")
+      runPostProcessors(ErrorSourceId.Conformance, pathCfg, jobCmdConfig, reportVersion)
     } finally {
       executePostStep(jobCmdConfig)
     }

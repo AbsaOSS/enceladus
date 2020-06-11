@@ -65,8 +65,8 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
   private def getTestDataFrame(tmpFileName: String,
-                               args: Array[String]): (StdCmdConfig, DataFrame) = {
-    val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
+                               args: Array[String]): (StdCmdConfigT, DataFrame) = {
+    val cmd = StdCmdConfigT.getCmdLineArguments(args)
     val csvReader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
     (cmd, csvReader.load(tmpFileName).orderBy("id"))
   }

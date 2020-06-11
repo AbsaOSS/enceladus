@@ -23,7 +23,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.{CommonJobExecution, PathCfg}
+import za.co.absa.enceladus.common.{CommonJobExecution, PathConfig}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
@@ -38,16 +38,16 @@ import za.co.absa.enceladus.utils.validation.ValidationException
 import scala.util.control.NonFatal
 
 trait StandardizationExecution extends CommonJobExecution {
-  protected implicit val step = "Standardization"
+  protected implicit val standardizationStepName: String = "Standardization"
 
-  protected def getPathCfg(cmd: StdCmdConfig, dataset: Dataset, reportVersion: Int): PathCfg = {
-    PathCfg(
+  protected def getPathCfg(cmd: StdCmdConfigT, dataset: Dataset, reportVersion: Int): PathConfig = {
+    PathConfig(
       inputPath = buildRawPath(cmd, dataset, reportVersion),
       outputPath = getStandardizationPath(cmd.jobConfig, reportVersion)
     )
   }
 
-  def buildRawPath(cmd: StdCmdConfig, dataset: Dataset, reportVersion: Int): String = {
+  def buildRawPath(cmd: StdCmdConfigT, dataset: Dataset, reportVersion: Int): String = {
     val dateTokens = cmd.jobConfig.reportDate.split("-")
     cmd.stdConfig.rawPathOverride match {
       case None =>
@@ -61,7 +61,7 @@ trait StandardizationExecution extends CommonJobExecution {
   }
 
   protected def prepareDataFrame(schema: StructType,
-                                 cmd: StdCmdConfig,
+                                 cmd: StdCmdConfigT,
                                  path: String,
                                  dataset: Dataset)
                                 (implicit spark: SparkSession,
@@ -136,7 +136,7 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def standardize(dfAll: DataFrame, schema: StructType, cmd: StdCmdConfig)
+  protected def standardize(dfAll: DataFrame, schema: StructType, cmd: StdCmdConfigT)
                            (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     //scalastyle:on parameter.number
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
@@ -154,18 +154,18 @@ trait StandardizationExecution extends CommonJobExecution {
       case NonFatal(e) if !e.isInstanceOf[ValidationException] =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(step, e.getMessage, sw.toString)
+        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(standardizationStepName, e.getMessage, sw.toString)
         throw e
     }
   }
 
   protected def processStandardizationResult(standardizedDF: DataFrame,
                                              performance: PerformanceMeasurer,
-                                             pathCfg: PathCfg,
-                                             schema: StructType, cmd: StdCmdConfig,
+                                             pathCfg: PathConfig,
+                                             schema: StructType, cmd: StdCmdConfigT,
                                              menasCredentials: MenasCredentials)
                                             (implicit spark: SparkSession,
-                                             fsUtils: FileSystemVersionUtils): Unit = {
+                                             fsUtils: FileSystemVersionUtils): DataFrame = {
     //register renames with ATUM
     import za.co.absa.atum.AtumImplicits._
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
@@ -173,7 +173,7 @@ trait StandardizationExecution extends CommonJobExecution {
       case (destinationName, sourceName) => standardizedDF.registerColumnRename(sourceName, destinationName)
     }
 
-    standardizedDF.setCheckpoint(s"$step - End", persistInDatabase = false)
+    standardizedDF.setCheckpoint(s"$standardizationStepName - End", persistInDatabase = false)
 
     val recordCount = standardizedDF.lastCheckpointRowCount match {
       case None => standardizedDF.count
@@ -183,12 +183,13 @@ trait StandardizationExecution extends CommonJobExecution {
       handleEmptyOutputAfterStep()
     }
 
-    standardizedDF.write.parquet(pathCfg.outputPath)
+    val standardizationPath = pathCfg.standardizationPath.getOrElse(pathCfg.outputPath)
+    standardizedDF.write.parquet(standardizationPath)
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
-    val stdDirSize = fsUtils.getDirectorySize(pathCfg.outputPath)
+    val stdDirSize = fsUtils.getDirectorySize(standardizationPath)
     performance.finishMeasurement(stdDirSize, recordCount)
-    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
+    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, standardizationPath,
       menasCredentials.username, cmd.jobConfig.args.mkString(" "))
 
     cmd.stdConfig.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
@@ -196,7 +197,9 @@ trait StandardizationExecution extends CommonJobExecution {
       cmd.stdConfig.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
     }
 
-    standardizedDF.writeInfoFile(pathCfg.outputPath)
+    standardizedDF.writeInfoFile(standardizationPath)
     writePerformanceMetrics(performance, cmd.jobConfig)
+
+    standardizedDF
   }
 }

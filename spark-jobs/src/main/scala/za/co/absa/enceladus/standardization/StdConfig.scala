@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.standardization
 
 import scopt.OptionParser
-import za.co.absa.enceladus.standardization.StdCmdConfig.stepName
+import za.co.absa.enceladus.standardization.StdCmdConfigT.stepName
 
 case class StdConfig(rawFormat: String = "xml",
                      charset: Option[String] = None,

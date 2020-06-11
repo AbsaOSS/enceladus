@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions._
 import org.mockito.Mockito.mock
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.common.JobCmdConfig
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.{ConfCmdConfig, ConfCmdConfigT}
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, ExplosionState, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -42,7 +42,7 @@ case class MyCustomRule(
 case class MyCustomRuleInterpreter(rule: MyCustomRule) extends RuleInterpreter {
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfigT): Dataset[Row] = {
     import spark.implicits._
     // we have to do this if this rule is to support arrays
     handleArrays(rule.outputColumn, df) { flattened =>

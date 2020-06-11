@@ -115,4 +115,4 @@ object JobCmdConfig {
   }
 }
 
-final case class PathCfg(inputPath: String, outputPath: String)
+case class PathConfig(inputPath: String, outputPath: String, standardizationPath: Option[String] = None)
