@@ -16,10 +16,12 @@
 package za.co.absa.enceladus.utils.types
 
 import java.sql.{Date, Timestamp}
+import java.util.Base64
+
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldEnhancements
 import za.co.absa.enceladus.utils.numeric._
-import za.co.absa.enceladus.utils.schema.MetadataKeys
+import za.co.absa.enceladus.utils.schema.{MetadataKeys, MetadataValues}
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.parsers._
@@ -134,6 +136,7 @@ object TypedStructField {
   def apply(structField: StructField)(implicit defaults: Defaults): TypedStructField = {
     structField.dataType match {
       case _: StringType    => new StringTypeStructField(structField)
+      case _: BinaryType    => new BinaryTypeStructField(structField)
       case _: BooleanType   => new BooleanTypeStructField(structField)
       case _: ByteType      => new ByteTypeStructField(structField)
       case _: ShortType     => new ShortTypeStructField(structField)
@@ -158,6 +161,8 @@ object TypedStructField {
     TypedStructField(structField).asInstanceOf[ArrayTypeStructField]
   def asStructTypeStructField(structField: StructField)(implicit defaults: Defaults): StructTypeStructField =
     TypedStructField(structField).asInstanceOf[StructTypeStructField]
+  def asBinaryTypeStructField(structField: StructField)(implicit defaults: Defaults): BinaryTypeStructField =
+    TypedStructField(structField).asInstanceOf[BinaryTypeStructField]
 
   def unapply[T](typedStructField: TypedStructField): Option[StructField] = Some(typedStructField.structField)
 
@@ -167,7 +172,7 @@ object TypedStructField {
   }
   // StringTypeStructField
   final class StringTypeStructField private[TypedStructField](structField: StructField)
-                                                              (implicit defaults: Defaults)
+                                                             (implicit defaults: Defaults)
     extends TypedStructFieldTagged[String](structField) {
     override protected def convertString(string: String): Try[String] = {
       Success(string)
@@ -175,6 +180,27 @@ object TypedStructField {
 
     override def validate(): Seq[ValidationIssue] = {
       ScalarFieldValidator.validate(this)
+    }
+  }
+
+  // BinaryTypeStructField
+  final class BinaryTypeStructField private[TypedStructField](structField: StructField)
+                                                             (implicit defaults: Defaults)
+    extends TypedStructFieldTagged[Array[Byte]](structField) {
+    val normalizedEncoding: Option[String] = structField.getMetadataString(MetadataKeys.Encoding).map(_.toLowerCase)
+
+    // used to convert the default value from metadata's [[MetadataKeys.DefaultValue]]
+    override protected def convertString(string: String): Try[Array[Byte]] = {
+      normalizedEncoding match {
+        case Some(MetadataValues.Encoding.Base64) => Try(Base64.getDecoder.decode(string))
+        case Some(MetadataValues.Encoding.None) | None => Success(string.getBytes) // use as-is
+        case _ =>
+          Failure(new IllegalStateException(s"Unsupported encoding for Binary field ${structField.name}: '${normalizedEncoding.get}'"))
+      }
+    }
+
+    override def validate(): Seq[ValidationIssue] = {
+      BinaryFieldValidator.validate(this)
     }
   }
 

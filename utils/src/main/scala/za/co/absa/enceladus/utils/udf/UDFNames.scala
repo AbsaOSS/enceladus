@@ -28,4 +28,6 @@ object UDFNames {
   final val arrayDistinctErrors = "arrayDistinctErrors"
   final val cleanErrCol = "cleanErrCol"
   final val errorColumnAppend = "errorColumnAppend"
+
+  final val binaryUnbase64 = "binaryUnbase64"
 }

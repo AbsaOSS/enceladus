@@ -27,8 +27,8 @@ import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils.FieldWithSource
+import za.co.absa.enceladus.utils.schema.{MetadataValues, SchemaUtils}
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.TypedStructField._
@@ -51,6 +51,7 @@ import scala.util.{Random, Try}
   *         NumericParser !
   *         StringParser !
   *         BooleanParser !
+  *       BinaryParser !
   *       DateTimeParser
   *         TimestampParser !
   *         DateParser !
@@ -168,6 +169,7 @@ object TypeParser {
       case _: DoubleType    => FractionalParser(TypedStructField.asNumericTypeStructField[Double](field), _, _, _, _, _)
       case _: DecimalType   => DecimalParser(TypedStructField.asNumericTypeStructField[BigDecimal](field), _, _, _, _, _)
       case _: StringType    => StringParser(TypedStructField(field), _, _, _, _, _)
+      case _: BinaryType    => BinaryParser(TypedStructField.asBinaryTypeStructField(field), _, _, _, _, _)
       case _: BooleanType   => BooleanParser(TypedStructField(field), _, _, _, _, _)
       case _: DateType      => DateParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _, _, _)
       case _: TimestampType => TimestampParser(TypedStructField.asDateTimeTypeStructField(field), _, _, _, _, _)
@@ -406,6 +408,34 @@ object TypeParser {
                                         failOnInputNotPerSchema: Boolean,
                                         isArrayElement: Boolean)
                                        (implicit defaults: Defaults) extends ScalarParser[String]
+
+  private final case class BinaryParser(field: BinaryTypeStructField,
+                                        path: String,
+                                        column: Column,
+                                        origType: DataType,
+                                        failOnInputNotPerSchema: Boolean,
+                                        isArrayElement: Boolean)
+                                       (implicit defaults: Defaults) extends PrimitiveParser[Array[Byte]] {
+    override protected def assemblePrimitiveCastLogic: Column = {
+      origType match {
+        case BinaryType => column
+        case StringType =>
+          // already validated in Standardization
+          field.normalizedEncoding match {
+            case Some(MetadataValues.Encoding.Base64) => callUDF(UDFNames.binaryUnbase64, column)
+            case Some(MetadataValues.Encoding.None) | None =>
+              if (field.normalizedEncoding.isEmpty) {
+                logger.warn(s"Binary field ${field.structField.name} does not have encoding setup in metadata. Reading as-is.")
+              }
+              column.cast(field.dataType) // use as-is
+            case _ => throw new IllegalStateException(s"Unsupported encoding for Binary field ${field.structField.name}:" +
+              s" '${field.normalizedEncoding.get}'")
+          }
+
+        case _ => throw new IllegalStateException(s"Unsupported conversion from BinaryType to ${field.dataType}")
+      }
+    }
+  }
 
   private final case class BooleanParser(field: TypedStructField,
                                          path: String,

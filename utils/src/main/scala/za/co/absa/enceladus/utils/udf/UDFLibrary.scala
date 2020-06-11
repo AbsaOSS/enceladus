@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.utils.udf
 
-import java.util.UUID
+import java.util.Base64
 
 import org.apache.spark.sql.api.java._
 import org.apache.spark.sql.types._
@@ -24,6 +24,7 @@ import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
 import za.co.absa.enceladus.utils.udf.UDFNames._
 
 import scala.collection.mutable
+import scala.util.{Failure, Success, Try}
 
 class UDFLibrary()(implicit val spark: SparkSession) {
 
@@ -67,6 +68,15 @@ class UDFLibrary()(implicit val spark: SparkSession) {
   spark.udf.register(errorColumnAppend,
                      UDFLibrary.errorColumnAppend,
                      ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
+
+
+  spark.udf.register(binaryUnbase64,
+    {stringVal: String => Try {
+      Base64.getDecoder.decode(stringVal)
+    } match {
+      case Success(decoded) => decoded
+      case Failure(_) => null //scalastyle:ignore null
+    }})
 }
 
 object UDFLibrary {
