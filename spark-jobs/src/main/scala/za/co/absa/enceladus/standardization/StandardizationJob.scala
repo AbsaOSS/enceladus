@@ -256,8 +256,8 @@ object StandardizationJob {
   private def getCobolOptions(cmd: StdCmdConfig, dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
       val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
-      val isXcomOpt = if (cobolOptions.isXcom) None else Some(true)
-      val isTextOpt = if (cobolOptions.isText) None else Some(true)
+      val isXcomOpt = if (cobolOptions.isXcom) Some(true) else None
+      val isTextOpt = if (cobolOptions.isText) Some(true) else None
       val isAscii = cobolOptions.encoding.exists(_.equalsIgnoreCase("ascii"))
       // For ASCII files --charset is converted into Cobrix "ascii_charset" option
       // For EBCDIC files --charset is converted into Cobrix "ebcdic_code_page" option
