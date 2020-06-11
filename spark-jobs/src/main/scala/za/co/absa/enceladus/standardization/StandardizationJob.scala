@@ -21,6 +21,7 @@ import java.time.Instant
 import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
+import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, DataFrameReader, SparkSession}
 import org.slf4j.LoggerFactory
@@ -28,6 +29,7 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.{IdType, _}
 import za.co.absa.enceladus.common._
+import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
@@ -42,11 +44,9 @@ import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
-import za.co.absa.enceladus.utils.unicode.ParameterConversion._
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.enceladus.utils.unicode.ParameterConversion._
 import za.co.absa.enceladus.utils.validation.ValidationException
-import org.apache.spark.SPARK_VERSION
-import za.co.absa.enceladus.common.plugin.PostProcessingService
 
 import scala.collection.immutable.HashMap
 import scala.util.control.NonFatal
@@ -256,12 +256,15 @@ object StandardizationJob {
   private def getCobolOptions(cmd: StdCmdConfig, dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
       val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
+      val isXcomOpt = if (cobolOptions.isXcom) None else Some(true)
+      val isTextOpt = if (cobolOptions.isText) None else Some(true)
       val isAscii = cobolOptions.encoding.exists(_.equalsIgnoreCase("ascii"))
       // For ASCII files --charset is converted into Cobrix "ascii_charset" option
       // For EBCDIC files --charset is converted into Cobrix "ebcdic_code_page" option
       HashMap(
         getCopybookOption(cobolOptions, dataset),
-        "is_xcom" -> Option(BooleanParameter(cobolOptions.isXcom)),
+        "is_xcom" -> isXcomOpt.map(BooleanParameter),
+        "is_text" -> isTextOpt.map(BooleanParameter),
         "string_trimming_policy" -> cobolOptions.trimmingPolicy.map(StringParameter),
         "encoding" -> cobolOptions.encoding.map(StringParameter),
         "ascii_charset" -> cmd.charset.flatMap(charset => if (isAscii) Option(StringParameter(charset)) else None),
@@ -295,7 +298,8 @@ object StandardizationJob {
                                dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, numberOfColumns)
-    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
+    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")
+      && !cmd.rawFormat.equalsIgnoreCase("cobol")) {
       // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
       val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
       val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {

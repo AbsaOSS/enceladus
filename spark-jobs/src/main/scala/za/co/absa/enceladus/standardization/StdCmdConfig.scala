@@ -246,6 +246,16 @@ object StdCmdConfig {
             failure("The --is-xcom option is supported only for COBOL data format")
           })
 
+      opt[Boolean]("cobol-is-text").optional().action((value, config) => {
+        config.copy(cobolOptions = cobolSetIsText(config.cobolOptions, value))
+      }).text("Specifies if the mainframe file is ASCII text file")
+        .validate(value =>
+          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol")) {
+            success
+          } else {
+            failure("The --cobol-is-text option is supported only for COBOL data format")
+          })
+
       opt[String]("cobol-encoding").optional().action((value, config) => {
         config.copy(cobolOptions = cobolSetEncoding(config.cobolOptions, value))
       }).text("Specify encoding of mainframe files (ascii or ebcdic)")
@@ -271,6 +281,13 @@ object StdCmdConfig {
       cobolOptions match {
         case Some(a) => Some(a.copy(copybook = newCopybook))
         case None => Some(CobolOptions(newCopybook))
+      }
+    }
+
+    private def cobolSetIsText(cobolOptions: Option[CobolOptions], newIsText: Boolean): Option[CobolOptions] = {
+      cobolOptions match {
+        case Some(a) => Some(a.copy(isText = newIsText))
+        case None => Some(CobolOptions(isText = newIsText))
       }
     }
 
