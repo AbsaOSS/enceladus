@@ -29,6 +29,7 @@ import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
+import za.co.absa.enceladus.utils.udf.UDFNames
 import za.co.absa.enceladus.utils.validation._
 
 import scala.util.Try

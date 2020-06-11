@@ -22,14 +22,15 @@ import za.co.absa.enceladus.plugins.builtin.controlinfo.ControlInfoAvroSerialize
 
 class ControlInfoSerSuite extends FunSuite {
   test ("Control info key serialize to Avro") {
-    val avroControlInfoKey = ControlInfoAvroSerializer.convertControlInfoKey("dummyDataset")
+    val dceControlInfo = DceControlInfoFactory.getDummyDceControlInfo()
+    val avroControlInfoKey = ControlInfoAvroSerializer.convertInfoKey(dceControlInfo)
 
     assert(avroControlInfoKey.toString == """{"datasetName": "dummyDataset"}""")
   }
 
   test ("Control info metrics serialize to Avro") {
     val dceControlInfo = DceControlInfoFactory.getDummyDceControlInfo()
-    val avroControlInfo = ControlInfoAvroSerializer.convertControlInfoRecord(dceControlInfo)
+    val avroControlInfo = ControlInfoAvroSerializer.convertInfoRecord(dceControlInfo)
     val expectedAvroRecord = IOUtils.toString(getClass.getResourceAsStream("/test_data/dummyAcontrolInfoAvro.json"), "UTF-8")
 
     assert(avroControlInfo.isDefined)

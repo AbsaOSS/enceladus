@@ -105,7 +105,7 @@ class SchemaParserSuite extends WordSpec with Matchers with MockitoSugar with In
         }
 
         inside(caughtException) {
-          case SchemaParsingException(SchemaType.Copybook, msg, Some(22), None, Some("B1"), cause) =>
+          case SchemaParsingException(SchemaType.Copybook, msg, Some(22), None, Some(""), cause) =>
             msg should include("Syntax error in the copybook")
             cause shouldBe a[SyntaxErrorException]
         }

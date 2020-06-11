@@ -1,0 +1,84 @@
+{
+  "name": "dataError",
+  "type": "record",
+  "namespace": "za.co.absa.dataquality.errors.avro.schema",
+  "fields": [
+    {
+      "name": "sourceSystem",
+      "type": "string"
+    },
+    {
+      "name": "sourceSystemId",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "dataset",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "ingestionNumber",
+      "type": [
+        "null",
+        "long"
+      ],
+      "default": null
+    },
+    {
+      "name": "processingTimestamp",
+      "type": "long",
+      "logicalType": "timestamp-millis"
+    },
+    {
+      "name": "informationDate",
+      "type": [
+        "null",
+        "int"
+      ],
+      "logicalType": "date",
+      "default": null
+    },
+    {
+      "name": "outputFileName",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "recordId",
+      "type": "string"
+    },
+    {
+      "name": "errorSourceId",
+      "type": "string"
+    },
+    {
+      "name": "errorType",
+      "type": "string"
+    },
+    {
+      "name": "errorCode",
+      "type": "string"
+    },
+    {
+      "name": "errorDescription",
+      "type": "string"
+    },
+    {
+      "name": "additionalInfo",
+      "type": {
+        "type": "map",
+        "values": "string"
+      }
+    }
+  ]
+}

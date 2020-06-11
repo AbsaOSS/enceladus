@@ -26,8 +26,8 @@ import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfterAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.http.MediaType
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.TestResourcePath
 import za.co.absa.enceladus.menas.integration.fixtures._
@@ -779,7 +779,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
               assert(e.errorType == "schema_parsing")
               assert(e.schemaType == SchemaType.Copybook)
               assert(e.line.contains(22))
-              assert(e.field.contains("B1"))
+              assert(e.field.contains(""))
               assert(body.message.contains("Syntax error in the copybook"))
             case e => fail(s"Expected an instance of SchemaParsingError, got $e.")
           }

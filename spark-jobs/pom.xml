@@ -12,8 +12,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>spark-jobs</artifactId>
     <packaging>jar</packaging>
@@ -21,13 +20,14 @@
     <parent>
         <groupId>za.co.absa.enceladus</groupId>
         <artifactId>parent</artifactId>
-        <version>2.5.0-SNAPSHOT</version>
+        <version>2.7.0-SNAPSHOT</version>
     </parent>
 
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <hyperdrive.version>3.0.0</hyperdrive.version>
         <commons.version>0.0.10</commons.version>
+        <spark.sql.kafka.version>2.4.5</spark.sql.kafka.version>
     </properties>
 
     <dependencies>
@@ -57,11 +57,11 @@
         <dependency>
             <groupId>za.co.absa</groupId>
             <artifactId>enceladus-fixedWidth</artifactId>
-            <version>${enceladus-fixedwidth.version}</version>
+            <version>1.7.0</version>
         </dependency>
         <dependency>
             <groupId>za.co.absa.cobrix</groupId>
-            <artifactId>spark-cobol</artifactId>
+            <artifactId>spark-cobol_${scala.compat.version}</artifactId>
             <version>${cobrix.version}</version>
         </dependency>
 
@@ -95,12 +95,17 @@
             <artifactId>mongo-java-driver</artifactId>
             <version>${mongo.java.driver.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql-kafka-0-10_${scala.compat.version}</artifactId>
+            <version>${spark.sql.kafka.version}</version>
+        </dependency>
 
         <!-- Lineage tracking -->
         <dependency>
             <groupId>za.co.absa.spline.agent.spark</groupId>
             <artifactId>agent-core_${scala.compat.version}</artifactId>
-            <version>${spline.agent.version}</version>
+            <version>0.5.0</version>
         </dependency>
     </dependencies>
     <build>
@@ -143,7 +148,9 @@
                             <include>*:*</include>
                         </includes>
                         <excludes>
-                            <exclude>org.apache.spark:*</exclude>
+<!--  org.apache.spark:* should not be excluded. Otherwise, the spark-submit would have to be called with
+spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0
+-->
                             <exclude>org.apache.hadoop:*</exclude>
                             <exclude>org.scala-lang:scala-actors</exclude>
                             <exclude>org.scala-lang:scala-compiler</exclude>

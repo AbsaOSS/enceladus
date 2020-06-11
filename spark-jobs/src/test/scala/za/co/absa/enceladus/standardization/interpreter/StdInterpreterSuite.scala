@@ -20,8 +20,9 @@ import java.sql.{Date, Timestamp}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 case class ErrorPreserve(a: String, b: String, errCol: List[ErrorMessage])
 case class ErrorPreserveStd(a: String, b: Int, errCol: List[ErrorMessage])
@@ -73,7 +74,7 @@ class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBas
 
   test("Non-null errors produced for non-nullable attribute in a struct") {
     import spark.implicits._
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val orig = spark.createDataFrame(Seq(
       MyWrapper(MyHolder(null)),
@@ -94,7 +95,7 @@ class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBas
   }
 
   test("Existing error messages should be preserved") {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
     import spark.implicits._
 
     val df = spark.createDataFrame(Array(
@@ -117,7 +118,7 @@ class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBas
   }
 
   test("Standardize Test") {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val sourceDF = spark.createDataFrame(
       Array(
@@ -140,7 +141,7 @@ class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBas
   }
 
   test("Standardize Test (JSON source)") {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
     val sourceDF = spark.read.json("src/test/resources/data/standardizeJsonSrc.json")
 
     val expectedSchema = stdExpectedSchema.add(
@@ -160,7 +161,7 @@ class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBas
   case class RootRecordCC(id: Long, name: Option[String], orders: Option[Array[OrderCC]])
 
   test("Test standardization of non-nullable field of a contains null array") {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val schema = StructType(
       Array(
@@ -189,7 +190,7 @@ class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBas
 
   test ("Test standardization of Date and Timestamp fields with default value and pattern")
   {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val schema = StructType(
       Seq(
@@ -216,7 +217,7 @@ class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBas
 
   test ("Test standardization of Date and Timestamp fields with default value, without pattern")
   {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val schema = StructType(
       Seq(
@@ -243,7 +244,7 @@ class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBas
 
   test ("Test standardization of Date and Timestamp fields without default value, with pattern")
   {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val schema = StructType(
       Seq(
@@ -270,7 +271,7 @@ class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBas
 
   test ("Test standardization of Date and Timestamp fields without default value, without pattern")
   {
-    implicit val udfLib: UDFLibrary = new za.co.absa.enceladus.utils.error.UDFLibrary
+    implicit val udfLib: UDFLibrary = new UDFLibrary()
 
     val schema = StructType(
       Seq(

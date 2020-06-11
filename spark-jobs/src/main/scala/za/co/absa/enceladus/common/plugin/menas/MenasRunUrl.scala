@@ -13,19 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.error
+package za.co.absa.enceladus.common.plugin.menas
 
-object UDFNames {
-  final val stdCastErr = "stdCastErr"
-  final val stdNullErr = "stdNullErr"
-  final val stdSchemaErr = "stdSchemaErr"
+object MenasRunUrl {
 
-  final val confMappingErr = "confMappingErr"
-  final val confCastErr = "confCastErr"
-  final val confNegErr = "confNegErr"
-  final val confLitErr = "confLitErr"
+  def getMenasApiRunUrl(menasBaseUrl: String, datasetName: String, datasetVersion: Int, runNumber: Int): String =
+    s"$menasBaseUrl/api/runs/$datasetName/$datasetVersion/$runNumber"
 
-  final val arrayDistinctErrors = "arrayDistinctErrors"
-  final val cleanErrCol = "cleanErrCol"
-  final val errorColumnAppend = "errorColumnAppend"
+  def getMenasUiRunUrl(menasBaseUrl: String, datasetName: String, datasetVersion: Int, runNumber: Int): String =
+    s"$menasBaseUrl/#/runs/$datasetName/$datasetVersion/$runNumber"
+
 }

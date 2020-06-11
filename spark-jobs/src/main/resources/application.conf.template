@@ -17,6 +17,10 @@ enceladus.version=${project.version}
 # each can have multiple comma-separated hosts, these are used for fault-tolerance
 menas.rest.uri="http://localhost:8080,host2:9000/menas;https://localhost:8080,host2:9000/menas"
 
+# 'enceladus_record_id' with an id can be added containing either true UUID, always the same IDs (row-hash-based) or the
+# column will not be added at all. Allowed values: "uuid", "stableHashId", "none"
+enceladus.recordId.generation.strategy="uuid"
+
 standardized.hdfs.path="/tmp/conformance-output/standardized-{0}-{1}-{2}-{3}"
 
 # Pattern to look for mapping table for the specified date
@@ -42,6 +46,10 @@ conformance.catalyst.workaround=true
 # Automatically delete standardized data folder after successful run of a Conformance job
 conformance.autoclean.standardized.hdfs.folder=false
 
+# Enforce info file validation
+# Can be one of: strict, warning, none
+control.info.validation=warning
+
 # system-wide time zone
 timezone="UTC"
 
@@ -61,10 +69,19 @@ timezone="UTC"
 # (uncomment to enable)
 #standardization.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin
 #conformance.plugin.control.metrics.1=za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka.KafkaInfoPlugin
+
+# 2. Push errors to a Kafka topic
+# standardization.plugin.postprocessor.1=za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
+# conformance.plugin.postprocessor.1=za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
+
 #kafka.schema.registry.url:"http://127.0.0.1:8081"
 #kafka.bootstrap.servers="127.0.0.1:9092"
 #kafka.info.metrics.client.id="controlInfo"
 #kafka.info.metrics.topic.name="control.info"
+
+#kafka.error.client.id="DqErrorSender"
+#kafka.error.topic.name="dq.errors"
+
 # Optional security settings
 #kafka.security.protocol="SASL_SSL"
 #kafka.sasl.mechanism="GSSAPI"

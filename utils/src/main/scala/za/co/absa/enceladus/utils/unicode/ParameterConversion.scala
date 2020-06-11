@@ -13,24 +13,23 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.common.mq
+package za.co.absa.enceladus.utils.unicode
 
-import za.co.absa.enceladus.plugins.builtin.controlinfo.DceControlInfo
+object ParameterConversion {
 
-/**
- * Base interface for control info metrics (aka INFO file) producer for messaging queues.
- */
-trait ControlInfoProducer {
+  implicit class UnicodeValueString(s: String) {
+    val unicodeElement = """[uU]?\+?([0-9a-fA-F]{4})$""".r
 
-  /**
-   * Send control metrics to a messaging queue.
-   *
-   * @param controlInfo Control info metrics to send.
-   */
-  def send(controlInfo: DceControlInfo): Unit
+    def includingUnicode: String = s match {
+      case unicodeElement(hex) => Integer.parseInt(hex, 16).toChar.toString
+      case other => other
+    }
+  }
 
-  /**
-   * This method should be called when the producer is no longer needed.
-   */
-  def close(): Unit
+  implicit class NoneValueString(s: String) {
+    def includingNone: String = s.toLowerCase() match {
+      case "none" => ""
+      case _ => s
+    }
+  }
 }

@@ -20,12 +20,13 @@ import java.util.Date
 
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.SPARK_VERSION
-import org.apache.spark.sql.functions.{lit, to_date}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
+import za.co.absa.enceladus.conformance.streaming.InfoDateFactory
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
@@ -33,14 +34,15 @@ import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, Stream
 
 class HyperConformance (implicit cmd: ConfCmdConfig,
                         featureSwitches: FeatureSwitches,
-                        menasBaseUrls: List[String]) extends StreamTransformer {
+                        menasBaseUrls: List[String],
+                        infoDateFactory: InfoDateFactory) extends StreamTransformer {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   @throws[IllegalArgumentException]
-  def transform(streamData: DataFrame): DataFrame = {
+  def transform(rawDf: DataFrame): DataFrame = {
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
-    implicit val spark: SparkSession = streamData.sparkSession
+    implicit val spark: SparkSession = rawDf.sparkSession
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
 
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
@@ -48,14 +50,20 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
 
     val reportVersion = getReportVersion
 
-    logPreConformanceInfo(streamData)
+    logPreConformanceInfo(rawDf)
+
+    val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
 
     val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
 
-    DynamicInterpreter.interpret(conformance, streamData)
-      .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.reportDate), ReportDateFormat))
-      .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))
+    val conformedDf = DynamicInterpreter.interpret(conformance, rawDf)
+      .withColumnIfDoesNotExist(InfoDateColumn, infoDateColumn)
+      .withColumnIfDoesNotExist(InfoDateColumnString, date_format(infoDateColumn,"yyyy-MM-dd"))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
+
+    log.info(s"Raw schema: ${rawDf.schema.treeString}")
+    log.info(s"Publish schema: ${conformedDf.schema.treeString}")
+    conformedDf
   }
 
   private def logPreConformanceInfo(streamData: DataFrame): Unit = {
@@ -82,6 +90,7 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
  * transformer.hyperconformance.dataset.version=1
  * transformer.hyperconformance.report.date=2020-01-29
  * transformer.hyperconformance.report.version=1
+ * transformer.hyperconformance.event.timestamp.column=EV_TIME
  *
  * # Either plain credentials
  * transformer.hyperconformance.menas.credentials.file=/path/menas.credentials
@@ -91,6 +100,8 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
  * }}}
  */
 object HyperConformance extends StreamTransformerFactory with HyperConformanceAttributes {
+  import HyperConformanceAttributes._
+
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   private val defaultReportVersion = 1
@@ -108,7 +119,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     implicit val cmd: ConfCmdConfig = ConfCmdConfig(
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
-      reportDate = getReportDate(conf),
+      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()), // Still need a report date for mapping table patterns
       reportVersion = Option(getReportVersion(conf)),
       menasCredentialsFactory = menasCredentialsFactory,
       performanceMetricsFile = None,
@@ -126,6 +137,8 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       .setControlFrameworkEnabled(false)
       .setBroadcastStrategyMode(Always)
       .setBroadcastMaxSizeMb(0)
+
+    implicit val reportDateCol: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(conf)
 
     implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
     new HyperConformance()
@@ -152,14 +165,6 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       case (true, false)  => new MenasPlainCredentialsFactory(conf.getString(menasCredentialsFileKey))
       case (false, true)  => new MenasKerberosCredentialsFactory(conf.getString(menasAuthKeytabKey))
       case (true, true)   => throw new IllegalArgumentException("Either a credentials file or a keytab should be specified, but not both.")
-    }
-  }
-
-  private def getReportDate(conf: Configuration): String = {
-    if (conf.containsKey(reportDateKey)) {
-      conf.getString(reportDateKey)
-    } else {
-      new SimpleDateFormat(ReportDateFormat).format(new Date())
     }
   }
 

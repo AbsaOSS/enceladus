@@ -26,8 +26,9 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.utils.error.{ErrorMessage, UDFLibrary}
+import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
 class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar {

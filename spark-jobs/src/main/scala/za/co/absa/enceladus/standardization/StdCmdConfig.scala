@@ -131,12 +131,12 @@ object StdCmdConfig {
       .validate(value =>
         if (rawFormat.isDefined &&
           (rawFormat.get.equalsIgnoreCase("xml") ||
-          rawFormat.get.equalsIgnoreCase("csv") ||
-          rawFormat.get.equalsIgnoreCase("json")))
-        {
+            rawFormat.get.equalsIgnoreCase("csv") ||
+            rawFormat.get.equalsIgnoreCase("json") ||
+            rawFormat.get.equalsIgnoreCase("cobol"))) {
           success
         } else {
-          failure("The --charset option is supported only for CSV, JSON and XML")
+          failure("The --charset option is supported only for CSV, JSON, XML and COBOL")
         })
 
     opt[String]("row-tag").optional().action((value, config) =>
@@ -245,6 +245,26 @@ object StdCmdConfig {
           } else {
             failure("The --is-xcom option is supported only for COBOL data format")
           })
+
+      opt[String]("cobol-encoding").optional().action((value, config) => {
+        config.copy(cobolOptions = cobolSetEncoding(config.cobolOptions, value))
+      }).text("Specify encoding of mainframe files (ascii or ebcdic)")
+        .validate(value =>
+          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol")) {
+            success
+          } else {
+            failure("The --cobol-encoding option is supported only for COBOL data format")
+          })
+
+      opt[String]("cobol-trimming-policy").optional().action((value, config) => {
+        config.copy(cobolOptions = cobolSetTrimmingPolicy(config.cobolOptions, value))
+      }).text("Specify string trimming policy for mainframe files (none, left, right, both)")
+        .validate(value =>
+          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol")) {
+            success
+          } else {
+            failure("The --cobol-trimming-policy option is supported only for COBOL data format")
+          })
     }
 
     private def cobolSetCopybook(cobolOptions: Option[CobolOptions], newCopybook: String): Option[CobolOptions] = {
@@ -258,6 +278,20 @@ object StdCmdConfig {
       cobolOptions match {
         case Some(a) => Some(a.copy(isXcom = newIsXCom))
         case None => Some(CobolOptions(isXcom = newIsXCom))
+      }
+    }
+
+    private def cobolSetEncoding(cobolOptions: Option[CobolOptions], newEncoding: String): Option[CobolOptions] = {
+      cobolOptions match {
+        case Some(a) => Some(a.copy(encoding = Option(newEncoding)))
+        case None => Some(CobolOptions(encoding = Option(newEncoding)))
+      }
+    }
+
+    private def cobolSetTrimmingPolicy(cobolOptions: Option[CobolOptions], newTrimmingPolicy: String): Option[CobolOptions] = {
+      cobolOptions match {
+        case Some(a) => Some(a.copy(trimmingPolicy = Option(newTrimmingPolicy)))
+        case None => Some(CobolOptions(trimmingPolicy = Option(newTrimmingPolicy)))
       }
     }
   }

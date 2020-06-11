@@ -17,8 +17,7 @@ package za.co.absa.enceladus.conformance
 
 import za.co.absa.hyperdrive.ingestor.api.{HasComponentAttributes, PropertyMetadata}
 
-trait HyperConformanceAttributes extends HasComponentAttributes {
-
+object HyperConformanceAttributes {
   val keysPrefix = "transformer.hyperconformance"
 
   // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
@@ -29,6 +28,12 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
   val datasetVersionKey = s"$keysPrefix.dataset.version"
   val reportDateKey = s"$keysPrefix.report.date"
   val reportVersionKey = s"$keysPrefix.report.version"
+  val eventTimestampColumnKey = s"$keysPrefix.event.timestamp.column"
+  val eventTimestampPatternKey = s"$keysPrefix.event.timestamp.pattern"
+}
+
+trait HyperConformanceAttributes extends HasComponentAttributes {
+  import HyperConformanceAttributes._
 
   override def getName: String = "HyperConformance"
 
@@ -45,6 +50,14 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
       PropertyMetadata("Report date", Some("The current date is used by default0"), required = false),
     reportVersionKey ->
       PropertyMetadata("Report version", Some("Will be determined automatically by default if not specified"), required = false),
+    eventTimestampColumnKey ->
+      PropertyMetadata("Event timestamp column",
+        Some("If specified, the column will be used to generate 'enceladus_info_date'"),
+        required = false),
+    eventTimestampPatternKey ->
+      PropertyMetadata("Event timestamp pattern",
+        Some("If the event timestamp column is string, the pattern is used to parse it (default is 'yyyy-MM-dd'T'HH:mm'Z''"),
+        required = false),
     menasCredentialsFileKey ->
       PropertyMetadata("Menas credentials file", Some("Relative or absolute path to the file on local FS or HDFS"), required = false),
     menasAuthKeytabKey ->

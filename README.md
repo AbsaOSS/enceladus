@@ -217,14 +217,18 @@ The list of additional options available for running Standardization:
 | --charset **charset**                | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.                                                                         |
 | --row-tag **tag**                    | A row tag if the input format is `xml`.                                                                                                            |
 | --header **true/false**              | Indicates if in the input CSV data has headers as the first row of each file.                                                                      |
-| --delimiter **character**            | Specifies a delimiter character to use for CSV format. By default `,` is used.                                                                     |
-| --csv-quote **character**            | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used.                    |
-| --csv-escape **character**           | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.                                            |
+| --delimiter **character**            | Specifies a delimiter character to use for CSV format. By default `,` is used. <sup>*</sup>                                                        |
+| --csv-quote **character**            | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. <sup>*</sup>       |
+| --csv-escape **character**           | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.   <sup>*</sup>                             |
 | --trimValues **true/false**          | Indicates if string fields of fixed with text data should be trimmed.                                                                              |
 | --is-xcom **true/false**             | If `true` a mainframe input file is expected to have XCOM RDW headers.                                                                             |
+| --cobol-encoding **encoding**        | Specifies the encoding of a mainframe file (`ascii` or `ebcdic`). Code page can be specified using `--charset` option.                             |
+| --cobol-trimming-policy **policy**   | Specifies the way leading and trailing spaces should be handled. Can be `none` (do not trim spaces), `left`, `right`, `both`(default).             |
 | --folder-prefix **prefix**           | Adds a folder prefix before the date tokens.                                                                                                       |
 | --debug-set-raw-path **path**        | Override the path of the raw data (used for testing purposes).                                                                                     |
 | --strict-schema-check **true/false** | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` (default) proceeds over it with an entry in _errCol_ | 
+
+<sup>*</sup> Can also be specified as a unicode value in the following ways: <code>U+00A1</code>, <code>u00a1</code> or just the code <code>00A1</code>. In case empty string option needs to be applied, the keyword <code>none</code> can be used.
 
 The list of additional options available for running Conformance:
 
