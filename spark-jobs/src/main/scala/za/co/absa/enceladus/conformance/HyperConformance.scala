@@ -65,7 +65,7 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
 
     val conformedDf = DynamicInterpreter.interpret(conformance, rawDf)
-      .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_timestamp().cast(DateType)))
+      .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_date()))
       .withColumnIfDoesNotExist(InfoDateColumnString, coalesce(date_format(infoDateColumn,"yyyy-MM-dd"), lit("")))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
     conformedDf
