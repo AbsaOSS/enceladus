@@ -75,7 +75,7 @@ class UDFLibrary()(implicit val spark: SparkSession) {
       Base64.getDecoder.decode(stringVal)
     } match {
       case Success(decoded) => decoded
-      case Failure(_) => null
+      case Failure(_) => null //scalastyle:ignore null
     }})
 }
 
