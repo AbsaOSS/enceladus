@@ -425,7 +425,7 @@ object TypeParser {
             case Some(MetadataValues.Encoding.Base64) => callUDF(UDFNames.binaryUnbase64, column)
             case Some(MetadataValues.Encoding.None) | None =>
               if (field.normalizedEncoding.isEmpty) {
-                logger.info(s"Binary field ${field.structField.name} does not have encoding setup in metadata. Reading as-is.")
+                logger.warn(s"Binary field ${field.structField.name} does not have encoding setup in metadata. Reading as-is.")
               }
               column.cast(field.dataType) // use as-is
             case _ => throw new IllegalStateException(s"Unsupported encoding for Binary field ${field.structField.name}:" +
