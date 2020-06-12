@@ -21,7 +21,7 @@ import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.TypedStructField._
-import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
+import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue, ValidationWarning}
 
 import scala.util.{Failure, Success, Try}
 
@@ -81,6 +81,7 @@ class TypedStructFieldSuite extends FunSuite {
       case FloatType      => (field.isInstanceOf[FloatTypeStructField], "FloatTypeStructField")
       case DoubleType     => (field.isInstanceOf[DoubleTypeStructField], "DoubleTypeStructField")
       case StringType     => (field.isInstanceOf[StringTypeStructField], "StringTypeStructField")
+      case BinaryType     => (field.isInstanceOf[BinaryTypeStructField], "BinaryTypeStructField")
       case BooleanType    => (field.isInstanceOf[BooleanTypeStructField], "BooleanTypeStructField")
       case DateType       => (field.isInstanceOf[DateTypeStructField], "DateTypeStructField")
       case TimestampType  => (field.isInstanceOf[TimestampTypeStructField], "TimestampTypeStructField")
@@ -144,6 +145,17 @@ class TypedStructFieldSuite extends FunSuite {
     val errMsg = s"null is not a valid value for field '$fieldName'"
     val fail = Failure(new IllegalArgumentException(errMsg))
     checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError(errMsg)))
+  }
+
+  test("Binary type not nullable, with default defined as null") {
+    val fieldType = BinaryType
+    val nullable = false
+    val field = createField(fieldType, nullable, Some(null)) // scalastyle:ignore null
+    val typed = TypedStructField(field)
+    val errMsg = s"null is not a valid value for field '$fieldName'"
+    val warnMsg ="Default value of 'null' found, but no encoding is specified. Assuming 'none'."
+    val fail = Failure(new IllegalArgumentException(errMsg))
+    checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError(errMsg), ValidationWarning(warnMsg)))
   }
 
   test("Byte type not nullable, with default defined as not not-numeric string") {
