@@ -7,9 +7,9 @@ categories:
     - usage
 redirect_from: /docs/usage/schema
 ---
-## Table Of Content
+## Table Of Contents
 <!-- toc -->
-- [Table Of Content](#table-of-content)
+- [Table Of Contents](#table-of-contents)
 - [Intro](#intro)
 - [Automatically added columns](#automatically-added-columns)
 - [Data types](#data-types)
@@ -31,10 +31,10 @@ redirect_from: /docs/usage/schema
   - [default](#default)
   - [pattern](#pattern)
   - [timezone](#timezone)
-  - [decimal_separator](#decimalseparator)
-  - [grouping_separator](#groupingseparator)
-  - [minus_sign](#minussign)
-  - [allow_infinity](#allowinfinity)
+  - [decimal_separator](#decimal_separator)
+  - [grouping_separator](#grouping_separator)
+  - [minus_sign](#minus_sign)
+  - [allow_infinity](#allow_infinity)
   - [radix](#radix)
 - [Parsing](#parsing)
   - [Parsing timestamps and dates](#parsing-timestamps-and-dates)

@@ -7,9 +7,9 @@ categories:
     - usage
 redirect_from: /docs/usage/config
 ---
-## Table Of Content
+## Table Of Contents
 <!-- toc -->
-- [Table Of Content](#table-of-content)
+- [Table Of Contents](#table-of-contents)
 - [Intro](#intro)
 - [General options](#general-options)
 <!-- tocstop -->

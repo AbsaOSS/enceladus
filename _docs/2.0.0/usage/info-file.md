@@ -7,10 +7,10 @@ categories:
     - usage
 redirect_from: /docs/usage/info-file
 ---
-## Table Of Content
+## Table Of Contents
 
 <!-- toc -->
-- [Table Of Content](#table-of-content)
+- [Table Of Contents](#table-of-contents)
 - [Description](#description)
 - [Validation](#validation)
 <!-- tocstop -->

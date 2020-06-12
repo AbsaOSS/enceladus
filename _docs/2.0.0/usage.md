@@ -8,10 +8,10 @@ redirect_from: /docs/usage
 ---
 {% capture docs_path %}{{ site.baseurl }}/docs/{{ page.version }}{% endcapture %}
 
-## Table Of Content
+## Table Of Contents
 
 <!-- toc -->
-- [Table Of Content](#table-of-content)
+- [Table Of Contents](#table-of-contents)
 - [Intro](#intro)
 - [Quick Start](#quick-start)
 - [Spark Jobs](#spark-jobs)
@@ -21,7 +21,7 @@ redirect_from: /docs/usage
 
 ## Intro
 
-This part of the documentations will show you how to use Enceladus. How use Menas as its UI and how to run its spark-jobs. This part expects you to have Menas already deployed and running and `spark-jobs.jar` ready at hand. If not, please look at previous parts of [build process][build] and [deployment][deploy]
+This part of the documentations will show you how to use Enceladus, Menas as its UI and how to run its spark-jobs. This part expects you to have Menas already deployed and running and `spark-jobs.jar` ready at hand. If not, please look at previous parts of [build process][build] and [deployment][deploy]
 
 ## Quick Start
 

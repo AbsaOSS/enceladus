@@ -7,9 +7,9 @@ categories:
     - usage
 redirect_from: /docs/usage/errcol
 ---
-## Table Of Content
+## Table Of Contents
 <!-- toc -->
-- [Table Of Content](#table-of-content)
+- [Table Of Contents](#table-of-contents)
 - [Description](#description)
 - [Error Types](#error-types)
 - [Notes](#notes)
