@@ -138,7 +138,7 @@ The list of options for configuring Spark deployment mode in Yarn and resource s
 | --conf-spark-memory-fraction **value**                               |             | **Advanced**. Fraction of (heap space - 300MB) used for execution and storage (default=`0.6`). Sets `spark.memory.fraction` Spark configuration parameter. See the detailed description [here](http://spark.apache.org/docs/latest/configuration.html#memory-management) |
 
 
-For more information on these options see the official documentation on [running Spark on Yarn] [spark-running-yarn]
+For more information on these options see the official documentation on [running Spark on Yarn][spark-running-yarn]
 
 The list of all options for running both Standardization and Conformance:
 
