@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.common.JobCmdConfig
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{DropConformanceRule, LiteralConformanceRule, MappingConformanceRule}
@@ -34,7 +34,7 @@ class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with Logger
     val inputDf = spark.read.option("header", "true").csv("src/test/resources/interpreter/literalJoin/data")
     val mappingDf = spark.read.option("header", "true").csv("src/test/resources/interpreter/literalJoin/mapping")
 
-    implicit val progArgs: ConfCmdConfig = ConfCmdConfig(jobConfig = JobCmdConfig(reportDate = "2018-03-23"))
+    implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(jobConfig = JobCmdConfig(reportDate = "2018-03-23"))
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
     val enableCF = false
     val isCatalystWorkaroundEnabled = true

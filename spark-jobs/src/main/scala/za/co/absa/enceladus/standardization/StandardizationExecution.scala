@@ -40,14 +40,14 @@ import scala.util.control.NonFatal
 trait StandardizationExecution extends CommonJobExecution {
   protected implicit val step = "Standardization"
 
-  protected def getPathCfg(cmd: StdCmdConfig, dataset: Dataset, reportVersion: Int): PathCfg = {
+  protected def getPathCfg(cmd: StandardizationCmdConfig, dataset: Dataset, reportVersion: Int): PathCfg = {
     PathCfg(
       inputPath = buildRawPath(cmd, dataset, reportVersion),
       outputPath = getStandardizationPath(cmd.jobConfig, reportVersion)
     )
   }
 
-  def buildRawPath(cmd: StdCmdConfig, dataset: Dataset, reportVersion: Int): String = {
+  def buildRawPath(cmd: StandardizationCmdConfig, dataset: Dataset, reportVersion: Int): String = {
     val dateTokens = cmd.jobConfig.reportDate.split("-")
     cmd.stdConfig.rawPathOverride match {
       case None =>
@@ -61,7 +61,7 @@ trait StandardizationExecution extends CommonJobExecution {
   }
 
   protected def prepareDataFrame(schema: StructType,
-                                 cmd: StdCmdConfig,
+                                 cmd: StandardizationCmdConfig,
                                  path: String,
                                  dataset: Dataset)
                                 (implicit spark: SparkSession,
@@ -136,7 +136,7 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def standardize(dfAll: DataFrame, schema: StructType, cmd: StdCmdConfig)
+  protected def standardize(dfAll: DataFrame, schema: StructType, cmd: StandardizationCmdConfig)
                            (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     //scalastyle:on parameter.number
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
@@ -162,7 +162,7 @@ trait StandardizationExecution extends CommonJobExecution {
   protected def processStandardizationResult(standardizedDF: DataFrame,
                                              performance: PerformanceMeasurer,
                                              pathCfg: PathCfg,
-                                             schema: StructType, cmd: StdCmdConfig,
+                                             schema: StructType, cmd: StandardizationCmdConfig,
                                              menasCredentials: MenasCredentials)
                                             (implicit spark: SparkSession,
                                              fsUtils: FileSystemVersionUtils): Unit = {

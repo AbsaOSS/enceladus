@@ -34,7 +34,7 @@ object DynamicConformanceJob extends ConformanceExecution {
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
-    implicit val cmd: ConfCmdConfig = ConfCmdConfig.getCmdLineArguments(args)
+    implicit val cmd: ConformanceCmdConfig = ConformanceCmdConfig.getCmdLineArguments(args)
     implicit val jobCmdConfig: JobCmdConfig = cmd.jobConfig
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)

@@ -23,16 +23,16 @@ import za.co.absa.enceladus.common.JobCmdConfig
  * Note: scopt requires all fields to have default values.
  *       Even if a field is mandatory it needs a default value.
  */
-case class ConfCmdConfig(confConfig: ConfConfig = ConfConfig(),
-                         jobConfig: JobCmdConfig = JobCmdConfig())
+case class ConformanceCmdConfig(confConfig: ConformanceConfig = ConformanceConfig(),
+                                jobConfig: JobCmdConfig = JobCmdConfig())
 
-object ConfCmdConfig {
+object ConformanceCmdConfig {
   val stepName = "Conformance"
 
-  def getCmdLineArguments(args: Array[String]): ConfCmdConfig = {
+  def getCmdLineArguments(args: Array[String]): ConformanceCmdConfig = {
     val jobConfig = JobCmdConfig.getCmdLineArguments(args, stepName)
-    val confConfig = ConfConfig.getCmdLineArguments(args)
-    ConfCmdConfig(confConfig, jobConfig)
+    val confConfig = ConformanceConfig.getCmdLineArguments(args)
+    ConformanceCmdConfig(confConfig, jobConfig)
   }
 
 }

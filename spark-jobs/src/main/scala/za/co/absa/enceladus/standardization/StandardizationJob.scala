@@ -38,7 +38,7 @@ object StandardizationJob extends StandardizationExecution {
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
-    implicit val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
+    implicit val cmd: StandardizationCmdConfig = StandardizationCmdConfig.getCmdLineArguments(args)
     implicit val jobCmdConfig: JobCmdConfig = cmd.jobConfig
     implicit val spark: SparkSession = obtainSparkSession()
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)

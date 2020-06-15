@@ -43,15 +43,15 @@ trait ConformanceExecution extends CommonJobExecution {
   protected implicit val step = "Conformance"
   private val conformanceReader = new ConformanceReader(log, conf)
 
-  def getPathCfg(cmd: ConfCmdConfig, conformance: Dataset, reportVersion: Int): PathCfg =
+  def getPathCfg(cmd: ConformanceCmdConfig, conformance: Dataset, reportVersion: Int): PathCfg =
     PathCfg(
       outputPath = buildPublishPath(cmd, conformance, reportVersion),
       inputPath = getStandardizationPath(cmd.jobConfig, reportVersion)
     )
 
-  def buildPublishPath(cmd: ConfCmdConfig,
-                               ds: Dataset,
-                               reportVersion: Int): String = {
+  def buildPublishPath(cmd: ConformanceCmdConfig,
+                       ds: Dataset,
+                       reportVersion: Int): String = {
     val infoDateCol: String = InfoDateColumn
     val infoVersionCol: String = InfoVersionColumn
 
@@ -66,7 +66,7 @@ trait ConformanceExecution extends CommonJobExecution {
   }
 
   protected def conform(conformance: Dataset, inputData: sql.Dataset[Row])
-                       (implicit spark: SparkSession, cmd: ConfCmdConfig, dao: MenasDAO): DataFrame = {
+                       (implicit spark: SparkSession, cmd: ConformanceCmdConfig, dao: MenasDAO): DataFrame = {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
@@ -98,7 +98,7 @@ trait ConformanceExecution extends CommonJobExecution {
                                          reportVersion: Int,
                                          menasCredentials: MenasCredentials)
                                         (implicit spark: SparkSession,
-                                         cmd: ConfCmdConfig,
+                                         cmd: ConformanceCmdConfig,
                                          fsUtils: FileSystemVersionUtils): Unit = {
     val cmdLineArgs: String = cmd.jobConfig.args.mkString(" ")
 

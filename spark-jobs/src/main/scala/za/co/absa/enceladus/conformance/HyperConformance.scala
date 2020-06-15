@@ -33,7 +33,7 @@ import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCred
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
-class HyperConformance (implicit cmd: ConfCmdConfig,
+class HyperConformance (implicit cmd: ConformanceCmdConfig,
                         featureSwitches: FeatureSwitches,
                         menasBaseUrls: List[String],
                         infoDateFactory: InfoDateFactory) extends StreamTransformer {
@@ -73,7 +73,7 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
   }
 
   @throws[IllegalArgumentException]
-  private def getReportVersion(implicit cmd: ConfCmdConfig): Int = {
+  private def getReportVersion(implicit cmd: ConformanceCmdConfig): Int = {
     cmd.jobConfig.reportVersion match {
       case Some(version) => version
       case None => throw new IllegalArgumentException("Report version is not provided.")
@@ -123,11 +123,11 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       menasCredentialsFactory = menasCredentialsFactory,args = Array.empty
     )
 
-    val confConfig = ConfConfig(publishPathOverride = None,
+    val confConfig = ConformanceConfig(publishPathOverride = None,
       experimentalMappingRule = Some(true),
       isCatalystWorkaroundEnabled = Some(true),
       autocleanStandardizedFolder = Some(false))
-    implicit val cmd: ConfCmdConfig = ConfCmdConfig(confConfig, jobConfig = jobConfig)
+    implicit val cmd: ConformanceCmdConfig = ConformanceCmdConfig(confConfig, jobConfig = jobConfig)
 
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(true)

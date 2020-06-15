@@ -19,7 +19,7 @@ import org.apache.spark.sql.functions._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import za.co.absa.enceladus.common.JobCmdConfig
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.samples._
@@ -31,7 +31,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
   // spark.enableControlFrameworkTracking()
 
   implicit var dao: MenasDAO = _
-  implicit var progArgs: ConfCmdConfig = _
+  implicit var progArgs: ConformanceCmdConfig = _
 
   private val enableCF = false
   private val isCatalystWorkaroundEnabled = true
@@ -41,7 +41,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     val mapDF = spark.createDataFrame(MappingsSamples.mapping)
 
     dao = mock(classOf[MenasDAO])
-    progArgs = new ConfCmdConfig(jobConfig = JobCmdConfig(reportDate = "2017-11-01"))
+    progArgs = new ConformanceCmdConfig(jobConfig = JobCmdConfig(reportDate = "2017-11-01"))
 
     mockWhen(dao.getMappingTable("mapping", 0)) thenReturn MappingsSamples.mappingTable
 

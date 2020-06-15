@@ -16,23 +16,23 @@
 package za.co.absa.enceladus.conformance
 
 import scopt.OptionParser
-import za.co.absa.enceladus.conformance.ConfCmdConfig.stepName
+import za.co.absa.enceladus.conformance.ConformanceCmdConfig.stepName
 
-case class ConfConfig(publishPathOverride: Option[String] = None,
-                      experimentalMappingRule: Option[Boolean] = None,
-                      isCatalystWorkaroundEnabled: Option[Boolean] = None,
-                      autocleanStandardizedFolder: Option[Boolean] = None)
+case class ConformanceConfig(publishPathOverride: Option[String] = None,
+                             experimentalMappingRule: Option[Boolean] = None,
+                             isCatalystWorkaroundEnabled: Option[Boolean] = None,
+                             autocleanStandardizedFolder: Option[Boolean] = None)
 
-object ConfConfig {
+object ConformanceConfig {
 
-  def getCmdLineArguments(args: Array[String]): ConfConfig = {
+  def getCmdLineArguments(args: Array[String]): ConformanceConfig = {
     val parser = new CmdParser(s"spark-submit [spark options] ${stepName}Bundle.jar")
 
-    val optionCmd = parser.parse(args, ConfConfig())
-    optionCmd.getOrElse(ConfConfig())
+    val optionCmd = parser.parse(args, ConformanceConfig())
+    optionCmd.getOrElse(ConformanceConfig())
   }
 
-  private class CmdParser(programName: String) extends OptionParser[ConfConfig](programName) {
+  private class CmdParser(programName: String) extends OptionParser[ConformanceConfig](programName) {
     override def errorOnUnknownArgument: Boolean = false
     override def reportWarning(msg: String): Unit = {}
     head("Dynamic Conformance", "")

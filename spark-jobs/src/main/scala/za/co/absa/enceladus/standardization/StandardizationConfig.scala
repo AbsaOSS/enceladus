@@ -16,29 +16,29 @@
 package za.co.absa.enceladus.standardization
 
 import scopt.OptionParser
-import za.co.absa.enceladus.standardization.StdCmdConfig.stepName
+import za.co.absa.enceladus.standardization.StandardizationCmdConfig.stepName
 
-case class StdConfig(rawFormat: String = "xml",
-                     charset: Option[String] = None,
-                     rowTag: Option[String] = None,
-                     csvDelimiter: Option[String] = None,
-                     csvHeader: Option[Boolean] = Some(false),
-                     csvQuote: Option[String] = None,
-                     csvEscape: Option[String] = None,
-                     cobolOptions: Option[CobolOptions] = None,
-                     fixedWidthTrimValues: Option[Boolean] = Some(false),
-                     rawPathOverride: Option[String] = None,
-                     failOnInputNotPerSchema: Boolean = false)
+case class StandardizationConfig(rawFormat: String = "xml",
+                                 charset: Option[String] = None,
+                                 rowTag: Option[String] = None,
+                                 csvDelimiter: Option[String] = None,
+                                 csvHeader: Option[Boolean] = Some(false),
+                                 csvQuote: Option[String] = None,
+                                 csvEscape: Option[String] = None,
+                                 cobolOptions: Option[CobolOptions] = None,
+                                 fixedWidthTrimValues: Option[Boolean] = Some(false),
+                                 rawPathOverride: Option[String] = None,
+                                 failOnInputNotPerSchema: Boolean = false)
 
-object StdConfig {
-  def getCmdLineArguments(args: Array[String]): StdConfig = {
+object StandardizationConfig {
+  def getCmdLineArguments(args: Array[String]): StandardizationConfig = {
     val parser = new CmdParser(s"spark-submit [spark options] ${stepName}Bundle.jar")
 
-    val optionCmd = parser.parse(args, StdConfig())
-    optionCmd.getOrElse(StdConfig())
+    val optionCmd = parser.parse(args, StandardizationConfig())
+    optionCmd.getOrElse(StandardizationConfig())
   }
 
-  private class CmdParser(programName: String) extends OptionParser[StdConfig](programName) {
+  private class CmdParser(programName: String) extends OptionParser[StandardizationConfig](programName) {
     override def errorOnUnknownArgument: Boolean = false
     override def reportWarning(msg: String): Unit = {}
 

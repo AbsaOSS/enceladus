@@ -23,7 +23,7 @@ class ConformanceReader(log: Logger, conf: Config) {
   private val enableCF: Boolean = true
   private implicit val config: Config = conf
 
-  def isAutocleanStdFolderEnabled()(implicit cmd: ConfCmdConfig): Boolean = {
+  def isAutocleanStdFolderEnabled()(implicit cmd: ConformanceCmdConfig): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.confConfig.autocleanStandardizedFolder,
       "conformance.autoclean.standardized.hdfs.folder",
       defaultValue = false)
@@ -31,14 +31,14 @@ class ConformanceReader(log: Logger, conf: Config) {
     enabled
   }
 
-  def readFeatureSwitches()(implicit cmdConfig: ConfCmdConfig): FeatureSwitches = FeatureSwitches()
+  def readFeatureSwitches()(implicit cmdConfig: ConformanceCmdConfig): FeatureSwitches = FeatureSwitches()
     .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
     .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled())
     .setControlFrameworkEnabled(enableCF)
     .setBroadcastStrategyMode(broadcastingStrategyMode)
     .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
-  private def isExperimentalRuleEnabled()(implicit cmd: ConfCmdConfig): Boolean = {
+  private def isExperimentalRuleEnabled()(implicit cmd: ConformanceCmdConfig): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.confConfig.experimentalMappingRule,
       "conformance.mapping.rule.experimental.implementation",
       defaultValue = false)
@@ -46,7 +46,7 @@ class ConformanceReader(log: Logger, conf: Config) {
     enabled
   }
 
-  private def isCatalystWorkaroundEnabled()(implicit cmd: ConfCmdConfig): Boolean = {
+  private def isCatalystWorkaroundEnabled()(implicit cmd: ConformanceCmdConfig): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.confConfig.isCatalystWorkaroundEnabled,
       "conformance.catalyst.workaround",
       defaultValue = true)

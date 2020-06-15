@@ -70,7 +70,7 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
   }
 
   test("folder-prefix parameter") {
-    val cmdConfigNoFolderPrefix = ConfCmdConfig.getCmdLineArguments(
+    val cmdConfigNoFolderPrefix = ConformanceCmdConfig.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -88,7 +88,7 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigNoFolderPrefix.confConfig.publishPathOverride.isEmpty)
     assert(actualPlainMenasCredentials === menasCredentials)
 
-    val cmdConfigFolderPrefix = ConfCmdConfig.getCmdLineArguments(
+    val cmdConfigFolderPrefix = ConformanceCmdConfig.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -108,7 +108,7 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigFolderPrefix.confConfig.publishPathOverride.isEmpty)
     assert(actualMenasKerberosCredentials === menasKeytab)
 
-    val cmdConfigPublishPathOverrideAndFolderPrefix = ConfCmdConfig.getCmdLineArguments(
+    val cmdConfigPublishPathOverrideAndFolderPrefix = ConformanceCmdConfig.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -146,7 +146,7 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
       userDisabled,
       List()
     )
-    val cmdConfigNoFolderPrefix = ConfCmdConfig.getCmdLineArguments(
+    val cmdConfigNoFolderPrefix = ConformanceCmdConfig.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -154,7 +154,7 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile
       ))
-    val cmdConfigFolderPrefix = ConfCmdConfig.getCmdLineArguments(
+    val cmdConfigFolderPrefix = ConformanceCmdConfig.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -162,7 +162,7 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile,
         "--folder-prefix", folderPrefix))
-    val cmdConfigPublishPathOverride = ConfCmdConfig.getCmdLineArguments(
+    val cmdConfigPublishPathOverride = ConformanceCmdConfig.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -170,7 +170,7 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride))
-    val cmdConfigPublishPathOverrideAndFolderPrefix = ConfCmdConfig.getCmdLineArguments(
+    val cmdConfigPublishPathOverrideAndFolderPrefix = ConformanceCmdConfig.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
