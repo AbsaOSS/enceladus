@@ -44,6 +44,10 @@ sap.ui.define([
       const auditTable = this.byId("auditTrailTable");
       const auditUtils = new AuditTrail(auditTable);
       auditUtils.applyTableUtils();
+
+      this._model.setProperty("/topicNameStem", "");
+      this._model.setProperty("/topicMergeWithKey", false);
+      console.log(this._model);
     },
 
     onEntityUpdated: function (sTopic, sEvent, oData) {
@@ -360,6 +364,21 @@ sap.ui.define([
     fixSchemaRegistryUrl: function (str) {
       // trailing slash gets stripped
       return str.replace(this.schemaRegistryRx, '$1/schema');
+    },
+
+    valueTopicFormatter: function(topicNameStem) {
+      return `topic: ${topicNameStem}-value`;
+    },
+
+    valueKeyTopicFormatter: function(topicNameStem) {
+      return `topics: ${topicNameStem}-value, ${topicNameStem}-key`;
+    },
+
+    topicFormatter: function(topicNameStem, includeKey) {
+      if (includeKey)
+        return this.valueKeyTopicFormatter(topicNameStem);
+      else
+        return this.valueTopicFormatter(topicNameStem);
     }
 
   });

@@ -68,6 +68,25 @@
                             </Input>
                             <Button text="Submit URL" press="handleRemoteUrlSubmit"/>
                         </HBox>
+                        <Label text="Load avro schema based on topic-name:" labelFor="topicNameBase"/>
+                        <VBox width="35em">
+                            <Input id="topicNameBase" type="Text" placeholder="Enter topic name basis, e.g. myName123"
+                                   value="{/topicNameStem}" valueLiveUpdate="true">
+                                <layoutData>
+                                    <FlexItemData growFactor="1"/>
+                                </layoutData>
+                            </Input>
+                            <Label text="Topic to be loaded from: {/topicNameStem}-value"/>
+                            <CheckBox id="mergeWithKey" selected="{/topicMergeWithKey}" editable="true" text="Merge with {/topicNameStem}-key"></CheckBox>
+
+                            <Button text="Submit {
+                                parts : [
+                                    {path: '/topicNameStem'},
+                                    {path: '/topicMergeWithKey'}
+                                ],
+                                formatter: '.topicFormatter'
+                            }" press="handleRemoteUrlSubmit"/> <!-- todo change to a custom processing routine -->
+                        </VBox>
                     </IconTabFilter>
                     <IconTabFilter id="UsedIn" icon="sap-icon://detail-view" text="Used In">
                         <Panel headerText="Datasets" height="50%">
