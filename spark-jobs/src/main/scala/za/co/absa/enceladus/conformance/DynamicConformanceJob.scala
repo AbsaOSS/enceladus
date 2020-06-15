@@ -64,7 +64,7 @@ object DynamicConformanceJob {
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
-    ConfigReader.logEffectiveConfig(Constants.SensitiveConfigurationKeys)
+    new ConfigReader(conf).logEffectiveConfig(Constants.ConfigKeysToRedact)
 
     implicit val cmd: ConfCmdConfig = ConfCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
