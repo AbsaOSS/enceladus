@@ -34,8 +34,9 @@ This part of the documentations will show you how to use Enceladus, Menas as its
 ## General
 
 - [Configuration]({{ docs_path }}/usage/config)
+- [How to run]({{ docs_path }}/usage/run)
 - [\_INFO file]({{ docs_path }}/usage/info-file)
-- [Schema][schema]
+- [Schema]({{ docs_path }}/usage/schema)
 
 ## Details
 
@@ -43,4 +44,3 @@ This part of the documentations will show you how to use Enceladus, Menas as its
 
 [build]: {{ docs_path }}/build-process
 [deploy]: {{ docs_path }}/deployment
-[schema]: {{ docs_path }}/usage/schema
