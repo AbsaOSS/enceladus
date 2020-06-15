@@ -15,13 +15,16 @@
 
 package za.co.absa.enceladus.utils.general
 
-import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
+import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions, ConfigValueFactory}
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
-
 object ConfigReader {
-  private val config: Config = ConfigFactory.load()
+  val redactedReplacement: String = "*****"
+}
+
+class ConfigReader(config: Config = ConfigFactory.load()) {
+  import ConfigReader._
+
   private val log = LoggerFactory.getLogger(this.getClass)
 
   def readStringConfigIfExist(path: String): Option[String] = {
@@ -37,62 +40,39 @@ object ConfigReader {
   }
 
   /**
-   * Flattens TypeSafe config tree and returns the effective configuration
-   * while redacting sensitive keys.
+   * Given a configuration returns a new configuration which has all sensitive keys redacted.
    *
-   * @param sensitiveKeys A set of keys for which values shouldn't be logged.
-   * @return the effective configuration as a map
+   * @param keysToRedact  A set of keys to be redacted.
    */
-  def getFlatConfig(sensitiveKeys: Set[String] = Set()): Map[String, String] = {
-    import collection.JavaConverters._
-
-    val flatEntries = mutable.Map[String, String]()
-
-    def redact(key: String, value: String): String = {
-      if (sensitiveKeys.contains(key)) {
-        "******"
+  def getRedactedConfig(keysToRedact: Set[String]): Config = {
+    def addToConfigIfIn()(accumulatedConfig: Config, key: String): Config = {
+      if (config.hasPath(key)) {
+        accumulatedConfig.withValue(key, ConfigValueFactory.fromAnyRef(redactedReplacement))
       } else {
-        value
+        accumulatedConfig
       }
     }
 
-    def render(path: String, obj: ConfigObject): Unit = {
-      obj.asScala.foreach({ case (key, value) =>
-        val flatKey = if (path.isEmpty) {
-          key
-        } else {
-          s"$path.$key"
-        }
+    val redactingConfig = keysToRedact.foldLeft(ConfigFactory.empty)(addToConfigIfIn())
 
-        value match {
-          case c: ConfigObject =>
-            render(flatKey, c)
-          case v: ConfigValue =>
-            val redactedValue = redact(flatKey, v.render())
-            flatEntries += flatKey -> redactedValue
-        }
-      })
-    }
-
-    render("", config.root())
-    flatEntries.toMap
+    redactingConfig.withFallback(config)
   }
 
   /**
    * Logs the effective configuration while redacting sensitive keys.
    *
-   * @param sensitiveKeys A set of keys for which values shouldn't be logged.
+   * @param keysToRedact A set of keys for which values shouldn't be logged.
    */
-  def logEffectiveConfig(sensitiveKeys: Set[String] = Set()): Unit = {
-    val flatConfig = getFlatConfig(sensitiveKeys)
-    val renderedConfig = flatConfig
-      .toSeq
-      .sortBy(_._1)
-      .map {
-        case (k, v) => s"$k = $v"
-      }
-      .mkString("\n")
+  def logEffectiveConfig(keysToRedact: Set[String] = Set()): Unit = {
+    val redactedConfig = getRedactedConfig(keysToRedact)
 
-    log.info(s"Effective configuration:\n$renderedConfig")
+    val renderOptions = ConfigRenderOptions.defaults()
+      .setComments(false)
+      .setOriginComments(false)
+      .setJson(false)
+
+    val rendered = redactedConfig.root().render(renderOptions)
+
+    log.info(s"Effective configuration:\n$rendered")
   }
 }
