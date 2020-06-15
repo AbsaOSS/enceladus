@@ -23,21 +23,21 @@ class ConfigReaderSuite extends WordSpec {
     """
       |top = default
       |quoted = "text"
-      |password="12345"
+      |redacted="12345"
       |nested {
       |  value.num = 100
       |  string = "str"
-      |  password = "67890"
+      |  redacted = "67890"
       |}
       |""".stripMargin)
 
-  private val keysToRedact = Set("password", "nested.password", "redundant.key")
+  private val keysToRedact = Set("redacted", "nested.redacted", "redundant.key")
 
   private val configReader = new ConfigReader(config)
 
   "readStringConfigIfExist()" should {
     "return Some(value) if the key exists" in {
-      assert(configReader.readStringConfigIfExist("nested.password").contains("67890"))
+      assert(configReader.readStringConfigIfExist("nested.redacted").contains("67890"))
     }
 
     "return None if the key does not exist" in {
@@ -51,7 +51,7 @@ class ConfigReaderSuite extends WordSpec {
 
   "readStringConfig()" should {
     "return the value if the key exists" in {
-      assert(configReader.readStringConfig("nested.password", "def") == "67890")
+      assert(configReader.readStringConfig("nested.redacted", "def") == "67890")
     }
 
     "return the default value if the key does not exist" in {
@@ -69,9 +69,9 @@ class ConfigReaderSuite extends WordSpec {
 
       assert(redactedConfig.getString("top") == "default")
       assert(redactedConfig.getString("quoted") == "text")
-      assert(redactedConfig.getString("password") == "12345")
+      assert(redactedConfig.getString("redacted") == "12345")
       assert(redactedConfig.getInt("nested.value.num") == 100)
-      assert(redactedConfig.getString("nested.password") == "67890")
+      assert(redactedConfig.getString("nested.redacted") == "67890")
       assert(!redactedConfig.hasPath("redundant.key"))
     }
 
@@ -84,8 +84,8 @@ class ConfigReaderSuite extends WordSpec {
       assert(redactedConfig.getString("quoted") == "text")
       assert(redactedConfig.getInt("nested.value.num") == 100)
       assert(redactedConfig.getString("nested.string") == "str")
-      assert(redactedConfig.getString("password") == ConfigReader.redactedReplacement)
-      assert(redactedConfig.getString("nested.password") == ConfigReader.redactedReplacement)
+      assert(redactedConfig.getString("redacted") == ConfigReader.redactedReplacement)
+      assert(redactedConfig.getString("nested.redacted") == ConfigReader.redactedReplacement)
       assert(!redactedConfig.hasPath("redundant.key"))
     }
 
