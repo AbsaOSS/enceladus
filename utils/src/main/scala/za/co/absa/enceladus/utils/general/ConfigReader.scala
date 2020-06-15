@@ -45,7 +45,7 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
    * @param keysToRedact  A set of keys to be redacted.
    */
   def getRedactedConfig(keysToRedact: Set[String]): Config = {
-    def addToConfigIfIn()(accumulatedConfig: Config, key: String): Config = {
+    def withAddedKey()(accumulatedConfig: Config, key: String): Config = {
       if (config.hasPath(key)) {
         accumulatedConfig.withValue(key, ConfigValueFactory.fromAnyRef(redactedReplacement))
       } else {
@@ -53,7 +53,7 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
       }
     }
 
-    val redactingConfig = keysToRedact.foldLeft(ConfigFactory.empty)(addToConfigIfIn())
+    val redactingConfig = keysToRedact.foldLeft(ConfigFactory.empty)(withAddedKey())
 
     redactingConfig.withFallback(config)
   }

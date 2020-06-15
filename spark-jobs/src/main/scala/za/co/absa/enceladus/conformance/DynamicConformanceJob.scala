@@ -55,6 +55,7 @@ object DynamicConformanceJob {
 
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val conf: Config = ConfigFactory.load()
+  private val confReader: ConfigReader = new ConfigReader(conf)
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   def main(args: Array[String]) {
@@ -64,7 +65,7 @@ object DynamicConformanceJob {
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
-    new ConfigReader(conf).logEffectiveConfig(Constants.ConfigKeysToRedact)
+    confReader.logEffectiveConfig(Constants.ConfigKeysToRedact)
 
     implicit val cmd: ConfCmdConfig = ConfCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark

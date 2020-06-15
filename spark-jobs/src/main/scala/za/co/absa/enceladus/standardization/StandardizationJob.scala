@@ -57,6 +57,7 @@ object StandardizationJob {
 
   private val log = LoggerFactory.getLogger(this.getClass)
   private val conf = ConfigFactory.load()
+  private val confReader: ConfigReader = new ConfigReader(conf)
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
@@ -67,7 +68,7 @@ object StandardizationJob {
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
-    new ConfigReader(conf).logEffectiveConfig(Constants.ConfigKeysToRedact)
+    confReader.logEffectiveConfig(Constants.ConfigKeysToRedact)
 
     implicit val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()
