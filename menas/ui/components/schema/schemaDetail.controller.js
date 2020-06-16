@@ -47,7 +47,6 @@ sap.ui.define([
 
       this._model.setProperty("/topicNameStem", "");
       this._model.setProperty("/topicMergeWithKey", false);
-      console.log(this._model);
     },
 
     onEntityUpdated: function (sTopic, sEvent, oData) {
@@ -166,6 +165,35 @@ sap.ui.define([
         }));
         oFileUpload.upload();
       }
+    },
+
+    handleTopicSubmit: function (oParams) {
+        const schema = this._model.getProperty("/currentSchema");
+        const topicStem = this._model.getProperty("/topicNameStem");
+        const mergeWithKey = this._model.getProperty("/topicMergeWithKey");
+
+
+        sap.ui.core.BusyIndicator.show();
+
+        let data = {
+          "format": "avro", // the only supported Schema registry type
+          "topicStem": topicStem,
+          "mergeWithKey": mergeWithKey,
+          "name": schema.name,
+          "version": schema.version
+        };
+
+        jQuery.ajax({
+          url: "api/schema/topic",
+          type: 'POST',
+          data: $.param(data),
+          contentType: 'application/x-www-form-urlencoded',
+          context: this, // becomes the result of "this" in handleRemoteLoadComplete
+          headers: {
+            'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
+          },
+          complete: this.handleRemoteLoadComplete /* todo create a different handler specific to topic load or generalize the routine */
+        });
     },
 
     handleRemoteUrlSubmit: function (oParams) {

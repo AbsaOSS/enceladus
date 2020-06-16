@@ -68,7 +68,7 @@
                             </Input>
                             <Button text="Submit URL" press="handleRemoteUrlSubmit"/>
                         </HBox>
-                        <Label text="Load avro schema based on topic-name:" labelFor="topicNameBase"/>
+                        <Label text="Load avro schema based on topic:" labelFor="topicNameBase"/>
                         <VBox width="35em">
                             <Input id="topicNameBase" type="Text" placeholder="Enter topic name basis, e.g. myName123"
                                    value="{/topicNameStem}" valueLiveUpdate="true">
@@ -85,7 +85,7 @@
                                     {path: '/topicMergeWithKey'}
                                 ],
                                 formatter: '.topicFormatter'
-                            }" press="handleRemoteUrlSubmit"/> <!-- todo change to a custom processing routine -->
+                            }" press="handleTopicSubmit"/>
                         </VBox>
                     </IconTabFilter>
                     <IconTabFilter id="UsedIn" icon="sap-icon://detail-view" text="Used In">
