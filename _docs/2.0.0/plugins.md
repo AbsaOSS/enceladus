@@ -4,7 +4,6 @@ title: Plugins
 version: '2.0.0'
 categories:
     - '2.0.0'
-redirect_from: /docs/plugins
 ---
 
 **Standardization** and **Conformance** support plugins that allow executing additional actions at certain times of the computation.

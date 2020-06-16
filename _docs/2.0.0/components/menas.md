@@ -5,7 +5,6 @@ version: '2.0.0'
 categories:
     - '2.0.0'
     - components
-redirect_from: /docs/components/menas
 ---
 ## API
 

@@ -29,7 +29,7 @@ module Docs
         puts "Removing redirects for #{file_path}"
         file_content = partition_liquid(file: File.read(file_path))
         new_content = file_content[0]
-        new_content << remove_redirect(file_content[1])
+        new_content << file_content[1]
         new_content << file_content[2]
         File.open(file_path, 'w') { |file| file.puts(new_content) }
       else
@@ -55,14 +55,6 @@ module Docs
 
   def self.partition_liquid(file:)
     file.partition( /---.*?(---)/m )
-  end
-
-  def self.remove_redirect(content)
-    front_matter = []
-    content.split("\n").each do |line|
-      front_matter << line unless line =~ /^redirect_from/
-    end
-    front_matter.join("\n")
   end
 
   def self.remove_docs(doc_folder:, version:)

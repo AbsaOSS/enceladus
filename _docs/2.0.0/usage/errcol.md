@@ -5,7 +5,6 @@ version: '2.0.0'
 categories:
     - '2.0.0'
     - usage
-redirect_from: /docs/usage/errcol
 ---
 ## Table Of Content
 <!-- toc -->
