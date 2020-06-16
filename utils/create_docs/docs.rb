@@ -90,7 +90,7 @@ module Docs
   def self.add_topic(topic_name:, doc_folder:, yaml_path:)
     name_pretty = topic_name.tr('-', ' ').split.map(&:capitalize).join(' ')
     FileUtils.cd(doc_folder, verbose: true) do
-      versions = Dir.glob('*')
+      versions = Dir.glob('*').select { |fn| File.directory?(fn) }
       versions.each do |version|
         FileUtils.cd(version, verbose: true) do
           first_file = Dir.glob('*').first
@@ -109,7 +109,7 @@ module Docs
 
   def self.remove_topic(topic_name:, doc_folder:, yaml_path:)
     FileUtils.cd(doc_folder, verbose: true) do
-      versions = Dir.glob('*')
+      versions = Dir.glob('*').select { |fn| File.directory?(fn) }
       versions.each do |version|
         file_name = "#{version}/#{topic_name}.md"
         FireUtils.rm(file_name) if File.exist?(file_name)
