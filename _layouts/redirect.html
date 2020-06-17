@@ -1,0 +1,15 @@
+---
+layout: default
+---
+{% assign ver = site.data.versions.last %}
+
+<script>
+window.onload = function(){
+  var docs_page = window.location.toString().split("/docs/")
+  const final_url = docs_page[0].concat("/docs/{{ ver }}/", docs_page[1])
+  window.location.replace(final_url)
+}
+</script>
+
+<h3>Redirecting to versioned documentattion</h3>
+<a href="{{ site.baseurl }}/docs/{{ ver }}" onclick="location.href = this.href + '/' + window.location.toString().split('/docs/')[1]; return false;"> Click here if you are not redirected. </a>

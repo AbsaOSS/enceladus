@@ -5,7 +5,6 @@ version: '2.0.0'
 categories:
     - '2.0.0'
     - usage
-redirect_from: /docs/usage/schema
 ---
 ## Table Of Content
 <!-- toc -->
@@ -32,10 +31,10 @@ redirect_from: /docs/usage/schema
   - [default](#default)
   - [pattern](#pattern)
   - [timezone](#timezone)
-  - [decimal_separator](#decimalseparator)
-  - [grouping_separator](#groupingseparator)
-  - [minus_sign](#minussign)
-  - [allow_infinity](#allowinfinity)
+  - [decimal_separator](#decimal_separator)
+  - [grouping_separator](#grouping_separator)
+  - [minus_sign](#minus_sign)
+  - [allow_infinity](#allow_infinity)
   - [radix](#radix)
   - [encoding](#encoding)
 - [Parsing](#parsing)
