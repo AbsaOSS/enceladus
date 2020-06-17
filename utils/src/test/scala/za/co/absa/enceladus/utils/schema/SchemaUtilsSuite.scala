@@ -537,4 +537,17 @@ class SchemaUtilsSuite extends FunSuite with Matchers {
     SchemaUtils.combineStructTypes(first, second) shouldBe expected
   }
 
+  test("combining schema - duplicates in one fieldList disallowed") {
+    val fieldsWithDuplicates = Seq(
+      StructField("b1", BooleanType),
+      StructField("b1", StringType)
+    )
+
+    val caught = the[IllegalArgumentException] thrownBy {
+      SchemaUtils.combineStructFieldLists(fieldsWithDuplicates, Seq.empty[StructField])
+    }
+    caught.getMessage should include
+      "Duplicated field names are not allowed within one field list, but duplicates found in: [b1,b1]"
+  }
+
 }

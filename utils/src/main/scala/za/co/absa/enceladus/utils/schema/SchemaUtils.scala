@@ -605,6 +605,12 @@ object SchemaUtils {
    * @return
    */
   def combineStructFieldLists(firstFields: Seq[StructField], secondFields: Seq[StructField]): Seq[StructField] = {
+    Seq(firstFields, secondFields).foreach{fields =>
+      val names = fields.map(_.name)
+      require(names.toSet.size == fields.size,
+        s"Duplicated field names are not allowed within one field list, but duplicates found in: ${names.mkString("[", ",", "]")}")
+    }
+
     val duplicateNames = secondFields.map(_.name).filter(field => firstFields.map(_.name).contains(field)).toSet
 
     // from firstField: duplicates are combined, non-dupl as-is. all in order
