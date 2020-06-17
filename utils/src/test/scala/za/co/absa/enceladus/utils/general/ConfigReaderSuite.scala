@@ -63,22 +63,41 @@ class ConfigReaderSuite extends WordSpec {
     }
   }
 
+  "getFlatConfig()" should {
+    "return the same config if there are no keys to redact" in {
+      val redactedConfig = configReader.getFlatConfig(Set())
+
+      assert(redactedConfig("top") == "default")
+      assert(redactedConfig("quoted") == "text")
+      assert(redactedConfig("nested.value.num") == "100")
+      assert(redactedConfig("nested.string") == "str")
+      assert(redactedConfig("redacted") == "12345")
+      assert(redactedConfig("nested.redacted") == "67890")
+      assert(!redactedConfig.contains("redundant.key"))
+    }
+
+    "redact an input config when given a set of keys to redact" in {
+      val redactedConfig = configReader.getFlatConfig(keysToRedact)
+
+      assert(redactedConfig("top") == "default")
+      assert(redactedConfig("quoted") == "text")
+      assert(redactedConfig("nested.value.num") == "100")
+      assert(redactedConfig("nested.string") == "str")
+      assert(redactedConfig("redacted") == ConfigReader.redactedReplacement)
+      assert(redactedConfig("nested.redacted") == ConfigReader.redactedReplacement)
+      assert(!redactedConfig.contains("redundant.key"))
+    }
+  }
+
   "getRedactedConfig()" should {
     "return the same config if there are no keys to redact" in {
       val redactedConfig = configReader.getRedactedConfig(Set())
 
-      assert(redactedConfig.getString("top") == "default")
-      assert(redactedConfig.getString("quoted") == "text")
-      assert(redactedConfig.getString("redacted") == "12345")
-      assert(redactedConfig.getInt("nested.value.num") == 100)
-      assert(redactedConfig.getString("nested.redacted") == "67890")
-      assert(!redactedConfig.hasPath("redundant.key"))
+      assertResult(config)(redactedConfig)
     }
 
     "redact an input config when given a set of keys to redact" in {
       val redactedConfig = configReader.getRedactedConfig(keysToRedact)
-
-      new ConfigReader(config).logEffectiveConfig(keysToRedact)
 
       assert(redactedConfig.getString("top") == "default")
       assert(redactedConfig.getString("quoted") == "text")
@@ -88,7 +107,6 @@ class ConfigReaderSuite extends WordSpec {
       assert(redactedConfig.getString("nested.redacted") == ConfigReader.redactedReplacement)
       assert(!redactedConfig.hasPath("redundant.key"))
     }
-
   }
 
 }

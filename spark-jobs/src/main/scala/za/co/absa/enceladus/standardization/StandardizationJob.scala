@@ -68,7 +68,7 @@ object StandardizationJob {
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
-    confReader.logEffectiveConfig(Constants.ConfigKeysToRedact)
+    confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
 
     implicit val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()
