@@ -144,3 +144,13 @@ menas.oozie.splineMongoURL=mongodb://localhost:27017
 #Provide optional spark config options to be passed onto standardization and conformance jobs
 #menas.oozie.extraSparkConfigs={"spark.eventLog.dir" : "hdfs:///spark2-history/", \
 #"spark.history.fs.logDirectory": "hdfs:///spark2-history" }
+
+#----------- Schema Registry
+# URL of schema registry:
+menas.schemaRegistryBaseUrl=https://schemaRegistryHostname:8081
+
+# When using secure schema registry, following paths and passwords must be specified
+javax.net.ssl.trustStore=/path/to/truststore.jks
+javax.net.ssl.trustStorePassword=somePassword
+javax.net.ssl.keyStore=/path/to/keystore.jks
+javax.net.ssl.keyStorePassword=somePassword

@@ -586,4 +586,52 @@ object SchemaUtils {
     }
   }
 
+  /**
+   * Combine schemas into one. Wrapper for [[SchemaUtils#combineStructFieldLists]]
+   *
+   * @param firstType
+   * @param secondType
+   * @return
+   */
+  def combineStructTypes(firstType: StructType, secondType: StructType): StructType =
+    StructType(combineStructFieldLists(firstType.fields, secondType.fields))
+
+  /**
+   * Combine schemas into one. By-name duplicated struct fields are deep-combined, otherwise field from first takes precedence.
+   *
+   * @param firstFields
+   * @param secondFields
+   * @return
+   */
+  def combineStructFieldLists(firstFields: Seq[StructField], secondFields: Seq[StructField]): Seq[StructField] = {
+    val duplicateNames = secondFields.map(_.name).filter(field => firstFields.map(_.name).contains(field)).toSet
+
+    // from firstField: duplicates are combined, non-dupl as-is. all in order
+    // from seconfField: duplicates are omitted (already combined ^), non-dupl as-is in order
+    firstFields.map { field1 =>
+      if (duplicateNames.contains(field1.name)) {
+        combineSameNameStructFields(field1, secondFields.filter(_.name == field1.name).head)
+      } else {
+        field1
+      }
+    } ++ secondFields.filter { field2 => !duplicateNames.contains(field2.name) }
+
+  }
+
+  private def combineSameNameStructFields(first: StructField, second: StructField): StructField = {
+    require(first.name == second.name)
+
+    // only structs get deep-combined, otherwise take first
+    (first.dataType, second.dataType) match {
+      case (firstStruct: StructType, secondStruct: StructType) =>
+        StructField(name = first.name,
+          dataType = combineStructTypes(firstStruct, secondStruct),
+          nullable =  first.nullable || second.nullable,
+          metadata = new MetadataBuilder().withMetadata(first.metadata).withMetadata(second.metadata).build()
+        )
+      case _ => first
+    }
+
+  }
+
 }

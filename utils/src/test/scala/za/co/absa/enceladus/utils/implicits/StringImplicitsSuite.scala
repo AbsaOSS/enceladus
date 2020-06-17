@@ -17,10 +17,10 @@ package za.co.absa.enceladus.utils.implicits
 
 import java.security.InvalidParameterException
 
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, Matchers}
 import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
 
-class StringImplicitsSuite extends FunSuite {
+class StringImplicitsSuite extends FunSuite with Matchers {
   test("StringEnhancements.replaceChars - empty replacements") {
     val s = "supercalifragilisticexpialidocious"
     assert(s.replaceChars(Map.empty) == s)
@@ -275,5 +275,20 @@ class StringImplicitsSuite extends FunSuite {
       'c'->0
     )
     assert("a$$bc$$".countUnquoted(charsToFind, quoteChars, '$') == expected)
+  }
+
+  test("string joining general") {
+    "abc#".joinWithSingleSeparator("#def", "#") shouldBe "abc#def"
+    "abc###".joinWithSingleSeparator("def", "#") shouldBe "abc###def"
+    "abcSEP".joinWithSingleSeparator("def", "SEP") shouldBe "abcSEPdef"
+    "abcSEPSEP".joinWithSingleSeparator("SEPSEPdef", "SEP") shouldBe "abcSEPSEPSEPdef"
+  }
+
+  test("string joining with /") {
+    "abc" / "123" shouldBe "abc/123"
+    "abc/" / "123" shouldBe "abc/123"
+    "abc" / "/123" shouldBe "abc/123"
+    "abc/" / "/123" shouldBe "abc/123"
+    "file:///" / "path" shouldBe "file:///path"
   }
 }

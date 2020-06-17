@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.utils
+package za.co.absa.enceladus.utils.config
 
 import java.nio.file.{Files, Paths}
 

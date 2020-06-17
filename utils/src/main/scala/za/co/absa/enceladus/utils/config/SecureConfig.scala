@@ -13,24 +13,43 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.plugins.builtin.utils
+package za.co.absa.enceladus.utils.config
 
 import com.typesafe.config.Config
 
-object SecureKafka {
+object SecureConfig {
   /**
    * Moves Kafka security configuration from the config to system properties
-   * if it is not defined there already.
+   * if it is not defined there already (regarding trustStore, keyStore and auth login config).
    *
    * This is needed to be executed at least once to initialize secure Kafka when running from Spark.
    *
    * @param conf A configuration.
    */
   def setSecureKafkaProperties(conf: Config): Unit = {
-    ConfigUtils.setSystemPropertyFileFallback(conf, "javax.net.ssl.trustStore")
-    ConfigUtils.setSystemPropertyStringFallback(conf, "javax.net.ssl.trustStorePassword")
-    ConfigUtils.setSystemPropertyFileFallback(conf, "javax.net.ssl.keyStore")
-    ConfigUtils.setSystemPropertyStringFallback(conf, "javax.net.ssl.keyStorePassword")
+    setTrustStoreProperties(conf)
+    setKeyStoreProperties(conf)
     ConfigUtils.setSystemPropertyFileFallback(conf, "java.security.auth.login.config")
   }
+
+  /**
+   * Sets `javax.net.ssl.trustStore` and `javax.net.ssl.trustStorePassword` system properties from the same-name values
+   * in the `conf`
+   * @param conf config to lookup values form
+   */
+  def setTrustStoreProperties(conf: Config): Unit = {
+    ConfigUtils.setSystemPropertyFileFallback(conf, "javax.net.ssl.trustStore")
+    ConfigUtils.setSystemPropertyStringFallback(conf, "javax.net.ssl.trustStorePassword")
+  }
+
+  /**
+   * Sets `javax.net.ssl.keyStore` and `javax.net.ssl.keyStorePassword` system properties from the same-name values
+   * in the `conf`
+   * @param conf config to lookup values form
+   */
+  def setKeyStoreProperties(conf: Config): Unit = {
+    ConfigUtils.setSystemPropertyFileFallback(conf, "javax.net.ssl.keyStore")
+    ConfigUtils.setSystemPropertyStringFallback(conf, "javax.net.ssl.keyStorePassword")
+  }
+
 }

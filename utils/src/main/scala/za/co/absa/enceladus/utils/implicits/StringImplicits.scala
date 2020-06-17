@@ -164,5 +164,32 @@ object StringImplicits {
         case   _ => Option(None, false)
       }
     }
+
+
+    private[implicits] def joinWithSingleSeparator(another: String, sep: String): String = {
+      val sb = new StringBuilder
+      sb.append(string.stripSuffix(sep))
+      sb.append(sep)
+      sb.append(another.stripPrefix(sep))
+      sb.mkString
+    }
+
+    /**
+     * Joins two strings with / while stripping single existing trailing/leading "/" in between:
+     * {{{
+     * "abc" / "123" -> "abc/123"
+     * "abc/" / "123" -> "abc/123"
+     * "abc" / "/123" -> "abc/123"
+     * "abc/" / "/123" -> "abc/123",
+     * but:
+     * "file:///" / "path" -> "file:///path",
+     * }}}
+     *
+     * @param another
+     * @return
+     */
+    def /(another: String): String = { // scalastyle:ignore method.name
+      joinWithSingleSeparator(another, "/")
+    }
   }
 }
