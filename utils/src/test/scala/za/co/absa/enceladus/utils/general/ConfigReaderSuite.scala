@@ -69,7 +69,7 @@ class ConfigReaderSuite extends WordSpec {
 
       assert(redactedConfig("top") == "default")
       assert(redactedConfig("quoted") == "text")
-      assert(redactedConfig("nested.value.num") == "100")
+      assert(redactedConfig("nested.value.num").toString == "100")
       assert(redactedConfig("nested.string") == "str")
       assert(redactedConfig("redacted") == "12345")
       assert(redactedConfig("nested.redacted") == "67890")
@@ -81,7 +81,7 @@ class ConfigReaderSuite extends WordSpec {
 
       assert(redactedConfig("top") == "default")
       assert(redactedConfig("quoted") == "text")
-      assert(redactedConfig("nested.value.num") == "100")
+      assert(redactedConfig("nested.value.num").toString == "100")
       assert(redactedConfig("nested.string") == "str")
       assert(redactedConfig("redacted") == ConfigReader.redactedReplacement)
       assert(redactedConfig("nested.redacted") == ConfigReader.redactedReplacement)
