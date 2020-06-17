@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.utils.schema
 
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, Matchers}
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.utils.schema.SchemaUtils._
 
-class SchemaUtilsSuite extends FunSuite {
+class SchemaUtilsSuite extends FunSuite with Matchers {
   // scalastyle:off magic.number
 
   private val schema = StructType(Seq(
@@ -471,4 +471,70 @@ class SchemaUtilsSuite extends FunSuite {
     val expected = "grand__parent_parent_first__child"
     assert(result == expected)
   }
+
+  test("combining schema - simple test") {
+    val first = StructType(Seq(
+      StructField("a1", IntegerType, metadata = new MetadataBuilder().putBoolean("abool", false).build()),
+      StructField("b1", BooleanType)
+    ))
+
+    val second = StructType(Seq(
+      StructField("c2", MapType(StringType, IntegerType)),
+      StructField("d2", FloatType)
+    ))
+
+    val expected = StructType(first.fields ++ second.fields)
+    SchemaUtils.combineStructTypes(first, second) shouldBe expected
+  }
+
+  test("combining schema - non-stuct duplicates - first wins") {
+    val first = StructType(Seq(
+      StructField("common", IntegerType, metadata = new MetadataBuilder().putBoolean("cbool", false).build()),
+      StructField("b1", BooleanType)
+    ))
+
+    val second = StructType(Seq(
+      StructField("common", IntegerType, metadata = new MetadataBuilder().putBoolean("anotherbool", true).build()),
+      StructField("d2", FloatType)
+    ))
+
+    val expected = StructType(first.fields ++ Seq(second.fields(1)))
+    SchemaUtils.combineStructTypes(first, second) shouldBe expected
+  }
+
+  test("combining schema - struct duplicates - deep cobmbining") {
+    val first = StructType(Seq(
+      StructField("common", nullable = true, metadata = new MetadataBuilder().putBoolean("bool1", false).build(), dataType =
+        StructType(Seq(
+          StructField("c1", IntegerType)
+        ))
+      ),
+      StructField("b1", BooleanType)
+    ))
+
+    val second  = StructType(Seq(
+      StructField("common", nullable = false, metadata = new MetadataBuilder().putBoolean("bool2", true).build(), dataType =
+        StructType(Seq(
+          StructField("c2", BooleanType)
+        ))
+      ),
+      StructField("b2", StringType)
+    ))
+
+    val expected = StructType(Seq(
+      // deep-combining of same-name struct:
+      StructField("common",
+        nullable = true, // widened
+        metadata = new MetadataBuilder().putBoolean("bool1", false).putBoolean("bool2", true).build(), dataType = // combined meta
+        StructType(Seq(
+          StructField("c1", IntegerType), // combined content of the structs
+          StructField("c2", BooleanType)
+        ))
+      ),
+      StructField("b1", BooleanType),
+      StructField("b2", StringType) // regular-combined
+    ))
+    SchemaUtils.combineStructTypes(first, second) shouldBe expected
+  }
+
 }

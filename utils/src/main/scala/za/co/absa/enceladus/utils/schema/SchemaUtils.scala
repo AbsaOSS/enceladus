@@ -587,7 +587,7 @@ object SchemaUtils {
   }
 
   /**
-   * Combine schemas into one. Wrapper for [[SchemaUtils#combineStructFieldLists]]
+   * Combines schemas into one. Wrapper for [[SchemaUtils#combineStructFieldLists]]
    *
    * @param firstType
    * @param secondType
@@ -597,7 +597,8 @@ object SchemaUtils {
     StructType(combineStructFieldLists(firstType.fields, secondType.fields))
 
   /**
-   * Combine schemas into one. By-name duplicated struct fields are deep-combined, otherwise field from first takes precedence.
+   * Combines schemas into one. By-name duplicated struct fields are deep-combined, otherwise the field from `firstFields`
+   * takes precedence.
    *
    * @param firstFields
    * @param secondFields
@@ -607,7 +608,7 @@ object SchemaUtils {
     val duplicateNames = secondFields.map(_.name).filter(field => firstFields.map(_.name).contains(field)).toSet
 
     // from firstField: duplicates are combined, non-dupl as-is. all in order
-    // from seconfField: duplicates are omitted (already combined ^), non-dupl as-is in order
+    // from secondField: duplicates are omitted (already combined ^), non-dupl as-is in order
     firstFields.map { field1 =>
       if (duplicateNames.contains(field1.name)) {
         combineSameNameStructFields(field1, secondFields.filter(_.name == field1.name).head)
