@@ -18,7 +18,7 @@ package za.co.absa.enceladus.utils.general
 import com.typesafe.config._
 import org.slf4j.LoggerFactory
 
-import scala.collection.immutable.HashMap
+import scala.collection.JavaConverters._
 
 object ConfigReader {
   val redactedReplacement: String = "*****"
@@ -67,10 +67,8 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
    * @param keysToRedact A set of keys for which should be redacted.
    * @return the effective configuration as a map
    */
-  def getFlatConfig(keysToRedact: Set[String] = Set()): Map[String, String] = {
-    import collection.JavaConverters._
-
-    def redact(key: String, value: String): String = {
+  def getFlatConfig(keysToRedact: Set[String] = Set()): Map[String, AnyRef] = {
+    def redact(key: String, value: AnyRef): AnyRef = {
       if (keysToRedact.contains(key)) {
         redactedReplacement
       } else {
@@ -78,30 +76,11 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
       }
     }
 
-    def render(obj: ConfigObject,
-               configMap: HashMap[String, String] = HashMap[String, String](),
-               path: String = ""): HashMap[String, String] = {
-
-      obj.asScala.foldLeft(configMap)((accMap, configEntry) => {
-        configEntry match {
-          case (key, value) =>
-            val flatKey = if (path.isEmpty) {
-              key
-            } else {
-              s"$path.$key"
-            }
-            value match {
-              case c: ConfigObject =>
-                accMap ++ render(c, configMap, flatKey)
-              case v: ConfigValue =>
-                val redactedValue = redact(flatKey, v.unwrapped().toString)
-                accMap + (flatKey -> redactedValue)
-            }
-        }
-      })
-    }
-
-    render(config.root())
+    config.entrySet().asScala.map({ entry =>
+      val key = entry.getKey
+      val value = entry.getValue.unwrapped()
+      key -> redact(key, value)
+    }).toMap
   }
 
   /**
