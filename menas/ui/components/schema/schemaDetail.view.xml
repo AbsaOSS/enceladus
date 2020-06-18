@@ -38,55 +38,96 @@
                         <core:Fragment type="XML" fragmentName="components.schemaTable"/>
                     </IconTabFilter>
                     <IconTabFilter id="UploadNew" icon="sap-icon://upload" text="Upload new">
-                        <Label text="Upload schema from file:" labelFor="schemaFormatSelect"/>
-                        <HBox width="35em">
-                            <Select id="schemaFormatSelect" forceSelection="true"
-                                    selectedKey="{/currentSchema/schemaFormat}">
-                                <core:Item key="struct" text="Spark StructType JSON"/>
-                                <core:Item key="copybook" text="COBOL Copybook"/>
-                                <core:Item key="avro" text="Avro Schema (avsc)"/>
-                            </Select>
-                            <u:FileUploader id="fileUploader" name="file" uploadUrl="api/schema/upload"
-                                            tooltip="Upload new version of the schema"
-                                            uploadComplete="handleUploadComplete"
-                                            sendXHR="true"
-                                            uploadProgress="handleUploadProgress" sameFilenameAllowed="true" >
-                                <u:parameters>
-                                    <u:FileUploaderParameter name="name" value="{/currentSchema/name}"/>
-                                    <u:FileUploaderParameter name="version" value="{/currentSchema/version}"/>
-                                    <u:FileUploaderParameter name="format" value="{/currentSchema/schemaFormat}"/>
-                                </u:parameters>
-                            </u:FileUploader>
-                            <Button text="Upload File" press="handleUploadPress"/>
-                        </HBox>
-                        <Label text="Load avro schema from URL:" labelFor="remoteUrl"/>
-                        <HBox width="35em">
-                            <Input id="remoteUrl" type="Text" placeholder="Enter URL of the new schema">
-                                <layoutData>
-                                    <FlexItemData growFactor="1"/>
-                                </layoutData>
-                            </Input>
-                            <Button text="Submit URL" press="handleRemoteUrlSubmit"/>
-                        </HBox>
-                        <Label text="Load avro schema based on topic:" labelFor="topicNameBase"/>
-                        <VBox width="35em">
-                            <Input id="topicNameBase" type="Text" placeholder="Enter topic name basis, e.g. myName123"
-                                   value="{/topicNameStem}" valueLiveUpdate="true">
-                                <layoutData>
-                                    <FlexItemData growFactor="1"/>
-                                </layoutData>
-                            </Input>
-                            <Label text="Topic to be loaded from: {/topicNameStem}-value"/>
-                            <CheckBox id="mergeWithKey" selected="{/topicMergeWithKey}" editable="true" text="Merge with {/topicNameStem}-key"></CheckBox>
+                    <VBox width="38em">
 
-                            <Button text="Submit {
-                                parts : [
-                                    {path: '/topicNameStem'},
-                                    {path: '/topicMergeWithKey'}
-                                ],
-                                formatter: '.topicFormatter'
-                            }" press="handleTopicSubmit"/>
-                        </VBox>
+                        <Panel headerText="Upload schema from a local file" expandable="true" expanded="false">
+                            <FormattedText htmlText="
+                                &lt;p>
+                                    Schema can be updated by directly uploading a file from your local filesystem.&lt;br/>
+                                    Please make sure that the content of the file and the selected schema type conform.
+                                &lt;/p>
+                            "/>
+                            <Label text="Select local file:" labelFor="schemaFormatSelect"/>
+                            <HBox width="35em">
+                                <Select id="schemaFormatSelect" forceSelection="true"
+                                        selectedKey="{/currentSchema/schemaFormat}">
+                                    <core:Item key="struct" text="Spark StructType JSON"/>
+                                    <core:Item key="copybook" text="COBOL Copybook"/>
+                                    <core:Item key="avro" text="Avro Schema (avsc)"/>
+                                </Select>
+                                <u:FileUploader id="fileUploader" name="file" uploadUrl="api/schema/upload"
+                                                tooltip="Upload new version of the schema"
+                                                uploadComplete="handleUploadComplete"
+                                                sendXHR="true"
+                                                uploadProgress="handleUploadProgress" sameFilenameAllowed="true" >
+                                    <u:parameters>
+                                        <u:FileUploaderParameter name="name" value="{/currentSchema/name}"/>
+                                        <u:FileUploaderParameter name="version" value="{/currentSchema/version}"/>
+                                        <u:FileUploaderParameter name="format" value="{/currentSchema/schemaFormat}"/>
+                                    </u:parameters>
+                                </u:FileUploader>
+                                <Button text="Upload File" press="handleUploadPress"/>
+                            </HBox>
+                        </Panel>
+                        <Panel headerText="Load schema from URL" expandable="true" expanded="false">
+                            <FormattedText htmlText="
+                                &lt;p>
+                                    This section allows us to update the schema by specifying a remote HTTP(s) location
+                                    that the file will be loaded from. URL from an existing schema registry is expected, therefore
+                                    AVRO-schema type is expected.
+                                &lt;/p>
+                                &lt;p>
+                                    Example: &lt;code>https://mydomain1.com/subjects/myTopic1/versions/latest/schema&lt;/code>
+                                &lt;/p>
+                                "/>
+                            <Label text="Specify URL of the schema:" labelFor="remoteUrl"/>
+                            <HBox width="35em">
+                                <Input id="remoteUrl" type="Text" placeholder="Enter URL of the new schema">
+                                    <layoutData>
+                                        <FlexItemData growFactor="1"/>
+                                    </layoutData>
+                                </Input>
+                                <Button text="Submit URL" press="handleRemoteUrlSubmit"/>
+                            </HBox>
+                        </Panel>
+                        <Panel headerText="Load schema from schema registry" expandable="true" expanded="false">
+                            <FormattedText htmlText='&lt;p>
+                                A new schema can be loaded from an internally-defined schema registry  by specifying a
+                                topic-name &lt;em>stem&lt;/em> - based on which the topic name(s) will be derived.&lt;/p>
+
+                                &lt;p>For a given stem, &lt;code>-value&lt;/code> will be appended to get the primary topic name to be fetched.
+                                Optionally, &lt;code>-key&lt;/code> variant can also be loaded and merged with the -value topic.&lt;/p>
+
+                                &lt;p>Merging of the &lt;code>-key&lt;/code> and &lt;code>-value&lt;/code> schemas works as follows:
+                                &lt;ul>
+                                    &lt;li>fields from both &lt;code>-value&lt;/code> and &lt;code>-key&lt;/code> are in the result provided there is no name-duplication&lt;/li>
+                                    &lt;li>for non-struct field names duplicates, fields from &lt;code>-value&lt;/code> take precedence&lt;/li>
+                                    &lt;li>struct-fields of the same name are recursively deep-combined&lt;/li>
+                                &lt;ul>
+                                &lt;/p>
+                            '/>
+                            <Label text="Specify topic name stem:" labelFor="topicNameBase"/>
+                            <VBox width="35em">
+                                <Input id="topicNameBase" type="Text" placeholder="Enter topic name stem (without the -value suffix), e.g. myName123"
+                                       value="{/topicNameStem}" valueLiveUpdate="true">
+                                    <layoutData>
+                                        <FlexItemData growFactor="1"/>
+                                    </layoutData>
+                                </Input>
+                                <Label text="Topic to be loaded from: {/topicNameStem}-value"/>
+                                <CheckBox id="mergeWithKey" selected="{/topicMergeWithKey}" editable="true"
+                                          text="Load {/topicNameStem}-key, too, and merge it with {/topicNameStem}-value"/>
+
+                                <Button text="Submit {
+                                    parts : [
+                                        {path: '/topicNameStem'},
+                                        {path: '/topicMergeWithKey'}
+                                    ],
+                                    formatter: '.topicFormatter'
+                                }" press="handleTopicSubmit" enabled="{= ${/topicNameStem}.length > 0 }"/>
+                            </VBox>
+                        </Panel>
+                    </VBox>
                     </IconTabFilter>
                     <IconTabFilter id="UsedIn" icon="sap-icon://detail-view" text="Used In">
                         <Panel headerText="Datasets" height="50%">
