@@ -5,7 +5,6 @@ version: '2.0.0'
 categories:
     - '2.0.0'
     - usage
-redirect_from: /docs/usage/menas-quick-start
 ---
 
 First of all, to run anything we will need a dataset and its corresponding schema defined in Menas UI. _Standardization_ and _Conformance_ spark jobs will then take this information from Menas when run. First, let us go to the URL where it is deployed. There you will be greeted by a login window. If you made no changes to the `application.conf` your default login is `user` for username and `changeme` for password. Otherwise log in with the credentials you have chosen.
