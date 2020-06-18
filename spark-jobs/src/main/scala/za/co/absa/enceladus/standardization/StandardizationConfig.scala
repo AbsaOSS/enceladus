@@ -18,18 +18,6 @@ package za.co.absa.enceladus.standardization
 
 import scopt.OParser
 
-case class StandardizationConfigAcc(rawFormat: String = "xml",
-                                 charset: Option[String] = None,
-                                 rowTag: Option[String] = None,
-                                 csvDelimiter: Option[String] = None,
-                                 csvHeader: Option[Boolean] = Some(false),
-                                 csvQuote: Option[String] = None,
-                                 csvEscape: Option[String] = None,
-                                 cobolOptions: Option[CobolOptions] = None,
-                                 fixedWidthTrimValues: Option[Boolean] = Some(false),
-                                 rawPathOverride: Option[String] = None,
-                                 failOnInputNotPerSchema: Boolean = false)
-
 trait StandardizationConfig[R] {
   def withRawFormat(value: String): R
   def withCharset(value: Option[String] = None): R
