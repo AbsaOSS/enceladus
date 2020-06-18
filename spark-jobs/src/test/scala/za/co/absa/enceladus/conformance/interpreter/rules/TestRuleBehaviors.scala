@@ -31,7 +31,7 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
 
   def conformanceRuleShouldMatchExpected(inputDf: DataFrame, inputDataset: Dataset, expectedJSON: String) {
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
-    implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(jobConfig = JobCmdConfig(reportDate = "2017-11-01"))
+    implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(reportDate = "2017-11-01")
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false

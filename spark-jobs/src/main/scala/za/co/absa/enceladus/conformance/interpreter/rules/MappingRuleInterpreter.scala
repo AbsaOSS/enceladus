@@ -56,7 +56,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
     // find the data frame from the mapping table
-    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.jobConfig.reportDate)
+    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.reportDate)
 
     // join & perform projection on the target attribute
     val joinConditionStr = MappingRuleInterpreter.getJoinCondition(rule).toString

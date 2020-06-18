@@ -41,7 +41,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
     val mapDF = spark.createDataFrame(MappingsSamples.mapping)
 
     dao = mock(classOf[MenasDAO])
-    progArgs = new ConformanceCmdConfig(jobConfig = JobCmdConfig(reportDate = "2017-11-01"))
+    progArgs = new ConformanceCmdConfig(reportDate = "2017-11-01")
 
     mockWhen(dao.getMappingTable("mapping", 0)) thenReturn MappingsSamples.mappingTable
 

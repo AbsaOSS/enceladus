@@ -39,7 +39,7 @@ class StandardizationReader(log: Logger) {
    */
   def getFormatSpecificReader(cmd: StandardizationCmdConfig, dataset: Dataset, numberOfColumns: Int = 0)
                              (implicit spark: SparkSession, dao: MenasDAO): DataFrameReader = {
-    val dfReader = spark.read.format(cmd.stdConfig.rawFormat)
+    val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
     val options = getCobolOptions(cmd, dataset) ++
       getGenericOptions(cmd) ++
@@ -64,32 +64,32 @@ class StandardizationReader(log: Logger) {
   }
 
   private def getGenericOptions(cmd: StandardizationCmdConfig): HashMap[String, Option[RawFormatParameter]] = {
-    val mode = if (cmd.stdConfig.failOnInputNotPerSchema) {
+    val mode = if (cmd.failOnInputNotPerSchema) {
       "FAILFAST"
     } else {
       "PERMISSIVE"
     }
     HashMap(
-      "charset" -> cmd.stdConfig.charset.map(StringParameter),
+      "charset" -> cmd.charset.map(StringParameter),
       "mode" -> Option(StringParameter(mode))
     )
   }
 
   private def getXmlOptions(cmd: StandardizationCmdConfig): HashMap[String, Option[RawFormatParameter]] = {
-    if (cmd.stdConfig.rawFormat.equalsIgnoreCase("xml")) {
-      HashMap("rowtag" -> cmd.stdConfig.rowTag.map(StringParameter))
+    if (cmd.rawFormat.equalsIgnoreCase("xml")) {
+      HashMap("rowtag" -> cmd.rowTag.map(StringParameter))
     } else {
       HashMap()
     }
   }
 
   private def getCsvOptions(cmd: StandardizationCmdConfig, numberOfColumns: Int = 0): HashMap[String, Option[RawFormatParameter]] = {
-    if (cmd.stdConfig.rawFormat.equalsIgnoreCase("csv")) {
+    if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
-        "delimiter" -> cmd.stdConfig.csvDelimiter.map(s => StringParameter(s.includingUnicode.includingNone)),
-        "header" -> cmd.stdConfig.csvHeader.map(BooleanParameter),
-        "quote" -> cmd.stdConfig.csvQuote.map(s => StringParameter(s.includingUnicode.includingNone)),
-        "escape" -> cmd.stdConfig.csvEscape.map(s => StringParameter(s.includingUnicode.includingNone)),
+        "delimiter" -> cmd.csvDelimiter.map(s => StringParameter(s.includingUnicode.includingNone)),
+        "header" -> cmd.csvHeader.map(BooleanParameter),
+        "quote" -> cmd.csvQuote.map(s => StringParameter(s.includingUnicode.includingNone)),
+        "escape" -> cmd.csvEscape.map(s => StringParameter(s.includingUnicode.includingNone)),
         // increase the default limit on the number of columns if needed
         // default is set at org.apache.spark.sql.execution.datasources.csv.CSVOptions maxColumns
         "maxColumns" -> {
@@ -102,16 +102,16 @@ class StandardizationReader(log: Logger) {
   }
 
   private def getFixedWidthOptions(cmd: StandardizationCmdConfig): HashMap[String, Option[RawFormatParameter]] = {
-    if (cmd.stdConfig.rawFormat.equalsIgnoreCase("fixed-width")) {
-      HashMap("trimValues" -> cmd.stdConfig.fixedWidthTrimValues.map(BooleanParameter))
+    if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
+      HashMap("trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter))
     } else {
       HashMap()
     }
   }
 
   private def getCobolOptions(cmd: StandardizationCmdConfig, dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
-    if (cmd.stdConfig.rawFormat.equalsIgnoreCase("cobol")) {
-      val cobolOptions = cmd.stdConfig.cobolOptions.getOrElse(CobolOptions())
+    if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
+      val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
       val isAscii = cobolOptions.encoding.exists(_.equalsIgnoreCase("ascii"))
       // For ASCII files --charset is converted into Cobrix "ascii_charset" option
       // For EBCDIC files --charset is converted into Cobrix "ebcdic_code_page" option
@@ -120,8 +120,8 @@ class StandardizationReader(log: Logger) {
         "is_xcom" -> Option(BooleanParameter(cobolOptions.isXcom)),
         "string_trimming_policy" -> cobolOptions.trimmingPolicy.map(StringParameter),
         "encoding" -> cobolOptions.encoding.map(StringParameter),
-        "ascii_charset" -> cmd.stdConfig.charset.flatMap(charset => if (isAscii) Option(StringParameter(charset)) else None),
-        "ebcdic_code_page" -> cmd.stdConfig.charset.flatMap(charset => if (!isAscii) Option(StringParameter(charset)) else None),
+        "ascii_charset" -> cmd.charset.flatMap(charset => if (isAscii) Option(StringParameter(charset)) else None),
+        "ebcdic_code_page" -> cmd.charset.flatMap(charset => if (!isAscii) Option(StringParameter(charset)) else None),
         "schema_retention_policy" -> Some(StringParameter("collapse_root"))
       )
     } else {

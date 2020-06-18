@@ -39,7 +39,7 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
   protected var standardizedDf: DataFrame = _
 
   implicit protected val dao: MenasDAO = mock(classOf[MenasDAO])
-  implicit protected val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(jobConfig = JobCmdConfig(reportDate = "2017-11-01"))
+  implicit protected val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(reportDate = "2017-11-01")
 
   protected val upperRule1 = UppercaseConformanceRule(order = 1, inputColumn = "strings.with_new_lines",
     controlCheckpoint = false, outputColumn = "strings.with_new_lines_upper")

@@ -44,7 +44,7 @@ class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
     val inputDf = spark.createDataFrame(d)
     val mappingDf = spark.createDataFrame(mapping)
 
-    implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(jobConfig = JobCmdConfig(reportDate = "2018-03-23")) // here we may need to specify some parameters (for certain rules)
+    implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
     implicit val dao: MenasDAO = mock(classOf[MenasDAO]) // you may have to hard-code your own implementation here (if not working with menas)
     val enableCF = false
     val isCatalystWorkaroundEnabled = true

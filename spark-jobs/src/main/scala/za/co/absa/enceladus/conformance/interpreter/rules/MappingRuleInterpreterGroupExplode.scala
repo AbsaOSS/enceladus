@@ -51,7 +51,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     spark.conf.set("spark.sql.crossJoin.enabled", "true")
 
     // find the data frame from the mapping table
-    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.jobConfig.reportDate)
+    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.reportDate)
     val joinConditionStr = getJoinCondition(rule).toString
     val defaultValueOpt = getDefaultValue(mappingTableDef)
 

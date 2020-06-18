@@ -58,7 +58,7 @@ class StandardizationJsonSuite extends FunSuite with SparkTestBase with MockitoS
     val expected = FileReader.readFileAsString("src/test/resources/data/standardization_json_suite_expected.txt")
       .replace("\r\n", "\n")
 
-    val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.stdConfig.rawFormat)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)

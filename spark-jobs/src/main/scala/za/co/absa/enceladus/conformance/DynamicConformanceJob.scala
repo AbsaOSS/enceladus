@@ -35,16 +35,15 @@ object DynamicConformanceJob extends ConformanceExecution {
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
     implicit val cmd: ConformanceCmdConfig = ConformanceCmdConfig.getCmdLineArguments(args)
-    implicit val jobCmdConfig: JobCmdConfig = cmd.jobConfig
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-    val menasCredentials = cmd.jobConfig.menasCredentialsFactory.getInstance()
+    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
 
     dao.authenticate()
     // get the dataset definition
-    val dataset = dao.getDataset(jobCmdConfig.datasetName, jobCmdConfig.datasetVersion)
-    val reportVersion = getReportVersion(cmd.jobConfig, dataset)
+    val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
+    val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg = getPathCfg(cmd, dataset, reportVersion)
 
     log.info(s"stdpath = ${pathCfg.inputPath}")
@@ -61,12 +60,12 @@ object DynamicConformanceJob extends ConformanceExecution {
     try {
       val result = conform(dataset, inputData)
 
-      processConformanceResult(result, performance, pathCfg, reportVersion, menasCredentials)
+      processConformanceResult(args, result, performance, pathCfg, reportVersion, menasCredentials)
       log.info(s"$step finished successfully")
 
-      runPostProcessors(ErrorSourceId.Conformance, pathCfg, jobCmdConfig, reportVersion)
+      runPostProcessors(ErrorSourceId.Conformance, pathCfg, cmd, reportVersion)
     } finally {
-      executePostStep(jobCmdConfig)
+      executePostStep(cmd)
     }
   }
 }

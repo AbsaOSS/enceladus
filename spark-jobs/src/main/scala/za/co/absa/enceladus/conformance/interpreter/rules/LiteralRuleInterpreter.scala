@@ -31,7 +31,7 @@ case class LiteralRuleInterpreter(rule: LiteralConformanceRule) extends RuleInte
   def conform(df: Dataset[Row])
              (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceCmdConfig): Dataset[Row] = {
     // Validate the rule parameters
-    RuleValidators.validateOutputField(progArgs.jobConfig.datasetName, ruleName, df.schema, rule.outputColumn)
+    RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)
 
     if (rule.outputColumn.contains('.')) {
       conformNestedField(df)

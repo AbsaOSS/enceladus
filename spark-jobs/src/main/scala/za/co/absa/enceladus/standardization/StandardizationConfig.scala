@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.standardization
 
-import scopt.OptionParser
-import za.co.absa.enceladus.standardization.StandardizationCmdConfig.stepName
 
-case class StandardizationConfig(rawFormat: String = "xml",
+import scopt.OParser
+
+case class StandardizationConfigAcc(rawFormat: String = "xml",
                                  charset: Option[String] = None,
                                  rowTag: Option[String] = None,
                                  csvDelimiter: Option[String] = None,
@@ -30,176 +30,143 @@ case class StandardizationConfig(rawFormat: String = "xml",
                                  rawPathOverride: Option[String] = None,
                                  failOnInputNotPerSchema: Boolean = false)
 
-object StandardizationConfig {
-  def getCmdLineArguments(args: Array[String]): StandardizationConfig = {
-    val parser = new CmdParser(s"spark-submit [spark options] ${stepName}Bundle.jar")
+trait StandardizationConfig[R] {
+  def withRawFormat(value: String): R
+  def withCharset(value: Option[String] = None): R
+  def withRowTag(value: Option[String] = None): R
+  def withCsvDelimiter(value: Option[String] = None): R
+  def withCsvHeader(value: Option[Boolean] = Some(false)): R
+  def withCsvQuote(value: Option[String] = None): R
+  def withCsvEscape(value: Option[String] = None): R
+  def withCobolOptions(value: Option[CobolOptions] = None): R
+  def withFixedWidthTrimValues(value: Option[Boolean] = Some(false)): R
+  def withRawPathOverride(value: Option[String]): R
+  def withFailOnInputNotPerSchema(value: Boolean): R
 
-    val optionCmd = parser.parse(args, StandardizationConfig())
-    optionCmd.getOrElse(StandardizationConfig())
-  }
+  def rawFormat: String
+  def charset: Option[String]
+  def rowTag: Option[String]
+  def csvDelimiter: Option[String]
+  def csvHeader: Option[Boolean]
+  def csvQuote: Option[String]
+  def csvEscape: Option[String]
+  def cobolOptions: Option[CobolOptions]
+  def fixedWidthTrimValues: Option[Boolean]
+  def rawPathOverride: Option[String]
+  def failOnInputNotPerSchema: Boolean
+}
 
-  private class CmdParser(programName: String) extends OptionParser[StandardizationConfig](programName) {
-    override def errorOnUnknownArgument: Boolean = false
-    override def reportWarning(msg: String): Unit = {}
+object StandardizationConf {
+  def standardizationParser[R <: StandardizationConfig[R]]: OParser[_, R] = {
+    val builder = OParser.builder[R]
+    import builder._
+    OParser.sequence(
+      head("\nStandardization", ""),
 
-    head("\nStandardization", "")
-    var rawFormat: Option[String] = None
+      opt[String]('f', "raw-format").required().action((value, config) => {
+        config.withRawFormat(value)
+      }).text("format of the raw data (csv, xml, parquet, fixed-width, etc.)"),
 
-    opt[String]('f', "raw-format").required().action((value, config) => {
-      rawFormat = Some(value)
-      config.copy(rawFormat = value)
-    }).text("format of the raw data (csv, xml, parquet,fixed-width, etc.)")
+      opt[String]("charset").optional().action((value, config) =>
+        config.withCharset(Some(value))).text("use the specific charset (default is UTF-8)"),
 
-    opt[String]("charset").optional().action((value, config) =>
-      config.copy(charset = Some(value))).text("use the specific charset (default is UTF-8)")
-      .validate(value =>
-        if (rawFormat.isDefined &&
-          (rawFormat.get.equalsIgnoreCase("xml") ||
-            rawFormat.get.equalsIgnoreCase("csv") ||
-            rawFormat.get.equalsIgnoreCase("json") ||
-            rawFormat.get.equalsIgnoreCase("cobol"))) {
-          success
-        } else {
-          failure("The --charset option is supported only for CSV, JSON, XML and COBOL")
-        })
+      opt[String]("row-tag").optional().action((value, config) =>
+        config.withRowTag(Some(value))).text("use the specific row tag instead of 'ROW' for XML format"),
 
-    opt[String]("row-tag").optional().action((value, config) =>
-      config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")
-      .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("xml")) {
-          success
-        } else {
-          failure("The --row-tag option is supported only for XML raw data format")
-        })
+      opt[String]("delimiter").optional().action((value, config) =>
+        config.withCsvDelimiter(Some(value))).text("use the specific delimiter instead of ',' for CSV format"),
 
-    opt[String]("delimiter").optional().action((value, config) =>
-      config.copy(csvDelimiter = Some(value))).text("use the specific delimiter instead of ',' for CSV format")
-      .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv")) {
-          success
-        } else {
-          failure("The --delimiter option is supported only for CSV raw data format")
-        })
+      opt[String]("csv-quote").optional().action((value, config) =>
+        config.withCsvQuote(Some(value)))
+        .text("use the specific quote character for creating CSV fields that may contain delimiter character(s) (default is '\"')"),
 
-    opt[String]("csv-quote").optional().action((value, config) =>
-      config.copy(csvQuote = Some(value)))
-      .text("use the specific quote character for creating CSV fields that may contain delimiter character(s) (default is '\"')")
-      .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv")) {
-          success
-        } else {
-          failure("The --csv-quote option is supported only for CSV raw data format")
-        })
+      opt[String]("csv-escape").optional().action((value, config) =>
+        config.withCsvEscape(Some(value)))
+        .text("use the specific escape character for CSV fields (default is '\\')"),
 
-    opt[String]("csv-escape").optional().action((value, config) =>
-      config.copy(csvEscape = Some(value)))
-      .text("use the specific escape character for CSV fields (default is '\\')")
-      .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv")) {
-          success
-        } else {
-          failure("The --csv-escape option is supported only for CSV raw data format")
-        })
+      // no need for validation for boolean since scopt itself will do
+      opt[Boolean]("header").optional().action((value, config) =>
+        config.withCsvHeader(Some(value))).text("use the header option to consider CSV header"),
 
-    // no need for validation for boolean since scopt itself will do
-    opt[Boolean]("header").optional().action((value, config) =>
-      config.copy(csvHeader = Some(value))).text("use the header option to consider CSV header")
-      .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("csv")) {
-          success
-        } else {
-          failure("The --header option is supported only for CSV ")
-        })
+      opt[Boolean]("trimValues").optional().action((value, config) =>
+        config.withFixedWidthTrimValues(Some(value))).text("use --trimValues option to trim values in  fixed width file"),
 
-    opt[Boolean]("trimValues").optional().action((value, config) =>
-      config.copy(fixedWidthTrimValues = Some(value))).text("use --trimValues option to trim values in  fixed width file")
-      .validate(value =>
-        if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("fixed-width")) {
-          success
-        } else {
-          failure("The --trimValues option is supported only for fixed-width files ")
-        })
+      opt[Boolean]("strict-schema-check").optional().action((value, config) =>
+        config.withFailOnInputNotPerSchema(value))
+        .text("use --strict-schema-check option to fail or proceed over rows not adhering to the schema (with error in errCol)"),
 
-    opt[Boolean]("strict-schema-check").optional().action((value, config) =>
-      config.copy(failOnInputNotPerSchema = value))
-      .text("use --strict-schema-check option to fail or proceed over rows not adhering to the schema (with error in errCol)")
-
-    processCobolCmdOptions()
-
-    opt[String]("debug-set-raw-path").optional().hidden().action((value, config) =>
-      config.copy(rawPathOverride = Some(value))).text("override the path of the raw data (used internally for performance tests)")
-
-    help("help").text("prints this usage text")
-
-    private def processCobolCmdOptions(): Unit = {
       opt[String]("copybook").optional().action((value, config) => {
-        config.copy(cobolOptions = cobolSetCopybook(config.cobolOptions, value))
-      }).text("Path to a copybook for COBOL data format")
-        .validate(value =>
-          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol")) {
-            success
-          } else {
-            failure("The --copybook option is supported only for COBOL data format")
-          }
-        )
+        val newOptions = config.cobolOptions match {
+          case Some(a) => Some(a.copy(copybook = value))
+          case None => Some(CobolOptions(value))
+        }
+        config.withCobolOptions(newOptions)
+
+      }).text("Path to a copybook for COBOL data format"),
 
       opt[Boolean]("is-xcom").optional().action((value, config) => {
-        config.copy(cobolOptions = cobolSetIsXcom(config.cobolOptions, value))
-      }).text("Does a mainframe file in COBOL format contain XCOM record headers")
-        .validate(value =>
-          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol")) {
-            success
-          } else {
-            failure("The --is-xcom option is supported only for COBOL data format")
-          })
+        val newOptions = config.cobolOptions match {
+          case Some(a) => Some(a.copy(isXcom = value))
+          case None => Some(CobolOptions(isXcom = value))
+        }
+        config.withCobolOptions(newOptions)
+      }).text("Does a mainframe file in COBOL format contain XCOM record headers"),
 
       opt[String]("cobol-encoding").optional().action((value, config) => {
-        config.copy(cobolOptions = cobolSetEncoding(config.cobolOptions, value))
-      }).text("Specify encoding of mainframe files (ascii or ebcdic)")
-        .validate(value =>
-          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol")) {
-            success
-          } else {
-            failure("The --cobol-encoding option is supported only for COBOL data format")
-          })
+        val newOptions = config.cobolOptions match {
+          case Some(a) => Some(a.copy(encoding = Option(value)))
+          case None => Some(CobolOptions(encoding = Option(value)))
+        }
+        config.withCobolOptions(newOptions)
+      }).text("Specify encoding of mainframe files (ascii or ebcdic)"),
 
       opt[String]("cobol-trimming-policy").optional().action((value, config) => {
-        config.copy(cobolOptions = cobolSetTrimmingPolicy(config.cobolOptions, value))
-      }).text("Specify string trimming policy for mainframe files (none, left, right, both)")
-        .validate(value =>
-          if (rawFormat.isDefined && rawFormat.get.equalsIgnoreCase("cobol")) {
-            success
-          } else {
-            failure("The --cobol-trimming-policy option is supported only for COBOL data format")
-          })
-    }
+        val newOptions = config.cobolOptions match {
+          case Some(a) => Some(a.copy(trimmingPolicy = Option(value)))
+          case None => Some(CobolOptions(trimmingPolicy = Option(value)))
+        }
+        config.withCobolOptions(newOptions)
+      }).text("Specify string trimming policy for mainframe files (none, left, right, both)"),
 
-    private def cobolSetCopybook(cobolOptions: Option[CobolOptions], newCopybook: String): Option[CobolOptions] = {
-      cobolOptions match {
-        case Some(a) => Some(a.copy(copybook = newCopybook))
-        case None => Some(CobolOptions(newCopybook))
-      }
-    }
+      opt[String]("debug-set-raw-path").optional().hidden().action((value, config) =>
+        config.withRawPathOverride(Some(value)))
+        .text("override the path of the raw data (used internally for performance tests)"),
 
-    private def cobolSetIsXcom(cobolOptions: Option[CobolOptions], newIsXCom: Boolean): Option[CobolOptions] = {
-      cobolOptions match {
-        case Some(a) => Some(a.copy(isXcom = newIsXCom))
-        case None => Some(CobolOptions(isXcom = newIsXCom))
-      }
-    }
+      checkConfig(config => {
+        def foundCsvField(config: R) = config match {
+          case _ if config.csvDelimiter.isDefined => Some("--delimiter")
+          case _ if config.csvEscape.isDefined => Some("--escape")
+          case _ if config.csvHeader.contains(true) => Some("--header")
+          case _ if config.csvQuote.isDefined => Some("--quote")
+          case _ => None
+        }
 
-    private def cobolSetEncoding(cobolOptions: Option[CobolOptions], newEncoding: String): Option[CobolOptions] = {
-      cobolOptions match {
-        case Some(a) => Some(a.copy(encoding = Option(newEncoding)))
-        case None => Some(CobolOptions(encoding = Option(newEncoding)))
-      }
-    }
+        def foundCobolField(cobolOptions: CobolOptions) = cobolOptions match {
+          case _ if cobolOptions.copybook != "" => Some("--copybook")
+          case _ if cobolOptions.encoding.isDefined => Some("--cobol-encoding")
+          case _ if cobolOptions.isXcom => Some("--is-xcom")
+          case _ if cobolOptions.trimmingPolicy.isDefined => Some("--cobol-trimming-policy")
+          case _ => None
+        }
 
-    private def cobolSetTrimmingPolicy(cobolOptions: Option[CobolOptions], newTrimmingPolicy: String): Option[CobolOptions] = {
-      cobolOptions match {
-        case Some(a) => Some(a.copy(trimmingPolicy = Option(newTrimmingPolicy)))
-        case None => Some(CobolOptions(trimmingPolicy = Option(newTrimmingPolicy)))
-      }
-    }
+
+        if (!List("xml", "csv", "json", "cobol").contains(config.rawFormat.toLowerCase) && config.charset.isDefined)
+          failure("The --charset option is supported only for CSV, JSON, XML and COBOL")
+        else if (config.rowTag.isDefined && !config.rawFormat.equalsIgnoreCase("xml"))
+          failure("The --row-tag option is supported only for XML raw data format")
+        else if (foundCsvField(config).isDefined && !config.rawFormat.equalsIgnoreCase("csv")) {
+          foundCsvField(config) match {
+            case Some("header") => failure("The --header option is supported only for CSV ")
+            case Some(field) => failure(s"The $field option is supported only for CSV raw data format")
+            case None =>
+              val cobolOptions = config.cobolOptions
+              if (cobolOptions.isDefined && !config.rawFormat.equalsIgnoreCase("cobol")) {
+                val field = foundCobolField(cobolOptions.get)
+                failure(s"The ${field} option is supported only for COBOL data format")
+              } else success
+          }
+        } else success
+      })
+    )
   }
 }

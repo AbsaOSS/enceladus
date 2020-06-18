@@ -43,16 +43,16 @@ trait StandardizationExecution extends CommonJobExecution {
   protected def getPathCfg(cmd: StandardizationCmdConfig, dataset: Dataset, reportVersion: Int): PathCfg = {
     PathCfg(
       inputPath = buildRawPath(cmd, dataset, reportVersion),
-      outputPath = getStandardizationPath(cmd.jobConfig, reportVersion)
+      outputPath = getStandardizationPath(cmd, reportVersion)
     )
   }
 
   def buildRawPath(cmd: StandardizationCmdConfig, dataset: Dataset, reportVersion: Int): String = {
-    val dateTokens = cmd.jobConfig.reportDate.split("-")
-    cmd.stdConfig.rawPathOverride match {
+    val dateTokens = cmd.reportDate.split("-")
+    cmd.rawPathOverride match {
       case None =>
         val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
-        cmd.jobConfig.folderPrefix match {
+        cmd.folderPrefix match {
           case None => s"${dataset.hdfsPath}$folderSuffix"
           case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
         }
@@ -70,10 +70,10 @@ trait StandardizationExecution extends CommonJobExecution {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationReader(log)
     val dfReaderConfigured = standardizationReader.getFormatSpecificReader(cmd, dataset, numberOfColumns)
-    val dfWithSchema = (if (!cmd.stdConfig.rawFormat.equalsIgnoreCase("parquet")) {
+    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
       val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
-      val optColumnNameOfCorruptRecord = if (cmd.stdConfig.failOnInputNotPerSchema) {
+      val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {
         None
       } else {
         Option(columnNameOfCorruptRecord)
@@ -143,8 +143,8 @@ trait StandardizationExecution extends CommonJobExecution {
 
     try {
       handleControlInfoValidation()
-      StandardizationInterpreter.standardize(dfAll, schema, cmd.stdConfig.rawFormat,
-        cmd.stdConfig.failOnInputNotPerSchema, recordIdGenerationStrategy)
+      StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat,
+        cmd.failOnInputNotPerSchema, recordIdGenerationStrategy)
     } catch {
       case e@ValidationException(msg, errors) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
@@ -159,7 +159,8 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def processStandardizationResult(standardizedDF: DataFrame,
+  protected def processStandardizationResult(args: Array[String],
+                                             standardizedDF: DataFrame,
                                              performance: PerformanceMeasurer,
                                              pathCfg: PathCfg,
                                              schema: StructType, cmd: StandardizationCmdConfig,
@@ -189,14 +190,14 @@ trait StandardizationExecution extends CommonJobExecution {
     val stdDirSize = fsUtils.getDirectorySize(pathCfg.outputPath)
     performance.finishMeasurement(stdDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
-      menasCredentials.username, cmd.jobConfig.args.mkString(" "))
+      menasCredentials.username, args.mkString(" "))
 
-    cmd.stdConfig.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
-    if (cmd.stdConfig.csvDelimiter.isDefined) {
-      cmd.stdConfig.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
+    cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
+    if (cmd.csvDelimiter.isDefined) {
+      cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
     }
 
     standardizedDF.writeInfoFile(pathCfg.outputPath)
-    writePerformanceMetrics(performance, cmd.jobConfig)
+    writePerformanceMetrics(performance, cmd)
   }
 }

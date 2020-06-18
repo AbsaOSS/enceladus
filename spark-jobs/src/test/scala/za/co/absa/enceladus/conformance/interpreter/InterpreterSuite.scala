@@ -51,8 +51,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
     implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(
-      ConformanceConfig(experimentalMappingRule = Option(useExperimentalMappingRule)),
-      jobConfig = JobCmdConfig(reportDate = "2017-11-01"))
+      experimentalMappingRule = Option(useExperimentalMappingRule),reportDate = "2017-11-01")
     val enableCF = true
     val isCatalystWorkaroundEnabled = true
 
@@ -108,8 +107,8 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
     implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(
-      ConformanceConfig(experimentalMappingRule = Option(useExperimentalMappingRule)),
-      jobConfig = JobCmdConfig(reportDate = "2017-11-01"))
+      experimentalMappingRule = Option(useExperimentalMappingRule),
+      reportDate = "2017-11-01")
     val enableCF = true
     val isCatalystWorkaroundEnabled = true
 

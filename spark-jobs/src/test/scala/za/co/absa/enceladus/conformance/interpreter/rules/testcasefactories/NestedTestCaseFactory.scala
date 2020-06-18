@@ -236,7 +236,7 @@ class NestedTestCaseFactory(implicit spark: SparkSession) {
       .json(getClass.getResource("/interpreter/mappingCases/nestedDf.json").getPath)
 
     val dataset = getDataSetWithConformanceRules(testCaseDataset, conformanceRules: _*)
-    val cmdConfig = ConformanceCmdConfig(jobConfig = JobCmdConfig(reportDate = reportDate))
+    val cmdConfig = ConformanceCmdConfig(reportDate = reportDate)
 
     val dao = mock(classOf[MenasDAO])
     mockWhen(dao.getDataset(testCaseName, 1)) thenReturn testCaseDataset

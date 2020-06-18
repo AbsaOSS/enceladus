@@ -44,7 +44,7 @@ class HyperConformance (implicit cmd: ConformanceCmdConfig,
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
     implicit val spark: SparkSession = rawDf.sparkSession
-    val menasCredentials = cmd.jobConfig.menasCredentialsFactory.getInstance()
+    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
 
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
     dao.authenticate()
@@ -55,7 +55,7 @@ class HyperConformance (implicit cmd: ConformanceCmdConfig,
 
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
 
-    val conformance = dao.getDataset(cmd.jobConfig.datasetName, cmd.jobConfig.datasetVersion)
+    val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
 
     val conformedDf = DynamicInterpreter.interpret(conformance, rawDf)
       .withColumnIfDoesNotExist(InfoDateColumn, infoDateColumn)
@@ -68,13 +68,13 @@ class HyperConformance (implicit cmd: ConformanceCmdConfig,
   }
 
   private def logPreConformanceInfo(streamData: DataFrame): Unit = {
-    log.info(s"Menas URLs: ${menasBaseUrls.mkString(",")}, dataset=${cmd.jobConfig.datasetName}, version=${cmd.jobConfig.datasetVersion}")
+    log.info(s"Menas URLs: ${menasBaseUrls.mkString(",")}, dataset=${cmd.datasetName}, version=${cmd.datasetVersion}")
     log.info(s"Input schema: ${streamData.schema.prettyJson}")
   }
 
   @throws[IllegalArgumentException]
   private def getReportVersion(implicit cmd: ConformanceCmdConfig): Int = {
-    cmd.jobConfig.reportVersion match {
+    cmd.reportVersion match {
       case Some(version) => version
       case None => throw new IllegalArgumentException("Report version is not provided.")
     }
@@ -116,18 +116,17 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     validateConfiguration(conf)
 
     val menasCredentialsFactory = getMenasCredentialsFactory(conf: Configuration)
-    val jobConfig = JobCmdConfig(
+    val jobConfig = ConformanceCmdConfig(
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
       reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()),
-      menasCredentialsFactory = menasCredentialsFactory,args = Array.empty
+      menasCredentialsFactory = menasCredentialsFactory
     )
 
-    val confConfig = ConformanceConfig(publishPathOverride = None,
+    implicit val confConfig: ConformanceCmdConfig = ConformanceCmdConfig(publishPathOverride = None,
       experimentalMappingRule = Some(true),
       isCatalystWorkaroundEnabled = Some(true),
       autocleanStandardizedFolder = Some(false))
-    implicit val cmd: ConformanceCmdConfig = ConformanceCmdConfig(confConfig, jobConfig = jobConfig)
 
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(true)

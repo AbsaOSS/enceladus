@@ -142,7 +142,7 @@ class SimpleTestCaseFactory(implicit spark: SparkSession) {
                   conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, ConformanceCmdConfig, FeatureSwitches) = {
     val inputDf = spark.read.schema(testCaseSchema).json(testCaseDataJson.toDS)
     val dataset = getDataSetWithConformanceRules(testCaseDataset, conformanceRules: _*)
-    val cmdConfig = ConformanceCmdConfig(jobConfig = JobCmdConfig(reportDate = reportDate))
+    val cmdConfig = ConformanceCmdConfig(reportDate = reportDate)
 
     val dao = mock(classOf[MenasDAO])
     mockWhen(dao.getDataset(testCaseName, 1)) thenReturn testCaseDataset

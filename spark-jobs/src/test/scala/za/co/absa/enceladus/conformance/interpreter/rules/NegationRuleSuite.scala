@@ -111,7 +111,7 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val inputDf = spark.read.schema(schema).json(inputDataset)
 
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
-    implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(jobConfig = JobCmdConfig(reportDate = "2017-11-01"))
+    implicit val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(reportDate = "2017-11-01")
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false

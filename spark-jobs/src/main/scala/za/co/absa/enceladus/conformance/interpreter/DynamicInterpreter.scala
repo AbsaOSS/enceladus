@@ -104,7 +104,7 @@ object DynamicInterpreter {
         }
         rulesApplied += 1
         interpreter.conformanceRule match {
-          case Some(rule) => applyRuleCheckpoint(rule, conformedDf, progArgs.jobConfig.persistStorageLevel, explosionState.explodeContext)
+          case Some(rule) => applyRuleCheckpoint(rule, conformedDf, progArgs.persistStorageLevel, explosionState.explodeContext)
           case None       => conformedDf
         }
     })
@@ -267,7 +267,7 @@ object DynamicInterpreter {
 
     val mappingTableDef = ictx.dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
     val mappingTablePath = PartitioningUtils.getPartitionedPathName(mappingTableDef.hdfsPath,
-      ictx.progArgs.jobConfig.reportDate)
+      ictx.progArgs.reportDate)
     val mappingTableSize = fsUtils.getDirectorySizeNoHidden(mappingTablePath)
     (mappingTableSize / (1024 * 1024)).toInt
   }
