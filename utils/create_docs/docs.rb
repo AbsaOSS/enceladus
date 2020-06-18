@@ -29,7 +29,7 @@ module Docs
         puts "Removing redirects for #{file_path}"
         file_content = partition_liquid(file: File.read(file_path))
         new_content = file_content[0]
-        new_content << remove_redirect(file_content[1])
+        new_content << file_content[1]
         new_content << file_content[2]
         File.open(file_path, 'w') { |file| file.puts(new_content) }
       else
@@ -57,14 +57,6 @@ module Docs
     file.partition( /---.*?(---)/m )
   end
 
-  def self.remove_redirect(content)
-    front_matter = []
-    content.split("\n").each do |line|
-      front_matter << line unless line =~ /^redirect_from/
-    end
-    front_matter.join("\n")
-  end
-
   def self.remove_docs(doc_folder:, version:)
     FileUtils.cd(doc_folder, verbose: true) do
       FileUtils.rm_r(version, verbose: true)
@@ -90,7 +82,7 @@ module Docs
   def self.add_topic(topic_name:, doc_folder:, yaml_path:)
     name_pretty = topic_name.tr('-', ' ').split.map(&:capitalize).join(' ')
     FileUtils.cd(doc_folder, verbose: true) do
-      versions = Dir.glob('*')
+      versions = Dir.glob('*').select { |fn| File.directory?(fn) }
       versions.each do |version|
         FileUtils.cd(version, verbose: true) do
           first_file = Dir.glob('*').first
@@ -109,7 +101,7 @@ module Docs
 
   def self.remove_topic(topic_name:, doc_folder:, yaml_path:)
     FileUtils.cd(doc_folder, verbose: true) do
-      versions = Dir.glob('*')
+      versions = Dir.glob('*').select { |fn| File.directory?(fn) }
       versions.each do |version|
         file_name = "#{version}/#{topic_name}.md"
         FireUtils.rm(file_name) if File.exist?(file_name)

@@ -4,7 +4,6 @@ title: Usage
 version: '2.0.0'
 categories:
     - '2.0.0'
-redirect_from: /docs/usage
 ---
 {% capture docs_path %}{{ site.baseurl }}/docs/{{ page.version }}{% endcapture %}
 

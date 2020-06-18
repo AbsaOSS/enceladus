@@ -4,12 +4,12 @@ title: Built-in Plugins
 version: '2.0.0'
 categories:
     - '2.0.0'
-redirect_from: /docs/plugins-built-in
 ---
 <!-- toc -->
 - [What are built-in plugins](#what-are-built-in-plugins)
 - [Existing built-in plugins](#existing-built-in-plugins)
   - [KafkaInfoPlugin](#kafkainfoplugin)
+  - [KafkaErrorSenderPlugin](#kafkaerrorsenderplugin)
 <!-- tocstop -->
 
 ## What are built-in plugins
