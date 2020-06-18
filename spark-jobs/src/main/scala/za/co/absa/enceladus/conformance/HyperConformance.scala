@@ -120,17 +120,16 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     validateConfiguration(conf)
 
     val menasCredentialsFactory = getMenasCredentialsFactory(conf: Configuration)
-    val jobConfig = ConformanceCmdConfig(
+
+    implicit val confConfig: ConformanceCmdConfig = ConformanceCmdConfig(publishPathOverride = None,
+      experimentalMappingRule = Some(true),
+      isCatalystWorkaroundEnabled = Some(true),
+      autocleanStandardizedFolder = Some(false),
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
       reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()),
       menasCredentialsFactory = menasCredentialsFactory
     )
-
-    implicit val confConfig: ConformanceCmdConfig = ConformanceCmdConfig(publishPathOverride = None,
-      experimentalMappingRule = Some(true),
-      isCatalystWorkaroundEnabled = Some(true),
-      autocleanStandardizedFolder = Some(false))
 
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(true)
