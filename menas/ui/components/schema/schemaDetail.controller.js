@@ -188,11 +188,11 @@ sap.ui.define([
           type: 'POST',
           data: $.param(data),
           contentType: 'application/x-www-form-urlencoded',
-          context: this, // becomes the result of "this" in handleRemoteLoadComplete
+          context: this, // becomes the result of "this" in handleRemoteLoad*Complete
           headers: {
             'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
           },
-          complete: this.handleRemoteLoadComplete /* todo create a different handler specific to topic load or generalize the routine */
+          complete: this.handleRemoteLoadFromTopicNameComplete
         });
     },
 
@@ -220,11 +220,11 @@ sap.ui.define([
         type: 'POST',
         data: $.param(data),
         contentType: 'application/x-www-form-urlencoded',
-        context: this, // becomes the result of "this" in handleRemoteLoadComplete
+        context: this, // becomes the result of "this" in handleRemoteLoad*Complete
         headers: {
           'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
         },
-        complete: this.handleRemoteLoadComplete
+        complete: this.handleRemoteLoadFromUrlComplete
       });
     },
 
@@ -262,13 +262,24 @@ sap.ui.define([
       return isOkToSubmit;
     },
 
-    handleRemoteLoadComplete: function (ajaxResponse) {
+    handleRemoteLoadFromTopicNameComplete: function (ajaxResponse) {
+      this.handleRemoteLoadComplete(ajaxResponse, "topicName")
+    },
+
+    handleRemoteLoadFromUrlComplete: function (ajaxResponse) {
+      this.handleRemoteLoadComplete(ajaxResponse, "remote")
+    },
+
+    // common for both loading from url and from topic name - differentiated by source param = "remote" | "topicName"
+    handleRemoteLoadComplete: function (ajaxResponse, source) {
       // *very* similar as handleUploadComplete, but the response object is a bit different
       sap.ui.core.BusyIndicator.hide();
       let status = ajaxResponse.status;
 
       if (status === 201) {
         this.byId("remoteUrl").setValue("");
+        model.setProperty("/topicNameStem", "");
+
         MessageToast.show("Schema successfully loaded.");
         let oData = JSON.parse(ajaxResponse.responseText);
         model.setProperty("/currentSchema", oData);
@@ -284,7 +295,11 @@ sap.ui.define([
 
         let msg;
         if (errorType === "schema_retrieval_error") {
-          msg = `Error retrieving the schema file from ${this.byId("remoteUrl").getValue()}${errorMessageDetails}`
+          if (source === "remote") {
+            msg = `Error retrieving the schema file from "${this.byId("remoteUrl").getValue()}".${errorMessageDetails}`
+          } else {
+            msg = `Error retrieving the schema file by topic-name stem "${this.byId("topicNameBase").getValue()}".${errorMessageDetails}`
+          }
         } else {
           msg = `Error parsing the schema file. Ensure that the file is a valid avro schema and ` +
             `try again.${errorMessageDetails}`
@@ -383,7 +398,7 @@ sap.ui.define([
     },
 
     // this is what the schema registry url should look like to be "fixable", e.g. http://example.schemaregistry.org/subjects/somename/versions/1
-    schemaRegistryRx: /^(https?:\/\/[^ ]+\/versions\/\d+)\/?$/,
+    schemaRegistryRx: /^(https?:\/\/[^ ]+\/versions\/(?:\d+|latest))\/?$/,
 
     isFixableSchemaRegistryUrl: function (str) {
       return this.schemaRegistryRx.test(str)
