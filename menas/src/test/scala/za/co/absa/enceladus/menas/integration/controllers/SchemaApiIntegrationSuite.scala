@@ -47,7 +47,7 @@ import scala.collection.immutable.HashMap
 @ActiveProfiles(Array("withEmbeddedMongo"))
 class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
 
-  private val port = 8877
+  private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistryBaseUrl` key
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
 
   override def beforeAll(): Unit = {
@@ -852,23 +852,24 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
     }
   }
 
+  import com.github.tomakehurst.wiremock.client.WireMock._
+
+  private def readTestResourceAsString(path: String): String = IOUtils.toString(getClass.getResourceAsStream(path))
+
+  /**
+   * will prepare the a response from file with correct `ContentType`
+   */
+  private def readTestResourceAsResponseWithContentType(path: String): ResponseDefinitionBuilder = {
+    // this is crazy, but it works better than hardcoding mime-types
+    val filePath: Path = new File(getClass.getResource(path).toURI()).toPath
+    val mime = Option(Files.probeContentType(filePath)).getOrElse(MediaType.APPLICATION_OCTET_STREAM_VALUE) // default for e.g. cob
+
+    val content = readTestResourceAsString(path)
+    import com.github.tomakehurst.wiremock.client.WireMock._
+    okForContentType(mime, content)
+  }
 
   s"POST $apiUrl/remote" should {
-    import com.github.tomakehurst.wiremock.client.WireMock._
-
-    def readTestResourceAsString(path: String): String = IOUtils.toString(getClass.getResourceAsStream(path))
-
-    /**
-     * will prepare the a response from file with correct `ContentType`
-     */
-    def readTestResourceAsResponseWithContentType(path: String): ResponseDefinitionBuilder = {
-      // this is crazy, but it works better than hardcoding mime-types
-      val filePath: Path = new File(getClass.getResource(path).toURI()).toPath
-      val mime = Option(Files.probeContentType(filePath)).getOrElse(MediaType.APPLICATION_OCTET_STREAM_VALUE) // default for e.g. cob
-
-      val content = readTestResourceAsString(path)
-      okForContentType(mime, content)
-    }
 
     val remoteFilePath = "/remote-test/someRemoteFile.ext"
     val remoteUrl = s"http://localhost:$port$remoteFilePath"
@@ -998,6 +999,52 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
         val params = HashMap[String, Any]("version" -> 1, "name" -> "dummy", "format" -> "copybook", "remoteUrl" -> remoteUrl)
         val response = sendPostRemoteFile[Schema](s"$apiUrl/remote", params)
         assertNotFound(response)
+      }
+    }
+  }
+
+  s"POST $apiUrl/topic" should {
+    def topicPath(topicName: String) = s"/subjects/$topicName/versions/latest/schema"
+
+    "return 201" when {
+      "an avro schema has no errors" should {
+        "return -value schema for the topicName (no merging)" in {
+          val schema = SchemaFactory.getDummySchema()
+          schemaFixture.add(schema)
+
+          wireMockServer.stubFor(get(urlPathEqualTo(topicPath("myTopic1-value")))
+            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
+
+          val params = HashMap[String, Any](
+            "name" -> schema.name, "version" -> schema.version, "format" -> "avro", "topicStem" -> "myTopic1", "mergeWithKey" -> false)
+          val responseRemoteLoaded = sendPostTopicName[Schema](s"$apiUrl/topic", params)
+          assertCreated(responseRemoteLoaded)
+
+          val actual = responseRemoteLoaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 7)
+        }
+
+        "return -value + -key schema for the topicName (merged together)" in {
+          val schema = SchemaFactory.getDummySchema()
+          schemaFixture.add(schema)
+
+          wireMockServer.stubFor(get(urlPathEqualTo(topicPath("myTopic1-value")))
+            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
+          wireMockServer.stubFor(get(urlPathEqualTo(topicPath("myTopic1-key")))
+            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.okForJoining)))
+
+          val params = HashMap[String, Any](
+            "name" -> schema.name, "version" -> schema.version, "format" -> "avro", "topicStem" -> "myTopic1", "mergeWithKey" -> true)
+          val responseRemoteLoaded = sendPostTopicName[Schema](s"$apiUrl/topic", params)
+          assertCreated(responseRemoteLoaded)
+
+          val actual = responseRemoteLoaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 8) // the Avro.ok contains 7 top-level fields, Avro.okForJoining cointains 2 fields (one is a duplicate and gets discarded, the other gets joined)
+        }
       }
     }
   }

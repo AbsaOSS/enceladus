@@ -279,6 +279,7 @@ sap.ui.define([
       if (status === 201) {
         this.byId("remoteUrl").setValue("");
         model.setProperty("/topicNameStem", "");
+        model.setProperty("/topicMergeWithKey", false);
 
         MessageToast.show("Schema successfully loaded.");
         let oData = JSON.parse(ajaxResponse.responseText);
