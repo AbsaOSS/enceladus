@@ -70,9 +70,17 @@ class InfoProducerKafka[T](kafkaConnectionParams: KafkaConnectionParams)
           logger.info(s"Sending info records ${infoRecord.getClass.getName} to ${kafkaConnectionParams.topicName}...")
           val producerRecord = new ProducerRecord[GenericRecord, GenericRecord](kafkaConnectionParams.topicName,
             avroKey, avroRecord)
+
+          // A future should be started first, since conversion from Java future to Scala future is asynchronous.
+          // We need to make sure the sending process is started so that if close() is called, it will wait for
+          // the send to finish.
+          val sendFuture = kafkaProducer.send(producerRecord)
+
           // Java Future to Scala Future
+          // Note that the conversion doesn't happen immediately since the body is specified by name.
+          // That's why we need to actually invoke '.send()' earlier and pass already existing future here.
           Future[RecordMetadata] {
-            kafkaProducer.send(producerRecord).get
+            sendFuture.get
           }.onComplete {
             case Success(metadata) =>
               logger.info(s"Info records were sent successfully to the Kafka topic, offset=${metadata.offset()}.")

@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.standardization.interpreter
 
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, Matchers}
 import za.co.absa.enceladus.common.error.ErrorMessageFactory
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
@@ -25,7 +25,7 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
-class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase with LoggerTestBase {
+class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase with LoggerTestBase with Matchers {
   import spark.implicits._
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
@@ -109,9 +109,12 @@ class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase 
     )
     val src = seq.toDF(fieldName)
     val desiredSchema = generateDesiredSchema(TimestampType, s""""${MetadataKeys.Pattern}": "fubar"""")
-    assert(intercept[ValidationException] {
+    val caught = intercept[ValidationException] {
       StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
-    }.getMessage == "A fatal schema validation error occurred.")
+    }
+
+    caught.getMessage should startWith ("A fatal schema validation error occurred.")
+    caught.errors.head should startWith ("Validation error for column 'arrayField[].arrayField', pattern 'fubar")
   }
 
   test("Array of integers with pattern defined") {

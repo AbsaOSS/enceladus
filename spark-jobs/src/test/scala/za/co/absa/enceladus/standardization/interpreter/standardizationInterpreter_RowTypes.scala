@@ -122,3 +122,11 @@ case class DateRow(
                     dateField: Date,
                     errCol: Seq[ErrorMessage] = Seq.empty
                   )
+
+case class BinaryRow(
+                    binaryField: Array[Byte],
+                    errCol: Seq[ErrorMessage] = Seq.empty
+                  ) {
+
+  def simpleFields = (binaryField.toSeq, errCol)
+}
