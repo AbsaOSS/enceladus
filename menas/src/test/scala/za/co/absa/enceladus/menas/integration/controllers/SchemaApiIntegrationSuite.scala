@@ -22,6 +22,7 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import org.apache.commons.io.IOUtils
+import org.apache.spark.sql.types.{DataType, StructType}
 import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfterAll
 import org.springframework.beans.factory.annotation.Autowired
@@ -36,6 +37,7 @@ import za.co.absa.enceladus.menas.models.rest.RestResponse
 import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.utils.SchemaType
+import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Schema, UsedIn}
@@ -71,6 +73,9 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
 
   @Autowired
   private val attachmentFixture: AttachmentFixtureService = null
+
+  @Autowired
+  private val convertor: SparkMenasSchemaConvertor = null
 
   private val apiUrl = "/schema"
   private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
@@ -1031,19 +1036,21 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
           schemaFixture.add(schema)
 
           wireMockServer.stubFor(get(urlPathEqualTo(topicPath("myTopic1-value")))
-            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
+            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.AvroCombining.value)))
           wireMockServer.stubFor(get(urlPathEqualTo(topicPath("myTopic1-key")))
-            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.okForJoining)))
+            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.AvroCombining.key)))
 
           val params = HashMap[String, Any](
             "name" -> schema.name, "version" -> schema.version, "format" -> "avro", "topicStem" -> "myTopic1", "mergeWithKey" -> true)
           val responseRemoteLoaded = sendPostTopicName[Schema](s"$apiUrl/topic", params)
           assertCreated(responseRemoteLoaded)
 
-          val actual = responseRemoteLoaded.getBody
-          assert(actual.name == schema.name)
-          assert(actual.version == schema.version + 1)
-          assert(actual.fields.length == 8) // the Avro.ok contains 7 top-level fields, Avro.okForJoining cointains 2 fields (one is a duplicate and gets discarded, the other gets joined)
+          val expectedSchema: StructType = DataType.fromJson(readTestResourceAsString(TestResourcePath.AvroCombining.expectedCombination)).asInstanceOf[StructType]
+
+          val actualMenasSchema = responseRemoteLoaded.getBody
+          val actualSparkSchema = convertor.convertMenasToSparkFields(actualMenasSchema.fields)
+
+          assert(actualSparkSchema == expectedSchema.fields.toSeq)
         }
       }
     }

@@ -1,0 +1,91 @@
+{
+  "type" : "struct",
+  "fields" : [ {
+    "name" : "stringFieldFromValue",
+    "type" : "string",
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "intFieldFromValue",
+    "type" : "integer",
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "common",
+    "type" : {
+      "type" : "struct",
+      "fields" : [ {
+        "name" : "commonStringFromValue",
+        "type" : "string",
+        "nullable" : false,
+        "metadata" : { }
+      }, {
+        "name" : "commonIntFromValue",
+        "type" : "integer",
+        "nullable" : false,
+        "metadata" : { }
+      }, {
+        "name" : "commonStringFromKey",
+        "type" : "string",
+        "nullable" : false,
+        "metadata" : { }
+      }, {
+        "name" : "commonIntFromKey",
+        "type" : "integer",
+        "nullable" : false,
+        "metadata" : { }
+      } ]
+    },
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "checkpoints",
+    "type" : {
+      "type" : "array",
+      "elementType" : {
+        "type" : "struct",
+        "fields" : [ {
+          "name" : "name",
+          "type" : "string",
+          "nullable" : false,
+          "metadata" : { }
+        }, {
+          "name" : "order",
+          "type" : "integer",
+          "nullable" : false,
+          "metadata" : { }
+        }, {
+          "name" : "controls",
+          "type" : {
+            "type" : "array",
+            "elementType" : {
+              "type" : "struct",
+              "fields" : [ {
+                "name" : "controlName",
+                "type" : "string",
+                "nullable" : false,
+                "metadata" : { }
+              } ]
+            },
+            "containsNull" : true
+          },
+          "nullable" : false,
+          "metadata" : { }
+        } ]
+      },
+      "containsNull" : true
+    },
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "stringFieldFromKey",
+    "type" : "string",
+    "nullable" : false,
+    "metadata" : { }
+  }, {
+    "name" : "intFieldFromKey",
+    "type" : "integer",
+    "nullable" : false,
+    "metadata" : { }
+  } ]
+}

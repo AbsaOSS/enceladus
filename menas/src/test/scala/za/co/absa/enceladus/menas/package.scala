@@ -37,8 +37,13 @@ package object menas {
       val ok = "/test_data/schemas/avro/avroschema_json_ok.avsc"
       val bogus = "/test_data/schemas/avro/avroschema_json_bogus.avsc"
       val okJsonEquivalent = "/test_data/schemas/avro/equivalent-to-avroschema.json"
+    }
 
-      val okForJoining = "/test_data/schemas/avro/avroschema_json_key_joining.avsc" /** to be joined with [[ok]] */
+    object AvroCombining {
+      val value = "/test_data/schemas/avro_combine/avro-value.avsc"
+      val key = "/test_data/schemas/avro_combine/avro-key.avsc"
+
+      val expectedCombination = "/test_data/schemas/avro_combine/expected-combination.json"
     }
 
   }
