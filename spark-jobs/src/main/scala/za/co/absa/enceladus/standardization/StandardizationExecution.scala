@@ -70,7 +70,8 @@ trait StandardizationExecution extends CommonJobExecution {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationReader(log)
     val dfReaderConfigured = standardizationReader.getFormatSpecificReader(cmd, dataset, numberOfColumns)
-    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
+    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")
+      && !cmd.rawFormat.equalsIgnoreCase("cobol")) {
       // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
       val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
       val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {

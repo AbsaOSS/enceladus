@@ -100,6 +100,14 @@ object StandardizationConf {
         config.withCobolOptions(newOptions)
       }).text("Does a mainframe file in COBOL format contain XCOM record headers"),
 
+      opt[Boolean]("cobol-is-text").optional().action((value, config) => {
+        val newOptions = config.cobolOptions match {
+          case Some(a) => Some(a.copy(isText = value))
+          case None => Some(CobolOptions(isText = value))
+        }
+        config.withCobolOptions(newOptions)
+      }).text("Specifies if the mainframe file is ASCII text file"),
+
       opt[String]("cobol-encoding").optional().action((value, config) => {
         val newOptions = config.cobolOptions match {
           case Some(a) => Some(a.copy(encoding = Option(value)))
@@ -133,6 +141,7 @@ object StandardizationConf {
           case _ if cobolOptions.copybook != "" => Some("--copybook")
           case _ if cobolOptions.encoding.isDefined => Some("--cobol-encoding")
           case _ if cobolOptions.isXcom => Some("--is-xcom")
+          case _ if cobolOptions.isText => Some("--is-text")
           case _ if cobolOptions.trimmingPolicy.isDefined => Some("--cobol-trimming-policy")
           case _ => None
         }
@@ -150,7 +159,7 @@ object StandardizationConf {
               val cobolOptions = config.cobolOptions
               if (cobolOptions.isDefined && !config.rawFormat.equalsIgnoreCase("cobol")) {
                 val field = foundCobolField(cobolOptions.get)
-                failure(s"The ${field} option is supported only for COBOL data format")
+                failure(s"The $field option is supported only for COBOL data format")
               } else success
           }
         } else success
