@@ -20,6 +20,9 @@ import scopt.OParser
 import za.co.absa.enceladus.common.JobCmdConfig
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory}
 
+import scala.util.{Failure, Try}
+import za.co.absa.enceladus.utils.implicits.OptionImplicits._
+
 /**
  * This is a class for configuration provided by the command line parameters
  *
@@ -38,8 +41,8 @@ case class ConformanceCmdConfig(datasetName: String = "",
                                 experimentalMappingRule: Option[Boolean] = None,
                                 isCatalystWorkaroundEnabled: Option[Boolean] = None,
                                 autocleanStandardizedFolder: Option[Boolean] = None)
-  extends ConformanceConfig[ConformanceCmdConfig]
-  with JobCmdConfig[ConformanceCmdConfig]{
+  extends ConformanceConfig[ConformanceCmdConfig] with JobCmdConfig[ConformanceCmdConfig] {
+
   override def withPublishPathOverride(value: Option[String]): ConformanceCmdConfig = copy(publishPathOverride = value)
   override def withExperimentalMappingRule(value: Option[Boolean]): ConformanceCmdConfig = copy(experimentalMappingRule = value)
   override def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): ConformanceCmdConfig = copy(isCatalystWorkaroundEnabled = value)

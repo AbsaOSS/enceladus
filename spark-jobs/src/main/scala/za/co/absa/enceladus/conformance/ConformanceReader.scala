@@ -73,9 +73,8 @@ class ConformanceReader(log: Logger, conf: Config) {
    * @param defaultValue    Global default value
    * @return The effective value of the parameter
    */
-  private def getCmdOrConfigBoolean(cmdParameterOpt: Option[Boolean],
-                            configKey: String,
-                            defaultValue: Boolean)(implicit conf: Config): Boolean = {
+  private def getCmdOrConfigBoolean(cmdParameterOpt: Option[Boolean], configKey: String, defaultValue: Boolean)
+                                   (implicit conf: Config): Boolean = {
     val enabled = cmdParameterOpt match {
       case Some(b) => b
       case None =>

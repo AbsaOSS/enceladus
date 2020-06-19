@@ -16,8 +16,7 @@
 package za.co.absa.enceladus.common
 
 import org.apache.spark.storage.StorageLevel
-import scopt.{OParser, OptionParser}
-import za.co.absa.enceladus.conformance.ConformanceConfig
+import scopt.OParser
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 
 import scala.util.matching.Regex
@@ -33,10 +32,10 @@ trait JobCmdConfig[R] {
   def withFolderPrefix(value: Option[String]): R
   def withPersistStorageLevel(value: Option[StorageLevel]): R
 
-  def menasCredentialsFactory: MenasCredentialsFactory
   def datasetName: String
-  def datasetVersion: Int
   def reportDate: String
+  def menasCredentialsFactory: MenasCredentialsFactory
+  def datasetVersion: Int
   def reportVersion: Option[Int]
   def performanceMetricsFile: Option[String]
   def folderPrefix: Option[String]
@@ -49,64 +48,63 @@ object JobCmdConfig {
     val builder = OParser.builder[R]
     import builder._
     OParser.sequence(head("Job Parameters"),
-    opt[String]('D', "dataset-name").required().action((value, config) =>
-      config.withDatasetName(value)).text("Dataset name"),
+      opt[String]('D', "dataset-name").required().action((value, config) =>
+        config.withDatasetName(value)).text("Dataset name"),
 
-    opt[Int]('d', "dataset-version").required().action((value, config) =>
-      config.withDatasetVersion(value)).text("Dataset version")
-      .validate(value =>
-        if (value > 0) {
-          success
-        } else {
-          failure("Option --dataset-version must be > 0")
+      opt[Int]('d', "dataset-version").required().action((value, config) =>
+        config.withDatasetVersion(value)).text("Dataset version")
+        .validate(value =>
+          if (value > 0) {
+            success
+          } else {
+            failure("Option --dataset-version must be > 0")
+          }),
+
+      opt[String]('R', "report-date").required().action((value, config) =>
+        config.withReportDate(value)).text("Report date in 'yyyy-MM-dd' format")
+        .validate(value => {
+          val reportDateMatcher: Regex = "^\\d{4}-\\d{2}-\\d{2}$".r
+          reportDateMatcher.findFirstIn(value) match {
+            case None => failure(s"Match error in '$value'. Option --report-date expects a date in 'yyyy-MM-dd' format")
+            case _ => success
+          }
         }),
 
-    opt[String]('R', "report-date").required().action((value, config) =>
-      config.withReportDate(value)).text("Report date in 'yyyy-MM-dd' format")
-      .validate(value => {
-        val reportDateMatcher: Regex = "^\\d{4}-\\d{2}-\\d{2}$".r
-        reportDateMatcher.findFirstIn(value) match {
-          case None => failure(s"Match error in '$value'. Option --report-date expects a date in 'yyyy-MM-dd' format")
-          case _ => success
-        }
-      }),
+      opt[Int]('r', "report-version").optional().action((value, config) =>
+        config.withReportVersion(Some(value)))
+        .text("Report version. If not provided, it is inferred based on the publish path (it's an EXPERIMENTAL feature)")
+        .validate(value =>
+          if (value > 0) {
+            success
+          } else {
+            failure("Option --report-version must be >0")
+          }),
 
-    opt[Int]('r', "report-version").optional().action((value, config) =>
-      config.withReportVersion(Some(value)))
-      .text("Report version. If not provided, it is inferred based on the publish path (it's an EXPERIMENTAL feature)")
-      .validate(value =>
-        if (value > 0) {
-          success
-        } else {
-          failure("Option --report-version must be >0")
-        }),
+      opt[String]("menas-credentials-file").hidden.optional().action({ (file, config) =>
+        config.withMenasCredentialsFactory(new MenasPlainCredentialsFactory(file))
+      }).text("Path to Menas credentials config file."),
 
-    opt[String]("menas-credentials-file").hidden.optional().action({ (file, config) =>
-      config.withMenasCredentialsFactory(new MenasPlainCredentialsFactory(file))
-    }).text("Path to Menas credentials config file."),
+      opt[String]("menas-auth-keytab").optional().action({ (file, config) => {
+        config.withMenasCredentialsFactory(new MenasKerberosCredentialsFactory(file))
+      }
+      }).text("Path to keytab file used for authenticating to menas"),
 
-    opt[String]("menas-auth-keytab").optional().action({ (file, config) => {
-      config.withMenasCredentialsFactory(new MenasKerberosCredentialsFactory(file))
-    }}).text("Path to keytab file used for authenticating to menas"),
+      opt[String]("performance-file").optional().action((value, config) =>
+        config.withPerformanceMetricsFile(Option(value))).text("Produce a performance metrics file at the given location (local filesystem)"),
 
-    opt[String]("performance-file").optional().action((value, config) =>
-      config.withPerformanceMetricsFile(Option(value))).text("Produce a performance metrics file at the given location (local filesystem)"),
+      opt[String]("folder-prefix").optional().action((value, config) =>
+        config.withFolderPrefix(Option(value))).text("Adds a folder prefix before the infoDateColumn"),
 
-    opt[String]("folder-prefix").optional().action((value, config) =>
-      config.withFolderPrefix(Option(value))).text("Adds a folder prefix before the infoDateColumn"),
+      opt[String]("persist-storage-level").optional().action((value, config) =>
+        config.withPersistStorageLevel(Some(StorageLevel.fromString(value))))
+        .text("Specifies persistence storage level to use when processing data. Spark's default is MEMORY_AND_DISK."),
 
-    opt[String]("persist-storage-level").optional().action((value, config) =>
-      config.withPersistStorageLevel(Some(StorageLevel.fromString(value))))
-      .text("Specifies persistence storage level to use when processing data. Spark's default is MEMORY_AND_DISK."),
-
-    checkConfig { config =>
+      checkConfig { config =>
         config.menasCredentialsFactory match {
           case InvalidMenasCredentialsFactory => failure("No authentication method specified (e.g. --menas-auth-keytab)")
           case _ => success
         }
       }
     )
+  }
 }
-}
-
-final case class PathCfg(inputPath: String, outputPath: String)

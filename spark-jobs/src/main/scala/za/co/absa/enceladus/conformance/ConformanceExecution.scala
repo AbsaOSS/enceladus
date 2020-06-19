@@ -23,8 +23,8 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
-import za.co.absa.enceladus.common.RecordIdGeneration.{getRecordIdGenerationStrategyFromConfig}
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants, PathCfg, RecordIdGeneration}
+import za.co.absa.enceladus.common.RecordIdGeneration._
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, PathConfig, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -42,8 +42,8 @@ trait ConformanceExecution extends CommonJobExecution {
   protected implicit val step = "Conformance"
   private val conformanceReader = new ConformanceReader(log, conf)
 
-  def getPathCfg(cmd: ConformanceCmdConfig, conformance: Dataset, reportVersion: Int): PathCfg =
-    PathCfg(
+  def getPathCfg(cmd: ConformanceCmdConfig, conformance: Dataset, reportVersion: Int): PathConfig =
+    PathConfig(
       outputPath = buildPublishPath(cmd, conformance, reportVersion),
       inputPath = getStandardizationPath(cmd, reportVersion)
     )
@@ -94,7 +94,7 @@ trait ConformanceExecution extends CommonJobExecution {
   protected def processConformanceResult(args: Array[String],
                                          result: DataFrame,
                                          performance: PerformanceMeasurer,
-                                         pathCfg: PathCfg,
+                                         pathCfg: PathConfig,
                                          reportVersion: Int,
                                          menasCredentials: MenasCredentials)
                                         (implicit spark: SparkSession,

@@ -23,7 +23,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.{CommonJobExecution, PathCfg}
+import za.co.absa.enceladus.common.{CommonJobExecution, PathConfig}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
@@ -38,10 +38,10 @@ import za.co.absa.enceladus.utils.validation.ValidationException
 import scala.util.control.NonFatal
 
 trait StandardizationExecution extends CommonJobExecution {
-  protected implicit val step = "Standardization"
+  protected implicit val step: String = "Standardization"
 
-  protected def getPathCfg(cmd: StandardizationCmdConfig, dataset: Dataset, reportVersion: Int): PathCfg = {
-    PathCfg(
+  protected def getPathCfg(cmd: StandardizationCmdConfig, dataset: Dataset, reportVersion: Int): PathConfig = {
+    PathConfig(
       inputPath = buildRawPath(cmd, dataset, reportVersion),
       outputPath = getStandardizationPath(cmd, reportVersion)
     )
@@ -147,9 +147,9 @@ trait StandardizationExecution extends CommonJobExecution {
         cmd.failOnInputNotPerSchema, recordIdGenerationStrategy)
     } catch {
       case e@ValidationException(msg, errors) =>
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
-          errors.mkString("\n")
-        }", "")
+        val errorDescription = s"$msg\nDetails: ${errors.mkString("\n")}"
+        AtumImplicits.SparkSessionWrapper(spark)
+            .setControlMeasurementError("Schema Validation", errorDescription, "")
         throw e
       case NonFatal(e) if !e.isInstanceOf[ValidationException] =>
         val sw = new StringWriter
@@ -162,12 +162,11 @@ trait StandardizationExecution extends CommonJobExecution {
   protected def processStandardizationResult(args: Array[String],
                                              standardizedDF: DataFrame,
                                              performance: PerformanceMeasurer,
-                                             pathCfg: PathCfg,
+                                             pathCfg: PathConfig,
                                              schema: StructType, cmd: StandardizationCmdConfig,
                                              menasCredentials: MenasCredentials)
                                             (implicit spark: SparkSession,
                                              fsUtils: FileSystemVersionUtils): Unit = {
-    //register renames with ATUM
     import za.co.absa.atum.AtumImplicits._
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {

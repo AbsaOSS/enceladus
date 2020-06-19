@@ -46,13 +46,13 @@ trait CommonJobExecution {
 
   protected def getStandardizationPath[T](jobConfig: JobCmdConfig[T], reportVersion: Int): String =
     MessageFormat.format(conf.getString("standardized.hdfs.path"),
-    jobConfig.datasetName,
-    jobConfig.datasetVersion.toString,
-    jobConfig.reportDate,
-    reportVersion.toString)
+      jobConfig.datasetName,
+      jobConfig.datasetVersion.toString,
+      jobConfig.reportDate,
+      reportVersion.toString)
 
   protected def getReportVersion[T](jobConfig: JobCmdConfig[T], dataset: Dataset)
-                                (implicit fsUtils: FileSystemVersionUtils): Int = {
+                                   (implicit fsUtils: FileSystemVersionUtils): Int = {
     jobConfig.reportVersion match {
       case Some(version) => version
       case None =>
@@ -86,7 +86,7 @@ trait CommonJobExecution {
 
   protected def handleControlInfoValidation(): Unit = {
     ControlInfoValidation.addRawAndSourceRecordCountsToMetadata() match {
-      case Failure(ex: za.co.absa.enceladus.utils.validation.ValidationException) => {
+      case Failure(ex: za.co.absa.enceladus.utils.validation.ValidationException) =>
         val confEntry = "control.info.validation"
         conf.getString(confEntry) match {
           case "strict" => throw ex
@@ -94,18 +94,17 @@ trait CommonJobExecution {
           case "none" =>
           case _ => throw new RuntimeException(s"Invalid $confEntry value")
         }
-      }
       case Failure(ex) => throw ex
       case Success(_) =>
     }
   }
 
   protected def initFunctionalExtensions[T](reportVersion: Int,
-                                         pathCfg: PathCfg,
-                                         isJobStageOnly: Boolean = false,
-                                         generateNewRun: Boolean = false)
-                                        (implicit spark: SparkSession, dao: MenasDAO,
-                                         jobConfig: JobCmdConfig[T], step: String): Unit = {
+                                            pathCfg: PathConfig,
+                                            isJobStageOnly: Boolean = false,
+                                            generateNewRun: Boolean = false)
+                                           (implicit spark: SparkSession, dao: MenasDAO,
+                                            jobConfig: JobCmdConfig[T], step: String): Unit = {
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
@@ -132,7 +131,7 @@ trait CommonJobExecution {
       generateNewRun)
   }
 
-  protected def validateForExistingOutputPath(fsUtils: FileSystemVersionUtils, pathCfg: PathCfg): Unit = {
+  protected def validateForExistingOutputPath(fsUtils: FileSystemVersionUtils, pathCfg: PathConfig): Unit = {
     if (fsUtils.hdfsExists(pathCfg.outputPath)) {
       throw new IllegalStateException(
         s"Path ${pathCfg.outputPath} already exists. Increment the run version, or delete ${pathCfg.outputPath}"
@@ -166,8 +165,8 @@ trait CommonJobExecution {
     }
   }
 
-  def runPostProcessors[T](errorSourceId: ErrorSourceId.Value, pathCfg: PathCfg, jobCmdConfig: JobCmdConfig[T], reportVersion: Int)
-                       (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
+  def runPostProcessors[T](errorSourceId: ErrorSourceId.Value, pathCfg: PathConfig, jobCmdConfig: JobCmdConfig[T], reportVersion: Int)
+                          (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
     val df = spark.read.parquet(pathCfg.outputPath)
     val runId = MenasPlugin.runNumber
 
