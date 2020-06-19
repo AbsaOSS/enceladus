@@ -49,6 +49,8 @@ HEADER=""
 CSV_QUOTE=""
 CSV_ESCAPE=""
 TRIM_VALUES=""
+COBOL_IS_TEXT=""
+COBOL_ENCODING=""
 IS_XCOM=""
 MAPPING_TABLE_PATTERN=""
 FOLDER_PREFIX=""
@@ -180,6 +182,14 @@ case $key in
     ;;
     --trimValues)
     TRIM_VALUES="$2"
+    shift 2 # past argument and value
+    ;;
+    --cobol-encoding)
+    COBOL_ENCODING="$2"
+    shift 2 # past argument and value
+    ;;
+    --cobol-is-text)
+    COBOL_IS_TEXT="$2"
     shift 2 # past argument and value
     ;;
     --is-xcom)
@@ -396,6 +406,8 @@ add_to_cmd_line "--header" ${HEADER}
 add_to_cmd_line "--csv-quote" ${CSV_QUOTE}
 add_to_cmd_line "--csv-escape" ${CSV_ESCAPE}
 add_to_cmd_line "--trimValues" ${TRIM_VALUES}
+add_to_cmd_line "--cobol-is-text" ${COBOL_IS_TEXT}
+add_to_cmd_line "--cobol-encoding" ${COBOL_ENCODING}
 add_to_cmd_line "--is-xcom" ${IS_XCOM}
 add_to_cmd_line "--folder-prefix" ${FOLDER_PREFIX}
 add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
