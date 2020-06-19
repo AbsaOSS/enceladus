@@ -6,10 +6,10 @@ categories:
     - '2.0.0'
     - usage
 ---
-## Table Of Content
+## Table Of Contents
 
 <!-- toc -->
-- [Table Of Content](#table-of-content)
+- [Table Of Contents](#table-of-contents)
 - [Description](#description)
 - [Validation](#validation)
 - [Additional Information](#additional-information)
