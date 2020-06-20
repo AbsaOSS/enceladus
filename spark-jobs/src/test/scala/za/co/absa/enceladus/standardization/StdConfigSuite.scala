@@ -66,7 +66,7 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
   }
 
   test("folder-prefix parameter") {
-    val cmdConfigNoFolderPrefix = StdCmdConfigT.getCmdLineArguments(
+    val cmdConfigNoFolderPrefix = StandardizationCmdConfigT.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -75,18 +75,18 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
         "--menas-credentials-file", menasCredentialsFile,
         "--raw-format", rawFormat))
 
-    val actualPlainMenasCredentials = cmdConfigNoFolderPrefix.jobConfig.menasCredentialsFactory.getInstance()
+    val actualPlainMenasCredentials = cmdConfigNoFolderPrefix.menasCredentialsFactory.getInstance()
 
-    assert(cmdConfigNoFolderPrefix.jobConfig.datasetName === datasetName)
-    assert(cmdConfigNoFolderPrefix.jobConfig.datasetVersion === datasetVersion)
-    assert(cmdConfigNoFolderPrefix.jobConfig.reportDate === reportDate)
-    assert(cmdConfigNoFolderPrefix.jobConfig.reportVersion.get === reportVersion)
-    assert(cmdConfigNoFolderPrefix.stdConfig.rawFormat === rawFormat)
-    assert(cmdConfigNoFolderPrefix.jobConfig.folderPrefix.isEmpty)
-    assert(cmdConfigNoFolderPrefix.stdConfig.rawPathOverride.isEmpty)
+    assert(cmdConfigNoFolderPrefix.datasetName === datasetName)
+    assert(cmdConfigNoFolderPrefix.datasetVersion === datasetVersion)
+    assert(cmdConfigNoFolderPrefix.reportDate === reportDate)
+    assert(cmdConfigNoFolderPrefix.reportVersion.get === reportVersion)
+    assert(cmdConfigNoFolderPrefix.rawFormat === rawFormat)
+    assert(cmdConfigNoFolderPrefix.folderPrefix.isEmpty)
+    assert(cmdConfigNoFolderPrefix.rawPathOverride.isEmpty)
     assert(actualPlainMenasCredentials === menasCredentials)
 
-    val cmdConfigFolderPrefix = StdCmdConfigT.getCmdLineArguments(
+    val cmdConfigFolderPrefix = StandardizationCmdConfigT.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -96,16 +96,16 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
         "--raw-format", rawFormat,
         "--folder-prefix", folderPrefix))
 
-    val actualMenasKerberosCredentials = cmdConfigFolderPrefix.jobConfig.menasCredentialsFactory.getInstance()
+    val actualMenasKerberosCredentials = cmdConfigFolderPrefix.menasCredentialsFactory.getInstance()
 
-    assert(cmdConfigFolderPrefix.jobConfig.datasetName === datasetName)
-    assert(cmdConfigFolderPrefix.jobConfig.datasetVersion === datasetVersion)
-    assert(cmdConfigFolderPrefix.jobConfig.reportDate === reportDate)
-    assert(cmdConfigFolderPrefix.jobConfig.reportVersion.get === reportVersion)
-    assert(cmdConfigFolderPrefix.stdConfig.rawFormat === rawFormat)
-    assert(cmdConfigFolderPrefix.jobConfig.folderPrefix.nonEmpty)
-    assert(cmdConfigFolderPrefix.jobConfig.folderPrefix.get === folderPrefix)
-    assert(cmdConfigFolderPrefix.stdConfig.rawPathOverride.isEmpty)
+    assert(cmdConfigFolderPrefix.datasetName === datasetName)
+    assert(cmdConfigFolderPrefix.datasetVersion === datasetVersion)
+    assert(cmdConfigFolderPrefix.reportDate === reportDate)
+    assert(cmdConfigFolderPrefix.reportVersion.get === reportVersion)
+    assert(cmdConfigFolderPrefix.rawFormat === rawFormat)
+    assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
+    assert(cmdConfigFolderPrefix.folderPrefix.get === folderPrefix)
+    assert(cmdConfigFolderPrefix.rawPathOverride.isEmpty)
     assert(actualMenasKerberosCredentials === menasKeytab)
   }
 
@@ -127,7 +127,7 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
       userDisabled,
       List()
     )
-    val cmdConfigNoFolderPrefix = StdCmdConfigT.getCmdLineArguments(
+    val cmdConfigNoFolderPrefix = StandardizationCmdConfigT.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -135,7 +135,7 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile,
         "--raw-format", rawFormat))
-    val cmdConfigFolderPrefix = StdCmdConfigT.getCmdLineArguments(
+    val cmdConfigFolderPrefix = StandardizationCmdConfigT.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -144,7 +144,7 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
         "--menas-credentials-file", menasCredentialsFile,
         "--folder-prefix", folderPrefix,
         "--raw-format", rawFormat))
-    val cmdConfigRawPathOverride = StdCmdConfigT.getCmdLineArguments(
+    val cmdConfigRawPathOverride = StandardizationCmdConfigT.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -153,7 +153,7 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
         "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-raw-path", hdfsRawPathOverride,
         "--raw-format", rawFormat))
-    val cmdConfigRawPathOverrideAndFolderPrefix = StdCmdConfigT.getCmdLineArguments(
+    val cmdConfigRawPathOverrideAndFolderPrefix = StandardizationCmdConfigT.getCmdLineArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -166,16 +166,16 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
 
 
     val publishPathNoFolderPrefix = StandardizationJob.buildRawPath(cmdConfigNoFolderPrefix, standardiseDataset,
-      cmdConfigNoFolderPrefix.jobConfig.reportVersion.get)
-    assert(publishPathNoFolderPrefix === s"${standardiseDataset.hdfsPath}/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigNoFolderPrefix.jobConfig.reportVersion.get}")
+      cmdConfigNoFolderPrefix.reportVersion.get)
+    assert(publishPathNoFolderPrefix === s"${standardiseDataset.hdfsPath}/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigNoFolderPrefix.reportVersion.get}")
     val publishPathFolderPrefix = StandardizationJob.buildRawPath(cmdConfigFolderPrefix, standardiseDataset,
-      cmdConfigFolderPrefix.jobConfig.reportVersion.get)
-    assert(publishPathFolderPrefix === s"${standardiseDataset.hdfsPath}/$folderPrefix/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigFolderPrefix.jobConfig.reportVersion.get}")
+      cmdConfigFolderPrefix.reportVersion.get)
+    assert(publishPathFolderPrefix === s"${standardiseDataset.hdfsPath}/$folderPrefix/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigFolderPrefix.reportVersion.get}")
     val publishPathRawPathOverride = StandardizationJob.buildRawPath(cmdConfigRawPathOverride, standardiseDataset,
-      cmdConfigRawPathOverride.jobConfig.reportVersion.get)
+      cmdConfigRawPathOverride.reportVersion.get)
     assert(publishPathRawPathOverride === hdfsRawPathOverride)
     val publishPathRawPathOverrideAndFolderPrefix = StandardizationJob.buildRawPath(cmdConfigRawPathOverrideAndFolderPrefix,
-        standardiseDataset, cmdConfigRawPathOverrideAndFolderPrefix.jobConfig.reportVersion.get)
+        standardiseDataset, cmdConfigRawPathOverrideAndFolderPrefix.reportVersion.get)
     assert(publishPathRawPathOverrideAndFolderPrefix === hdfsRawPathOverride)
   }
 

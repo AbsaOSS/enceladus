@@ -69,7 +69,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
       "--menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format csv --header false --delimiter |").split(" ")
 
-    val cmd = StdCmdConfigT.getCmdLineArguments(args)
+    val cmd = StandardizationCmdConfigT.getCmdLineArguments(args)
     standardizationReader
       .getFormatSpecificReader(cmd, dataSet, schemaWithStringType.fields.length)
       .schema(schemaWithStringType)

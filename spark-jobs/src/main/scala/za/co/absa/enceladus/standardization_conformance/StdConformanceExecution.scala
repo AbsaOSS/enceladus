@@ -16,20 +16,18 @@
 package za.co.absa.enceladus.standardization_conformance
 
 import za.co.absa.enceladus.common.PathConfig
-import za.co.absa.enceladus.conformance.{ConfCmdConfig, ConformanceExecution}
+import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.{StandardizationExecution, StdCmdConfig}
+import za.co.absa.enceladus.standardization.StandardizationExecution
 
-trait StandardizationConformanceExecution extends StandardizationExecution with ConformanceExecution {
+trait StdConformanceExecution extends StandardizationExecution with ConformanceExecution {
 
-  def getFullPathCfg(cmd: StdConfCmdConfigT, dataset: Dataset, reportVersion: Int): PathConfig = {
-    val forRawPath = StdCmdConfig(cmd.stdConfig, cmd.jobConfig)
-    val forPublishPath = ConfCmdConfig(cmd.confConfig, cmd.jobConfig)
-    val standardization = getStandardizationPath(cmd.jobConfig, reportVersion)
+  def getFullPathCfg[T](cmd: StdConformanceCmdConfigT[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+    val standardization = getStandardizationPath(cmd, reportVersion)
 
     PathConfig(
-      inputPath = buildRawPath(forRawPath, dataset, reportVersion),
-      outputPath = buildPublishPath(forPublishPath, dataset, reportVersion),
+      inputPath = buildRawPath(cmd, dataset, reportVersion),
+      outputPath = buildPublishPath(cmd, dataset, reportVersion),
       standardizationPath = Some(standardization)
     )
   }

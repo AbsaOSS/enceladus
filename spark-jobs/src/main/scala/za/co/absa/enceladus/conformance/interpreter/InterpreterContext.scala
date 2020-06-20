@@ -17,17 +17,17 @@ package za.co.absa.enceladus.conformance.interpreter
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
-import za.co.absa.enceladus.conformance.ConfCmdConfigT
+import za.co.absa.enceladus.conformance.{ConformanceCmdConfig, ConformanceCmdConfigT}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 
 /** Holds everything that is needed in between dynamic conformance interpreter stages */
-case class InterpreterContext (
+case class InterpreterContext(
                                 schema: StructType,
                                 conformance: ConfDataset,
                                 featureSwitches: FeatureSwitches,
                                 jobShortName: String,
                                 spark: SparkSession,
                                 dao: MenasDAO,
-                                progArgs: ConfCmdConfigT
+                                progArgs: ConformanceCmdConfig
                               )

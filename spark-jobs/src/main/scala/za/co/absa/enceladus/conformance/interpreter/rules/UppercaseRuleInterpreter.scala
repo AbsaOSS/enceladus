@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import za.co.absa.spark.hats.Extensions._
-import za.co.absa.enceladus.conformance.{ConfCmdConfig, ConfCmdConfigT}
+import za.co.absa.enceladus.conformance.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, UppercaseConformanceRule}
@@ -30,11 +30,11 @@ case class UppercaseRuleInterpreter(rule: UppercaseConformanceRule) extends Rule
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfigT): Dataset[Row] = {
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceCmdConfig): Dataset[Row] = {
     // Validate the rule parameters
-    RuleValidators.validateInputField(progArgs.jobConfig.datasetName, ruleName, df.schema, rule.inputColumn)
-    RuleValidators.validateOutputField(progArgs.jobConfig.datasetName, ruleName, df.schema, rule.outputColumn)
-    RuleValidators.validateSameParent(progArgs.jobConfig.datasetName, ruleName, rule.inputColumn, rule.outputColumn)
+    RuleValidators.validateInputField(progArgs.datasetName, ruleName, df.schema, rule.inputColumn)
+    RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)
+    RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumn, rule.outputColumn)
 
     if (rule.inputColumn.contains('.')) {
       conformNestedField(df)

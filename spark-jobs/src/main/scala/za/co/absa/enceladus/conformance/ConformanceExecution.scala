@@ -42,28 +42,30 @@ trait ConformanceExecution extends CommonJobExecution {
   protected implicit val conformanceStepName: String = "Conformance"
   private val conformanceReader = new ConformanceReader(log, conf)
 
-  def getPathCfg(cmd: ConfCmdConfigT, conformance: Dataset, reportVersion: Int): PathConfig =
+  def getPathCfg[T](cmd: ConformanceCmdConfigT[T], conformance: Dataset, reportVersion: Int): PathConfig =
     PathConfig(
       outputPath = buildPublishPath(cmd, conformance, reportVersion),
-      inputPath = getStandardizationPath(cmd.jobConfig, reportVersion)
+      inputPath = getStandardizationPath(cmd, reportVersion)
     )
 
-  def buildPublishPath(cmd: ConfCmdConfigT, ds: Dataset, reportVersion: Int): String = {
+  def buildPublishPath[T](cmd: ConformanceCmdConfigT[T],
+                       ds: Dataset,
+                       reportVersion: Int): String = {
     val infoDateCol: String = InfoDateColumn
     val infoVersionCol: String = InfoVersionColumn
 
-    (cmd.confConfig.publishPathOverride, cmd.jobConfig.folderPrefix) match {
+    (cmd.publishPathOverride, cmd.folderPrefix) match {
       case (None, None) =>
-        s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.jobConfig.reportDate}/$infoVersionCol=$reportVersion"
+        s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
       case (None, Some(folderPrefix)) =>
-        s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.jobConfig.reportDate}/$infoVersionCol=$reportVersion"
+        s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
       case (Some(publishPathOverride), _) =>
         publishPathOverride
     }
   }
 
-  protected def conform(conformance: Dataset, inputData: sql.Dataset[Row])
-                       (implicit spark: SparkSession, cmd: ConfCmdConfigT, dao: MenasDAO): DataFrame = {
+  protected def conform[T](conformance: Dataset, inputData: sql.Dataset[Row])
+                       (implicit spark: SparkSession, cmd: ConformanceCmdConfigT[T], dao: MenasDAO): DataFrame = {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
 
@@ -88,22 +90,23 @@ trait ConformanceExecution extends CommonJobExecution {
     }
   }
 
-  protected def processConformanceResult(result: DataFrame,
+  protected def processConformanceResult[T](args: Array[String],
+                                         result: DataFrame,
                                          performance: PerformanceMeasurer,
                                          pathCfg: PathConfig,
                                          reportVersion: Int,
                                          menasCredentials: MenasCredentials)
                                         (implicit spark: SparkSession,
-                                         cmd: ConfCmdConfigT,
+                                         cmd: ConformanceCmdConfigT[T],
                                          fsUtils: FileSystemVersionUtils): Unit = {
-    val cmdLineArgs: String = cmd.jobConfig.args.mkString(" ")
+    val cmdLineArgs: String = args.mkString(" ")
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("conform",
       pathCfg.inputPath, pathCfg.outputPath, menasCredentials.username, cmdLineArgs)
 
     val withPartCols = result
-      .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.jobConfig.reportDate), ReportDateFormat))
-      .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.jobConfig.reportDate))
+      .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.reportDate), ReportDateFormat))
+      .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
 
     val recordCount = result.lastCheckpointRowCount match {
@@ -125,7 +128,7 @@ trait ConformanceExecution extends CommonJobExecution {
       pathCfg.inputPath, pathCfg.outputPath, menasCredentials.username, cmdLineArgs)
 
     withPartCols.writeInfoFile(pathCfg.outputPath)
-    writePerformanceMetrics(performance, cmd.jobConfig)
+    writePerformanceMetrics(performance, cmd)
 
     if (conformanceReader.isAutocleanStdFolderEnabled()) {
       fsUtils.deleteDirectoryRecursively(pathCfg.inputPath)

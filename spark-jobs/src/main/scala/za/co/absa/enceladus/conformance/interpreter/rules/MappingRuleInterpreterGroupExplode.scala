@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import za.co.absa.enceladus.conformance.{ConfCmdConfig, ConfCmdConfigT}
+import za.co.absa.enceladus.conformance.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.rules.MappingRuleInterpreterGroupExplode._
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
@@ -42,7 +42,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfigT): Dataset[Row] = {
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceCmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule (explode-optimized) to conform ${rule.outputColumn}...")
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
@@ -51,7 +51,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     spark.conf.set("spark.sql.crossJoin.enabled", "true")
 
     // find the data frame from the mapping table
-    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.jobConfig.reportDate)
+    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.reportDate)
     val joinConditionStr = getJoinCondition(rule).toString
     val defaultValueOpt = getDefaultValue(mappingTableDef)
 

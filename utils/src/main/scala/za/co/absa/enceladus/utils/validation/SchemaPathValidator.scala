@@ -89,7 +89,7 @@ object SchemaPathValidator {
     */
   def validateSchemaPathPrimitive(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
     validateSchemaPathType(schema, fieldPath) {
-      case _: NumericType | _: StringType | _: BooleanType | _: DateType | _: TimestampType => Seq.empty[ValidationIssue]
+      case _: NumericType | _: StringType | _: BooleanType | _: DateType | _: TimestampType | _: BinaryType => Seq.empty[ValidationIssue]
       case k => Seq(ValidationError(s"The datatype '${k.typeName}' of '$fieldPath' field is not a primitive type"))
     }
   }

@@ -44,14 +44,14 @@ trait CommonJobExecution {
   protected val conf: Config = ConfigFactory.load()
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
-  protected def getStandardizationPath(jobConfig: JobCmdConfig, reportVersion: Int): String =
+  protected def getStandardizationPath[T](jobConfig: JobCmdConfig[T], reportVersion: Int): String =
     MessageFormat.format(conf.getString("standardized.hdfs.path"),
     jobConfig.datasetName,
     jobConfig.datasetVersion.toString,
     jobConfig.reportDate,
     reportVersion.toString)
 
-  protected def getReportVersion(jobConfig: JobCmdConfig, dataset: Dataset)
+  protected def getReportVersion[T](jobConfig: JobCmdConfig[T], dataset: Dataset)
                                 (implicit fsUtils: FileSystemVersionUtils): Int = {
     jobConfig.reportVersion match {
       case Some(version) => version
@@ -65,7 +65,7 @@ trait CommonJobExecution {
     }
   }
 
-  protected def obtainSparkSession()(implicit cmd: JobCmdConfig): SparkSession = {
+  protected def obtainSparkSession[T]()(implicit cmd: JobCmdConfig[T]): SparkSession = {
     val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
@@ -99,12 +99,12 @@ trait CommonJobExecution {
     }
   }
 
-  protected def initFunctionalExtensions(reportVersion: Int,
+  protected def initFunctionalExtensions[T](reportVersion: Int,
                                          pathCfg: PathConfig,
                                          isJobStageOnly: Boolean = false,
                                          generateNewRun: Boolean = false)
                                         (implicit spark: SparkSession, dao: MenasDAO,
-                                         jobConfig: JobCmdConfig, step: String): Unit = {
+                                         jobConfig: JobCmdConfig[T], step: String): Unit = {
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
@@ -139,7 +139,7 @@ trait CommonJobExecution {
     }
   }
 
-  protected def writePerformanceMetrics(performance: PerformanceMeasurer, jobCmdConfig: JobCmdConfig): Unit = {
+  protected def writePerformanceMetrics[T](performance: PerformanceMeasurer, jobCmdConfig: JobCmdConfig[T]): Unit = {
     jobCmdConfig.performanceMetricsFile.foreach(fileName => try {
       performance.writeMetricsToFile(fileName)
     } catch {
@@ -165,7 +165,7 @@ trait CommonJobExecution {
     }
   }
 
-  def runPostProcessors(errorSourceId: ErrorSourceId.Value, pathCfg: PathConfig, jobCmdConfig: JobCmdConfig, reportVersion: Int)
+  def runPostProcessors[T](errorSourceId: ErrorSourceId.Value, pathCfg: PathConfig, jobCmdConfig: JobCmdConfig[T], reportVersion: Int)
                        (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
     val df = spark.read.parquet(pathCfg.outputPath)
     val runId = MenasPlugin.runNumber
@@ -191,7 +191,7 @@ trait CommonJobExecution {
     postProcessingService.onSaveOutput(df)
   }
 
-  protected def executePostStep(jobConfig: JobCmdConfig): Unit = {
+  protected def executePostStep[T](jobConfig: JobCmdConfig[T]): Unit = {
     val name = jobConfig.datasetName
     val version = jobConfig.datasetVersion
     MenasPlugin.runNumber.foreach { runNumber =>

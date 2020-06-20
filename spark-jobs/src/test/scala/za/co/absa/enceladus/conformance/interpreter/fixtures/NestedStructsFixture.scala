@@ -23,7 +23,7 @@ import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.{BeforeAndAfterAll, Suite}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.JobCmdConfig
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
@@ -39,7 +39,7 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
   protected var standardizedDf: DataFrame = _
 
   implicit protected val dao: MenasDAO = mock(classOf[MenasDAO])
-  implicit protected val progArgs: ConfCmdConfig = ConfCmdConfig(jobConfig = JobCmdConfig(reportDate = "2017-11-01"))
+  implicit protected val progArgs: ConformanceCmdConfig = ConformanceCmdConfig(reportDate = "2017-11-01")
 
   protected val upperRule1 = UppercaseConformanceRule(order = 1, inputColumn = "strings.with_new_lines",
     controlCheckpoint = false, outputColumn = "strings.with_new_lines_upper")
@@ -112,7 +112,6 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
 
   protected val nestedStructsDS = Dataset(
     name = "Nested Structs Conformance",
-    version = 1,
     hdfsPath = "src/test/testData/_nestedStructs",
     hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
     schemaName = "NestedStructs", schemaVersion = 0,
@@ -122,7 +121,6 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
 
   protected val nestedStructsUpperDS = Dataset(
     name = "Nested Structs Conformance",
-    version = 1,
     hdfsPath = "src/test/testData/_nestedStructs",
     hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
     schemaName = "NestedStructs", schemaVersion = 0,
@@ -132,7 +130,6 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
 
   protected val nestedStructsNegationDS = Dataset(
     name = "Nested Structs Conformance",
-    version = 1,
     hdfsPath = "src/test/testData/_nestedStructs",
     hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
     schemaName = "NestedStructs", schemaVersion = 0,
@@ -142,7 +139,6 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
 
   protected val nestedStructsCastingDS = Dataset(
     name = "Nested Structs Conformance",
-    version = 1,
     hdfsPath = "src/test/testData/_nestedStructs",
     hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
     schemaName = "NestedStructs", schemaVersion = 0,

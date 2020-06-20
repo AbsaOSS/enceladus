@@ -17,37 +17,38 @@ package za.co.absa.enceladus.conformance
 
 import com.typesafe.config.Config
 import org.slf4j.Logger
+import za.co.absa.enceladus.common.JobCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{FeatureSwitches, ThreeStateSwitch}
 
 class ConformanceReader(log: Logger, conf: Config) {
   private val enableCF: Boolean = true
   private implicit val config: Config = conf
 
-  def isAutocleanStdFolderEnabled()(implicit cmd: ConfCmdConfigT): Boolean = {
-    val enabled = getCmdOrConfigBoolean(cmd.confConfig.autocleanStandardizedFolder,
+  def isAutocleanStdFolderEnabled[T]()(implicit cmd: ConformanceCmdConfigT[T]): Boolean = {
+    val enabled = getCmdOrConfigBoolean(cmd.autocleanStandardizedFolder,
       "conformance.autoclean.standardized.hdfs.folder",
       defaultValue = false)
     log.info(s"Autoclean standardized HDFS folder = $enabled")
     enabled
   }
 
-  def readFeatureSwitches()(implicit cmdConfig: ConfCmdConfigT): FeatureSwitches = FeatureSwitches()
+  def readFeatureSwitches[T]()(implicit cmdConfig: ConformanceCmdConfigT[T]): FeatureSwitches = FeatureSwitches()
     .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
     .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled())
     .setControlFrameworkEnabled(enableCF)
     .setBroadcastStrategyMode(broadcastingStrategyMode)
     .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
-  private def isExperimentalRuleEnabled()(implicit cmd: ConfCmdConfigT): Boolean = {
-    val enabled = getCmdOrConfigBoolean(cmd.confConfig.experimentalMappingRule,
+  private def isExperimentalRuleEnabled[T]()(implicit cmd: ConformanceCmdConfigT[T]): Boolean = {
+    val enabled = getCmdOrConfigBoolean(cmd.experimentalMappingRule,
       "conformance.mapping.rule.experimental.implementation",
       defaultValue = false)
     log.info(s"Experimental mapping rule enabled = $enabled")
     enabled
   }
 
-  private def isCatalystWorkaroundEnabled()(implicit cmd: ConfCmdConfigT): Boolean = {
-    val enabled = getCmdOrConfigBoolean(cmd.confConfig.isCatalystWorkaroundEnabled,
+  private def isCatalystWorkaroundEnabled[T]()(implicit cmd: ConformanceCmdConfigT[T]): Boolean = {
+    val enabled = getCmdOrConfigBoolean(cmd.isCatalystWorkaroundEnabled,
       "conformance.catalyst.workaround",
       defaultValue = true)
     log.info(s"Catalyst workaround enabled = $enabled")

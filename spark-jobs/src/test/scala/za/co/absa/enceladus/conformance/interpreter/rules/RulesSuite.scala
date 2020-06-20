@@ -19,7 +19,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.{ConfCmdConfig, ConfCmdConfigT}
+import za.co.absa.enceladus.conformance.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.ExplosionState
 import za.co.absa.enceladus.conformance.samples.EmployeeConformance
 import za.co.absa.enceladus.dao.MenasDAO
@@ -32,7 +32,7 @@ class RulesSuite extends FunSuite with SparkTestBase {
   private val dummyInterpreter = new RuleInterpreter {
     override def conformanceRule: Option[ConformanceRule] = None
     def conform(df: Dataset[Row])
-               (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfigT): Dataset[Row] = df
+               (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceCmdConfig): Dataset[Row] = df
   }
 
   test("Test country code join condition") {

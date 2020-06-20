@@ -40,19 +40,19 @@ import scala.util.control.NonFatal
 trait StandardizationExecution extends CommonJobExecution {
   protected implicit val standardizationStepName: String = "Standardization"
 
-  protected def getPathCfg(cmd: StdCmdConfigT, dataset: Dataset, reportVersion: Int): PathConfig = {
+  protected def getPathCfg[T](cmd: StandardizationCmdConfigT[T], dataset: Dataset, reportVersion: Int): PathConfig = {
     PathConfig(
       inputPath = buildRawPath(cmd, dataset, reportVersion),
-      outputPath = getStandardizationPath(cmd.jobConfig, reportVersion)
+      outputPath = getStandardizationPath(cmd, reportVersion)
     )
   }
 
-  def buildRawPath(cmd: StdCmdConfigT, dataset: Dataset, reportVersion: Int): String = {
-    val dateTokens = cmd.jobConfig.reportDate.split("-")
-    cmd.stdConfig.rawPathOverride match {
+  def buildRawPath[T](cmd: StandardizationCmdConfigT[T], dataset: Dataset, reportVersion: Int): String = {
+    val dateTokens = cmd.reportDate.split("-")
+    cmd.rawPathOverride match {
       case None =>
         val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
-        cmd.jobConfig.folderPrefix match {
+        cmd.folderPrefix match {
           case None => s"${dataset.hdfsPath}$folderSuffix"
           case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
         }
@@ -60,8 +60,8 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def prepareDataFrame(schema: StructType,
-                                 cmd: StdCmdConfigT,
+  protected def prepareDataFrame[T](schema: StructType,
+                                 cmd: StandardizationCmdConfigT[T],
                                  path: String,
                                  dataset: Dataset)
                                 (implicit spark: SparkSession,
@@ -70,10 +70,10 @@ trait StandardizationExecution extends CommonJobExecution {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationReader(log)
     val dfReaderConfigured = standardizationReader.getFormatSpecificReader(cmd, dataset, numberOfColumns)
-    val dfWithSchema = (if (!cmd.stdConfig.rawFormat.equalsIgnoreCase("parquet")) {
+    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
       // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
       val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
-      val optColumnNameOfCorruptRecord = if (cmd.stdConfig.failOnInputNotPerSchema) {
+      val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {
         None
       } else {
         Option(columnNameOfCorruptRecord)
@@ -136,15 +136,15 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def standardize(dfAll: DataFrame, schema: StructType, cmd: StdCmdConfigT)
+  protected def standardize[T](dfAll: DataFrame, schema: StructType, cmd: StandardizationCmdConfigT[T])
                            (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     //scalastyle:on parameter.number
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     try {
       handleControlInfoValidation()
-      StandardizationInterpreter.standardize(dfAll, schema, cmd.stdConfig.rawFormat,
-        cmd.stdConfig.failOnInputNotPerSchema, recordIdGenerationStrategy)
+      StandardizationInterpreter.standardize(dfAll, schema, cmd.rawFormat,
+        cmd.failOnInputNotPerSchema, recordIdGenerationStrategy)
     } catch {
       case e@ValidationException(msg, errors) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", s"$msg\nDetails: ${
@@ -159,10 +159,11 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def processStandardizationResult(standardizedDF: DataFrame,
+  protected def processStandardizationResult[T](args: Array[String],
+                                             standardizedDF: DataFrame,
                                              performance: PerformanceMeasurer,
                                              pathCfg: PathConfig,
-                                             schema: StructType, cmd: StdCmdConfigT,
+                                             schema: StructType, cmd: StandardizationCmdConfigT[T],
                                              menasCredentials: MenasCredentials)
                                             (implicit spark: SparkSession,
                                              fsUtils: FileSystemVersionUtils): DataFrame = {
@@ -189,16 +190,16 @@ trait StandardizationExecution extends CommonJobExecution {
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
     val stdDirSize = fsUtils.getDirectorySize(standardizationPath)
     performance.finishMeasurement(stdDirSize, recordCount)
-    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, standardizationPath,
-      menasCredentials.username, cmd.jobConfig.args.mkString(" "))
+    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(spark, "std", pathCfg.inputPath, pathCfg.outputPath,
+      menasCredentials.username, args.mkString(" "))
 
-    cmd.stdConfig.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
-    if (cmd.stdConfig.csvDelimiter.isDefined) {
-      cmd.stdConfig.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
+    cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
+    if (cmd.csvDelimiter.isDefined) {
+      cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
     }
 
     standardizedDF.writeInfoFile(standardizationPath)
-    writePerformanceMetrics(performance, cmd.jobConfig)
+    writePerformanceMetrics(performance, cmd)
 
     standardizedDF
   }

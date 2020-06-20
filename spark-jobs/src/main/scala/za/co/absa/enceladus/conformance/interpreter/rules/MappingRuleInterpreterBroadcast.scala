@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
-import za.co.absa.enceladus.conformance.{ConfCmdConfig, ConfCmdConfigT}
+import za.co.absa.enceladus.conformance.ConformanceCmdConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.ExplosionState
 import za.co.absa.enceladus.dao.MenasDAO
@@ -31,13 +31,13 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfigT): Dataset[Row] = {
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceCmdConfig): Dataset[Row] = {
     log.info(s"Processing mapping rule to conform ${rule.outputColumn} (broadcast strategy)...")
 
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
     // find the data frame from the mapping table
-    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.jobConfig.reportDate)
+    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.reportDate)
 
     // join & perform projection on the target attribute
     val joinConditionStr = MappingRuleInterpreter.getJoinCondition(rule).toString
