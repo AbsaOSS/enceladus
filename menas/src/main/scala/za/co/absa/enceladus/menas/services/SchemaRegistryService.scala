@@ -41,8 +41,8 @@ class SchemaRegistryService @Autowired()() {
 
   /**
    * Loading the latest schema by a topicName (e.g. topic1-value), the url is constructed based on the [[schemaRegistryBaseUrl]]
-   * @param topicName topic name
-   * @return
+   * @param topicName topic name to load the Schema by
+   * @return `SchemaResponse` object containing the obtained schema.
    */
   def loadSchemaByTopicName(topicName: String): SchemaResponse = {
     val schemaUrl = SchemaRegistryService.getLatestSchemaUrl(schemaRegistryBaseUrl, topicName)
@@ -51,8 +51,8 @@ class SchemaRegistryService @Autowired()() {
 
   /**
    * Loading the schema by a full URL
-   * @param remoteUrl
-   * @return
+   * @param remoteUrl URL to for the Schema to be loaded from
+   * @return `SchemaResponse` object containing the obtained schema.
    */
   def loadSchemaByUrl(remoteUrl: String): SchemaResponse = {
     try {

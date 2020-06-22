@@ -1008,7 +1008,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
     }
   }
 
-  s"POST $apiUrl/topic" should {
+  s"POST $apiUrl/registry" should {
     def topicPath(topicName: String) = s"/subjects/$topicName/versions/latest/schema"
 
     "return 201" when {
@@ -1022,7 +1022,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
 
           val params = HashMap[String, Any](
             "name" -> schema.name, "version" -> schema.version, "format" -> "avro", "topicStem" -> "myTopic1", "mergeWithKey" -> false)
-          val responseRemoteLoaded = sendPostTopicName[Schema](s"$apiUrl/topic", params)
+          val responseRemoteLoaded = sendPostTopicName[Schema](s"$apiUrl/registry", params)
           assertCreated(responseRemoteLoaded)
 
           val actual = responseRemoteLoaded.getBody
@@ -1042,7 +1042,7 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
 
           val params = HashMap[String, Any](
             "name" -> schema.name, "version" -> schema.version, "format" -> "avro", "topicStem" -> "myTopic1", "mergeWithKey" -> true)
-          val responseRemoteLoaded = sendPostTopicName[Schema](s"$apiUrl/topic", params)
+          val responseRemoteLoaded = sendPostTopicName[Schema](s"$apiUrl/registry", params)
           assertCreated(responseRemoteLoaded)
 
           val expectedSchema: StructType = DataType.fromJson(readTestResourceAsString(TestResourcePath.AvroCombining.expectedCombination)).asInstanceOf[StructType]

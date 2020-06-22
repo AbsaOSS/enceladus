@@ -185,8 +185,8 @@ object StringImplicits {
      * "file:///" / "path" -> "file:///path",
      * }}}
      *
-     * @param another
-     * @return
+     * @param another the second string we are appending after the `/` separator
+     * @return this/another (this has stripped trailing / if present, another has leading / stripped if present)
      */
     def /(another: String): String = { // scalastyle:ignore method.name
       joinWithSingleSeparator(another, "/")

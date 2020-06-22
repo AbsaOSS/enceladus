@@ -184,7 +184,7 @@ sap.ui.define([
         };
 
         jQuery.ajax({
-          url: "api/schema/topic",
+          url: "api/schema/registry",
           type: 'POST',
           data: $.param(data),
           contentType: 'application/x-www-form-urlencoded',

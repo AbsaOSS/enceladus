@@ -73,7 +73,7 @@ class SchemaController @Autowired()(
     uploadSchemaToMenas(principal.getUsername, menasFile, sparkStruct, schemaType)
   }
 
-  @PostMapping(Array("/topic"))
+  @PostMapping(Array("/registry"))
   @ResponseStatus(HttpStatus.CREATED)
   def handleTopicStem(@AuthenticationPrincipal principal: UserDetails,
                       @RequestParam topicStem: String,

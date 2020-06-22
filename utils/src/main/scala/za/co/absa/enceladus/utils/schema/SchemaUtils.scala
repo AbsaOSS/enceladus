@@ -589,9 +589,9 @@ object SchemaUtils {
   /**
    * Combines schemas into one. Wrapper for [[SchemaUtils#combineStructFieldLists]]
    *
-   * @param firstType
-   * @param secondType
-   * @return
+   * @param firstType StructType to be combined with `secondType`
+   * @param secondType StructType to be combined with `firstType`
+   * @return combined `firstType` + `secondType` (`firstType`` will take precedence for non-combinable fields of the same name)
    */
   def combineStructTypes(firstType: StructType, secondType: StructType): StructType =
     StructType(combineStructFieldLists(firstType.fields, secondType.fields))
@@ -600,9 +600,9 @@ object SchemaUtils {
    * Combines schemas into one. By-name duplicated struct fields are deep-combined, otherwise the field from `firstFields`
    * takes precedence.
    *
-   * @param firstFields
-   * @param secondFields
-   * @return
+   * @param firstFields fields to be combined with `secondFields`
+   * @param secondFields fields to be combined with `firstFields`
+   * @return combined `firstFields` + `secondFields` (`firstFields` will take precedence for non-combinable fields of the same name)
    */
   def combineStructFieldLists(firstFields: Seq[StructField], secondFields: Seq[StructField]): Seq[StructField] = {
     Seq(firstFields, secondFields).foreach{fields =>
