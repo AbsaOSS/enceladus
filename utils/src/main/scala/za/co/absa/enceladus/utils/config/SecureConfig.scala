@@ -18,6 +18,14 @@ package za.co.absa.enceladus.utils.config
 import com.typesafe.config.Config
 
 object SecureConfig {
+  object Keys {
+    val javaSecurityAuthLoginConfig = "java.security.auth.login.config"
+    val javaxNetSslTrustStore = "javax.net.ssl.trustStore"
+    val javaxNetSslTrustStorePassword = "javax.net.ssl.trustStorePassword"
+    val javaxNetSslKeyStore = "javax.net.ssl.keyStore"
+    val javaxNetSslKeyStorePassword = "javax.net.ssl.keyStorePassword"
+  }
+
   /**
    * Moves Kafka security configuration from the config to system properties
    * if it is not defined there already (regarding trustStore, keyStore and auth login config).
@@ -29,7 +37,7 @@ object SecureConfig {
   def setSecureKafkaProperties(conf: Config): Unit = {
     setTrustStoreProperties(conf)
     setKeyStoreProperties(conf)
-    ConfigUtils.setSystemPropertyFileFallback(conf, "java.security.auth.login.config")
+    ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaSecurityAuthLoginConfig)
   }
 
   /**
@@ -38,8 +46,13 @@ object SecureConfig {
    * @param conf config to lookup values form
    */
   def setTrustStoreProperties(conf: Config): Unit = {
-    ConfigUtils.setSystemPropertyFileFallback(conf, "javax.net.ssl.trustStore")
-    ConfigUtils.setSystemPropertyStringFallback(conf, "javax.net.ssl.trustStorePassword")
+    ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaxNetSslTrustStore)
+    ConfigUtils.setSystemPropertyStringFallback(conf, Keys.javaxNetSslTrustStorePassword)
+  }
+
+  def hasTrustStoreProperties(conf: Config): Boolean = {
+    conf.hasPath(Keys.javaxNetSslTrustStore) &&
+      conf.hasPath(Keys.javaxNetSslTrustStorePassword)
   }
 
   /**
@@ -48,8 +61,13 @@ object SecureConfig {
    * @param conf config to lookup values form
    */
   def setKeyStoreProperties(conf: Config): Unit = {
-    ConfigUtils.setSystemPropertyFileFallback(conf, "javax.net.ssl.keyStore")
-    ConfigUtils.setSystemPropertyStringFallback(conf, "javax.net.ssl.keyStorePassword")
+    ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaxNetSslKeyStore)
+    ConfigUtils.setSystemPropertyStringFallback(conf, Keys.javaxNetSslKeyStorePassword)
+  }
+
+  def hasKeyStoreProperties(conf: Config): Boolean = {
+    conf.hasPath(Keys.javaxNetSslKeyStore) &&
+      conf.hasPath(Keys.javaxNetSslKeyStorePassword)
   }
 
 }

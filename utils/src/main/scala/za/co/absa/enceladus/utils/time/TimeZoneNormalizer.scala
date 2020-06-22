@@ -20,7 +20,7 @@ import java.util.TimeZone
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.utils.general.ConfigReader
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 /**
   * Sets the system time zone per application configuration, recommended value being UTC

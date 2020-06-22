@@ -13,22 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.general
+package za.co.absa.enceladus.menas.models
 
-import com.typesafe.config.{Config, ConfigFactory}
-
-object ConfigReader {
-  private val config: Config = ConfigFactory.load()
-
-  def readStringConfigIfExist(path: String): Option[String] = {
-    if (config.hasPath(path)) {
-      Option(config.getString(path))
-    } else {
-      None
-    }
-  }
-
-  def readStringConfig(path: String, default: String): String = {
-    readStringConfigIfExist(path).getOrElse(default)
-  }
-}
+case class SchemaApiAvailability(
+                                  upload: Boolean,
+                                  remoteUrl: Boolean,
+                                  registry: Boolean
+                                )

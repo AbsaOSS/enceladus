@@ -26,6 +26,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
+import za.co.absa.enceladus.menas.models.SchemaApiAvailability
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaRegistryService, SchemaService}
@@ -35,6 +36,8 @@ import za.co.absa.enceladus.menas.utils.parsers.SchemaParser
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.utils.schema.SchemaUtils
+
+import scala.concurrent.Future
 
 
 @RestController
@@ -48,6 +51,7 @@ class SchemaController @Autowired()(
   extends VersionedModelController(schemaService) {
 
   import za.co.absa.enceladus.menas.utils.implicits._
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   @PostMapping(Array("/remote"))
@@ -84,11 +88,11 @@ class SchemaController @Autowired()(
 
     val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format)
 
-    val valueSchemaResponse = schemaRegistryService.loadSchemaByTopicName(s"$topicStem-value")
+    val valueSchemaResponse = schemaRegistryService.loadSchemaBySubjectName(s"$topicStem-value")
     val valueSparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(valueSchemaResponse.fileContent)
 
     val combinedStructType = if (mergeWithKey) {
-      val keySchemaResponse = schemaRegistryService.loadSchemaByTopicName(s"$topicStem-key")
+      val keySchemaResponse = schemaRegistryService.loadSchemaBySubjectName(s"$topicStem-key")
       val keySparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(keySchemaResponse.fileContent)
 
       SchemaUtils.combineStructTypes(valueSparkStruct, keySparkStruct)
@@ -180,6 +184,14 @@ class SchemaController @Autowired()(
       case None =>
         throw notFound()
     }
+  }
+
+  @GetMapping(path = Array("/availability"))
+  @ResponseStatus(HttpStatus.OK)
+  def getAvailability(): CompletableFuture[SchemaApiAvailability] = {
+    val registryAvailable = schemaRegistryService.schemaRegistryBaseUrl.isDefined
+
+    Future { SchemaApiAvailability(true, true, registryAvailable)}
   }
 }
 

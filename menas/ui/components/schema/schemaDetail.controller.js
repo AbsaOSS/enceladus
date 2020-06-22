@@ -47,6 +47,10 @@ sap.ui.define([
 
       this._model.setProperty("/topicNameStem", "");
       this._model.setProperty("/topicMergeWithKey", false);
+
+      // initially, registry integration is disabled in UI - get enabled by qeurying schemaApiAvailability
+      this._model.setProperty("/registryEnabled", false);
+      this.checkRegistryIntegration()
     },
 
     onEntityUpdated: function (sTopic, sEvent, oData) {
@@ -383,7 +387,28 @@ sap.ui.define([
       }
     },
 
-    httpUrlRx: new RegExp('^(https?:\\/\\/)?'+ // protocol
+    checkRegistryIntegration: function () {
+      jQuery.ajax({
+        url: "api/schema/availability",
+        type: 'GET',
+        context: this,
+        complete: this.handleRegistryIntegrationResponse
+      });
+    },
+
+    handleRegistryIntegrationResponse: function (ajaxResponse) {
+      let oData = JSON.parse(ajaxResponse.responseText);
+      let registryEnabled = oData.registry;
+      if (registryEnabled) {
+        console.log("Enabling schema registry integration after confirming on backend.");
+      } else {
+        console.log("Schema registry integration is disabled on the backend.");
+      }
+
+      this._model.setProperty("/registryEnabled", registryEnabled);
+    },
+
+  httpUrlRx: new RegExp('^(https?:\\/\\/)?'+ // protocol
       '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
       'localhost|'+ // OR localhost
       '(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|'+ // OR IPv4 address

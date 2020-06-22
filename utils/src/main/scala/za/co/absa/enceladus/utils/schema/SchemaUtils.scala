@@ -591,7 +591,7 @@ object SchemaUtils {
    *
    * @param firstType StructType to be combined with `secondType`
    * @param secondType StructType to be combined with `firstType`
-   * @return combined `firstType` + `secondType` (`firstType`` will take precedence for non-combinable fields of the same name)
+   * @return combined `firstType` + `secondType` (`firstType` will take precedence for non-combinable fields of the same name)
    */
   def combineStructTypes(firstType: StructType, secondType: StructType): StructType =
     StructType(combineStructFieldLists(firstType.fields, secondType.fields))

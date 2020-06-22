@@ -90,7 +90,8 @@
                                 <Button text="Submit URL" press="handleRemoteUrlSubmit"/>
                             </HBox>
                         </Panel>
-                        <Panel headerText="Load schema from schema registry" expandable="true" expanded="false">
+                        <Panel headerText="Load schema from schema registry" expanded="false" expandable="true"
+                               visible="{/registryEnabled}">
                             <FormattedText htmlText='&lt;p>
                                 A new schema can be loaded from an internally-defined schema registry  by specifying a
                                 topic-name &lt;em>stem&lt;/em> - based on which the topic name(s) will be derived.&lt;/p>

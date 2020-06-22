@@ -47,6 +47,7 @@ import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceM
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.config.SecureConfig
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -200,11 +201,7 @@ object DynamicConformanceJob {
     val enabled = cmdParameterOpt match {
       case Some(b) => b
       case None    =>
-        if (conf.hasPath(configKey)) {
-          conf.getBoolean(configKey)
-        } else {
-          defaultValue
-        }
+        conf.getOptionBoolean(configKey).getOrElse(defaultValue)
     }
     enabled
   }

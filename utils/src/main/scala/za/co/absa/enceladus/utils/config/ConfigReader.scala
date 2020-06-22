@@ -13,17 +13,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.general
+package za.co.absa.enceladus.utils.config
 
 import com.typesafe.config.{Config, ConfigFactory}
 import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 
-object ProjectMetadataTools {
-  private val conf: Config = ConfigFactory.load()
+object ConfigReader {
+  private val config: Config = ConfigFactory.load()
 
-  private val enceladusVersionKey = "enceladus.version"
+  def readStringConfigIfExist(path: String): Option[String] = {
+    config.getOptionString(path)
+  }
 
-  /** Returns Enceladus version from the application configuration properties */
-  def getEnceladusVersion: String = conf.getOptionString(enceladusVersionKey).getOrElse("N/A")
-
+  def readStringConfig(path: String, default: String): String = {
+    readStringConfigIfExist(path).getOrElse(default)
+  }
 }

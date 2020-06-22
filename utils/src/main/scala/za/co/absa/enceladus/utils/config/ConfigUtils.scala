@@ -67,5 +67,34 @@ object ConfigUtils {
     }
   }
 
+  implicit class ConfigImplicits(config: Config) {
+    /**
+     * Inspects the config for the presence of the `key` and returns an optional result.
+     *
+     * @param key path to look for, e.g. "group1.subgroup2.value3
+     * @return None if not found or defined Option[String]
+     */
+    def getOptionString(key: String): Option[String] = {
+      if (config.hasPath(key)) {
+        Some(config.getString(key))
+      } else {
+        None
+      }
+    }
+
+    /**
+     * Inspects the config for the presence of the `key` and returns an optional result.
+     *
+     * @param key path to look for, e.g. "group1.subgroup2.value3
+     * @return None if not found or defined Option[Boolean]
+     */
+    def getOptionBoolean(key: String): Option[Boolean] = {
+      if (config.hasPath(key)) {
+        Some(config.getBoolean(key))
+      } else {
+        None
+      }
+    }
+  }
 
 }

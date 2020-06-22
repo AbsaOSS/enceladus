@@ -146,7 +146,8 @@ menas.oozie.splineMongoURL=mongodb://localhost:27017
 #"spark.history.fs.logDirectory": "hdfs:///spark2-history" }
 
 #----------- Schema Registry
-# URL of schema registry:
+# URL of schema registry [optional]:
+# if omitted, the ability to load schmema by topic name will be hidden.
 menas.schemaRegistryBaseUrl=https://localhost:8081
 
 # When using secure schema registry, following paths and passwords must be specified

@@ -22,9 +22,10 @@ import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.menas.controllers.SchemaController
 import za.co.absa.enceladus.menas.models.rest.exceptions.RemoteSchemaRetrievalException
-import za.co.absa.enceladus.menas.services.SchemaRegistryService.SchemaResponse
+import za.co.absa.enceladus.menas.services.SchemaRegistryService._
 import za.co.absa.enceladus.menas.utils.SchemaType
-import za.co.absa.enceladus.utils.config.SecureConfig
+import za.co.absa.enceladus.utils.config.{ConfigUtils, SecureConfig}
+import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 
 import scala.io.Source
 import scala.util.control.NonFatal
@@ -32,25 +33,37 @@ import scala.util.control.NonFatal
 @Service
 class SchemaRegistryService @Autowired()() {
 
-  @Value("${menas.schemaRegistryBaseUrl}")
-  val schemaRegistryBaseUrl: String = ""
-
   private val config = ConfigFactory.load()
-  SecureConfig.setKeyStoreProperties(config)
-  SecureConfig.setTrustStoreProperties(config)
+
+  if (SecureConfig.hasKeyStoreProperties(config) && SecureConfig.hasTrustStoreProperties(config)) {
+    SecureConfig.setKeyStoreProperties(config)
+    SecureConfig.setTrustStoreProperties(config)
+  }
+
+  lazy val schemaRegistryBaseUrl: Option[String] = {
+    config.getOptionString(SchemaRegistryUrlConfigKey)
+  }
 
   /**
-   * Loading the latest schema by a topicName (e.g. topic1-value), the url is constructed based on the [[schemaRegistryBaseUrl]]
-   * @param topicName topic name to load the Schema by
+   * Loading the latest schema by a subject name (e.g. topic1-value), the url is constructed based on the [[schemaRegistryBaseUrl]]
+   *
+   * @param subjectName subject name to load the Schema by
    * @return `SchemaResponse` object containing the obtained schema.
    */
-  def loadSchemaByTopicName(topicName: String): SchemaResponse = {
-    val schemaUrl = SchemaRegistryService.getLatestSchemaUrl(schemaRegistryBaseUrl, topicName)
-    loadSchemaByUrl(schemaUrl)
+  def loadSchemaBySubjectName(subjectName: String): SchemaResponse = {
+    schemaRegistryBaseUrl.fold {
+      throw new IllegalStateException(
+        s"Schema registry URL is not configured for Menas (the '$schemaRegistryBaseUrl' config value is not defined)."
+      )
+    } { baseUrl =>
+      val schemaUrl = SchemaRegistryService.getLatestSchemaUrl(baseUrl, subjectName)
+      loadSchemaByUrl(schemaUrl)
+    }
   }
 
   /**
    * Loading the schema by a full URL
+   *
    * @param remoteUrl URL to for the Schema to be loaded from
    * @return `SchemaResponse` object containing the obtained schema.
    */
@@ -77,9 +90,11 @@ object SchemaRegistryService {
 
   import za.co.absa.enceladus.utils.implicits.StringImplicits._
 
-  def getLatestSchemaUrl(baseUrl: String, topicName: String): String =
-    baseUrl / "subjects" / topicName / "versions/latest/schema"
+  def getLatestSchemaUrl(baseUrl: String, subjectName: String): String =
+    baseUrl / "subjects" / subjectName / "versions/latest/schema"
 
   case class SchemaResponse(fileContent: String, mimeType: String, url: URL)
+
+  val SchemaRegistryUrlConfigKey = "menas.schemaRegistryBaseUrl"
 
 }
