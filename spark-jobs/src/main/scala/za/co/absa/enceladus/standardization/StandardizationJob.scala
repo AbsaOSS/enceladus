@@ -298,11 +298,14 @@ object StandardizationJob {
                                dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, numberOfColumns)
-    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")
+    val dfWithSchema = (if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
+      val inputSchema = PlainSchemaGenerator.generateInputSchema(schema)
+      dfReaderConfigured.schema(inputSchema)
+    } else if (!cmd.rawFormat.equalsIgnoreCase("parquet")
       && !cmd.rawFormat.equalsIgnoreCase("cobol")) {
       // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
       val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
-      val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {
+      val optColumnNameOfCorruptRecord: Option[String] = if (cmd.failOnInputNotPerSchema) {
         None
       } else {
         Option(columnNameOfCorruptRecord)
