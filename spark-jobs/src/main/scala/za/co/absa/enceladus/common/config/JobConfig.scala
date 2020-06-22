@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common
+package za.co.absa.enceladus.common.config
 
 import org.apache.spark.storage.StorageLevel
 import scopt.OParser
@@ -22,14 +22,15 @@ import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCrede
 import scala.util.matching.Regex
 
 
-trait JobCmdConfig[R] {
+trait JobConfig[R] {
   def withDatasetName(value: String): R
   def withDatasetVersion(value: Int): R
   def withReportDate(value: String): R
   def withReportVersion(value: Option[Int]): R
-  def withMenasCredentialsFactory(value: MenasCredentialsFactory): R
   def withPerformanceMetricsFile(value: Option[String]): R
   def withFolderPrefix(value: Option[String]): R
+  def withCredsFile(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): R
+  def withAuthKeytab(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): R
   def withPersistStorageLevel(value: Option[StorageLevel]): R
 
   def datasetName: String
@@ -40,11 +41,14 @@ trait JobCmdConfig[R] {
   def performanceMetricsFile: Option[String]
   def folderPrefix: Option[String]
   def persistStorageLevel: Option[StorageLevel]
+  def credsFile: Option[String]
+  def keytabFile: Option[String]
 }
 
-object JobCmdConfig {
+object JobConfig {
 
-  def jobConfigParser[R <: JobCmdConfig[R]]: OParser[_, R] = {
+  //scalastyle:off method.length the length is legit for parsing input paramters
+  def jobConfigParser[R <: JobConfig[R]]: OParser[_, R] = {
     val builder = OParser.builder[R]
     import builder._
     OParser.sequence(head("Job Parameters"),
@@ -81,16 +85,18 @@ object JobCmdConfig {
           }),
 
       opt[String]("menas-credentials-file").hidden.optional().action({ (file, config) =>
-        config.withMenasCredentialsFactory(new MenasPlainCredentialsFactory(file))
+        config.withCredsFile(Option(file), new MenasPlainCredentialsFactory(file))
       }).text("Path to Menas credentials config file."),
 
       opt[String]("menas-auth-keytab").optional().action({ (file, config) => {
-        config.withMenasCredentialsFactory(new MenasKerberosCredentialsFactory(file))
+          config.withAuthKeytab(Option(file), new MenasKerberosCredentialsFactory(file))
       }
       }).text("Path to keytab file used for authenticating to menas"),
 
+
       opt[String]("performance-file").optional().action((value, config) =>
-        config.withPerformanceMetricsFile(Option(value))).text("Produce a performance metrics file at the given location (local filesystem)"),
+        config.withPerformanceMetricsFile(Option(value)))
+        .text("Produce a performance metrics file at the given location (local filesystem)"),
 
       opt[String]("folder-prefix").optional().action((value, config) =>
         config.withFolderPrefix(Option(value))).text("Adds a folder prefix before the infoDateColumn"),
@@ -102,9 +108,12 @@ object JobCmdConfig {
       checkConfig { config =>
         config.menasCredentialsFactory match {
           case InvalidMenasCredentialsFactory => failure("No authentication method specified (e.g. --menas-auth-keytab)")
+          case _ if config.credsFile.isDefined && config.keytabFile.isDefined =>
+            failure("Only one authentication method is allowed at a time")
           case _ => success
         }
       }
     )
   }
+  //scalastyle:on method.length
 }

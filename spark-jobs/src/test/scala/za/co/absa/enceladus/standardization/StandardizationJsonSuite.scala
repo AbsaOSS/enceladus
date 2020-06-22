@@ -21,6 +21,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileReader
@@ -43,7 +44,7 @@ class StandardizationJsonSuite extends FunSuite with SparkTestBase with MockitoS
       "--raw-format json").split(" ")
 
     val dataSet = Dataset("SpecialChars", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
-    val cmd = StandardizationCmdConfig.getCmdLineArguments(args)
+    val cmd = StandardizationConfigInstance.getFromArguments(args)
 
     val csvReader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
 

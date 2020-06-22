@@ -25,6 +25,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId
 import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
+import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.udf.UDFLibrary
@@ -38,7 +39,7 @@ object StandardizationJob extends StandardizationExecution {
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
-    implicit val cmd: StandardizationCmdConfig = StandardizationCmdConfig.getCmdLineArguments(args)
+    implicit val cmd: StandardizationConfigInstance = StandardizationConfigInstance.getFromArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     implicit val udfLib: UDFLibrary = new UDFLibrary

@@ -27,6 +27,7 @@ import za.co.absa.enceladus.common.{CommonJobExecution, PathConfig}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
@@ -40,14 +41,14 @@ import scala.util.control.NonFatal
 trait StandardizationExecution extends CommonJobExecution {
   protected implicit val step: String = "Standardization"
 
-  protected def getPathCfg(cmd: StandardizationCmdConfig, dataset: Dataset, reportVersion: Int): PathConfig = {
+  protected def getPathCfg(cmd: StandardizationConfigInstance, dataset: Dataset, reportVersion: Int): PathConfig = {
     PathConfig(
       inputPath = buildRawPath(cmd, dataset, reportVersion),
       outputPath = getStandardizationPath(cmd, reportVersion)
     )
   }
 
-  def buildRawPath(cmd: StandardizationCmdConfig, dataset: Dataset, reportVersion: Int): String = {
+  def buildRawPath(cmd: StandardizationConfigInstance, dataset: Dataset, reportVersion: Int): String = {
     val dateTokens = cmd.reportDate.split("-")
     cmd.rawPathOverride match {
       case None =>
@@ -61,7 +62,7 @@ trait StandardizationExecution extends CommonJobExecution {
   }
 
   protected def prepareDataFrame(schema: StructType,
-                                 cmd: StandardizationCmdConfig,
+                                 cmd: StandardizationConfigInstance,
                                  path: String,
                                  dataset: Dataset)
                                 (implicit spark: SparkSession,
@@ -137,7 +138,7 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def standardize(dfAll: DataFrame, schema: StructType, cmd: StandardizationCmdConfig)
+  protected def standardize(dfAll: DataFrame, schema: StructType, cmd: StandardizationConfigInstance)
                            (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     //scalastyle:on parameter.number
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
@@ -164,7 +165,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                              standardizedDF: DataFrame,
                                              performance: PerformanceMeasurer,
                                              pathCfg: PathConfig,
-                                             schema: StructType, cmd: StandardizationCmdConfig,
+                                             schema: StructType, cmd: StandardizationConfigInstance,
                                              menasCredentials: MenasCredentials)
                                             (implicit spark: SparkSession,
                                              fsUtils: FileSystemVersionUtils): Unit = {

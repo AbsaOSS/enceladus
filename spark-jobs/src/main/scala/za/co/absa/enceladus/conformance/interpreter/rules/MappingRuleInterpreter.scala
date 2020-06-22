@@ -19,7 +19,7 @@ import org.apache.spark.sql.api.java.UDF1
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
-import za.co.absa.enceladus.conformance.ConformanceCmdConfig
+import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -40,7 +40,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceCmdConfig): Dataset[Row] = {
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceConfigInstance): Dataset[Row] = {
     log.info(s"Processing mapping rule to conform ${rule.outputColumn}...")
     import spark.implicits._
 

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.conformance
+package za.co.absa.enceladus.conformance.config
 
 import scopt.OParser
 

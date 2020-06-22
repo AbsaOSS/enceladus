@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.standardization.config
 
-
-import scopt.OParser
+import scopt.{OParser, OParserBuilder}
+import za.co.absa.enceladus.standardization.CobolOptions
 
 trait StandardizationConfig[R] {
   def withRawFormat(value: String): R
@@ -44,7 +44,9 @@ trait StandardizationConfig[R] {
   def failOnInputNotPerSchema: Boolean
 }
 
-object StandardizationConf {
+object StandardizationConfig {
+
+  //scalastyle:off method.length the length is legit for parsing input paramters
   def standardizationParser[R <: StandardizationConfig[R]]: OParser[_, R] = {
     val builder = OParser.builder[R]
     import builder._
@@ -52,7 +54,7 @@ object StandardizationConf {
       head("\nStandardization", ""),
 
       opt[String]('f', "raw-format").required().action((value, config) => {
-        config.withRawFormat(value)
+        config.withRawFormat(value.toLowerCase())
       }).text("format of the raw data (csv, xml, parquet, fixed-width, etc.)"),
 
       opt[String]("charset").optional().action((value, config) =>
@@ -128,42 +130,85 @@ object StandardizationConf {
         config.withRawPathOverride(Some(value)))
         .text("override the path of the raw data (used internally for performance tests)"),
 
-      checkConfig(config => {
-        def foundCsvField(config: R) = config match {
-          case _ if config.csvDelimiter.isDefined => Some("--delimiter")
-          case _ if config.csvEscape.isDefined => Some("--escape")
-          case _ if config.csvHeader.contains(true) => Some("--header")
-          case _ if config.csvQuote.isDefined => Some("--quote")
-          case _ => None
-        }
-
-        def foundCobolField(cobolOptions: CobolOptions) = cobolOptions match {
-          case _ if cobolOptions.copybook != "" => Some("--copybook")
-          case _ if cobolOptions.encoding.isDefined => Some("--cobol-encoding")
-          case _ if cobolOptions.isXcom => Some("--is-xcom")
-          case _ if cobolOptions.isText => Some("--is-text")
-          case _ if cobolOptions.trimmingPolicy.isDefined => Some("--cobol-trimming-policy")
-          case _ => None
-        }
-
-
-        if (!List("xml", "csv", "json", "cobol").contains(config.rawFormat.toLowerCase) && config.charset.isDefined)
-          failure("The --charset option is supported only for CSV, JSON, XML and COBOL")
-        else if (config.rowTag.isDefined && !config.rawFormat.equalsIgnoreCase("xml"))
-          failure("The --row-tag option is supported only for XML raw data format")
-        else if (foundCsvField(config).isDefined && !config.rawFormat.equalsIgnoreCase("csv")) {
-          foundCsvField(config) match {
-            case Some("header") => failure("The --header option is supported only for CSV ")
-            case Some(field) => failure(s"The $field option is supported only for CSV raw data format")
-            case None =>
-              val cobolOptions = config.cobolOptions
-              if (cobolOptions.isDefined && !config.rawFormat.equalsIgnoreCase("cobol")) {
-                val field = foundCobolField(cobolOptions.get)
-                failure(s"The $field option is supported only for COBOL data format")
-              } else success
-          }
-        } else success
-      })
+      checkConfig(checkConfigX(_, builder))
     )
   }
+  //scalastyle:on method.length
+
+  private val formatsSupportingCharset = List("xml", "csv", "json", "cobol")
+
+  private def typicalError(field: String, format: String): String = {
+    s"The $field option is supported only for $format format"
+  }
+
+  private def checkCharset[R <: StandardizationConfig[R]](config: R): List[String] = {
+    if (!formatsSupportingCharset.contains(config.rawFormat) && config.charset.isDefined) {
+      List(typicalError("--charset", "CSV, JSON, XML and COBOL"))
+    } else {
+      List.empty
+    }
+  }
+
+  private def checkXMLFields[R <: StandardizationConfig[R]](config: R): List[String] = {
+    if (config.rowTag.isDefined && config.rawFormat != "xml") {
+      List(typicalError("--row-tag", "XML raw data"))
+    } else {
+      List.empty
+    }
+  }
+
+  private def checkCSVFields[R <: StandardizationConfig[R]](config: R): List[String] = {
+    def csvFieldsThatShouldNotBePresent(config: R): List[String] = {
+      val format = "CSV"
+      val definedFields = Map(
+        typicalError("--delimiter", format) -> config.csvDelimiter.isDefined,
+        typicalError("--escape", format) -> config.csvEscape.isDefined,
+        typicalError("--header", s"$format raw data") -> config.csvHeader.contains(true),
+        typicalError("--quote", format) -> config.csvQuote.isDefined
+      )
+      definedFields.filter { case (_, value) => value }.keys.toList
+    }
+
+    if (config.rawFormat == "csv") {
+      List.empty
+    } else {
+      csvFieldsThatShouldNotBePresent(config)
+    }
+  }
+
+  private def checkCobolFields[R <: StandardizationConfig[R]](config: R): Seq[String] = {
+    def cobolFieldsThatShouldNotBePresent(cobolOptions: CobolOptions): List[String] = {
+      val format = "COBOL"
+      val definedFields = Map(
+        typicalError("--copybook", format) -> (cobolOptions.copybook != ""),
+        typicalError("--cobol-encoding", format) -> cobolOptions.encoding.isDefined,
+        typicalError("--is-xcom", format) -> cobolOptions.isXcom,
+        typicalError("--is-text", format) -> cobolOptions.isText
+      )
+      definedFields.filter { case (_, value) => value }.keys.toList
+    }
+
+
+    if (config.rawFormat == "cobol") {
+      List.empty
+    } else {
+      config.cobolOptions
+        .map(cobolFieldsThatShouldNotBePresent)
+        .getOrElse(List.empty)
+    }
+  }
+
+  private def checkConfigX[R <: StandardizationConfig[R]](config: R, builder: OParserBuilder[R]): Either[String, Unit] = {
+    val allErrors:List[String] = checkCharset(config) ++
+      checkXMLFields(config) ++
+      checkCSVFields(config) ++
+      checkCobolFields(config)
+
+    if (allErrors.isEmpty) {
+      builder.success
+    } else {
+      builder.failure(allErrors.mkString("\n"))
+    }
+  }
+
 }

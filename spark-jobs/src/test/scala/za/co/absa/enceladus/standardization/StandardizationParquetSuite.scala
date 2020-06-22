@@ -25,6 +25,7 @@ import org.slf4j.Logger
 import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
@@ -65,8 +66,8 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
   private def getTestDataFrame(tmpFileName: String,
-                               args: Array[String]): (StandardizationCmdConfig, DataFrame) = {
-    val cmd: StandardizationCmdConfig = StandardizationCmdConfig.getCmdLineArguments(args)
+                               args: Array[String]): (StandardizationConfigInstance, DataFrame) = {
+    val cmd: StandardizationConfigInstance = StandardizationConfigInstance.getFromArguments(args)
     val csvReader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
     (cmd, csvReader.load(tmpFileName).orderBy("id"))
   }

@@ -25,6 +25,7 @@ import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, PathConfig, RecordIdGeneration}
+import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -42,13 +43,13 @@ trait ConformanceExecution extends CommonJobExecution {
   protected implicit val step = "Conformance"
   private val conformanceReader = new ConformanceReader(log, conf)
 
-  def getPathCfg(cmd: ConformanceCmdConfig, conformance: Dataset, reportVersion: Int): PathConfig =
+  def getPathCfg(cmd: ConformanceConfigInstance, conformance: Dataset, reportVersion: Int): PathConfig =
     PathConfig(
       outputPath = buildPublishPath(cmd, conformance, reportVersion),
       inputPath = getStandardizationPath(cmd, reportVersion)
     )
 
-  def buildPublishPath(cmd: ConformanceCmdConfig,
+  def buildPublishPath(cmd: ConformanceConfigInstance,
                        ds: Dataset,
                        reportVersion: Int): String = {
     val infoDateCol: String = InfoDateColumn
@@ -65,7 +66,7 @@ trait ConformanceExecution extends CommonJobExecution {
   }
 
   protected def conform(conformance: Dataset, inputData: sql.Dataset[Row])
-                       (implicit spark: SparkSession, cmd: ConformanceCmdConfig, dao: MenasDAO): DataFrame = {
+                       (implicit spark: SparkSession, cmd: ConformanceConfigInstance, dao: MenasDAO): DataFrame = {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
@@ -98,7 +99,7 @@ trait ConformanceExecution extends CommonJobExecution {
                                          reportVersion: Int,
                                          menasCredentials: MenasCredentials)
                                         (implicit spark: SparkSession,
-                                         cmd: ConformanceCmdConfig,
+                                         cmd: ConformanceConfigInstance,
                                          fsUtils: FileSystemVersionUtils): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
 

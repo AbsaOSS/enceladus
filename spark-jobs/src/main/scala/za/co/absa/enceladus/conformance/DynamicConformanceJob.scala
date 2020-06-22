@@ -17,8 +17,8 @@ package za.co.absa.enceladus.conformance
 
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.common.JobCmdConfig
 import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId
@@ -34,7 +34,7 @@ object DynamicConformanceJob extends ConformanceExecution {
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
-    implicit val cmd: ConformanceCmdConfig = ConformanceCmdConfig.getCmdLineArguments(args)
+    implicit val cmd: ConformanceConfigInstance = ConformanceConfigInstance.getFromArguments(args)
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
