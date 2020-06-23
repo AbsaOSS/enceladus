@@ -93,39 +93,23 @@
                         <Panel headerText="Load schema from schema registry" expanded="false" expandable="true"
                                visible="{/registryEnabled}">
                             <FormattedText htmlText='&lt;p>
-                                A new schema can be loaded from an internally-defined schema registry  by specifying a
-                                topic-name &lt;em>stem&lt;/em> - based on which the topic name(s) will be derived.&lt;/p>
+                                A new schema can be loaded from an internally-defined schema registry by specifying
+                                a subject name that exists in the schema repository.&lt;/p>
 
-                                &lt;p>For a given stem, &lt;code>-value&lt;/code> will be appended to get the primary topic name to be fetched.
-                                Optionally, &lt;code>-key&lt;/code> variant can also be loaded and merged with the -value topic.&lt;/p>
+                                &lt;p>Should the loading of the schema fail, a fallback of
+                                &lt;em>subject_name&lt;/em>&lt;code>-value&lt;/code> will be attempted, too.&lt;/p>
 
-                                &lt;p>Merging of the &lt;code>-key&lt;/code> and &lt;code>-value&lt;/code> schemas works as follows:
-                                &lt;ul>
-                                    &lt;li>fields from both &lt;code>-value&lt;/code> and &lt;code>-key&lt;/code> are in the result provided there is no name-duplication&lt;/li>
-                                    &lt;li>for non-struct field names duplicates, fields from &lt;code>-value&lt;/code> take precedence&lt;/li>
-                                    &lt;li>struct-fields of the same name are recursively deep-combined&lt;/li>
-                                &lt;ul>
-                                &lt;/p>
                             '/>
-                            <Label text="Specify topic name stem:" labelFor="topicNameBase"/>
+                            <Label text="Specify subject name:" labelFor="subjectName"/>
                             <VBox width="35em">
-                                <Input id="topicNameBase" type="Text" placeholder="Enter topic name stem (without the -value suffix), e.g. myName123"
-                                       value="{/topicNameStem}" valueLiveUpdate="true">
+                                <Input id="subjectName" type="Text" placeholder="Enter subject name e.g. myName123-value"
+                                       value="{/subjectName}" valueLiveUpdate="true">
                                     <layoutData>
                                         <FlexItemData growFactor="1"/>
                                     </layoutData>
                                 </Input>
-                                <Label text="Topic to be loaded from: {/topicNameStem}-value"/>
-                                <CheckBox id="mergeWithKey" selected="{/topicMergeWithKey}" editable="true"
-                                          text="Load {/topicNameStem}-key, too, and merge it with {/topicNameStem}-value"/>
-
-                                <Button text="Submit {
-                                    parts : [
-                                        {path: '/topicNameStem'},
-                                        {path: '/topicMergeWithKey'}
-                                    ],
-                                    formatter: '.topicFormatter'
-                                }" press="handleTopicSubmit" enabled="{= ${/topicNameStem}.length > 0 }"/>
+                                <Label text="Subject to be loaded from: {/subjectName}; fallback: {/subjectName}-value"/>
+                                <Button text="Submit {/subjectName} " press="handleSubjectSubmit" enabled="{= ${/subjectName}.length > 0 }"/>
                             </VBox>
                         </Panel>
                     </VBox>

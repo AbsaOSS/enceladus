@@ -45,8 +45,7 @@ sap.ui.define([
       const auditUtils = new AuditTrail(auditTable);
       auditUtils.applyTableUtils();
 
-      this._model.setProperty("/topicNameStem", "");
-      this._model.setProperty("/topicMergeWithKey", false);
+      this._model.setProperty("/subjectName", "");
 
       // initially, registry integration is disabled in UI - get enabled by qeurying schemaApiAvailability
       this._model.setProperty("/registryEnabled", false);
@@ -171,18 +170,15 @@ sap.ui.define([
       }
     },
 
-    handleTopicSubmit: function (oParams) {
+    handleSubjectSubmit: function (oParams) {
         const schema = this._model.getProperty("/currentSchema");
-        const topicStem = this._model.getProperty("/topicNameStem");
-        const mergeWithKey = this._model.getProperty("/topicMergeWithKey");
-
+        const subjectName = this._model.getProperty("/subjectName");
 
         sap.ui.core.BusyIndicator.show();
 
         let data = {
           "format": "avro", // the only supported Schema registry type
-          "topicStem": topicStem,
-          "mergeWithKey": mergeWithKey,
+          "subject": subjectName,
           "name": schema.name,
           "version": schema.version
         };
@@ -196,7 +192,7 @@ sap.ui.define([
           headers: {
             'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
           },
-          complete: this.handleRemoteLoadFromTopicNameComplete
+          complete: this.handleRemoteLoadFromSubjectNameComplete
         });
     },
 
@@ -266,8 +262,8 @@ sap.ui.define([
       return isOkToSubmit;
     },
 
-    handleRemoteLoadFromTopicNameComplete: function (ajaxResponse) {
-      this.handleRemoteLoadComplete(ajaxResponse, "topicName")
+    handleRemoteLoadFromSubjectNameComplete: function (ajaxResponse) {
+      this.handleRemoteLoadComplete(ajaxResponse, "subject")
     },
 
     handleRemoteLoadFromUrlComplete: function (ajaxResponse) {
@@ -282,8 +278,7 @@ sap.ui.define([
 
       if (status === 201) {
         this.byId("remoteUrl").setValue("");
-        model.setProperty("/topicNameStem", "");
-        model.setProperty("/topicMergeWithKey", false);
+        model.setProperty("/subjectName", "");
 
         MessageToast.show("Schema successfully loaded.");
         let oData = JSON.parse(ajaxResponse.responseText);
@@ -303,7 +298,7 @@ sap.ui.define([
           if (source === "remote") {
             msg = `Error retrieving the schema file from "${this.byId("remoteUrl").getValue()}".${errorMessageDetails}`
           } else {
-            msg = `Error retrieving the schema file by topic-name stem "${this.byId("topicNameBase").getValue()}".${errorMessageDetails}`
+            msg = `Error retrieving the schema file by topic-name stem "${this.byId("subjectName").getValue()}".${errorMessageDetails}`
           }
         } else {
           msg = `Error parsing the schema file. Ensure that the file is a valid avro schema and ` +
@@ -433,21 +428,6 @@ sap.ui.define([
     fixSchemaRegistryUrl: function (str) {
       // trailing slash gets stripped
       return str.replace(this.schemaRegistryRx, '$1/schema');
-    },
-
-    valueTopicFormatter: function(topicNameStem) {
-      return `topic: ${topicNameStem}-value`;
-    },
-
-    valueKeyTopicFormatter: function(topicNameStem) {
-      return `topics: ${topicNameStem}-value, ${topicNameStem}-key`;
-    },
-
-    topicFormatter: function(topicNameStem, includeKey) {
-      if (includeKey)
-        return this.valueKeyTopicFormatter(topicNameStem);
-      else
-        return this.valueTopicFormatter(topicNameStem);
     }
 
   });

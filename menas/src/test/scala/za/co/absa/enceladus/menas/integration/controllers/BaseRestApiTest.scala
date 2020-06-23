@@ -111,12 +111,12 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     fromRemote(urlPath, headers, parameters)
   }
 
-  def sendPostTopicName[T](urlPath: String,
-                           parameters: Map[String, Any],
-                           headers: HttpHeaders = new HttpHeaders())
-                          (implicit ct: ClassTag[T]): ResponseEntity[T] = {
-    require(parameters.keySet.contains("topicStem") && parameters.keySet.contains("mergeWithKey"),
-      s"parameters map must contain the 'topicStem' and 'mergeWithKey' entry, but only $parameters was found")
+  def sendPostSubject[T](urlPath: String,
+                         parameters: Map[String, Any],
+                         headers: HttpHeaders = new HttpHeaders())
+                        (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    require(parameters.keySet.contains("subject"),
+      s"parameters map must contain the 'subject', but only $parameters was found")
 
     fromRemote(urlPath, headers, parameters)
   }

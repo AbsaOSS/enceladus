@@ -38,6 +38,7 @@ import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 
 @RestController
@@ -79,26 +80,22 @@ class SchemaController @Autowired()(
 
   @PostMapping(Array("/registry"))
   @ResponseStatus(HttpStatus.CREATED)
-  def handleTopicStem(@AuthenticationPrincipal principal: UserDetails,
-                      @RequestParam topicStem: String,
-                      @RequestParam mergeWithKey: Boolean,
+  def handleSubject(@AuthenticationPrincipal principal: UserDetails,
+                      @RequestParam subject: String,
                       @RequestParam version: Int,
                       @RequestParam name: String,
                       @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
 
     val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format)
 
-    val valueSchemaResponse = schemaRegistryService.loadSchemaBySubjectName(s"$topicStem-value")
-    val valueSparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(valueSchemaResponse.fileContent)
-
-    val combinedStructType = if (mergeWithKey) {
-      val keySchemaResponse = schemaRegistryService.loadSchemaBySubjectName(s"$topicStem-key")
-      val keySparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(keySchemaResponse.fileContent)
-
-      SchemaUtils.combineStructTypes(valueSparkStruct, keySparkStruct)
-    } else {
-      valueSparkStruct
+    val valueSchemaResponse = Try {
+      schemaRegistryService.loadSchemaBySubjectName(s"$subject")
+    } match {
+      case Success(schemaResponse) => schemaResponse
+      case Failure(_) => schemaRegistryService.loadSchemaBySubjectName(s"$subject-value") // fallback to -value
     }
+
+    val valueSparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(valueSchemaResponse.fileContent)
 
     val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
@@ -108,7 +105,7 @@ class SchemaController @Autowired()(
       fileContent = valueSchemaResponse.fileContent.getBytes,
       fileMIMEType = valueSchemaResponse.mimeType)
 
-    uploadSchemaToMenas(principal.getUsername, menasFile, combinedStructType, schemaType)
+    uploadSchemaToMenas(principal.getUsername, menasFile, valueSparkStruct, schemaType)
   }
 
   @PostMapping(Array("/upload"))

@@ -147,7 +147,7 @@ menas.oozie.splineMongoURL=mongodb://localhost:27017
 
 #----------- Schema Registry
 # URL of schema registry [optional]:
-# if omitted, the ability to load schmema by topic name will be hidden.
+# if omitted, the ability to load schema by topic name will be hidden.
 menas.schemaRegistryBaseUrl=https://localhost:8081
 
 # When using secure schema registry, following paths and passwords must be specified
