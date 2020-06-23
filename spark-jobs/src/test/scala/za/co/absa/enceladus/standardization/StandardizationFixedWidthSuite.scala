@@ -15,22 +15,23 @@ import za.co.absa.enceladus.utils.udf.UDFLibrary
 class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with MockitoSugar{
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
 
+  private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
+    "--menas-auth-keytab src/test/resources/user.keytab.example " +
+    "--raw-format fixed-width").split(" ")
+
+  private implicit val dao: MenasDAO = mock[MenasDAO]
+
+  private val dataSet = Dataset("Foo", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
+
+  private val baseSchema: StructType = DataType.fromJson(
+    FileReader.readFileAsString("src/test/resources/data/standardization_fixed_width_suite_schema.json")
+  ).asInstanceOf[StructType]
+
   test("Reading data from FixedWidth input") {
-
-    implicit val dao: MenasDAO = mock[MenasDAO]
-
-    val args = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format fixed-width").split(" ")
-
-    val dataSet = Dataset("Foo", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
-    val cmd = StdCmdConfig.getCmdLineArguments(args)
+    val cmd = StdCmdConfig.getCmdLineArguments(argsBase)
 
     val fixedWidthReader = StandardizationJob.getFormatSpecificReader(cmd, dataSet)
 
-    val baseSchema: StructType = DataType.fromJson(
-      FileReader.readFileAsString("src/test/resources/data/standardization_fixed_width_suite_schema.json")
-    ).asInstanceOf[StructType]
     val inputSchema = PlainSchemaGenerator.generateInputSchema(baseSchema)
     val reader = fixedWidthReader.schema(inputSchema)
 
@@ -46,21 +47,10 @@ class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with Mo
   }
 
   test("Reading data from FixedWidth input trimmed") {
-
-    implicit val dao: MenasDAO = mock[MenasDAO]
-
-    val args = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
-      "--raw-format fixed-width --trimValues true").split(" ")
-
-    val dataSet = Dataset("Foo", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
-    val cmd = StdCmdConfig.getCmdLineArguments(args)
+    val cmd = StdCmdConfig.getCmdLineArguments(argsBase ++ Array("--trimValues", "true"))
 
     val fixedWidthReader = StandardizationJob.getFormatSpecificReader(cmd, dataSet)
 
-    val baseSchema: StructType = DataType.fromJson(
-      FileReader.readFileAsString("src/test/resources/data/standardization_fixed_width_suite_schema.json")
-    ).asInstanceOf[StructType]
     val inputSchema = PlainSchemaGenerator.generateInputSchema(baseSchema)
     val reader = fixedWidthReader.schema(inputSchema)
 
