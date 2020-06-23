@@ -15,8 +15,4 @@
 
 package za.co.absa.enceladus.menas.models
 
-case class SchemaApiAvailability(
-                                  upload: Boolean,
-                                  remoteUrl: Boolean,
-                                  registry: Boolean
-                                )
+case class SchemaApiAvailability(registry: Boolean)

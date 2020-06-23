@@ -191,7 +191,8 @@ class SchemaController @Autowired()(
   def getAvailability(): CompletableFuture[SchemaApiAvailability] = {
     val registryAvailable = schemaRegistryService.schemaRegistryBaseUrl.isDefined
 
-    Future { SchemaApiAvailability(true, true, registryAvailable)}
+    // the ability to upload or input a remoteUrl is always enabled, so it is not part of the availability endpoint at the moment
+    Future { SchemaApiAvailability(registry = registryAvailable)}
   }
 }
 
