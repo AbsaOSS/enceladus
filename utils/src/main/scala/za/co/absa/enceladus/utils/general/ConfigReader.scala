@@ -68,18 +68,8 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
    * @return the effective configuration as a map
    */
   def getFlatConfig(keysToRedact: Set[String] = Set()): Map[String, AnyRef] = {
-    def redact(key: String, value: AnyRef): AnyRef = {
-      if (keysToRedact.contains(key)) {
-        redactedReplacement
-      } else {
-        value
-      }
-    }
-
-    config.entrySet().asScala.map({ entry =>
-      val key = entry.getKey
-      val value = entry.getValue.unwrapped()
-      key -> redact(key, value)
+    getRedactedConfig(keysToRedact).entrySet().asScala.map({ entry =>
+      entry.getKey -> entry.getValue.unwrapped()
     }).toMap
   }
 
@@ -109,9 +99,9 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
    * @param keysToRedact A set of keys for which values shouldn't be logged.
    */
   def logEffectiveConfigProps(keysToRedact: Set[String] = Set()): Unit = {
-    val redactedFlatConfig = getFlatConfig(keysToRedact)
+    val redactedConfig = getFlatConfig(keysToRedact)
 
-    val rendered = redactedFlatConfig.map {
+    val rendered = redactedConfig.map {
       case (k, v) => s"$k = $v"
     }.toArray
       .sortBy(identity)
