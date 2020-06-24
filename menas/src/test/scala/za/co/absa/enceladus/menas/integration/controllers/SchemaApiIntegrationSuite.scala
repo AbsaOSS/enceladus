@@ -23,9 +23,7 @@ import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import org.apache.commons.io.IOUtils
 import org.junit.runner.RunWith
-import org.mockito.Mockito
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.mockito.MockitoSugar
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.{HttpStatus, MediaType}
@@ -37,7 +35,6 @@ import za.co.absa.enceladus.menas.models.rest.RestResponse
 import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.menas.models.{SchemaApiAvailability, Validation}
 import za.co.absa.enceladus.menas.repositories.RefCollection
-import za.co.absa.enceladus.menas.services.SchemaRegistryService
 import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.model.menas.MenasReference
@@ -49,7 +46,7 @@ import scala.collection.immutable.HashMap
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll with MockitoSugar {
+class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
 
   private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistryBaseUrl` key
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
@@ -1052,6 +1049,20 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll w
           assert(actual.name == schema.name)
           assert(actual.version == schema.version + 1)
           assert(actual.fields.length == 7)
+        }
+      }
+    }
+
+    s"GET $apiUrl/availability" can {
+      "show schema registry availability" when {
+        "schema registry integration is enabled" in {
+
+          val response = sendGet[SchemaApiAvailability](s"$apiUrl/availability")
+          assert(response.getStatusCode == HttpStatus.OK)
+          val responseBody = response.getBody
+
+          // test-config contains populated menas.schemaRegistryBaseUrl
+          assert(responseBody == SchemaApiAvailability(registry = true))
         }
       }
     }

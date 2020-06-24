@@ -35,7 +35,6 @@ import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.menas.utils.parsers.SchemaParser
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
