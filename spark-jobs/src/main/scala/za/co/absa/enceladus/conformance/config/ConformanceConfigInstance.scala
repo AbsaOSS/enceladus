@@ -48,8 +48,10 @@ case class ConformanceConfigInstance(datasetName: String = "",
 
   override def withPublishPathOverride(value: Option[String]): ConformanceConfigInstance = copy(publishPathOverride = value)
   override def withExperimentalMappingRule(value: Option[Boolean]): ConformanceConfigInstance = copy(experimentalMappingRule = value)
-  override def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): ConformanceConfigInstance = copy(isCatalystWorkaroundEnabled = value)
-  override def withAutocleanStandardizedFolder(value: Option[Boolean]): ConformanceConfigInstance = copy(autocleanStandardizedFolder = value)
+  override def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): ConformanceConfigInstance =
+    copy(isCatalystWorkaroundEnabled = value)
+  override def withAutocleanStandardizedFolder(value: Option[Boolean]): ConformanceConfigInstance =
+    copy(autocleanStandardizedFolder = value)
   override def withDatasetName(value: String): ConformanceConfigInstance = copy(datasetName = value)
   override def withDatasetVersion(value: Int): ConformanceConfigInstance = copy(datasetVersion = value)
   override def withReportDate(value: String): ConformanceConfigInstance = copy(reportDate = value)

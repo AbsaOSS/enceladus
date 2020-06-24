@@ -17,14 +17,14 @@ package za.co.absa.enceladus.plugins.builtin.errorsender.params
 
 import java.time.Instant
 
-import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId
+import za.co.absa.enceladus.utils.modules.SourceId
 
 case class ErrorSenderPluginParams(datasetName: String,
                                    datasetVersion: Int,
                                    reportDate: String,
                                    reportVersion: Int,
                                    outputPath: String,
-                                   sourceId: ErrorSourceId.Value,
+                                   sourceId: SourceId,
                                    sourceSystem: String,
                                    runUrls: Option[String],
                                    runId: Option[Int],
@@ -36,11 +36,6 @@ case class ErrorSenderPluginParams(datasetName: String,
 }
 
 object ErrorSenderPluginParams {
-
-  object ErrorSourceId extends Enumeration {
-    val Standardization = Value("standardizaton")
-    val Conformance = Value("conformance")
-  }
 
   object FieldNames {
     val datasetName = "datasetName"
@@ -65,7 +60,7 @@ object ErrorSenderPluginParams {
       reportDate -> params.reportDate,
       reportVersion -> params.reportVersion.toString,
       outputPath -> params.outputPath,
-      sourceId -> params.sourceId.toString,
+      sourceId -> params.sourceId.asIdentifier,
       sourceSystem -> params.sourceSystem,
       processingTimestamp -> params.processingTimestamp.toString
     ) ++
@@ -80,7 +75,7 @@ object ErrorSenderPluginParams {
     reportDate = params(reportDate),
     reportVersion = params(reportVersion).toInt,
     outputPath = params(outputPath),
-    sourceId = ErrorSourceId.withName(params(sourceId)),
+    sourceId = SourceId.withIdentifier(params(sourceId)),
     sourceSystem = params(sourceSystem),
     runUrls = params.get(runUrls),
     runId = params.get(runId).map(_.toInt),

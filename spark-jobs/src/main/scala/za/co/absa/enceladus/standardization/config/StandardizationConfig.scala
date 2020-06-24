@@ -16,9 +16,10 @@
 package za.co.absa.enceladus.standardization.config
 
 import scopt.{OParser, OParserBuilder}
+import za.co.absa.enceladus.common.config.JobConfig
 import za.co.absa.enceladus.standardization.CobolOptions
 
-trait StandardizationConfig[R] {
+trait StandardizationConfig[R] extends JobConfig[R] {
   def withRawFormat(value: String): R
   def withCharset(value: Option[String] = None): R
   def withRowTag(value: Option[String] = None): R

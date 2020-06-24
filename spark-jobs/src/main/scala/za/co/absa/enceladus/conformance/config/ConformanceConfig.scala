@@ -16,8 +16,14 @@
 package za.co.absa.enceladus.conformance.config
 
 import scopt.OParser
+import za.co.absa.enceladus.common.config.JobConfig
 
-trait ConformanceConfig[R] {
+trait ConformanceConfig[R] extends JobConfig[R] {
+  def publishPathOverride: Option[String]
+  def experimentalMappingRule: Option[Boolean]
+  def isCatalystWorkaroundEnabled: Option[Boolean]
+  def autocleanStandardizedFolder: Option[Boolean]
+
   def withPublishPathOverride(vlue: Option[String]): R
   def withExperimentalMappingRule(value: Option[Boolean]): R
   def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): R

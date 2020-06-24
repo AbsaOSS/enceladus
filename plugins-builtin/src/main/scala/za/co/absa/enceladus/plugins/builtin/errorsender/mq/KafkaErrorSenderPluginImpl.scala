@@ -18,7 +18,7 @@ package za.co.absa.enceladus.plugins.builtin.errorsender.mq
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.functions.{col, explode, lit, size, struct}
 import org.apache.spark.sql.types.DataTypes
-import org.apache.spark.sql.{DataFrame, Encoders}
+import org.apache.spark.sql.{DataFrame, Encoder, Encoders}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
 import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
@@ -27,8 +27,8 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 import KafkaErrorSenderPluginImpl._
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
-import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId
 import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
+import za.co.absa.enceladus.utils.modules._
 
 import scala.util.{Failure, Success, Try}
 
@@ -87,8 +87,8 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
    * @return DF with exploded errors and corresponding to the given error source
    */
   def getIndividualErrors(dataFrame: DataFrame, params: ErrorSenderPluginParams): DataFrame = {
-    implicit val singleErrorStardardizedEncoder = Encoders.product[SingleErrorStardardized]
-    implicit val dceErrorEncoder = Encoders.product[DceError]
+    implicit val singleErrorStardardizedEncoder: Encoder[SingleErrorStardardized] = Encoders.product[SingleErrorStardardized]
+    implicit val dceErrorEncoder: Encoder[DceError] = Encoders.product[DceError]
 
     val allowedErrorCodes = KafkaErrorSenderPluginImpl.errorCodesForSource(params.sourceId)
 
@@ -168,7 +168,7 @@ object KafkaErrorSenderPluginImpl {
         informationDate = Some(reportDate.toLocalDate.toEpochDay.toInt),
         outputFileName = Some(additionalParams.outputPath),
         recordId = recordId,
-        errorSourceId = additionalParams.sourceId.toString,
+        errorSourceId = additionalParams.sourceId.value,
         errorType = singleError.errType,
         errorCode = singleError.errCode,
         errorDescription = singleError.errMsg,
@@ -184,9 +184,9 @@ object KafkaErrorSenderPluginImpl {
     }
   }
 
-  def errorCodesForSource(sourceId: ErrorSourceId.Value): Seq[String] = sourceId match {
-    case ErrorSourceId.Standardization => ErrorCodes.standardizationErrorCodes
-    case ErrorSourceId.Conformance => ErrorCodes.conformanceErrorCodes
+  def errorCodesForSource(sourceId: SourceId): Seq[String] = sourceId match {
+    case SourceId.Standardization => ErrorCodes.standardizationErrorCodes
+    case SourceId.Conformance => ErrorCodes.conformanceErrorCodes
   }
 
 }

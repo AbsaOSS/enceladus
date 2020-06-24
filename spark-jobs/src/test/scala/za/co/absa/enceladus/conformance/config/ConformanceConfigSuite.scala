@@ -13,17 +13,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.conformance
+package za.co.absa.enceladus.conformance.config
 
 import java.time.ZonedDateTime
 
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
+import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.dao.auth.{MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class ConfConfigSuite extends FunSuite with SparkTestBase {
+class ConformanceConfigSuite extends FunSuite with SparkTestBase {
 
   private val year = "2018"
   private val month = "12"
@@ -50,7 +50,6 @@ class ConfConfigSuite extends FunSuite with SparkTestBase {
   private val disabled = false
   private val dateDisabled = None
   private val userDisabled = None
-  private val rawFormat = "parquet"
   private val folderPrefix = s"year=$year/month=$month/day=$day"
   private val infoDateColumn = "enceladus_info_date"
   private val infoVersionColumn = "enceladus_info_version"

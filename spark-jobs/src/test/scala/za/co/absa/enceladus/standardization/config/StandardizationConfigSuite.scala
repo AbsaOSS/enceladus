@@ -13,17 +13,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.standardization.config
 
 import java.time.ZonedDateTime
 
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.dao.auth.{MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
+import za.co.absa.enceladus.standardization.StandardizationExecution
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class StdConfigSuite extends FunSuite with SparkTestBase {
+class StandardizationConfigSuite extends FunSuite with SparkTestBase {
 
   private val year = "2018"
   private val month = "12"
@@ -52,6 +52,8 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
   private val reportVersion = 3
   private val rawFormat = "parquet"
   private val folderPrefix = s"year=$year/month=$month/day=$day"
+
+  private object TestStandardization extends StandardizationExecution
 
   test("Test credentials file parsing "){
     val credentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
@@ -165,17 +167,16 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
         "--debug-set-raw-path", hdfsRawPathOverride,
         "--raw-format", rawFormat))
 
-
-    val publishPathNoFolderPrefix = StandardizationJob.buildRawPath(cmdConfigNoFolderPrefix, standardiseDataset,
+    val publishPathNoFolderPrefix = TestStandardization.buildRawPath(cmdConfigNoFolderPrefix, standardiseDataset,
       cmdConfigNoFolderPrefix.reportVersion.get)
     assert(publishPathNoFolderPrefix === s"${standardiseDataset.hdfsPath}/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigNoFolderPrefix.reportVersion.get}")
-    val publishPathFolderPrefix = StandardizationJob.buildRawPath(cmdConfigFolderPrefix, standardiseDataset,
+    val publishPathFolderPrefix = TestStandardization.buildRawPath(cmdConfigFolderPrefix, standardiseDataset,
       cmdConfigFolderPrefix.reportVersion.get)
     assert(publishPathFolderPrefix === s"${standardiseDataset.hdfsPath}/$folderPrefix/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigFolderPrefix.reportVersion.get}")
-    val publishPathRawPathOverride = StandardizationJob.buildRawPath(cmdConfigRawPathOverride, standardiseDataset,
+    val publishPathRawPathOverride = TestStandardization.buildRawPath(cmdConfigRawPathOverride, standardiseDataset,
       cmdConfigRawPathOverride.reportVersion.get)
     assert(publishPathRawPathOverride === hdfsRawPathOverride)
-    val publishPathRawPathOverrideAndFolderPrefix = StandardizationJob.buildRawPath(cmdConfigRawPathOverrideAndFolderPrefix,
+    val publishPathRawPathOverrideAndFolderPrefix = TestStandardization.buildRawPath(cmdConfigRawPathOverrideAndFolderPrefix,
         standardiseDataset, cmdConfigRawPathOverrideAndFolderPrefix.reportVersion.get)
     assert(publishPathRawPathOverrideAndFolderPrefix === hdfsRawPathOverride)
   }
