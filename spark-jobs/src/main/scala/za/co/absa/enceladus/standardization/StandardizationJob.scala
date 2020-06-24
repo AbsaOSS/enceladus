@@ -259,12 +259,15 @@ object StandardizationJob {
   private def getCobolOptions(cmd: StdCmdConfig, dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
       val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
+      val isXcomOpt = if (cobolOptions.isXcom) Some(true) else None
+      val isTextOpt = if (cobolOptions.isText) Some(true) else None
       val isAscii = cobolOptions.encoding.exists(_.equalsIgnoreCase("ascii"))
       // For ASCII files --charset is converted into Cobrix "ascii_charset" option
       // For EBCDIC files --charset is converted into Cobrix "ebcdic_code_page" option
       HashMap(
         getCopybookOption(cobolOptions, dataset),
-        "is_xcom" -> Option(BooleanParameter(cobolOptions.isXcom)),
+        "is_xcom" -> isXcomOpt.map(BooleanParameter),
+        "is_text" -> isTextOpt.map(BooleanParameter),
         "string_trimming_policy" -> cobolOptions.trimmingPolicy.map(StringParameter),
         "encoding" -> cobolOptions.encoding.map(StringParameter),
         "ascii_charset" -> cmd.charset.flatMap(charset => if (isAscii) Option(StringParameter(charset)) else None),
@@ -298,7 +301,8 @@ object StandardizationJob {
                                dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, numberOfColumns)
-    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")) {
+    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")
+      && !cmd.rawFormat.equalsIgnoreCase("cobol")) {
       // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
       val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
       val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {
