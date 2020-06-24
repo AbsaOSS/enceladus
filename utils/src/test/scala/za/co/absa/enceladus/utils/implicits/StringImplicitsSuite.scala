@@ -286,9 +286,9 @@ class StringImplicitsSuite extends FunSuite with Matchers {
 
   test("string joining with /") {
     "abc" / "123" shouldBe "abc/123"
-    "abc/" / "123" shouldBe "abc/123"
-    "abc" / "/123" shouldBe "abc/123"
-    "abc/" / "/123" shouldBe "abc/123"
+    "aaa/" / "123" shouldBe "aaa/123"
+    "bbb" / "/123" shouldBe "bbb/123"
+    "ccc/" / "/123" shouldBe "ccc/123"
     "file:///" / "path" shouldBe "file:///path"
   }
 }

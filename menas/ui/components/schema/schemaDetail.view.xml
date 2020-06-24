@@ -100,7 +100,7 @@
                                 &lt;em>subject_name&lt;/em>&lt;code>-value&lt;/code> will be attempted, too.&lt;/p>
 
                             '/>
-                            <Label text="Specify subject name:" labelFor="subjectName"/>
+                            <Label text="Specify the subject name:" labelFor="subjectName"/>
                             <VBox width="35em">
                                 <Input id="subjectName" type="Text" placeholder="Enter subject name e.g. myName123-value"
                                        value="{/subjectName}" valueLiveUpdate="true">
@@ -108,7 +108,8 @@
                                         <FlexItemData growFactor="1"/>
                                     </layoutData>
                                 </Input>
-                                <Label text="Subject to be loaded from: {/subjectName}; fallback: {/subjectName}-value"/>
+                                <Label text="Subject to be loaded from: {/subjectName}; fallback: {/subjectName}-value."
+                                       visible="{= ${/subjectName}.length > 0 }"/>
                                 <Button text="Submit {/subjectName} " press="handleSubjectSubmit" enabled="{= ${/subjectName}.length > 0 }"/>
                             </VBox>
                         </Panel>

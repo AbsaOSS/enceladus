@@ -39,13 +39,6 @@ package object menas {
       val okJsonEquivalent = "/test_data/schemas/avro/equivalent-to-avroschema.json"
     }
 
-    object AvroCombining {
-      val value = "/test_data/schemas/avro_combine/avro-value.avsc"
-      val key = "/test_data/schemas/avro_combine/avro-key.avsc"
-
-      val expectedCombination = "/test_data/schemas/avro_combine/expected-combination.json"
-    }
-
   }
 
 }
