@@ -15,14 +15,15 @@
 
 package za.co.absa.enceladus.standardization_conformance
 
-import za.co.absa.enceladus.common.PathConfig
+import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
+import za.co.absa.enceladus.standardization_conformance.config.StdConformanceConfigInstance
 
 trait StdConformanceExecution extends StandardizationExecution with ConformanceExecution {
 
-  def getFullPathCfg[T](cmd: StdConformanceCmdConfigT[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+  def getFullPathCfg[T](cmd: StdConformanceConfigInstance, dataset: Dataset, reportVersion: Int): PathConfig = {
     val standardization = getStandardizationPath(cmd, reportVersion)
 
     PathConfig(

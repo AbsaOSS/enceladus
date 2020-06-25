@@ -23,9 +23,9 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.JobConfig
+import za.co.absa.enceladus.common.config.{JobConfig, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants, PathConfig}
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
@@ -80,8 +80,8 @@ trait StandardizationExecution extends CommonJobExecution {
     dao.getSchema(preparationResult.dataset.schemaName, preparationResult.dataset.schemaVersion)
   }
 
-  protected def readStandardizationInputData(schema: StructType,
-                                             cmd: StandardizationConfigInstance,
+  protected def readStandardizationInputData[T](schema: StructType,
+                                             cmd: StandardizationConfig[T],
                                              path: String,
                                              dataset: Dataset)
                                             (implicit spark: SparkSession,
@@ -107,7 +107,7 @@ trait StandardizationExecution extends CommonJobExecution {
     ensureSplittable(dfWithSchema, path, schema)
   }
 
-  protected def standardize(inputData: DataFrame, schema: StructType, cmd: StandardizationConfigInstance)
+  protected def standardize[T](inputData: DataFrame, schema: StructType, cmd: StandardizationConfig[T])
                            (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     //scalastyle:on parameter.number
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
@@ -130,14 +130,14 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def processStandardizationResult(args: Array[String],
+  protected def processStandardizationResult[T](args: Array[String],
                                              standardizedDF: DataFrame,
                                              preparationResult: PreparationResult,
                                              schema: StructType,
-                                             cmd: StandardizationConfigInstance,
+                                             cmd: StandardizationConfig[T],
                                              menasCredentials: MenasCredentials)
                                             (implicit spark: SparkSession,
-                                             fsUtils: FileSystemVersionUtils): Unit = {
+                                             fsUtils: FileSystemVersionUtils): DataFrame = {
     import za.co.absa.atum.AtumImplicits._
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {
@@ -176,6 +176,7 @@ trait StandardizationExecution extends CommonJobExecution {
     standardizedDF.writeInfoFile(preparationResult.pathCfg.outputPath)
     writePerformanceMetrics(preparationResult.performance, cmd)
     log.info(s"$sourceId finished successfully")
+    standardizedDF
   }
 
   override protected def getPathCfg[T](cmd: JobConfig[T], dataset: Dataset, reportVersion: Int): PathConfig = {

@@ -40,6 +40,7 @@ case class StandardizationConfigInstance(rawFormat: String = "xml",
                                          fixedWidthTrimValues: Option[Boolean] = Some(false),
                                          rawPathOverride: Option[String] = None,
                                          failOnInputNotPerSchema: Boolean = false,
+
                                          datasetName: String = "",
                                          datasetVersion: Int = 1,
                                          reportDate: String = "",

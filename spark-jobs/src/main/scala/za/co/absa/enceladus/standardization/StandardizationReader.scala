@@ -20,7 +20,7 @@ import org.slf4j.Logger
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
+import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigInstance}
 import za.co.absa.enceladus.utils.unicode.ParameterConversion._
 
 import scala.collection.immutable.HashMap
@@ -38,7 +38,7 @@ class StandardizationReader(log: Logger) {
    *                        larger than Spark default
    * @return The updated dataframe reader
    */
-  def getFormatSpecificReader(cmd: StandardizationConfigInstance, dataset: Dataset, numberOfColumns: Int = 0)
+  def getFormatSpecificReader[T](cmd: StandardizationConfig[T], dataset: Dataset, numberOfColumns: Int = 0)
                              (implicit spark: SparkSession, dao: MenasDAO): DataFrameReader = {
     val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
@@ -64,7 +64,7 @@ class StandardizationReader(log: Logger) {
     }
   }
 
-  private def getGenericOptions(cmd: StandardizationConfigInstance): HashMap[String, Option[RawFormatParameter]] = {
+  private def getGenericOptions[T](cmd: StandardizationConfig[T]): HashMap[String, Option[RawFormatParameter]] = {
     val mode = if (cmd.failOnInputNotPerSchema) {
       "FAILFAST"
     } else {
@@ -76,7 +76,7 @@ class StandardizationReader(log: Logger) {
     )
   }
 
-  private def getXmlOptions(cmd: StandardizationConfigInstance): HashMap[String, Option[RawFormatParameter]] = {
+  private def getXmlOptions[T](cmd: StandardizationConfig[T]): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("xml")) {
       HashMap("rowtag" -> cmd.rowTag.map(StringParameter))
     } else {
@@ -84,7 +84,7 @@ class StandardizationReader(log: Logger) {
     }
   }
 
-  private def getCsvOptions(cmd: StandardizationConfigInstance, numberOfColumns: Int = 0): HashMap[String, Option[RawFormatParameter]] = {
+  private def getCsvOptions[T](cmd: StandardizationConfig[T], numberOfColumns: Int = 0): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
         "delimiter" -> cmd.csvDelimiter.map(s => StringParameter(s.includingUnicode.includingNone)),
@@ -102,7 +102,7 @@ class StandardizationReader(log: Logger) {
     }
   }
 
-  private def getFixedWidthOptions(cmd: StandardizationConfigInstance): HashMap[String, Option[RawFormatParameter]] = {
+  private def getFixedWidthOptions[T](cmd: StandardizationConfig[T]): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
       HashMap("trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter))
     } else {
@@ -110,7 +110,7 @@ class StandardizationReader(log: Logger) {
     }
   }
 
-  private def getCobolOptions(cmd: StandardizationConfigInstance, dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
+  private def getCobolOptions[T](cmd: StandardizationConfig[T], dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
       val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
       val isXcomOpt = if (cobolOptions.isXcom) Some(true) else None

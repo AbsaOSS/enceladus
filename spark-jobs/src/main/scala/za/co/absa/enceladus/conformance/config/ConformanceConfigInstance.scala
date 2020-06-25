@@ -18,6 +18,7 @@ package za.co.absa.enceladus.conformance.config
 import org.apache.spark.storage.StorageLevel
 import scopt.OParser
 import za.co.absa.enceladus.common.config.{ConfigError, JobConfig}
+import za.co.absa.enceladus.conformance.interpreter.InterpreterContextArgs
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory}
 
 import scala.util.Try

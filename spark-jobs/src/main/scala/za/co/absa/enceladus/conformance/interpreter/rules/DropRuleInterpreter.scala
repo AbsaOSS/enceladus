@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
 import za.co.absa.spark.hats.Extensions._
-import za.co.absa.enceladus.conformance.interpreter.ExplosionState
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, DropConformanceRule}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
@@ -28,7 +28,8 @@ case class DropRuleInterpreter(rule: DropConformanceRule) extends RuleInterprete
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceConfigInstance): Dataset[Row] = {
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO,
+              progArgs: InterpreterContextArgs): Dataset[Row] = {
     if (SchemaUtils.fieldExists(rule.outputColumn, df.schema)) {
       if (rule.outputColumn.contains('.')) {
         conformNestedField(df)
