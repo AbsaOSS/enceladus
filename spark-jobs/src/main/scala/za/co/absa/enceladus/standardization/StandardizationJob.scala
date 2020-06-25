@@ -299,21 +299,29 @@ object StandardizationJob {
                                dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val dfReaderConfigured = getFormatSpecificReader(cmd, dataset, numberOfColumns)
-    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")
-      && !cmd.rawFormat.equalsIgnoreCase("cobol")) {
-      // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
-      val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
-      val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {
-        None
-      } else {
-        Option(columnNameOfCorruptRecord)
-      }
-      val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, optColumnNameOfCorruptRecord)
-      dfReaderConfigured.schema(inputSchema)
-    } else {
-      dfReaderConfigured
-    }).load(s"$path/*")
+
+    val readerWithOptSchema = cmd.rawFormat.toLowerCase() match {
+      case "parquet" | "cobol" =>
+        dfReaderConfigured
+      case _ =>
+        val optColumnNameOfCorruptRecord = getColumnNameOfCorruptRecord(schema, cmd)
+        val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, optColumnNameOfCorruptRecord)
+        dfReaderConfigured.schema(inputSchema)
+    }
+
+    val dfWithSchema = readerWithOptSchema.load(s"$path/*")
     ensureSplittable(dfWithSchema, path, schema)
+  }
+
+  private def getColumnNameOfCorruptRecord(schema: StructType, cmd: StdCmdConfig)
+                                          (implicit spark: SparkSession): Option[String] = {
+    // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
+    val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
+    if (cmd.rawFormat.equalsIgnoreCase("fixed-width")  || cmd.failOnInputNotPerSchema) {
+      None
+    } else {
+      Option(columnNameOfCorruptRecord)
+    }
   }
 
   //scalastyle:off parameter.number

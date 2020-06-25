@@ -37,14 +37,14 @@ class PlainSchemaGeneratorSuite extends FunSuite with SparkTestBase {
 
   private val expectedSchemaSeq = Seq(
     StructField("a", StringType, nullable = true),
-    StructField("b", StringType, nullable = true),
-    StructField("override_c", StringType, nullable = true),
+    StructField("b", StringType, nullable = true, new MetadataBuilder().putString("meta", "data").build),
+    StructField("override_c", StringType, nullable = true, new MetadataBuilder().putString("sourcecolumn", "override_c").build),
     StructField("d", ArrayType(StructType(Seq(
       StructField("e", StructType(Seq(
         StructField("f", ArrayType(StructType(Seq(
           StructField("g", StringType, nullable = true),
-          StructField("h", StringType, nullable = true),
-          StructField("override_i", StringType, nullable = true)
+          StructField("h", StringType, nullable = true, new MetadataBuilder().putString("meta", "data").build),
+          StructField("override_i", StringType, nullable = true, new MetadataBuilder().putString("sourcecolumn", "override_i").build)
         ))))
       )))
     ))))
