@@ -19,8 +19,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession, types}
 import org.mockito.Mockito.{mock, when => mockWhen}
-import za.co.absa.enceladus.common.JobCmdConfig
-import za.co.absa.enceladus.conformance.ConformanceCmdConfig
+import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
 import za.co.absa.enceladus.conformance.interpreter.{Always, FeatureSwitches, Never}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
@@ -229,14 +228,14 @@ class NestedTestCaseFactory(implicit spark: SparkSession) {
     */
   def getTestCase(experimentalMappingRule: Boolean,
                   enableMappingRuleBroadcasting: Boolean,
-                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, ConformanceCmdConfig, FeatureSwitches) = {
+                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, ConformanceConfigInstance, FeatureSwitches) = {
 
     val inputDf = spark.read
       .schema(testCaseSchema)
       .json(getClass.getResource("/interpreter/mappingCases/nestedDf.json").getPath)
 
     val dataset = getDataSetWithConformanceRules(testCaseDataset, conformanceRules: _*)
-    val cmdConfig = ConformanceCmdConfig(reportDate = reportDate)
+    val cmdConfig = ConformanceConfigInstance(reportDate = reportDate)
 
     val dao = mock(classOf[MenasDAO])
     mockWhen(dao.getDataset(testCaseName, 1)) thenReturn testCaseDataset

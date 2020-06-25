@@ -24,8 +24,8 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
-import za.co.absa.enceladus.common.JobCmdConfig
 import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.InfoDateFactory
 import za.co.absa.enceladus.dao.MenasDAO
@@ -34,7 +34,7 @@ import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactor
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
-class HyperConformance (implicit cmd: ConformanceCmdConfig,
+class HyperConformance (implicit cmd: ConformanceConfigInstance,
                         featureSwitches: FeatureSwitches,
                         menasBaseUrls: List[String],
                         infoDateFactory: InfoDateFactory) extends StreamTransformer {
@@ -77,7 +77,7 @@ class HyperConformance (implicit cmd: ConformanceCmdConfig,
   }
 
   @throws[IllegalArgumentException]
-  private def getReportVersion(implicit cmd: ConformanceCmdConfig): Int = {
+  private def getReportVersion(implicit cmd: ConformanceConfigInstance): Int = {
     cmd.reportVersion match {
       case Some(version) => version
       case None => throw new IllegalArgumentException("Report version is not provided.")
@@ -121,7 +121,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
 
     val menasCredentialsFactory = getMenasCredentialsFactory(conf: Configuration)
 
-    implicit val confConfig: ConformanceCmdConfig = ConformanceCmdConfig(publishPathOverride = None,
+    implicit val confConfig: ConformanceConfigInstance = ConformanceConfigInstance(publishPathOverride = None,
       experimentalMappingRule = Some(true),
       isCatalystWorkaroundEnabled = Some(true),
       autocleanStandardizedFolder = Some(false),
@@ -176,4 +176,3 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     }
   }
 }
-

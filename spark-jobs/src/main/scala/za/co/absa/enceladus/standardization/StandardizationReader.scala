@@ -20,6 +20,7 @@ import org.slf4j.Logger
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
 import za.co.absa.enceladus.utils.unicode.ParameterConversion._
 
 import scala.collection.immutable.HashMap
@@ -37,7 +38,7 @@ class StandardizationReader(log: Logger) {
    *                        larger than Spark default
    * @return The updated dataframe reader
    */
-  def getFormatSpecificReader[T](cmd: StandardizationCmdConfigT[T], dataset: Dataset, numberOfColumns: Int = 0)
+  def getFormatSpecificReader(cmd: StandardizationConfigInstance, dataset: Dataset, numberOfColumns: Int = 0)
                              (implicit spark: SparkSession, dao: MenasDAO): DataFrameReader = {
     val dfReader = spark.read.format(cmd.rawFormat)
     // applying format specific options
@@ -63,7 +64,7 @@ class StandardizationReader(log: Logger) {
     }
   }
 
-  private def getGenericOptions[T](cmd: StandardizationCmdConfigT[T]): HashMap[String, Option[RawFormatParameter]] = {
+  private def getGenericOptions(cmd: StandardizationConfigInstance): HashMap[String, Option[RawFormatParameter]] = {
     val mode = if (cmd.failOnInputNotPerSchema) {
       "FAILFAST"
     } else {
@@ -75,7 +76,7 @@ class StandardizationReader(log: Logger) {
     )
   }
 
-  private def getXmlOptions[T](cmd: StandardizationCmdConfigT[T]): HashMap[String, Option[RawFormatParameter]] = {
+  private def getXmlOptions(cmd: StandardizationConfigInstance): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("xml")) {
       HashMap("rowtag" -> cmd.rowTag.map(StringParameter))
     } else {
@@ -83,7 +84,7 @@ class StandardizationReader(log: Logger) {
     }
   }
 
-  private def getCsvOptions[T](cmd: StandardizationCmdConfigT[T], numberOfColumns: Int = 0): HashMap[String, Option[RawFormatParameter]] = {
+  private def getCsvOptions(cmd: StandardizationConfigInstance, numberOfColumns: Int = 0): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
         "delimiter" -> cmd.csvDelimiter.map(s => StringParameter(s.includingUnicode.includingNone)),
@@ -101,7 +102,7 @@ class StandardizationReader(log: Logger) {
     }
   }
 
-  private def getFixedWidthOptions[T](cmd: StandardizationCmdConfigT[T]): HashMap[String, Option[RawFormatParameter]] = {
+  private def getFixedWidthOptions(cmd: StandardizationConfigInstance): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
       HashMap("trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter))
     } else {
@@ -109,15 +110,18 @@ class StandardizationReader(log: Logger) {
     }
   }
 
-  private def getCobolOptions[T](cmd: StandardizationCmdConfigT[T], dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
+  private def getCobolOptions(cmd: StandardizationConfigInstance, dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
       val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
+      val isXcomOpt = if (cobolOptions.isXcom) Some(true) else None
+      val isTextOpt = if (cobolOptions.isText) Some(true) else None
       val isAscii = cobolOptions.encoding.exists(_.equalsIgnoreCase("ascii"))
       // For ASCII files --charset is converted into Cobrix "ascii_charset" option
       // For EBCDIC files --charset is converted into Cobrix "ebcdic_code_page" option
       HashMap(
         getCopybookOption(cobolOptions, dataset),
-        "is_xcom" -> Option(BooleanParameter(cobolOptions.isXcom)),
+        "is_xcom" -> isXcomOpt.map(BooleanParameter),
+        "is_text" -> isTextOpt.map(BooleanParameter),
         "string_trimming_policy" -> cobolOptions.trimmingPolicy.map(StringParameter),
         "encoding" -> cobolOptions.encoding.map(StringParameter),
         "ascii_charset" -> cmd.charset.flatMap(charset => if (isAscii) Option(StringParameter(charset)) else None),

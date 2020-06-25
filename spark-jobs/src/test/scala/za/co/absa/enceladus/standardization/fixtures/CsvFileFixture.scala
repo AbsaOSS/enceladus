@@ -24,7 +24,8 @@ import org.scalatest.mockito.MockitoSugar
 import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.{StandardizationCmdConfig, StandardizationCmdConfigT, StandardizationReader}
+import za.co.absa.enceladus.standardization.StandardizationReader
+import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 trait CsvFileFixture extends MockitoSugar with TempFileFixture with SparkTestBase {
@@ -61,7 +62,7 @@ trait CsvFileFixture extends MockitoSugar with TempFileFixture with SparkTestBas
                           dataSet: Dataset,
                           schema: StructType
                          ): DataFrame = {
-    val cmd = StandardizationCmdConfigT.getCmdLineArguments(args)
+    val cmd: StandardizationConfigInstance = StandardizationConfigInstance.getFromArguments(args)
     val csvReader = if (checkMaxColumns) {
       standardizationReader.getFormatSpecificReader(cmd, dataSet, schema.fields.length)
     } else {

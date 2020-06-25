@@ -17,8 +17,7 @@ package za.co.absa.enceladus.standardization
 
 import java.util.UUID
 
-import org.apache.spark.sql
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
@@ -26,6 +25,7 @@ import org.slf4j.Logger
 import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
@@ -66,8 +66,8 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
   private def getTestDataFrame(tmpFileName: String,
-                               args: Array[String]): (StandardizationCmdConfigT[StandardizationCmdConfig], DataFrame) = {
-    val cmd = StandardizationCmdConfigT.getCmdLineArguments(args)
+                               args: Array[String]): (StandardizationConfigInstance, DataFrame) = {
+    val cmd: StandardizationConfigInstance = StandardizationConfigInstance.getFromArguments(args)
     val csvReader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
     (cmd, csvReader.load(tmpFileName).orderBy("id"))
   }

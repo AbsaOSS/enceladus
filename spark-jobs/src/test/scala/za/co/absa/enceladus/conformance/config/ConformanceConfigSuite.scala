@@ -13,24 +13,25 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.conformance.config
 
 import java.time.ZonedDateTime
 
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.dao.auth.{MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class StdConfigSuite extends FunSuite with SparkTestBase {
+class ConformanceConfigSuite extends FunSuite with SparkTestBase {
 
   private val year = "2018"
   private val month = "12"
   private val day = "31"
   private val dateTokens = Array(year, month, day)
   private val hdfsRawPath = "/bigdatahdfs/datalake/raw/system/feed"
-  private val hdfsRawPathOverride = "/bigdatahdfs/datalake/raw/system/feed/override"
   private val hdfsPublishPath = "/bigdatahdfs/datalake/publish/system/feed"
+  private val hdfsPublishPathOverride = "/bigdatahdfs/datalake/publish/system/feed/override"
   private val menasCredentialsFile = "src/test/resources/menas-credentials.conf"
   private val menasCredentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
   private val keytabPath = "src/test/resources/user.keytab.example"
@@ -45,12 +46,15 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
   private val lastUpdated = ZonedDateTime.now()
   private val userUpdated = "user"
   private val reportDate = s"$year-$month-$day"
+  private val reportVersion = 3
   private val disabled = false
   private val dateDisabled = None
   private val userDisabled = None
-  private val reportVersion = 3
-  private val rawFormat = "parquet"
   private val folderPrefix = s"year=$year/month=$month/day=$day"
+  private val infoDateColumn = "enceladus_info_date"
+  private val infoVersionColumn = "enceladus_info_version"
+
+  private object TestDynamicConformance extends ConformanceExecution
 
   test("Test credentials file parsing "){
     val credentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
@@ -66,14 +70,13 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
   }
 
   test("folder-prefix parameter") {
-    val cmdConfigNoFolderPrefix = StandardizationCmdConfigT.getCmdLineArguments(
+    val cmdConfigNoFolderPrefix = ConformanceConfigInstance.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
-        "--raw-format", rawFormat))
+        "--menas-credentials-file", menasCredentialsFile))
 
     val actualPlainMenasCredentials = cmdConfigNoFolderPrefix.menasCredentialsFactory.getInstance()
 
@@ -81,19 +84,17 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigNoFolderPrefix.datasetVersion === datasetVersion)
     assert(cmdConfigNoFolderPrefix.reportDate === reportDate)
     assert(cmdConfigNoFolderPrefix.reportVersion.get === reportVersion)
-    assert(cmdConfigNoFolderPrefix.rawFormat === rawFormat)
     assert(cmdConfigNoFolderPrefix.folderPrefix.isEmpty)
-    assert(cmdConfigNoFolderPrefix.rawPathOverride.isEmpty)
+    assert(cmdConfigNoFolderPrefix.publishPathOverride.isEmpty)
     assert(actualPlainMenasCredentials === menasCredentials)
 
-    val cmdConfigFolderPrefix = StandardizationCmdConfigT.getCmdLineArguments(
+    val cmdConfigFolderPrefix = ConformanceConfigInstance.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
         "--menas-auth-keytab", keytabPath,
-        "--raw-format", rawFormat,
         "--folder-prefix", folderPrefix))
 
     val actualMenasKerberosCredentials = cmdConfigFolderPrefix.menasCredentialsFactory.getInstance()
@@ -102,15 +103,33 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigFolderPrefix.datasetVersion === datasetVersion)
     assert(cmdConfigFolderPrefix.reportDate === reportDate)
     assert(cmdConfigFolderPrefix.reportVersion.get === reportVersion)
-    assert(cmdConfigFolderPrefix.rawFormat === rawFormat)
     assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
     assert(cmdConfigFolderPrefix.folderPrefix.get === folderPrefix)
-    assert(cmdConfigFolderPrefix.rawPathOverride.isEmpty)
+    assert(cmdConfigFolderPrefix.publishPathOverride.isEmpty)
     assert(actualMenasKerberosCredentials === menasKeytab)
+
+    val cmdConfigPublishPathOverrideAndFolderPrefix = ConformanceConfigInstance.getFromArguments(
+      Array(
+        "--dataset-name", datasetName,
+        "--dataset-version", datasetVersion.toString,
+        "--report-date", reportDate,
+        "--report-version", reportVersion.toString,
+        "--menas-credentials-file", menasCredentialsFile,
+        "--debug-set-publish-path", hdfsPublishPathOverride,
+        "--folder-prefix", folderPrefix))
+
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.datasetName === datasetName)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.datasetVersion === datasetVersion)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.reportDate === reportDate)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.reportVersion.get === reportVersion)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.folderPrefix.nonEmpty)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.folderPrefix.get === folderPrefix)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.publishPathOverride.nonEmpty)
+    assert(cmdConfigPublishPathOverrideAndFolderPrefix.publishPathOverride.get === hdfsPublishPathOverride)
   }
 
-  test("Test buildRawPath") {
-    val standardiseDataset = Dataset(
+  test("Test buildPublishPath") {
+    val conformanceDataset = Dataset(
       datasetName,
       datasetVersion,
       description,
@@ -127,56 +146,52 @@ class StdConfigSuite extends FunSuite with SparkTestBase {
       userDisabled,
       List()
     )
-    val cmdConfigNoFolderPrefix = StandardizationCmdConfigT.getCmdLineArguments(
+    val cmdConfigNoFolderPrefix = ConformanceConfigInstance.getFromArguments(
+      Array(
+        "--dataset-name", datasetName,
+        "--dataset-version", datasetVersion.toString,
+        "--report-date", reportDate,
+        "--report-version", reportVersion.toString,
+        "--menas-credentials-file", menasCredentialsFile
+      ))
+    val cmdConfigFolderPrefix = ConformanceConfigInstance.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile,
-        "--raw-format", rawFormat))
-    val cmdConfigFolderPrefix = StandardizationCmdConfigT.getCmdLineArguments(
+        "--folder-prefix", folderPrefix))
+    val cmdConfigPublishPathOverride = ConformanceConfigInstance.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile,
+        "--debug-set-publish-path", hdfsPublishPathOverride))
+    val cmdConfigPublishPathOverrideAndFolderPrefix = ConformanceConfigInstance.getFromArguments(
+      Array(
+        "--dataset-name", datasetName,
+        "--dataset-version", datasetVersion.toString,
+        "--report-date", reportDate,
+        "--report-version", reportVersion.toString,
         "--folder-prefix", folderPrefix,
-        "--raw-format", rawFormat))
-    val cmdConfigRawPathOverride = StandardizationCmdConfigT.getCmdLineArguments(
-      Array(
-        "--dataset-name", datasetName,
-        "--dataset-version", datasetVersion.toString,
-        "--report-date", reportDate,
-        "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile,
-        "--debug-set-raw-path", hdfsRawPathOverride,
-        "--raw-format", rawFormat))
-    val cmdConfigRawPathOverrideAndFolderPrefix = StandardizationCmdConfigT.getCmdLineArguments(
-      Array(
-        "--dataset-name", datasetName,
-        "--dataset-version", datasetVersion.toString,
-        "--report-date", reportDate,
-        "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
-        "--folder-prefix", folderPrefix,
-        "--debug-set-raw-path", hdfsRawPathOverride,
-        "--raw-format", rawFormat))
+        "--debug-set-publish-path", hdfsPublishPathOverride))
+    val publishPathNoFolderPrefix = TestDynamicConformance.buildPublishPath(cmdConfigNoFolderPrefix,
+      conformanceDataset, cmdConfigNoFolderPrefix.reportVersion.get)
+    assert(publishPathNoFolderPrefix === s"$hdfsPublishPath/$infoDateColumn=$reportDate/$infoVersionColumn=$reportVersion")
+    val publishPathFolderPrefix = TestDynamicConformance.buildPublishPath(cmdConfigFolderPrefix,
+      conformanceDataset, cmdConfigFolderPrefix.reportVersion.get)
+    assert(publishPathFolderPrefix === s"$hdfsPublishPath/$folderPrefix/$infoDateColumn=$reportDate/$infoVersionColumn=$reportVersion")
+    val publishPathPublishPathOverride = TestDynamicConformance.buildPublishPath(cmdConfigPublishPathOverride, conformanceDataset, cmdConfigPublishPathOverride.reportVersion.get)
+    assert(publishPathPublishPathOverride === hdfsPublishPathOverride)
 
-
-    val publishPathNoFolderPrefix = StandardizationJob.buildRawPath(cmdConfigNoFolderPrefix, standardiseDataset,
-      cmdConfigNoFolderPrefix.reportVersion.get)
-    assert(publishPathNoFolderPrefix === s"${standardiseDataset.hdfsPath}/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigNoFolderPrefix.reportVersion.get}")
-    val publishPathFolderPrefix = StandardizationJob.buildRawPath(cmdConfigFolderPrefix, standardiseDataset,
-      cmdConfigFolderPrefix.reportVersion.get)
-    assert(publishPathFolderPrefix === s"${standardiseDataset.hdfsPath}/$folderPrefix/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigFolderPrefix.reportVersion.get}")
-    val publishPathRawPathOverride = StandardizationJob.buildRawPath(cmdConfigRawPathOverride, standardiseDataset,
-      cmdConfigRawPathOverride.reportVersion.get)
-    assert(publishPathRawPathOverride === hdfsRawPathOverride)
-    val publishPathRawPathOverrideAndFolderPrefix = StandardizationJob.buildRawPath(cmdConfigRawPathOverrideAndFolderPrefix,
-        standardiseDataset, cmdConfigRawPathOverrideAndFolderPrefix.reportVersion.get)
-    assert(publishPathRawPathOverrideAndFolderPrefix === hdfsRawPathOverride)
+    val publishPathPublishPathOverrideAndFolderPrefix =
+      TestDynamicConformance.buildPublishPath(cmdConfigPublishPathOverrideAndFolderPrefix,
+        conformanceDataset, cmdConfigPublishPathOverrideAndFolderPrefix.reportVersion.get)
+    assert(publishPathPublishPathOverrideAndFolderPrefix === hdfsPublishPathOverride)
   }
 
 }

@@ -24,6 +24,7 @@ import org.scalatest.{Outcome, fixture}
 import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
@@ -73,7 +74,7 @@ class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase
   private def getTestDataFrame(tmpFileName: String,
                                args: Array[String]
                               ): DataFrame = {
-    val cmd = StandardizationCmdConfigT.getCmdLineArguments(argumentsBase ++ args)
+    val cmd: StandardizationConfigInstance = StandardizationConfigInstance.getFromArguments(argumentsBase ++ args)
     val cobolReader = standardizationReader.getFormatSpecificReader(cmd, dataSet, schema.fields.length)
     cobolReader
       .option("copybook_contents", copybook)
@@ -133,6 +134,21 @@ class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase
         |{"A1":"2","A2":"est2","A3":"SomeText"}
         |{"A1":"3","A2":"None","A3":"Data¡3"}
         |{"A1":"4","A2":"on","A3":"Data 4"}""".stripMargin.replace("\r\n", "\n")
+
+    val df = getTestDataFrame(tmpFileName, args)
+    val actual = df.toJSON.collect.mkString("\n")
+
+    assert(actual == expected)
+  }
+
+  test("Test ASCII COBOL file that has EOL as record separators") { tmpFileName =>
+    val args = "--cobol-is-text true".split(" ")
+
+    val expected =
+      """{"A1":"1","A2":"Tes","A3":"0123456789"}
+        |{"A1":"2","A2":"est2","A3":"SomeText"}
+        |{"A1":"3","A2":"None","A3":"Data   3"}
+        |{"A1":"","A2":"4 on","A3":"Data"}""".stripMargin.replace("\r\n", "\n")
 
     val df = getTestDataFrame(tmpFileName, args)
     val actual = df.toJSON.collect.mkString("\n")

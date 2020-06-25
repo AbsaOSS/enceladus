@@ -20,9 +20,9 @@ import java.time.Instant
 import com.typesafe.config.Config
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId._
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
+import za.co.absa.enceladus.utils.modules.SourceId._
 
 object PostProcessingService {
   //scalastyle:off parameter.number

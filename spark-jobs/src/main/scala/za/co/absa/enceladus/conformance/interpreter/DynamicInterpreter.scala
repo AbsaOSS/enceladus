@@ -23,7 +23,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits._
-import za.co.absa.enceladus.conformance.{ConformanceCmdConfig, ConformanceCmdConfigT}
+import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
 import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
@@ -50,11 +50,11 @@ object DynamicInterpreter {
     * @return The conformed DataFrame.
     *
     */
-  def interpret[T](conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
-               (implicit spark: SparkSession, dao: MenasDAO, progArgs: ConformanceCmdConfigT[T], featureSwitches: FeatureSwitches): DataFrame = {
+  def interpret(conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
+               (implicit spark: SparkSession, dao: MenasDAO, progArgs: ConformanceConfigInstance, featureSwitches: FeatureSwitches): DataFrame = {
 
     implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
-      featureSwitches, jobShortName, spark, dao, progArgs.asInstanceOf[ConformanceCmdConfig])
+      featureSwitches, jobShortName, spark, dao, progArgs)
 
     applyCheckpoint(inputDf, "Start")
 
@@ -76,7 +76,7 @@ object DynamicInterpreter {
                                    (implicit ictx: InterpreterContext): DataFrame = {
     implicit val spark: SparkSession = ictx.spark
     implicit val dao: MenasDAO = ictx.dao
-    implicit val progArgs = ictx.progArgs
+    implicit val progArgs: ConformanceConfigInstance = ictx.progArgs
     implicit val udfLib: UDFLibrary = new UDFLibrary
     implicit val explosionState: ExplosionState = new ExplosionState()
 

@@ -13,22 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.common
 
-/**
-  * This is a class for COBOL format loading properties
-  *
-  * Note: scopt requires all fields to have default values.
-  * Even if a field is mandatory it needs a default value.
-
-  * @param copybook A location of a copybook
-  * @param isXcom Does a mainframe file contain XCOM record headers
-  */
-case class CobolOptions
-(
-  copybook: String = "",
-  encoding: Option[String] = None,
-  trimmingPolicy: Option[String] = None,
-  isText: Boolean = false,
-  isXcom: Boolean = false
-)
+case class PathConfig(inputPath: String, outputPath: String)

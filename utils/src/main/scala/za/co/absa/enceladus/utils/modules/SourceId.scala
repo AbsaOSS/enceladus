@@ -13,22 +13,28 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization
+package za.co.absa.enceladus.utils.modules
 
-/**
-  * This is a class for COBOL format loading properties
-  *
-  * Note: scopt requires all fields to have default values.
-  * Even if a field is mandatory it needs a default value.
+sealed trait SourceId {
+  val value: String
 
-  * @param copybook A location of a copybook
-  * @param isXcom Does a mainframe file contain XCOM record headers
-  */
-case class CobolOptions
-(
-  copybook: String = "",
-  encoding: Option[String] = None,
-  trimmingPolicy: Option[String] = None,
-  isText: Boolean = false,
-  isXcom: Boolean = false
-)
+  def asIdentifier: String = value.toLowerCase
+}
+
+object SourceId {
+  def withIdentifier(name: String): SourceId = {
+    name match {
+      case "conformance" => SourceId.Conformance
+      case "standardization" => SourceId.Standardization
+      case _ => throw new NoSuchElementException(s"No value found for '$name'")
+    }
+  }
+
+  case object Standardization extends SourceId {
+    val value = "Standardization"
+  }
+
+  case object Conformance extends SourceId {
+    val value = "Conformance"
+  }
+}

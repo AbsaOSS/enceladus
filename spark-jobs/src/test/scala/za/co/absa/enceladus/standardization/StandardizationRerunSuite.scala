@@ -25,6 +25,7 @@ import org.scalatest.{Outcome, fixture}
 import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.utils.error.ErrorMessage
@@ -69,7 +70,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
       "--menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format csv --header false --delimiter |").split(" ")
 
-    val cmd = StandardizationCmdConfigT.getCmdLineArguments(args)
+    val cmd: StandardizationConfigInstance = StandardizationConfigInstance.getFromArguments(args)
     standardizationReader
       .getFormatSpecificReader(cmd, dataSet, schemaWithStringType.fields.length)
       .schema(schemaWithStringType)
