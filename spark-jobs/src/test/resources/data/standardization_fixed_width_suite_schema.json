@@ -1,0 +1,19 @@
+{
+  "type" : "struct",
+  "fields" : [ {
+    "name" : "id",
+    "type" : "long",
+    "nullable" : false,
+    "metadata" : { "width" : "3" }
+  }, {
+    "name" : "first_name",
+    "type" : "string",
+    "nullable" : true,
+    "metadata" : { "width" : "15" }
+  }, {
+    "name" : "last_name",
+    "type" : "string",
+    "nullable" : false,
+    "metadata" : { "width" : "9" }
+  } ]
+}
