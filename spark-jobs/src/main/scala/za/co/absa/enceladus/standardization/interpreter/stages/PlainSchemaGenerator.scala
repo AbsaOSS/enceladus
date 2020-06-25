@@ -31,7 +31,7 @@ object PlainSchemaGenerator {
       // If the meta data value sourcecolumn is set override the field name
       val fieldName = field.getMetadataString(MetadataKeys.SourceColumn).getOrElse(field.name)
       val dataType = inputSchemaAsStringTypes(field.dataType)
-      StructField(fieldName, dataType, nullable = true) //metadata not needed to be transferred
+      StructField(fieldName, dataType, nullable = true, field.metadata)
     }
   }
 
@@ -47,6 +47,7 @@ object PlainSchemaGenerator {
     val inputSchema = structTypeFieldsConversion(structType.fields)
     val corruptRecordField = corruptRecordFieldName.map(StructField(_, StringType)).toArray
     StructType(inputSchema ++ corruptRecordField)
+
   }
 
 
