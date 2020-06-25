@@ -124,7 +124,7 @@ case $key in
     shift 2 # past argument and value
     ;;
     --class)
-    JAR="$2"
+    CLASS="$2"
     shift 2 # past argument and value
     ;;
     -D|--dataset-name)
