@@ -111,7 +111,6 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
 
   protected val nestedStructsDS = Dataset(
     name = "Nested Structs Conformance",
-    version = 1,
     hdfsPath = "src/test/testData/_nestedStructs",
     hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
     schemaName = "NestedStructs", schemaVersion = 0,
@@ -121,7 +120,6 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
 
   protected val nestedStructsUpperDS = Dataset(
     name = "Nested Structs Conformance",
-    version = 1,
     hdfsPath = "src/test/testData/_nestedStructs",
     hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
     schemaName = "NestedStructs", schemaVersion = 0,
@@ -131,7 +129,6 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
 
   protected val nestedStructsNegationDS = Dataset(
     name = "Nested Structs Conformance",
-    version = 1,
     hdfsPath = "src/test/testData/_nestedStructs",
     hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
     schemaName = "NestedStructs", schemaVersion = 0,
@@ -141,7 +138,6 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
 
   protected val nestedStructsCastingDS = Dataset(
     name = "Nested Structs Conformance",
-    version = 1,
     hdfsPath = "src/test/testData/_nestedStructs",
     hdfsPublishPath = "src/test/testData/_conformedNestedStructs",
     schemaName = "NestedStructs", schemaVersion = 0,
