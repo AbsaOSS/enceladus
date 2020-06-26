@@ -38,7 +38,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.general.ProjectMetadataTools
+import za.co.absa.enceladus.utils.general.{ConfigReader, ProjectMetadataTools}
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
@@ -58,6 +58,7 @@ object StandardizationJob {
 
   private val log = LoggerFactory.getLogger(this.getClass)
   private val conf = ConfigFactory.load()
+  private val confReader: ConfigReader = new ConfigReader(conf)
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 
@@ -67,6 +68,8 @@ object StandardizationJob {
     SecureConfig.setSecureKafkaProperties(conf)
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
+
+    confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
 
     implicit val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()
