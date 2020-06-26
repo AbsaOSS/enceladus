@@ -3,8 +3,10 @@ package za.co.absa.enceladus.standardization
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
 import org.scalatest.mockito.MockitoSugar
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileReader
@@ -14,7 +16,7 @@ import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with MockitoSugar{
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
-
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
     "--menas-auth-keytab src/test/resources/user.keytab.example " +
     "--raw-format fixed-width").split(" ")
@@ -28,9 +30,9 @@ class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with Mo
   ).asInstanceOf[StructType]
 
   test("Reading data from FixedWidth input") {
-    val cmd = StdCmdConfig.getCmdLineArguments(argsBase)
+    val cmd = StandardizationConfigInstance.getFromArguments(argsBase)
 
-    val fixedWidthReader = StandardizationJob.getFormatSpecificReader(cmd, dataSet)
+    val fixedWidthReader = new StandardizationReader(log).getFormatSpecificReader(cmd, dataSet)
 
     val inputSchema = PlainSchemaGenerator.generateInputSchema(baseSchema)
     val reader = fixedWidthReader.schema(inputSchema)
@@ -47,9 +49,9 @@ class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with Mo
   }
 
   test("Reading data from FixedWidth input trimmed") {
-    val cmd = StdCmdConfig.getCmdLineArguments(argsBase ++ Array("--trimValues", "true"))
+    val cmd = StandardizationConfigInstance.getFromArguments(argsBase ++ Array("--trimValues", "true"))
 
-    val fixedWidthReader = StandardizationJob.getFormatSpecificReader(cmd, dataSet)
+    val fixedWidthReader = new StandardizationReader(log).getFormatSpecificReader(cmd, dataSet)
 
     val inputSchema = PlainSchemaGenerator.generateInputSchema(baseSchema)
     val reader = fixedWidthReader.schema(inputSchema)

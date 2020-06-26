@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.standardization
 
 import org.apache.spark.sql.{DataFrameReader, SparkSession}
-import org.slf4j.Logger
+import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common._
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset

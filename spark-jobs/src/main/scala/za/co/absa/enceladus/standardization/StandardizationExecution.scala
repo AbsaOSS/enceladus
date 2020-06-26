@@ -23,9 +23,9 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.JobConfig
+import za.co.absa.enceladus.common.config.{JobConfig, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants, PathConfig}
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
@@ -58,9 +58,7 @@ trait StandardizationExecution extends CommonJobExecution {
       cmd.datasetName,
       cmd.datasetVersion,
       cmd.reportDate,
-      preparationResult.reportVersion,
-      isJobStageOnly = false,
-      generateNewRun = false)
+      preparationResult.reportVersion)
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
@@ -90,21 +88,28 @@ trait StandardizationExecution extends CommonJobExecution {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationReader(log)
     val dfReaderConfigured = standardizationReader.getFormatSpecificReader(cmd, dataset, numberOfColumns)
-    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")
-      && !cmd.rawFormat.equalsIgnoreCase("cobol")) {
-      // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
-      val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
-      val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {
-        None
-      } else {
-        Option(columnNameOfCorruptRecord)
-      }
-      val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, optColumnNameOfCorruptRecord)
-      dfReaderConfigured.schema(inputSchema)
-    } else {
-      dfReaderConfigured
-    }).load(s"$path/*")
+    val readerWithOptSchema = cmd.rawFormat.toLowerCase() match {
+      case "parquet" | "cobol" => dfReaderConfigured
+      case _ =>
+        val optColumnNameOfCorruptRecord = getColumnNameOfCorruptRecord(schema, cmd)
+        val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, optColumnNameOfCorruptRecord)
+        dfReaderConfigured.schema(inputSchema)
+    }
+    val dfWithSchema = readerWithOptSchema.load(s"$path/*")
+
     ensureSplittable(dfWithSchema, path, schema)
+  }
+
+
+  private def getColumnNameOfCorruptRecord[R](schema: StructType, cmd: StandardizationConfig[R])
+                                          (implicit spark: SparkSession): Option[String] = {
+    // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
+    val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
+    if (cmd.rawFormat.equalsIgnoreCase("fixed-width") || cmd.failOnInputNotPerSchema) {
+      None
+    } else {
+      Option(columnNameOfCorruptRecord)
+    }
   }
 
   protected def standardize(inputData: DataFrame, schema: StructType, cmd: StandardizationConfigInstance)

@@ -23,9 +23,9 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.config.JobConfig
+import za.co.absa.enceladus.common.config.{JobConfig, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants, PathConfig, RecordIdGeneration}
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigInstance}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
