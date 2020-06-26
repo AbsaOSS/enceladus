@@ -39,14 +39,14 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
+import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.general.{ConfigReader, ProjectMetadataTools}
+import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-import za.co.absa.enceladus.utils.config.SecureConfig
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
-import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}

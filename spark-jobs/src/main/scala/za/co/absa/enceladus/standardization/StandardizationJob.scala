@@ -29,6 +29,7 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.{IdType, _}
 import za.co.absa.enceladus.common._
+import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
@@ -37,17 +38,15 @@ import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactor
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.general.{ConfigReader, ProjectMetadataTools}
+import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.unicode.ParameterConversion._
 import za.co.absa.enceladus.utils.validation.ValidationException
-import org.apache.spark.SPARK_VERSION
-import za.co.absa.enceladus.common.plugin.PostProcessingService
-import za.co.absa.enceladus.utils.config.SecureConfig
 
 import scala.collection.immutable.HashMap
 import scala.util.control.NonFatal
