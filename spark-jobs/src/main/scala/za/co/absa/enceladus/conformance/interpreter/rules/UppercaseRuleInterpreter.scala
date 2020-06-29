@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -30,7 +30,7 @@ case class UppercaseRuleInterpreter(rule: UppercaseConformanceRule) extends Rule
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceConfigInstance): Dataset[Row] = {
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceConfig): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateInputField(progArgs.datasetName, ruleName, df.schema, rule.inputColumn)
     RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)

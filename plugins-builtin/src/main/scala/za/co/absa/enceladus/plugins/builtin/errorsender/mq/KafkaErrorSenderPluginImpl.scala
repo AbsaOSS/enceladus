@@ -184,9 +184,9 @@ object KafkaErrorSenderPluginImpl {
     }
   }
 
-  def errorCodesForSource(sourceId: SourceId): Seq[String] = sourceId match {
-    case SourceId.Standardization => ErrorCodes.standardizationErrorCodes
-    case SourceId.Conformance => ErrorCodes.conformanceErrorCodes
+  def errorCodesForSource(sourceId: SourcePhase): Seq[String] = sourceId match {
+    case SourcePhase.Standardization => ErrorCodes.standardizationErrorCodes
+    case SourcePhase.Conformance => ErrorCodes.conformanceErrorCodes
   }
 
 }

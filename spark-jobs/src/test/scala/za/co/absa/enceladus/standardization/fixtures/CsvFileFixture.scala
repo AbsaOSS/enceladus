@@ -21,17 +21,15 @@ import java.nio.charset.{Charset, StandardCharsets}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.scalatest.mockito.MockitoSugar
-import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationReader
-import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
+import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 trait CsvFileFixture extends MockitoSugar with TempFileFixture with SparkTestBase {
   private implicit val dao: MenasDAO = mock[MenasDAO]
-  private implicit val log: Logger = mock[Logger]
-  private val standardizationReader = new StandardizationReader(log)
+  private val standardizationReader = new StandardizationReader()
 
   type FixtureParam = String
   private val tmpFilePrefix = "special-characters"
@@ -62,7 +60,7 @@ trait CsvFileFixture extends MockitoSugar with TempFileFixture with SparkTestBas
                           dataSet: Dataset,
                           schema: StructType
                          ): DataFrame = {
-    val cmd: StandardizationConfigInstance = StandardizationConfigInstance.getFromArguments(args)
+    val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(args)
     val csvReader = if (checkMaxColumns) {
       standardizationReader.getFormatSpecificReader(cmd, dataSet, schema.fields.length)
     } else {

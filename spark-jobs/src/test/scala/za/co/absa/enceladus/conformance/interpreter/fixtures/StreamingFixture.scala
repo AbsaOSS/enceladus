@@ -23,14 +23,14 @@ import org.scalatest.mockito.MockitoSugar
 import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
 import za.co.absa.enceladus.conformance.streaming.InfoDateFactory
 import za.co.absa.enceladus.conformance.HyperConformance
-import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 trait StreamingFixture extends FunSuite with SparkTestBase with MockitoSugar {
   implicit val menasBaseUrls: List[String] = List.empty
-  implicit val cmd: ConformanceConfigInstance = ConformanceConfigInstance(reportVersion = Some(1))
+  implicit val cmd: ConformanceConfig = ConformanceConfig(reportVersion = Some(1))
 
   protected def testHyperConformance(input: DataFrame,
                                      sinkTableName: String,

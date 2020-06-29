@@ -17,14 +17,14 @@ package za.co.absa.enceladus.plugins.builtin.errorsender.params
 
 import java.time.Instant
 
-import za.co.absa.enceladus.utils.modules.SourceId
+import za.co.absa.enceladus.utils.modules.SourcePhase
 
 case class ErrorSenderPluginParams(datasetName: String,
                                    datasetVersion: Int,
                                    reportDate: String,
                                    reportVersion: Int,
                                    outputPath: String,
-                                   sourceId: SourceId,
+                                   sourceId: SourcePhase,
                                    sourceSystem: String,
                                    runUrls: Option[String],
                                    runId: Option[Int],
@@ -75,7 +75,7 @@ object ErrorSenderPluginParams {
     reportDate = params(reportDate),
     reportVersion = params(reportVersion).toInt,
     outputPath = params(outputPath),
-    sourceId = SourceId.withIdentifier(params(sourceId)),
+    sourceId = SourcePhase.withIdentifier(params(sourceId)),
     sourceSystem = params(sourceSystem),
     runUrls = params.get(runUrls),
     runId = params.get(runId).map(_.toInt),

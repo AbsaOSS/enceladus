@@ -16,11 +16,11 @@
 package za.co.absa.enceladus.conformance
 
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.modules.SourceId
+import za.co.absa.enceladus.utils.modules.SourcePhase
 
 object DynamicConformanceJob extends ConformanceExecution {
 
@@ -29,7 +29,7 @@ object DynamicConformanceJob extends ConformanceExecution {
     // After Spring activates JavaX, it will be too late.
     initialValidation()
 
-    implicit val cmd: ConformanceConfigInstance = ConformanceConfigInstance.getFromArguments(args)
+    implicit val cmd: ConformanceConfig = ConformanceConfig.getFromArguments(args)
     implicit val spark: SparkSession = obtainSparkSession() // initialize spark
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
@@ -43,7 +43,7 @@ object DynamicConformanceJob extends ConformanceExecution {
       val result = conform(inputData, preparationResult)
 
       processConformanceResult(args, result, preparationResult, menasCredentials)
-      runPostProcessing(SourceId.Conformance, preparationResult, cmd)
+      runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)
     } finally {
       finishJob(cmd)
     }

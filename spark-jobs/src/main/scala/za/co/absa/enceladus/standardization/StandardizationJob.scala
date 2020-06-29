@@ -18,9 +18,9 @@ package za.co.absa.enceladus.standardization
 import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
-import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
+import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.modules.SourceId
+import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 object StandardizationJob extends StandardizationExecution {
@@ -28,7 +28,7 @@ object StandardizationJob extends StandardizationExecution {
   def main(args: Array[String]) {
     initialValidation()
 
-    implicit val cmd: StandardizationConfigInstance = StandardizationConfigInstance.getFromArguments(args)
+    implicit val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     implicit val udfLib: UDFLibrary = new UDFLibrary
@@ -44,7 +44,7 @@ object StandardizationJob extends StandardizationExecution {
 
       processStandardizationResult(args, result, preparationResult, schema, cmd, menasCredentials)
 
-      runPostProcessing(SourceId.Standardization, preparationResult, cmd)
+      runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
     } finally {
       finishJob(cmd)
     }

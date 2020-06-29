@@ -23,7 +23,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class StandardizationConfigSuite extends FunSuite with SparkTestBase {
+class StandardizationParserSuite extends FunSuite with SparkTestBase {
 
   private val year = "2018"
   private val month = "12"
@@ -69,7 +69,7 @@ class StandardizationConfigSuite extends FunSuite with SparkTestBase {
   }
 
   test("folder-prefix parameter") {
-    val cmdConfigNoFolderPrefix = StandardizationConfigInstance.getFromArguments(
+    val cmdConfigNoFolderPrefix = StandardizationConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -89,7 +89,7 @@ class StandardizationConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigNoFolderPrefix.rawPathOverride.isEmpty)
     assert(actualPlainMenasCredentials === menasCredentials)
 
-    val cmdConfigFolderPrefix = StandardizationConfigInstance.getFromArguments(
+    val cmdConfigFolderPrefix = StandardizationConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -130,7 +130,7 @@ class StandardizationConfigSuite extends FunSuite with SparkTestBase {
       userDisabled,
       List()
     )
-    val cmdConfigNoFolderPrefix = StandardizationConfigInstance.getFromArguments(
+    val cmdConfigNoFolderPrefix = StandardizationConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -138,7 +138,7 @@ class StandardizationConfigSuite extends FunSuite with SparkTestBase {
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile,
         "--raw-format", rawFormat))
-    val cmdConfigFolderPrefix = StandardizationConfigInstance.getFromArguments(
+    val cmdConfigFolderPrefix = StandardizationConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -147,7 +147,7 @@ class StandardizationConfigSuite extends FunSuite with SparkTestBase {
         "--menas-credentials-file", menasCredentialsFile,
         "--folder-prefix", folderPrefix,
         "--raw-format", rawFormat))
-    val cmdConfigRawPathOverride = StandardizationConfigInstance.getFromArguments(
+    val cmdConfigRawPathOverride = StandardizationConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -156,7 +156,7 @@ class StandardizationConfigSuite extends FunSuite with SparkTestBase {
         "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-raw-path", hdfsRawPathOverride,
         "--raw-format", rawFormat))
-    val cmdConfigRawPathOverrideAndFolderPrefix = StandardizationConfigInstance.getFromArguments(
+    val cmdConfigRawPathOverrideAndFolderPrefix = StandardizationConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,

@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
-import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -34,7 +34,7 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   override def conform(df: Dataset[Row])
-                      (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceConfigInstance): Dataset[Row] = {
+                      (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceConfig): Dataset[Row] = {
     NegationRuleInterpreter.validateInputField(progArgs.datasetName, df.schema, rule.inputColumn)
 
     val field = SchemaUtils.getField(rule.inputColumn, df.schema).get

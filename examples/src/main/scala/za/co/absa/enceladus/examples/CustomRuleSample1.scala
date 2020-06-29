@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.examples
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
@@ -41,7 +41,7 @@ object CustomRuleSample1 {
     // scalastyle:off magic.number
     val menasBaseUrls = List("http://localhost:8080/menas")
     val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
-    implicit val progArgs: ConformanceConfigInstance = ConformanceConfigInstance() // here we may need to specify some parameters (for certain rules)
+    implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
 
     val experimentalMR = true

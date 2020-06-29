@@ -15,26 +15,29 @@
 
 package za.co.absa.enceladus.utils.modules
 
-sealed trait SourceId {
+/**
+ * Stands to represent the source part (standardization or conformance) regardless of the Job class
+ */
+sealed trait SourcePhase {
   val value: String
 
   def asIdentifier: String = value.toLowerCase
 }
 
-object SourceId {
-  def withIdentifier(name: String): SourceId = {
+object SourcePhase {
+  def withIdentifier(name: String): SourcePhase = {
     name match {
-      case "conformance" => SourceId.Conformance
-      case "standardization" => SourceId.Standardization
+      case "conformance" => SourcePhase.Conformance
+      case "standardization" => SourcePhase.Standardization
       case _ => throw new NoSuchElementException(s"No value found for '$name'")
     }
   }
 
-  case object Standardization extends SourceId {
+  case object Standardization extends SourcePhase {
     val value = "Standardization"
   }
 
-  case object Conformance extends SourceId {
+  case object Conformance extends SourcePhase {
     val value = "Conformance"
   }
 }

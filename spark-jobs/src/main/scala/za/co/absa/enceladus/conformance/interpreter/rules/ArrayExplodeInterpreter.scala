@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
-import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.ExplosionState
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
@@ -29,7 +29,7 @@ class ArrayExplodeInterpreter(columnName: String) extends RuleInterpreter {
   override def conformanceRule: Option[ConformanceRule] = None
 
   override def conform(df: Dataset[Row])
-                      (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceConfigInstance): Dataset[Row] = {
+                      (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceConfig): Dataset[Row] = {
     val (dfOut, ctx) = ExplodeTools.explodeAllArraysInPath(columnName, df, explosionState.explodeContext)
     explosionState.explodeContext = ctx
     dfOut

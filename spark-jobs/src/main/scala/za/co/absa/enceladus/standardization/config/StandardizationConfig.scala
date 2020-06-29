@@ -15,201 +15,87 @@
 
 package za.co.absa.enceladus.standardization.config
 
-import scopt.{OParser, OParserBuilder}
-import za.co.absa.enceladus.common.config.JobConfig
+import org.apache.spark.storage.StorageLevel
+import scopt.OParser
+import za.co.absa.enceladus.common.config.{ConfigError, JobParser}
+import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory}
 import za.co.absa.enceladus.standardization.CobolOptions
 
-trait StandardizationConfig[R] extends JobConfig[R] {
-  def withRawFormat(value: String): R
-  def withCharset(value: Option[String] = None): R
-  def withRowTag(value: Option[String] = None): R
-  def withCsvDelimiter(value: Option[String] = None): R
-  def withCsvHeader(value: Option[Boolean] = Some(false)): R
-  def withCsvQuote(value: Option[String] = None): R
-  def withCsvEscape(value: Option[String] = None): R
-  def withCobolOptions(value: Option[CobolOptions] = None): R
-  def withFixedWidthTrimValues(value: Option[Boolean] = Some(false)): R
-  def withRawPathOverride(value: Option[String]): R
-  def withFailOnInputNotPerSchema(value: Boolean): R
+import scala.util.Try
 
-  def rawFormat: String
-  def charset: Option[String]
-  def rowTag: Option[String]
-  def csvDelimiter: Option[String]
-  def csvHeader: Option[Boolean]
-  def csvQuote: Option[String]
-  def csvEscape: Option[String]
-  def cobolOptions: Option[CobolOptions]
-  def fixedWidthTrimValues: Option[Boolean]
-  def rawPathOverride: Option[String]
-  def failOnInputNotPerSchema: Boolean
+/**
+ * This is a class for configuration provided by the command line parameters
+ *
+ * Note: scopt requires all fields to have default values.
+ * Even if a field is mandatory it needs a default value.
+ */
+case class StandardizationConfig(rawFormat: String = "xml",
+                                 charset: Option[String] = None,
+                                 rowTag: Option[String] = None,
+                                 csvDelimiter: Option[String] = None,
+                                 csvHeader: Option[Boolean] = Some(false),
+                                 csvQuote: Option[String] = None,
+                                 csvEscape: Option[String] = None,
+                                 cobolOptions: Option[CobolOptions] = None,
+                                 fixedWidthTrimValues: Option[Boolean] = Some(false),
+                                 rawPathOverride: Option[String] = None,
+                                 failOnInputNotPerSchema: Boolean = false,
+                                 datasetName: String = "",
+                                 datasetVersion: Int = 1,
+                                 reportDate: String = "",
+                                 reportVersion: Option[Int] = None,
+                                 menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
+                                 performanceMetricsFile: Option[String] = None,
+                                 folderPrefix: Option[String] = None,
+                                 persistStorageLevel: Option[StorageLevel] = None,
+                                 credsFile: Option[String] = None,
+                                 keytabFile: Option[String] = None
+                                        )
+  extends StandardizationParser[StandardizationConfig] with JobParser[StandardizationConfig]{
+  override def withRawFormat(value: String): StandardizationConfig = copy(rawFormat = value)
+  override def withCharset(value: Option[String]): StandardizationConfig = copy(charset = value)
+  override def withRowTag(value: Option[String]): StandardizationConfig = copy(rowTag = value)
+  override def withCsvDelimiter(value: Option[String]): StandardizationConfig = copy(csvDelimiter = value)
+  override def withCsvHeader(value: Option[Boolean]): StandardizationConfig = copy(csvHeader = value)
+  override def withCsvQuote(value: Option[String]): StandardizationConfig = copy(csvQuote = value)
+  override def withCsvEscape(value: Option[String]): StandardizationConfig = copy(csvEscape = value)
+  override def withCobolOptions(value: Option[CobolOptions]): StandardizationConfig = copy(cobolOptions = value)
+  override def withFixedWidthTrimValues(value: Option[Boolean]): StandardizationConfig = copy(fixedWidthTrimValues = value)
+  override def withRawPathOverride(value: Option[String]): StandardizationConfig = copy(rawPathOverride = value)
+  override def withFailOnInputNotPerSchema(value: Boolean): StandardizationConfig = copy(failOnInputNotPerSchema = value)
+
+  override def withDatasetName(value: String): StandardizationConfig = copy(datasetName = value)
+  override def withDatasetVersion(value: Int): StandardizationConfig = copy(datasetVersion = value)
+  override def withReportDate(value: String): StandardizationConfig = copy(reportDate = value)
+  override def withReportVersion(value: Option[Int]): StandardizationConfig = copy(reportVersion = value)
+  override def withCredsFile(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): StandardizationConfig = {
+    copy(credsFile = value, menasCredentialsFactory = menasCredentialsFactory)
+  }
+  override def withAuthKeytab(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): StandardizationConfig = {
+    copy(keytabFile = value, menasCredentialsFactory = menasCredentialsFactory)
+  }
+  override def withPerformanceMetricsFile(value: Option[String]): StandardizationConfig = copy(performanceMetricsFile = value)
+  override def withFolderPrefix(value: Option[String]): StandardizationConfig = copy(folderPrefix = value)
+  override def withPersistStorageLevel(value: Option[StorageLevel]): StandardizationConfig = copy(persistStorageLevel = value)
 }
 
 object StandardizationConfig {
 
-  //scalastyle:off method.length the length is legit for parsing input paramters
-  def standardizationParser[R <: StandardizationConfig[R]]: OParser[_, R] = {
-    val builder = OParser.builder[R]
+  def tryFromArguments(args: Array[String]): Try[StandardizationConfig] = {
+    import za.co.absa.enceladus.utils.implicits.OptionImplicits._
+    OParser.parse(standardizationJobParser, args, StandardizationConfig()).toTry(ConfigError("Command line parameters error"))
+  }
+
+  def getFromArguments(args: Array[String]): StandardizationConfig = tryFromArguments(args).get
+
+  private val standardizationJobParser: OParser[_, StandardizationConfig] = {
+    val builder = OParser.builder[StandardizationConfig]
     import builder._
     OParser.sequence(
-      head("\nStandardization", ""),
-
-      opt[String]('f', "raw-format").required().action((value, config) => {
-        config.withRawFormat(value.toLowerCase())
-      }).text("format of the raw data (csv, xml, parquet, fixed-width, etc.)"),
-
-      opt[String]("charset").optional().action((value, config) =>
-        config.withCharset(Some(value))).text("use the specific charset (default is UTF-8)"),
-
-      opt[String]("row-tag").optional().action((value, config) =>
-        config.withRowTag(Some(value))).text("use the specific row tag instead of 'ROW' for XML format"),
-
-      opt[String]("delimiter").optional().action((value, config) =>
-        config.withCsvDelimiter(Some(value))).text("use the specific delimiter instead of ',' for CSV format"),
-
-      opt[String]("csv-quote").optional().action((value, config) =>
-        config.withCsvQuote(Some(value)))
-        .text("use the specific quote character for creating CSV fields that may contain delimiter character(s) (default is '\"')"),
-
-      opt[String]("csv-escape").optional().action((value, config) =>
-        config.withCsvEscape(Some(value)))
-        .text("use the specific escape character for CSV fields (default is '\\')"),
-
-      // no need for validation for boolean since scopt itself will do
-      opt[Boolean]("header").optional().action((value, config) =>
-        config.withCsvHeader(Some(value))).text("use the header option to consider CSV header"),
-
-      opt[Boolean]("trimValues").optional().action((value, config) =>
-        config.withFixedWidthTrimValues(Some(value))).text("use --trimValues option to trim values in  fixed width file"),
-
-      opt[Boolean]("strict-schema-check").optional().action((value, config) =>
-        config.withFailOnInputNotPerSchema(value))
-        .text("use --strict-schema-check option to fail or proceed over rows not adhering to the schema (with error in errCol)"),
-
-      opt[String]("copybook").optional().action((value, config) => {
-        val newOptions = config.cobolOptions match {
-          case Some(a) => Some(a.copy(copybook = value))
-          case None => Some(CobolOptions(value))
-        }
-        config.withCobolOptions(newOptions)
-
-      }).text("Path to a copybook for COBOL data format"),
-
-      opt[Boolean]("is-xcom").optional().action((value, config) => {
-        val newOptions = config.cobolOptions match {
-          case Some(a) => Some(a.copy(isXcom = value))
-          case None => Some(CobolOptions(isXcom = value))
-        }
-        config.withCobolOptions(newOptions)
-      }).text("Does a mainframe file in COBOL format contain XCOM record headers"),
-
-      opt[Boolean]("cobol-is-text").optional().action((value, config) => {
-        val newOptions = config.cobolOptions match {
-          case Some(a) => Some(a.copy(isText = value))
-          case None => Some(CobolOptions(isText = value))
-        }
-        config.withCobolOptions(newOptions)
-      }).text("Specifies if the mainframe file is ASCII text file"),
-
-      opt[String]("cobol-encoding").optional().action((value, config) => {
-        val newOptions = config.cobolOptions match {
-          case Some(a) => Some(a.copy(encoding = Option(value)))
-          case None => Some(CobolOptions(encoding = Option(value)))
-        }
-        config.withCobolOptions(newOptions)
-      }).text("Specify encoding of mainframe files (ascii or ebcdic)"),
-
-      opt[String]("cobol-trimming-policy").optional().action((value, config) => {
-        val newOptions = config.cobolOptions match {
-          case Some(a) => Some(a.copy(trimmingPolicy = Option(value)))
-          case None => Some(CobolOptions(trimmingPolicy = Option(value)))
-        }
-        config.withCobolOptions(newOptions)
-      }).text("Specify string trimming policy for mainframe files (none, left, right, both)"),
-
-      opt[String]("debug-set-raw-path").optional().hidden().action((value, config) =>
-        config.withRawPathOverride(Some(value)))
-        .text("override the path of the raw data (used internally for performance tests)"),
-
-      checkConfig(checkConfigX(_, builder))
+      programName("Standardization Job"),
+      head("Standardization", ""),
+      StandardizationParser.standardizationParser,
+      JobParser.jobConfigParser
     )
   }
-  //scalastyle:on method.length
-
-  private val formatsSupportingCharset = List("xml", "csv", "json", "cobol")
-
-  private def typicalError(field: String, format: String): String = {
-    s"The $field option is supported only for $format format"
-  }
-
-  private def checkCharset[R <: StandardizationConfig[R]](config: R): List[String] = {
-    if (!formatsSupportingCharset.contains(config.rawFormat) && config.charset.isDefined) {
-      List(typicalError("--charset", "CSV, JSON, XML and COBOL"))
-    } else {
-      List.empty
-    }
-  }
-
-  private def checkXMLFields[R <: StandardizationConfig[R]](config: R): List[String] = {
-    if (config.rowTag.isDefined && config.rawFormat != "xml") {
-      List(typicalError("--row-tag", "XML raw data"))
-    } else {
-      List.empty
-    }
-  }
-
-  private def checkCSVFields[R <: StandardizationConfig[R]](config: R): List[String] = {
-    def csvFieldsThatShouldNotBePresent(config: R): List[String] = {
-      val format = "CSV"
-      val definedFields = Map(
-        typicalError("--delimiter", format) -> config.csvDelimiter.isDefined,
-        typicalError("--escape", format) -> config.csvEscape.isDefined,
-        typicalError("--header", s"$format raw data") -> config.csvHeader.contains(true),
-        typicalError("--quote", format) -> config.csvQuote.isDefined
-      )
-      definedFields.filter { case (_, value) => value }.keys.toList
-    }
-
-    if (config.rawFormat == "csv") {
-      List.empty
-    } else {
-      csvFieldsThatShouldNotBePresent(config)
-    }
-  }
-
-  private def checkCobolFields[R <: StandardizationConfig[R]](config: R): Seq[String] = {
-    def cobolFieldsThatShouldNotBePresent(cobolOptions: CobolOptions): List[String] = {
-      val format = "COBOL"
-      val definedFields = Map(
-        typicalError("--copybook", format) -> (cobolOptions.copybook != ""),
-        typicalError("--cobol-encoding", format) -> cobolOptions.encoding.isDefined,
-        typicalError("--is-xcom", format) -> cobolOptions.isXcom,
-        typicalError("--is-text", format) -> cobolOptions.isText
-      )
-      definedFields.filter { case (_, value) => value }.keys.toList
-    }
-
-
-    if (config.rawFormat == "cobol") {
-      List.empty
-    } else {
-      config.cobolOptions
-        .map(cobolFieldsThatShouldNotBePresent)
-        .getOrElse(List.empty)
-    }
-  }
-
-  private def checkConfigX[R <: StandardizationConfig[R]](config: R, builder: OParserBuilder[R]): Either[String, Unit] = {
-    val allErrors:List[String] = checkCharset(config) ++
-      checkXMLFields(config) ++
-      checkCSVFields(config) ++
-      checkCobolFields(config)
-
-    if (allErrors.isEmpty) {
-      builder.success
-    } else {
-      builder.failure(allErrors.mkString("\n"))
-    }
-  }
-
 }

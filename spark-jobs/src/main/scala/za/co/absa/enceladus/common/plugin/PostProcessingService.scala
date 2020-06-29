@@ -15,51 +15,12 @@
 
 package za.co.absa.enceladus.common.plugin
 
-import java.time.Instant
-
 import com.typesafe.config.Config
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
-import za.co.absa.enceladus.utils.modules.SourceId._
-
-object PostProcessingService {
-  //scalastyle:off parameter.number
-  def forStandardization(config: Config,
-                         datasetName: String,
-                         datasetVersion: Int,
-                         reportDate: String,
-                         reportVersion: Int,
-                         outputPath: String,
-                         sourceSystem: String,
-                         runUrls: Option[String],
-                         runId: Option[Int],
-                         uniqueRunId: Option[String],
-                         processingTimestamp: Instant): PostProcessingService = {
-    val params = ErrorSenderPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
-      Standardization, sourceSystem, runUrls, runId, uniqueRunId, processingTimestamp)
-    PostProcessingService(config, params)
-  }
-
-  def forConformance(config: Config,
-                     datasetName: String,
-                     datasetVersion: Int,
-                     reportDate: String,
-                     reportVersion: Int,
-                     outputPath: String,
-                     sourceSystem: String,
-                     runUrls: Option[String],
-                     runId: Option[Int],
-                     uniqueRunId: Option[String],
-                     processingTimestamp: Instant): PostProcessingService = {
-    val params = ErrorSenderPluginParams(datasetName, datasetVersion, reportDate, reportVersion, outputPath,
-      Conformance, sourceSystem, runUrls, runId, uniqueRunId, processingTimestamp)
-    PostProcessingService(config, params)
-    //scalastyle:on parameter.number
-  }
-
-}
+import za.co.absa.enceladus.utils.modules.SourcePhase._
 
 case class PostProcessingService private(config: Config, additionalParams: ErrorSenderPluginParams) {
 

@@ -6,7 +6,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
+import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileReader
@@ -30,9 +30,9 @@ class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with Mo
   ).asInstanceOf[StructType]
 
   test("Reading data from FixedWidth input") {
-    val cmd = StandardizationConfigInstance.getFromArguments(argsBase)
+    val cmd = StandardizationConfig.getFromArguments(argsBase)
 
-    val fixedWidthReader = new StandardizationReader(log).getFormatSpecificReader(cmd, dataSet)
+    val fixedWidthReader = new StandardizationReader().getFormatSpecificReader(cmd, dataSet)
 
     val inputSchema = PlainSchemaGenerator.generateInputSchema(baseSchema)
     val reader = fixedWidthReader.schema(inputSchema)
@@ -49,9 +49,9 @@ class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with Mo
   }
 
   test("Reading data from FixedWidth input trimmed") {
-    val cmd = StandardizationConfigInstance.getFromArguments(argsBase ++ Array("--trimValues", "true"))
+    val cmd = StandardizationConfig.getFromArguments(argsBase ++ Array("--trimValues", "true"))
 
-    val fixedWidthReader = new StandardizationReader(log).getFormatSpecificReader(cmd, dataSet)
+    val fixedWidthReader = new StandardizationReader().getFormatSpecificReader(cmd, dataSet)
 
     val inputSchema = PlainSchemaGenerator.generateInputSchema(baseSchema)
     val reader = fixedWidthReader.schema(inputSchema)
