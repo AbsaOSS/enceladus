@@ -18,8 +18,8 @@ package za.co.absa.enceladus.menas.controllers
 import org.mockito.Mockito
 import org.scalatest.concurrent.Futures
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{AsyncFlatSpec, FlatSpec, Matchers}
-import za.co.absa.enceladus.menas.models.SchemaApiAvailability
+import org.scalatest.{AsyncFlatSpec, Matchers}
+import za.co.absa.enceladus.menas.models.SchemaApiFeatures
 import za.co.absa.enceladus.menas.services.SchemaRegistryService
 
 import scala.compat.java8.FutureConverters._
@@ -40,7 +40,7 @@ class SchemaControllerSuite extends AsyncFlatSpec with Matchers with MockitoSuga
       val controller = new SchemaController(null, null, null, registryServiceMock)
 
       controller.getAvailability().toScala.map {
-        _ shouldBe SchemaApiAvailability(expectedRegistryAvailability)
+        _ shouldBe SchemaApiFeatures(expectedRegistryAvailability)
       }
     }
   }

@@ -33,7 +33,7 @@ import za.co.absa.enceladus.menas.TestResourcePath
 import za.co.absa.enceladus.menas.integration.fixtures._
 import za.co.absa.enceladus.menas.models.rest.RestResponse
 import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
-import za.co.absa.enceladus.menas.models.{SchemaApiAvailability, Validation}
+import za.co.absa.enceladus.menas.models.{SchemaApiFeatures, Validation}
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
@@ -46,7 +46,7 @@ import scala.collection.immutable.HashMap
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
+class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
 
   private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistryBaseUrl` key
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
@@ -1053,16 +1053,16 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
       }
     }
 
-    s"GET $apiUrl/availability" can {
+    s"GET $apiUrl/features" can {
       "show schema registry availability" when {
         "schema registry integration is enabled" in {
 
-          val response = sendGet[SchemaApiAvailability](s"$apiUrl/availability")
+          val response = sendGet[SchemaApiFeatures](s"$apiUrl/features")
           assert(response.getStatusCode == HttpStatus.OK)
           val responseBody = response.getBody
 
           // test-config contains populated menas.schemaRegistryBaseUrl
-          assert(responseBody == SchemaApiAvailability(registry = true))
+          assert(responseBody == SchemaApiFeatures(registry = true))
         }
       }
     }

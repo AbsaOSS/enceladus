@@ -26,7 +26,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
-import za.co.absa.enceladus.menas.models.SchemaApiAvailability
+import za.co.absa.enceladus.menas.models.SchemaApiFeatures
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaRegistryService, SchemaService}
@@ -182,13 +182,13 @@ class SchemaController @Autowired()(
     }
   }
 
-  @GetMapping(path = Array("/availability"))
+  @GetMapping(path = Array("/features"))
   @ResponseStatus(HttpStatus.OK)
-  def getAvailability(): CompletableFuture[SchemaApiAvailability] = {
+  def getAvailability(): CompletableFuture[SchemaApiFeatures] = {
     val registryAvailable = schemaRegistryService.schemaRegistryBaseUrl.isDefined
 
     // the ability to upload or input a remoteUrl is always enabled, so it is not part of the availability endpoint at the moment
-    Future { SchemaApiAvailability(registry = registryAvailable)}
+    Future.successful(SchemaApiFeatures(registry = registryAvailable))
   }
 }
 

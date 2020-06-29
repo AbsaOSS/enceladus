@@ -47,7 +47,7 @@ sap.ui.define([
 
       this._model.setProperty("/subjectName", "");
 
-      // initially, registry integration is disabled in UI - get enabled by qeurying schemaApiAvailability
+      // initially, registry integration is disabled in UI - get enabled by querying SchemaApiFeatures
       this._model.setProperty("/registryEnabled", false);
       this.checkRegistryIntegration()
     },
@@ -384,7 +384,7 @@ sap.ui.define([
 
     checkRegistryIntegration: function () {
       jQuery.ajax({
-        url: "api/schema/availability",
+        url: "api/schema/features",
         type: 'GET',
         context: this,
         complete: this.handleRegistryIntegrationResponse

@@ -15,4 +15,4 @@
 
 package za.co.absa.enceladus.menas.models
 
-case class SchemaApiAvailability(registry: Boolean)
+case class SchemaApiFeatures(registry: Boolean)
