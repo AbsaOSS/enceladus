@@ -1,0 +1,26 @@
+---
+  - name: menas.schemaRegistryBaseUrl
+    options:
+      - name: string with URL
+        description: 'Base Url to (secure) schema registry. E.g.:
+        <code>https://localhost:8081</code>'
+  - name: javax.net.ssl.trustStore
+    options:
+      - name: string path to JKS file
+        description: 'TrustStore file containing records of trusted certificates to connect to a secure schema registry.
+        E.g.: <code>/path/to/truststore.jks</code>'
+  - name: javax.net.ssl.trustStorePassword
+    options:
+      - name: string
+        description: 'Password for the file referenced in <code>javax.net.ssl.trustStore</code>. E.g.:
+        <code>password123</code>'
+  - name: javax.net.ssl.keyStore
+    options:
+      - name: string path to JKS file
+        description: 'KeyStore file containing records of private keys to connect to a secure schema registry.
+        E.g.: <code>/path/to/keystore.jks</code>'
+  - name: javax.net.ssl.keyStorePassword
+    options:
+      - name: string
+        description: 'Password for the file referenced in <code>javax.net.ssl.keyStore</code>. E.g.:
+        <code>password1234</code>'
