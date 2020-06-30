@@ -34,7 +34,7 @@ class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase
 
   private implicit val dao: MenasDAO = mock[MenasDAO]
 
-  private val standardizationReader = new StandardizationReader()
+  private val standardizationReader = new PropertiesProvider()
 
   private val tmpFilePrefix = "cobol-fix-ascii-"
   private val tmpFileSuffix = ".dat"

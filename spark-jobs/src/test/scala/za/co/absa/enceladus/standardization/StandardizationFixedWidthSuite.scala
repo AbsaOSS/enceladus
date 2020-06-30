@@ -32,7 +32,7 @@ class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with Mo
   test("Reading data from FixedWidth input") {
     val cmd = StandardizationConfig.getFromArguments(argsBase)
 
-    val fixedWidthReader = new StandardizationReader().getFormatSpecificReader(cmd, dataSet)
+    val fixedWidthReader = new PropertiesProvider().getFormatSpecificReader(cmd, dataSet)
 
     val inputSchema = PlainSchemaGenerator.generateInputSchema(baseSchema)
     val reader = fixedWidthReader.schema(inputSchema)
@@ -51,7 +51,7 @@ class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with Mo
   test("Reading data from FixedWidth input trimmed") {
     val cmd = StandardizationConfig.getFromArguments(argsBase ++ Array("--trimValues", "true"))
 
-    val fixedWidthReader = new StandardizationReader().getFormatSpecificReader(cmd, dataSet)
+    val fixedWidthReader = new PropertiesProvider().getFormatSpecificReader(cmd, dataSet)
 
     val inputSchema = PlainSchemaGenerator.generateInputSchema(baseSchema)
     val reader = fixedWidthReader.schema(inputSchema)

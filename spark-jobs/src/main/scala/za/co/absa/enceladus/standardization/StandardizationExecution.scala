@@ -86,7 +86,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                              fsUtils: FileSystemVersionUtils,
                                              dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
-    val standardizationReader = new StandardizationReader()
+    val standardizationReader = new PropertiesProvider()
     val dfReaderConfigured = standardizationReader.getFormatSpecificReader(cmd, dataset, numberOfColumns)
     val readerWithOptSchema = cmd.rawFormat.toLowerCase() match {
       case "parquet" | "cobol" => dfReaderConfigured

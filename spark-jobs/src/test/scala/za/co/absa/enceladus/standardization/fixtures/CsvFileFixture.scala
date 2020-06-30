@@ -23,13 +23,13 @@ import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructT
 import org.scalatest.mockito.MockitoSugar
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.StandardizationReader
+import za.co.absa.enceladus.standardization.PropertiesProvider
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 trait CsvFileFixture extends MockitoSugar with TempFileFixture with SparkTestBase {
   private implicit val dao: MenasDAO = mock[MenasDAO]
-  private val standardizationReader = new StandardizationReader()
+  private val standardizationReader = new PropertiesProvider()
 
   type FixtureParam = String
   private val tmpFilePrefix = "special-characters"

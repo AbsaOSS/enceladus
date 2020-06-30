@@ -25,7 +25,7 @@ import za.co.absa.enceladus.utils.unicode.ParameterConversion._
 
 import scala.collection.immutable.HashMap
 
-class StandardizationReader {
+class PropertiesProvider {
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private final val SparkCSVReaderMaxColumnsDefault: Int = 20480
 

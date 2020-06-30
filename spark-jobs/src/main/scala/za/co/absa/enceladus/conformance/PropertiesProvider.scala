@@ -20,7 +20,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{FeatureSwitches, ThreeStateSwitch}
 
-class ConformancePropertiesProvider {
+class PropertiesProvider {
   private val enableCF: Boolean = true
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private implicit val conf: Config = ConfigFactory.load()
