@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.model.menas
 
-case class HDFSFolder
+case class HDFSFolder2
 (
   path: String,
   name: String,
-  children: Option[Seq[HDFSFolder]]
+  children: Option[Seq[HDFSFolder2]]
 )

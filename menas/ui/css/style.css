@@ -82,17 +82,3 @@ html, body {
   border: none !important;
   height: 100% !important;
 }
-
-.scheduleMenuButton {
-  margin-top: -1rem !important;
-  position: absolute !important;
-}
-
-.scheduleMenuHBox {
-  height: 2rem !important;
-  margin-top: 1rem !important;
-}
-
-h5[id$=datasetDetailView--scheduleTimingTitle] {
-  margin-top: 1rem !important;
-}

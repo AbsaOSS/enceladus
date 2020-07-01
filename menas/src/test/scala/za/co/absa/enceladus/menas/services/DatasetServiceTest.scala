@@ -21,7 +21,7 @@ import org.mockito.Mockito
 import org.mongodb.scala.bson.BsonDocument
 import za.co.absa.enceladus.menas.exceptions.ValidationException
 import za.co.absa.enceladus.menas.models.Validation
-import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
+import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.test.factories.DatasetFactory
 
@@ -30,8 +30,7 @@ import scala.concurrent.Future
 class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
 
   override val modelRepository: DatasetMongoRepository = mock[DatasetMongoRepository]
-  val oozieRepository: OozieRepository = mock[OozieRepository]
-  override val service = new DatasetService(modelRepository, oozieRepository)
+  override val service = new DatasetService(modelRepository)
 
   test("fail to create multiple Datasets with the same name concurrently with a ValidationException") {
     val dataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1)

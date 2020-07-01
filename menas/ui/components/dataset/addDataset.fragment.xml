@@ -13,8 +13,7 @@
   ~ limitations under the License.
   -->
 
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
-                         xmlns:hdfs="components.hdfs">
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
     <Dialog id="addDatasetDialog" title="{entity>/title} Dataset" stretchOnPhone="true" class="minW40rem">
         <content>
             <VBox class="sapUiSmallMargin">
@@ -28,21 +27,9 @@
                                value="{entity>/description}"/>
                         <core:Fragment type="XML" fragmentName="components.schema.selector.schemaSelector"/>
                         <Label text="HDFS raw data folder path"/>
-                        <VBox>
-                        	<Input type="Text" id="selectedRawHDFSPathLabel"/>
-                            <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%"
-                                          busyControl="addDatasetDialog"
-                                          pathInput ="selectedRawHDFSPathLabel" restURI="api/hdfs/list"
-                                          HDFSPath="{entity>/hdfsPath}"/>
-                        </VBox>
+                        <Input type="Text" id="selectedRawHDFSPathLabel"/>
                         <Label text="HDFS conformed data publish folder path"/>
-                        <VBox>
-                            <Input type="Text" id="selectedPublishHDFSPathLabel"/>
-                            <hdfs:HDFSBrowser id="newDatasetPublishHDFSBrowser" height="300px" width="100%"
-                                          busyControl="addDatasetDialog"
-                                          pathInput="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
-                                          HDFSPath="{entity>/hdfsPublishPath}"/>
-                        </VBox>
+                        <Input type="Text" id="selectedPublishHDFSPathLabel"/>
                     </form:content>
                 </form:SimpleForm>
             </VBox>

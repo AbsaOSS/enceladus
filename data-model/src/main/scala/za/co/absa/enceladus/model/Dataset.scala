@@ -21,7 +21,6 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConfo
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
 
 case class Dataset(
   name:    String,
@@ -44,8 +43,7 @@ case class Dataset(
   dateDisabled: Option[ZonedDateTime] = None,
   userDisabled: Option[String]        = None,
   conformance:  List[ConformanceRule],
-  parent:       Option[MenasReference] = None,
-  schedule:     Option[OozieSchedule] = None) extends VersionedModel with Auditable[Dataset] {
+  parent:       Option[MenasReference] = None) extends VersionedModel with Auditable[Dataset] {
 
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -61,7 +59,6 @@ case class Dataset(
   def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
   def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
-  def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
 
   /**
