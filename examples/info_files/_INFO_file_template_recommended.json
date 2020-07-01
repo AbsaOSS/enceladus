@@ -11,8 +11,8 @@
 	"checkpoints": [
     {
       "name": "Source",
-      "processStartTime": "01-01-1970 00:00:00 +0000",
-      "processEndTime": "01-01-1970 0:00:00 +0000",
+      "processStartTime": "<ProcessStartTime>",
+      "processEndTime": "<ProcessEndTime>",
       "workflowName": "Source",
       "order": 1,
       "controls": [
@@ -20,14 +20,14 @@
           "controlName": "recordCount",
           "controlType": "controlType.Count",
           "controlCol": "<ColumnName>",
-          "controlValue": "3"
+          "controlValue": "<SourceRecordCount>"
         }
       ]
     },
     {
       "name": "Raw",
-      "processStartTime": "01-01-1970 0:00:00 +0000",
-      "processEndTime": "01-01-1970 0:00:00 +0000",
+      "processStartTime": "<ProcessStartTime>",
+      "processEndTime": "<ProcessEndTime>",
       "workflowName": "Raw",
       "order": 2,
       "controls": [
@@ -35,7 +35,7 @@
           "controlName": "recordCount",
           "controlType": "controlType.Count",
           "controlCol": "<ColumnName>",
-          "controlValue": "3"
+          "controlValue": "<RawRecordCount>"
         }
       ]
     }

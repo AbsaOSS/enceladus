@@ -13,7 +13,8 @@
 
 # Examples of Enceladus usage
 ## Templates for _INFO files
-
+#### Templates which illustrate the way to write _INFO files, one with the minimally necessary fields and one with the recommended fields to add
+#### Replace the <Field> tags with the appropriate data in the templates
 ### Fields changed once per dataset
 
 * `<SourceApplication>` - name of the application
@@ -24,12 +25,18 @@
 ### Fields (possibly) changed for every run
 
 * `<Filename>` - source file name
-* `<Version>` - version of the source file
+* `<Version>` - version of the source file (integer)
 * `<Date>` - date of the input processing
+* `<ProcessStartTime>` - Start of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’
+* `<ProcessEndTime>` - End of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’
 
-[Minimally required _INFO file template](examples/info_files/_INFO_file_template_minimal.json)
+Optionally:
+* `<RawRecordCount>` - Number of records in Raw state
+* `<SourceRecordCount>` - Number of records in Source state
 
-[Recommended _INFO file template](examples/info_files/_INFO_file_template_recommended.json)
+[Template for bare minimum required data](examples/info_files/_INFO_file_template_minimal.json)
+
+[Template of recommended _INFO file content](examples/info_files/_INFO_file_template_recommended.json)
 
 ## Custom Rule Implementations and usage
 ### Requirements
