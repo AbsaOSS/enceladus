@@ -15,7 +15,7 @@ categories:
 
 ## Intro
 
-This page describes the usage of configuration of _Menas_.
+This page describes the usage of the configuration of _Menas_.
 This page describes the configuration values stored in `menas`'s `application.properties` (or its
 [template][app-props-template]).
 
