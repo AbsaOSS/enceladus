@@ -1,0 +1,43 @@
+{
+	"metadata": {
+		"sourceApplication": "<SourceApplication>",
+		"country": "<Country>",
+		"historyType": "Snapshot",
+		"dataFilename": "<Filename>",
+		"sourceType": "<SourceType>",
+		"version": "<Version>",
+		"informationDate": "<Date>"
+	},
+	"checkpoints": [
+    {
+      "name": "Source",
+      "processStartTime": "01-01-1970 00:00:00 +0000",
+      "processEndTime": "01-01-1970 0:00:00 +0000",
+      "workflowName": "Source",
+      "order": 1,
+      "controls": [
+        {
+          "controlName": "recordCount",
+          "controlType": "controlType.Count",
+          "controlCol": "<ColumnName>",
+          "controlValue": "3"
+        }
+      ]
+    },
+    {
+      "name": "Raw",
+      "processStartTime": "01-01-1970 0:00:00 +0000",
+      "processEndTime": "01-01-1970 0:00:00 +0000",
+      "workflowName": "Raw",
+      "order": 2,
+      "controls": [
+        {
+          "controlName": "recordCount",
+          "controlType": "controlType.Count",
+          "controlCol": "<ColumnName>",
+          "controlValue": "3"
+        }
+      ]
+    }
+	]
+}

@@ -12,6 +12,25 @@
                       limitations under the License.
 
 # Examples of Enceladus usage
+## Templates for _INFO files
+
+### Fields changed once per dataset
+
+* `<SourceApplication>` - name of the application
+* `<Country>` - country the file belongs to
+* `<SourceType>` - source type
+* `<ColumnName>` - ideally the key column name, but can be any column
+
+### Fields (possibly) changed for every run
+
+* `<Filename>` - source file name
+* `<Version>` - version of the source file
+* `<Date>` - date of the input processing
+
+[Minimally required _INFO file template](examples/info_files/_INFO_file_template_minimal.json)
+
+[Recommended _INFO file template](examples/info_files/_INFO_file_template_recommended.json)
+
 ## Custom Rule Implementations and usage
 ### Requirements
 * Spark 2.2.1+ (might work with earlier, not tested)
