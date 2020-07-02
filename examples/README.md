@@ -27,10 +27,10 @@
 * `<Filename>` - source file name
 * `<Version>` - version of the source file (integer)
 * `<Date>` - date of the input processing
-* `<ProcessStartTime>` - Start of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’
-* `<ProcessEndTime>` - End of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’
+* `<ProcessStartTimeX>` - Start of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’(X in the name standing for Raw or Source)
+* `<ProcessEndTimeX>` - End of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’(X stands for Raw or Source)
 
-Optionally:
+###Optionally:
 * `<RawRecordCount>` - Number of records in Raw state
 * `<SourceRecordCount>` - Number of records in Source state
 

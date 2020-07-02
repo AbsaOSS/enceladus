@@ -11,8 +11,8 @@
 	"checkpoints": [
     {
       "name": "Source",
-      "processStartTime": "<ProcessStartTime>",
-      "processEndTime": "<ProcessEndTime>",
+      "processStartTime": "<ProcessStartTimeSource>",
+      "processEndTime": "<ProcessEndTimeSource>",
       "workflowName": "Source",
       "order": 1,
       "controls": [
@@ -26,8 +26,8 @@
     },
     {
       "name": "Raw",
-      "processStartTime": "<ProcessStartTime>",
-      "processEndTime": "<ProcessEndTime>",
+      "processStartTime": "<ProcessStartTimeRaw>",
+      "processEndTime": "<ProcessEndTimeRaw>",
       "workflowName": "Raw",
       "order": 2,
       "controls": [
