@@ -16,9 +16,9 @@
 package za.co.absa.enceladus.conformance.config
 
 import scopt.OParser
-import za.co.absa.enceladus.common.config.JobParser
+import za.co.absa.enceladus.common.config.JobConfigParser
 
-trait ConformanceParser[R] extends JobParser[R] {
+trait ConformanceParser[R] extends JobConfigParser[R] {
   def publishPathOverride: Option[String]
   def experimentalMappingRule: Option[Boolean]
   def isCatalystWorkaroundEnabled: Option[Boolean]

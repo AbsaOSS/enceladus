@@ -23,7 +23,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.{JobParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -182,7 +182,7 @@ trait StandardizationExecution extends CommonJobExecution {
   }
   //scalastyle:off parameter.number
 
-  override protected def getPathCfg[T](cmd: JobParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+  override protected def getPathCfg[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
     val stdCmd = cmd.asInstanceOf[StandardizationParser[T]]
     PathConfig(
       inputPath = buildRawPath(stdCmd, dataset, reportVersion),

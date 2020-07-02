@@ -24,7 +24,7 @@ import org.apache.spark.sql.SparkSession
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.common.config.{JobParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -58,7 +58,7 @@ trait CommonJobExecution {
   protected val conf: Config = ConfigFactory.load()
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
-  protected def obtainSparkSession[T]()(implicit cmd: JobParser[T]): SparkSession = {
+  protected def obtainSparkSession[T]()(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
@@ -77,7 +77,7 @@ trait CommonJobExecution {
 
   protected def prepareJob[T]()
                              (implicit dao: MenasDAO,
-                              cmd: JobParser[T],
+                              cmd: JobConfigParser[T],
                               fsUtils: FileSystemVersionUtils,
                               spark: SparkSession): PreparationResult = {
     dao.authenticate()
@@ -105,7 +105,7 @@ trait CommonJobExecution {
     PreparationResult(dataset, reportVersion, pathCfg, performance)
   }
 
-  protected def runPostProcessing[T](sourceId: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobParser[T])
+  protected def runPostProcessing[T](sourceId: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
                                     (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
     val df = spark.read.parquet(preparationResult.pathCfg.outputPath)
     val runId = MenasPlugin.runNumber
@@ -131,7 +131,7 @@ trait CommonJobExecution {
     postProcessingService.onSaveOutput(df)
   }
 
-  protected def finishJob[T](jobConfig: JobParser[T]): Unit = {
+  protected def finishJob[T](jobConfig: JobConfigParser[T]): Unit = {
     val name = jobConfig.datasetName
     val version = jobConfig.datasetVersion
     MenasPlugin.runNumber.foreach { runNumber =>
@@ -146,9 +146,9 @@ trait CommonJobExecution {
   }
 
 
-  protected def getPathCfg[T](cmd: JobParser[T], dataset: Dataset, reportVetsion: Int): PathConfig
+  protected def getPathCfg[T](cmd: JobConfigParser[T], dataset: Dataset, reportVetsion: Int): PathConfig
 
-  protected def getStandardizationPath[T](jobConfig: JobParser[T], reportVersion: Int): String = {
+  protected def getStandardizationPath[T](jobConfig: JobConfigParser[T], reportVersion: Int): String = {
     MessageFormat.format(conf.getString("standardized.hdfs.path"),
       jobConfig.datasetName,
       jobConfig.datasetVersion.toString,
@@ -179,7 +179,7 @@ trait CommonJobExecution {
     }
   }
 
-  protected def writePerformanceMetrics[T](performance: PerformanceMeasurer, jobCmdConfig: JobParser[T]): Unit = {
+  protected def writePerformanceMetrics[T](performance: PerformanceMeasurer, jobCmdConfig: JobConfigParser[T]): Unit = {
     jobCmdConfig.performanceMetricsFile.foreach(fileName => try {
       performance.writeMetricsToFile(fileName)
     } catch {
@@ -205,7 +205,7 @@ trait CommonJobExecution {
     }
   }
 
-  private def getReportVersion[T](jobConfig: JobParser[T], dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {
+  private def getReportVersion[T](jobConfig: JobConfigParser[T], dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {
     jobConfig.reportVersion match {
       case Some(version) => version
       case None =>

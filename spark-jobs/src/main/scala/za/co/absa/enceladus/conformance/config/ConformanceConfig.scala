@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.config
 
 import org.apache.spark.storage.StorageLevel
 import scopt.OParser
-import za.co.absa.enceladus.common.config.{ConfigError, JobParser}
+import za.co.absa.enceladus.common.config.{ConfigError, JobConfigParser}
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory}
 
 import scala.util.Try
@@ -43,7 +43,7 @@ case class ConformanceConfig(datasetName: String = "",
                              autocleanStandardizedFolder: Option[Boolean] = None,
                              credsFile: Option[String] = None,
                              keytabFile: Option[String] = None)
-  extends ConformanceParser[ConformanceConfig] with JobParser[ConformanceConfig] {
+  extends ConformanceParser[ConformanceConfig] {
 
   override def withPublishPathOverride(value: Option[String]): ConformanceConfig = copy(publishPathOverride = value)
   override def withExperimentalMappingRule(value: Option[Boolean]): ConformanceConfig = copy(experimentalMappingRule = value)
@@ -80,7 +80,7 @@ object ConformanceConfig {
     OParser.sequence(
       programName("Conformance Job"),
       ConformanceParser.conformanceParser,
-      JobParser.jobConfigParser
+      JobConfigParser.jobConfigParser
     )
   }
 

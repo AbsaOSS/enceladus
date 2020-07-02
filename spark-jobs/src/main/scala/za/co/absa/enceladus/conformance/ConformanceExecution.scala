@@ -23,7 +23,7 @@ import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.config.{JobParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.config.{ConformanceParser, ConformanceConfig}
@@ -147,7 +147,7 @@ trait ConformanceExecution extends CommonJobExecution {
     log.info(s"$sourceId finished successfully")
   }
 
-  override protected def getPathCfg[T](cmd: JobParser[T], conformance: Dataset, reportVersion: Int): PathConfig = {
+  override protected def getPathCfg[T](cmd: JobConfigParser[T], conformance: Dataset, reportVersion: Int): PathConfig = {
     val confCmd = cmd.asInstanceOf[ConformanceParser[T]]
     PathConfig(
       outputPath = buildPublishPath(confCmd, conformance, reportVersion),

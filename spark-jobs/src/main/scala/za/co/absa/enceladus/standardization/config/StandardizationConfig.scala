@@ -17,7 +17,7 @@ package za.co.absa.enceladus.standardization.config
 
 import org.apache.spark.storage.StorageLevel
 import scopt.OParser
-import za.co.absa.enceladus.common.config.{ConfigError, JobParser}
+import za.co.absa.enceladus.common.config.{ConfigError, JobConfigParser}
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory}
 import za.co.absa.enceladus.standardization.CobolOptions
 
@@ -51,7 +51,7 @@ case class StandardizationConfig(rawFormat: String = "xml",
                                  credsFile: Option[String] = None,
                                  keytabFile: Option[String] = None
                                         )
-  extends StandardizationParser[StandardizationConfig] with JobParser[StandardizationConfig]{
+  extends StandardizationParser[StandardizationConfig]{
   override def withRawFormat(value: String): StandardizationConfig = copy(rawFormat = value)
   override def withCharset(value: Option[String]): StandardizationConfig = copy(charset = value)
   override def withRowTag(value: Option[String]): StandardizationConfig = copy(rowTag = value)
@@ -95,7 +95,7 @@ object StandardizationConfig {
       programName("Standardization Job"),
       head("Standardization", ""),
       StandardizationParser.standardizationParser,
-      JobParser.jobConfigParser
+      JobConfigParser.jobConfigParser
     )
   }
 }
