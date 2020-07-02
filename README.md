@@ -246,9 +246,14 @@ To learn how plugins work, when and how their logic is executed, please
 refer to the [documentation](https://absaoss.github.io/enceladus/docs/plugins).
 
 ### Built-in Plugins
+
 The purpose of this module is to provide some plugins of additional but relatively elementary functionality. And also to
 serve as an example how plugins are written: 
 [detailed description](https://absaoss.github.io/enceladus/docs/plugins-built-in)  
+
+## Examples
+
+A module containing [examples](examples/README.md) of the project usage.
 
 ## How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
