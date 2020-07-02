@@ -12,9 +12,15 @@
                       limitations under the License.
 
 # Examples of Enceladus usage
+
 ## Templates for _INFO files
-#### Templates which illustrate the way to write _INFO files, one with the minimally necessary fields and one with the recommended fields to add
-#### Replace the <Field> tags with the appropriate data in the templates
+
+ Templates which illustrate the way to write _INFO files, one with the minimally necessary fields and one with the recommended fields to add.
+    
+ More info regarding the _INFO file validation can be found in the [INFO file Documentation](https://absaoss.github.io/enceladus/docs/usage/info-file).
+ 
+ Replace the <Field> tags with the appropriate data in the templates.
+ 
 ### Fields changed once per dataset
 
 * `<SourceApplication>` - name of the application
@@ -31,7 +37,7 @@
 ###Optionally:
 * `<ProcessStartTime>` - Start of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’(doesn't have to be the same for Raw and Source)
 * `<ProcessEndTime>` - End of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’(doesn't have to be the same for Raw and Source)
-* `<RecordCount>` - Number of records in Raw/Source state which should be the same for Raw and Source
+* `<RecordCount>` - Number of records, should be the same for Raw and Source. In case of an unknown value, provide `""`(empty string) and ensure [`control.info.validation` configuration](https://absaoss.github.io/enceladus/docs/usage/config) is set to `Warning` or `None`
 
 [Template for bare minimum required data](examples/info_files/_INFO_file_template_minimal.json)
 
