@@ -20,14 +20,14 @@
           "controlName": "recordCount",
           "controlType": "controlType.Count",
           "controlCol": "<ColumnName>",
-          "controlValue": "<SourceRecordCount>"
+          "controlValue": "<RecordCount>"
         }
       ]
     },
     {
       "name": "Raw",
-      "processStartTime": "<ProcessStartTimeRaw>",
-      "processEndTime": "<ProcessEndTimeRaw>",
+      "processStartTime": "<ProcessStartTime>",
+      "processEndTime": "<ProcessEndTime>",
       "workflowName": "Raw",
       "order": 2,
       "controls": [
@@ -35,7 +35,7 @@
           "controlName": "recordCount",
           "controlType": "controlType.Count",
           "controlCol": "<ColumnName>",
-          "controlValue": "<RawRecordCount>"
+          "controlValue": "<RecordCount>"
         }
       ]
     }

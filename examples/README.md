@@ -27,12 +27,11 @@
 * `<Filename>` - source file name
 * `<Version>` - version of the source file (integer)
 * `<Date>` - date of the input processing
-* `<ProcessStartTimeX>` - Start of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’(X in the name standing for Raw or Source)
-* `<ProcessEndTimeX>` - End of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’(X stands for Raw or Source)
 
 ###Optionally:
-* `<RawRecordCount>` - Number of records in Raw state
-* `<SourceRecordCount>` - Number of records in Source state
+* `<ProcessStartTime>` - Start of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’(doesn't have to be the same for Raw and Source)
+* `<ProcessEndTime>` - End of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’(doesn't have to be the same for Raw and Source)
+* `<RecordCount>` - Number of records in Raw/Source state which should be the same for Raw and Source
 
 [Template for bare minimum required data](examples/info_files/_INFO_file_template_minimal.json)
 
@@ -64,5 +63,5 @@ Example arguments:
 `spark-submit --class za.co.absa.enceladus.examples.CustomRuleSample4 --master local enceladus-examples.jar --input-file="data/input/example_data.csv" --out-path="data/output" --header=true`
 
 ### Best Practices
-* It's a good idea when creating cusrom rules the cover their logic with unit tests as well. 
+* It's a good idea when creating custom rules the cover their logic with unit tests as well. 
 See the tests in `test/scala/class/za/co/absa/enceladus/examples/interpreter/rules/custom/`

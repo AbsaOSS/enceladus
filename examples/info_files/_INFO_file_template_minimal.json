@@ -12,14 +12,14 @@
     {
       "name": "Source",
       "processStartTime": "01-01-1970 00:00:00 +0000",
-      "processEndTime": "<ProcessEndTimeSource>",
+      "processEndTime": "01-01-1970 00:00:00 +0000",
       "workflowName": "Source",
       "order": 1
     },
     {
       "name": "Raw",
-      "processStartTime": "<ProcessStartTimeRaw>",
-      "processEndTime": "<ProcessEndTimeRaw>",
+      "processStartTime": "01-01-1970 00:00:00 +0000",
+      "processEndTime": "01-01-1970 00:00:00 +0000",
       "workflowName": "Raw",
       "order": 2
     }
