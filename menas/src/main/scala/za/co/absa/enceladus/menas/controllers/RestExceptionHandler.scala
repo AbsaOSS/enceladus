@@ -15,29 +15,20 @@
 
 package za.co.absa.enceladus.menas.controllers
 
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
-import za.co.absa.enceladus.model.UsedIn
-import za.co.absa.enceladus.menas.exceptions._
-import za.co.absa.enceladus.menas.models.{RestError, Validation}
-import org.springframework.http.HttpStatus
 import org.slf4j.LoggerFactory
-import za.co.absa.enceladus.menas.models.rest.RestResponse
-import za.co.absa.enceladus.menas.models.rest.errors.{RequestTimeoutExpiredError, RemoteSchemaRetrievalError, SchemaFormatError, SchemaParsingError}
-import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
-import org.apache.oozie.client.OozieClientException
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.{HttpStatus, ResponseEntity}
+import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import za.co.absa.enceladus.menas.exceptions._
+import za.co.absa.enceladus.menas.models.Validation
+import za.co.absa.enceladus.menas.models.rest.RestResponse
+import za.co.absa.enceladus.menas.models.rest.errors.{RemoteSchemaRetrievalError, RequestTimeoutExpiredError, SchemaFormatError, SchemaParsingError}
+import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
+import za.co.absa.enceladus.model.UsedIn
 
 @ControllerAdvice(annotations = Array(classOf[RestController]))
 class RestExceptionHandler {
-
-  @Value("${menas.oozie.customImpersonationExceptionMessage:}")
-  val oozieImpersonationExceptionMessage: String = ""
-
-  @Value("${menas.oozie.proxyGroup:}")
-  val oozieProxyGroup: String = ""
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -90,24 +81,4 @@ class RestExceptionHandler {
     ResponseEntity.notFound().build[Any]()
   }
 
-  @ExceptionHandler(Array(classOf[OozieActionException]))
-  def handleOozieActionException(ex: OozieActionException): ResponseEntity[RestError] = {
-    val err = RestError(ex.getMessage)
-    logger.error(s"Exception: $err", ex)
-    new ResponseEntity(err, HttpStatus.INTERNAL_SERVER_ERROR)
-  }
-
-  @ExceptionHandler(Array(classOf[OozieClientException]))
-  def handleOozieClientException(ex: OozieClientException): ResponseEntity[RestError] = {
-    val err = if (ex.getMessage.toLowerCase.contains("unauthorized proxyuser")) {
-      val message = if (oozieImpersonationExceptionMessage.nonEmpty) oozieImpersonationExceptionMessage else
-        s"Please add the system user into ${oozieProxyGroup} group to use this feature."
-      RestError(message)
-    } else {
-      RestError(ex.getMessage)
-    }
-
-    logger.error(s"Exception: $err", ex)
-    new ResponseEntity(err, HttpStatus.INTERNAL_SERVER_ERROR)
-  }
 }

@@ -18,14 +18,6 @@ jQuery.sap.require("sap.ui.core.Locale");
 
 var Formatters = new function() {
 
-  this.oozieCoordinatorStatusFormatter = function(sStatus) {
-    if(!sStatus) {
-      return sap.ui.core.ValueState.None;
-    } else if(sStatus === "RUNNING") {
-      return sap.ui.core.ValueState.Success;
-    } else return sap.ui.core.ValueState.Error;
-  };
-
   let defaultDateFormat = sap.ui.core.format.DateFormat.getDateTimeInstance({
     style: "short"
   }, new sap.ui.core.Locale("en_GB"));
@@ -46,24 +38,10 @@ var Formatters = new function() {
     }
   };
 
-  this.cronScheduleTimingFormatter = function(aMinute, aHour, aDayOfMonth, aMonth, aDayOfWeek) {
-    let cronExpr;
-    if(aMinute && aHour && aDayOfMonth && aMonth && aDayOfWeek) {
-      const minuteSep = aMinute.join(",")
-      const hourSep = aHour.join(",")
-      const dayOfMonthSep = aDayOfMonth.join(",")
-      const monthSep = aMonth.join(",")
-      const dayOfWeekSep = aDayOfWeek.join(",")
-
-      cronExpr = `${minuteSep} ${hourSep} ${dayOfMonthSep} ${monthSep} ${dayOfWeekSep}`;
-    }
-    return Formatters.cronExpressionFormatter(cronExpr);
-  }
-
   this.nonNullArrFormatter = function(aArr) {
     if(!aArr) return [];
     return aArr;
-  }
+  };
 
   this.stringDateShortFormatter = function(sDate) {
     if (!sDate)

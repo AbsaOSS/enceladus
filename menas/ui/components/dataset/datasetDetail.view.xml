@@ -52,9 +52,6 @@
                     <IconTabFilter id="auditTrail" icon="sap-icon://history" key="auditTrail" text="Audit Trail">
                         <core:Fragment type="XML" fragmentName="components.auditTrail" />
                     </IconTabFilter>
-                    <IconTabFilter id="schedule" icon="sap-icon://fob-watch" key="schedule" text="Scheduling" enabled="{/appInfo/oozie/isEnabled}">
-                        <core:Fragment type="XML" fragmentName="components.dataset.schedule.viewSchedule" />
-                    </IconTabFilter>
                     <IconTabFilter id="monitoringTab" icon="sap-icon://vertical-bar-chart-2" key="monitoring" text="Monitoring">
                         <core:Fragment type="XML" fragmentName="components.dataset.monitoring.monitoring"/>
                     </IconTabFilter>
@@ -68,7 +65,6 @@
                     <Button id="AddRule" text="Add Conformance Rule" icon="sap-icon://add-equipment" press="onAddConformanceRulePress" />
                     <Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress" enabled="{/editingEnabled}"
                             tooltip="{= ${/editingEnabled} ? 'Edit current dataset' : 'Editing old version is disabled'}" />
-                    <Button id="editSchedule" text="Edit Schedule" icon="sap-icon://provision" press="onScheduleEditPress" enabled="{/appInfo/oozie/isEnabled}" />
                 </contentRight>
             </Bar>
         </footer>

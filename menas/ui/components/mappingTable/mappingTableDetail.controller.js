@@ -166,9 +166,9 @@ sap.ui.define([
     },
 
     defaultSubmit: function () {
-      let newDef = this._model.getProperty("/newDefaultValue")
+      let newDef = this._model.getProperty("/newDefaultValue");
 
-      let currentMT = this._model.getProperty("/currentMappingTable")
+      let currentMT = this._model.getProperty("/currentMappingTable");
 
       if (this.validateNewDefaultValue()) {
         // send and update UI
@@ -190,7 +190,7 @@ sap.ui.define([
     },
 
     onDefaultValueMenuAction: function (oEv) {
-      let sAction = oEv.getParameter("item").data("action")
+      let sAction = oEv.getParameter("item").data("action");
       let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
 
       if (sAction === "edit") {

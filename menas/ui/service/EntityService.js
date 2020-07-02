@@ -310,7 +310,6 @@ class DatasetService extends EntityService {
       hdfsPublishPath: oEntity.hdfsPublishPath,
       schemaName: oEntity.schemaName,
       schemaVersion: oEntity.schemaVersion,
-      schedule: oEntity.schedule,
       conformance: (oEntity.conformance || [])
     }
   }
