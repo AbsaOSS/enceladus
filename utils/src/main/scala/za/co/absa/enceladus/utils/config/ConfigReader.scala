@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.general
+package za.co.absa.enceladus.utils.config
 
 import com.typesafe.config._
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
+import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 
 object ConfigReader {
   val redactedReplacement: String = "*****"
@@ -30,11 +31,7 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
   private val log = LoggerFactory.getLogger(this.getClass)
 
   def readStringConfigIfExist(path: String): Option[String] = {
-    if (config.hasPath(path)) {
-      Option(config.getString(path))
-    } else {
-      None
-    }
+    config.getOptionString(path)
   }
 
   def readStringConfig(path: String, default: String): String = {

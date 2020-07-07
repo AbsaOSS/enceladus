@@ -13,17 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.general
+package za.co.absa.enceladus.menas.models
 
-import com.typesafe.config.{Config, ConfigFactory}
-import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
-
-object ProjectMetadataTools {
-  private val conf: Config = ConfigFactory.load()
-
-  private val enceladusVersionKey = "enceladus.version"
-
-  /** Returns Enceladus version from the application configuration properties */
-  def getEnceladusVersion: String = conf.getOptionString(enceladusVersionKey).getOrElse("N/A")
-
-}
+case class SchemaApiFeatures(registry: Boolean)
