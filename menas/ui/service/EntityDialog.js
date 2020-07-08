@@ -80,6 +80,12 @@ class DatasetDialog extends EntityDialog {
 
     this.oController.byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("schemaVersionSelect").setValueStateText("");
+
+    this.oController.byId("selectedRawHDFSPathLabel").setValueState(sap.ui.core.ValueState.None);
+    this.oController.byId("selectedRawHDFSPathLabel").setValueStateText("");
+
+    this.oController.byId("selectedPublishHDFSPathLabel").setValueState(sap.ui.core.ValueState.None);
+    this.oController.byId("selectedPublishHDFSPathLabel").setValueStateText("");
   }
 
   isValid(oDataset) {
@@ -246,6 +252,9 @@ class MappingTableDialog extends EntityDialog {
 
     this.oController.byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("schemaVersionSelect").setValueStateText("");
+
+    this.oController.byId("selectedHDFSPathLabel").setValueState(sap.ui.core.ValueState.None);
+    this.oController.byId("selectedHDFSPathLabel").setValueStateText("");
   }
 
   isValid(oMT) {
