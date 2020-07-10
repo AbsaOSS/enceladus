@@ -17,6 +17,7 @@ package za.co.absa.enceladus.utils.general
 
 import com.typesafe.config.ConfigFactory
 import org.scalatest.WordSpec
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 class ConfigReaderSuite extends WordSpec {
   private val config = ConfigFactory.parseString(

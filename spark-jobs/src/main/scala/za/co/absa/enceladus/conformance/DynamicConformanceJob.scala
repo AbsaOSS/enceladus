@@ -39,9 +39,10 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
+import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
+import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.general.{ConfigReader, ProjectMetadataTools}
+import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
@@ -61,7 +62,7 @@ object DynamicConformanceJob {
   def main(args: Array[String]) {
     // This should be the first thing the app does to make secure Kafka work with our CA.
     // After Spring activates JavaX, it will be too late.
-    SecureKafka.setSecureKafkaProperties(conf)
+    SecureConfig.setSecureKafkaProperties(conf)
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
@@ -202,11 +203,7 @@ object DynamicConformanceJob {
     val enabled = cmdParameterOpt match {
       case Some(b) => b
       case None    =>
-        if (conf.hasPath(configKey)) {
-          conf.getBoolean(configKey)
-        } else {
-          defaultValue
-        }
+        conf.getOptionBoolean(configKey).getOrElse(defaultValue)
     }
     enabled
   }

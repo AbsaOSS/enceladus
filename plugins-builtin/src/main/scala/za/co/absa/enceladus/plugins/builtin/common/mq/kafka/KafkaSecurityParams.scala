@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.plugins.builtin.common.mq.kafka
 
 import com.typesafe.config.Config
+import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 
 /**
  * This case class contains security parameters for Kafka secure connections.
@@ -37,24 +38,10 @@ object KafkaSecurityParams {
    * @return An instance of Kafka security parameters.
    */
   def fromConfig(conf: Config): Option[KafkaSecurityParams] = {
-    getOptionConf(conf, SecurityProtocolKey).map { securityProtocol =>
+    conf.getOptionString(SecurityProtocolKey).map { securityProtocol =>
       KafkaSecurityParams(securityProtocol,
-        getOptionConf(conf, SaslMechanismKey))
+        conf.getOptionString(SaslMechanismKey))
     }
   }
 
-  /**
-   * Searches a key in a configuration and returns an optional result.
-   *
-   * @param conf A configuration.
-   * @param key  A key.
-   * @return An optional value depending on the existence of the ke in the configuration.
-   */
-  private def getOptionConf(conf: Config, key: String): Option[String] = {
-    if (conf.hasPath(key)) {
-      Option(conf.getString(key))
-    } else {
-      None
-    }
-  }
 }
