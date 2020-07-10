@@ -306,6 +306,27 @@ class LiteralConformanceRuleForm extends ConformanceRuleForm {
 
 }
 
+class FillNullsConformanceRuleForm extends ConformanceRuleForm {
+
+  constructor() {
+    super("FillNullsConformanceRule", false)
+  }
+
+  get fillNullsValueControl() {
+    return sap.ui.getCore().byId(`${this.ruleType}--fillNullsValue`);
+  }
+
+  isCorrectlyConfigured(rule) {
+    return this.nonEmptyField(rule.value, "Fill Nulls Value", this.fillNullsValueControl);
+  }
+
+  reset() {
+    super.reset();
+    this.resetValueState(this.fillNullsValueControl);
+  }
+
+}
+
 class MappingConformanceRuleForm extends ConformanceRuleForm {
 
   constructor() {

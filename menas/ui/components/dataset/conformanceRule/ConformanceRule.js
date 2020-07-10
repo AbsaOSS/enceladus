@@ -132,6 +132,17 @@ class LiteralConformanceRule extends ConformanceRule {
 
 }
 
+class FillNullsConformanceRule extends ConformanceRule {
+
+  apply(fields) {
+    const inputCol = this.getInputCol(fields);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, inputCol.type, false, []);
+    this.addNewField(fields, newField);
+    return fields;
+  }
+
+}
+
 class MappingConformanceRule extends ConformanceRule {
 
   getTargetCol(fields) {

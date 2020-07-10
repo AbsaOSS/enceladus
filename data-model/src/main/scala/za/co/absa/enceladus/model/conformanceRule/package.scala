@@ -30,7 +30,8 @@ package object conformanceRule {
     new Type(value = classOf[NegationConformanceRule], name = "NegationConformanceRule"),
     new Type(value = classOf[SingleColumnConformanceRule], name = "SingleColumnConformanceRule"),
     new Type(value = classOf[SparkSessionConfConformanceRule], name = "SparkSessionConfConformanceRule"),
-    new Type(value = classOf[UppercaseConformanceRule], name = "UppercaseConformanceRule")
+    new Type(value = classOf[UppercaseConformanceRule], name = "UppercaseConformanceRule"),
+    new Type(value = classOf[FillNullsConformanceRule], name = "FillNullsConformanceRule")
   ))
   sealed trait ConformanceRule {
     val order: Int
@@ -118,6 +119,14 @@ package object conformanceRule {
                                       outputColumn: String,
                                       controlCheckpoint: Boolean,
                                       inputColumn: String) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+  }
+
+  case class FillNullsConformanceRule(order: Int,
+                                      controlCheckpoint: Boolean,
+                                      outputColumn: String,
+                                      inputColumn: String,
+                                      value: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
   }
 

@@ -182,6 +182,7 @@ object DynamicInterpreter {
       case r: CastingConformanceRule          => CastingRuleInterpreter(r)
       case r: NegationConformanceRule         => NegationRuleInterpreter(r)
       case r: MappingConformanceRule          => getMappingRuleInterpreter(r)
+      case r: FillNullsConformanceRule        => FillNullsRuleInterpreter(r)
       case r: CustomConformanceRule           => r.getInterpreter()
       case r                                  => throw new IllegalStateException(s"Unrecognized rule class: ${r.getClass.getName}")
     }
