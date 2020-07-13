@@ -21,12 +21,13 @@ import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits._
+import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
-import za.co.absa.enceladus.conformance.config.{ConformanceParser, ConformanceConfig}
+import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceParser}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -53,6 +54,9 @@ trait ConformanceExecution extends CommonJobExecution {
                                      ): Unit = {
     spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.inputPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
+
+    // Enable control framework performance optimization for pipeline-like jobs
+    Atum.setAllowUnpersistOldDatasets(true)
 
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(

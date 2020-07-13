@@ -96,9 +96,6 @@ trait CommonJobExecution {
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
 
-    // Enable control framework performance optimization for pipeline-like jobs
-    Atum.setAllowUnpersistOldDatasets(true)
-
     // Enable non-default persistence storage level if provided in the command line
     cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
 

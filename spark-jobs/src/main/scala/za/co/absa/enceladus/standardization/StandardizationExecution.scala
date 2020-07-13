@@ -65,6 +65,9 @@ trait StandardizationExecution extends CommonJobExecution {
     spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.inputPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
+    // Enable control framework performance optimization for pipeline-like jobs
+    Atum.setAllowUnpersistOldDatasets(true)
+
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
     Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)
     Atum.setAdditionalInfo(Constants.InfoVersionColumn -> preparationResult.reportVersion.toString)
