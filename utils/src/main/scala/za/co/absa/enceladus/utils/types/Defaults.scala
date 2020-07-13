@@ -19,7 +19,7 @@ import java.sql.{Date, Timestamp}
 import java.util.{Locale, TimeZone}
 
 import org.apache.spark.sql.types._
-import za.co.absa.enceladus.utils.general.ConfigReader
+import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.numeric.DecimalSymbols
 
 import scala.util.{Success, Try}

@@ -26,16 +26,17 @@ import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfterAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.http.MediaType
+import org.springframework.http.{HttpStatus, MediaType}
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.TestResourcePath
 import za.co.absa.enceladus.menas.integration.fixtures._
-import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.models.rest.RestResponse
 import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
+import za.co.absa.enceladus.menas.models.{SchemaApiFeatures, Validation}
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.utils.SchemaType
+import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Schema, UsedIn}
@@ -45,9 +46,9 @@ import scala.collection.immutable.HashMap
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
+class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
 
-  private val port = 8877
+  private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistryBaseUrl` key
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
 
   override def beforeAll(): Unit = {
@@ -71,6 +72,9 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
 
   @Autowired
   private val attachmentFixture: AttachmentFixtureService = null
+
+  @Autowired
+  private val convertor: SparkMenasSchemaConvertor = null
 
   private val apiUrl = "/schema"
   private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
@@ -852,23 +856,24 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
     }
   }
 
+  import com.github.tomakehurst.wiremock.client.WireMock._
+
+  private def readTestResourceAsString(path: String): String = IOUtils.toString(getClass.getResourceAsStream(path))
+
+  /**
+   * will prepare the a response from file with correct `ContentType`
+   */
+  private def readTestResourceAsResponseWithContentType(path: String): ResponseDefinitionBuilder = {
+    // this is crazy, but it works better than hardcoding mime-types
+    val filePath: Path = new File(getClass.getResource(path).toURI()).toPath
+    val mime = Option(Files.probeContentType(filePath)).getOrElse(MediaType.APPLICATION_OCTET_STREAM_VALUE) // default for e.g. cob
+
+    val content = readTestResourceAsString(path)
+    import com.github.tomakehurst.wiremock.client.WireMock._
+    okForContentType(mime, content)
+  }
 
   s"POST $apiUrl/remote" should {
-    import com.github.tomakehurst.wiremock.client.WireMock._
-
-    def readTestResourceAsString(path: String): String = IOUtils.toString(getClass.getResourceAsStream(path))
-
-    /**
-     * will prepare the a response from file with correct `ContentType`
-     */
-    def readTestResourceAsResponseWithContentType(path: String): ResponseDefinitionBuilder = {
-      // this is crazy, but it works better than hardcoding mime-types
-      val filePath: Path = new File(getClass.getResource(path).toURI()).toPath
-      val mime = Option(Files.probeContentType(filePath)).getOrElse(MediaType.APPLICATION_OCTET_STREAM_VALUE) // default for e.g. cob
-
-      val content = readTestResourceAsString(path)
-      okForContentType(mime, content)
-    }
 
     val remoteFilePath = "/remote-test/someRemoteFile.ext"
     val remoteUrl = s"http://localhost:$port$remoteFilePath"
@@ -998,6 +1003,67 @@ class SchemaApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
         val params = HashMap[String, Any]("version" -> 1, "name" -> "dummy", "format" -> "copybook", "remoteUrl" -> remoteUrl)
         val response = sendPostRemoteFile[Schema](s"$apiUrl/remote", params)
         assertNotFound(response)
+      }
+    }
+  }
+
+  s"POST $apiUrl/registry" should {
+    def subjectPath(subjectName: String) = s"/subjects/$subjectName/versions/latest/schema"
+
+    "return 201" when {
+      "an avro schema has no errors" should {
+        "load schema by subject name as-is" in {
+          val schema = SchemaFactory.getDummySchema()
+          schemaFixture.add(schema)
+
+          wireMockServer.stubFor(get(urlPathEqualTo(subjectPath("myTopic1-value")))
+            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
+
+          val params = HashMap[String, Any](
+            "name" -> schema.name, "version" -> schema.version, "format" -> "avro", "subject" -> "myTopic1-value")
+          val responseRemoteLoaded = sendPostSubject[Schema](s"$apiUrl/registry", params)
+          assertCreated(responseRemoteLoaded)
+
+          val actual = responseRemoteLoaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 7)
+        }
+
+        "load schema by subject name -value fallback" in {
+          val schema = SchemaFactory.getDummySchema()
+          schemaFixture.add(schema)
+
+          wireMockServer.stubFor(get(urlPathEqualTo(subjectPath("myTopic2"))) // will fail
+            .willReturn(notFound()))
+
+          wireMockServer.stubFor(get(urlPathEqualTo(subjectPath("myTopic2-value"))) // fallback will kick in
+            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
+
+          val params = HashMap[String, Any](
+            "name" -> schema.name, "version" -> schema.version, "format" -> "avro", "subject" -> "myTopic2")
+          val responseRemoteLoaded = sendPostSubject[Schema](s"$apiUrl/registry", params)
+          assertCreated(responseRemoteLoaded)
+
+          val actual = responseRemoteLoaded.getBody
+          assert(actual.name == schema.name)
+          assert(actual.version == schema.version + 1)
+          assert(actual.fields.length == 7)
+        }
+      }
+    }
+
+    s"GET $apiUrl/features" can {
+      "show schema registry availability" when {
+        "schema registry integration is enabled" in {
+
+          val response = sendGet[SchemaApiFeatures](s"$apiUrl/features")
+          assert(response.getStatusCode == HttpStatus.OK)
+          val responseBody = response.getBody
+
+          // test-config contains populated menas.schemaRegistryBaseUrl
+          assert(responseBody == SchemaApiFeatures(registry = true))
+        }
       }
     }
   }
