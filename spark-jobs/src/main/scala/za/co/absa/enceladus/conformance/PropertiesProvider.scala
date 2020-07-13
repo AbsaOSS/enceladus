@@ -26,10 +26,14 @@ class PropertiesProvider {
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private implicit val conf: Config = ConfigFactory.load()
 
+  private val standardizedHdfsFolderKey = "conformance.autoclean.standardized.hdfs.folder"
+  private val maxBroadcastSizeKey = "conformance.mapping.rule.max.broadcast.size.mb"
+  private val experimentalRuleKey = "conformance.mapping.rule.experimental.implementation"
+  private val catalystWorkaroundKey = "conformance.catalyst.workaround"
+  private val broadcastStrategyKey = "conformance.mapping.rule.broadcast"
+
   def isAutocleanStdFolderEnabled()(implicit cmd: ConformanceConfig): Boolean = {
-    val enabled = getCmdOrConfigBoolean(cmd.autocleanStandardizedFolder,
-      "conformance.autoclean.standardized.hdfs.folder",
-      defaultValue = false)
+    val enabled = getCmdOrConfigBoolean(cmd.autocleanStandardizedFolder, standardizedHdfsFolderKey, defaultValue = false)
     log.info(s"Autoclean standardized HDFS folder = $enabled")
     enabled
   }
@@ -42,27 +46,23 @@ class PropertiesProvider {
     .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
   private def isExperimentalRuleEnabled()(implicit cmd: ConformanceConfig): Boolean = {
-    val enabled = getCmdOrConfigBoolean(cmd.experimentalMappingRule,
-      "conformance.mapping.rule.experimental.implementation",
-      defaultValue = false)
+    val enabled = getCmdOrConfigBoolean(cmd.experimentalMappingRule, experimentalRuleKey, defaultValue = false)
     log.info(s"Experimental mapping rule enabled = $enabled")
     enabled
   }
 
   private def isCatalystWorkaroundEnabled()(implicit cmd: ConformanceConfig): Boolean = {
-    val enabled = getCmdOrConfigBoolean(cmd.isCatalystWorkaroundEnabled,
-      "conformance.catalyst.workaround",
-      defaultValue = true)
+    val enabled = getCmdOrConfigBoolean(cmd.isCatalystWorkaroundEnabled, catalystWorkaroundKey, defaultValue = true)
     log.info(s"Catalyst workaround enabled = $enabled")
     enabled
   }
 
   private def broadcastingStrategyMode: ThreeStateSwitch = {
-    ThreeStateSwitch(conf.getString("conformance.mapping.rule.broadcast"))
+    ThreeStateSwitch(conf.getString(broadcastStrategyKey))
   }
 
   private def broadcastingMaxSizeMb: Int = {
-    conf.getInt("conformance.mapping.rule.max.broadcast.size.mb")
+    conf.getInt(maxBroadcastSizeKey)
   }
 
   /**
