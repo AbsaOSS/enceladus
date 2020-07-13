@@ -18,6 +18,7 @@ package za.co.absa.enceladus.conformance
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
+import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 import za.co.absa.enceladus.conformance.interpreter.{FeatureSwitches, ThreeStateSwitch}
 
 class PropertiesProvider {
@@ -79,12 +80,7 @@ class PropertiesProvider {
                                    (implicit conf: Config): Boolean = {
     val enabled = cmdParameterOpt match {
       case Some(b) => b
-      case None =>
-        if (conf.hasPath(configKey)) {
-          conf.getBoolean(configKey)
-        } else {
-          defaultValue
-        }
+      case None => conf.getOptionBoolean(configKey).getOrElse(defaultValue)
     }
     enabled
   }

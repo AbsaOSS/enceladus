@@ -33,6 +33,7 @@ import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
+import za.co.absa.enceladus.utils.config.SecureConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
@@ -72,7 +73,7 @@ trait CommonJobExecution {
   protected def initialValidation(): Unit = {
     // This should be the first thing the app does to make secure Kafka work with our CA.
     // After Spring activates JavaX, it will be too late.
-    SecureKafka.setSecureKafkaProperties(conf)
+    SecureConfig.setSecureKafkaProperties(conf)
   }
 
   protected def prepareJob[T]()
