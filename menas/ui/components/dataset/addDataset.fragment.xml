@@ -27,9 +27,9 @@
                                value="{entity>/description}"/>
                         <core:Fragment type="XML" fragmentName="components.schema.selector.schemaSelector"/>
                         <Label text="HDFS raw data folder path"/>
-                        <Input type="Text" id="selectedRawHDFSPathLabel"/>
+                        <Input type="Text" id="selectedRawHDFSPathLabel" value="{entity>/hdfsPath}"/>
                         <Label text="HDFS conformed data publish folder path"/>
-                        <Input type="Text" id="selectedPublishHDFSPathLabel"/>
+                        <Input type="Text" id="selectedPublishHDFSPathLabel" value="{entity>/hdfsPublishPath}"/>
                     </form:content>
                 </form:SimpleForm>
             </VBox>

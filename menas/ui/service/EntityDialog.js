@@ -80,6 +80,12 @@ class DatasetDialog extends EntityDialog {
 
     this.oController.byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("schemaVersionSelect").setValueStateText("");
+
+    this.oController.byId("selectedRawHDFSPathLabel").setValueState(sap.ui.core.ValueState.None);
+    this.oController.byId("selectedRawHDFSPathLabel").setValueStateText("");
+
+    this.oController.byId("selectedPublishHDFSPathLabel").setValueState(sap.ui.core.ValueState.None);
+    this.oController.byId("selectedPublishHDFSPathLabel").setValueStateText("");
   }
 
   isValid(oDataset) {
@@ -95,11 +101,8 @@ class DatasetDialog extends EntityDialog {
     let hasValidPublishHDFSPath = EntityValidationService.hasValidHDFSPath(oDataset.hdfsPublishPath,
       "Dataset publish HDFS path",
       this.oController.byId("selectedPublishHDFSPathLabel"));
-    let hasExistingRawHDFSPath = hasValidRawHDFSPath ? this.oController.byId("newDatasetRawHDFSBrowser").validate() : false;
-    let hasExistingPublishHDFSPath = hasValidRawHDFSPath && hasValidPublishHDFSPath ?
-      this.oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
 
-    return hasValidName && hasValidSchema && hasExistingRawHDFSPath && hasExistingPublishHDFSPath;
+    return hasValidName && hasValidSchema && hasValidRawHDFSPath && hasValidPublishHDFSPath;
   }
 
   onNameChange() {
@@ -246,6 +249,9 @@ class MappingTableDialog extends EntityDialog {
 
     this.oController.byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("schemaVersionSelect").setValueStateText("");
+
+    this.oController.byId("selectedHDFSPathLabel").setValueState(sap.ui.core.ValueState.None);
+    this.oController.byId("selectedHDFSPathLabel").setValueStateText("");
   }
 
   isValid(oMT) {
@@ -258,9 +264,8 @@ class MappingTableDialog extends EntityDialog {
     let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT.hdfsPath,
       "Mapping Table HDFS path",
       this.oController.byId("selectedHDFSPathLabel"));
-    let hasExistingHDFSPath = hasValidHDFSPath ? this.oController.byId("addMtHDFSBrowser").validate() : false;
 
-    return hasValidName && hasValidSchema && hasExistingHDFSPath;
+    return hasValidName && hasValidSchema && hasValidHDFSPath;
   }
 
   onNameChange() {
