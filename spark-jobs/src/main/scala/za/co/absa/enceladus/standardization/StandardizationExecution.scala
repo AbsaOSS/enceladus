@@ -52,13 +52,6 @@ trait StandardizationExecution extends CommonJobExecution {
                                           cmd: StandardizationParser[T],
                                           fsUtils: FileSystemVersionUtils,
                                           spark: SparkSession): StructType = {
-    // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(
-      conf,
-      cmd.datasetName,
-      cmd.datasetVersion,
-      cmd.reportDate,
-      preparationResult.reportVersion)
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
@@ -67,6 +60,14 @@ trait StandardizationExecution extends CommonJobExecution {
 
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
+
+    // Enable Menas plugin for Control Framework
+    MenasPlugin.enableMenas(
+      conf,
+      cmd.datasetName,
+      cmd.datasetVersion,
+      cmd.reportDate,
+      preparationResult.reportVersion)
 
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
     Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)

@@ -52,6 +52,9 @@ trait ConformanceExecution extends CommonJobExecution {
                                       fsUtils: FileSystemVersionUtils,
                                       spark: SparkSession
                                      ): Unit = {
+    // Enable Control Framework
+    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
+
     spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.inputPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
