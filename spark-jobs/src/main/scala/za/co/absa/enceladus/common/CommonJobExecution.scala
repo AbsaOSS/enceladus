@@ -24,7 +24,7 @@ import org.apache.spark.sql.SparkSession
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.common.config.{JobConfig, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -32,10 +32,10 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
-import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
+import za.co.absa.enceladus.utils.config.SecureConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
-import za.co.absa.enceladus.utils.modules.SourceId
+import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
@@ -58,7 +58,7 @@ trait CommonJobExecution {
   protected val conf: Config = ConfigFactory.load()
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
-  protected def obtainSparkSession[T]()(implicit cmd: JobConfig[T]): SparkSession = {
+  protected def obtainSparkSession[T]()(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
@@ -72,12 +72,12 @@ trait CommonJobExecution {
   protected def initialValidation(): Unit = {
     // This should be the first thing the app does to make secure Kafka work with our CA.
     // After Spring activates JavaX, it will be too late.
-    SecureKafka.setSecureKafkaProperties(conf)
+    SecureConfig.setSecureKafkaProperties(conf)
   }
 
   protected def prepareJob[T]()
                              (implicit dao: MenasDAO,
-                              cmd: JobConfig[T],
+                              cmd: JobConfigParser[T],
                               fsUtils: FileSystemVersionUtils,
                               spark: SparkSession): PreparationResult = {
     dao.authenticate()
@@ -96,16 +96,13 @@ trait CommonJobExecution {
     import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
 
-    // Enable control framework performance optimization for pipeline-like jobs
-    Atum.setAllowUnpersistOldDatasets(true)
-
     // Enable non-default persistence storage level if provided in the command line
     cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
 
     PreparationResult(dataset, reportVersion, pathCfg, performance)
   }
 
-  protected def runPostProcessing[T](sourceId: SourceId, preparationResult: PreparationResult, jobCmdConfig: JobConfig[T])
+  protected def runPostProcessing[T](sourceId: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
                                     (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
     val df = spark.read.parquet(preparationResult.pathCfg.outputPath)
     val runId = MenasPlugin.runNumber
@@ -131,7 +128,7 @@ trait CommonJobExecution {
     postProcessingService.onSaveOutput(df)
   }
 
-  protected def finishJob[T](jobConfig: JobConfig[T]): Unit = {
+  protected def finishJob[T](jobConfig: JobConfigParser[T]): Unit = {
     val name = jobConfig.datasetName
     val version = jobConfig.datasetVersion
     MenasPlugin.runNumber.foreach { runNumber =>
@@ -146,9 +143,9 @@ trait CommonJobExecution {
   }
 
 
-  protected def getPathCfg[T](cmd: JobConfig[T], dataset: Dataset, reportVetsion: Int): PathConfig
+  protected def getPathCfg[T](cmd: JobConfigParser[T], dataset: Dataset, reportVetsion: Int): PathConfig
 
-  protected def getStandardizationPath[T](jobConfig: JobConfig[T], reportVersion: Int): String = {
+  protected def getStandardizationPath[T](jobConfig: JobConfigParser[T], reportVersion: Int): String = {
     MessageFormat.format(conf.getString("standardized.hdfs.path"),
       jobConfig.datasetName,
       jobConfig.datasetVersion.toString,
@@ -179,7 +176,7 @@ trait CommonJobExecution {
     }
   }
 
-  protected def writePerformanceMetrics[T](performance: PerformanceMeasurer, jobCmdConfig: JobConfig[T]): Unit = {
+  protected def writePerformanceMetrics[T](performance: PerformanceMeasurer, jobCmdConfig: JobConfigParser[T]): Unit = {
     jobCmdConfig.performanceMetricsFile.foreach(fileName => try {
       performance.writeMetricsToFile(fileName)
     } catch {
@@ -187,7 +184,7 @@ trait CommonJobExecution {
     })
   }
 
-  protected def handleEmptyOutput(job: SourceId)(implicit spark: SparkSession): Unit = {
+  protected def handleEmptyOutput(job: SourcePhase)(implicit spark: SparkSession): Unit = {
     import za.co.absa.atum.core.Constants._
 
     val areCountMeasurementsAllZero = Atum.getControlMeasure.checkpoints
@@ -205,7 +202,7 @@ trait CommonJobExecution {
     }
   }
 
-  private def getReportVersion[T](jobConfig: JobConfig[T], dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {
+  private def getReportVersion[T](jobConfig: JobConfigParser[T], dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {
     jobConfig.reportVersion match {
       case Some(version) => version
       case None =>

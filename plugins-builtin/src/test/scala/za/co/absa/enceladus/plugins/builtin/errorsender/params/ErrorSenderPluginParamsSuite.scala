@@ -18,7 +18,7 @@ package za.co.absa.enceladus.plugins.builtin.errorsender.params
 import java.time.Instant
 
 import org.scalatest.{FlatSpec, Matchers}
-import za.co.absa.enceladus.utils.modules.SourceId
+import za.co.absa.enceladus.utils.modules.SourcePhase
 
 class ErrorSenderPluginParamsSuite extends FlatSpec with Matchers {
 
@@ -28,7 +28,7 @@ class ErrorSenderPluginParamsSuite extends FlatSpec with Matchers {
     reportDate = "2020-03-30",
     reportVersion = 1,
     outputPath = "output/Path1",
-    sourceId = SourceId.Conformance,
+    sourceId = SourcePhase.Conformance,
     sourceSystem = "sourceSystem1",
     runUrls = Some("http://runUrls1"),
     runId = Some(1),

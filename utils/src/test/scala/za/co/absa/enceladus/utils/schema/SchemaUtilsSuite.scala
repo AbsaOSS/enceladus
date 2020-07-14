@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.utils.schema
 
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, Matchers}
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.utils.schema.SchemaUtils._
 
-class SchemaUtilsSuite extends FunSuite {
+class SchemaUtilsSuite extends FunSuite with Matchers {
   // scalastyle:off magic.number
 
   private val schema = StructType(Seq(
@@ -471,4 +471,5 @@ class SchemaUtilsSuite extends FunSuite {
     val expected = "grand__parent_parent_first__child"
     assert(result == expected)
   }
+
 }

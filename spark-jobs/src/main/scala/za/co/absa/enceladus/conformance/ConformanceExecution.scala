@@ -21,12 +21,13 @@ import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits._
+import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.config.{JobConfig, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
-import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigInstance}
+import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceParser}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -34,7 +35,7 @@ import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
-import za.co.absa.enceladus.utils.modules.SourceId
+import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
@@ -42,20 +43,23 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 trait ConformanceExecution extends CommonJobExecution {
-  private val conformanceReader = new ConformanceReader(log, conf)
-  private val sourceId = SourceId.Conformance
+  private val conformanceReader = new PropertiesProvider
+  private val sourceId = SourcePhase.Conformance
 
   protected def prepareConformance[T](preparationResult: PreparationResult)
                                      (implicit dao: MenasDAO,
-                                      cmd: ConformanceConfig[T],
+                                      cmd: ConformanceParser[T],
                                       fsUtils: FileSystemVersionUtils,
                                       spark: SparkSession
                                      ): Unit = {
-    // die before performing any computation if the output path aleady exists
-    validateForExistingOutputPath(fsUtils, preparationResult.pathCfg)
+    // Enable Control Framework
+    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 
     spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.inputPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
+
+    // Enable control framework performance optimization for pipeline-like jobs
+    Atum.setAllowUnpersistOldDatasets(true)
 
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(
@@ -63,9 +67,7 @@ trait ConformanceExecution extends CommonJobExecution {
       cmd.datasetName,
       cmd.datasetVersion,
       cmd.reportDate,
-      preparationResult.reportVersion,
-      isJobStageOnly = false,
-      generateNewRun = false)
+      preparationResult.reportVersion)
   }
 
   protected def readConformanceInputData(pathCfg: PathConfig)(implicit spark: SparkSession): DataFrame = {
@@ -125,7 +127,7 @@ trait ConformanceExecution extends CommonJobExecution {
       case Some(p) => p
     }
     if (recordCount == 0) {
-      handleEmptyOutput(SourceId.Conformance)
+      handleEmptyOutput(SourcePhase.Conformance)
     }
 
     // ensure the whole path but version exists
@@ -152,15 +154,15 @@ trait ConformanceExecution extends CommonJobExecution {
     log.info(s"$sourceId finished successfully")
   }
 
-  override protected def getPathCfg[T](cmd: JobConfig[T], conformance: Dataset, reportVersion: Int): PathConfig = {
-    val confCmd = cmd.asInstanceOf[ConformanceConfig[T]]
+  override protected def getPathCfg[T](cmd: JobConfigParser[T], conformance: Dataset, reportVersion: Int): PathConfig = {
+    val confCmd = cmd.asInstanceOf[ConformanceParser[T]]
     PathConfig(
       outputPath = buildPublishPath(confCmd, conformance, reportVersion),
       inputPath = getStandardizationPath(cmd, reportVersion)
     )
   }
 
-  def buildPublishPath[T](cmd: ConformanceConfig[T],
+  def buildPublishPath[T](cmd: ConformanceParser[T],
                           ds: Dataset,
                           reportVersion: Int): String = {
     val infoDateCol: String = InfoDateColumn

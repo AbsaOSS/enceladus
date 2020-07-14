@@ -15,44 +15,73 @@
 
 package za.co.absa.enceladus.conformance.config
 
+import org.apache.spark.storage.StorageLevel
 import scopt.OParser
-import za.co.absa.enceladus.common.config.JobConfig
+import za.co.absa.enceladus.common.config.{ConfigError, JobConfigParser}
+import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory}
 
-trait ConformanceConfig[R] extends JobConfig[R] {
-  def publishPathOverride: Option[String]
-  def experimentalMappingRule: Option[Boolean]
-  def isCatalystWorkaroundEnabled: Option[Boolean]
-  def autocleanStandardizedFolder: Option[Boolean]
+import scala.util.Try
 
-  def withPublishPathOverride(vlue: Option[String]): R
-  def withExperimentalMappingRule(value: Option[Boolean]): R
-  def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): R
-  def withAutocleanStandardizedFolder(value: Option[Boolean]): R
+
+/**
+ * This is a class for configuration provided by the command line parameters
+ *
+ * Note: scopt requires all fields to have default values.
+ *       Even if a field is mandatory it needs a default value.
+ */
+case class ConformanceConfig(datasetName: String = "",
+                             datasetVersion: Int = 1,
+                             reportDate: String = "",
+                             reportVersion: Option[Int] = None,
+                             menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
+                             performanceMetricsFile: Option[String] = None,
+                             folderPrefix: Option[String] = None,
+                             persistStorageLevel: Option[StorageLevel] = None,
+                             publishPathOverride: Option[String] = None,
+                             experimentalMappingRule: Option[Boolean] = None,
+                             isCatalystWorkaroundEnabled: Option[Boolean] = None,
+                             autocleanStandardizedFolder: Option[Boolean] = None,
+                             credsFile: Option[String] = None,
+                             keytabFile: Option[String] = None)
+  extends ConformanceParser[ConformanceConfig] {
+
+  override def withPublishPathOverride(value: Option[String]): ConformanceConfig = copy(publishPathOverride = value)
+  override def withExperimentalMappingRule(value: Option[Boolean]): ConformanceConfig = copy(experimentalMappingRule = value)
+  override def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): ConformanceConfig =
+    copy(isCatalystWorkaroundEnabled = value)
+  override def withAutocleanStandardizedFolder(value: Option[Boolean]): ConformanceConfig =
+    copy(autocleanStandardizedFolder = value)
+  override def withDatasetName(value: String): ConformanceConfig = copy(datasetName = value)
+  override def withDatasetVersion(value: Int): ConformanceConfig = copy(datasetVersion = value)
+  override def withReportDate(value: String): ConformanceConfig = copy(reportDate = value)
+  override def withReportVersion(value: Option[Int]): ConformanceConfig = copy(reportVersion = value)
+  override def withCredsFile(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): ConformanceConfig =
+    copy(credsFile = value, menasCredentialsFactory = menasCredentialsFactory)
+
+  override def withAuthKeytab(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): ConformanceConfig =
+    copy(keytabFile = value, menasCredentialsFactory = menasCredentialsFactory)
+
+  override def withPerformanceMetricsFile(value: Option[String]): ConformanceConfig = copy(performanceMetricsFile = value)
+  override def withFolderPrefix(value: Option[String]): ConformanceConfig = copy(folderPrefix = value)
+  override def withPersistStorageLevel(value: Option[StorageLevel]): ConformanceConfig = copy(persistStorageLevel = value)
 }
 
 object ConformanceConfig {
+  def tryFromArguments(args: Array[String]): Try[ConformanceConfig] = {
+    import za.co.absa.enceladus.utils.implicits.OptionImplicits._
+    OParser.parse(conformanceJobParser, args, ConformanceConfig()).toTry(ConfigError("Command line parameters error"))
+  }
 
-  def conformanceParser[R <: ConformanceConfig[R]]: OParser[_, R] = {
-    val builder = OParser.builder[R]
+  def getFromArguments(args: Array[String]): ConformanceConfig = tryFromArguments(args).get
+
+  val conformanceJobParser: OParser[_, ConformanceConfig] = {
+    val builder = OParser.builder[ConformanceConfig]
     import builder._
     OParser.sequence(
-    head("Dynamic Conformance", ""),
-
-    opt[String]("debug-set-publish-path").optional().hidden().action((value, config) =>
-      config.withPublishPathOverride(Some(value))).text("override the path of the published data (used internally for testing)"),
-
-    opt[Boolean]("experimental-mapping-rule").optional().action((value, config) =>
-      config.withExperimentalMappingRule(Option(value))).text("Use experimental optimized mapping conformance rule"),
-
-    opt[Boolean]("catalyst-workaround").optional().action((value, config) =>
-      config.withIsCatalystWorkaroundEnabled(Some(value))).text("Turn on or off Catalyst workaround feature. " +
-      "This overrides 'conformance.catalyst.workaround' configuration value provided in 'application.conf'."),
-
-    opt[Boolean]("autoclean-std-folder").optional().action((value, config) =>
-      config.withAutocleanStandardizedFolder(Option(value))).text("Deletes standardized data from HDFS once " +
-      "it is successfully conformed. This overrides 'conformance.autoclean.standardized.hdfs.folder' configuration " +
-      " value provided in 'application.conf'.")
+      programName("Conformance Job"),
+      ConformanceParser.conformanceParser,
+      JobConfigParser.jobConfigParser
     )
   }
-}
 
+}

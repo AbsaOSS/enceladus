@@ -22,7 +22,7 @@ import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCrede
 import scala.util.matching.Regex
 
 
-trait JobConfig[R] {
+trait JobConfigParser[R] {
   def withDatasetName(value: String): R
   def withDatasetVersion(value: Int): R
   def withReportDate(value: String): R
@@ -45,10 +45,10 @@ trait JobConfig[R] {
   def keytabFile: Option[String]
 }
 
-object JobConfig {
+object JobConfigParser {
 
   //scalastyle:off method.length the length is legit for parsing input paramters
-  def jobConfigParser[R <: JobConfig[R]]: OParser[_, R] = {
+  def jobConfigParser[R <: JobConfigParser[R]]: OParser[_, R] = {
     val builder = OParser.builder[R]
     import builder._
     OParser.sequence(head("Job Parameters"),

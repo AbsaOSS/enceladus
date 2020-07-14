@@ -22,7 +22,7 @@ import org.scalatest.{Outcome, fixture}
 import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.config.StandardizationConfigInstance
+import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
@@ -32,8 +32,7 @@ class StandardizationCobolEbcdicSuite extends fixture.FunSuite with SparkTestBas
 
   private implicit val dao: MenasDAO = mock[MenasDAO]
 
-  private implicit val log: Logger = mock[Logger]
-  private val standardizationReader = new StandardizationReader(log)
+  private val standardizationReader = new PropertiesProvider()
 
   private val tmpFilePrefix = "cobol-fix-ebcdic-"
   private val tmpFileSuffix = ".dat"
@@ -75,7 +74,7 @@ class StandardizationCobolEbcdicSuite extends fixture.FunSuite with SparkTestBas
   private def getTestDataFrame(tmpFileName: String,
                                args: Array[String]
                               ): DataFrame = {
-    val cmd: StandardizationConfigInstance = StandardizationConfigInstance.getFromArguments(argumentsBase ++ args)
+    val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(argumentsBase ++ args)
     val cobolReader = standardizationReader.getFormatSpecificReader(cmd, dataSet, schema.fields.length)
     cobolReader
       .option("copybook_contents", copybook)

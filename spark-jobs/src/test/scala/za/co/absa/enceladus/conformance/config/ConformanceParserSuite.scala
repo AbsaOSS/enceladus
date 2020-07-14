@@ -23,7 +23,7 @@ import za.co.absa.enceladus.dao.auth.{MenasKerberosCredentials, MenasPlainCreden
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class ConformanceConfigSuite extends FunSuite with SparkTestBase {
+class ConformanceParserSuite extends FunSuite with SparkTestBase {
 
   private val year = "2018"
   private val month = "12"
@@ -70,7 +70,7 @@ class ConformanceConfigSuite extends FunSuite with SparkTestBase {
   }
 
   test("folder-prefix parameter") {
-    val cmdConfigNoFolderPrefix = ConformanceConfigInstance.getFromArguments(
+    val cmdConfigNoFolderPrefix = ConformanceConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -88,7 +88,7 @@ class ConformanceConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigNoFolderPrefix.publishPathOverride.isEmpty)
     assert(actualPlainMenasCredentials === menasCredentials)
 
-    val cmdConfigFolderPrefix = ConformanceConfigInstance.getFromArguments(
+    val cmdConfigFolderPrefix = ConformanceConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -108,7 +108,7 @@ class ConformanceConfigSuite extends FunSuite with SparkTestBase {
     assert(cmdConfigFolderPrefix.publishPathOverride.isEmpty)
     assert(actualMenasKerberosCredentials === menasKeytab)
 
-    val cmdConfigPublishPathOverrideAndFolderPrefix = ConformanceConfigInstance.getFromArguments(
+    val cmdConfigPublishPathOverrideAndFolderPrefix = ConformanceConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -146,7 +146,7 @@ class ConformanceConfigSuite extends FunSuite with SparkTestBase {
       userDisabled,
       List()
     )
-    val cmdConfigNoFolderPrefix = ConformanceConfigInstance.getFromArguments(
+    val cmdConfigNoFolderPrefix = ConformanceConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -154,7 +154,7 @@ class ConformanceConfigSuite extends FunSuite with SparkTestBase {
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile
       ))
-    val cmdConfigFolderPrefix = ConformanceConfigInstance.getFromArguments(
+    val cmdConfigFolderPrefix = ConformanceConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -162,7 +162,7 @@ class ConformanceConfigSuite extends FunSuite with SparkTestBase {
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile,
         "--folder-prefix", folderPrefix))
-    val cmdConfigPublishPathOverride = ConformanceConfigInstance.getFromArguments(
+    val cmdConfigPublishPathOverride = ConformanceConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,
@@ -170,7 +170,7 @@ class ConformanceConfigSuite extends FunSuite with SparkTestBase {
         "--report-version", reportVersion.toString,
         "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride))
-    val cmdConfigPublishPathOverrideAndFolderPrefix = ConformanceConfigInstance.getFromArguments(
+    val cmdConfigPublishPathOverrideAndFolderPrefix = ConformanceConfig.getFromArguments(
       Array(
         "--dataset-name", datasetName,
         "--dataset-version", datasetVersion.toString,

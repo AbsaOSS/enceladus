@@ -29,7 +29,7 @@ import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginSuite.{TestingErrCol, TestingRecord}
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
-import za.co.absa.enceladus.utils.modules.SourceId
+import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 
@@ -75,7 +75,7 @@ class KafkaErrorSenderPluginSuite extends FlatSpec with SparkTestBase with Match
   "ErrorSenderPluginParams" should "getIndividualErrors (exploding, filtering by source for Standardization)" in {
     val plugin = KafkaErrorSenderPluginImpl(null, Map(), Map())
 
-    plugin.getIndividualErrors(testDataDf, defaultPluginParams.copy(sourceId = SourceId.Standardization))
+    plugin.getIndividualErrors(testDataDf, defaultPluginParams.copy(sourceId = SourcePhase.Standardization))
       .as[DceError].collect.map(entry => (entry.errorType, entry.errorCode)) should contain theSameElementsAs Seq(
       ("stdCastError", "E00000"),
       ("stdNullError", "E00002"),
@@ -87,7 +87,7 @@ class KafkaErrorSenderPluginSuite extends FlatSpec with SparkTestBase with Match
   it should "getIndividualErrors (exploding, filtering by source for Conformance)" in {
     val plugin = KafkaErrorSenderPluginImpl(null, Map(), Map())
 
-    plugin.getIndividualErrors(testDataDf, defaultPluginParams.copy(sourceId = SourceId.Conformance))
+    plugin.getIndividualErrors(testDataDf, defaultPluginParams.copy(sourceId = SourcePhase.Conformance))
       .as[DceError].collect.map(entry => (entry.errorType, entry.errorCode)) should contain theSameElementsAs Seq(
       ("confMapError", "E00001"),
       ("confCastError", "E00003"),
@@ -143,7 +143,7 @@ class KafkaErrorSenderPluginSuite extends FlatSpec with SparkTestBase with Match
 
     // onlyConformanceErrorsDataDf should result in 0 std errors
     val onlyConformanceErrorsDataDf =  Seq(testData(1)).toDF
-    errorKafkaPlugin.onDataReady(onlyConformanceErrorsDataDf, defaultPluginParams.copy(sourceId = SourceId.Standardization).toMap)
+    errorKafkaPlugin.onDataReady(onlyConformanceErrorsDataDf, defaultPluginParams.copy(sourceId = SourcePhase.Standardization).toMap)
 
     assert(sendErrorsToKafkaWasCalled == false, "KafkaErrorSenderPluginImpl.sentErrorToKafka should not be called for 0 errors")
   }
@@ -160,11 +160,11 @@ class KafkaErrorSenderPluginSuite extends FlatSpec with SparkTestBase with Match
   }
 
   Seq(
-    SourceId.Standardization -> Seq(
+    SourcePhase.Standardization -> Seq(
       "standardizaton,stdCastError,E00000,Standardization Error - Type cast",
       "standardizaton,stdNullError,E00002,Standardization Error - Null detected in non-nullable attribute"
     ),
-    SourceId.Conformance -> Seq(
+    SourcePhase.Conformance -> Seq(
       "conformance,confNegErr,E00004,Conformance Negation Error",
       "conformance,confLitErr,E00005,Conformance Literal Error"
     )

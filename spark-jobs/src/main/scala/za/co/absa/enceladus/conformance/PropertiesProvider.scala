@@ -15,19 +15,25 @@
 
 package za.co.absa.enceladus.conformance
 
-import com.typesafe.config.Config
-import org.slf4j.Logger
-import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigInstance}
+import com.typesafe.config.{Config, ConfigFactory}
+import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
+import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 import za.co.absa.enceladus.conformance.interpreter.{FeatureSwitches, ThreeStateSwitch}
 
-class ConformanceReader(log: Logger, conf: Config) {
+class PropertiesProvider {
   private val enableCF: Boolean = true
-  private implicit val config: Config = conf
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
+  private implicit val conf: Config = ConfigFactory.load()
 
-  def isAutocleanStdFolderEnabled[T]()(implicit cmd: ConformanceConfig[T]): Boolean = {
-    val enabled = getCmdOrConfigBoolean(cmd.autocleanStandardizedFolder,
-      "conformance.autoclean.standardized.hdfs.folder",
-      defaultValue = false)
+  private val standardizedHdfsFolderKey = "conformance.autoclean.standardized.hdfs.folder"
+  private val maxBroadcastSizeKey = "conformance.mapping.rule.max.broadcast.size.mb"
+  private val experimentalRuleKey = "conformance.mapping.rule.experimental.implementation"
+  private val catalystWorkaroundKey = "conformance.catalyst.workaround"
+  private val broadcastStrategyKey = "conformance.mapping.rule.broadcast"
+
+  def isAutocleanStdFolderEnabled()(implicit cmd: ConformanceConfig): Boolean = {
+    val enabled = getCmdOrConfigBoolean(cmd.autocleanStandardizedFolder, standardizedHdfsFolderKey, defaultValue = false)
     log.info(s"Autoclean standardized HDFS folder = $enabled")
     enabled
   }
@@ -40,27 +46,23 @@ class ConformanceReader(log: Logger, conf: Config) {
     .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
   private def isExperimentalRuleEnabled[T]()(implicit cmd: ConformanceConfig[T]): Boolean = {
-    val enabled = getCmdOrConfigBoolean(cmd.experimentalMappingRule,
-      "conformance.mapping.rule.experimental.implementation",
-      defaultValue = false)
+    val enabled = getCmdOrConfigBoolean(cmd.experimentalMappingRule, experimentalRuleKey, defaultValue = false)
     log.info(s"Experimental mapping rule enabled = $enabled")
     enabled
   }
 
-  private def isCatalystWorkaroundEnabled[T]()(implicit cmd: ConformanceConfig[T]): Boolean = {
-    val enabled = getCmdOrConfigBoolean(cmd.isCatalystWorkaroundEnabled,
-      "conformance.catalyst.workaround",
-      defaultValue = true)
+  private def isCatalystWorkaroundEnabled()(implicit cmd: ConformanceConfig[T]): Boolean = {
+    val enabled = getCmdOrConfigBoolean(cmd.isCatalystWorkaroundEnabled, catalystWorkaroundKey, defaultValue = true)
     log.info(s"Catalyst workaround enabled = $enabled")
     enabled
   }
 
   private def broadcastingStrategyMode: ThreeStateSwitch = {
-    ThreeStateSwitch(conf.getString("conformance.mapping.rule.broadcast"))
+    ThreeStateSwitch(conf.getString(broadcastStrategyKey))
   }
 
   private def broadcastingMaxSizeMb: Int = {
-    conf.getInt("conformance.mapping.rule.max.broadcast.size.mb")
+    conf.getInt(maxBroadcastSizeKey)
   }
 
   /**
@@ -78,12 +80,7 @@ class ConformanceReader(log: Logger, conf: Config) {
                                    (implicit conf: Config): Boolean = {
     val enabled = cmdParameterOpt match {
       case Some(b) => b
-      case None =>
-        if (conf.hasPath(configKey)) {
-          conf.getBoolean(configKey)
-        } else {
-          defaultValue
-        }
+      case None => conf.getOptionBoolean(configKey).getOrElse(defaultValue)
     }
     enabled
   }

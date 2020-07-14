@@ -19,7 +19,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.mockito.Mockito.mock
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, ExplosionState, FeatureSwitches, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -61,7 +61,7 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
 
   // we may WANT to enable control framework & spline here
 
-  implicit val progArgs: ConformanceConfigInstance = ConformanceConfigInstance() // here we may need to specify some parameters (for certain rules)
+  implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: MenasDAO = mock(classOf[MenasDAO]) // you may have to hard-code your own implementation here (if not working with menas)
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true

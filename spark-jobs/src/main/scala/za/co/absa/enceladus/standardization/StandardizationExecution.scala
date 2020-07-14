@@ -23,17 +23,17 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.{JobConfig, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigInstance}
+import za.co.absa.enceladus.standardization.config.{StandardizationParser, StandardizationConfig}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.modules.SourceId
+import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
@@ -42,36 +42,38 @@ import za.co.absa.enceladus.utils.validation.ValidationException
 import scala.util.control.NonFatal
 
 trait StandardizationExecution extends CommonJobExecution {
-  private val sourceId = SourceId.Standardization
+  private val sourceId = SourcePhase.Standardization
 
   protected def prepareStandardization[T](args: Array[String],
                                           menasCredentials: MenasCredentials,
                                           preparationResult: PreparationResult
                                          )
                                          (implicit dao: MenasDAO,
-                                          cmd: StandardizationConfig[T],
+                                          cmd: StandardizationParser[T],
                                           fsUtils: FileSystemVersionUtils,
                                           spark: SparkSession): StructType = {
-    // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(
-      conf,
-      cmd.datasetName,
-      cmd.datasetVersion,
-      cmd.reportDate,
-      preparationResult.reportVersion,
-      isJobStageOnly = false,
-      generateNewRun = false)
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
     spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.inputPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
+    // Enable control framework performance optimization for pipeline-like jobs
+    Atum.setAllowUnpersistOldDatasets(true)
+
+    // Enable Menas plugin for Control Framework
+    MenasPlugin.enableMenas(
+      conf,
+      cmd.datasetName,
+      cmd.datasetVersion,
+      cmd.reportDate,
+      preparationResult.reportVersion)
+
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
     Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)
     Atum.setAdditionalInfo(Constants.InfoVersionColumn -> preparationResult.reportVersion.toString)
 
-    // Add the raw format of the input file(s) to Atum's metadata as well
+    // Add the raw format of the input file(s) to Atum's metadata
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std", preparationResult.pathCfg.inputPath, preparationResult.pathCfg.outputPath,
@@ -88,23 +90,30 @@ trait StandardizationExecution extends CommonJobExecution {
                                              fsUtils: FileSystemVersionUtils,
                                              dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
-    val standardizationReader = new StandardizationReader(log)
+    val standardizationReader = new PropertiesProvider()
     val dfReaderConfigured = standardizationReader.getFormatSpecificReader(cmd, dataset, numberOfColumns)
-    val dfWithSchema = (if (!cmd.rawFormat.equalsIgnoreCase("parquet")
-      && !cmd.rawFormat.equalsIgnoreCase("cobol")) {
-      // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
-      val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
-      val optColumnNameOfCorruptRecord = if (cmd.failOnInputNotPerSchema) {
-        None
-      } else {
-        Option(columnNameOfCorruptRecord)
-      }
-      val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, optColumnNameOfCorruptRecord)
-      dfReaderConfigured.schema(inputSchema)
-    } else {
-      dfReaderConfigured
-    }).load(s"$path/*")
+    val readerWithOptSchema = cmd.rawFormat.toLowerCase() match {
+      case "parquet" | "cobol" => dfReaderConfigured
+      case _ =>
+        val optColumnNameOfCorruptRecord = getColumnNameOfCorruptRecord(schema, cmd)
+        val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, optColumnNameOfCorruptRecord)
+        dfReaderConfigured.schema(inputSchema)
+    }
+    val dfWithSchema = readerWithOptSchema.load(s"$path/*")
+
     ensureSplittable(dfWithSchema, path, schema)
+  }
+
+
+  private def getColumnNameOfCorruptRecord[R](schema: StructType, cmd: StandardizationParser[R])
+                                          (implicit spark: SparkSession): Option[String] = {
+    // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
+    val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
+    if (cmd.rawFormat.equalsIgnoreCase("fixed-width") || cmd.failOnInputNotPerSchema) {
+      None
+    } else {
+      Option(columnNameOfCorruptRecord)
+    }
   }
 
   protected def standardize[T](inputData: DataFrame, schema: StructType, cmd: StandardizationConfig[T])
@@ -169,25 +178,24 @@ trait StandardizationExecution extends CommonJobExecution {
     )
 
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
-    if (cmd.csvDelimiter.isDefined) {
-      cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
-    }
+    cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
 
     standardizedDF.writeInfoFile(preparationResult.pathCfg.outputPath)
     writePerformanceMetrics(preparationResult.performance, cmd)
     log.info(s"$sourceId finished successfully")
     standardizedDF
   }
+  //scalastyle:off parameter.number
 
-  override protected def getPathCfg[T](cmd: JobConfig[T], dataset: Dataset, reportVersion: Int): PathConfig = {
-    val stdCmd = cmd.asInstanceOf[StandardizationConfig[T]]
+  override protected def getPathCfg[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+    val stdCmd = cmd.asInstanceOf[StandardizationParser[T]]
     PathConfig(
       inputPath = buildRawPath(stdCmd, dataset, reportVersion),
       outputPath = getStandardizationPath(cmd, reportVersion)
     )
   }
 
-  def buildRawPath[T](cmd: StandardizationConfig[T], dataset: Dataset, reportVersion: Int): String = {
+  def buildRawPath[T](cmd: StandardizationParser[T], dataset: Dataset, reportVersion: Int): String = {
     val dateTokens = cmd.reportDate.split("-")
     cmd.rawPathOverride match {
       case None =>

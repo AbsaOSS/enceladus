@@ -25,7 +25,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
-import za.co.absa.enceladus.conformance.config.ConformanceConfigInstance
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.InfoDateFactory
 import za.co.absa.enceladus.dao.MenasDAO
@@ -34,7 +34,7 @@ import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactor
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
-class HyperConformance (implicit cmd: ConformanceConfigInstance,
+class HyperConformance (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         menasBaseUrls: List[String],
                         infoDateFactory: InfoDateFactory) extends StreamTransformer {
@@ -65,8 +65,8 @@ class HyperConformance (implicit cmd: ConformanceConfigInstance,
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
 
     val conformedDf = DynamicInterpreter.interpret(conformance, rawDf)
-      .withColumnIfDoesNotExist(InfoDateColumn, infoDateColumn)
-      .withColumnIfDoesNotExist(InfoDateColumnString, date_format(infoDateColumn, "yyyy-MM-dd"))
+      .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_date()))
+      .withColumnIfDoesNotExist(InfoDateColumnString, coalesce(date_format(infoDateColumn,"yyyy-MM-dd"), lit("")))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
     conformedDf
   }
@@ -77,7 +77,7 @@ class HyperConformance (implicit cmd: ConformanceConfigInstance,
   }
 
   @throws[IllegalArgumentException]
-  private def getReportVersion(implicit cmd: ConformanceConfigInstance): Int = {
+  private def getReportVersion(implicit cmd: ConformanceConfig): Int = {
     cmd.reportVersion match {
       case Some(version) => version
       case None => throw new IllegalArgumentException("Report version is not provided.")
@@ -121,7 +121,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
 
     val menasCredentialsFactory = getMenasCredentialsFactory(conf: Configuration)
 
-    implicit val confConfig: ConformanceConfigInstance = ConformanceConfigInstance(publishPathOverride = None,
+    implicit val confConfig: ConformanceConfig = ConformanceConfig(publishPathOverride = None,
       experimentalMappingRule = Some(true),
       isCatalystWorkaroundEnabled = Some(true),
       autocleanStandardizedFolder = Some(false),
@@ -165,14 +165,6 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       case (true, false)  => new MenasPlainCredentialsFactory(conf.getString(menasCredentialsFileKey))
       case (false, true)  => new MenasKerberosCredentialsFactory(conf.getString(menasAuthKeytabKey))
       case (true, true)   => throw new IllegalArgumentException("Either a credentials file or a keytab should be specified, but not both.")
-    }
-  }
-
-  private def getReportVersion(conf: Configuration): Int = {
-    if (conf.containsKey(reportVersionKey)) {
-      conf.getInt(reportVersionKey)
-    } else {
-      defaultReportVersion
     }
   }
 }
