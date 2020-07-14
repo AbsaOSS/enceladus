@@ -43,7 +43,7 @@ where:
 
 - `dataset_name` is the name gaven the dataset per [Menas Quick Start]({{ docs_path }}/usage/menas-quick-start) guide Guide
 - `dataset_version` is a version of the dataset to use, which should have the correct schema and all the conformance rules wanted
-- `report_date` represent the date on which the data landed in the HDFS (in raw) and also the next part of the path of to the data. So if in Menas you specified `/path/on/hdfs/raw` as your raw and input `2020-12-24` as a report date then the path where standardization will look for your files will be `/path/on/hdfs/raw/2020/12/24`. For the final part we are missing report versions.
+- `report_date` represents the date on which the data landed in the HDFS (in raw) and also the next part of the data output path. So if in Menas raw was specified as `/path/on/hdfs/raw` and the input parameter `report_date` as `2020-12-24` as a report date then the path where standardization will look for input files will be `/path/on/hdfs/raw/2020/12/24`. For the final part we are missing the report versions.
 - `report_version` is the final part of the path on HDSF. With `report_date` we finished with `/path/on/hdfs/raw/2020/12/24/v<report_version>`. This is the location where standardization will look for raw data. 
 - `raw-format` and its specifis. Raw format tells the standardization in which format the data is on the HDFS and what are the specifics. CSV might have header, XML has row tag, etc. Here in the example we use row-tag. For more options for different types and run parameters see our [run documentations](https://absaoss.github.io/enceladus/docs/2.0.0/usage/run) or just run `--help`
 

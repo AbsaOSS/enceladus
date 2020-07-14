@@ -31,7 +31,7 @@ More about spline at [Spline](https://github.com/AbsaOSS/spline) Github.
 
 ## _INFO files
 
-`_INFO` files our our way of tracking where the data came from and how much is there. It checks mainly that we did not loose any data on the way to standardization and conformance. All this made possibleby [Atum](https://github.com/AbsaOSS/atum). `_INFO` files should be placed withing the source directory together with the raw data.
+`_INFO` file is our way of tracking where the data came from and how much data is there. It checks mainly that no data were lost on the way to and through standardization and conformance. All this is made possible by [Atum](https://github.com/AbsaOSS/atum). `_INFO` files need to  be placed within the source directory together with the raw data.
 
 More info about `_INFO` files [here](https://absaoss.github.io/enceladus/docs/2.0.0/usage/info-file).
 
