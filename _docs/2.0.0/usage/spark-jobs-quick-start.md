@@ -41,7 +41,7 @@ spark-jobs_<build_version>.jar \
 
 where:
 
-- `dataset_name` is the name you gave the dataset in the [Menas Quick Start]({{ docs_path }}/usage/menas-quick-start) guide Guide
+- `dataset_name` is the name gaven the dataset per [Menas Quick Start]({{ docs_path }}/usage/menas-quick-start) guide Guide
 - `dataset_versin` is a version of the dataset that has the correct schema and all the conformance rules you want
 - `report_date` represent the date on which the data landed in the HDFS (in raw) and also the next part of the path of to the data. So if in Menas you specified `/path/on/hdfs/raw` as your raw and input `2020-12-24` as a report date then the path where standardization will look for your files will be `/path/on/hdfs/raw/2020/12/24`. For the final part we are missing report versions.
 - `report_version` is the final part of the path on HDSF. With `report_date` we finished with `/path/on/hdfs/raw/2020/12/24/v<report_version>`. This is the location where standardization will look for raw data. 
