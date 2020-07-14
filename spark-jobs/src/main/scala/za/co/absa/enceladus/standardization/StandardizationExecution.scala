@@ -46,8 +46,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
   protected def prepareStandardization[T](args: Array[String],
                                           menasCredentials: MenasCredentials,
-                                          preparationResult: PreparationResult
-                                         )
+                                          preparationResult: PreparationResult)
                                          (implicit dao: MenasDAO,
                                           cmd: StandardizationParser[T],
                                           fsUtils: FileSystemVersionUtils,
