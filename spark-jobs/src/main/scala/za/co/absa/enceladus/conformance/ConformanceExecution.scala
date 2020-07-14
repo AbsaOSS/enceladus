@@ -43,7 +43,7 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 trait ConformanceExecution extends CommonJobExecution {
-  private val conformanceReader = new PropertiesProvider
+  private val conformanceReader = new ConformancePropertiesProvider
   private val sourceId = SourcePhase.Conformance
 
   protected def prepareConformance[T](preparationResult: PreparationResult)

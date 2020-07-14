@@ -19,7 +19,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
-import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
@@ -32,7 +31,7 @@ class StandardizationCobolEbcdicSuite extends fixture.FunSuite with SparkTestBas
 
   private implicit val dao: MenasDAO = mock[MenasDAO]
 
-  private val standardizationReader = new PropertiesProvider()
+  private val standardizationReader = new StandardizationPropertiesProvider()
 
   private val tmpFilePrefix = "cobol-fix-ebcdic-"
   private val tmpFileSuffix = ".dat"

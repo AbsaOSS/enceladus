@@ -20,17 +20,15 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 import za.co.absa.enceladus.conformance.interpreter.{FeatureSwitches, ThreeStateSwitch}
+import ConformancePropertiesProvider._
 
-class PropertiesProvider {
+/**
+  * Reads conformance properties from the configuration file
+  */
+class ConformancePropertiesProvider {
   private val enableCF: Boolean = true
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private implicit val conf: Config = ConfigFactory.load()
-
-  private val standardizedHdfsFolderKey = "conformance.autoclean.standardized.hdfs.folder"
-  private val maxBroadcastSizeKey = "conformance.mapping.rule.max.broadcast.size.mb"
-  private val experimentalRuleKey = "conformance.mapping.rule.experimental.implementation"
-  private val catalystWorkaroundKey = "conformance.catalyst.workaround"
-  private val broadcastStrategyKey = "conformance.mapping.rule.broadcast"
 
   def isAutocleanStdFolderEnabled()(implicit cmd: ConformanceConfig): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.autocleanStandardizedFolder, standardizedHdfsFolderKey, defaultValue = false)
@@ -84,4 +82,12 @@ class PropertiesProvider {
     }
     enabled
   }
+}
+
+object ConformancePropertiesProvider {
+  private val standardizedHdfsFolderKey = "conformance.autoclean.standardized.hdfs.folder"
+  private val maxBroadcastSizeKey = "conformance.mapping.rule.max.broadcast.size.mb"
+  private val experimentalRuleKey = "conformance.mapping.rule.experimental.implementation"
+  private val catalystWorkaroundKey = "conformance.catalyst.workaround"
+  private val broadcastStrategyKey = "conformance.mapping.rule.broadcast"
 }
