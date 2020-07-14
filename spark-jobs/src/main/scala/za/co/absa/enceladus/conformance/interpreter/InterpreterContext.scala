@@ -18,10 +18,10 @@ package za.co.absa.enceladus.conformance.interpreter
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.storage.StorageLevel
-import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigInstance}
+import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceParser}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
-import za.co.absa.enceladus.standardization_conformance.config.StdConformanceConfigInstance
+import za.co.absa.enceladus.standardization_conformance.config.StdConformanceConfig
 
 /** Holds everything that is needed in between dynamic conformance interpreter stages */
 
@@ -31,7 +31,7 @@ case class InterpreterContextArgs(datasetName: String,
                                  )
 
 object InterpreterContextArgs {
-  def fromConformanceConfig[T](conformanceConfig: ConformanceConfig[T]): InterpreterContextArgs = {
+  def fromConformanceConfig[T](conformanceConfig: ConformanceParser[T]): InterpreterContextArgs = {
 
     conformanceConfig match {
       case ConformanceConfigInstanceInterpreter(interpreterContextArgs) => interpreterContextArgs
@@ -42,13 +42,13 @@ object InterpreterContextArgs {
 }
 
 object ConformanceConfigInstanceInterpreter {
-  def unapply(conformanceInstance: ConformanceConfigInstance): Option[InterpreterContextArgs] =
+  def unapply(conformanceInstance: ConformanceConfig): Option[InterpreterContextArgs] =
     Some(InterpreterContextArgs(conformanceInstance.datasetName: String, conformanceInstance.reportDate: String,
       conformanceInstance.persistStorageLevel: Option[StorageLevel]))
 }
 
 object StdConformanceConfigInstanceInterpreter {
-  def unapply(conformanceInstance: StdConformanceConfigInstance): Option[InterpreterContextArgs] =
+  def unapply(conformanceInstance: StdConformanceConfig): Option[InterpreterContextArgs] =
     Some(InterpreterContextArgs(conformanceInstance.datasetName: String, conformanceInstance.reportDate: String,
       conformanceInstance.persistStorageLevel: Option[StorageLevel]))
 }

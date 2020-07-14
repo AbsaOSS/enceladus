@@ -36,6 +36,7 @@ import za.co.absa.enceladus.utils.config.SecureConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
+import za.co.absa.enceladus.utils.modules.SourcePhase.{Conformance, Standardization}
 import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
@@ -87,8 +88,14 @@ trait CommonJobExecution {
 
     log.info(s"input path: ${pathCfg.inputPath}")
     log.info(s"output path: ${pathCfg.outputPath}")
+
     // die if the output path exists
-    validateForExistingOutputPath(fsUtils, pathCfg)
+    validateForExistingOutputPath(fsUtils, pathCfg.outputPath)
+
+    pathCfg.standardizationPath.foreach(standardizationPath => {
+      log.info(s"standardization path: $standardizationPath")
+      validateForExistingOutputPath(fsUtils, standardizationPath)
+    })
 
     val performance = initPerformanceMeasurer(pathCfg.inputPath)
 
@@ -104,7 +111,8 @@ trait CommonJobExecution {
 
   protected def runPostProcessing[T](sourceId: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
                                     (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
-    val df = spark.read.parquet(preparationResult.pathCfg.outputPath)
+    val outputPath = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.outputPath)
+    val df = spark.read.parquet(outputPath)
     val runId = MenasPlugin.runNumber
 
     if (runId.isEmpty) {
@@ -122,7 +130,7 @@ trait CommonJobExecution {
     val uniqueRunId = Atum.getControlMeasure.runUniqueId
 
     val params = ErrorSenderPluginParams(jobCmdConfig.datasetName,
-      jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, preparationResult.pathCfg.outputPath,
+      jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, outputPath,
       sourceId, sourceSystem, runUrl, runId, uniqueRunId, Instant.now)
     val postProcessingService = PostProcessingService(conf, params)
     postProcessingService.onSaveOutput(df)
@@ -168,10 +176,10 @@ trait CommonJobExecution {
     }
   }
 
-  protected def validateForExistingOutputPath(fsUtils: FileSystemVersionUtils, pathCfg: PathConfig): Unit = {
-    if (fsUtils.hdfsExists(pathCfg.outputPath)) {
+  protected def validateForExistingOutputPath(fsUtils: FileSystemVersionUtils, path: String): Unit = {
+    if (fsUtils.hdfsExists(path)) {
       throw new IllegalStateException(
-        s"Path ${pathCfg.outputPath} already exists. Increment the run version, or delete ${pathCfg.outputPath}"
+        s"Path $path already exists. Increment the run version, or delete $path"
       )
     }
   }

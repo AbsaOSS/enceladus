@@ -20,19 +20,19 @@ import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
-import za.co.absa.enceladus.plugins.builtin.utils.SecureKafka
-import za.co.absa.enceladus.standardization_conformance.config.StdConformanceConfigInstance
+import za.co.absa.enceladus.standardization_conformance.config.StdConformanceConfig
+import za.co.absa.enceladus.utils.config.SecureConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.modules.SourceId
+import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 object StandardizationConformanceJob extends StdConformanceExecution {
   def main(args: Array[String]): Unit = {
-    SecureKafka.setSecureKafkaProperties(conf)
+    SecureConfig.setSecureKafkaProperties(conf)
 
     SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
-    implicit val cmd: StdConformanceConfigInstance = StdConformanceConfigInstance.getCmdLineArguments(args)
+    implicit val cmd: StdConformanceConfig = StdConformanceConfig.getCmdLineArguments(args)
 
     implicit val spark: SparkSession = obtainSparkSession()
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
@@ -41,21 +41,19 @@ object StandardizationConformanceJob extends StdConformanceExecution {
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
 
     val preparationResult = prepareJob()
-    val schema =  prepareStandardization(args, menasCredentials, preparationResult)
-    prepareConformance(preparationResult)
+
+    val schema = prepareStandardization(args, menasCredentials, preparationResult)
     val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.inputPath, preparationResult.dataset)
 
-
     try {
-
       val standardized = standardize(inputData, schema, cmd)
       val processedStandardization = processStandardizationResult(args, standardized, preparationResult, schema, cmd, menasCredentials)
-      runPostProcessing(SourceId.Standardization, preparationResult, cmd)
+      runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
 
+      prepareConformance(preparationResult)
       val result = conform(processedStandardization, preparationResult)
-
       processConformanceResult(args, result, preparationResult, menasCredentials)
-      runPostProcessing(SourceId.Conformance, preparationResult, cmd)
+      runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)
     } finally {
       finishJob(cmd)
     }

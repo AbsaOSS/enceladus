@@ -15,20 +15,22 @@
 
 package za.co.absa.enceladus.standardization_conformance
 
-import za.co.absa.enceladus.common.config.PathConfig
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.conformance.ConformanceExecution
+import za.co.absa.enceladus.conformance.config.ConformanceParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
-import za.co.absa.enceladus.standardization_conformance.config.StdConformanceConfigInstance
+import za.co.absa.enceladus.standardization.config.StandardizationParser
+import za.co.absa.enceladus.standardization_conformance.config.StdConformanceConfig
 
 trait StdConformanceExecution extends StandardizationExecution with ConformanceExecution {
 
-  def getFullPathCfg[T](cmd: StdConformanceConfigInstance, dataset: Dataset, reportVersion: Int): PathConfig = {
+  override protected def getPathCfg[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
     val standardization = getStandardizationPath(cmd, reportVersion)
 
     PathConfig(
-      inputPath = buildRawPath(cmd, dataset, reportVersion),
-      outputPath = buildPublishPath(cmd, dataset, reportVersion),
+      inputPath = buildRawPath(cmd.asInstanceOf[StandardizationParser[StdConformanceConfig]], dataset, reportVersion),
+      outputPath = buildPublishPath(cmd.asInstanceOf[ConformanceParser[StdConformanceConfig]], dataset, reportVersion),
       standardizationPath = Some(standardization)
     )
   }

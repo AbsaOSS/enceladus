@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.enceladus.conformance.config.ConformanceConfig
+import za.co.absa.enceladus.conformance.config.ConformanceParser
 import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 import za.co.absa.enceladus.conformance.interpreter.{FeatureSwitches, ThreeStateSwitch}
 
@@ -32,26 +32,26 @@ class PropertiesProvider {
   private val catalystWorkaroundKey = "conformance.catalyst.workaround"
   private val broadcastStrategyKey = "conformance.mapping.rule.broadcast"
 
-  def isAutocleanStdFolderEnabled()(implicit cmd: ConformanceConfig): Boolean = {
+  def isAutocleanStdFolderEnabled[T]()(implicit cmd: ConformanceParser[T]): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.autocleanStandardizedFolder, standardizedHdfsFolderKey, defaultValue = false)
     log.info(s"Autoclean standardized HDFS folder = $enabled")
     enabled
   }
 
-  def readFeatureSwitches[T]()(implicit cmdConfig: ConformanceConfig[T]): FeatureSwitches = FeatureSwitches()
+  def readFeatureSwitches[T]()(implicit cmdConfig: ConformanceParser[T]): FeatureSwitches = FeatureSwitches()
     .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
     .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled())
     .setControlFrameworkEnabled(enableCF)
     .setBroadcastStrategyMode(broadcastingStrategyMode)
     .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
 
-  private def isExperimentalRuleEnabled[T]()(implicit cmd: ConformanceConfig[T]): Boolean = {
+  private def isExperimentalRuleEnabled[T]()(implicit cmd: ConformanceParser[T]): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.experimentalMappingRule, experimentalRuleKey, defaultValue = false)
     log.info(s"Experimental mapping rule enabled = $enabled")
     enabled
   }
 
-  private def isCatalystWorkaroundEnabled()(implicit cmd: ConformanceConfig[T]): Boolean = {
+  private def isCatalystWorkaroundEnabled[T]()(implicit cmd: ConformanceParser[T]): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.isCatalystWorkaroundEnabled, catalystWorkaroundKey, defaultValue = true)
     log.info(s"Catalyst workaround enabled = $enabled")
     enabled
