@@ -37,6 +37,7 @@ categories:
   - [allow_infinity](#allow_infinity)
   - [radix](#radix)
   - [encoding](#encoding)
+  - [width](#width)
 - [Parsing](#parsing)
   - [Parsing timestamps and dates](#parsing-timestamps-and-dates)
     - [Time Zone support](#time-zone-support)
@@ -158,13 +159,13 @@ adhere exactly to the automatically added one. More on this field [see in dedica
 
 The data type representing *String* values.
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [width](#width)</sup>
 
 ### Boolean
 
 The data type representing *Boolean* values.
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [width](#width)</sup>
 
 ### Decimal
 
@@ -174,61 +175,61 @@ specifies the number of digits after the decimal point and has to be equal or le
 
 The type is specified as `decimal(`*precision*, *scale*`)`, for example: `decimal(15, 3)`
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [width](#width)</sup>
 
 ### Long
 
 The data type representing *Long* values. That is a whole number between -9223372036854775808 and 9223372036854775807.
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix), [width](#width)</sup>
 
 ### Integer
 
 The data type representing *Integer* values. That is a whole number between -2147483648 and 2147483647.
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix), [width](#width)</sup>
 
 ### Short
 
 The data type representing *Short* values. That is a whole number between  -32768 and 32767.
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix), [width](#width)</sup>
 
 ### Byte
 
 The data type representing *Byte* values. That is a whole number between -128 and 127.
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [radix](#radix), [width](#width)</sup>
 
 ### Double
 
 The data type representing *Double* values, 64-bit (IEEE 754) double-precision float.
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [allow_infinity](#allow_infinity)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [allow_infinity](#allow_infinity), [width](#width)</sup>
 
 ### Float
 
 The data type representing *Float* values, 32-bit (IEEE 754) single-precision float.
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [allow_infinity](#allow_infinity)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [decimal_separator](#decimal_separator), [grouping_separator](#grouping_separator), [minus_sign](#minus_sign), [allow_infinity](#allow_infinity), [width](#width)</sup>
 
 ### Timestamp
 
 The data type representing *java.sql.Timestamp* values. Upon entry they are normalized to UTC time zone.
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone), [width](#width)</sup>
 
 ### Date
 
 The data type representing *java.sql.Date* values. If time zone is specified the date is adjusted to UTC.
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [pattern](#pattern), [timezone](#timezone), [width](#width)</sup>
 
 ### Binary
 
 The data type representing *Binary* values.
 
-<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [encoding](#encoding)</sup>
+<sup>**Metadata keys:** [sourcecolumn](#sourcecolumn), [default](#default), [encoding](#encoding), [width](#width)</sup>
 
 ### Struct
 
@@ -272,6 +273,7 @@ Here are the recognized ones with the description of their purpose (with detaile
 | [allow_infinity](#allow_infinity)         | float & double              | Flag indicating if the column accepts infinity as a value (and positive/negative numbers which are too large are converted to *infinity*/*-infinity*) | *true*          | *false*                                      |
 | [radix](#radix)                           | long, integer, short, byte  | The base of the numbers provided                                                                                                                      | *hex*           | *10*                                         |
 | [encoding](#encoding)                     | binary                      | Encoding is used for string to binary conversion                                                                                                      | *base64*,*none* | `-` (explained in [encoding](#encoding))     |
+| [width](#width) | any atomic type | Specifies the width of a column for a fixed-width formats | "10" | - |
 
 **NB!** All values in _metadata_ have to be entered as *string*. Even if they would conform to other types, like number
 or boolean.
@@ -397,6 +399,12 @@ If `encoding` is missing altogether when it would be needed (e.g. when default v
  issued and the encoding value is considered to be `none`.
  
 `encoding` is not considered if BinaryType is already found in the input (no conversion is happening there).
+
+### width
+
+<sup>**Supported by types:** [String](#string), [Boolean](#boolean), [Decimal](#decimal), [Long](#long), [Integer](#integer), [Short](#short), [Byte](#byte), [Double](#double), [Float](#float), [Timestamp](#struct), [Date](#timestamp)</sup>
+
+Specifically for the Fixed-Width data format. Specifies the width of the column.
 
 ## Parsing
 
