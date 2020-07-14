@@ -43,7 +43,7 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 trait ConformanceExecution extends CommonJobExecution {
-  private val propertiesProvider = new PropertiesProvider
+  private val conformanceReader = new ConformancePropertiesProvider
   private val sourceId = SourcePhase.Conformance
 
   protected def prepareConformance[T](preparationResult: PreparationResult)
@@ -55,8 +55,7 @@ trait ConformanceExecution extends CommonJobExecution {
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 
-    val inputPath = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.inputPath)
-    spark.enableControlMeasuresTracking(s"$inputPath/_INFO")
+    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.inputPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
     // Enable control framework performance optimization for pipeline-like jobs
@@ -75,11 +74,11 @@ trait ConformanceExecution extends CommonJobExecution {
     spark.read.parquet(pathCfg.inputPath)
   }
 
-  protected def conform[T](inputData: DataFrame, preparationResult: PreparationResult)
-                       (implicit spark: SparkSession, cmd: ConformanceParser[T], dao: MenasDAO): DataFrame = {
+  protected def conform(inputData: DataFrame, preparationResult: PreparationResult)
+                       (implicit spark: SparkSession, cmd: ConformanceConfig, dao: MenasDAO): DataFrame = {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
-    implicit val featureSwitcher: FeatureSwitches = propertiesProvider.readFeatureSwitches()
+    implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
 
     Try {
       handleControlInfoValidation()
@@ -102,19 +101,18 @@ trait ConformanceExecution extends CommonJobExecution {
     }
   }
 
-  protected def processConformanceResult[T](args: Array[String],
+  protected def processConformanceResult(args: Array[String],
                                          result: DataFrame,
                                          preparationResult: PreparationResult,
                                          menasCredentials: MenasCredentials)
                                         (implicit spark: SparkSession,
-                                         cmd: ConformanceParser[T],
+                                         cmd: ConformanceConfig,
                                          fsUtils: FileSystemVersionUtils): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
 
-    val standardizationPath = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.inputPath)
     PerformanceMetricTools.addJobInfoToAtumMetadata(
       "conform",
-      standardizationPath,
+      preparationResult.pathCfg.inputPath,
       preparationResult.pathCfg.outputPath,
       menasCredentials.username, cmdLineArgs
     )
@@ -142,7 +140,7 @@ trait ConformanceExecution extends CommonJobExecution {
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
       "conform",
-      standardizationPath,
+      preparationResult.pathCfg.inputPath,
       preparationResult.pathCfg.outputPath,
       menasCredentials.username, cmdLineArgs
     )
@@ -150,8 +148,8 @@ trait ConformanceExecution extends CommonJobExecution {
     withPartCols.writeInfoFile(preparationResult.pathCfg.outputPath)
     writePerformanceMetrics(preparationResult.performance, cmd)
 
-    if (propertiesProvider.isAutocleanStdFolderEnabled()) {
-      fsUtils.deleteDirectoryRecursively(standardizationPath)
+    if (conformanceReader.isAutocleanStdFolderEnabled()) {
+      fsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.inputPath)
     }
     log.info(s"$sourceId finished successfully")
   }

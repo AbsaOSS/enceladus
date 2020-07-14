@@ -40,7 +40,7 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
   import spark.implicits._
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
-  private val standardizationReader = new PropertiesProvider()
+  private val standardizationReader = new StandardizationPropertiesProvider()
   private implicit val dao: MenasDAO = mock[MenasDAO]
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
 

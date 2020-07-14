@@ -40,7 +40,7 @@ class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with
   private implicit val udfLib: UDFLibrary = new UDFLibrary
   private implicit val dao: MenasDAO = mock[MenasDAO]
 
-  private val standardizationReader = new PropertiesProvider()
+  private val standardizationReader = new StandardizationPropertiesProvider()
 
   private val tmpDirPrefix = "StdRerunTest"
   private val tmpFilePrefix = "test-input-"
