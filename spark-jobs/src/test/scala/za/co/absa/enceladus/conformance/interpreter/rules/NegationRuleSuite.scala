@@ -19,7 +19,7 @@ import org.apache.spark.sql.Dataset
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.FunSuite
 import org.slf4j.event.Level.ERROR
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.samples.NegationRuleSamples
 import za.co.absa.enceladus.dao.MenasDAO
@@ -110,7 +110,7 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
     val inputDf = spark.read.schema(schema).json(inputDataset)
 
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
-    implicit val progArgs: ConfCmdConfig = ConfCmdConfig(reportDate = "2017-11-01")
+    implicit val progArgs: ConformanceConfig = ConformanceConfig(reportDate = "2017-11-01")
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
