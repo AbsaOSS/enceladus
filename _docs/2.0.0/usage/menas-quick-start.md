@@ -77,4 +77,4 @@ _Don't mind the orange color. It only means the paths don't exist at the moment 
 
 After clicking on _Save_, we have both the Dataset and accompanying Schema ready and we are able to run Standardization and Conformance.
 
-[**Next Data Qiality Quick Sart**]({{ site.baseurl }}/docs/{{ page.version }}/usage/data-quick-start)
+[**Next Data Quality Quick Sart**]({{ site.baseurl }}/docs/{{ page.version }}/usage/data-quick-start)
