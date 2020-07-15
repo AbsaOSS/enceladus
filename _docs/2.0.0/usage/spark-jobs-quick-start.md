@@ -100,4 +100,4 @@ The basic command to run Conformance becomes:
 --report-version <data_run_version>
 ```
 
-For more options and arguments check the [run documentations](https://absaoss.github.io/enceladus/docs/2.0.0/usage/run)
+For more options and arguments check the [run documentation](https://absaoss.github.io/enceladus/docs/2.0.0/usage/run)
