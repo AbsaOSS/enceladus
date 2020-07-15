@@ -55,7 +55,11 @@ trait ConformanceExecution extends CommonJobExecution {
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 
-    val inputPath = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.inputPath)
+    // reinitialize Control Framework in case of combined job
+    val standardizationPath = preparationResult.pathCfg.standardizationPath
+    standardizationPath.foreach(_ => spark.disableControlMeasuresTracking())
+
+    val inputPath = standardizationPath.getOrElse(preparationResult.pathCfg.inputPath)
     spark.enableControlMeasuresTracking(s"$inputPath/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
