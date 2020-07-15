@@ -75,8 +75,9 @@ trait StandardizationExecution extends CommonJobExecution {
     // Add the raw format of the input file(s) to Atum's metadata
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
-    val path = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.outputPath)
-    PerformanceMetricTools.addJobInfoToAtumMetadata("std", preparationResult.pathCfg.inputPath, path,
+    // OutputPath is standardizationPath on the Standardization phase of the combined job
+    val outputPath = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.outputPath)
+    PerformanceMetricTools.addJobInfoToAtumMetadata("std", preparationResult.pathCfg.inputPath, outputPath,
       menasCredentials.username, args.mkString(" "))
 
     dao.getSchema(preparationResult.dataset.schemaName, preparationResult.dataset.schemaVersion)
@@ -163,6 +164,7 @@ trait StandardizationExecution extends CommonJobExecution {
       handleEmptyOutput(sourceId)
     }
 
+    // OutputPath is standardizationPath on the Standardization phase of the combined job
     val outputPath = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.outputPath)
     standardizedDF.write.parquet(outputPath)
     // Store performance metrics

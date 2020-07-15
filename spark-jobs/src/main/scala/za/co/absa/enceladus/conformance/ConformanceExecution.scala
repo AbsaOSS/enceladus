@@ -59,6 +59,7 @@ trait ConformanceExecution extends CommonJobExecution {
     val standardizationPath = preparationResult.pathCfg.standardizationPath
     standardizationPath.foreach(_ => spark.disableControlMeasuresTracking())
 
+    // InputPath is standardizationPath in the combined job
     val inputPath = standardizationPath.getOrElse(preparationResult.pathCfg.inputPath)
     spark.enableControlMeasuresTracking(s"$inputPath/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
@@ -115,6 +116,7 @@ trait ConformanceExecution extends CommonJobExecution {
                                          fsUtils: FileSystemVersionUtils): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
 
+    // StandardizationPath is the input on the Conformance phase of the combined job
     val standardizationPath = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.inputPath)
     PerformanceMetricTools.addJobInfoToAtumMetadata(
       "conform",

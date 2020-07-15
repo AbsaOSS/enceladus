@@ -45,12 +45,10 @@ import scala.util.{Failure, Success, Try}
 
 trait CommonJobExecution {
 
-  protected case class PreparationResult(
-                                          dataset: Dataset,
-                                          reportVersion: Int,
-                                          pathCfg: PathConfig,
-                                          performance: PerformanceMeasurer
-                                        )
+  protected case class PreparationResult(dataset: Dataset,
+                                         reportVersion: Int,
+                                         pathCfg: PathConfig,
+                                         performance: PerformanceMeasurer)
 
   TimeZoneNormalizer.normalizeJVMTimeZone()
   SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
@@ -92,6 +90,7 @@ trait CommonJobExecution {
     // die if the output path exists
     validateForExistingOutputPath(fsUtils, pathCfg.outputPath)
 
+    // In case of combined job
     pathCfg.standardizationPath.foreach(standardizationPath => {
       log.info(s"standardization path: $standardizationPath")
       validateForExistingOutputPath(fsUtils, standardizationPath)
@@ -109,15 +108,16 @@ trait CommonJobExecution {
     PreparationResult(dataset, reportVersion, pathCfg, performance)
   }
 
-  protected def runPostProcessing[T](sourceId: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
+  protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
                                     (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
-    val outputPath = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.outputPath)
+    // Output is standardizationPath on the Standardization phase of the combined job
+    val outputPath = sourcePhase match {
+      case Standardization => preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.outputPath)
+      case _ => preparationResult.pathCfg.outputPath
+    }
+
     val df = spark.read.parquet(outputPath)
     val runId = MenasPlugin.runNumber
-
-    if (runId.isEmpty) {
-      log.warn("No run number found, the Run URL cannot be properly reported!")
-    }
 
     // reporting the UI url(s) - if more than one, its comma-separated
     val runUrl: Option[String] = runId.map { runNumber =>
@@ -131,9 +131,13 @@ trait CommonJobExecution {
 
     val params = ErrorSenderPluginParams(jobCmdConfig.datasetName,
       jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, outputPath,
-      sourceId, sourceSystem, runUrl, runId, uniqueRunId, Instant.now)
+      sourcePhase, sourceSystem, runUrl, runId, uniqueRunId, Instant.now)
     val postProcessingService = PostProcessingService(conf, params)
     postProcessingService.onSaveOutput(df)
+
+    if (runId.isEmpty) {
+      log.warn("No run number found, the Run URL cannot be properly reported!")
+    }
   }
 
   protected def finishJob[T](jobConfig: JobConfigParser[T]): Unit = {

@@ -15,25 +15,19 @@
 
 package za.co.absa.enceladus.standardization_conformance
 
-import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.standardization_conformance.config.StdConformanceConfig
-import za.co.absa.enceladus.utils.config.SecureConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 object StandardizationConformanceJob extends StdConformanceExecution {
   def main(args: Array[String]): Unit = {
-    SecureConfig.setSecureKafkaProperties(conf)
+    initialValidation()
 
-    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
-
-    implicit val cmd: StdConformanceConfig = StdConformanceConfig.getCmdLineArguments(args)
-
+    implicit val cmd: StdConformanceConfig = StdConformanceConfig.getFromArguments(args)
     implicit val spark: SparkSession = obtainSparkSession()
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     implicit val udfLib: UDFLibrary = new UDFLibrary
@@ -41,7 +35,6 @@ object StandardizationConformanceJob extends StdConformanceExecution {
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
 
     val preparationResult = prepareJob()
-
     val schema = prepareStandardization(args, menasCredentials, preparationResult)
     val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.inputPath, preparationResult.dataset)
 

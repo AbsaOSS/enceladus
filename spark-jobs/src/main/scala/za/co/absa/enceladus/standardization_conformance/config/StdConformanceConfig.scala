@@ -17,11 +17,13 @@ package za.co.absa.enceladus.standardization_conformance.config
 
 import org.apache.spark.storage.StorageLevel
 import scopt.OParser
-import za.co.absa.enceladus.common.config.JobConfigParser
+import za.co.absa.enceladus.common.config.{ConfigError, JobConfigParser}
 import za.co.absa.enceladus.conformance.config.ConformanceParser
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory}
 import za.co.absa.enceladus.standardization.CobolOptions
 import za.co.absa.enceladus.standardization.config.StandardizationParser
+
+import scala.util.Try
 
 
 case class StdConformanceConfig(datasetName: String = "",
@@ -89,20 +91,12 @@ case class StdConformanceConfig(datasetName: String = "",
 
 object StdConformanceConfig {
 
-  def getCmdLineArguments(args: Array[String]): StdConformanceConfig = {
-    //Mutually exclusive parameters don't work in scopt 4
-    if (args.contains("--menas-credentials-file") && args.contains("--menas-auth-keytab")) {
-      println("ERROR: Only one authentication method is allowed at a time")
-      System.exit(1)
-    }
-    val optionCmd = OParser.parse(stdConfJobParser, args, StdConformanceConfig())
-
-    if (optionCmd.isEmpty) {
-      // Wrong arguments provided, the message is already displayed
-      System.exit(1)
-    }
-    optionCmd.get
+  def tryFromArguments(args: Array[String]): Try[StdConformanceConfig] = {
+    import za.co.absa.enceladus.utils.implicits.OptionImplicits._
+    OParser.parse(stdConfJobParser, args, StdConformanceConfig()).toTry(ConfigError("Command line parameters error"))
   }
+
+  def getFromArguments(args: Array[String]): StdConformanceConfig = tryFromArguments(args).get
 
   val stdConfJobParser: OParser[_, StdConformanceConfig] = {
     val builder = OParser.builder[StdConformanceConfig]

@@ -26,9 +26,8 @@ import za.co.absa.enceladus.standardization_conformance.config.StdConformanceCon
 /** Holds everything that is needed in between dynamic conformance interpreter stages */
 
 case class InterpreterContextArgs(datasetName: String,
-                                   reportDate: String = "",
-                                   persistStorageLevel: Option[StorageLevel] = None
-                                 )
+                                  reportDate: String = "",
+                                  persistStorageLevel: Option[StorageLevel] = None)
 
 object InterpreterContextArgs {
   def fromConformanceConfig[T](conformanceConfig: ConformanceParser[T]): InterpreterContextArgs = {
