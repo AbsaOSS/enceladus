@@ -86,7 +86,7 @@ class ConformanceRuleTest extends WordSpec with Matchers {
   }
 
   "FillNullsConformanceRule" should {
-    val rule = FillNullsConformanceRule(order = 9, controlCheckpoint = true, outputColumn = "conformed_upper", inputColumn = "input_col", value = "lit")
+    val rule = FillNullsConformanceRule(order = 10, controlCheckpoint = true, outputColumn = "conformed_nulls", inputColumn = "input_col", value = "lit")
     val json = """{"_t":"FillNullsConformanceRule","order":10,"outputColumn":"conformed_nulls","controlCheckpoint":true,"inputColumn":"input_col","value":"lit"}"""
     assertSerDe(rule, json)
   }

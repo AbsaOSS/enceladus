@@ -123,8 +123,8 @@ package object conformanceRule {
   }
 
   case class FillNullsConformanceRule(order: Int,
-                                      controlCheckpoint: Boolean,
                                       outputColumn: String,
+                                      controlCheckpoint: Boolean,
                                       inputColumn: String,
                                       value: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)

@@ -23,16 +23,23 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, FillNullsCon
 import za.co.absa.spark.hats.Extensions._
 import org.apache.spark.sql.functions._
 
-case class FillNullsRuleInterpreter(rule: FillNullsConformanceRule) extends RuleInterpreter {
-
+object FillNullsRuleInterpreter {
   final val ruleName = "Fill Nulls Rule"
+}
+
+case class FillNullsRuleInterpreter(rule: FillNullsConformanceRule) extends RuleInterpreter {
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
              (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfig): Dataset[Row] = {
     // Validate the rule parameters
-    RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)
+    RuleValidators.validateOutputField(
+      progArgs.datasetName,
+      FillNullsRuleInterpreter.ruleName,
+      df.schema,
+      rule.outputColumn
+    )
 
     if (rule.outputColumn.contains('.')) {
       conformNestedField(df)
