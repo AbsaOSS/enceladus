@@ -317,7 +317,7 @@ class FillNullsConformanceRuleForm extends ConformanceRuleForm {
   }
 
   isCorrectlyConfigured(rule) {
-    return this.nonEmptyField(rule.value, "Fill Nulls Value", this.fillNullsValueControl);
+    return this.nonEmptyField(rule.value, "Fill Nulls with Value", this.fillNullsValueControl);
   }
 
   reset() {
