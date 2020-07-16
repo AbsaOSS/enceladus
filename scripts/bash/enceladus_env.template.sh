@@ -26,7 +26,7 @@ SPARK_SUBMIT="$SPARK_HOME/bin/spark-submit"
 
 HDP_VERSION="2.7.3"
 
-SPARK_JOBS_JAR="${SPARK_JOBS_JAR:="enceladus-spark-jobs.jar"}"
+SPARK_JOBS_JAR="enceladus-spark-jobs.jar"
 
 STD_CLASS="za.co.absa.enceladus.standardization.StandardizationJob"
 
