@@ -192,6 +192,8 @@ class RuleFactory {
         return new SparkSessionConfConformanceRule(rule);
       case "UppercaseConformanceRule":
         return new UppercaseConformanceRule(rule);
+      case "FillNullsConformanceRule":
+        return new FillNullsConformanceRule(rule);
       default:
         throw new TypeError("Unknown conformance rule type: " + rule._t)
     }
