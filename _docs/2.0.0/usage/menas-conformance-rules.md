@@ -37,7 +37,7 @@ Allows users to cast a specific column to another type. This conformance rules p
 
 ## Concatenation Conformance Rule
 
-Concatenation rule concatenates multiple input columns together into a single column. Columns are frist transformed into their string representation.
+Concatenation rule concatenates multiple input columns together into a single column. Columns are first transformed into their string representation.
 
 ## Drop Conformance Rule
 
@@ -63,7 +63,7 @@ Negation conformance rule negates any Numerical or Boolean value.
 
 ## SingleColumn Conformance Rule
 
-Single column conformance rule transforms column into a column of structs of previouse columns values. Input column alias here will be the name/key of the struct
+Single column conformance rule transforms column into a column of structs of previous columns values. Input column alias here will be the name/key of the struct
 
 ## SparkSessionConf Conformance Rule
 
