@@ -16,12 +16,12 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
-import za.co.absa.enceladus.conformance.ConfCmdConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, FillNullsConformanceRule}
 import za.co.absa.spark.hats.Extensions._
 import org.apache.spark.sql.functions._
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 
 object FillNullsRuleInterpreter {
   final val ruleName = "Fill Nulls Rule"
@@ -32,7 +32,7 @@ case class FillNullsRuleInterpreter(rule: FillNullsConformanceRule) extends Rule
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfig): Dataset[Row] = {
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceConfig): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateOutputField(
       progArgs.datasetName,
