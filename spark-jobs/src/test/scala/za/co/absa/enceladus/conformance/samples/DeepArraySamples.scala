@@ -52,6 +52,32 @@ object DeepArraySamples {
     ))
   )
 
+  val ordersDataWithNulls: Seq[Order] = Seq[Order](
+    Order(1L, "First Order", Seq[OrderItem](
+      OrderItem("ar229", 10, 5.1, Seq(Payment("pid10", 51.0))),
+      OrderItem("2891k", 100, 1.1, Seq(Payment("zk20", 100.0))),
+      OrderItem("31239", 2, 55.2, Nil)
+    )),
+    Order(2L, null, Seq[OrderItem](
+      OrderItem("AkuYdg", 100, 10, Seq(Payment("d101", 10.0), Payment("d102", 20.0))),
+      OrderItem("jUa1k0", 2, 55.2, Nil)
+    )),
+    Order(3L, "Third Order", Seq[OrderItem](
+      OrderItem(null, 10, 10000, Seq(Payment("pid10", 2000.0), Payment("pid10", 5000.0))),
+      OrderItem("Jdha2", 100, 45, Seq(Payment("zk20", 150.0), Payment("pid10", 2000.0)))
+    )),
+    Order(4L, "Fourth Order", Seq[OrderItem](
+      OrderItem("dLda1", 10, 5.1, Seq(Payment("pid10", 10.0))),
+      OrderItem("d2dhJ", 100, 1.1, Seq(Payment("zk20", 15.0))),
+      OrderItem("Mska0", 2, 55.2, Nil),
+      OrderItem("Gdal1", 20, 5.2, Nil),
+      OrderItem("dakl1", 99, 1.2, Nil)
+    )),
+    Order(5L, "Fifths order", Seq[OrderItem](
+      OrderItem("hdUs1J", 50, 0.2, Seq(Payment("pid10", 10.0), Payment("pid10", 11.0), Payment("pid10", 12.0)))
+    ))
+  )
+
   val ordersSchema = StructType(
     Array(
       StructField("id", LongType),
