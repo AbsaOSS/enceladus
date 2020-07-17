@@ -14,6 +14,7 @@ categories:
 - [Intro](#intro)
 - [Quick Start](#quick-start)
 - [Spark Jobs](#spark-jobs)
+- [Menas](#menas)
 - [General](#general)
 - [Details](#details)
 <!-- tocstop -->
@@ -35,6 +36,7 @@ This part of the documentations will show you how to use Enceladus, Menas as its
 ## Menas
 
 - [Configuration]({{ docs_path }}/usage/menas-config)
+- [Conformance Rules]({{ docs_path }}/usage/menas-conformance-rules)
 
 ## General
 
