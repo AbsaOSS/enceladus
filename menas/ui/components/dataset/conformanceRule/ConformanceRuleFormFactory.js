@@ -65,7 +65,8 @@ class ConformanceRuleFormRepository {
       "NegationConformanceRule": new NegationConformanceRuleForm(),
       "SingleColumnConformanceRule": new SingleColumnConformanceRuleForm(),
       "SparkSessionConfConformanceRule": new SparkSessionConfConformanceRuleForm(),
-      "UppercaseConformanceRule": new UppercaseConformanceRuleForm()
+      "UppercaseConformanceRule": new UppercaseConformanceRuleForm(),
+      "FillNullsConformanceRule": new FillNullsConformanceRuleForm()
     };
 
     this._all = Object.values(this.formsMap);
