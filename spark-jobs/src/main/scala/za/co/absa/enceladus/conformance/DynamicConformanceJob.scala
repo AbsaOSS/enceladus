@@ -41,7 +41,6 @@ object DynamicConformanceJob extends ConformanceExecution {
 
     try {
       val result = conform(inputData, preparationResult)
-
       processConformanceResult(args, result, preparationResult, menasCredentials)
       runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)
     } finally {

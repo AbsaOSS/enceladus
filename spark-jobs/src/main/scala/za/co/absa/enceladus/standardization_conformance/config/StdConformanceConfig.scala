@@ -53,8 +53,7 @@ case class StdConformanceConfig(datasetName: String = "",
                                 failOnInputNotPerSchema: Boolean = false,
 
                                 credsFile: Option[String] = None,
-                                keytabFile: Option[String] = None
-                                  ) extends StandardizationParser[StdConformanceConfig]
+                                keytabFile: Option[String] = None) extends StandardizationParser[StdConformanceConfig]
   with ConformanceParser[StdConformanceConfig]{
 
   override def withPublishPathOverride(value: Option[String]): StdConformanceConfig = copy(publishPathOverride = value)

@@ -154,7 +154,6 @@ trait CommonJobExecution {
     }
   }
 
-
   protected def getPathCfg[T](cmd: JobConfigParser[T], dataset: Dataset, reportVetsion: Int): PathConfig
 
   protected def getStandardizationPath[T](jobConfig: JobConfigParser[T], reportVersion: Int): String = {

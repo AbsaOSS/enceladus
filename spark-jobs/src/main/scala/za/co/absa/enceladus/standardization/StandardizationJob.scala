@@ -41,9 +41,7 @@ object StandardizationJob extends StandardizationExecution {
 
     try {
       val result = standardize(inputData, schema, cmd)
-
       processStandardizationResult(args, result, preparationResult, schema, cmd, menasCredentials)
-
       runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
     } finally {
       finishJob(cmd)

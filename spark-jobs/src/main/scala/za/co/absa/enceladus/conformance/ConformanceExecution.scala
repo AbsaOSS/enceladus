@@ -50,8 +50,7 @@ trait ConformanceExecution extends CommonJobExecution {
                                      (implicit dao: MenasDAO,
                                       cmd: ConformanceParser[T],
                                       fsUtils: FileSystemVersionUtils,
-                                      spark: SparkSession
-                                     ): Unit = {
+                                      spark: SparkSession): Unit = {
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 
@@ -81,7 +80,7 @@ trait ConformanceExecution extends CommonJobExecution {
   }
 
   protected def conform[T](inputData: DataFrame, preparationResult: PreparationResult)
-                       (implicit spark: SparkSession, cmd: ConformanceParser[T], dao: MenasDAO): DataFrame = {
+                          (implicit spark: SparkSession, cmd: ConformanceParser[T], dao: MenasDAO): DataFrame = {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
@@ -108,12 +107,12 @@ trait ConformanceExecution extends CommonJobExecution {
   }
 
   protected def processConformanceResult[T](args: Array[String],
-                                         result: DataFrame,
-                                         preparationResult: PreparationResult,
-                                         menasCredentials: MenasCredentials)
-                                        (implicit spark: SparkSession,
-                                         cmd: ConformanceParser[T],
-                                         fsUtils: FileSystemVersionUtils): Unit = {
+                                            result: DataFrame,
+                                            preparationResult: PreparationResult,
+                                            menasCredentials: MenasCredentials)
+                                           (implicit spark: SparkSession,
+                                            cmd: ConformanceParser[T],
+                                            fsUtils: FileSystemVersionUtils): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
 
     // StandardizationPath is the input on the Conformance phase of the combined job
