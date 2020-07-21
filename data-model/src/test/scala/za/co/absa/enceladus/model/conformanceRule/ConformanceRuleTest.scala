@@ -92,8 +92,8 @@ class ConformanceRuleTest extends WordSpec with Matchers {
   }
 
   "CoalesceConformanceRule" should {
-    val rule = CoalesceConformanceRule(order = 10, controlCheckpoint = true, outputColumn = "coalesced_col", inputColumns = List("a.b.c", "drop", "lit"))
-    val json = """{"_t":"CoalesceConformanceRule","order":10,"outputColumn":"coalesced_col","controlCheckpoint":true,"inputColumns":["a.b.c","drop","lit"]}"""
+    val rule = CoalesceConformanceRule(order = 11, controlCheckpoint = true, outputColumn = "coalesced_col", inputColumns = List("a.b.c", "drop", "lit"))
+    val json = """{"_t":"CoalesceConformanceRule","order":11,"outputColumn":"coalesced_col","controlCheckpoint":true,"inputColumns":["a.b.c","drop","lit"]}"""
     assertSerDe(rule, json)
   }
 

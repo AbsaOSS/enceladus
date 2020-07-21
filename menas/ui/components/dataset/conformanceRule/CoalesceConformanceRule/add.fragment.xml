@@ -19,7 +19,7 @@
     <Label text="Concatenation Columns"/>
     <List id="inputColumns"
           items="{/newRule/inputColumns}"
-          noDataText="No concatenation columns (minimum 2)"
+          noDataText="No columns selected (minimum 2)"
           mode="Delete"
           delete=".onDeleteConcatColumn">
         <items>
