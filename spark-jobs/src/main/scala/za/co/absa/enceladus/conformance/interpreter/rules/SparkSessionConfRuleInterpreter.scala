@@ -16,11 +16,10 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
-import za.co.absa.enceladus.conformance.config.ConformanceConfig
-import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, SparkSessionConfConformanceRule}
+import za.co.absa.spark.hats.Extensions._
 
 case class SparkSessionConfRuleInterpreter(rule: SparkSessionConfConformanceRule) extends RuleInterpreter {
 

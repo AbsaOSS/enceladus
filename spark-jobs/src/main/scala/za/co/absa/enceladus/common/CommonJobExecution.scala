@@ -36,7 +36,7 @@ import za.co.absa.enceladus.utils.config.SecureConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.enceladus.utils.modules.SourcePhase.{Conformance, Standardization}
+import za.co.absa.enceladus.utils.modules.SourcePhase.{Standardization}
 import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 

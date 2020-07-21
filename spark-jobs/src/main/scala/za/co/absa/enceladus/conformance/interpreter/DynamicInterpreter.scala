@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
@@ -39,7 +38,6 @@ import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 object DynamicInterpreter {
   private val log = LoggerFactory.getLogger(this.getClass)
-  private val config: Config = ConfigFactory.load()
 
   /**
     * Interpret conformance rules defined in a dataset.
@@ -51,7 +49,8 @@ object DynamicInterpreter {
     *
     */
   def interpret[T](conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
-               (implicit spark: SparkSession, dao: MenasDAO, progArgs: ConformanceParser[T], featureSwitches: FeatureSwitches): DataFrame = {
+               (implicit spark: SparkSession, dao: MenasDAO,
+                progArgs: ConformanceParser[T], featureSwitches: FeatureSwitches): DataFrame = {
 
     implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
       featureSwitches, jobShortName, spark, dao, InterpreterContextArgs.fromConformanceConfig(progArgs))

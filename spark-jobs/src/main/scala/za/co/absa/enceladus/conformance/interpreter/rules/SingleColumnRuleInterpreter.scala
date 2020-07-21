@@ -29,7 +29,8 @@ case class SingleColumnRuleInterpreter(rule: SingleColumnConformanceRule) extend
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: InterpreterContextArgs): Dataset[Row] = {
+             (implicit spark: SparkSession, explosionState: ExplosionState,
+              dao: MenasDAO, progArgs: InterpreterContextArgs): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateFieldExistence(progArgs.datasetName, ruleName, df.schema, rule.inputColumn)
     RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)
