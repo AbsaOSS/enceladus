@@ -39,7 +39,6 @@ import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 object DynamicInterpreter {
   private val log = LoggerFactory.getLogger(this.getClass)
-  private val config: Config = ConfigFactory.load()
 
   /**
     * Interpret conformance rules defined in a dataset.
@@ -183,6 +182,7 @@ object DynamicInterpreter {
       case r: NegationConformanceRule         => NegationRuleInterpreter(r)
       case r: MappingConformanceRule          => getMappingRuleInterpreter(r)
       case r: FillNullsConformanceRule        => FillNullsRuleInterpreter(r)
+      case r: CoalesceConformanceRule         => CoalesceRuleInterpreter(r)
       case r: CustomConformanceRule           => r.getInterpreter()
       case r                                  => throw new IllegalStateException(s"Unrecognized rule class: ${r.getClass.getName}")
     }
