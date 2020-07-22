@@ -18,7 +18,7 @@
         <form:SimpleForm adjustLabelSpan="true" editable="false">
             <form:content>
                 <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.commonRuleFields"/>
-                <Label text="Concatenation columns"/>
+                <Label text="Coalesce columns"/>
                 <List items="{inputColumns}">
                     <items>
                         <StandardListItem title="{}"/>
