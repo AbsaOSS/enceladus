@@ -29,7 +29,7 @@ import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.config.StandardizationParser
+import za.co.absa.enceladus.standardization.config.StandardizationConfigParser
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
@@ -48,13 +48,13 @@ trait StandardizationExecution extends CommonJobExecution {
                                           menasCredentials: MenasCredentials,
                                           preparationResult: PreparationResult)
                                          (implicit dao: MenasDAO,
-                                          cmd: StandardizationParser[T],
+                                          cmd: StandardizationConfigParser[T],
                                           fsUtils: FileSystemVersionUtils,
                                           spark: SparkSession): StructType = {
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.inputPath}/_INFO")
+    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.rawPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
     // Enable control framework performance optimization for pipeline-like jobs
@@ -75,16 +75,16 @@ trait StandardizationExecution extends CommonJobExecution {
     // Add the raw format of the input file(s) to Atum's metadata
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
-    // OutputPath is standardizationPath on the Standardization phase of the combined job
-    val outputPath = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.outputPath)
-    PerformanceMetricTools.addJobInfoToAtumMetadata("std", preparationResult.pathCfg.inputPath, outputPath,
+    PerformanceMetricTools.addJobInfoToAtumMetadata("std",
+      preparationResult.pathCfg.rawPath,
+      preparationResult.pathCfg.standardizationPath,
       menasCredentials.username, args.mkString(" "))
 
     dao.getSchema(preparationResult.dataset.schemaName, preparationResult.dataset.schemaVersion)
   }
 
   protected def readStandardizationInputData[T](schema: StructType,
-                                                cmd: StandardizationParser[T],
+                                                cmd: StandardizationConfigParser[T],
                                                 path: String,
                                                 dataset: Dataset)
                                                (implicit spark: SparkSession,
@@ -105,8 +105,7 @@ trait StandardizationExecution extends CommonJobExecution {
     ensureSplittable(dfWithSchema, path, schema)
   }
 
-
-  private def getColumnNameOfCorruptRecord[R](schema: StructType, cmd: StandardizationParser[R])
+  private def getColumnNameOfCorruptRecord[R](schema: StructType, cmd: StandardizationConfigParser[R])
                                              (implicit spark: SparkSession): Option[String] = {
     // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
     val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
@@ -117,7 +116,7 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def standardize[T](inputData: DataFrame, schema: StructType, cmd: StandardizationParser[T])
+  protected def standardize[T](inputData: DataFrame, schema: StructType, cmd: StandardizationConfigParser[T])
                               (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     //scalastyle:on parameter.number
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
@@ -144,7 +143,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                                 standardizedDF: DataFrame,
                                                 preparationResult: PreparationResult,
                                                 schema: StructType,
-                                                cmd: StandardizationParser[T],
+                                                cmd: StandardizationConfigParser[T],
                                                 menasCredentials: MenasCredentials)
                                                (implicit spark: SparkSession,
                                                 fsUtils: FileSystemVersionUtils): DataFrame = {
@@ -164,8 +163,7 @@ trait StandardizationExecution extends CommonJobExecution {
       handleEmptyOutput(sourceId)
     }
 
-    // OutputPath is standardizationPath on the Standardization phase of the combined job
-    val outputPath = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.outputPath)
+    val outputPath = preparationResult.pathCfg.standardizationPath
     standardizedDF.write.parquet(outputPath)
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
@@ -174,7 +172,7 @@ trait StandardizationExecution extends CommonJobExecution {
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
       "std",
-      preparationResult.pathCfg.inputPath,
+      preparationResult.pathCfg.rawPath,
       outputPath,
       menasCredentials.username,
       args.mkString(" ")
@@ -190,27 +188,6 @@ trait StandardizationExecution extends CommonJobExecution {
   }
 
   //scalastyle:off parameter.number
-
-  override protected def getPathCfg[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
-    val stdCmd = cmd.asInstanceOf[StandardizationParser[T]]
-    PathConfig(
-      inputPath = buildRawPath(stdCmd, dataset, reportVersion),
-      outputPath = getStandardizationPath(cmd, reportVersion)
-    )
-  }
-
-  def buildRawPath[T](cmd: StandardizationParser[T], dataset: Dataset, reportVersion: Int): String = {
-    val dateTokens = cmd.reportDate.split("-")
-    cmd.rawPathOverride match {
-      case None =>
-        val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
-        cmd.folderPrefix match {
-          case None => s"${dataset.hdfsPath}$folderSuffix"
-          case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
-        }
-      case Some(rawPathOverride) => rawPathOverride
-    }
-  }
 
   private def ensureSplittable(df: DataFrame, path: String, schema: StructType)
                               (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {

@@ -24,19 +24,23 @@ import org.apache.spark.sql.SparkSession
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
+import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
+import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.config.SecureConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.enceladus.utils.modules.SourcePhase.{Standardization}
+import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
@@ -57,12 +61,12 @@ trait CommonJobExecution {
   protected val conf: Config = ConfigFactory.load()
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
-  protected def obtainSparkSession[T]()(implicit cmd: JobConfigParser[T]): SparkSession = {
+  protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
     val spark = SparkSession.builder()
-      .appName(s"Standardisation $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
+      .appName(s"$jobName $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
       .getOrCreate()
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
@@ -82,21 +86,17 @@ trait CommonJobExecution {
     dao.authenticate()
     val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     val reportVersion = getReportVersion(cmd, dataset)
-    val pathCfg = getPathCfg(cmd, dataset, reportVersion)
+    val pathCfg = getPathConfig(cmd, dataset, reportVersion)
 
-    log.info(s"input path: ${pathCfg.inputPath}")
-    log.info(s"output path: ${pathCfg.outputPath}")
+    val (inputPath, outputPath) = getInputOutputPaths(cmd, fsUtils, pathCfg)
+
+    log.info(s"input path: $inputPath")
+    log.info(s"output path: $outputPath")
 
     // die if the output path exists
-    validateForExistingOutputPath(fsUtils, pathCfg.outputPath)
+    validateForExistingOutputPath(fsUtils, outputPath)
 
-    // In case of combined job
-    pathCfg.standardizationPath.foreach(standardizationPath => {
-      log.info(s"standardization path: $standardizationPath")
-      validateForExistingOutputPath(fsUtils, standardizationPath)
-    })
-
-    val performance = initPerformanceMeasurer(pathCfg.inputPath)
+    val performance = initPerformanceMeasurer(inputPath)
 
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
@@ -108,12 +108,24 @@ trait CommonJobExecution {
     PreparationResult(dataset, reportVersion, pathCfg, performance)
   }
 
+  private def getInputOutputPaths[T](cmd: JobConfigParser[T], fsUtils: FileSystemVersionUtils, pathCfg: PathConfig): (String, String) = {
+    cmd match {
+      case _: StandardizationConfig => (pathCfg.rawPath, pathCfg.standardizationPath)
+      case _: ConformanceConfig => (pathCfg.standardizationPath, pathCfg.publishPath)
+      case _ => {
+        val intermediatePath = pathCfg.standardizationPath
+        log.info(s"standardization path: $intermediatePath")
+        validateForExistingOutputPath(fsUtils, intermediatePath)
+        (pathCfg.rawPath, pathCfg.publishPath)
+      }
+    }
+  }
+
   protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
                                     (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
-    // Output is standardizationPath on the Standardization phase of the combined job
     val outputPath = sourcePhase match {
-      case Standardization => preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.outputPath)
-      case _ => preparationResult.pathCfg.outputPath
+      case Standardization => preparationResult.pathCfg.standardizationPath
+      case _ => preparationResult.pathCfg.publishPath
     }
 
     val df = spark.read.parquet(outputPath)
@@ -154,7 +166,42 @@ trait CommonJobExecution {
     }
   }
 
-  protected def getPathCfg[T](cmd: JobConfigParser[T], dataset: Dataset, reportVetsion: Int): PathConfig
+  protected def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+    PathConfig(
+      rawPath = buildRawPath(cmd.asInstanceOf[StandardizationConfigParser[StandardizationConformanceConfig]], dataset, reportVersion),
+      publishPath = buildPublishPath(cmd.asInstanceOf[ConformanceConfigParser[StandardizationConformanceConfig]], dataset, reportVersion),
+      standardizationPath = getStandardizationPath(cmd, reportVersion)
+    )
+  }
+
+  def buildPublishPath[T](cmd: ConformanceConfigParser[T],
+                          ds: Dataset,
+                          reportVersion: Int): String = {
+    val infoDateCol: String = InfoDateColumn
+    val infoVersionCol: String = InfoVersionColumn
+
+    (cmd.publishPathOverride, cmd.folderPrefix) match {
+      case (None, None) =>
+        s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
+      case (None, Some(folderPrefix)) =>
+        s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
+      case (Some(publishPathOverride), _) =>
+        publishPathOverride
+    }
+  }
+
+  def buildRawPath[T](cmd: StandardizationConfigParser[T], dataset: Dataset, reportVersion: Int): String = {
+    val dateTokens = cmd.reportDate.split("-")
+    cmd.rawPathOverride match {
+      case None =>
+        val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
+        cmd.folderPrefix match {
+          case None => s"${dataset.hdfsPath}$folderSuffix"
+          case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
+        }
+      case Some(rawPathOverride) => rawPathOverride
+    }
+  }
 
   protected def getStandardizationPath[T](jobConfig: JobConfigParser[T], reportVersion: Int): String = {
     MessageFormat.format(conf.getString("standardized.hdfs.path"),

@@ -18,10 +18,10 @@ package za.co.absa.enceladus.conformance.interpreter
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.storage.StorageLevel
-import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceParser}
+import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
-import za.co.absa.enceladus.standardization_conformance.config.StdConformanceConfig
+import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 
 /** Holds everything that is needed in between dynamic conformance interpreter stages */
 
@@ -30,7 +30,7 @@ case class InterpreterContextArgs(datasetName: String,
                                   persistStorageLevel: Option[StorageLevel] = None)
 
 object InterpreterContextArgs {
-  def fromConformanceConfig[T](conformanceConfig: ConformanceParser[T]): InterpreterContextArgs = {
+  def fromConformanceConfig[T](conformanceConfig: ConformanceConfigParser[T]): InterpreterContextArgs = {
 
     conformanceConfig match {
       case ConformanceConfigInstanceInterpreter(interpreterContextArgs) => interpreterContextArgs
@@ -47,7 +47,7 @@ object ConformanceConfigInstanceInterpreter {
 }
 
 object StdConformanceConfigInstanceInterpreter {
-  def unapply(conformanceInstance: StdConformanceConfig): Option[InterpreterContextArgs] =
+  def unapply(conformanceInstance: StandardizationConformanceConfig): Option[InterpreterContextArgs] =
     Some(InterpreterContextArgs(conformanceInstance.datasetName: String, conformanceInstance.reportDate: String,
       conformanceInstance.persistStorageLevel: Option[StorageLevel]))
 }

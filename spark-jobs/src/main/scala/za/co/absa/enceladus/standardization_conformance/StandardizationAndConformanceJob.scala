@@ -16,19 +16,23 @@
 package za.co.absa.enceladus.standardization_conformance
 
 import org.apache.spark.sql.SparkSession
+import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
-import za.co.absa.enceladus.standardization_conformance.config.StdConformanceConfig
+import za.co.absa.enceladus.standardization.StandardizationExecution
+import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-object StandardizationConformanceJob extends StdConformanceExecution {
+object StandardizationAndConformanceJob extends StandardizationExecution with ConformanceExecution {
+  private val jobName = "Standardization Conformance"
+
   def main(args: Array[String]): Unit = {
     initialValidation()
 
-    implicit val cmd: StdConformanceConfig = StdConformanceConfig.getFromArguments(args)
-    implicit val spark: SparkSession = obtainSparkSession()
+    implicit val cmd: StandardizationConformanceConfig = StandardizationConformanceConfig.getFromArguments(args)
+    implicit val spark: SparkSession = obtainSparkSession(jobName)
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     implicit val udfLib: UDFLibrary = new UDFLibrary
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
@@ -36,7 +40,7 @@ object StandardizationConformanceJob extends StdConformanceExecution {
 
     val preparationResult = prepareJob()
     val schema = prepareStandardization(args, menasCredentials, preparationResult)
-    val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.inputPath, preparationResult.dataset)
+    val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.rawPath, preparationResult.dataset)
 
     try {
       val standardized = standardize(inputData, schema, cmd)

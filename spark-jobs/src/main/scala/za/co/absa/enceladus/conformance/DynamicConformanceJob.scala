@@ -23,6 +23,7 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 
 object DynamicConformanceJob extends ConformanceExecution {
+  private val jobName: String = "Dynamic Conformance"
 
   def main(args: Array[String]) {
     // This should be the first thing the app does to make secure Kafka work with our CA.
@@ -30,7 +31,7 @@ object DynamicConformanceJob extends ConformanceExecution {
     initialValidation()
 
     implicit val cmd: ConformanceConfig = ConformanceConfig.getFromArguments(args)
-    implicit val spark: SparkSession = obtainSparkSession() // initialize spark
+    implicit val spark: SparkSession = obtainSparkSession(jobName) // initialize spark
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)

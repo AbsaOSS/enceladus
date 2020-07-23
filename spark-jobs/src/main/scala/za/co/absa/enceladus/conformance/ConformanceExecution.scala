@@ -27,12 +27,14 @@ import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
-import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceParser}
+import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob
+import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
@@ -48,19 +50,19 @@ trait ConformanceExecution extends CommonJobExecution {
 
   protected def prepareConformance[T](preparationResult: PreparationResult)
                                      (implicit dao: MenasDAO,
-                                      cmd: ConformanceParser[T],
+                                      cmd: ConformanceConfigParser[T],
                                       fsUtils: FileSystemVersionUtils,
                                       spark: SparkSession): Unit = {
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 
     // reinitialize Control Framework in case of combined job
-    val standardizationPath = preparationResult.pathCfg.standardizationPath
-    standardizationPath.foreach(_ => spark.disableControlMeasuresTracking())
+    if(cmd.isInstanceOf[StandardizationConformanceConfig]) {
+      spark.disableControlMeasuresTracking()
+    }
 
     // InputPath is standardizationPath in the combined job
-    val inputPath = standardizationPath.getOrElse(preparationResult.pathCfg.inputPath)
-    spark.enableControlMeasuresTracking(s"$inputPath/_INFO")
+    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardizationPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
     // Enable control framework performance optimization for pipeline-like jobs
@@ -76,11 +78,11 @@ trait ConformanceExecution extends CommonJobExecution {
   }
 
   protected def readConformanceInputData(pathCfg: PathConfig)(implicit spark: SparkSession): DataFrame = {
-    spark.read.parquet(pathCfg.inputPath)
+    spark.read.parquet(pathCfg.standardizationPath)
   }
 
   protected def conform[T](inputData: DataFrame, preparationResult: PreparationResult)
-                          (implicit spark: SparkSession, cmd: ConformanceParser[T], dao: MenasDAO): DataFrame = {
+                          (implicit spark: SparkSession, cmd: ConformanceConfigParser[T], dao: MenasDAO): DataFrame = {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
@@ -111,16 +113,14 @@ trait ConformanceExecution extends CommonJobExecution {
                                             preparationResult: PreparationResult,
                                             menasCredentials: MenasCredentials)
                                            (implicit spark: SparkSession,
-                                            cmd: ConformanceParser[T],
+                                            cmd: ConformanceConfigParser[T],
                                             fsUtils: FileSystemVersionUtils): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
 
-    // StandardizationPath is the input on the Conformance phase of the combined job
-    val standardizationPath = preparationResult.pathCfg.standardizationPath.getOrElse(preparationResult.pathCfg.inputPath)
     PerformanceMetricTools.addJobInfoToAtumMetadata(
       "conform",
-      standardizationPath,
-      preparationResult.pathCfg.outputPath,
+      preparationResult.pathCfg.standardizationPath,
+      preparationResult.pathCfg.publishPath,
       menasCredentials.username, cmdLineArgs
     )
 
@@ -138,50 +138,26 @@ trait ConformanceExecution extends CommonJobExecution {
     }
 
     // ensure the whole path but version exists
-    fsUtils.createAllButLastSubDir(preparationResult.pathCfg.outputPath)
+    fsUtils.createAllButLastSubDir(preparationResult.pathCfg.publishPath)
 
-    withPartCols.write.parquet(preparationResult.pathCfg.outputPath)
+    withPartCols.write.parquet(preparationResult.pathCfg.publishPath)
 
-    val publishDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.outputPath)
+    val publishDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.publishPath)
     preparationResult.performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
       "conform",
-      standardizationPath,
-      preparationResult.pathCfg.outputPath,
+      preparationResult.pathCfg.standardizationPath,
+      preparationResult.pathCfg.publishPath,
       menasCredentials.username, cmdLineArgs
     )
 
-    withPartCols.writeInfoFile(preparationResult.pathCfg.outputPath)
+    withPartCols.writeInfoFile(preparationResult.pathCfg.publishPath)
     writePerformanceMetrics(preparationResult.performance, cmd)
 
     if (conformanceReader.isAutocleanStdFolderEnabled()) {
-      fsUtils.deleteDirectoryRecursively(standardizationPath)
+      fsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardizationPath)
     }
     log.info(s"$sourceId finished successfully")
-  }
-
-  override protected def getPathCfg[T](cmd: JobConfigParser[T], conformance: Dataset, reportVersion: Int): PathConfig = {
-    val confCmd = cmd.asInstanceOf[ConformanceParser[T]]
-    PathConfig(
-      outputPath = buildPublishPath(confCmd, conformance, reportVersion),
-      inputPath = getStandardizationPath(cmd, reportVersion)
-    )
-  }
-
-  def buildPublishPath[T](cmd: ConformanceParser[T],
-                          ds: Dataset,
-                          reportVersion: Int): String = {
-    val infoDateCol: String = InfoDateColumn
-    val infoVersionCol: String = InfoVersionColumn
-
-    (cmd.publishPathOverride, cmd.folderPrefix) match {
-      case (None, None) =>
-        s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
-      case (None, Some(folderPrefix)) =>
-        s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
-      case (Some(publishPathOverride), _) =>
-        publishPathOverride
-    }
   }
 }
