@@ -23,7 +23,7 @@ class ConformanceRuleDialog {
     this._mappingTableService = new MappingTableService(this.model, eventBus);
     this._controller = controller;
     this._addJoinConditionDialog = new JoinConditionDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
-    this._addConcatColumnDialog = new ConcatenationColumnDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
+    this._addRuleColumnDialog = new RuleColumnDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
     this._ruleFormFragmentFactory = new ConformanceRuleFormFragmentFactory(this);
     this._ruleForms = new ConformanceRuleFormRepository(this);
     this._rules = this._ruleForms.all;
@@ -52,8 +52,8 @@ class ConformanceRuleDialog {
     return this._addJoinConditionDialog;
   }
 
-  get addConcatColumnDialog() {
-    return this._addConcatColumnDialog;
+  get addRuleColumnDialog() {
+    return this._addRuleColumnDialog;
   }
 
   get ruleFormFactory() {
@@ -111,10 +111,10 @@ class ConformanceRuleDialog {
     }
   }
 
-  onAddConcatColumn() {
+  onAddRuleColumn() {
     const datasetSchema = this._dialog.getModel("schema").oData;
-    this.addConcatColumnDialog.setSchema(datasetSchema);
-    this.addConcatColumnDialog.onAddPress();
+    this.addRuleColumnDialog.setSchema(datasetSchema);
+    this.addRuleColumnDialog.onAddPress();
   }
 
   onAddJoinCondition() {
@@ -180,7 +180,7 @@ class ConformanceRuleDialog {
     this.resetRuleValidation();
   }
 
-  onDeleteConcatColumn(oEv) {
+  onDeleteRuleColumn(oEv) {
     let sBindPath = oEv.getParameter("listItem").getBindingContext().getPath();
     let toks = sBindPath.split("/");
     let inputColumnIndex = parseInt(toks[toks.length - 1]);
@@ -209,12 +209,12 @@ class ConformanceRuleDialog {
     this.addJoinConditionDialog.onEditPress(index, datasetField, mappingTableField);
   }
 
-  onConcatSelect(oEv) {
+  onRuleWithColumnsSelect(oEv) {
     const item = oEv.getSource();
-    const concatField = item.data("concatField");
+    const ruleFields = item.data("ruleFields");
     const index = item.getParent().indexOfItem(item);
 
-    this.addConcatColumnDialog.onEditPress(index, concatField);
+    this.addRuleColumnDialog.onEditPress(index, ruleFields);
   }
 
   onSchemaFieldSelect(oEv) {

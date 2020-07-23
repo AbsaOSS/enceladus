@@ -58,15 +58,16 @@ class ConformanceRuleFormRepository {
   constructor() {
     this._formsMap = {
       "CastingConformanceRule": new CastingConformanceRuleForm(),
+      "CoalesceConformanceRule": new CoalesceConformanceRuleForm(),
       "ConcatenationConformanceRule": new ConcatenationConformanceRuleForm(),
       "DropConformanceRule": new DropConformanceRuleForm(),
+      "FillNullsConformanceRule": new FillNullsConformanceRuleForm(),
       "LiteralConformanceRule": new LiteralConformanceRuleForm(),
       "MappingConformanceRule": new MappingConformanceRuleForm(),
       "NegationConformanceRule": new NegationConformanceRuleForm(),
       "SingleColumnConformanceRule": new SingleColumnConformanceRuleForm(),
       "SparkSessionConfConformanceRule": new SparkSessionConfConformanceRuleForm(),
-      "UppercaseConformanceRule": new UppercaseConformanceRuleForm(),
-      "FillNullsConformanceRule": new FillNullsConformanceRuleForm()
+      "UppercaseConformanceRule": new UppercaseConformanceRuleForm()
     };
 
     this._all = Object.values(this.formsMap);
