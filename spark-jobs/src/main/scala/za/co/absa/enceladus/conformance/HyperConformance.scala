@@ -21,11 +21,11 @@ import java.util.Date
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.DateType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.InfoDateFactory
 import za.co.absa.enceladus.dao.MenasDAO
@@ -34,7 +34,7 @@ import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactor
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
-class HyperConformance (implicit cmd: ConfCmdConfig,
+class HyperConformance (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         menasBaseUrls: List[String],
                         infoDateFactory: InfoDateFactory) extends StreamTransformer {
@@ -77,7 +77,7 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
   }
 
   @throws[IllegalArgumentException]
-  private def getReportVersion(implicit cmd: ConfCmdConfig): Int = {
+  private def getReportVersion(implicit cmd: ConformanceConfig): Int = {
     cmd.reportVersion match {
       case Some(version) => version
       case None => throw new IllegalArgumentException("Report version is not provided.")
@@ -121,19 +121,14 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
 
     val menasCredentialsFactory = getMenasCredentialsFactory(conf: Configuration)
 
-    implicit val cmd: ConfCmdConfig = ConfCmdConfig(
-      datasetName = conf.getString(datasetNameKey),
-      datasetVersion = conf.getInt(datasetVersionKey),
-      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()), // Still need a report date for mapping table patterns
-      reportVersion = Option(getReportVersion(conf)),
-      menasCredentialsFactory = menasCredentialsFactory,
-      performanceMetricsFile = None,
-      publishPathOverride = None,
-      folderPrefix = None,
+    implicit val confConfig: ConformanceConfig = ConformanceConfig(publishPathOverride = None,
       experimentalMappingRule = Some(true),
       isCatalystWorkaroundEnabled = Some(true),
       autocleanStandardizedFolder = Some(false),
-      persistStorageLevel = None
+      datasetName = conf.getString(datasetNameKey),
+      datasetVersion = conf.getInt(datasetVersionKey),
+      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()),
+      menasCredentialsFactory = menasCredentialsFactory
     )
 
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
@@ -172,13 +167,4 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       case (true, true)   => throw new IllegalArgumentException("Either a credentials file or a keytab should be specified, but not both.")
     }
   }
-
-  private def getReportVersion(conf: Configuration): Int = {
-    if (conf.containsKey(reportVersionKey)) {
-      conf.getInt(reportVersionKey)
-    } else {
-      defaultReportVersion
-    }
-  }
 }
-
