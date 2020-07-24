@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-class ConcatenationColumnDialog {
+class RuleColumnDialog {
 
   constructor(oDialog, oController, model) {
     this._oDialog = oDialog;
     this._oController = oController;
-    oController.byId("concatSubmitButton").attachPress(this.onConcatSubmit, this);
-    oController.byId("concatCancelButton").attachPress(this.onConcatCancel, this);
+    oController.byId("columnSubmitButton").attachPress(this.onColumnSubmit, this);
+    oController.byId("columnCancelButton").attachPress(this.onColumnCancel, this);
     oController.byId("schemaFieldSelector").attachSelectionChange(this.onSchemaFieldSelect, this);
     this._schemaFieldSelector = new SimpleSchemaFieldSelector(oController, this.oDialog);
     this._model = model;
@@ -46,16 +46,16 @@ class ConcatenationColumnDialog {
   }
 
   reset() {
-    this.model.setProperty("/concatColumn", "");
+    this.model.setProperty("/ruleColumn", "");
     this.schemaFieldSelector.reset(this.oDialog);
   }
 
   onSchemaFieldSelect(oEv) {
-    this.schemaFieldSelector.onSchemaFieldSelect(oEv, "/concatColumn");
+    this.schemaFieldSelector.onSchemaFieldSelect(oEv, "/ruleColumn");
   }
 
   preselectField(field) {
-    this.model.setProperty("/concatColumn", field);
+    this.model.setProperty("/ruleColumn", field);
     this.schemaFieldSelector.preselectSchemaFieldSelector(field);
   }
 
@@ -63,23 +63,23 @@ class ConcatenationColumnDialog {
     this.oDialog.setModel(new sap.ui.model.json.JSONModel(schema), "schema");
   }
 
-  onConcatSubmit() {
-    const concatenationColumn = this.model.getProperty("/concatColumn");
+  onColumnSubmit() {
+    const ruleColumn = this.model.getProperty("/ruleColumn");
 
-    if (this.isValid(concatenationColumn)) {
+    if (this.isValid(ruleColumn)) {
       const inputColumnsPath = "/newRule/inputColumns";
       if (model.getProperty(inputColumnsPath) === undefined) {
         model.setProperty(inputColumnsPath, [])
       }
       const inputColumns = model.getProperty(inputColumnsPath);
       if (this.editIndex === undefined) {
-        inputColumns.push(concatenationColumn);
+        inputColumns.push(ruleColumn);
       } else {
-        inputColumns[this.editIndex] = concatenationColumn;
+        inputColumns[this.editIndex] = ruleColumn;
         this.editIndex = undefined;
       }
       model.setProperty(inputColumnsPath, inputColumns);
-      this.onConcatCancel(); // close & clean up
+      this.onColumnCancel(); // close & clean up
     }
   }
 
@@ -95,7 +95,7 @@ class ConcatenationColumnDialog {
     return isValid;
   }
 
-  onConcatCancel() {
+  onColumnCancel() {
     this.oDialog.close();
     this.reset();
   }

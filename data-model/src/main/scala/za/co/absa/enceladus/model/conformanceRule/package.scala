@@ -31,7 +31,8 @@ package object conformanceRule {
     new Type(value = classOf[SingleColumnConformanceRule], name = "SingleColumnConformanceRule"),
     new Type(value = classOf[SparkSessionConfConformanceRule], name = "SparkSessionConfConformanceRule"),
     new Type(value = classOf[UppercaseConformanceRule], name = "UppercaseConformanceRule"),
-    new Type(value = classOf[FillNullsConformanceRule], name = "FillNullsConformanceRule")
+    new Type(value = classOf[FillNullsConformanceRule], name = "FillNullsConformanceRule"),
+    new Type(value = classOf[CoalesceConformanceRule], name = "CoalesceConformanceRule")
   ))
   sealed trait ConformanceRule {
     val order: Int
@@ -104,7 +105,8 @@ package object conformanceRule {
   /**
     * Rule for getting values out of spark session conf.
     *
-    * This is an easy way of introducing values from the info file into the dataset (such as version), where control framework will populate the conf.
+    * This is an easy way of introducing values from the info file into the dataset (such as version), where control
+    * framework will populate the conf.
     *
     * Gets value from spark.sessionState.conf
     */
@@ -128,6 +130,13 @@ package object conformanceRule {
                                       inputColumn: String,
                                       value: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): FillNullsConformanceRule = copy(order = newOrder)
+  }
+
+  case class CoalesceConformanceRule(order: Int,
+                                     outputColumn: String,
+                                     controlCheckpoint: Boolean,
+                                     inputColumns: Seq[String]) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): CoalesceConformanceRule = copy(order = newOrder)
   }
 
   abstract class ExtensibleConformanceRule() extends ConformanceRule
