@@ -327,6 +327,44 @@ class FillNullsConformanceRuleForm extends ConformanceRuleForm {
 
 }
 
+class CoalesceConformanceRuleForm extends ConformanceRuleForm {
+
+  constructor() {
+    super("CoalesceConformanceRule", false)
+  }
+
+  get inputColumnsControl() {
+    return sap.ui.getCore().byId(`${this.ruleType}--inputColumns`);
+  }
+
+  isCorrectlyConfigured(rule) {
+    return this.hasValidInputColumns(rule.inputColumns);
+  }
+
+  hasValidInputColumns(fieldValue = []) {
+    let isValid = fieldValue.length >= 2;
+
+    if (!isValid) {
+      this.inputColumnsControl.getItems().forEach(item => item.setHighlight(sap.ui.core.ValueState.Error));
+      sap.m.MessageToast.show("At least 2 columns are required for coalesce.");
+    }
+
+    return isValid
+  }
+
+  reset() {
+    super.reset();
+    this.resetInputColumns();
+  }
+
+  resetInputColumns() {
+    this.inputColumnsControl
+      .getItems()
+      .forEach(item => item.setHighlight(sap.ui.core.ValueState.None));
+  }
+
+}
+
 class MappingConformanceRuleForm extends ConformanceRuleForm {
 
   constructor() {

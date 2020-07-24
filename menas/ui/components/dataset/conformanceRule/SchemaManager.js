@@ -194,6 +194,8 @@ class RuleFactory {
         return new UppercaseConformanceRule(rule);
       case "FillNullsConformanceRule":
         return new FillNullsConformanceRule(rule);
+      case "CoalesceConformanceRule":
+        return new CoalesceConformanceRule(rule)
       default:
         throw new TypeError("Unknown conformance rule type: " + rule._t)
     }
