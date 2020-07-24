@@ -23,12 +23,12 @@ title: News
 
   <div id="page_move" class="col-xs-6 col-md-4">
     {% if paginator.previous_page %}
-      <a href="{{ paginator.previous_page_path }}" class="previous">Previous&nbsp;</a>
+      <a href="{{ site.baseurl }}{{ paginator.previous_page_path }}" class="previous">Previous&nbsp;</a>
     {% else %}
       <span class="previous">Previous&nbsp;</span>
     {% endif %}
     {% if paginator.next_page %}
-      <a href="{{ paginator.next_page_path }}" class="next">Next</a>
+      <a href="{{ site.baseurl }}{{ paginator.next_page_path }}" class="next">Next</a>
     {% else %}
       <span class="next ">Next</span>
     {% endif %}
