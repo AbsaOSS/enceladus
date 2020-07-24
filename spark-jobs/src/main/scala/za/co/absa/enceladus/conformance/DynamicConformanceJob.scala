@@ -23,7 +23,7 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 
 object DynamicConformanceJob extends ConformanceExecution {
-  private val jobName: String = "Dynamic Conformance"
+  private val jobName: String = "Enceladus Conformance"
 
   def main(args: Array[String]) {
     // This should be the first thing the app does to make secure Kafka work with our CA.

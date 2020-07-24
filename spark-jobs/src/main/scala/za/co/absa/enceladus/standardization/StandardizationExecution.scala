@@ -29,7 +29,7 @@ import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.config.StandardizationConfigParser
+import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
@@ -57,6 +57,9 @@ trait StandardizationExecution extends CommonJobExecution {
     spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.rawPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
+    log.info(s"raw path: ${preparationResult.pathCfg.rawPath}")
+    log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
+
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
 
@@ -81,6 +84,21 @@ trait StandardizationExecution extends CommonJobExecution {
       menasCredentials.username, args.mkString(" "))
 
     dao.getSchema(preparationResult.dataset.schemaName, preparationResult.dataset.schemaVersion)
+  }
+
+  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+    val pathOverride = cmd.asInstanceOf[StandardizationConfig].rawPathOverride
+    val initialConfig = getDefaultPathConfig(cmd, dataset, reportVersion)
+    pathOverride match {
+      case None => initialConfig
+      case Some(providedRawPath) => initialConfig.copy(rawPath = providedRawPath)
+    }
+  }
+
+  override def getInputPath[T](pathCfg: PathConfig): String = pathCfg.rawPath
+
+  override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
+    validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, pathConfig.standardizationPath)
   }
 
   protected def readStandardizationInputData[T](schema: StructType,
@@ -163,17 +181,16 @@ trait StandardizationExecution extends CommonJobExecution {
       handleEmptyOutput(sourceId)
     }
 
-    val outputPath = preparationResult.pathCfg.standardizationPath
-    standardizedDF.write.parquet(outputPath)
+    standardizedDF.write.parquet(preparationResult.pathCfg.standardizationPath)
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
-    val stdDirSize = fsUtils.getDirectorySize(outputPath)
+    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
     preparationResult.performance.finishMeasurement(stdDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
       "std",
       preparationResult.pathCfg.rawPath,
-      outputPath,
+      preparationResult.pathCfg.standardizationPath,
       menasCredentials.username,
       args.mkString(" ")
     )
@@ -181,7 +198,7 @@ trait StandardizationExecution extends CommonJobExecution {
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
 
-    standardizedDF.writeInfoFile(outputPath)
+    standardizedDF.writeInfoFile(preparationResult.pathCfg.standardizationPath)
     writePerformanceMetrics(preparationResult.performance, cmd)
     log.info(s"$sourceId finished successfully")
     standardizedDF

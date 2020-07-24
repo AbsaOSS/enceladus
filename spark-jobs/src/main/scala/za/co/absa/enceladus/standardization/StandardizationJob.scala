@@ -24,7 +24,7 @@ import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 object StandardizationJob extends StandardizationExecution {
-  private val jobName: String = "Standardisation"
+  private val jobName: String = "Enceladus Standardization"
 
   def main(args: Array[String]) {
     initialValidation()

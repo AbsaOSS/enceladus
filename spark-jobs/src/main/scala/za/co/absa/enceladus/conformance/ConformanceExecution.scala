@@ -33,6 +33,7 @@ import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, Feature
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
@@ -53,6 +54,9 @@ trait ConformanceExecution extends CommonJobExecution {
                                       cmd: ConformanceConfigParser[T],
                                       fsUtils: FileSystemVersionUtils,
                                       spark: SparkSession): Unit = {
+    log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
+    log.info(s"publish path: ${preparationResult.pathCfg.publishPath}")
+
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 
@@ -76,6 +80,21 @@ trait ConformanceExecution extends CommonJobExecution {
       cmd.reportDate,
       preparationResult.reportVersion)
   }
+
+  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+    val pathOverride = cmd.asInstanceOf[ConformanceConfig].publishPathOverride
+    val initialConfig = getDefaultPathConfig(cmd, dataset, reportVersion)
+    pathOverride match {
+      case None => initialConfig
+      case Some(providedRawPath) => initialConfig.copy(publishPath = providedRawPath)
+    }
+  }
+
+  override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
+    validateIfPathAlreadyExists(fsUtils, pathConfig.publishPath)
+  }
+
+  override def getInputPath[T](pathCfg: PathConfig): String = pathCfg.standardizationPath
 
   protected def readConformanceInputData(pathCfg: PathConfig)(implicit spark: SparkSession): DataFrame = {
     spark.read.parquet(pathCfg.standardizationPath)

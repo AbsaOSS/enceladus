@@ -25,8 +25,8 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-object StandardizationAndConformanceJob extends StandardizationExecution with ConformanceExecution {
-  private val jobName = "Standardization Conformance"
+object StandardizationAndConformanceJob extends StandardizationAndConformanceExecution {
+  private val jobName = "Enceladus Standardization&Conformance"
 
   def main(args: Array[String]): Unit = {
     initialValidation()

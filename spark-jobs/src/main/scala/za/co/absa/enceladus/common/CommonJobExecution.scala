@@ -88,13 +88,9 @@ trait CommonJobExecution {
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg = getPathConfig(cmd, dataset, reportVersion)
 
-    val (inputPath, outputPath) = getInputOutputPaths(cmd, fsUtils, pathCfg)
+    val inputPath = getInputPath(pathCfg)
 
-    log.info(s"input path: $inputPath")
-    log.info(s"output path: $outputPath")
-
-    // die if the output path exists
-    validateForExistingOutputPath(fsUtils, outputPath)
+    validateOutputPath(fsUtils, pathCfg)
 
     val performance = initPerformanceMeasurer(inputPath)
 
@@ -108,18 +104,17 @@ trait CommonJobExecution {
     PreparationResult(dataset, reportVersion, pathCfg, performance)
   }
 
-  private def getInputOutputPaths[T](cmd: JobConfigParser[T], fsUtils: FileSystemVersionUtils, pathCfg: PathConfig): (String, String) = {
-    cmd match {
-      case _: StandardizationConfig => (pathCfg.rawPath, pathCfg.standardizationPath)
-      case _: ConformanceConfig => (pathCfg.standardizationPath, pathCfg.publishPath)
-      case _ => {
-        val intermediatePath = pathCfg.standardizationPath
-        log.info(s"standardization path: $intermediatePath")
-        validateForExistingOutputPath(fsUtils, intermediatePath)
-        (pathCfg.rawPath, pathCfg.publishPath)
-      }
+  protected def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
+
+  protected def validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, path: String): Unit = {
+    if (fsUtils.hdfsExists(path)) {
+      throw new IllegalStateException(
+        s"Path $path already exists. Increment the run version, or delete $path"
+      )
     }
   }
+
+  protected def getInputPath[T](pathCfg: PathConfig): String
 
   protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
                                     (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
@@ -166,44 +161,37 @@ trait CommonJobExecution {
     }
   }
 
-  protected def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+  protected def getDefaultPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
     PathConfig(
-      rawPath = buildRawPath(cmd.asInstanceOf[StandardizationConfigParser[StandardizationConformanceConfig]], dataset, reportVersion),
-      publishPath = buildPublishPath(cmd.asInstanceOf[ConformanceConfigParser[StandardizationConformanceConfig]], dataset, reportVersion),
+      rawPath = buildRawPath(cmd, dataset, reportVersion),
+      publishPath = buildPublishPath(cmd, dataset, reportVersion),
       standardizationPath = getStandardizationPath(cmd, reportVersion)
     )
   }
 
-  def buildPublishPath[T](cmd: ConformanceConfigParser[T],
-                          ds: Dataset,
-                          reportVersion: Int): String = {
+  protected def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig
+
+  private def buildPublishPath[T](cmd: JobConfigParser[T], ds: Dataset, reportVersion: Int): String = {
     val infoDateCol: String = InfoDateColumn
     val infoVersionCol: String = InfoVersionColumn
 
-    (cmd.publishPathOverride, cmd.folderPrefix) match {
-      case (None, None) =>
-        s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
-      case (None, Some(folderPrefix)) =>
+    cmd.folderPrefix match {
+      case None => s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
+      case Some(folderPrefix) =>
         s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
-      case (Some(publishPathOverride), _) =>
-        publishPathOverride
     }
   }
 
-  def buildRawPath[T](cmd: StandardizationConfigParser[T], dataset: Dataset, reportVersion: Int): String = {
+  private def buildRawPath[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): String = {
     val dateTokens = cmd.reportDate.split("-")
-    cmd.rawPathOverride match {
-      case None =>
-        val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
-        cmd.folderPrefix match {
-          case None => s"${dataset.hdfsPath}$folderSuffix"
-          case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
-        }
-      case Some(rawPathOverride) => rawPathOverride
+    val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
+    cmd.folderPrefix match {
+      case None => s"${dataset.hdfsPath}$folderSuffix"
+      case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
     }
   }
 
-  protected def getStandardizationPath[T](jobConfig: JobConfigParser[T], reportVersion: Int): String = {
+  private def getStandardizationPath[T](jobConfig: JobConfigParser[T], reportVersion: Int): String = {
     MessageFormat.format(conf.getString("standardized.hdfs.path"),
       jobConfig.datasetName,
       jobConfig.datasetVersion.toString,
@@ -223,14 +211,6 @@ trait CommonJobExecution {
         }
       case Failure(ex) => throw ex
       case Success(_) =>
-    }
-  }
-
-  protected def validateForExistingOutputPath(fsUtils: FileSystemVersionUtils, path: String): Unit = {
-    if (fsUtils.hdfsExists(path)) {
-      throw new IllegalStateException(
-        s"Path $path already exists. Increment the run version, or delete $path"
-      )
     }
   }
 
