@@ -12,6 +12,7 @@ categories:
 - [Table Of Contents](#table-of-contents)
 - [Intro](#intro)
 - [Casting Conformance Rule](#casting-conformance-rule)
+- [Coalesce Conformance Rule](#coalesce-conformance-rule)
 - [Concatenation Conformance Rule](#concatenation-conformance-rule)
 - [Drop Conformance Rule](#drop-conformance-rule)
 - [FillNulls Conformance Rule](#fillnulls-conformance-rule)
@@ -33,7 +34,23 @@ Every column also has one or more input columns.
 
 ## Casting Conformance Rule
 
-Casting conformance rule Allows users to cast a specific column to another type. This conformance rule provides a selection of other types.
+Casting conformance rule allows users to cast a specific column to another type. This conformance rule provides a selection of other types.
+
+Allowed Conversions are:
+
+| From | To |
+|---|---|
+| Anything | String |
+| Boolean | Any Numeric |
+| Any Numeric Integer | Any Numeric given that it fits |
+| Any Floating point Numeric | Any Floating point Numeric given that it fits |
+| String | Any Numeric or Time given it keep locale in mind, Boolean given it is `"true"` or `"false"` |
+| Date | Timestamp |
+| Timestamp | Date |
+
+## Coalesce Conformance Rule
+
+Coalesce conformance rule applies value for the new column from the first non-null value from the list of columns.
 
 ## Concatenation Conformance Rule
 
@@ -57,7 +74,7 @@ To use a mapping conformance rule, the user first needs to define a Mapping Tabl
 
 When defining a mapping conformance rule, users first need to pick a correct Mapping Table and correct version. Then there is a question if the data can have Null values in join conditions. This means if the join that will be executed should be null safe or not.
 
-Then the join conditions. A join condition conveys a relationship between the Dataset and MappingTable. The join condition specifies how the rows from one table will be combined with the rows of the other table. This is based on the equality of the rows.
+Then the join conditions conveys the relationship between the Dataset and Mapping Table. The join condition specifies how the rows from one table will be combined with the rows of another table. This is based on the equality of the values in the selected columns.
 
 Last is the target column, which specifies which column from the mapping table will be written into the output column.
 
