@@ -31,6 +31,7 @@ This part of the documentations will show you how to use Enceladus, Menas as its
 ## Spark Jobs
 
 - [Configuration]({{ docs_path }}/usage/config)
+- [Standardization Formats]({{ docs_path }}/usage/standardization-formats)
 
 ## Menas
 
