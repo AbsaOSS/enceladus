@@ -33,7 +33,9 @@ case class CoalesceRuleInterpreter(rule: CoalesceConformanceRule) extends RuleIn
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO,
+             (implicit spark: SparkSession,
+              explosionState: ExplosionState,
+              dao: MenasDAO,
               progArgs: InterpreterContextArgs): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumns :+ rule.outputColumn: _*)

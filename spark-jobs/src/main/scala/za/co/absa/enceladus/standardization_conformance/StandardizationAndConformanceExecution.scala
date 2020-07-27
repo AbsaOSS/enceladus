@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.standardization_conformance
 
+import za.co.absa.enceladus.common.CommonJobExecution
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.model.Dataset
@@ -22,13 +23,15 @@ import za.co.absa.enceladus.standardization.StandardizationExecution
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
-trait StandardizationAndConformanceExecution extends StandardizationExecution with ConformanceExecution {
+trait StandardizationAndConformanceExecution extends StandardizationExecution
+  with ConformanceExecution
+  with CommonJobExecution{
 
   override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+    val defaultConfig = super[CommonJobExecution].getPathConfig(cmd, dataset, reportVersion)
     val jobCmd = cmd.asInstanceOf[StandardizationConformanceConfig]
     val rawPathOverride = jobCmd.rawPathOverride
     val publishPathOverride = jobCmd.publishPathOverride
-    val defaultConfig = getDefaultPathConfig(cmd, dataset, reportVersion)
     defaultConfig.copy(rawPath = rawPathOverride.getOrElse(defaultConfig.rawPath),
       publishPath = publishPathOverride.getOrElse(defaultConfig.publishPath))
   }

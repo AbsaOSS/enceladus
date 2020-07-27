@@ -161,15 +161,13 @@ trait CommonJobExecution {
     }
   }
 
-  protected def getDefaultPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+  protected def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
     PathConfig(
       rawPath = buildRawPath(cmd, dataset, reportVersion),
       publishPath = buildPublishPath(cmd, dataset, reportVersion),
       standardizationPath = getStandardizationPath(cmd, reportVersion)
     )
   }
-
-  protected def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig
 
   private def buildPublishPath[T](cmd: JobConfigParser[T], ds: Dataset, reportVersion: Int): String = {
     val infoDateCol: String = InfoDateColumn

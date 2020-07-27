@@ -87,9 +87,8 @@ trait StandardizationExecution extends CommonJobExecution {
   }
 
   override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
-    val pathOverride = cmd.asInstanceOf[StandardizationConfig].rawPathOverride
-    val initialConfig = getDefaultPathConfig(cmd, dataset, reportVersion)
-    pathOverride match {
+    val initialConfig = super.getPathConfig(cmd, dataset, reportVersion)
+    cmd.asInstanceOf[StandardizationConfig].rawPathOverride match {
       case None => initialConfig
       case Some(providedRawPath) => initialConfig.copy(rawPath = providedRawPath)
     }

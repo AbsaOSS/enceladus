@@ -82,9 +82,8 @@ trait ConformanceExecution extends CommonJobExecution {
   }
 
   override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
-    val pathOverride = cmd.asInstanceOf[ConformanceConfig].publishPathOverride
-    val initialConfig = getDefaultPathConfig(cmd, dataset, reportVersion)
-    pathOverride match {
+    val initialConfig = super.getPathConfig(cmd, dataset, reportVersion)
+    cmd.asInstanceOf[ConformanceConfig].publishPathOverride match {
       case None => initialConfig
       case Some(providedRawPath) => initialConfig.copy(publishPath = providedRawPath)
     }
