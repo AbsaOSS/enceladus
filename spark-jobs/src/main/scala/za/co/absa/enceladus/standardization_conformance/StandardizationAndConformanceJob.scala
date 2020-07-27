@@ -16,10 +16,8 @@
 package za.co.absa.enceladus.standardization_conformance
 
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
-import za.co.absa.enceladus.standardization.StandardizationExecution
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
