@@ -52,6 +52,9 @@ trait ConformanceExecution extends CommonJobExecution {
                                       cmd: ConformanceConfigParser[T],
                                       fsUtils: FileSystemVersionUtils,
                                       spark: SparkSession): Unit = {
+    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
+    preparationResult.performance.startMeasurement(stdDirSize)
+
     log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
     log.info(s"publish path: ${preparationResult.pathCfg.publishPath}")
 
@@ -90,8 +93,6 @@ trait ConformanceExecution extends CommonJobExecution {
   override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
     validateIfPathAlreadyExists(fsUtils, pathConfig.publishPath)
   }
-
-  override def getInputPath[T](pathCfg: PathConfig): String = pathCfg.standardizationPath
 
   protected def readConformanceInputData(pathCfg: PathConfig)(implicit spark: SparkSession): DataFrame = {
     spark.read.parquet(pathCfg.standardizationPath)

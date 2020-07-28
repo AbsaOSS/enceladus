@@ -34,7 +34,7 @@ import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpret
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
+import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
@@ -52,6 +52,8 @@ trait StandardizationExecution extends CommonJobExecution {
                                           fsUtils: FileSystemVersionUtils,
                                           spark: SparkSession): StructType = {
 
+    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.rawPath)
+    preparationResult.performance.startMeasurement(stdDirSize)
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
     spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.rawPath}/_INFO")
@@ -93,8 +95,6 @@ trait StandardizationExecution extends CommonJobExecution {
       case Some(providedRawPath) => initialConfig.copy(rawPath = providedRawPath)
     }
   }
-
-  override def getInputPath[T](pathCfg: PathConfig): String = pathCfg.rawPath
 
   override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
     validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, pathConfig.standardizationPath)

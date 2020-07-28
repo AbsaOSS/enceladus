@@ -40,6 +40,4 @@ trait StandardizationAndConformanceExecution extends StandardizationExecution
     validateIfPathAlreadyExists(fsUtils, pathConfig.standardizationPath)
     validateIfPathAlreadyExists(fsUtils, pathConfig.publishPath)
   }
-
-  override def getInputPath[T](pathCfg: PathConfig): String = super[StandardizationExecution].getInputPath(pathCfg)
 }

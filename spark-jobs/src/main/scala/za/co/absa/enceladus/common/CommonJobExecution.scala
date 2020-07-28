@@ -85,11 +85,7 @@ trait CommonJobExecution {
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg = getPathConfig(cmd, dataset, reportVersion)
 
-    val inputPath = getInputPath(pathCfg)
-
     validateOutputPath(fsUtils, pathCfg)
-
-    val performance = initPerformanceMeasurer(inputPath)
 
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
@@ -98,7 +94,7 @@ trait CommonJobExecution {
     // Enable non-default persistence storage level if provided in the command line
     cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
 
-    PreparationResult(dataset, reportVersion, pathCfg, performance)
+    PreparationResult(dataset, reportVersion, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
   }
 
   protected def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
@@ -110,8 +106,6 @@ trait CommonJobExecution {
       )
     }
   }
-
-  protected def getInputPath[T](pathCfg: PathConfig): String
 
   protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
                                     (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
@@ -246,13 +240,5 @@ trait CommonJobExecution {
         log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
         newVersion
     }
-  }
-
-  private def initPerformanceMeasurer(path: String)
-                                     (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils): PerformanceMeasurer = {
-    val performance = new PerformanceMeasurer(spark.sparkContext.appName)
-    val stdDirSize = fsUtils.getDirectorySize(path)
-    performance.startMeasurement(stdDirSize)
-    performance
   }
 }
