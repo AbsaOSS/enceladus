@@ -28,7 +28,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 trait RuleInterpreter {
 
@@ -86,7 +86,7 @@ trait RuleInterpreter {
    * @param dataType DataType of the value to be casted to
    * @return Returns Column representation of the newly casted value
    */
-  def simpleLiteralCast(input: String, dataType: DataType): Column = {
+  def simpleLiteralCast(input: String, dataType: DataType): Try[Column] = {
     Try({
       dataType match {
         case _: ByteType =>
@@ -112,12 +112,7 @@ trait RuleInterpreter {
         case _ =>
           lit(input)
       }
-    }) match {
-      case Success(value) => value
-      case Failure(_) =>
-        log.warn(s"Unable to cast literal $input to $dataType")
-        lit(input)
-    }
+    })
   }
 
   /**

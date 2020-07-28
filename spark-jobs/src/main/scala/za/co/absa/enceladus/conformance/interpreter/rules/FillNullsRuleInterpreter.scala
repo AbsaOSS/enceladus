@@ -24,6 +24,8 @@ import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
+import scala.util.{Failure, Success}
+
 object FillNullsRuleInterpreter {
   final val ruleName = "Fill Nulls Rule"
 }
@@ -42,8 +44,16 @@ case class FillNullsRuleInterpreter(rule: FillNullsConformanceRule) extends Rule
       rule.outputColumn
     )
 
-    val sourceDataType = SchemaUtils.getFieldType(rule.inputColumn, df.schema).get
-    val default: Column = simpleLiteralCast(rule.value, sourceDataType)
+    val dataType = SchemaUtils.getFieldType(rule.inputColumn, df.schema).get
+    val default: Column = simpleLiteralCast(rule.value, dataType) match {
+      case Success(value) => value
+      case Failure(_) =>
+        log.warn(
+          s"""Unable to cast literal ${rule.value} to $dataType
+             |for FillNulls conformance rule number ${rule.order}.
+             |Using string as a fallback.""".stripMargin.replaceAll("[\\r\\n]", ""))
+        lit(rule.value)
+    }
 
     if (rule.outputColumn.contains('.')) {
       conformNestedField(df, default)
