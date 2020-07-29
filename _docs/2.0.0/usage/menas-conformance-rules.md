@@ -26,7 +26,7 @@ categories:
 
 ## Intro
 
-Conformance Rules are a way for the user to enhance the data. Every conformance rule has an output column and an option for running a control measure. Output column defines the name of the output column into which the rule will output. Control measure check will run an Atum control measure check as in previous stages as defined in controls of `_INFO` file.
+Conformance Rules are a way for the user to enhance the data. Every conformance rule has an output column and an option for running a control measure. Output column text field defines the name of the column into which the rule will output the result into. Control measure check will run an Atum control measure check as in previous stages as defined in controls of `_INFO` file.
 
 Every column also has one or more input columns.
 
@@ -44,7 +44,7 @@ Allowed Conversions are:
 | Boolean | Any Numeric |
 | Any Numeric Integer | Any Numeric given that it fits |
 | Any Floating point Numeric | Any Floating point Numeric given that it fits |
-| String | Any Numeric or Time given it keep locale in mind, Boolean given it is `"true"` or `"false"` |
+| String | Any Numeric or Time, or Boolean given it is `"true"` or `"false"` |
 | Date | Timestamp |
 | Timestamp | Date |
 
@@ -74,7 +74,7 @@ To use a mapping conformance rule, the user first needs to define a Mapping Tabl
 
 When defining a mapping conformance rule, users first need to pick a correct Mapping Table and correct version. Then there is a question if the data can have Null values in join conditions. This means if the join that will be executed should be null safe or not.
 
-Then the join conditions conveys the relationship between the Dataset and Mapping Table. The join condition specifies how the rows from one table will be combined with the rows of another table. This is based on the equality of the values in the selected columns.
+Then the join conditions conveys the relationship between the Dataset and Mapping Table. The join condition specifies how the rows from one table will be combined with the rows of the other table. This is based on the equality of the values in the selected columns.
 
 Last is the target column, which specifies which column from the mapping table will be written into the output column.
 
@@ -84,7 +84,7 @@ Negation conformance rule negates any Numerical or Boolean value.
 
 ## SingleColumn Conformance Rule
 
-Single column conformance rule transforms column into a column of structs of previous columns values. Input column alias here will be the name/key of the struct.
+Single column conformance rule transforms column into a column of structs of previous column's values. Input column alias here will be the name/key of the struct.
 
 ## SparkSessionConf Conformance Rule
 
