@@ -12,8 +12,8 @@ Currently Standardization supports these formats of input files
 - [Cobol](#cobol) (see [Cobrix GitHub](https://github.com/AbsaOSS/cobrix/))
 - [CSV](#csv) (see [rfc4180](https://tools.ietf.org/html/rfc4180))
 - [FixedWidth](#fixed-width) (see `Link to be added repo does not exist yet`)
-- [JSON](json) (see [json.org](https://www.json.org/json-en.html))
-- [Parquet](parquet) (see [Apache Parquet](https://parquet.apache.org/documentation/latest/))
+- [JSON](#json) (see [json.org](https://www.json.org/json-en.html))
+- [Parquet](#parquet) (see [Apache Parquet](https://parquet.apache.org/documentation/latest/))
 - [XML](#xml) (see [xml.com](https://www.xml.com/))
 
 When running standardization one of the formats of the list has to be specified.
@@ -26,7 +26,7 @@ When running standardization one of the formats of the list has to be specified.
 
 ## Cobol
 
-Cobol `format` option is `cobol`. Format options are
+Cobol `format` value is `cobol`. Format options are
 
 | Option | Values domain | Description | Default |
 |---|---|---|---|
@@ -39,7 +39,7 @@ Cobol `format` option is `cobol`. Format options are
 
 ## CSV
 
-CSV `format` option is `csv`. Format options are
+CSV `format` value is `csv`. Format options are
 
 | Option | Values domain | Description | Default |
 |---|---|---|---|
@@ -53,7 +53,7 @@ CSV `format` option is `csv`. Format options are
 
 Fixed Width is a custom in house made format. Requires width metadata, more in [Usage - Schema]({{ docs_path }}/usage/schema#width).
 
-Fixed Width `format` option is `fixed-width`. Format options are
+Fixed Width `format` value is `fixed-width`. Format options are
 
 | Option | Values domain | Description | Default |
 |---|---|---|---|
@@ -61,7 +61,7 @@ Fixed Width `format` option is `fixed-width`. Format options are
 
 ## JSON
 
-JSON `format` option is `json`. Format options are
+JSON `format` value is `json`. Format options are
 
 | Option | Values domain | Description | Default |
 |---|---|---|---|
@@ -73,7 +73,7 @@ Has no extra options. Only `--format parquet`.
 
 ## XML
 
-XML `format` option is `xml`. Format options are
+XML `format` value is `xml`. Format options are
 
 | Option | Values domain | Description | Default |
 |---|---|---|---|
