@@ -7,7 +7,7 @@ categories:
     - usage
 ---
 
-Currently Standardization supports these formats
+Currently Standardization supports these formats of input files
 
 - [Cobol](#cobol) (see [Cobrix GitHub](https://github.com/AbsaOSS/cobrix/))
 - [CSV](#csv) (see [rfc4180](https://tools.ietf.org/html/rfc4180))
@@ -16,24 +16,24 @@ Currently Standardization supports these formats
 - [Parquet](parquet) (see [Apache Parquet](https://parquet.apache.org/documentation/latest/))
 - [XML](#xml) (see [xml.com](https://www.xml.com/))
 
-To use any of the format you need to add to you standardization
+When running standardization one of the formats of the list has to be specified.
 
 ```shell
 ...standardization options...
 --format <format>
---optionX valueY
+--format-specific-optionX valueY
 ```
 
 ## Cobol
 
 Cobol `format` option is `cobol`. Format options are
 
-| Option | Values | Description |
+| Option | Values domain | Description |
 |---|---|---|
 | copybook | String | Path to a copybook for COBOL data format |
 | is-xcom | Boolean | Does a mainframe file in COBOL format contain XCOM record headers |
 | cobol-is-text | Boolean | Specifies if the mainframe file is ASCII text file |
-| cobol-encoding | `ascii` or `ebcdic` | Specify encoding of mainframe files |
+| cobol-encoding | `ascii` or `ebcdic` | Specifies encoding of mainframe files |
 | cobol-trimming-policy | `none`, `left`, `right`, `both` | Specify string trimming policy for mainframe files |
 | charset | Any valid charset names | The character set. By default `UTF-8`. |
 
@@ -44,7 +44,7 @@ CSV `format` option is `csv`. Format options are
 | Option | Values | Description |
 |---|---|---|
 | header | Boolean | By default `false`. Specifies if the input data have a CSV style header |
-| delimiter | Any char or unicode such as `U+00A1` | By default `,`. Delimiter of the data on single row |
+| delimiter | Any char or unicode such as `U+00A1` | By default `,`. Delimiter the column values on a row |
 | csv-quote | Any char | Quote character. By default `"`. Delimiters inside quotes are ignored. |
 | csv-escape | Any char | Escape character. By default `\`. Escaped quote characters are ignored. |
 | charset | Any valid charset names | The character set. By default `UTF-8`. |
