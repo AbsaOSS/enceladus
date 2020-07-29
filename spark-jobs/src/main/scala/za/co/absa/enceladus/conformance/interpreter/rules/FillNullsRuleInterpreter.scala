@@ -15,13 +15,17 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, FillNullsConformanceRule}
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.spark.hats.Extensions._
-import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.conformance.config.ConformanceConfig
+
+import scala.util.{Failure, Success}
 
 object FillNullsRuleInterpreter {
   final val ruleName = "Fill Nulls Rule"
@@ -41,22 +45,28 @@ case class FillNullsRuleInterpreter(rule: FillNullsConformanceRule) extends Rule
       rule.outputColumn
     )
 
+    val dataType: DataType = SchemaUtils.getFieldType(rule.inputColumn, df.schema).get
+    val default: Column = simpleLiteralCast(rule.value, dataType) match {
+      case Success(value) => value
+      case Failure(exception) =>
+        throw new ValidationException(
+          s"""Unable to cast literal ${rule.value} to $dataType
+             | for FillNulls conformance rule number ${rule.order}.""".stripMargin.replaceAll("[\\r\\n]", ""),
+          cause = exception)
+    }
+
     if (rule.outputColumn.contains('.')) {
-      conformNestedField(df)
+      conformNestedField(df, default)
     } else {
-      conformRootField(df)
+      conformRootField(df, default)
     }
   }
 
-  private def conformNestedField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
-    df.nestedWithColumnExtended(rule.outputColumn, getField => when(
-      getField(rule.inputColumn).isNull, inferStrictestType(rule.value)
-    ).otherwise(getField(rule.inputColumn)))
+  private def conformNestedField(df: Dataset[Row], default: Column)(implicit spark: SparkSession): Dataset[Row] = {
+    df.nestedWithColumnExtended(rule.outputColumn, getField => coalesce(getField(rule.inputColumn), default))
   }
 
-  private def conformRootField(df: Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
-    df.withColumn(rule.outputColumn, when(
-      col(rule.inputColumn).isNull, inferStrictestType(rule.value)
-    ).otherwise(col(rule.inputColumn)))
+  private def conformRootField(df: Dataset[Row], default: Column)(implicit spark: SparkSession): Dataset[Row] = {
+    df.withColumn(rule.outputColumn, coalesce(col(rule.inputColumn), default))
   }
 }

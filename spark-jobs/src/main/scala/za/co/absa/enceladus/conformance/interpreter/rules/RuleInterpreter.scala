@@ -15,11 +15,16 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
+import java.math.BigDecimal
+import java.sql.{Date, Timestamp}
+
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.ExplosionState
+import za.co.absa.enceladus.conformance.interpreter.exceptions.InvalidDataTypeException
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
@@ -27,7 +32,6 @@ import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import scala.util.Try
 
 trait RuleInterpreter {
-
 
   /**
     * Returns the conformance rule the interpreter is intended to interpret.
@@ -74,6 +78,42 @@ trait RuleInterpreter {
     val boolTry = Try(lit(input.toBoolean))
 
     (intTry orElse longTry orElse doubleTry orElse boolTry) getOrElse lit(input)
+  }
+
+  /**
+   * Preforms a simple type cast to input base on the DataType
+   * @param input Value to be casted
+   * @param dataType DataType of the value to be casted to
+   * @return Returns Column representation of the newly casted value
+   */
+  def simpleLiteralCast(input: String, dataType: DataType): Try[Column] = {
+    Try({
+      dataType match {
+        case _: ByteType =>
+          lit(input.toByte)
+        case _: ShortType =>
+          lit(input.toShort)
+        case _: IntegerType =>
+          lit(input.toInt)
+        case _: LongType =>
+          lit(input.toLong)
+        case _: FloatType =>
+          lit(input.toFloat)
+        case _: DoubleType =>
+          lit(input.toDouble)
+        case _: BooleanType =>
+          lit(input.toBoolean)
+        case _: DecimalType =>
+          lit(new BigDecimal(input))
+        case _: TimestampType =>
+          lit(Timestamp.valueOf(input))
+        case _: DateType =>
+          lit(Date.valueOf(input))
+        case _: StringType =>
+          lit(input)
+        case _ => throw InvalidDataTypeException(input, dataType)
+      }
+    })
   }
 
   /**
