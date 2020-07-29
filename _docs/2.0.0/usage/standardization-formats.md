@@ -1,6 +1,6 @@
 ---
 layout: docs
-title: Usage - Standardization Formats
+title: Usage - Standardization Input Formats
 version: '2.0.0'
 categories:
     - '2.0.0'
