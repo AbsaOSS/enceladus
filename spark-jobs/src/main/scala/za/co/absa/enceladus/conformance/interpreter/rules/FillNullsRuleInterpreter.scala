@@ -15,14 +15,15 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, FillNullsConformanceRule}
-import za.co.absa.spark.hats.Extensions._
-import org.apache.spark.sql.functions._
-import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.spark.hats.Extensions._
 
 import scala.util.{Failure, Success}
 
@@ -44,15 +45,14 @@ case class FillNullsRuleInterpreter(rule: FillNullsConformanceRule) extends Rule
       rule.outputColumn
     )
 
-    val dataType = SchemaUtils.getFieldType(rule.inputColumn, df.schema).get
+    val dataType: DataType = SchemaUtils.getFieldType(rule.inputColumn, df.schema).get
     val default: Column = simpleLiteralCast(rule.value, dataType) match {
       case Success(value) => value
-      case Failure(_) =>
-        log.warn(
+      case Failure(exception) =>
+        throw new ValidationException(
           s"""Unable to cast literal ${rule.value} to $dataType
-             |for FillNulls conformance rule number ${rule.order}.
-             |Using string as a fallback.""".stripMargin.replaceAll("[\\r\\n]", ""))
-        lit(rule.value)
+             |for FillNulls conformance rule number ${rule.order}.""".stripMargin.replaceAll("[\\r\\n]", ""),
+          cause = exception)
     }
 
     if (rule.outputColumn.contains('.')) {

@@ -24,6 +24,7 @@ import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.ExplosionState
+import za.co.absa.enceladus.conformance.interpreter.exceptions.InvalidDataTypeException
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
@@ -31,7 +32,6 @@ import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import scala.util.Try
 
 trait RuleInterpreter {
-
 
   /**
     * Returns the conformance rule the interpreter is intended to interpret.
@@ -109,8 +109,9 @@ trait RuleInterpreter {
           lit(Timestamp.valueOf(input))
         case _: DateType =>
           lit(Date.valueOf(input))
-        case _ =>
+        case _: StringType =>
           lit(input)
+        case _ => throw InvalidDataTypeException(input, dataType)
       }
     })
   }
