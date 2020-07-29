@@ -17,9 +17,9 @@ categories:
 
 This page describes the usage of configuration of _Standardization_ and _Conformance_.
 There are number of default options that [Project's readme][readme] documents.
-This page describes the configuration values stored in `spark-jobs`'s `application.conf` (or its
-[template][app-conf-template]).
+This page describes the configuration values stored in `spark-jobs`'s `reference.conf` ([link][spark-app-conf]) or `application.conf` provided by the user.
 These values can be overridden using the `-D` property values as in:
+
 ```shell
 spark-submit --conf "spark.driver.extraJavaOptions= -Dkey1=value1 -Dkey2=value2" ...
 ```
@@ -31,4 +31,4 @@ spark-submit --conf "spark.driver.extraJavaOptions= -Dkey1=value1 -Dkey2=value2"
 <!-- specific sections on Standardization & Conformance options may follow in the future -->
 
 [readme]: https://github.com/AbsaOSS/enceladus/blob/master/README.md
-[app-conf-template]: https://github.com/AbsaOSS/enceladus/blob/master/spark-jobs/src/main/resources/application.conf.template
+[spark-app-conf]: https://github.com/AbsaOSS/enceladus/blob/master/spark-jobs/src/main/resources/reference.conf
