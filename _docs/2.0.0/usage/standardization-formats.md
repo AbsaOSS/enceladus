@@ -35,7 +35,7 @@ Cobol `format` option is `cobol`. Format options are
 | cobol-is-text | Boolean | Specifies if the mainframe file is ASCII text file |
 | cobol-encoding | `ascii` or `ebcdic` | Specifies encoding of mainframe files |
 | cobol-trimming-policy | `none`, `left`, `right`, `both` | Specify string trimming policy for mainframe files |
-| charset | Any valid charset names | The character set. By default `UTF-8`. |
+| charset | Any valid charset name | The character set of the input. By default `UTF-8`. |
 
 ## CSV
 
@@ -77,5 +77,5 @@ XML `format` option is `xml`. Format options are
 
 | Option | Values | Description |
 |---|---|---|
-| rowTag | String | The row tag of your xml files to treat as a row. For example, in this xml `<books> <book><book> ...</books>`, the appropriate value would be `book`. |
+| rowTag | String | The tag of the xml file to treat as a row. For example, in the following xml `<books> <book><book> ...</books>`, the appropriate value would be `book`. |
 | charset | Any valid charset names | The character set. By default `UTF-8`. |
