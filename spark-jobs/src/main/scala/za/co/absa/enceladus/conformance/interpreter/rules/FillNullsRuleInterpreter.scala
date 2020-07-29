@@ -51,7 +51,7 @@ case class FillNullsRuleInterpreter(rule: FillNullsConformanceRule) extends Rule
       case Failure(exception) =>
         throw new ValidationException(
           s"""Unable to cast literal ${rule.value} to $dataType
-             |for FillNulls conformance rule number ${rule.order}.""".stripMargin.replaceAll("[\\r\\n]", ""),
+             | for FillNulls conformance rule number ${rule.order}.""".stripMargin.replaceAll("[\\r\\n]", ""),
           cause = exception)
     }
 
