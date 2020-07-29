@@ -25,14 +25,14 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 class FillNullsRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
   // scalastyle:off line.size.limit
 
-  private val literalRule = FillNullsConformanceRule(
+  private val fillNullsRule = FillNullsConformanceRule(
     order = 1,
     outputColumn = "nameNoNull",
     controlCheckpoint = false,
     inputColumn = "name",
     value = "NoNullValue"
   )
-  private val literalArrayRule = FillNullsConformanceRule(
+  private val fillNullsArrayRule = FillNullsConformanceRule(
     order = 2,
     outputColumn = "items.itemid2",
     controlCheckpoint = false,
@@ -40,7 +40,7 @@ class FillNullsRuleSuite extends FunSuite with SparkTestBase with TestRuleBehavi
     value = "Gshj1"
   )
 
-  private val literalDateRule = FillNullsConformanceRule(
+  private val fillNullsDateRule = FillNullsConformanceRule(
     order = 2,
     outputColumn = "date2",
     controlCheckpoint = false,
@@ -48,21 +48,21 @@ class FillNullsRuleSuite extends FunSuite with SparkTestBase with TestRuleBehavi
     value = "1900-05-05"
   )
 
-  private val literalRulesList1 = List(literalRule)
-  private val literalRulesList2 = List(literalRule, literalArrayRule)
-  private val literalRulesList3 = List(literalRule, literalArrayRule, literalDateRule)
+  private val fillNullsList1 = List(fillNullsRule)
+  private val fillNullsList2 = List(fillNullsRule, fillNullsArrayRule)
+  private val fillNullsList3 = List(fillNullsRule, fillNullsArrayRule, fillNullsDateRule)
 
-  private val literalOrdersDS1 = Dataset(
+  private val fillNullsOrdersDS1 = Dataset(
     name = "Orders Conformance",
     hdfsPath = "src/test/testData/orders",
     hdfsPublishPath = "testData/conformedOrders",
     schemaName = "Orders",
     schemaVersion = 1,
-    conformance = literalRulesList1
+    conformance = fillNullsList1
   )
 
-  private val literalOrdersDS2 = literalOrdersDS1.copy(conformance = literalRulesList2)
-  private val literalOrdersDS3 = literalOrdersDS2.copy(conformance = literalRulesList3)
+  private val fillNullsOrdersDS2 = fillNullsOrdersDS1.copy(conformance = fillNullsList2)
+  private val fillNullsOrdersDS3 = fillNullsOrdersDS2.copy(conformance = fillNullsList3)
 
   private val conformedLiteralOrdersJSON1: String =
     """{"id":1,"name":"First Order","date":"2025-11-15","items":[{"itemid":"ar229","qty":10,"price":5.1,"payments":[{"payid":"pid10","amount":51.0}]},{"itemid":"2891k","qty":100,"price":1.1,"payments":[{"payid":"zk20","amount":100.0}]},{"itemid":"31239","qty":2,"price":55.2,"payments":[]}],"errCol":[],"nameNoNull":"First Order"}
@@ -91,15 +91,15 @@ class FillNullsRuleSuite extends FunSuite with SparkTestBase with TestRuleBehavi
   private val inputDf: DataFrame = spark.createDataFrame(DeepArraySamples.ordersDataWithNulls)
 
   test("FillNulls conformance rule test 1") {
-    conformanceRuleShouldMatchExpected(inputDf, literalOrdersDS1, conformedLiteralOrdersJSON1)
+    conformanceRuleShouldMatchExpected(inputDf, fillNullsOrdersDS1, conformedLiteralOrdersJSON1)
   }
 
   test("FillNulls conformance rule test 2") {
-    conformanceRuleShouldMatchExpected(inputDf, literalOrdersDS2, conformedLiteralOrdersJSON2)
+    conformanceRuleShouldMatchExpected(inputDf, fillNullsOrdersDS2, conformedLiteralOrdersJSON2)
   }
 
   test("FillNulls conformance rule test 3") {
-    conformanceRuleShouldMatchExpected(inputDf, literalOrdersDS3, conformedLiteralOrdersJSON3)
+    conformanceRuleShouldMatchExpected(inputDf, fillNullsOrdersDS3, conformedLiteralOrdersJSON3)
   }
 
   // scalastyle:on line.size.limit

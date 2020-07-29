@@ -63,14 +63,10 @@ case class FillNullsRuleInterpreter(rule: FillNullsConformanceRule) extends Rule
   }
 
   private def conformNestedField(df: Dataset[Row], default: Column)(implicit spark: SparkSession): Dataset[Row] = {
-    df.nestedWithColumnExtended(rule.outputColumn, getField => when(
-      getField(rule.inputColumn).isNull, default
-    ).otherwise(getField(rule.inputColumn)))
+    df.nestedWithColumnExtended(rule.outputColumn, getField => coalesce(getField(rule.inputColumn), default))
   }
 
   private def conformRootField(df: Dataset[Row], default: Column)(implicit spark: SparkSession): Dataset[Row] = {
-    df.withColumn(rule.outputColumn, when(
-      col(rule.inputColumn).isNull, default
-    ).otherwise(col(rule.inputColumn)))
+    df.withColumn(rule.outputColumn, coalesce(col(rule.inputColumn), default))
   }
 }
