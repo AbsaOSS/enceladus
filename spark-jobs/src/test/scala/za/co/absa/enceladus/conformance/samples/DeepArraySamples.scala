@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.conformance.samples
 
+import java.sql.Date
+
 import org.apache.spark.sql.types._
 
 object DeepArraySamples {
@@ -25,6 +27,8 @@ object DeepArraySamples {
   case class OrderItem(itemid: String, qty: Int, price: Double, payments: Seq[Payment])
 
   case class Order(id: Long, name: String, items: Seq[OrderItem])
+
+  case class OrderWithDate(id: Long, name: String, date: Date, items: Seq[OrderItem])
 
   val ordersData: Seq[Order] = Seq[Order](
     Order(1L, "First Order", Seq[OrderItem](
@@ -52,28 +56,28 @@ object DeepArraySamples {
     ))
   )
 
-  val ordersDataWithNulls: Seq[Order] = Seq[Order](
-    Order(1L, "First Order", Seq[OrderItem](
+  val ordersDataWithNulls: Seq[OrderWithDate] = Seq[OrderWithDate](
+    OrderWithDate(1L, "First Order", Date.valueOf("2025-11-15"), Seq[OrderItem](
       OrderItem("ar229", 10, 5.1, Seq(Payment("pid10", 51.0))),
       OrderItem("2891k", 100, 1.1, Seq(Payment("zk20", 100.0))),
       OrderItem("31239", 2, 55.2, Nil)
     )),
-    Order(2L, null, Seq[OrderItem](
+    OrderWithDate(2L, null, Date.valueOf("2019-03-12"), Seq[OrderItem](
       OrderItem("AkuYdg", 100, 10, Seq(Payment("d101", 10.0), Payment("d102", 20.0))),
       OrderItem("jUa1k0", 2, 55.2, Nil)
     )),
-    Order(3L, "Third Order", Seq[OrderItem](
+    OrderWithDate(3L, "Third Order", null,  Seq[OrderItem](
       OrderItem(null, 10, 10000, Seq(Payment("pid10", 2000.0), Payment("pid10", 5000.0))),
       OrderItem("Jdha2", 100, 45, Seq(Payment("zk20", 150.0), Payment("pid10", 2000.0)))
     )),
-    Order(4L, "Fourth Order", Seq[OrderItem](
+    OrderWithDate(4L, "Fourth Order", Date.valueOf("2005-01-02"), Seq[OrderItem](
       OrderItem("dLda1", 10, 5.1, Seq(Payment("pid10", 10.0))),
       OrderItem("d2dhJ", 100, 1.1, Seq(Payment("zk20", 15.0))),
       OrderItem("Mska0", 2, 55.2, Nil),
       OrderItem("Gdal1", 20, 5.2, Nil),
       OrderItem("dakl1", 99, 1.2, Nil)
     )),
-    Order(5L, "Fifths order", Seq[OrderItem](
+    OrderWithDate(5L, "Fifths order", Date.valueOf("2009-05-21"), Seq[OrderItem](
       OrderItem("hdUs1J", 50, 0.2, Seq(Payment("pid10", 10.0), Payment("pid10", 11.0), Payment("pid10", 12.0)))
     ))
   )
