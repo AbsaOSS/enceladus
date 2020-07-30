@@ -34,7 +34,7 @@ import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpret
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.enceladus.utils.performance.{PerformanceMeasurer, PerformanceMetricTools}
+import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException

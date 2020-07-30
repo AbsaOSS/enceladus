@@ -53,13 +53,16 @@ case class StandardizationConformanceConfig(datasetName: String = "",
                                             failOnInputNotPerSchema: Boolean = false,
 
                                             credsFile: Option[String] = None,
-                                            keytabFile: Option[String] = None) extends StandardizationConfigParser[StandardizationConformanceConfig]
+                                            keytabFile: Option[String] = None)
+  extends StandardizationConfigParser[StandardizationConformanceConfig]
   with ConformanceConfigParser[StandardizationConformanceConfig]{
 
   override def withPublishPathOverride(value: Option[String]): StandardizationConformanceConfig = copy(publishPathOverride = value)
   override def withExperimentalMappingRule(value: Option[Boolean]): StandardizationConformanceConfig = copy(experimentalMappingRule = value)
-  override def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): StandardizationConformanceConfig = copy(isCatalystWorkaroundEnabled = value)
-  override def withAutocleanStandardizedFolder(value: Option[Boolean]): StandardizationConformanceConfig = copy(autocleanStandardizedFolder = value)
+  override def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): StandardizationConformanceConfig = copy(isCatalystWorkaroundEnabled = value) //scalastyle:ignore
+  //better readability than multiline
+  override def withAutocleanStandardizedFolder(value: Option[Boolean]): StandardizationConformanceConfig = copy(autocleanStandardizedFolder = value) //scalastyle:ignore
+  //better readability than multiline
   override def withDatasetName(value: String): StandardizationConformanceConfig = copy(datasetName = value)
   override def withDatasetVersion(value: Int): StandardizationConformanceConfig = copy(datasetVersion = value)
   override def withReportDate(value: String): StandardizationConformanceConfig = copy(reportDate = value)
@@ -92,7 +95,8 @@ object StandardizationConformanceConfig {
 
   def tryFromArguments(args: Array[String]): Try[StandardizationConformanceConfig] = {
     import za.co.absa.enceladus.utils.implicits.OptionImplicits._
-    OParser.parse(stdConfJobParser, args, StandardizationConformanceConfig()).toTry(ConfigError("Command line parameters error"))
+    OParser.parse(stdConfJobParser, args, StandardizationConformanceConfig())
+      .toTry(ConfigError("Command line parameters error"))
   }
 
   def getFromArguments(args: Array[String]): StandardizationConformanceConfig = tryFromArguments(args).get

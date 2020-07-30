@@ -88,7 +88,8 @@ class StandardizationPropertiesProvider {
     }
   }
 
-  private def getCsvOptions[T](cmd: StandardizationConfigParser[T], numberOfColumns: Int = 0): HashMap[String, Option[RawFormatParameter]] = {
+  private def getCsvOptions[T](cmd: StandardizationConfigParser[T],
+                               numberOfColumns: Int = 0): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("csv")) {
       HashMap(
         "delimiter" -> cmd.csvDelimiter.map(s => StringParameter(s.includingUnicode.includingNone)),
@@ -114,7 +115,8 @@ class StandardizationPropertiesProvider {
     }
   }
 
-  private def getCobolOptions[T](cmd: StandardizationConfigParser[T], dataset: Dataset)(implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
+  private def getCobolOptions[T](cmd: StandardizationConfigParser[T], dataset: Dataset)
+                                (implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
       val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
       val isXcomOpt = if (cobolOptions.isXcom) Some(true) else None
