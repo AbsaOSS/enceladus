@@ -43,7 +43,7 @@ case class ConformanceConfig(datasetName: String = "",
                              autocleanStandardizedFolder: Option[Boolean] = None,
                              credsFile: Option[String] = None,
                              keytabFile: Option[String] = None)
-  extends ConformanceParser[ConformanceConfig] {
+  extends ConformanceConfigParser[ConformanceConfig] {
 
   override def withPublishPathOverride(value: Option[String]): ConformanceConfig = copy(publishPathOverride = value)
   override def withExperimentalMappingRule(value: Option[Boolean]): ConformanceConfig = copy(experimentalMappingRule = value)
@@ -78,8 +78,8 @@ object ConformanceConfig {
     val builder = OParser.builder[ConformanceConfig]
     import builder._
     OParser.sequence(
-      programName("Conformance Job"),
-      ConformanceParser.conformanceParser,
+      programName("Dynamic Conformance Job"),
+      ConformanceConfigParser.conformanceParser,
       JobConfigParser.jobConfigParser
     )
   }

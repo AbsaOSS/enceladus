@@ -13,35 +13,40 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.conformance
+package za.co.absa.enceladus.standardization_conformance
 
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
+import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-object DynamicConformanceJob extends ConformanceExecution {
-  private val jobName: String = "Enceladus Conformance"
+object StandardizationAndConformanceJob extends StandardizationAndConformanceExecution {
+  private val jobName = "Enceladus Standardization&Conformance"
 
-  def main(args: Array[String]) {
-    // This should be the first thing the app does to make secure Kafka work with our CA.
-    // After Spring activates JavaX, it will be too late.
+  def main(args: Array[String]): Unit = {
     initialValidation()
 
-    implicit val cmd: ConformanceConfig = ConformanceConfig.getFromArguments(args)
-    implicit val spark: SparkSession = obtainSparkSession(jobName) // initialize spark
+    implicit val cmd: StandardizationConformanceConfig = StandardizationConformanceConfig.getFromArguments(args)
+    implicit val spark: SparkSession = obtainSparkSession(jobName)
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+    implicit val udfLib: UDFLibrary = new UDFLibrary
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
 
     val preparationResult = prepareJob()
-    prepareConformance(preparationResult)
-    val inputData = readConformanceInputData(preparationResult.pathCfg)
+    val schema = prepareStandardization(args, menasCredentials, preparationResult)
+    val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.rawPath, preparationResult.dataset)
 
     try {
-      val result = conform(inputData, preparationResult)
+      val standardized = standardize(inputData, schema, cmd)
+      val processedStandardization = processStandardizationResult(args, standardized, preparationResult, schema, cmd, menasCredentials)
+      runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
+
+      prepareConformance(preparationResult)
+      val result = conform(processedStandardization, preparationResult)
       processConformanceResult(args, result, preparationResult, menasCredentials)
       runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)
     } finally {
@@ -49,4 +54,3 @@ object DynamicConformanceJob extends ConformanceExecution {
     }
   }
 }
-

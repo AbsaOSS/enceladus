@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
@@ -23,7 +22,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits._
-import za.co.absa.enceladus.conformance.config.ConformanceConfig
+import za.co.absa.enceladus.conformance.config.ConformanceConfigParser
 import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
@@ -49,11 +48,12 @@ object DynamicInterpreter {
     * @return The conformed DataFrame.
     *
     */
-  def interpret(conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
-               (implicit spark: SparkSession, dao: MenasDAO, progArgs: ConformanceConfig, featureSwitches: FeatureSwitches): DataFrame = {
+  def interpret[T](conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
+               (implicit spark: SparkSession, dao: MenasDAO,
+                progArgs: ConformanceConfigParser[T], featureSwitches: FeatureSwitches): DataFrame = {
 
     implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
-      featureSwitches, jobShortName, spark, dao, progArgs)
+      featureSwitches, jobShortName, spark, dao, InterpreterContextArgs.fromConformanceConfig(progArgs))
 
     applyCheckpoint(inputDf, "Start")
 
@@ -75,7 +75,7 @@ object DynamicInterpreter {
                                    (implicit ictx: InterpreterContext): DataFrame = {
     implicit val spark: SparkSession = ictx.spark
     implicit val dao: MenasDAO = ictx.dao
-    implicit val progArgs: ConformanceConfig = ictx.progArgs
+    implicit val progArgs: InterpreterContextArgs = ictx.progArgs
     implicit val udfLib: UDFLibrary = new UDFLibrary
     implicit val explosionState: ExplosionState = new ExplosionState()
 

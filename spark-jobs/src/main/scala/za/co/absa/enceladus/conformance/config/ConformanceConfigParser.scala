@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.config
 import scopt.OParser
 import za.co.absa.enceladus.common.config.JobConfigParser
 
-trait ConformanceParser[R] extends JobConfigParser[R] {
+trait ConformanceConfigParser[R] extends JobConfigParser[R] {
   def publishPathOverride: Option[String]
   def experimentalMappingRule: Option[Boolean]
   def isCatalystWorkaroundEnabled: Option[Boolean]
@@ -30,14 +30,12 @@ trait ConformanceParser[R] extends JobConfigParser[R] {
   def withAutocleanStandardizedFolder(value: Option[Boolean]): R
 }
 
-object ConformanceParser {
+object ConformanceConfigParser {
 
-  def conformanceParser[R <: ConformanceParser[R]]: OParser[_, R] = {
+  def conformanceParser[R <: ConformanceConfigParser[R]]: OParser[_, R] = {
     val builder = OParser.builder[R]
     import builder._
     OParser.sequence(
-    head("Dynamic Conformance", ""),
-
     opt[String]("debug-set-publish-path").optional().hidden().action((value, config) =>
       config.withPublishPathOverride(Some(value))).text("override the path of the published data (used internally for testing)"),
 

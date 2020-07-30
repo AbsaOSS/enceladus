@@ -49,9 +49,8 @@ case class StandardizationConfig(rawFormat: String = "xml",
                                  folderPrefix: Option[String] = None,
                                  persistStorageLevel: Option[StorageLevel] = None,
                                  credsFile: Option[String] = None,
-                                 keytabFile: Option[String] = None
-                                        )
-  extends StandardizationParser[StandardizationConfig]{
+                                 keytabFile: Option[String] = None)
+  extends StandardizationConfigParser[StandardizationConfig]{
   override def withRawFormat(value: String): StandardizationConfig = copy(rawFormat = value)
   override def withCharset(value: Option[String]): StandardizationConfig = copy(charset = value)
   override def withRowTag(value: Option[String]): StandardizationConfig = copy(rowTag = value)
@@ -93,8 +92,7 @@ object StandardizationConfig {
     import builder._
     OParser.sequence(
       programName("Standardization Job"),
-      head("Standardization", ""),
-      StandardizationParser.standardizationParser,
+      StandardizationConfigParser.standardizationParser,
       JobConfigParser.jobConfigParser
     )
   }
