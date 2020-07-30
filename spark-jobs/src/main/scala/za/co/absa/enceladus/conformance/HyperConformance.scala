@@ -128,6 +128,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
       reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()),
+      reportVersion = Option(getReportVersion(conf)),
       menasCredentialsFactory = menasCredentialsFactory
     )
 
@@ -142,6 +143,14 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
 
     implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
     new HyperConformance()
+  }
+
+  private def getReportVersion(conf: Configuration): Int = {
+    if (conf.containsKey(reportVersionKey)) {
+      conf.getInt(reportVersionKey)
+    } else {
+      defaultReportVersion
+    }
   }
 
   @throws[IllegalArgumentException]
