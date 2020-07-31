@@ -31,7 +31,7 @@ Cobol `format` value is `cobol`. Format options are
 | Option | Values domain | Description | Default |
 |---|---|---|---|
 | copybook | String | Path to a copybook for COBOL data format | - |
-| is-xcom | Boolean | Does a mainframe file in COBOL format contain XCOM record headers | false |
+| is-xcom | Boolean | Does a mainframe file in COBOL format contain XCOM record headers | `false` |
 | cobol-is-text | Boolean | Specifies if the mainframe file is ASCII text file | `false` |
 | cobol-encoding | `ascii` or `ebcdic` | Specifies encoding of mainframe files | - |
 | cobol-trimming-policy | `none`, `left`, `right`, `both` | Specify string trimming policy for mainframe files | `none` |
