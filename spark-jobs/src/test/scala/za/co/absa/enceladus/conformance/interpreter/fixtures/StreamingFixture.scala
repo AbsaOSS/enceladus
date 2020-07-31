@@ -15,15 +15,18 @@
 
 package za.co.absa.enceladus.conformance.interpreter.fixtures
 
+import org.apache.commons.configuration2.Configuration
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.{DataFrame, Row}
+import org.mockito.Mockito.when
 import org.scalatest.FunSuite
 import org.scalatest.mockito.MockitoSugar
+import za.co.absa.enceladus.conformance.HyperConformance
+import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
 import za.co.absa.enceladus.conformance.streaming.InfoDateFactory
-import za.co.absa.enceladus.conformance.HyperConformance
-import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
@@ -31,6 +34,45 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 trait StreamingFixture extends FunSuite with SparkTestBase with MockitoSugar {
   implicit val menasBaseUrls: List[String] = List.empty
   implicit val cmd: ConformanceConfig = ConformanceConfig(reportVersion = Some(1))
+
+  protected def testHyperConformanceFromConfig(input: DataFrame,
+                                               sinkTableName: String,
+                                               dataset: Dataset,
+                                               reportDate: String)
+                                              (implicit menasDAO: MenasDAO): DataFrame = {
+    val configStub: Configuration = mock[Configuration]
+    when(configStub.containsKey(reportVersionKey)).thenReturn(false)
+    when(configStub.containsKey(reportDateKey)).thenReturn(true)
+    when(configStub.getString(reportDateKey)).thenReturn(reportDate)
+    when(configStub.containsKey(datasetNameKey)).thenReturn(true)
+    when(configStub.getString(datasetNameKey)).thenReturn("StreamingDataset")
+    when(configStub.containsKey(datasetVersionKey)).thenReturn(true)
+    when(configStub.getInt(datasetVersionKey)).thenReturn(1)
+    when(configStub.containsKey(menasUriKey)).thenReturn(true)
+    when(configStub.getString(menasUriKey)).thenReturn("https://mymenas.org")
+    when(configStub.containsKey(menasAuthKeytabKey)).thenReturn(true)
+
+    val memoryStream = new MemoryStream[Row](1, spark.sqlContext)(RowEncoder(input.schema))
+    val hyperConformance = HyperConformance(configStub).asInstanceOf[HyperConformance]
+    val source: DataFrame = memoryStream.toDF()
+    val conformed: DataFrame = hyperConformance.applyConformanceTransformations(source, dataset)
+    val sink = conformed
+      .writeStream
+      .queryName(sinkTableName)
+      .outputMode("append")
+      .format("memory")
+      .start()
+
+    input.collect().foreach(e => {
+      memoryStream.addData(e)
+      sink.processAllAvailable()
+    })
+
+    val frame: DataFrame = spark.sql(s"select * from $sinkTableName")
+
+    sink.stop()
+    frame
+  }
 
   protected def testHyperConformance(input: DataFrame,
                                      sinkTableName: String,
