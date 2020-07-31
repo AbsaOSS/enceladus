@@ -127,8 +127,11 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       autocleanStandardizedFolder = Some(false),
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
-      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()),
+      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()),  // Still need a report date for mapping table patterns
       reportVersion = Option(getReportVersion(conf)),
+      performanceMetricsFile = None,
+      folderPrefix = None,
+      persistStorageLevel = None,
       menasCredentialsFactory = menasCredentialsFactory
     )
 
