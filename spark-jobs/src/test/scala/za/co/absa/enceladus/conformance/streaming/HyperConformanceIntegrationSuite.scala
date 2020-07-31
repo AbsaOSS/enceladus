@@ -37,6 +37,22 @@ class HyperConformanceIntegrationSuite extends FunSuite with StreamingFixture wi
     assertResult(returned)(conformed)
   }
 
+  test("Test Hyperconformance from config") {
+    val df: DataFrame = testHyperConformanceFromConfig(standardizedDf,
+      "result",
+      nestedStructsDS,
+      reportDate = "2020-05-23" )
+      .orderBy("ID")
+
+    assertResult(df.count())(20)
+    val conformed = spark.read
+      .textFile("src/test/testData/nestedStructs/conformed_literal.json")
+      .collect().mkString("\n")
+    val returned = df.toJSON.collect().mkString("\n")
+
+    assertResult(returned)(conformed)
+  }
+
   test("Test with catalyst workaround, event time factory") {
     implicit val infoDateFactory: InfoDateFactory = new InfoDateFromColumnFactory("dates.date_format5",
       "MM-dd-yyyy HH:mm")

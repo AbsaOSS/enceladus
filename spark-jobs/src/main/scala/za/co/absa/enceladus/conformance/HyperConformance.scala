@@ -127,7 +127,11 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       autocleanStandardizedFolder = Some(false),
       datasetName = conf.getString(datasetNameKey),
       datasetVersion = conf.getInt(datasetVersionKey),
-      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()),
+      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()),  // Still need a report date for mapping table patterns
+      reportVersion = Option(getReportVersion(conf)),
+      performanceMetricsFile = None,
+      folderPrefix = None,
+      persistStorageLevel = None,
       menasCredentialsFactory = menasCredentialsFactory
     )
 
@@ -142,6 +146,14 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
 
     implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
     new HyperConformance()
+  }
+
+  private def getReportVersion(conf: Configuration): Int = {
+    if (conf.containsKey(reportVersionKey)) {
+      conf.getInt(reportVersionKey)
+    } else {
+      defaultReportVersion
+    }
   }
 
   @throws[IllegalArgumentException]
