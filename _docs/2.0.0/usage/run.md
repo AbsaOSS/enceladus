@@ -13,6 +13,7 @@ categories:
 - [Requirements and deploy](#requirements-and-deploy)
 - [Running Standardization](#running-standardization)
 - [Running Conformance](#running-conformance)
+- [Running Standardization and Conformance together](#running-standardization-and-conformance-together)
 - [Helper scripts](#helper-scripts)
 <!-- tocstop -->
 
@@ -67,6 +68,28 @@ For description of requirements and deployment see the [README.md][project-readm
 --report-version <data_run_version>
 ```
 
+## Running Standardization And Conformance together
+
+```
+<spark home>/spark-submit \
+--num-executors <num> \
+--executor-memory <num>G \
+--master yarn \
+--deploy-mode <client/cluster> \
+--driver-cores <num> \
+--driver-memory <num>G \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
+--class za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob \
+<spark-jobs_<build_version>.jar> \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <date> \
+--report-version <data_run_version> \
+--raw-format <data_format> \
+--row-tag <tag>
+```
+
 * In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
 ## Helper scripts
@@ -77,7 +100,7 @@ Steps to configure the scripts are as follows:
 * Copy all the scripts in `scripts` directory to a location in your environment.
 * Copy `enceladus_env.template.sh` to `enceladus_env.sh`.
 * Change `enceladus_env.sh` according to your environment settings.
-* Use `run_standardization.sh` and `run_conformance.sh` scripts instead of directly invoking `spark-submit` to run your jobs.
+* Use `run_standardization.sh` , `run_conformance.sh` and `run_standardization_conformance.sh` scripts instead of directly invoking `spark-submit` to run your jobs.
 
 The syntax for running Standardization and Conformance is similar to running them using `spark-submit`. The only difference 
 is that you don't have to provide environment-specific settings. The scripts are set to use Spark's _Dynamic Resource Allocation_
@@ -115,6 +138,20 @@ The basic command to run **Conformance** becomes:
 --dataset-version <dataset_version> \
 --report-date <date> \
 --report-version <data_run_version>
+```
+
+The basic command to run **Standardization And Conformance** becomes:
+
+```
+<path to scripts>/run_standardization_conformance.sh \
+--deploy-mode <client/cluster> \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <date> \
+--report-version <data_run_version> \
+--raw-format <data_format> \
+--row-tag <tag>
 ```
 
 The list of options for configuring Spark deployment mode in Yarn and resource specification:
@@ -176,6 +213,8 @@ The list of additional options available for running Conformance:
 | --experimental-mapping-rule **true/false** | build-specific and is set in 'application.properties' | If `true`, the experimental optimized mapping rule implementation is used |
 | --catalyst-workaround **true/false**       | `true`                   | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. Turn this off only is you encounter timing freeze issues when running Conformance | 
 | --autoclean-std-folder **true/false**      |                          | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job |
+
+All the additional options valid for both Standardization and Conformance can also be specified when running the combined StandardizationAndConformance job
 
 [project-readme]: https://github.com/AbsaOSS/enceladus/blob/master/README.md#how-to-run
 [spark-running-yarn]: https://spark.apache.org/docs/latest/running-on-yarn.html
