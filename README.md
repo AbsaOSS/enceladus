@@ -40,7 +40,7 @@ This is a Spark job which reads an input dataset in any of the supported formats
 This is a Spark job which **applies the Menas-specified conformance rules to the standardized dataset**.
 
 ### Standardization and Conformance
-This is a Spark job which executes Standardization and Conformance together
+This is a Spark job which executes both Standardization and Conformance together in the same job
 
 ## How to build
 #### Build requirements:
@@ -236,7 +236,7 @@ The list of options for configuring Spark deployment mode in Yarn and resource s
 For more information on these options see the official documentation on running Spark on Yarn: 
 [https://spark.apache.org/docs/latest/running-on-yarn.html](https://spark.apache.org/docs/latest/running-on-yarn.html)
 
-The list of all options for running Standardization, Conformance and the combined Standardization and Conformance:
+The list of all options for running Standardization, Conformance and the combined Standardization And Conformance jobs:
 
 |            Option                     |                           Description                                                                                                                                                       |
 |---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -278,7 +278,7 @@ The list of additional options available for running Conformance:
 | --catalyst-workaround **true/false**       | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. It is `true` by default. Turn this off only is you encounter timing freeze issues when running Conformance. | 
 | --autoclean-std-folder **true/false**      | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job. |
 
-All the additional options for Standardization and Conformance can be specified when running the combined StandardizationAndConformance job
+All the additional options valid for both Standardization and Conformance can also be specified when running the combined StandardizationAndConformance job
 
 ## Plugins
 
