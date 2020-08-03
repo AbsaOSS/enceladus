@@ -100,7 +100,7 @@ Steps to configure the scripts are as follows:
 * Copy all the scripts in `scripts` directory to a location in your environment.
 * Copy `enceladus_env.template.sh` to `enceladus_env.sh`.
 * Change `enceladus_env.sh` according to your environment settings.
-* Use `run_standardization.sh` , `run_conformance.sh` and `run_standardization_conformance.sh` scripts instead of directly invoking `spark-submit` to run your jobs.
+* Use `run_standardization.sh`, `run_conformance.sh` and `run_standardization_conformance.sh` scripts instead of directly invoking `spark-submit` to run your jobs.
 
 The syntax for running Standardization and Conformance is similar to running them using `spark-submit`. The only difference 
 is that you don't have to provide environment-specific settings. The scripts are set to use Spark's _Dynamic Resource Allocation_
