@@ -68,7 +68,7 @@ For description of requirements and deployment see the [README.md][project-readm
 --report-version <data_run_version>
 ```
 
-## Running Standardization And Conformance together
+## Running Standardization And Conformance together as one Spark job
 
 ```
 <spark home>/spark-submit \
@@ -100,7 +100,7 @@ Steps to configure the scripts are as follows:
 * Copy all the scripts in `scripts` directory to a location in your environment.
 * Copy `enceladus_env.template.sh` to `enceladus_env.sh`.
 * Change `enceladus_env.sh` according to your environment settings.
-* Use `run_standardization.sh`, `run_conformance.sh` and `run_standardization_conformance.sh` scripts instead of directly invoking `spark-submit` to run your jobs.
+* Use `run_standardization.sh` and `run_conformance.sh` or `run_standardization_conformance.sh` scripts instead of directly invoking `spark-submit` to run your jobs.
 
 The syntax for running Standardization and Conformance is similar to running them using `spark-submit`. The only difference 
 is that you don't have to provide environment-specific settings. The scripts are set to use Spark's _Dynamic Resource Allocation_
@@ -214,7 +214,7 @@ The list of additional options available for running Conformance:
 | --catalyst-workaround **true/false**       | `true`                   | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. Turn this off only is you encounter timing freeze issues when running Conformance | 
 | --autoclean-std-folder **true/false**      |                          | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job |
 
-All the additional options valid for both Standardization and Conformance can also be specified when running the combined StandardizationAndConformance job
+All the additional options valid for both _Standardization_ and _Conformance_ can also be specified when running the combined _Standardization And Conformance_ job
 
 [project-readme]: https://github.com/AbsaOSS/enceladus/blob/master/README.md#how-to-run
 [spark-running-yarn]: https://spark.apache.org/docs/latest/running-on-yarn.html
