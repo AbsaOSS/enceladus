@@ -67,6 +67,27 @@ spark-jobs_<build_version>.jar \
 --report-version <data_run_version>
 ```
 
+### Running Standardization and Conformance together
+
+```shell
+<spark home>/spark-submit \
+--num-executors 2 \
+--executor-memory 2G \
+--master yarn \
+--deploy-mode cluster \
+--driver-cores 2 \
+--driver-memory 2G \
+--class za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob \
+spark-jobs_<build_version>.jar \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <report_date> \
+--report-version <report_version> \
+--raw-format <data_format> \
+--row-tag <tag>
+```
+
 Here, nothing new is added for the quick run. Of course, there might be special options which are all documented in the [run documentation](https://absaoss.github.io/enceladus/docs/2.0.0/usage/run)
 
 ## Running with helper scripts
@@ -98,6 +119,19 @@ The basic command to run Conformance becomes:
 --dataset-version <dataset_version> \
 --report-date <report_date> \
 --report-version <data_run_version>
+```
+
+The basic command to run Standardization and Conformance together becomes:
+
+```shell
+<path to scripts>/run_standardization_conformance.sh \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <report_date> \
+--report-version <data_run_version> \
+--raw-format <data_format> \
+--row-tag <tag>
 ```
 
 For more options and arguments check the [run documentation](https://absaoss.github.io/enceladus/docs/2.0.0/usage/run)
