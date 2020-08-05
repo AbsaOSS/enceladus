@@ -33,7 +33,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
-import za.co.absa.enceladus.utils.config.SecureConfig
+import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
@@ -56,6 +56,10 @@ trait CommonJobExecution {
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
   protected val conf: Config = ConfigFactory.load()
+
+  private val confReader: ConfigReader = new ConfigReader(conf)
+  confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
+
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
