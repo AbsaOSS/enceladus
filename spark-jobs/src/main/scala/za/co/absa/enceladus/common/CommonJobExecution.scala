@@ -33,7 +33,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
-import za.co.absa.enceladus.utils.config.SecureConfig
+import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
@@ -80,6 +80,9 @@ trait CommonJobExecution {
                               cmd: JobConfigParser[T],
                               fsUtils: FileSystemVersionUtils,
                               spark: SparkSession): PreparationResult = {
+    val confReader: ConfigReader = new ConfigReader(conf)
+    confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
+
     dao.authenticate()
     val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     val reportVersion = getReportVersion(cmd, dataset)
