@@ -56,10 +56,7 @@ trait CommonJobExecution {
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
   protected val conf: Config = ConfigFactory.load()
-
-  private val confReader: ConfigReader = new ConfigReader(conf)
-  confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
-
+  protected val confReader: ConfigReader = new ConfigReader(conf)
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
@@ -84,6 +81,8 @@ trait CommonJobExecution {
                               cmd: JobConfigParser[T],
                               fsUtils: FileSystemVersionUtils,
                               spark: SparkSession): PreparationResult = {
+    confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
+
     dao.authenticate()
     val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     val reportVersion = getReportVersion(cmd, dataset)
