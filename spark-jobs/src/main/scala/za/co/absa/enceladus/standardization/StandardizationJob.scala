@@ -24,12 +24,13 @@ import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 object StandardizationJob extends StandardizationExecution {
+  private val jobName: String = "Enceladus Standardization"
 
   def main(args: Array[String]) {
     initialValidation()
 
     implicit val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(args)
-    implicit val spark: SparkSession = obtainSparkSession()
+    implicit val spark: SparkSession = obtainSparkSession(jobName)
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     implicit val udfLib: UDFLibrary = new UDFLibrary
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
@@ -37,13 +38,11 @@ object StandardizationJob extends StandardizationExecution {
 
     val preparationResult = prepareJob()
     val schema =  prepareStandardization(args, menasCredentials, preparationResult)
-    val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.inputPath, preparationResult.dataset)
+    val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.rawPath, preparationResult.dataset)
 
     try {
       val result = standardize(inputData, schema, cmd)
-
       processStandardizationResult(args, result, preparationResult, schema, cmd, menasCredentials)
-
       runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
     } finally {
       finishJob(cmd)

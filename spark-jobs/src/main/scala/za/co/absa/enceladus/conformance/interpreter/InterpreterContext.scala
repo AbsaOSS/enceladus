@@ -17,17 +17,47 @@ package za.co.absa.enceladus.conformance.interpreter
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
-import za.co.absa.enceladus.conformance.config.ConformanceConfig
+import org.apache.spark.storage.StorageLevel
+import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
+import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 
 /** Holds everything that is needed in between dynamic conformance interpreter stages */
-case class InterpreterContext (
-                                schema: StructType,
-                                conformance: ConfDataset,
-                                featureSwitches: FeatureSwitches,
-                                jobShortName: String,
-                                spark: SparkSession,
-                                dao: MenasDAO,
-                                progArgs: ConformanceConfig
-                              )
+
+case class InterpreterContextArgs(datasetName: String,
+                                  reportDate: String = "",
+                                  persistStorageLevel: Option[StorageLevel] = None)
+
+object InterpreterContextArgs {
+  def fromConformanceConfig[T](conformanceConfig: ConformanceConfigParser[T]): InterpreterContextArgs = {
+
+    conformanceConfig match {
+      case ConformanceConfigInstanceInterpreter(interpreterContextArgs) => interpreterContextArgs
+      case StdConformanceConfigInstanceInterpreter(interpreterContextArgs) => interpreterContextArgs
+      case _ => throw new Exception("")
+    }
+  }
+}
+
+object ConformanceConfigInstanceInterpreter {
+  def unapply(conformanceInstance: ConformanceConfig): Option[InterpreterContextArgs] =
+    Some(InterpreterContextArgs(conformanceInstance.datasetName: String, conformanceInstance.reportDate: String,
+      conformanceInstance.persistStorageLevel: Option[StorageLevel]))
+}
+
+object StdConformanceConfigInstanceInterpreter {
+  def unapply(conformanceInstance: StandardizationConformanceConfig): Option[InterpreterContextArgs] =
+    Some(InterpreterContextArgs(conformanceInstance.datasetName: String, conformanceInstance.reportDate: String,
+      conformanceInstance.persistStorageLevel: Option[StorageLevel]))
+}
+
+case class InterpreterContext(
+                               schema: StructType,
+                               conformance: ConfDataset,
+                               featureSwitches: FeatureSwitches,
+                               jobShortName: String,
+                               spark: SparkSession,
+                               dao: MenasDAO,
+                               progArgs: InterpreterContextArgs
+                             )

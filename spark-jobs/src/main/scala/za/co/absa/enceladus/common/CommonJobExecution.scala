@@ -24,6 +24,7 @@ import org.apache.spark.sql.SparkSession
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
@@ -32,10 +33,11 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
-import za.co.absa.enceladus.utils.config.SecureConfig
+import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
+import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
@@ -44,12 +46,10 @@ import scala.util.{Failure, Success, Try}
 
 trait CommonJobExecution {
 
-  protected case class PreparationResult(
-                                          dataset: Dataset,
-                                          reportVersion: Int,
-                                          pathCfg: PathConfig,
-                                          performance: PerformanceMeasurer
-                                        )
+  protected case class PreparationResult(dataset: Dataset,
+                                         reportVersion: Int,
+                                         pathCfg: PathConfig,
+                                         performance: PerformanceMeasurer)
 
   TimeZoneNormalizer.normalizeJVMTimeZone()
   SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
@@ -58,12 +58,12 @@ trait CommonJobExecution {
   protected val conf: Config = ConfigFactory.load()
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
-  protected def obtainSparkSession[T]()(implicit cmd: JobConfigParser[T]): SparkSession = {
+  protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
     val spark = SparkSession.builder()
-      .appName(s"Standardisation $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
+      .appName(s"$jobName $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
       .getOrCreate()
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
@@ -80,17 +80,15 @@ trait CommonJobExecution {
                               cmd: JobConfigParser[T],
                               fsUtils: FileSystemVersionUtils,
                               spark: SparkSession): PreparationResult = {
+    val confReader: ConfigReader = new ConfigReader(conf)
+    confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
+
     dao.authenticate()
     val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     val reportVersion = getReportVersion(cmd, dataset)
-    val pathCfg = getPathCfg(cmd, dataset, reportVersion)
+    val pathCfg = getPathConfig(cmd, dataset, reportVersion)
 
-    log.info(s"input path: ${pathCfg.inputPath}")
-    log.info(s"output path: ${pathCfg.outputPath}")
-    // die if the output path exists
-    validateForExistingOutputPath(fsUtils, pathCfg)
-
-    val performance = initPerformanceMeasurer(pathCfg.inputPath)
+    validateOutputPath(fsUtils, pathCfg)
 
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
@@ -99,17 +97,28 @@ trait CommonJobExecution {
     // Enable non-default persistence storage level if provided in the command line
     cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
 
-    PreparationResult(dataset, reportVersion, pathCfg, performance)
+    PreparationResult(dataset, reportVersion, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
   }
 
-  protected def runPostProcessing[T](sourceId: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
-                                    (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
-    val df = spark.read.parquet(preparationResult.pathCfg.outputPath)
-    val runId = MenasPlugin.runNumber
+  protected def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
 
-    if (runId.isEmpty) {
-      log.warn("No run number found, the Run URL cannot be properly reported!")
+  protected def validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, path: String): Unit = {
+    if (fsUtils.hdfsExists(path)) {
+      throw new IllegalStateException(
+        s"Path $path already exists. Increment the run version, or delete $path"
+      )
     }
+  }
+
+  protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
+                                    (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
+    val outputPath = sourcePhase match {
+      case Standardization => preparationResult.pathCfg.standardizationPath
+      case _ => preparationResult.pathCfg.publishPath
+    }
+
+    val df = spark.read.parquet(outputPath)
+    val runId = MenasPlugin.runNumber
 
     // reporting the UI url(s) - if more than one, its comma-separated
     val runUrl: Option[String] = runId.map { runNumber =>
@@ -122,10 +131,14 @@ trait CommonJobExecution {
     val uniqueRunId = Atum.getControlMeasure.runUniqueId
 
     val params = ErrorSenderPluginParams(jobCmdConfig.datasetName,
-      jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, preparationResult.pathCfg.outputPath,
-      sourceId, sourceSystem, runUrl, runId, uniqueRunId, Instant.now)
+      jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, outputPath,
+      sourcePhase, sourceSystem, runUrl, runId, uniqueRunId, Instant.now)
     val postProcessingService = PostProcessingService(conf, params)
     postProcessingService.onSaveOutput(df)
+
+    if (runId.isEmpty) {
+      log.warn("No run number found, the Run URL cannot be properly reported!")
+    }
   }
 
   protected def finishJob[T](jobConfig: JobConfigParser[T]): Unit = {
@@ -142,10 +155,35 @@ trait CommonJobExecution {
     }
   }
 
+  protected def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+    PathConfig(
+      rawPath = buildRawPath(cmd, dataset, reportVersion),
+      publishPath = buildPublishPath(cmd, dataset, reportVersion),
+      standardizationPath = getStandardizationPath(cmd, reportVersion)
+    )
+  }
 
-  protected def getPathCfg[T](cmd: JobConfigParser[T], dataset: Dataset, reportVetsion: Int): PathConfig
+  private def buildPublishPath[T](cmd: JobConfigParser[T], ds: Dataset, reportVersion: Int): String = {
+    val infoDateCol: String = InfoDateColumn
+    val infoVersionCol: String = InfoVersionColumn
 
-  protected def getStandardizationPath[T](jobConfig: JobConfigParser[T], reportVersion: Int): String = {
+    cmd.folderPrefix match {
+      case None => s"${ds.hdfsPublishPath}/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
+      case Some(folderPrefix) =>
+        s"${ds.hdfsPublishPath}/$folderPrefix/$infoDateCol=${cmd.reportDate}/$infoVersionCol=$reportVersion"
+    }
+  }
+
+  private def buildRawPath[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): String = {
+    val dateTokens = cmd.reportDate.split("-")
+    val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
+    cmd.folderPrefix match {
+      case None => s"${dataset.hdfsPath}$folderSuffix"
+      case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
+    }
+  }
+
+  private def getStandardizationPath[T](jobConfig: JobConfigParser[T], reportVersion: Int): String = {
     MessageFormat.format(conf.getString("standardized.hdfs.path"),
       jobConfig.datasetName,
       jobConfig.datasetVersion.toString,
@@ -165,14 +203,6 @@ trait CommonJobExecution {
         }
       case Failure(ex) => throw ex
       case Success(_) =>
-    }
-  }
-
-  protected def validateForExistingOutputPath(fsUtils: FileSystemVersionUtils, pathCfg: PathConfig): Unit = {
-    if (fsUtils.hdfsExists(pathCfg.outputPath)) {
-      throw new IllegalStateException(
-        s"Path ${pathCfg.outputPath} already exists. Increment the run version, or delete ${pathCfg.outputPath}"
-      )
     }
   }
 
@@ -213,13 +243,5 @@ trait CommonJobExecution {
         log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
         newVersion
     }
-  }
-
-  private def initPerformanceMeasurer(path: String)
-                                     (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils): PerformanceMeasurer = {
-    val performance = new PerformanceMeasurer(spark.sparkContext.appName)
-    val stdDirSize = fsUtils.getDirectorySize(path)
-    performance.startMeasurement(stdDirSize)
-    performance
   }
 }

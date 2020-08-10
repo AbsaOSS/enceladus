@@ -16,9 +16,8 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
-import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.conformance.interpreter.ExplosionState
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
@@ -31,7 +30,8 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceConfig): Dataset[Row] = {
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO,
+              progArgs: InterpreterContextArgs): Dataset[Row] = {
     log.info(s"Processing mapping rule to conform ${rule.outputColumn} (broadcast strategy)...")
 
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)

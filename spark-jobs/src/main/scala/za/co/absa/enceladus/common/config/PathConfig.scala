@@ -15,4 +15,11 @@
 
 package za.co.absa.enceladus.common.config
 
-case class PathConfig(inputPath: String, outputPath: String)
+/**
+ *
+ * @param rawPath Input path of the job
+ * @param publishPath Output path of the job
+ * @param standardizationPath In case of StandardizationJob and ConformanceJob it should be None and for
+ *                            StandardizationConformanceJob it should represent the intermediate standardization path
+ */
+case class PathConfig(rawPath: String, publishPath: String, standardizationPath: String)

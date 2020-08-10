@@ -17,9 +17,8 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
-import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.spark.hats.Extensions._
-import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, SingleColumnConformanceRule}
 
@@ -30,9 +29,10 @@ case class SingleColumnRuleInterpreter(rule: SingleColumnConformanceRule) extend
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConformanceConfig): Dataset[Row] = {
+             (implicit spark: SparkSession, explosionState: ExplosionState,
+              dao: MenasDAO, progArgs: InterpreterContextArgs): Dataset[Row] = {
     // Validate the rule parameters
-    RuleValidators.validateFieldExistence(progArgs.datasetName,ruleName, df.schema, rule.inputColumn)
+    RuleValidators.validateFieldExistence(progArgs.datasetName, ruleName, df.schema, rule.inputColumn)
     RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)
     RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumn, rule.outputColumn)
 

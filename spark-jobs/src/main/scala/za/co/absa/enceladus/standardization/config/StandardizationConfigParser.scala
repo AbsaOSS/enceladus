@@ -19,7 +19,7 @@ import scopt.{OParser, OParserBuilder}
 import za.co.absa.enceladus.common.config.JobConfigParser
 import za.co.absa.enceladus.standardization.CobolOptions
 
-trait StandardizationParser[R] extends JobConfigParser[R] {
+trait StandardizationConfigParser[R] extends JobConfigParser[R] {
   def withRawFormat(value: String): R
   def withCharset(value: Option[String] = None): R
   def withRowTag(value: Option[String] = None): R
@@ -45,15 +45,13 @@ trait StandardizationParser[R] extends JobConfigParser[R] {
   def failOnInputNotPerSchema: Boolean
 }
 
-object StandardizationParser {
+object StandardizationConfigParser {
 
   //scalastyle:off method.length the length is legit for parsing input paramters
-  def standardizationParser[R <: StandardizationParser[R]]: OParser[_, R] = {
+  def standardizationParser[R <: StandardizationConfigParser[R]]: OParser[_, R] = {
     val builder = OParser.builder[R]
     import builder._
     OParser.sequence(
-      head("\nStandardization", ""),
-
       opt[String]('f', "raw-format").required().action((value, config) => {
         config.withRawFormat(value.toLowerCase())
       }).text("format of the raw data (csv, xml, parquet, fixed-width, etc.)"),
@@ -142,7 +140,7 @@ object StandardizationParser {
     s"The $field option is supported only for $format format"
   }
 
-  private def checkCharset[R <: StandardizationParser[R]](config: R): List[String] = {
+  private def checkCharset[R <: StandardizationConfigParser[R]](config: R): List[String] = {
     if (!formatsSupportingCharset.contains(config.rawFormat) && config.charset.isDefined) {
       List(typicalError("--charset", "CSV, JSON, XML and COBOL"))
     } else {
@@ -150,7 +148,7 @@ object StandardizationParser {
     }
   }
 
-  private def checkXMLFields[R <: StandardizationParser[R]](config: R): List[String] = {
+  private def checkXMLFields[R <: StandardizationConfigParser[R]](config: R): List[String] = {
     if (config.rowTag.isDefined && config.rawFormat != "xml") {
       List(typicalError("--row-tag", "XML raw data"))
     } else {
@@ -158,7 +156,7 @@ object StandardizationParser {
     }
   }
 
-  private def checkCSVFields[R <: StandardizationParser[R]](config: R): List[String] = {
+  private def checkCSVFields[R <: StandardizationConfigParser[R]](config: R): List[String] = {
     def csvFieldsThatShouldNotBePresent(config: R): List[String] = {
       val format = "CSV"
       val definedFields = Map(
@@ -177,7 +175,7 @@ object StandardizationParser {
     }
   }
 
-  private def checkCobolFields[R <: StandardizationParser[R]](config: R): Seq[String] = {
+  private def checkCobolFields[R <: StandardizationConfigParser[R]](config: R): Seq[String] = {
     def cobolFieldsThatShouldNotBePresent(cobolOptions: CobolOptions): List[String] = {
       val format = "COBOL"
       val definedFields = Map(
@@ -199,7 +197,7 @@ object StandardizationParser {
     }
   }
 
-  private def checkConfigX[R <: StandardizationParser[R]](config: R, builder: OParserBuilder[R]): Either[String, Unit] = {
+  private def checkConfigX[R <: StandardizationConfigParser[R]](config: R, builder: OParserBuilder[R]): Either[String, Unit] = {
     val allErrors:List[String] = checkCharset(config) ++
       checkXMLFields(config) ++
       checkCSVFields(config) ++

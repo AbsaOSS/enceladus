@@ -29,7 +29,7 @@ import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.standardization.config.{StandardizationParser, StandardizationConfig}
+import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
@@ -46,17 +46,21 @@ trait StandardizationExecution extends CommonJobExecution {
 
   protected def prepareStandardization[T](args: Array[String],
                                           menasCredentials: MenasCredentials,
-                                          preparationResult: PreparationResult
-                                         )
+                                          preparationResult: PreparationResult)
                                          (implicit dao: MenasDAO,
-                                          cmd: StandardizationParser[T],
+                                          cmd: StandardizationConfigParser[T],
                                           fsUtils: FileSystemVersionUtils,
                                           spark: SparkSession): StructType = {
 
+    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.rawPath)
+    preparationResult.performance.startMeasurement(stdDirSize)
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.inputPath}/_INFO")
+    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.rawPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
+
+    log.info(s"raw path: ${preparationResult.pathCfg.rawPath}")
+    log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
 
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
@@ -76,19 +80,33 @@ trait StandardizationExecution extends CommonJobExecution {
     // Add the raw format of the input file(s) to Atum's metadata
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
-    PerformanceMetricTools.addJobInfoToAtumMetadata("std", preparationResult.pathCfg.inputPath, preparationResult.pathCfg.outputPath,
+    PerformanceMetricTools.addJobInfoToAtumMetadata("std",
+      preparationResult.pathCfg.rawPath,
+      preparationResult.pathCfg.standardizationPath,
       menasCredentials.username, args.mkString(" "))
 
     dao.getSchema(preparationResult.dataset.schemaName, preparationResult.dataset.schemaVersion)
   }
 
-  protected def readStandardizationInputData(schema: StructType,
-                                             cmd: StandardizationConfig,
-                                             path: String,
-                                             dataset: Dataset)
-                                            (implicit spark: SparkSession,
-                                             fsUtils: FileSystemVersionUtils,
-                                             dao: MenasDAO): DataFrame = {
+  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+    val initialConfig = super.getPathConfig(cmd, dataset, reportVersion)
+    cmd.asInstanceOf[StandardizationConfig].rawPathOverride match {
+      case None => initialConfig
+      case Some(providedRawPath) => initialConfig.copy(rawPath = providedRawPath)
+    }
+  }
+
+  override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
+    validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, pathConfig.standardizationPath)
+  }
+
+  protected def readStandardizationInputData[T](schema: StructType,
+                                                cmd: StandardizationConfigParser[T],
+                                                path: String,
+                                                dataset: Dataset)
+                                               (implicit spark: SparkSession,
+                                                fsUtils: FileSystemVersionUtils,
+                                                dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationPropertiesProvider()
     val dfReaderConfigured = standardizationReader.getFormatSpecificReader(cmd, dataset, numberOfColumns)
@@ -104,9 +122,8 @@ trait StandardizationExecution extends CommonJobExecution {
     ensureSplittable(dfWithSchema, path, schema)
   }
 
-
-  private def getColumnNameOfCorruptRecord[R](schema: StructType, cmd: StandardizationParser[R])
-                                          (implicit spark: SparkSession): Option[String] = {
+  private def getColumnNameOfCorruptRecord[R](schema: StructType, cmd: StandardizationConfigParser[R])
+                                             (implicit spark: SparkSession): Option[String] = {
     // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
     val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width") || cmd.failOnInputNotPerSchema) {
@@ -116,8 +133,8 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def standardize(inputData: DataFrame, schema: StructType, cmd: StandardizationConfig)
-                           (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
+  protected def standardize[T](inputData: DataFrame, schema: StructType, cmd: StandardizationConfigParser[T])
+                              (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     //scalastyle:on parameter.number
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
@@ -139,14 +156,14 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def processStandardizationResult(args: Array[String],
-                                             standardizedDF: DataFrame,
-                                             preparationResult: PreparationResult,
-                                             schema: StructType,
-                                             cmd: StandardizationConfig,
-                                             menasCredentials: MenasCredentials)
-                                            (implicit spark: SparkSession,
-                                             fsUtils: FileSystemVersionUtils): Unit = {
+  protected def processStandardizationResult[T](args: Array[String],
+                                                standardizedDF: DataFrame,
+                                                preparationResult: PreparationResult,
+                                                schema: StructType,
+                                                cmd: StandardizationConfigParser[T],
+                                                menasCredentials: MenasCredentials)
+                                               (implicit spark: SparkSession,
+                                                fsUtils: FileSystemVersionUtils): DataFrame = {
     import za.co.absa.atum.AtumImplicits._
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {
@@ -163,16 +180,16 @@ trait StandardizationExecution extends CommonJobExecution {
       handleEmptyOutput(sourceId)
     }
 
-    standardizedDF.write.parquet(preparationResult.pathCfg.outputPath)
+    standardizedDF.write.parquet(preparationResult.pathCfg.standardizationPath)
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
-    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.outputPath)
+    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
     preparationResult.performance.finishMeasurement(stdDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
       "std",
-      preparationResult.pathCfg.inputPath,
-      preparationResult.pathCfg.outputPath,
+      preparationResult.pathCfg.rawPath,
+      preparationResult.pathCfg.standardizationPath,
       menasCredentials.username,
       args.mkString(" ")
     )
@@ -180,32 +197,13 @@ trait StandardizationExecution extends CommonJobExecution {
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
 
-    standardizedDF.writeInfoFile(preparationResult.pathCfg.outputPath)
+    standardizedDF.writeInfoFile(preparationResult.pathCfg.standardizationPath)
     writePerformanceMetrics(preparationResult.performance, cmd)
     log.info(s"$sourceId finished successfully")
+    standardizedDF
   }
+
   //scalastyle:off parameter.number
-
-  override protected def getPathCfg[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
-    val stdCmd = cmd.asInstanceOf[StandardizationParser[T]]
-    PathConfig(
-      inputPath = buildRawPath(stdCmd, dataset, reportVersion),
-      outputPath = getStandardizationPath(cmd, reportVersion)
-    )
-  }
-
-  def buildRawPath[T](cmd: StandardizationParser[T], dataset: Dataset, reportVersion: Int): String = {
-    val dateTokens = cmd.reportDate.split("-")
-    cmd.rawPathOverride match {
-      case None =>
-        val folderSuffix = s"/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v$reportVersion"
-        cmd.folderPrefix match {
-          case None => s"${dataset.hdfsPath}$folderSuffix"
-          case Some(folderPrefix) => s"${dataset.hdfsPath}/$folderPrefix$folderSuffix"
-        }
-      case Some(rawPathOverride) => rawPathOverride
-    }
-  }
 
   private def ensureSplittable(df: DataFrame, path: String, schema: StructType)
                               (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {

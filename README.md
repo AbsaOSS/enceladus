@@ -39,6 +39,9 @@ This is a Spark job which reads an input dataset in any of the supported formats
 ### Conformance
 This is a Spark job which **applies the Menas-specified conformance rules to the standardized dataset**.
 
+### Standardization and Conformance
+This is a Spark job which executes both Standardization and Conformance together in the same job
+
 ## How to build
 #### Build requirements:
  - **Maven 3.5.4+**
@@ -137,9 +140,31 @@ password=changeme
 --report-date <date> \
 --report-version <data_run_version>
 ```
+
+#### Running Standardization and Conformance together
+```
+<spark home>/spark-submit \
+--num-executors <num> \
+--executor-memory <num>G \
+--master yarn \
+--deploy-mode <client/cluster> \
+--driver-cores <num> \
+--driver-memory <num>G \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
+--class za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob \
+<spark-jobs_<build_version>.jar> \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <date> \
+--report-version <data_run_version> \
+--raw-format <data_format> \
+--row-tag <tag>
+```
+
 * In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
-#### Helper scripts for running Standardization and Conformance
+#### Helper scripts for running Standardization, Conformance or both together
 
 The Scripts in `scripts` folder can be used to simplify command lines for running Standardization and Conformance jobs.
 
@@ -179,6 +204,20 @@ The basic command to run Conformance becomes:
 --report-version <data_run_version>
 ```
 
+The basic command to run Standardization and Conformance combined becomes:
+```
+<path to scripts>/run_standardization_conformance.sh \
+--num-executors <num> \
+--deploy-mode <client/cluster> \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <date> \
+--report-version <data_run_version> \
+--raw-format <data_format> \
+--row-tag <tag>
+```
+
 The list of options for configuring Spark deployment mode in Yarn and resource specification:
 
 |            Option                            |                           Description                                                                       |
@@ -197,7 +236,7 @@ The list of options for configuring Spark deployment mode in Yarn and resource s
 For more information on these options see the official documentation on running Spark on Yarn: 
 [https://spark.apache.org/docs/latest/running-on-yarn.html](https://spark.apache.org/docs/latest/running-on-yarn.html)
 
-The list of all options for running both Standardization and Conformance:
+The list of all options for running Standardization, Conformance and the combined Standardization And Conformance jobs:
 
 |            Option                     |                           Description                                                                                                                                                       |
 |---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -238,6 +277,8 @@ The list of additional options available for running Conformance:
 | --experimental-mapping-rule **true/false** | If `true`, the experimental optimized mapping rule implementation is used. The default value is build-specific and is set in 'application.properties'. |
 | --catalyst-workaround **true/false**       | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. It is `true` by default. Turn this off only is you encounter timing freeze issues when running Conformance. | 
 | --autoclean-std-folder **true/false**      | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job. |
+
+All the additional options valid for both Standardization and Conformance can also be specified when running the combined StandardizationAndConformance job
 
 ## Plugins
 
