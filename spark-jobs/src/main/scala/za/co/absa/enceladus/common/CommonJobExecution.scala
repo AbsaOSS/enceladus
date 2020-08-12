@@ -42,7 +42,7 @@ import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Random, Success, Try}
 
 trait CommonJobExecution {
 
@@ -103,11 +103,13 @@ trait CommonJobExecution {
   protected def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
 
   protected def validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, path: String): Unit = {
-    if (fsUtils.hdfsExists(path)) {
-      throw new IllegalStateException(
-        s"Path $path already exists. Increment the run version, or delete $path"
-      )
-    }
+    // TODO fix for s3
+
+//    if (fsUtils.hdfsExists(path)) {
+//      throw new IllegalStateException(
+//        s"Path $path already exists. Increment the run version, or delete $path"
+//      )
+//    }
   }
 
   protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
@@ -117,6 +119,7 @@ trait CommonJobExecution {
       case _ => preparationResult.pathCfg.publishPath
     }
 
+    log.info(s"rereading outputPath $outputPath to run postProcessing")
     val df = spark.read.parquet(outputPath)
     val runId = MenasPlugin.runNumber
 
@@ -127,8 +130,8 @@ trait CommonJobExecution {
       }.mkString(",")
     }
 
-    val sourceSystem = Atum.getControlMeasure.metadata.sourceApplication
-    val uniqueRunId = Atum.getControlMeasure.runUniqueId
+    val sourceSystem = "source1" //Atum.getControlMeasure.metadata.sourceApplication  // TODO fix for s3
+    val uniqueRunId = Some(s"runId-${Math.abs(Random.nextLong())}") //Atum.getControlMeasure.runUniqueId  // TODO fix for s3
 
     val params = ErrorSenderPluginParams(jobCmdConfig.datasetName,
       jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, outputPath,

@@ -52,8 +52,8 @@ trait ConformanceExecution extends CommonJobExecution {
                                       cmd: ConformanceConfigParser[T],
                                       fsUtils: FileSystemVersionUtils,
                                       spark: SparkSession): Unit = {
-    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
-    preparationResult.performance.startMeasurement(stdDirSize)
+    //val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
+    //preparationResult.performance.startMeasurement(stdDirSize) // TODO fix for s3
 
     log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
     log.info(s"publish path: ${preparationResult.pathCfg.publishPath}")
@@ -134,12 +134,13 @@ trait ConformanceExecution extends CommonJobExecution {
                                             fsUtils: FileSystemVersionUtils): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
 
-    PerformanceMetricTools.addJobInfoToAtumMetadata(
-      "conform",
-      preparationResult.pathCfg.standardizationPath,
-      preparationResult.pathCfg.publishPath,
-      menasCredentials.username, cmdLineArgs
-    )
+    // TODO fix for s3
+//    PerformanceMetricTools.addJobInfoToAtumMetadata(
+//      "conform",
+//      preparationResult.pathCfg.standardizationPath,
+//      preparationResult.pathCfg.publishPath,
+//      menasCredentials.username, cmdLineArgs
+//    )
 
     val withPartCols = result
       .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.reportDate), ReportDateFormat))
@@ -159,18 +160,20 @@ trait ConformanceExecution extends CommonJobExecution {
 
     withPartCols.write.parquet(preparationResult.pathCfg.publishPath)
 
-    val publishDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.publishPath)
-    preparationResult.performance.finishMeasurement(publishDirSize, recordCount)
-    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
-      spark,
-      "conform",
-      preparationResult.pathCfg.standardizationPath,
-      preparationResult.pathCfg.publishPath,
-      menasCredentials.username, cmdLineArgs
-    )
+    // TODO fix for s3
+    //val publishDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.publishPath)
+    // preparationResult.performance.finishMeasurement(publishDirSize, recordCount)
+//    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
+//      spark,
+//      "conform",
+//      preparationResult.pathCfg.standardizationPath,
+//      preparationResult.pathCfg.publishPath,
+//      menasCredentials.username, cmdLineArgs
+//    )
 
-    withPartCols.writeInfoFile(preparationResult.pathCfg.publishPath)
-    writePerformanceMetrics(preparationResult.performance, cmd)
+    // TODO fix for s3
+    //withPartCols.writeInfoFile(preparationResult.pathCfg.publishPath)
+    //writePerformanceMetrics(preparationResult.performance, cmd)
 
     if (conformanceReader.isAutocleanStdFolderEnabled()) {
       fsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardizationPath)
