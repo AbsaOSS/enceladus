@@ -55,11 +55,11 @@ object DynamicInterpreter {
     implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
       featureSwitches, jobShortName, spark, dao, InterpreterContextArgs.fromConformanceConfig(progArgs))
 
-    applyCheckpoint(inputDf, "Start")
+    // applyCheckpoint(inputDf, "Start") // TODO fix for s3
 
     val conformedDf = applyConformanceRules(ensureErrorColumnExists(inputDf))
 
-    applyCheckpoint(conformedDf, "End")
+    // applyCheckpoint(conformedDf, "End") // TODO fix for s3
     logExecutionPlan(conformedDf)
 
     conformedDf
