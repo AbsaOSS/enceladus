@@ -111,6 +111,16 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     fromRemote(urlPath, headers, parameters)
   }
 
+  def sendPostSubject[T](urlPath: String,
+                         parameters: Map[String, Any],
+                         headers: HttpHeaders = new HttpHeaders())
+                        (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    require(parameters.keySet.contains("subject"),
+      s"parameters map must contain the 'subject', but only $parameters was found")
+
+    fromRemote(urlPath, headers, parameters)
+  }
+
   def sendPostAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): Future[ResponseEntity[T]] = {
     sendAsync(HttpMethod.POST, urlPath, headers, bodyOpt)

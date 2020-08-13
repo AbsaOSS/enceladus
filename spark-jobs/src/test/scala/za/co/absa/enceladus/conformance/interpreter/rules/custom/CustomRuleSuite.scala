@@ -19,9 +19,9 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.mockito.Mockito.mock
 import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
-import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, ExplosionState, FeatureSwitches}
+import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, ExplosionState, FeatureSwitches, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{conformanceRule, Dataset => ConfDataset}
@@ -41,7 +41,8 @@ case class MyCustomRule(
 case class MyCustomRuleInterpreter(rule: MyCustomRule) extends RuleInterpreter {
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfig): Dataset[Row] = {
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO,
+                                progArgs: InterpreterContextArgs): Dataset[Row] = {
     import spark.implicits._
     // we have to do this if this rule is to support arrays
     handleArrays(rule.outputColumn, df) { flattened =>
@@ -60,7 +61,7 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
 
   // we may WANT to enable control framework & spline here
 
-  implicit val progArgs: ConfCmdConfig = ConfCmdConfig() // here we may need to specify some parameters (for certain rules)
+  implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: MenasDAO = mock(classOf[MenasDAO]) // you may have to hard-code your own implementation here (if not working with menas)
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true

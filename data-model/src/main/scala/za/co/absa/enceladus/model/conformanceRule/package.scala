@@ -30,7 +30,9 @@ package object conformanceRule {
     new Type(value = classOf[NegationConformanceRule], name = "NegationConformanceRule"),
     new Type(value = classOf[SingleColumnConformanceRule], name = "SingleColumnConformanceRule"),
     new Type(value = classOf[SparkSessionConfConformanceRule], name = "SparkSessionConfConformanceRule"),
-    new Type(value = classOf[UppercaseConformanceRule], name = "UppercaseConformanceRule")
+    new Type(value = classOf[UppercaseConformanceRule], name = "UppercaseConformanceRule"),
+    new Type(value = classOf[FillNullsConformanceRule], name = "FillNullsConformanceRule"),
+    new Type(value = classOf[CoalesceConformanceRule], name = "CoalesceConformanceRule")
   ))
   sealed trait ConformanceRule {
     val order: Int
@@ -44,7 +46,7 @@ package object conformanceRule {
                                           outputColumn: String,
                                           controlCheckpoint: Boolean,
                                           inputColumns: Seq[String]) extends ConformanceRule {
-    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+    override def withUpdatedOrder(newOrder: Int): ConcatenationConformanceRule = copy(order = newOrder)
   }
 
   case class CastingConformanceRule(order: Int,
@@ -52,20 +54,20 @@ package object conformanceRule {
                                     controlCheckpoint: Boolean,
                                     inputColumn: String,
                                     outputDataType: String) extends ConformanceRule {
-    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+    override def withUpdatedOrder(newOrder: Int): CastingConformanceRule = copy(order = newOrder)
   }
 
   case class DropConformanceRule(order: Int,
                                  controlCheckpoint: Boolean,
                                  outputColumn: String) extends ConformanceRule {
-    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+    override def withUpdatedOrder(newOrder: Int): DropConformanceRule = copy(order = newOrder)
   }
 
   case class LiteralConformanceRule(order: Int,
                                     outputColumn: String,
                                     controlCheckpoint: Boolean,
                                     value: String) extends ConformanceRule {
-    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+    override def withUpdatedOrder(newOrder: Int): LiteralConformanceRule = copy(order = newOrder)
   }
 
 
@@ -77,14 +79,14 @@ package object conformanceRule {
                                     targetAttribute: String,
                                     outputColumn: String,
                                     isNullSafe: Boolean = false) extends ConformanceRule {
-    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+    override def withUpdatedOrder(newOrder: Int): MappingConformanceRule = copy(order = newOrder)
   }
 
   case class NegationConformanceRule(order: Int,
                                      outputColumn: String,
                                      controlCheckpoint: Boolean,
                                      inputColumn: String) extends ConformanceRule {
-    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+    override def withUpdatedOrder(newOrder: Int): NegationConformanceRule = copy(order = newOrder)
   }
 
   /**
@@ -97,13 +99,14 @@ package object conformanceRule {
                                          outputColumn: String,
                                          inputColumn: String,
                                          inputColumnAlias: String) extends ConformanceRule {
-    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+    override def withUpdatedOrder(newOrder: Int): SingleColumnConformanceRule = copy(order = newOrder)
   }
 
   /**
     * Rule for getting values out of spark session conf.
     *
-    * This is an easy way of introducing values from the info file into the dataset (such as version), where control framework will populate the conf.
+    * This is an easy way of introducing values from the info file into the dataset (such as version), where control
+    * framework will populate the conf.
     *
     * Gets value from spark.sessionState.conf
     */
@@ -111,14 +114,29 @@ package object conformanceRule {
                                              outputColumn: String,
                                              controlCheckpoint: Boolean,
                                              sparkConfKey: String) extends ConformanceRule {
-    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+    override def withUpdatedOrder(newOrder: Int): SparkSessionConfConformanceRule = copy(order = newOrder)
   }
 
   case class UppercaseConformanceRule(order: Int,
                                       outputColumn: String,
                                       controlCheckpoint: Boolean,
                                       inputColumn: String) extends ConformanceRule {
-    override def withUpdatedOrder(newOrder: Int): ConformanceRule = copy(order = newOrder)
+    override def withUpdatedOrder(newOrder: Int): UppercaseConformanceRule = copy(order = newOrder)
+  }
+
+  case class FillNullsConformanceRule(order: Int,
+                                      outputColumn: String,
+                                      controlCheckpoint: Boolean,
+                                      inputColumn: String,
+                                      value: String) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): FillNullsConformanceRule = copy(order = newOrder)
+  }
+
+  case class CoalesceConformanceRule(order: Int,
+                                     outputColumn: String,
+                                     controlCheckpoint: Boolean,
+                                     inputColumns: Seq[String]) extends ConformanceRule {
+    override def withUpdatedOrder(newOrder: Int): CoalesceConformanceRule = copy(order = newOrder)
   }
 
   abstract class ExtensibleConformanceRule() extends ConformanceRule

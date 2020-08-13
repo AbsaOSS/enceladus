@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.menas.controllers
 
-import java.net.URL
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
@@ -27,27 +26,32 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
-import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaParsingException}
+import za.co.absa.enceladus.menas.models.SchemaApiFeatures
+import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.repositories.RefCollection
-import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaService}
+import za.co.absa.enceladus.menas.services.{AttachmentService, SchemaRegistryService, SchemaService}
 import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.menas.utils.parsers.SchemaParser
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
 
-import scala.io.Source
-import scala.util.control.NonFatal
+import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
+
 
 @RestController
 @RequestMapping(Array("/api/schema"))
 class SchemaController @Autowired()(
                                      schemaService: SchemaService,
                                      attachmentService: AttachmentService,
-                                     sparkMenasConvertor: SparkMenasSchemaConvertor)
+                                     sparkMenasConvertor: SparkMenasSchemaConvertor,
+                                     schemaRegistryService: SchemaRegistryService
+                                     )
   extends VersionedModelController(schemaService) {
 
   import za.co.absa.enceladus.menas.utils.implicits._
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   @PostMapping(Array("/remote"))
@@ -59,34 +63,48 @@ class SchemaController @Autowired()(
                        @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
 
     val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format)
-    val (url, fileContent, mimeType) = {
-      try {
-        val url = new URL(remoteUrl)
-        val connection = url.openConnection()
-        val mimeType = SchemaController.avscContentType // only AVSC is expected to come from the schema registry
-        val fileStream = Source.fromInputStream(connection.getInputStream)
-        val fileContent = fileStream.mkString
-        fileStream.close()
-
-        (url, fileContent, mimeType)
-
-      } catch {
-        case NonFatal(e) =>
-          throw RemoteSchemaRetrievalException(schemaType, s"Could not retrieve a schema file from $remoteUrl. Please check the correctness of the URL and a presence of the schema at the mentioned endpoint", e)
-      }
-    }
-
-    val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
+    val schemaResponse = schemaRegistryService.loadSchemaByUrl(remoteUrl)
+    val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(schemaResponse.fileContent)
 
     val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
       refVersion = version + 1,  // version is the current one, refVersion is the to-be-created one
       attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
-      filename = url.getFile,
-      fileContent = fileContent.getBytes,
-      fileMIMEType = mimeType)
+      filename = schemaResponse.url.getFile,
+      fileContent = schemaResponse.fileContent.getBytes,
+      fileMIMEType = schemaResponse.mimeType)
 
     uploadSchemaToMenas(principal.getUsername, menasFile, sparkStruct, schemaType)
+  }
+
+  @PostMapping(Array("/registry"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def handleSubject(@AuthenticationPrincipal principal: UserDetails,
+                      @RequestParam subject: String,
+                      @RequestParam version: Int,
+                      @RequestParam name: String,
+                      @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
+
+    val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format)
+
+    val valueSchemaResponse = Try {
+      schemaRegistryService.loadSchemaBySubjectName(s"$subject")
+    } match {
+      case Success(schemaResponse) => schemaResponse
+      case Failure(_) => schemaRegistryService.loadSchemaBySubjectName(s"$subject-value") // fallback to -value
+    }
+
+    val valueSparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(valueSchemaResponse.fileContent)
+
+    val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
+      refName = name,
+      refVersion = version + 1,  // version is the current one, refVersion is the to-be-created one
+      attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
+      filename = valueSchemaResponse.url.getFile, // only the value file gets saved as an attachment
+      fileContent = valueSchemaResponse.fileContent.getBytes,
+      fileMIMEType = valueSchemaResponse.mimeType)
+
+    uploadSchemaToMenas(principal.getUsername, menasFile, valueSparkStruct, schemaType)
   }
 
   @PostMapping(Array("/upload"))
@@ -162,6 +180,15 @@ class SchemaController @Autowired()(
       case None =>
         throw notFound()
     }
+  }
+
+  @GetMapping(path = Array("/features"))
+  @ResponseStatus(HttpStatus.OK)
+  def getAvailability(): CompletableFuture[SchemaApiFeatures] = {
+    val registryAvailable = schemaRegistryService.schemaRegistryBaseUrl.isDefined
+
+    // the ability to upload or input a remoteUrl is always enabled, so it is not part of the availability endpoint at the moment
+    Future.successful(SchemaApiFeatures(registry = registryAvailable))
   }
 }
 

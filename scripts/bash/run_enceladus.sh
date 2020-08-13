@@ -37,6 +37,7 @@ DRA_ALLOCATION_RATIO="$DEFAULT_DRA_ALLOCATION_RATIO"
 ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE="$DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE"
 
 # Command like default for the job
+JAR=${SPARK_JOBS_JAR_OVERRIDE:-$SPARK_JOBS_JAR}
 DATASET_NAME=""
 DATASET_VERSION=""
 REPORT_DATE=""
@@ -52,6 +53,8 @@ TRIM_VALUES=""
 COBOL_IS_TEXT=""
 COBOL_ENCODING=""
 IS_XCOM=""
+COPYBOOK=""
+COBOL_TRIMMING_POLICY=""
 MAPPING_TABLE_PATTERN=""
 FOLDER_PREFIX=""
 DEBUG_SET_RAW_PATH=""
@@ -192,8 +195,16 @@ case $key in
     COBOL_IS_TEXT="$2"
     shift 2 # past argument and value
     ;;
+    --cobol-trimming-policy)
+    COBOL_TRIMMING_POLICY="$2"
+    shift 2 # past argument and value
+    ;;
     --is-xcom)
     IS_XCOM="$2"
+    shift 2 # past argument and value
+    ;;
+    --copybook)
+    COPYBOOK="$2"
     shift 2 # past argument and value
     ;;
     --mapping-table-pattern)
@@ -348,18 +359,18 @@ fi
 # configure DRA and adaptive execution if enabled
 if [ "$DRA_ENABLED" = true ] ; then
     echo "Dynamic Resource Allocation enabled"
-    SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.enabled=true"
-    SPARK_CONF="${SPARK_CONF} --conf spark.shuffle.service.enabled=true"
-    SPARK_CONF="${SPARK_CONF} --conf spark.sql.adaptive.enabled=true"
-    SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.maxExecutors=$DRA_MAX_EXECUTORS"
+    add_spark_conf_cmd "spark.dynamicAllocation.enabled" "true"
+    add_spark_conf_cmd "spark.shuffle.service.enabled" "true"
+    add_spark_conf_cmd "spark.sql.adaptive.enabled" "true"
+    add_spark_conf_cmd "spark.dynamicAllocation.maxExecutors" ${DRA_MAX_EXECUTORS}
     if [ ! -z "$DRA_MIN_EXECUTORS" ]; then
-        SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.minExecutors=$DRA_MIN_EXECUTORS"
+        add_spark_conf_cmd "spark.dynamicAllocation.minExecutors" ${DRA_MIN_EXECUTORS}
     fi
     if [ ! -z "$DRA_ALLOCATION_RATIO" ]; then
-        SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.executorAllocationRatio=$DRA_ALLOCATION_RATIO"
+        add_spark_conf_cmd "spark.dynamicAllocation.executorAllocationRatio" ${DRA_ALLOCATION_RATIO}
     fi
     if [ ! -z "$ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE" ]; then
-        SPARK_CONF="${SPARK_CONF} --conf spark.sql.adaptive.shuffle.targetPostShuffleInputSize=$ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE"
+        add_spark_conf_cmd "spark.sql.adaptive.shuffle.targetPostShuffleInputSize" ${ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE}
     fi
 fi
 
@@ -408,7 +419,9 @@ add_to_cmd_line "--csv-escape" ${CSV_ESCAPE}
 add_to_cmd_line "--trimValues" ${TRIM_VALUES}
 add_to_cmd_line "--cobol-is-text" ${COBOL_IS_TEXT}
 add_to_cmd_line "--cobol-encoding" ${COBOL_ENCODING}
+add_to_cmd_line "--cobol-trimming-policy" ${COBOL_TRIMMING_POLICY}
 add_to_cmd_line "--is-xcom" ${IS_XCOM}
+add_to_cmd_line "--copybook" ${COPYBOOK}
 add_to_cmd_line "--folder-prefix" ${FOLDER_PREFIX}
 add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
 add_to_cmd_line "--experimental-mapping-rule" ${EXPERIMENTAL_MAPPING_RULE}

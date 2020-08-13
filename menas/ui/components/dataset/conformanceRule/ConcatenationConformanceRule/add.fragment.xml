@@ -16,23 +16,23 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core"
                          xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.commonRuleFields"/>
-    <Label text="Concatenation Columns"/>
+    <Label text="Columns to concatenate"/>
     <List id="inputColumns"
           items="{/newRule/inputColumns}"
-          noDataText="No concatenation columns (minimum 2)"
+          noDataText="No columns selected (minimum 2)"
           mode="Delete"
-          delete=".onDeleteConcatColumn">
+          delete=".onDeleteRuleColumn">
         <items>
             <CustomListItem
                 type="Active"
-                press=".onConcatSelect"
-                cust:concatField="{}">
+                press=".onRuleWithColumnsSelect"
+                cust:ruleFields="{}">
                 <Text
                     class="sapUiSmallMarginBegin sapUiSmallMarginEnd"
                     text="{}"/>
             </CustomListItem>
         </items>
     </List>
-    <Label text="Add Concatenation Column"/>
-    <Button id="addConcatColumn" icon="sap-icon://add" press=".onAddConcatColumn"/>
+    <Label text="Add Column"/>
+    <Button id="addRuleColumn" icon="sap-icon://add" press=".onAddRuleColumn"/>
 </core:FragmentDefinition>

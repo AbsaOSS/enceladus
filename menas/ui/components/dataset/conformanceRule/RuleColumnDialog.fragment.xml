@@ -15,15 +15,15 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
                          xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <Dialog id="concatenationColumnDialog" title="Add Concatenation Column" resizable="true" draggable="true" class="minW20rem">
+    <Dialog id="ruleColumnDialog" title="Add Column" resizable="true" draggable="true" class="minW20rem">
         <content>
             <VBox class="sapUiSmallMargin">
                 <core:Fragment type="XML" fragmentName="components.schemaFieldSelector"/>
             </VBox>
         </content>
         <buttons>
-            <Button id="concatSubmitButton" text="Accept" icon="sap-icon://save" press=".onConcatSubmit"/>
-            <Button id="concatCancelButton" text="Cancel" icon="sap-icon://cancel" press=".onConcatCancel"/>
+            <Button id="columnSubmitButton" text="Accept" icon="sap-icon://save" press=".onColumnSubmit"/>
+            <Button id="columnCancelButton" text="Cancel" icon="sap-icon://cancel" press=".onColumnCancel"/>
         </buttons>
     </Dialog>
 </core:FragmentDefinition>

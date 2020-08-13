@@ -132,6 +132,32 @@ class LiteralConformanceRule extends ConformanceRule {
 
 }
 
+class FillNullsConformanceRule extends ConformanceRule {
+
+  apply(fields) {
+    const inputCol = this.getInputCol(fields);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, inputCol.type, false, []);
+    this.addNewField(fields, newField);
+    return fields;
+  }
+
+}
+
+class CoalesceConformanceRule extends ConformanceRule {
+
+  apply(fields) {
+    const isNullable = this.getInputCols(fields).some(field => field.nullable);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", isNullable, []);
+    this.addNewField(fields, newField);
+    return fields;
+  }
+
+  getInputCols(fields) {
+    return this.rule.inputColumns.map(inputCol => this.getCol(fields, inputCol));
+  }
+
+}
+
 class MappingConformanceRule extends ConformanceRule {
 
   getTargetCol(fields) {

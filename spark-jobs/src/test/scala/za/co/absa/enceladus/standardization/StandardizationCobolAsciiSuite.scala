@@ -23,6 +23,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Outcome, fixture}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
@@ -31,6 +32,8 @@ class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase
   type FixtureParam = String
 
   private implicit val dao: MenasDAO = mock[MenasDAO]
+
+  private val standardizationReader = new StandardizationPropertiesProvider()
 
   private val tmpFilePrefix = "cobol-fix-ascii-"
   private val tmpFileSuffix = ".dat"
@@ -69,8 +72,8 @@ class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase
   private def getTestDataFrame(tmpFileName: String,
                                args: Array[String]
                               ): DataFrame = {
-    val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(argumentsBase ++ args)
-    val cobolReader = StandardizationJob.getFormatSpecificReader(cmd, dataSet, schema.fields.length)
+    val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(argumentsBase ++ args)
+    val cobolReader = standardizationReader.getFormatSpecificReader(cmd, dataSet, schema.fields.length)
     cobolReader
       .option("copybook_contents", copybook)
       .load(tmpFileName)
