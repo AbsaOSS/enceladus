@@ -37,7 +37,7 @@ case class StandardizationConfig(rawFormat: String = "xml",
                                  csvQuote: Option[String] = None,
                                  csvEscape: Option[String] = None,
                                  cobolOptions: Option[CobolOptions] = None,
-                                 fixedWidthTrimValues: Option[Boolean] = Some(false),
+                                 fixedWidthTrimValues: Option[Boolean] = None,
                                  rawPathOverride: Option[String] = None,
                                  failOnInputNotPerSchema: Boolean = false,
                                  datasetName: String = "",
@@ -49,7 +49,9 @@ case class StandardizationConfig(rawFormat: String = "xml",
                                  folderPrefix: Option[String] = None,
                                  persistStorageLevel: Option[StorageLevel] = None,
                                  credsFile: Option[String] = None,
-                                 keytabFile: Option[String] = None)
+                                 keytabFile: Option[String] = None,
+                                 fixedWidthTreatEmptyValuesAsNulls: Option[Boolean] = None,
+                                 fixedWidthNullValue: Option[String] = None)
   extends StandardizationConfigParser[StandardizationConfig]{
   override def withRawFormat(value: String): StandardizationConfig = copy(rawFormat = value)
   override def withCharset(value: Option[String]): StandardizationConfig = copy(charset = value)
@@ -76,6 +78,8 @@ case class StandardizationConfig(rawFormat: String = "xml",
   override def withPerformanceMetricsFile(value: Option[String]): StandardizationConfig = copy(performanceMetricsFile = value)
   override def withFolderPrefix(value: Option[String]): StandardizationConfig = copy(folderPrefix = value)
   override def withPersistStorageLevel(value: Option[StorageLevel]): StandardizationConfig = copy(persistStorageLevel = value)
+  override def withFixedWidthTreatEmptyValuesAsNulls(value: Option[Boolean]): StandardizationConfig = copy(fixedWidthTreatEmptyValuesAsNulls = value)
+  override def withFixedWidthNullValue(value: Option[String]): StandardizationConfig = copy(fixedWidthNullValue = value)
 }
 
 object StandardizationConfig {

@@ -48,9 +48,11 @@ case class StandardizationConformanceConfig(datasetName: String = "",
                                             csvQuote: Option[String] = None,
                                             csvEscape: Option[String] = None,
                                             cobolOptions: Option[CobolOptions] = None,
-                                            fixedWidthTrimValues: Option[Boolean] = Some(false),
+                                            fixedWidthTrimValues: Option[Boolean] = None,
                                             rawPathOverride: Option[String] = None,
                                             failOnInputNotPerSchema: Boolean = false,
+                                            fixedWidthTreatEmptyValuesAsNulls: Option[Boolean] = None,
+                                            fixedWidthNullValue: Option[String] = None,
 
                                             credsFile: Option[String] = None,
                                             keytabFile: Option[String] = None)
@@ -82,6 +84,8 @@ case class StandardizationConformanceConfig(datasetName: String = "",
   override def withFixedWidthTrimValues(value: Option[Boolean]): StandardizationConformanceConfig = copy(fixedWidthTrimValues = value)
   override def withRawPathOverride(value: Option[String]): StandardizationConformanceConfig = copy(rawPathOverride = value)
   override def withFailOnInputNotPerSchema(value: Boolean): StandardizationConformanceConfig = copy(failOnInputNotPerSchema = value)
+  override def withFixedWidthTreatEmptyValuesAsNulls(value: Option[Boolean]): StandardizationConformanceConfig = copy(fixedWidthTreatEmptyValuesAsNulls = value)
+  override def withFixedWidthNullValue(value: Option[String]): StandardizationConformanceConfig = copy(fixedWidthNullValue = value)
 
   override def withCredsFile(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): StandardizationConformanceConfig = {
     copy(credsFile = value, menasCredentialsFactory = menasCredentialsFactory)
