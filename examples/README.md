@@ -12,6 +12,37 @@
                       limitations under the License.
 
 # Examples of Enceladus usage
+
+## Templates for _INFO files
+
+ Templates which illustrate the way to write _INFO files, one with the minimally necessary fields and one with the recommended fields to add.
+    
+ More info regarding the _INFO file validation can be found in the [INFO file Documentation](https://absaoss.github.io/enceladus/docs/usage/info-file).
+ 
+ Replace the <Field> tags with the appropriate data in the templates.
+ 
+### Fields changed once per dataset
+
+* `<SourceApplication>` - name of the application
+* `<Country>` - country the file belongs to
+* `<SourceType>` - source type
+* `<ColumnName>` - ideally the key column name, but can be any column
+
+### Fields (possibly) changed for every run
+
+* `<Filename>` - source file name
+* `<Version>` - version of the source file (integer)
+* `<Date>` - date of the input processing
+
+###Optionally:
+* `<ProcessStartTime>` - Start of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’(doesn't have to be the same for Raw and Source)
+* `<ProcessEndTime>` - End of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’(doesn't have to be the same for Raw and Source)
+* `<RecordCount>` - Number of records, should be the same for Raw and Source. In case of an unknown value, provide `""`(empty string) and ensure [`control.info.validation` configuration](https://absaoss.github.io/enceladus/docs/usage/config) is set to `Warning` or `None`
+
+[Template for bare minimum required data](examples/info_files/_INFO_file_template_minimal.json)
+
+[Template of recommended _INFO file content](examples/info_files/_INFO_file_template_recommended.json)
+
 ## Custom Rule Implementations and usage
 ### Requirements
 * Spark 2.2.1+ (might work with earlier, not tested)
@@ -38,5 +69,5 @@ Example arguments:
 `spark-submit --class za.co.absa.enceladus.examples.CustomRuleSample4 --master local enceladus-examples.jar --input-file="data/input/example_data.csv" --out-path="data/output" --header=true`
 
 ### Best Practices
-* It's a good idea when creating cusrom rules the cover their logic with unit tests as well. 
+* It's a good idea when creating custom rules the cover their logic with unit tests as well. 
 See the tests in `test/scala/class/za/co/absa/enceladus/examples/interpreter/rules/custom/`

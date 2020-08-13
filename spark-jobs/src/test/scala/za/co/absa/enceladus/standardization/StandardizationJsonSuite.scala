@@ -18,8 +18,10 @@ package za.co.absa.enceladus.standardization
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
 import org.scalatest.mockito.MockitoSugar
+import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileReader
@@ -30,6 +32,8 @@ import za.co.absa.enceladus.utils.udf.UDFLibrary
 class StandardizationJsonSuite extends FunSuite with SparkTestBase with MockitoSugar{
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
 
+  private val standardizationReader = new StandardizationPropertiesProvider()
+
   test("Reading data from JSON input, also such that don't adhere to desired schema") {
 
     implicit val dao: MenasDAO = mock[MenasDAO]
@@ -39,9 +43,9 @@ class StandardizationJsonSuite extends FunSuite with SparkTestBase with MockitoS
       "--raw-format json").split(" ")
 
     val dataSet = Dataset("SpecialChars", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
-    val cmd = StdCmdConfig.getCmdLineArguments(args)
+    val cmd = StandardizationConfig.getFromArguments(args)
 
-    val csvReader = StandardizationJob.getFormatSpecificReader(cmd, dataSet)
+    val csvReader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
 
     val baseSchema: StructType = DataType.fromJson(
       FileReader.readFileAsString("src/test/resources/data/standardization_json_suite_schema.json")

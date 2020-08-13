@@ -15,4 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-class ValidationException(val message: String, val techDetails: String = "") extends Exception(message)
+class ValidationException(val message: String,
+                          val techDetails: String = "",
+                          cause: Throwable = None.orNull) extends Exception(message, cause)
+

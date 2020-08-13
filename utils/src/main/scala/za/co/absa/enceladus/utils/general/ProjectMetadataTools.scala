@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.utils.general
 
 import com.typesafe.config.{Config, ConfigFactory}
+import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 
 object ProjectMetadataTools {
   private val conf: Config = ConfigFactory.load()
@@ -23,11 +24,6 @@ object ProjectMetadataTools {
   private val enceladusVersionKey = "enceladus.version"
 
   /** Returns Enceladus version from the application configuration properties */
-  def getEnceladusVersion: String = {
-    if (conf.hasPath(enceladusVersionKey)) {
-      conf.getString(enceladusVersionKey)
-    } else {
-      "N/A"
-    }
-  }
+  def getEnceladusVersion: String = conf.getOptionString(enceladusVersionKey).getOrElse("N/A")
+
 }

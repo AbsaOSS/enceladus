@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-class ConcatenationColumnDialogFactory {
+class RuleColumnDialogFactory {
 
   constructor(oController, fnLoad) {
     this._oController = oController;
@@ -21,13 +21,13 @@ class ConcatenationColumnDialogFactory {
 
     fnLoad({
       id: oView.getId(),
-      name: "components.dataset.conformanceRule.ConcatenationConformanceRule.ConcatenationColumnDialog",
+      name: "components.dataset.conformanceRule.RuleColumnDialog",
       controller: oController
     }).then(function (oDialog) {
       oView.addDependent(oDialog);
     });
 
-    this._oDialog = oController.byId("concatenationColumnDialog");
+    this._oDialog = oController.byId("ruleColumnDialog");
   }
 
   get oController() {
@@ -39,7 +39,7 @@ class ConcatenationColumnDialogFactory {
   }
 
   getDialog() {
-    return new ConcatenationColumnDialog(this.oDialog, this.oController, this.oController._model);
+    return new RuleColumnDialog(this.oDialog, this.oController, this.oController._model);
   }
 
 }
