@@ -53,7 +53,7 @@ trait ConformanceExecution extends CommonJobExecution {
                                       fsUtils: FileSystemVersionUtils,
                                       spark: SparkSession): Unit = {
     //val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
-    //preparationResult.performance.startMeasurement(stdDirSize) // TODO fix for s3
+    //preparationResult.performance.startMeasurement(stdDirSize) // TODO fix for s3 [ref issue #1416]
 
     log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
     log.info(s"publish path: ${preparationResult.pathCfg.publishPath}")
@@ -67,12 +67,12 @@ trait ConformanceExecution extends CommonJobExecution {
     }
 
     // InputPath is standardizationPath in the combined job
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
 //    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardizationPath}/_INFO")
 //      .setControlMeasuresWorkflow(sourceId.toString)
 
     // Enable control framework performance optimization for pipeline-like jobs
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
     //Atum.setAllowUnpersistOldDatasets(true)
 
     // Enable Menas plugin for Control Framework
@@ -107,16 +107,16 @@ trait ConformanceExecution extends CommonJobExecution {
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
 
     Try {
-      // handleControlInfoValidation()  // TODO fix for s3
+      // handleControlInfoValidation()  // TODO fix for s3 [ref issue #1416]
       DynamicInterpreter.interpret(preparationResult.dataset, inputData)
     } match {
       case Failure(e: ValidationException) =>
-        // AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, e.techDetails)  // TODO fix for s3
+        // AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, e.techDetails)  // TODO fix for s3 [ref issue #1416]
         throw e
       case Failure(NonFatal(e)) =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
-        // AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)  // TODO fix for s3
+        // AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)  // TODO fix for s3 [ref issue #1416]
         throw e
       case Success(conformedDF) =>
         if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
@@ -136,7 +136,7 @@ trait ConformanceExecution extends CommonJobExecution {
                                             fsUtils: FileSystemVersionUtils): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
 
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
 //    PerformanceMetricTools.addJobInfoToAtumMetadata(
 //      "conform",
 //      preparationResult.pathCfg.standardizationPath,
@@ -149,7 +149,7 @@ trait ConformanceExecution extends CommonJobExecution {
       .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(preparationResult.reportVersion))
 
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
     val recordCount = 100
 //    val recordCount = result.lastCheckpointRowCount match {
 //      case None => withPartCols.count
@@ -160,11 +160,11 @@ trait ConformanceExecution extends CommonJobExecution {
     }
 
     // ensure the whole path but version exists
-    //fsUtils.createAllButLastSubDir(preparationResult.pathCfg.publishPath) // TODO fix for s3
+    //fsUtils.createAllButLastSubDir(preparationResult.pathCfg.publishPath) // TODO fix for s3 [ref issue #1416]
 
     withPartCols.write.parquet(preparationResult.pathCfg.publishPath)
 
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
     //val publishDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.publishPath)
     // preparationResult.performance.finishMeasurement(publishDirSize, recordCount)
 //    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
@@ -175,7 +175,7 @@ trait ConformanceExecution extends CommonJobExecution {
 //      menasCredentials.username, cmdLineArgs
 //    )
 
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
     //withPartCols.writeInfoFile(preparationResult.pathCfg.publishPath)
     //writePerformanceMetrics(preparationResult.performance, cmd)
 

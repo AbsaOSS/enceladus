@@ -52,7 +52,7 @@ object MenasPlugin {
       isJobStageOnly,
       generateNewRun)
     listener = Option(eventListener)
-    //PluginManager.loadPlugin(eventListener)  // TODO fix for s3
+    //PluginManager.loadPlugin(eventListener)  // TODO fix for s3 [ref issue #1416]
   }
 
   def runUniqueId: Option[String] = listener.flatMap(_.runUniqueId)

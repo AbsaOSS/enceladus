@@ -53,10 +53,10 @@ trait StandardizationExecution extends CommonJobExecution {
                                           spark: SparkSession): StructType = {
 
     // val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.rawPath)
-    // preparationResult.performance.startMeasurement(stdDirSize) // TODO fix for s3
+    // preparationResult.performance.startMeasurement(stdDirSize) // TODO fix for s3 [ref issue #1416]
     // Enable Control Framework
 
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 //    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.rawPath}/_INFO")
 //      .setControlMeasuresWorkflow(sourceId.toString)
@@ -65,7 +65,7 @@ trait StandardizationExecution extends CommonJobExecution {
     log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
 
     // Enable control framework performance optimization for pipeline-like jobs
-    //Atum.setAllowUnpersistOldDatasets(true) // TODO fix for s3
+    //Atum.setAllowUnpersistOldDatasets(true) // TODO fix for s3 [ref issue #1416]
 
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(
@@ -76,15 +76,15 @@ trait StandardizationExecution extends CommonJobExecution {
       preparationResult.reportVersion)
 
     // Add report date and version (aka Enceladus info date and version) to Atum's metadata
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
     //Atum.setAdditionalInfo(Constants.InfoDateColumn -> cmd.reportDate)
     //Atum.setAdditionalInfo(Constants.InfoVersionColumn -> preparationResult.reportVersion.toString)
 
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
     // Add the raw format of the input file(s) to Atum's metadata
     //Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
 //    PerformanceMetricTools.addJobInfoToAtumMetadata("std",
 //      preparationResult.pathCfg.rawPath,
 //      preparationResult.pathCfg.standardizationPath,
@@ -144,19 +144,19 @@ trait StandardizationExecution extends CommonJobExecution {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     try {
-      //handleControlInfoValidation() // TODO fix for s3
+      //handleControlInfoValidation() // TODO fix for s3 [ref issue #1416]
       StandardizationInterpreter.standardize(inputData, schema, cmd.rawFormat,
         cmd.failOnInputNotPerSchema, recordIdGenerationStrategy)
     } catch {
       case e@ValidationException(msg, errors) =>
         val errorDescription = s"$msg\nDetails: ${errors.mkString("\n")}"
-        // TODO fix for s3
+        // TODO fix for s3 [ref issue #1416]
         //AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", errorDescription, "")
         throw e
       case NonFatal(e) if !e.isInstanceOf[ValidationException] =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
-        // TODO fix for s3
+        // TODO fix for s3 [ref issue #1416]
         //AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
         throw e
     }
@@ -176,9 +176,9 @@ trait StandardizationExecution extends CommonJobExecution {
       case (destinationName, sourceName) => standardizedDF.registerColumnRename(sourceName, destinationName)
     }
 
-    // standardizedDF.setCheckpoint(s"$sourceId - End", persistInDatabase = false)  // TODO fix for s3
+    // standardizedDF.setCheckpoint(s"$sourceId - End", persistInDatabase = false)  // TODO fix for s3 [ref issue #1416]
 
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
 //    val recordCount = standardizedDF.lastCheckpointRowCount match {
 //      case None => standardizedDF.count
 //      case Some(p) => p
@@ -194,7 +194,7 @@ trait StandardizationExecution extends CommonJobExecution {
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
 
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
     // val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
     // preparationResult.performance.finishMeasurement(stdDirSize, recordCount)
 //    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
@@ -206,11 +206,11 @@ trait StandardizationExecution extends CommonJobExecution {
 //      args.mkString(" ")
 //    )
 
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
     //cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     //cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
 
-    // standardizedDF.writeInfoFile(preparationResult.pathCfg.standardizationPath)  // TODO fix for s3
+    // standardizedDF.writeInfoFile(preparationResult.pathCfg.standardizationPath)  // TODO fix for s3 [ref issue #1416]
     //writePerformanceMetrics(preparationResult.performance, cmd)
     log.info(s"$sourceId finished successfully")
     standardizedDF
@@ -220,7 +220,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
   private def ensureSplittable(df: DataFrame, path: String, schema: StructType)
                               (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
 //    if (fsUtils.isNonSplittable(path)) {
 //      convertToSplittable(df, schema)
 //    } else {

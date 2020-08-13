@@ -103,7 +103,7 @@ trait CommonJobExecution {
   protected def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
 
   protected def validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, path: String): Unit = {
-    // TODO fix for s3
+    // TODO fix for s3 [ref issue #1416]
 
 //    if (fsUtils.hdfsExists(path)) {
 //      throw new IllegalStateException(
@@ -130,8 +130,8 @@ trait CommonJobExecution {
       }.mkString(",")
     }
 
-    val sourceSystem = "source1" //Atum.getControlMeasure.metadata.sourceApplication  // TODO fix for s3
-    val uniqueRunId = Some(s"runId-${Math.abs(Random.nextLong())}") //Atum.getControlMeasure.runUniqueId  // TODO fix for s3
+    val sourceSystem = "source1" //Atum.getControlMeasure.metadata.sourceApplication  // TODO fix for s3 [ref issue #1416]
+    val uniqueRunId = Some(s"runId-${Math.abs(Random.nextLong())}") //Atum.getControlMeasure.runUniqueId  // TODO fix for s3 [ref issue #1416]
 
     val params = ErrorSenderPluginParams(jobCmdConfig.datasetName,
       jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, outputPath,
