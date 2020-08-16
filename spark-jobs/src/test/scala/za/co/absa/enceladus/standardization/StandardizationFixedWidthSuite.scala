@@ -31,7 +31,6 @@ import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with MockitoSugar{
   private implicit val udfLibrary: UDFLibrary = new UDFLibrary()
-  private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
     "--menas-auth-keytab src/test/resources/user.keytab.example " +
     "--raw-format fixed-width").split(" ")

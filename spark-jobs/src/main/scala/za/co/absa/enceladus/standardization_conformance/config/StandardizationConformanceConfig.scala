@@ -61,10 +61,12 @@ case class StandardizationConformanceConfig(datasetName: String = "",
 
   override def withPublishPathOverride(value: Option[String]): StandardizationConformanceConfig = copy(publishPathOverride = value)
   override def withExperimentalMappingRule(value: Option[Boolean]): StandardizationConformanceConfig = copy(experimentalMappingRule = value)
-  override def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): StandardizationConformanceConfig = copy(isCatalystWorkaroundEnabled = value) //scalastyle:ignore
-  //better readability than multiline
-  override def withAutocleanStandardizedFolder(value: Option[Boolean]): StandardizationConformanceConfig = copy(autocleanStandardizedFolder = value) //scalastyle:ignore
-  //better readability than multiline
+  override def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): StandardizationConformanceConfig = {
+    copy(isCatalystWorkaroundEnabled = value) //scalastyle:ignore
+  }
+  override def withAutocleanStandardizedFolder(value: Option[Boolean]): StandardizationConformanceConfig = {
+    copy(autocleanStandardizedFolder = value) //scalastyle:ignore
+  }
   override def withDatasetName(value: String): StandardizationConformanceConfig = copy(datasetName = value)
   override def withDatasetVersion(value: Int): StandardizationConformanceConfig = copy(datasetVersion = value)
   override def withReportDate(value: String): StandardizationConformanceConfig = copy(reportDate = value)
@@ -84,7 +86,9 @@ case class StandardizationConformanceConfig(datasetName: String = "",
   override def withFixedWidthTrimValues(value: Option[Boolean]): StandardizationConformanceConfig = copy(fixedWidthTrimValues = value)
   override def withRawPathOverride(value: Option[String]): StandardizationConformanceConfig = copy(rawPathOverride = value)
   override def withFailOnInputNotPerSchema(value: Boolean): StandardizationConformanceConfig = copy(failOnInputNotPerSchema = value)
-  override def withFixedWidthTreatEmptyValuesAsNulls(value: Option[Boolean]): StandardizationConformanceConfig = copy(fixedWidthTreatEmptyValuesAsNulls = value)
+  override def withFixedWidthTreatEmptyValuesAsNulls(value: Option[Boolean]): StandardizationConformanceConfig = {
+    copy(fixedWidthTreatEmptyValuesAsNulls = value)
+  }
   override def withFixedWidthNullValue(value: Option[String]): StandardizationConformanceConfig = copy(fixedWidthNullValue = value)
 
   override def withCredsFile(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): StandardizationConformanceConfig = {

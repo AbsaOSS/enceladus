@@ -78,7 +78,9 @@ case class StandardizationConfig(rawFormat: String = "xml",
   override def withPerformanceMetricsFile(value: Option[String]): StandardizationConfig = copy(performanceMetricsFile = value)
   override def withFolderPrefix(value: Option[String]): StandardizationConfig = copy(folderPrefix = value)
   override def withPersistStorageLevel(value: Option[StorageLevel]): StandardizationConfig = copy(persistStorageLevel = value)
-  override def withFixedWidthTreatEmptyValuesAsNulls(value: Option[Boolean]): StandardizationConfig = copy(fixedWidthTreatEmptyValuesAsNulls = value)
+  override def withFixedWidthTreatEmptyValuesAsNulls(value: Option[Boolean]): StandardizationConfig = {
+    copy(fixedWidthTreatEmptyValuesAsNulls = value)
+  }
   override def withFixedWidthNullValue(value: Option[String]): StandardizationConfig = copy(fixedWidthNullValue = value)
 }
 
