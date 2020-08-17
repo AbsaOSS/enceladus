@@ -470,6 +470,30 @@ if [[ -z "$DRY_RUN" ]]; then
 	echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME" | tee -a "$TMP_PATH_NAME"
 	exit $EXIT_STATUS
   else
-    bash -c "$CMD_LINE"
+
+    APPLICATIONID=$(bash -c "$CMD_LINE" 2>&1 | grep "Submitted application" | tail -c +62)
+    echo Application Id : $APPLICATIONID
+    if [ "$APPLICATIONID" == "" ]; then
+      echo Failed to start app
+      exit 1
+    fi
+
+    STATE='NOT FINISHED'
+
+    while [[ "$STATE" != "FINISHED" && "$STATE" != "FAILED" && "$STATE" != "KILLED" ]]; do
+      STATE=$(yarn application -status $APPLICATIONID | grep -P '\tState' | tail -c +10)
+      echo State: $STATE
+      if [[ "$STATE" != "FINISHED" && "$STATE" != "FAILED" && "$STATE" != "KILLED" ]]; then
+        sleep 30
+      fi
+    done
+
+    FINALSTATE=$(yarn application -status $APPLICATIONID | grep -P '\tFinal-State' | tail -c +16)
+
+    if [ "$FINALSTATE" == "SUCCEEDED" ]; then
+      exit 0
+    else
+        exit 1
+    fi
   fi
 fi
