@@ -15,6 +15,7 @@ categories:
 - [Running Conformance](#running-conformance)
 - [Running Standardization and Conformance together](#running-standardization-and-conformance-together)
 - [Helper scripts](#helper-scripts)
+- [Command line options](#command-line-options)
 <!-- tocstop -->
 
 ## Requirements and deploy
@@ -154,6 +155,8 @@ The basic command to run **Standardization And Conformance** becomes:
 --row-tag <tag>
 ```
 
+## Command line options
+
 The list of options for configuring Spark deployment mode in Yarn and resource specification:
 
 |            Option                                                    |   Default   |                         Description                                                                       |
@@ -193,7 +196,7 @@ The list of additional options available for running Standardization:
 |            Option                    | Default |                          Description                                                                                                    |
 |--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | --raw-format **format**              |         | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`                                          |
-| --charset **charset**                | `UTF-8` | Specifies a charset to use for `csv`, `json` or `xml`                                                                                   |
+| --charset **charset**                | `UTF-8` | Specifies a charset to use for `csv`, `json`, `xml`, `cobol` or `fixed-width` |
 | --row-tag **tag**                    |         | A row tag if the input format is `xml`                                                                                                  |
 | --header **true/false**              |         | Indicates if in the input CSV data has headers as the first row of each file                                                            |
 | --delimiter **character**            | `,`     | Specifies a delimiter character to use for CSV format                                                                                   |
@@ -204,6 +207,8 @@ The list of additional options available for running Standardization:
 | --folder-prefix **prefix**           |         | Adds a folder prefix before the date tokens                                                                                             |
 | --debug-set-raw-path **path**        |         | Override the path of the raw data (used for testing purposes)                                                                           |
 | --strict-schema-check **true/false** | `false` | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` proceeds over it with an entry in _errCol | 
+| --empty-values-as-nulls **true/false** | `false` | If `true` treats empty values as `null`s | 
+| --null-value **value** | `""` _(empty string)_ | Defines how null values are represented in a `fixed-width` file format | 
 
 The list of additional options available for running Conformance:
 
