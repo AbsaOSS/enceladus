@@ -150,7 +150,7 @@ trait ConformanceExecution extends CommonJobExecution {
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(preparationResult.reportVersion))
 
     // TODO fix for s3 [ref issue #1416]
-    val recordCount = 100
+    val recordCount = -1
 //    val recordCount = result.lastCheckpointRowCount match {
 //      case None => withPartCols.count
 //      case Some(p) => p
@@ -179,9 +179,10 @@ trait ConformanceExecution extends CommonJobExecution {
     //withPartCols.writeInfoFile(preparationResult.pathCfg.publishPath)
     //writePerformanceMetrics(preparationResult.performance, cmd)
 
-    if (conformanceReader.isAutocleanStdFolderEnabled()) {
-      fsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardizationPath)
-    }
+    // TODO fix for s3 [ref issue #1416]
+//    if (conformanceReader.isAutocleanStdFolderEnabled()) {
+//      fsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardizationPath)
+//    }
     log.info(s"$sourceId finished successfully")
   }
 }
