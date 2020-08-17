@@ -6,7 +6,7 @@
 |3  |Griff     |Leaning  |[]    |
 |4  |Klarrisa  |Corps    |[]    |
 |5  |Cornie    |Hewertson|[]    |
-|6  |          |a        |[]    |
+|6  |null      |a        |[]    |
 +---+----------+---------+------+
 
 
