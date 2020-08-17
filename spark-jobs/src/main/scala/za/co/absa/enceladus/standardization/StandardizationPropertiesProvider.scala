@@ -109,7 +109,12 @@ class StandardizationPropertiesProvider {
 
   private def getFixedWidthOptions[T](cmd: StandardizationConfigParser[T]): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
-      HashMap("trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter))
+      HashMap(
+        "trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter),
+        "treatEmptyValuesAsNulls" -> cmd.fixedWidthTreatEmptyValuesAsNulls.map(BooleanParameter),
+        "nullValue" -> cmd.fixedWidthNullValue.map(StringParameter),
+        "charset" -> cmd.charset.map(StringParameter)
+      )
     } else {
       HashMap()
     }

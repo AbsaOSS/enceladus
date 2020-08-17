@@ -28,9 +28,11 @@ trait StandardizationConfigParser[R] extends JobConfigParser[R] {
   def withCsvQuote(value: Option[String] = None): R
   def withCsvEscape(value: Option[String] = None): R
   def withCobolOptions(value: Option[CobolOptions] = None): R
-  def withFixedWidthTrimValues(value: Option[Boolean] = Some(false)): R
+  def withFixedWidthTrimValues(value: Option[Boolean] = None): R
   def withRawPathOverride(value: Option[String]): R
   def withFailOnInputNotPerSchema(value: Boolean): R
+  def withFixedWidthTreatEmptyValuesAsNulls(value: Option[Boolean] = None): R
+  def withFixedWidthNullValue(value: Option[String] = None): R
 
   def rawFormat: String
   def charset: Option[String]
@@ -43,6 +45,8 @@ trait StandardizationConfigParser[R] extends JobConfigParser[R] {
   def fixedWidthTrimValues: Option[Boolean]
   def rawPathOverride: Option[String]
   def failOnInputNotPerSchema: Boolean
+  def fixedWidthTreatEmptyValuesAsNulls: Option[Boolean]
+  def fixedWidthNullValue: Option[String]
 }
 
 object StandardizationConfigParser {
@@ -129,12 +133,20 @@ object StandardizationConfigParser {
         config.withRawPathOverride(Some(value)))
         .text("override the path of the raw data (used internally for performance tests)"),
 
+      opt[Boolean]("empty-values-as-nulls").optional()
+        .action((value, config) => config.withFixedWidthTreatEmptyValuesAsNulls(Some(value)))
+        .text("For FixedWidth file format. Treats empty values as null. Default is false"),
+
+      opt[String]("null-value").optional()
+        .action((value, config) => config.withFixedWidthNullValue(Some(value)))
+        .text("""For FixedWidth file format. Sets the representation of a null value. Defaults is ""."""),
+
       checkConfig(checkConfigX(_, builder))
     )
   }
   //scalastyle:on method.length
 
-  private val formatsSupportingCharset = List("xml", "csv", "json", "cobol")
+  private val formatsSupportingCharset = List("xml", "csv", "json", "cobol", "fixed-width")
 
   private def typicalError(field: String, format: String): String = {
     s"The $field option is supported only for $format format"
@@ -142,7 +154,7 @@ object StandardizationConfigParser {
 
   private def checkCharset[R <: StandardizationConfigParser[R]](config: R): List[String] = {
     if (!formatsSupportingCharset.contains(config.rawFormat) && config.charset.isDefined) {
-      List(typicalError("--charset", "CSV, JSON, XML and COBOL"))
+      List(typicalError("--charset", "CSV, JSON, XML, COBOL and FixedWidth"))
     } else {
       List.empty
     }
@@ -197,11 +209,30 @@ object StandardizationConfigParser {
     }
   }
 
+  private def checkFixedWidthFields[R <: StandardizationConfigParser[R]](config: R): Seq[String] = {
+    def fixedWidthFieldsThatShouldNotBePresent(config: R): List[String] = {
+      val format = "FixedWidth"
+      val definedFields = Map(
+        typicalError("--trimValues", format) -> config.fixedWidthTrimValues.isDefined,
+        typicalError("--empty-values-as-nulls", format) -> config.fixedWidthTreatEmptyValuesAsNulls.isDefined,
+        typicalError("--null-value", format) -> config.fixedWidthNullValue.isDefined
+      )
+      definedFields.filter { case (_, value) => value }.keys.toList
+    }
+
+    if (config.rawFormat == "fixed-width") {
+      List.empty
+    } else {
+      fixedWidthFieldsThatShouldNotBePresent(config)
+    }
+  }
+
   private def checkConfigX[R <: StandardizationConfigParser[R]](config: R, builder: OParserBuilder[R]): Either[String, Unit] = {
     val allErrors:List[String] = checkCharset(config) ++
       checkXMLFields(config) ++
       checkCSVFields(config) ++
-      checkCobolFields(config)
+      checkCobolFields(config) ++
+      checkFixedWidthFields(config)
 
     if (allErrors.isEmpty) {
       builder.success
