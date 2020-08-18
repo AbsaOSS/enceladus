@@ -399,6 +399,7 @@ if [[ "$DEPLOY_MODE" == "client" ]]; then
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLIENT"
 else
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLUSTER"
+  add_spark_conf_cmd "spark.yarn.submit.waitAppCompletion" "true"
 fi
 CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
@@ -481,19 +482,19 @@ if [[ -z "$DRY_RUN" ]]; then
     STATE='NOT FINISHED'
 
     while [[ "$STATE" != "FINISHED" && "$STATE" != "FAILED" && "$STATE" != "KILLED" ]]; do
-      STATE=$(yarn application -status $APPLICATIONID | grep -P '\tState' | tail -c +10)
+      STATE=$(yarn application -status $APPLICATIONID | grep -oP "(?<=\sState : ).*" )
       echo State: $STATE
       if [[ "$STATE" != "FINISHED" && "$STATE" != "FAILED" && "$STATE" != "KILLED" ]]; then
         sleep 30
       fi
     done
 
-    FINALSTATE=$(yarn application -status $APPLICATIONID | grep -P '\tFinal-State' | tail -c +16)
+    FINALSTATE=$(yarn application -status $APPLICATIONID | grep -oP "(?<=\sFinal-State : ).*" )
 
     if [ "$FINALSTATE" == "SUCCEEDED" ]; then
       exit 0
     else
-        exit 1
+      exit 1
     fi
   fi
 fi
