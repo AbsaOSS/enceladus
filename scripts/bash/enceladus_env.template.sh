@@ -16,10 +16,9 @@
 # Environment configuration
 STD_HDFS_PATH="/bigdata/std/std-{0}-{1}-{2}-{3}"
 
-# MongoDB connection configuration for Spline
+# Configuration for Spline
 # Important! Special characters should be escaped using triple backslashes (\\\)
-SPLINE_MONGODB_URL="mongodb://localhost:27017"
-SPLINE_MONGODB_NAME="spline"
+SPLINE_PRODUCER_URL="http://localhost:8080/spline/producer"
 
 export SPARK_HOME="/opt/spark-2.4.4"
 SPARK_SUBMIT="$SPARK_HOME/bin/spark-submit"
