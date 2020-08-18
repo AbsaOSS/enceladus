@@ -472,7 +472,7 @@ if [[ -z "$DRY_RUN" ]]; then
 	exit $EXIT_STATUS
   else
 
-    APPLICATIONID=$(bash -c "$CMD_LINE" 2>&1 | grep "Submitted application" | tail -c +62)
+    APPLICATIONID=$(bash -c "$CMD_LINE" 2>&1 | grep -oP "(?<=Submitted application ).*" )
     echo Application Id : $APPLICATIONID
     if [ "$APPLICATIONID" == "" ]; then
       echo Failed to start app
