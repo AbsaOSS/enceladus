@@ -399,7 +399,7 @@ if [[ "$DEPLOY_MODE" == "client" ]]; then
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLIENT"
 else
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLUSTER"
-  add_spark_conf_cmd "spark.yarn.submit.waitAppCompletion" "true"
+  add_spark_conf_cmd "spark.yarn.submit.waitAppCompletion" "false"
 fi
 CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
@@ -472,7 +472,7 @@ if [[ -z "$DRY_RUN" ]]; then
 	exit $EXIT_STATUS
   else
 
-    APPLICATIONID=$(bash -c "$CMD_LINE" 2>&1 | grep "Submitted application" | tail -c +62)
+    APPLICATIONID=$(bash -c "$CMD_LINE" 2>&1 | grep -oP "(?<=Submitted application ).*" )
     echo Application Id : $APPLICATIONID
     if [ "$APPLICATIONID" == "" ]; then
       echo Failed to start app
@@ -481,7 +481,7 @@ if [[ -z "$DRY_RUN" ]]; then
 
     STATE='NOT FINISHED'
 
-    while [[ "$STATE" != "FINISHED" && "$STATE" != "FAILED" && "$STATE" != "KILLED" ]]; do
+    while [[ "$STATE" != "FINISHED" && "$STATE" != "FAILED" && "$STATE" != "KILLED" ]];  do
       STATE=$(yarn application -status $APPLICATIONID | grep -oP "(?<=\sState : ).*" )
       echo State: $STATE
       if [[ "$STATE" != "FINISHED" && "$STATE" != "FAILED" && "$STATE" != "KILLED" ]]; then
