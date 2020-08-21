@@ -30,8 +30,7 @@ import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancem
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with MockitoSugar{
-  private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
-  private val log: Logger = LoggerFactory.getLogger(this.getClass)
+  private implicit val udfLibrary: UDFLibrary = new UDFLibrary()
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
     "--menas-auth-keytab src/test/resources/user.keytab.example " +
     "--raw-format fixed-width").split(" ")
@@ -60,11 +59,11 @@ class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with Mo
     val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    assert(expected == actual)
   }
 
   test("Reading data from FixedWidth input trimmed") {
-    val cmd = StandardizationConfig.getFromArguments(argsBase ++ Array("--trimValues", "true"))
+    val cmd = StandardizationConfig.getFromArguments(argsBase ++ Array("--trimValues", "true", "--empty-values-as-nulls", "false", "--null-value", "alfa"))
 
     val fixedWidthReader = new StandardizationPropertiesProvider().getFormatSpecificReader(cmd, dataSet)
 
@@ -79,6 +78,25 @@ class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with Mo
     val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    assert(expected == actual)
+  }
+
+  test("Reading data from FixedWidth input treating empty as null") {
+    val cmd = StandardizationConfig.getFromArguments(argsBase ++ Array("--trimValues", "true", "--empty-values-as-nulls", "true"))
+
+    val fixedWidthReader = new StandardizationPropertiesProvider().getFormatSpecificReader(cmd, dataSet)
+
+    val inputSchema = PlainSchemaGenerator.generateInputSchema(baseSchema)
+    val reader = fixedWidthReader.schema(inputSchema)
+
+    val sourceDF = reader.load("src/test/resources/data/standardization_fixed_width_suite_data.txt")
+
+    val expected = FileReader.readFileAsString("src/test/resources/data/standardization_fixed_width_suite_expected_with_nulls.txt")
+      .replace("\r\n", "\n")
+
+    val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
+
+    val actual = destDF.dataAsString(truncate = false)
+    assert(expected == actual)
   }
 }
