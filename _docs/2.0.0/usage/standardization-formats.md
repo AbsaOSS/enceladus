@@ -57,6 +57,9 @@ Fixed Width `format` value is `fixed-width`. Format options are
 
 | Option | Values domain | Description | Default |
 |---|---|---|---|
+| charset | Any valid charset names | The character set. | `UTF-8` |
+| empty-values-as-nulls | Boolean | If `true` treats empty values as `null`s | `false` | 
+| null-value | String | Defines how null values are represented in a `fixed-width` file format | `""` _(empty string)_ | 
 | trimValues | Boolean | Uses Java's String `.trim`  method. Removes whitespaces from left and right ends. Required if data is to be casted to any Numeric | `false` |
 
 ## JSON
