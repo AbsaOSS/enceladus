@@ -55,9 +55,6 @@ trait ConformanceExecution extends CommonJobExecution {
     val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
     preparationResult.performance.startMeasurement(stdDirSize)
 
-    log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
-    log.info(s"publish path: ${preparationResult.pathCfg.publishPath}")
-
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 
@@ -91,6 +88,9 @@ trait ConformanceExecution extends CommonJobExecution {
   }
 
   override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
+    log.info(s"standardization path: ${pathConfig.standardizationPath}")
+    log.info(s"publish path: ${pathConfig.publishPath}")
+
     validateIfPathAlreadyExists(fsUtils, pathConfig.publishPath)
   }
 
