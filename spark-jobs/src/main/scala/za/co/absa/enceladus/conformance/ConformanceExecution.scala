@@ -52,8 +52,8 @@ trait ConformanceExecution extends CommonJobExecution {
                                       cmd: ConformanceConfigParser[T],
                                       fsUtils: FileSystemVersionUtils,
                                       spark: SparkSession): Unit = {
-    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
-    preparationResult.performance.startMeasurement(stdDirSize)
+    //val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
+    //preparationResult.performance.startMeasurement(stdDirSize) // TODO fix for s3 [ref issue #1416]
 
     log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
     log.info(s"publish path: ${preparationResult.pathCfg.publishPath}")
@@ -67,11 +67,13 @@ trait ConformanceExecution extends CommonJobExecution {
     }
 
     // InputPath is standardizationPath in the combined job
-    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardizationPath}/_INFO")
-      .setControlMeasuresWorkflow(sourceId.toString)
+    // TODO fix for s3 [ref issue #1416]
+//    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardizationPath}/_INFO")
+//      .setControlMeasuresWorkflow(sourceId.toString)
 
     // Enable control framework performance optimization for pipeline-like jobs
-    Atum.setAllowUnpersistOldDatasets(true)
+    // TODO fix for s3 [ref issue #1416]
+    //Atum.setAllowUnpersistOldDatasets(true)
 
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(
@@ -105,16 +107,16 @@ trait ConformanceExecution extends CommonJobExecution {
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
 
     Try {
-      handleControlInfoValidation()
+      // handleControlInfoValidation()  // TODO fix for s3 [ref issue #1416]
       DynamicInterpreter.interpret(preparationResult.dataset, inputData)
     } match {
       case Failure(e: ValidationException) =>
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, e.techDetails)
+        // AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, e.techDetails)  // TODO fix for s3 [ref issue #1416]
         throw e
       case Failure(NonFatal(e)) =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
+        // AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)  // TODO fix for s3 [ref issue #1416]
         throw e
       case Success(conformedDF) =>
         if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
@@ -134,47 +136,53 @@ trait ConformanceExecution extends CommonJobExecution {
                                             fsUtils: FileSystemVersionUtils): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
 
-    PerformanceMetricTools.addJobInfoToAtumMetadata(
-      "conform",
-      preparationResult.pathCfg.standardizationPath,
-      preparationResult.pathCfg.publishPath,
-      menasCredentials.username, cmdLineArgs
-    )
+    // TODO fix for s3 [ref issue #1416]
+//    PerformanceMetricTools.addJobInfoToAtumMetadata(
+//      "conform",
+//      preparationResult.pathCfg.standardizationPath,
+//      preparationResult.pathCfg.publishPath,
+//      menasCredentials.username, cmdLineArgs
+//    )
 
     val withPartCols = result
       .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.reportDate), ReportDateFormat))
       .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(preparationResult.reportVersion))
 
-    val recordCount = result.lastCheckpointRowCount match {
-      case None => withPartCols.count
-      case Some(p) => p
-    }
+    // TODO fix for s3 [ref issue #1416]
+    val recordCount = -1
+//    val recordCount = result.lastCheckpointRowCount match {
+//      case None => withPartCols.count
+//      case Some(p) => p
+//    }
     if (recordCount == 0) {
       handleEmptyOutput(SourcePhase.Conformance)
     }
 
     // ensure the whole path but version exists
-    fsUtils.createAllButLastSubDir(preparationResult.pathCfg.publishPath)
+    //fsUtils.createAllButLastSubDir(preparationResult.pathCfg.publishPath) // TODO fix for s3 [ref issue #1416]
 
     withPartCols.write.parquet(preparationResult.pathCfg.publishPath)
 
-    val publishDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.publishPath)
-    preparationResult.performance.finishMeasurement(publishDirSize, recordCount)
-    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
-      spark,
-      "conform",
-      preparationResult.pathCfg.standardizationPath,
-      preparationResult.pathCfg.publishPath,
-      menasCredentials.username, cmdLineArgs
-    )
+    // TODO fix for s3 [ref issue #1416]
+    //val publishDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.publishPath)
+    // preparationResult.performance.finishMeasurement(publishDirSize, recordCount)
+//    PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
+//      spark,
+//      "conform",
+//      preparationResult.pathCfg.standardizationPath,
+//      preparationResult.pathCfg.publishPath,
+//      menasCredentials.username, cmdLineArgs
+//    )
 
-    withPartCols.writeInfoFile(preparationResult.pathCfg.publishPath)
-    writePerformanceMetrics(preparationResult.performance, cmd)
+    // TODO fix for s3 [ref issue #1416]
+    //withPartCols.writeInfoFile(preparationResult.pathCfg.publishPath)
+    //writePerformanceMetrics(preparationResult.performance, cmd)
 
-    if (conformanceReader.isAutocleanStdFolderEnabled()) {
-      fsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardizationPath)
-    }
+    // TODO fix for s3 [ref issue #1416]
+//    if (conformanceReader.isAutocleanStdFolderEnabled()) {
+//      fsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardizationPath)
+//    }
     log.info(s"$sourceId finished successfully")
   }
 }
