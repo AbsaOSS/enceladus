@@ -74,9 +74,9 @@ menas.environment=Dev
 
 menas.spark.master=local[1]
 
-# The template for Lineage (Spline) display. If empty Lineage button is not shown.
+# The api gateway for Lineage (Spline) display. If empty Lineage button is not shown.
 # Avoiding the http(s) protocol will cause that the same protocol will be used as for Menas itself, avoiding issues
-spline.urlTemplate=//localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s
+menas.lineage.readApiUrl=//localhost:8080/spline-gw/consumer
 
 #system-wide time zone
 timezone=UTC
