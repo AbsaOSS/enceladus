@@ -42,6 +42,7 @@ class ConformancePropertiesProvider {
     .setControlFrameworkEnabled(enableCF)
     .setBroadcastStrategyMode(broadcastingStrategyMode)
     .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
+    .setAllowDataFrameMutability(isDataFrameMutabilityEnabled())
 
   private def isExperimentalRuleEnabled[T]()(implicit cmd: ConformanceConfigParser[T]): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.experimentalMappingRule, experimentalRuleKey, defaultValue = false)
@@ -52,6 +53,12 @@ class ConformancePropertiesProvider {
   private def isCatalystWorkaroundEnabled[T]()(implicit cmd: ConformanceConfigParser[T]): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.isCatalystWorkaroundEnabled, catalystWorkaroundKey, defaultValue = true)
     log.info(s"Catalyst workaround enabled = $enabled")
+    enabled
+  }
+
+  private def isDataFrameMutabilityEnabled[T]()(implicit cmd: ConformanceConfigParser[T]): Boolean = {
+    val enabled = conf.getOptionBoolean(allowDataFrameMutabilityKey).getOrElse(false)
+    log.info(s"DataFrame mutability enabled = $enabled")
     enabled
   }
 
@@ -90,4 +97,5 @@ object ConformancePropertiesProvider {
   private val experimentalRuleKey = "conformance.mapping.rule.experimental.implementation"
   private val catalystWorkaroundKey = "conformance.catalyst.workaround"
   private val broadcastStrategyKey = "conformance.mapping.rule.broadcast"
+  private val allowDataFrameMutabilityKey = "conformance.allowDataFrameMutability"
 }

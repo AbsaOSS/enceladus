@@ -58,8 +58,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef,
-      df)
+    val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef, df)
     val expected = ArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[ConformedOuter].collect().sortBy(_.order).toList
     assertResult(expected)(conformed)
