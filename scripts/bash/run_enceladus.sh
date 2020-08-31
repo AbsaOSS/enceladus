@@ -50,6 +50,8 @@ HEADER=""
 CSV_QUOTE=""
 CSV_ESCAPE=""
 TRIM_VALUES=""
+EMPTY_VALUES_AS_NULLS=""
+NULL_VALUE=""
 COBOL_IS_TEXT=""
 COBOL_ENCODING=""
 IS_XCOM=""
@@ -187,6 +189,14 @@ case $key in
     TRIM_VALUES="$2"
     shift 2 # past argument and value
     ;;
+    --empty-values-as-nulls)
+    EMPTY_VALUES_AS_NULLS="$2"
+    shift 2 # past argument and value
+    ;;
+    --null-value)
+    NULL_VALUE="$2"
+    shift 2 # past argument and value
+    ;;
     --cobol-encoding)
     COBOL_ENCODING="$2"
     shift 2 # past argument and value
@@ -219,7 +229,6 @@ case $key in
     DEBUG_SET_RAW_PATH="$2"
     shift 2 # past argument and value
     ;;
-
     --menas-credentials-file)
     MENAS_CREDENTIALS_FILE="$2"
     shift 2 # past argument and value
@@ -418,6 +427,8 @@ add_to_cmd_line "--header" ${HEADER}
 add_to_cmd_line "--csv-quote" ${CSV_QUOTE}
 add_to_cmd_line "--csv-escape" ${CSV_ESCAPE}
 add_to_cmd_line "--trimValues" ${TRIM_VALUES}
+add_to_cmd_line "--empty-values-as-nulls" ${EMPTY_VALUES_AS_NULLS}
+add_to_cmd_line "--null-value" ${NULL_VALUE}
 add_to_cmd_line "--cobol-is-text" ${COBOL_IS_TEXT}
 add_to_cmd_line "--cobol-encoding" ${COBOL_ENCODING}
 add_to_cmd_line "--cobol-trimming-policy" ${COBOL_TRIMMING_POLICY}
