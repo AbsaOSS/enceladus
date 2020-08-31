@@ -23,7 +23,7 @@ import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
-import za.co.absa.atum.core.Atum
+import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
@@ -223,7 +223,10 @@ trait CommonJobExecution {
     val areCountMeasurementsAllZero = Atum.getControlMeasure.checkpoints
       .flatMap(checkpoint =>
         checkpoint.controls.filter(control =>
-          control.controlName.equalsIgnoreCase(controlTypeRecordCount)))
+          // original: control.controlName.equalsIgnoreCase(controlTypeRecordCount))
+          ControlType.isControlMeasureTypeEqual(control.controlType, ControlType.Count.value) // TODO check that is works as expected on this Atum update
+        )
+      )
       .forall(m => Try(m.controlValue.toString.toDouble).toOption.contains(0D))
 
     if (areCountMeasurementsAllZero) {

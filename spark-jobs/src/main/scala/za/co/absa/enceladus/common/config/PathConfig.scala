@@ -15,6 +15,9 @@
 
 package za.co.absa.enceladus.common.config
 
+import software.amazon.awssdk.regions.Region
+import za.co.absa.atum.persistence.S3Location
+
 /**
  *
  * @param rawPath Input path of the job
@@ -23,3 +26,21 @@ package za.co.absa.enceladus.common.config
  *                            StandardizationConformanceJob it should represent the intermediate standardization path
  */
 case class PathConfig(rawPath: String, publishPath: String, standardizationPath: String)
+
+object PathConfig {
+
+  // hint: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html#bucketnamingrules
+  val S3LocationRx = "s3(?:a|n)?://([-a-z0-9.]{3,63})/(.*)".r
+
+   implicit class StringS3LocationExt(path: String) {
+
+     // TODO figure out where to get region from
+      def toS3Location(region: Region = Region.EU_WEST_1): S3Location = {
+          path match {
+            case S3LocationRx(bucketName, path) => S3Location(bucketName, path, region)
+            case _ => throw new IllegalArgumentException(s"Could not parse S3 Location from $path using rx $S3LocationRx.")
+          }
+      }
+   }
+
+}

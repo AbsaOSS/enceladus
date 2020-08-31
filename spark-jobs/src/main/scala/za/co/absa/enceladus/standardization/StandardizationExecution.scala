@@ -22,6 +22,7 @@ import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.S3DefaultCredentialsProvider
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
@@ -41,7 +42,7 @@ import za.co.absa.enceladus.utils.validation.ValidationException
 
 import scala.util.control.NonFatal
 
-trait StandardizationExecution extends CommonJobExecution {
+trait StandardizationExecution extends CommonJobExecution with S3DefaultCredentialsProvider {
   private val sourceId = SourcePhase.Standardization
 
   protected def prepareStandardization[T](args: Array[String],
@@ -58,7 +59,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
     // TODO fix for s3 [ref issue #1416]
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-//    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.rawPath}/_INFO")
+//    spark.enableControlMeasuresTrackingForS3(s"${preparationResult.pathCfg.rawPath}/_INFO")
 //      .setControlMeasuresWorkflow(sourceId.toString)
 
     log.info(s"raw path: ${preparationResult.pathCfg.rawPath}")
