@@ -51,7 +51,10 @@ object JobConfigParser {
   def jobConfigParser[R <: JobConfigParser[R]]: OParser[_, R] = {
     val builder = OParser.builder[R]
     import builder._
-    OParser.sequence(head("Job Parameters"),
+    OParser.sequence(
+
+      head(s"Enceladus ${this.getClass.getPackage.getImplementationVersion}"),
+      help("help"),
       opt[String]('D', "dataset-name").required().action((value, config) =>
         config.withDatasetName(value)).text("Dataset name"),
 
