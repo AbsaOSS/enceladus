@@ -67,9 +67,7 @@ object DynamicInterpreter {
 
   private def findOriginalColumnsModificationRules(steps: List[ConformanceRule],
                                                    schema: StructType): Seq[ConformanceRule] = {
-    steps.flatMap {
-      rule: ConformanceRule => if (SchemaUtils.fieldExists(rule.outputColumn, schema)) Some(rule) else None
-    }
+    steps.filter(rule => SchemaUtils.fieldExists(rule.outputColumn, schema))
   }
 
   /**
