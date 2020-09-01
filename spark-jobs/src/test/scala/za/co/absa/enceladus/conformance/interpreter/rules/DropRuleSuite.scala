@@ -91,7 +91,7 @@ class DropRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
       .setExperimentalMappingRuleEnabled(true)
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
-      .setAllowDataFrameMutability(false)
+      .setOriginalColumnsMutability(false)
   )
 
   test("Drop conformance rule test 1 - drop root column") {

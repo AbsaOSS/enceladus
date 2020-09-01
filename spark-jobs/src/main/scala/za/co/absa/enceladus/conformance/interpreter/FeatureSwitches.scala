@@ -33,7 +33,7 @@ sealed abstract case class FeatureSwitches(
                                             controlFrameworkEnabled: Boolean = false,
                                             broadcastStrategyMode: ThreeStateSwitch = Auto,
                                             broadcastMaxSizeMb: Int = 0,
-                                            allowDataFrameMutability: Boolean = false
+                                            allowOriginalColumnsMutability: Boolean = false
                                           ) {
   private def copy(
                     experimentalMappingRuleEnabled: Boolean = this.experimentalMappingRuleEnabled,
@@ -41,14 +41,14 @@ sealed abstract case class FeatureSwitches(
                     controlFrameworkEnabled: Boolean = this.controlFrameworkEnabled,
                     broadcastStrategyMode: ThreeStateSwitch = this.broadcastStrategyMode,
                     broadcastMaxSizeMb: Int = this.broadcastMaxSizeMb,
-                    allowDataFrameMutability: Boolean = this.allowDataFrameMutability
+                    allowOriginalColumnsMutability: Boolean = this.allowOriginalColumnsMutability
                   ): FeatureSwitches = {
     new FeatureSwitches(experimentalMappingRuleEnabled,
       catalystWorkaroundEnabled,
       controlFrameworkEnabled,
       broadcastStrategyMode,
       broadcastMaxSizeMb,
-      allowDataFrameMutability) {}
+      allowOriginalColumnsMutability) {}
   }
 
   def setExperimentalMappingRuleEnabled(value: Boolean): FeatureSwitches = {
@@ -71,8 +71,8 @@ sealed abstract case class FeatureSwitches(
     copy(broadcastMaxSizeMb = value)
   }
 
-  def setAllowDataFrameMutability(value: Boolean): FeatureSwitches = {
-    copy(allowDataFrameMutability = value)
+  def setOriginalColumnsMutability(value: Boolean): FeatureSwitches = {
+    copy(allowOriginalColumnsMutability = value)
   }
 
 }

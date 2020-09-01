@@ -42,7 +42,7 @@ class ConformancePropertiesProvider {
     .setControlFrameworkEnabled(enableCF)
     .setBroadcastStrategyMode(broadcastingStrategyMode)
     .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
-    .setAllowDataFrameMutability(isDataFrameMutabilityEnabled())
+    .setOriginalColumnsMutability(isOriginalColumnsMutabilityEnabled())
 
   private def isExperimentalRuleEnabled[T]()(implicit cmd: ConformanceConfigParser[T]): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.experimentalMappingRule, experimentalRuleKey, defaultValue = false)
@@ -56,8 +56,8 @@ class ConformancePropertiesProvider {
     enabled
   }
 
-  private def isDataFrameMutabilityEnabled[T]()(implicit cmd: ConformanceConfigParser[T]): Boolean = {
-    val enabled = conf.getOptionBoolean(allowDataFrameMutabilityKey).getOrElse(false)
+  private def isOriginalColumnsMutabilityEnabled[T]()(implicit cmd: ConformanceConfigParser[T]): Boolean = {
+    val enabled = conf.getOptionBoolean(allowOriginalColumnsMutabilityKey).getOrElse(false)
     log.info(s"DataFrame mutability enabled = $enabled")
     enabled
   }
@@ -97,5 +97,5 @@ object ConformancePropertiesProvider {
   private val experimentalRuleKey = "conformance.mapping.rule.experimental.implementation"
   private val catalystWorkaroundKey = "conformance.catalyst.workaround"
   private val broadcastStrategyKey = "conformance.mapping.rule.broadcast"
-  private val allowDataFrameMutabilityKey = "conformance.allowDataFrameMutability"
+  private val allowOriginalColumnsMutabilityKey = "conformance.allowOriginalColumnsMutability"
 }

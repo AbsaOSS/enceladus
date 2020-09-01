@@ -65,10 +65,10 @@ object DynamicInterpreter {
     conformedDf
   }
 
-  def findRulesBreakingImmutability(steps: List[ConformanceRule], schema: StructType): Seq[DropConformanceRule] = {
+  private def findOriginalColumnsModificationRules(steps: List[ConformanceRule],
+                                                   schema: StructType): Seq[ConformanceRule] = {
     steps.flatMap {
-      case rule: DropConformanceRule => if (SchemaUtils.fieldExists(rule.outputColumn, schema)) Some(rule) else None
-      case _ => None
+      rule: ConformanceRule => if (SchemaUtils.fieldExists(rule.outputColumn, schema)) Some(rule) else None
     }
   }
 
@@ -88,7 +88,7 @@ object DynamicInterpreter {
 
     val steps = getConformanceSteps
 
-    checkMutabilityNotViolated(inputDf, steps)
+    checkMutabilityNotViolated(inputDf.schema, steps)
 
     val interpreters = getInterpreters(steps, inputDf.schema)
     val optimizerTimeTracker = new OptimizerTimeTracker(inputDf, ictx.featureSwitches.catalystWorkaroundEnabled)
@@ -120,15 +120,15 @@ object DynamicInterpreter {
     optimizerTimeTracker.cleanupWorkaroundDf(conformedDf)
   }
 
-  private def checkMutabilityNotViolated(inputDf: DataFrame, steps: List[ConformanceRule])
+  private def checkMutabilityNotViolated(schema: StructType, steps: List[ConformanceRule])
                                         (implicit ictx: InterpreterContext): Unit = {
-    val rulesInViolation = findRulesBreakingImmutability(steps, inputDf.schema)
+    val rulesInViolation = findOriginalColumnsModificationRules(steps, schema)
 
     if (rulesInViolation.nonEmpty) {
       val violationsString = rulesInViolation.map(rule =>
         s"Rule number ${rule.order} - ${rule.getClass.getSimpleName}"
       ).mkString("\n")
-      if (ictx.featureSwitches.allowDataFrameMutability) {
+      if (ictx.featureSwitches.allowOriginalColumnsMutability) {
         log.warn(
           s"""Mutability of original Data Allowed and there are some rules in violation of immutability pattern.
              |These are:

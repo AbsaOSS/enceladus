@@ -37,7 +37,7 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
-    val allowMutableDataFrames: Boolean = true
+    val originalColumnsMutability: Boolean = true
 
     mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn inputDataset
     mockWhen(dao.getDataset("Library Conformance", 1)) thenReturn inputDataset
@@ -47,7 +47,7 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
       .setExperimentalMappingRuleEnabled(experimentalMR)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
-      .setAllowDataFrameMutability(allowMutableDataFrames))
+      .setOriginalColumnsMutability(originalColumnsMutability))
 
 
     val conformed = DynamicInterpreter.interpret(inputDataset, inputDf)
