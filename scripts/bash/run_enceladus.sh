@@ -492,6 +492,7 @@ if [[ -z "$DRY_RUN" ]]; then
 
     STATE='NOT FINISHED'
 
+    echo State: Application Starting
     while [[ "$STATE" != "FINISHED" && "$STATE" != "FAILED" && "$STATE" != "KILLED" ]];  do
       sleep 30
       STATE=$(yarn application -status $APPLICATIONID | grep -oP "(?<=\sState : ).*" )
