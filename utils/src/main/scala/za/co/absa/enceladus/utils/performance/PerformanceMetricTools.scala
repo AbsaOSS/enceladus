@@ -52,10 +52,14 @@ object PerformanceMetricTools {
     // The number of executors minus the driver
     val numberOfExecutors = sc.getExecutorMemoryStatus.keys.size - 1
 
-    val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+    // TODO fix for s3 [ref issue #1416]
+    // val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     // Directory sizes and size ratio
-    val inputDirSize = fsUtils.getDirectorySize(inputPath)
-    val inputDataSize = fsUtils.getDirectorySizeNoHidden(inputPath)
+    //val inputDirSize = fsUtils.getDirectorySize(inputPath)
+    //val inputDataSize = fsUtils.getDirectorySizeNoHidden(inputPath)
+
+    val inputDirSize = -1
+    val inputDataSize = -2
 
     addSparkConfig(optionPrefix, "spark.driver.memory", "driver_memory")
     addSparkConfig(optionPrefix, "spark.driver.cores", "driver_cores")
@@ -97,13 +101,20 @@ object PerformanceMetricTools {
                                           loginUserName: String,
                                           cmdLineArgs: String
                                          ): Unit = {
-    val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+
+    // TODO fix for s3 [ref issue #1416]
+    //val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
 
     // Directory sizes and size ratio
-    val inputDirSize = fsUtils.getDirectorySize(inputPath)
-    val inputDataSize = fsUtils.getDirectorySizeNoHidden(inputPath)
-    val outputDirSize = fsUtils.getDirectorySize(outputPath)
-    val outputDataSize = fsUtils.getDirectorySizeNoHidden(outputPath)
+//    val inputDirSize = fsUtils.getDirectorySize(inputPath)
+//    val inputDataSize = fsUtils.getDirectorySizeNoHidden(inputPath)
+//    val outputDirSize = fsUtils.getDirectorySize(outputPath)
+//    val outputDataSize = fsUtils.getDirectorySizeNoHidden(outputPath)
+
+    val inputDataSize = -2L
+    val outputDirSize = -3L
+    val outputDataSize = -4L
+    val inputDirSize = -1L
 
     val (numRecordsFailed, numRecordsSuccessful, numOfErrors) = getNumberOfErrors(spark, outputPath)
 

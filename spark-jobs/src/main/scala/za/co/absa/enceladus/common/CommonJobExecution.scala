@@ -130,8 +130,8 @@ trait CommonJobExecution {
       }.mkString(",")
     }
 
-    val sourceSystem = "source1" //Atum.getControlMeasure.metadata.sourceApplication  // TODO fix for s3 [ref issue #1416]
-    val uniqueRunId = Some(s"runId-${Math.abs(Random.nextLong())}") //Atum.getControlMeasure.runUniqueId  // TODO fix for s3 [ref issue #1416]
+    val sourceSystem = Atum.getControlMeasure.metadata.sourceApplication
+    val uniqueRunId = Atum.getControlMeasure.runUniqueId
 
     val params = ErrorSenderPluginParams(jobCmdConfig.datasetName,
       jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, outputPath,
