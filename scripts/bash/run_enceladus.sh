@@ -501,10 +501,6 @@ if [[ -z "$DRY_RUN" ]]; then
 
     FINALSTATE=$(yarn application -status $APPLICATIONID | grep -oP "(?<=\sFinal-State : ).*" )
 
-    if [ "$FINALSTATE" == "SUCCEEDED" ]; then
-      exit 0
-    else
-      exit 1
-    fi
+    echo $FINALSTATE
   fi
 fi
