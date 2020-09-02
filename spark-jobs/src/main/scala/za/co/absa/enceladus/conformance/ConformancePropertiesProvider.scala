@@ -58,7 +58,7 @@ class ConformancePropertiesProvider {
 
   private def isOriginalColumnsMutabilityEnabled[T]()(implicit cmd: ConformanceConfigParser[T]): Boolean = {
     val enabled = conf.getOptionBoolean(allowOriginalColumnsMutabilityKey).getOrElse(false)
-    log.info(s"DataFrame mutability enabled = $enabled")
+    log.info(s"Original column mutability enabled = $enabled")
     enabled
   }
 
