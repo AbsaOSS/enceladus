@@ -63,10 +63,8 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 
-    val inputDataPath = preparationResult.pathCfg.rawPath
-    val dataS3Location = inputDataPath.toS3Location(preparationResult.s3Config.region)
+    val dataS3Location = preparationResult.pathCfg.rawPath.toS3Location(preparationResult.s3Config.region)
     val infoS3Location = dataS3Location.copy(path = s"${dataS3Location.path}/_INFO")
-    log.info(s"inputDataPath = $inputDataPath, infoS3Location = $infoS3Location")
 
     spark.enableControlMeasuresTrackingForS3(sourceS3Location = Some(infoS3Location), destinationS3Config = None)
       .setControlMeasuresWorkflow(sourceId.toString)
@@ -137,6 +135,8 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
   private def getColumnNameOfCorruptRecord[R](schema: StructType, cmd: StandardizationConfigParser[R])
                                              (implicit spark: SparkSession): Option[String] = {
     // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
+
+    import AtumImplicits.DataSetWrapper
     val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width") || cmd.failOnInputNotPerSchema) {
       None
