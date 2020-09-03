@@ -26,26 +26,38 @@ class PathConfigSuite extends FlatSpec with Matchers {
 
   val region1 = Region.EU_WEST_1
 
-  "PathConfig" should "parse S3 path from String" in {
-    Seq(
-      // (path, expected parsed value)
-      ("s3://mybucket-123/path/to/file.ext", S3Location("mybucket-123", "path/to/file.ext")),
-      ("s3n://mybucket-123/path/to/ends/with/slash/", S3Location("mybucket-123", "path/to/ends/with/slash/")),
-      ("s3a://mybucket-123.asdf.cz/path-to-$_file!@#$.ext", S3Location("mybucket-123.asdf.cz", "path-to-$_file!@#$.ext"))
-    ).foreach { case (path, expectedLocation) =>
+  val validPathsWithExpectedLocations = Seq(
+    // (path, expected parsed value)
+    ("s3://mybucket-123/path/to/file.ext", S3Location("mybucket-123", "path/to/file.ext")),
+    ("s3n://mybucket-123/path/to/ends/with/slash/", S3Location("mybucket-123", "path/to/ends/with/slash/")),
+    ("s3a://mybucket-123.asdf.cz/path-to-$_file!@#$.ext", S3Location("mybucket-123.asdf.cz", "path-to-$_file!@#$.ext"))
+  )
+
+  val invalidPaths = Seq(
+    "s3x://mybucket-123/path/to/file/on/invalid/prefix",
+    "s3://bb/some/path/but/bucketname/too/short"
+  )
+
+  "PathConfig" should "parse S3 path from String using toS3Location" in {
+    validPathsWithExpectedLocations.foreach { case (path, expectedLocation) =>
       path.toS3Location(region1) shouldBe expectedLocation
     }
   }
 
-  it should "fail parsing invalid S3 path from String" in {
-    Seq(
-      "s3x://mybucket-123/path/to/file/on/invalid/prefix",
-      "s3://bb/some/path/but/bucketname/too/short"
-    ).foreach { path =>
+  it should "fail parsing invalid S3 path from String using toS3Location" in {
+    invalidPaths.foreach { path =>
       assertThrows[IllegalArgumentException] {
         path.toS3Location(region1)
       }
     }
+  }
+
+  it should "check path using isValidS3Path" in {
+    validPathsWithExpectedLocations.map(_._1).foreach { path =>
+      path.isValidS3Path shouldBe true
+    }
+
+    invalidPaths.foreach(_.isValidS3Path shouldBe false)
   }
 
 }

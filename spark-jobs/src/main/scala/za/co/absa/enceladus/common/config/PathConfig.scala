@@ -17,7 +17,6 @@ package za.co.absa.enceladus.common.config
 
 import software.amazon.awssdk.regions.Region
 import za.co.absa.atum.persistence.S3Location
-import PathConfig.StringS3LocationExt
 
 /**
  *
@@ -28,13 +27,11 @@ import PathConfig.StringS3LocationExt
  */
 case class PathConfig(rawPath: String, publishPath: String, standardizationPath: String)
 
-// todo move to atum and reuse? or elsewhere?
 object PathConfig {
 
   // hint: https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html#bucketnamingrules
   val S3LocationRx = "s3(?:a|n)?://([-a-z0-9.]{3,63})/(.*)".r
 
-  // todo add test
   def isValidS3Path(path: String): Boolean = path match {
     case S3LocationRx(_, _) => true
     case _ => false
@@ -48,5 +45,7 @@ object PathConfig {
         case _ => throw new IllegalArgumentException(s"Could not parse S3 Location from $path using rx $S3LocationRx.")
       }
     }
+
+    def isValidS3Path: Boolean = PathConfig.isValidS3Path(path)
   }
 }
