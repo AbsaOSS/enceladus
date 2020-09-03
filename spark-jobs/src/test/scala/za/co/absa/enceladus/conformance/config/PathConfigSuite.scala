@@ -19,9 +19,12 @@ import org.scalatest.{FlatSpec, Matchers}
 import za.co.absa.atum.persistence.S3Location
 import za.co.absa.enceladus.common.config.PathConfig
 import PathConfig.StringS3LocationExt
+import software.amazon.awssdk.regions.Region
 
 
 class PathConfigSuite extends FlatSpec with Matchers {
+
+  val region1 = Region.EU_WEST_1
 
   "PathConfig" should "parse S3 path from String" in {
     Seq(
@@ -30,7 +33,7 @@ class PathConfigSuite extends FlatSpec with Matchers {
       ("s3n://mybucket-123/path/to/ends/with/slash/", S3Location("mybucket-123", "path/to/ends/with/slash/")),
       ("s3a://mybucket-123.asdf.cz/path-to-$_file!@#$.ext", S3Location("mybucket-123.asdf.cz", "path-to-$_file!@#$.ext"))
     ).foreach { case (path, expectedLocation) =>
-      path.toS3Location() shouldBe expectedLocation
+      path.toS3Location(region1) shouldBe expectedLocation
     }
   }
 
@@ -40,7 +43,7 @@ class PathConfigSuite extends FlatSpec with Matchers {
       "s3://bb/some/path/but/bucketname/too/short"
     ).foreach { path =>
       assertThrows[IllegalArgumentException] {
-        path.toS3Location()
+        path.toS3Location(region1)
       }
     }
   }

@@ -16,12 +16,11 @@
 package za.co.absa.enceladus.standardization_conformance
 
 import za.co.absa.enceladus.common.CommonJobExecution
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, S3Config}
 import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 
 trait StandardizationAndConformanceExecution extends StandardizationExecution
   with ConformanceExecution
@@ -36,8 +35,8 @@ trait StandardizationAndConformanceExecution extends StandardizationExecution
       publishPath = publishPathOverride.getOrElse(defaultConfig.publishPath))
   }
 
-  override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
-    validateIfPathAlreadyExists(fsUtils, pathConfig.standardizationPath)
-    validateIfPathAlreadyExists(fsUtils, pathConfig.publishPath)
+  override def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig): Unit = {
+    validateIfPathAlreadyExists(s3Config, pathConfig.standardizationPath)
+    validateIfPathAlreadyExists(s3Config, pathConfig.publishPath)
   }
 }

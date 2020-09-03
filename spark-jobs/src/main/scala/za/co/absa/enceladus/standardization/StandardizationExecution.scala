@@ -22,9 +22,11 @@ import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
+import za.co.absa.atum.persistence.S3KmsSettings
 import za.co.absa.enceladus.S3DefaultCredentialsProvider
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.PathConfig.StringS3LocationExt
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, S3Config}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -39,7 +41,6 @@ import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
-import za.co.absa.enceladus.common.config.PathConfig.StringS3LocationExt
 
 import scala.util.control.NonFatal
 
@@ -63,7 +64,7 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 
     val inputDataPath = preparationResult.pathCfg.rawPath
-    val dataS3Location = inputDataPath.toS3Location()
+    val dataS3Location = inputDataPath.toS3Location(preparationResult.s3Config.region)
     val infoS3Location = dataS3Location.copy(path = s"${dataS3Location.path}/_INFO")
     log.info(s"inputDataPath = $inputDataPath, infoS3Location = $infoS3Location")
 
@@ -107,8 +108,8 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
     }
   }
 
-  override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
-    validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, pathConfig.standardizationPath)
+  override def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig): Unit = {
+    validateIfPathAlreadyExists(s3Config, pathConfig.standardizationPath)
   }
 
   protected def readStandardizationInputData[T](schema: StructType,
@@ -215,7 +216,11 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
 
-    standardizedDF.writeInfoFile(preparationResult.pathCfg.standardizationPath)
+    val infoFilePath = s"${preparationResult.pathCfg.standardizationPath}/_INFO"
+    val infoFileLocation = infoFilePath.toS3Location(preparationResult.s3Config.region)
+    log.info(s"infoFilePath = $infoFilePath, infoFileLocation = $infoFileLocation")
+
+    standardizedDF.writeInfoFileOnS3(infoFileLocation, S3KmsSettings(preparationResult.s3Config.kmsKeyId))
     writePerformanceMetrics(preparationResult.performance, cmd)
     log.info(s"$sourceId finished successfully")
     standardizedDF

@@ -19,12 +19,9 @@ import java.io.{PrintWriter, StringWriter}
 
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import za.co.absa.atum.AtumImplicits
-import za.co.absa.atum.AtumImplicits._
-import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, S3Config}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
@@ -37,7 +34,6 @@ import za.co.absa.enceladus.standardization_conformance.config.StandardizationCo
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.util.control.NonFatal
@@ -92,8 +88,8 @@ trait ConformanceExecution extends CommonJobExecution {
     }
   }
 
-  override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
-    validateIfPathAlreadyExists(fsUtils, pathConfig.publishPath)
+  override def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig): Unit = {
+    validateIfPathAlreadyExists(s3Config, pathConfig.publishPath)
   }
 
   protected def readConformanceInputData(pathCfg: PathConfig)(implicit spark: SparkSession): DataFrame = {

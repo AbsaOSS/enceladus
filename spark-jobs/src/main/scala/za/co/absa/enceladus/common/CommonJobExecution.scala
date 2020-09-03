@@ -22,10 +22,11 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
 import org.slf4j.{Logger, LoggerFactory}
+import software.amazon.awssdk.regions.Region
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, S3Config}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -49,6 +50,7 @@ trait CommonJobExecution {
   protected case class PreparationResult(dataset: Dataset,
                                          reportVersion: Int,
                                          pathCfg: PathConfig,
+                                         s3Config: S3Config,
                                          performance: PerformanceMeasurer)
 
   TimeZoneNormalizer.normalizeJVMTimeZone()
@@ -87,8 +89,9 @@ trait CommonJobExecution {
     val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg: PathConfig = getPathConfig(cmd, dataset, reportVersion)
+    val s3Config: S3Config = getS3Config
 
-    validateOutputPath(fsUtils, pathCfg)
+    validateOutputPath(s3Config, pathCfg)
 
     // Enable Spline
     import za.co.absa.spline.harvester.SparkLineageInitializer._
@@ -97,12 +100,12 @@ trait CommonJobExecution {
     // Enable non-default persistence storage level if provided in the command line
     cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
 
-    PreparationResult(dataset, reportVersion, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
+    PreparationResult(dataset, reportVersion, pathCfg, s3Config, new PerformanceMeasurer(spark.sparkContext.appName))
   }
 
-  protected def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
+  protected def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig): Unit
 
-  protected def validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, path: String): Unit = {
+  protected def validateIfPathAlreadyExists(s3Config: S3Config, path: String): Unit = {
     // TODO fix for s3 [ref issue #1416]
 
 //    if (fsUtils.hdfsExists(path)) {
@@ -164,6 +167,13 @@ trait CommonJobExecution {
       publishPath = buildPublishPath(cmd, dataset, reportVersion),
       standardizationPath = getStandardizationPath(cmd, reportVersion)
     )
+  }
+
+  protected def getS3Config: S3Config = {
+    val keyId = conf.getString("s3.kmsKeyId")
+    val region = Region.of(conf.getString("s3.region"))
+
+    S3Config(region, keyId)
   }
 
   private def buildPublishPath[T](cmd: JobConfigParser[T], ds: Dataset, reportVersion: Int): String = {
