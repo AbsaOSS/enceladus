@@ -28,9 +28,9 @@ class PathConfigSuite extends FlatSpec with Matchers {
 
   val validPathsWithExpectedLocations = Seq(
     // (path, expected parsed value)
-    ("s3://mybucket-123/path/to/file.ext", S3Location("mybucket-123", "path/to/file.ext")),
-    ("s3n://mybucket-123/path/to/ends/with/slash/", S3Location("mybucket-123", "path/to/ends/with/slash/")),
-    ("s3a://mybucket-123.asdf.cz/path-to-$_file!@#$.ext", S3Location("mybucket-123.asdf.cz", "path-to-$_file!@#$.ext"))
+    ("s3://mybucket-123/path/to/file.ext", S3Location("mybucket-123", "path/to/file.ext", region1)),
+    ("s3n://mybucket-123/path/to/ends/with/slash/", S3Location("mybucket-123", "path/to/ends/with/slash/", region1)),
+    ("s3a://mybucket-123.asdf.cz/path-to-$_file!@#$.ext", S3Location("mybucket-123.asdf.cz", "path-to-$_file!@#$.ext", region1))
   )
 
   val invalidPaths = Seq(
