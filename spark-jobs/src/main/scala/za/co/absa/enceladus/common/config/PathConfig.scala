@@ -39,9 +39,9 @@ object PathConfig {
 
   implicit class StringS3LocationExt(path: String) {
 
-    def toS3Location(withRegion: Region): S3Location = {
+    def toS3Location(region: Region): S3Location = {
       path match {
-        case S3LocationRx(bucketName, path) => S3Location(bucketName, path, withRegion)
+        case S3LocationRx(bucketName, path) => S3Location(bucketName, path, region)
         case _ => throw new IllegalArgumentException(s"Could not parse S3 Location from $path using rx $S3LocationRx.")
       }
     }
