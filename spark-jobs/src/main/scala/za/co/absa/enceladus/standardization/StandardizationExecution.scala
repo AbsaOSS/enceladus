@@ -65,8 +65,10 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
 
     val dataS3Location = preparationResult.pathCfg.rawPath.toS3Location(preparationResult.s3Config.region)
     val infoS3Location = dataS3Location.copy(path = s"${dataS3Location.path}/_INFO")
+    val kmsSettings = S3KmsSettings(preparationResult.s3Config.kmsKeyId)
 
-    spark.enableControlMeasuresTrackingForS3(sourceS3Location = Some(infoS3Location), destinationS3Config = None)
+    spark.enableControlMeasuresTrackingForS3(sourceS3Location = Some(infoS3Location),
+      destinationS3Config = Some(infoS3Location, kmsSettings))
       .setControlMeasuresWorkflow(sourceId.toString)
 
     log.info(s"raw path: ${preparationResult.pathCfg.rawPath}")
