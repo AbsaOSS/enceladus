@@ -63,12 +63,15 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 
-    val dataS3Location = preparationResult.pathCfg.rawPath.toS3Location(preparationResult.s3Config.region)
-    val infoS3Location = dataS3Location.copy(path = s"${dataS3Location.path}/_INFO")
+    val inputDataS3Location = preparationResult.pathCfg.rawPath.toS3Location(preparationResult.s3Config.region)
+    val inputInfoS3Location = inputDataS3Location.copy(path = s"${inputDataS3Location.path}/_INFO")
+
+    val outputDataS3Location = preparationResult.pathCfg.standardizationPath.toS3Location(preparationResult.s3Config.region)
+    val outputInfoS3Location = outputDataS3Location.copy(path = s"${outputDataS3Location.path}/_INFO")
     val kmsSettings = S3KmsSettings(preparationResult.s3Config.kmsKeyId)
 
-    spark.enableControlMeasuresTrackingForS3(sourceS3Location = Some(infoS3Location),
-      destinationS3Config = Some(infoS3Location, kmsSettings))
+    spark.enableControlMeasuresTrackingForS3(sourceS3Location = Some(inputInfoS3Location),
+      destinationS3Config = Some(outputInfoS3Location, kmsSettings))
       .setControlMeasuresWorkflow(sourceId.toString)
 
     log.info(s"raw path: ${preparationResult.pathCfg.rawPath}")
