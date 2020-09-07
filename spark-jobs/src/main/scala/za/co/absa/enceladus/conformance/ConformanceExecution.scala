@@ -35,7 +35,7 @@ import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-import PathConfig.StringS3LocationExt
+import za.co.absa.atum.utils.S3Utils.StringS3LocationExt
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits.{DataSetWrapper, SparkSessionWrapper}
 import za.co.absa.atum.core.Atum

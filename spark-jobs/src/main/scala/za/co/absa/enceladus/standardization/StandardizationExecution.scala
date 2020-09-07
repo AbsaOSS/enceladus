@@ -25,7 +25,7 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.atum.persistence.S3KmsSettings
 import za.co.absa.enceladus.S3DefaultCredentialsProvider
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.PathConfig.StringS3LocationExt
+import za.co.absa.atum.utils.S3Utils.StringS3LocationExt
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, S3Config}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
