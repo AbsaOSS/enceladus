@@ -35,7 +35,7 @@ import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
@@ -80,7 +80,7 @@ trait CommonJobExecution {
   protected def prepareJob[T]()
                              (implicit dao: MenasDAO,
                               cmd: JobConfigParser[T],
-                              fsUtils: FileSystemVersionUtils,
+                              fsUtils: HdfsUtils,
                               spark: SparkSession): PreparationResult = {
     val confReader: ConfigReader = new ConfigReader(conf)
     confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
@@ -116,7 +116,7 @@ trait CommonJobExecution {
   }
 
   protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
-                                    (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
+                                    (implicit spark: SparkSession, fileSystemVersionUtils: HdfsUtils): Unit = {
     val outputPath = sourcePhase match {
       case Standardization => preparationResult.pathCfg.standardizationPath
       case _ => preparationResult.pathCfg.publishPath
@@ -248,7 +248,7 @@ trait CommonJobExecution {
     }
   }
 
-  private def getReportVersion[T](jobConfig: JobConfigParser[T], dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {
+  private def getReportVersion[T](jobConfig: JobConfigParser[T], dataset: Dataset)(implicit fsUtils: HdfsUtils): Int = {
     jobConfig.reportVersion match {
       case Some(version) => version
       case None =>

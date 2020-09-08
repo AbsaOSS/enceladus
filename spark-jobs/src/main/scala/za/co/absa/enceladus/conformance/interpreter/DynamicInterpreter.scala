@@ -31,7 +31,7 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.explode.ExplosionContext
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.udf.UDFLibrary
@@ -264,7 +264,7 @@ object DynamicInterpreter {
     */
   private def getMappingTableSizeMb(rule: MappingConformanceRule)
                                    (implicit ictx: InterpreterContext): Int = {
-    val fsUtils = new FileSystemVersionUtils(ictx.spark.sparkContext.hadoopConfiguration)
+    val fsUtils = new HdfsUtils(ictx.spark.sparkContext.hadoopConfiguration)
 
     val mappingTableDef = ictx.dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
     val mappingTablePath = PartitioningUtils.getPartitionedPathName(mappingTableDef.hdfsPath,

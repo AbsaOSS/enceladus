@@ -13,20 +13,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus
+package za.co.absa.enceladus.utils.fs
 
 import java.io.FileNotFoundException
 
 import org.apache.hadoop.fs.Path
 import org.scalatest.{Matchers, WordSpec}
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 /**
   * Unit tests for File system utils
   */
-class FsUtilsSpec extends WordSpec with Matchers with SparkTestBase {
-  val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+class HdfsUtilsSpec extends WordSpec with Matchers with SparkTestBase {
+  val fsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   "splitUriPath" should {
     "split URI and path" in {

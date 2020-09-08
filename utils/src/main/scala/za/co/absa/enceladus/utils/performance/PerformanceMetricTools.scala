@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions.{col, size, sum}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 

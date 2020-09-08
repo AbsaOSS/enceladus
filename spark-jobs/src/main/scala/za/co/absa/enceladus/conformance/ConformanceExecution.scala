@@ -31,7 +31,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.schema.SchemaUtils
@@ -53,7 +53,7 @@ trait ConformanceExecution extends CommonJobExecution with S3DefaultCredentialsP
   protected def prepareConformance[T](preparationResult: PreparationResult)
                                      (implicit dao: MenasDAO,
                                       cmd: ConformanceConfigParser[T],
-                                      fsUtils: FileSystemVersionUtils,
+                                      fsUtils: HdfsUtils,
                                       spark: SparkSession): Unit = {
 
     // TODO fix for s3 [ref issue #1416]
@@ -138,7 +138,7 @@ trait ConformanceExecution extends CommonJobExecution with S3DefaultCredentialsP
                                             menasCredentials: MenasCredentials)
                                            (implicit spark: SparkSession,
                                             cmd: ConformanceConfigParser[T],
-                                            fsUtils: FileSystemVersionUtils): Unit = {
+                                            fsUtils: HdfsUtils): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
 
     PerformanceMetricTools.addJobInfoToAtumMetadata(

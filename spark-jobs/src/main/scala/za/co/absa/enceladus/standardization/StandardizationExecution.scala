@@ -35,7 +35,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
@@ -52,7 +52,7 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
                                           preparationResult: PreparationResult)
                                          (implicit dao: MenasDAO,
                                           cmd: StandardizationConfigParser[T],
-                                          fsUtils: FileSystemVersionUtils,
+                                          fsUtils: HdfsUtils,
                                           spark: SparkSession): StructType = {
 
     // TODO fix for s3 [ref issue #1416]
@@ -120,7 +120,7 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
                                                 path: String,
                                                 dataset: Dataset)
                                                (implicit spark: SparkSession,
-                                                fsUtils: FileSystemVersionUtils,
+                                                fsUtils: HdfsUtils,
                                                 dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationPropertiesProvider()
@@ -179,7 +179,7 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
                                                 cmd: StandardizationConfigParser[T],
                                                 menasCredentials: MenasCredentials)
                                                (implicit spark: SparkSession,
-                                                fsUtils: FileSystemVersionUtils): DataFrame = {
+                                                fsUtils: HdfsUtils): DataFrame = {
     import za.co.absa.atum.AtumImplicits._
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {
@@ -234,7 +234,7 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
   //scalastyle:off parameter.number
 
   private def ensureSplittable(df: DataFrame, path: String, schema: StructType)
-                              (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
+                              (implicit spark: SparkSession, fsUtils: HdfsUtils) = {
     // TODO fix for s3 [ref issue #1416]
     //    if (fsUtils.isNonSplittable(path)) {
     //      convertToSplittable(df, schema)
@@ -244,7 +244,7 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
   }
 
   private def convertToSplittable(df: DataFrame, schema: StructType)
-                                 (implicit spark: SparkSession, fsUtils: FileSystemVersionUtils) = {
+                                 (implicit spark: SparkSession, fsUtils: HdfsUtils) = {
     log.warn("Dataset is stored in a non-splittable format. This can have a severe performance impact.")
 
     val tempParquetDir = s"/tmp/nonsplittable-to-parquet-${UUID.randomUUID()}"
