@@ -349,6 +349,7 @@ object TypedStructField {
       DecimalTypeStructField.minPossible(dataType),
       DecimalTypeStructField.maxPossible(dataType)
     ){
+    val strictParsing: Boolean = getMetadataStringAsBoolean(MetadataKeys.StrictParsing).getOrElse(false)
 
     override val parser: Try[DecimalParser] =
       pattern.map { patternOpt =>
@@ -356,7 +357,13 @@ object TypedStructField {
       }
 
     override def validate(): Seq[ValidationIssue] = {
-      NumericFieldValidator.validate(this)
+      DecimalFieldValidator.validate(this)
+    }
+
+    override protected def convertString(string: String): Try[BigDecimal] = {
+      if (strictParsing && scale < string.split("\\.")(1).length)
+          Failure(new IllegalArgumentException(s"Strict parsing does not allow $string"))
+      else super.convertString(string)
     }
 
     def precision: Int = dataType.precision
