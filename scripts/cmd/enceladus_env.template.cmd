@@ -75,23 +75,23 @@ SET LOG_DIR=%TEMP%
 
 :: Kafka security
 :: Path to jaas.config
-:: JAAS_CLIENT="-Djava.security.auth.login.config=/path/jaas.config"
-:: JAAS_CLUSTER="-Djava.security.auth.login.config=jaas_cluster.config"
+:: JAAS_CLIENT=-Djava.security.auth.login.config=/path/jaas.config
+:: JAAS_CLUSTER=-Djava.security.auth.login.config=jaas_cluster.config
 
-:: SET APPLICATION_PROPERTIES_CLIENT="-Dconfig.file=/absolute/path/application.conf"
-:: SET APPLICATION_PROPERTIES_CLUSTER="-Dconfig.file=application.conf"
+:: SET APPLICATION_PROPERTIES_CLIENT=-Dconfig.file=/absolute/path/application.conf
+:: SET APPLICATION_PROPERTIES_CLUSTER=-Dconfig.file=application.conf
 
 :: Files to send when running in cluster mode (comma separated)
 :: Hash is used as the file alias: https://stackoverflow.com/a/49866757/1038282
 :: SET ENCELADUS_FILES="/absolute/path/application.conf#application.conf"
 
-:: Additional environment-specific Spark options, e.g. "--conf spark.driver.host=myhost"
+:: Additional environment-specific Spark options, e.g. --conf "spark.driver.host=myhost"
 :: To specify several configuration options prepend '--conf' to each config key.
-:: Example: ADDITIONAL_SPARK_CONF="--conf spark.driver.host=myhost --conf spark.driver.port=12233"
+:: Example: ADDITIONAL_SPARK_CONF=--conf "spark.driver.host=myhost" --conf "spark.driver.port=12233"
 SET ADDITIONAL_SPARK_CONF=
 
 :: Additional JVM options
-:: Example: ADDITIONAL_JVM_CONF="-Dtimezone=UTC -Dfoo=bar"
+:: Example: ADDITIONAL_JVM_CONF=-Dtimezone=UTC -Dfoo=bar
 :: for deployment mode: client
 SET ADDITIONAL_JVM_CONF_CLIENT=%APPLICATION_PROPERTIES_CLIENT% %JAAS_CLIENT%
 

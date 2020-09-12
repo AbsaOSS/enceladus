@@ -404,8 +404,9 @@ CALL :validate_either --menas-credentials-file,%MENAS_CREDENTIALS_FILE%,--menas-
 :: Validation failure check
 IF %VALID%=="0" EXIT /B 1
 
-:: Construct command line
 
+
+:: ### Bellow construct the command line ###
 
 :: Puts Spark configuration properties to the command line
 :: Constructing the grand command line
@@ -444,7 +445,7 @@ IF %DRA_ENABLED%==true (
     IF NOT "%ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE%"=="" SET SPARK_CONF=%SPARK_CONF% --conf spark.sql.adaptive.shuffle.targetPostShuffleInputSize=%ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE%
 )
 
-SET JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=%STD_HDFS_PATH% -Dspline.mongodb.url=%SPLINE_MONGODB_URL% -Dspline.mongodb.name=%SPLINE_MONGODB_NAME% -Dhdp.version=%HDP_VERSION% %MT_PATTERN%"
+SET JVM_CONF=spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=%STD_HDFS_PATH% -Dspline.mongodb.url=%SPLINE_MONGODB_URL% -Dspline.mongodb.name=%SPLINE_MONGODB_NAME% -Dhdp.version=%HDP_VERSION% %MT_PATTERN%
 
 SET CMD_LINE=%SPARK_SUBMIT%
 
@@ -470,7 +471,7 @@ IF "%DEPLOY_MODE%"=="client" (
 ) ELSE (
   SET ADDITIONAL_JVM_CONF=%ADDITIONAL_JVM_CONF_CLUSTER%
 )
-SET CMD_LINE=%CMD_LINE% %ADDITIONAL_SPARK_CONF% %SPARK_CONF% --conf %JVM_CONF% %ADDITIONAL_JVM_CONF% --class %CLASS% %JAR%
+SET CMD_LINE=%CMD_LINE% %ADDITIONAL_SPARK_CONF% %SPARK_CONF% --conf "%JVM_CONF% %ADDITIONAL_JVM_CONF%" --class %CLASS% %JAR%
 
 :: Adding command line parameters that go AFTER the jar file
 IF NOT "%MENAS_AUTH_KEYTAB%"=="" SET CMD_LINE=%CMD_LINE% --menas-auth-keytab %MENAS_AUTH_KEYTAB%
