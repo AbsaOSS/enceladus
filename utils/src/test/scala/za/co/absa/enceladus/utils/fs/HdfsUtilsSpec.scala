@@ -25,26 +25,26 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
   * Unit tests for File system utils
   */
 class HdfsUtilsSpec extends WordSpec with Matchers with SparkTestBase {
-  val fsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
+  val hdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   "splitUriPath" should {
     "split URI and path" in {
       val path = new Path("hdfs://some-host:8020/user/data/input")
-      val (prefix, rawPath) = fsUtils.splitUriPath(path)
+      val (prefix, rawPath) = hdfsUtils.splitUriPath(path)
       prefix shouldEqual "hdfs://some-host:8020"
       rawPath shouldEqual "/user/data/input"
     }
 
     "not split a path without URI prefix" in {
       val path = new Path("/projects/coreconformance/publish/dataset")
-      val (prefix, rawPath) = fsUtils.splitUriPath(path)
+      val (prefix, rawPath) = hdfsUtils.splitUriPath(path)
       prefix shouldEqual ""
       rawPath shouldEqual "/projects/coreconformance/publish/dataset"
     }
 
     "not split relative path" in {
       val path = new Path("data/input")
-      val (prefix, rawPath) = fsUtils.splitUriPath(path)
+      val (prefix, rawPath) = hdfsUtils.splitUriPath(path)
       prefix shouldEqual ""
       rawPath shouldEqual "data/input"
     }
@@ -53,27 +53,27 @@ class HdfsUtilsSpec extends WordSpec with Matchers with SparkTestBase {
   "getDirectorySize" should {
     "throw an exception if the specified path does not exist" in {
       intercept[FileNotFoundException] {
-        fsUtils.getDirectorySize("src/test/resources/test_data/not_exist")
+        hdfsUtils.getDirectorySize("src/test/resources/test_data/not_exist")
       }
     }
 
     "return the file size if a single file is specified" in {
-      val dirSize = fsUtils.getDirectorySize("src/test/resources/test_data/test_dir/dummy.txt")
+      val dirSize = hdfsUtils.getDirectorySize("src/test/resources/test_data/test_dir/dummy.txt")
       assert(dirSize == 20L)
     }
 
     "return the file size if a single hidden file is specified" in {
-      val dirSize = fsUtils.getDirectorySize("src/test/resources/test_data/test_dir/_hidden_dummy.txt")
+      val dirSize = hdfsUtils.getDirectorySize("src/test/resources/test_data/test_dir/_hidden_dummy.txt")
       assert(dirSize == 27L)
     }
 
     "return the size of all files in a directory" in {
-      val dirSize = fsUtils.getDirectorySize("src/test/resources/test_data/test_dir")
+      val dirSize = hdfsUtils.getDirectorySize("src/test/resources/test_data/test_dir")
       assert(dirSize == 47L)
     }
 
     "return the size of all files recursively" in {
-      val dirSize = fsUtils.getDirectorySize("src/test/resources/test_data/test_dir2")
+      val dirSize = hdfsUtils.getDirectorySize("src/test/resources/test_data/test_dir2")
       assert(dirSize == 87L)
     }
   }
@@ -81,32 +81,32 @@ class HdfsUtilsSpec extends WordSpec with Matchers with SparkTestBase {
   "getDirectorySizeNoHidden" should {
     "throw an exception if the specified path does not exist" in {
       intercept[FileNotFoundException] {
-        fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/not_exist")
+        hdfsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/not_exist")
       }
     }
 
     "return the file size if a single file is specified" in {
-      val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir/dummy.txt")
+      val dirSize = hdfsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir/dummy.txt")
       assert(dirSize == 20L)
     }
 
     "return the file size if a single hidden file is specified" in {
-      val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir/_hidden_dummy.txt")
+      val dirSize = hdfsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir/_hidden_dummy.txt")
       assert(dirSize == 27L)
     }
 
     "return the size of all non-hidden files in a directory" in {
-      val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir")
+      val dirSize = hdfsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir")
       assert(dirSize == 20L)
     }
 
     "return the size of all non-hidden files recursively along non-hidden paths" in {
-      val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir2")
+      val dirSize = hdfsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir2")
       assert(dirSize == 40L)
     }
 
     "return the size of all non-hidden files if a hidden directory is specified explicitly" in {
-      val dirSize = fsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir2/_inner_dir")
+      val dirSize = hdfsUtils.getDirectorySizeNoHidden("src/test/resources/test_data/test_dir2/_inner_dir")
       assert(dirSize == 20L)
     }
   }

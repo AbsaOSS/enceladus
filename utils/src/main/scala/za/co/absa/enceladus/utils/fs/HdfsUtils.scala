@@ -223,10 +223,8 @@ class HdfsUtils(conf: Configuration) extends DistributedFsUtils {
    * Checks if the HDFS path contains non-splittable files
    */
   override def isNonSplittable(path: String): Boolean = {
-    val nonSplittableExtensions = List("gz")
-
     val files = getFilePaths(path)
-    files.exists(file => nonSplittableExtensions.exists(file.endsWith))
+    files.exists(file => DistributedFsUtils.nonSplittableExtensions.exists(file.endsWith))
   }
 
   /**

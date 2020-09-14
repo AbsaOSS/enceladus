@@ -61,3 +61,7 @@ trait DistributedFsUtils {
   def getLatestVersion(publishPath: String, reportDate: String): Int
 
 }
+
+object DistributedFsUtils {
+  val nonSplittableExtensions = List("gz")
+}
