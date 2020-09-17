@@ -271,6 +271,7 @@ Here are the recognized ones with the description of their purpose (with detaile
 | [grouping_separator](#grouping_separator) | any numeric type            | Character to mark boundaries between orders of magnitude, usually to mark thousands, millions etc.                                                    | *\_*            | *,*                                          |
 | [minus_sign](#minus_sign)                 | any numeric type            | Character to mark the number is negative.                                                                                                             | *N*             | *-*                                          |
 | [allow_infinity](#allow_infinity)         | float & double              | Flag indicating if the column accepts infinity as a value (and positive/negative numbers which are too large are converted to *infinity*/*-infinity*) | *true*          | *false*                                      |
+| [strict_parsing](#strict_parsing)         | decimal                     | Flat indicating strict parsing on the provided decimal value. Strict parsing rejects a value(including default) with a larger scale than allowed      | *true*          | *false*                                      |
 | [radix](#radix)                           | long, integer, short, byte  | The base of the numbers provided                                                                                                                      | *hex*           | *10*                                         |
 | [encoding](#encoding)                     | binary                      | Encoding is used for string to binary conversion                                                                                                      | *base64*,*none* | `-` (explained in [encoding](#encoding))     |
 | [width](#width) | any atomic type | Specifies the width of a column for a fixed-width formats | "10" | - |
@@ -369,6 +370,15 @@ Flag indicating if the column accepts infinity as a value. When set to true *inf
 valid value, instead of failing with casting error ([see here]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)).
 The string representing infinity on input is *"∞"* and *"-∞"* respectively. Positive and negative numbers with values 
 that are too large are converted to *infinity* and *-infinity*, respectively.
+
+### strict_parsing
+
+<sup>Supported by types:** [Decimal](#decimal)</sup>
+
+Flat indicating strict parsing on the provided decimal value.
+Strict parsing rejects a value(including default) with a larger scale than allowed with casting error
+([see here]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)). For example for Decimal(X,2), the values with
+longer scale(like 10.12345, 0.1234) will rejected 
 
 ### radix
 
