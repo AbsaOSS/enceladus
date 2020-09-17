@@ -214,7 +214,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
   private[fs] def getS3Client: S3Client = S3Utils.getS3Client(region, credentialsProvider)
 
   /**
-   * General method to list and accumulate the objects info. Note, that the method strieves to be memory-efficient -
+   * General method to list and accumulate the objects info. Note, that the method strives to be memory-efficient -
    * i.e. accumulate the current batch first and then load the next batch (instead of the naive "load all first, process later"
    *
    * @param location     s3location - bucket & path are used
@@ -242,6 +242,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
       val response: ListObjectsV2Response = s3Client.listObjectsV2(listObjectsRequest)
       val accumulated: T = accumulateOp(acc, response)
 
+      // the caller is able define a short-circuiting condition - at which no more processing is needed, hence we "break out" here
       if (breakOut.contains(accumulated)) {
         log.debug(s"Breakout at accumulated value $accumulated")
         accumulated
