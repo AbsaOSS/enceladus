@@ -24,7 +24,7 @@ import scala.util.{Failure, Success, Try}
 class DecimalParser(override val pattern: NumericPattern,
                     override val min: Option[BigDecimal],
                     override val max: Option[BigDecimal],
-                    val maxScale: Option[Int])
+                    val maxScale: Option[Int] = None)
   extends NumericParser(pattern, min, max) with ParseViaDecimalFormat[BigDecimal] {
 
   override protected val stringConversion: String => BigDecimal = BigDecimal(_)
@@ -39,11 +39,9 @@ class DecimalParser(override val pattern: NumericPattern,
   override def parse(string: String): Try[BigDecimal] = {
     super.parse(string).flatMap(number => {
       maxScale match {
-        case Some(maxSc) =>
-          if (maxSc < number.scale) {
+        case Some(maxSc) if maxSc < number.scale =>
             Failure(new IllegalArgumentException(s"$string exceeds the defined scale limit in the schema"))
-          } else Success(number)
-        case None => Success(number)
+        case _ => Success(number)
       }
     })
   }

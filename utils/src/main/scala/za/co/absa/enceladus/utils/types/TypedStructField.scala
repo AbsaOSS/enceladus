@@ -366,7 +366,7 @@ object TypedStructField {
     }
 
     override protected def convertString(string: String): Try[BigDecimal] =
-      parser.flatMap(parser => parser.parse(string)).flatMap(_ => super.convertString(string))
+      parser.flatMap(parser => parser.parse(string))
 
     def precision: Int = dataType.precision
     def scale: Int = dataType.scale
