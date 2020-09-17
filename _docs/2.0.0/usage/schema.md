@@ -607,6 +607,7 @@ The value used when _explicit default_ was not defined in the schema:
 cannot be a `default` for the type [`Short`](#short), or _"∞"_ if `allow_infinity` is _"false"_ for [`Double`](#double)/
 [`Float`](#float))
 - If it's a type supporting [`pattern`](#pattern) and it is defined, the default value has to adhere to the `pattern`
+- If 'strict_parsing' is enabled for [`Decimal`](#decimal), the decimal scale should fit into the specified type scale
 
 [test-samples]: https://github.com/AbsaOSS/enceladus/blob/master/spark-jobs/src/test/scala/za/co/absa/enceladus/standardization/samples/TestSamples.scala
 [oracle-tz-ids]: https://docs.oracle.com/javase/8/docs/api/java/util/TimeZone.html#getAvailableIDs--
