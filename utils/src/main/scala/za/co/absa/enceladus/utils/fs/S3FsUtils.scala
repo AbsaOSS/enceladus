@@ -19,8 +19,8 @@ import org.slf4j.{Logger, LoggerFactory}
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.model._
-import za.co.absa.atum.persistence.S3KmsSettings
+import software.amazon.awssdk.services.s3.model.{S3Location => _, _}
+import za.co.absa.atum.persistence.{S3KmsSettings, S3Location}
 import za.co.absa.atum.utils.S3Utils
 import za.co.absa.atum.utils.S3Utils.StringS3LocationExt
 
@@ -76,30 +76,21 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
    * Returns distributed directory size in bytes
    */
   private[fs] def getDirectorySize(distPath: String, keyNameFilter: String => Boolean): Long = {
+
+    // setup accumulation
     val location = distPath.toS3Location(region)
+    val initSize = 0L
 
-    @tailrec
-    def getDirectorySizeRecBatch(continue: Boolean, contToken: Option[String], acc: Long): Long = {
-      log.debug(s"getDirectorySizeRecBatch($continue, $contToken, $acc)")
+    def accumulateSizeOp(previousTotalSize: Long, response: ListObjectsV2Response): Long = {
+      val objects = response.contents().asScala
+      val totalSize = objects
+        .filter(obj => keyNameFilter(obj.key))
+        .foldLeft(0L) { (currentSize: Long, nextObject: S3Object) => currentSize + nextObject.size }
 
-      if (continue) {
-         val listObjectsBuilder = ListObjectsV2Request.builder.bucket(location.bucketName).prefix(location.path).maxKeys(maxKeys)
-        val listObjectsRequest = contToken.fold(listObjectsBuilder.build)(listObjectsBuilder.continuationToken(_).build)
-
-        val response = s3Client.listObjectsV2(listObjectsRequest)
-        val objects = response.contents().asScala
-
-        val totalSize = objects
-          .filter(obj => keyNameFilter(obj.key))
-          .foldLeft(0L) { (currentSize: Long, nextObject: S3Object) => currentSize + nextObject.size }
-
-        getDirectorySizeRecBatch(continue = response.isTruncated, Some(response.nextContinuationToken), acc + totalSize)
-      } else {
-        acc
-      }
+      previousTotalSize + totalSize
     }
 
-    getDirectorySizeRecBatch(continue = true, contToken = None, 0L)
+    listAndAccumulateRecursively(location, accumulateSizeOp)(continue = true, contToken = None, initSize)
   }
 
   /**
@@ -133,59 +124,38 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
    * Checks if the distributed-FS path contains non-splittable files
    */
   override def isNonSplittable(distPath: String): Boolean = {
+    // setup accumulation
     val location = distPath.toS3Location(region)
+    val initFoundValue = false
+    // we want to break the recursion if ever found, because it cannot be unfound and the rest is moot.
+    val breakOutCase = Some(true)
 
-    @tailrec
-    def isNonSplittableRecBatch(continue: Boolean, contToken: String, acc: Boolean): Boolean = {
-      log.debug(s"isNonSplittableRecBatch($continue, $contToken, $acc)")
+    def accumulateFoundOp(previouslyFound: Boolean, response: ListObjectsV2Response): Boolean = {
+      val objects = response.contents().asScala
+      val nonSplittableFound = objects.exists(obj => isKeyNonSplittable(obj.key))
 
-      if (continue) {  // truncated = need to continue
-        val listObjectsBuilder = ListObjectsV2Request.builder.bucket(location.bucketName).prefix(location.path).maxKeys(maxKeys)
-        val listObjectsRequest = listObjectsBuilder.continuationToken(contToken).build
-
-        val response = s3Client.listObjectsV2(listObjectsRequest)
-        val objects = response.contents().asScala
-
-        val nonSplittableFound = objects.exists(obj => isKeyNonSplittable(obj.key))
-
-        if (nonSplittableFound) {
-          true
-        } else {
-          isNonSplittableRecBatch(continue = response.isTruncated, response.nextContinuationToken, false)
-        }
-      } else {
-        acc
-      }
+      previouslyFound || nonSplittableFound // true if ever found
     }
 
-    isNonSplittableRecBatch(continue = true, contToken = null, false)
+    listAndAccumulateRecursively(location, accumulateFoundOp)(continue = true, contToken = None, initFoundValue, breakOutCase)
   }
 
   /**
    * Deletes a distributed-FS directory and all its contents recursively
    */
   override def deleteDirectoryRecursively(distPath: String): Unit = {
+
+    // setup accumulation
     val location = distPath.toS3Location(region)
 
-    @tailrec
-    def deleteDirectoryRecBatch(continue: Boolean, contToken: String): Unit = {
-      log.debug(s"deleteDirectoryRecBatch($continue, $contToken)")
-
-      if (continue) {
-        val listObjectsBuilder = ListObjectsV2Request.builder.bucket(location.bucketName).prefix(location.path).maxKeys(maxKeys)
-        val listObjectsRequest  =  listObjectsBuilder.continuationToken(contToken).build
-
-        val response = s3Client.listObjectsV2(listObjectsRequest)
-        val objects = response.contents().asScala
-
-        if (objects.size > 0) {
-          deleteKeys(location.bucketName, objects.map(_.key))
-        }
-
-        deleteDirectoryRecBatch(continue = response.isTruncated, response.nextContinuationToken)
+    def accumulateSizeOp(acc: Unit, response: ListObjectsV2Response): Unit = { // side-effect, no accumulation?
+      val objects = response.contents().asScala
+      if (objects.size > 0) {
+        deleteKeys(location.bucketName, objects.map(_.key))
       }
     }
-    deleteDirectoryRecBatch(continue = true, contToken = null)
+
+    listAndAccumulateRecursively(location, accumulateSizeOp)(continue = true, contToken = None, ())
   }
 
   private[fs] def deleteKeys(bucketName: String, keys: Seq[String]): Unit = {
@@ -211,47 +181,77 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
    * @return the latest version or 0 in case no versions exist
    */
   override def getLatestVersion(publishPath: String, reportDate: String): Int = {
+
+    // setup accumulation
     val location = publishPath.toS3Location(region)
+    val initVersion = 0
 
-    @tailrec
-    def getLatestVersionRecBatch(continue: Boolean, contToken: String, accMaxVersion: Int): Int = {
-      log.debug(s"getLatestVersionRecBatch($continue, $contToken, $accMaxVersion)")
+    // looking for $publishPath/enceladus_info_date=$reportDate\enceladus_info_version=$version
+    val prefix = s"${location.path}/enceladus_info_date=$reportDate/enceladus_info_version="
 
-      if (continue) {
-        // looking for $publishPath/enceladus_info_date=$reportDate\enceladus_info_version=$version
-        val prefix = s"${location.path}/enceladus_info_date=$reportDate/enceladus_info_version="
+    def accumulateSizeOp(previousMaxVersion: Int, response: ListObjectsV2Response): Int = {
+      val objects = response.contents().asScala
 
-        val listObjectsBuilder = ListObjectsV2Request.builder.bucket(location.bucketName).prefix(location.path).maxKeys(maxKeys)
-        val listObjectsRequest  =  listObjectsBuilder.continuationToken(contToken).build
-
-        val response = s3Client.listObjectsV2(listObjectsRequest)
-        val objects = response.contents().asScala
-
-        val existingVersions = objects
-          .map(_.key)
-          .map { key =>
-            assert(key.startsWith(prefix), s"Retrieved keys should start with $prefix, but precondition fails for $key")
-            val noPrefix = key.stripPrefix(prefix)
-            noPrefix.takeWhile(_.isDigit).toInt // existing versions
-          }
-          .toSet
-
-        val batchMaxVersion = if (existingVersions.isEmpty) {
-          0
-        } else {
-          existingVersions.max
+      val existingVersions = objects
+        .map(_.key)
+        .map { key =>
+          assert(key.startsWith(prefix), s"Retrieved keys should start with $prefix, but precondition fails for $key")
+          val noPrefix = key.stripPrefix(prefix)
+          noPrefix.takeWhile(_.isDigit).toInt // existing versions
         }
+        .toSet
 
-        getLatestVersionRecBatch(continue = response.isTruncated, response.nextContinuationToken, Math.max(accMaxVersion, batchMaxVersion))
+      if (existingVersions.isEmpty) {
+        previousMaxVersion
       } else {
-        accMaxVersion
+        Math.max(previousMaxVersion, existingVersions.max)
       }
     }
 
-    getLatestVersionRecBatch(continue = true, contToken = null, 0) // scalastyle:ignore null default token in Java v2 SDK
+    listAndAccumulateRecursively(location, accumulateSizeOp)(continue = true, contToken = None, initVersion)
   }
 
-  // todo redo the recursiveBatches in a general fashion?
-
   private[fs] def getS3Client: S3Client = S3Utils.getS3Client(region, credentialsProvider)
+
+  /**
+   * General method to list and accumulate the objects info. Note, that the method strieves to be memory-efficient -
+   * i.e. accumulate the current batch first and then load the next batch (instead of the naive "load all first, process later"
+   *
+   * @param location     s3location - bucket & path are used
+   * @param accumulateOp operation to accumulate
+   * @param continue     recursion control: true = recursion continues, false = recursion stops
+   * @param contToken    continuationToken for S3 Listing if present (first call has `None`, subsequent calls carry over a token
+   * @param acc          (initial/carry-over) accumulator value
+   * @param breakOut     allows to break the recursion prematurely when the defined value equals the currently accumulated value.
+   *                     Default: None = no break out
+   * @tparam T accumulator value type
+   * @return accumulated value
+   */
+  @tailrec
+  private def listAndAccumulateRecursively[T](location: S3Location, accumulateOp: (T, ListObjectsV2Response) => T)
+                                             (continue: Boolean, contToken: Option[String], acc: T, breakOut: Option[T] = None): T = {
+    log.debug(s"listAndAccumulateRecursively($location, $accumulateOp)($continue, $contToken, $acc)")
+
+    if (continue) { // todo get rid of continue?
+      val listObjectsBuilder = ListObjectsV2Request.builder
+        .bucket(location.bucketName)
+        .prefix(location.path)
+        .maxKeys(maxKeys)
+      val listObjectsRequest = contToken.fold(listObjectsBuilder.build)(listObjectsBuilder.continuationToken(_).build)
+
+      val response: ListObjectsV2Response = s3Client.listObjectsV2(listObjectsRequest)
+      val accumulated: T = accumulateOp(acc, response)
+
+      if (breakOut.contains(accumulated)) {
+        log.debug(s"Breakout at accumulated value $accumulated")
+        accumulated
+      } else {
+        listAndAccumulateRecursively(location, accumulateOp)(response.isTruncated, Some(response.nextContinuationToken),
+          accumulated, breakOut)
+      }
+
+    } else {
+      acc
+    }
+  }
 }

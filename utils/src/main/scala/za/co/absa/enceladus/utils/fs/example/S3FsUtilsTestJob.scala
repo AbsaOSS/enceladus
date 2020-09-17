@@ -59,6 +59,9 @@ object S3FsUtilsTestJob {
 
     log.info(s"reading file content:" +  s3utils.read(s"$basePath/1/2019/11/27/1/_INFO").take(50))
 
+    log.info(s"should find no gz-s:" +  s3utils.isNonSplittable("s3://euw1-ctodatadev-dev-bigdatarnd-s3-poc/gz-list/nogz"))
+    log.info(s"should find some gz-s (and breakOut):" +  s3utils.isNonSplittable("s3://euw1-ctodatadev-dev-bigdatarnd-s3-poc/gz-list/somegz"))
+
     val deletePath = "s3://euw1-ctodatadev-dev-bigdatarnd-s3-poc/delete"
     log.info(s"deleting $deletePath" +  s3utils.deleteDirectoryRecursively(deletePath))
   }
