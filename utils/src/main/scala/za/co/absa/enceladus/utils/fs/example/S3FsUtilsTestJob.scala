@@ -24,12 +24,12 @@ import za.co.absa.enceladus.utils.fs.S3FsUtils
 
 // todo remove or create a integtest like this instead.
 // implementation is directly suited to be runnable locally with a saml profile.
-object HdfsUtilsTestJob {
+object S3FsUtilsTestJob {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
   def main(args: Array[String]): Unit = {
-    val basePath  ="s3://euw1-ctodatadev-dev-bigdatarnd-s3-poc/ao-hdfs-data/hdfs_data/std/std_nf_dn"
+    val basePath ="s3://euw1-ctodatadev-dev-bigdatarnd-s3-poc/ao-hdfs-data/hdfs_data/std/std_nf_dn"
 
     val sparkBuilder = SparkSession.builder().appName("Sample S3 Measurements 1 Job")
     val spark = sparkBuilder
@@ -41,7 +41,10 @@ object HdfsUtilsTestJob {
     val kmsKeyId = System.getenv("TOOLING_KMS_KEY_ID") // load from an environment property in order not to disclose it here
     log.info(s"kmsKeyId from env loaded = ${kmsKeyId.take(10)}...")
 
-    val s3utils =  S3FsUtils(Region.EU_WEST_1, S3KmsSettings(kmsKeyId))
+    val s3utils = new S3FsUtils(Region.EU_WEST_1, S3KmsSettings(kmsKeyId)) {
+      override val maxKeys = 5 // to test recursive listing/action
+    }
+
     log.info(s"dir size of $basePath is:" +  s3utils.getDirectorySize(basePath))
     log.info(s"dir size (no hidden) of $basePath is:" +  s3utils.getDirectorySizeNoHidden(basePath))
 
@@ -56,8 +59,8 @@ object HdfsUtilsTestJob {
 
     log.info(s"reading file content:" +  s3utils.read(s"$basePath/1/2019/11/27/1/_INFO").take(50))
 
+    val deletePath = "s3://euw1-ctodatadev-dev-bigdatarnd-s3-poc/delete"
+    log.info(s"deleting $deletePath" +  s3utils.deleteDirectoryRecursively(deletePath))
   }
-
-
 
 }

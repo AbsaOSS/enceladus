@@ -32,6 +32,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
   extends DistributedFsUtils {
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
+  private[fs] val maxKeys = 1000 // overridable default
 
   val s3Client: S3Client = getS3Client
 
@@ -77,20 +78,28 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
   private[fs] def getDirectorySize(distPath: String, keyNameFilter: String => Boolean): Long = {
     val location = distPath.toS3Location(region)
 
-    val listRequest = ListObjectsV2Request
-      .builder().bucket(location.bucketName).prefix(location.path)
-      .build()
+    @tailrec
+    def getDirectorySizeRecBatch(continue: Boolean, contToken: Option[String], acc: Long): Long = {
+      log.debug(s"getDirectorySizeRecBatch($continue, $contToken, $acc)")
 
-    val initResult: ListObjectsV2Response = s3Client.listObjectsV2(listRequest)
-    if (initResult.isTruncated) {
-      throw new IllegalStateException("Only supporting prefixes that have 1000 files or less") // redo for 1000+?
+      if (continue) {
+         val listObjectsBuilder = ListObjectsV2Request.builder.bucket(location.bucketName).prefix(location.path).maxKeys(maxKeys)
+        val listObjectsRequest = contToken.fold(listObjectsBuilder.build)(listObjectsBuilder.continuationToken(_).build)
+
+        val response = s3Client.listObjectsV2(listObjectsRequest)
+        val objects = response.contents().asScala
+
+        val totalSize = objects
+          .filter(obj => keyNameFilter(obj.key))
+          .foldLeft(0L) { (currentSize: Long, nextObject: S3Object) => currentSize + nextObject.size }
+
+        getDirectorySizeRecBatch(continue = response.isTruncated, Some(response.nextContinuationToken), acc + totalSize)
+      } else {
+        acc
+      }
     }
 
-    val totalSize = initResult.contents().asScala
-      .filter(obj => keyNameFilter(obj.key))
-      .foldLeft(0L) { (currentSize: Long, nextObject: S3Object) => currentSize + nextObject.size }
-
-    totalSize
+    getDirectorySizeRecBatch(continue = true, contToken = None, 0L)
   }
 
   /**
@@ -126,16 +135,30 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
   override def isNonSplittable(distPath: String): Boolean = {
     val location = distPath.toS3Location(region)
 
-    val listRequest = ListObjectsV2Request
-      .builder().bucket(location.bucketName).prefix(location.path)
-      .build()
+    @tailrec
+    def isNonSplittableRecBatch(continue: Boolean, contToken: String, acc: Boolean): Boolean = {
+      log.debug(s"isNonSplittableRecBatch($continue, $contToken, $acc)")
 
-    val initResult: ListObjectsV2Response = s3Client.listObjectsV2(listRequest)
-    if (initResult.isTruncated) {
-      throw new IllegalStateException("Only supporting prefixes that have 1000 files or less") // redo for 1000+?
+      if (continue) {  // truncated = need to continue
+        val listObjectsBuilder = ListObjectsV2Request.builder.bucket(location.bucketName).prefix(location.path).maxKeys(maxKeys)
+        val listObjectsRequest = listObjectsBuilder.continuationToken(contToken).build
+
+        val response = s3Client.listObjectsV2(listObjectsRequest)
+        val objects = response.contents().asScala
+
+        val nonSplittableFound = objects.exists(obj => isKeyNonSplittable(obj.key))
+
+        if (nonSplittableFound) {
+          true
+        } else {
+          isNonSplittableRecBatch(continue = response.isTruncated, response.nextContinuationToken, false)
+        }
+      } else {
+        acc
+      }
     }
 
-    initResult.contents().asScala.exists(obj => isKeyNonSplittable(obj.key))
+    isNonSplittableRecBatch(continue = true, contToken = null, false)
   }
 
   /**
@@ -143,27 +166,26 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
    */
   override def deleteDirectoryRecursively(distPath: String): Unit = {
     val location = distPath.toS3Location(region)
-    deleteNextBatch(isTruncated = false, contToken = null) // scalastyle:ignore null default token in Java v2 SDK
 
     @tailrec
-    def deleteNextBatch(isTruncated: Boolean, contToken: String): Unit = {
-      val listObjectsBuilder = ListObjectsV2Request.builder.bucket(location.bucketName).prefix(location.path)
-      val listObjectsRequest = if (isTruncated) {
-        listObjectsBuilder.build
-      } else {
-        listObjectsBuilder.continuationToken(contToken).build
+    def deleteDirectoryRecBatch(continue: Boolean, contToken: String): Unit = {
+      log.debug(s"deleteDirectoryRecBatch($continue, $contToken)")
+
+      if (continue) {
+        val listObjectsBuilder = ListObjectsV2Request.builder.bucket(location.bucketName).prefix(location.path).maxKeys(maxKeys)
+        val listObjectsRequest  =  listObjectsBuilder.continuationToken(contToken).build
+
+        val response = s3Client.listObjectsV2(listObjectsRequest)
+        val objects = response.contents().asScala
+
+        if (objects.size > 0) {
+          deleteKeys(location.bucketName, objects.map(_.key))
+        }
+
+        deleteDirectoryRecBatch(continue = response.isTruncated, response.nextContinuationToken)
       }
-
-      val response = s3Client.listObjectsV2(listObjectsRequest)
-      val objects = response.contents().asScala
-
-      if (objects.size > 0) {
-        deleteKeys(location.bucketName, objects.map(_.key))
-      }
-
-      deleteNextBatch(response.isTruncated, response.continuationToken)
     }
-
+    deleteDirectoryRecBatch(continue = true, contToken = null)
   }
 
   private[fs] def deleteKeys(bucketName: String, keys: Seq[String]): Unit = {
@@ -189,36 +211,47 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
    * @return the latest version or 0 in case no versions exist
    */
   override def getLatestVersion(publishPath: String, reportDate: String): Int = {
-
-    // looking for $publishPath/enceladus_info_date=$reportDate\enceladus_info_version=$version
-
     val location = publishPath.toS3Location(region)
-    val prefix = s"${location.path}/enceladus_info_date=$reportDate/enceladus_info_version="
 
-    val listRequest = ListObjectsV2Request
-      .builder().bucket(location.bucketName).prefix(prefix)
-      .build()
+    @tailrec
+    def getLatestVersionRecBatch(continue: Boolean, contToken: String, accMaxVersion: Int): Int = {
+      log.debug(s"getLatestVersionRecBatch($continue, $contToken, $accMaxVersion)")
 
-    val initResult: ListObjectsV2Response = s3Client.listObjectsV2(listRequest)
-    if (initResult.isTruncated) {
-      throw new IllegalStateException("Only supporting prefixes that have 1000 files or less") // redo for 1000+?
-    }
+      if (continue) {
+        // looking for $publishPath/enceladus_info_date=$reportDate\enceladus_info_version=$version
+        val prefix = s"${location.path}/enceladus_info_date=$reportDate/enceladus_info_version="
 
-    val existingVersions = initResult.contents().asScala
-      .map(_.key)
-      .map { key =>
-        assert(key.startsWith(prefix), s"Retrieved keys should start with $prefix, but precondition fails for $key")
-        val noPrefix = key.stripPrefix(prefix)
-        noPrefix.takeWhile(_.isDigit).toInt // existing versions
+        val listObjectsBuilder = ListObjectsV2Request.builder.bucket(location.bucketName).prefix(location.path).maxKeys(maxKeys)
+        val listObjectsRequest  =  listObjectsBuilder.continuationToken(contToken).build
+
+        val response = s3Client.listObjectsV2(listObjectsRequest)
+        val objects = response.contents().asScala
+
+        val existingVersions = objects
+          .map(_.key)
+          .map { key =>
+            assert(key.startsWith(prefix), s"Retrieved keys should start with $prefix, but precondition fails for $key")
+            val noPrefix = key.stripPrefix(prefix)
+            noPrefix.takeWhile(_.isDigit).toInt // existing versions
+          }
+          .toSet
+
+        val batchMaxVersion = if (existingVersions.isEmpty) {
+          0
+        } else {
+          existingVersions.max
+        }
+
+        getLatestVersionRecBatch(continue = response.isTruncated, response.nextContinuationToken, Math.max(accMaxVersion, batchMaxVersion))
+      } else {
+        accMaxVersion
       }
-      .toSet
-
-    if (existingVersions.isEmpty) {
-      0
-    } else {
-      existingVersions.max
     }
+
+    getLatestVersionRecBatch(continue = true, contToken = null, 0) // scalastyle:ignore null default token in Java v2 SDK
   }
+
+  // todo redo the recursiveBatches in a general fashion?
 
   private[fs] def getS3Client: S3Client = S3Utils.getS3Client(region, credentialsProvider)
 }
