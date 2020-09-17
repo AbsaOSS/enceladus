@@ -365,9 +365,6 @@ object TypedStructField {
       DecimalFieldValidator.validate(this)
     }
 
-    override protected def convertString(string: String): Try[BigDecimal] =
-      parser.flatMap(parser => parser.parse(string))
-
     def precision: Int = dataType.precision
     def scale: Int = dataType.scale
   }
