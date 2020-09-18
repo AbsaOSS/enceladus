@@ -168,11 +168,13 @@ password=changeme
 
 The Scripts in `scripts` folder can be used to simplify command lines for running Standardization and Conformance jobs.
 
-Steps to configure the scripts are as follows:
-* Copy all the scripts in `scripts` directory to a location in your environment.
+Steps to configure the scripts are as follows (_Linux_):
+* Copy all the scripts in `scripts/bash` directory to a location in your environment.
 * Copy `enceladus_env.template.sh` to `enceladus_env.sh`.
 * Change `enceladus_env.sh` according to your environment settings.
 * Use `run_standardization.sh` and `run_conformance.sh` scripts instead of directly invoking `spark-submit` to run your jobs.
+
+Similar scripts exist for _Windows_ in directory `scripts/cmd`.
 
 The syntax for running Standardization and Conformance is similar to running them using `spark-submit`. The only difference is that
 you don't have to provide environment-specific settings. Several resource options, like driver memory and driver cores also have
@@ -217,6 +219,23 @@ The basic command to run Standardization and Conformance combined becomes:
 --raw-format <data_format> \
 --row-tag <tag>
 ```
+
+
+Similarly for Windows:
+```
+<path to scripts>/run_standardization.cmd ^
+--num-executors <num> ^
+--deploy-mode <client/cluster> ^
+--menas-auth-keytab <path_to_keytab_file> ^
+--dataset-name <dataset_name> ^
+--dataset-version <dataset_version> ^
+--report-date <date> ^
+--report-version <data_run_version> ^
+--raw-format <data_format> ^
+--row-tag <tag>
+```
+Etc...
+
 
 The list of options for configuring Spark deployment mode in Yarn and resource specification:
 
