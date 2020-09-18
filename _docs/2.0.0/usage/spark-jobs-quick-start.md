@@ -94,7 +94,17 @@ Here, nothing new is added for the quick run. Of course, there might be special 
 
 If your local DevOps/SysAdmin set up helper scripts for you, then it is even easier. You can omit all the spark options if sensible defaults are provided or Dynamic Resource Allocation is enabled. For more about this ask the people who set up your environment.
 
-When scripts are properly set up, then only a few parameters need to specified.
+Steps to configure the scripts are as follows (_Linux_/_Windows_):
+* Copy all the scripts in `scripts/bash`/`scripts/c,d` directory to a location in your environment.
+* Copy `enceladus_env.template.sh`/`enceladus_env.template.cmd` to `enceladus_env.sh`/`enceladus_env.cmd`.
+* Change `enceladus_env.sh`/`enceladus_env.cmd` according to your environment settings.
+* Use `run_standardization.sh`/`run_standardization.cmd` and `run_conformance.sh`/`run_conformance.cmd` or `run_standardization_conformance.sh`/`run_standardization_conformance.cmd` scripts instead of directly invoking `spark-submit` to run your jobs.
+
+Similar scripts exist for _Windows_ in directory `scripts/cmd`.
+
+When scripts are properly set up, then only a few parameters need to be specified.
+
+### Linux
 
 The basic command to run Standardization becomes:
 
@@ -133,5 +143,46 @@ The basic command to run Standardization and Conformance together becomes:
 --raw-format <data_format> \
 --row-tag <tag>
 ```
+
+### Windows
+
+The basic command to run Standardization becomes:
+
+```cmd
+<path to scripts>/run_standardization.cmd ^
+--menas-auth-keytab <path_to_keytab_file> ^
+--dataset-name <dataset_name> ^
+--dataset-version <dataset_version> ^
+--report-date <report_date> ^
+--report-version <data_run_version> ^
+--raw-format <data_format> ^
+--row-tag <tag>
+```
+
+The basic command to run Conformance becomes:
+
+```cmd
+<path to scripts>/run_conformance.cmd ^
+--deploy-mode <client/cluster> ^
+--menas-auth-keytab <path_to_keytab_file> ^
+--dataset-name <dataset_name> ^
+--dataset-version <dataset_version> ^
+--report-date <report_date> ^
+--report-version <data_run_version>
+```
+
+The basic command to run Standardization and Conformance together becomes:
+
+```cmd
+<path to scripts>/run_standardization_conformance.cmd ^
+--menas-auth-keytab <path_to_keytab_file> ^
+--dataset-name <dataset_name> ^
+--dataset-version <dataset_version> ^
+--report-date <report_date> ^
+--report-version <data_run_version> ^
+--raw-format <data_format> ^
+--row-tag <tag>
+```
+
 
 For more options and arguments check the [run documentation](https://absaoss.github.io/enceladus/docs/2.0.0/usage/run)
