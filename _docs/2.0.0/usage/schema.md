@@ -271,6 +271,7 @@ Here are the recognized ones with the description of their purpose (with detaile
 | [grouping_separator](#grouping_separator) | any numeric type            | Character to mark boundaries between orders of magnitude, usually to mark thousands, millions etc.                                                    | *\_*            | *,*                                          |
 | [minus_sign](#minus_sign)                 | any numeric type            | Character to mark the number is negative.                                                                                                             | *N*             | *-*                                          |
 | [allow_infinity](#allow_infinity)         | float & double              | Flag indicating if the column accepts infinity as a value (and positive/negative numbers which are too large are converted to *infinity*/*-infinity*) | *true*          | *false*                                      |
+| [strict_parsing](#strict_parsing)         | decimal                     | Flag indicating if strict parsing should be done on the input value. Strict parsing rejects a value with more decimal places than the defined scale     | *true*          | *false*                                      |
 | [radix](#radix)                           | long, integer, short, byte  | The base of the numbers provided                                                                                                                      | *hex*           | *10*                                         |
 | [encoding](#encoding)                     | binary                      | Encoding is used for string to binary conversion                                                                                                      | *base64*,*none* | `-` (explained in [encoding](#encoding))     |
 | [width](#width) | any atomic type | Specifies the width of a column for a fixed-width formats | "10" | - |
@@ -369,6 +370,16 @@ Flag indicating if the column accepts infinity as a value. When set to true *inf
 valid value, instead of failing with casting error ([see here]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)).
 The string representing infinity on input is *"∞"* and *"-∞"* respectively. Positive and negative numbers with values 
 that are too large are converted to *infinity* and *-infinity*, respectively.
+
+### strict_parsing
+
+<sup>**Supported by types:** [Decimal](#decimal)</sup>
+
+Flag indicating strict parsing should be applied on the input values.
+Strict parsing rejects a value with more decimal places than the scale (second number) of the field's Decimal type definition. 
+This results in a casting error in error column ([see here]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)). 
+For example for Decimal(X,2), the values with longer scale (like 10.12345, 0.1234) will be rejected.
+Default value has to fit the scale as well in the case of strict parsing.
 
 ### radix
 
@@ -597,6 +608,7 @@ The value used when _explicit default_ was not defined in the schema:
 cannot be a `default` for the type [`Short`](#short), or _"∞"_ if `allow_infinity` is _"false"_ for [`Double`](#double)/
 [`Float`](#float))
 - If it's a type supporting [`pattern`](#pattern) and it is defined, the default value has to adhere to the `pattern`
+- If 'strict_parsing' is enabled for [`Decimal`](#decimal), the number of decimal places has to fit into the type's scale
 
 [test-samples]: https://github.com/AbsaOSS/enceladus/blob/master/spark-jobs/src/test/scala/za/co/absa/enceladus/standardization/samples/TestSamples.scala
 [oracle-tz-ids]: https://docs.oracle.com/javase/8/docs/api/java/util/TimeZone.html#getAvailableIDs--
