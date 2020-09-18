@@ -90,7 +90,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
       previousTotalSize + totalSize
     }
 
-    listAndAccumulateRecursively(location, accumulateSizeOp)(continue = true, contToken = None, initSize)
+    listAndAccumulateRecursively(location, accumulateSizeOp, initSize)
   }
 
   /**
@@ -127,7 +127,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
     // setup accumulation
     val location = distPath.toS3Location(region)
     val initFoundValue = false
-    // we want to break the recursion if ever found, because it cannot be unfound and the rest is moot.
+    // we want to break out of the recursion if a non-splittable is found, because it cannot ever be unfound.
     val breakOutCase = Some(true)
 
     def accumulateFoundOp(previouslyFound: Boolean, response: ListObjectsV2Response): Boolean = {
@@ -137,7 +137,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
       previouslyFound || nonSplittableFound // true if ever found
     }
 
-    listAndAccumulateRecursively(location, accumulateFoundOp)(continue = true, contToken = None, initFoundValue, breakOutCase)
+    listAndAccumulateRecursively(location, accumulateFoundOp, initFoundValue, breakOutCase)
   }
 
   /**
@@ -148,14 +148,14 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
     // setup accumulation
     val location = distPath.toS3Location(region)
 
-    def accumulateSizeOp(acc: Unit, response: ListObjectsV2Response): Unit = { // side-effect, no accumulation?
+    def accumulateSizeOp(acc: Unit, response: ListObjectsV2Response): Unit = { // side-effect, "accumulates" to unit
       val objects = response.contents().asScala
       if (objects.size > 0) {
         deleteKeys(location.bucketName, objects.map(_.key))
       }
     }
 
-    listAndAccumulateRecursively(location, accumulateSizeOp)(continue = true, contToken = None, ())
+    listAndAccumulateRecursively(location, accumulateSizeOp, ())
   }
 
   private[fs] def deleteKeys(bucketName: String, keys: Seq[String]): Unit = {
@@ -208,7 +208,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
       }
     }
 
-    listAndAccumulateRecursively(location, accumulateSizeOp)(continue = true, contToken = None, initVersion)
+    listAndAccumulateRecursively(location, accumulateSizeOp, initVersion)
   }
 
   private[fs] def getS3Client: S3Client = S3Utils.getS3Client(region, credentialsProvider)
@@ -219,20 +219,23 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
    *
    * @param location     s3location - bucket & path are used
    * @param accumulateOp operation to accumulate
-   * @param continue     recursion control: true = recursion continues, false = recursion stops
-   * @param contToken    continuationToken for S3 Listing if present (first call has `None`, subsequent calls carry over a token
-   * @param acc          (initial/carry-over) accumulator value
+   * @param initialAccValue          (initial/carry-over) accumulator value
    * @param breakOut     allows to break the recursion prematurely when the defined value equals the currently accumulated value.
    *                     Default: None = no break out
    * @tparam T accumulator value type
    * @return accumulated value
    */
-  @tailrec
-  private def listAndAccumulateRecursively[T](location: S3Location, accumulateOp: (T, ListObjectsV2Response) => T)
-                                             (continue: Boolean, contToken: Option[String], acc: T, breakOut: Option[T] = None): T = {
-    log.debug(s"listAndAccumulateRecursively($location, $accumulateOp)($continue, $contToken, $acc)")
+  private def listAndAccumulateRecursively[T](location: S3Location,
+                                              accumulateOp: (T, ListObjectsV2Response) => T,
+                                              initialAccValue: T,
+                                              breakOut: Option[T] = None): T = {
 
-    if (continue) { // todo get rid of continue?
+    log.debug(s"listAndAccumulateRecursively($location, $accumulateOp, $initialAccValue, $breakOut)")
+
+    @tailrec
+    def listAndAccumulateRecursivelyAcc(contToken: Option[String], acc: T): T = {
+      log.debug(s"listAndAccumulateRecursivelyAcc($contToken, $acc)")
+
       val listObjectsBuilder = ListObjectsV2Request.builder
         .bucket(location.bucketName)
         .prefix(location.path)
@@ -240,19 +243,22 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
       val listObjectsRequest = contToken.fold(listObjectsBuilder.build)(listObjectsBuilder.continuationToken(_).build)
 
       val response: ListObjectsV2Response = s3Client.listObjectsV2(listObjectsRequest)
-      val accumulated: T = accumulateOp(acc, response)
+      val totalAccumulated: T = accumulateOp(acc, response) // result of previous with the currently accumulated together
 
       // the caller is able define a short-circuiting condition - at which no more processing is needed, hence we "break out" here
-      if (breakOut.contains(accumulated)) {
-        log.debug(s"Breakout at accumulated value $accumulated")
-        accumulated
+      if (breakOut.contains(totalAccumulated)) {
+        log.debug(s"Breakout at totalAccumulated value $totalAccumulated")
+        totalAccumulated
+      } else if (!response.isTruncated) {
+        log.debug(s"Final recursion level reached.")
+        totalAccumulated
       } else {
-        listAndAccumulateRecursively(location, accumulateOp)(response.isTruncated, Some(response.nextContinuationToken),
-          accumulated, breakOut)
+        // need to recurse & accumulate deeper
+        listAndAccumulateRecursivelyAcc(Some(response.nextContinuationToken), totalAccumulated)
       }
-
-    } else {
-      acc
     }
+
+    // run the recursive call
+    listAndAccumulateRecursivelyAcc(contToken = None, acc = initialAccValue)
   }
 }
