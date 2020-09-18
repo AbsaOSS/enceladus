@@ -23,6 +23,7 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 
@@ -44,8 +45,9 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
+    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
-    val conformed = DynamicInterpreter.interpret(inputDataset, inputDf)
+    val conformed = DynamicInterpreter().interpret(inputDataset, inputDf)
 
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 

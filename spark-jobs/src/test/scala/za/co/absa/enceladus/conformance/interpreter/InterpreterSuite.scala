@@ -25,7 +25,7 @@ import za.co.absa.enceladus.conformance.samples._
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import org.json4s._
 import org.json4s.jackson._
-import za.co.absa.enceladus.utils.fs.FileReader
+import za.co.absa.enceladus.utils.fs.{FileReader, HdfsUtils}
 
 class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase {
 
@@ -55,6 +55,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     val isCatalystWorkaroundEnabled = true
 
     import spark.implicits._
+    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
     val mappingTablePattern = "{0}/{1}/{2}"
 
     val dfs = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath, "2017-11-01", mappingTablePattern)
@@ -70,7 +71,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs)
+    val conformed = DynamicInterpreter().interpret(EmployeeConformance.employeeDS, dfs)
 
     val data = conformed.as[ConformedEmployee].collect.sortBy(_.employee_id).toList
     val expected = EmployeeConformance.conformedEmployees.sortBy(_.employee_id).toList
@@ -112,6 +113,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     val isCatalystWorkaroundEnabled = true
 
     import spark.implicits._
+    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
     val mappingTablePattern = "{0}/{1}/{2}"
 
     val dfs = DataSource.getDataFrame(TradeConformance.tradeDS.hdfsPath, "2017-11-01", mappingTablePattern)
@@ -127,7 +129,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs).cache
+    val conformed = DynamicInterpreter().interpret(TradeConformance.tradeDS, dfs).cache
 
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
 
@@ -168,23 +170,19 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
     })
   }
 
-  // TODO fix for s3 [ref issue #1416]
-  ignore("End to end dynamic conformance test") {
+  test("End to end dynamic conformance test") {
     testEndToEndDynamicConformance(useExperimentalMappingRule = false)
   }
 
-  // TODO fix for s3 [ref issue #1416]
-  ignore("End to end dynamic conformance test (experimental optimized mapping rule)") {
+  test("End to end dynamic conformance test (experimental optimized mapping rule)") {
     testEndToEndDynamicConformance(useExperimentalMappingRule = true)
   }
 
-  // TODO fix for s3 [ref issue #1416]
-  ignore("End to end array dynamic conformance test") {
+  test("End to end array dynamic conformance test") {
     testEndToEndArrayConformance(useExperimentalMappingRule = false)
   }
 
-  // TODO fix for s3 [ref issue #1416]
-  ignore("End to end array dynamic conformance test (experimental optimized mapping rule)") {
+  test("End to end array dynamic conformance test (experimental optimized mapping rule)") {
     testEndToEndArrayConformance(useExperimentalMappingRule = true)
   }
 }

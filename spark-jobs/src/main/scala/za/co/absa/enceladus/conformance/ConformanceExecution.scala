@@ -19,6 +19,12 @@ import java.io.{PrintWriter, StringWriter}
 
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import za.co.absa.atum.AtumImplicits
+import za.co.absa.atum.AtumImplicits.{DataSetWrapper, SparkSessionWrapper}
+import za.co.absa.atum.core.Atum
+import za.co.absa.atum.persistence.S3KmsSettings
+import za.co.absa.atum.utils.S3Utils.StringS3LocationExt
+import za.co.absa.enceladus.S3DefaultCredentialsProvider
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, S3Config}
@@ -31,17 +37,11 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
-import za.co.absa.enceladus.utils.fs.HdfsUtils
+import za.co.absa.enceladus.utils.fs.DistributedFsUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.enceladus.utils.schema.SchemaUtils
-import za.co.absa.atum.utils.S3Utils.StringS3LocationExt
-import za.co.absa.atum.AtumImplicits
-import za.co.absa.atum.AtumImplicits.{DataSetWrapper, SparkSessionWrapper}
-import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.S3DefaultCredentialsProvider
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
-import za.co.absa.atum.persistence.S3KmsSettings
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -53,12 +53,10 @@ trait ConformanceExecution extends CommonJobExecution with S3DefaultCredentialsP
   protected def prepareConformance[T](preparationResult: PreparationResult)
                                      (implicit dao: MenasDAO,
                                       cmd: ConformanceConfigParser[T],
-                                      fsUtils: HdfsUtils,
+                                      fsUtils: DistributedFsUtils,
                                       spark: SparkSession): Unit = {
 
-    // TODO fix for s3 [ref issue #1416]
-    //val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
-    val stdDirSize = -1L
+    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
     preparationResult.performance.startMeasurement(stdDirSize)
 
     log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
@@ -97,7 +95,7 @@ trait ConformanceExecution extends CommonJobExecution with S3DefaultCredentialsP
     }
   }
 
-  override def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig): Unit = {
+  override def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig)(implicit fsUtils: DistributedFsUtils): Unit = {
     validateIfPathAlreadyExists(s3Config, pathConfig.publishPath)
   }
 
@@ -106,14 +104,15 @@ trait ConformanceExecution extends CommonJobExecution with S3DefaultCredentialsP
   }
 
   protected def conform[T](inputData: DataFrame, preparationResult: PreparationResult)
-                          (implicit spark: SparkSession, cmd: ConformanceConfigParser[T], dao: MenasDAO): DataFrame = {
+                          (implicit spark: SparkSession, cmd: ConformanceConfigParser[T], dao: MenasDAO,
+                           fsUtils: DistributedFsUtils): DataFrame = {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
 
     Try {
       handleControlInfoValidation()
-      DynamicInterpreter.interpret(preparationResult.dataset, inputData)
+      DynamicInterpreter().interpret(preparationResult.dataset, inputData)
     } match {
       case Failure(e: ValidationException) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, e.techDetails)
@@ -138,7 +137,7 @@ trait ConformanceExecution extends CommonJobExecution with S3DefaultCredentialsP
                                             menasCredentials: MenasCredentials)
                                            (implicit spark: SparkSession,
                                             cmd: ConformanceConfigParser[T],
-                                            fsUtils: HdfsUtils): Unit = {
+                                            fsUtils: DistributedFsUtils): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
 
     PerformanceMetricTools.addJobInfoToAtumMetadata(
@@ -163,10 +162,7 @@ trait ConformanceExecution extends CommonJobExecution with S3DefaultCredentialsP
 
     withPartCols.write.parquet(preparationResult.pathCfg.publishPath)
 
-    // TODO fix for s3 [ref issue #1416]
-    //val publishDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.publishPath)
-    val publishDirSize = -1L
-
+    val publishDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.publishPath)
     preparationResult.performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
@@ -184,8 +180,7 @@ trait ConformanceExecution extends CommonJobExecution with S3DefaultCredentialsP
     writePerformanceMetrics(preparationResult.performance, cmd)
 
     if (conformanceReader.isAutocleanStdFolderEnabled()) {
-      // TODO fix for s3 [ref issue #1416]
-//      fsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardizationPath)
+      fsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardizationPath)
     }
     log.info(s"$sourceId finished successfully")
   }

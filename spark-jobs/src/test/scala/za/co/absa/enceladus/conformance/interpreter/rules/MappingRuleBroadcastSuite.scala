@@ -23,6 +23,7 @@ import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.Nest
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.{NestedTestCaseFactory, SimpleTestCaseFactory}
 import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
@@ -31,6 +32,8 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
 
   private val simpleTestCaseFactory = new SimpleTestCaseFactory()
   private val nestedTestCaseFactory = new NestedTestCaseFactory()
+
+  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   override def beforeAll(): Unit = {
     super.beforeAll()
@@ -51,7 +54,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       simpleTestCaseFactory.getTestCase(true, true, simpleMappingRule)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
       .cache
 
@@ -69,7 +72,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       simpleTestCaseFactory.getTestCase(true, true, simpleMappingRuleWithDefaultValue)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
       .cache
 
@@ -87,7 +90,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule1)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum1")
       .cache
 
@@ -105,7 +108,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule2)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum2")
       .cache
 
@@ -123,7 +126,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule3)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"conformedNum3", $"errCol")
       .cache
 
@@ -141,7 +144,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule1)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
       .cache
 
@@ -159,7 +162,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule2)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
@@ -177,7 +180,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule3)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
@@ -195,7 +198,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule4)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
@@ -213,7 +216,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule5)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
@@ -231,7 +234,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule6)
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
@@ -251,7 +254,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
 
     val inputDf2 = inputDf.withColumn("errCol", array(typedLit(ErrorMessage("Initial", "000", "ErrMsg", "id", Seq(), Seq()))))
 
-    val dfOut = DynamicInterpreter.interpret(dataset, inputDf2)
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf2)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
@@ -267,7 +270,7 @@ class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerT
       nestedTestCaseFactory.getTestCase(true, true, wrongMappingRule1)
 
     intercept[Exception] {
-      DynamicInterpreter.interpret(dataset, inputDf)
+      DynamicInterpreter().interpret(dataset, inputDf)
     }
   }
 

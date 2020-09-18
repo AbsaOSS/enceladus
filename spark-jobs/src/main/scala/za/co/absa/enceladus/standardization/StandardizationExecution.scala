@@ -35,7 +35,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.fs.HdfsUtils
+import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HdfsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
@@ -52,13 +52,10 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
                                           preparationResult: PreparationResult)
                                          (implicit dao: MenasDAO,
                                           cmd: StandardizationConfigParser[T],
-                                          fsUtils: HdfsUtils,
+                                          fsUtils: DistributedFsUtils,
                                           spark: SparkSession): StructType = {
 
-    // TODO fix for s3 [ref issue #1416]
-    // val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.rawPath)
-    val stdDirSize = -1L
-
+    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.rawPath)
      preparationResult.performance.startMeasurement(stdDirSize)
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
@@ -111,7 +108,7 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
     }
   }
 
-  override def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig): Unit = {
+  override def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig)(implicit fsUtils: DistributedFsUtils): Unit = {
     validateIfPathAlreadyExists(s3Config, pathConfig.standardizationPath)
   }
 
@@ -120,7 +117,7 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
                                                 path: String,
                                                 dataset: Dataset)
                                                (implicit spark: SparkSession,
-                                                fsUtils: HdfsUtils,
+                                                fsUtils: DistributedFsUtils,
                                                 dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationPropertiesProvider()
@@ -179,7 +176,7 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
                                                 cmd: StandardizationConfigParser[T],
                                                 menasCredentials: MenasCredentials)
                                                (implicit spark: SparkSession,
-                                                fsUtils: HdfsUtils): DataFrame = {
+                                                fsUtils: DistributedFsUtils): DataFrame = {
     import za.co.absa.atum.AtumImplicits._
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {
@@ -203,10 +200,7 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
 
-    // TODO fix for s3 [ref issue #1416]
-    // val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
-    val stdDirSize = -1L
-
+    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
     preparationResult.performance.finishMeasurement(stdDirSize, recordCount)
 
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
@@ -234,34 +228,41 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
   //scalastyle:off parameter.number
 
   private def ensureSplittable(df: DataFrame, path: String, schema: StructType)
-                              (implicit spark: SparkSession, fsUtils: HdfsUtils) = {
-    // TODO fix for s3 [ref issue #1416]
-    //    if (fsUtils.isNonSplittable(path)) {
-    //      convertToSplittable(df, schema)
-    //    } else {
-    df
-    //    }
+                              (implicit spark: SparkSession, fsUtils: DistributedFsUtils): DataFrame = {
+    if (fsUtils.isNonSplittable(path)) {
+      convertToSplittable(df, schema)
+    } else {
+      df
+    }
   }
 
   private def convertToSplittable(df: DataFrame, schema: StructType)
-                                 (implicit spark: SparkSession, fsUtils: HdfsUtils) = {
+                                 (implicit spark: SparkSession, fsUtils: DistributedFsUtils): DataFrame = {
     log.warn("Dataset is stored in a non-splittable format. This can have a severe performance impact.")
 
-    val tempParquetDir = s"/tmp/nonsplittable-to-parquet-${UUID.randomUUID()}"
-    log.warn(s"Converting to Parquet in temporary dir: $tempParquetDir")
+    fsUtils match {
+      case utils: HdfsUtils =>
+        val tempParquetDir = s"/tmp/nonsplittable-to-parquet-${UUID.randomUUID()}"
+        log.warn(s"Converting to Parquet in temporary dir: $tempParquetDir")
 
-    // Handle renaming of source columns in case there are columns
-    // that will break because of issues in column names like spaces
-    df.select(schema.fields.map { field: StructField =>
-      renameSourceColumn(df, field)
-    }: _*).write.parquet(tempParquetDir)
+        // Handle renaming of source columns in case there are columns
+        // that will break because of issues in column names like spaces
+        df.select(schema.fields.map { field: StructField =>
+          renameSourceColumn(df, field)
+        }: _*).write.parquet(tempParquetDir)
 
-    fsUtils.deleteOnExit(tempParquetDir)
-    // Reload from temp parquet and reverse column renaming above
-    val dfTmp = spark.read.parquet(tempParquetDir)
-    dfTmp.select(schema.fields.map { field: StructField =>
-      reverseRenameSourceColumn(dfTmp, field)
-    }: _*)
+        utils.deleteOnExit(tempParquetDir)
+        // Reload from temp parquet and reverse column renaming above
+        val dfTmp = spark.read.parquet(tempParquetDir)
+        dfTmp.select(schema.fields.map { field: StructField =>
+          reverseRenameSourceColumn(dfTmp, field)
+        }: _*)
+
+      case utils =>
+        log.warn(s"Splittability conversion only available for HDFS, leaving as is for ${utils.getClass.getName}")
+        df
+    }
+
   }
 
   private def renameSourceColumn(df: DataFrame, field: StructField): Column = {

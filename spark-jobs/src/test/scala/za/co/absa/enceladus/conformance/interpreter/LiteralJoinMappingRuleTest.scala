@@ -22,6 +22,7 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{DropConformanceRule, LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with LoggerTestBase {
@@ -67,7 +68,9 @@ class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with Logger
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val confd = DynamicInterpreter.interpret(conformanceDef, inputDf).repartition(2)
+    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
+
+    val confd = DynamicInterpreter().interpret(conformanceDef, inputDf).repartition(2)
 
     confd.write.mode("overwrite").parquet("_testOutput")
     val readAgain = spark.read.parquet("_testOutput")

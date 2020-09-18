@@ -32,6 +32,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
 class HyperConformance (implicit cmd: ConformanceConfig,
@@ -64,7 +65,10 @@ class HyperConformance (implicit cmd: ConformanceConfig,
 
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
 
-    val conformedDf = DynamicInterpreter.interpret(conformance, rawDf)
+    // using HDFS implementation until HyperConformance is S3-ready
+    implicit val fsUtils: HdfsUtils = new HdfsUtils(sparkSession.sparkContext.hadoopConfiguration)
+
+    val conformedDf = DynamicInterpreter().interpret(conformance, rawDf)
       .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_date()))
       .withColumnIfDoesNotExist(InfoDateColumnString, coalesce(date_format(infoDateColumn,"yyyy-MM-dd"), lit("")))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))

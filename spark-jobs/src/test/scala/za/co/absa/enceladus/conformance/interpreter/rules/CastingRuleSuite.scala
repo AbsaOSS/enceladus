@@ -23,6 +23,7 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, RuleValidators}
 import za.co.absa.enceladus.conformance.samples.CastingRuleSamples
 import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
@@ -51,7 +52,9 @@ class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase {
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val conformed = DynamicInterpreter.interpret(CastingRuleSamples.ordersDS, inputDf).cache
+    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
+
+    val conformed = DynamicInterpreter().interpret(CastingRuleSamples.ordersDS, inputDf).cache
 
     val conformedJSON = JsonUtils.prettySparkJSON(conformed.orderBy($"id").toJSON.collect)
 

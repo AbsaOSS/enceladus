@@ -22,6 +22,7 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 case class MyMappingTable(id: Int, mappedAttr: MyMappingTableInner)
@@ -71,7 +72,9 @@ class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val confd = DynamicInterpreter.interpret(conformanceDef, inputDf).repartition(2)
+    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
+
+    val confd = DynamicInterpreter().interpret(conformanceDef, inputDf).repartition(2)
 
     logDataFrameContent(confd)
 

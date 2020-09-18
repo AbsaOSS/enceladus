@@ -22,12 +22,14 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.samples._
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll {
 
   import spark.implicits._
   // spark.enableControlFrameworkTracking()
+  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   implicit var dao: MenasDAO = _
   implicit var progArgs: ConformanceConfig = _
@@ -58,7 +60,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef,
+    val conformedDf = DynamicInterpreter().interpret(ArraySamples.conformanceDef,
       df)
     val expected = ArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[ConformedOuter].collect().sortBy(_.order).toList
@@ -83,7 +85,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformedDf = DynamicInterpreter.interpret(NullArraySamples.mappingOnlyConformanceDef,
+    val conformedDf = DynamicInterpreter().interpret(NullArraySamples.mappingOnlyConformanceDef,
       df)
 
     val expected = NullArraySamples.conformedData.toArray.sortBy(_.order).toList
@@ -113,7 +115,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformedDf = DynamicInterpreter.interpret(EmtpyArraySamples.mappingOnlyConformanceDef,
+    val conformedDf = DynamicInterpreter().interpret(EmtpyArraySamples.mappingOnlyConformanceDef,
       df)
     val expected = EmtpyArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[OuterErr].collect().sortBy(_.order).toList

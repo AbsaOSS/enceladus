@@ -26,6 +26,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{conformanceRule, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 case class MyCustomRule(
@@ -89,7 +90,9 @@ class CustomRuleSuite extends FunSuite with SparkTestBase {
     .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
     .setControlFrameworkEnabled(enableCF)
 
-  val actualDf: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
+
+  val actualDf: DataFrame = DynamicInterpreter().interpret(conformanceDef, inputData)
 
   val actual: Seq[MineConfd] = actualDf.as[MineConfd].collect().toSeq
 
