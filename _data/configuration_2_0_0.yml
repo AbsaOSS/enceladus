@@ -1,4 +1,8 @@
 ---
+  - name: conformance.allowOriginalColumnsMutability
+    options:
+    - name: boolean
+      description: "Allows to modify/drop columns from the original input (default is <i>false</i>)"
   - name: control.info.validation
     options:
     - name: <i>strict</i>
@@ -27,4 +31,4 @@
     options:
     - name: string with any valid time zone name
       description: The time zone the Spark application will operate in. Strongly recommended
-        to keep it to default _UTC_
+        to keep it to default <i>UTC</i>
