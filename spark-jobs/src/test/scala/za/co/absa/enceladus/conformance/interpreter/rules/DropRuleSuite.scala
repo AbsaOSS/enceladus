@@ -17,6 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.DataFrame
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
 import za.co.absa.enceladus.conformance.samples.DeepArraySamples
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.DropConformanceRule
@@ -85,6 +86,14 @@ class DropRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
 
   private val inputDf: DataFrame = spark.createDataFrame(DeepArraySamples.ordersData)
 
+  private val featureSwitchesOverride: Option[FeatureSwitches] = Some(
+    FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(true)
+      .setCatalystWorkaroundEnabled(true)
+      .setControlFrameworkEnabled(false)
+      .setOriginalColumnsMutability(false)
+  )
+
   test("Drop conformance rule test 1 - drop root column") {
     conformanceRuleShouldMatchExpected(inputDf, dropOrdersDS1, conformedDropOrdersJSON1)
   }
@@ -99,5 +108,15 @@ class DropRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
 
   test("Drop conformance rule test 4 - column name does not exist") {
     conformanceRuleShouldMatchExpected(inputDf, dropOrdersDS4, conformedDropOrdersJSON4)
+  }
+
+  test("Drop conformance rule test 5 - DataFrame immutable") {
+    val expectedMsg =
+    """There are some rules in violation of immutability pattern. These are:
+      |Rule number 1 - DropConformanceRule""".stripMargin
+    val exception = intercept[IllegalStateException] {
+      conformanceRuleShouldMatchExpected(inputDf, dropOrdersDS1, conformedDropOrdersJSON1, featureSwitchesOverride)
+    }
+    assert(expectedMsg == exception.getMessage)
   }
 }

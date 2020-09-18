@@ -50,6 +50,8 @@ HEADER=""
 CSV_QUOTE=""
 CSV_ESCAPE=""
 TRIM_VALUES=""
+EMPTY_VALUES_AS_NULLS=""
+NULL_VALUE=""
 COBOL_IS_TEXT=""
 COBOL_ENCODING=""
 IS_XCOM=""
@@ -187,6 +189,14 @@ case $key in
     TRIM_VALUES="$2"
     shift 2 # past argument and value
     ;;
+    --empty-values-as-nulls)
+    EMPTY_VALUES_AS_NULLS="$2"
+    shift 2 # past argument and value
+    ;;
+    --null-value)
+    NULL_VALUE="$2"
+    shift 2 # past argument and value
+    ;;
     --cobol-encoding)
     COBOL_ENCODING="$2"
     shift 2 # past argument and value
@@ -219,7 +229,6 @@ case $key in
     DEBUG_SET_RAW_PATH="$2"
     shift 2 # past argument and value
     ;;
-
     --menas-credentials-file)
     MENAS_CREDENTIALS_FILE="$2"
     shift 2 # past argument and value
@@ -399,6 +408,7 @@ if [[ "$DEPLOY_MODE" == "client" ]]; then
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLIENT"
 else
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLUSTER"
+  add_spark_conf_cmd "spark.yarn.submit.waitAppCompletion" "false"
 fi
 CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
@@ -417,6 +427,8 @@ add_to_cmd_line "--header" ${HEADER}
 add_to_cmd_line "--csv-quote" ${CSV_QUOTE}
 add_to_cmd_line "--csv-escape" ${CSV_ESCAPE}
 add_to_cmd_line "--trimValues" ${TRIM_VALUES}
+add_to_cmd_line "--empty-values-as-nulls" ${EMPTY_VALUES_AS_NULLS}
+add_to_cmd_line "--null-value" ${NULL_VALUE}
 add_to_cmd_line "--cobol-is-text" ${COBOL_IS_TEXT}
 add_to_cmd_line "--cobol-encoding" ${COBOL_ENCODING}
 add_to_cmd_line "--cobol-trimming-policy" ${COBOL_TRIMMING_POLICY}
@@ -470,6 +482,25 @@ if [[ -z "$DRY_RUN" ]]; then
 	echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME" | tee -a "$TMP_PATH_NAME"
 	exit $EXIT_STATUS
   else
-    bash -c "$CMD_LINE"
+
+    APPLICATIONID=$(bash -c "$CMD_LINE" 2>&1 | grep -oP "(?<=Submitted application ).*" )
+    echo Application Id : $APPLICATIONID
+    if [ "$APPLICATIONID" == "" ]; then
+      echo Failed to start app
+      exit 1
+    fi
+
+    STATE='NOT FINISHED'
+
+    echo State: Application Started
+    while [[ "$STATE" != "FINISHED" && "$STATE" != "FAILED" && "$STATE" != "KILLED" ]];  do
+      sleep 30
+      STATE=$(yarn application -status $APPLICATIONID | grep -oP "(?<=\sState : ).*" )
+      echo State: $STATE
+    done
+
+    FINALSTATE=$(yarn application -status $APPLICATIONID | grep -oP "(?<=\sFinal-State : ).*" )
+
+    echo $FINALSTATE
   fi
 fi

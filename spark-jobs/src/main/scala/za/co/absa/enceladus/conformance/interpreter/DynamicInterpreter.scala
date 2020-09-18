@@ -65,6 +65,11 @@ object DynamicInterpreter {
     conformedDf
   }
 
+  private def findOriginalColumnsModificationRules(steps: List[ConformanceRule],
+                                                   schema: StructType): Seq[ConformanceRule] = {
+    steps.filter(rule => SchemaUtils.fieldExists(rule.outputColumn, schema))
+  }
+
   /**
     * Applies conformance rules applying a workaround for the Catalyst optimizer bug.
     *
@@ -80,6 +85,9 @@ object DynamicInterpreter {
     implicit val explosionState: ExplosionState = new ExplosionState()
 
     val steps = getConformanceSteps
+
+    checkMutabilityNotViolated(inputDf.schema, steps)
+
     val interpreters = getInterpreters(steps, inputDf.schema)
     val optimizerTimeTracker = new OptimizerTimeTracker(inputDf, ictx.featureSwitches.catalystWorkaroundEnabled)
     val dfInputWithIdForWorkaround = optimizerTimeTracker.getWorkaroundDataframe
@@ -108,6 +116,27 @@ object DynamicInterpreter {
         }
     })
     optimizerTimeTracker.cleanupWorkaroundDf(conformedDf)
+  }
+
+  private def checkMutabilityNotViolated(schema: StructType, steps: List[ConformanceRule])
+                                        (implicit ictx: InterpreterContext): Unit = {
+    val rulesInViolation = findOriginalColumnsModificationRules(steps, schema)
+
+    if (rulesInViolation.nonEmpty) {
+      val violationsString = rulesInViolation.map(rule =>
+        s"Rule number ${rule.order} - ${rule.getClass.getSimpleName}"
+      ).mkString("\n")
+      if (ictx.featureSwitches.allowOriginalColumnsMutability) {
+        log.warn(
+          s"""Mutability of original Data Allowed and there are some rules in violation of immutability pattern.
+             |These are:
+             |$violationsString""".stripMargin)
+      } else {
+        throw new IllegalStateException(
+          s"""There are some rules in violation of immutability pattern. These are:
+             |$violationsString""".stripMargin)
+      }
+    }
   }
 
   /**
