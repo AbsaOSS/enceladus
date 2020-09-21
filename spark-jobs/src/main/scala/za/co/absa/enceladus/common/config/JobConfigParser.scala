@@ -18,6 +18,7 @@ package za.co.absa.enceladus.common.config
 import org.apache.spark.storage.StorageLevel
 import scopt.OParser
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
+import za.co.absa.enceladus.utils.general.ProjectMetadata
 
 import scala.util.matching.Regex
 
@@ -53,7 +54,7 @@ object JobConfigParser {
     import builder._
     OParser.sequence(
 
-      head(s"Enceladus v${this.getClass.getPackage.getImplementationVersion}"),
+      head(s"Enceladus v${ProjectMetadata.enceladusVersion}"),
       help("help"),
       opt[String]('D', "dataset-name").required().action((value, config) =>
         config.withDatasetName(value)).text("Dataset name"),
