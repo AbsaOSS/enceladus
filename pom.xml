@@ -144,7 +144,7 @@
         <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
         <!--dependency versions-->
         <abris.version>3.1.1</abris.version>
-        <atum.version>0.3.0-SNAPSHOT</atum.version>
+        <atum.version>3.0.0</atum.version>
         <aws.java.sdk.version>2.13.65</aws.java.sdk.version>
         <bower.chart.js.version>2.7.3</bower.chart.js.version>
         <bson.codec.jsr310.version>3.5.4</bson.codec.jsr310.version>
