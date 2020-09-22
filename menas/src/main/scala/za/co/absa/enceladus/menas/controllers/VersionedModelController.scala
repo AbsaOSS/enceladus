@@ -104,6 +104,12 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
     versionedModelService.exportSingleItem(name, version)
   }
 
+  @GetMapping(Array("/exportItem/{name}"))
+  @ResponseStatus(HttpStatus.OK)
+  def exportLatestEntity(@PathVariable name: String): CompletableFuture[String] = {
+    versionedModelService.exportLatestItem(name)
+  }
+
   @PostMapping(Array("/importItem"))
   @ResponseStatus(HttpStatus.CREATED)
   def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,

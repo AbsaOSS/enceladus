@@ -78,6 +78,13 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     })
   }
 
+  def exportLatestItem(name: String): Future[String] = {
+    getLatestVersion(name).flatMap({
+      case Some(item) => Future(item.exportItem())
+      case _ => throw NotFoundException()
+    })
+  }
+
   def importSingleItem(item: C, username: String): Future[Option[C]]
 
   private[services] def getParents(name: String, fromVersion: Option[Int] = None): Future[Seq[C]] = {
