@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
@@ -25,7 +25,7 @@ import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with LoggerTestBase {
+class LiteralJoinMappingRuleTest extends AnyFunSuite with SparkTestBase with LoggerTestBase {
 
   def testMappingRuleWithLiteral(useExperimentalMappingRule: Boolean): Unit = {
 

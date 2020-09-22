@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.types._
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.slf4j.event.Level.ERROR
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, RuleValidators}
@@ -27,7 +27,7 @@ import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class CastingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase {
+class CastingRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase {
   private val ruleName = "Casting rule"
   private val columnName = "dummy"
 

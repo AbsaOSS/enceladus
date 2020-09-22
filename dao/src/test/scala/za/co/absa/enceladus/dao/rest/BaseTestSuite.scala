@@ -15,10 +15,12 @@
 
 package za.co.absa.enceladus.dao.rest
 
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.BeforeAndAfter
+import org.scalatest.matchers.should.Matchers
 
-abstract class BaseTestSuite extends WordSpec
+abstract class BaseTestSuite extends AnyWordSpec
   with Matchers
   with MockitoSugar
   with BeforeAndAfter

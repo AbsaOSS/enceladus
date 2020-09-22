@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.plugins.buildin.kafka
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.plugins.buildin.factories.DceControlInfoFactory
 import za.co.absa.enceladus.plugins.buildin.kafka.dummy.DummyControlInfoProducer
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams}
@@ -24,7 +24,7 @@ import za.co.absa.enceladus.plugins.builtin.controlinfo.mq.ControlInfoSenderPlug
 
 import scala.collection.JavaConverters._
 
-class KafkaPluginSuite extends FunSuite {
+class KafkaPluginSuite extends AnyFunSuite {
   test("Test Kafka info plugin sends control measurements") {
     val producer = new DummyControlInfoProducer
     val dceControlInfo = DceControlInfoFactory.getDummyDceControlInfo()

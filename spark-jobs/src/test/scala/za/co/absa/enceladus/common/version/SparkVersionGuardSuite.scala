@@ -15,16 +15,17 @@
 
 package za.co.absa.enceladus.common.version
 
-import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
 import za.co.absa.commons.version.Version._
 
 import scala.reflect.ClassTag
 
-class SparkVersionGuardSuite extends FlatSpec with Matchers with MockitoSugar {
+class SparkVersionGuardSuite extends AnyFlatSpec with Matchers with MockitoSugar {
 
   private def ensureThrowsWithMessageIncluding[T <: Throwable](messageSubstringToAppear: String)(fun: => scala.Any)
                                                               (implicit ev: ClassTag[T]): Assertion = {

@@ -17,8 +17,8 @@ package za.co.absa.enceladus.examples.interpreter.rules.custom
 
 import org.apache.spark.sql
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FunSuite
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
+import org.mockito.scalatest.MockitoSugar
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -33,7 +33,7 @@ object TestOutputRow {
   def apply(input: TestInputRow, doneUpper: String): TestOutputRow = TestOutputRow(input.id, input.mandatoryString, input.nullableString, doneUpper)
 }
 
-class UppercaseCustomConformanceRuleSuite extends FunSuite with SparkTestBase with MockitoSugar {
+class UppercaseCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase with MockitoSugar {
   import spark.implicits._
 
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)

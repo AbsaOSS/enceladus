@@ -19,9 +19,8 @@ import org.apache.commons.configuration2.Configuration
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.{DataFrame, Row}
-import org.mockito.Mockito.when
-import org.scalatest.FunSuite
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
+import org.mockito.scalatest.MockitoSugar
 import za.co.absa.enceladus.conformance.HyperConformance
 import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
@@ -31,7 +30,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-trait StreamingFixture extends FunSuite with SparkTestBase with MockitoSugar {
+trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar {
   implicit val menasBaseUrls: List[String] = List.empty
   implicit val cmd: ConformanceConfig = ConformanceConfig(reportVersion = Some(1))
 

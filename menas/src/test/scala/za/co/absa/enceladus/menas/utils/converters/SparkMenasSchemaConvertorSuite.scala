@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.menas.utils.converters
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.model._
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
@@ -25,7 +25,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.databind.SerializationFeature
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 
-class SparkMenasSchemaConvertorSuite extends FunSuite with SparkTestBase {
+class SparkMenasSchemaConvertorSuite extends AnyFunSuite with SparkTestBase {
   private val objectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
     .registerModule(new JavaTimeModule())

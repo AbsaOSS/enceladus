@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.Dataset
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.slf4j.event.Level.ERROR
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
@@ -27,7 +27,7 @@ import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
+class NegationRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase{
 
   import spark.implicits._
 

@@ -163,7 +163,8 @@
         <junit.version>4.11</junit.version>
         <kafka.spark.version>0-10</kafka.spark.version>
         <lodash.version>4.17.10</lodash.version>
-        <mockito.version>2.10.0</mockito.version>
+        <mockito.scala.version>1.15.0</mockito.scala.version>
+        <mockito.core.version>3.5.2</mockito.core.version>
         <momentjs.version>2.22.2</momentjs.version>
         <mongo.java.driver.version>3.6.4</mongo.java.driver.version>
         <mongo.scala.driver.version>2.7.0</mongo.scala.driver.version>
@@ -174,7 +175,7 @@
         <scala.java8.compat.version>0.9.0</scala.java8.compat.version>
         <scala.version>2.11.12</scala.version>
         <scalatest.maven.version>2.0.0</scalatest.maven.version>
-        <scalatest.version>3.0.5</scalatest.version>
+        <scalatest.version>3.2.2</scalatest.version>
         <scopt.version>4.0.0-RC2</scopt.version>
         <spark.compat.version>2.4</spark.compat.version>
         <spark.hats.version>0.2.1</spark.hats.version>
@@ -336,8 +337,20 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
+            <artifactId>mockito-scala_${scala.compat.version}</artifactId>
+            <version>${mockito.scala.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-scala-scalatest_${scala.compat.version}</artifactId>
+            <version>${mockito.scala.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
+            <version>${mockito.core.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

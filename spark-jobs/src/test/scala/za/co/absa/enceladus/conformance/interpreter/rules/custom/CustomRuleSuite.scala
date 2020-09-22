@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules.custom
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.mockito.Mockito.mock
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, ExplosionState, FeatureSwitches, InterpreterContextArgs}
@@ -57,7 +57,7 @@ case class MyCustomRuleInterpreter(rule: MyCustomRule) extends RuleInterpreter {
 case class Mine(id: Int)
 case class MineConfd(id: Int, myOutputCol: Double, errCol: Seq[ErrorMessage])
 
-class CustomRuleSuite extends FunSuite with SparkTestBase {
+class CustomRuleSuite extends AnyFunSuite with SparkTestBase {
   import spark.implicits._
 
   // we may WANT to enable control framework & spline here

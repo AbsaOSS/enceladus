@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
@@ -30,7 +30,7 @@ case class MyMappingTableInner(description: String, name: String)
 case class MyData(id: Int, toJoin: Int)
 case class MyDataConfd(id: Int, toJoin: Int, confMapping: MyMappingTableInner)
 
-class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
+class ChorusMockSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase {
 
   def testChorusMockData(useExperimentalMappingRule: Boolean): Unit = {
     val d = Seq(

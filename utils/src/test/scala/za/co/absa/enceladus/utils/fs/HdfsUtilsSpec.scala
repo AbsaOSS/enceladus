@@ -18,13 +18,14 @@ package za.co.absa.enceladus.utils.fs
 import java.io.FileNotFoundException
 
 import org.apache.hadoop.fs.Path
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 /**
   * Unit tests for File system utils
   */
-class HdfsUtilsSpec extends WordSpec with Matchers with SparkTestBase {
+class HdfsUtilsSpec extends AnyWordSpec with Matchers with SparkTestBase {
   val hdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   "splitUriPath" should {

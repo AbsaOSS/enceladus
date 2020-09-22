@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.{BeforeAndAfterAll}
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
@@ -25,9 +25,10 @@ import za.co.absa.enceladus.conformance.samples._
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import org.json4s._
 import org.json4s.jackson._
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.fs.{FileReader, HdfsUtils}
 
-class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase {
+class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase {
 
   override def beforeAll(): Unit = {
     super.beforeAll

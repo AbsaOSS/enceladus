@@ -15,13 +15,13 @@
 
 package za.co.absa.enceladus.common
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.atum.core.ControlType
 import za.co.absa.atum.model.{Checkpoint, Measurement}
 
 import scala.util.Success
 
-class ControlInfoValidationSuite extends FunSuite {
+class ControlInfoValidationSuite extends AnyFunSuite {
   import za.co.absa.atum.core.Constants._
 
   private val checkpoints1 = List(

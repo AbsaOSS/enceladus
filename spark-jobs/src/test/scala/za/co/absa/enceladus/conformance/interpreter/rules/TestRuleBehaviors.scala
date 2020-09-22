@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.DataFrame
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.slf4j.event.Level._
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
@@ -27,7 +27,7 @@ import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 
-trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase {
+trait TestRuleBehaviors  extends AnyFunSuite with SparkTestBase with LoggerTestBase {
 
   def conformanceRuleShouldMatchExpected(inputDf: DataFrame, inputDataset: Dataset, expectedJSON: String) {
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])

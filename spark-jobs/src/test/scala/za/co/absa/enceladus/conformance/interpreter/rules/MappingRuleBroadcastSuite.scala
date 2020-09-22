@@ -17,7 +17,8 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.functions._
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.NestedTestCaseFactory._
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
@@ -27,7 +28,7 @@ import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class MappingRuleBroadcastSuite extends FunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll {
+class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll {
   import spark.implicits._
 
   private val simpleTestCaseFactory = new SimpleTestCaseFactory()

@@ -20,8 +20,9 @@ import java.nio.charset.StandardCharsets
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Outcome, fixture}
+import org.scalatest.funsuite.FixtureAnyFunSuite
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.Outcome
 import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
@@ -33,7 +34,7 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
-class StandardizationRerunSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
+class StandardizationRerunSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
 
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 

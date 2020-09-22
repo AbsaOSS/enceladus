@@ -22,7 +22,9 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import org.apache.spark.sql.DataFrame
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.BeforeAndAfterAll
 import za.co.absa.abris.avro.read.confluent.SchemaManager
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
 import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
@@ -33,7 +35,7 @@ import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 
-class KafkaErrorSenderPluginSuite extends FlatSpec with SparkTestBase with Matchers with BeforeAndAfterAll {
+class KafkaErrorSenderPluginSuite extends AnyFlatSpec with SparkTestBase with Matchers with BeforeAndAfterAll {
 
   private val port = 6081
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))

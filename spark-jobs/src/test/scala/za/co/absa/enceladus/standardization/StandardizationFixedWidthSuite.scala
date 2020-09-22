@@ -16,8 +16,8 @@
 package za.co.absa.enceladus.standardization
 
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.scalatest.FunSuite
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
+import org.mockito.scalatest.MockitoSugar
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
@@ -29,7 +29,7 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-class StandardizationFixedWidthSuite extends FunSuite with SparkTestBase with MockitoSugar{
+class StandardizationFixedWidthSuite extends AnyFunSuite with SparkTestBase with MockitoSugar{
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +

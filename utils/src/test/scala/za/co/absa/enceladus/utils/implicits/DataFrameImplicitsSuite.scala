@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.utils.implicits
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class DataFrameImplicitsSuite extends FunSuite with SparkTestBase  {
+class DataFrameImplicitsSuite extends AnyFunSuite with SparkTestBase  {
   import spark.implicits._
 
   private val columnName = "data"

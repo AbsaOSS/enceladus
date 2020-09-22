@@ -17,13 +17,13 @@ package za.co.absa.enceladus.conformance.config
 
 import java.time.ZonedDateTime
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.dao.auth.{MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class ConformanceParserSuite extends FunSuite with SparkTestBase {
+class ConformanceParserSuite extends AnyFunSuite with SparkTestBase {
 
   private val year = "2018"
   private val month = "12"

@@ -18,8 +18,8 @@ package za.co.absa.enceladus.examples.interpreter.rules.custom
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FunSuite
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
+import org.mockito.scalatest.MockitoSugar
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -35,7 +35,7 @@ object XPadTestOutputRow {
   def apply(input: XPadTestInputRow, targetField: String): XPadTestOutputRow = XPadTestOutputRow(input.intField, input.stringField, targetField)
 }
 
-class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase with MockitoSugar {
+class LpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase with MockitoSugar {
   import spark.implicits._
 
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
@@ -180,7 +180,7 @@ class LpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase with Mo
 }
 
 
-class RpadCustomConformanceRuleSuite extends FunSuite with SparkTestBase {
+class RpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase {
 
   import spark.implicits._
 
