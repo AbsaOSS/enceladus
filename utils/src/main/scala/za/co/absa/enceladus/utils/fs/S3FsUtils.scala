@@ -28,6 +28,7 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
+// kmsSettings: S3KmsSettings in not currently used, but would be necessary if any SDK calls needed to put data on S3
 case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit credentialsProvider: AwsCredentialsProvider)
   extends DistributedFsUtils {
 
@@ -188,16 +189,22 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
 
     // looking for $publishPath/enceladus_info_date=$reportDate\enceladus_info_version=$version
     val prefix = s"${location.path}/enceladus_info_date=$reportDate/enceladus_info_version="
+    val prefixedLocation = location.copy(path = prefix)
 
     def accumulateSizeOp(previousMaxVersion: Int, response: ListObjectsV2Response): Int = {
       val objects = response.contents().asScala
 
       val existingVersions = objects
         .map(_.key)
-        .map { key =>
+        .flatMap { key =>
           assert(key.startsWith(prefix), s"Retrieved keys should start with $prefix, but precondition fails for $key")
           val noPrefix = key.stripPrefix(prefix)
-          noPrefix.takeWhile(_.isDigit).toInt // existing versions
+          Try {
+            noPrefix.takeWhile(_.isDigit).toInt // may not hold valid int >= 1
+          } match {
+            case Success(version) if version >= 1 => Some(version)
+            case _ => None
+          }
         }
         .toSet
 
@@ -208,7 +215,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
       }
     }
 
-    listAndAccumulateRecursively(location, accumulateSizeOp, initVersion)
+    listAndAccumulateRecursively(prefixedLocation, accumulateSizeOp, initVersion)
   }
 
   private[fs] def getS3Client: S3Client = S3Utils.getS3Client(region, credentialsProvider)
@@ -217,11 +224,11 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
    * General method to list and accumulate the objects info. Note, that the method strives to be memory-efficient -
    * i.e. accumulate the current batch first and then load the next batch (instead of the naive "load all first, process later"
    *
-   * @param location     s3location - bucket & path are used
-   * @param accumulateOp operation to accumulate
-   * @param initialAccValue          (initial/carry-over) accumulator value
-   * @param breakOut     allows to break the recursion prematurely when the defined value equals the currently accumulated value.
-   *                     Default: None = no break out
+   * @param location        s3location - bucket & path are used
+   * @param accumulateOp    operation to accumulate
+   * @param initialAccValue (initial/carry-over) accumulator value
+   * @param breakOut        allows to break the recursion prematurely when the defined value equals the currently accumulated value.
+   *                        Default: None = no break out
    * @tparam T accumulator value type
    * @return accumulated value
    */
