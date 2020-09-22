@@ -28,11 +28,10 @@ import za.co.absa.enceladus.menas.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.menas.audit._
 
 import scala.concurrent.Future
-
 import com.mongodb.MongoWriteException
 
-abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]](versionedMongoRepository: VersionedMongoRepository[C])
-  extends ModelService(versionedMongoRepository) {
+//noinspection ScalaStyle
+abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]](versionedMongoRepository: VersionedMongoRepository[C]) extends ModelService(versionedMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -71,6 +70,15 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   def getLatestVersionValue(name: String): Future[Option[Int]] = {
     versionedMongoRepository.getLatestVersionValue(name)
   }
+
+  def exportSingleItem(name: String, version: Int): Future[String] = {
+    getVersion(name, version).flatMap({
+      case Some(item) => Future(item.exportItem())
+      case _ => throw NotFoundException()
+    })
+  }
+
+  def importSingleItem(item: C, username: String): Future[Option[C]]
 
   private[services] def getParents(name: String, fromVersion: Option[Int] = None): Future[Seq[C]] = {
     for {

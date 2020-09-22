@@ -16,6 +16,10 @@
 package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
@@ -75,5 +79,22 @@ case class MappingTable(name: String,
           AuditFieldName("schemaName", "Schema Name"),
           AuditFieldName("schemaVersion", "Schema Version"))) ++
         super.getSeqFieldsAudit(newRecord, AuditFieldName("defaultMappingValue", "Default Mapping Value")))
+  }
+
+  override def exportItem(): String = {
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+
+    val root: ObjectNode = mapper.createObjectNode()
+    val defaultMappingValueJsonList: ArrayNode = mapper.valueToTree(defaultMappingValue.toArray)
+
+    root.put("name", name)
+    description.map(d => root.put("description", d))
+    root.put("hdfsPath", hdfsPath)
+    root.put("schemaName", schemaName)
+    root.put("schemaVersion", schemaVersion)
+    root.putArray("defaultMappingValue").addAll(defaultMappingValueJsonList)
+
+    root.toString
   }
 }

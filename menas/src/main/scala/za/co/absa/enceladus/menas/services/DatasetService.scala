@@ -102,4 +102,10 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     }
   }
 
+  override def importSingleItem(item: Dataset, username: String): Future[Option[Dataset]] = {
+    getLatestVersionValue(item.name).flatMap {
+      case Some(version) => update(username, item.copy(version = version))
+      case None => super.create(item.copy(version = 1), username)
+    }
+  }
 }

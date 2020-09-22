@@ -68,4 +68,10 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
     }
   }
 
+  override def importSingleItem(item: MappingTable, username: String): Future[Option[MappingTable]] = {
+    getLatestVersionValue(item.name).flatMap {
+      case Some(version) => update(username, item.copy(version = version))
+      case None => super.create(item.copy(version = 1), username)
+    }
+  }
 }

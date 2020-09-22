@@ -98,6 +98,23 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
     versionedModelService.getAllVersions(name)
   }
 
+  @GetMapping(Array("/exportItem/{name}/{version}"))
+  @ResponseStatus(HttpStatus.OK)
+  def exportSingleEntity(@PathVariable name: String, @PathVariable version: Int): CompletableFuture[String] = {
+    versionedModelService.exportSingleItem(name, version)
+  }
+
+  @PostMapping(Array("/importItem"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
+                         @RequestBody item: C): CompletableFuture[C] = {
+    versionedModelService.importSingleItem(item, principal.getUsername).map {
+      case Some(entity) => entity
+      case None         => throw notFound()
+    }
+  }
+
+
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
   def create(@AuthenticationPrincipal principal: UserDetails, @RequestBody item: C): CompletableFuture[C] = {

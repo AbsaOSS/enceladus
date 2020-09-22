@@ -68,4 +68,10 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
     super.create(schema, username)
   }
 
+  override def importSingleItem(item: Schema, username: String): Future[Option[Schema]] = {
+    getLatestVersionValue(item.name).flatMap {
+      case Some(version) => update(username, item.copy(version = version))
+      case None => super.create(item.copy(version = 1), username)
+    }
+  }
 }

@@ -17,6 +17,10 @@ package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
 
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
@@ -105,5 +109,24 @@ case class Dataset(
           AuditFieldName("schemaVersion", "Schema Version"),
           AuditFieldName("schedule", "Schedule"))) ++
         super.getSeqFieldsAudit(newRecord, AuditFieldName("conformance", "Conformance rule")))
+  }
+
+  override def exportItem(): String = {
+    val mapper = new ObjectMapper()
+      .registerModule(DefaultScalaModule)
+      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+
+    val root: ObjectNode = mapper.createObjectNode()
+    val conformanceJsonList: ArrayNode = mapper.valueToTree(conformance.toArray)
+
+    root.put("name", name)
+    description.map(d => root.put("description", d))
+    root.put("hdfsPath", hdfsPath)
+    root.put("hdfsPublishPath", hdfsPublishPath)
+    root.put("schemaName", schemaName)
+    root.put("schemaVersion", schemaVersion)
+    root.putArray("conformance").addAll(conformanceJsonList)
+
+    root.toString
   }
 }

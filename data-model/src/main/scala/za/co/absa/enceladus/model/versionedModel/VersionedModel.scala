@@ -46,6 +46,8 @@ trait VersionedModel {
   def setUserCreated(user: String): VersionedModel
   def setParent(newParent: Option[MenasReference]): VersionedModel
 
+  def exportItem(): String
+
   def setCreatedInfo(username: String): VersionedModel = {
     setDateCreated(ZonedDateTime.now).setUserCreated(username)
   }

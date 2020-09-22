@@ -16,6 +16,11 @@
 package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
+
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
@@ -61,4 +66,17 @@ case class Schema(name: String,
         super.getSeqFieldsAudit(newRecord, AuditFieldName("fields", "Schema field")))
   }
 
+  override def exportItem(): String = {
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+
+    val root: ObjectNode = mapper.createObjectNode()
+    val fieldsJsonList: ArrayNode = mapper.valueToTree(fields.toArray)
+
+    root.put("name", name)
+    description.map(d => root.put("description", d))
+    root.putArray("fields").addAll(fieldsJsonList)
+
+    root.toString
+  }
 }
