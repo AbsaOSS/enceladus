@@ -100,8 +100,6 @@ Steps to configure the scripts are as follows (_Linux_/_Windows_):
 * Change `enceladus_env.sh`/`enceladus_env.cmd` according to your environment settings.
 * Use `run_standardization.sh`/`run_standardization.cmd` and `run_conformance.sh`/`run_conformance.cmd` or `run_standardization_conformance.sh`/`run_standardization_conformance.cmd` scripts instead of directly invoking `spark-submit` to run your jobs.
 
-Similar scripts exist for _Windows_ in directory `scripts/cmd`.
-
 When scripts are properly set up, then only a few parameters need to be specified.
 
 ### Linux
