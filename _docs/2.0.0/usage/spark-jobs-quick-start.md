@@ -95,7 +95,7 @@ Here, nothing new is added for the quick run. Of course, there might be special 
 If your local DevOps/SysAdmin set up helper scripts for you, then it is even easier. You can omit all the spark options if sensible defaults are provided or Dynamic Resource Allocation is enabled. For more about this ask the people who set up your environment.
 
 Steps to configure the scripts are as follows (_Linux_/_Windows_):
-* Copy all the scripts in `scripts/bash`/`scripts/c,d` directory to a location in your environment.
+* Copy all the scripts in `scripts/bash`/`scripts/cmd` directory to a location in your environment.
 * Copy `enceladus_env.template.sh`/`enceladus_env.template.cmd` to `enceladus_env.sh`/`enceladus_env.cmd`.
 * Change `enceladus_env.sh`/`enceladus_env.cmd` according to your environment settings.
 * Use `run_standardization.sh`/`run_standardization.cmd` and `run_conformance.sh`/`run_conformance.cmd` or `run_standardization_conformance.sh`/`run_standardization_conformance.cmd` scripts instead of directly invoking `spark-submit` to run your jobs.
