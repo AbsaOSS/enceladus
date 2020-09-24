@@ -40,6 +40,11 @@ package object conformanceRule {
     val controlCheckpoint: Boolean
 
     def withUpdatedOrder(newOrder: Int): ConformanceRule
+
+    def hasEntityConnected: Boolean = false
+    def maybeConnectedEntityName: Option[String] = None
+    def maybeConnectedEntityVersion: Option[Int] = None
+    def maybeConnectedEntityType: Option[String] = None
   }
 
   case class ConcatenationConformanceRule(order: Int,
@@ -80,6 +85,10 @@ package object conformanceRule {
                                     outputColumn: String,
                                     isNullSafe: Boolean = false) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): MappingConformanceRule = copy(order = newOrder)
+    override def hasEntityConnected: Boolean = true
+    override def maybeConnectedEntityName: Option[String] = Some(mappingTable)
+    override def maybeConnectedEntityVersion: Option[Int] = Some(mappingTableVersion)
+    override def maybeConnectedEntityType: Option[String] = Some("mappingTable")
   }
 
   case class NegationConformanceRule(order: Int,

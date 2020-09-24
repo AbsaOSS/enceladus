@@ -19,7 +19,7 @@ import org.mongodb.scala.result.UpdateResult
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
-import za.co.absa.enceladus.model.UsedIn
+import za.co.absa.enceladus.model.{Schema, UsedIn}
 import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.menas.exceptions._
@@ -85,7 +85,41 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     })
   }
 
-  def importSingleItem(item: C, username: String): Future[Option[C]]
+  def importSingleItem(item: C, username: String): Future[Option[C]] = {
+    for {
+      validation <- validateSingleImport(item)
+      result <- {
+        if (validation.isValid()) {
+          importItem(item, username)
+        } else {
+          throw ValidationException(validation)
+        }
+      }
+    } yield result
+  }
+
+  private[services] def validateSingleImport(item: C): Future[Validation] = {
+    val validation = Validation()
+      .withErrorIf(!hasValidNameChars(item.name), "name", s"name '${item.name}' contains unsupported characters")
+      .withErrorIf(item.parent.isDefined, "parent", "parent should not be defined on import")
+    Future(validation)
+  }
+
+  private[services] def importItem(item: C, username: String): Future[Option[C]]
+
+  private[services] def validateSchema(schemaName: String,
+                                       schemaVersion: Int,
+                                       validations: Future[Validation],
+                                       maybeSchema: Future[Option[Schema]]): Future[Validation] = {
+    for {
+      schema <- maybeSchema
+      validation <- validations
+    } yield validation.withErrorIf(
+      schema.isEmpty,
+      "schema",
+      s"schema ${schemaName} v${schemaVersion} defined for the dataset could not be found"
+    )
+  }
 
   private[services] def getParents(name: String, fromVersion: Option[Int] = None): Future[Seq[C]] = {
     for {
@@ -237,6 +271,8 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     }
   }
 
-  private def hasWhitespace(name: String): Boolean = !name.matches("""\w+""")
+  private[services] def hasWhitespace(name: String): Boolean = !name.matches("""\w+""")
+  private[services] def hasValidNameChars(name: String): Boolean = name.matches("""[a-zA-Z0-9._-]+""")
+
 
 }

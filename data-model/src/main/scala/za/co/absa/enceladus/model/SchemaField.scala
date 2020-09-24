@@ -35,4 +35,8 @@ case class SchemaField
   def getAbsolutePath(): String = {
     if(path.isEmpty) name else s"${path}.${name}"
   }
+
+  def getAllChildren: Seq[String] = {
+    children.flatMap(child => child.getAllChildren :+ child.getAbsolutePath())
+  }
 }

@@ -32,4 +32,7 @@ case class Validation (errors: Map[String, List[String]] = Map()) {
     this.copy(errors = errors + (key -> (error :: errors.getOrElse(key, Nil))))
   }
 
+  def withErrorIf(condition: Boolean, key: String, error: String): Validation = {
+    if (condition) withError(key, error) else this
+  }
 }
