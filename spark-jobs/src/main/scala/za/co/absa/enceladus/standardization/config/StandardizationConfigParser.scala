@@ -195,7 +195,7 @@ object StandardizationConfigParser {
       Seq (
         config.csvDelimiter.map(_ => unsupportedOptionError("--delimiter", csvFormatName)),
         config.csvEscape.map(_ => unsupportedOptionError("--escape", csvFormatName)),
-        config.csvHeader.map(_ => unsupportedOptionError("--header", s"$csvFormatName raw data")),
+        config.csvHeader.map(_ => unsupportedOptionError("--header", csvFormatName)),
         config.csvQuote.map(_ => unsupportedOptionError("--quote", csvFormatName))
       ).flatten
     }

@@ -277,8 +277,8 @@ The list of additional options available for running Standardization:
 | --cobol-is-text **true/false**         | Specifies if the mainframe file is ASCII text file                                                                                                 |
 | --cobol-trimming-policy **policy**     | Specifies the way leading and trailing spaces should be handled. Can be `none` (do not trim spaces), `left`, `right`, `both`(default).             |
 | --copybook **string**                  | Path to a copybook for COBOL data format                                                                                                           |
-| --csv-quote **character**              | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. <sup>*</sup>       |
 | --csv-escape **character**             | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.   <sup>*</sup>                             |
+| --csv-quote **character**              | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. <sup>*</sup>       |
 | --debug-set-raw-path **path**          | Override the path of the raw data (used for testing purposes).                                                                                     |
 | --delimiter **character**              | Specifies a delimiter character to use for CSV format. By default `,` is used. <sup>*</sup>                                                        |
 | --empty-values-as-nulls **true/false** | If `true` treats empty values as `null`s                                                                                                           |
