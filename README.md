@@ -269,22 +269,28 @@ The list of all options for running Standardization, Conformance and the combine
 
 The list of additional options available for running Standardization:
 
-|            Option                    |                           Description                                                                                                              |
-|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| --raw-format **format**              | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`.                                                    |
-| --charset **charset**                | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.                                                                         |
-| --row-tag **tag**                    | A row tag if the input format is `xml`.                                                                                                            |
-| --header **true/false**              | Indicates if in the input CSV data has headers as the first row of each file.                                                                      |
-| --delimiter **character**            | Specifies a delimiter character to use for CSV format. By default `,` is used. <sup>*</sup>                                                        |
-| --csv-quote **character**            | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. <sup>*</sup>       |
-| --csv-escape **character**           | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.   <sup>*</sup>                             |
-| --trimValues **true/false**          | Indicates if string fields of fixed with text data should be trimmed.                                                                              |
-| --is-xcom **true/false**             | If `true` a mainframe input file is expected to have XCOM RDW headers.                                                                             |
-| --cobol-encoding **encoding**        | Specifies the encoding of a mainframe file (`ascii` or `ebcdic`). Code page can be specified using `--charset` option.                             |
-| --cobol-trimming-policy **policy**   | Specifies the way leading and trailing spaces should be handled. Can be `none` (do not trim spaces), `left`, `right`, `both`(default).             |
-| --folder-prefix **prefix**           | Adds a folder prefix before the date tokens.                                                                                                       |
-| --debug-set-raw-path **path**        | Override the path of the raw data (used for testing purposes).                                                                                     |
-| --strict-schema-check **true/false** | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` (default) proceeds over it with an entry in _errCol_ | 
+|            Option                      |                           Description                                                                                                              |
+|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| --raw-format **format**                | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`.                                                    |
+| --charset **charset**                  | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.                                                                         |
+| --cobol-encoding **encoding**          | Specifies the encoding of a mainframe file (`ascii` or `ebcdic`). Code page can be specified using `--charset` option.                             |
+| --cobol-is-text **true/false**         | Specifies if the mainframe file is ASCII text file                                                                                                 |
+| --cobol-trimming-policy **policy**     | Specifies the way leading and trailing spaces should be handled. Can be `none` (do not trim spaces), `left`, `right`, `both`(default).             |
+| --copybook **string**                  | Path to a copybook for COBOL data format                                                                                                           |
+| --csv-quote **character**              | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. <sup>*</sup>       |
+| --csv-escape **character**             | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.   <sup>*</sup>                             |
+| --debug-set-raw-path **path**          | Override the path of the raw data (used for testing purposes).                                                                                     |
+| --delimiter **character**              | Specifies a delimiter character to use for CSV format. By default `,` is used. <sup>*</sup>                                                        |
+| --empty-values-as-nulls **true/false** | If `true` treats empty values as `null`s                                                                                                           |
+| --folder-prefix **prefix**             | Adds a folder prefix before the date tokens.                                                                                                       |
+| --header **true/false**                | Indicates if in the input CSV data has headers as the first row of each file.                                                                      |
+| --is-xcom **true/false**               | If `true` a mainframe input file is expected to have XCOM RDW headers.                                                                             |
+| --null-value **string**                | Defines how null values are represented in a  `csv` and `fixed-width` file formats                                                                 |
+| --row-tag **tag**                      | A row tag if the input format is `xml`.                                                                                                            |
+| --strict-schema-check **true/false**   | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` (default) proceeds over it with an entry in _errCol_ |
+| --trimValues **true/false**            | Indicates if string fields of fixed with text data should be trimmed.                                                                              |
+
+Most of these options are format specific. For details see [the documentation](https://absaoss.github.io/enceladus/docs/usage/standardization-formats). 
 
 <sup>*</sup> Can also be specified as a unicode value in the following ways: <code>U+00A1</code>, <code>u00a1</code> or just the code <code>00A1</code>. In case empty string option needs to be applied, the keyword <code>none</code> can be used.
 

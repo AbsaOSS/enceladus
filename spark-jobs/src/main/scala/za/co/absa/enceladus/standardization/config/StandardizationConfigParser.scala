@@ -53,7 +53,7 @@ object StandardizationConfigParser {
 
   private val csvFormatName = "CSV"
   private val cobolFormatName = "COBOL"
-  private val fixedWidhFormatName = "FixedWidth"
+  private val fixedWidthFormatName = "FixedWidth"
   private val xmlFormatName = "XML"
   private val jsonFormatName = "JSON"
 
@@ -72,7 +72,7 @@ object StandardizationConfigParser {
 
       opt[String]("null-value").optional()
         .action((value, config) => config.withNullValue(Some(value)))
-        .text(s"For $csvFormatName and $fixedWidhFormatName file format. Sets the representation of a null value. Defaults is empty string."), //scalastyle:ignore maxLineLength
+        .text(s"For $csvFormatName and $fixedWidthFormatName file format. Sets the representation of a null value. Defaults is empty string."), //scalastyle:ignore maxLineLength
 
       opt[String]("row-tag").optional().action((value, config) =>
         config.withRowTag(Some(value))).text("use the specific row tag instead of 'ROW' for XML format"),
@@ -167,14 +167,14 @@ object StandardizationConfigParser {
       case Seq(format) => sprintf(format)
       case _           =>
         val revertedFormats = formats.reverse
-        val frmt = revertedFormats.reverse.mkString(", ") + " and " + revertedFormats.head
+        val frmt = revertedFormats.tail.reverse.mkString(", ") + " and " + revertedFormats.head
         sprintf(frmt, "s")
     }
   }
 
   private def checkCharset[R <: StandardizationConfigParser[R]](config: R): List[String] = {
     if (!formatsSupportingCharset.contains(config.rawFormat) && config.charset.isDefined) {
-      List(unsupportedOptionError("--charset", Seq(csvFormatName, jsonFormatName, xmlFormatName, cobolFormatName, fixedWidhFormatName)))
+      List(unsupportedOptionError("--charset", Seq(csvFormatName, jsonFormatName, xmlFormatName, cobolFormatName, fixedWidthFormatName)))
     } else {
       List.empty
     }
@@ -227,8 +227,8 @@ object StandardizationConfigParser {
       Seq.empty
     } else {
       Seq(
-        config.fixedWidthTrimValues.map(_ => unsupportedOptionError("--trimValues", fixedWidhFormatName)),
-        config.fixedWidthTreatEmptyValuesAsNulls.map(_ => unsupportedOptionError("--empty-values-as-nulls", fixedWidhFormatName))
+        config.fixedWidthTrimValues.map(_ => unsupportedOptionError("--trimValues", fixedWidthFormatName)),
+        config.fixedWidthTreatEmptyValuesAsNulls.map(_ => unsupportedOptionError("--empty-values-as-nulls", fixedWidthFormatName))
       ).flatten
     }
   }
@@ -237,7 +237,7 @@ object StandardizationConfigParser {
     if ((config.rawFormat == "csv") || (config.rawFormat == "fixed-width")) {
       List.empty
     } else {
-      config.nullValue.map(_ => unsupportedOptionError("--null-value", Seq(csvFormatName, fixedWidhFormatName))).toSeq
+      config.nullValue.map(_ => unsupportedOptionError("--null-value", Seq(csvFormatName, fixedWidthFormatName))).toSeq
     }
   }
 
