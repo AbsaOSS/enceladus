@@ -30,12 +30,12 @@ Cobol `format` value is `cobol`. Format options are
 
 | Option | Values domain | Description | Default |
 |---|---|---|---|
+| charset | Any valid charset name | The character set of the input. | `UTF-8` |
+| cobol-encoding | `ascii` or `ebcdic` | Specifies encoding of mainframe files | - |
+| cobol-is-text | Boolean | Specifies if the mainframe file is ASCII text file | `false` |
+| cobol-trimming-policy | `none`, `left`, `right`, `both` | Specify string trimming policy for mainframe files | `none` |
 | copybook | String | Path to a copybook for COBOL data format | - |
 | is-xcom | Boolean | Does a mainframe file in COBOL format contain XCOM record headers | `false` |
-| cobol-is-text | Boolean | Specifies if the mainframe file is ASCII text file | `false` |
-| cobol-encoding | `ascii` or `ebcdic` | Specifies encoding of mainframe files | - |
-| cobol-trimming-policy | `none`, `left`, `right`, `both` | Specify string trimming policy for mainframe files | `none` |
-| charset | Any valid charset name | The character set of the input. | `UTF-8` |
 
 ## CSV
 
@@ -43,11 +43,12 @@ CSV `format` value is `csv`. Format options are
 
 | Option | Values domain | Description | Default |
 |---|---|---|---|
-| header | Boolean | Specifies if the input data have a CSV style header | `false` |
-| delimiter | Any char or unicode such as `U+00A1` | Delimiter the column values on a row | `,` |
-| csv-quote | Any char | Quote character. Delimiters inside quotes are ignored. | `"` |
-| csv-escape | Any char | Escape character. Escaped quote characters are ignored. | `\` |
 | charset | Any valid charset names | The character set. | `UTF-8` |
+| csv-escape | Any char | Escape character. Escaped quote characters are ignored. | `\` |
+| csv-quote | Any char | Quote character. Delimiters inside quotes are ignored. | `"` |
+| delimiter | Any char or unicode such as `U+00A1` | Delimiter the column values on a row | `,` |
+| header | Boolean | Specifies if the input data have a CSV style header | `false` |
+| null-value | String | Defines how null values are represented in a `fixed-width` file format | `""` _(empty string)_ | 
 
 ## Fixed Width
 
@@ -80,5 +81,5 @@ XML `format` value is `xml`. Format options are
 
 | Option | Values domain | Description | Default |
 |---|---|---|---|
-| rowTag | String | The tag of the xml file to treat as a row. For example, in the following xml `<books> <book><book> ...</books>`, the appropriate value would be `book`. | - |
 | charset | Any valid charset names | The character set. | `UTF-8` |
+| row-tag | String | The tag of the xml file to treat as a row. For example, in the following xml `<books> <book><book> ...</books>`, the appropriate value would be `book`. | - |
