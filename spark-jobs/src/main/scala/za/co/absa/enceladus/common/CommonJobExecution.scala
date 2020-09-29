@@ -237,8 +237,7 @@ trait CommonJobExecution {
     val areCountMeasurementsAllZero = Atum.getControlMeasure.checkpoints
       .flatMap(checkpoint =>
         checkpoint.controls.filter(control =>
-          // original: control.controlName.equalsIgnoreCase(controlTypeRecordCount))
-          ControlType.isControlMeasureTypeEqual(control.controlType, ControlType.Count.value) // TODO check that is works as expected on this Atum update
+          ControlType.isControlMeasureTypeEqual(control.controlType, ControlType.Count.value)
         )
       )
       .forall(m => Try(m.controlValue.toString.toDouble).toOption.contains(0D))
