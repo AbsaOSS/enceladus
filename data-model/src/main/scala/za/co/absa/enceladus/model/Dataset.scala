@@ -80,9 +80,11 @@ case class Dataset(
    */
   def decode: Dataset = substituteMappingConformanceRuleCharacter(this, MappingConformanceRule.DOT_REPLACEMENT_SYMBOL, '.')
 
-  override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
+  override val createdMessage: AuditTrailEntry = AuditTrailEntry(
+    menasRef = MenasReference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
-    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset ${name} created.")))
+    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset $name created."))
+  )
 
   private def substituteMappingConformanceRuleCharacter(dataset: Dataset, from: Char, to: Char): Dataset = {
     val conformanceRules = dataset.conformance.map {
