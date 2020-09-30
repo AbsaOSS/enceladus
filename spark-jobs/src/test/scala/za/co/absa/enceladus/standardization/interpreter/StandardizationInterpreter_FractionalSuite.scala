@@ -72,7 +72,7 @@ class StandardizationInterpreter_FractionalSuite extends AnyFunSuite with SparkT
       FractionalRow("02-Null", Option(0), None, Seq(
         ErrorMessage.stdNullErr("floatField"))),
       FractionalRow("03-Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
-      FractionalRow("04-infinity", Option(0), None,  Seq(
+      FractionalRow("04-infinity", Option(0), None, Seq(
         ErrorMessage.stdCastErr("floatField", "-Infinity"),
         ErrorMessage.stdCastErr("doubleField", "Infinity"))),
       FractionalRow("05-Really big", Option(0), None, Seq(
@@ -132,7 +132,7 @@ class StandardizationInterpreter_FractionalSuite extends AnyFunSuite with SparkT
       FractionalRow("02-Null", Option(0), None, Seq(
         ErrorMessage.stdNullErr("floatField"))),
       FractionalRow("03-Long", Option(9.223372E18F), Option(-9.223372036854776E18)),
-      FractionalRow("04-Infinity", Option(0), None,  Seq(
+      FractionalRow("04-Infinity", Option(0), None, Seq(
         ErrorMessage.stdCastErr("floatField", "-Infinity"),
         ErrorMessage.stdCastErr("doubleField", "Infinity"))),
       FractionalRow("05-Really big", Option(0), Option(reallyBig), Seq(

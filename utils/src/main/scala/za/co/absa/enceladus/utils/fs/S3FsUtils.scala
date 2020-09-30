@@ -151,7 +151,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
 
     def accumulateSizeOp(acc: Unit, response: ListObjectsV2Response): Unit = { // side-effect, "accumulates" to unit
       val objects = response.contents().asScala
-      if (objects.size > 0) {
+      if (objects.nonEmpty) {
         deleteKeys(location.bucketName, objects.map(_.key))
       }
     }

@@ -27,7 +27,7 @@ class ControlInfoValidationSuite extends AnyFunSuite {
   private val checkpoints1 = List(
     Checkpoint("raw", None, None, "", "", "", 0, List(
       Measurement("", ControlType.AbsAggregatedTotal.value, "", 0),
-      Measurement("",  ControlType.Count.value, "", 11)
+      Measurement("", ControlType.Count.value, "", 11)
     )
     ),
     Checkpoint("source", None, None, "", "", "", 1, List(

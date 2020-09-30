@@ -56,9 +56,9 @@ class LiteralJoinMappingRuleTest extends AnyFunSuite with SparkTestBase with Log
       conformance = List(
         LiteralConformanceRule(order = 1, outputColumn = "country", controlCheckpoint = true, value = "CZ"),
         MappingConformanceRule(order = 2, controlCheckpoint = true, mappingTable = "countryMT", mappingTableVersion = 0,
-                                    attributeMappings = Map("countryCode" -> "country"),  targetAttribute = "countryName",
+                                    attributeMappings = Map("countryCode" -> "country"), targetAttribute = "countryName",
                                     outputColumn = "conformedCountry", isNullSafe = true),
-        DropConformanceRule(order = 3,   controlCheckpoint = false, outputColumn = "country")
+        DropConformanceRule(order = 3, controlCheckpoint = false, outputColumn = "country")
       )
     )
 
