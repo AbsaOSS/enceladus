@@ -36,11 +36,11 @@ class SchemaTest extends FunSuite {
     fields = List(schemaField)
   )
 
-  private val jsonSchema = """{"name":"SomeSchema","description":"Some Desc","fields":[{"name":"someField",""" +
+  private val expectedSchema = """{"name":"SomeSchema","description":"Some Desc","fields":[{"name":"someField",""" +
     """"type":"StringType","path":"","elementType":null,"containsNull":null,"nullable":true,"metadata":{},""" +
     """"children":[],"absolutePath":"someField"}]}"""
 
   test("export Schema") {
-    assert(jsonSchema == schema.exportItem())
+    assert(expectedSchema == schema.exportItem())
   }
 }

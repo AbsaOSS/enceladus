@@ -31,11 +31,11 @@ class MappingTableTest extends FunSuite {
     defaultMappingValue = List(defaultValue1, defaultValue2)
   )
 
-  private val jsonMappingTable = """{"name":"Testing Mapping Table","hdfsPath":"/path/to/hdfs",""" +
+  private val expectedMappingTable = """{"name":"Testing Mapping Table","hdfsPath":"/path/to/hdfs",""" +
     """"schemaName":"Some Schema","schemaVersion":1,"defaultMappingValue":[{"columnName":"someColumn","value":"alfa"}""" +
     """,{"columnName":"otherColumn","value":"beta"}]}"""
 
   test("export Mapping Table") {
-    assert(jsonMappingTable == mappingTable.exportItem())
+    assert(expectedMappingTable == mappingTable.exportItem())
   }
 }
