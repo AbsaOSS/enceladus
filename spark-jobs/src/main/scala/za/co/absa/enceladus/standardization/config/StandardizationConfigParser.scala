@@ -160,15 +160,18 @@ object StandardizationConfigParser {
   }
 
   private def unsupportedOptionError(option: String, formats: Seq[String]): String = {
-    def sprintf(frmt: String, s: String = ""): String = s"The $option option is supported only for $frmt format$s"
+    def mkErrorMessage(format: String, s: String = ""): String = s"The $option option is supported only for $format format$s"
+
+    def mkErrorMessageForMoreFormats(allFormats: Seq[String]): String = {
+      val revertedFormats = allFormats.reverse
+      val format = revertedFormats.tail.reverse.mkString(", ") + " and " + revertedFormats.head
+      mkErrorMessage(format, "s")
+    }
 
     formats match {
       case Seq()       => ""
-      case Seq(format) => sprintf(format)
-      case _           =>
-        val revertedFormats = formats.reverse
-        val frmt = revertedFormats.tail.reverse.mkString(", ") + " and " + revertedFormats.head
-        sprintf(frmt, "s")
+      case Seq(format) => mkErrorMessage(format)
+      case _           => mkErrorMessageForMoreFormats(formats)
     }
   }
 
