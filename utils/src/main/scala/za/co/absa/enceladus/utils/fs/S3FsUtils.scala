@@ -160,7 +160,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
   }
 
   private[fs] def deleteKeys(bucketName: String, keys: Seq[String]): Unit = {
-    require(keys.length > 0)
+    require(keys.nonEmpty)
 
     val objIds = keys.map(k => ObjectIdentifier.builder().key(k).build())
     val request: DeleteObjectsRequest = DeleteObjectsRequest.builder().bucket(bucketName)
