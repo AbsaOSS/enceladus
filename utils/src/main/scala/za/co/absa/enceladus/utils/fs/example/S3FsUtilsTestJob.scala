@@ -15,14 +15,13 @@
 
 package za.co.absa.enceladus.utils.fs.example
 
-import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 import software.amazon.awssdk.regions.Region
 import za.co.absa.atum.persistence.S3KmsSettings
 import za.co.absa.atum.utils.S3Utils
 import za.co.absa.enceladus.utils.fs.S3FsUtils
 
-// todo remove or create a integtest like this instead.
+// open: remove or create a integtest like this instead.
 // implementation is directly suited to be runnable locally with a saml profile.
 object S3FsUtilsTestJob {
 
@@ -31,11 +30,6 @@ object S3FsUtilsTestJob {
 
   def main(args: Array[String]): Unit = {
     val basePath = s"s3://$bucketName/ao-hdfs-data/hdfs_data/std/std_nf_dn"
-
-    val sparkBuilder = SparkSession.builder().appName("Sample S3 Measurements 1 Job")
-    val spark = sparkBuilder
-      // .master("local")
-      .getOrCreate()
 
     // This sample example relies on local credentials profile named "saml" with access to the s3 location defined below
     implicit val samlCredentialsProvider = S3Utils.getLocalProfileCredentialsProvider("saml")
