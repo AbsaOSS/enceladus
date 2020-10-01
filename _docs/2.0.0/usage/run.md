@@ -176,7 +176,6 @@ The list of options for configuring Spark deployment mode in Yarn and resource s
 | --conf-spark-executor-memoryOverhead **mem**                         |             | **Advanced**. The amount of off-heap memory to be allocated per executor, in MiB unless otherwise specified. Sets `spark.executor.memoryOverhead` Spark configuration parameter. See the detailed description [here](http://spark.apache.org/docs/latest/configuration.html#available-properties). See memory specification syntax in Spark. Examples: `4g`, `8g` |
 | --conf-spark-memory-fraction **value**                               |             | **Advanced**. Fraction of (heap space - 300MB) used for execution and storage (default=`0.6`). Sets `spark.memory.fraction` Spark configuration parameter. See the detailed description [here](http://spark.apache.org/docs/latest/configuration.html#memory-management) |
 
-
 For more information on these options see the official documentation on [running Spark on Yarn][spark-running-yarn]
 
 The list of all options for running both Standardization and Conformance:
@@ -193,22 +192,28 @@ The list of all options for running both Standardization and Conformance:
 
 The list of additional options available for running Standardization:
 
-|            Option                    | Default |                          Description                                                                                                    |
-|--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| --raw-format **format**              |         | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`                                          |
-| --charset **charset**                | `UTF-8` | Specifies a charset to use for `csv`, `json`, `xml`, `cobol` or `fixed-width` |
-| --row-tag **tag**                    |         | A row tag if the input format is `xml`                                                                                                  |
-| --header **true/false**              |         | Indicates if in the input CSV data has headers as the first row of each file                                                            |
-| --delimiter **character**            | `,`     | Specifies a delimiter character to use for CSV format                                                                                   |
-| --csv-quote **character**            | `"`     | Specifies a character to be used as a quote for creating fields that might contain delimiter character                                  |
-| --csv-escape **character**           | `\`     | Specifies a character to be used for escaping other characters                                                                          |
-| --trimValues **true/false**          |         | Indicates if string fields of fixed with text data should be trimmed                                                                    |
-| --is-xcom **true/false**             |         | If `true` a mainframe input file is expected to have XCOM RDW headers                                                                   |
-| --folder-prefix **prefix**           |         | Adds a folder prefix before the date tokens                                                                                             |
-| --debug-set-raw-path **path**        |         | Override the path of the raw data (used for testing purposes)                                                                           |
-| --strict-schema-check **true/false** | `false` | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` proceeds over it with an entry in _errCol | 
-| --empty-values-as-nulls **true/false** | `false` | If `true` treats empty values as `null`s | 
-| --null-value **value** | `""` _(empty string)_ | Defines how null values are represented in a `fixed-width` file format | 
+|            Option                      | Default               |                          Description                                                                                                    |
+|----------------------------------------|-----------------------|---------------------------------------------------------------------------------------------------------------------------|
+| --raw-format **format**                |                       | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`                                          |
+| --charset **charset**                  | `UTF-8`               | Specifies a charset to use for `csv`, `json`, `xml`, `cobol` or `fixed-width` |
+| --cobol-encoding **encoding**          |                       | Specifies the encoding of a mainframe file (`ascii` or `ebcdic`). Code page can be specified using `--charset` option.                             |
+| --cobol-is-text **true/false**         |                       | Specifies if the mainframe file is ASCII text file                                                                                                 |
+| --cobol-trimming-policy **policy**     |                       | Specifies the way leading and trailing spaces should be handled. Can be `none` (do not trim spaces), `left`, `right`, `both`(default).             |
+| --copybook **string**                  |                       | Path to a copybook for COBOL data format                                                                                                           |
+| --csv-escape **character**             | `\`                   | Specifies a character to be used for escaping other characters                                                                          |
+| --csv-quote **character**              | `"`                   | Specifies a character to be used as a quote for creating fields that might contain delimiter character                                  |
+| --debug-set-raw-path **path**          |                       | Override the path of the raw data (used for testing purposes).                                                                                     |
+| --delimiter **character**              | `,`                   | Specifies a delimiter character to use for CSV format                                                                                   |
+| --empty-values-as-nulls **true/false** | `false`               | If `true` treats empty values as `null`s | 
+| --folder-prefix **prefix**             |                       | Adds a folder prefix before the date tokens                                                                                             |
+| --header **true/false**                |                       | Indicates if in the input CSV data has headers as the first row of each file                                                            |
+| --is-xcom **true/false**               |                       | If `true` a mainframe input file is expected to have XCOM RDW headers                                                                   |
+| --null-value **value**                 | `""` _(empty string)_ | Defines how null values are represented in a `fixed-width` file format | 
+| --row-tag **tag**                      |                       | A row tag if the input format is `xml`                                                                                                  |
+| --strict-schema-check **true/false**   | `false`               | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` proceeds over it with an entry in _errCol | 
+| --trimValues **true/false**            |                       | Indicates if string fields of fixed with text data should be trimmed                                                                    |
+
+Most of these options are format specific. For details see [the documentation]({{ site.baseurl }}/docs/usage/standardization-formats). 
 
 The list of additional options available for running Conformance:
 
@@ -217,7 +222,7 @@ The list of additional options available for running Conformance:
 | --mapping-table-pattern **pattern**        | `reportDate={0}-{1}-{2}` | A pattern to look for mapping table for the specified date.<br>The list of possible substitutions: `{0}` - year, `{1}` - month, `{2}` - day of month. Special symbols in the pattern need to be escaped. For example, an empty pattern can be be specified as `\'\'` (single quotes are escaped using a backslash character) |
 | --experimental-mapping-rule **true/false** | build-specific and is set in 'application.properties' | If `true`, the experimental optimized mapping rule implementation is used |
 | --catalyst-workaround **true/false**       | `true`                   | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. Turn this off only is you encounter timing freeze issues when running Conformance | 
-| --autoclean-std-folder **true/false**      |                          | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job |
+| --autoclean-std-folder **true/false**      |                          | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job. If present, overrides `conformance.autoclean.standardized.hdfs.folder` from [application configuration]({{ site.baseurl }}/docs/usage/config#general-options) |
 
 All the additional options valid for both _Standardization_ and _Conformance_ can also be specified when running the combined _Standardization And Conformance_ job
 
