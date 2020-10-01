@@ -18,7 +18,6 @@ package za.co.absa.enceladus.standardization
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
 import org.scalatest.mockito.MockitoSugar
-import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
