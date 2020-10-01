@@ -22,6 +22,7 @@ import za.co.absa.enceladus.standardization.CobolOptions
 trait StandardizationConfigParser[R] extends JobConfigParser[R] {
   def withRawFormat(value: String): R
   def withCharset(value: Option[String] = None): R
+  def withNullValue(value: Option[String] = None): R
   def withRowTag(value: Option[String] = None): R
   def withCsvDelimiter(value: Option[String] = None): R
   def withCsvHeader(value: Option[Boolean] = Some(false)): R
@@ -32,10 +33,10 @@ trait StandardizationConfigParser[R] extends JobConfigParser[R] {
   def withRawPathOverride(value: Option[String]): R
   def withFailOnInputNotPerSchema(value: Boolean): R
   def withFixedWidthTreatEmptyValuesAsNulls(value: Option[Boolean] = None): R
-  def withFixedWidthNullValue(value: Option[String] = None): R
 
   def rawFormat: String
   def charset: Option[String]
+  def nullValue: Option[String]
   def rowTag: Option[String]
   def csvDelimiter: Option[String]
   def csvHeader: Option[Boolean]
@@ -46,10 +47,16 @@ trait StandardizationConfigParser[R] extends JobConfigParser[R] {
   def rawPathOverride: Option[String]
   def failOnInputNotPerSchema: Boolean
   def fixedWidthTreatEmptyValuesAsNulls: Option[Boolean]
-  def fixedWidthNullValue: Option[String]
 }
 
 object StandardizationConfigParser {
+
+  private val csvFormatName = "CSV"
+  private val cobolFormatName = "COBOL"
+  private val fixedWidthFormatName = "FixedWidth"
+  private val xmlFormatName = "XML"
+  private val jsonFormatName = "JSON"
+
 
   //scalastyle:off method.length the length is legit for parsing input paramters
   def standardizationParser[R <: StandardizationConfigParser[R]]: OParser[_, R] = {
@@ -62,6 +69,10 @@ object StandardizationConfigParser {
 
       opt[String]("charset").optional().action((value, config) =>
         config.withCharset(Some(value))).text("use the specific charset (default is UTF-8)"),
+
+      opt[String]("null-value").optional()
+        .action((value, config) => config.withNullValue(Some(value)))
+        .text(s"For $csvFormatName and $fixedWidthFormatName file format. Sets the representation of a null value. Defaults is empty string."), //scalastyle:ignore maxLineLength
 
       opt[String]("row-tag").optional().action((value, config) =>
         config.withRowTag(Some(value))).text("use the specific row tag instead of 'ROW' for XML format"),
@@ -137,10 +148,6 @@ object StandardizationConfigParser {
         .action((value, config) => config.withFixedWidthTreatEmptyValuesAsNulls(Some(value)))
         .text("For FixedWidth file format. Treats empty values as null. Default is false"),
 
-      opt[String]("null-value").optional()
-        .action((value, config) => config.withFixedWidthNullValue(Some(value)))
-        .text("""For FixedWidth file format. Sets the representation of a null value. Defaults is ""."""),
-
       checkConfig(checkConfigX(_, builder))
     )
   }
@@ -148,13 +155,29 @@ object StandardizationConfigParser {
 
   private val formatsSupportingCharset = List("xml", "csv", "json", "cobol", "fixed-width")
 
-  private def typicalError(field: String, format: String): String = {
-    s"The $field option is supported only for $format format"
+  private def unsupportedOptionError(option: String, format: String): String = {
+    unsupportedOptionError(option, Seq(format))
+  }
+
+  private def unsupportedOptionError(option: String, formats: Seq[String]): String = {
+    def mkErrorMessage(format: String, s: String = ""): String = s"The $option option is supported only for $format format$s"
+
+    def mkErrorMessageForMoreFormats(allFormats: Seq[String]): String = {
+      val revertedFormats = allFormats.reverse
+      val format = revertedFormats.tail.reverse.mkString(", ") + " and " + revertedFormats.head
+      mkErrorMessage(format, "s")
+    }
+
+    formats match {
+      case Seq()       => ""
+      case Seq(format) => mkErrorMessage(format)
+      case _           => mkErrorMessageForMoreFormats(formats)
+    }
   }
 
   private def checkCharset[R <: StandardizationConfigParser[R]](config: R): List[String] = {
     if (!formatsSupportingCharset.contains(config.rawFormat) && config.charset.isDefined) {
-      List(typicalError("--charset", "CSV, JSON, XML, COBOL and FixedWidth"))
+      List(unsupportedOptionError("--charset", Seq(csvFormatName, jsonFormatName, xmlFormatName, cobolFormatName, fixedWidthFormatName)))
     } else {
       List.empty
     }
@@ -162,39 +185,32 @@ object StandardizationConfigParser {
 
   private def checkXMLFields[R <: StandardizationConfigParser[R]](config: R): List[String] = {
     if (config.rowTag.isDefined && config.rawFormat != "xml") {
-      List(typicalError("--row-tag", "XML raw data"))
+      List(unsupportedOptionError("--row-tag", xmlFormatName))
     } else {
       List.empty
     }
   }
 
-  private def checkCSVFields[R <: StandardizationConfigParser[R]](config: R): List[String] = {
-    def csvFieldsThatShouldNotBePresent(config: R): List[String] = {
-      val format = "CSV"
-      val definedFields = Map(
-        typicalError("--delimiter", format) -> config.csvDelimiter.isDefined,
-        typicalError("--escape", format) -> config.csvEscape.isDefined,
-        typicalError("--header", s"$format raw data") -> config.csvHeader.contains(true),
-        typicalError("--quote", format) -> config.csvQuote.isDefined
-      )
-      definedFields.filter { case (_, value) => value }.keys.toList
-    }
-
+  private def checkCSVFields[R <: StandardizationConfigParser[R]](config: R): Seq[String] = {
     if (config.rawFormat == "csv") {
-      List.empty
+      Seq.empty
     } else {
-      csvFieldsThatShouldNotBePresent(config)
+      Seq (
+        config.csvDelimiter.map(_ => unsupportedOptionError("--delimiter", csvFormatName)),
+        config.csvEscape.map(_ => unsupportedOptionError("--escape", csvFormatName)),
+        config.csvHeader.map(_ => unsupportedOptionError("--header", csvFormatName)),
+        config.csvQuote.map(_ => unsupportedOptionError("--quote", csvFormatName))
+      ).flatten
     }
   }
 
   private def checkCobolFields[R <: StandardizationConfigParser[R]](config: R): Seq[String] = {
     def cobolFieldsThatShouldNotBePresent(cobolOptions: CobolOptions): List[String] = {
-      val format = "COBOL"
       val definedFields = Map(
-        typicalError("--copybook", format) -> (cobolOptions.copybook != ""),
-        typicalError("--cobol-encoding", format) -> cobolOptions.encoding.isDefined,
-        typicalError("--is-xcom", format) -> cobolOptions.isXcom,
-        typicalError("--is-text", format) -> cobolOptions.isText
+        unsupportedOptionError("--copybook", cobolFormatName) -> (cobolOptions.copybook != ""),
+        unsupportedOptionError("--cobol-encoding", cobolFormatName) -> cobolOptions.encoding.isDefined,
+        unsupportedOptionError("--is-xcom", cobolFormatName) -> cobolOptions.isXcom,
+        unsupportedOptionError("--is-text", cobolFormatName) -> cobolOptions.isText
       )
       definedFields.filter { case (_, value) => value }.keys.toList
     }
@@ -210,20 +226,21 @@ object StandardizationConfigParser {
   }
 
   private def checkFixedWidthFields[R <: StandardizationConfigParser[R]](config: R): Seq[String] = {
-    def fixedWidthFieldsThatShouldNotBePresent(config: R): List[String] = {
-      val format = "FixedWidth"
-      val definedFields = Map(
-        typicalError("--trimValues", format) -> config.fixedWidthTrimValues.isDefined,
-        typicalError("--empty-values-as-nulls", format) -> config.fixedWidthTreatEmptyValuesAsNulls.isDefined,
-        typicalError("--null-value", format) -> config.fixedWidthNullValue.isDefined
-      )
-      definedFields.filter { case (_, value) => value }.keys.toList
-    }
-
     if (config.rawFormat == "fixed-width") {
+      Seq.empty
+    } else {
+      Seq(
+        config.fixedWidthTrimValues.map(_ => unsupportedOptionError("--trimValues", fixedWidthFormatName)),
+        config.fixedWidthTreatEmptyValuesAsNulls.map(_ => unsupportedOptionError("--empty-values-as-nulls", fixedWidthFormatName))
+      ).flatten
+    }
+  }
+
+  private def checkCSVAndFixedWidthFields[R <: StandardizationConfigParser[R]](config: R): Seq[String] = {
+    if ((config.rawFormat == "csv") || (config.rawFormat == "fixed-width")) {
       List.empty
     } else {
-      fixedWidthFieldsThatShouldNotBePresent(config)
+      config.nullValue.map(_ => unsupportedOptionError("--null-value", Seq(csvFormatName, fixedWidthFormatName))).toSeq
     }
   }
 
@@ -232,7 +249,8 @@ object StandardizationConfigParser {
       checkXMLFields(config) ++
       checkCSVFields(config) ++
       checkCobolFields(config) ++
-      checkFixedWidthFields(config)
+      checkFixedWidthFields(config) ++
+      checkCSVAndFixedWidthFields(config)
 
     if (allErrors.isEmpty) {
       builder.success
