@@ -100,7 +100,8 @@ class StandardizationPropertiesProvider {
         // default is set at org.apache.spark.sql.execution.datasources.csv.CSVOptions maxColumns
         "maxColumns" -> {
           if (numberOfColumns > SparkCSVReaderMaxColumnsDefault) Some(LongParameter(numberOfColumns)) else None
-        }
+        },
+        "nullValue" -> cmd.nullValue.map(StringParameter)
       )
     } else {
       HashMap()
@@ -112,7 +113,7 @@ class StandardizationPropertiesProvider {
       HashMap(
         "trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter),
         "treatEmptyValuesAsNulls" -> cmd.fixedWidthTreatEmptyValuesAsNulls.map(BooleanParameter),
-        "nullValue" -> cmd.fixedWidthNullValue.map(StringParameter),
+        "nullValue" -> cmd.nullValue.map(StringParameter),
         "charset" -> cmd.charset.map(StringParameter)
       )
     } else {

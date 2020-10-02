@@ -337,8 +337,8 @@ var MonitoringService = new function() {
       name: original["name"],
       order: original["order"],
       workflowName: original["workflowName"],
-      //startDate: moment(original["processStartTime"], "DD-MM-YYYY HH:mm:ss").toDate(),
-      endDate: moment(original["processEndTime"], "DD-MM-YYYY HH:mm:ss").toDate()
+      //startDate: moment.parseZone(original["processStartTime"], "DD-MM-YYYY HH:mm:ss ZZ").toDate(),
+      endDate: moment.parseZone(original["processEndTime"], "DD-MM-YYYY HH:mm:ss ZZ").toDate()
     };
     oRun["latestCheckpoint"] = latestCheckpoint;
   };
