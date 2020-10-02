@@ -18,6 +18,7 @@ package za.co.absa.enceladus.menas.services
 import java.net.URL
 
 import com.typesafe.config.ConfigFactory
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.menas.controllers.SchemaController
@@ -26,12 +27,15 @@ import za.co.absa.enceladus.menas.services.SchemaRegistryService._
 import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.utils.config.{ConfigUtils, SecureConfig}
 import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
+import scala.collection.JavaConverters._
 
 import scala.io.Source
 import scala.util.control.NonFatal
 
 @Service
 class SchemaRegistryService @Autowired()() {
+
+  private val logger  = LoggerFactory.getLogger(this.getClass)
 
   private val config = ConfigFactory.load()
 
@@ -61,6 +65,29 @@ class SchemaRegistryService @Autowired()() {
     }
   }
 
+  def logAndGetKeyStoreAliases(): Seq[(String, Boolean)] = {
+    import java.security.KeyStore
+    val ks = KeyStore.getInstance("JKS")
+
+    val ksInputStream = new java.io.FileInputStream(config.getString(SecureConfig.Keys.javaxNetSslKeyStore))
+    ks.load(ksInputStream, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
+    ksInputStream.close()
+
+    val aliases = ks.aliases().asScala.toSeq
+    logger.info(s"aliases in the keystore:\n ${aliases.mkString("\n ")}") // printing aliases found
+
+    val keyEntries = ks.aliases.asScala.map(alias => (alias, ks.isKeyEntry(alias))).toList
+    logger.info(s"keystore aliases - key info:")
+      keyEntries.foreach { case (alias, isKeyEntry) =>
+        logger.info(s"$alias\t\t${ if(isKeyEntry) "has key" else "no key" }")
+    }
+
+    // val certs = ks.aliases().asScala.map(ks.getCertificate).toList
+    // val keys = ks.aliases().asScala.map(alias => ks.getKey(alias, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)).toList
+
+    keyEntries
+  }
+
   /**
    * Loading the schema by a full URL
    *
@@ -68,6 +95,7 @@ class SchemaRegistryService @Autowired()() {
    * @return `SchemaResponse` object containing the obtained schema.
    */
   def loadSchemaByUrl(remoteUrl: String): SchemaResponse = {
+    val ksAliases = logAndGetKeyStoreAliases
     try {
       val url = new URL(remoteUrl)
       val connection = url.openConnection()
@@ -80,7 +108,9 @@ class SchemaRegistryService @Autowired()() {
     } catch {
       case NonFatal(e) =>
         throw RemoteSchemaRetrievalException(SchemaType.Avro, s"Could not retrieve a schema file from $remoteUrl. " +
-          s"Please check the correctness of the URL and a presence of the schema at the mentioned endpoint", e)
+          s"Please check the correctness of the URL and a presence of the schema at the mentioned endpoint" +
+          s"debug: ksAliases used: \n ${ksAliases.mkString("\n ")}",
+          e)
     }
   }
 
