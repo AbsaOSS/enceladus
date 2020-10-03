@@ -6,6 +6,9 @@ categories:
     - '2.0.0'
     - usage
 ---
+
+{% capture docs_path %}{{ site.baseurl }}/docs/{{ page.version }}{% endcapture %}
+
 ## Table Of Content
 
 <!-- toc -->
@@ -213,7 +216,7 @@ The list of additional options available for running Standardization:
 | --strict-schema-check **true/false**   | `false`               | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` proceeds over it with an entry in _errCol | 
 | --trimValues **true/false**            |                       | Indicates if string fields of fixed with text data should be trimmed                                                                    |
 
-Most of these options are format specific. For details see [the documentation]({{ site.baseurl }}/docs/usage/standardization-formats). 
+Most of these options are format specific. For details see [the documentation]({{ docs_path }}/usage/standardization-formats). 
 
 The list of additional options available for running Conformance:
 
