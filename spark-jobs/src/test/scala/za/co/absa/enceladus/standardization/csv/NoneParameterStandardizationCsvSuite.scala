@@ -3,7 +3,7 @@ package za.co.absa.enceladus.standardization.csv
 import org.scalatest.{Outcome, fixture}
 import za.co.absa.enceladus.standardization.fixtures.CsvFileFixture
 
-class NoneValueStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture {
+class NoneParameterStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture {
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
   // A field containing the delimiter with the escape has to be enclosed in specified quotes
