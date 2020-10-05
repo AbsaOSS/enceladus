@@ -5,9 +5,10 @@ version: '2.0.0'
 categories:
     - '2.0.0'
     - usage
+redirect_from: /docs/usage/standardization-formats    
 ---
 
-Currently Standardization supports these formats of input files
+Currently, Standardization supports these formats of input files
 
 - [Cobol](#cobol) (see [Cobrix GitHub](https://github.com/AbsaOSS/cobrix/))
 - [CSV](#csv) (see [rfc4180](https://tools.ietf.org/html/rfc4180))

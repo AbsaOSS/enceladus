@@ -6,6 +6,9 @@ categories:
     - '2.0.0'
     - usage
 ---
+
+{% capture docs_path %}{{ site.baseurl }}/docs/{{ page.version }}{% endcapture %}
+
 ## Table Of Contents
 <!-- toc -->
 - [Table Of Contents](#table-of-contents)
@@ -55,7 +58,7 @@ categories:
 
 Schema is the description of fields in a dataset. All and only the fields defined in the schema will be in the output
 table. That means fields not mentioned in the schema won't be in the input. There's an exception of three fields added
-automatically - [see bellow](#TODO). Fields are defined in the order they are to be in the output table and have three basic common properties:
+automatically - [see bellow](#automatically-added-columns). Fields are defined in the order they are to be in the output table and have three basic common properties:
 
 - `name` - the field (column) name
 - `type` - data type of the field
@@ -151,7 +154,7 @@ Example of data adhering to the above schema can be found [here][test-samples].
 
 There is a column automatically added to each **Standardization** output. Its name is `errCol` and it contains information
 on all errors that happened on the particular row *standardization*. If defined in schema its structure there has to 
-adhere exactly to the automatically added one. More on this field [see in dedicated documentation]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol).  
+adhere exactly to the automatically added one. More on this field [see in dedicated documentation][errcol].  
 
 ## Data types
 
@@ -367,7 +370,7 @@ sign (*"-"*).
 <sup>Supported by types:** [Double](#double), [Float](#float)</sup>
 
 Flag indicating if the column accepts infinity as a value. When set to true *infinity*/*-infinity* are recognized as a 
-valid value, instead of failing with casting error ([see here]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)).
+valid value, instead of failing with casting error ([see here][errcol]).
 The string representing infinity on input is *"∞"* and *"-∞"* respectively. Positive and negative numbers with values 
 that are too large are converted to *infinity* and *-infinity*, respectively.
 
@@ -377,7 +380,7 @@ that are too large are converted to *infinity* and *-infinity*, respectively.
 
 Flag indicating strict parsing should be applied on the input values.
 Strict parsing rejects a value with more decimal places than the scale (second number) of the field's Decimal type definition. 
-This results in a casting error in error column ([see here]({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)). 
+This results in a casting error in error column ([see here][errcol]). 
 For example for Decimal(X,2), the values with longer scale (like 10.12345, 0.1234) will be rejected.
 Default value has to fit the scale as well in the case of strict parsing.
 
@@ -541,7 +544,7 @@ be distinct characters, or parsing will be impossible.
 |--------|-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | `0`    | Number                | Digit                                                                                                                                                                                                               |                                                                                    |
 | `#`    | Number                | Digit, zero shows as absent                                                                                                                                                                                         |                                                                                    |
-| `.`    | Number                | Decimal separator                                                                                                                                                                                                   | [Decimal separator](#deciaml_separator) NB!<sup>[*](#pattern-parsing-star)</sup>   |
+| `.`    | Number                | Decimal separator                                                                                                                                                                                                   | [Decimal separator](#decimal_separator) NB!<sup>[*](#pattern-parsing-star)</sup>   |
 | `-`    | Number                | Minus sign                                                                                                                                                                                                          | [Minus sign](#minus_sign) NB!<sup>[*](#pattern-parsing-star)</sup>                 |
 | `,`    | Number                | Grouping separator                                                                                                                                                                                                  | [Grouping separator](#grouping_separator) NB!<sup>[*](#pattern-parsing-star)</sup> |
 | `E`    | Number                | Separates mantissa and exponent in scientific notation. Need not be quoted in prefix or suffix.                                                                                                                     |                                                                                    |
@@ -576,7 +579,7 @@ then they are usually not whole numbers)
 
 As described, when a field fails to standardize, either because of missing data in a non-nullable column
 or because it was being cast to the wrong type, the field is populated with a default value and an error is added to 
-the [error column](({{ site.baseurl }}/docs/{{ page.version }}/usage-errcol)).
+the [error column][errcol].
 
 ### Explicit default
 
@@ -615,3 +618,4 @@ cannot be a `default` for the type [`Short`](#short), or _"∞"_ if `allow_infin
 [timestamp-types]: https://docs.google.com/document/d/1gNRww9mZJcHvUDCXklzjFEQGpefsuR_akCDfWsdE35Q/edit#heading=h.n699ftkvhjlo
 [oracle-simple-date-format]: https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
 [oracle-decimal-format]: https://docs.oracle.com/javase/7/docs/api/java/text/DecimalFormat.html
+[errcol]: {{ docs_path }}/usage/errcol
