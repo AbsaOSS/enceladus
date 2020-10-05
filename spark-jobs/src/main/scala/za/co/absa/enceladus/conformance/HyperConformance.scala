@@ -90,18 +90,20 @@ class HyperConformance (implicit cmd: ConformanceConfig,
  *
  * In order to use it in hyperdrive the component needs to be configured in 'ingestion.properties' as follows:
  * {{{
- * transformer.hyperconformance.menas.rest.uri=http://localhost:8080
- * transformer.hyperconformance.dataset.name=example
- * transformer.hyperconformance.dataset.version=1
- * transformer.hyperconformance.report.date=2020-01-29
- * transformer.hyperconformance.report.version=1
- * transformer.hyperconformance.event.timestamp.column=EV_TIME
+ * component.transformer.id.1=[hyperconformance]
+ * component.transformer.class.[hyperconformance]=za.co.absa.enceladus.conformance.HyperConformance
+ * transformer.[hyperconformance].menas.rest.uri=http://localhost:8080
+ * transformer.[hyperconformance].dataset.name=example
+ * transformer.[hyperconformance].dataset.version=1
+ * transformer.[hyperconformance].report.date=2020-01-29
+ * transformer.[hyperconformance].report.version=1
+ * transformer.[hyperconformance].event.timestamp.column=EV_TIME
  *
  * # Either plain credentials
- * transformer.hyperconformance.menas.credentials.file=/path/menas.credentials
+ * transformer.[hyperconformance].menas.credentials.file=/path/menas.credentials
  *
  * # Or a keytab
- * transformer.hyperconformance.menas.auth.keytab=/path/to/keytab
+ * transformer.[hyperconformance].menas.auth.keytab=/path/to/keytab
  * }}}
  */
 object HyperConformance extends StreamTransformerFactory with HyperConformanceAttributes {
