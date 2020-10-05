@@ -70,8 +70,7 @@ trait ConformanceExecution extends CommonJobExecution with S3DefaultCredentialsP
     val dataS3Location = preparationResult.pathCfg.standardizationPath.toS3Location(preparationResult.s3Config.region)
     val infoS3Location = dataS3Location.copy(path = s"${dataS3Location.path}/_INFO")
 
-    // InputPath is standardizationPath in the combined job
-
+    // Enable Control Framework
     spark.enableControlMeasuresTrackingForS3(sourceS3Location = Some(infoS3Location), destinationS3Config = None)
       .setControlMeasuresWorkflow(sourceId.toString)
 

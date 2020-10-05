@@ -29,7 +29,7 @@ object S3FsUtilsTestJob {
   private val bucketName = "putYourBucketBucketNameHere"
 
   def main(args: Array[String]): Unit = {
-    val basePath = s"s3://$bucketName/ao-hdfs-data/hdfs_data/std/std_nf_dn"
+    val basePath = s"s3://$bucketName/exampleS3Path"
 
     // This sample example relies on local credentials profile named "saml" with access to the s3 location defined below
     implicit val samlCredentialsProvider = S3Utils.getLocalProfileCredentialsProvider("saml")
@@ -44,7 +44,7 @@ object S3FsUtilsTestJob {
     log.info(s"dir size (no hidden) of $basePath is:" + s3utils.getDirectorySizeNoHidden(basePath))
 
     log.info(s"should exist:" + s3utils.exists(s"$basePath/1/2019/11/27/1/_INFO"))
-    log.info(s"should not exist:" + s3utils.exists(s"$basePath/1/2019/11/27/1/_INFOxxx"))
+    log.info(s"should not exist:" + s3utils.exists(s"$basePath/1/2019/11/27/1/_INFObogus"))
 
     log.info("found version (1): "
       + s3utils.getLatestVersion(s"s3://$bucketName/superhero/publish", "2020-08-06"))
