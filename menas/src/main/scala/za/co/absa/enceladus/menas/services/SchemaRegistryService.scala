@@ -15,30 +15,33 @@
 
 package za.co.absa.enceladus.menas.services
 
+import java.io.FileInputStream
 import java.net.URL
+import java.security.KeyStore
 
 import com.typesafe.config.ConfigFactory
-import javax.net.ssl.{HostnameVerifier, HttpsURLConnection, KeyManagerFactory, SSLContext, SSLSession, TrustManagerFactory}
+import javax.net.ssl.{HttpsURLConnection, KeyManagerFactory, SSLContext, TrustManagerFactory}
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.menas.controllers.SchemaController
 import za.co.absa.enceladus.menas.models.rest.exceptions.RemoteSchemaRetrievalException
 import za.co.absa.enceladus.menas.services.SchemaRegistryService._
 import za.co.absa.enceladus.menas.utils.SchemaType
-import za.co.absa.enceladus.utils.config.{ConfigUtils, SecureConfig}
 import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
+import za.co.absa.enceladus.utils.config.SecureConfig
 
-import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.util.control.NonFatal
 
 @Service
 class SchemaRegistryService @Autowired()() {
 
-  private val logger  = LoggerFactory.getLogger(this.getClass)
-
+  private val logger = LoggerFactory.getLogger(this.getClass)
   private val config = ConfigFactory.load()
+
+  private val defaultStoreType = "JKS"
+  private val defaultSslContextProtocol = "TLS"
 
   if (SecureConfig.hasKeyStoreProperties(config) && SecureConfig.hasTrustStoreProperties(config)) {
     //SecureConfig.setKeyStoreProperties(config)
@@ -66,27 +69,46 @@ class SchemaRegistryService @Autowired()() {
     }
   }
 
-  def logAndGetKeyStoreAliases(): Seq[(String, Boolean)] = {
-    import java.security.KeyStore
-    val ks = KeyStore.getInstance("JKS")
+  /**
+   * JKS based TrustManagerFactory option based on [[SecureConfig.Keys.javaxNetSslTrustStore]] and
+   * [[SecureConfig.Keys.javaxNetSslTrustStorePassword]] presence in [[config]]
+   */
+  lazy val trustManagerFactory: Option[TrustManagerFactory] = {
+    if (SecureConfig.hasTrustStoreProperties(config)) {
+      val trustStore = KeyStore.getInstance(defaultStoreType)
 
-    val ksInputStream = new java.io.FileInputStream(config.getString(SecureConfig.Keys.javaxNetSslKeyStore))
-    ks.load(ksInputStream, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
-    ksInputStream.close()
+      val tsInputStream = new FileInputStream(config.getString(SecureConfig.Keys.javaxNetSslTrustStore))
+      trustStore.load(tsInputStream, config.getString(SecureConfig.Keys.javaxNetSslTrustStorePassword).toCharArray)
+      tsInputStream.close()
 
-    val aliases = ks.aliases().asScala.toSeq
-    logger.info(s"aliases in the keystore:\n ${aliases.mkString("\n ")}") // printing aliases found
+      val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
+      tmf.init(trustStore)
 
-    val keyEntries = ks.aliases.asScala.map(alias => (alias, ks.isKeyEntry(alias))).toList
-    logger.info(s"keystore aliases - key info:")
-      keyEntries.foreach { case (alias, isKeyEntry) =>
-        logger.info(s"$alias\t\t${ if(isKeyEntry) "has key" else "no key" }")
+      Some(tmf)
+    } else {
+      None
     }
+  }
 
-    // val certs = ks.aliases().asScala.map(ks.getCertificate).toList
-    // val keys = ks.aliases().asScala.map(alias => ks.getKey(alias, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)).toList
+  /**
+   * JKS based KeyManagerFactory option based on [[SecureConfig.Keys.javaxNetSslKeyStore]] and
+   * [[SecureConfig.Keys.javaxNetSslKeyStorePassword]] presence in [[config]]
+   */
+  lazy val keyManagerFactory: Option[KeyManagerFactory] = {
+    if (SecureConfig.hasKeyStoreProperties(config)) {
+      val ks = KeyStore.getInstance(defaultStoreType)
 
-    keyEntries
+      val ksInputStream = new FileInputStream(config.getString(SecureConfig.Keys.javaxNetSslKeyStore))
+      ks.load(ksInputStream, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
+      ksInputStream.close()
+
+      val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
+      kmf.init(ks, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
+
+      Some(kmf)
+    } else {
+      None
+    }
   }
 
   /**
@@ -96,31 +118,34 @@ class SchemaRegistryService @Autowired()() {
    * @return `SchemaResponse` object containing the obtained schema.
    */
   def loadSchemaByUrl(remoteUrl: String): SchemaResponse = {
-    val ksAliases = logAndGetKeyStoreAliases
     try {
+      if (keyManagerFactory.isEmpty) {
+        logger.warn("keyManagerFactory is not, secure schema registry integration may not function properly. " +
+          s"Set ${SecureConfig.Keys.javaxNetSslKeyStore} and ${SecureConfig.Keys.javaxNetSslKeyStorePassword} to fix the issue.")
+      }
+      if (trustManagerFactory.isEmpty) {
+        logger.warn("trustManagerFactory is not, secure schema registry integration may not function properly. " +
+          s"Set ${SecureConfig.Keys.javaxNetSslTrustStore} and ${SecureConfig.Keys.javaxNetSslTrustStorePassword} to fix the issue.")
+      }
 
-
-      import java.security.KeyStore
-      val ks = KeyStore.getInstance("JKS")
-
-      val ksInputStream = new java.io.FileInputStream(config.getString(SecureConfig.Keys.javaxNetSslKeyStore))
-      ks.load(ksInputStream, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
-      ksInputStream.close()
-
-
-      val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
-      tmf.init(ks)
-
-      val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
-      kmf.init(ks, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
-
-      val ctx = SSLContext.getInstance("TLS")
-      ctx.init(kmf.getKeyManagers, tmf.getTrustManagers, null)
-      val sslFactory = ctx.getSocketFactory
+      val ctx = SSLContext.getInstance(defaultSslContextProtocol)
+      ctx.init(
+        keyManagerFactory.map(_.getKeyManagers).orNull,
+        trustManagerFactory.map(_.getTrustManagers).orNull,
+        null // scalastyle:ignore null - Java API
+      )
 
       val url = new URL(remoteUrl)
-      val connection: HttpsURLConnection = url.openConnection().asInstanceOf[HttpsURLConnection]
-     connection.setSSLSocketFactory(sslFactory)
+      val connection = url.openConnection()
+
+      if (remoteUrl.toLowerCase.startsWith("https")) {
+        val httpsConnection: HttpsURLConnection = connection.asInstanceOf[HttpsURLConnection]
+        httpsConnection.setSSLSocketFactory(ctx.getSocketFactory)
+      } else {
+        logger.warn(s"Connection to schema registry at $remoteUrl is not secure and trust/key stores are not used." +
+          s" Fix by setting config value of $SchemaRegistryUrlConfigKey to begin with 'https'.")
+      }
+
 
       val mimeType = SchemaController.avscContentType // only AVSC is expected to come from the schema registry
       val fileStream = Source.fromInputStream(connection.getInputStream)
@@ -131,9 +156,7 @@ class SchemaRegistryService @Autowired()() {
     } catch {
       case NonFatal(e) =>
         throw RemoteSchemaRetrievalException(SchemaType.Avro, s"Could not retrieve a schema file from $remoteUrl. " +
-          s"Please check the correctness of the URL and a presence of the schema at the mentioned endpoint" +
-          s"debug: ksAliases used: \n ${ksAliases.mkString("\n ")}",
-          e)
+          s"Please check the correctness of the URL and a presence of the schema at the mentioned endpoint", e)
     }
   }
 
