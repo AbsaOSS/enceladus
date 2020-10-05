@@ -18,6 +18,7 @@ package za.co.absa.enceladus.menas.services
 import java.net.URL
 
 import com.typesafe.config.ConfigFactory
+import javax.net.ssl.{HostnameVerifier, HttpsURLConnection, KeyManagerFactory, SSLContext, SSLSession, TrustManagerFactory}
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
@@ -27,8 +28,8 @@ import za.co.absa.enceladus.menas.services.SchemaRegistryService._
 import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.utils.config.{ConfigUtils, SecureConfig}
 import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.util.control.NonFatal
 
@@ -40,7 +41,7 @@ class SchemaRegistryService @Autowired()() {
   private val config = ConfigFactory.load()
 
   if (SecureConfig.hasKeyStoreProperties(config) && SecureConfig.hasTrustStoreProperties(config)) {
-    SecureConfig.setKeyStoreProperties(config)
+    //SecureConfig.setKeyStoreProperties(config)
     SecureConfig.setTrustStoreProperties(config)
   }
 
@@ -97,8 +98,30 @@ class SchemaRegistryService @Autowired()() {
   def loadSchemaByUrl(remoteUrl: String): SchemaResponse = {
     val ksAliases = logAndGetKeyStoreAliases
     try {
+
+
+      import java.security.KeyStore
+      val ks = KeyStore.getInstance("JKS")
+
+      val ksInputStream = new java.io.FileInputStream(config.getString(SecureConfig.Keys.javaxNetSslKeyStore))
+      ks.load(ksInputStream, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
+      ksInputStream.close()
+
+
+      val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
+      tmf.init(ks)
+
+      val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
+      kmf.init(ks, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
+
+      val ctx = SSLContext.getInstance("TLS")
+      ctx.init(kmf.getKeyManagers, tmf.getTrustManagers, null)
+      val sslFactory = ctx.getSocketFactory
+
       val url = new URL(remoteUrl)
-      val connection = url.openConnection()
+      val connection: HttpsURLConnection = url.openConnection().asInstanceOf[HttpsURLConnection]
+     connection.setSSLSocketFactory(sslFactory)
+
       val mimeType = SchemaController.avscContentType // only AVSC is expected to come from the schema registry
       val fileStream = Source.fromInputStream(connection.getInputStream)
       val fileContent = fileStream.mkString
