@@ -43,11 +43,6 @@ class SchemaRegistryService @Autowired()() {
   private val defaultStoreType = "JKS"
   private val defaultSslContextProtocol = "TLS"
 
-  if (SecureConfig.hasKeyStoreProperties(config) && SecureConfig.hasTrustStoreProperties(config)) {
-    //SecureConfig.setKeyStoreProperties(config)
-    SecureConfig.setTrustStoreProperties(config)
-  }
-
   lazy val schemaRegistryBaseUrl: Option[String] = {
     config.getOptionString(SchemaRegistryUrlConfigKey)
   }
