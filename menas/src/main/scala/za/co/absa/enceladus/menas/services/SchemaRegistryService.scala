@@ -115,11 +115,11 @@ class SchemaRegistryService @Autowired()() {
   def loadSchemaByUrl(remoteUrl: String): SchemaResponse = {
     try {
       if (keyManagerFactory.isEmpty) {
-        logger.warn("keyManagerFactory is not, secure schema registry integration may not function properly. " +
+        logger.warn("keyManagerFactory is not defined, secure schema registry integration may not function properly. " +
           s"Set ${SecureConfig.Keys.javaxNetSslKeyStore} and ${SecureConfig.Keys.javaxNetSslKeyStorePassword} to fix the issue.")
       }
       if (trustManagerFactory.isEmpty) {
-        logger.warn("trustManagerFactory is not, secure schema registry integration may not function properly. " +
+        logger.warn("trustManagerFactory is not defined, secure schema registry integration may not function properly. " +
           s"Set ${SecureConfig.Keys.javaxNetSslTrustStore} and ${SecureConfig.Keys.javaxNetSslTrustStorePassword} to fix the issue.")
       }
 
