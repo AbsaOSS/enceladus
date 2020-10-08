@@ -26,8 +26,6 @@ SET HDP_VERSION=2.7.3
 
 SET SPARK_JOBS_JAR=spark-jobs.jar
 
-SET STD_CLASS=za.co.absa.enceladus.standardization.StandardizationJob
-
 :: Environment-specific resource defaults for Standardization.
 :: If empty and not specified explicitly, Spark configuration defaults will be used.
 SET STD_DEFAULT_DRIVER_MEMORY=
@@ -46,8 +44,6 @@ SET STD_DEFAULT_DRA_MAX_EXECUTORS=4
 SET STD_DEFAULT_DRA_MIN_EXECUTORS=0
 SET STD_DEFAULT_DRA_ALLOCATION_RATIO=0.5
 SET STD_DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE=134217728
-
-SET CONF_CLASS=za.co.absa.enceladus.conformance.DynamicConformanceJob
 
 :: Environment-specific resource defaults for Conformance.
 :: If empty and not specified explicitly, Spark configuration defaults will be used.

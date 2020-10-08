@@ -64,6 +64,7 @@ EXPERIMENTAL_MAPPING_RULE=""
 CATALYST_WORKAROUND=""
 AUTOCLEAN_STD_FOLDER=""
 PERSIST_STORAGE_LEVEL=""
+HELP_CALL="0"
 
 # Spark configuration options
 CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=""
@@ -273,6 +274,10 @@ case $key in
     DRA_ENABLED="$2"
     shift 2 # past argument and value
     ;;
+    --help)
+    HELP_CALL="1"
+    shift # past argument
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -284,36 +289,38 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 # Display values of all declared variables
 #declare -p
 
-# Validation
-VALID="1"
-validate() {
-    if [[ -z "$2" ]]; then
-        echo "Missing mandatory option $1"
-        VALID="0"
+if [ "$HELP_CALL" == "0" ]; then
+    # Validation (only if not help called)
+    VALID="1"
+    validate() {
+        if [[ -z "$2" ]]; then
+            echo "Missing mandatory option $1"
+            VALID="0"
+        fi
+    }
+
+    validate_either() {
+        if [[ -z "$2" && -z "$4" ]]; then
+            echo "Either $1 or $3 should be specified"
+            VALID="0"
+        fi
+    }
+
+    validate "--dataset-name" "$DATASET_NAME"
+    validate "--dataset-version" "$DATASET_VERSION"
+    validate "--report-date" "$REPORT_DATE"
+
+    validate_either "--menas-credentials-file" "$MENAS_CREDENTIALS_FILE" "--menas-auth-keytab" "$MENAS_AUTH_KEYTAB"
+
+    if [[ "$MASTER" != "yarn" ]]; then
+      echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
+      VALID="0"
     fi
-}
 
-validate_either() {
-    if [[ -z "$2" && -z "$4" ]]; then
-        echo "Either $1 or $3 should be specified"
-        VALID="0"
+    # Validation failure check
+    if [ "$VALID" == "0" ]; then
+        exit 1
     fi
-}
-
-validate "--dataset-name" "$DATASET_NAME"
-validate "--dataset-version" "$DATASET_VERSION"
-validate "--report-date" "$REPORT_DATE"
-
-validate_either "--menas-credentials-file" "$MENAS_CREDENTIALS_FILE" "--menas-auth-keytab" "$MENAS_AUTH_KEYTAB"
-
-if [[ "$MASTER" != "yarn" ]]; then
-  echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
-  VALID="0"
-fi
-
-# Validation failure check
-if [ "$VALID" == "0" ]; then
-    exit 1
 fi
 
 # Construct command line
@@ -440,6 +447,9 @@ add_to_cmd_line "--experimental-mapping-rule" ${EXPERIMENTAL_MAPPING_RULE}
 add_to_cmd_line "--catalyst-workaround" ${CATALYST_WORKAROUND}
 add_to_cmd_line "--autoclean-std-folder" ${AUTOCLEAN_STD_FOLDER}
 add_to_cmd_line "--persist-storage-level" ${PERSIST_STORAGE_LEVEL}
+if [ "$HELP_CALL" == "1" ]; then
+    CMD_LINE="$CMD_LINE --help"
+fi
 
 echo "Command line:"
 echo "$CMD_LINE"

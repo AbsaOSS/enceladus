@@ -18,7 +18,7 @@ SET PATH=%~dp0;%PATH%
 
 CALL enceladus_env.cmd
 
-SET CLASS=%STD_CONF_CLASS%
+SET CLASS=za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob
 
 SET DEFAULT_DRIVER_MEMORY=%STD_DEFAULT_DRIVER_MEMORY%
 SET DEFAULT_DRIVER_CORES=%STD_DEFAULT_DRIVER_CORES%

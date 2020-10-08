@@ -1,4 +1,4 @@
-/bin/bash
+#!/bin/bash
 
 # Copyright 2018 ABSA Group Limited
 #
@@ -17,7 +17,7 @@ SRC_DIR=`dirname "$0"`
 
 source ${SRC_DIR}/enceladus_env.sh
 
-export CLASS=${STD_CONF_CLASS}
+export CLASS="za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob"
 
 export DEFAULT_DRIVER_MEMORY="$STD_DEFAULT_DRIVER_MEMORY"
 export DEFAULT_DRIVER_CORES="$STD_DEFAULT_DRIVER_CORES"

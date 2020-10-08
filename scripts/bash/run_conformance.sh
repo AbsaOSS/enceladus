@@ -17,7 +17,7 @@ SRC_DIR=`dirname "$0"`
 
 source ${SRC_DIR}/enceladus_env.sh
 
-export CLASS=${CONF_CLASS}
+export CLASS="za.co.absa.enceladus.conformance.DynamicConformanceJob"
 
 export DEFAULT_DRIVER_MEMORY="$CONF_DEFAULT_DRIVER_MEMORY"
 export DEFAULT_DRIVER_CORES="$CONF_DEFAULT_DRIVER_CORES"
