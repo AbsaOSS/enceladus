@@ -16,9 +16,10 @@
 SETLOCAL EnableDelayedExpansion
 SET PATH=%~dp0;%PATH%
 
+CALL enceladus_const.cmd
 CALL enceladus_env.cmd
 
-SET CLASS=za.co.absa.enceladus.conformance.DynamicConformanceJob
+SET CLASS=%CONF_CLASS%
 
 SET DEFAULT_DRIVER_MEMORY=%CONF_DEFAULT_DRIVER_MEMORY%
 SET DEFAULT_DRIVER_CORES=%CONF_DEFAULT_DRIVER_CORES%
