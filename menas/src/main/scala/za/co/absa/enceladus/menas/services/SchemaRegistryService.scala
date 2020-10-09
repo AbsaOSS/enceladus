@@ -73,8 +73,11 @@ class SchemaRegistryService @Autowired()() {
       val trustStore = KeyStore.getInstance(defaultStoreType)
 
       val tsInputStream = new FileInputStream(config.getString(SecureConfig.Keys.javaxNetSslTrustStore))
-      trustStore.load(tsInputStream, config.getString(SecureConfig.Keys.javaxNetSslTrustStorePassword).toCharArray)
-      tsInputStream.close()
+      try {
+        trustStore.load(tsInputStream, config.getString(SecureConfig.Keys.javaxNetSslTrustStorePassword).toCharArray)
+      } finally {
+        tsInputStream.close()
+      }
 
       val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
       tmf.init(trustStore)
@@ -94,8 +97,11 @@ class SchemaRegistryService @Autowired()() {
       val ks = KeyStore.getInstance(defaultStoreType)
 
       val ksInputStream = new FileInputStream(config.getString(SecureConfig.Keys.javaxNetSslKeyStore))
-      ks.load(ksInputStream, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
-      ksInputStream.close()
+      try {
+        ks.load(ksInputStream, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
+      } finally {
+        ksInputStream.close()
+      }
 
       val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
       kmf.init(ks, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
