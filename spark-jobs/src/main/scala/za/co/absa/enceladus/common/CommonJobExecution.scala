@@ -110,6 +110,9 @@ trait CommonJobExecution {
     }
   }
 
+  /**
+   * Post processing rereads the data from a path on FS (based on `sourcePhase`)
+   */
   protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
                                     (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
     val outputPath = sourcePhase match {
