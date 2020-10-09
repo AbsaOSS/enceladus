@@ -15,6 +15,8 @@
 
 # Command line for the script itself
 
+SET -e
+
 # Show spark-submit command line without actually running it (--dry-run)
 DRY_RUN=""
 
@@ -289,22 +291,23 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 # Display values of all declared variables
 #declare -p
 
+validate() {
+    if [[ -z "$2" ]]; then
+        echo "Missing mandatory option $1"
+        VALID="0"
+    fi
+}
+
+validate_either() {
+    if [[ -z "$2" && -z "$4" ]]; then
+        echo "Either $1 or $3 should be specified"
+        VALID="0"
+    fi
+}
+
 if [ "$HELP_CALL" == "0" ]; then
     # Validation (only if not help called)
     VALID="1"
-    validate() {
-        if [[ -z "$2" ]]; then
-            echo "Missing mandatory option $1"
-            VALID="0"
-        fi
-    }
-
-    validate_either() {
-        if [[ -z "$2" && -z "$4" ]]; then
-            echo "Either $1 or $3 should be specified"
-            VALID="0"
-        fi
-    }
 
     validate "--dataset-name" "$DATASET_NAME"
     validate "--dataset-version" "$DATASET_VERSION"
@@ -419,6 +422,9 @@ else
 fi
 CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
+if [ "$HELP_CALL" == "1" ]; then
+    CMD_LINE="$CMD_LINE --help"
+fi
 # Adding command line parameters that go AFTER the jar file
 add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
 add_to_cmd_line "--menas-credentials-file" ${MENAS_CREDENTIALS_FILE}
@@ -447,9 +453,6 @@ add_to_cmd_line "--experimental-mapping-rule" ${EXPERIMENTAL_MAPPING_RULE}
 add_to_cmd_line "--catalyst-workaround" ${CATALYST_WORKAROUND}
 add_to_cmd_line "--autoclean-std-folder" ${AUTOCLEAN_STD_FOLDER}
 add_to_cmd_line "--persist-storage-level" ${PERSIST_STORAGE_LEVEL}
-if [ "$HELP_CALL" == "1" ]; then
-    CMD_LINE="$CMD_LINE --help"
-fi
 
 echo "Command line:"
 echo "$CMD_LINE"
@@ -478,19 +481,20 @@ if [[ -z "$DRY_RUN" ]]; then
     echo "$CMD_LINE" >> "$TMP_PATH_NAME"
     echo "The log will be saved to $TMP_PATH_NAME"
     # Run the job and return exit status of the last failed command in the subshell pipeline (Issue #893)
+    SET +e
     bash -c "set -o pipefail; $CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
-	# Save the exit status of spark submit subshell run
-	EXIT_STATUS="$?"
-	# Test if the command executed successfully
-	if [ $EXIT_STATUS -eq 0 ]; then
+    # Save the exit status of spark submit subshell run
+    EXIT_STATUS="$?"
+    # Test if the command executed successfully
+    if [ $EXIT_STATUS -eq 0 ]; then
       RESULT="passed"
-	else
-	  RESULT="failed"
-	fi
-	# Report the result and log location
-	echo ""
-	echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME" | tee -a "$TMP_PATH_NAME"
-	exit $EXIT_STATUS
+    else
+      RESULT="failed"
+    fi
+    # Report the result and log location
+    echo ""
+    echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME" | tee -a "$TMP_PATH_NAME"
+    exit $EXIT_STATUS
   else
 
     APPLICATIONID=$(bash -c "$CMD_LINE" 2>&1 | grep -oP "(?<=Submitted application ).*" )
