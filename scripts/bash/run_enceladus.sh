@@ -15,7 +15,7 @@
 
 # Command line for the script itself
 
-SET -e
+set -e
 
 # Show spark-submit command line without actually running it (--dry-run)
 DRY_RUN=""
@@ -481,7 +481,7 @@ if [[ -z "$DRY_RUN" ]]; then
     echo "$CMD_LINE" >> "$TMP_PATH_NAME"
     echo "The log will be saved to $TMP_PATH_NAME"
     # Run the job and return exit status of the last failed command in the subshell pipeline (Issue #893)
-    SET +e
+    set +e
     bash -c "set -o pipefail; $CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
     # Save the exit status of spark submit subshell run
     EXIT_STATUS="$?"
