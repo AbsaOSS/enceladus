@@ -15,8 +15,10 @@
 
 package za.co.absa.enceladus.utils.general
 
-object ProjectMetadata {
+trait ProjectMetadata {
 
-  val enceladusVersion: String = getClass.getPackage.getImplementationVersion
-
+  def enceladusVersion(): String = {
+    getClass.getPackage.getImplementationVersion
+  }
 }
+object ProjectMetadata extends ProjectMetadata

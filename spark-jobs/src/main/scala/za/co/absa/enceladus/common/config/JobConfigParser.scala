@@ -54,7 +54,7 @@ object JobConfigParser {
     import builder._
     OParser.sequence(
 
-      head(s"Enceladus v${ProjectMetadata.enceladusVersion}"),
+      head(s"Enceladus v${ProjectMetadata.enceladusVersion()}"),
       help("help"),
       opt[String]('D', "dataset-name").required().action((value, config) =>
         config.withDatasetName(value)).text("Dataset name"),
