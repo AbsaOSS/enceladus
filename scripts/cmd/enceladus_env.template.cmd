@@ -84,6 +84,8 @@ SET LOG_DIR=%TEMP%
 :: Additional environment-specific Spark options, e.g. --conf "spark.driver.host=myhost"
 :: To specify several configuration options prepend '--conf' to each config key.
 :: Example: ADDITIONAL_SPARK_CONF=--conf "spark.driver.host=myhost" --conf "spark.driver.port=12233"
+:: For secured HDFS the following two usually needs to be specified:
+:: ADDITIONAL_SPARK_CONF=--conf spark.yarn.principal=<principal_name> --conf spark.yarn.keytab=<path_to_keytab>
 SET ADDITIONAL_SPARK_CONF=
 
 :: Additional JVM options
