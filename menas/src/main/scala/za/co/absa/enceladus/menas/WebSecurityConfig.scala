@@ -36,7 +36,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
                                      jwtAuthFilter: JwtAuthenticationFilter,
                                      @Value("${menas.auth.mechanism:}")
                                      authMechanism: String) extends ProjectMetadata {
-
+  // Implements the trait instead of using the object because the object doesn't seem to work in Spring
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   @Configuration
@@ -60,7 +60,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
         .authorizeRequests()
           .antMatchers("/index.html", "/resources/**", "/generic/**",
             "/service/**", "/webjars/**", "/css/**", "/components/**", "/admin/health",
-            "/api/oozie/isEnabled", "/api/user/version", s"/${enceladusVersion()}/**", "/api/configuration/**")
+            "/api/oozie/isEnabled", "/api/user/version", s"/${projectVersion}/**", "/api/configuration/**")
           .permitAll()
         .anyRequest()
           .authenticated()

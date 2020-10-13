@@ -59,7 +59,7 @@ trait CommonJobExecution {
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
-    val enceladusVersion = ProjectMetadata.enceladusVersion()
+    val enceladusVersion = ProjectMetadata.projectVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
     val spark = SparkSession.builder()

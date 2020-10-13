@@ -26,17 +26,18 @@ import za.co.absa.enceladus.utils.general.ProjectMetadata
 @RestController
 @RequestMapping(Array("/api/user"))
 class UserInfoController extends BaseController with ProjectMetadata {
+  // Implements the trait instead of using the object because the object doesn't seem to work in Spring
 
   @GetMapping(path = Array("/info"))
   def userInfo(request: HttpServletRequest, response: HttpServletResponse): UserInfo = {
     val auth = SecurityContextHolder.getContext.getAuthentication
     val principal = auth.getPrincipal.asInstanceOf[UserDetails]
     val groups = auth.getAuthorities.toArray(Array[GrantedAuthority]()).map(auth => auth.getAuthority)
-    UserInfo(principal.getUsername, groups, enceladusVersion())
+    UserInfo(principal.getUsername, groups, projectVersion)
   }
 
   @GetMapping(path = Array("/version"))
   def getVersion(): String = {
-    enceladusVersion()
+    projectVersion
   }
 }

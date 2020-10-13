@@ -73,7 +73,7 @@ object PerformanceMetricTools extends ProjectMetadata {
     Atum.setAdditionalInfo(s"${optionPrefix}_output_dir" -> outputPath)
     Atum.setAdditionalInfo(s"${optionPrefix}_input_dir_size" -> inputDirSize.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_input_data_size" -> inputDataSize.toString)
-    Atum.setAdditionalInfo(s"${optionPrefix}_enceladus_version" -> enceladusVersion())
+    Atum.setAdditionalInfo(s"${optionPrefix}_enceladus_version" -> projectVersion)
     Atum.setAdditionalInfo(s"${optionPrefix}_application_id" -> spark.sparkContext.applicationId)
     Atum.setAdditionalInfo(s"${optionPrefix}_username" -> loginUserName)
     Atum.setAdditionalInfo(s"${optionPrefix}_executors_num" -> s"$numberOfExecutors")

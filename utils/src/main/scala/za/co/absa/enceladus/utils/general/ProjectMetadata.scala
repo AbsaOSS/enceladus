@@ -15,9 +15,10 @@
 
 package za.co.absa.enceladus.utils.general
 
+// Defined the trait to be extended in Menas so that it can work with Spring
 trait ProjectMetadata {
 
-  def enceladusVersion(): String = {
+  def projectVersion: String = {
     getClass.getPackage.getImplementationVersion
   }
 }
