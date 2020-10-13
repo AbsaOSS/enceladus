@@ -40,12 +40,8 @@ class SchemaRegistryService @Autowired()() {
   private val logger = LoggerFactory.getLogger(this.getClass)
   private val config = ConfigFactory.load()
 
-  private val defaultStoreType = "JKS"
-  private val defaultSslContextProtocol = "TLS"
-
-  lazy val schemaRegistryBaseUrl: Option[String] = {
-    config.getOptionString(SchemaRegistryUrlConfigKey)
-  }
+  private val warnUnsecured = config.getOptionBoolean(SchemaRegsitryWarnUnsecureKey).getOrElse(true)
+  val schemaRegistryBaseUrl: Option[String] = config.getOptionString(SchemaRegistryUrlConfigKey)
 
   /**
    * Loading the latest schema by a subject name (e.g. topic1-value), the url is constructed based on the [[schemaRegistryBaseUrl]]
@@ -68,7 +64,7 @@ class SchemaRegistryService @Autowired()() {
    * JKS based TrustManagerFactory option based on [[SecureConfig.Keys.javaxNetSslTrustStore]] and
    * [[SecureConfig.Keys.javaxNetSslTrustStorePassword]] presence in [[config]]
    */
-  lazy val trustManagerFactory: Option[TrustManagerFactory] = {
+  private lazy val trustManagerFactory: Option[TrustManagerFactory] = {
     if (SecureConfig.hasTrustStoreProperties(config)) {
       val trustStore = KeyStore.getInstance(defaultStoreType)
 
@@ -92,19 +88,20 @@ class SchemaRegistryService @Autowired()() {
    * JKS based KeyManagerFactory option based on [[SecureConfig.Keys.javaxNetSslKeyStore]] and
    * [[SecureConfig.Keys.javaxNetSslKeyStorePassword]] presence in [[config]]
    */
-  lazy val keyManagerFactory: Option[KeyManagerFactory] = {
+  private lazy val keyManagerFactory: Option[KeyManagerFactory] = {
     if (SecureConfig.hasKeyStoreProperties(config)) {
+      val ksPwd = config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray
       val ks = KeyStore.getInstance(defaultStoreType)
 
       val ksInputStream = new FileInputStream(config.getString(SecureConfig.Keys.javaxNetSslKeyStore))
       try {
-        ks.load(ksInputStream, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
+        ks.load(ksInputStream, ksPwd)
       } finally {
         ksInputStream.close()
       }
 
       val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
-      kmf.init(ks, config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray)
+      kmf.init(ks, ksPwd)
 
       Some(kmf)
     } else {
@@ -120,11 +117,11 @@ class SchemaRegistryService @Autowired()() {
    */
   def loadSchemaByUrl(remoteUrl: String): SchemaResponse = {
     try {
-      if (keyManagerFactory.isEmpty) {
+      if (keyManagerFactory.isEmpty && warnUnsecured) {
         logger.warn("keyManagerFactory is not defined, secure schema registry integration may not function properly. " +
           s"Set ${SecureConfig.Keys.javaxNetSslKeyStore} and ${SecureConfig.Keys.javaxNetSslKeyStorePassword} to fix the issue.")
       }
-      if (trustManagerFactory.isEmpty) {
+      if (trustManagerFactory.isEmpty && warnUnsecured) {
         logger.warn("trustManagerFactory is not defined, secure schema registry integration may not function properly. " +
           s"Set ${SecureConfig.Keys.javaxNetSslTrustStore} and ${SecureConfig.Keys.javaxNetSslTrustStorePassword} to fix the issue.")
       }
@@ -142,11 +139,10 @@ class SchemaRegistryService @Autowired()() {
       if (remoteUrl.toLowerCase.startsWith("https")) {
         val httpsConnection: HttpsURLConnection = connection.asInstanceOf[HttpsURLConnection]
         httpsConnection.setSSLSocketFactory(ctx.getSocketFactory)
-      } else {
+      } else if (warnUnsecured) {
         logger.warn(s"Connection to schema registry at $remoteUrl is not secure and trust/key stores are not used." +
           s" Fix by setting config value of $SchemaRegistryUrlConfigKey to begin with 'https'.")
       }
-
 
       val mimeType = SchemaController.avscContentType // only AVSC is expected to come from the schema registry
       val fileStream = Source.fromInputStream(connection.getInputStream)
@@ -165,13 +161,17 @@ class SchemaRegistryService @Autowired()() {
 
 object SchemaRegistryService {
 
+  val SchemaRegistryUrlConfigKey = "menas.schemaRegistryBaseUrl"
+  val SchemaRegsitryWarnUnsecureKey = "menas.schemaRegistry.warnUnsecured"
+
+  private val defaultStoreType = "JKS"
+  private val defaultSslContextProtocol = "TLS"
+
   import za.co.absa.enceladus.utils.implicits.StringImplicits._
 
   def getLatestSchemaUrl(baseUrl: String, subjectName: String): String =
     baseUrl / "subjects" / subjectName / "versions/latest/schema"
 
   case class SchemaResponse(fileContent: String, mimeType: String, url: URL)
-
-  val SchemaRegistryUrlConfigKey = "menas.schemaRegistryBaseUrl"
 
 }
