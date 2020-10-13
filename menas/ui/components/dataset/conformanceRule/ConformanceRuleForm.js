@@ -309,7 +309,7 @@ class LiteralConformanceRuleForm extends ConformanceRuleForm {
 class FillNullsConformanceRuleForm extends ConformanceRuleForm {
 
   constructor() {
-    super("FillNullsConformanceRule", false)
+    super("FillNullsConformanceRule", true)
   }
 
   get fillNullsValueControl() {
