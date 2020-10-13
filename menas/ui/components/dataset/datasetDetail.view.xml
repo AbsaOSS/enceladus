@@ -35,7 +35,7 @@
                         <core:Fragment type="XML" fragmentName="components.dataset.datasetInfo" />
                     </IconTabFilter>
                     <IconTabFilter id="Schema" icon="sap-icon://tree" key="schemaFields" text="Schema">
-                        <core:Fragment type="XML" fragmentName="components.schemaTable" />
+                        <core:Fragment type="XML" fragmentName="components.schemaTable" id="schemaFragment" />
                     </IconTabFilter>
                     <IconTabFilter id="ConformanceRules" icon="sap-icon://list" key="conformanceRules"
                                    text="Conformance Rules">

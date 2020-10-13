@@ -15,10 +15,18 @@
 
 class SchemaTable {
 
-  constructor(oController) {
+  constructor(oController, fragmentId) {
     this._oController = oController;
-    this._schemaTable = oController.byId("schemaFieldsTreeTable");
-    oController.byId("metadataButton").attachPress(this.metadataPress, this);
+    console.log("oController: ");
+    console.log(oController);
+
+    this._parentId = fragmentId;
+
+    console.log("id for schemaFieldsTreeTable: " + sap.ui.core.Fragment.createId(this._parentId, "schemaFieldsTreeTable"));
+    console.log("id for metadataButton: " + sap.ui.core.Fragment.createId(this._parentId, "metadataButton"));
+
+    this._schemaTable = oController.byId(sap.ui.core.Fragment.createId(this._parentId, "schemaFieldsTreeTable"));
+    oController.byId(sap.ui.core.Fragment.createId(this._parentId, "metadataButton")).attachPress(this.metadataPress, this); // worked with "schemaFragment--metadataButton"
 
     this._oPopoverTemplate = new sap.m.List({})
     this._oPopover = new sap.m.Popover({
@@ -55,7 +63,8 @@ class SchemaTable {
     if(oSrc !== this._lastMetatadaEvSrc) {
       let binding = oSrc.getBindingContext("schema").getPath() + "/metadata";
       let bindingArr = binding + "Arr";
-      const model = this.oController.byId("schemaFieldsTreeTable").getModel("schema");
+
+      const model = this.oController.byId(sap.ui.core.Fragment.createId(this._parentId, "schemaFieldsTreeTable")).getModel("schema");
       let arrMeta = Formatters.objToKVArray(model.getProperty(binding));
       model.setProperty(bindingArr, arrMeta);
       this._oPopoverTemplate.setModel(model);

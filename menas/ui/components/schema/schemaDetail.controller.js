@@ -39,7 +39,7 @@ sap.ui.define([
       this._eventBus.subscribe("schemas", "updated", this.onEntityUpdated, this);
 
       this._schemaService = new SchemaService(this._model, this._eventBus);
-      this._schemaTable = new SchemaTable(this);
+      this._schemaTable = new SchemaTable(this, "schemaFragment");
 
       const auditTable = this.byId("auditTrailTable");
       const auditUtils = new AuditTrail(auditTable);

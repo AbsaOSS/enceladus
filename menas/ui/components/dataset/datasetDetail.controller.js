@@ -77,7 +77,7 @@ sap.ui.define([
       this._datasetService = new DatasetService(this._model, this._oEventBus);
       this._mappingTableService = new MappingTableService(this._model, this._oEventBus);
       this._schemaService = new SchemaService(this._model, this._oEventBus)
-      this._schemaTable = new SchemaTable(this)
+      this._schemaTable = new SchemaTable(this, "schemaFragment")
 
       this._validator = new Validator();
 
