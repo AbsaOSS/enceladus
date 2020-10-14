@@ -65,12 +65,12 @@ class SchemaRegistryService @Autowired()() {
    * [[SecureConfig.Keys.javaxNetSslTrustStorePassword]] presence in [[config]]
    */
   private lazy val trustManagerFactory: Option[TrustManagerFactory] = {
-    if (SecureConfig.hasTrustStoreProperties(config)) {
+    SecureConfig.getTrustStoreProperties(config).map { trustStoreDef =>
       val trustStore = KeyStore.getInstance(defaultStoreType)
 
-      val tsInputStream = new FileInputStream(config.getString(SecureConfig.Keys.javaxNetSslTrustStore))
+      val tsInputStream = new FileInputStream(trustStoreDef.path)
       try {
-        trustStore.load(tsInputStream, config.getString(SecureConfig.Keys.javaxNetSslTrustStorePassword).toCharArray)
+        trustStore.load(tsInputStream, trustStoreDef.password.map(_.toCharArray).orNull)
       } finally {
         tsInputStream.close()
       }
@@ -78,9 +78,7 @@ class SchemaRegistryService @Autowired()() {
       val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
       tmf.init(trustStore)
 
-      Some(tmf)
-    } else {
-      None
+      tmf
     }
   }
 
@@ -89,11 +87,11 @@ class SchemaRegistryService @Autowired()() {
    * [[SecureConfig.Keys.javaxNetSslKeyStorePassword]] presence in [[config]]
    */
   private lazy val keyManagerFactory: Option[KeyManagerFactory] = {
-    if (SecureConfig.hasKeyStoreProperties(config)) {
-      val ksPwd = config.getString(SecureConfig.Keys.javaxNetSslKeyStorePassword).toCharArray
+    SecureConfig.getKeyStoreProperties(config).map { keyStoreDef =>
+      val ksPwd = keyStoreDef.password.map(_.toCharArray).orNull
       val ks = KeyStore.getInstance(defaultStoreType)
 
-      val ksInputStream = new FileInputStream(config.getString(SecureConfig.Keys.javaxNetSslKeyStore))
+      val ksInputStream = new FileInputStream(keyStoreDef.path)
       try {
         ks.load(ksInputStream, ksPwd)
       } finally {
@@ -103,9 +101,7 @@ class SchemaRegistryService @Autowired()() {
       val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
       kmf.init(ks, ksPwd)
 
-      Some(kmf)
-    } else {
-      None
+      kmf
     }
   }
 
@@ -128,8 +124,8 @@ class SchemaRegistryService @Autowired()() {
 
       val ctx = SSLContext.getInstance(defaultSslContextProtocol)
       ctx.init(
-        keyManagerFactory.map(_.getKeyManagers).orNull,
-        trustManagerFactory.map(_.getTrustManagers).orNull,
+        keyManagerFactory.map(_.getKeyManagers).orNull, // will use default security providers if null from env = natural fallback
+        trustManagerFactory.map(_.getTrustManagers).orNull, // will use default security providers if null from env = natural fallback
         null // scalastyle:ignore null - Java API
       )
 
