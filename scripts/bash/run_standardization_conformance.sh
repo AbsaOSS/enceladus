@@ -1,4 +1,4 @@
-/bin/bash
+#!/bin/bash
 
 # Copyright 2018 ABSA Group Limited
 #
@@ -15,6 +15,7 @@
 
 SRC_DIR=`dirname "$0"`
 
+source ${SRC_DIR}/enceladus_const.sh
 source ${SRC_DIR}/enceladus_env.sh
 
 export CLASS=${STD_CONF_CLASS}
