@@ -28,8 +28,6 @@ HDP_VERSION="2.7.3"
 
 SPARK_JOBS_JAR="enceladus-spark-jobs.jar"
 
-STD_CLASS="za.co.absa.enceladus.standardization.StandardizationJob"
-
 # Environment-specific resource defaults for Standardization.
 # If empty and not specified explicitly, Spark configuration defaults will be used.
 STD_DEFAULT_DRIVER_MEMORY=""
@@ -48,8 +46,6 @@ STD_DEFAULT_DRA_MAX_EXECUTORS=4
 STD_DEFAULT_DRA_MIN_EXECUTORS=0
 STD_DEFAULT_DRA_ALLOCATION_RATIO=0.5
 STD_DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE=134217728
-
-CONF_CLASS="za.co.absa.enceladus.conformance.DynamicConformanceJob"
 
 # Environment-specific resource defaults for Conformance.
 # If empty and not specified explicitly, Spark configuration defaults will be used.
@@ -71,8 +67,6 @@ CONF_DEFAULT_DRA_MIN_EXECUTORS=0
 CONF_DEFAULT_DRA_ALLOCATION_RATIO=0.5
 CONF_DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE=134217728
 
-STD_CONF_CLASS="za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob"
-
 DEFAULT_DEPLOY_MODE="client"
 
 LOG_DIR="/tmp"
@@ -92,6 +86,8 @@ ENCELADUS_FILES="/absolute/path/application.conf#application.conf"
 # Additional environment-specific Spark options, e.g. "--conf spark.driver.host=myhost"
 # To specify several configuration options prepend '--conf' to each config key.
 # Example: ADDITIONAL_SPARK_CONF="--conf spark.driver.host=myhost --conf spark.driver.port=12233"
+# For secured HDFS the following two usually needs to be specified:
+# ADDITIONAL_SPARK_CONF="--conf spark.yarn.principal=<principal_name> --conf spark.yarn.keytab=<path_to_keytab>"
 ADDITIONAL_SPARK_CONF=""
 
 # Additional JVM options
