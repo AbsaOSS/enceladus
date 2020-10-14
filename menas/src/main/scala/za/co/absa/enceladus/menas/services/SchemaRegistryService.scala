@@ -148,8 +148,7 @@ class SchemaRegistryService @Autowired()() {
       SchemaResponse(fileContent, mimeType, url)
     } catch {
       case NonFatal(e) =>
-        throw RemoteSchemaRetrievalException(SchemaType.Avro, s"Could not retrieve a schema file from $remoteUrl. " +
-          s"Please check the correctness of the URL and a presence of the schema at the mentioned endpoint", e)
+        throw RemoteSchemaRetrievalException(SchemaType.Avro, s"Could not retrieve a schema file from $remoteUrl.", e)
     }
   }
 
