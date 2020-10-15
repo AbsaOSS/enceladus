@@ -43,6 +43,7 @@ object DynamicConformanceJob extends ConformanceExecution {
     try {
       val result = conform(inputData, preparationResult)
       processConformanceResult(args, result, preparationResult, menasCredentials)
+      // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)
     } finally {
       finishJob(cmd)
