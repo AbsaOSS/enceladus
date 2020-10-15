@@ -59,6 +59,7 @@ class ConformanceRule {
       let element = acc.find(field => field.name === path);
       if (!element) {
         element = (index === splitPath.length - 1) ? newField : new SchemaField(path, splitPath.slice(0, index).join(","), "struct", true, []);
+        element.isConformed = true; // marking field as Conformed in order to differentiate it in the ConformedSchema table
         acc.push(element);
       }
       let ch = element.children;

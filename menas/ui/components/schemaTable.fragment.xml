@@ -22,7 +22,7 @@
             <table:Column width="60%">
                 <Label text="Fields"/>
                 <table:template>
-                    <Text text="{schema>name}" wrapping="false"/>
+                    <Text text="{schema>name}{= ${schema>isConformed} ? ' (conformed field)' : ''}" wrapping="false"/>
                 </table:template>
             </table:Column>
             <table:Column width="20%">
