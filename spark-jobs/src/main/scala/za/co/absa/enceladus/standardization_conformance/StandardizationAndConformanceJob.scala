@@ -38,16 +38,20 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
 
     val preparationResult = prepareJob()
     val schema = prepareStandardization(args, menasCredentials, preparationResult)
-    val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.rawPath, preparationResult.dataset)
+    val stdInputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.rawPath, preparationResult.dataset)
 
     try {
-      val standardized = standardize(inputData, schema, cmd)
-      val processedStandardization = processStandardizationResult(args, standardized, preparationResult, schema, cmd, menasCredentials)
+      val standardized = standardize(stdInputData, schema, cmd)
+      processStandardizationResult(args, standardized, preparationResult, schema, cmd, menasCredentials)
+      // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
 
       prepareConformance(preparationResult)
-      val result = conform(processedStandardization, preparationResult)
+      val confInputData = readConformanceInputData(preparationResult.pathCfg)
+      val result = conform(confInputData, preparationResult)
       processConformanceResult(args, result, preparationResult, menasCredentials)
+
+      // post processing deliberately rereads the output ... same as above
       runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)
     } finally {
       finishJob(cmd)
