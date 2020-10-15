@@ -15,6 +15,8 @@
 
 # Command line for the script itself
 
+set -e
+
 # Show spark-submit command line without actually running it (--dry-run)
 DRY_RUN=""
 
@@ -64,6 +66,7 @@ EXPERIMENTAL_MAPPING_RULE=""
 CATALYST_WORKAROUND=""
 AUTOCLEAN_STD_FOLDER=""
 PERSIST_STORAGE_LEVEL=""
+HELP_CALL="0"
 
 # Spark configuration options
 CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=""
@@ -273,6 +276,10 @@ case $key in
     DRA_ENABLED="$2"
     shift 2 # past argument and value
     ;;
+    --help)
+    HELP_CALL="1"
+    shift # past argument
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -284,8 +291,6 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 # Display values of all declared variables
 #declare -p
 
-# Validation
-VALID="1"
 validate() {
     if [[ -z "$2" ]]; then
         echo "Missing mandatory option $1"
@@ -300,20 +305,25 @@ validate_either() {
     fi
 }
 
-validate "--dataset-name" "$DATASET_NAME"
-validate "--dataset-version" "$DATASET_VERSION"
-validate "--report-date" "$REPORT_DATE"
+if [ "$HELP_CALL" == "0" ]; then
+    # Validation (only if not help called)
+    VALID="1"
 
-validate_either "--menas-credentials-file" "$MENAS_CREDENTIALS_FILE" "--menas-auth-keytab" "$MENAS_AUTH_KEYTAB"
+    validate "--dataset-name" "$DATASET_NAME"
+    validate "--dataset-version" "$DATASET_VERSION"
+    validate "--report-date" "$REPORT_DATE"
 
-if [[ "$MASTER" != "yarn" ]]; then
-  echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
-  VALID="0"
-fi
+    validate_either "--menas-credentials-file" "$MENAS_CREDENTIALS_FILE" "--menas-auth-keytab" "$MENAS_AUTH_KEYTAB"
 
-# Validation failure check
-if [ "$VALID" == "0" ]; then
-    exit 1
+    if [[ "$MASTER" != "yarn" ]]; then
+      echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
+      VALID="0"
+    fi
+
+    # Validation failure check
+    if [ "$VALID" == "0" ]; then
+        exit 1
+    fi
 fi
 
 # Construct command line
@@ -412,6 +422,9 @@ else
 fi
 CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
+if [ "$HELP_CALL" == "1" ]; then
+    CMD_LINE="$CMD_LINE --help"
+fi
 # Adding command line parameters that go AFTER the jar file
 add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
 add_to_cmd_line "--menas-credentials-file" ${MENAS_CREDENTIALS_FILE}
@@ -468,19 +481,20 @@ if [[ -z "$DRY_RUN" ]]; then
     echo "$CMD_LINE" >> "$TMP_PATH_NAME"
     echo "The log will be saved to $TMP_PATH_NAME"
     # Run the job and return exit status of the last failed command in the subshell pipeline (Issue #893)
+    set +e
     bash -c "set -o pipefail; $CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
-	# Save the exit status of spark submit subshell run
-	EXIT_STATUS="$?"
-	# Test if the command executed successfully
-	if [ $EXIT_STATUS -eq 0 ]; then
+    # Save the exit status of spark submit subshell run
+    EXIT_STATUS="$?"
+    # Test if the command executed successfully
+    if [ $EXIT_STATUS -eq 0 ]; then
       RESULT="passed"
-	else
-	  RESULT="failed"
-	fi
-	# Report the result and log location
-	echo ""
-	echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME" | tee -a "$TMP_PATH_NAME"
-	exit $EXIT_STATUS
+    else
+      RESULT="failed"
+    fi
+    # Report the result and log location
+    echo ""
+    echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME" | tee -a "$TMP_PATH_NAME"
+    exit $EXIT_STATUS
   else
 
     APPLICATIONID=$(bash -c "$CMD_LINE" 2>&1 | grep -oP "(?<=Submitted application ).*" )

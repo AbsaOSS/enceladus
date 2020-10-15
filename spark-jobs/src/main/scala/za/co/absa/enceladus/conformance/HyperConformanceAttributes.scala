@@ -18,18 +18,17 @@ package za.co.absa.enceladus.conformance
 import za.co.absa.hyperdrive.ingestor.api.{HasComponentAttributes, PropertyMetadata}
 
 object HyperConformanceAttributes {
-  val keysPrefix = "transformer.hyperconformance"
 
   // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
-  val menasUriKey = s"$keysPrefix.menas.rest.uri"
-  val menasCredentialsFileKey = s"$keysPrefix.menas.credentials.file"
-  val menasAuthKeytabKey = s"$keysPrefix.menas.auth.keytab"
-  val datasetNameKey = s"$keysPrefix.dataset.name"
-  val datasetVersionKey = s"$keysPrefix.dataset.version"
-  val reportDateKey = s"$keysPrefix.report.date"
-  val reportVersionKey = s"$keysPrefix.report.version"
-  val eventTimestampColumnKey = s"$keysPrefix.event.timestamp.column"
-  val eventTimestampPatternKey = s"$keysPrefix.event.timestamp.pattern"
+  val menasUriKey = "menas.rest.uri"
+  val menasCredentialsFileKey = "menas.credentials.file"
+  val menasAuthKeytabKey = "menas.auth.keytab"
+  val datasetNameKey = "dataset.name"
+  val datasetVersionKey = "dataset.version"
+  val reportDateKey = "report.date"
+  val reportVersionKey = "report.version"
+  val eventTimestampColumnKey = "event.timestamp.column"
+  val eventTimestampPatternKey = "event.timestamp.pattern"
 }
 
 trait HyperConformanceAttributes extends HasComponentAttributes {
