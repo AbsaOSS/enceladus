@@ -22,12 +22,12 @@ import za.co.absa.enceladus.utils.config.SecureConfig.StoreDef
 
 class SecureConfigSuite extends FlatSpec with Matchers {
 
-  val emptyConfig = ConfigFactory.empty()
-  val keyStoreNoPassConfig = emptyConfig.withAnyRefValue("javax.net.ssl.keyStore", "/path/to/keystore")
-  val keyStoreConfig = keyStoreNoPassConfig.withAnyRefValue("javax.net.ssl.keyStorePassword", "ksPwd1")
+  private val emptyConfig = ConfigFactory.empty()
+  private val keyStoreNoPassConfig = emptyConfig.withAnyRefValue("javax.net.ssl.keyStore", "/path/to/keystore")
+  private val keyStoreConfig = keyStoreNoPassConfig.withAnyRefValue("javax.net.ssl.keyStorePassword", "ksPwd1")
 
-  val trustStoreNoPassConfig = emptyConfig.withAnyRefValue("javax.net.ssl.trustStore", "/path/to/trustStore")
-  val trustStoreConfig = trustStoreNoPassConfig.withAnyRefValue("javax.net.ssl.trustStorePassword", "tsPwd1")
+  private val trustStoreNoPassConfig = emptyConfig.withAnyRefValue("javax.net.ssl.trustStore", "/path/to/trustStore")
+  private val trustStoreConfig = trustStoreNoPassConfig.withAnyRefValue("javax.net.ssl.trustStorePassword", "tsPwd1")
 
   "SecureConfig" should "load keyStoreProperties from config" in {
     SecureConfig.getKeyStoreProperties(emptyConfig) shouldBe None
