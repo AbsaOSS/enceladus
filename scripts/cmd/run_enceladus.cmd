@@ -67,6 +67,7 @@ SET AUTOCLEAN_STD_FOLDER=
 SET PERSIST_STORAGE_LEVEL=
 SET EMPTY_VALUES_AS_NULLS=
 SET NULL_VALUE=
+SET HELP_CALL=
 
 :: Spark configuration options
 SET CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=
@@ -382,10 +383,17 @@ IF "%1"=="--set-dra" (
     SHIFT
     GOTO CmdParse
 )
+IF "%1"=="--help" (
+    SET HELP_CALL=true
+    SHIFT
+    GOTO CmdParse
+)
 SHIFT
 GOTO CmdParse
 
 :PastLoop
+
+IF "%HELP_CALL%"=="true" GOTO PastValidation
 
 :: Validation
 SET VALID="1"
@@ -403,8 +411,7 @@ CALL :validate_either --menas-credentials-file,%MENAS_CREDENTIALS_FILE%,--menas-
 
 :: Validation failure check
 IF %VALID%=="0" EXIT /B 1
-
-
+:PastValidation
 
 :: ### Bellow construct the command line ###
 
@@ -499,6 +506,7 @@ IF NOT "%EXPERIMENTAL_MAPPING_RULE%"=="" SET CMD_LINE=%CMD_LINE% --experimental-
 IF NOT "%CATALYST_WORKAROUND%"=="" SET CMD_LINE=%CMD_LINE% --catalyst-workaround %CATALYST_WORKAROUND%
 IF NOT "%AUTOCLEAN_STD_FOLDER%"=="" SET CMD_LINE=%CMD_LINE% --autoclean-std-folder %AUTOCLEAN_STD_FOLDER%
 IF NOT "%PERSIST_STORAGE_LEVEL%"=="" SET CMD_LINE=%CMD_LINE% --persist-storage-level %PERSIST_STORAGE_LEVEL%
+IF "%HELP_CALL%"=="true"  SET CMD_LINE=%CMD_LINE% --help
 
 ECHO Command line:
 ECHO %CMD_LINE%
