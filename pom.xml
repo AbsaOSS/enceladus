@@ -191,6 +191,7 @@
         <guava.version>27.0.1-jre</guava.version>
         <!--other properties-->
         <skip.integration.tests>true</skip.integration.tests>
+        <skip.unit.tests>false</skip.unit.tests>
         <quiet.scalastyle.check>true</quiet.scalastyle.check>
         <scalastyle.configLocation>${project.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <!-- logging-->
@@ -365,6 +366,7 @@
                         </goals>
                         <configuration>
                             <suffixes>(?&lt;!IntegrationSuite)</suffixes>
+                            <skipTests>${skip.unit.tests}</skipTests>
                         </configuration>
                     </execution>
                     <execution>
