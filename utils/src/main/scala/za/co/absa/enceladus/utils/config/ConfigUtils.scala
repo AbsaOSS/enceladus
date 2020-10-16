@@ -17,7 +17,7 @@ package za.co.absa.enceladus.utils.config
 
 import java.nio.file.{Files, Paths}
 
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigValueFactory}
 import org.slf4j.LoggerFactory
 
 object ConfigUtils {
@@ -95,6 +95,12 @@ object ConfigUtils {
         None
       }
     }
+
+    /** Handy shorthand of frequent `config.withValue(key, ConfigValueFactory.fromAnyRef(value))` */
+    def withAnyRefValue(key: String, value: AnyRef) : Config = {
+      config.withValue(key, ConfigValueFactory.fromAnyRef(value))
+    }
+
   }
 
 }
