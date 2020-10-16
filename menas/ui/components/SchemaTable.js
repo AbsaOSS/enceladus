@@ -20,9 +20,9 @@ class SchemaTable {
     this._parentId = fragmentId;
 
     this._schemaTable = oController.byId(sap.ui.core.Fragment.createId(this._parentId, "schemaFieldsTreeTable"));
-    oController.byId(sap.ui.core.Fragment.createId(this._parentId, "metadataButton")).attachPress(this.metadataPress, this); // worked with "schemaFragment--metadataButton"
+    oController.byId(sap.ui.core.Fragment.createId(this._parentId, "metadataButton")).attachPress(this.metadataPress, this);
 
-    this._oPopoverTemplate = new sap.m.List({})
+    this._oPopoverTemplate = new sap.m.List({});
     this._oPopover = new sap.m.Popover({
       title: "Metadata",
       content: [this._oPopoverTemplate],
