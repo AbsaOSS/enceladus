@@ -44,7 +44,7 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
-trait CommonJobExecution {
+trait CommonJobExecution extends ProjectMetadata {
 
   protected case class PreparationResult(dataset: Dataset,
                                          reportVersion: Int,
@@ -59,7 +59,7 @@ trait CommonJobExecution {
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
-    val enceladusVersion = ProjectMetadata.projectVersion
+    val enceladusVersion = projectVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
     val spark = SparkSession.builder()

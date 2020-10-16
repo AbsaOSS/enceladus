@@ -26,7 +26,6 @@ import za.co.absa.enceladus.utils.general.ProjectMetadata
 @RestController
 @RequestMapping(Array("/api/user"))
 class UserInfoController extends BaseController with ProjectMetadata {
-  // Implements the trait instead of using the object because the object doesn't seem to work in Spring
 
   @GetMapping(path = Array("/info"))
   def userInfo(request: HttpServletRequest, response: HttpServletResponse): UserInfo = {

@@ -46,7 +46,7 @@ trait JobConfigParser[R] {
   def keytabFile: Option[String]
 }
 
-object JobConfigParser {
+object JobConfigParser extends ProjectMetadata {
 
   //scalastyle:off method.length the length is legit for parsing input paramters
   def jobConfigParser[R <: JobConfigParser[R]]: OParser[_, R] = {
@@ -54,7 +54,7 @@ object JobConfigParser {
     import builder._
     OParser.sequence(
 
-      head(s"Enceladus v${ProjectMetadata.projectVersion}"),
+      head(s"Enceladus v${projectVersion}"),
       help("help"),
       opt[String]('D', "dataset-name").required().action((value, config) =>
         config.withDatasetName(value)).text("Dataset name"),
