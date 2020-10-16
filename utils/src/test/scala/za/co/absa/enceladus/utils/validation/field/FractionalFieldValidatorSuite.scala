@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.utils.validation.field
 
 import org.apache.spark.sql.types.{DataType, DoubleType, FloatType, MetadataBuilder, StructField}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.TypedStructField.FractionalTypeStructField
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults, TypedStructField}
 import za.co.absa.enceladus.utils.validation.ValidationError
 
-class FractionalFieldValidatorSuite extends FunSuite {
+class FractionalFieldValidatorSuite extends AnyFunSuite {
   private implicit val defaults: Defaults = GlobalDefaults
 
   private def field(dataType: DataType, metadataBuilder: MetadataBuilder): FractionalTypeStructField[_] = {

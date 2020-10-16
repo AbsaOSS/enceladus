@@ -16,15 +16,16 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{DropConformanceRule, LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with LoggerTestBase {
+class LiteralJoinMappingRuleTest extends AnyFunSuite with SparkTestBase with LoggerTestBase {
 
   def testMappingRuleWithLiteral(useExperimentalMappingRule: Boolean): Unit = {
 
@@ -55,9 +56,9 @@ class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with Logger
       conformance = List(
         LiteralConformanceRule(order = 1, outputColumn = "country", controlCheckpoint = true, value = "CZ"),
         MappingConformanceRule(order = 2, controlCheckpoint = true, mappingTable = "countryMT", mappingTableVersion = 0,
-                                    attributeMappings = Map("countryCode" -> "country"),  targetAttribute = "countryName",
+                                    attributeMappings = Map("countryCode" -> "country"), targetAttribute = "countryName",
                                     outputColumn = "conformedCountry", isNullSafe = true),
-        DropConformanceRule(order = 3,   controlCheckpoint = false, outputColumn = "country")
+        DropConformanceRule(order = 3, controlCheckpoint = false, outputColumn = "country")
       )
     )
 
@@ -67,7 +68,9 @@ class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with Logger
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val confd = DynamicInterpreter.interpret(conformanceDef, inputDf).repartition(2)
+    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
+
+    val confd = DynamicInterpreter().interpret(conformanceDef, inputDf).repartition(2)
 
     confd.write.mode("overwrite").parquet("_testOutput")
     val readAgain = spark.read.parquet("_testOutput")

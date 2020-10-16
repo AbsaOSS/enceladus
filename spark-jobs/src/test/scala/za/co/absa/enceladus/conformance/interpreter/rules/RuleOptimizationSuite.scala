@@ -16,12 +16,14 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, InterpreterContext, Never}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.conformance.samples.TradeConformance._
+import za.co.absa.enceladus.utils.fs.HdfsUtils
+import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class RuleOptimizationSuite extends FunSuite {
+class RuleOptimizationSuite extends AnyFunSuite with SparkTestBase {
 
   private val schemaJson =
     """{
@@ -109,10 +111,12 @@ class RuleOptimizationSuite extends FunSuite {
     null,
     null)
 
+  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
+
   test("Test non-mapping rules are not grouped") {
     val rules: List[ConformanceRule] = List(litRule, upperRule, lit2Rule)
 
-    val actualInterpreters = DynamicInterpreter.getInterpreters(rules, schema)
+    val actualInterpreters = DynamicInterpreter().getInterpreters(rules, schema)
 
     assert(actualInterpreters.length == 3)
     assert(actualInterpreters.head.isInstanceOf[LiteralRuleInterpreter])
@@ -123,7 +127,7 @@ class RuleOptimizationSuite extends FunSuite {
   test("Test mapping rules having the same array are grouped") {
     val rules: List[ConformanceRule] = List(litRule, countryRule, productRule, lit2Rule)
 
-    val actualInterpreters = DynamicInterpreter.getInterpreters(rules, schema)
+    val actualInterpreters = DynamicInterpreter().getInterpreters(rules, schema)
 
     assert(actualInterpreters.length == 6)
     assert(actualInterpreters.head.isInstanceOf[LiteralRuleInterpreter])
@@ -137,7 +141,7 @@ class RuleOptimizationSuite extends FunSuite {
   test("Test single arrays in the beginning and at the end") {
     val rules: List[ConformanceRule] = List(countryRule, litRule, lit2Rule, productRule)
 
-    val actualInterpreters = DynamicInterpreter.getInterpreters(rules, schema)
+    val actualInterpreters = DynamicInterpreter().getInterpreters(rules, schema)
 
     assert(actualInterpreters.length == 4)
     assert(actualInterpreters.head.isInstanceOf[MappingRuleInterpreterGroupExplode])
@@ -149,7 +153,7 @@ class RuleOptimizationSuite extends FunSuite {
   test("Test several arrays in the beginning and at the end") {
     val rules: List[ConformanceRule] = List(countryRule, productRule, litRule, lit2Rule, productRule, countryRule)
 
-    val actualInterpreters = DynamicInterpreter.getInterpreters(rules, schema)
+    val actualInterpreters = DynamicInterpreter().getInterpreters(rules, schema)
 
     assert(actualInterpreters.length == 10)
     assert(actualInterpreters.head.isInstanceOf[ArrayExplodeInterpreter])
@@ -173,7 +177,7 @@ class RuleOptimizationSuite extends FunSuite {
     val rules: List[ConformanceRule] = List(countryRule, productRule, legIdRule, countryRule, legIdRule,
       countryRule, productRule, legIdRule, legIdRule)
 
-    val actualInterpreters = DynamicInterpreter.getInterpreters(rules, schema)
+    val actualInterpreters = DynamicInterpreter().getInterpreters(rules, schema)
 
     assert(actualInterpreters.length == 15)
     assert(actualInterpreters.head.isInstanceOf[ArrayExplodeInterpreter])

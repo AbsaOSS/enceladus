@@ -22,10 +22,13 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
 import org.slf4j.{Logger, LoggerFactory}
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
+import software.amazon.awssdk.regions.Region
 import za.co.absa.atum.AtumImplicits
-import za.co.absa.atum.core.Atum
+import za.co.absa.atum.core.{Atum, ControlType}
+import za.co.absa.atum.persistence.S3KmsSettings
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, S3Config}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -34,7 +37,7 @@ import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, S3FsUtils}
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
@@ -42,13 +45,14 @@ import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 import scala.util.control.NonFatal
-import scala.util.{Failure, Random, Success, Try}
+import scala.util.{Failure, Success, Try}
 
 trait CommonJobExecution {
 
   protected case class PreparationResult(dataset: Dataset,
                                          reportVersion: Int,
                                          pathCfg: PathConfig,
+                                         s3Config: S3Config,
                                          performance: PerformanceMeasurer)
 
   TimeZoneNormalizer.normalizeJVMTimeZone()
@@ -78,7 +82,7 @@ trait CommonJobExecution {
   protected def prepareJob[T]()
                              (implicit dao: MenasDAO,
                               cmd: JobConfigParser[T],
-                              fsUtils: FileSystemVersionUtils,
+                              fsUtils: DistributedFsUtils,
                               spark: SparkSession): PreparationResult = {
     val confReader: ConfigReader = new ConfigReader(conf)
     confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
@@ -87,8 +91,9 @@ trait CommonJobExecution {
     val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg: PathConfig = getPathConfig(cmd, dataset, reportVersion)
+    val s3Config: S3Config = getS3Config
 
-    validateOutputPath(fsUtils, pathCfg)
+    validateOutputPath(s3Config, pathCfg)
 
     // Enable Spline
     import za.co.absa.spline.harvester.SparkLineageInitializer._
@@ -97,23 +102,21 @@ trait CommonJobExecution {
     // Enable non-default persistence storage level if provided in the command line
     cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
 
-    PreparationResult(dataset, reportVersion, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
+    PreparationResult(dataset, reportVersion, pathCfg, s3Config, new PerformanceMeasurer(spark.sparkContext.appName))
   }
 
-  protected def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
+  protected def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig)(implicit fsUtils: DistributedFsUtils): Unit
 
-  protected def validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, path: String): Unit = {
-    // TODO fix for s3 [ref issue #1416]
-
-//    if (fsUtils.hdfsExists(path)) {
-//      throw new IllegalStateException(
-//        s"Path $path already exists. Increment the run version, or delete $path"
-//      )
-//    }
+  protected def validateIfPathAlreadyExists(s3Config: S3Config, path: String)(implicit fsUtils: DistributedFsUtils): Unit = {
+    if (fsUtils.exists(path)) {
+      throw new IllegalStateException(
+        s"Path $path already exists. Increment the run version, or delete $path"
+      )
+    }
   }
 
   protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
-                                    (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
+                                    (implicit spark: SparkSession, fileSystemVersionUtils: DistributedFsUtils): Unit = {
     val outputPath = sourcePhase match {
       case Standardization => preparationResult.pathCfg.standardizationPath
       case _ => preparationResult.pathCfg.publishPath
@@ -130,8 +133,8 @@ trait CommonJobExecution {
       }.mkString(",")
     }
 
-    val sourceSystem = "source1" //Atum.getControlMeasure.metadata.sourceApplication  // TODO fix for s3 [ref issue #1416]
-    val uniqueRunId = Some(s"runId-${Math.abs(Random.nextLong())}") //Atum.getControlMeasure.runUniqueId  // TODO fix for s3 [ref issue #1416]
+    val sourceSystem = Atum.getControlMeasure.metadata.sourceApplication
+    val uniqueRunId = Atum.getControlMeasure.runUniqueId
 
     val params = ErrorSenderPluginParams(jobCmdConfig.datasetName,
       jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, outputPath,
@@ -164,6 +167,18 @@ trait CommonJobExecution {
       publishPath = buildPublishPath(cmd, dataset, reportVersion),
       standardizationPath = getStandardizationPath(cmd, reportVersion)
     )
+  }
+
+  protected def getS3Config: S3Config = {
+    val keyId = conf.getString("s3.kmsKeyId")
+    val region = Region.of(conf.getString("s3.region"))
+
+    S3Config(region, keyId)
+  }
+
+  protected def getS3FsUtil(implicit credentialsProvider: AwsCredentialsProvider): S3FsUtils = {
+    val s3Config = getS3Config
+    S3FsUtils(s3Config.region, S3KmsSettings(s3Config.kmsKeyId))
   }
 
   private def buildPublishPath[T](cmd: JobConfigParser[T], ds: Dataset, reportVersion: Int): String = {
@@ -218,12 +233,13 @@ trait CommonJobExecution {
   }
 
   protected def handleEmptyOutput(job: SourcePhase)(implicit spark: SparkSession): Unit = {
-    import za.co.absa.atum.core.Constants._
 
     val areCountMeasurementsAllZero = Atum.getControlMeasure.checkpoints
       .flatMap(checkpoint =>
         checkpoint.controls.filter(control =>
-          control.controlName.equalsIgnoreCase(controlTypeRecordCount)))
+          ControlType.isControlMeasureTypeEqual(control.controlType, ControlType.Count.value)
+        )
+      )
       .forall(m => Try(m.controlValue.toString.toDouble).toOption.contains(0D))
 
     if (areCountMeasurementsAllZero) {
@@ -235,7 +251,7 @@ trait CommonJobExecution {
     }
   }
 
-  private def getReportVersion[T](jobConfig: JobConfigParser[T], dataset: Dataset)(implicit fsUtils: FileSystemVersionUtils): Int = {
+  private def getReportVersion[T](jobConfig: JobConfigParser[T], dataset: Dataset)(implicit fsUtils: DistributedFsUtils): Int = {
     jobConfig.reportVersion match {
       case Some(version) => version
       case None =>

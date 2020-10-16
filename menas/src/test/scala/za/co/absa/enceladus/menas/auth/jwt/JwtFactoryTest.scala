@@ -16,9 +16,10 @@
 package za.co.absa.enceladus.menas.auth.jwt
 
 import io.jsonwebtoken.security.WeakKeyException
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class JwtFactoryTest extends WordSpec with Matchers {
+class JwtFactoryTest extends AnyWordSpec with Matchers {
 
   private val secret = "1234567890qwertyuiopasdfghjklzxcvbnm"
   private val jwtFactory = new JwtFactory(secret)

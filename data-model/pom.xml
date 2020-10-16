@@ -53,6 +53,12 @@
             <version>${scalatest.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest-funsuite_${scala.compat.version}</artifactId>
+            <version>${scalatest.version}</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -16,14 +16,18 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.AnalysisException
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
-class MappingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll {
+class MappingRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll {
   private val testCaseFactory = new SimpleTestCaseFactory()
+
+  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   override def beforeAll(): Unit = {
     super.beforeAll()
@@ -40,7 +44,7 @@ class MappingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase w
       testCaseFactory.getTestCase(true, false, nonExistentTableMappingRule)
 
     val ex = intercept[AnalysisException] {
-      DynamicInterpreter.interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cache
     }
 
     assert(ex.getMessage.contains("Path does not exist"))
@@ -51,7 +55,7 @@ class MappingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase w
       testCaseFactory.getTestCase(false, false, nonExistentTableMappingRule)
 
     val ex = intercept[AnalysisException] {
-      DynamicInterpreter.interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cache
     }
 
     assert(ex.getMessage.contains("Path does not exist"))
@@ -62,7 +66,7 @@ class MappingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase w
       testCaseFactory.getTestCase(true, false, emptyTableMappingRule)
 
     val ex = intercept[RuntimeException] {
-      DynamicInterpreter.interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cache
     }
 
     assert(ex.getMessage.contains("Unable to read the mapping table"))
@@ -73,7 +77,7 @@ class MappingRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase w
       testCaseFactory.getTestCase(false, false, emptyTableMappingRule)
 
     val ex = intercept[RuntimeException] {
-      DynamicInterpreter.interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cache
     }
 
     assert(ex.getMessage.contains("Unable to read the mapping table"))

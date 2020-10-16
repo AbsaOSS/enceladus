@@ -31,12 +31,12 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.explode.ExplosionContext
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.DistributedFsUtils
 import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-object DynamicInterpreter {
+case class DynamicInterpreter(implicit fsUtils: DistributedFsUtils) {
   private val log = LoggerFactory.getLogger(this.getClass)
 
   /**
@@ -55,11 +55,11 @@ object DynamicInterpreter {
     implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
       featureSwitches, jobShortName, spark, dao, InterpreterContextArgs.fromConformanceConfig(progArgs))
 
-    // applyCheckpoint(inputDf, "Start") // TODO fix for s3 [ref issue #1416]
+    applyCheckpoint(inputDf, "Start")
 
     val conformedDf = applyConformanceRules(ensureErrorColumnExists(inputDf))
 
-    // applyCheckpoint(conformedDf, "End") // TODO fix for s3 [ref issue #1416]
+    applyCheckpoint(conformedDf, "End")
     logExecutionPlan(conformedDf)
 
     conformedDf
@@ -264,7 +264,6 @@ object DynamicInterpreter {
     */
   private def getMappingTableSizeMb(rule: MappingConformanceRule)
                                    (implicit ictx: InterpreterContext): Int = {
-    val fsUtils = new FileSystemVersionUtils(ictx.spark.sparkContext.hadoopConfiguration)
 
     val mappingTableDef = ictx.dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
     val mappingTablePath = PartitioningUtils.getPartitionedPathName(mappingTableDef.hdfsPath,

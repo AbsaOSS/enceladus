@@ -15,13 +15,13 @@
 
 package za.co.absa.enceladus.utils.types.parsers
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.numeric.{DecimalSymbols, NumericPattern}
 import za.co.absa.enceladus.utils.types.GlobalDefaults
 
 import scala.util.Success
 
-class DecimalParserSuite extends FunSuite {
+class DecimalParserSuite extends AnyFunSuite {
   test("No pattern, no limitations") {
     val decimalSymbols: DecimalSymbols = GlobalDefaults.getDecimalSymbols
     val pattern = NumericPattern(decimalSymbols)

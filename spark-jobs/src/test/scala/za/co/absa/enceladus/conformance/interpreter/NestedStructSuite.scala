@@ -15,8 +15,9 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.fixtures.NestedStructsFixture
+import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 /**
@@ -24,7 +25,9 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
   *
   * Without applying a workaround any test in this suite makes Spark freeze.
   */
-class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFixture {
+class NestedStructSuite extends AnyFunSuite with SparkTestBase with NestedStructsFixture {
+
+  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   test("Test Dynamic Conformance does not hang on many mixed conformance rules") {
     implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
@@ -32,7 +35,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
 
-    val conformed = DynamicInterpreter.interpret(nestedStructsDS, standardizedDf)
+    val conformed = DynamicInterpreter().interpret(nestedStructsDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }
@@ -43,7 +46,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
 
-    val conformed = DynamicInterpreter.interpret(nestedStructsUpperDS, standardizedDf)
+    val conformed = DynamicInterpreter().interpret(nestedStructsUpperDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }
@@ -54,7 +57,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
 
-    val conformed = DynamicInterpreter.interpret( nestedStructsNegationDS, standardizedDf)
+    val conformed = DynamicInterpreter().interpret( nestedStructsNegationDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }
@@ -65,7 +68,7 @@ class NestedStructSuite extends FunSuite with SparkTestBase with NestedStructsFi
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
 
-    val conformed = DynamicInterpreter.interpret(nestedStructsCastingDS, standardizedDf)
+    val conformed = DynamicInterpreter().interpret(nestedStructsCastingDS, standardizedDf)
 
     assert(conformed.count() == 20)
   }

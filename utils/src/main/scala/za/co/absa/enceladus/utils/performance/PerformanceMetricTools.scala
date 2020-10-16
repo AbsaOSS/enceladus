@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions.{col, size, sum}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.DistributedFsUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
@@ -45,14 +45,13 @@ object PerformanceMetricTools {
                                 outputPath: String,
                                 loginUserName: String,
                                 cmdLineArgs: String)
-                               (implicit spark: SparkSession): Unit = {
+                               (implicit spark: SparkSession, fsUtils: DistributedFsUtils): Unit = {
     // Spark job configuration
     val sc = spark.sparkContext
 
     // The number of executors minus the driver
     val numberOfExecutors = sc.getExecutorMemoryStatus.keys.size - 1
 
-    val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     // Directory sizes and size ratio
     val inputDirSize = fsUtils.getDirectorySize(inputPath)
     val inputDataSize = fsUtils.getDirectorySizeNoHidden(inputPath)
@@ -96,12 +95,10 @@ object PerformanceMetricTools {
                                           outputPath: String,
                                           loginUserName: String,
                                           cmdLineArgs: String
-                                         ): Unit = {
-    val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+                                         )(implicit fsUtils: DistributedFsUtils): Unit = {
 
     // Directory sizes and size ratio
     val inputDirSize = fsUtils.getDirectorySize(inputPath)
-    val inputDataSize = fsUtils.getDirectorySizeNoHidden(inputPath)
     val outputDirSize = fsUtils.getDirectorySize(outputPath)
     val outputDataSize = fsUtils.getDirectorySizeNoHidden(outputPath)
 

@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.migrations.framework
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class ObjectIdToolsSuite extends FunSuite {
+class ObjectIdToolsSuite extends AnyFunSuite {
 
   test("Test ObjectId extractor ") {
     val doc1 = """{ "_id" : { "$oid" : "5b98eea5a43a28a6154a2453" }, "name" : "Test" }"""

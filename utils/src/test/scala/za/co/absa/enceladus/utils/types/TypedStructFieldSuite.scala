@@ -18,14 +18,14 @@ package za.co.absa.enceladus.utils.types
 import java.text.ParseException
 
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.TypedStructField._
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue, ValidationWarning}
 
 import scala.util.{Failure, Success, Try}
 
-class TypedStructFieldSuite extends FunSuite {
+class TypedStructFieldSuite extends AnyFunSuite {
   private implicit val defaults: Defaults = GlobalDefaults
   private val fieldName = "test_field"
   private def createField(dataType: DataType,

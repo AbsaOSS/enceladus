@@ -16,14 +16,14 @@
 package za.co.absa.enceladus.utils.validation.field
 
 import org.apache.spark.sql.types.{ByteType, DataType, IntegerType, LongType, MetadataBuilder, ShortType, StructField}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.numeric.Radix
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.TypedStructField.IntegralTypeStructField
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults, TypedStructField}
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationWarning}
 
-class IntegralFieldValidatorSuite extends FunSuite {
+class IntegralFieldValidatorSuite extends AnyFunSuite {
   private implicit val defaults: Defaults = GlobalDefaults
 
   private def field(dataType: DataType, metadataBuilder: MetadataBuilder): IntegralTypeStructField[_] = {

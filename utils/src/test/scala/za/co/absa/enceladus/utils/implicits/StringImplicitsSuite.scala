@@ -17,10 +17,11 @@ package za.co.absa.enceladus.utils.implicits
 
 import java.security.InvalidParameterException
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
 
-class StringImplicitsSuite extends FunSuite with Matchers {
+class StringImplicitsSuite extends AnyFunSuite with Matchers {
   test("StringEnhancements.replaceChars - empty replacements") {
     val s = "supercalifragilisticexpialidocious"
     assert(s.replaceChars(Map.empty) == s)

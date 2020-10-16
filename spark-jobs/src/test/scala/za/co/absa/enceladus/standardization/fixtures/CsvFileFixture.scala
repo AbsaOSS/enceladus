@@ -20,7 +20,7 @@ import java.nio.charset.{Charset, StandardCharsets}
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.scalatest.MockitoSugar
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationPropertiesProvider

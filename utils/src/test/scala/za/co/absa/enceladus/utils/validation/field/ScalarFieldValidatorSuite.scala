@@ -16,12 +16,12 @@
 package za.co.absa.enceladus.utils.validation.field
 
 import org.apache.spark.sql.types.{MetadataBuilder, StringType, StructField}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults, TypedStructField}
 import za.co.absa.enceladus.utils.validation.ValidationError
 
-class ScalarFieldValidatorSuite extends FunSuite {
+class ScalarFieldValidatorSuite extends AnyFunSuite {
 
   private implicit val defaults: Defaults = GlobalDefaults
 

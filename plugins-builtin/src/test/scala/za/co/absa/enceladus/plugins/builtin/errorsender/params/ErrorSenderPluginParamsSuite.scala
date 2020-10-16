@@ -17,10 +17,11 @@ package za.co.absa.enceladus.plugins.builtin.errorsender.params
 
 import java.time.Instant
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.utils.modules.SourcePhase
 
-class ErrorSenderPluginParamsSuite extends FlatSpec with Matchers {
+class ErrorSenderPluginParamsSuite extends AnyFlatSpec with Matchers {
 
   private val params = ErrorSenderPluginParams(
     datasetName = "datasetName1",

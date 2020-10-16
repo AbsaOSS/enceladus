@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.common.plugin
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.common.plugin.dummy.{DummyPostProcessor1, DummyPostProcessor2}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 
 import scala.collection.JavaConverters._
 
-class PostProcessorPluginSuite extends FunSuite {
+class PostProcessorPluginSuite extends AnyFunSuite {
 
   test("Test the postprocessor loader loads nothing if no class is specified") {
     val conf = ConfigFactory.parseMap(Map[String, String]().asJava)
