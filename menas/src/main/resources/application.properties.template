@@ -69,7 +69,6 @@ menas.mongo.connection.database=menas
 # Timeout (in seconds) for MongoDB migration queries
 migrations.mongo.query.timeout.seconds=300
 
-menas.version=@project.version@
 menas.environment=Dev
 
 menas.spark.master=local[1]
