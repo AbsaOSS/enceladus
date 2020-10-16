@@ -46,7 +46,7 @@
                                         factory: '.conformanceRuleFactory'
                                       }"/>
                     </IconTabFilter>
-                    <IconTabFilter id="ConformedSchema" icon="sap-icon://overview-chart" key="conformedSchemaFields" text="ConformedSchema">
+                    <IconTabFilter id="ConformedSchema" icon="sap-icon://activate" key="conformedSchemaFields" text="Conformed Schema">
                         <core:Fragment type="XML" fragmentName="components.schemaTable" id="conformedSchemaFragment" />
                     </IconTabFilter>
                     <IconTabFilter id="Runs" icon="sap-icon://activities" key="runs" text="Runs">

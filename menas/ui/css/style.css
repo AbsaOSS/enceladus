@@ -96,3 +96,8 @@ html, body {
 h5[id$=datasetDetailView--scheduleTimingTitle] {
   margin-top: 1rem !important;
 }
+
+/* Conformance indicator styling */
+.conformIcon, .conformIconLegend {
+  margin: 0 3px;
+}

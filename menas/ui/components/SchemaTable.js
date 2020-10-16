@@ -17,13 +17,7 @@ class SchemaTable {
 
   constructor(oController, fragmentId) {
     this._oController = oController;
-    console.log("oController: ");
-    console.log(oController);
-
     this._parentId = fragmentId;
-
-    console.log("id for schemaFieldsTreeTable: " + sap.ui.core.Fragment.createId(this._parentId, "schemaFieldsTreeTable"));
-    console.log("id for metadataButton: " + sap.ui.core.Fragment.createId(this._parentId, "metadataButton"));
 
     this._schemaTable = oController.byId(sap.ui.core.Fragment.createId(this._parentId, "schemaFieldsTreeTable"));
     oController.byId(sap.ui.core.Fragment.createId(this._parentId, "metadataButton")).attachPress(this.metadataPress, this); // worked with "schemaFragment--metadataButton"

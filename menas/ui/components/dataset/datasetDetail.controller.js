@@ -357,7 +357,7 @@ sap.ui.define([
           transitiveSchemas.push(schema);
           SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance);
 
-          this._conformedSchemaTable.model = transitiveSchemas[transitiveSchemas.length-1] // schema has all conf rules applied
+          this._conformedSchemaTable.model = transitiveSchemas[transitiveSchemas.length-1] // last schema has all conf rules applied
         });
 
         this._datasetRestDAO = new DatasetRestDAO();
