@@ -18,6 +18,7 @@
         <form:SimpleForm adjustLabelSpan="true" editable="false">
             <form:content>
                 <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.commonRuleFields"/>
+                <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.inputColumn"/>
                 <Label text="Value"/>
                 <Text text="{value}"/>
             </form:content>

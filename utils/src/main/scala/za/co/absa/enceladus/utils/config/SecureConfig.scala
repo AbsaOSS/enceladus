@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.utils.config
 
 import com.typesafe.config.Config
+import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 
 object SecureConfig {
   object Keys {
@@ -25,6 +26,8 @@ object SecureConfig {
     val javaxNetSslKeyStore = "javax.net.ssl.keyStore"
     val javaxNetSslKeyStorePassword = "javax.net.ssl.keyStorePassword"
   }
+
+  case class StoreDef(path: String, password: Option[String])
 
   /**
    * Moves Kafka security configuration from the config to system properties
@@ -69,5 +72,32 @@ object SecureConfig {
     conf.hasPath(Keys.javaxNetSslKeyStore) &&
       conf.hasPath(Keys.javaxNetSslKeyStorePassword)
   }
+
+  /** Common logic to retrieve any store path with its optional password */
+  private def getStoreProperties(conf: Config, storePathKey: String, storePasswordKey: String): Option[StoreDef] = {
+    conf.getOptionString(storePathKey).map { storePath: String =>
+      val optPassword = conf.getOptionString(storePasswordKey)
+
+      StoreDef(storePath, optPassword)
+    }
+  }
+
+  /**
+   * Will yield optional KeyStore definition from `conf` from `Keys.javaxNetSslKeyStore` and
+   * `Keys.javaxNetSslKeyStorePassword` (password is optional)
+   * @param conf config
+   * @return Defined KeyStore definition if `Keys.javaxNetSslKeyStore` exists
+   */
+  def getKeyStoreProperties(conf: Config): Option[StoreDef] =
+    getStoreProperties(conf, Keys.javaxNetSslKeyStore, Keys.javaxNetSslKeyStorePassword)
+
+  /**
+   * Will yield optional TrustStore definition from `conf` from `Keys.javaxNetSslTrustStore` and
+   * `Keys.javaxNetSslTrustStorePassword` (password is optional)
+   * @param conf config
+   * @return Defined TrustStore definition if `Keys.javaxNetSslKeyStore` exists
+   */
+  def getTrustStoreProperties(conf: Config): Option[StoreDef] =
+    getStoreProperties(conf, Keys.javaxNetSslTrustStore, Keys.javaxNetSslTrustStorePassword)
 
 }
