@@ -162,7 +162,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                                 cmd: StandardizationConfigParser[T],
                                                 menasCredentials: MenasCredentials)
                                                (implicit spark: SparkSession,
-                                                fsUtils: FileSystemVersionUtils): DataFrame = {
+                                                fsUtils: FileSystemVersionUtils): Unit = {
     import za.co.absa.atum.AtumImplicits._
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {
@@ -199,7 +199,6 @@ trait StandardizationExecution extends CommonJobExecution {
     standardizedDF.writeInfoFile(preparationResult.pathCfg.standardizationPath)
     writePerformanceMetrics(preparationResult.performance, cmd)
     log.info(s"$sourceId finished successfully")
-    standardizedDF
   }
 
   //scalastyle:off parameter.number

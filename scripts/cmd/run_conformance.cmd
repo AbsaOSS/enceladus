@@ -16,6 +16,7 @@
 SETLOCAL EnableDelayedExpansion
 SET PATH=%~dp0;%PATH%
 
+CALL enceladus_const.cmd
 CALL enceladus_env.cmd
 
 SET CLASS=%CONF_CLASS%

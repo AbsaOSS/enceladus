@@ -20,16 +20,19 @@ import za.co.absa.enceladus.menas.models.rest.exceptions.RemoteSchemaRetrievalEx
 import za.co.absa.enceladus.menas.utils.SchemaType
 
 /**
-  * This error is produced when an incorrect schema format is provided.
-  */
+ * This error is produced when an incorrect schema format is provided.
+ */
 case class RemoteSchemaRetrievalError(
-                              errorType: String,
-                              schemaType: SchemaType.Value
-                            ) extends ResponseError
+                                       errorType: String,
+                                       schemaType: SchemaType.Value,
+                                       causeDesc: Option[String]
+                                     ) extends ResponseError
 
 object RemoteSchemaRetrievalError {
   def fromException(ex: RemoteSchemaRetrievalException): RemoteSchemaRetrievalError = RemoteSchemaRetrievalError(
     errorType = "schema_retrieval_error",
-    schemaType = ex.schemaType)
+    schemaType = ex.schemaType,
+    causeDesc = Some(ex.cause).map { cause => s"${cause.getClass.toString}: ${cause.getMessage}" }
+  )
 }
 

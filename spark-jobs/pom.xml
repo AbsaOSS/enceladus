@@ -20,12 +20,12 @@
     <parent>
         <groupId>za.co.absa.enceladus</groupId>
         <artifactId>parent</artifactId>
-        <version>2.14.0</version>
+        <version>2.15.0</version>
     </parent>
 
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <hyperdrive.version>3.0.0</hyperdrive.version>
+        <hyperdrive.version>4.0.0</hyperdrive.version>
         <commons.version>0.0.10</commons.version>
         <spark.sql.kafka.version>2.4.5</spark.sql.kafka.version>
     </properties>
