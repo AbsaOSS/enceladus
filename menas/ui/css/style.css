@@ -98,6 +98,10 @@ h5[id$=datasetDetailView--scheduleTimingTitle] {
 }
 
 /* Conformance indicator styling */
-.conformIcon, .conformIconLegend {
+.conformIcon {
   margin: 0 3px;
+}
+
+.sapMITBFilter .sapMITBText, .sapMITBTab {
+  width: 7rem;
 }
