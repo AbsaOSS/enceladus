@@ -156,7 +156,7 @@ class SchemaRegistryService @Autowired()() {
 
 object SchemaRegistryService {
 
-  val SchemaRegistryUrlConfigKey = "menas.schemaRegistryBaseUrl"
+  val SchemaRegistryUrlConfigKey = "menas.schemaRegistry.baseUrl"
   val SchemaRegsitryWarnUnsecureKey = "menas.schemaRegistry.warnUnsecured"
 
   private val defaultStoreType = "JKS"
