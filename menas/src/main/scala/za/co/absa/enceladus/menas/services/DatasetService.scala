@@ -18,11 +18,10 @@ package za.co.absa.enceladus.menas.services
 import scala.concurrent.Future
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.menas.exceptions.ValidationException
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.OozieRepository
-import za.co.absa.enceladus.model.{Dataset, Schema, SchemaField, UsedIn}
+import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 
@@ -143,7 +142,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
   private def validateConformanceRules(conformanceRules: List[ConformanceRule],
                                        maybeSchema: Future[Option[Schema]],
                                        validations: Future[Validation]): Future[Validation] = {
-    val maybeFields = maybeSchema.map { case Some(x) => x.fields.flatMap(f => f.getAllChildren :+ f.getAbsolutePath()).toSet }
+    val maybeFields = maybeSchema.map { case Some(x) => x.fields.flatMap(f => f.getAllChildren :+ f.getAbsolutePath).toSet }
     val accumulator = Tuple2(validations, maybeFields)
 
     conformanceRules.foldLeft(accumulator) { case ((validation, currentColumns), conformanceRule) =>

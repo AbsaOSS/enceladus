@@ -13,26 +13,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.models
+package za.co.absa.enceladus.utils.general
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
-object Validation {
+trait ObjectMapperBase {
+  protected val objectMapperBase: ObjectMapper = new ObjectMapper()
+    .registerModule(DefaultScalaModule)
+    .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 
-  val NotSpecified = "not specified"
-
-}
-
-case class Validation (errors: Map[String, List[String]] = Map()) {
-
-  @JsonIgnore
-  def isValid(): Boolean = errors.isEmpty
-
-  def withError(key: String, error: String): Validation = {
-    this.copy(errors = errors + (key -> (error :: errors.getOrElse(key, Nil))))
-  }
-
-  def withErrorIf(condition: Boolean, key: => String, error: => String): Validation = {
-    if (condition) withError(key, error) else this
-  }
+  protected val objectMapperRoot: ObjectNode = objectMapperBase.createObjectNode()
 }

@@ -67,16 +67,12 @@ case class Schema(name: String,
   }
 
   override def exportItem(): String = {
-    val mapper = new ObjectMapper()
-    mapper.registerModule(DefaultScalaModule)
+    val fieldsJsonList: ArrayNode = objectMapperBase.valueToTree(fields.toArray)
 
-    val root: ObjectNode = mapper.createObjectNode()
-    val fieldsJsonList: ArrayNode = mapper.valueToTree(fields.toArray)
+    objectMapperRoot.put("name", name)
+    description.map(d => objectMapperRoot.put("description", d))
+    objectMapperRoot.putArray("fields").addAll(fieldsJsonList)
 
-    root.put("name", name)
-    description.map(d => root.put("description", d))
-    root.putArray("fields").addAll(fieldsJsonList)
-
-    root.toString
+    objectMapperRoot.toString
   }
 }

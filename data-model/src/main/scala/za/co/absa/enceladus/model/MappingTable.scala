@@ -82,19 +82,15 @@ case class MappingTable(name: String,
   }
 
   override def exportItem(): String = {
-    val mapper = new ObjectMapper()
-    mapper.registerModule(DefaultScalaModule)
+    val defaultMappingValueJsonList: ArrayNode = objectMapperBase.valueToTree(defaultMappingValue.toArray)
 
-    val root: ObjectNode = mapper.createObjectNode()
-    val defaultMappingValueJsonList: ArrayNode = mapper.valueToTree(defaultMappingValue.toArray)
+    objectMapperRoot.put("name", name)
+    description.map(d => objectMapperRoot.put("description", d))
+    objectMapperRoot.put("hdfsPath", hdfsPath)
+    objectMapperRoot.put("schemaName", schemaName)
+    objectMapperRoot.put("schemaVersion", schemaVersion)
+    objectMapperRoot.putArray("defaultMappingValue").addAll(defaultMappingValueJsonList)
 
-    root.put("name", name)
-    description.map(d => root.put("description", d))
-    root.put("hdfsPath", hdfsPath)
-    root.put("schemaName", schemaName)
-    root.put("schemaVersion", schemaVersion)
-    root.putArray("defaultMappingValue").addAll(defaultMappingValueJsonList)
-
-    root.toString
+    objectMapperRoot.toString
   }
 }

@@ -16,9 +16,11 @@
 package za.co.absa.enceladus.model.versionedModel
 
 import java.time.ZonedDateTime
-import za.co.absa.enceladus.model.menas.MenasReference
 
-trait VersionedModel {
+import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.utils.general.ObjectMapperBase
+
+trait VersionedModel extends ObjectMapperBase {
   val name: String
   val version: Int
   val description: Option[String]

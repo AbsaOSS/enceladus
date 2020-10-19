@@ -91,7 +91,7 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
         accValidations <- acc
       } yield {
         accValidations.withErrorIf(
-          schema.exists(s => !s.fields.exists(_.getAbsolutePath() == defaultValue.columnName)),
+          schema.exists(s => !s.fields.exists(_.getAbsolutePath == defaultValue.columnName)),
           "defaultMappingValue",
           s"Cannot fiend field ${defaultValue.columnName} in schema")
       }

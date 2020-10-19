@@ -53,6 +53,11 @@
             <version>${scalatest.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>utils</artifactId>
+            <version>${parent.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -20,7 +20,6 @@ import java.time.ZonedDateTime
 import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
@@ -114,21 +113,16 @@ case class Dataset(
   }
 
   override def exportItem(): String = {
-    val mapper = new ObjectMapper()
-      .registerModule(DefaultScalaModule)
-      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+    val conformanceJsonList: ArrayNode = objectMapperBase.valueToTree(conformance.toArray)
 
-    val root: ObjectNode = mapper.createObjectNode()
-    val conformanceJsonList: ArrayNode = mapper.valueToTree(conformance.toArray)
+    objectMapperRoot.put("name", name)
+    description.map(d => objectMapperRoot.put("description", d))
+    objectMapperRoot.put("hdfsPath", hdfsPath)
+    objectMapperRoot.put("hdfsPublishPath", hdfsPublishPath)
+    objectMapperRoot.put("schemaName", schemaName)
+    objectMapperRoot.put("schemaVersion", schemaVersion)
+    objectMapperRoot.putArray("conformance").addAll(conformanceJsonList)
 
-    root.put("name", name)
-    description.map(d => root.put("description", d))
-    root.put("hdfsPath", hdfsPath)
-    root.put("hdfsPublishPath", hdfsPublishPath)
-    root.put("schemaName", schemaName)
-    root.put("schemaVersion", schemaVersion)
-    root.putArray("conformance").addAll(conformanceJsonList)
-
-    root.toString
+    objectMapperRoot.toString
   }
 }
