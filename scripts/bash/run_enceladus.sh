@@ -67,6 +67,7 @@ CATALYST_WORKAROUND=""
 AUTOCLEAN_STD_FOLDER=""
 PERSIST_STORAGE_LEVEL=""
 HELP_CALL="0"
+ASYNCHRONOUSMODE="0"
 
 # Spark configuration options
 CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=""
@@ -83,92 +84,91 @@ do
 key="$1"
 
 case $key in
-    --dry-run)
+  --dry-run)
     DRY_RUN="1"
     shift # past argument
     ;;
-    --num-executors)
+  --num-executors)
     NUM_EXECUTORS="$2"
     shift 2 # past argument and value
     ;;
-    --executor-cores)
+  --executor-cores)
     EXECUTOR_CORES="$2"
     shift 2 # past argument and value
     ;;
-    --executor-memory)
+  --executor-memory)
     EXECUTOR_MEMORY="$2"
     shift 2 # past argument and value
     ;;
-    --master)
+  --master)
     MASTER="$2"
     shift 2 # past argument and value
     ;;
-    --deploy-mode)
+  --deploy-mode)
     DEPLOY_MODE="$2"
     shift 2 # past argument and value
     ;;
-    --driver-cores)
+  --driver-cores)
     DRIVER_CORES="$2"
     shift 2 # past argument and value
     ;;
-    --driver-memory)
+  --driver-memory)
     DRIVER_MEMORY="$2"
     shift 2 # past argument and value
     ;;
-    --files)
+  --files)
     FILES="$ENCELADUS_FILES,$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-executor-memoryOverhead)
+  --conf-spark-executor-memoryOverhead)
     CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD="$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-memory-fraction)
+  --conf-spark-memory-fraction)
     CONF_SPARK_MEMORY_FRACTION="$2"
     shift 2 # past argument and value
     ;;
-    --jar)
+  --jar)
     JAR="$2"
     shift 2 # past argument and value
     ;;
-    --class)
+  --class)
     CLASS="$2"
     shift 2 # past argument and value
     ;;
-    -D|--dataset-name)
+  -D|--dataset-name)
     DATASET_NAME="$2"
     shift 2 # past argument and value
     ;;
-    -d|--dataset-version)
+  -d|--dataset-version)
     DATASET_VERSION="$2"
     shift 2 # past argument and value
     ;;
-    -R|--report-date)
+  -R|--report-date)
     REPORT_DATE="$2"
     shift 2 # past argument and value
     ;;
-    -r|--report-version)
+  -r|--report-version)
     REPORT_VERSION="$2"
     shift 2 # past argument and value
     ;;
-    --folder-prefix)
+  --folder-prefix)
     FOLDER_PREFIX="$2"
     shift 2 # past argument and value
     ;;
-
-    -f|--raw-format)
+  -f|--raw-format)
     RAW_FORMAT="$2"
     shift 2 # past argument and value
     ;;
-    --charset)
+  --charset)
     CHARSET="$2"
     shift 2 # past argument and value
     ;;
-    --row-tag)
+  --row-tag)
     ROW_TAG="$2"
     shift 2 # past argument and value
     ;;
-    --delimiter)
+  --delimiter)
     if [[ "$2" == " " ]]; then
       DELIMITER="' '"
     else
@@ -176,111 +176,115 @@ case $key in
     fi
     shift 2 # past argument and value
     ;;
-    --header)
+  --header)
     HEADER="$2"
     shift 2 # past argument and value
     ;;
-    --csv-quote)
+  --csv-quote)
     CSV_QUOTE="$2"
     shift 2 # past argument and value
     ;;
-    --csv-escape)
+  --csv-escape)
     CSV_ESCAPE="$2"
     shift 2 # past argument and value
     ;;
-    --trimValues)
+  --trimValues)
     TRIM_VALUES="$2"
     shift 2 # past argument and value
     ;;
-    --empty-values-as-nulls)
+  --empty-values-as-nulls)
     EMPTY_VALUES_AS_NULLS="$2"
     shift 2 # past argument and value
     ;;
-    --null-value)
+  --null-value)
     NULL_VALUE="$2"
     shift 2 # past argument and value
     ;;
-    --cobol-encoding)
+  --cobol-encoding)
     COBOL_ENCODING="$2"
     shift 2 # past argument and value
     ;;
-    --cobol-is-text)
+  --cobol-is-text)
     COBOL_IS_TEXT="$2"
     shift 2 # past argument and value
     ;;
-    --cobol-trimming-policy)
+  --cobol-trimming-policy)
     COBOL_TRIMMING_POLICY="$2"
     shift 2 # past argument and value
     ;;
-    --is-xcom)
+  --is-xcom)
     IS_XCOM="$2"
     shift 2 # past argument and value
     ;;
-    --copybook)
+  --copybook)
     COPYBOOK="$2"
     shift 2 # past argument and value
     ;;
-    --mapping-table-pattern)
+  --mapping-table-pattern)
     MAPPING_TABLE_PATTERN="$2"
     shift 2 # past argument and value
     ;;
-    --std-hdfs-path)
+  --std-hdfs-path)
     STD_HDFS_PATH="$2"
     shift 2 # past argument and value
     ;;
-    --debug-set-raw-path)
+  --debug-set-raw-path)
     DEBUG_SET_RAW_PATH="$2"
     shift 2 # past argument and value
     ;;
-    --menas-credentials-file)
+  --menas-credentials-file)
     MENAS_CREDENTIALS_FILE="$2"
     shift 2 # past argument and value
     ;;
-    --menas-auth-keytab)
+  --menas-auth-keytab)
     MENAS_AUTH_KEYTAB="$2"
     shift 2 # past argument and value
     ;;
-    --experimental-mapping-rule)
+  --experimental-mapping-rule)
     EXPERIMENTAL_MAPPING_RULE="$2"
     shift 2 # past argument and value
     ;;
-    --catalyst-workaround)
+  --catalyst-workaround)
     CATALYST_WORKAROUND="$2"
     shift 2 # past argument and value
     ;;
-    --autoclean-std-folder)
+  --autoclean-std-folder)
     AUTOCLEAN_STD_FOLDER="$2"
     shift 2 # past argument and value
     ;;
-    --persist-storage-level)
+  --persist-storage-level)
     PERSIST_STORAGE_LEVEL="$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-dynamicAllocation-minExecutors)
+  --conf-spark-dynamicAllocation-minExecutors)
     DRA_MIN_EXECUTORS="$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-dynamicAllocation-maxExecutors)
+  --conf-spark-dynamicAllocation-maxExecutors)
     DRA_MAX_EXECUTORS="$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-dynamicAllocation-executorAllocationRatio)
+  --conf-spark-dynamicAllocation-executorAllocationRatio)
     DRA_ALLOCATION_RATIO="$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-sql-adaptive-shuffle-targetPostShuffleInputSize)
+  --conf-spark-sql-adaptive-shuffle-targetPostShuffleInputSize)
     ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE="$2"
     shift 2 # past argument and value
     ;;
-    --set-dra)
+  --set-dra)
     DRA_ENABLED="$2"
     shift 2 # past argument and value
     ;;
-    --help)
+  --help)
     HELP_CALL="1"
     shift # past argument
     ;;
-    *)    # unknown option
+  --asynchronous)
+    ASYNCHRONOUSMODE="1"
+    shift
+    ;;
+  *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
     ;;
@@ -345,8 +349,8 @@ echoerr() {
 }
 
 get_temp_log_file() {
-    DATE=`date +%Y_%m_%d-%H_%M_%S`
-    NAME=`sed -e 's#.*\.##' <<< $CLASS`
+    DATE=$(date +%Y_%m_%d-%H_%M_%S)
+    NAME=$(sed -e 's#.*\.##' <<< $CLASS)
     TEMPLATE="enceladus_${NAME}_${DATE}_XXXXXX.log"
 
     mktemp -p "$LOG_DIR" -t "$TEMPLATE"
@@ -496,25 +500,50 @@ if [[ -z "$DRY_RUN" ]]; then
     echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME" | tee -a "$TMP_PATH_NAME"
     exit $EXIT_STATUS
   else
+    # Kills the yarn application. Invoked by the trap on EXIT
+    function kill_yarn_app {
+      yarn application -kill "$APPLICATIONID"
+    }
 
     APPLICATIONID=$(bash -c "$CMD_LINE" 2>&1 | grep -oP "(?<=Submitted application ).*" )
-    echo Application Id : $APPLICATIONID
-    if [ "$APPLICATIONID" == "" ]; then
-      echo Failed to start app
+
+    if [ -z "$APPLICATIONID" ]; then
+      echo "Failed to start app. Application ID empty"
       exit 1
+    else
+      echo "Application Id : $APPLICATIONID"
     fi
+
+    if [ "$ASYNCHRONOUSMODE" == "1" ]; then
+      echo "Running in asynchronous mode. Script exiting. Application ID can be found above"
+      exit 0
+    fi
+
+    # If EXIT is invoked while the script is running, this will invoke kill_yarn_app function
+    trap kill_yarn_app EXIT
 
     STATE='NOT FINISHED'
 
-    echo State: Application Started
+    echo "State: Application Started"
     while [[ "$STATE" != "FINISHED" && "$STATE" != "FAILED" && "$STATE" != "KILLED" ]];  do
       sleep 30
-      STATE=$(yarn application -status $APPLICATIONID | grep -oP "(?<=\sState : ).*" )
-      echo State: $STATE
+      STATE=$(yarn application -status "$APPLICATIONID" | grep -oP "(?<=\sState : ).*" )
+      echo State: "$STATE"
     done
 
-    FINALSTATE=$(yarn application -status $APPLICATIONID | grep -oP "(?<=\sFinal-State : ).*" )
+    FINALSTATE=$(yarn application -status "$APPLICATIONID" | grep -oP "(?<=\sFinal-State : ).*" )
 
-    echo $FINALSTATE
+    echo "$FINALSTATE"
+    case "$FINALSTATE" in
+      "SUCCEEDED" )
+        exit 0
+        ;;
+      "KILLED" )
+        exit 130
+        ;;
+      * )
+        exit 1
+        ;;
+    esac
   fi
 fi
