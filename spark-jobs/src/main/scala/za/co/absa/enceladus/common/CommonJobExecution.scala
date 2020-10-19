@@ -35,7 +35,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.general.ProjectMetadataTools
+import za.co.absa.enceladus.utils.general.ProjectMetadata
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
@@ -44,7 +44,7 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
-trait CommonJobExecution {
+trait CommonJobExecution extends ProjectMetadata {
 
   protected case class PreparationResult(dataset: Dataset,
                                          reportVersion: Int,
@@ -59,7 +59,7 @@ trait CommonJobExecution {
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
-    val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
+    val enceladusVersion = projectVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
     val spark = SparkSession.builder()
@@ -110,6 +110,9 @@ trait CommonJobExecution {
     }
   }
 
+  /**
+   * Post processing rereads the data from a path on FS (based on `sourcePhase`)
+   */
   protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
                                     (implicit spark: SparkSession, fileSystemVersionUtils: FileSystemVersionUtils): Unit = {
     val outputPath = sourcePhase match {

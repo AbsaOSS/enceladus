@@ -36,6 +36,7 @@ object ConformanceConfigParser {
     val builder = OParser.builder[R]
     import builder._
     OParser.sequence(
+    help("help"),
     opt[String]("debug-set-publish-path").optional().hidden().action((value, config) =>
       config.withPublishPathOverride(Some(value))).text("override the path of the published data (used internally for testing)"),
 
