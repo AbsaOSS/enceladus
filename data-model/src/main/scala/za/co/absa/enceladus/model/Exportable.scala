@@ -13,16 +13,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.general
+package za.co.absa.enceladus.model
 
-import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
-trait ObjectMapperBase {
-  protected val objectMapperBase: ObjectMapper = new ObjectMapper()
+trait Exportable {
+  @JsonIgnore
+  protected def objectMapperBase: ObjectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 
-  protected val objectMapperRoot: ObjectNode = objectMapperBase.createObjectNode()
+  @JsonIgnore
+  protected def objectMapperRoot: ObjectNode = objectMapperBase.createObjectNode()
 }

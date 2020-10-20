@@ -17,10 +17,10 @@ package za.co.absa.enceladus.model.versionedModel
 
 import java.time.ZonedDateTime
 
+import za.co.absa.enceladus.model.Exportable
 import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.utils.general.ObjectMapperBase
 
-trait VersionedModel extends ObjectMapperBase {
+trait VersionedModel extends Exportable {
   val name: String
   val version: Int
   val description: Option[String]

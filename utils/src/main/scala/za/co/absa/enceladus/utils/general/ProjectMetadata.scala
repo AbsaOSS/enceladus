@@ -16,8 +16,11 @@
 package za.co.absa.enceladus.utils.general
 
 trait ProjectMetadata {
-
   def projectVersion: String = {
     getClass.getPackage.getImplementationVersion
+  }
+
+  def projectMajorVersion: Int = {
+    projectVersion.split(".").head.toInt
   }
 }
