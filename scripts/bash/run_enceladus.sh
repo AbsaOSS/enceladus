@@ -508,7 +508,7 @@ if [[ -z "$DRY_RUN" ]]; then
     APPLICATIONID=$(bash -c "$CMD_LINE" 2>&1 | grep -oP "(?<=Submitted application ).*" )
 
     if [ -z "$APPLICATIONID" ]; then
-      echo "Failed to start app. Application ID empty"
+      echo "Failed to capture the Application ID. Exiting."
       exit 1
     else
       echo "Application Id : $APPLICATIONID"
