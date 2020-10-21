@@ -15,7 +15,7 @@
 
 # Command line for the script itself
 
-#set -e
+set -e
 
 # Show spark-submit command line without actually running it (--dry-run)
 DRY_RUN=""
