@@ -23,7 +23,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
-import za.co.absa.enceladus.model.UsedIn
+import za.co.absa.enceladus.model.{ExportableObject, UsedIn}
 import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.menas.exceptions.NotFoundException
 import za.co.absa.enceladus.menas.services.VersionedModelService
@@ -113,8 +113,8 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @PostMapping(Array("/importItem"))
   @ResponseStatus(HttpStatus.CREATED)
   def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
-                         @RequestBody item: C): CompletableFuture[C] = {
-    versionedModelService.importSingleItem(item, principal.getUsername).map {
+                         @RequestBody importObject: ExportableObject[C]): CompletableFuture[C] = {
+    versionedModelService.importSingleItem(importObject.item, principal.getUsername, importObject.metadata).map {
       case Some(entity) => entity
       case None         => throw notFound()
     }

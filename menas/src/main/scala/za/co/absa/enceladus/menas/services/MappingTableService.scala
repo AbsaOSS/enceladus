@@ -76,10 +76,10 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
     }
   }
 
-  override def validateSingleImport(item: MappingTable): Future[Validation] = {
+  override def validateSingleImport(item: MappingTable, metadata: Map[String, String]): Future[Validation] = {
     val maybeSchema = datasetMongoRepository.getConnectedSchema(item.schemaName, item.schemaVersion)
 
-    val validations = super.validateSingleImport(item)
+    val validations = super.validateSingleImport(item, metadata)
     val validationsWithSchema = validateSchema(item.schemaName, item.schemaVersion, validations, maybeSchema)
     validateDefaultValues(item, maybeSchema, validationsWithSchema)
   }
@@ -92,7 +92,7 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
       } yield {
         accValidations.withErrorIf(
           schema.exists(s => !s.fields.exists(_.getAbsolutePath == defaultValue.columnName)),
-          "defaultMappingValue",
+          "item.defaultMappingValue",
           s"Cannot fiend field ${defaultValue.columnName} in schema")
       }
     }

@@ -26,6 +26,7 @@ import za.co.absa.enceladus.menas.exceptions._
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.menas.audit._
+import za.co.absa.enceladus.model.ModelVersion
 
 import scala.concurrent.Future
 import com.mongodb.MongoWriteException
@@ -85,9 +86,9 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     })
   }
 
-  def importSingleItem(item: C, username: String): Future[Option[C]] = {
+  def importSingleItem(item: C, username: String, metadata: Map[String, String]): Future[Option[C]] = {
     for {
-      validation <- validateSingleImport(item)
+      validation <- validateSingleImport(item, metadata)
       result <- {
         if (validation.isValid()) {
           importItem(item, username)
@@ -98,11 +99,21 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     } yield result
   }
 
-  private[services] def validateSingleImport(item: C): Future[Validation] = {
+  private[services] def validateSingleImport(item: C, metadata: Map[String, String]): Future[Validation] = {
     val validation = Validation()
-      .withErrorIf(!hasValidNameChars(item.name), "name", s"name '${item.name}' contains unsupported characters")
-      .withErrorIf(item.parent.isDefined, "parent", "parent should not be defined on import")
-    Future(validation)
+      .withErrorIf(!hasValidNameChars(item.name), "item.name", s"name '${item.name}' contains unsupported characters")
+      .withErrorIf(item.parent.isDefined, "item.parent", "parent should not be defined on import")
+    val withMetadataValidation = validateMetadata(validation, metadata)
+    Future(withMetadataValidation)
+  }
+
+  private[services] def validateMetadata(validation: Validation, metadata: Map[String, String]): Validation = {
+    val exportVersionErrorMessage =
+      s"""Export/Import API version mismatch. Acceptable version is "$ModelVersion".
+         | Version passed is ${metadata.getOrElse("exportVersion", "null")}""".stripMargin.replaceAll("[\\r\\n]", "")
+
+    validation
+      .withErrorIf(!hasValidApiVersion(metadata.get("exportVersion")), "metadata.exportApiVersion", exportVersionErrorMessage)
   }
 
   private[services] def importItem(item: C, username: String): Future[Option[C]]
@@ -116,7 +127,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
       validation <- validations
     } yield validation.withErrorIf(
       schema.isEmpty,
-      "schema",
+      "item.schema",
       s"schema ${schemaName} v${schemaVersion} defined for the dataset could not be found"
     )
   }
@@ -273,6 +284,6 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private[services] def hasWhitespace(name: String): Boolean = !name.matches("""\w+""")
   private[services] def hasValidNameChars(name: String): Boolean = name.matches("""[a-zA-Z0-9._-]+""")
-
+  private[services] def hasValidApiVersion(version: Option[String]): Boolean = version.contains(ModelVersion.toString)
 
 }

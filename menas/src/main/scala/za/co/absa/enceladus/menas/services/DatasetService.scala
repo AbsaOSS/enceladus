@@ -108,11 +108,11 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     }
   }
 
-  override def validateSingleImport(item: Dataset): Future[Validation] = {
+  override def validateSingleImport(item: Dataset, metadata: Map[String, String]): Future[Validation] = {
     val confRulesWithConnectedEntities = item.conformance.filter(_.hasEntityConnected)
     val maybeSchema = datasetMongoRepository.getConnectedSchema(item.schemaName, item.schemaVersion)
 
-    val validations = super.validateSingleImport(item)
+    val validations = super.validateSingleImport(item, metadata)
     val validationsWithSchema = validateSchema(item.schemaName, item.schemaVersion, validations, maybeSchema)
     val validationWithConnected = validateConnectedEntities(confRulesWithConnectedEntities, validationsWithSchema)
     validateConformanceRules(item.conformance, maybeSchema, validationWithConnected)
@@ -135,7 +135,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
       for {
         ce <- maybeConnectedEntity
         accValidations <- acc
-      } yield accValidations.withErrorIf(ce.isEmpty, cr.maybeConnectedEntityType.get, issueMsg)
+      } yield accValidations.withErrorIf(ce.isEmpty, s"item.${cr.maybeConnectedEntityType.get}", issueMsg)
     }
   }
 
@@ -172,7 +172,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
           } yield {
             v.withErrorIf(
               !f.contains(cr.outputColumn),
-              "conformanceRules",
+              "item.conformanceRules",
               s"Input column ${cr.outputColumn} for conformance rule cannot be found"
             )
           },
@@ -226,7 +226,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     } yield {
       v.withErrorIf(
         !f.contains(input),
-        "conformanceRules",
+        "item.conformanceRules",
         s"Input column $input for conformance rule cannot be found"
       )
     }
@@ -241,7 +241,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     } yield {
       v.withErrorIf(
         f.contains(output),
-        "conformanceRules",
+        "item.conformanceRules",
         s"Output column $output already exists"
       )
     }
