@@ -414,6 +414,7 @@ if [ "$HELP_CALL" == "1" ]; then
   echo "script-specific-options:"
   echo "  --help                          To print this message"
   echo "  --asynchronous                  To run the job in an asynchronous mode. The script will exit after printing application ID"
+  echo "  --dry-run                       Show spark-submit command line without actually running it"
   echo ""
   echo "job-specific-options:"
   echo "  Running the JAR --help to print all job specific options"
