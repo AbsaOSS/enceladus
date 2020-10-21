@@ -31,9 +31,12 @@ class MappingTableTest extends FunSuite {
     defaultMappingValue = List(defaultValue1, defaultValue2)
   )
 
-  private val expectedMappingTable = """{"name":"Testing Mapping Table","hdfsPath":"/path/to/hdfs",""" +
-    """"schemaName":"Some Schema","schemaVersion":1,"defaultMappingValue":[{"columnName":"someColumn","value":"alfa"}""" +
-    """,{"columnName":"otherColumn","value":"beta"}]}"""
+  private val modelVersion = ModelVersion
+
+  private val expectedMappingTable =
+    s"""{"metadata":{"exportVersion":$modelVersion},"item":{"name":"Testing Mapping Table","hdfsPath":"/path/to/hdfs",
+      |"schemaName":"Some Schema","schemaVersion":1,"defaultMappingValue":[{"columnName":"someColumn","value":"alfa"},
+      |{"columnName":"otherColumn","value":"beta"}]}}""".stripMargin.replaceAll("[\\r\\n]", "")
 
   test("export Mapping Table") {
     assert(expectedMappingTable == mappingTable.exportItem())

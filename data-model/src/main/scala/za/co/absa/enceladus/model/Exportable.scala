@@ -21,11 +21,17 @@ import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 trait Exportable {
+
   @JsonIgnore
-  protected def objectMapperBase: ObjectMapper = new ObjectMapper()
+  protected lazy val objectMapperBase: ObjectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 
   @JsonIgnore
-  protected def objectMapperRoot: ObjectNode = objectMapperBase.createObjectNode()
+  protected lazy val objectMapperRoot: ObjectNode = {
+    val mapperBase = objectMapperBase.createObjectNode()
+    mapperBase.`with`("metadata").put("exportVersion", ModelVersion)
+    mapperBase
+  }
+
 }

@@ -113,13 +113,15 @@ case class Dataset(
   override def exportItem(): String = {
     val conformanceJsonList: ArrayNode = objectMapperBase.valueToTree(conformance.toArray)
 
-    objectMapperRoot.put("name", name)
-    description.map(d => objectMapperRoot.put("description", d))
-    objectMapperRoot.put("hdfsPath", hdfsPath)
-    objectMapperRoot.put("hdfsPublishPath", hdfsPublishPath)
-    objectMapperRoot.put("schemaName", schemaName)
-    objectMapperRoot.put("schemaVersion", schemaVersion)
-    objectMapperRoot.putArray("conformance").addAll(conformanceJsonList)
+    val objectItemMapper = objectMapperRoot.`with`("item")
+
+    objectItemMapper.put("name", name)
+    description.map(d => objectItemMapper.put("description", d))
+    objectItemMapper.put("hdfsPath", hdfsPath)
+    objectItemMapper.put("hdfsPublishPath", hdfsPublishPath)
+    objectItemMapper.put("schemaName", schemaName)
+    objectItemMapper.put("schemaVersion", schemaVersion)
+    objectItemMapper.putArray("conformance").addAll(conformanceJsonList)
 
     objectMapperRoot.toString
   }

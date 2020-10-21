@@ -36,9 +36,12 @@ class SchemaTest extends FunSuite {
     fields = List(schemaField)
   )
 
-  private val expectedSchema = """{"name":"SomeSchema","description":"Some Desc","fields":[{"name":"someField",""" +
-    """"type":"StringType","path":"","elementType":null,"containsNull":null,"nullable":true,"metadata":{},""" +
-    """"children":[],"absolutePath":"someField"}]}"""
+  private val modelVersion = ModelVersion
+
+  private val expectedSchema =
+    s"""{"metadata":{"exportVersion":$modelVersion},"item":{"name":"SomeSchema","description":"Some Desc","fields":
+      |[{"name":"someField","type":"StringType","path":"","elementType":null,"containsNull":null,
+      |"nullable":true,"metadata":{},"children":[],"absolutePath":"someField"}]}}""".stripMargin.replaceAll("[\\r\\n]", "")
 
   test("export Schema") {
     assert(expectedSchema == schema.exportItem())

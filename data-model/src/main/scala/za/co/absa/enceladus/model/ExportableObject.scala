@@ -13,10 +13,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.general
+package za.co.absa.enceladus.model
 
-trait ProjectMetadata {
-  def projectVersion: String = {
-    getClass.getPackage.getImplementationVersion
-  }
-}
+import za.co.absa.enceladus.model.menas.audit.Auditable
+import za.co.absa.enceladus.model.versionedModel.VersionedModel
+
+case class ExportableObject[C <: VersionedModel with Product with Auditable[C]](item: C, metadata: Map[String, String])
