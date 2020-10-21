@@ -332,14 +332,14 @@ fi
 
 # Construct command line
 add_to_cmd_line() {
-    if [[ ! -z "$2" ]]; then
+    if [[ -n "$2" ]]; then
         CMD_LINE="$CMD_LINE $1 $2"
     fi
 }
 
 # Puts Spark configuration properties to the command line
 add_spark_conf_cmd() {
-    if [[ ! -z "$2" ]]; then
+    if [[ -n "$2" ]]; then
         SPARK_CONF="$SPARK_CONF --conf $1=$2"
     fi
 }
@@ -350,7 +350,7 @@ echoerr() {
 
 get_temp_log_file() {
     DATE=$(date +%Y_%m_%d-%H_%M_%S)
-    NAME=$(sed -e 's#.*\.##' <<< $CLASS)
+    NAME="${CLASS##*.}"
     TEMPLATE="enceladus_${NAME}_${DATE}_XXXXXX.log"
 
     mktemp -p "$LOG_DIR" -t "$TEMPLATE"
@@ -360,7 +360,7 @@ get_temp_log_file() {
 # Configuration passed to JVM
 
 MT_PATTERN=""
-if [ ! -z "$MAPPING_TABLE_PATTERN" ]; then
+if [ -n "$MAPPING_TABLE_PATTERN" ]; then
     MT_PATTERN="-Dconformance.mappingtable.pattern=$MAPPING_TABLE_PATTERN"
 fi
 
@@ -369,7 +369,7 @@ SPARK_CONF="--conf spark.logConf=true"
 # Dynamic Resource Allocation
 # check DRA safe prerequisites
 if [ "$DRA_ENABLED" = true ] ; then
-    if [ ! -z "$NUM_EXECUTORS" ]; then
+    if [ -n "$NUM_EXECUTORS" ]; then
         echo "WARNING: num-executors should NOT be set when using Dynamic Resource Allocation. DRA is disabled.";
         DRA_ENABLED=false
     fi
@@ -385,15 +385,15 @@ if [ "$DRA_ENABLED" = true ] ; then
     add_spark_conf_cmd "spark.dynamicAllocation.enabled" "true"
     add_spark_conf_cmd "spark.shuffle.service.enabled" "true"
     add_spark_conf_cmd "spark.sql.adaptive.enabled" "true"
-    add_spark_conf_cmd "spark.dynamicAllocation.maxExecutors" ${DRA_MAX_EXECUTORS}
-    if [ ! -z "$DRA_MIN_EXECUTORS" ]; then
-        add_spark_conf_cmd "spark.dynamicAllocation.minExecutors" ${DRA_MIN_EXECUTORS}
+    add_spark_conf_cmd "spark.dynamicAllocation.maxExecutors" "${DRA_MAX_EXECUTORS}"
+    if [ -n "$DRA_MIN_EXECUTORS" ]; then
+        add_spark_conf_cmd "spark.dynamicAllocation.minExecutors" "${DRA_MIN_EXECUTORS}"
     fi
-    if [ ! -z "$DRA_ALLOCATION_RATIO" ]; then
-        add_spark_conf_cmd "spark.dynamicAllocation.executorAllocationRatio" ${DRA_ALLOCATION_RATIO}
+    if [ -n "$DRA_ALLOCATION_RATIO" ]; then
+        add_spark_conf_cmd "spark.dynamicAllocation.executorAllocationRatio" "${DRA_ALLOCATION_RATIO}"
     fi
-    if [ ! -z "$ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE" ]; then
-        add_spark_conf_cmd "spark.sql.adaptive.shuffle.targetPostShuffleInputSize" ${ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE}
+    if [ -n "$ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE" ]; then
+        add_spark_conf_cmd "spark.sql.adaptive.shuffle.targetPostShuffleInputSize" "${ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE}"
     fi
 fi
 
@@ -431,18 +431,18 @@ fi
 CMD_LINE="$SPARK_SUBMIT"
 
 # Adding command line parameters that go BEFORE the jar file
-add_to_cmd_line "--master" ${MASTER}
-add_to_cmd_line "--deploy-mode" ${DEPLOY_MODE}
-add_to_cmd_line "--num-executors" ${NUM_EXECUTORS}
-add_to_cmd_line "--executor-memory" ${EXECUTOR_MEMORY}
-add_to_cmd_line "--executor-cores" ${EXECUTOR_CORES}
-add_to_cmd_line "--driver-cores" ${DRIVER_CORES}
-add_to_cmd_line "--driver-memory" ${DRIVER_MEMORY}
-add_to_cmd_line "--files" ${FILES}
+add_to_cmd_line "--master" "${MASTER}"
+add_to_cmd_line "--deploy-mode" "${DEPLOY_MODE}"
+add_to_cmd_line "--num-executors" "${NUM_EXECUTORS}"
+add_to_cmd_line "--executor-memory" "${EXECUTOR_MEMORY}"
+add_to_cmd_line "--executor-cores" "${EXECUTOR_CORES}"
+add_to_cmd_line "--driver-cores" "${DRIVER_CORES}"
+add_to_cmd_line "--driver-memory" "${DRIVER_MEMORY}"
+add_to_cmd_line "--files" "${FILES}"
 
 # Adding Spark config options
-add_spark_conf_cmd "spark.executor.memoryOverhead" ${CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD}
-add_spark_conf_cmd "spark.memory.fraction" ${CONF_SPARK_MEMORY_FRACTION}
+add_spark_conf_cmd "spark.executor.memoryOverhead" "${CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD}"
+add_spark_conf_cmd "spark.memory.fraction" "${CONF_SPARK_MEMORY_FRACTION}"
 
 # Adding JVM configuration, entry point class name and the jar file
 if [[ "$DEPLOY_MODE" == "client" ]]; then
@@ -454,33 +454,33 @@ fi
 CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
-add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
-add_to_cmd_line "--menas-credentials-file" ${MENAS_CREDENTIALS_FILE}
-add_to_cmd_line "--dataset-name" ${DATASET_NAME}
-add_to_cmd_line "--dataset-version" ${DATASET_VERSION}
-add_to_cmd_line "--report-date" ${REPORT_DATE}
-add_to_cmd_line "--report-version" ${REPORT_VERSION}
-add_to_cmd_line "--raw-format" ${RAW_FORMAT}
-add_to_cmd_line "--charset" ${CHARSET}
-add_to_cmd_line "--row-tag" ${ROW_TAG}
+add_to_cmd_line "--menas-auth-keytab" "${MENAS_AUTH_KEYTAB}"
+add_to_cmd_line "--menas-credentials-file" "${MENAS_CREDENTIALS_FILE}"
+add_to_cmd_line "--dataset-name" "${DATASET_NAME}"
+add_to_cmd_line "--dataset-version" "${DATASET_VERSION}"
+add_to_cmd_line "--report-date" "${REPORT_DATE}"
+add_to_cmd_line "--report-version" "${REPORT_VERSION}"
+add_to_cmd_line "--raw-format" "${RAW_FORMAT}"
+add_to_cmd_line "--charset" "${CHARSET}"
+add_to_cmd_line "--row-tag" "${ROW_TAG}"
 add_to_cmd_line "--delimiter" "${DELIMITER}"
-add_to_cmd_line "--header" ${HEADER}
-add_to_cmd_line "--csv-quote" ${CSV_QUOTE}
-add_to_cmd_line "--csv-escape" ${CSV_ESCAPE}
-add_to_cmd_line "--trimValues" ${TRIM_VALUES}
-add_to_cmd_line "--empty-values-as-nulls" ${EMPTY_VALUES_AS_NULLS}
-add_to_cmd_line "--null-value" ${NULL_VALUE}
-add_to_cmd_line "--cobol-is-text" ${COBOL_IS_TEXT}
-add_to_cmd_line "--cobol-encoding" ${COBOL_ENCODING}
-add_to_cmd_line "--cobol-trimming-policy" ${COBOL_TRIMMING_POLICY}
-add_to_cmd_line "--is-xcom" ${IS_XCOM}
-add_to_cmd_line "--copybook" ${COPYBOOK}
-add_to_cmd_line "--folder-prefix" ${FOLDER_PREFIX}
-add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
-add_to_cmd_line "--experimental-mapping-rule" ${EXPERIMENTAL_MAPPING_RULE}
-add_to_cmd_line "--catalyst-workaround" ${CATALYST_WORKAROUND}
-add_to_cmd_line "--autoclean-std-folder" ${AUTOCLEAN_STD_FOLDER}
-add_to_cmd_line "--persist-storage-level" ${PERSIST_STORAGE_LEVEL}
+add_to_cmd_line "--header" "${HEADER}"
+add_to_cmd_line "--csv-quote" "${CSV_QUOTE}"
+add_to_cmd_line "--csv-escape" "${CSV_ESCAPE}"
+add_to_cmd_line "--trimValues" "${TRIM_VALUES}"
+add_to_cmd_line "--empty-values-as-nulls" "${EMPTY_VALUES_AS_NULLS}"
+add_to_cmd_line "--null-value" "${NULL_VALUE}"
+add_to_cmd_line "--cobol-is-text" "${COBOL_IS_TEXT}"
+add_to_cmd_line "--cobol-encoding" "${COBOL_ENCODING}"
+add_to_cmd_line "--cobol-trimming-policy" "${COBOL_TRIMMING_POLICY}"
+add_to_cmd_line "--is-xcom" "${IS_XCOM}"
+add_to_cmd_line "--copybook" "${COPYBOOK}"
+add_to_cmd_line "--folder-prefix" "${FOLDER_PREFIX}"
+add_to_cmd_line "--debug-set-raw-path" "${DEBUG_SET_RAW_PATH}"
+add_to_cmd_line "--experimental-mapping-rule" "${EXPERIMENTAL_MAPPING_RULE}"
+add_to_cmd_line "--catalyst-workaround" "${CATALYST_WORKAROUND}"
+add_to_cmd_line "--autoclean-std-folder" "${AUTOCLEAN_STD_FOLDER}"
+add_to_cmd_line "--persist-storage-level" "${PERSIST_STORAGE_LEVEL}"
 
 echo "Command line:"
 echo "$CMD_LINE"
@@ -489,12 +489,12 @@ if [[ -z "$DRY_RUN" ]]; then
   if [[ "$DEPLOY_MODE" == "client" ]]; then
     TMP_PATH_NAME=$(get_temp_log_file)
     # Initializing Kerberos ticket
-    if [[ ! -z "$MENAS_AUTH_KEYTAB" ]]; then
+    if [[ -n "$MENAS_AUTH_KEYTAB" ]]; then
       # Get principle stored in the keyfile (Thanks @Zejnilovic)
-      PR=$(printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1)
+      PR=$(printf "read_kt %s\nlist" "$MENAS_AUTH_KEYTAB" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1)
       # Alternative way, might be less reliable
       # PR=$(printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1)
-      if [[ ! -z "$PR" ]]; then
+      if [[ -n "$PR" ]]; then
         # Initialize a ticket
         kinit -k -t "$MENAS_AUTH_KEYTAB" "$PR"
         klist 2>&1 | tee -a "$TMP_PATH_NAME"
