@@ -204,7 +204,11 @@ class SingleColumnConformanceRule extends ConformanceRule {
 
   apply(fields) {
     const inputCol = this.getInputCol(fields);
-    const child = new SchemaField(this.rule.inputColumnAlias, this.rule.outputColumn, inputCol.type, inputCol.nullable, [], true);
+
+    const clonedInputChildren = SchemaField.cloneFields(inputCol.children); // otherwise original inputColumn child would be tampered with
+    const child = new SchemaField(this.rule.inputColumnAlias, this.rule.outputColumn, inputCol.type, inputCol.nullable, clonedInputChildren, true);
+    child.setDeepConformed(true); // otherwise all subfield would not be marked as conformed (= would stay exactly as in inputCol)
+
     const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "struct", false, [child], true);
     this.addNewField(fields, newField);
     return fields;
@@ -291,4 +295,26 @@ class SchemaField {
   set conformed(value) {
     this._conformed = value;
   }
+
+  setDeepConformed(value) {
+    console.debug(`Recursively setting conformed=${value} on ${this.path}`);
+    SchemaField.setDeepConformed(this, value);
+  }
+
+  static setDeepConformed(field, value) {
+    field.conformed = value;
+    field.children.forEach(child => {
+      SchemaField.setDeepConformed(child, value)
+    })
+  }
+
+  static cloneField(field) {
+    const clonedChildren = field.children.map(child => SchemaField.cloneField(child));
+    return new SchemaField(field.name, field.path, field.type, field.nullable, clonedChildren, field.conformed);
+  }
+
+  static cloneFields(fields) {
+      return fields.map(field => SchemaField.cloneField(field));
+  }
+
 }
