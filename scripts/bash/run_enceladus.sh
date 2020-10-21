@@ -15,7 +15,7 @@
 
 # Command line for the script itself
 
-set -e
+#set -e
 
 # Show spark-submit command line without actually running it (--dry-run)
 DRY_RUN=""
@@ -401,6 +401,33 @@ JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH 
 -Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=$HDP_VERSION \
 $MT_PATTERN"
 
+if [ "$HELP_CALL" == "1" ]; then
+  echo "Enceladus Helper Scripts"
+  echo ""
+  echo "Usage: run_[job-name].sh [script-specific-options] [job-specific-options]"
+  echo ""
+  echo "job-name:"
+  echo "  standardization                 To run a Standardization only script"
+  echo "  conformance                     To run a Conformance only script"
+  echo "  standardization_conformance     To run a joint Standardization and Conformance script"
+  echo ""
+  echo "script-specific-options:"
+  echo "  --help                          To print this message"
+  echo "  --asynchronous                  To run the job in an asynchronous mode. The script will exit after printing application ID"
+  echo ""
+  echo "job-specific-options:"
+  echo "  Running the JAR --help to print all job specific options"
+
+  HELP_CONF_DRIVER="spark.driver.extraJavaOptions=-Dlog4j.rootCategory=\"WARN, console\""
+  HELP_CONF_EXECUTOR="spark.executor.extraJavaOptions=-Dlog4j.rootCategory=\"WARN, console\""
+  HELP_CLASS="za.co.absa.enceladus.HelpPrinter"
+  HELP_SPARK_BASE="$SPARK_SUBMIT --deploy-mode client"
+  HELP_CMD="$HELP_SPARK_BASE --conf '$HELP_CONF_DRIVER' --conf '$HELP_CONF_EXECUTOR' --class $HELP_CLASS $JAR $CLASS"
+
+  bash -c "set -o pipefail; $HELP_CMD 2>&1 | tee -a $TMP_PATH_NAME"
+  exit "$?"
+fi
+
 CMD_LINE="$SPARK_SUBMIT"
 
 # Adding command line parameters that go BEFORE the jar file
@@ -426,9 +453,6 @@ else
 fi
 CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
-if [ "$HELP_CALL" == "1" ]; then
-    CMD_LINE="$CMD_LINE --help"
-fi
 # Adding command line parameters that go AFTER the jar file
 add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
 add_to_cmd_line "--menas-credentials-file" ${MENAS_CREDENTIALS_FILE}
@@ -463,13 +487,13 @@ echo "$CMD_LINE"
 
 if [[ -z "$DRY_RUN" ]]; then
   if [[ "$DEPLOY_MODE" == "client" ]]; then
-    TMP_PATH_NAME=`get_temp_log_file`
+    TMP_PATH_NAME=$(get_temp_log_file)
     # Initializing Kerberos ticket
     if [[ ! -z "$MENAS_AUTH_KEYTAB" ]]; then
       # Get principle stored in the keyfile (Thanks @Zejnilovic)
-      PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1`
+      PR=$(printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1)
       # Alternative way, might be less reliable
-      # PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1`
+      # PR=$(printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1)
       if [[ ! -z "$PR" ]]; then
         # Initialize a ticket
         kinit -k -t "$MENAS_AUTH_KEYTAB" "$PR"
