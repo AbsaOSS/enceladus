@@ -51,9 +51,8 @@ echo "  Running the JAR --help to print all job specific options"
 
 HELP_CONF_DRIVER="spark.driver.extraJavaOptions=-Dlog4j.rootCategory=\"WARN, console\""
 HELP_CONF_EXECUTOR="spark.executor.extraJavaOptions=-Dlog4j.rootCategory=\"WARN, console\""
-HELP_CLASS="za.co.absa.enceladus.HelpPrinter"
 HELP_SPARK_BASE="$SPARK_SUBMIT --deploy-mode client"
-HELP_CMD="$HELP_SPARK_BASE --conf '$HELP_CONF_DRIVER' --conf '$HELP_CONF_EXECUTOR' --class $HELP_CLASS $JAR $CLASS"
+HELP_CMD="$HELP_SPARK_BASE --conf '$HELP_CONF_DRIVER' --conf '$HELP_CONF_EXECUTOR' --class $CLASS $JAR --help"
 
 bash -c "set -o pipefail; $HELP_CMD 2>&1 | tee -a $TMP_PATH_NAME"
 exit "$?"
