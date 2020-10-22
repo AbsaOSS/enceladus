@@ -402,31 +402,7 @@ JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH 
 $MT_PATTERN"
 
 if [ "$HELP_CALL" == "1" ]; then
-  echo "Enceladus Helper Scripts"
-  echo ""
-  echo "Usage: run_[job-name].sh [script-specific-options] [job-specific-options]"
-  echo ""
-  echo "job-name:"
-  echo "  standardization                 To run a Standardization only script"
-  echo "  conformance                     To run a Conformance only script"
-  echo "  standardization_conformance     To run a joint Standardization and Conformance script"
-  echo ""
-  echo "script-specific-options:"
-  echo "  --help                          To print this message"
-  echo "  --asynchronous                  To run the job in an asynchronous mode. The script will exit after printing application ID"
-  echo "  --dry-run                       Show spark-submit command line without actually running it"
-  echo ""
-  echo "job-specific-options:"
-  echo "  Running the JAR --help to print all job specific options"
-
-  HELP_CONF_DRIVER="spark.driver.extraJavaOptions=-Dlog4j.rootCategory=\"WARN, console\""
-  HELP_CONF_EXECUTOR="spark.executor.extraJavaOptions=-Dlog4j.rootCategory=\"WARN, console\""
-  HELP_CLASS="za.co.absa.enceladus.HelpPrinter"
-  HELP_SPARK_BASE="$SPARK_SUBMIT --deploy-mode client"
-  HELP_CMD="$HELP_SPARK_BASE --conf '$HELP_CONF_DRIVER' --conf '$HELP_CONF_EXECUTOR' --class $HELP_CLASS $JAR $CLASS"
-
-  bash -c "set -o pipefail; $HELP_CMD 2>&1 | tee -a $TMP_PATH_NAME"
-  exit "$?"
+  source ${SRC_DIR}/help_script.sh
 fi
 
 CMD_LINE="$SPARK_SUBMIT"
