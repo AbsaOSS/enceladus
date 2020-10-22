@@ -402,7 +402,8 @@ JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH 
 $MT_PATTERN"
 
 if [ "$HELP_CALL" == "1" ]; then
-  source ${SRC_DIR}/help_script.sh
+  source ${SRC_DIR}/_print_help.sh
+  exit "$?"
 fi
 
 CMD_LINE="$SPARK_SUBMIT"
