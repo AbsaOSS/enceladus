@@ -35,7 +35,7 @@
                         <core:Fragment type="XML" fragmentName="components.schema.schemaInfo"/>
                     </IconTabFilter>
                     <IconTabFilter id="schemaFields" icon="sap-icon://tree" key="schemaFields" text="Fields">
-                        <core:Fragment type="XML" fragmentName="components.schemaTable"/>
+                        <core:Fragment type="XML" fragmentName="components.schemaTable"  id="schemaFragment"/>
                     </IconTabFilter>
                     <IconTabFilter id="UploadNew" icon="sap-icon://upload" text="Upload new">
                     <VBox width="38em">

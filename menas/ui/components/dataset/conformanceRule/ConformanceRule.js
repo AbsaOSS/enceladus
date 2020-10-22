@@ -58,7 +58,7 @@ class ConformanceRule {
     return splitPath.reduce((acc, path, index) => {
       let element = acc.find(field => field.name === path);
       if (!element) {
-        element = (index === splitPath.length - 1) ? newField : new SchemaField(path, splitPath.slice(0, index).join(","), "struct", true, []);
+        element = (index === splitPath.length - 1) ? newField : new SchemaField(path, splitPath.slice(0, index).join(","), "struct", true, [], true);
         acc.push(element);
       }
       let ch = element.children;
@@ -79,7 +79,7 @@ class CastingConformanceRule extends ConformanceRule {
 
   apply(fields) {
     const inputCol = this.getInputCol(fields);
-    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, this.rule.outputDataType, inputCol.nullable, []);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, this.rule.outputDataType, inputCol.nullable, [], true);
     this.addNewField(fields, newField);
     return fields;
   }
@@ -90,7 +90,7 @@ class ConcatenationConformanceRule extends ConformanceRule {
 
   apply(fields) {
     const isNullable = this.getInputCols(fields).some(field => field.nullable);
-    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", isNullable, []);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", isNullable, [], true);
     this.addNewField(fields, newField);
     return fields;
   }
@@ -125,7 +125,7 @@ class DropConformanceRule extends ConformanceRule {
 class LiteralConformanceRule extends ConformanceRule {
 
   apply(fields) {
-    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, [], true);
     this.addNewField(fields, newField);
     return fields;
   }
@@ -136,7 +136,7 @@ class FillNullsConformanceRule extends ConformanceRule {
 
   apply(fields) {
     const inputCol = this.getInputCol(fields);
-    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, inputCol.type, false, []);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, inputCol.type, false, [], true);
     this.addNewField(fields, newField);
     return fields;
   }
@@ -147,7 +147,7 @@ class CoalesceConformanceRule extends ConformanceRule {
 
   apply(fields) {
     const isNullable = this.getInputCols(fields).some(field => field.nullable);
-    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", isNullable, []);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", isNullable, [], true);
     this.addNewField(fields, newField);
     return fields;
   }
@@ -165,7 +165,7 @@ class MappingConformanceRule extends ConformanceRule {
   }
 
   apply(fields) {
-    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, [], true);
 
     return new MappingTableRestDAO().getByNameAndVersionSync(this.rule.mappingTable, this.rule.mappingTableVersion)
       .then(mappingTable => {
@@ -193,7 +193,7 @@ class NegationConformanceRule extends ConformanceRule {
 
   apply(fields) {
     const inputCol = this.getInputCol(fields);
-    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, inputCol.type, inputCol.nullable, []);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, inputCol.type, inputCol.nullable, [], true);
     this.addNewField(fields, newField);
     return fields;
   }
@@ -204,8 +204,12 @@ class SingleColumnConformanceRule extends ConformanceRule {
 
   apply(fields) {
     const inputCol = this.getInputCol(fields);
-    const child = new SchemaField(this.rule.inputColumnAlias, this.rule.outputColumn, inputCol.type, inputCol.nullable, []);
-    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "struct", false, [child]);
+
+    const clonedInputChildren = SchemaField.cloneFields(inputCol.children); // otherwise original inputColumn child would be tampered with
+    const child = new SchemaField(this.rule.inputColumnAlias, this.rule.outputColumn, inputCol.type, inputCol.nullable, clonedInputChildren, true);
+    child.setDeepConformed(true); // otherwise all subfield would not be marked as conformed (= would stay exactly as in inputCol)
+
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "struct", false, [child], true);
     this.addNewField(fields, newField);
     return fields;
   }
@@ -215,7 +219,7 @@ class SingleColumnConformanceRule extends ConformanceRule {
 class SparkSessionConfConformanceRule extends ConformanceRule {
 
   apply(fields) {
-    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, []);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, [], true);
     this.addNewField(fields, newField);
     return fields;
   }
@@ -226,7 +230,7 @@ class UppercaseConformanceRule extends ConformanceRule {
 
   apply(fields) {
     const inputCol = this.getInputCol(fields);
-    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", inputCol.nullable, []);
+    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", inputCol.nullable, [], true);
     this.addNewField(fields, newField);
     return fields;
   }
@@ -235,12 +239,13 @@ class UppercaseConformanceRule extends ConformanceRule {
 
 class SchemaField {
 
-  constructor(name, path, type, nullable, children) {
+  constructor(name, path, type, nullable, children, conformed = false) {
     this._name = name;
     this._path = path;
     this._type = type;
     this._nullable = nullable;
     this._children = children;
+    this._conformed = conformed;
   }
 
   get name() {
@@ -282,4 +287,34 @@ class SchemaField {
   set children(value) {
     this._children = value;
   }
+
+  get conformed() {
+    return this._conformed;
+  }
+
+  set conformed(value) {
+    this._conformed = value;
+  }
+
+  setDeepConformed(value) {
+    console.debug(`Recursively setting conformed=${value} on ${this.path}`);
+    SchemaField.setDeepConformed(this, value);
+  }
+
+  static setDeepConformed(field, value) {
+    field.conformed = value;
+    field.children.forEach(child => {
+      SchemaField.setDeepConformed(child, value)
+    })
+  }
+
+  static cloneField(field) {
+    const clonedChildren = field.children.map(child => SchemaField.cloneField(child));
+    return new SchemaField(field.name, field.path, field.type, field.nullable, clonedChildren, field.conformed);
+  }
+
+  static cloneFields(fields) {
+      return fields.map(field => SchemaField.cloneField(field));
+  }
+
 }

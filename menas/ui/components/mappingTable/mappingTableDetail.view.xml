@@ -35,7 +35,7 @@
                         <core:Fragment type="XML" fragmentName="components.mappingTable.mappingTableInfo"/>
                     </IconTabFilter>
                     <IconTabFilter id="Schema" icon="sap-icon://tree" key="schemaFields" text="Schema">
-                        <core:Fragment type="XML" fragmentName="components.schemaTable"/>
+                        <core:Fragment type="XML" fragmentName="components.schemaTable"  id="schemaFragment"/>
                     </IconTabFilter>
                     <IconTabFilter id="UsedIn" icon="sap-icon://detail-view" text="Used In">
                         <Panel headerText="Datasets" height="50%">
