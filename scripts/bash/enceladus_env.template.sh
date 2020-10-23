@@ -96,4 +96,7 @@ ADDITIONAL_SPARK_CONF=""
 ADDITIONAL_JVM_CONF_CLIENT="$APPLICATION_PROPERTIES_CLIENT $JAAS_CLIENT"
 
 # for deployment mode: cluster
+# Warning!
+# Avoid suppression of Info level logger. This will lead to the fact that, we are not able to get application_id
+# and thus the scripts will not be able to continue properly, not giving the status update or kill option on interrupt
 ADDITIONAL_JVM_CONF_CLUSTER="$APPLICATION_PROPERTIES_CLUSTER $JAAS_CLUSTER"
