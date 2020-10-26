@@ -22,15 +22,14 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.fs.HdfsUtils
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
 case class MyMappingTable(id: Int, mappedAttr: MyMappingTableInner)
 case class MyMappingTableInner(description: String, name: String)
 case class MyData(id: Int, toJoin: Int)
 case class MyDataConfd(id: Int, toJoin: Int, confMapping: MyMappingTableInner)
 
-class ChorusMockSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase {
+class ChorusMockSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
   def testChorusMockData(useExperimentalMappingRule: Boolean): Unit = {
     val d = Seq(
@@ -71,8 +70,6 @@ class ChorusMockSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
-
-    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
     val confd = DynamicInterpreter().interpret(conformanceDef, inputDf).repartition(2)
 

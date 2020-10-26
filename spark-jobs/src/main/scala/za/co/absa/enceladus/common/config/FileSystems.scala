@@ -1,0 +1,57 @@
+/*
+ * Copyright 2018 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package za.co.absa.enceladus.common.config
+
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
+import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
+
+import scala.collection.concurrent.TrieMap
+
+
+case class FileSystems(rawFs: FileSystem, publishFs: FileSystem, standardizationFs: FileSystem)
+
+object FileSystems {
+  val log: Logger = LoggerFactory.getLogger(this.getClass)
+
+  def fromPathConfig(pathConfig: PathConfig)(implicit hadoopConf: Configuration): FileSystems = FileSystems(
+    rawFs = FileSystemUtils.getFileSystemFromPath(pathConfig.rawPath),
+    publishFs = FileSystemUtils.getFileSystemFromPath(pathConfig.publishPath),
+    standardizationFs = FileSystemUtils.getFileSystemFromPath(pathConfig.standardizationPath)
+  )
+
+//  private[config] val fsUtilsCache = TrieMap[FileSystem, HadoopFsUtils]()
+//
+//  implicit class FileSystemExt(fs: FileSystem) {
+//    /**
+//     * Given the FileSystem object `fs` that this method is called on,
+//     * the appropriate HadoopFsUtils is either newly created or returned form cache.
+//     * @return
+//     */
+//    def toFsUtils: HadoopFsUtils = {
+//      fsUtilsCache.getOrElseUpdate(fs, {
+//        log.info(s"reusing cached fsUtils for FS ${fs.getUri} / ${fs.toString}")
+//        new HadoopFsUtils()(fs)}
+//
+//      )
+//    }
+//  }
+
+
+}
+
+

@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.standardization
 
+import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
@@ -31,7 +32,6 @@ object StandardizationJob extends StandardizationExecution {
 
     implicit val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(args)
     implicit val spark: SparkSession = obtainSparkSession(jobName)
-    implicit val fsUtils: DistributedFsUtils = getS3FsUtil
 
     implicit val udfLib: UDFLibrary = new UDFLibrary
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
@@ -39,6 +39,7 @@ object StandardizationJob extends StandardizationExecution {
 
     val preparationResult = prepareJob()
     val schema =  prepareStandardization(args, menasCredentials, preparationResult)
+    implicit val rawFs: FileSystem = preparationResult.fileSystems.rawFs
     val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.rawPath, preparationResult.dataset)
 
     try {

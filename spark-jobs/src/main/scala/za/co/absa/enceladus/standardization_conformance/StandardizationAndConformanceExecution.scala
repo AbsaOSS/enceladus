@@ -16,12 +16,12 @@
 package za.co.absa.enceladus.standardization_conformance
 
 import za.co.absa.enceladus.common.CommonJobExecution
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, S3Config}
+import za.co.absa.enceladus.common.config.{FileSystems, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
-import za.co.absa.enceladus.utils.fs.DistributedFsUtils
+import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 
 trait StandardizationAndConformanceExecution extends StandardizationExecution
   with ConformanceExecution
@@ -36,8 +36,11 @@ trait StandardizationAndConformanceExecution extends StandardizationExecution
       publishPath = publishPathOverride.getOrElse(defaultConfig.publishPath))
   }
 
-  override def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig)(implicit fsUtils: DistributedFsUtils): Unit = {
-    validateIfPathAlreadyExists(s3Config, pathConfig.standardizationPath)
-    validateIfPathAlreadyExists(s3Config, pathConfig.publishPath)
+  override def validateOutputPath(pathConfig: PathConfig)(implicit fileSystems: FileSystems): Unit = {
+    // Std output is validated in the std FS
+    validateIfPathAlreadyExists(pathConfig.standardizationPath)(fileSystems.standardizationFs.toFsUtils)
+
+    // publish output is validated in the publish FS
+    validateIfPathAlreadyExists(pathConfig.publishPath)(fileSystems.publishFs.toFsUtils)
   }
 }

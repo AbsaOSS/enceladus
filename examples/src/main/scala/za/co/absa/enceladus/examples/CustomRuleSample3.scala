@@ -24,17 +24,16 @@ import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.fs.HdfsUtils
+import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
-object CustomRuleSample3 {
+object CustomRuleSample3 extends HadoopFsTestBase {
   implicit val spark: SparkSession = SparkSession.builder
     .master("local[*]")
     .appName("CustomRuleSample3")
     .config("spark.sql.codegen.wholeStage", value = false)
     .getOrCreate()
   TimeZoneNormalizer.normalizeAll(spark) //normalize the timezone of JVM and the spark session
-  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   def main(args: Array[String]): Unit = {
     val conf = ConfigFactory.load()

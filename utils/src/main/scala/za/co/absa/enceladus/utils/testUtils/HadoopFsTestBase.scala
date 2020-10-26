@@ -13,8 +13,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common.config
 
-import software.amazon.awssdk.regions.Region
+package za.co.absa.enceladus.utils.testUtils
 
-case class S3Config(region: Region, kmsKeyId: String)
+import org.apache.hadoop.fs.FileSystem
+import org.apache.spark.sql.SparkSession
+import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
+
+
+trait HadoopFsTestBase extends HasSparkSession {
+
+  implicit val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
+  implicit val fsUtils = fs.toFsUtils
+}
+
+trait HasSparkSession {
+  def spark: SparkSession
+}
+
+

@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions.{col, size, sum}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.fs.DistributedFsUtils
+import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
@@ -45,7 +45,7 @@ object PerformanceMetricTools {
                                 outputPath: String,
                                 loginUserName: String,
                                 cmdLineArgs: String)
-                               (implicit spark: SparkSession, fsUtils: DistributedFsUtils): Unit = {
+                               (implicit spark: SparkSession, inputFsUtils: HadoopFsUtils): Unit = {
     // Spark job configuration
     val sc = spark.sparkContext
 
@@ -53,8 +53,8 @@ object PerformanceMetricTools {
     val numberOfExecutors = sc.getExecutorMemoryStatus.keys.size - 1
 
     // Directory sizes and size ratio
-    val inputDirSize = fsUtils.getDirectorySize(inputPath)
-    val inputDataSize = fsUtils.getDirectorySizeNoHidden(inputPath)
+    val inputDirSize = inputFsUtils.getDirectorySize(inputPath)
+    val inputDataSize = inputFsUtils.getDirectorySizeNoHidden(inputPath)
 
     addSparkConfig(optionPrefix, "spark.driver.memory", "driver_memory")
     addSparkConfig(optionPrefix, "spark.driver.cores", "driver_cores")
@@ -95,12 +95,12 @@ object PerformanceMetricTools {
                                           outputPath: String,
                                           loginUserName: String,
                                           cmdLineArgs: String
-                                         )(implicit fsUtils: DistributedFsUtils): Unit = {
+                                         )(inputFsUtils: HadoopFsUtils, outputFsUtils: HadoopFsUtils): Unit = {
 
     // Directory sizes and size ratio
-    val inputDirSize = fsUtils.getDirectorySize(inputPath)
-    val outputDirSize = fsUtils.getDirectorySize(outputPath)
-    val outputDataSize = fsUtils.getDirectorySizeNoHidden(outputPath)
+    val inputDirSize = inputFsUtils.getDirectorySize(inputPath)
+    val outputDirSize = outputFsUtils.getDirectorySize(outputPath)
+    val outputDataSize = outputFsUtils.getDirectorySizeNoHidden(outputPath)
 
     val (numRecordsFailed, numRecordsSuccessful, numOfErrors) = getNumberOfErrors(spark, outputPath)
 

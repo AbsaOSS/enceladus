@@ -29,7 +29,7 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 // kmsSettings: S3KmsSettings in not currently used, but would be necessary if any SDK calls needed to put data on S3
-case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit credentialsProvider: AwsCredentialsProvider)
+case class S3SdkFsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit credentialsProvider: AwsCredentialsProvider)
   extends DistributedFsUtils {
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
@@ -41,7 +41,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
    * Check if a given path exists on the distributed Fs
    */
   override def exists(distPath: String): Boolean = {
-    val location = distPath.toS3Location(region)
+    val location = distPath.toS3LocationOrFail.withRegion(region)
 
     val headRequest = HeadObjectRequest
       .builder().bucket(location.bucketName).key(location.path)
@@ -60,7 +60,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
   }
 
   override def read(distPath: String): String = {
-    val location = distPath.toS3Location(region)
+    val location = distPath.toS3LocationOrFail.withRegion(region)
 
     val getRequest = GetObjectRequest
       .builder().bucket(location.bucketName).key(location.path)
@@ -79,7 +79,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
   private[fs] def getDirectorySize(distPath: String, keyNameFilter: String => Boolean): Long = {
 
     // setup accumulation
-    val location = distPath.toS3Location(region)
+    val location = distPath.toS3LocationOrFail.withRegion(region)
     val initSize = 0L
 
     def accumulateSizeOp(previousTotalSize: Long, response: ListObjectsV2Response): Long = {
@@ -126,7 +126,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
    */
   override def isNonSplittable(distPath: String): Boolean = {
     // setup accumulation
-    val location = distPath.toS3Location(region)
+    val location = distPath.toS3LocationOrFail.withRegion(region)
     val initFoundValue = false
     // we want to break out of the recursion if a non-splittable is found, because it cannot ever be unfound.
     val breakOutCase = Some(true)
@@ -147,7 +147,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
   override def deleteDirectoryRecursively(distPath: String): Unit = {
 
     // setup accumulation
-    val location = distPath.toS3Location(region)
+    val location = distPath.toS3LocationOrFail.withRegion(region)
 
     def accumulateSizeOp(acc: Unit, response: ListObjectsV2Response): Unit = { // side-effect, "accumulates" to unit
       val objects = response.contents().asScala
@@ -184,7 +184,7 @@ case class S3FsUtils(region: Region, kmsSettings: S3KmsSettings)(implicit creden
   override def getLatestVersion(publishPath: String, reportDate: String): Int = {
 
     // setup accumulation
-    val location = publishPath.toS3Location(region)
+    val location = publishPath.toS3LocationOrFail.withRegion(region)
     val initVersion = 0
 
     // looking for $publishPath/enceladus_info_date=$reportDate\enceladus_info_version=$version

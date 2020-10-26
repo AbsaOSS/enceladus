@@ -26,8 +26,8 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.fs.HdfsUtils
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.fs.HadoopFsUtils
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
 
 case class XPadTestInputRow(intField: Int, stringField: Option[String])
 case class XPadTestOutputRow(intField: Int, stringField: Option[String], targetField: String)
@@ -35,12 +35,11 @@ object XPadTestOutputRow {
   def apply(input: XPadTestInputRow, targetField: String): XPadTestOutputRow = XPadTestOutputRow(input.intField, input.stringField, targetField)
 }
 
-class LpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase with MockitoSugar {
+class LpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase with MockitoSugar with HadoopFsTestBase {
   import spark.implicits._
 
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: MenasDAO = mock[MenasDAO] // you may have to hard-code your own implementation here (if not working with menas)
-  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true
@@ -180,7 +179,7 @@ class LpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase with
 }
 
 
-class RpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase {
+class RpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase with HadoopFsTestBase {
 
   import spark.implicits._
 
@@ -189,7 +188,6 @@ class RpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase {
   private val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/test/resources/user.keytab.example")
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
-  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true

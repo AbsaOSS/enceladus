@@ -32,7 +32,6 @@ object DynamicConformanceJob extends ConformanceExecution {
 
     implicit val cmd: ConformanceConfig = ConformanceConfig.getFromArguments(args)
     implicit val spark: SparkSession = obtainSparkSession(jobName) // initialize spark
-    implicit val fsUtils: DistributedFsUtils = getS3FsUtil
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
 

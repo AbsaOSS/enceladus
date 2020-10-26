@@ -15,10 +15,6 @@
 
 package za.co.absa.enceladus.utils.fs
 
-/**
- * A set of functions to help with the date partitioning and version control
- */
-
 trait DistributedFsUtils {
 
    /**

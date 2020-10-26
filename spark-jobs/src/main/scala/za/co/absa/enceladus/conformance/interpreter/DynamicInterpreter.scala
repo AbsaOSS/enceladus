@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
+import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
@@ -31,12 +32,12 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.explode.ExplosionContext
-import za.co.absa.enceladus.utils.fs.DistributedFsUtils
 import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 
-case class DynamicInterpreter(implicit fsUtils: DistributedFsUtils) {
+case class DynamicInterpreter(implicit inputFs: FileSystem) {
   private val log = LoggerFactory.getLogger(this.getClass)
 
   /**
@@ -49,8 +50,10 @@ case class DynamicInterpreter(implicit fsUtils: DistributedFsUtils) {
     *
     */
   def interpret[T](conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
-               (implicit spark: SparkSession, dao: MenasDAO,
-                progArgs: ConformanceConfigParser[T], featureSwitches: FeatureSwitches): DataFrame = {
+               (implicit spark: SparkSession,
+                dao: MenasDAO,
+                progArgs: ConformanceConfigParser[T],
+                featureSwitches: FeatureSwitches): DataFrame = {
 
     implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
       featureSwitches, jobShortName, spark, dao, InterpreterContextArgs.fromConformanceConfig(progArgs))
@@ -268,7 +271,7 @@ case class DynamicInterpreter(implicit fsUtils: DistributedFsUtils) {
     val mappingTableDef = ictx.dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
     val mappingTablePath = PartitioningUtils.getPartitionedPathName(mappingTableDef.hdfsPath,
       ictx.progArgs.reportDate)
-    val mappingTableSize = fsUtils.getDirectorySizeNoHidden(mappingTablePath)
+    val mappingTableSize = inputFs.toFsUtils.getDirectorySizeNoHidden(mappingTablePath)
     (mappingTableSize / (1024 * 1024)).toInt
   }
 

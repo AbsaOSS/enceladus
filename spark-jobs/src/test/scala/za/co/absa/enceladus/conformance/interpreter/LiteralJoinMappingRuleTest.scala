@@ -22,10 +22,9 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{DropConformanceRule, LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.fs.HdfsUtils
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-class LiteralJoinMappingRuleTest extends AnyFunSuite with SparkTestBase with LoggerTestBase {
+class LiteralJoinMappingRuleTest extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
   def testMappingRuleWithLiteral(useExperimentalMappingRule: Boolean): Unit = {
 
@@ -67,8 +66,6 @@ class LiteralJoinMappingRuleTest extends AnyFunSuite with SparkTestBase with Log
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
-
-    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
     val confd = DynamicInterpreter().interpret(conformanceDef, inputDf).repartition(2)
 

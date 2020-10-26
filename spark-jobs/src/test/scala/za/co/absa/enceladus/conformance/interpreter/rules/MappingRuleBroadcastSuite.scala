@@ -24,17 +24,14 @@ import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.Nest
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.{NestedTestCaseFactory, SimpleTestCaseFactory}
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.fs.HdfsUtils
 import za.co.absa.enceladus.utils.general.JsonUtils
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll {
+class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll with HadoopFsTestBase {
   import spark.implicits._
 
   private val simpleTestCaseFactory = new SimpleTestCaseFactory()
   private val nestedTestCaseFactory = new NestedTestCaseFactory()
-
-  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   override def beforeAll(): Unit = {
     super.beforeAll()

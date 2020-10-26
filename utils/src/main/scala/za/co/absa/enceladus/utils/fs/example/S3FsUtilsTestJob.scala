@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
 import software.amazon.awssdk.regions.Region
 import za.co.absa.atum.persistence.S3KmsSettings
 import za.co.absa.atum.utils.S3Utils
-import za.co.absa.enceladus.utils.fs.S3FsUtils
+import za.co.absa.enceladus.utils.fs.S3SdkFsUtils
 
 // open: remove or create a integtest like this instead.
 // implementation is directly suited to be runnable locally with a saml profile.
@@ -36,7 +36,7 @@ object S3FsUtilsTestJob {
     val kmsKeyId = System.getenv("TOOLING_KMS_KEY_ID") // load from an environment property in order not to disclose it here
     log.info(s"kmsKeyId from env loaded = ${kmsKeyId.take(10)}...")
 
-    val s3utils = new S3FsUtils(Region.EU_WEST_1, S3KmsSettings(kmsKeyId)) {
+    val s3utils = new S3SdkFsUtils(Region.EU_WEST_1, S3KmsSettings(kmsKeyId)) {
       override val maxKeys = 5 // to test recursive listing/action
     }
 

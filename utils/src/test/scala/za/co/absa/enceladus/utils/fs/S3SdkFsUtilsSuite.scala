@@ -29,7 +29,7 @@ import za.co.absa.atum.persistence.S3KmsSettings
 
 import scala.collection.JavaConverters._
 
-class S3FsUtilsSuite extends AnyFlatSpec with IdiomaticMockito with Matchers {
+class S3SdkFsUtilsSuite extends AnyFlatSpec with IdiomaticMockito with Matchers {
 
   val kmsSettigns = S3KmsSettings("testingKeyId123")
   val region = Region.EU_WEST_2
@@ -39,7 +39,7 @@ class S3FsUtilsSuite extends AnyFlatSpec with IdiomaticMockito with Matchers {
   // common fixture for all tests
   def fixture = new {
     val mockedS3Client = mock[S3Client]
-    val mockedS3FsUtils = new S3FsUtils(region, kmsSettigns) {
+    val mockedS3FsUtils = new S3SdkFsUtils(region, kmsSettigns) {
       override def getS3Client: S3Client = mockedS3Client
 
       override val maxKeys = 3 // to test recursion for listing

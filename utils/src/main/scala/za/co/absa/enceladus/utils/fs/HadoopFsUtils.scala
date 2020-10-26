@@ -17,11 +17,8 @@ package za.co.absa.enceladus.utils.fs
 
 import java.io.{File, FileNotFoundException}
 import java.net.ConnectException
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Paths}
 
 import org.apache.commons.io.FileUtils
-import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.LogManager
 
@@ -31,10 +28,10 @@ import scala.util.Try
  * A set of functions to help with the date partitioning and version control
  */
 
-class HdfsUtils(conf: Configuration) extends DistributedFsUtils {
+class HadoopFsUtils()(implicit fs: FileSystem) extends DistributedFsUtils {
 
-  private val log = LogManager.getLogger("enceladus.utils.fs.HdfsUtils")
-  private val fs = FileSystem.get(conf)
+  private val log = LogManager.getLogger("enceladus.utils.fs.HadoopFsUtils")
+
   /**
    * Split HDFS path URI by separating scheme+server and path part
    * Example:

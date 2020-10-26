@@ -1,0 +1,69 @@
+/*
+ * Copyright 2018 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+package za.co.absa.enceladus.utils.fs
+
+import java.net.URI
+
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
+import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.atum.utils.S3Utils.StringS3LocationExt
+
+import scala.collection.concurrent.TrieMap
+
+object FileSystemUtils {
+
+  val log: Logger = LoggerFactory.getLogger(this.getClass)
+
+  /**
+   * Will yeild a [[FileSystem]] for path. If path prefix suggest S3, S3 FS is returned, HDFS otherwise.
+   * @param path
+   * @param hadoopConf
+   * @return
+   */
+  def getFileSystemFromPath(path: String)(implicit hadoopConf: Configuration): FileSystem = {
+    path.toS3Location match {
+
+      case Some(s3Location) => // s3 over hadoop fs api
+        val s3BucketUri: String = s"s3://${s3Location.bucketName}" // s3://<bucket>
+        val s3uri: URI = new URI(s3BucketUri)
+        FileSystem.get(s3uri, hadoopConf)
+
+      case None =>
+        FileSystem.get(hadoopConf) // HDFS
+    }
+  }
+
+  private[fs] val fsUtilsCache = TrieMap[FileSystem, HadoopFsUtils]()
+
+  implicit class FileSystemExt(fs: FileSystem) {
+    /**
+     * Given the FileSystem object `fs` that this method is called on,
+     * the appropriate HadoopFsUtils is either newly created or returned form cache.
+     * @return
+     */
+    def toFsUtils: HadoopFsUtils = {
+      fsUtilsCache.getOrElseUpdate(fs, {
+        log.info(s"reusing cached fsUtils for FS ${fs.getUri} / ${fs.toString}")
+        new HadoopFsUtils()(fs)}
+
+      )
+    }
+  }
+
+}
+

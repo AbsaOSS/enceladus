@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import org.apache.commons.configuration2.Configuration
+import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -32,8 +33,9 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.fs.HdfsUtils
+import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
+import FileSystemUtils.FileSystemExt
 
 class HyperConformance (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
@@ -66,7 +68,8 @@ class HyperConformance (implicit cmd: ConformanceConfig,
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
 
     // using HDFS implementation until HyperConformance is S3-ready
-    implicit val fsUtils: HdfsUtils = new HdfsUtils(sparkSession.sparkContext.hadoopConfiguration)
+    implicit val hdfs = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)
+    implicit val hdfsUtils = hdfs.toFsUtils
 
     val conformedDf = DynamicInterpreter().interpret(conformance, rawDf)
       .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_date()))

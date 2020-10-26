@@ -20,10 +20,10 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, InterpreterContext, Never}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.conformance.samples.TradeConformance._
-import za.co.absa.enceladus.utils.fs.HdfsUtils
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.fs.HadoopFsUtils
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
 
-class RuleOptimizationSuite extends AnyFunSuite with SparkTestBase {
+class RuleOptimizationSuite extends AnyFunSuite with SparkTestBase with HadoopFsTestBase {
 
   private val schemaJson =
     """{
@@ -110,8 +110,6 @@ class RuleOptimizationSuite extends AnyFunSuite with SparkTestBase {
     null,
     null,
     null)
-
-  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   test("Test non-mapping rules are not grouped") {
     val rules: List[ConformanceRule] = List(litRule, upperRule, lit2Rule)
