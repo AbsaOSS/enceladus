@@ -31,7 +31,6 @@ import za.co.absa.enceladus.model.ModelVersion
 import scala.concurrent.Future
 import com.mongodb.MongoWriteException
 
-//noinspection ScalaStyle
 abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]](versionedMongoRepository: VersionedMongoRepository[C]) extends ModelService(versionedMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -103,17 +102,21 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     val validation = Validation()
       .withErrorIf(!hasValidNameChars(item.name), "item.name", s"name '${item.name}' contains unsupported characters")
       .withErrorIf(item.parent.isDefined, "item.parent", "parent should not be defined on import")
-    val withMetadataValidation = validateMetadata(validation, metadata)
+    val withMetadataValidation = validation.merge(validateMetadata(metadata))
     Future(withMetadataValidation)
   }
 
-  private[services] def validateMetadata(validation: Validation, metadata: Map[String, String]): Validation = {
-    val exportVersionErrorMessage =
-      s"""Export/Import API version mismatch. Acceptable version is "$ModelVersion".
-         | Version passed is ${metadata.getOrElse("exportVersion", "null")}""".stripMargin.replaceAll("[\\r\\n]", "")
+  private[services] def validateMetadata(metadata: Map[String, String]): Validation = {
+    def exportVersionErrorMessage(version: String) = {
+      s"""Export/Import API version mismatch. Acceptable version is "$ModelVersion". Version passed is $version"""
+    }
 
-    validation
-      .withErrorIf(!hasValidApiVersion(metadata.get("exportVersion")), "metadata.exportApiVersion", exportVersionErrorMessage)
+    Validation()
+      .withErrorIf(
+        !hasValidApiVersion(metadata.get("exportVersion")),
+        "metadata.exportApiVersion",
+        exportVersionErrorMessage(metadata.getOrElse("exportVersion", "null"))
+      )
   }
 
   private[services] def importItem(item: C, username: String): Future[Option[C]]
@@ -128,7 +131,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     } yield validation.withErrorIf(
       schema.isEmpty,
       "item.schema",
-      s"schema ${schemaName} v${schemaVersion} defined for the dataset could not be found"
+      s"schema $schemaName v$schemaVersion defined for the dataset could not be found"
     )
   }
 

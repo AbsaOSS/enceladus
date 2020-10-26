@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.OozieRepository
-import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn}
+import za.co.absa.enceladus.model.{Dataset, MappingTable, Schema, UsedIn}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 
@@ -109,33 +109,30 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
   }
 
   override def validateSingleImport(item: Dataset, metadata: Map[String, String]): Future[Validation] = {
-    val confRulesWithConnectedEntities = item.conformance.filter(_.hasEntityConnected)
+    val confRulesWithConnectedEntities = item.conformance.filter(_.hasConnectedEntities)
     val maybeSchema = datasetMongoRepository.getConnectedSchema(item.schemaName, item.schemaVersion)
 
     val validations = super.validateSingleImport(item, metadata)
     val validationsWithSchema = validateSchema(item.schemaName, item.schemaVersion, validations, maybeSchema)
-    val validationWithConnected = validateConnectedEntities(confRulesWithConnectedEntities, validationsWithSchema)
+    val validationWithConnected = validateConnectedEntitiesExistence(confRulesWithConnectedEntities, validationsWithSchema)
     validateConformanceRules(item.conformance, maybeSchema, validationWithConnected)
   }
 
-  private def validateConnectedEntities(confRulesWithConnectedEntities: List[ConformanceRule],
-                                    validationWithSchema: Future[Validation]): Future[Validation] = {
-    confRulesWithConnectedEntities.foldLeft(validationWithSchema) { (acc, cr) =>
-      val maybeConnectedEntity = cr.maybeConnectedEntityType.get match {
-        case "mappingTable" => datasetMongoRepository.getConnectedMappingTable(
-          cr.maybeConnectedEntityName.get,
-          cr.maybeConnectedEntityVersion.get
-        )
+  private def validateConnectedEntitiesExistence(confRulesWithConnectedEntities: List[ConformanceRule],
+                                                 validations: Future[Validation]): Future[Validation] = {
+    def standardizedErrMessage(ce: ConnectedEntity) = s"Connected ${ce.kind} ${ce.name} v${ce.version} could not be found"
+
+    confRulesWithConnectedEntities.foldLeft(validations) { (acc, cr) =>
+      val connectedEntities = cr.connectedEntities.map {
+        case mt: ConnectedMappingTable => (mt, datasetMongoRepository.getConnectedMappingTable(mt.name, mt.version))
       }
 
-      val issueMsg =
-        s"""Connected ${cr.maybeConnectedEntityType.get} ${cr.maybeConnectedEntityName.get}
-           | v${cr.maybeConnectedEntityVersion.get} could not be found""".stripMargin.replaceAll("[\\r\\n]", "")
-
-      for {
-        ce <- maybeConnectedEntity
-        accValidations <- acc
-      } yield accValidations.withErrorIf(ce.isEmpty, s"item.${cr.maybeConnectedEntityType.get}", issueMsg)
+      connectedEntities.foldLeft(acc) { case (v, (entityDef, entityDBInstance)) =>
+        for {
+          instance <- entityDBInstance
+          accValidations <- v
+        } yield accValidations.withErrorIf(instance.isEmpty, s"item.${entityDef.kind}", standardizedErrMessage(entityDef))
+      }
     }
   }
 
