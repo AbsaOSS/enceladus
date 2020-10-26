@@ -9,7 +9,7 @@
 #       menas
 # You can skip the environment properties if you set up your own properties before build
 # FROM openjdk:8-jdk-alpine
-FROM openjdk:8-jre-alpine
+FROM tomcat:9-jre8-alpine
 
 LABEL \
     vendor="AbsaOSS" \
@@ -17,26 +17,13 @@ LABEL \
     license="Apache License, version 2.0" \
     name="Menas"
 
-ENV TOMCAT_MAJOR=9 \
-    TOMCAT_VERSION=9.0.37 \
-    TOMCAT_HOME=/opt/tomcat \
-    CATALINA_HOME=/opt/tomcat
+ADD src/main/resources/start_menas.sh start_menas.sh
+RUN chmod +x start_menas.sh && rm -rf webapps/*
 
-ENV PATH $CATALINA_HOME/bin:$PATH
+ADD ./target/*.war webapps/ROOT.war
+ADD ./src/main/resources/server.xml conf/server.xml
 
-EXPOSE 8080
+EXPOSE 8443
 EXPOSE 8009
 
-RUN apk upgrade --update && \
-    apk add --update curl && \
-    curl -jksSL -o /tmp/apache-tomcat.tar.gz http://archive.apache.org/dist/tomcat/tomcat-${TOMCAT_MAJOR}/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz && \
-    gunzip /tmp/apache-tomcat.tar.gz && \
-    tar -C /opt -xf /tmp/apache-tomcat.tar && \
-    ln -s /opt/apache-tomcat-${TOMCAT_VERSION} ${TOMCAT_HOME} && \
-    rm -rf ${TOMCAT_HOME}/webapps/* && \
-    apk del curl && \
-    rm -rf /tmp/* /var/cache/apk/*
-
-COPY ./target/*.war ${TOMCAT_HOME}/webapps/ROOT.war
-
-CMD ["catalina.sh", "run"]
+CMD ["./start_menas.sh"]
