@@ -204,18 +204,6 @@
         <log.specialfilters.acceptonmatch>false</log.specialfilters.acceptonmatch>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>software.amazon.awssdk</groupId>
-                <artifactId>bom</artifactId>
-                <version>${aws.java.sdk.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -240,16 +228,12 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>s3</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-aws</artifactId>
             <version>${hadoop.version}</version>
             <scope>provided</scope>
             <exclusions>
-                <!-- using AWS SDK v2 instead of v1 -->
+                <!-- using AWS SDK v2 instead of v1 if desired -->
                 <exclusion>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-s3</artifactId>

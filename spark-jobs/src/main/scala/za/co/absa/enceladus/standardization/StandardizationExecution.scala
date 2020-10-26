@@ -22,7 +22,6 @@ import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.S3DefaultCredentialsProvider
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.config.{FileSystems, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
@@ -44,7 +43,7 @@ import org.apache.hadoop.fs.FileSystem
 
 import scala.util.control.NonFatal
 
-trait StandardizationExecution extends CommonJobExecution with S3DefaultCredentialsProvider {
+trait StandardizationExecution extends CommonJobExecution {
   private val sourceId = SourcePhase.Standardization
 
   protected def prepareStandardization[T](args: Array[String],
