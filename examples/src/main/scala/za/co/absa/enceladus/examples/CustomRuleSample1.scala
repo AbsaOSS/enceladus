@@ -23,7 +23,6 @@ import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.examples.interpreter.rules.custom.UppercaseCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 

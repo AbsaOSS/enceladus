@@ -18,8 +18,8 @@ package za.co.absa.enceladus.dao.auth
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.SparkSession
 import sun.security.krb5.internal.ktab.KeyTab
-import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, FileSystemUtils}
-import FileSystemUtils.FileSystemExt
+import za.co.absa.enceladus.utils.fs.FileSystemUtils
+import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 
 sealed abstract class MenasCredentials {
   val username: String

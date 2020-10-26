@@ -33,9 +33,8 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
+import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
-import FileSystemUtils.FileSystemExt
 
 class HyperConformance (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,

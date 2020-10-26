@@ -53,13 +53,16 @@ trait StandardizationExecution extends CommonJobExecution {
                                           cmd: StandardizationConfigParser[T],
                                           spark: SparkSession): StructType = {
     val rawFs = preparationResult.fileSystems.rawFs
+    val rawFsUtils = rawFs.toFsUtils
 
-    val stdDirSize = rawFs.toFsUtils.getDirectorySize(preparationResult.pathCfg.rawPath)
+    val stdFs = preparationResult.fileSystems.standardizationFs
+
+    val stdDirSize = rawFsUtils.getDirectorySize(preparationResult.pathCfg.rawPath)
     preparationResult.performance.startMeasurement(stdDirSize)
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking(sourceInfoFile = s"${preparationResult.pathCfg.rawPath}/_INFO")(rawFs)
+    spark.enableControlMeasuresTracking(sourceInfoFile = s"${preparationResult.pathCfg.rawPath}/_INFO")(stdFs)
       .setControlMeasuresWorkflow(sourceId.toString)
 
     log.info(s"raw path: ${preparationResult.pathCfg.rawPath}")
@@ -86,7 +89,7 @@ trait StandardizationExecution extends CommonJobExecution {
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
       preparationResult.pathCfg.rawPath,
       preparationResult.pathCfg.standardizationPath,
-      menasCredentials.username, args.mkString(" "))(spark, rawFs.toFsUtils)
+      menasCredentials.username, args.mkString(" "))(spark, rawFsUtils)
 
     dao.getSchema(preparationResult.dataset.schemaName, preparationResult.dataset.schemaVersion)
   }
