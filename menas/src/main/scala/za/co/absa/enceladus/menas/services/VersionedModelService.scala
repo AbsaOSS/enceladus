@@ -123,11 +123,11 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private[services] def validateSchema(schemaName: String,
                                        schemaVersion: Int,
-                                       validations: Future[Validation],
                                        maybeSchema: Future[Option[Schema]]): Future[Validation] = {
+    val validation = Validation()
+
     for {
       schema <- maybeSchema
-      validation <- validations
     } yield validation.withErrorIf(
       schema.isEmpty,
       "item.schema",

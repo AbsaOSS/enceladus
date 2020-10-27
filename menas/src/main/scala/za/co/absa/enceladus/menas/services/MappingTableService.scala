@@ -79,13 +79,15 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
   override def validateSingleImport(item: MappingTable, metadata: Map[String, String]): Future[Validation] = {
     val maybeSchema = datasetMongoRepository.getConnectedSchema(item.schemaName, item.schemaVersion)
 
-    val validations = super.validateSingleImport(item, metadata)
-    val validationsWithSchema = validateSchema(item.schemaName, item.schemaVersion, validations, maybeSchema)
-    validateDefaultValues(item, maybeSchema, validationsWithSchema)
+    for {
+      validationBase <- super.validateSingleImport(item, metadata)
+      validationSchema <- validateSchema(item.schemaName, item.schemaVersion, maybeSchema)
+      validationDefaultValues <- validateDefaultValues(item, maybeSchema)
+    } yield validationBase.merge(validationSchema).merge(validationDefaultValues)
   }
 
-  private def validateDefaultValues(item: MappingTable, maybeSchema: Future[Option[Schema]], validationsWithSchema: Future[Validation]) = {
-    item.defaultMappingValue.foldLeft(validationsWithSchema) { (acc, defaultValue) =>
+  private def validateDefaultValues(item: MappingTable, maybeSchema: Future[Option[Schema]]) = {
+    item.defaultMappingValue.foldLeft(Future(Validation())) { (acc, defaultValue) =>
       for {
         schema <- maybeSchema
         accValidations <- acc
