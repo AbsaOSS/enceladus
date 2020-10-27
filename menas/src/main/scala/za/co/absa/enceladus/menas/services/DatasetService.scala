@@ -139,7 +139,10 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
   private def validateConformanceRules(conformanceRules: List[ConformanceRule],
                                        maybeSchema: Future[Option[Schema]],
                                        validations: Future[Validation]): Future[Validation] = {
-    val maybeFields = maybeSchema.map { case Some(x) => x.fields.flatMap(f => f.getAllChildren :+ f.getAbsolutePath).toSet }
+    val maybeFields = maybeSchema.map {
+      case Some(x) => x.fields.flatMap(f => f.getAllChildren :+ f.getAbsolutePath).toSet
+      case None => Set.empty[String]
+    }
     val accumulator = Tuple2(validations, maybeFields)
 
     conformanceRules.foldLeft(accumulator) { case ((validation, currentColumns), conformanceRule) =>
@@ -159,26 +162,23 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
         case cr: CoalesceConformanceRule =>
           validateMultipleInAndOut(validation, currentColumns, cr)
         case cr: LiteralConformanceRule =>
-          (validateOutputColumn(validation, currentColumns, cr.outputColumn), currentColumns.map(f => f + cr.outputColumn))
+          validateOutputColumn(validation, currentColumns, cr.outputColumn)
         case cr: SparkSessionConfConformanceRule =>
-          (validateOutputColumn(validation, currentColumns, cr.outputColumn), currentColumns.map(f => f + cr.outputColumn))
-        case cr: DropConformanceRule => (
-          for {
-            f <- currentColumns
-            v <- validation
-          } yield {
-            v.withErrorIf(
-              !f.contains(cr.outputColumn),
-              "item.conformanceRules",
-              s"Input column ${cr.outputColumn} for conformance rule cannot be found"
-            )
-          },
-          currentColumns.map(f => f - cr.outputColumn)
-        )
+          validateOutputColumn(validation, currentColumns, cr.outputColumn)
+        case cr: DropConformanceRule =>
+          validateDrop(validation, currentColumns, cr.outputColumn)
         case cr: MappingConformanceRule => validateMappingTable(validation, currentColumns, cr)
-
+        case cr: _ => (validation, currentColumns) // TODO add conformance rule not found to validation
       }
     }._1
+  }
+
+  private def validateDrop(validation: Future[Validation],
+                           currentColumns: Future[Set[String]],
+                           output: String): (Future[Validation], Future[Set[String]]) = {
+    val newValidation = validateInputColumn(validation, currentColumns, output)
+
+    (newValidation, currentColumns.map(f => f - output))
   }
 
   private type WithInAndOut = { def inputColumn: String; def outputColumn: String }
@@ -187,35 +187,35 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
   private def validateInAndOut[C <: WithInAndOut](validation: Future[Validation],
                                                   fields: Future[Set[String]],
                                                   cr: C): (Future[Validation], Future[Set[String]]) = {
-    val validationInputFields = validateInputColumn(fields, validation, cr.inputColumn)
+    val validationInputFields = validateInputColumn(validation, fields, cr.inputColumn)
     val withOutputValidated = validateOutputColumn(validationInputFields, fields, cr.outputColumn)
 
-    (withOutputValidated, fields.map(f => f + cr.outputColumn))
+    withOutputValidated
   }
 
   def validateMappingTable(validation: Future[Validation],
                            fields: Future[Set[String]],
                            mt: MappingConformanceRule): (Future[Validation], Future[Set[String]]) = {
     val withInputValidation = mt.attributeMappings.values.foldLeft(validation) { case (acc, value) =>
-      validateInputColumn(fields, acc, value)
+      validateInputColumn(acc, fields, value)
     }
     val withOutputValidation = validateOutputColumn(withInputValidation, fields, mt.outputColumn)
 
-    (withOutputValidation, fields.map(f => f + mt.outputColumn))
+    withOutputValidation
   }
 
   private def validateMultipleInAndOut[C <: WithMultipleInAndOut](validation: Future[Validation],
                                                                   fields: Future[Set[String]],
                                                                   cr: C): (Future[Validation], Future[Set[String]]) = {
     val resultValidation = cr.inputColumns.foldLeft(validation) { case (acc, input) =>
-      validateInputColumn(fields, acc, input)
+      validateInputColumn(acc, fields, input)
     }
 
-    (validateOutputColumn(resultValidation, fields, cr.outputColumn), fields.map(f => f + cr.outputColumn))
+    validateOutputColumn(resultValidation, fields, cr.outputColumn)
   }
 
-  private def validateInputColumn(fields: Future[Set[String]],
-                                  validation: Future[Validation],
+  private def validateInputColumn(validation: Future[Validation],
+                                  fields: Future[Set[String]],
                                   input: String): Future[Validation] = {
     for {
       f <- fields
@@ -231,8 +231,8 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
 
   private def validateOutputColumn(validation: Future[Validation],
                                    fields: Future[Set[String]],
-                                   output: String): Future[Validation] = {
-    for {
+                                   output: String): (Future[Validation], Future[Set[String]]) = {
+    val newValidation = for {
       f <- fields
       v <- validation
     } yield {
@@ -242,6 +242,8 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
         s"Output column $output already exists"
       )
     }
+
+    (newValidation, fields.map(f => f + output))
   }
 
 }
