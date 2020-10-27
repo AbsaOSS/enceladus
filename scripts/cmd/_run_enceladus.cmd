@@ -68,6 +68,7 @@ SET PERSIST_STORAGE_LEVEL=
 SET EMPTY_VALUES_AS_NULLS=
 SET NULL_VALUE=
 SET HELP_CALL=
+SET ASYNCHRONOUS_MODE=
 
 :: Spark configuration options
 SET CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=
@@ -388,12 +389,20 @@ IF "%1"=="--help" (
     SHIFT
     GOTO CmdParse
 )
+IF "%1"=="--asynchronous" (
+    SET ASYNCHRONOUS_MODE=true
+    SHIFT
+    GOTO CmdParse
+)
 SHIFT
 GOTO CmdParse
 
 :PastLoop
 
-IF "%HELP_CALL%"=="true" GOTO PastValidation
+IF "%HELP_CALL%"=="true" (
+    CALL _print_help.cmd
+    GOTO :eof
+)
 
 :: Validation
 SET VALID="1"
@@ -411,7 +420,6 @@ CALL :validate_either --menas-credentials-file,%MENAS_CREDENTIALS_FILE%,--menas-
 
 :: Validation failure check
 IF %VALID%=="0" EXIT /B 1
-:PastValidation
 
 :: ### Bellow construct the command line ###
 
@@ -515,7 +523,12 @@ IF DEFINED DRY_RUN GOTO :eof
 
 IF "%DEPLOY_MODE%"=="client" GOTO client_run
 
-%CMD_LINE%
+IF "%ASYNCHRONOUS_MODE%"=="true" (
+    ECHO Running in asynchronous mode. Script exiting.
+    START %CMD_LINE%
+) ELSE (
+    %CMD_LINE%
+)
 GOTO :eof
 
 :client_run

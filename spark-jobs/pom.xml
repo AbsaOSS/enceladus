@@ -253,6 +253,7 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven.jar.plugin.version}</version>
                 <configuration>
                     <archive>
                         <manifest>
