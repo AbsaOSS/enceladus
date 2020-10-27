@@ -7,8 +7,6 @@
 #           -Dmenas.mongo.connection.database=menas \
 #       -p 8080:8080 \
 #       menas
-# You can skip the environment properties if you set up your own properties before build
-# FROM openjdk:8-jdk-alpine
 FROM tomcat:9-jre8-alpine
 
 LABEL \
@@ -18,7 +16,8 @@ LABEL \
     name="Menas"
 
 ADD src/main/resources/start_menas.sh start_menas.sh
-RUN chmod +x start_menas.sh && rm -rf webapps/*
+RUN chmod +x start_menas.sh && \
+    rm -rf webapps/*
 
 ADD ./target/*.war webapps/ROOT.war
 ADD ./src/main/resources/server.xml conf/server.xml
