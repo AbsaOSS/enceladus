@@ -194,7 +194,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
           validationsAndFields.update(validateDrop(validationsAndFields.fields, cr.outputColumn))
         case cr: MappingConformanceRule =>
           validationsAndFields.update(validateMappingTable(validationsAndFields.fields, cr))
-        case cr: _ =>
+        case cr =>
           validationsAndFields.update(unknownRule(validationsAndFields.fields, cr))
       }
     }
