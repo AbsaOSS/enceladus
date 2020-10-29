@@ -79,24 +79,24 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
   override def validateSingleImport(item: MappingTable, metadata: Map[String, String]): Future[Validation] = {
     val maybeSchema = datasetMongoRepository.getConnectedSchema(item.schemaName, item.schemaVersion)
 
+    val validationBase = super.validateSingleImport(item, metadata)
+    val validationSchema = validateSchema(item.schemaName, item.schemaVersion, maybeSchema)
+    val validationDefaultValues = validateDefaultValues(item, maybeSchema)
     for {
-      validationBase <- super.validateSingleImport(item, metadata)
-      validationSchema <- validateSchema(item.schemaName, item.schemaVersion, maybeSchema)
-      validationDefaultValues <- validateDefaultValues(item, maybeSchema)
-    } yield validationBase.merge(validationSchema).merge(validationDefaultValues)
+      base <- validationBase
+      schema <- validationSchema
+      defaultValues <- validationDefaultValues
+    } yield base.merge(schema).merge(defaultValues)
   }
 
-  private def validateDefaultValues(item: MappingTable, maybeSchema: Future[Option[Schema]]) = {
-    item.defaultMappingValue.foldLeft(Future(Validation())) { (acc, defaultValue) =>
-      for {
-        schema <- maybeSchema
-        accValidations <- acc
-      } yield {
+  private def validateDefaultValues(item: MappingTable, maybeSchema: Future[Option[Schema]]): Future[Validation] = {
+    maybeSchema.map(schema => {
+      item.defaultMappingValue.foldLeft(Validation()) { (accValidations, defaultValue) =>
         accValidations.withErrorIf(
           schema.exists(s => !s.fields.exists(_.getAbsolutePath == defaultValue.columnName)),
           "item.defaultMappingValue",
           s"Cannot fiend field ${defaultValue.columnName} in schema")
       }
-    }
+    })
   }
 }

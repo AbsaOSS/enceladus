@@ -124,39 +124,32 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     val confRulesWithConnectedEntities = item.conformance.filter(_.hasConnectedEntities)
     val maybeSchema = datasetMongoRepository.getConnectedSchema(item.schemaName, item.schemaVersion)
 
+    val validationBase = super.validateSingleImport(item, metadata)
+    val validationSchema = validateSchema(item.schemaName, item.schemaVersion, maybeSchema)
+    val validationConnectedEntities = validateConnectedEntitiesExistence(confRulesWithConnectedEntities)
+    val validationConformanceRules = validateConformanceRules(item.conformance, maybeSchema)
     for {
-      validationBase <- super.validateSingleImport(item, metadata)
-      validationSchema <- validateSchema(item.schemaName, item.schemaVersion, maybeSchema)
-      validationConnectedEntities <- validateConnectedEntitiesExistence(confRulesWithConnectedEntities)
-      validationConformanceRules <- validateConformanceRules(item.conformance, maybeSchema)
-    } yield validationBase.merge(validationSchema).merge(validationConnectedEntities).merge(validationConformanceRules)
+      b  <- validationBase
+      s  <- validationSchema
+      ce <- validationConnectedEntities
+      cr <- validationConformanceRules
+    } yield b.merge(s).merge(ce).merge(cr)
   }
 
   private def validateConnectedEntitiesExistence(confRulesWithConnectedEntities: List[ConformanceRule]): Future[Validation] = {
     def standardizedErrMessage(ce: ConnectedEntity) = s"Connected ${ce.kind} ${ce.name} v${ce.version} could not be found"
 
-    confRulesWithConnectedEntities.foldLeft(Future(Validation())) { (acc, cr) =>
-      cr.connectedEntities.foldLeft(acc) { (validation, connectedEntity)  =>
-        connectedEntity match {
-          case mt: ConnectedMappingTable =>
-            for {
-              instance <- datasetMongoRepository.getConnectedMappingTable(mt.name, mt.version)
-              accValidations <- validation
-            } yield instance
-              .map { _ => accValidations.withError(s"item.${mt.kind}", standardizedErrMessage(mt))}
-              .getOrElse(accValidations)
-        }
-      }
+    val allConnectedEntities: Set[ConnectedEntity] = confRulesWithConnectedEntities
+      .foldLeft(Set.empty[ConnectedEntity]) { (acc, cr) => acc ++ cr.connectedEntities.toSet }
 
-      val connectedEntities = cr.connectedEntities.map {
-        case mt: ConnectedMappingTable => (mt, datasetMongoRepository.getConnectedMappingTable(mt.name, mt.version))
-      }
-
-      connectedEntities.foldLeft(acc) { case (v, (entityDef, entityDBInstance)) =>
-        for {
-          instance <- entityDBInstance
-          accValidations <- v
-        } yield accValidations.withErrorIf(instance.isEmpty, s"item.${entityDef.kind}", standardizedErrMessage(entityDef))
+    allConnectedEntities.foldLeft(Future(Validation())) { (accValidations, entityDef) =>
+      entityDef match {
+        case mt: ConnectedMappingTable =>
+          val entityDBInstance = datasetMongoRepository.getConnectedMappingTable(mt.name, mt.version)
+          for {
+            instance <- entityDBInstance
+            validations <- accValidations
+          } yield validations.withErrorIf(instance.isEmpty, s"item.${entityDef.kind}", standardizedErrMessage(entityDef))
       }
     }
   }
