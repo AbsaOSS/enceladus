@@ -20,8 +20,9 @@ RUN chmod +x start_menas.sh && \
     rm -rf webapps/*
 
 ADD ./target/*.war webapps/ROOT.war
-ADD ./src/main/resources/server.xml conf/server.xml
+ADD ./src/main/resources/server.xml /tmp/server.xml
 
+EXPOSE 8080
 EXPOSE 8443
 EXPOSE 8009
 
