@@ -18,10 +18,7 @@ package za.co.absa.enceladus.common.config
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
-
-import scala.collection.concurrent.TrieMap
-
+import za.co.absa.enceladus.utils.fs.FileSystemUtils
 
 case class FileSystems(rawFs: FileSystem, publishFs: FileSystem, standardizationFs: FileSystem)
 
@@ -33,24 +30,6 @@ object FileSystems {
     publishFs = FileSystemUtils.getFileSystemFromPath(pathConfig.publishPath),
     standardizationFs = FileSystemUtils.getFileSystemFromPath(pathConfig.standardizationPath)
   )
-
-//  private[config] val fsUtilsCache = TrieMap[FileSystem, HadoopFsUtils]()
-//
-//  implicit class FileSystemExt(fs: FileSystem) {
-//    /**
-//     * Given the FileSystem object `fs` that this method is called on,
-//     * the appropriate HadoopFsUtils is either newly created or returned form cache.
-//     * @return
-//     */
-//    def toFsUtils: HadoopFsUtils = {
-//      fsUtilsCache.getOrElseUpdate(fs, {
-//        log.info(s"reusing cached fsUtils for FS ${fs.getUri} / ${fs.toString}")
-//        new HadoopFsUtils()(fs)}
-//
-//      )
-//    }
-//  }
-
 
 }
 

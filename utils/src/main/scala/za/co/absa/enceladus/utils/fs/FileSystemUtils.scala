@@ -58,7 +58,7 @@ object FileSystemUtils {
      */
     def toFsUtils: HadoopFsUtils = {
       fsUtilsCache.getOrElseUpdate(fs, {
-        log.info(s"reusing cached fsUtils for FS ${fs.getUri} / ${fs.toString}")
+        log.debug(s"reusing cached fsUtils for FS ${fs.getUri} / ${fs.toString}")
         new HadoopFsUtils()(fs)}
 
       )
