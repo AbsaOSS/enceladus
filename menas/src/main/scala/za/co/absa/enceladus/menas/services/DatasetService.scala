@@ -41,7 +41,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
 
     def update(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
 
-    def mergeAndGetValidations(): Future[Validation] = Future.reduce(validations)((v1, v2) => v1.merge(v2))
+    def mergeAndGetValidations(): Future[Validation] = Future.fold(validations)(Validation())((v1, v2) => v1.merge(v2))
   }
 
   override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
