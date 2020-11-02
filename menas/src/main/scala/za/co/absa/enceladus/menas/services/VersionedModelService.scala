@@ -108,7 +108,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private[services] def validateMetadata(metadata: Map[String, String]): Validation = {
     def exportVersionErrorMessage(version: String) = {
-      s"""Export/Import API version mismatch. Acceptable version is "$ModelVersion". Version passed is $version"""
+      s"""Export/Import API version mismatch. Acceptable version is $ModelVersion. Version passed is $version"""
     }
 
     Validation()
