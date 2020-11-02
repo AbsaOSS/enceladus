@@ -69,7 +69,7 @@ trait ConformanceExecution extends CommonJobExecution{
     }
 
     // InputPath is standardizationPath in the combined job
-    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardizationPath}/_INFO")(preparationResult.fileSystems.publishFs)
+    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardizationPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
     // Enable control framework performance optimization for pipeline-like jobs

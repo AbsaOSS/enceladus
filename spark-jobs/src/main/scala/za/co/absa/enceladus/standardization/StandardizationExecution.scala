@@ -62,7 +62,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking(sourceInfoFile = s"${preparationResult.pathCfg.rawPath}/_INFO")(stdFs)
+    spark.enableControlMeasuresTracking(sourceInfoFile = s"${preparationResult.pathCfg.rawPath}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
     log.info(s"raw path: ${preparationResult.pathCfg.rawPath}")
