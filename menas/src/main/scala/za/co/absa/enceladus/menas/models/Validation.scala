@@ -38,7 +38,7 @@ case class Validation (errors: Map[String, List[String]] = Map()) {
 
   def merge(validation: Validation): Validation = {
     val mergedMaps = validation.errors.foldLeft(errors) { case (acc, (key, list)) =>
-      acc + (key -> (list ++ acc.getOrElse(key, List.empty[String])))
+      acc + (key -> (acc.getOrElse(key, List.empty[String]) ++ list))
     }
 
     Validation(mergedMaps)

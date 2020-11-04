@@ -285,8 +285,10 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     }
   }
 
-  private[services] def hasWhitespace(name: String): Boolean = name != None.orNull && !name.matches("""\w+""")
-  private[services] def hasValidNameChars(name: String): Boolean = name != None.orNull && name.matches("""[a-zA-Z0-9._-]+""")
+  private[services] def hasWhitespace(name: String): Boolean =
+    Option(name).exists( definedName => !definedName.matches("""\w+"""))
+  private[services] def hasValidNameChars(name: String): Boolean =
+    Option(name).exists( definedName => !definedName.matches("""[a-zA-Z0-9._-]+"""))
   private[services] def hasValidApiVersion(version: Option[String]): Boolean = version.contains(ModelVersion.toString)
 
 }

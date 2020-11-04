@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.OozieRepository
-import za.co.absa.enceladus.model.{Dataset, MappingTable, Schema, UsedIn}
+import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 
@@ -145,9 +145,9 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     allConnectedEntities.foldLeft(Future(Validation())) { (accValidations, entityDef) =>
       entityDef match {
         case mt: ConnectedMappingTable =>
-          val entityDBInstance = datasetMongoRepository.getConnectedMappingTable(mt.name, mt.version)
+          val entityDbInstance = datasetMongoRepository.getConnectedMappingTable(mt.name, mt.version)
           for {
-            instance <- entityDBInstance
+            instance <- entityDbInstance
             validations <- accValidations
           } yield validations.withErrorIf(instance.isEmpty, s"item.${entityDef.kind}", standardizedErrMessage(entityDef))
       }
