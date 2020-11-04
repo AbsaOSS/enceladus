@@ -102,4 +102,5 @@ ADDITIONAL_JVM_CONF_CLIENT="$APPLICATION_PROPERTIES_CLIENT $JAAS_CLIENT"
 ADDITIONAL_JVM_CONF_CLUSTER="$APPLICATION_PROPERTIES_CLUSTER $JAAS_CLUSTER"
 
 # Switch that tells the script if it should exit if it encounters unrecognized.
+# On true it prints an Error and exits with 127, on false it only prints a warning
 EXIT_ON_UNRECOGNIZED_OPTIONS="true"
