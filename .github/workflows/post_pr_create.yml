@@ -1,0 +1,13 @@
+name: "Connect Issue to PR"
+on: pull_request
+jobs:
+  hello_world_job:
+    runs-on: ubuntu-latest
+    name: Post PR Create
+    steps:
+      - name: Post PR Create Action
+        uses: Zejnilovic/post-pr-create-action@v1.3-alpha.2
+        with:
+          ZENHUB_TOKEN: ${{ secrets.ZENHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
