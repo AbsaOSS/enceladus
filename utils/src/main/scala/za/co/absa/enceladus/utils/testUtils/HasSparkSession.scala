@@ -13,17 +13,10 @@
  * limitations under the License.
  */
 
-
 package za.co.absa.enceladus.utils.testUtils
 
-import org.apache.hadoop.fs.FileSystem
-import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
-import za.co.absa.enceladus.utils.fs.HadoopFsUtils
+import org.apache.spark.sql.SparkSession
 
-
-trait HadoopFsTestBase extends HasSparkSession {
-
-  implicit val fs: FileSystem = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-  implicit val fsUtils: HadoopFsUtils = fs.toFsUtils
+trait HasSparkSession {
+  def spark: SparkSession
 }
-
