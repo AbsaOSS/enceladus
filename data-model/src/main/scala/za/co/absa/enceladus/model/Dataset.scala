@@ -17,6 +17,7 @@ package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
 
+import com.fasterxml.jackson.databind.node.ArrayNode
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
@@ -76,9 +77,11 @@ case class Dataset(
    */
   def decode: Dataset = substituteMappingConformanceRuleCharacter(this, MappingConformanceRule.DOT_REPLACEMENT_SYMBOL, '.')
 
-  override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
+  override val createdMessage: AuditTrailEntry = AuditTrailEntry(
+    menasRef = MenasReference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
-    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset ${name} created.")))
+    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset $name created."))
+  )
 
   private def substituteMappingConformanceRuleCharacter(dataset: Dataset, from: Char, to: Char): Dataset = {
     val conformanceRules = dataset.conformance.map {
@@ -105,5 +108,21 @@ case class Dataset(
           AuditFieldName("schemaVersion", "Schema Version"),
           AuditFieldName("schedule", "Schedule"))) ++
         super.getSeqFieldsAudit(newRecord, AuditFieldName("conformance", "Conformance rule")))
+  }
+
+  override def exportItem(): String = {
+    val conformanceJsonList: ArrayNode = objectMapperBase.valueToTree(conformance.toArray)
+
+    val objectItemMapper = objectMapperRoot.`with`("item")
+
+    objectItemMapper.put("name", name)
+    description.map(d => objectItemMapper.put("description", d))
+    objectItemMapper.put("hdfsPath", hdfsPath)
+    objectItemMapper.put("hdfsPublishPath", hdfsPublishPath)
+    objectItemMapper.put("schemaName", schemaName)
+    objectItemMapper.put("schemaVersion", schemaVersion)
+    objectItemMapper.putArray("conformance").addAll(conformanceJsonList)
+
+    objectMapperRoot.toString
   }
 }

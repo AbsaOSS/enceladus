@@ -13,10 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.general
+package za.co.absa.enceladus.model.conformanceRule
 
-trait ProjectMetadata {
-  def projectVersion: String = {
-    getClass.getPackage.getImplementationVersion
-  }
+sealed trait ConnectedEntity{
+  val name: String
+  val version: Int
+  val kind: String
+}
+
+case class ConnectedMappingTable(name: String, version: Int) extends ConnectedEntity {
+  val kind = "mappingTable"
 }
