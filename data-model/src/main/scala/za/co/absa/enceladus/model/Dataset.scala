@@ -24,29 +24,30 @@ import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
 
-case class Dataset(
-  name:    String,
-  version: Int = 1,
-  description: Option[String] = None,
+case class Dataset(name: String,
+                   version: Int = 1,
+                   description: Option[String] = None,
 
-  hdfsPath:        String,
-  hdfsPublishPath: String,
+                   hdfsPath: String,
+                   hdfsPublishPath: String,
 
-  schemaName:    String,
-  schemaVersion: Int,
+                   schemaName: String,
+                   schemaVersion: Int,
 
-  dateCreated: ZonedDateTime = ZonedDateTime.now(),
-  userCreated: String        = null,
+                   dateCreated: ZonedDateTime = ZonedDateTime.now(),
+                   userCreated: String = null,
 
-  lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-  userUpdated: String        = null,
+                   lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+                   userUpdated: String = null,
 
-  disabled:     Boolean               = false,
-  dateDisabled: Option[ZonedDateTime] = None,
-  userDisabled: Option[String]        = None,
-  conformance:  List[ConformanceRule],
-  parent:       Option[MenasReference] = None,
-  schedule:     Option[OozieSchedule] = None) extends VersionedModel with Auditable[Dataset] {
+                   disabled: Boolean = false,
+                   dateDisabled: Option[ZonedDateTime] = None,
+                   userDisabled: Option[String] = None,
+                   conformance: List[ConformanceRule],
+                   parent: Option[MenasReference] = None,
+                   schedule: Option[OozieSchedule] = None,
+                   properties: Map[String, String] = Map.empty
+                  ) extends VersionedModel with Auditable[Dataset] {
 
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -80,7 +81,7 @@ case class Dataset(
   override val createdMessage: AuditTrailEntry = AuditTrailEntry(
     menasRef = MenasReference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
-    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset $name created."))
+      AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset $name created."))
   )
 
   private def substituteMappingConformanceRuleCharacter(dataset: Dataset, from: Char, to: Char): Dataset = {
