@@ -16,29 +16,22 @@
 package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.codehaus.jackson.annotate.JsonProperty
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
-case class SchemaField
-(
-  name: String,
-  `type`: String,
-  path: String,  // path up to this field
-
-  // These fields are optional when the type of the field is "array".
-  elementType: Option[String] = None,
-  containsNull: Option[Boolean] = None,
-
-  nullable: Boolean,
-  metadata: Map[String, String],
-  children: Seq[SchemaField]
-) {
-  @JsonProperty("absolutePath")
-  def getAbsolutePath: String = {
-    if(path.isEmpty) name else s"$path.$name"
-  }
+trait Exportable {
 
   @JsonIgnore
-  def getAllChildren: Seq[String] = {
-    children.flatMap(child => child.getAllChildren :+ child.getAbsolutePath)
+  protected lazy val objectMapperBase: ObjectMapper = new ObjectMapper()
+    .registerModule(DefaultScalaModule)
+    .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+
+  @JsonIgnore
+  protected lazy val objectMapperRoot: ObjectNode = {
+    val mapperBase = objectMapperBase.createObjectNode()
+    mapperBase.`with`("metadata").put("exportVersion", ModelVersion)
+    mapperBase
   }
+
 }

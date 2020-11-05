@@ -16,22 +16,33 @@
 package za.co.absa.enceladus.menas.services
 
 import scala.concurrent.Future
-
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-
+import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.OozieRepository
-import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.model.UsedIn
-import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
+import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn}
+import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
+
 
 @Service
 class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepository, oozieRepository: OozieRepository)
   extends VersionedModelService(datasetMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
+
+  // Local class for the representation of validation of conformance rules.
+  final case class RuleValidationsAndFields(validations: Seq[Future[Validation]], fields: Future[Set[String]]) {
+    def update(ruleValidationsAndFields: RuleValidationsAndFields): RuleValidationsAndFields = copy(
+        validations = validations ++ ruleValidationsAndFields.validations,
+        fields = ruleValidationsAndFields.fields
+      )
+
+    def update(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
+
+    def mergeAndGetValidations(): Future[Validation] = Future.fold(validations)(Validation())((v1, v2) => v1.merge(v2))
+  }
 
   override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
     super.updateFuture(username, dataset.name, dataset.version) { latest =>
@@ -100,6 +111,172 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     super.update(username, datasetName, datasetVersion) { dataset =>
       dataset.copy(conformance = dataset.conformance :+ rule)
     }
+  }
+
+  override def importItem(item: Dataset, username: String): Future[Option[Dataset]] = {
+    getLatestVersionValue(item.name).flatMap {
+      case Some(version) => update(username, item.copy(version = version))
+      case None => super.create(item.copy(version = 1), username)
+    }
+  }
+
+  override def validateSingleImport(item: Dataset, metadata: Map[String, String]): Future[Validation] = {
+    val confRulesWithConnectedEntities = item.conformance.filter(_.hasConnectedEntities)
+    val maybeSchema = datasetMongoRepository.getConnectedSchema(item.schemaName, item.schemaVersion)
+
+    val validationBase = super.validateSingleImport(item, metadata)
+    val validationSchema = validateSchema(item.schemaName, item.schemaVersion, maybeSchema)
+    val validationConnectedEntities = validateConnectedEntitiesExistence(confRulesWithConnectedEntities)
+    val validationConformanceRules = validateConformanceRules(item.conformance, maybeSchema)
+    for {
+      b  <- validationBase
+      s  <- validationSchema
+      ce <- validationConnectedEntities
+      cr <- validationConformanceRules
+    } yield b.merge(s).merge(ce).merge(cr)
+  }
+
+  private def validateConnectedEntitiesExistence(confRulesWithConnectedEntities: List[ConformanceRule]): Future[Validation] = {
+    def standardizedErrMessage(ce: ConnectedEntity) = s"Connected ${ce.kind} ${ce.name} v${ce.version} could not be found"
+
+    val allConnectedEntities: Set[ConnectedEntity] = confRulesWithConnectedEntities
+      .foldLeft(Set.empty[ConnectedEntity]) { (acc, cr) => acc ++ cr.connectedEntities.toSet }
+
+    allConnectedEntities.foldLeft(Future(Validation())) { (accValidations, entityDef) =>
+      entityDef match {
+        case mt: ConnectedMappingTable =>
+          val entityDbInstance = datasetMongoRepository.getConnectedMappingTable(mt.name, mt.version)
+          for {
+            instance <- entityDbInstance
+            validations <- accValidations
+          } yield validations.withErrorIf(instance.isEmpty, s"item.${entityDef.kind}", standardizedErrMessage(entityDef))
+      }
+    }
+  }
+
+  private def validateConformanceRules(conformanceRules: List[ConformanceRule],
+                                       maybeSchema: Future[Option[Schema]]): Future[Validation] = {
+
+    val maybeFields = maybeSchema.map {
+      case Some(x) => x.fields.flatMap(f => f.getAllChildren :+ f.getAbsolutePath).toSet
+      case None => Set.empty[String]
+    }
+    val accumulator = RuleValidationsAndFields(Seq.empty[Future[Validation]], maybeFields)
+
+    val ruleValidationsAndFields = conformanceRules.foldLeft(accumulator) { case (validationsAndFields, conformanceRule) =>
+      conformanceRule match {
+        case cr: CastingConformanceRule =>
+          validationsAndFields.update(validateInAndOut(validationsAndFields.fields, cr))
+        case cr: NegationConformanceRule =>
+          validationsAndFields.update(validateInAndOut(validationsAndFields.fields, cr))
+        case cr: UppercaseConformanceRule =>
+          validationsAndFields.update(validateInAndOut(validationsAndFields.fields, cr))
+        case cr: SingleColumnConformanceRule =>
+          validationsAndFields.update(validateInAndOut(validationsAndFields.fields, cr))
+        case cr: FillNullsConformanceRule =>
+          validationsAndFields.update(validateInAndOut(validationsAndFields.fields, cr))
+        case cr: ConcatenationConformanceRule =>
+          validationsAndFields.update(validateMultipleInAndOut(validationsAndFields.fields, cr))
+        case cr: CoalesceConformanceRule =>
+          validationsAndFields.update(validateMultipleInAndOut(validationsAndFields.fields, cr))
+        case cr: LiteralConformanceRule =>
+          validationsAndFields.update(validateOutputColumn(validationsAndFields.fields, cr.outputColumn))
+        case cr: SparkSessionConfConformanceRule =>
+          validationsAndFields.update(validateOutputColumn(validationsAndFields.fields, cr.outputColumn))
+        case cr: DropConformanceRule =>
+          validationsAndFields.update(validateDrop(validationsAndFields.fields, cr.outputColumn))
+        case cr: MappingConformanceRule =>
+          validationsAndFields.update(validateMappingTable(validationsAndFields.fields, cr))
+        case cr =>
+          validationsAndFields.update(unknownRule(validationsAndFields.fields, cr))
+      }
+    }
+
+    ruleValidationsAndFields.mergeAndGetValidations()
+  }
+
+  private def validateDrop(currentColumns: Future[Set[String]],
+                           output: String): RuleValidationsAndFields = {
+    validateInputColumn(currentColumns, output)
+      .update(currentColumns.map(f => f - output))
+  }
+
+  private type WithInAndOut = { def inputColumn: String; def outputColumn: String }
+  private type WithMultipleInAndOut = { def inputColumns: Seq[String]; def outputColumn: String }
+
+  private def validateInAndOut[C <: WithInAndOut](fields: Future[Set[String]],
+                                                  cr: C): RuleValidationsAndFields = {
+    val withOutputValidated = validateOutputColumn(fields, cr.outputColumn)
+    val validationInputFields = validateInputColumn(fields, cr.inputColumn)
+    withOutputValidated.update(validationInputFields)
+  }
+
+  def validateMappingTable(fields: Future[Set[String]],
+                           mt: MappingConformanceRule): RuleValidationsAndFields = {
+    val inputValidation = mt.attributeMappings.values.map { input =>
+      validateInputColumn(fields, input)
+    }
+    val outputValidation = validateOutputColumn(fields, mt.outputColumn)
+
+    inputValidation
+      .foldLeft(RuleValidationsAndFields(Seq.empty, fields))((acc, instance) => acc.update(instance))
+      .update(outputValidation)
+  }
+
+  private def validateMultipleInAndOut[C <: WithMultipleInAndOut](fields: Future[Set[String]],
+                                                                  cr: C): RuleValidationsAndFields = {
+    val inputValidation = cr.inputColumns.map { input =>
+      validateInputColumn(fields, input)
+    }
+    val outputValidation = validateOutputColumn(fields, cr.outputColumn)
+
+    inputValidation
+      .foldLeft(RuleValidationsAndFields(Seq.empty, fields))((acc, instance) => acc.update(instance))
+      .update(outputValidation)
+  }
+
+  private def validateInputColumn(fields: Future[Set[String]],
+                                  input: String): RuleValidationsAndFields = {
+    val validation = Validation()
+
+    val newValidation = for {
+      f <- fields
+    } yield {
+      validation.withErrorIf(
+        !f.contains(input),
+        "item.conformanceRules",
+        s"Input column $input for conformance rule cannot be found"
+      )
+    }
+    RuleValidationsAndFields(Seq(newValidation), fields)
+  }
+
+  private def validateOutputColumn(fields: Future[Set[String]],
+                                   output: String): RuleValidationsAndFields = {
+    val validation = Validation()
+
+    val newValidation = for {
+      f <- fields
+    } yield {
+      validation.withErrorIf(
+        f.contains(output),
+        "item.conformanceRules",
+        s"Output column $output already exists"
+      )
+    }
+
+    RuleValidationsAndFields(Seq(newValidation), fields.map(f => f + output))
+  }
+
+  private def unknownRule(fields: Future[Set[String]],
+                          cr: ConformanceRule): RuleValidationsAndFields = {
+    val validation = Validation()
+      .withError(
+      "item.conformanceRules",
+      s"Validation does not know hot to process rule of type ${cr.getClass}"
+    )
+
+    RuleValidationsAndFields(Seq(Future(validation)), fields)
   }
 
 }
