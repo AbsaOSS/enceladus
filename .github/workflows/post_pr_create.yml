@@ -6,7 +6,7 @@ jobs:
     name: Post PR Create
     steps:
       - name: Post PR Create Action
-        uses: Zejnilovic/post-pr-create-action@v1.3-alpha.2
+        uses: Zejnilovic/post-pr-create-action@v1.3-alpha.1
         with:
           ZENHUB_TOKEN: ${{ secrets.ZENHUB_TOKEN }}
         env:
