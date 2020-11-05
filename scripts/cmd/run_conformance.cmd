@@ -18,6 +18,7 @@ SET PATH=%~dp0;%PATH%
 
 CALL _enceladus_const.cmd
 CALL _enceladus_env.cmd
+CALL _version_file.cmd
 
 SET CLASS=%CONF_CLASS%
 
