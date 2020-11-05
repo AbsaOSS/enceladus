@@ -25,7 +25,7 @@ import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 
 trait StandardizationAndConformanceExecution extends StandardizationExecution
   with ConformanceExecution
-  with CommonJobExecution{
+  with CommonJobExecution {
 
   override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
     val defaultConfig = super[CommonJobExecution].getPathConfig(cmd, dataset, reportVersion)

@@ -17,13 +17,11 @@ package za.co.absa.enceladus.common.config
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
-import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.utils.fs.FileSystemUtils
 
 case class FileSystems(rawFs: FileSystem, publishFs: FileSystem, standardizationFs: FileSystem)
 
 object FileSystems {
-  val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   def fromPathConfig(pathConfig: PathConfig)(implicit hadoopConf: Configuration): FileSystems = FileSystems(
     rawFs = FileSystemUtils.getFileSystemFromPath(pathConfig.rawPath),

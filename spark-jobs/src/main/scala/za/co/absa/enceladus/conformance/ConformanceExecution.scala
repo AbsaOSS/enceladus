@@ -43,7 +43,7 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
-trait ConformanceExecution extends CommonJobExecution{
+trait ConformanceExecution extends CommonJobExecution {
   private val conformanceReader = new ConformancePropertiesProvider
   private val sourceId = SourcePhase.Conformance
 

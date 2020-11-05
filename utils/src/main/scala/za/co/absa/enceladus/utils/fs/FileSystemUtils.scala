@@ -31,9 +31,9 @@ object FileSystemUtils {
 
   /**
    * Will yeild a [[FileSystem]] for path. If path prefix suggest S3, S3 FS is returned, HDFS otherwise.
-   * @param path
-   * @param hadoopConf
-   * @return
+   * @param path full path - used to determinte the kind of FS used (e.g. "s3://bucket1/path/to/file" or "/on/hdfs")
+   * @param hadoopConf hadoop Configuration object
+   * @return FileSystem instance (backed by S3/HDFS)
    */
   def getFileSystemFromPath(path: String)(implicit hadoopConf: Configuration): FileSystem = {
     path.toS3Location match {
@@ -48,7 +48,7 @@ object FileSystemUtils {
     }
   }
 
-  private[fs] val fsUtilsCache = TrieMap[FileSystem, HadoopFsUtils]()
+  private val fsUtilsCache = TrieMap[FileSystem, HadoopFsUtils]()
 
   implicit class FileSystemExt(fs: FileSystem) {
     /**
