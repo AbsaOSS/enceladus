@@ -25,7 +25,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, PathConfigEntry}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -34,6 +34,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
@@ -88,9 +89,9 @@ trait StandardizationExecution extends CommonJobExecution {
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
-      preparationResult.pathCfg.raw.path,
+      preparationResult.pathCfg.raw,
       preparationResult.pathCfg.standardization.path,
-      menasCredentials.username, args.mkString(" "))(spark, rawFsUtils)
+      menasCredentials.username, args.mkString(" "))
 
     dao.getSchema(preparationResult.dataset.schemaName, preparationResult.dataset.schemaVersion)
   }
@@ -100,7 +101,7 @@ trait StandardizationExecution extends CommonJobExecution {
     val initialConfig = super.getPathConfig(cmd, dataset, reportVersion)
     cmd.asInstanceOf[StandardizationConfig].rawPathOverride match {
       case None => initialConfig
-      case Some(providedRawPath) => initialConfig.copy(raw = PathConfigEntry.fromPath(providedRawPath))
+      case Some(providedRawPath) => initialConfig.copy(raw = PathWithFs.fromPath(providedRawPath))
     }
   }
 
@@ -203,11 +204,11 @@ trait StandardizationExecution extends CommonJobExecution {
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
       "std",
-      preparationResult.pathCfg.raw.path,
-      preparationResult.pathCfg.standardization.path,
+      preparationResult.pathCfg.raw,
+      preparationResult.pathCfg.standardization,
       menasCredentials.username,
       args.mkString(" ")
-    )(rawFs.toFsUtils, stdFs.toFsUtils)
+    )
 
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))

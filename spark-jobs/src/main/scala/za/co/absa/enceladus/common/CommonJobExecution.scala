@@ -27,7 +27,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, PathConfigEntry}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -35,7 +35,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
-import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
+import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs, SecureConfig}
 import za.co.absa.enceladus.utils.fs.FileSystemUtils
 import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
@@ -106,7 +106,7 @@ trait CommonJobExecution {
 
   protected def validateOutputPath(pathConfig: PathConfig): Unit
 
-  protected def validateIfPathAlreadyExists(entry: PathConfigEntry): Unit = {
+  protected def validateIfPathAlreadyExists(entry: PathWithFs): Unit = {
     val fsUtils = entry.fileSystem.toFsUtils
     if (fsUtils.exists(entry.path)) {
       throw new IllegalStateException(

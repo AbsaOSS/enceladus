@@ -25,7 +25,7 @@ import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, PathConfigEntry}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
@@ -35,6 +35,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
+import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
@@ -90,7 +91,7 @@ trait ConformanceExecution extends CommonJobExecution {
     val initialConfig = super.getPathConfig(cmd, dataset, reportVersion)
     cmd.asInstanceOf[ConformanceConfig].publishPathOverride match {
       case None => initialConfig
-      case Some(providedPublishPath) => initialConfig.copy(publish = PathConfigEntry.fromPath(providedPublishPath))
+      case Some(providedPublishPath) => initialConfig.copy(publish = PathWithFs.fromPath(providedPublishPath))
     }
   }
 
@@ -143,10 +144,10 @@ trait ConformanceExecution extends CommonJobExecution {
 
     PerformanceMetricTools.addJobInfoToAtumMetadata(
       "conform",
-      preparationResult.pathCfg.standardization.path,
+      preparationResult.pathCfg.standardization,
       preparationResult.pathCfg.publish.path,
       menasCredentials.username, cmdLineArgs
-    )(spark, stdFs.toFsUtils)
+    )
 
     val withPartCols = result
       .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(cmd.reportDate), ReportDateFormat))
@@ -168,10 +169,10 @@ trait ConformanceExecution extends CommonJobExecution {
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
       "conform",
-      preparationResult.pathCfg.standardization.path,
-      preparationResult.pathCfg.publish.path,
+      preparationResult.pathCfg.standardization,
+      preparationResult.pathCfg.publish,
       menasCredentials.username, cmdLineArgs
-    )(stdFs.toFsUtils, publishFs.toFsUtils)
+    )
 
     withPartCols.writeInfoFile(preparationResult.pathCfg.publish.path)(publishFs)
     writePerformanceMetrics(preparationResult.performance, cmd)

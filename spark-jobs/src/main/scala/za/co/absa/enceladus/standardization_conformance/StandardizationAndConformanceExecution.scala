@@ -17,11 +17,12 @@ package za.co.absa.enceladus.standardization_conformance
 
 import org.apache.hadoop.conf.Configuration
 import za.co.absa.enceladus.common.CommonJobExecution
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, PathConfigEntry}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
+import za.co.absa.enceladus.utils.config.PathWithFs
 
 trait StandardizationAndConformanceExecution extends StandardizationExecution
   with ConformanceExecution
@@ -34,8 +35,8 @@ trait StandardizationAndConformanceExecution extends StandardizationExecution
     val rawPathOverride = jobCmd.rawPathOverride
     val publishPathOverride = jobCmd.publishPathOverride
     defaultConfig.copy(
-      raw = PathConfigEntry.fromPath(rawPathOverride.getOrElse(defaultConfig.raw.path)),
-      publish = PathConfigEntry.fromPath(publishPathOverride.getOrElse(defaultConfig.publish.path))
+      raw = PathWithFs.fromPath(rawPathOverride.getOrElse(defaultConfig.raw.path)),
+      publish = PathWithFs.fromPath(publishPathOverride.getOrElse(defaultConfig.publish.path))
     )
   }
 

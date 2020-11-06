@@ -16,8 +16,7 @@
 package za.co.absa.enceladus.common.config
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
-import za.co.absa.enceladus.utils.fs.FileSystemUtils
+import za.co.absa.enceladus.utils.config.PathWithFs
 
 /**
  *
@@ -26,23 +25,17 @@ import za.co.absa.enceladus.utils.fs.FileSystemUtils
  * @param standardization In case of StandardizationJob and ConformanceJob it should be None and for
  *                            StandardizationConformanceJob it should represent the intermediate standardization path
  */
-case class PathConfig(raw: PathConfigEntry,
-                      publish: PathConfigEntry,
-                      standardization: PathConfigEntry)
+case class PathConfig(raw: PathWithFs,
+                      publish: PathWithFs,
+                      standardization: PathWithFs)
 
 object PathConfig {
   def fromPaths(rawPath: String, publishPath: String, standardizationPath: String)
                (implicit hadoopConf: Configuration): PathConfig =
     PathConfig(
-      PathConfigEntry.fromPath(rawPath),
-      PathConfigEntry.fromPath(publishPath),
-      PathConfigEntry.fromPath(standardizationPath)
+      PathWithFs.fromPath(rawPath),
+      PathWithFs.fromPath(publishPath),
+      PathWithFs.fromPath(standardizationPath)
     )
 }
 
-case class PathConfigEntry(path: String, fileSystem: FileSystem)
-
-object PathConfigEntry {
-  def fromPath(path: String)(implicit hadoopConf: Configuration): PathConfigEntry =
-    PathConfigEntry(path, FileSystemUtils.getFileSystemFromPath(path))
-}
