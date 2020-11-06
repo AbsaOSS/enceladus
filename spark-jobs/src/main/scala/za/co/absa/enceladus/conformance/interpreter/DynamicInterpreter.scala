@@ -32,10 +32,10 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.explode.ExplosionContext
+import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.udf.UDFLibrary
-import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 
 case class DynamicInterpreter(implicit inputFs: FileSystem) {
   private val log = LoggerFactory.getLogger(this.getClass)
@@ -271,7 +271,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     val mappingTableDef = ictx.dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
     val mappingTablePath = PartitioningUtils.getPartitionedPathName(mappingTableDef.hdfsPath,
       ictx.progArgs.reportDate)
-    val mappingTableSize = inputFs.toFsUtils.getDirectorySizeNoHidden(mappingTablePath)
+    val mappingTableSize = HadoopFsUtils.getOrCreate(inputFs).getDirectorySizeNoHidden(mappingTablePath)
     (mappingTableSize / (1024 * 1024)).toInt
   }
 

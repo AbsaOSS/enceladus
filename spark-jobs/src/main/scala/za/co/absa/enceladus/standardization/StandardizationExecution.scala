@@ -19,7 +19,6 @@ import java.io.{PrintWriter, StringWriter}
 import java.util.UUID
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
@@ -35,7 +34,6 @@ import za.co.absa.enceladus.standardization.config.{StandardizationConfig, Stand
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.config.PathWithFs
-import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
@@ -55,7 +53,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                           cmd: StandardizationConfigParser[T],
                                           spark: SparkSession): StructType = {
     val rawFs = preparationResult.pathCfg.raw.fileSystem
-    val rawFsUtils = rawFs.toFsUtils
+    val rawFsUtils = HadoopFsUtils.getOrCreate(rawFs)
 
     val stdDirSize = rawFsUtils.getDirectorySize(preparationResult.pathCfg.raw.path)
     preparationResult.performance.startMeasurement(stdDirSize)
@@ -195,7 +193,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
-    val stdDirSize = stdFs.toFsUtils.getDirectorySize(preparationResult.pathCfg.standardization.path)
+    val stdDirSize = HadoopFsUtils.getOrCreate(stdFs).getDirectorySize(preparationResult.pathCfg.standardization.path)
     preparationResult.performance.finishMeasurement(stdDirSize, recordCount)
 
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
@@ -221,7 +219,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
   private def ensureSplittable(df: DataFrame, input: PathWithFs, schema: StructType)
                               (implicit spark: SparkSession): DataFrame = {
-    implicit val fsUtils = input.fileSystem.toFsUtils
+    implicit val fsUtils = HadoopFsUtils.getOrCreate(input.fileSystem)
     if (fsUtils.isNonSplittable(input.path)) {
       convertToSplittable(df, schema)
     } else {

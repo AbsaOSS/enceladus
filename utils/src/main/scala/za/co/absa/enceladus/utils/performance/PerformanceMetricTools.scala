@@ -21,7 +21,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
+import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
@@ -53,7 +53,7 @@ object PerformanceMetricTools {
     // The number of executors minus the driver
     val numberOfExecutors = sc.getExecutorMemoryStatus.keys.size - 1
 
-    val inputFsUtils = input.fileSystem.toFsUtils
+    val inputFsUtils = HadoopFsUtils.getOrCreate(input.fileSystem)
 
     // Directory sizes and size ratio
     val inputDirSize = inputFsUtils.getDirectorySize(input.path)
@@ -100,8 +100,8 @@ object PerformanceMetricTools {
                                           cmdLineArgs: String
                                          ): Unit = {
 
-    val inputFsUtils = input.fileSystem.toFsUtils
-    val outputFsUtils = output.fileSystem.toFsUtils
+    val inputFsUtils = HadoopFsUtils.getOrCreate(input.fileSystem)
+    val outputFsUtils = HadoopFsUtils.getOrCreate(output.fileSystem)
 
     // Directory sizes and size ratio
     val inputDirSize = inputFsUtils.getDirectorySize(input.path)

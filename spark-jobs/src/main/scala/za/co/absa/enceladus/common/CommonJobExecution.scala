@@ -36,8 +36,7 @@ import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs, SecureConfig}
-import za.co.absa.enceladus.utils.fs.FileSystemUtils
-import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
+import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
@@ -107,7 +106,7 @@ trait CommonJobExecution {
   protected def validateOutputPath(pathConfig: PathConfig): Unit
 
   protected def validateIfPathAlreadyExists(entry: PathWithFs): Unit = {
-    val fsUtils = entry.fileSystem.toFsUtils
+    val fsUtils = HadoopFsUtils.getOrCreate(entry.fileSystem)
     if (fsUtils.exists(entry.path)) {
       throw new IllegalStateException(
         s"Path ${entry.path} already exists. Increment the run version, or delete ${entry.path}"
@@ -245,11 +244,12 @@ trait CommonJobExecution {
     jobConfig.reportVersion match {
       case Some(version) => version
       case None =>
-        import FileSystemUtils.FileSystemExt
 
-        // publishFs for this specific feature (needed for missing reportVersion until reusable common "PathConfig" with FS objects is established)
-        implicit val tempPublishFs: FileSystem = FileSystemUtils.getFileSystemFromPath(dataset.hdfsPublishPath)
-        val newVersion = tempPublishFs.toFsUtils.getLatestVersion(dataset.hdfsPublishPath, jobConfig.reportDate) + 1
+        // publishFs for this specific feature (needed for missing reportVersion until reusable
+        // common "PathConfig" with FS objects is established)
+        val tempPublishFs: FileSystem = FileSystemUtils.getFileSystemFromPath(dataset.hdfsPublishPath)
+        val fsUtils = HadoopFsUtils.getOrCreate(tempPublishFs)
+        val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, jobConfig.reportDate) + 1
         log.warn(s"Report version not provided, inferred report version: $newVersion")
         log.warn("This is an EXPERIMENTAL feature.")
         log.warn(" -> It can lead to issues when running multiple jobs on a dataset concurrently.")

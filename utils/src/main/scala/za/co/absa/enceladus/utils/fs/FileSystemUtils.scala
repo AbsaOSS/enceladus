@@ -23,8 +23,6 @@ import org.apache.hadoop.fs.FileSystem
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.utils.S3Utils.StringS3LocationExt
 
-import scala.collection.concurrent.TrieMap
-
 object FileSystemUtils {
 
   val log: Logger = LoggerFactory.getLogger(this.getClass)
@@ -48,22 +46,6 @@ object FileSystemUtils {
     }
   }
 
-  private val fsUtilsCache = TrieMap[FileSystem, HadoopFsUtils]()
-
-  implicit class FileSystemExt(fs: FileSystem) {
-    /**
-     * Given the FileSystem object `fs` that this method is called on,
-     * the appropriate HadoopFsUtils is either newly created or returned form cache.
-     * @return
-     */
-    def toFsUtils: HadoopFsUtils = {
-      fsUtilsCache.getOrElseUpdate(fs, {
-        log.debug(s"reusing cached fsUtils for FS ${fs.getUri} / ${fs.toString}")
-        new HadoopFsUtils()(fs)}
-
-      )
-    }
-  }
 
 }
 

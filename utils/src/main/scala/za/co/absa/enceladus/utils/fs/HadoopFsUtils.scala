@@ -21,14 +21,36 @@ import java.net.ConnectException
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.LogManager
+import za.co.absa.enceladus.utils.fs.FileSystemUtils.log
 
+import scala.collection.concurrent.TrieMap
 import scala.util.Try
+
+object HadoopFsUtils {
+  private val fsUtilsCache = TrieMap[FileSystem, HadoopFsUtils]()
+
+  /**
+   * Given the FileSystem object `fs`, an appropriate HadoopFsUtils is either
+   * newly created or returned form cache.
+   *
+   * @return cached [[HadoopFsUtils]] instance
+   */
+  def getOrCreate(fs: FileSystem): HadoopFsUtils = {
+    fsUtilsCache.getOrElseUpdate(fs, {
+      log.debug(s"reusing cached fsUtils for FS ${fs.getUri} / ${fs.toString}")
+      new HadoopFsUtils()(fs)
+    })
+
+  }
+}
 
 /**
  * A set of functions to help with the date partitioning and version control
+ *
+ * This class has a private constructor - to achieve instance cache control - use
+ * [[za.co.absa.enceladus.utils.fs.HadoopFsUtils#getOrCreate(org.apache.hadoop.fs.FileSystem)]]
  */
-
-class HadoopFsUtils()(implicit fs: FileSystem) extends DistributedFsUtils {
+class HadoopFsUtils private()(implicit fs: FileSystem) extends DistributedFsUtils {
 
   private val log = LogManager.getLogger("enceladus.utils.fs.HadoopFsUtils")
 
@@ -71,7 +93,6 @@ class HadoopFsUtils()(implicit fs: FileSystem) extends DistributedFsUtils {
   }
 
 
-
   /**
    * Check if a given path exists on HDFS
    */
@@ -99,7 +120,7 @@ class HadoopFsUtils()(implicit fs: FileSystem) extends DistributedFsUtils {
         exists(path)
       } catch {
         case e: IllegalArgumentException => false
-        case e: ConnectException  => false
+        case e: ConnectException => false
       }
       if (hdfs) {
         log.debug(s"HDFS file $path exists")
@@ -111,12 +132,12 @@ class HadoopFsUtils()(implicit fs: FileSystem) extends DistributedFsUtils {
   }
 
   /**
-    * Checks if a file is located on HDFS or the local file system.
-    * If the file is in HDFS, it is copied to a temporary location.
-    *
-    * @param path A path to a file.  Can be either local or HDFS location.
-    * @return A path to a file in the local filesystem.
-    */
+   * Checks if a file is located on HDFS or the local file system.
+   * If the file is in HDFS, it is copied to a temporary location.
+   *
+   * @param path A path to a file.  Can be either local or HDFS location.
+   * @return A path to a file in the local filesystem.
+   */
   @throws[FileNotFoundException]
   def getLocalPathToFileOrCopyToLocal(path: String): String = {
     val absolutePath = LocalFsUtils.replaceHome(path)
@@ -130,12 +151,12 @@ class HadoopFsUtils()(implicit fs: FileSystem) extends DistributedFsUtils {
   }
 
   /**
-    * Reads a file fully and returns its content.
-    * The file can be either in a HDFS or in a local file system.
-    *
-    * @param path A path to a file.  Can be either local or HDFS location.
-    * @return The file's content.
-    */
+   * Reads a file fully and returns its content.
+   * The file can be either in a HDFS or in a local file system.
+   *
+   * @param path A path to a file.  Can be either local or HDFS location.
+   * @return The file's content.
+   */
   @throws[FileNotFoundException]
   def getLocalOrDistributedFileContent(path: String): String = {
     val absolutePath = LocalFsUtils.replaceHome(path)
@@ -182,11 +203,11 @@ class HadoopFsUtils()(implicit fs: FileSystem) extends DistributedFsUtils {
   }
 
   /**
-    * Returns directory size in bytes, skipping hidden files and directories (starting from '_' or '.').
-    *
-    * @param path A path to a directory or a file.
-    * @return Directory size in bytes
-    */
+   * Returns directory size in bytes, skipping hidden files and directories (starting from '_' or '.').
+   *
+   * @param path A path to a directory or a file.
+   * @return Directory size in bytes
+   */
   def getDirectorySizeNoHidden(path: String): Long = {
     def getDirSizeHelper(f: Path): Long = {
       var totalLength = 0L
@@ -235,8 +256,8 @@ class HadoopFsUtils()(implicit fs: FileSystem) extends DistributedFsUtils {
   }
 
   /**
-    * Deletes a HDFS directory and all its contents recursively
-    */
+   * Deletes a HDFS directory and all its contents recursively
+   */
   def deleteDirectoryRecursively(path: String): Unit = {
     log.info(s"Deleting '$path' recursively...")
     val hdfsPath = new Path(path)
@@ -255,7 +276,7 @@ class HadoopFsUtils()(implicit fs: FileSystem) extends DistributedFsUtils {
    * Finds the latest version given a publish folder on HDFS
    *
    * @param publishPath The HDFS path to the publish folder containing versions
-   * @param reportDate The string representation of the report date used to infer the latest version
+   * @param reportDate  The string representation of the report date used to infer the latest version
    * @return the latest version or 0 in case no versions exist
    */
   def getLatestVersion(publishPath: String, reportDate: String): Int = {
@@ -267,7 +288,7 @@ class HadoopFsUtils()(implicit fs: FileSystem) extends DistributedFsUtils {
         val versions = files.filter(_.isDirectory()).map({
           file => file.getPath.getName.replace("enceladus_info_version=", "").toInt
         })
-        if(versions.isEmpty) 0 else versions.max
+        if (versions.isEmpty) 0 else versions.max
       case None => 0
     }
   }

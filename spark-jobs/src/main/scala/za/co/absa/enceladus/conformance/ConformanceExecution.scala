@@ -36,7 +36,7 @@ import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.config.PathWithFs
-import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
+import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
@@ -54,7 +54,7 @@ trait ConformanceExecution extends CommonJobExecution {
                                       cmd: ConformanceConfigParser[T],
                                       spark: SparkSession): Unit = {
 
-    val stdFsUtils = preparationResult.pathCfg.standardization.fileSystem.toFsUtils
+    val stdFsUtils = HadoopFsUtils.getOrCreate(preparationResult.pathCfg.standardization.fileSystem)
 
     val stdDirSize = stdFsUtils.getDirectorySize(preparationResult.pathCfg.standardization.path)
     preparationResult.performance.startMeasurement(stdDirSize)
@@ -164,7 +164,7 @@ trait ConformanceExecution extends CommonJobExecution {
 
     withPartCols.write.parquet(preparationResult.pathCfg.publish.path)
 
-    val publishDirSize = publishFs.toFsUtils.getDirectorySize(preparationResult.pathCfg.publish.path)
+    val publishDirSize = HadoopFsUtils.getOrCreate(publishFs).getDirectorySize(preparationResult.pathCfg.publish.path)
     preparationResult.performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
@@ -178,7 +178,7 @@ trait ConformanceExecution extends CommonJobExecution {
     writePerformanceMetrics(preparationResult.performance, cmd)
 
     if (conformanceReader.isAutocleanStdFolderEnabled()) {
-      stdFs.toFsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardization.path)
+      HadoopFsUtils.getOrCreate(stdFs).deleteDirectoryRecursively(preparationResult.pathCfg.standardization.path)
     }
     log.info(s"$sourceId finished successfully")
   }
