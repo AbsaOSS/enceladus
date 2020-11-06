@@ -39,8 +39,7 @@ object StandardizationJob extends StandardizationExecution {
 
     val preparationResult = prepareJob()
     val schema =  prepareStandardization(args, menasCredentials, preparationResult)
-    implicit val rawFs: FileSystem = preparationResult.pathCfg.raw.fileSystem
-    val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.raw.path, preparationResult.dataset)
+    val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.raw, preparationResult.dataset)
 
     try {
       val result = standardize(inputData, schema, cmd)

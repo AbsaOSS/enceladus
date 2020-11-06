@@ -57,8 +57,6 @@ trait StandardizationExecution extends CommonJobExecution {
     val rawFs = preparationResult.pathCfg.raw.fileSystem
     val rawFsUtils = rawFs.toFsUtils
 
-    val stdFs = preparationResult.pathCfg.standardization.fileSystem
-
     val stdDirSize = rawFsUtils.getDirectorySize(preparationResult.pathCfg.raw.path)
     preparationResult.performance.startMeasurement(stdDirSize)
 
@@ -112,10 +110,9 @@ trait StandardizationExecution extends CommonJobExecution {
 
   protected def readStandardizationInputData[T](schema: StructType,
                                                 cmd: StandardizationConfigParser[T],
-                                                path: String,
+                                                rawInput: PathWithFs,
                                                 dataset: Dataset)
                                                (implicit spark: SparkSession,
-                                                rawFs: FileSystem,
                                                 dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationPropertiesProvider()
@@ -127,9 +124,9 @@ trait StandardizationExecution extends CommonJobExecution {
         val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, optColumnNameOfCorruptRecord)
         dfReaderConfigured.schema(inputSchema)
     }
-    val dfWithSchema = readerWithOptSchema.load(s"$path/*")
+    val dfWithSchema = readerWithOptSchema.load(s"${rawInput.path}/*")
 
-    ensureSplittable(dfWithSchema, path, schema)(spark, rawFs.toFsUtils)
+    ensureSplittable(dfWithSchema, rawInput, schema)
   }
 
   private def getColumnNameOfCorruptRecord[R](schema: StructType, cmd: StandardizationConfigParser[R])
@@ -222,9 +219,10 @@ trait StandardizationExecution extends CommonJobExecution {
 
   //scalastyle:off parameter.number
 
-  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)
-                              (implicit spark: SparkSession, fsUtils: DistributedFsUtils): DataFrame = {
-    if (fsUtils.isNonSplittable(path)) {
+  private def ensureSplittable(df: DataFrame, input: PathWithFs, schema: StructType)
+                              (implicit spark: SparkSession): DataFrame = {
+    implicit val fsUtils = input.fileSystem.toFsUtils
+    if (fsUtils.isNonSplittable(input.path)) {
       convertToSplittable(df, schema)
     } else {
       df
