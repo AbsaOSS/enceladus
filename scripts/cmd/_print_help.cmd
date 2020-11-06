@@ -14,19 +14,19 @@
 :: limitations under the License.
 
 ECHO Enceladus Helper Scripts
-ECHO.
+ECHO/
 ECHO Usage: run_[job-name].cmd [script-specific-options] [spark-specific-options] [job-specific-options]
-ECHO.
+ECHO/
 ECHO job-name:
 ECHO   standardization                 To run a Standardization only script
 ECHO   conformance                     To run a Conformance only script
 ECHO   standardization_conformance     To run a joint Standardization and Conformance script
-ECHO.
+ECHO/
 ECHO script-specific-options:
 ECHO   --help             To print this message
 ECHO   --asynchronous     To run the job in an asynchronous mode. The script will exit after launching the job. Works only in `cluster` deploy mode
 ECHO   --dry-run          Show spark-submit command line without actually running it
-ECHO.
+ECHO/
 ECHO spark-specific-options:
 ECHO !!!WARNING - set these only if you know what you are doing. This could for example disable DRA
 ECHO   --num-executors NUM                      Number of executors to launch.
@@ -41,7 +41,7 @@ ECHO   --conf-spark-executor-memoryOverhead     Amount of non-heap memory to be 
 ECHO   --conf-spark-memory-fraction NUM         Fraction of the heap space reserved for execution and storage regions (default 0.6)
 ECHO   --jar                                    Custom path to Enceladus's SparkJobs jar
 ECHO   --class CLASS_NAME                       Application's main class.
-ECHO.
+ECHO/
 ECHO job-specific-options:
 ECHO   Running the JAR --help to print all job specific options
 
