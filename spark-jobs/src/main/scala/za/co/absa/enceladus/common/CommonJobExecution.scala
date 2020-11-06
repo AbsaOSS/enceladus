@@ -27,7 +27,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
-import za.co.absa.enceladus.common.config.{FileSystems, JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, PathConfigEntry}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -36,7 +36,8 @@ import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
-import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, FileSystemUtils}
+import za.co.absa.enceladus.utils.fs.FileSystemUtils
+import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
@@ -51,7 +52,6 @@ trait CommonJobExecution {
   protected case class PreparationResult(dataset: Dataset,
                                          reportVersion: Int,
                                          pathCfg: PathConfig,
-                                         fileSystems: FileSystems,
                                          performance: PerformanceMeasurer)
 
   TimeZoneNormalizer.normalizeJVMTimeZone()
@@ -91,9 +91,8 @@ trait CommonJobExecution {
     val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg: PathConfig = getPathConfig(cmd, dataset, reportVersion)
-    val fileSystems: FileSystems = FileSystems.fromPathConfig(pathCfg)
 
-    validateOutputPath(pathCfg)(fileSystems)
+    validateOutputPath(pathCfg)
 
     // Enable Spline
     import za.co.absa.spline.harvester.SparkLineageInitializer._
@@ -102,15 +101,16 @@ trait CommonJobExecution {
     // Enable non-default persistence storage level if provided in the command line
     cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)
 
-    PreparationResult(dataset, reportVersion, pathCfg, fileSystems, new PerformanceMeasurer(spark.sparkContext.appName))
+    PreparationResult(dataset, reportVersion, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
   }
 
-  protected def validateOutputPath(pathConfig: PathConfig)(implicit fileSystems: FileSystems): Unit
+  protected def validateOutputPath(pathConfig: PathConfig): Unit
 
-  protected def validateIfPathAlreadyExists(path: String)(implicit fsUtils: DistributedFsUtils): Unit = {
-    if (fsUtils.exists(path)) {
+  protected def validateIfPathAlreadyExists(entry: PathConfigEntry): Unit = {
+    val fsUtils = entry.fileSystem.toFsUtils
+    if (fsUtils.exists(entry.path)) {
       throw new IllegalStateException(
-        s"Path $path already exists. Increment the run version, or delete $path"
+        s"Path ${entry.path} already exists. Increment the run version, or delete ${entry.path}"
       )
     }
   }
@@ -118,8 +118,8 @@ trait CommonJobExecution {
   protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
                                     (implicit spark: SparkSession): Unit = {
     val outputPath = sourcePhase match {
-      case Standardization => preparationResult.pathCfg.standardizationPath
-      case _ => preparationResult.pathCfg.publishPath
+      case Standardization => preparationResult.pathCfg.standardization.path
+      case _ => preparationResult.pathCfg.publish.path
     }
 
     log.info(s"rereading outputPath $outputPath to run postProcessing")
@@ -161,12 +161,14 @@ trait CommonJobExecution {
     }
   }
 
-  protected def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
-    PathConfig(
-      rawPath = buildRawPath(cmd, dataset, reportVersion),
-      publishPath = buildPublishPath(cmd, dataset, reportVersion),
-      standardizationPath = getStandardizationPath(cmd, reportVersion)
-    )
+  protected def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int)
+                                (implicit hadoopConf: Configuration): PathConfig = {
+
+    val rawPath = buildRawPath(cmd, dataset, reportVersion)
+    val publishPath = buildPublishPath(cmd, dataset, reportVersion)
+    val standardizationPath = getStandardizationPath(cmd, reportVersion)
+
+    PathConfig.fromPaths(rawPath, publishPath, standardizationPath)
   }
 
   private def buildPublishPath[T](cmd: JobConfigParser[T], ds: Dataset, reportVersion: Int): String = {
@@ -245,7 +247,7 @@ trait CommonJobExecution {
       case None =>
         import FileSystemUtils.FileSystemExt
 
-        // publishFs for this specific feature (needed for missing reportVersion until reusable common FileSystems object is established)
+        // publishFs for this specific feature (needed for missing reportVersion until reusable common "PathConfig" with FS objects is established)
         implicit val tempPublishFs: FileSystem = FileSystemUtils.getFileSystemFromPath(dataset.hdfsPublishPath)
         val newVersion = tempPublishFs.toFsUtils.getLatestVersion(dataset.hdfsPublishPath, jobConfig.reportDate) + 1
         log.warn(s"Report version not provided, inferred report version: $newVersion")

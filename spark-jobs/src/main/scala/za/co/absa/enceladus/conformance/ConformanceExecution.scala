@@ -17,6 +17,7 @@ package za.co.absa.enceladus.conformance
 
 import java.io.{PrintWriter, StringWriter}
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
@@ -24,7 +25,7 @@ import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.config.{FileSystems, JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, PathConfigEntry}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
@@ -52,13 +53,13 @@ trait ConformanceExecution extends CommonJobExecution {
                                       cmd: ConformanceConfigParser[T],
                                       spark: SparkSession): Unit = {
 
-    val stdFsUtils = preparationResult.fileSystems.standardizationFs.toFsUtils
+    val stdFsUtils = preparationResult.pathCfg.standardization.fileSystem.toFsUtils
 
-    val stdDirSize = stdFsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
+    val stdDirSize = stdFsUtils.getDirectorySize(preparationResult.pathCfg.standardization.path)
     preparationResult.performance.startMeasurement(stdDirSize)
 
-    log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
-    log.info(s"publish path: ${preparationResult.pathCfg.publishPath}")
+    log.info(s"standardization path: ${preparationResult.pathCfg.standardization.path}")
+    log.info(s"publish path: ${preparationResult.pathCfg.publish.path}")
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
@@ -69,7 +70,7 @@ trait ConformanceExecution extends CommonJobExecution {
     }
 
     // InputPath is standardizationPath in the combined job
-    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardizationPath}/_INFO")
+    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardization.path}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
     // Enable control framework performance optimization for pipeline-like jobs
@@ -84,21 +85,22 @@ trait ConformanceExecution extends CommonJobExecution {
       preparationResult.reportVersion)
   }
 
-  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int)
+                               (implicit hadoopConf: Configuration): PathConfig = {
     val initialConfig = super.getPathConfig(cmd, dataset, reportVersion)
     cmd.asInstanceOf[ConformanceConfig].publishPathOverride match {
       case None => initialConfig
-      case Some(providedRawPath) => initialConfig.copy(publishPath = providedRawPath)
+      case Some(providedPublishPath) => initialConfig.copy(publish = PathConfigEntry.fromPath(providedPublishPath))
     }
   }
 
-  override def validateOutputPath(pathConfig: PathConfig)(implicit fileSystems: FileSystems): Unit = {
+  override def validateOutputPath(pathConfig: PathConfig): Unit = {
     // Conformance output is validated in the publish FS
-    validateIfPathAlreadyExists(pathConfig.publishPath)(fileSystems.publishFs.toFsUtils)
+    validateIfPathAlreadyExists(pathConfig.publish)
   }
 
   protected def readConformanceInputData(pathCfg: PathConfig)(implicit spark: SparkSession): DataFrame = {
-    spark.read.parquet(pathCfg.standardizationPath)
+    spark.read.parquet(pathCfg.standardization.path)
   }
 
   protected def conform[T](inputData: DataFrame, preparationResult: PreparationResult)
@@ -106,7 +108,7 @@ trait ConformanceExecution extends CommonJobExecution {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
-    implicit val stdFs = preparationResult.fileSystems.standardizationFs
+    implicit val stdFs = preparationResult.pathCfg.standardization.fileSystem
 
     Try {
       handleControlInfoValidation()
@@ -136,13 +138,13 @@ trait ConformanceExecution extends CommonJobExecution {
                                            (implicit spark: SparkSession,
                                             cmd: ConformanceConfigParser[T]): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
-    val stdFs = preparationResult.fileSystems.standardizationFs
-    val publishFs = preparationResult.fileSystems.publishFs
+    val stdFs = preparationResult.pathCfg.standardization.fileSystem
+    val publishFs = preparationResult.pathCfg.publish.fileSystem
 
     PerformanceMetricTools.addJobInfoToAtumMetadata(
       "conform",
-      preparationResult.pathCfg.standardizationPath,
-      preparationResult.pathCfg.publishPath,
+      preparationResult.pathCfg.standardization.path,
+      preparationResult.pathCfg.publish.path,
       menasCredentials.username, cmdLineArgs
     )(spark, stdFs.toFsUtils)
 
@@ -159,23 +161,23 @@ trait ConformanceExecution extends CommonJobExecution {
       handleEmptyOutput(SourcePhase.Conformance)
     }
 
-    withPartCols.write.parquet(preparationResult.pathCfg.publishPath)
+    withPartCols.write.parquet(preparationResult.pathCfg.publish.path)
 
-    val publishDirSize = publishFs.toFsUtils.getDirectorySize(preparationResult.pathCfg.publishPath)
+    val publishDirSize = publishFs.toFsUtils.getDirectorySize(preparationResult.pathCfg.publish.path)
     preparationResult.performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
       "conform",
-      preparationResult.pathCfg.standardizationPath,
-      preparationResult.pathCfg.publishPath,
+      preparationResult.pathCfg.standardization.path,
+      preparationResult.pathCfg.publish.path,
       menasCredentials.username, cmdLineArgs
     )(stdFs.toFsUtils, publishFs.toFsUtils)
 
-    withPartCols.writeInfoFile(preparationResult.pathCfg.publishPath)(publishFs)
+    withPartCols.writeInfoFile(preparationResult.pathCfg.publish.path)(publishFs)
     writePerformanceMetrics(preparationResult.performance, cmd)
 
     if (conformanceReader.isAutocleanStdFolderEnabled()) {
-      stdFs.toFsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardizationPath)
+      stdFs.toFsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardization.path)
     }
     log.info(s"$sourceId finished successfully")
   }

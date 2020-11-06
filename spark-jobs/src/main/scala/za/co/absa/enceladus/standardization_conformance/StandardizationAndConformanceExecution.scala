@@ -15,32 +15,35 @@
 
 package za.co.absa.enceladus.standardization_conformance
 
+import org.apache.hadoop.conf.Configuration
 import za.co.absa.enceladus.common.CommonJobExecution
-import za.co.absa.enceladus.common.config.{FileSystems, JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, PathConfigEntry}
 import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
-import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 
 trait StandardizationAndConformanceExecution extends StandardizationExecution
   with ConformanceExecution
   with CommonJobExecution {
 
-  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int)
+                               (implicit hadoopConf: Configuration): PathConfig = {
     val defaultConfig = super[CommonJobExecution].getPathConfig(cmd, dataset, reportVersion)
     val jobCmd = cmd.asInstanceOf[StandardizationConformanceConfig]
     val rawPathOverride = jobCmd.rawPathOverride
     val publishPathOverride = jobCmd.publishPathOverride
-    defaultConfig.copy(rawPath = rawPathOverride.getOrElse(defaultConfig.rawPath),
-      publishPath = publishPathOverride.getOrElse(defaultConfig.publishPath))
+    defaultConfig.copy(
+      raw = PathConfigEntry.fromPath(rawPathOverride.getOrElse(defaultConfig.raw.path)),
+      publish = PathConfigEntry.fromPath(publishPathOverride.getOrElse(defaultConfig.publish.path))
+    )
   }
 
-  override def validateOutputPath(pathConfig: PathConfig)(implicit fileSystems: FileSystems): Unit = {
+  override def validateOutputPath(pathConfig: PathConfig): Unit = {
     // Std output is validated in the std FS
-    validateIfPathAlreadyExists(pathConfig.standardizationPath)(fileSystems.standardizationFs.toFsUtils)
+    validateIfPathAlreadyExists(pathConfig.standardization)
 
     // publish output is validated in the publish FS
-    validateIfPathAlreadyExists(pathConfig.publishPath)(fileSystems.publishFs.toFsUtils)
+    validateIfPathAlreadyExists(pathConfig.publish)
   }
 }

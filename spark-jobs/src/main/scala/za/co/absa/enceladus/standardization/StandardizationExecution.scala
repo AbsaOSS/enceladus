@@ -18,12 +18,14 @@ package za.co.absa.enceladus.standardization
 import java.io.{PrintWriter, StringWriter}
 import java.util.UUID
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.{FileSystems, JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, PathConfigEntry}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -32,14 +34,13 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
-import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
-import org.apache.hadoop.fs.FileSystem
 
 import scala.util.control.NonFatal
 
@@ -52,21 +53,21 @@ trait StandardizationExecution extends CommonJobExecution {
                                          (implicit dao: MenasDAO,
                                           cmd: StandardizationConfigParser[T],
                                           spark: SparkSession): StructType = {
-    val rawFs = preparationResult.fileSystems.rawFs
+    val rawFs = preparationResult.pathCfg.raw.fileSystem
     val rawFsUtils = rawFs.toFsUtils
 
-    val stdFs = preparationResult.fileSystems.standardizationFs
+    val stdFs = preparationResult.pathCfg.standardization.fileSystem
 
-    val stdDirSize = rawFsUtils.getDirectorySize(preparationResult.pathCfg.rawPath)
+    val stdDirSize = rawFsUtils.getDirectorySize(preparationResult.pathCfg.raw.path)
     preparationResult.performance.startMeasurement(stdDirSize)
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-    spark.enableControlMeasuresTracking(sourceInfoFile = s"${preparationResult.pathCfg.rawPath}/_INFO")
+    spark.enableControlMeasuresTracking(sourceInfoFile = s"${preparationResult.pathCfg.raw.path}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
-    log.info(s"raw path: ${preparationResult.pathCfg.rawPath}")
-    log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
+    log.info(s"raw path: ${preparationResult.pathCfg.raw.path}")
+    log.info(s"standardization path: ${preparationResult.pathCfg.standardization.path}")
 
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
@@ -87,24 +88,25 @@ trait StandardizationExecution extends CommonJobExecution {
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
-      preparationResult.pathCfg.rawPath,
-      preparationResult.pathCfg.standardizationPath,
+      preparationResult.pathCfg.raw.path,
+      preparationResult.pathCfg.standardization.path,
       menasCredentials.username, args.mkString(" "))(spark, rawFsUtils)
 
     dao.getSchema(preparationResult.dataset.schemaName, preparationResult.dataset.schemaVersion)
   }
 
-  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int)
+                               (implicit hadoopConf: Configuration): PathConfig = {
     val initialConfig = super.getPathConfig(cmd, dataset, reportVersion)
     cmd.asInstanceOf[StandardizationConfig].rawPathOverride match {
       case None => initialConfig
-      case Some(providedRawPath) => initialConfig.copy(rawPath = providedRawPath)
+      case Some(providedRawPath) => initialConfig.copy(raw = PathConfigEntry.fromPath(providedRawPath))
     }
   }
 
-  override def validateOutputPath(pathConfig: PathConfig)(implicit fileSystems: FileSystems): Unit = {
+  override def validateOutputPath(pathConfig: PathConfig): Unit = {
     // Std output is validated in the std FS
-    validateIfPathAlreadyExists(pathConfig.standardizationPath)(fileSystems.standardizationFs.toFsUtils)
+    validateIfPathAlreadyExists(pathConfig.standardization)
   }
 
   protected def readStandardizationInputData[T](schema: StructType,
@@ -132,8 +134,6 @@ trait StandardizationExecution extends CommonJobExecution {
   private def getColumnNameOfCorruptRecord[R](schema: StructType, cmd: StandardizationConfigParser[R])
                                              (implicit spark: SparkSession): Option[String] = {
     // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
-
-    import AtumImplicits.DataSetWrapper
     val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width") || cmd.failOnInputNotPerSchema) {
       None
@@ -173,8 +173,8 @@ trait StandardizationExecution extends CommonJobExecution {
                                                (implicit spark: SparkSession): DataFrame = {
     import za.co.absa.atum.AtumImplicits._
 
-    val rawFs = preparationResult.fileSystems.rawFs
-    val stdFs = preparationResult.fileSystems.standardizationFs
+    val rawFs = preparationResult.pathCfg.raw.fileSystem
+    val stdFs = preparationResult.pathCfg.standardization.fileSystem
 
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {
@@ -192,19 +192,19 @@ trait StandardizationExecution extends CommonJobExecution {
       handleEmptyOutput(sourceId)
     }
 
-    log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardizationPath}")
-    standardizedDF.write.parquet(preparationResult.pathCfg.standardizationPath)
+    log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardization.path}")
+    standardizedDF.write.parquet(preparationResult.pathCfg.standardization.path)
 
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
-    val stdDirSize = stdFs.toFsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
+    val stdDirSize = stdFs.toFsUtils.getDirectorySize(preparationResult.pathCfg.standardization.path)
     preparationResult.performance.finishMeasurement(stdDirSize, recordCount)
 
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
       "std",
-      preparationResult.pathCfg.rawPath,
-      preparationResult.pathCfg.standardizationPath,
+      preparationResult.pathCfg.raw.path,
+      preparationResult.pathCfg.standardization.path,
       menasCredentials.username,
       args.mkString(" ")
     )(rawFs.toFsUtils, stdFs.toFsUtils)
@@ -212,8 +212,8 @@ trait StandardizationExecution extends CommonJobExecution {
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
 
-    log.info(s"infoFilePath = ${preparationResult.pathCfg.standardizationPath}/_INFO")
-    standardizedDF.writeInfoFile(preparationResult.pathCfg.standardizationPath)(stdFs)
+    log.info(s"infoFilePath = ${preparationResult.pathCfg.standardization.path}/_INFO")
+    standardizedDF.writeInfoFile(preparationResult.pathCfg.standardization.path)(stdFs)
     writePerformanceMetrics(preparationResult.performance, cmd)
     log.info(s"$sourceId finished successfully")
     standardizedDF
