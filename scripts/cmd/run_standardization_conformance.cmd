@@ -14,11 +14,12 @@
 :: limitations under the License.
 
 SETLOCAL EnableDelayedExpansion
+SET SCRIPT_NAME=%0
 SET PATH=%~dp0;%PATH%
 
 CALL _enceladus_const.cmd
 CALL _enceladus_env.cmd
-CALL _version_file.cmd
+CALL _print_version.cmd
 
 SET CLASS=%STD_CONF_CLASS%
 
