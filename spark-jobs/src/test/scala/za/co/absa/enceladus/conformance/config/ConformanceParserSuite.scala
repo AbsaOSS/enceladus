@@ -56,6 +56,8 @@ class ConformanceParserSuite extends AnyFunSuite with SparkTestBase {
 
   private object TestDynamicConformance extends ConformanceExecution
 
+  implicit val hadoopConf = spark.sparkContext.hadoopConfiguration
+
   test("Test credentials file parsing "){
     val credentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
 
@@ -180,19 +182,19 @@ class ConformanceParserSuite extends AnyFunSuite with SparkTestBase {
         "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride))
     val publishPathNoFolderPrefix = TestDynamicConformance
-      .getPathConfig(cmdConfigNoFolderPrefix, conformanceDataset, cmdConfigNoFolderPrefix.reportVersion.get).publishPath
+      .getPathConfig(cmdConfigNoFolderPrefix, conformanceDataset, cmdConfigNoFolderPrefix.reportVersion.get).publish.path
     assert(publishPathNoFolderPrefix === s"$hdfsPublishPath/$infoDateColumn=$reportDate/$infoVersionColumn=$reportVersion")
     val publishPathFolderPrefix = TestDynamicConformance
-      .getPathConfig(cmdConfigFolderPrefix, conformanceDataset, cmdConfigFolderPrefix.reportVersion.get).publishPath
+      .getPathConfig(cmdConfigFolderPrefix, conformanceDataset, cmdConfigFolderPrefix.reportVersion.get).publish.path
     assert(publishPathFolderPrefix === s"$hdfsPublishPath/$folderPrefix/$infoDateColumn=$reportDate/$infoVersionColumn=$reportVersion")
     val publishPathPublishPathOverride = TestDynamicConformance
       .getPathConfig(cmdConfigPublishPathOverride, conformanceDataset, cmdConfigPublishPathOverride.reportVersion.get)
-        .publishPath
+        .publish.path
     assert(publishPathPublishPathOverride === hdfsPublishPathOverride)
 
     val publishPathPublishPathOverrideAndFolderPrefix = TestDynamicConformance
       .getPathConfig(cmdConfigPublishPathOverrideAndFolderPrefix,
-        conformanceDataset, cmdConfigPublishPathOverrideAndFolderPrefix.reportVersion.get).publishPath
+        conformanceDataset, cmdConfigPublishPathOverrideAndFolderPrefix.reportVersion.get).publish.path
     assert(publishPathPublishPathOverrideAndFolderPrefix === hdfsPublishPathOverride)
   }
 

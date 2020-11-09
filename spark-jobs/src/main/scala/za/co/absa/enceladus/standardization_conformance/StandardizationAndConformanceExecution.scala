@@ -15,29 +15,36 @@
 
 package za.co.absa.enceladus.standardization_conformance
 
+import org.apache.hadoop.conf.Configuration
 import za.co.absa.enceladus.common.CommonJobExecution
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, S3Config}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
-import za.co.absa.enceladus.utils.fs.DistributedFsUtils
+import za.co.absa.enceladus.utils.config.PathWithFs
 
 trait StandardizationAndConformanceExecution extends StandardizationExecution
   with ConformanceExecution
-  with CommonJobExecution{
+  with CommonJobExecution {
 
-  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int)
+                               (implicit hadoopConf: Configuration): PathConfig = {
     val defaultConfig = super[CommonJobExecution].getPathConfig(cmd, dataset, reportVersion)
     val jobCmd = cmd.asInstanceOf[StandardizationConformanceConfig]
     val rawPathOverride = jobCmd.rawPathOverride
     val publishPathOverride = jobCmd.publishPathOverride
-    defaultConfig.copy(rawPath = rawPathOverride.getOrElse(defaultConfig.rawPath),
-      publishPath = publishPathOverride.getOrElse(defaultConfig.publishPath))
+    defaultConfig.copy(
+      raw = PathWithFs.fromPath(rawPathOverride.getOrElse(defaultConfig.raw.path)),
+      publish = PathWithFs.fromPath(publishPathOverride.getOrElse(defaultConfig.publish.path))
+    )
   }
 
-  override def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig)(implicit fsUtils: DistributedFsUtils): Unit = {
-    validateIfPathAlreadyExists(s3Config, pathConfig.standardizationPath)
-    validateIfPathAlreadyExists(s3Config, pathConfig.publishPath)
+  override def validateOutputPath(pathConfig: PathConfig): Unit = {
+    // Std output is validated in the std FS
+    validateIfPathAlreadyExists(pathConfig.standardization)
+
+    // publish output is validated in the publish FS
+    validateIfPathAlreadyExists(pathConfig.publish)
   }
 }

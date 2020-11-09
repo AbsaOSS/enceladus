@@ -53,6 +53,8 @@ class StandardizationParserSuite extends AnyFunSuite with SparkTestBase {
   private val rawFormat = "parquet"
   private val folderPrefix = s"year=$year/month=$month/day=$day"
 
+  implicit val hadoopConf = spark.sparkContext.hadoopConfiguration
+
   private object TestStandardization extends StandardizationExecution
 
   test("Test credentials file parsing "){
@@ -168,17 +170,17 @@ class StandardizationParserSuite extends AnyFunSuite with SparkTestBase {
         "--raw-format", rawFormat))
 
     val publishPathNoFolderPrefix = TestStandardization.getPathConfig(cmdConfigNoFolderPrefix, standardiseDataset,
-        cmdConfigRawPathOverride.reportVersion.get).rawPath
+        cmdConfigRawPathOverride.reportVersion.get).raw.path
     assert(publishPathNoFolderPrefix === s"${standardiseDataset.hdfsPath}/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigNoFolderPrefix.reportVersion.get}")
     val publishPathFolderPrefix = TestStandardization
-      .getPathConfig(cmdConfigFolderPrefix, standardiseDataset, cmdConfigRawPathOverride.reportVersion.get).rawPath
+      .getPathConfig(cmdConfigFolderPrefix, standardiseDataset, cmdConfigRawPathOverride.reportVersion.get).raw.path
     assert(publishPathFolderPrefix === s"${standardiseDataset.hdfsPath}/$folderPrefix/${dateTokens(0)}/${dateTokens(1)}/${dateTokens(2)}/v${cmdConfigFolderPrefix.reportVersion.get}")
     val publishPathRawPathOverride = TestStandardization
-      .getPathConfig(cmdConfigRawPathOverride, standardiseDataset, cmdConfigRawPathOverride.reportVersion.get).rawPath
+      .getPathConfig(cmdConfigRawPathOverride, standardiseDataset, cmdConfigRawPathOverride.reportVersion.get).raw.path
     assert(publishPathRawPathOverride === hdfsRawPathOverride)
     val publishPathRawPathOverrideAndFolderPrefix = TestStandardization
       .getPathConfig(cmdConfigRawPathOverrideAndFolderPrefix, standardiseDataset,
-        cmdConfigRawPathOverride.reportVersion.get).rawPath
+        cmdConfigRawPathOverride.reportVersion.get).raw.path
     assert(publishPathRawPathOverrideAndFolderPrefix === hdfsRawPathOverride)
   }
 

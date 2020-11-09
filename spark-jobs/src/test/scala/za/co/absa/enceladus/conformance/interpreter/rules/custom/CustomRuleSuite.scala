@@ -26,8 +26,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{conformanceRule, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.fs.HdfsUtils
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
 
 case class MyCustomRule(
   order:             Int,
@@ -57,7 +56,7 @@ case class MyCustomRuleInterpreter(rule: MyCustomRule) extends RuleInterpreter {
 case class Mine(id: Int)
 case class MineConfd(id: Int, myOutputCol: Double, errCol: Seq[ErrorMessage])
 
-class CustomRuleSuite extends AnyFunSuite with SparkTestBase {
+class CustomRuleSuite extends AnyFunSuite with SparkTestBase with HadoopFsTestBase  {
   import spark.implicits._
 
   // we may WANT to enable control framework & spline here
@@ -89,8 +88,6 @@ class CustomRuleSuite extends AnyFunSuite with SparkTestBase {
     .setExperimentalMappingRuleEnabled(experimentalMR)
     .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
     .setControlFrameworkEnabled(enableCF)
-
-  implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
   val actualDf: DataFrame = DynamicInterpreter().interpret(conformanceDef, inputData)
 

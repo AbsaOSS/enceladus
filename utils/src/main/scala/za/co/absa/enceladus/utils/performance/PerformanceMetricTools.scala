@@ -19,8 +19,9 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, size, sum}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.fs.DistributedFsUtils
+import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
@@ -35,26 +36,28 @@ object PerformanceMetricTools {
     *
     * @param spark         A Spark Session
     * @param optionPrefix  A prefix for all performance metrics options, e.g. 'std' for Standardization and 'conform' for Conformance
-    * @param inputPath     A path to an input directory of the job
+    * @param input         A path+fs to an input directory of the job
     * @param outputPath    A path to an output directory of the job
     * @param loginUserName A login user name who performed the job
     *
     **/
   def addJobInfoToAtumMetadata(optionPrefix: String,
-                                inputPath: String,
-                                outputPath: String,
-                                loginUserName: String,
-                                cmdLineArgs: String)
-                               (implicit spark: SparkSession, fsUtils: DistributedFsUtils): Unit = {
+                               input: PathWithFs,
+                               outputPath: String,
+                               loginUserName: String,
+                               cmdLineArgs: String)
+                               (implicit spark: SparkSession): Unit = {
     // Spark job configuration
     val sc = spark.sparkContext
 
     // The number of executors minus the driver
     val numberOfExecutors = sc.getExecutorMemoryStatus.keys.size - 1
 
+    val inputFsUtils = HadoopFsUtils.getOrCreate(input.fileSystem)
+
     // Directory sizes and size ratio
-    val inputDirSize = fsUtils.getDirectorySize(inputPath)
-    val inputDataSize = fsUtils.getDirectorySizeNoHidden(inputPath)
+    val inputDirSize = inputFsUtils.getDirectorySize(input.path)
+    val inputDataSize = inputFsUtils.getDirectorySizeNoHidden(input.path)
 
     addSparkConfig(optionPrefix, "spark.driver.memory", "driver_memory")
     addSparkConfig(optionPrefix, "spark.driver.cores", "driver_cores")
@@ -68,7 +71,7 @@ object PerformanceMetricTools {
     sc.applicationAttemptId
       .foreach(attemptId => Atum.setAdditionalInfo(s"${optionPrefix}_spark_attempt_id" -> attemptId))
     Atum.setAdditionalInfo(s"${optionPrefix}_cmd_line_args" -> cmdLineArgs)
-    Atum.setAdditionalInfo(s"${optionPrefix}_input_dir" -> inputPath)
+    Atum.setAdditionalInfo(s"${optionPrefix}_input_dir" -> input.path)
     Atum.setAdditionalInfo(s"${optionPrefix}_output_dir" -> outputPath)
     Atum.setAdditionalInfo(s"${optionPrefix}_input_dir_size" -> inputDirSize.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_input_data_size" -> inputDataSize.toString)
@@ -84,25 +87,28 @@ object PerformanceMetricTools {
     *
     * @param spark         A Spark Session
     * @param optionPrefix  A prefix for all performance metrics options, e.g. 'std' for Standardization and 'conform' for Conformance
-    * @param inputPath     A path to an input directory of the job
-    * @param outputPath    A path to an output directory of the job
+    * @param input     A path to an input directory of the job
+    * @param output    A path to an output directory of the job
     * @param loginUserName A login user name who performed the job
     *
     **/
   def addPerformanceMetricsToAtumMetadata(spark: SparkSession,
                                           optionPrefix: String,
-                                          inputPath: String,
-                                          outputPath: String,
+                                          input: PathWithFs,
+                                          output: PathWithFs,
                                           loginUserName: String,
                                           cmdLineArgs: String
-                                         )(implicit fsUtils: DistributedFsUtils): Unit = {
+                                         ): Unit = {
+
+    val inputFsUtils = HadoopFsUtils.getOrCreate(input.fileSystem)
+    val outputFsUtils = HadoopFsUtils.getOrCreate(output.fileSystem)
 
     // Directory sizes and size ratio
-    val inputDirSize = fsUtils.getDirectorySize(inputPath)
-    val outputDirSize = fsUtils.getDirectorySize(outputPath)
-    val outputDataSize = fsUtils.getDirectorySizeNoHidden(outputPath)
+    val inputDirSize = inputFsUtils.getDirectorySize(input.path)
+    val outputDirSize = outputFsUtils.getDirectorySize(output.path)
+    val outputDataSize = outputFsUtils.getDirectorySizeNoHidden(output.path)
 
-    val (numRecordsFailed, numRecordsSuccessful, numOfErrors) = getNumberOfErrors(spark, outputPath)
+    val (numRecordsFailed, numRecordsSuccessful, numOfErrors) = getNumberOfErrors(spark, output.path)
 
     calculateSizeRatio(inputDirSize, outputDataSize, numRecordsFailed + numRecordsSuccessful)
       .foreach(ratio => {

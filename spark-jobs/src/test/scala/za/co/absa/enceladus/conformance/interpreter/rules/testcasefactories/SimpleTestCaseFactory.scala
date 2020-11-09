@@ -25,7 +25,8 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory}
 import za.co.absa.enceladus.model.{Dataset, DefaultValue, MappingTable}
-import za.co.absa.enceladus.utils.fs.{HdfsUtils, LocalFsUtils}
+import za.co.absa.enceladus.utils.fs.{HadoopFsUtils, LocalFsUtils}
+import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 
 
 object SimpleTestCaseFactory {
@@ -118,13 +119,11 @@ object SimpleTestCaseFactory {
   *
   * Users of this factory can specify which conformance rules to include to the dataset definition to be created.
   */
-class SimpleTestCaseFactory(implicit spark: SparkSession) {
+class SimpleTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTestBase {
 
   import SimpleTestCaseFactory._
   import spark.implicits._
 
-  private val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-  private val fsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
   private val tempDir = LocalFsUtils.getLocalTemporaryDirectory("test_case_factory")
 
   /**

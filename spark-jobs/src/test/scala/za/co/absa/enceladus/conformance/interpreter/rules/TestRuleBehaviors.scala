@@ -23,11 +23,9 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.fs.HdfsUtils
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-
-trait TestRuleBehaviors  extends AnyFunSuite with SparkTestBase with LoggerTestBase {
+trait TestRuleBehaviors  extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
   def conformanceRuleShouldMatchExpected(inputDf: DataFrame, inputDataset: Dataset, expectedJSON: String) {
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
@@ -44,8 +42,6 @@ trait TestRuleBehaviors  extends AnyFunSuite with SparkTestBase with LoggerTestB
       .setExperimentalMappingRuleEnabled(experimentalMR)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
-
-    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
 
     val conformed = DynamicInterpreter().interpret(inputDataset, inputDf)
 

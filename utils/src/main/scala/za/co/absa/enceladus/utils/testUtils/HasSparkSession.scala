@@ -13,8 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common.config
+package za.co.absa.enceladus.utils.testUtils
 
-import software.amazon.awssdk.regions.Region
+import org.apache.spark.sql.SparkSession
 
-case class S3Config(region: Region, kmsKeyId: String)
+trait HasSparkSession {
+  def spark: SparkSession
+}

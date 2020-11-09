@@ -18,15 +18,13 @@ package za.co.absa.enceladus.standardization
 import java.io.{PrintWriter, StringWriter}
 import java.util.UUID
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.core.Atum
-import za.co.absa.atum.persistence.S3KmsSettings
-import za.co.absa.enceladus.S3DefaultCredentialsProvider
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.atum.utils.S3Utils.StringS3LocationExt
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig, S3Config}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -35,7 +33,8 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HdfsUtils}
+import za.co.absa.enceladus.utils.config.PathWithFs
+import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
@@ -44,7 +43,7 @@ import za.co.absa.enceladus.utils.validation.ValidationException
 
 import scala.util.control.NonFatal
 
-trait StandardizationExecution extends CommonJobExecution with S3DefaultCredentialsProvider {
+trait StandardizationExecution extends CommonJobExecution {
   private val sourceId = SourcePhase.Standardization
 
   protected def prepareStandardization[T](args: Array[String],
@@ -52,27 +51,20 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
                                           preparationResult: PreparationResult)
                                          (implicit dao: MenasDAO,
                                           cmd: StandardizationConfigParser[T],
-                                          fsUtils: DistributedFsUtils,
                                           spark: SparkSession): StructType = {
+    val rawFs = preparationResult.pathCfg.raw.fileSystem
+    val rawFsUtils = HadoopFsUtils.getOrCreate(rawFs)
 
-    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.rawPath)
-     preparationResult.performance.startMeasurement(stdDirSize)
+    val stdDirSize = rawFsUtils.getDirectorySize(preparationResult.pathCfg.raw.path)
+    preparationResult.performance.startMeasurement(stdDirSize)
+
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-
-    val inputDataS3Location = preparationResult.pathCfg.rawPath.toS3Location(preparationResult.s3Config.region)
-    val inputInfoS3Location = inputDataS3Location.copy(path = s"${inputDataS3Location.path}/_INFO")
-
-    val outputDataS3Location = preparationResult.pathCfg.standardizationPath.toS3Location(preparationResult.s3Config.region)
-    val outputInfoS3Location = outputDataS3Location.copy(path = s"${outputDataS3Location.path}/_INFO")
-    val kmsSettings = S3KmsSettings(preparationResult.s3Config.kmsKeyId)
-
-    spark.enableControlMeasuresTrackingForS3(sourceS3Location = Some(inputInfoS3Location),
-      destinationS3Config = Some(outputInfoS3Location, kmsSettings))
+    spark.enableControlMeasuresTracking(sourceInfoFile = s"${preparationResult.pathCfg.raw.path}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
-    log.info(s"raw path: ${preparationResult.pathCfg.rawPath}")
-    log.info(s"standardization path: ${preparationResult.pathCfg.standardizationPath}")
+    log.info(s"raw path: ${preparationResult.pathCfg.raw.path}")
+    log.info(s"standardization path: ${preparationResult.pathCfg.standardization.path}")
 
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
@@ -93,31 +85,32 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
-      preparationResult.pathCfg.rawPath,
-      preparationResult.pathCfg.standardizationPath,
+      preparationResult.pathCfg.raw,
+      preparationResult.pathCfg.standardization.path,
       menasCredentials.username, args.mkString(" "))
 
     dao.getSchema(preparationResult.dataset.schemaName, preparationResult.dataset.schemaVersion)
   }
 
-  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int)
+                               (implicit hadoopConf: Configuration): PathConfig = {
     val initialConfig = super.getPathConfig(cmd, dataset, reportVersion)
     cmd.asInstanceOf[StandardizationConfig].rawPathOverride match {
       case None => initialConfig
-      case Some(providedRawPath) => initialConfig.copy(rawPath = providedRawPath)
+      case Some(providedRawPath) => initialConfig.copy(raw = PathWithFs.fromPath(providedRawPath))
     }
   }
 
-  override def validateOutputPath(s3Config: S3Config, pathConfig: PathConfig)(implicit fsUtils: DistributedFsUtils): Unit = {
-    validateIfPathAlreadyExists(s3Config, pathConfig.standardizationPath)
+  override def validateOutputPath(pathConfig: PathConfig): Unit = {
+    // Std output is validated in the std FS
+    validateIfPathAlreadyExists(pathConfig.standardization)
   }
 
   protected def readStandardizationInputData[T](schema: StructType,
                                                 cmd: StandardizationConfigParser[T],
-                                                path: String,
+                                                rawInput: PathWithFs,
                                                 dataset: Dataset)
                                                (implicit spark: SparkSession,
-                                                fsUtils: DistributedFsUtils,
                                                 dao: MenasDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationPropertiesProvider()
@@ -129,16 +122,14 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
         val inputSchema = PlainSchemaGenerator.generateInputSchema(schema, optColumnNameOfCorruptRecord)
         dfReaderConfigured.schema(inputSchema)
     }
-    val dfWithSchema = readerWithOptSchema.load(s"$path/*")
+    val dfWithSchema = readerWithOptSchema.load(s"${rawInput.path}/*")
 
-    ensureSplittable(dfWithSchema, path, schema)
+    ensureSplittable(dfWithSchema, rawInput, schema)
   }
 
   private def getColumnNameOfCorruptRecord[R](schema: StructType, cmd: StandardizationConfigParser[R])
                                              (implicit spark: SparkSession): Option[String] = {
     // SparkUtils.setUniqueColumnNameOfCorruptRecord is called even if result is not used to avoid conflict
-
-    import AtumImplicits.DataSetWrapper
     val columnNameOfCorruptRecord = SparkUtils.setUniqueColumnNameOfCorruptRecord(spark, schema)
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width") || cmd.failOnInputNotPerSchema) {
       None
@@ -175,15 +166,18 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
                                                 schema: StructType,
                                                 cmd: StandardizationConfigParser[T],
                                                 menasCredentials: MenasCredentials)
-                                               (implicit spark: SparkSession,
-                                                fsUtils: DistributedFsUtils): DataFrame = {
+                                               (implicit spark: SparkSession): DataFrame = {
     import za.co.absa.atum.AtumImplicits._
+
+    val rawFs = preparationResult.pathCfg.raw.fileSystem
+    val stdFs = preparationResult.pathCfg.standardization.fileSystem
+
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {
-      case (destinationName, sourceName) => standardizedDF.registerColumnRename(sourceName, destinationName)
+      case (destinationName, sourceName) => standardizedDF.registerColumnRename(sourceName, destinationName)(rawFs)
     }
 
-    standardizedDF.setCheckpoint(s"$sourceId - End", persistInDatabase = false)
+    standardizedDF.setCheckpoint(s"$sourceId - End", persistInDatabase = false)(rawFs)
 
     val recordCount = standardizedDF.lastCheckpointRowCount match {
       case None => standardizedDF.count
@@ -194,20 +188,19 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
       handleEmptyOutput(sourceId)
     }
 
-    log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardizationPath}")
-    standardizedDF.write.parquet(preparationResult.pathCfg.standardizationPath)
+    log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardization.path}")
+    standardizedDF.write.parquet(preparationResult.pathCfg.standardization.path)
 
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)
-
-    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
+    val stdDirSize = HadoopFsUtils.getOrCreate(stdFs).getDirectorySize(preparationResult.pathCfg.standardization.path)
     preparationResult.performance.finishMeasurement(stdDirSize, recordCount)
 
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
       "std",
-      preparationResult.pathCfg.rawPath,
-      preparationResult.pathCfg.standardizationPath,
+      preparationResult.pathCfg.raw,
+      preparationResult.pathCfg.standardization,
       menasCredentials.username,
       args.mkString(" ")
     )
@@ -215,11 +208,8 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
     cmd.rowTag.foreach(rowTag => Atum.setAdditionalInfo("xml_row_tag" -> rowTag))
     cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
 
-    val infoFilePath = s"${preparationResult.pathCfg.standardizationPath}/_INFO"
-    val infoFileLocation = infoFilePath.toS3Location(preparationResult.s3Config.region)
-    log.info(s"infoFilePath = $infoFilePath, infoFileLocation = $infoFileLocation")
-
-    standardizedDF.writeInfoFileOnS3(infoFileLocation, S3KmsSettings(preparationResult.s3Config.kmsKeyId))
+    log.info(s"infoFilePath = ${preparationResult.pathCfg.standardization.path}/_INFO")
+    standardizedDF.writeInfoFile(preparationResult.pathCfg.standardization.path)(stdFs)
     writePerformanceMetrics(preparationResult.performance, cmd)
     log.info(s"$sourceId finished successfully")
     standardizedDF
@@ -227,21 +217,21 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
 
   //scalastyle:off parameter.number
 
-  private def ensureSplittable(df: DataFrame, path: String, schema: StructType)
-                              (implicit spark: SparkSession, fsUtils: DistributedFsUtils): DataFrame = {
-    if (fsUtils.isNonSplittable(path)) {
-      convertToSplittable(df, schema)
+  private def ensureSplittable(df: DataFrame, input: PathWithFs, schema: StructType)
+                              (implicit spark: SparkSession): DataFrame = {
+    val fsUtils = HadoopFsUtils.getOrCreate(input.fileSystem)
+    if (fsUtils.isNonSplittable(input.path)) {
+      convertToSplittable(df, schema, fsUtils)
     } else {
       df
     }
   }
 
-  private def convertToSplittable(df: DataFrame, schema: StructType)
-                                 (implicit spark: SparkSession, fsUtils: DistributedFsUtils): DataFrame = {
+  private def convertToSplittable(df: DataFrame, schema: StructType, fsUtils: DistributedFsUtils)
+                                 (implicit spark: SparkSession): DataFrame = {
     log.warn("Dataset is stored in a non-splittable format. This can have a severe performance impact.")
-
     fsUtils match {
-      case utils: HdfsUtils =>
+      case utils: HadoopFsUtils =>
         val tempParquetDir = s"/tmp/nonsplittable-to-parquet-${UUID.randomUUID()}"
         log.warn(s"Converting to Parquet in temporary dir: $tempParquetDir")
 
@@ -259,7 +249,7 @@ trait StandardizationExecution extends CommonJobExecution with S3DefaultCredenti
         }: _*)
 
       case utils =>
-        log.warn(s"Splittability conversion only available for HDFS, leaving as is for ${utils.getClass.getName}")
+        log.warn(s"Splittability conversion only available for 'HadoopFsUtils', leaving as is for ${utils.getClass.getName}")
         df
     }
 
