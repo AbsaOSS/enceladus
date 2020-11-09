@@ -22,12 +22,12 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
+import za.co.absa.enceladus.menas.exceptions.NotFoundException
 import za.co.absa.enceladus.menas.services.PropertyDefinitionService
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.propertyType.{StringEnumPropertyType, StringPropertyType}
+import scala.concurrent.ExecutionContext.Implicits.global
 
-import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.util.Random
 
 @RestController
@@ -46,9 +46,19 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
 
   @GetMapping(Array("/datasets/{propertyName}"))
   def getDatasetProperty(@PathVariable propertyName: String): CompletableFuture[Option[PropertyDefinition]] = {
-    // todo particular version, too?
-    logger.info(s"retrieving dataset properties by name $propertyName")
+    logger.info(s"retrieving dataset properties by name $propertyName (latest version)")
     propertyDefService.getLatestVersion(propertyName) // 404 when not found
+  }
+
+  @GetMapping(Array("/datasets/{propertyName}/{version}"))
+  def getDatasetProperty(@PathVariable propertyName: String, @PathVariable version: Int): CompletableFuture[Option[PropertyDefinition]] = {
+    logger.info(s"retrieving dataset properties by name $propertyName (version $version)")
+
+
+    propertyDefService.getVersion(propertyName, version).map({
+      case definedPropDef @ Some(_) => definedPropDef
+      case None => throw NotFoundException()
+    })
   }
 
   @PostMapping(Array("/datasets/testcreate")) // todo remove/use as inspiration for a integTest?
