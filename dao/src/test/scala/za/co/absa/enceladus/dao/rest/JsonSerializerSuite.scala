@@ -44,6 +44,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "conformance": [],
           |  "parent": null,
           |  "schedule": null,
+          |  "properties": {},
           |  "createdMessage": {
           |    "menasRef": {
           |      "collection": null,
