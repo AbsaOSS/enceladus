@@ -38,6 +38,7 @@ This part of the documentations will show you how to use Enceladus, Menas as its
 
 - [Configuration]({{ docs_path }}/usage/menas-config)
 - [Conformance Rules]({{ docs_path }}/usage/menas-conformance-rules)
+- [API]({{ docs_path }}/usage/menas-api)
 
 ## General
 
