@@ -114,6 +114,8 @@ case class Dataset(name: String,
   override def exportItem(): String = {
     val conformanceJsonList: ArrayNode = objectMapperBase.valueToTree(conformance.toArray)
 
+    val propertiesJsonList: ArrayNode = objectMapperBase.valueToTree(properties.toArray)
+
     val objectItemMapper = objectMapperRoot.`with`("item")
 
     objectItemMapper.put("name", name)
@@ -123,6 +125,7 @@ case class Dataset(name: String,
     objectItemMapper.put("schemaName", schemaName)
     objectItemMapper.put("schemaVersion", schemaVersion)
     objectItemMapper.putArray("conformance").addAll(conformanceJsonList)
+    objectItemMapper.putArray("properties").addAll(propertiesJsonList)
 
     objectMapperRoot.toString
   }

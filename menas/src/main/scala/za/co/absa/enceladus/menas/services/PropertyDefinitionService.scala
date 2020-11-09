@@ -56,4 +56,5 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
     super.create(propertyDef, username)
   }
 
+  override private[services] def importItem(item: PropertyDefinition, username: String) = ??? // todo
 }

@@ -17,6 +17,7 @@ package za.co.absa.enceladus.model.properties
 
 import java.time.ZonedDateTime
 
+import com.fasterxml.jackson.databind.node.ArrayNode
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.menas.audit.{AuditFieldName, AuditTrailChange, AuditTrailEntry, Auditable}
 import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Mandatory, Optional}
@@ -81,7 +82,9 @@ case class PropertyDefinition(name: String,
           AuditFieldName("essentiality", "Essentiality"),
           AuditFieldName("schemaVersion", "Schema Version"),
           AuditFieldName("schedule", "Schedule"))))
-          // todo property type in depth audit?
+    // todo property type in depth audit?
   }
+
+  override def exportItem(): String = ??? // todo
 }
 
