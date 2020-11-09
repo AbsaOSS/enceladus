@@ -19,7 +19,7 @@ import java.time.ZonedDateTime
 
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.menas.audit.{AuditFieldName, AuditTrailChange, AuditTrailEntry, Auditable}
-import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Optional}
+import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Mandatory, Optional}
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
@@ -46,12 +46,12 @@ case class PropertyDefinition(name: String,
                              ) extends VersionedModel with Auditable[PropertyDefinition] {
 
   require(propertyType.isValueConforming(suggestedValue),
-    s"The suggested value $suggestedValue does not conform to the propertyType $propertyType!")
+    s"The suggested value '$suggestedValue' does not conform to the propertyType $propertyType!")
 
   //def typeSpecificSettings: Map[String, Any] = propertyType.typeSpecificSettings
 
-//  val required: Boolean = essentiality == Mandatory()
-//  val optional: Boolean = essentiality == Optional()
+  val required: Boolean = essentiality == Mandatory()
+  val optional: Boolean = essentiality == Optional()
 
   // VersionModel induced methods:
   override def setVersion(value: Int): PropertyDefinition = this.copy(version = value)

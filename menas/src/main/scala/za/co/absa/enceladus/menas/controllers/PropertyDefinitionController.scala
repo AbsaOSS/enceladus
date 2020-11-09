@@ -24,7 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.menas.services.PropertyDefinitionService
 import za.co.absa.enceladus.model.properties.PropertyDefinition
-import za.co.absa.enceladus.model.properties.propertyType.StringPropertyType
+import za.co.absa.enceladus.model.properties.propertyType.{StringEnumPropertyType, StringPropertyType}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -53,12 +53,29 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
     propertyDefService.getLatestVersion(propertyName) // 404 when not found
   }
 
-  @PostMapping(Array("/datasets/testcreate"))
+  @PostMapping(Array("/datasets/testcreate")) // todo remove/use as inspiration for a integTest?
   @ResponseStatus(HttpStatus.CREATED)
-  def addConformanceRule(@AuthenticationPrincipal user: UserDetails): CompletableFuture[Option[PropertyDefinition]] = {
+  def addConformanceRule(@AuthenticationPrincipal user: UserDetails): CompletableFuture[Seq[PropertyDefinition]] = {
 
-    val testProperty = PropertyDefinition(s"testProp${Random.nextLong().abs}", propertyType = StringPropertyType())
-    propertyDefService.create(testProperty, user.getUsername)
+    val testProperty = PropertyDefinition(
+      name = s"testProp${Random.nextLong().abs}",
+      propertyType = StringPropertyType()
+    )
+    val prop1 = propertyDefService.create(testProperty, user.getUsername)
+
+    val testProperty2 = PropertyDefinition(
+      name = s"testProp${Random.nextLong().abs}",
+      propertyType = StringEnumPropertyType(Set("optionA", "optionB", "optionC")),
+      suggestedValue = "optionB"
+    )
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val prop2 = propertyDefService.create(testProperty2, user.getUsername)
+
+    for {
+      res1 <- prop1.map(_.toSeq)
+      res2 <- prop2.map(_.toSeq)
+    } yield (res1 ++ res2)
 
   }
 

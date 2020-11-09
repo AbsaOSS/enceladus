@@ -47,7 +47,10 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
     val propertyDef = PropertyDefinition(
       name = newPropertyDef.name,
       description = newPropertyDef.description,
-      propertyType = newPropertyDef.propertyType
+      propertyType = newPropertyDef.propertyType,
+      suggestedValue = newPropertyDef.suggestedValue,
+      putIntoInfoFile = newPropertyDef.putIntoInfoFile,
+      essentiality = newPropertyDef.essentiality
     )
     super.create(propertyDef, username)
   }

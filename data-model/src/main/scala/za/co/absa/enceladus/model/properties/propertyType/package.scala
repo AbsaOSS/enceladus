@@ -28,20 +28,20 @@ package object propertyType {
   sealed trait PropertyType {
     def isValueConforming(value: String): Boolean
 
-    //def typeSpecificSettings: Map[String, Any]
+    def typeSpecificSettings: Map[String, Any]
   }
 
   case class StringPropertyType() extends PropertyType {
     override def isValueConforming(value: String): Boolean = true
 
-    //override def typeSpecificSettings: Map[String, Any] = Map.empty
+    override def typeSpecificSettings: Map[String, Any] = Map.empty
   }
 
   case class StringEnumPropertyType(allowedValues: Set[String]) extends PropertyType {
 
     override def isValueConforming(value: String): Boolean = allowedValues.contains(value)
 
-    //override def typeSpecificSettings: Map[String, Set[String]] = Map("items" -> allowedValues)
+    override def typeSpecificSettings: Map[String, Set[String]] = Map("items" -> allowedValues)
   }
 
 }
