@@ -15,12 +15,10 @@
 
 package za.co.absa.enceladus.standardization
 
-import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
-import za.co.absa.enceladus.utils.fs.DistributedFsUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 

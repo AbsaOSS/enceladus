@@ -219,18 +219,17 @@ trait StandardizationExecution extends CommonJobExecution {
 
   private def ensureSplittable(df: DataFrame, input: PathWithFs, schema: StructType)
                               (implicit spark: SparkSession): DataFrame = {
-    implicit val fsUtils = HadoopFsUtils.getOrCreate(input.fileSystem)
+    val fsUtils = HadoopFsUtils.getOrCreate(input.fileSystem)
     if (fsUtils.isNonSplittable(input.path)) {
-      convertToSplittable(df, schema)
+      convertToSplittable(df, schema, fsUtils)
     } else {
       df
     }
   }
 
-  private def convertToSplittable(df: DataFrame, schema: StructType)
-                                 (implicit spark: SparkSession, fsUtils: DistributedFsUtils): DataFrame = {
+  private def convertToSplittable(df: DataFrame, schema: StructType, fsUtils: DistributedFsUtils)
+                                 (implicit spark: SparkSession): DataFrame = {
     log.warn("Dataset is stored in a non-splittable format. This can have a severe performance impact.")
-
     fsUtils match {
       case utils: HadoopFsUtils =>
         val tempParquetDir = s"/tmp/nonsplittable-to-parquet-${UUID.randomUUID()}"
@@ -250,7 +249,7 @@ trait StandardizationExecution extends CommonJobExecution {
         }: _*)
 
       case utils =>
-        log.warn(s"Splittability conversion only available for HDFS, leaving as is for ${utils.getClass.getName}")
+        log.warn(s"Splittability conversion only available for 'HadoopFsUtils', leaving as is for ${utils.getClass.getName}")
         df
     }
 
