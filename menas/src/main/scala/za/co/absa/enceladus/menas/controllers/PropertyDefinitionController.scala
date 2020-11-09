@@ -39,16 +39,14 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
 
 
   @GetMapping(Array("/datasets"))
-  def getAllDatasetProperties(): CompletableFuture[java.util.List[PropertyDefinition]] = {
-    // todo implement
+  def getAllDatasetProperties(): CompletableFuture[Seq[PropertyDefinition]] = {
     logger.info("retrieving all dataset properties")
-    Future.successful(List.empty[PropertyDefinition].asJava)
+    propertyDefService.getLatestVersions
   }
 
   @GetMapping(Array("/datasets/{propertyName}"))
   def getDatasetProperty(@PathVariable propertyName: String): CompletableFuture[Option[PropertyDefinition]] = {
-    // todo implement
-    // todo particular version, too
+    // todo particular version, too?
     logger.info(s"retrieving dataset properties by name $propertyName")
     propertyDefService.getLatestVersion(propertyName) // 404 when not found
   }
