@@ -44,4 +44,8 @@ package object propertyType {
     override def typeSpecificSettings: Map[String, Set[String]] = Map("items" -> allowedValues)
   }
 
+  object StringEnumPropertyType {
+    def apply(allowedValues: String*): StringEnumPropertyType = StringEnumPropertyType(allowedValues.toSet)
+  }
+
 }

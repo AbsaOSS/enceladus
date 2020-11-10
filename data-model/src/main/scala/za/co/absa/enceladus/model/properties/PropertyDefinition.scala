@@ -17,7 +17,7 @@ package za.co.absa.enceladus.model.properties
 
 import java.time.ZonedDateTime
 
-import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.menas.audit.{AuditFieldName, AuditTrailChange, AuditTrailEntry, Auditable}
 import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Mandatory, Optional}
@@ -49,7 +49,7 @@ case class PropertyDefinition(name: String,
   require(propertyType.isValueConforming(suggestedValue),
     s"The suggested value '$suggestedValue' does not conform to the propertyType $propertyType!")
 
-  //def typeSpecificSettings: Map[String, Any] = propertyType.typeSpecificSettings
+  def typeSpecificSettings: Map[String, Any] = propertyType.typeSpecificSettings
 
   val required: Boolean = essentiality == Mandatory()
   val optional: Boolean = essentiality == Optional()
@@ -85,6 +85,24 @@ case class PropertyDefinition(name: String,
     // todo property type in depth audit?
   }
 
-  override def exportItem(): String = ??? // todo
+  override def exportItem(): String = {
+    // using objectMapperBase.writeValueAsString would work too, but the object would get "-escaped
+    val propertyTypeJson: ObjectNode = objectMapperBase.valueToTree(propertyType)
+    val essentialityJson: ObjectNode = objectMapperBase.valueToTree(essentiality)
+    val typeSpecificSettingsJson: ArrayNode = objectMapperBase.valueToTree(typeSpecificSettings.toArray)
+
+    val objectItemMapper = objectMapperRoot.`with`("item")
+
+    objectItemMapper.put("name", name)
+    description.map(d => objectItemMapper.put("description", d))
+    objectItemMapper.set("propertyType", propertyTypeJson)
+    objectItemMapper.put("suggestedValue", suggestedValue)
+    objectItemMapper.put("putIntoInfoFile", putIntoInfoFile)
+    objectItemMapper.set("essentiality", essentialityJson)
+    objectItemMapper.putArray("typeSpecificSettings").addAll(typeSpecificSettingsJson)
+
+    objectMapperRoot.toString
+  }
+
 }
 

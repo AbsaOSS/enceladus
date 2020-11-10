@@ -48,7 +48,7 @@ class DatasetTest extends FunSuite {
       |"properties":[["property1","value1"],["property2.sub","value2"]]}}""".stripMargin.replaceAll("[\\r\\n]", "")
 
   test("export Dataset") {
-    assert(expectedDataset == dataset.exportItem())
+    assert(dataset.exportItem() == expectedDataset)
   }
 
 }
