@@ -16,7 +16,7 @@ categories:
 
 ### Export Entity
 
-This feature exports a single entity from Menas. All exports are version less. Except for connected entities. They are kept as is, but need to be validated before import, that they match.
+This feature exports a single entity from Menas. All exports are versionless, except for connected entities. They are kept as is, but need to be validated before import, that they match.
 
 `GET /menas/api/{entity}/exportItem/{name}/{version}`
 
@@ -102,7 +102,7 @@ Example:
 
 ### Entity Import
 
-This feature imports a single entity. All imports are version less. If import does not find an entity with the same name it will create a new one and start the version from 1. If import finds a version it will update the previous version.
+This feature imports a single entity. All imports are versionless. If the import does not find an entity with the same name it will create a new one and start the version from 1. If the import finds an existing version, it will update the previous version.
 
 Versions of connected entities need to be specified properly. Export of a Dataset carries a Schema and maybe a Mapping table as connected entities. These have versions and these versions need to exist on Import.
 
@@ -119,7 +119,7 @@ JSON payload is the same as the JSON response from the [export](#example-import-
 
 On success, it is the same as JSON payload of update or create API, depending if the entity name already existed or not.
 
-On failure, you will get a list off error produced by the validation like bellow
+On failure, you will get a list of errors produced by the validation like bellow
 
 ```json
 {
