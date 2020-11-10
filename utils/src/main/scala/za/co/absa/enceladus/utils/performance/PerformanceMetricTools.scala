@@ -21,10 +21,10 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
-import za.co.absa.enceladus.utils.general.ProjectMetadataTools
+import za.co.absa.enceladus.utils.general.ProjectMetadata
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
-object PerformanceMetricTools {
+object PerformanceMetricTools extends ProjectMetadata {
 
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
@@ -73,7 +73,7 @@ object PerformanceMetricTools {
     Atum.setAdditionalInfo(s"${optionPrefix}_output_dir" -> outputPath)
     Atum.setAdditionalInfo(s"${optionPrefix}_input_dir_size" -> inputDirSize.toString)
     Atum.setAdditionalInfo(s"${optionPrefix}_input_data_size" -> inputDataSize.toString)
-    Atum.setAdditionalInfo(s"${optionPrefix}_enceladus_version" -> ProjectMetadataTools.getEnceladusVersion)
+    Atum.setAdditionalInfo(s"${optionPrefix}_enceladus_version" -> projectVersion)
     Atum.setAdditionalInfo(s"${optionPrefix}_application_id" -> spark.sparkContext.applicationId)
     Atum.setAdditionalInfo(s"${optionPrefix}_username" -> loginUserName)
     Atum.setAdditionalInfo(s"${optionPrefix}_executors_num" -> s"$numberOfExecutors")

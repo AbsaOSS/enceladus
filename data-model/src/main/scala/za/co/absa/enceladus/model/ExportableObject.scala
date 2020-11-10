@@ -13,17 +13,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.general
+package za.co.absa.enceladus.model
 
-import com.typesafe.config.{Config, ConfigFactory}
-import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
+import za.co.absa.enceladus.model.menas.audit.Auditable
+import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
-object ProjectMetadataTools {
-  private val conf: Config = ConfigFactory.load()
-
-  private val enceladusVersionKey = "enceladus.version"
-
-  /** Returns Enceladus version from the application configuration properties */
-  def getEnceladusVersion: String = conf.getOptionString(enceladusVersionKey).getOrElse("N/A")
-
+case class ExportableObject[C <: VersionedModel with Product with Auditable[C]](item: C, metadata: Map[String, String]){
+  def setItem(item: C): ExportableObject[C] = this.copy(item = item)
+  def setMetadata(metadata: Map[String, String]): ExportableObject[C] = this.copy(metadata = metadata)
 }

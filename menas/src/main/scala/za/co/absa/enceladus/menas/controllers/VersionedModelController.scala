@@ -23,7 +23,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
-import za.co.absa.enceladus.model.UsedIn
+import za.co.absa.enceladus.model.{ExportableObject, UsedIn}
 import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.menas.exceptions.NotFoundException
 import za.co.absa.enceladus.menas.services.VersionedModelService
@@ -97,6 +97,29 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   def getAllVersions(@PathVariable name: String): CompletableFuture[Seq[C]] = {
     versionedModelService.getAllVersions(name)
   }
+
+  @GetMapping(Array("/exportItem/{name}/{version}"))
+  @ResponseStatus(HttpStatus.OK)
+  def exportSingleEntity(@PathVariable name: String, @PathVariable version: Int): CompletableFuture[String] = {
+    versionedModelService.exportSingleItem(name, version)
+  }
+
+  @GetMapping(Array("/exportItem/{name}"))
+  @ResponseStatus(HttpStatus.OK)
+  def exportLatestEntity(@PathVariable name: String): CompletableFuture[String] = {
+    versionedModelService.exportLatestItem(name)
+  }
+
+  @PostMapping(Array("/importItem"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
+                         @RequestBody importObject: ExportableObject[C]): CompletableFuture[C] = {
+    versionedModelService.importSingleItem(importObject.item, principal.getUsername, importObject.metadata).map {
+      case Some(entity) => entity
+      case None         => throw notFound()
+    }
+  }
+
 
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)

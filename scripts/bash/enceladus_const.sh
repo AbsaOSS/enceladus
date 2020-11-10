@@ -18,3 +18,7 @@
 STD_CLASS="za.co.absa.enceladus.standardization.StandardizationJob"
 CONF_CLASS="za.co.absa.enceladus.conformance.DynamicConformanceJob"
 STD_CONF_CLASS="za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob"
+
+HELP_CONF_DRIVER="spark.driver.extraJavaOptions=-Dlog4j.rootCategory=\"WARN, console\""
+HELP_CONF_EXECUTOR="spark.executor.extraJavaOptions=-Dlog4j.rootCategory=\"WARN, console\""
+HELP_SPARK_BASE="--deploy-mode client --conf '$HELP_CONF_DRIVER' --conf '$HELP_CONF_EXECUTOR'"
