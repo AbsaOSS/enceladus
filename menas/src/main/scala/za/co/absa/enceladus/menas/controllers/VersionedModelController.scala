@@ -120,7 +120,6 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
     }
   }
 
-
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
   def create(@AuthenticationPrincipal principal: UserDetails, @RequestBody item: C): CompletableFuture[C] = {

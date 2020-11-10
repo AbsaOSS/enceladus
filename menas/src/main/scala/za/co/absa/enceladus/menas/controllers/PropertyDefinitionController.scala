@@ -22,12 +22,11 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
-import za.co.absa.enceladus.menas.exceptions.NotFoundException
 import za.co.absa.enceladus.menas.services.PropertyDefinitionService
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.propertyType.{StringEnumPropertyType, StringPropertyType}
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
 @RestController
@@ -37,7 +36,6 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
 
   import za.co.absa.enceladus.menas.utils.implicits._
 
-
   @GetMapping(Array(""))
   def getAllDatasetProperties(): CompletableFuture[Seq[PropertyDefinition]] = {
     logger.info("retrieving all dataset properties in full")
@@ -45,20 +43,17 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
   }
 
   @GetMapping(Array("/{propertyName}"))
-  def getDatasetProperty(@PathVariable propertyName: String): CompletableFuture[Option[PropertyDefinition]] = {
+  def getDatasetProperty(@PathVariable propertyName: String): CompletableFuture[PropertyDefinition] = {
     logger.info(s"retrieving property definition '$propertyName' (latest version) in full")
-    propertyDefService.getLatestVersion(propertyName) // 404 when not found
+    // basically an alias for /detail/{name}/latest
+    super.getLatestDetail(propertyName) // 404 when not found
   }
 
   @GetMapping(Array("/{propertyName}/{version}"))
-  def getDatasetProperty(@PathVariable propertyName: String, @PathVariable version: Int): CompletableFuture[Option[PropertyDefinition]] = {
+  def getDatasetProperty(@PathVariable propertyName: String, @PathVariable version: Int): CompletableFuture[PropertyDefinition] = {
     logger.info(s"retrieving property definition '$propertyName' (version $version) in full")
-
-
-    propertyDefService.getVersion(propertyName, version).map({
-      case definedPropDef @ Some(_) => definedPropDef
-      case None => throw NotFoundException()
-    })
+    // basically an alias for /detail/{name}/latest
+    super.getVersionDetail(propertyName, version)
   }
 
   @PostMapping(Array("/testcreate")) // todo remove/use as inspiration for a integTest?
@@ -77,7 +72,6 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
       suggestedValue = "optionB"
     )
 
-    import scala.concurrent.ExecutionContext.Implicits.global
     val prop2 = propertyDefService.create(testProperty2, user.getUsername)
 
     for {
