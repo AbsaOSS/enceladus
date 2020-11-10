@@ -31,28 +31,28 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
 @RestController
-@RequestMapping(path = Array("/api/properties"), produces = Array("application/json"))
+@RequestMapping(path = Array("/api/properties/datasets"), produces = Array("application/json"))
 class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefinitionService)
   extends VersionedModelController(propertyDefService) {
 
   import za.co.absa.enceladus.menas.utils.implicits._
 
 
-  @GetMapping(Array("/datasets"))
+  @GetMapping(Array(""))
   def getAllDatasetProperties(): CompletableFuture[Seq[PropertyDefinition]] = {
-    logger.info("retrieving all dataset properties")
+    logger.info("retrieving all dataset properties in full")
     propertyDefService.getLatestVersions
   }
 
-  @GetMapping(Array("/datasets/{propertyName}"))
+  @GetMapping(Array("/{propertyName}"))
   def getDatasetProperty(@PathVariable propertyName: String): CompletableFuture[Option[PropertyDefinition]] = {
-    logger.info(s"retrieving dataset properties by name $propertyName (latest version)")
+    logger.info(s"retrieving property definition '$propertyName' (latest version) in full")
     propertyDefService.getLatestVersion(propertyName) // 404 when not found
   }
 
-  @GetMapping(Array("/datasets/{propertyName}/{version}"))
+  @GetMapping(Array("/{propertyName}/{version}"))
   def getDatasetProperty(@PathVariable propertyName: String, @PathVariable version: Int): CompletableFuture[Option[PropertyDefinition]] = {
-    logger.info(s"retrieving dataset properties by name $propertyName (version $version)")
+    logger.info(s"retrieving property definition '$propertyName' (version $version) in full")
 
 
     propertyDefService.getVersion(propertyName, version).map({
@@ -61,7 +61,7 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
     })
   }
 
-  @PostMapping(Array("/datasets/testcreate")) // todo remove/use as inspiration for a integTest?
+  @PostMapping(Array("/testcreate")) // todo remove/use as inspiration for a integTest?
   @ResponseStatus(HttpStatus.CREATED)
   def addConformanceRule(@AuthenticationPrincipal user: UserDetails): CompletableFuture[Seq[PropertyDefinition]] = {
 
