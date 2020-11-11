@@ -22,3 +22,5 @@ STD_CONF_CLASS="za.co.absa.enceladus.standardization_conformance.Standardization
 HELP_CONF_DRIVER="spark.driver.extraJavaOptions=-Dlog4j.rootCategory=\"WARN, console\""
 HELP_CONF_EXECUTOR="spark.executor.extraJavaOptions=-Dlog4j.rootCategory=\"WARN, console\""
 HELP_SPARK_BASE="--deploy-mode client --conf '$HELP_CONF_DRIVER' --conf '$HELP_CONF_EXECUTOR'"
+
+HELPER_SCRIPT_VERSION="1.0"
