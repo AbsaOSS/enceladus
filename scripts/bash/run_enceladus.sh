@@ -197,7 +197,11 @@ case $key in
     shift 2 # past argument and value
     ;;
   --null-value)
-    NULL_VALUE="$2"
+    if [[ -z "${2// }" ]]; then
+      NULL_VALUE="'$2'"
+    else
+      NULL_VALUE="$2"
+    fi
     shift 2 # past argument and value
     ;;
   --cobol-encoding)
