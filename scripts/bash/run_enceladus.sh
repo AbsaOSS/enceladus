@@ -78,7 +78,7 @@ MENAS_CREDENTIALS_FILE=""
 MENAS_AUTH_KEYTAB=""
 
 # Parse command line (based on https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash)
-POSITIONAL=()
+OTHER_PARAMETERS=()
 while [[ $# -gt 0 ]]
 do
 key="$1"
@@ -289,12 +289,26 @@ case $key in
     shift
     ;;
   *)    # unknown option
-    POSITIONAL+=("$1") # save it in an array for later
+    OTHER_PARAMETERS+=("$1") # save it in an array for later
     shift # past argument
     ;;
 esac
 done
-set -- "${POSITIONAL[@]}" # restore positional parameters
+
+too_many_options_print() {
+  echo "$1: Found unrecognized options passed to the script. Parameters are:"
+  echo "    $2"
+  echo ""
+}
+
+if [[ -n "${OTHER_PARAMETERS[*]}" ]]; then
+  if [[ "$EXIT_ON_UNRECOGNIZED_OPTIONS" == "true" ]]; then
+    too_many_options_print "ERROR" "${OTHER_PARAMETERS[*]}"
+    exit 127
+  else
+    too_many_options_print "WARNING" "${OTHER_PARAMETERS[*]}"
+  fi
+fi
 
 # Display values of all declared variables
 #declare -p
