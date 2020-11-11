@@ -31,7 +31,8 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
 
   override def getUsedIn(mappingTableName: String, mappingTableVersion: Option[Int]): Future[UsedIn] = {
     val used = mappingTableVersion match {
-      case Some(version) => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName), ("mappingTableVersion", version))
+      case Some(version) => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName),
+        ("mappingTableVersion", version))
       case None          => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName))
     }
 

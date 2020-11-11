@@ -29,6 +29,8 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
                                              datasetMongoRepository: DatasetMongoRepository,
                                              sparkMenasConvertor: SparkMenasSchemaConvertor) extends VersionedModelService(propertyDefMongoRepository) {
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
 //    for {
       // usedInD <- datasetMongoRepository.findRefEqual("schemaName", "schemaVersion", name, version)
@@ -56,5 +58,10 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
     super.create(propertyDef, username)
   }
 
-  override private[services] def importItem(item: PropertyDefinition, username: String) = ??? // todo
+  override private[services] def importItem(item: PropertyDefinition, username: String): Future[Option[PropertyDefinition]] = {
+    getLatestVersionValue(item.name).flatMap {
+      case Some(version) => update(username, item.copy(version = version))
+      case None => super.create(item.copy(version = 1), username)
+    }
+  }
 }
