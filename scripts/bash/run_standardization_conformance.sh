@@ -17,7 +17,7 @@ SRC_DIR=$(dirname "$0")
 
 source ${SRC_DIR}/enceladus_const.sh
 source ${SRC_DIR}/enceladus_env.sh
-source ${SRC_DIR}/_version_file.sh
+source ${SRC_DIR}/_print_version.sh
 
 export CLASS=${STD_CONF_CLASS}
 
