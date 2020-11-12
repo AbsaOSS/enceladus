@@ -140,7 +140,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
         val typeConformityValidation: Validation = if (!propertyDefinition.propertyType.isValueConforming(value)) {
           Validation.empty.withError(key, s"Value $value of key '$key' does not conform " +
-            s"to the property type of ${propertyDefinition.propertyType}")
+            s"to the property type of ${propertyDefinition.propertyType}.")
         } else {
           Validation.empty
         }
@@ -152,7 +152,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   private[services] def validateRequiredPropertiesExistence(existingProperties: Set[String],
                                                             propDefs: Seq[PropertyDefinition]): Validation = {
     propDefs.collect {
-      case propDef if propDef.isRequired =>
+      case propDef if propDef.isRequired && !propDef.disabled =>
         if (!existingProperties.contains(propDef.name)) {
           Validation.empty.withError(propDef.name, s"Dataset property ${propDef.name} is mandatory, but does not exist!")
         } else { Validation.empty }
