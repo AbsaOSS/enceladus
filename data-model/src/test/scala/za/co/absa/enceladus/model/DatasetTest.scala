@@ -33,11 +33,11 @@ class DatasetTest extends FunSuite {
     schemaName = "newSchema",
     schemaVersion = 1,
     conformance = List(conformanceRule1),
-    properties = Map(
+    properties = Some(Map(
       "property1" -> "value1",
       "property2.sub" -> "value2"
       )
-    )
+    ))
 
   private val modelVersion = ModelVersion
 

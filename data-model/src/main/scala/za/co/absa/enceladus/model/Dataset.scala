@@ -46,7 +46,7 @@ case class Dataset(name: String,
                    conformance: List[ConformanceRule],
                    parent: Option[MenasReference] = None,
                    schedule: Option[OozieSchedule] = None,
-                   properties: Map[String, String] = Map.empty
+                   properties: Option[Map[String, String]] = Some(Map.empty)
                   ) extends VersionedModel with Auditable[Dataset] {
 
   override def setVersion(value: Int): Dataset = this.copy(version = value)
@@ -65,6 +65,8 @@ case class Dataset(name: String,
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
   def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
+
+  def propertiesAsMap: Map[String, String] = properties.getOrElse(Map.empty)
 
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the dots are
@@ -114,7 +116,7 @@ case class Dataset(name: String,
   override def exportItem(): String = {
     val conformanceJsonList: ArrayNode = objectMapperBase.valueToTree(conformance.toArray)
 
-    val propertiesJsonList: ArrayNode = objectMapperBase.valueToTree(properties.toArray)
+    val propertiesJsonList: ArrayNode = objectMapperBase.valueToTree(propertiesAsMap.toArray)
 
     val objectItemMapper = objectMapperRoot.`with`("item")
 

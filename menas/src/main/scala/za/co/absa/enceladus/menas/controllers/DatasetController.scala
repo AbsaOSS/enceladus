@@ -28,7 +28,7 @@ import za.co.absa.enceladus.menas.services.DatasetService
 
 @RestController
 @RequestMapping(path = Array("/api/dataset"))
-class DatasetController @Autowired() (datasetService: DatasetService)
+class DatasetController @Autowired()(datasetService: DatasetService)
   extends VersionedModelController(datasetService) {
 
   import za.co.absa.enceladus.menas.utils.implicits._
@@ -38,8 +38,8 @@ class DatasetController @Autowired() (datasetService: DatasetService)
   @PostMapping(Array("/{datasetName}/rule/create"))
   @ResponseStatus(HttpStatus.OK)
   def addConformanceRule(@AuthenticationPrincipal user: UserDetails,
-      @PathVariable datasetName: String,
-      @RequestBody rule: ConformanceRule): CompletableFuture[Dataset] = {
+                         @PathVariable datasetName: String,
+                         @RequestBody rule: ConformanceRule): CompletableFuture[Dataset] = {
     //TODO: we need to figure out how to deal with versioning properly from UX perspective
     for {
       latestVersion <- datasetService.getLatestVersionValue(datasetName)
@@ -51,6 +51,35 @@ class DatasetController @Autowired() (datasetService: DatasetService)
         case _ => throw notFound()
       }
     } yield res
+  }
+
+
+  @GetMapping(Array("/{datasetName}/{datasetVersion}/properties"))
+  @ResponseStatus(HttpStatus.OK)
+  def getAllProperties(@PathVariable datasetName: String,
+                       @PathVariable datasetVersion: Int): CompletableFuture[Map[String, String]] = {
+    datasetService.getVersion(datasetName, datasetVersion).map {
+      case Some(entity) => entity.propertiesAsMap
+      case None => throw notFound()
+    }
+  }
+
+  @GetMapping(Array("/{datasetName}/properties"))
+  @ResponseStatus(HttpStatus.OK)
+  def getAllProperties(@PathVariable datasetName: String): CompletableFuture[Map[String, String]] = {
+    datasetService.getLatestVersion(datasetName).map {
+      case Some(entity) => entity.propertiesAsMap
+      case None => throw notFound()
+    }
+  }
+
+  @PutMapping(Array("/{datasetName}/properties"))
+  @ResponseStatus(HttpStatus.OK)
+  def replaceProperties(@AuthenticationPrincipal principal: UserDetails,
+                        @PathVariable datasetName: String,
+                        @RequestBody newProperties: Map[String, String]): CompletableFuture[Option[Dataset]] = {
+
+    datasetService.replaceProperties(principal.getUsername, datasetName, newProperties)
   }
 
 }
