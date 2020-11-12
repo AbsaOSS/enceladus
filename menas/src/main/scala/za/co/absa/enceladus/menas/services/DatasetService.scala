@@ -24,10 +24,13 @@ import za.co.absa.enceladus.menas.repositories.OozieRepository
 import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
+import za.co.absa.enceladus.model.properties.PropertyDefinition
 
 
 @Service
-class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepository, oozieRepository: OozieRepository)
+class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository,
+                                  oozieRepository: OozieRepository,
+                                  datasetPropertyDefinitionService: PropertyDefinitionService)
   extends VersionedModelService(datasetMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,9 +38,9 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
   // Local class for the representation of validation of conformance rules.
   final case class RuleValidationsAndFields(validations: Seq[Future[Validation]], fields: Future[Set[String]]) {
     def update(ruleValidationsAndFields: RuleValidationsAndFields): RuleValidationsAndFields = copy(
-        validations = validations ++ ruleValidationsAndFields.validations,
-        fields = ruleValidationsAndFields.fields
-      )
+      validations = validations ++ ruleValidationsAndFields.validations,
+      fields = ruleValidationsAndFields.fields
+    )
 
     def update(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
 
@@ -121,6 +124,53 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
         latest.copy(properties = Some(updatedProperties))
       }
     } yield update
+  }
+
+  private[services] def validateExistingProperty(key: String, value: String,
+                                                 propertyDefinitionsMap: Map[String, PropertyDefinition]): Validation = {
+    propertyDefinitionsMap.get(key) match {
+      case None => Validation.empty.withError(key, s"There is no property definition for key '$key'.")
+      case Some(propertyDefinition) =>
+
+        val disabilityValidation: Validation = if (propertyDefinition.disabled) {
+          Validation.empty.withError(key, s"Property for key '$key' is disabled.")
+        } else {
+          Validation.empty
+        }
+
+        val typeConformityValidation: Validation = if (!propertyDefinition.propertyType.isValueConforming(value)) {
+          Validation.empty.withError(key, s"Value $value of key '$key' does not conform " +
+            s"to the property type of ${propertyDefinition.propertyType}")
+        } else {
+          Validation.empty
+        }
+
+        disabilityValidation merge typeConformityValidation
+    }
+  }
+
+  private[services] def validateRequiredPropertiesExistence(existingProperties: Set[String],
+                                                            propDefs: Seq[PropertyDefinition]): Validation = {
+    propDefs.collect {
+      case propDef if propDef.isRequired =>
+        if (!existingProperties.contains(propDef.name)) {
+          Validation.empty.withError(propDef.name, s"Dataset property ${propDef.name} is mandatory, but does not exist!")
+        } else { Validation.empty }
+
+    }.foldLeft(Validation.empty)(Validation.merge)
+  }
+
+  def validateProperties(properties: Map[String, String]): Future[Validation] = {
+
+    datasetPropertyDefinitionService.getLatestVersions().map { propDefs: Seq[PropertyDefinition] =>
+      val propDefsMap = Map(propDefs.map { propDef => (propDef.name, propDef) }: _*) // map(key, propDef)
+
+      val existingPropsValidation = properties.toSeq.map { case (key, value) => validateExistingProperty(key, value, propDefsMap) }
+        .foldLeft(Validation.empty)(Validation.merge)
+      val requiredPropDefsValidations = validateRequiredPropertiesExistence(properties.keySet, propDefs)
+
+      existingPropsValidation merge requiredPropDefsValidations
+    }
   }
 
   override def importItem(item: Dataset, username: String): Future[Option[Dataset]] = {

@@ -21,6 +21,10 @@ object Validation {
 
   val NotSpecified = "not specified"
 
+  val empty = Validation()
+
+  def merge(a: Validation, b: Validation) : Validation = a merge b
+
 }
 
 case class Validation (errors: Map[String, List[String]] = Map()) {

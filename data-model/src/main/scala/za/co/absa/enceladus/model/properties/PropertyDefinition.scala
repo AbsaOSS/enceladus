@@ -51,8 +51,8 @@ case class PropertyDefinition(name: String,
 
   def typeSpecificSettings: Map[String, Any] = propertyType.typeSpecificSettings
 
-  val required: Boolean = essentiality == Mandatory()
-  val optional: Boolean = essentiality == Optional()
+  val isRequired: Boolean = essentiality == Mandatory()
+  val isOptional: Boolean = essentiality == Optional()
 
   // VersionModel induced methods:
   override def setVersion(value: Int): PropertyDefinition = this.copy(version = value)

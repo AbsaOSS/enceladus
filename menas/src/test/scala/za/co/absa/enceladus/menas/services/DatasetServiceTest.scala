@@ -32,7 +32,8 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
 
   override val modelRepository: DatasetMongoRepository = mock[DatasetMongoRepository]
   val oozieRepository: OozieRepository = mock[OozieRepository]
-  override val service = new DatasetService(modelRepository, oozieRepository)
+  val datasetPropDefService: PropertyDefinitionService = mock[PropertyDefinitionService]
+  override val service = new DatasetService(modelRepository, oozieRepository, datasetPropDefService)
 
   test("fail to create multiple Datasets with the same name concurrently with a ValidationException") {
     val dataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1)

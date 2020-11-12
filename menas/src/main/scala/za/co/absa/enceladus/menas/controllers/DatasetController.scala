@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
+import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.menas.services.DatasetService
@@ -80,6 +81,16 @@ class DatasetController @Autowired()(datasetService: DatasetService)
                         @RequestBody newProperties: Map[String, String]): CompletableFuture[Option[Dataset]] = {
 
     datasetService.replaceProperties(principal.getUsername, datasetName, newProperties)
+  }
+
+
+  @GetMapping(Array("/{datasetName}/properties/validation")) // todo how about non-latest? validate against latest propDefs?
+  @ResponseStatus(HttpStatus.OK)
+  def getPropertiesValidation(@PathVariable datasetName: String): CompletableFuture[Validation] = {
+    datasetService.getLatestVersion(datasetName).flatMap {
+      case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap)
+      case None => throw notFound()
+    }
   }
 
 }
