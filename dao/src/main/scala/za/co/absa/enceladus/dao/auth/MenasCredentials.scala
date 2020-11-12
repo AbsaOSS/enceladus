@@ -18,7 +18,7 @@ package za.co.absa.enceladus.dao.auth
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.SparkSession
 import sun.security.krb5.internal.ktab.KeyTab
-import za.co.absa.enceladus.utils.fs.HdfsUtils
+import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 
 sealed abstract class MenasCredentials {
   val username: String
@@ -40,9 +40,9 @@ object MenasPlainCredentials {
     * @return An instance of Menas Credentials.
     */
   def fromFile(path: String)(implicit spark: SparkSession): MenasPlainCredentials = {
-    val fsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
+    val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
-    val conf = ConfigFactory.parseString(fsUtils.getLocalOrDistributedFileContent(path))
+    val conf = ConfigFactory.parseString(HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path))
     MenasPlainCredentials(conf.getString("username"), conf.getString("password"))
   }
 }
@@ -55,9 +55,9 @@ object MenasKerberosCredentials {
     * @return An instance of Menas Credentials.
     */
   def fromFile(path: String)(implicit spark: SparkSession): MenasKerberosCredentials = {
-    val fsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
+    val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
-    val localKeyTabPath = fsUtils.getLocalPathToFileOrCopyToLocal(path)
+    val localKeyTabPath = HadoopFsUtils.getOrCreate(fs).getLocalPathToFileOrCopyToLocal(path)
     val keytab = KeyTab.getInstance(localKeyTabPath)
     val username = keytab.getOneName.getName
 

@@ -15,20 +15,20 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
+import org.json4s._
+import org.json4s.jackson._
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.{BeforeAndAfterAll}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.samples._
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-import org.json4s._
-import org.json4s.jackson._
-import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.utils.fs.{FileReader, HdfsUtils}
+import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.utils.fs.FileReader
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase {
+class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase {
 
   override def beforeAll(): Unit = {
     super.beforeAll
@@ -56,7 +56,6 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
     val isCatalystWorkaroundEnabled = true
 
     import spark.implicits._
-    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
     val mappingTablePattern = "{0}/{1}/{2}"
 
     val dfs = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath, "2017-11-01", mappingTablePattern)
@@ -114,7 +113,6 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
     val isCatalystWorkaroundEnabled = true
 
     import spark.implicits._
-    implicit val fsUtils: HdfsUtils = new HdfsUtils(spark.sparkContext.hadoopConfiguration)
     val mappingTablePattern = "{0}/{1}/{2}"
 
     val dfs = DataSource.getDataFrame(TradeConformance.tradeDS.hdfsPath, "2017-11-01", mappingTablePattern)

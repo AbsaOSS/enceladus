@@ -13,12 +13,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus
 
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+package za.co.absa.enceladus.utils.config
 
-trait S3DefaultCredentialsProvider {
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
+import za.co.absa.enceladus.utils.fs.FileSystemUtils
 
-  implicit val defaultCredentialsProvider = DefaultCredentialsProvider.create()
+case class PathWithFs(path: String, fileSystem: FileSystem)
 
+object PathWithFs {
+  def fromPath(path: String)(implicit hadoopConf: Configuration): PathWithFs =
+    PathWithFs(path, FileSystemUtils.getFileSystemFromPath(path))
 }
