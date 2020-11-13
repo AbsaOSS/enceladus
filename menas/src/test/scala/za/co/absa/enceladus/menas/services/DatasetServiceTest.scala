@@ -26,6 +26,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.test.factories.DatasetFactory
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
 
@@ -59,6 +60,34 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
       await(service.update("user", dataset))
     }
     assert(result.validation == Validation().withError("version", "entity 'dataset' with this version already exists: 2"))
+  }
+
+  test("RuleValidationsAndFields - merge"){
+    val expectedResult = Validation(Map("alfa" -> List("some error 1", "some error 3"), "beta" -> List("some error 2")))
+    val validationWithErrors1 = Future(
+      Validation()
+        .withError("alfa", "some error 1")
+        .withError("beta", "some error 2")
+    )
+    val validationWithErrors2 = Future(
+      Validation()
+        .withError("alfa", "some error 3")
+    )
+
+    val validations = Seq(Future(Validation()), validationWithErrors1, validationWithErrors2)
+    val fields = Future(Set("someField"))
+    val validation = service.RuleValidationsAndFields(validations, fields)
+    val result = await(validation.mergeAndGetValidations())
+
+    assert(expectedResult == result)
+  }
+
+  test("RuleValidationsAndFields - merge empty"){
+    val validations = Seq.empty[Future[Validation]]
+    val fields = Future(Set("a"))
+    val validation = service.RuleValidationsAndFields(validations, fields)
+
+    assert(await(validation.mergeAndGetValidations()).isValid())
   }
 
 }

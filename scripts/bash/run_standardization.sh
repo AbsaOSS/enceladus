@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SRC_DIR=`dirname "$0"`
+SRC_DIR=$(dirname "$0")
 
 source ${SRC_DIR}/enceladus_const.sh
 source ${SRC_DIR}/enceladus_env.sh
+source ${SRC_DIR}/_print_version.sh
 
 export CLASS=${STD_CLASS}
 

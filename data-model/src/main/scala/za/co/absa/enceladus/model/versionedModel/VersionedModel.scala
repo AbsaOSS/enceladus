@@ -16,9 +16,11 @@
 package za.co.absa.enceladus.model.versionedModel
 
 import java.time.ZonedDateTime
+
+import za.co.absa.enceladus.model.Exportable
 import za.co.absa.enceladus.model.menas.MenasReference
 
-trait VersionedModel {
+trait VersionedModel extends Exportable {
   val name: String
   val version: Int
   val description: Option[String]
@@ -45,6 +47,8 @@ trait VersionedModel {
   def setDateCreated(time: ZonedDateTime): VersionedModel
   def setUserCreated(user: String): VersionedModel
   def setParent(newParent: Option[MenasReference]): VersionedModel
+
+  def exportItem(): String
 
   def setCreatedInfo(username: String): VersionedModel = {
     setDateCreated(ZonedDateTime.now).setUserCreated(username)

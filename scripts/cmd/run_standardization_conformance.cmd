@@ -14,10 +14,12 @@
 :: limitations under the License.
 
 SETLOCAL EnableDelayedExpansion
+SET SCRIPT_NAME=%0
 SET PATH=%~dp0;%PATH%
 
-CALL enceladus_const.cmd
-CALL enceladus_env.cmd
+CALL _enceladus_const.cmd
+CALL _enceladus_env.cmd
+CALL _print_version.cmd
 
 SET CLASS=%STD_CONF_CLASS%
 
@@ -34,4 +36,4 @@ SET DEFAULT_DRA_MAX_EXECUTORS=%STD_DEFAULT_DRA_MAX_EXECUTORS%
 SET DEFAULT_DRA_ALLOCATION_RATIO=%STD_DEFAULT_DRA_ALLOCATION_RATIO%
 SET DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE=%STD_DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE%
 
-CALL run_enceladus.cmd %*
+CALL _run_enceladus.cmd %*
