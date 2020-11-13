@@ -87,11 +87,11 @@ trait ConformanceExecution extends CommonJobExecution {
     }
   }
 
-  override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
+  override def validatePaths(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
     log.info(s"standardization path: ${pathConfig.standardizationPath}")
     log.info(s"publish path: ${pathConfig.publishPath}")
-
-    validateIfPathAlreadyExists(fsUtils, pathConfig.publishPath)
+    validateInputPath(fsUtils, pathConfig.standardizationPath)
+    validateIfOutputPathAlreadyExists(fsUtils, pathConfig.publishPath)
   }
 
   protected def readConformanceInputData(pathCfg: PathConfig)(implicit spark: SparkSession): DataFrame = {

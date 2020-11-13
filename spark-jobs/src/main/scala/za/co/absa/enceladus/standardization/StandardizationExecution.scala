@@ -93,10 +93,11 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
+  override def validatePaths(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
     log.info(s"raw path: ${pathConfig.rawPath}")
     log.info(s"standardization path: ${pathConfig.standardizationPath}")
-    validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, pathConfig.standardizationPath)
+    validateInputPath(fsUtils, pathConfig.rawPath)
+    validateIfOutputPathAlreadyExists(fsUtils: FileSystemVersionUtils, pathConfig.standardizationPath)
   }
 
   protected def readStandardizationInputData[T](schema: StructType,
