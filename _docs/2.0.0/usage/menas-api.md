@@ -16,7 +16,7 @@ categories:
 
 ### Export Entity
 
-This feature exports a single entity from Menas. All exports are versionless, except for connected entities. They are kept as is, but need to be validated before import, that they match.
+This feature exports a single entity from Menas. All exports are versionless, except for connected entities. They are kept as is, but need to be validated before import.
 
 `GET /menas/api/{entity}/exportItem/{name}/{version}`
 
