@@ -24,16 +24,16 @@ import za.co.absa.enceladus.model.properties.PropertyDefinition
 import scala.reflect.ClassTag
 
 
-object PropertyDefintionMongoRepository {
+object PropertyDefinitionMongoRepository {
   val collectionBaseName: String = "propertydef"
   val collectionName: String = s"$collectionBaseName${model.CollectionSuffix}"
 }
 
 
 @Repository
-class PropertyDefintionMongoRepository @Autowired()(mongoDb: MongoDatabase)
+class PropertyDefinitionMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends VersionedMongoRepository[PropertyDefinition](mongoDb)(ClassTag(classOf[PropertyDefinition])) {
 
-  override private[menas] def collectionBaseName: String = PropertyDefintionMongoRepository.collectionBaseName
+  override private[menas] def collectionBaseName: String = PropertyDefinitionMongoRepository.collectionBaseName
 
 }

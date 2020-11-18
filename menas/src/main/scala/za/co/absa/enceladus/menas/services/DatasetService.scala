@@ -126,7 +126,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     } yield update
   }
 
-  private[services] def validateExistingProperty(key: String, value: String,
+  private def validateExistingProperty(key: String, value: String,
                                                  propertyDefinitionsMap: Map[String, PropertyDefinition]): Validation = {
     propertyDefinitionsMap.get(key) match {
       case None => Validation.empty.withError(key, s"There is no property definition for key '$key'.")
@@ -149,7 +149,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     }
   }
 
-  private[services] def validateRequiredPropertiesExistence(existingProperties: Set[String],
+  private def validateRequiredPropertiesExistence(existingProperties: Set[String],
                                                             propDefs: Seq[PropertyDefinition]): Validation = {
     propDefs.collect {
       case propDef if propDef.isRequired && !propDef.disabled =>

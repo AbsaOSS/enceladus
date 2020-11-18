@@ -17,7 +17,7 @@ package za.co.absa.enceladus.menas.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, PropertyDefintionMongoRepository}
+import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, PropertyDefinitionMongoRepository}
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.model.UsedIn
 import za.co.absa.enceladus.model.properties.PropertyDefinition
@@ -25,7 +25,7 @@ import za.co.absa.enceladus.model.properties.PropertyDefinition
 import scala.concurrent.Future
 
 @Service
-class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: PropertyDefintionMongoRepository,
+class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: PropertyDefinitionMongoRepository,
                                              datasetMongoRepository: DatasetMongoRepository,
                                              sparkMenasConvertor: SparkMenasSchemaConvertor) extends VersionedModelService(propertyDefMongoRepository) {
 
