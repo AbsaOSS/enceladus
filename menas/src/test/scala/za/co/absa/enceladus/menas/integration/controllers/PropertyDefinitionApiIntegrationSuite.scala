@@ -129,243 +129,57 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
             assert(actual == expected)
           }
         }
-//        "any version of the PropertyDefinition is only used in disabled Datasets" should {
-//          "disable all versions of the PropertyDefinition" in {
-//            val dataset = DatasetFactory.getDummyDataset(propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 1, disabled = true)
-//            datasetFixture.add(dataset)
-//            val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-//            val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-//            propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-//
-//            val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
-//
-//            assertOk(response)
-//
-//            val actual = response.getBody
-//            val expected = """{"matchedCount":2,"modifiedCount":2,"upsertedId":null,"modifiedCountAvailable":true}"""
-//            assert(actual == expected)
-//          }
-//        }
-//        "any version of the PropertyDefinition is only used in disabled MappingTables" should {
-//          "disable all versions of the PropertyDefinition" in {
-//            val mappingTable = MappingTableFactory.getDummyMappingTable(propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 1, disabled = true)
-//            mappingTableFixture.add(mappingTable)
-//            val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-//            val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-//            propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-//
-//            val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
-//
-//            assertOk(response)
-//
-//            val actual = response.getBody
-//            val expected = """{"matchedCount":2,"modifiedCount":2,"upsertedId":null,"modifiedCountAvailable":true}"""
-//            assert(actual == expected)
-//          }
-//        }
-//        "no PropertyDefinition with the given name exists" should {
-//          "disable nothing" in {
-//            val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
-//
-//            assertOk(response)
-//
-//            val actual = response.getBody
-//            val expected = """{"matchedCount":0,"modifiedCount":0,"upsertedId":null,"modifiedCountAvailable":true}"""
-//            assert(actual == expected)
-//          }
-//        }
       }
-  //
-  //    "return 400" when {
-  //      "some version of the PropertyDefinition is used by an enabled Dataset" should {
-  //        "return a list of the entities the PropertyDefinition is used in" in {
-  //          val dataset = DatasetFactory.getDummyDataset(name = "dataset", propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 1, disabled = false)
-  //          datasetFixture.add(dataset)
-  //          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-  //          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-  //          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-  //
-  //          val response = sendDelete[PropertyDefinition, UsedIn](s"$apiUrl/disable/propertyDefinition")
-  //
-  //          assertBadRequest(response)
-  //
-  //          val actual = response.getBody
-  //          val expected = UsedIn(Some(Seq(MenasReference(None, "dataset", 1))), Some(Seq()))
-  //          assert(actual == expected)
-  //        }
-  //      }
-  //      "some version of the PropertyDefinition is used by a enabled MappingTable" should {
-  //        "return a list of the entities the PropertyDefinition is used in" in {
-  //          val mappingTable = MappingTableFactory.getDummyMappingTable(name = "mapping", propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 1, disabled = false)
-  //          mappingTableFixture.add(mappingTable)
-  //          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-  //          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-  //          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-  //
-  //          val response = sendDelete[PropertyDefinition, UsedIn](s"$apiUrl/disable/propertyDefinition")
-  //
-  //          assertBadRequest(response)
-  //
-  //          val actual = response.getBody
-  //          val expected = UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping", 1))))
-  //          assert(actual == expected)
-  //        }
-  //      }
-  //    }
     }
-  //
-  //  s"DELETE $apiUrl/disable/{name}/{version}" can {
-  //    "return 200" when {
-  //      "a PropertyDefinition with the given name and version exists" should {
-  //        "disable only the propertyDefinition with the given name and version" in {
-  //          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-  //          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "otherPropertyDefinition", version = 1)
-  //          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-  //
-  //          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
-  //
-  //          assertOk(response)
-  //
-  //          val actual = response.getBody
-  //          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
-  //          assert(actual == expected)
-  //        }
-  //      }
-  //      "multiple versions of the PropertyDefinition with the given name exist" should {
-  //        "disable the specified version of the PropertyDefinition" in {
-  //          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-  //          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-  //          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-  //
-  //          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
-  //
-  //          assertOk(response)
-  //
-  //          val actual = response.getBody
-  //          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
-  //          assert(actual == expected)
-  //        }
-  //      }
-  //      "the version of the PropertyDefinition is only used in disabled Datasets" should {
-  //        "disable the specified version of the PropertyDefinition" in {
-  //          val dataset = DatasetFactory.getDummyDataset(propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 1, disabled = true)
-  //          datasetFixture.add(dataset)
-  //          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-  //          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-  //          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-  //
-  //          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
-  //
-  //          assertOk(response)
-  //
-  //          val actual = response.getBody
-  //          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
-  //          assert(actual == expected)
-  //        }
-  //      }
-  //      "the version of the PropertyDefinition is not used in enabled Datasets" should {
-  //        "disable the specified version of the PropertyDefinition" in {
-  //          val dataset = DatasetFactory.getDummyDataset(propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 1, disabled = false)
-  //          datasetFixture.add(dataset)
-  //          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-  //          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-  //          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-  //
-  //          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/2")
-  //
-  //          assertOk(response)
-  //
-  //          val actual = response.getBody
-  //          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
-  //          assert(actual == expected)
-  //        }
-  //      }
-  //      "the version of the PropertyDefinition is only used in disabled MappingTables" should {
-  //        "disable the specified version of the PropertyDefinition" in {
-  //          val mappingTable = MappingTableFactory.getDummyMappingTable(propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 1, disabled = true)
-  //          mappingTableFixture.add(mappingTable)
-  //          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-  //          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-  //          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-  //
-  //          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
-  //
-  //          assertOk(response)
-  //
-  //          val actual = response.getBody
-  //          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
-  //          assert(actual == expected)
-  //        }
-  //      }
-  //      "the version of the PropertyDefinition is not used in enabled MappingTables" should {
-  //        "disable the specified version of the PropertyDefinition" in {
-  //          val mappingTable = MappingTableFactory.getDummyMappingTable(propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 1, disabled = false)
-  //          mappingTableFixture.add(mappingTable)
-  //          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-  //          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-  //          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-  //
-  //          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/2")
-  //
-  //          assertOk(response)
-  //
-  //          val actual = response.getBody
-  //          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
-  //          assert(actual == expected)
-  //        }
-  //      }
-  //      "no PropertyDefinition with the given name exists" should {
-  //        "disable nothing" in {
-  //          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
-  //
-  //          assertOk(response)
-  //
-  //          val actual = response.getBody
-  //          val expected = """{"matchedCount":0,"modifiedCount":0,"upsertedId":null,"modifiedCountAvailable":true}"""
-  //          assert(actual == expected)
-  //        }
-  //      }
-  //    }
-  //
-  //    "return 400" when {
-  //      "the version of the PropertyDefinition is used by an enabled Dataset" should {
-  //        "return a list of the entities the version of the PropertyDefinition is used in" in {
-  //          val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 1, disabled = false)
-  //          val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 2, disabled = false)
-  //          datasetFixture.add(dataset1, dataset2)
-  //          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-  //          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-  //          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-  //
-  //          val response = sendDelete[PropertyDefinition, UsedIn](s"$apiUrl/disable/propertyDefinition/1")
-  //
-  //          assertBadRequest(response)
-  //
-  //          val actual = response.getBody
-  //          val expected = UsedIn(Some(Seq(MenasReference(None, "dataset1", 1))), Some(Seq()))
-  //          assert(actual == expected)
-  //        }
-  //      }
-  //      "some version of the PropertyDefinition is used by a enabled MappingTable" should {
-  //        "return a list of the entities the version of the PropertyDefinition is used in" in {
-  //          val mappingTable1 = MappingTableFactory.getDummyMappingTable(name = "mapping1", propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 1, disabled = false)
-  //          val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mapping2", propertyDefinitionName = "propertyDefinition", propertyDefinitionVersion = 2, disabled = false)
-  //          mappingTableFixture.add(mappingTable1, mappingTable2)
-  //          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-  //          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-  //          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-  //
-  //          val response = sendDelete[PropertyDefinition, UsedIn](s"$apiUrl/disable/propertyDefinition/1")
-  //
-  //          assertBadRequest(response)
-  //
-  //          val actual = response.getBody
-  //          val expected = UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping1", 1))))
-  //          assert(actual == expected)
-  //        }
-  //      }
-  //    }
-  //  }
+
+    s"DELETE $apiUrl/disable/{name}/{version}" can {
+      "return 200" when {
+        "a PropertyDefinition with the given name and version exists" should {
+          "disable only the propertyDefinition with the given name and version" in {
+            val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
+            val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "otherPropertyDefinition", version = 1)
+            propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
+
+            val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
+            assertOk(response)
+
+            val actual = response.getBody
+            val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+            assert(actual == expected)
+          }
+        }
+        "multiple versions of the PropertyDefinition with the given name exist" should {
+          Seq(
+            ("disable only specific version of the propertyDefinition", s"$apiUrl/disable/propertyDefinition/1", 1),
+            ("disable all versions by name of the propertyDefinition", s"$apiUrl/disable/propertyDefinition", 2)
+          ).foreach { case (testCaseName, deleteUrl, expectedCount) =>
+            testCaseName in {
+              val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
+              val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
+              propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
+
+              val response = sendDelete[PropertyDefinition, String](deleteUrl)
+              assertOk(response)
+
+              val actual = response.getBody
+              val expected = s"""{"matchedCount":$expectedCount,"modifiedCount":$expectedCount,"upsertedId":null,"modifiedCountAvailable":true}"""
+              assert(actual == expected)
+            }
+          }
+        }
+
+        "no PropertyDefinition with the given name exists" should {
+          "disable nothing" in {
+            val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
+            assertOk(response)
+
+            val actual = response.getBody
+            val expected = """{"matchedCount":0,"modifiedCount":0,"upsertedId":null,"modifiedCountAvailable":true}"""
+            assert(actual == expected)
+          }
+        }
+      }
+    }
 
   s"GET $apiUrl/detail/{name}/latestVersion" should {
     "return 200" when {
@@ -392,7 +206,6 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
       }
     }
   }
-
 
   //
   //  s"GET $apiUrl/export/{name}/{version}" should {
@@ -471,186 +284,6 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
   //    }
   //  }
   //
-  //  s"POST $apiUrl/upload" should {
-  //    "return 201" when {
-  //      "a copybook has no errors" should {
-  //        "return a new version of the propertyDefinition" in {
-  //          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-  //          propertyDefinitionFixture.add(propertyDefinition)
-  //
-  //          val propertyDefinitionParams = HashMap[String, Any](
-  //            "name" -> propertyDefinition.name, "version" -> propertyDefinition.version, "format" -> "copybook")
-  //          val responseUploaded = sendPostUploadFile[PropertyDefinition](
-  //            s"$apiUrl/upload", TestResourcePath.Copybook.ok, propertyDefinitionParams)
-  //          assertCreated(responseUploaded)
-  //
-  //          val actual = responseUploaded.getBody
-  //          assert(actual.name == propertyDefinition.name)
-  //          assert(actual.version == propertyDefinition.version + 1)
-  //          assert(actual.fields.length == 3)
-  //        }
-  //      }
-  //
-  //      "a JSON struct type propertyDefinition has no errors" should {
-  //        "return a new version of the propertyDefinition" in {
-  //          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-  //          propertyDefinitionFixture.add(propertyDefinition)
-  //
-  //          val propertyDefinitionParams = HashMap[String, Any](
-  //            "name" -> propertyDefinition.name, "version" -> propertyDefinition.version, "format" -> "struct")
-  //          val responseUploaded = sendPostUploadFile[PropertyDefinition](
-  //            s"$apiUrl/upload", TestResourcePath.Json.ok, propertyDefinitionParams)
-  //          assertCreated(responseUploaded)
-  //
-  //          val actual = responseUploaded.getBody
-  //          assert(actual.name == propertyDefinition.name)
-  //          assert(actual.version == propertyDefinition.version + 1)
-  //          assert(actual.fields.length == 2)
-  //        }
-  //      }
-  //
-  //      "a JSON struct type propertyDefinition is uploaded, but an empty format type is specified" should {
-  //        "return a new version of the propertyDefinition" in {
-  //          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-  //          propertyDefinitionFixture.add(propertyDefinition)
-  //
-  //          val propertyDefinitionParams = HashMap[String, Any](
-  //            "name" -> propertyDefinition.name, "version" -> propertyDefinition.version, "format" -> "")
-  //          val responseUploaded = sendPostUploadFile[PropertyDefinition](
-  //            s"$apiUrl/upload", TestResourcePath.Json.ok, propertyDefinitionParams)
-  //          assertCreated(responseUploaded)
-  //
-  //          val actual = responseUploaded.getBody
-  //          assert(actual.name == propertyDefinition.name)
-  //          assert(actual.version == propertyDefinition.version + 1)
-  //          assert(actual.fields.length == 2)
-  //        }
-  //      }
-  //
-  //      "a JSON struct type propertyDefinition is uploaded, but no format type is specified" should {
-  //        "return a new version of the propertyDefinition" in {
-  //          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-  //          propertyDefinitionFixture.add(propertyDefinition)
-  //
-  //          val propertyDefinitionParams = HashMap[String, Any](
-  //            "name" -> propertyDefinition.name, "version" -> propertyDefinition.version)
-  //          val responseUploaded = sendPostUploadFile[PropertyDefinition](
-  //            s"$apiUrl/upload", TestResourcePath.Json.ok, propertyDefinitionParams)
-  //          assertCreated(responseUploaded)
-  //
-  //          val actual = responseUploaded.getBody
-  //          assert(actual.name == propertyDefinition.name)
-  //          assert(actual.version == propertyDefinition.version + 1)
-  //          assert(actual.fields.length == 2)
-  //        }
-  //      }
-  //
-  //      "an avro propertyDefinition has no errors" should {
-  //        "return a new version of the propertyDefinition" in {
-  //          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-  //          propertyDefinitionFixture.add(propertyDefinition)
-  //
-  //          val propertyDefinitionParams = HashMap[String, Any](
-  //            "name" -> propertyDefinition.name, "version" -> propertyDefinition.version, "format" -> "avro")
-  //          val responseUploaded = sendPostUploadFile[PropertyDefinition](
-  //            s"$apiUrl/upload", TestResourcePath.Avro.ok, propertyDefinitionParams)
-  //          assertCreated(responseUploaded)
-  //
-  //          val actual = responseUploaded.getBody
-  //          assert(actual.name == propertyDefinition.name)
-  //          assert(actual.version == propertyDefinition.version + 1)
-  //          assert(actual.fields.length == 7)
-  //        }
-  //      }
-  //    }
-  //
-  //    "return 400" when {
-  //      "a copybook with a syntax error" should {
-  //        "return a response containing a propertyDefinition parsing error with syntax error specific fields" in {
-  //          val propertyDefinitionParams = HashMap[String, Any]("version" -> 1, "name" -> "MyPropertyDefinition", "format" -> "copybook")
-  //          val response = sendPostUploadFile[RestResponse](
-  //            s"$apiUrl/upload", TestResourcePath.Copybook.bogus, propertyDefinitionParams)
-  //          val body = response.getBody
-  //
-  //          assertBadRequest(response)
-  //          body.error match {
-  //            case Some(e: PropertyDefinitionParsingError) =>
-  //              assert(e.errorType == "propertyDefinition_parsing")
-  //              assert(e.propertyDefinitionType == PropertyDefinitionType.Copybook)
-  //              assert(e.line.contains(22))
-  //              assert(e.field.contains(""))
-  //              assert(body.message.contains("Syntax error in the copybook"))
-  //            case e => fail(s"Expected an instance of PropertyDefinitionParsingError, got $e.")
-  //          }
-  //        }
-  //      }
-  //
-  //      "a JSON struct type propertyDefinition with a syntax error" should {
-  //        "return a response containing a propertyDefinition parsing error returned by the StructType parser" in {
-  //          val propertyDefinitionParams = HashMap[String, Any]("version" -> 1, "name" -> "MyPropertyDefinition", "format" -> "struct")
-  //          val response = sendPostUploadFile[RestResponse](
-  //            s"$apiUrl/upload", TestResourcePath.Json.bogus, propertyDefinitionParams)
-  //          val body = response.getBody
-  //
-  //          assertBadRequest(response)
-  //          body.error match {
-  //            case Some(e: PropertyDefinitionParsingError) =>
-  //              assert(e.errorType == "propertyDefinition_parsing")
-  //              assert(e.propertyDefinitionType == PropertyDefinitionType.Struct)
-  //              assert(body.message.contains("StructType serializer: Failed to convert the JSON string"))
-  //            case e => fail(s"Expected an instance of PropertyDefinitionParsingError, got $e.")
-  //          }
-  //        }
-  //      }
-  //
-  //      "an avro-propertyDefinition with a syntax error" should {
-  //        "return a response containing a propertyDefinition parsing error encountered during avro propertyDefinition parsing" in {
-  //          val propertyDefinitionParams = HashMap[String, Any]("version" -> 1, "name" -> "MyPropertyDefinition", "format" -> "avro")
-  //          val response = sendPostUploadFile[RestResponse](
-  //            s"$apiUrl/upload", TestResourcePath.Avro.bogus, propertyDefinitionParams)
-  //          val body = response.getBody
-  //
-  //          assertBadRequest(response)
-  //          body.error match {
-  //            case Some(e: PropertyDefinitionParsingError) =>
-  //              assert(e.errorType == "propertyDefinition_parsing")
-  //              assert(e.propertyDefinitionType == PropertyDefinitionType.Avro)
-  //              assert(body.message.contains("Record has no fields"))
-  //            case e => fail(s"Expected an instance of PropertyDefinitionParsingError, got $e.")
-  //          }
-  //        }
-  //      }
-  //
-  //      "a wrong format has been specified" should {
-  //        "return a response containing a propertyDefinition format error" in {
-  //          val propertyDefinitionParams = HashMap[String, Any]("version" -> 1, "name" -> "MyPropertyDefinition", "format" -> "foo")
-  //          val response = sendPostUploadFile[RestResponse](
-  //            s"$apiUrl/upload", TestResourcePath.Json.bogus, propertyDefinitionParams)
-  //          val body = response.getBody
-  //
-  //          assertBadRequest(response)
-  //          body.error match {
-  //            case Some(e: PropertyDefinitionFormatError) =>
-  //              assert(e.errorType == "propertyDefinition_format")
-  //              assert(e.propertyDefinitionType == "foo")
-  //              assert(body.message.contains("'foo' is not a recognized propertyDefinition format."))
-  //            case e => fail(s"Expected an instance of PropertyDefinitionFormatError, got $e.")
-  //          }
-  //        }
-  //      }
-  //    }
-  //
-  //    "return 404" when {
-  //      "a propertyDefinition file is uploaded, but no propertyDefinition exists for the specified name and version" in {
-  //        val propertyDefinitionParams = HashMap[String, Any](
-  //          "name" -> "dummy", "version" -> 1, "format" -> "copybook")
-  //        val responseUploaded = sendPostUploadFile[PropertyDefinition](
-  //          s"$apiUrl/upload", TestResourcePath.Copybook.ok, propertyDefinitionParams)
-  //        assertNotFound(responseUploaded)
-  //      }
-  //    }
-  //  }
-
 
   // PD specific:
   Seq(
@@ -753,218 +386,6 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
       }
     }
   }
-
-
-  private def readTestResourceAsString(path: String): String = IOUtils.toString(getClass.getResourceAsStream(path))
-
-  /**
-   * will prepare the a response from file with correct `ContentType`
-   */
-  private def readTestResourceAsResponseWithContentType(path: String): ResponseDefinitionBuilder = {
-    // this is crazy, but it works better than hardcoding mime-types
-    val filePath: Path = new File(getClass.getResource(path).toURI()).toPath
-    val mime = Option(Files.probeContentType(filePath)).getOrElse(MediaType.APPLICATION_OCTET_STREAM_VALUE) // default for e.g. cob
-
-    val content = readTestResourceAsString(path)
-    import com.github.tomakehurst.wiremock.client.WireMock._
-    okForContentType(mime, content)
-  }
-
-  //
-  //  s"POST $apiUrl/remote" should {
-  //
-  //    val remoteFilePath = "/remote-test/someRemoteFile.ext"
-  //    val remoteUrl = s"http://localhost:$port$remoteFilePath"
-  //
-  //    "return 201" when {
-  //      "a copybook has no errors" should {
-  //        "return a new version of the propertyDefinition" in {
-  //          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-  //          propertyDefinitionFixture.add(propertyDefinition)
-  //
-  //          wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-  //            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Copybook.ok)))
-  //
-  //          val params = HashMap[String, Any](
-  //            "name" -> propertyDefinition.name, "version" -> propertyDefinition.version, "format" -> "copybook", "remoteUrl" -> remoteUrl)
-  //          val responseRemoteLoaded = sendPostRemoteFile[PropertyDefinition](s"$apiUrl/remote", params)
-  //          assertCreated(responseRemoteLoaded)
-  //
-  //          val actual = responseRemoteLoaded.getBody
-  //          assert(actual.name == propertyDefinition.name)
-  //          assert(actual.version == propertyDefinition.version + 1)
-  //          assert(actual.fields.length == 3)
-  //        }
-  //      }
-  //
-  //      Seq(
-  //        ("explicit JSON struct format", Some("format" -> "struct")),
-  //        ("implicit JSON struct (by empty string format)", Some("format" -> "")),
-  //        ("implicit JSON struct (by no format at all)", None)
-  //      ).foreach { case (name, formatSpec) =>
-  //        s"an $name propertyDefinition has no errors" should {
-  //          "return a new version of the propertyDefinition" in {
-  //            val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-  //            propertyDefinitionFixture.add(propertyDefinition)
-  //
-  //            wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-  //              .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Json.ok)))
-  //
-  //            // conditionally adding ("format" -> "struct"/"") or no format at all
-  //            val params = HashMap("name" -> propertyDefinition.name, "version" -> propertyDefinition.version, "remoteUrl" -> remoteUrl) ++ formatSpec
-  //            val responseRemoteLoaded = sendPostRemoteFile[PropertyDefinition](s"$apiUrl/remote", params)
-  //            assertCreated(responseRemoteLoaded)
-  //
-  //            val actual = responseRemoteLoaded.getBody
-  //            assert(actual.name == propertyDefinition.name)
-  //            assert(actual.version == propertyDefinition.version + 1)
-  //            assert(actual.fields.length == 2)
-  //          }
-  //        }
-  //      }
-  //
-  //      "an avro propertyDefinition has no errors" should {
-  //        "return a new version of the propertyDefinition" in {
-  //          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-  //          propertyDefinitionFixture.add(propertyDefinition)
-  //
-  //          wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-  //            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
-  //
-  //          val params = HashMap[String, Any](
-  //            "name" -> propertyDefinition.name, "version" -> propertyDefinition.version, "format" -> "avro", "remoteUrl" -> remoteUrl)
-  //          val responseRemoteLoaded = sendPostRemoteFile[PropertyDefinition](s"$apiUrl/remote", params)
-  //          assertCreated(responseRemoteLoaded)
-  //
-  //          val actual = responseRemoteLoaded.getBody
-  //          assert(actual.name == propertyDefinition.name)
-  //          assert(actual.version == propertyDefinition.version + 1)
-  //          assert(actual.fields.length == 7)
-  //        }
-  //      }
-  //    }
-  //
-  //    "return 400" when {
-  //      Seq(
-  //        (PropertyDefinitionType.Copybook, TestResourcePath.Copybook.bogus, "Syntax error in the copybook"),
-  //        (PropertyDefinitionType.Struct, TestResourcePath.Json.bogus, "StructType serializer: Failed to convert the JSON string"),
-  //        (PropertyDefinitionType.Avro, TestResourcePath.Avro.bogus, "Record has no fields")
-  //      ).foreach { case (propertyDefinitionType, testResourcePath, expectedErrorMessage) =>
-  //
-  //        s"a $propertyDefinitionType with a syntax error" should {
-  //          "return a response containing a propertyDefinition parsing error with syntax error specific fields" in {
-  //            wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-  //              .willReturn(readTestResourceAsResponseWithContentType(testResourcePath)))
-  //
-  //            val params = HashMap("name" -> "MyPropertyDefinition", "version" -> 1, "format" -> propertyDefinitionType.toString, "remoteUrl" -> remoteUrl)
-  //            val response = sendPostRemoteFile[RestResponse](s"$apiUrl/remote", params)
-  //            val body = response.getBody
-  //
-  //            assertBadRequest(response)
-  //            body.error match {
-  //              case Some(e: PropertyDefinitionParsingError) =>
-  //                assert(e.errorType == "propertyDefinition_parsing")
-  //                assert(e.propertyDefinitionType == propertyDefinitionType)
-  //                assert(body.message.contains(expectedErrorMessage))
-  //              case e => fail(s"Expected an instance of PropertyDefinitionParsingError, got $e.")
-  //            }
-  //          }
-  //        }
-  //      }
-  //
-  //      "a wrong format has been specified" should {
-  //        "return a response containing a propertyDefinition format error" in {
-  //          wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-  //            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Json.ok)))
-  //
-  //          val params = HashMap[String, Any]("version" -> 1, "name" -> "MyPropertyDefinition", "format" -> "foo", "remoteUrl" -> remoteUrl)
-  //          val response = sendPostRemoteFile[RestResponse](s"$apiUrl/remote", params)
-  //          val body = response.getBody
-  //
-  //          assertBadRequest(response)
-  //          body.error match {
-  //            case Some(e: PropertyDefinitionFormatError) =>
-  //              assert(e.errorType == "propertyDefinition_format")
-  //              assert(e.propertyDefinitionType == "foo")
-  //              assert(body.message.contains("'foo' is not a recognized propertyDefinition format."))
-  //            case e => fail(s"Expected an instance of PropertyDefinitionFormatError, got $e.")
-  //          }
-  //        }
-  //      }
-  //    }
-  //
-  //    "return 404" when {
-  //      "a propertyDefinition file is loaded from remote url, but no propertyDefinition exists for the specified name and version" in {
-  //        wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
-  //          .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Copybook.ok)))
-  //
-  //        val params = HashMap[String, Any]("version" -> 1, "name" -> "dummy", "format" -> "copybook", "remoteUrl" -> remoteUrl)
-  //        val response = sendPostRemoteFile[PropertyDefinition](s"$apiUrl/remote", params)
-  //        assertNotFound(response)
-  //      }
-  //    }
-  //  }
-  //
-  //  s"POST $apiUrl/registry" should {
-  //    def subjectPath(subjectName: String) = s"/subjects/$subjectName/versions/latest/propertyDefinition"
-  //
-  //    "return 201" when {
-  //      "an avro propertyDefinition has no errors" should {
-  //        "load propertyDefinition by subject name as-is" in {
-  //          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-  //          propertyDefinitionFixture.add(propertyDefinition)
-  //
-  //          wireMockServer.stubFor(get(urlPathEqualTo(subjectPath("myTopic1-value")))
-  //            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
-  //
-  //          val params = HashMap[String, Any](
-  //            "name" -> propertyDefinition.name, "version" -> propertyDefinition.version, "format" -> "avro", "subject" -> "myTopic1-value")
-  //          val responseRemoteLoaded = sendPostSubject[PropertyDefinition](s"$apiUrl/registry", params)
-  //          assertCreated(responseRemoteLoaded)
-  //
-  //          val actual = responseRemoteLoaded.getBody
-  //          assert(actual.name == propertyDefinition.name)
-  //          assert(actual.version == propertyDefinition.version + 1)
-  //          assert(actual.fields.length == 7)
-  //        }
-  //
-  //        "load propertyDefinition by subject name -value fallback" in {
-  //          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-  //          propertyDefinitionFixture.add(propertyDefinition)
-  //
-  //          wireMockServer.stubFor(get(urlPathEqualTo(subjectPath("myTopic2"))) // will fail
-  //            .willReturn(notFound()))
-  //
-  //          wireMockServer.stubFor(get(urlPathEqualTo(subjectPath("myTopic2-value"))) // fallback will kick in
-  //            .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
-  //
-  //          val params = HashMap[String, Any](
-  //            "name" -> propertyDefinition.name, "version" -> propertyDefinition.version, "format" -> "avro", "subject" -> "myTopic2")
-  //          val responseRemoteLoaded = sendPostSubject[PropertyDefinition](s"$apiUrl/registry", params)
-  //          assertCreated(responseRemoteLoaded)
-  //
-  //          val actual = responseRemoteLoaded.getBody
-  //          assert(actual.name == propertyDefinition.name)
-  //          assert(actual.version == propertyDefinition.version + 1)
-  //          assert(actual.fields.length == 7)
-  //        }
-  //      }
-  //    }
-  //
-  //    s"GET $apiUrl/features" can {
-  //      "show propertyDefinition registry availability" when {
-  //        "propertyDefinition registry integration is enabled" in {
-  //
-  //          val response = sendGet[PropertyDefinitionApiFeatures](s"$apiUrl/features")
-  //          assert(response.getStatusCode == HttpStatus.OK)
-  //          val responseBody = response.getBody
-  //
-  //          // test-config contains populated menas.propertyDefinitionRegistry.baseUrl
-  //          assert(responseBody == PropertyDefinitionApiFeatures(registry = true))
-  //        }
-  //      }
-  //    }
-  //  }
 
   private def toExpected(propertyDefinition: PropertyDefinition, actual: PropertyDefinition): PropertyDefinition = {
     propertyDefinition.copy(
