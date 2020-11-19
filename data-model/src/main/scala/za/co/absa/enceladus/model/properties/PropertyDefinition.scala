@@ -29,7 +29,6 @@ case class PropertyDefinition(name: String,
                               description: Option[String] = None,
 
                               propertyType: PropertyType,
-                              suggestedValue: String = "",
                               putIntoInfoFile: Boolean = false,
                               essentiality: Essentiality = Optional(), // consider renaming or simplifying into 2 boolean fields?
                               disabled: Boolean = false,
@@ -45,11 +44,6 @@ case class PropertyDefinition(name: String,
                               userDisabled: Option[String] = None,
                               parent: Option[MenasReference] = None
                              ) extends VersionedModel with Auditable[PropertyDefinition] {
-
-  require(propertyType.isValueConforming(suggestedValue),
-    s"The suggested value '$suggestedValue' does not conform to the propertyType $propertyType!")
-
-  def typeSpecificSettings: Map[String, Any] = propertyType.typeSpecificSettings
 
   val isRequired: Boolean = essentiality == Mandatory()
   val isOptional: Boolean = essentiality == Optional()
@@ -77,7 +71,6 @@ case class PropertyDefinition(name: String,
       updatedBy = newRecord.userUpdated,
       changes = super.getPrimitiveFieldsAudit(newRecord,
         Seq(AuditFieldName("propertyType", "Property type"),
-          AuditFieldName("suggestedValue", "Suggested value"),
           AuditFieldName("putIntoInfoFile", "Put into _INFO file"),
           AuditFieldName("essentiality", "Essentiality"),
           AuditFieldName("schemaVersion", "Schema Version"),
@@ -89,17 +82,14 @@ case class PropertyDefinition(name: String,
     // using objectMapperBase.writeValueAsString would work too, but the object would get "-escaped
     val propertyTypeJson: ObjectNode = objectMapperBase.valueToTree(propertyType)
     val essentialityJson: ObjectNode = objectMapperBase.valueToTree(essentiality)
-    val typeSpecificSettingsJson: ArrayNode = objectMapperBase.valueToTree(typeSpecificSettings.toArray)
 
     val objectItemMapper = objectMapperRoot.`with`("item")
 
     objectItemMapper.put("name", name)
     description.map(d => objectItemMapper.put("description", d))
     objectItemMapper.set("propertyType", propertyTypeJson)
-    objectItemMapper.put("suggestedValue", suggestedValue)
     objectItemMapper.put("putIntoInfoFile", putIntoInfoFile)
     objectItemMapper.set("essentiality", essentialityJson)
-    objectItemMapper.putArray("typeSpecificSettings").addAll(typeSpecificSettingsJson)
 
     objectMapperRoot.toString
   }

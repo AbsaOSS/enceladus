@@ -103,10 +103,8 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
       PropertyDefinition(name = "mandatoryString2", propertyType = StringPropertyType(), essentiality = Mandatory()),
       PropertyDefinition(name = "mandatoryDisabledString1", propertyType = StringPropertyType(), essentiality = Mandatory(), disabled = true),
 
-      PropertyDefinition(name = "optionalEnumAb", propertyType = StringEnumPropertyType("optionA", "optionB"),
-        essentiality = Optional(), suggestedValue = "optionA"),
-      PropertyDefinition(name = "optionalEnumCd", propertyType = StringEnumPropertyType("optionC", "optionD"),
-        essentiality = Optional(), suggestedValue = "optionD")
+      PropertyDefinition(name = "optionalEnumAb", propertyType = StringEnumPropertyType("optionA", "optionB"), essentiality = Optional()),
+      PropertyDefinition(name = "optionalEnumCd", propertyType = StringEnumPropertyType("optionC", "optionD"), essentiality = Optional())
     )
 
     Mockito.when(datasetPropDefService.getLatestVersions()).thenReturn(Future.successful(mockedPropertyDefinitions))
@@ -121,7 +119,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
 
     val validationResult = await(service.validateProperties(datasetProperties))
     val expectedValidationResult = Validation(Map(
-      "optionalEnumAb" -> List("Value optionX of key 'optionalEnumAb' does not conform to the property type of StringEnumPropertyType(Set(optionA, optionB))."),
+      "optionalEnumAb" -> List("Value optionX of key 'optionalEnumAb' does not conform to the property type of StringEnumPropertyType(Set(optionA, optionB),optionA)."),
       "undefinedKey1" -> List("There is no property definition for key 'undefinedKey1'."),
       "mandatoryString2" -> List("Dataset property mandatoryString2 is mandatory, but does not exist!"))
     )

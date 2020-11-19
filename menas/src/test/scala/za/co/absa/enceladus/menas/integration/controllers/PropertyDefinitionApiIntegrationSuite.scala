@@ -207,83 +207,39 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
     }
   }
 
-  //
-  //  s"GET $apiUrl/export/{name}/{version}" should {
-  //    "return 404" when {
-  //      "no Attachment exists for the specified name" in {
-  //        val attachment = AttachmentFactory.getDummyAttachment(refName = "propertyDefinitionName", refVersion = 2, refCollection = propertyDefinitionRefCollection)
-  //        attachmentFixture.add(attachment)
-  //
-  //        val response = sendGet[Array[Byte]](s"$apiUrl/export/otherPropertyDefinitionName/2")
-  //
-  //        assertNotFound(response)
-  //        assert(!response.getHeaders.containsKey("mime-type"))
-  //      }
-  //      "no Attachment exists with a version up to the specified version" in {
-  //        val attachment = AttachmentFactory.getDummyAttachment(refName = "propertyDefinitionName", refVersion = 2, refCollection = propertyDefinitionRefCollection)
-  //        attachmentFixture.add(attachment)
-  //
-  //        val response = sendGet[Array[Byte]](s"$apiUrl/export/propertyDefinitionName/1")
-  //
-  //        assertNotFound(response)
-  //        assert(!response.getHeaders.containsKey("mime-type"))
-  //      }
-  //    }
-  //
-  //    "return 200" when {
-  //      val attachment1 = AttachmentFactory.getDummyAttachment(
-  //        refName = "propertyDefinitionName",
-  //        refVersion = 1,
-  //        refCollection = propertyDefinitionRefCollection,
-  //        fileContent = Array(1, 2, 3))
-  //      val attachment2 = AttachmentFactory.getDummyAttachment(
-  //        refName = "propertyDefinitionName",
-  //        refVersion = 2,
-  //        refCollection = propertyDefinitionRefCollection,
-  //        fileContent = Array(2, 3, 4),
-  //        fileMIMEType = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-  //      val attachment4 = AttachmentFactory.getDummyAttachment(
-  //        refName = "propertyDefinitionName",
-  //        refVersion = 4,
-  //        refCollection = propertyDefinitionRefCollection,
-  //        fileContent = Array(4, 5, 6),
-  //        fileMIMEType = MediaType.APPLICATION_JSON_VALUE)
-  //      val attachment5 = AttachmentFactory.getDummyAttachment(
-  //        refName = "propertyDefinitionName",
-  //        refVersion = 5,
-  //        refCollection = propertyDefinitionRefCollection,
-  //        fileContent = Array(5, 6, 7))
-  //      "there are Attachments with previous and subsequent versions" should {
-  //        "return the byte array of the uploaded file with the nearest previous version" in {
-  //          attachmentFixture.add(attachment1, attachment2, attachment4, attachment5)
-  //
-  //          val response = sendGet[Array[Byte]](s"$apiUrl/export/propertyDefinitionName/3")
-  //
-  //          assertOk(response)
-  //          assert(response.getHeaders.containsKey("mime-type"))
-  //          assert(response.getHeaders.get("mime-type").get(0) == MediaType.APPLICATION_OCTET_STREAM_VALUE)
-  //
-  //          val body = response.getBody
-  //          assert(body.sameElements(attachment2.fileContent))
-  //        }
-  //      }
-  //      "there is an Attachment with the exact version" should {
-  //        "return the byte array of the uploaded file with the exact version" in {
-  //          attachmentFixture.add(attachment1, attachment2, attachment4, attachment5)
-  //
-  //          val response = sendGet[Array[Byte]](s"$apiUrl/export/propertyDefinitionName/4")
-  //
-  //          assertOk(response)
-  //          assert(response.getHeaders.containsKey("mime-type"))
-  //          assert(response.getHeaders.get("mime-type").get(0) == "application/json")
-  //
-  //          val body = response.getBody
-  //          assert(body.sameElements(attachment4.fileContent))
-  //        }
-  //      }
-  //    }
-  //  }
-  //
+
+  s"GET $apiUrl/export/{name}/{version}" should {
+    "return 404" when {
+      "when the name+version does not exist" in {
+        val response = sendGet[Array[Byte]](s"$apiUrl/export/notFoundPropertyDefinition/2")
+
+        assertNotFound(response)
+      }
+    }
+
+    "return 200" when {
+      "there is a correct PropertyDefinition version" should {
+        "return the exported PD representation" in {
+          val propDef = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
+          propertyDefinitionFixture.add(propDef)
+          val response = sendGet[String](s"$apiUrl/exportItem/propertyDefinition/2")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body ==
+            """{
+              |"metadata":{"exportVersion":1},
+              |"item":{"name":"propertyDefinition",
+              |"propertyType":{"_t":"StringPropertyType","suggestedValue":""},
+              |"putIntoInfoFile":false,
+              |"essentiality":{"_t":"Optional"}}
+              |}""".stripMargin.replaceAll("[\\r\\n]", ""))
+        }
+      }
+    }
+  }
+
 
   // PD specific:
   Seq(
@@ -315,23 +271,42 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
       "return 200" when {
         "there is a PropertyDefinition with the specified name and version" should {
           "return the PropertyDefinition as a JSON" in {
-            val pd1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 1)
-            propertyDefinitionFixture.add(pd1)
+            val pd23 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 23)
+            propertyDefinitionFixture.add(pd23)
 
             val response = sendGet[String](urlPattern
               .replace("{name}", "propertyDefinition1")
-              .replace("{version}", "1"))
+              .replace("{version}", "23"))
             assertOk(response)
 
             val body = response.getBody
+
+            // todo fix/check collection null
             val expected =
-              s"""{"name":"propertyDefinition1","version":1,"description":null,"propertyType":{"_t":"StringPropertyType"},
-                 |"suggestedValue":"","putIntoInfoFile":false,"essentiality":{"_t":"Optional"},"disabled":false,
-                 |"dateCreated":"${pd1.dateCreated}","userCreated":"dummyUser","lastUpdated":"${pd1.lastUpdated}",
-                 |"userUpdated":"dummyUser","dateDisabled":null,"userDisabled":null,"parent":null,"isRequired":false,
-                 |"isOptional":true,"createdMessage":{"menasRef":{"collection":null,"name":"propertyDefinition1","version":1},
-                 |"updatedBy":"dummyUser","updated":"${pd1.createdMessage.updated}","changes":[{"field":"","oldValue":null,"newValue":null,
-                 |"message":"PropertyDefinition propertyDefinition1 created."}]}}""".stripMargin.replaceAll("[\\r\\n]", "")
+              s"""{
+                 |"name":"propertyDefinition1",
+                 |"version":23,
+                 |"description":null,
+                 |"propertyType":{"_t":"StringPropertyType","suggestedValue":""},
+                 |"putIntoInfoFile":false,
+                 |"essentiality":{"_t":"Optional"},
+                 |"disabled":false,
+                 |"dateCreated":"${pd23.dateCreated}",
+                 |"userCreated":"dummyUser",
+                 |"lastUpdated":"${pd23.lastUpdated}",
+                 |"userUpdated":"dummyUser",
+                 |"dateDisabled":null,
+                 |"userDisabled":null,
+                 |"parent":null,
+                 |"isRequired":false,
+                 |"isOptional":true,
+                 |"createdMessage":{
+                 |"menasRef":{"collection":null,"name":"propertyDefinition1","version":23},
+                 |"updatedBy":"dummyUser",
+                 |"updated":"${pd23.createdMessage.updated}",
+                 |"changes":[{"field":"","oldValue":null,"newValue":null,"message":"PropertyDefinition propertyDefinition1 created."}]
+                 |}
+                 |}""".stripMargin.replaceAll("[\\r\\n]", "")
             assert(body == expected)
           }
         }

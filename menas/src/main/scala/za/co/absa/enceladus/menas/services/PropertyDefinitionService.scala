@@ -25,20 +25,12 @@ import za.co.absa.enceladus.model.properties.PropertyDefinition
 import scala.concurrent.Future
 
 @Service
-class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: PropertyDefinitionMongoRepository,
-                                             datasetMongoRepository: DatasetMongoRepository,
-                                             sparkMenasConvertor: SparkMenasSchemaConvertor) extends VersionedModelService(propertyDefMongoRepository) {
+class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: PropertyDefinitionMongoRepository)
+  extends VersionedModelService(propertyDefMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
-//    for {
-      // usedInD <- datasetMongoRepository.findRefEqual("schemaName", "schemaVersion", name, version)
-      // todo create a method in datasetMongoRepository to find linked properties defintions of used properties
-//    } yield UsedIn(Some(usedInD))
-
-    Future.successful(UsedIn())
-  }
+  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = Future.successful(UsedIn())
 
   override def update(username: String, propertyDef: PropertyDefinition): Future[Option[PropertyDefinition]] = {
     super.update(username, propertyDef.name, propertyDef.version) { latest =>
@@ -51,7 +43,6 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
       name = newPropertyDef.name,
       description = newPropertyDef.description,
       propertyType = newPropertyDef.propertyType,
-      suggestedValue = newPropertyDef.suggestedValue,
       putIntoInfoFile = newPropertyDef.putIntoInfoFile,
       essentiality = newPropertyDef.essentiality
     )

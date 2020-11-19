@@ -30,8 +30,7 @@ class PropertyDefinitionTest extends FunSuite {
       name = "Test string property",
       version = 2,
       description = Some("test desc"),
-      propertyType = StringPropertyType(),
-      suggestedValue = "sort of default",
+      propertyType = StringPropertyType(suggestedValue = "sort of default"),
       putIntoInfoFile = true,
       essentiality = Mandatory()
     )
@@ -40,11 +39,9 @@ class PropertyDefinitionTest extends FunSuite {
       s"""{"metadata":{"exportVersion":$modelVersion},"item":{
          |"name":"Test string property",
          |"description":"test desc",
-         |"propertyType":{"_t":"StringPropertyType"},
-         |"suggestedValue":"sort of default",
+         |"propertyType":{"_t":"StringPropertyType","suggestedValue":"sort of default"},
          |"putIntoInfoFile":true,
-         |"essentiality":{"_t":"Mandatory"},
-         |"typeSpecificSettings":[]
+         |"essentiality":{"_t":"Mandatory"}
          |}}""".stripMargin.replaceAll("[\\r\\n]", "")
 
     assert(stringPropertyDef.exportItem() == expectedPropertyDef)
@@ -55,18 +52,15 @@ class PropertyDefinitionTest extends FunSuite {
       name = "Test enum property",
       version = 3,
       description = None,
-      propertyType = StringEnumPropertyType("optionA", "optionB", "optionC"),
-      suggestedValue = "optionB"
+      propertyType = StringEnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = "optionB")
     )
 
     val expectedPropertyDef =
       s"""{"metadata":{"exportVersion":$modelVersion},"item":{
          |"name":"Test enum property",
-         |"propertyType":{"_t":"StringEnumPropertyType","allowedValues":["optionA","optionB","optionC"]},
-         |"suggestedValue":"optionB",
+         |"propertyType":{"_t":"StringEnumPropertyType","allowedValues":["optionA","optionB","optionC"],"suggestedValue":"optionB"},
          |"putIntoInfoFile":false,
-         |"essentiality":{"_t":"Optional"},
-         |"typeSpecificSettings":[["items",["optionA","optionB","optionC"]]]
+         |"essentiality":{"_t":"Optional"}
          |}}""".stripMargin.replaceAll("[\\r\\n]", "")
 
     assert(enumPropertyDef.exportItem() == expectedPropertyDef)

@@ -26,26 +26,28 @@ package object propertyType {
     new Type(value = classOf[StringEnumPropertyType], name = "StringEnumPropertyType")
   ))
   sealed trait PropertyType {
+    def suggestedValue: String
+
     def isValueConforming(value: String): Boolean
-
-    def typeSpecificSettings: Map[String, Any]
   }
 
-  case class StringPropertyType() extends PropertyType {
+  case class StringPropertyType(suggestedValue: String = "") extends PropertyType {
     override def isValueConforming(value: String): Boolean = true
-
-    override def typeSpecificSettings: Map[String, Any] = Map.empty
   }
 
-  case class StringEnumPropertyType(allowedValues: Set[String]) extends PropertyType {
-
+  case class StringEnumPropertyType(allowedValues: Set[String], suggestedValue: String) extends PropertyType {
     override def isValueConforming(value: String): Boolean = allowedValues.contains(value)
 
-    override def typeSpecificSettings: Map[String, Set[String]] = Map("items" -> allowedValues)
+    require(isValueConforming(suggestedValue), s"The suggested value '$suggestedValue' does not conform to the propertyType $this!")
   }
 
   object StringEnumPropertyType {
-    def apply(allowedValues: String*): StringEnumPropertyType = StringEnumPropertyType(allowedValues.toSet)
+    /**
+     * Shorthand for creating [[StringEnumPropertyType]].
+     * @param allowedValues The first value will be assinged to the [[PropertyType#suggestedValue]] field.
+     * @return
+     */
+    def apply(allowedValues: String*): StringEnumPropertyType = StringEnumPropertyType(allowedValues.toSet, allowedValues(0))
   }
 
 }

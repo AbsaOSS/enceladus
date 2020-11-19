@@ -68,8 +68,7 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
 
     val testProperty2 = PropertyDefinition(
       name = s"testProp${Random.nextLong().abs}",
-      propertyType = StringEnumPropertyType(Set("optionA", "optionB", "optionC")),
-      suggestedValue = "optionB"
+      propertyType = StringEnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = "optionB")
     )
 
     val prop2 = propertyDefService.create(testProperty2, user.getUsername)
