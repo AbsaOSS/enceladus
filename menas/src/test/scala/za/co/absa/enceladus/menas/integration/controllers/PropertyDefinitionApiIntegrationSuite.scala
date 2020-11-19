@@ -697,7 +697,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
 
   s"GET $apiUrl/{name}" should {
     "return 200" when {
-      "there is a PropertyDefinition with the latest name and version (regardless of being disabled)" should {
+      "there is a PropertyDefinition with the name and latest version (regardless of being disabled)" should {
         "return the PropertyDefinition as a JSON" in {
           val pd1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 1)
           val pd2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 2)
@@ -709,6 +709,31 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
 
           val bodyVersion = response.getBody.version
           assert(bodyVersion == 3)
+        }
+      }
+    }
+  }
+
+  s"GET $apiUrl" should {
+    "return 200" when {
+      "there is a list of PropertyDefinition  in their latest non-disabled versions" should {
+        "return the PropertyDefinition as a JSON" in {
+          val pdA1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionA", version = 1)
+          val pdA2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionA", version = 2)
+          val pdA3 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionA", version = 3, disabled = true)
+          propertyDefinitionFixture.add(pdA1, pdA2, pdA3)
+
+          val pdB1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionB", version = 1)
+          val pdB2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionB", version = 2)
+          val pdB3 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionB", version = 3)
+          propertyDefinitionFixture.add(pdB1, pdB2, pdB3)
+
+          val response = sendGet[Array[PropertyDefinition]](s"$apiUrl") // Array to avoid erasure
+          assertOk(response)
+
+          val responseData = response.getBody.toSeq.map(pd => (pd.name, pd.version))
+          val expectedData = Seq("propertyDefinitionA" -> 2, "propertyDefinitionB" -> 3) // disabled pdA-v3 not reported
+          assert(responseData == expectedData)
         }
       }
     }
