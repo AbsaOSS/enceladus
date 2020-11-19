@@ -653,62 +653,77 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
 
 
   // PD specific:
-  s"GET $apiUrl/{name}/{version}" should {
-    "return 404" when {
-      "no propertyDefinition exists for the specified name" in {
-        val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 1)
-        propertyDefinitionFixture.add(propertyDefinition)
+  Seq(
+    s"$apiUrl/detail/{name}/{version}",
+    s"$apiUrl/{name}/{version}" // PropertyDefinitionController API alias
+  ).foreach {urlPattern =>
+    s"GET $urlPattern" should {
+      "return 404" when {
+        "no propertyDefinition exists for the specified name" in {
+          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 1)
+          propertyDefinitionFixture.add(propertyDefinition)
 
-        val response = sendGet[String](s"$apiUrl/json/otherPropertyDefinitionName/1")
-        assertNotFound(response)
+          val response = sendGet[String](urlPattern
+            .replace("{name}", "otherPropertyDefinitionName")
+            .replace("{version}", "1"))
+          assertNotFound(response)
+        }
+
+        "no propertyDefinition exists for the specified version" in {
+          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 1)
+          propertyDefinitionFixture.add(propertyDefinition)
+
+          val response = sendGet[String](urlPattern
+            .replace("{name}", "propertyDefinition1")
+            .replace("{version}", "789"))
+          assertNotFound(response)
+        }
       }
+      "return 200" when {
+        "there is a PropertyDefinition with the specified name and version" should {
+          "return the PropertyDefinition as a JSON" in {
+            val pd1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 1)
+            propertyDefinitionFixture.add(pd1)
 
-      "no propertyDefinition exists for the specified version" in {
-        val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 1)
-        propertyDefinitionFixture.add(propertyDefinition)
+            val response = sendGet[String](urlPattern
+              .replace("{name}", "propertyDefinition1")
+              .replace("{version}", "1"))
+            assertOk(response)
 
-        val response = sendGet[String](s"$apiUrl/propertyDefinition1/123")
-        assertNotFound(response)
-      }
-    }
-    "return 200" when {
-      "there is a PropertyDefinition with the specified name and version" should {
-        "return the PropertyDefinition as a JSON" in {
-          val pd1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 1)
-          propertyDefinitionFixture.add(pd1)
-
-          val response = sendGet[String](s"$apiUrl/propertyDefinition1/1")
-          assertOk(response)
-
-          val body = response.getBody
-          val expected =
-            s"""{"name":"propertyDefinition1","version":1,"description":null,"propertyType":{"_t":"StringPropertyType"},
-               |"suggestedValue":"","putIntoInfoFile":false,"essentiality":{"_t":"Optional"},"disabled":false,
-               |"dateCreated":"${pd1.dateCreated}","userCreated":"dummyUser","lastUpdated":"${pd1.lastUpdated}",
-               |"userUpdated":"dummyUser","dateDisabled":null,"userDisabled":null,"parent":null,"isRequired":false,
-               |"isOptional":true,"createdMessage":{"menasRef":{"collection":null,"name":"propertyDefinition1","version":1},
-               |"updatedBy":"dummyUser","updated":"${pd1.createdMessage.updated}","changes":[{"field":"","oldValue":null,"newValue":null,
-               |"message":"PropertyDefinition propertyDefinition1 created."}]}}""".stripMargin.replaceAll("[\\r\\n]", "")
-          assert(body == expected)
+            val body = response.getBody
+            val expected =
+              s"""{"name":"propertyDefinition1","version":1,"description":null,"propertyType":{"_t":"StringPropertyType"},
+                 |"suggestedValue":"","putIntoInfoFile":false,"essentiality":{"_t":"Optional"},"disabled":false,
+                 |"dateCreated":"${pd1.dateCreated}","userCreated":"dummyUser","lastUpdated":"${pd1.lastUpdated}",
+                 |"userUpdated":"dummyUser","dateDisabled":null,"userDisabled":null,"parent":null,"isRequired":false,
+                 |"isOptional":true,"createdMessage":{"menasRef":{"collection":null,"name":"propertyDefinition1","version":1},
+                 |"updatedBy":"dummyUser","updated":"${pd1.createdMessage.updated}","changes":[{"field":"","oldValue":null,"newValue":null,
+                 |"message":"PropertyDefinition propertyDefinition1 created."}]}}""".stripMargin.replaceAll("[\\r\\n]", "")
+            assert(body == expected)
+          }
         }
       }
     }
   }
+  Seq(
+    s"$apiUrl/detail/{name}/latest",
+    s"$apiUrl/{name}" // PropertyDefinitionController API alias
+  ).foreach { urlPattern =>
+    s"GET $urlPattern" should {
+      "return 200" when {
+        "there is a PropertyDefinition with the name and latest version (regardless of being disabled)" should {
+          "return the PropertyDefinition as a JSON" in {
+            val pd1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 1)
+            val pd2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 2)
+            val pd3 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 3, disabled = true)
+            propertyDefinitionFixture.add(pd1, pd2, pd3)
 
-  s"GET $apiUrl/{name}" should {
-    "return 200" when {
-      "there is a PropertyDefinition with the name and latest version (regardless of being disabled)" should {
-        "return the PropertyDefinition as a JSON" in {
-          val pd1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 1)
-          val pd2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 2)
-          val pd3 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 3, disabled = true)
-          propertyDefinitionFixture.add(pd1, pd2, pd3)
+            val response = sendGet[PropertyDefinition](urlPattern.replace("{name}", "propertyDefinition1"))
+            assertOk(response)
 
-          val response = sendGet[PropertyDefinition](s"$apiUrl/propertyDefinition1")
-          assertOk(response)
-
-          val bodyVersion = response.getBody.version
-          assert(bodyVersion == 3)
+            val bodyVersion = response.getBody.version
+            assert(bodyVersion == 3)
+          }
         }
       }
     }
@@ -716,7 +731,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
 
   s"GET $apiUrl" should {
     "return 200" when {
-      "there is a list of PropertyDefinition  in their latest non-disabled versions" should {
+      "there is a list of PropertyDefinition in their latest non-disabled versions" should {
         "return the PropertyDefinition as a JSON" in {
           val pdA1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionA", version = 1)
           val pdA2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionA", version = 2)
