@@ -43,8 +43,8 @@ IF %Append%==0 (COPY %Y% NUL %File% > NUL 2>&1)
 
 :: Actual TEE
 FOR /F "tokens=1* delims=]" %%A IN ('FIND /N /V ""') DO (
-	>  CON    ECHO.%%B
-	>> %File% ECHO.%%B
+	>  CON    ECHO/%%B
+	>> %File% ECHO/%%B
 )
 
 :: Done
@@ -59,20 +59,20 @@ GOTO:EOF
 
 
 :Syntax
-ECHO.
+ECHO/
 ECHO Tee.bat,  Version 2.11a for Windows NT 4 / 2000 / XP
 ECHO Display text on screen and redirect it to a file simultaneously
-ECHO.
+ECHO/
 IF NOT "%OS%"=="Windows_NT" ECHO Usage:  some_command  ³  TEE.BAT  [ -a ]  filename
 IF NOT "%OS%"=="Windows_NT" GOTO Skip
 ECHO Usage:  some_command  ^|  TEE.BAT  [ -a ]  filename
 :Skip
-ECHO.
+ECHO/
 ECHO Where:  "some_command" is the command whose output should be redirected
 ECHO         "filename"     is the file the output should be redirected to
 ECHO         -a             appends the output of the command to the file,
 ECHO                        rather than overwriting the file
-ECHO.
+ECHO/
 ECHO Written by Rob van der Woude
 ECHO http://www.robvanderwoude.com
 ECHO Modified by Kees Couprie

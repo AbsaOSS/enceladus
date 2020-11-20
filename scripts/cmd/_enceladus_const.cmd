@@ -16,3 +16,5 @@
 SET STD_CLASS=za.co.absa.enceladus.standardization.StandardizationJob
 SET CONF_CLASS=za.co.absa.enceladus.conformance.DynamicConformanceJob
 SET STD_CONF_CLASS=za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob
+
+SET HELPER_SCRIPT_VERSION=1.0
