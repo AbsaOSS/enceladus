@@ -200,8 +200,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
   s"GET $apiUrl/export/{name}/{version}" should {
     "return 404" when {
       "when the name+version does not exist" in {
-        val response = sendGet[Array[Byte]](s"$apiUrl/export/notFoundPropertyDefinition/2")
-
+        val response = sendGet[String](s"$apiUrl/export/notFoundPropertyDefinition/2")
         assertNotFound(response)
       }
     }

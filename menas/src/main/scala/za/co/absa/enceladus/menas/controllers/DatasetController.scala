@@ -84,7 +84,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   }
 
 
-  @GetMapping(Array("/{datasetName}/properties/validation")) // todo how about non-latest? validate against latest propDefs?
+  @GetMapping(Array("/{datasetName}/properties/valid")) // todo how about non-latest? validate against latest propDefs?
   @ResponseStatus(HttpStatus.OK)
   def getPropertiesValidation(@PathVariable datasetName: String): CompletableFuture[Validation] = {
     datasetService.getLatestVersion(datasetName).flatMap {

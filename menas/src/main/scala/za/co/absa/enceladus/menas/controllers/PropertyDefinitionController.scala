@@ -65,28 +65,28 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
     super.getVersionDetail(propertyName, version)
   }
 
-  @PostMapping(Array("/testcreate")) // todo remove/use as inspiration for a integTest?
-  @ResponseStatus(HttpStatus.CREATED)
-  def addConformanceRule(@AuthenticationPrincipal user: UserDetails): CompletableFuture[Seq[PropertyDefinition]] = {
-
-    val testProperty = PropertyDefinition(
-      name = s"testProp${Random.nextLong().abs}",
-      propertyType = StringPropertyType()
-    )
-    val prop1 = propertyDefService.create(testProperty, user.getUsername)
-
-    val testProperty2 = PropertyDefinition(
-      name = s"testProp${Random.nextLong().abs}",
-      propertyType = StringEnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = "optionB")
-    )
-
-    val prop2 = propertyDefService.create(testProperty2, user.getUsername)
-
-    for {
-      res1 <- prop1.map(_.toSeq)
-      res2 <- prop2.map(_.toSeq)
-    } yield (res1 ++ res2)
-
-  }
+//  @PostMapping(Array("/testcreate")) // todo remove/use as inspiration for a integTest?
+//  @ResponseStatus(HttpStatus.CREATED)
+//  def addConformanceRule(@AuthenticationPrincipal user: UserDetails): CompletableFuture[Seq[PropertyDefinition]] = {
+//
+//    val testProperty = PropertyDefinition(
+//      name = s"testProp${Random.nextLong().abs}",
+//      propertyType = StringPropertyType()
+//    )
+//    val prop1 = propertyDefService.create(testProperty, user.getUsername)
+//
+//    val testProperty2 = PropertyDefinition(
+//      name = s"testProp${Random.nextLong().abs}",
+//      propertyType = StringEnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = "optionB")
+//    )
+//
+//    val prop2 = propertyDefService.create(testProperty2, user.getUsername)
+//
+//    for {
+//      res1 <- prop1.map(_.toSeq)
+//      res2 <- prop2.map(_.toSeq)
+//    } yield (res1 ++ res2)
+//
+//  }
 
 }
