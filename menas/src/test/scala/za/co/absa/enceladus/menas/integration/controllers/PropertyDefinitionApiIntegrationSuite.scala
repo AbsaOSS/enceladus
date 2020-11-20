@@ -15,32 +15,16 @@
 
 package za.co.absa.enceladus.menas.integration.controllers
 
-import java.io.File
-import java.nio.file.{Files, Path}
-
-import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
-import org.apache.commons.io.IOUtils
 import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfterAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.http.{HttpStatus, MediaType}
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.menas.TestResourcePath
 import za.co.absa.enceladus.menas.integration.fixtures._
-import za.co.absa.enceladus.menas.models.rest.RestResponse
-import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
-import za.co.absa.enceladus.menas.models.{SchemaApiFeatures, Validation}
-import za.co.absa.enceladus.menas.repositories.RefCollection
-import za.co.absa.enceladus.menas.utils.SchemaType
-import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.model.properties.PropertyDefinition
-import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
-import za.co.absa.enceladus.model.{Schema, UsedIn}
-
-import scala.collection.immutable.HashMap
+import za.co.absa.enceladus.model.test.factories.PropertyDefinitionFactory
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -55,131 +39,136 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
   // fixtures are cleared after each test
   override def fixtures: List[FixtureService[_]] = List(propertyDefinitionFixture)
 
-  s"POST $apiUrl/create" can {
-    "return 201" when {
-      "a PropertyDefinition is created" should {
-        "return the created PropertyDefinition" in {
-          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-
-          val response = sendPost[PropertyDefinition, PropertyDefinition](s"$apiUrl/create", bodyOpt = Some(propertyDefinition))
-          assertCreated(response)
-
-          val actual = response.getBody
-          val expected = toExpected(propertyDefinition, actual)
-          assert(actual == expected)
-        }
-      }
-      "all prior versions of the PropertyDefinition are disabled" should {
-        "return the recreated PropertyDefinition" in {
-          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-          propertyDefinitionFixture.add(propertyDefinition.copy(disabled = true))
-
-          val response = sendPost[PropertyDefinition, PropertyDefinition](s"$apiUrl/create", bodyOpt = Some(propertyDefinition.setVersion(0)))
-          assertCreated(response)
-
-          val actual = response.getBody
-          val expected = toExpected(propertyDefinition.setVersion(2), actual).copy(parent = Some(PropertyDefinitionFactory.toParent(propertyDefinition)))
-          assert(actual == expected)
-        }
-      }
-    }
-    "return 400" when {
-      "an enabled PropertyDefinition with that name already exists" in {
-        val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-        propertyDefinitionFixture.add(propertyDefinition)
-
-        val response = sendPost[PropertyDefinition, Validation](s"$apiUrl/create", bodyOpt = Some(propertyDefinition))
-        assertBadRequest(response)
-
-        val actual = response.getBody
-        val expected = Validation().withError("name", "entity with name already exists: 'dummyName'")
-        assert(actual == expected)
-      }
-    }
-  }
-    s"DELETE $apiUrl/disable/{name}" can {
-      "return 200" when {
-        "a PropertyDefinition with the given name exists" should {
-          "disable only the propertyDefinition with the given name" in {
-            val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-            val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "otherPropertyDefinition", version = 1)
-            propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-
-            val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
-
-            assertOk(response)
+  Seq(
+    s"$apiUrl/create",
+    s"$apiUrl" // PropertyDefinitionController API alias
+  ).foreach { urlPattern =>
+    s"POST $urlPattern" can {
+      "return 201" when {
+        "a PropertyDefinition is created" should {
+          "return the created PropertyDefinition" in {
+            val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
+            val response = sendPost[PropertyDefinition, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition))
+            assertCreated(response)
 
             val actual = response.getBody
-            val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+            val expected = toExpected(propertyDefinition, actual)
             assert(actual == expected)
           }
         }
-        "multiple versions of the PropertyDefinition with the given name exist" should {
-          "disable all versions of the PropertyDefinition" in {
+        "all prior versions of the PropertyDefinition are disabled" should {
+          "return the recreated PropertyDefinition" in {
+            val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
+            propertyDefinitionFixture.add(propertyDefinition.copy(disabled = true))
+
+            val response = sendPost[PropertyDefinition, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition.setVersion(0)))
+            assertCreated(response)
+
+            val actual = response.getBody
+            val expected = toExpected(propertyDefinition.setVersion(2), actual).copy(parent = Some(PropertyDefinitionFactory.toParent(propertyDefinition)))
+            assert(actual == expected)
+          }
+        }
+      }
+      "return 400" when {
+        "an enabled PropertyDefinition with that name already exists" in {
+          val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
+          propertyDefinitionFixture.add(propertyDefinition)
+
+          val response = sendPost[PropertyDefinition, Validation](urlPattern, bodyOpt = Some(propertyDefinition))
+          assertBadRequest(response)
+
+          val actual = response.getBody
+          val expected = Validation().withError("name", "entity with name already exists: 'dummyName'")
+          assert(actual == expected)
+        }
+      }
+    }
+  }
+
+  s"DELETE $apiUrl/disable/{name}" can {
+    "return 200" when {
+      "a PropertyDefinition with the given name exists" should {
+        "disable only the propertyDefinition with the given name" in {
+          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
+          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "otherPropertyDefinition", version = 1)
+          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
+
+          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "multiple versions of the PropertyDefinition with the given name exist" should {
+        "disable all versions of the PropertyDefinition" in {
+          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
+          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
+          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
+
+          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":2,"modifiedCount":2,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+    }
+  }
+
+  s"DELETE $apiUrl/disable/{name}/{version}" can {
+    "return 200" when {
+      "a PropertyDefinition with the given name and version exists" should {
+        "disable only the propertyDefinition with the given name and version" in {
+          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
+          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "otherPropertyDefinition", version = 1)
+          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
+
+          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "multiple versions of the PropertyDefinition with the given name exist" should {
+        Seq(
+          ("disable only specific version of the propertyDefinition", s"$apiUrl/disable/propertyDefinition/1", 1),
+          ("disable all versions by name of the propertyDefinition", s"$apiUrl/disable/propertyDefinition", 2)
+        ).foreach { case (testCaseName, deleteUrl, expectedCount) =>
+          testCaseName in {
             val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
             val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
             propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
 
-            val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
-
+            val response = sendDelete[PropertyDefinition, String](deleteUrl)
             assertOk(response)
 
             val actual = response.getBody
-            val expected = """{"matchedCount":2,"modifiedCount":2,"upsertedId":null,"modifiedCountAvailable":true}"""
+            val expected = s"""{"matchedCount":$expectedCount,"modifiedCount":$expectedCount,"upsertedId":null,"modifiedCountAvailable":true}"""
             assert(actual == expected)
           }
         }
       }
-    }
 
-    s"DELETE $apiUrl/disable/{name}/{version}" can {
-      "return 200" when {
-        "a PropertyDefinition with the given name and version exists" should {
-          "disable only the propertyDefinition with the given name and version" in {
-            val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-            val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "otherPropertyDefinition", version = 1)
-            propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
+      "no PropertyDefinition with the given name exists" should {
+        "disable nothing" in {
+          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
+          assertOk(response)
 
-            val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
-            assertOk(response)
-
-            val actual = response.getBody
-            val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
-            assert(actual == expected)
-          }
-        }
-        "multiple versions of the PropertyDefinition with the given name exist" should {
-          Seq(
-            ("disable only specific version of the propertyDefinition", s"$apiUrl/disable/propertyDefinition/1", 1),
-            ("disable all versions by name of the propertyDefinition", s"$apiUrl/disable/propertyDefinition", 2)
-          ).foreach { case (testCaseName, deleteUrl, expectedCount) =>
-            testCaseName in {
-              val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
-              val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
-              propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
-
-              val response = sendDelete[PropertyDefinition, String](deleteUrl)
-              assertOk(response)
-
-              val actual = response.getBody
-              val expected = s"""{"matchedCount":$expectedCount,"modifiedCount":$expectedCount,"upsertedId":null,"modifiedCountAvailable":true}"""
-              assert(actual == expected)
-            }
-          }
-        }
-
-        "no PropertyDefinition with the given name exists" should {
-          "disable nothing" in {
-            val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
-            assertOk(response)
-
-            val actual = response.getBody
-            val expected = """{"matchedCount":0,"modifiedCount":0,"upsertedId":null,"modifiedCountAvailable":true}"""
-            assert(actual == expected)
-          }
+          val actual = response.getBody
+          val expected = """{"matchedCount":0,"modifiedCount":0,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
         }
       }
     }
+  }
 
   s"GET $apiUrl/detail/{name}/latestVersion" should {
     "return 200" when {

@@ -42,11 +42,20 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
     propertyDefService.getLatestVersions
   }
 
+  @PostMapping(Array(""))
+  @ResponseStatus(HttpStatus.CREATED)
+  def createDatasetProperty(@AuthenticationPrincipal principal: UserDetails,
+                            @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] = {
+    // basically an alias for /create
+    logger.info(s"creating new property definition '${item.name}'")
+    super.create(principal, item)
+  }
+
   @GetMapping(Array("/{propertyName}"))
   def getDatasetProperty(@PathVariable propertyName: String): CompletableFuture[PropertyDefinition] = {
     logger.info(s"retrieving property definition '$propertyName' (latest version) in full")
     // basically an alias for /detail/{name}/latest
-    super.getLatestDetail(propertyName) // 404 when not found
+    super.getLatestDetail(propertyName)
   }
 
   @GetMapping(Array("/{propertyName}/{version}"))
