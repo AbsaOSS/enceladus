@@ -271,8 +271,10 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
       "return 200" when {
         "there is a PropertyDefinition with the specified name and version" should {
           "return the PropertyDefinition as a JSON" in {
-            val pd23 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 23)
-            propertyDefinitionFixture.add(pd23)
+            val pd22 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 22)
+            val pd23 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition1", version = 23,
+              parent = Some(PropertyDefinitionFactory.toParent(pd22)))
+            propertyDefinitionFixture.add(pd22, pd23)
 
             val response = sendGet[String](urlPattern
               .replace("{name}", "propertyDefinition1")
@@ -281,7 +283,6 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
 
             val body = response.getBody
 
-            // todo fix/check collection null
             val expected =
               s"""{
                  |"name":"propertyDefinition1",
@@ -297,7 +298,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
                  |"userUpdated":"dummyUser",
                  |"dateDisabled":null,
                  |"userDisabled":null,
-                 |"parent":null,
+                 |"parent":{"collection":"propertydef","name":"propertyDefinition1","version":22},
                  |"isRequired":false,
                  |"isOptional":true,
                  |"createdMessage":{
