@@ -121,7 +121,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     val expectedValidationResult = Validation(Map(
       "optionalEnumAb" -> List("Value optionX of key 'optionalEnumAb' does not conform to the property type of StringEnumPropertyType(Set(optionA, optionB),optionA)."),
       "undefinedKey1" -> List("There is no property definition for key 'undefinedKey1'."),
-      "mandatoryString2" -> List("Dataset property mandatoryString2 is mandatory, but does not exist!"))
+      "mandatoryString2" -> List("Dataset property 'mandatoryString2' is mandatory, but does not exist!"))
     )
 
     validationResult shouldBe expectedValidationResult

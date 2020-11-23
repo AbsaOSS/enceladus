@@ -24,7 +24,10 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.integration.fixtures._
 import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.model.test.factories.DatasetFactory
+import za.co.absa.enceladus.model.properties.PropertyDefinition
+import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Mandatory, Optional, Recommended}
+import za.co.absa.enceladus.model.properties.propertyType.{PropertyType, StringEnumPropertyType, StringPropertyType}
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -34,10 +37,13 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
   @Autowired
   private val datasetFixture: DatasetFixtureService = null
 
+  @Autowired
+  private val propertyDefinitionFixture: PropertyDefinitionFixtureService = null
+
   private val apiUrl = "/dataset"
 
   // fixtures are cleared after each test
-  override def fixtures: List[FixtureService[_]] = List(datasetFixture)
+  override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture)
 
   s"GET $apiUrl/detail/{name}/latestVersion" should {
     "return 200" when {
@@ -139,7 +145,6 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
         }
       }
     }
-
   }
 
   s"PUT $apiUrl/{name}/properties" should {
@@ -168,15 +173,48 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
     }
   }
 
-  // todo validate properties
+    s"GET $apiUrl/{name}/properties/valid" should {
+      "return 404" when {
+        "when the dataset-by-name does not exist" in {
+          val response = sendGet[String](s"$apiUrl/notExistingDataset/properties/valid")
+          assertNotFound(response)
+        }
+      }
 
-  private def toExpected(dataset: Dataset, actual: Dataset): Dataset = {
-    dataset.copy(
-      dateCreated = actual.dateCreated,
-      userCreated = actual.userCreated,
-      lastUpdated = actual.lastUpdated,
-      userUpdated = actual.userUpdated,
-      dateDisabled = actual.dateDisabled,
-      userDisabled = actual.userDisabled)
+      "return 200" when {
+        "there is a correct Dataset" should {
+          s"return validated properties" in {
+            def createPropDef(name: String, essentiality: Essentiality, propertyType: PropertyType): PropertyDefinition =
+              PropertyDefinitionFactory.getDummyPropertyDefinition(name, essentiality = essentiality, propertyType = propertyType)
+
+            val propDefS1 = createPropDef("mandatoryField1", Mandatory(), StringPropertyType("default1"))
+            val propDefS2 = propDefS1.copy(name = "mandatoryField2")
+            val propDefE1 = createPropDef("enumField1", Optional(), StringEnumPropertyType("optionA", "optionB"))
+            val propDefE2 = createPropDef("enumField2", Recommended(), StringEnumPropertyType("optionC", "optionD"))
+            propertyDefinitionFixture.add(propDefE1, propDefE2, propDefS1, propDefS2)
+
+            val dataset = DatasetFactory.getDummyDataset(name = "dataset1", version = 2,
+              properties = Some(Map(
+                "mandatoryField1" -> "its value", // mandatoryField2 missing
+                "enumField1" -> "invalidOption", // enumField2 is just recommended
+                "nonAccountedField" -> "randomVal"
+              )))
+            datasetFixture.add(dataset)
+
+            val response = sendGet[Validation](s"$apiUrl/dataset1/properties/valid")
+            assertOk(response)
+
+            val expectedValidation = Validation(Map(
+              "mandatoryField2" -> List("Dataset property 'mandatoryField2' is mandatory, but does not exist!"),
+              "enumField1" -> List("Value invalidOption of key 'enumField1' does not conform to the property type of StringEnumPropertyType(Set(optionA, optionB),optionA)."),
+              "nonAccountedField" -> List("There is no property definition for key 'nonAccountedField'.")
+            ))
+            val body = response.getBody
+            assert(body == expectedValidation)
+          }
+        }
+      }
+
   }
+
 }

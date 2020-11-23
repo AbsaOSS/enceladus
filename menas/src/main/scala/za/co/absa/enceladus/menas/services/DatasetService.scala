@@ -154,7 +154,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     propDefs.collect {
       case propDef if propDef.isRequired && !propDef.disabled =>
         if (!existingProperties.contains(propDef.name)) {
-          Validation.empty.withError(propDef.name, s"Dataset property ${propDef.name} is mandatory, but does not exist!")
+          Validation.empty.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
         } else { Validation.empty }
 
     }.foldLeft(Validation.empty)(Validation.merge)
