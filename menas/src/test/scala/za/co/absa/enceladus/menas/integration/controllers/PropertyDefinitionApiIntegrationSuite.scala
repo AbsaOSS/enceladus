@@ -216,13 +216,12 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
 
           val body = response.getBody
           assert(body ==
-            """{
-              |"metadata":{"exportVersion":1},
-              |"item":{"name":"propertyDefinition",
+            """{"metadata":{"exportVersion":1},"item":{
+              |"name":"propertyDefinition",
               |"propertyType":{"_t":"StringPropertyType","suggestedValue":""},
               |"putIntoInfoFile":false,
-              |"essentiality":{"_t":"Optional"}}
-              |}""".stripMargin.replaceAll("[\\r\\n]", ""))
+              |"essentiality":{"_t":"Optional"}
+              |}}""".stripMargin.replaceAll("[\\r\\n]", ""))
         }
       }
     }

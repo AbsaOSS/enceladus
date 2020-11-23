@@ -65,41 +65,44 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
     }
   }
 
+  s"GET $apiUrl/export/{name}/{version}" should {
+    "return 404" when {
+      "when the name+version does not exist" in {
+        val response = sendGet[String](s"$apiUrl/export/notFoundDataset/2")
+        assertNotFound(response)
+      }
+    }
+
+    "return 200" when {
+      "there is a correct Dataset version" should {
+        "return the exported PD representation" in {
+          val dataset = DatasetFactory.getDummyDataset(name = "dataset", version = 2,
+            properties = Some(Map("key1" -> "val1", "key2" -> "val2")))
+          datasetFixture.add(dataset)
+          val response = sendGet[String](s"$apiUrl/exportItem/dataset/2")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body ==
+            """{"metadata":{"exportVersion":1},"item":{
+              |"name":"dataset",
+              |"hdfsPath":"/dummy/path",
+              |"hdfsPublishPath":"/dummy/publish/path",
+              |"schemaName":"dummySchema",
+              |"schemaVersion":1,
+              |"conformance":[],
+              |"properties":[["key2","val2"],["key1","val1"]]
+              |}}""".stripMargin.replaceAll("[\\r\\n]", ""))
+        }
+      }
+    }
+
+  }
+
   // todo properties endpoint checks
 
   // validation endpoint checks
-
-//  s"GET $apiUrl/export/{name}/{version}" should {
-//    "return 404" when {
-//      "when the name+version does not exist" in {
-//        val response = sendGet[String](s"$apiUrl/export/notFoundDataset/2")
-//        assertNotFound(response)
-//      }
-//    }
-//
-//    "return 200" when {
-//      "there is a correct Dataset version" should {
-//        "return the exported PD representation" in {
-//          val dataset = DatasetFactory.getDummyDataset(name = "dataset", version = 2)
-//          datasetFixture.add(dataset)
-//          val response = sendGet[String](s"$apiUrl/exportItem/dataset/2")
-//
-//          assertOk(response)
-//
-//          val body = response.getBody
-//          assert(body ==
-//            """{
-//              |"metadata":{"exportVersion":1},
-//              |"item":{"name":"dataset",
-//              |"propertyType":{"_t":"StringPropertyType","suggestedValue":""},
-//              |"putIntoInfoFile":false,
-//              |"essentiality":{"_t":"Optional"}}
-//              |}""".stripMargin.replaceAll("[\\r\\n]", ""))
-//        }
-//      }
-//    }
-//  }
-
 
   // Dataset specific:
 //  Seq(
