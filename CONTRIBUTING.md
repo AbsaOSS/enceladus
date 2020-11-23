@@ -33,14 +33,14 @@
 ## **Do you want to improve the project's documentation?**
 
 * The process is similar, just a tad bit simpler, than the feature or bugfix implementation
-* For documentation changes an _Issue_ doesn't neet to exist. For bigger changes we still encourage to have one.
+* For documentation changes an _Issue_ doesn't need to exist. For bigger changes we still encourage to have one.
 * For the repository.
   * You want to base your changes on the `gh-pages` branch.
   * Name the branch with **ghp/** prefix, if a connected issue exists add its number after the **ghp/** prefix  
     * **ghp/dont-panic**
     * **ghp/42-dont-panic**  
 * After finishing, push to your forked repo and open a Pull Request to our `gh-pages` branch.
-  * Describe in the Pull Request description what the changes are about, what was their motivation.
+  * In the Pull Request describe what the changes are about, what was their motivation.
   * Connect the PR to the _Issue_ if it exists
 
 #### Thanks!
