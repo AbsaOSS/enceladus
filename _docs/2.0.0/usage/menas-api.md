@@ -16,7 +16,7 @@ categories:
 
 ### Export Entity
 
-This feature exports a single entity from Menas. All exports are versionless, except for connected entities. They are kept as is, but need to be validated before import.
+This endpoint exports a single entity from Menas. All exports are versionless, except for connected entities. They are kept as is, but need to be validated before import.
 
 `GET /menas/api/{entity}/exportItem/{name}/{version}`
 
@@ -102,9 +102,9 @@ Example:
 
 ### Entity Import
 
-This feature imports a single entity. All imports are versionless. If the import does not find an entity with the same name it will create a new one and start the version from 1. If the import finds an existing version, it will update the previous version.
+This endpoint imports a single entity. All imports are versionless. If the import does not find an entity with the same name it will create a new one and start the version from 1. If the import finds an existing version, it will update the previous version.
 
-Versions of connected entities need to be specified properly. Export of a Dataset carries a Schema and maybe a Mapping table as connected entities. These have versions and these versions need to exist on Import.
+Versions of connected entities need to be specified properly. Export of a Dataset carries a Schema and maybe some Mapping tables as connected entities. These have versions and these versions need to exist on Import.
 
 `POST /menas/api/{entity}/importItem`
 
