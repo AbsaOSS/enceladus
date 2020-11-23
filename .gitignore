@@ -61,6 +61,7 @@ myTestCheckpoints
 **/main/resources/application.yml
 **/main/resources/spline.properties
 **/main/resources/kafka.properties
+**/main/resources/docker.properties
 **/enceladus_env.sh
 *.config
 *.keytab
