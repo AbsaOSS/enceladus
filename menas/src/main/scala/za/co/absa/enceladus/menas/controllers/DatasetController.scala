@@ -15,10 +15,11 @@
 
 package za.co.absa.enceladus.menas.controllers
 
+import java.net.URI
 import java.util.concurrent.CompletableFuture
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
+import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
@@ -75,12 +76,20 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   }
 
   @PutMapping(Array("/{datasetName}/properties"))
-  @ResponseStatus(HttpStatus.OK)
+  @ResponseStatus(HttpStatus.CREATED)
   def replaceProperties(@AuthenticationPrincipal principal: UserDetails,
                         @PathVariable datasetName: String,
-                        @RequestBody newProperties: Map[String, String]): CompletableFuture[Option[Dataset]] = {
+                        @RequestBody newProperties: Map[String, String]): CompletableFuture[ResponseEntity[Option[Dataset]]] = {
 
-    datasetService.replaceProperties(principal.getUsername, datasetName, newProperties)
+    datasetService.replaceProperties(principal.getUsername, datasetName, newProperties).map { dataset =>
+      dataset match {
+        case None => throw notFound()
+        case Some(ds) => {
+          val location: URI = new URI(s"/api/dataset/${ds.name}/${ds.version}")
+          ResponseEntity.created(location).body(dataset)
+        }
+      }
+    }
   }
 
 

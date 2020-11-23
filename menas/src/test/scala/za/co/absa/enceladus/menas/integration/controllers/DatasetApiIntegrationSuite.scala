@@ -100,131 +100,75 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
 
   }
 
-  // todo properties endpoint checks
-
-  // validation endpoint checks
-
   // Dataset specific:
-//  Seq(
-//    s"$apiUrl/detail/{name}/{version}",
-//    s"$apiUrl/{name}/{version}" // DatasetController API alias
-//  ).foreach {urlPattern =>
-//    s"GET $urlPattern" should {
-//      "return 404" when {
-//        "no dataset exists for the specified name" in {
-//          val dataset = DatasetFactory.getDummyDataset(name = "dataset1", version = 1)
-//          datasetFixture.add(dataset)
-//
-//          val response = sendGet[String](urlPattern
-//            .replace("{name}", "otherDatasetName")
-//            .replace("{version}", "1"))
-//          assertNotFound(response)
-//        }
-//
-//        "no dataset exists for the specified version" in {
-//          val dataset = DatasetFactory.getDummyDataset(name = "dataset1", version = 1)
-//          datasetFixture.add(dataset)
-//
-//          val response = sendGet[String](urlPattern
-//            .replace("{name}", "dataset1")
-//            .replace("{version}", "789"))
-//          assertNotFound(response)
-//        }
-//      }
-//      "return 200" when {
-//        "there is a Dataset with the specified name and version" should {
-//          "return the Dataset as a JSON" in {
-//            val pd22 = DatasetFactory.getDummyDataset(name = "dataset1", version = 22)
-//            val pd23 = DatasetFactory.getDummyDataset(name = "dataset1", version = 23,
-//              parent = Some(DatasetFactory.toParent(pd22)))
-//            datasetFixture.add(pd22, pd23)
-//
-//            val response = sendGet[String](urlPattern
-//              .replace("{name}", "dataset1")
-//              .replace("{version}", "23"))
-//            assertOk(response)
-//
-//            val body = response.getBody
-//
-//            val expected =
-//              s"""{
-//                 |"name":"dataset1",
-//                 |"version":23,
-//                 |"description":null,
-//                 |"propertyType":{"_t":"StringPropertyType","suggestedValue":""},
-//                 |"putIntoInfoFile":false,
-//                 |"essentiality":{"_t":"Optional"},
-//                 |"disabled":false,
-//                 |"dateCreated":"${pd23.dateCreated}",
-//                 |"userCreated":"dummyUser",
-//                 |"lastUpdated":"${pd23.lastUpdated}",
-//                 |"userUpdated":"dummyUser",
-//                 |"dateDisabled":null,
-//                 |"userDisabled":null,
-//                 |"parent":{"collection":"propertydef","name":"dataset1","version":22},
-//                 |"isRequired":false,
-//                 |"isOptional":true,
-//                 |"createdMessage":{
-//                 |"menasRef":{"collection":null,"name":"dataset1","version":23},
-//                 |"updatedBy":"dummyUser",
-//                 |"updated":"${pd23.createdMessage.updated}",
-//                 |"changes":[{"field":"","oldValue":null,"newValue":null,"message":"Dataset dataset1 created."}]
-//                 |}
-//                 |}""".stripMargin.replaceAll("[\\r\\n]", "")
-//            assert(body == expected)
-//          }
-//        }
-//      }
-//    }
-//  }
-//  Seq(
-//    s"$apiUrl/detail/{name}/latest",
-//    s"$apiUrl/{name}" // DatasetController API alias
-//  ).foreach { urlPattern =>
-//    s"GET $urlPattern" should {
-//      "return 200" when {
-//        "there is a Dataset with the name and latest version (regardless of being disabled)" should {
-//          "return the Dataset as a JSON" in {
-//            val pd1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1)
-//            val pd2 = DatasetFactory.getDummyDataset(name = "dataset1", version = 2)
-//            val pd3 = DatasetFactory.getDummyDataset(name = "dataset1", version = 3, disabled = true)
-//            datasetFixture.add(pd1, pd2, pd3)
-//
-//            val response = sendGet[Dataset](urlPattern.replace("{name}", "dataset1"))
-//            assertOk(response)
-//
-//            val bodyVersion = response.getBody.version
-//            assert(bodyVersion == 3)
-//          }
-//        }
-//      }
-//    }
-//  }
-//
-//  s"GET $apiUrl" should {
-//    "return 200" when {
-//      "there is a list of Dataset in their latest non-disabled versions" should {
-//        "return the Dataset as a JSON" in {
-//          val pdA1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
-//          val pdA2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2)
-//          val pdA3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3, disabled = true)
-//          datasetFixture.add(pdA1, pdA2, pdA3)
-//
-//          val pdB1 = DatasetFactory.getDummyDataset(name = "datasetB", version = 1)
-//          val pdB2 = DatasetFactory.getDummyDataset(name = "datasetB", version = 2)
-//          val pdB3 = DatasetFactory.getDummyDataset(name = "datasetB", version = 3)
-//          datasetFixture.add(pdB1, pdB2, pdB3)
-//
-//          val response = sendGet[Array[Dataset]](s"$apiUrl") // Array to avoid erasure
-//          assertOk(response)
-//
-//          val responseData = response.getBody.toSeq.map(pd => (pd.name, pd.version))
-//          val expectedData = Seq("datasetA" -> 2, "datasetB" -> 3) // disabled pdA-v3 not reported
-//          assert(responseData == expectedData)
-//        }
-//      }
-//    }
-//  }
+  Seq(
+    s"$apiUrl/{name}/{version}/properties",
+    s"$apiUrl/{name}/properties"
+  ).foreach { urlPattern =>
+    s"GET $urlPattern" should {
+      "return 404" when {
+        "when the name+version does not exist" in {
+          val response = sendGet[String](urlPattern
+            .replace("{name}", "notFoundDataset")
+            .replace("{version}", "123")) // version replacing has no effect for "latest version" urlPattern
+          assertNotFound(response)
+        }
+      }
+
+      "return 200" when {
+        "there is a correct Dataset version" should {
+          Seq(
+            ("empty1", Some(Map.empty[String, String])),
+            ("empty2", None),
+            ("non-empty", Some(Map("key1" -> "val1", "key2" -> "val2")))
+          ).foreach { case (propertiesCaseName, propertiesData) =>
+            s"return dataset properties ($propertiesCaseName)" in {
+              val datasetV1 = DatasetFactory.getDummyDataset(name = "dataset", version = 1)
+              val datasetV2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2, properties = propertiesData)
+              datasetFixture.add(datasetV1, datasetV2)
+              val response = sendGet[Map[String, String]](urlPattern
+                .replace("{name}", "dataset")
+                .replace("{version}", "2")) // version replacing has no effect for "latest version" urlPattern
+              assertOk(response)
+
+              val expectedProperties = propertiesData.getOrElse(Map.empty[String, String])
+              val body = response.getBody
+              assert(body == expectedProperties)
+            }
+          }
+        }
+      }
+    }
+
+  }
+
+  s"PUT $apiUrl/{name}/properties" should {
+    "201 Created with location = replace properties with a new version" when {
+      "there is a correct Dataset version" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "dataset", version = 1)
+        datasetFixture.add(datasetV1)
+        val response1 = sendGet[Map[String, String]](s"$apiUrl/dataset/1/properties")
+        assertOk(response1)
+
+        val expectedProperties1 = Map.empty[String, String]
+        val body1 = response1.getBody
+        assert(body1 == expectedProperties1, "initially, there are no properties")
+
+        val updatedProperties = Map("keyA" -> "valA", "keyB" -> "valB") // both put content & expected properties content
+        val response2 = sendPut[Map[String, String], Dataset](s"$apiUrl/dataset/properties", bodyOpt = Some(updatedProperties))
+
+        assertCreated(response2)
+        val headers2 = response2.getHeaders
+        val body2 = response2.getBody
+
+        assert(headers2.getFirst("Location").contains("/api/dataset/dataset/2"))
+        assert(body2.version == 2)
+        assert(body2.propertiesAsMap == updatedProperties)
+      }
+    }
+  }
+
+  // todo validate properties
 
   private def toExpected(dataset: Dataset, actual: Dataset): Dataset = {
     dataset.copy(
