@@ -61,7 +61,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
         .authorizeRequests()
           .antMatchers("/index.html", "/resources/**", "/generic/**",
             "/service/**", "/webjars/**", "/css/**", "/components/**", "/admin/health",
-            "/api/user/version", s"/$menasVersion/**", "/api/configuration/**")
+            "/api/user/version", s"/$menasVersion/**", "/api/configuration/**", "/lineage/**")
           .permitAll()
         .anyRequest()
           .authenticated()
