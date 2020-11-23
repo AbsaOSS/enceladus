@@ -198,6 +198,9 @@
         <skip.integration.tests>true</skip.integration.tests>
         <quiet.scalastyle.check>true</quiet.scalastyle.check>
         <scalastyle.configLocation>${project.basedir}/scalastyle-config.xml</scalastyle.configLocation>
+        <dockerfile.repository>docker.io/absaoss/menas</dockerfile.repository>
+        <dockerfile.tag>${project.version}</dockerfile.tag>
+        <dockerfile.property.file>docker</dockerfile.property.file>
         <!-- logging-->
         <log.level.base>WARN</log.level.base>
         <log.level.testcode>ERROR</log.level.testcode>

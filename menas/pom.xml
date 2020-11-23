@@ -287,11 +287,11 @@
                 <artifactId>dockerfile-maven-plugin</artifactId>
                 <version>${dockerfile.maven.version}</version>
                 <configuration>
-                    <repository>docker.io/absaoss/menas</repository>
-                    <tag>${project.version}</tag>
+                    <repository>${dockerfile.repository}</repository>
+                    <tag>${dockerfile.tag}</tag>
                     <buildArgs>
                         <WAR_FILE>${project.build.finalName}.war</WAR_FILE>
-                        <PROPERTY_FILE>docker</PROPERTY_FILE>
+                        <PROPERTY_FILE>${dockerfile.property.file}</PROPERTY_FILE>
                     </buildArgs>
                 </configuration>
             </plugin>
