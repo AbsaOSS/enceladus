@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.models
+package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 

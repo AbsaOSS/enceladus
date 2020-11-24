@@ -22,7 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.integration.fixtures._
-import za.co.absa.enceladus.menas.models.Validation
+import za.co.absa.enceladus.model.Validation
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.test.factories.PropertyDefinitionFactory
 

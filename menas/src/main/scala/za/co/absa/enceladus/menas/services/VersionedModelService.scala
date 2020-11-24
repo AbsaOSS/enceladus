@@ -19,14 +19,12 @@ import org.mongodb.scala.result.UpdateResult
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
-import za.co.absa.enceladus.model.{Schema, UsedIn}
+import za.co.absa.enceladus.model.{ModelVersion, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.menas.exceptions._
-import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.menas.audit._
-import za.co.absa.enceladus.model.ModelVersion
 
 import scala.concurrent.Future
 import com.mongodb.MongoWriteException

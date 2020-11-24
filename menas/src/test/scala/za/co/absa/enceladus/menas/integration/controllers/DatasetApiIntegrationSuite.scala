@@ -22,8 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.integration.fixtures._
-import za.co.absa.enceladus.menas.models.Validation
-import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Mandatory, Optional, Recommended}
 import za.co.absa.enceladus.model.properties.propertyType.{PropertyType, StringEnumPropertyType, StringPropertyType}
@@ -173,16 +172,25 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
     }
   }
 
-    s"GET $apiUrl/{name}/properties/valid" should {
+    s"GET $apiUrl/{name}/{version}/properties/valid" should {
       "return 404" when {
         "when the dataset-by-name does not exist" in {
-          val response = sendGet[String](s"$apiUrl/notExistingDataset/properties/valid")
+          val response = sendGet[String](s"$apiUrl/notExistingDataset/1/properties/valid")
           assertNotFound(response)
         }
+
+        "when the dataset by name+version does not exist" in {
+          val datasetAv1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+          datasetFixture.add(datasetAv1)
+
+          val response = sendGet[String](s"$apiUrl/datasetA/123/properties/valid")
+          assertNotFound(response)
+        }
+
       }
 
       "return 200" when {
-        "there is a correct Dataset" should {
+        "there is a correct Dataset name+version" should {
           s"return validated properties" in {
             def createPropDef(name: String, essentiality: Essentiality, propertyType: PropertyType): PropertyDefinition =
               PropertyDefinitionFactory.getDummyPropertyDefinition(name, essentiality = essentiality, propertyType = propertyType)
@@ -193,15 +201,17 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
             val propDefE2 = createPropDef("enumField2", Recommended(), StringEnumPropertyType("optionC", "optionD"))
             propertyDefinitionFixture.add(propDefE1, propDefE2, propDefS1, propDefS2)
 
-            val dataset = DatasetFactory.getDummyDataset(name = "dataset1", version = 2,
+            val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2,
               properties = Some(Map(
                 "mandatoryField1" -> "its value", // mandatoryField2 missing
                 "enumField1" -> "invalidOption", // enumField2 is just recommended
                 "nonAccountedField" -> "randomVal"
               )))
-            datasetFixture.add(dataset)
+            // showing that the version # is respected, even for the non-latest
+            val datasetAv3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
+            datasetFixture.add(datasetAv2, datasetAv3)
 
-            val response = sendGet[Validation](s"$apiUrl/dataset1/properties/valid")
+            val response = sendGet[Validation](s"$apiUrl/datasetA/2/properties/valid")
             assertOk(response)
 
             val expectedValidation = Validation(Map(

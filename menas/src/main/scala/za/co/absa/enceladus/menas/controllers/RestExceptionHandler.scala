@@ -18,13 +18,13 @@ package za.co.absa.enceladus.menas.controllers
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
-import za.co.absa.enceladus.model.UsedIn
+import za.co.absa.enceladus.model.{UsedIn, Validation}
 import za.co.absa.enceladus.menas.exceptions._
-import za.co.absa.enceladus.menas.models.{RestError, Validation}
+import za.co.absa.enceladus.menas.models.RestError
 import org.springframework.http.HttpStatus
 import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.menas.models.rest.RestResponse
-import za.co.absa.enceladus.menas.models.rest.errors.{RequestTimeoutExpiredError, RemoteSchemaRetrievalError, SchemaFormatError, SchemaParsingError}
+import za.co.absa.enceladus.menas.models.rest.errors.{RemoteSchemaRetrievalError, RequestTimeoutExpiredError, SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
 import org.apache.oozie.client.OozieClientException
 import org.springframework.beans.factory.annotation.Value

@@ -33,13 +33,13 @@ import za.co.absa.enceladus.menas.TestResourcePath
 import za.co.absa.enceladus.menas.integration.fixtures._
 import za.co.absa.enceladus.menas.models.rest.RestResponse
 import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
-import za.co.absa.enceladus.menas.models.{SchemaApiFeatures, Validation}
+import za.co.absa.enceladus.menas.models.SchemaApiFeatures
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
-import za.co.absa.enceladus.model.{Schema, UsedIn}
+import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
 
 import scala.collection.immutable.HashMap
 

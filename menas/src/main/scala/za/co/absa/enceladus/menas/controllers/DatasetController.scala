@@ -23,8 +23,7 @@ import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
-import za.co.absa.enceladus.menas.models.Validation
-import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.menas.services.DatasetService
 
@@ -92,11 +91,10 @@ class DatasetController @Autowired()(datasetService: DatasetService)
     }
   }
 
-
-  @GetMapping(Array("/{datasetName}/properties/valid"))
+  @GetMapping(Array("/{datasetName}/{datasetVersion}/properties/valid"))
   @ResponseStatus(HttpStatus.OK)
-  def getPropertiesValidation(@PathVariable datasetName: String): CompletableFuture[Validation] = {
-    datasetService.getLatestVersion(datasetName).flatMap {
+  def getPropertiesValidation(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Validation] = {
+    datasetService.getVersion(datasetName, datasetVersion).flatMap {
       case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap)
       case None => throw notFound()
     }

@@ -42,6 +42,15 @@ trait MenasDAO {
                  version: Int): Dataset
 
   /**
+   * Retrieves validation status of dataset's properties (latest version)
+   *
+   * @param datasetName The dataset's name
+   * @param datasetVersion The dataset's version
+   * @return
+   */
+  def getDatasetPropertiesValidation(datasetName: String, datasetVersion: Int): Validation
+
+  /**
     * Retrieves a specific mapping table
     *
     * @param name    The mapping table's name

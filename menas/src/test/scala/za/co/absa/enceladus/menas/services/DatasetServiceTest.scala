@@ -21,9 +21,8 @@ import org.mockito.Mockito
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.Matchers
 import za.co.absa.enceladus.menas.exceptions.ValidationException
-import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
-import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.{Mandatory, Optional, Recommended}
 import za.co.absa.enceladus.model.properties.propertyType.{StringEnumPropertyType, StringPropertyType}

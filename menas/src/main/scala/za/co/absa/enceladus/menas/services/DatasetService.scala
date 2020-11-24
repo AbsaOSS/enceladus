@@ -18,10 +18,9 @@ package za.co.absa.enceladus.menas.services
 import scala.concurrent.Future
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.OozieRepository
-import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn}
+import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 import za.co.absa.enceladus.model.properties.PropertyDefinition
