@@ -24,9 +24,13 @@ This endpoint exports a single entity from Menas. All exports are versionless, e
 - name is the name of the entity as seen in Menas
 - version is the version of the entity as seen in Menas. Version is optional and in that case the latest version will be used
 
-#### Example Import Response for Schema
+**Resposes:**
+| Code | Description |
+|------|-------------|
+| 200  | Successful export with exported entity in the response payload |
+| 404  | Requested entity was not found |
 
-Returns code is 200.
+#### Example Import Response for Schema
 
 **Top level keys**
 
@@ -108,10 +112,16 @@ This endpoint imports a single entity. All imports are versionless. If the impor
 
 Versions of connected entities need to be specified properly. Export of a Dataset carries a Schema and maybe some Mapping tables as connected entities. These have versions and these versions need to exist on Import.
 
-`POST {menas_url}//api/{entity}/importItem`
+`POST {menas_url}/api/{entity}/importItem`
 
 - entity is `schema`, `dataset` or `mappingTable`
 - expects a JSON payload
+
+**Resposes:**
+| Code | Description |
+|------|-------------|
+| 201  | Successful imported with created/updated entity in the response payload |
+| 400  | Bad request. Import payload had validation errors. Errors returned in response json payload |
 
 #### JSON payload
 
@@ -119,7 +129,7 @@ JSON payload is the same as the JSON response from the [export](#example-import-
 
 #### Example Export Response for Schema
 
-On success, it is the same as JSON payload of update or create API, depending if the entity name already existed or not. Response code is 201.
+On success, it is the same as JSON payload of update or create API, depending if the entity name already existed or not.
 
 On failure, you will get a list of errors produced by the validation like bellow
 
