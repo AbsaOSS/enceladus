@@ -85,6 +85,13 @@ trait CommonJobExecution extends ProjectMetadata {
 
     dao.authenticate()
     val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
+    val dsValidation = dao.getDatasetPropertiesValidation(cmd.datasetName, cmd.datasetVersion)
+    if (!dsValidation.isValid) {
+      throw new IllegalStateException("Dataset validation failed, errors found in fields:\n" +
+        dsValidation.errors.map { case (field, errMsg) => s" - '$field': $errMsg" }.mkString("\n")
+      )
+    }
+
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg = getPathConfig(cmd, dataset, reportVersion)
 

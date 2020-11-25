@@ -56,7 +56,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
           .setHDFSPublishPath(dataset.hdfsPublishPath)
           .setConformance(dataset.conformance)
           .setDescription(dataset.description).asInstanceOf[Dataset]
-        }
+      }
       )
     }
   }
@@ -126,7 +126,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   private def validateExistingProperty(key: String, value: String,
-                                                 propertyDefinitionsMap: Map[String, PropertyDefinition]): Validation = {
+                                       propertyDefinitionsMap: Map[String, PropertyDefinition]): Validation = {
     propertyDefinitionsMap.get(key) match {
       case None => Validation.empty.withError(key, s"There is no property definition for key '$key'.")
       case Some(propertyDefinition) =>
@@ -149,12 +149,14 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   private def validateRequiredPropertiesExistence(existingProperties: Set[String],
-                                                            propDefs: Seq[PropertyDefinition]): Validation = {
+                                                  propDefs: Seq[PropertyDefinition]): Validation = {
     propDefs.collect {
       case propDef if propDef.isRequired && !propDef.disabled =>
         if (!existingProperties.contains(propDef.name)) {
           Validation.empty.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
-        } else { Validation.empty }
+        } else {
+          Validation.empty
+        }
 
     }.foldLeft(Validation.empty)(Validation.merge)
   }
@@ -169,6 +171,13 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       val requiredPropDefsValidations = validateRequiredPropertiesExistence(properties.keySet, propDefs)
 
       existingPropsValidation merge requiredPropDefsValidations
+    }
+  }
+
+  def filterProperties(properties: Map[String, String], filter: PropertyDefinition => Boolean): Future[Map[String, String]] = {
+    datasetPropertyDefinitionService.getLatestVersions().map { propDefs: Seq[PropertyDefinition] =>
+      val filteredPropDefNames = propDefs.filter(filter).map(_.name).toSet
+      properties.filterKeys(filteredPropDefNames.contains)
     }
   }
 
@@ -260,8 +269,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       .update(currentColumns.map(f => f - output))
   }
 
-  private type WithInAndOut = { def inputColumn: String; def outputColumn: String }
-  private type WithMultipleInAndOut = { def inputColumns: Seq[String]; def outputColumn: String }
+  private type WithInAndOut = {def inputColumn: String; def outputColumn: String}
+  private type WithMultipleInAndOut = {def inputColumns: Seq[String]; def outputColumn: String}
 
   private def validateInAndOut[C <: WithInAndOut](fields: Future[Set[String]],
                                                   cr: C): RuleValidationsAndFields = {

@@ -146,6 +146,49 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
     }
   }
 
+  Seq(
+    s"$apiUrl/{name}/{version}/properties?putIntoInfoFile=true" -> Set("infoField1"),
+    s"$apiUrl/{name}/properties?putIntoInfoFile=true" -> Set("infoField1"),
+    s"$apiUrl/{name}/properties?putIntoInfoFile=false" -> Set("field1"),
+    s"$apiUrl/{name}/properties?putIntoInfoFile=bogus" -> Set("infoField1", "field1") // but not "extraUnwantedField1"
+  ).foreach { case (urlPattern, expectedKeys) =>
+    s"GET $urlPattern" should {
+      "return 200" when {
+        "there is a correct Dataset version" should {
+          s"return dataset properties (filtered)" in {
+            def createPropDef(name: String, putIntoInfoFile: Boolean, disabled: Boolean): PropertyDefinition =
+              PropertyDefinitionFactory.getDummyPropertyDefinition(name, putIntoInfoFile = putIntoInfoFile, disabled = disabled)
+
+            val propDef1 = createPropDef("field1", false, false)
+            val propDef2 = createPropDef(name = "infoField1", true, false)
+            val propDef2a = createPropDef(name = "infoField2", true, false)
+            propertyDefinitionFixture.add(propDef1, propDef2, propDef2a)
+
+            val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2)
+            val datasetAv3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3,
+              properties = Some(Map(
+                "field1" -> "someValueA",
+                "infoField1" -> "someValueB",
+                // infoField2 is missing
+                "extraUnwantedField1" -> "whatever"
+              ))
+            )
+            datasetFixture.add(datasetAv2, datasetAv3)
+
+            val response = sendGet[Map[String, String]](urlPattern
+              .replace("{name}", "datasetA")
+              .replace("{version}", "3") // version is not used for the latest-url
+            )
+            assertOk(response)
+
+            val body = response.getBody
+            assert(body.keySet == expectedKeys)
+          }
+        }
+      }
+    }
+  }
+
   s"PUT $apiUrl/{name}/properties" should {
     "201 Created with location = replace properties with a new version" when {
       "there is a correct Dataset version" in {

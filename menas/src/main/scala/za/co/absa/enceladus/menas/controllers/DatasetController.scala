@@ -16,16 +16,22 @@
 package za.co.absa.enceladus.menas.controllers
 
 import java.net.URI
+import java.util
 import java.util.concurrent.CompletableFuture
 
+import org.slf4j.{Logger, LoggerFactory}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
-import za.co.absa.enceladus.model.{Dataset, Validation}
-import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.menas.services.DatasetService
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
+import za.co.absa.enceladus.model.properties.PropertyDefinition
+import za.co.absa.enceladus.model.{Dataset, Validation}
+
+import scala.concurrent.Future
+import scala.util.Try
 
 @RestController
 @RequestMapping(path = Array("/api/dataset"))
@@ -57,19 +63,36 @@ class DatasetController @Autowired()(datasetService: DatasetService)
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}/properties"))
   @ResponseStatus(HttpStatus.OK)
-  def getAllProperties(@PathVariable datasetName: String,
-                       @PathVariable datasetVersion: Int): CompletableFuture[Map[String, String]] = {
-    datasetService.getVersion(datasetName, datasetVersion).map {
-      case Some(entity) => entity.propertiesAsMap
-      case None => throw notFound()
-    }
+  def getAllPropertiesForVersion(@PathVariable("datasetName") datasetName: String,
+                                 @PathVariable("datasetVersion") datasetVersion: Int,
+                                 @RequestParam allFilterParams: util.Map[String, String] // special case: all params into a java.util.Map
+                                ): CompletableFuture[Map[String, String]] = {
+    getPropertiesForVersionCommon(datasetName, datasetVersion, allFilterParams)
   }
 
   @GetMapping(Array("/{datasetName}/properties"))
   @ResponseStatus(HttpStatus.OK)
-  def getAllProperties(@PathVariable datasetName: String): CompletableFuture[Map[String, String]] = {
-    datasetService.getLatestVersion(datasetName).map {
-      case Some(entity) => entity.propertiesAsMap
+  def getAllProperties(@PathVariable datasetName: String,
+                       @RequestParam allFilterParams: util.Map[String, String]): CompletableFuture[Map[String, String]] = {
+    datasetService.getLatestVersionNumber(datasetName).flatMap { version =>
+      getPropertiesForVersionCommon(datasetName, version, allFilterParams)
+    }
+  }
+
+  private def getPropertiesForVersionCommon(datasetName: String,
+                                            datasetVersion: Int,
+                                            allFilterParams: util.Map[String, String]): Future[Map[String, String]] = {
+    datasetService.getVersion(datasetName, datasetVersion).flatMap {
+      case Some(entity) => {
+        val dsProperties = entity.propertiesAsMap
+
+        val scalaFilterMap: Map[String, String] = allFilterParams.toScalaMap // in Scala 2.12, we could just do .asScala.toMap
+        if (scalaFilterMap.isEmpty) {
+          Future.successful(dsProperties) // no filtering, may even contain properties without existing definition
+        } else {
+          datasetService.filterProperties(dsProperties, DatasetController.paramsToPropertyDefinitionFilter(scalaFilterMap))
+        }
+      }
       case None => throw notFound()
     }
   }
@@ -100,4 +123,34 @@ class DatasetController @Autowired()(datasetService: DatasetService)
     }
   }
 
+}
+
+object DatasetController {
+  protected val log: Logger = LoggerFactory.getLogger(this.getClass)
+
+  private[controllers] def paramsToPropertyDefinitionFilter(filterParams: Map[String, String]): PropertyDefinition => Boolean = {
+    val filters: Seq[PropertyDefinition => Boolean] = filterParams
+      .map { case (paramName, paramValue) => paramToPropertyDefinitionFilter(paramName, paramValue) }.toSeq
+
+    def combineFilters(filter1: PropertyDefinition => Boolean, filter2: PropertyDefinition => Boolean): PropertyDefinition => Boolean = {
+      propDef: PropertyDefinition => filter1(propDef) && filter2(propDef) // "and"-combination of filters
+    }
+
+    filters.foldLeft[PropertyDefinition => Boolean](_ => true)(combineFilters)
+  }
+
+  private[controllers] def paramToPropertyDefinitionFilter(paramName: String, paramValue: String): PropertyDefinition => Boolean = {
+    propDef: PropertyDefinition =>
+      paramName match {
+        case "put_into_info_file" | "putIntoInfoFile" =>
+          Try(paramValue.toBoolean).toOption.fold(true) {
+            propDef.putIntoInfoFile == _
+          } // invalid value => not filtered
+
+        // add more cases if you want to filter using different means
+        case _ =>
+          log.warn(s"Invalid param $paramName=$paramValue was passed to filter properties by, ignoring it.")
+          true
+      }
+  }
 }

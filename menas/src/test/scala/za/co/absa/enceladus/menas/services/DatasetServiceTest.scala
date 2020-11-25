@@ -126,4 +126,42 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     validationResult shouldBe expectedValidationResult
   }
 
+  private case class FilteringTestCase(testCaseName: String, filter: PropertyDefinition => Boolean, expectedKeys: Set[String])
+
+  Seq(
+    FilteringTestCase("info presence", _.putIntoInfoFile, Set("infoMandatoryString1", "infoMandatoryDisabledString1")),
+    FilteringTestCase("non-disabled", !_.disabled, Set("optionalString1", "recommendedString1", "optionalEnumAb", "infoMandatoryString1")),
+    FilteringTestCase("non-disabled && info presence", pd => !pd.disabled && pd.putIntoInfoFile, Set("infoMandatoryString1"))
+  ).foreach { testCase =>
+    test(s"filtering properties (${testCase.testCaseName})") {
+      val mockedPropertyDefinitions = Seq(
+        PropertyDefinition(name = "recommendedString1", propertyType = StringPropertyType(), essentiality = Recommended()),
+        PropertyDefinition(name = "optionalString1", propertyType = StringPropertyType(), essentiality = Optional()),
+        PropertyDefinition(name = "infoMandatoryString1", propertyType = StringPropertyType(), essentiality = Mandatory(), putIntoInfoFile = true),
+        PropertyDefinition(name = "mandatoryString2", propertyType = StringPropertyType(), essentiality = Mandatory()),
+        PropertyDefinition(name = "infoMandatoryDisabledString1", propertyType = StringPropertyType(), essentiality = Mandatory(),
+          disabled = true, putIntoInfoFile = true),
+
+        PropertyDefinition(name = "optionalEnumAb", propertyType = StringEnumPropertyType("optionA", "optionB"), essentiality = Optional())
+      )
+
+      Mockito.when(datasetPropDefService.getLatestVersions()).thenReturn(Future.successful(mockedPropertyDefinitions))
+      Mockito.when(modelRepository.isUniqueName("dataset")).thenReturn(Future.successful(true))
+
+      val datasetProperties = Map(
+        "recommendedString1" -> "someValueA",
+        "optionalString1" -> "someValueB",
+        "infoMandatoryString1" -> "someValueC",
+        // mandatoryString2 missing
+        "infoMandatoryDisabledString1" -> "someValueD",
+
+        "optionalEnumAb" -> "optionA",
+        "undefinedKey1" -> "valueX" // extra unwanted key, always filtered out when a single filter exists
+      )
+
+      val filteringResult = await(service.filterProperties(datasetProperties, testCase.filter))
+      filteringResult.keys shouldBe testCase.expectedKeys
+    }
+  }
+
 }

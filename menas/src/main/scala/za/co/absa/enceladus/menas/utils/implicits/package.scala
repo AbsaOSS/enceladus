@@ -36,8 +36,10 @@ import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.user._
 import za.co.absa.enceladus.model.versionedModel._
+import scala.collection.immutable
 
 import scala.compat.java8.FutureConverters._
+import scala.collection.JavaConverters
 import scala.concurrent.Future
 import scala.language.implicitConversions
 
@@ -59,5 +61,13 @@ package object implicits {
   ),
     CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
 
+  def javaMapToScalaMap[K, V](javaMap: java.util.Map[K, V]): immutable.Map[K, V] = {
+    // in Scala 2.12, we could just do javaMap.asScala.toMap // https://stackoverflow.com/a/64614317/1773349
+    JavaConverters.mapAsScalaMapConverter(javaMap).asScala.toMap(Predef.$conforms[(K, V)])
+  }
+
+  implicit class JavaMapExt[K, V](javaMap: java.util.Map[K, V]) {
+    def toScalaMap: immutable.Map[K, V] = javaMapToScalaMap(javaMap)
+  }
 
 }
