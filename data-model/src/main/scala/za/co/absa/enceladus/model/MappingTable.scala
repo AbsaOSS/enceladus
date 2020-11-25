@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
-
+import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import com.fasterxml.jackson.databind.node.ArrayNode
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
@@ -42,7 +42,8 @@ case class MappingTable(name: String,
     disabled: Boolean = false,
     dateDisabled: Option[ZonedDateTime] = None,
     userDisabled: Option[String] = None,
-    parent: Option[MenasReference] = None) extends VersionedModel with Auditable[MappingTable] {
+    parent: Option[MenasReference] = None,
+    filter: Option[DataFrameFilter] = None) extends VersionedModel with Auditable[MappingTable] {
 
   override def setVersion(value: Int): MappingTable = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -58,6 +59,7 @@ case class MappingTable(name: String,
   def setHDFSPath(newPath: String): MappingTable = this.copy(hdfsPath = newPath)
   def setDefaultMappingValue(newDefaults: List[DefaultValue]): MappingTable = this.copy(defaultMappingValue = newDefaults)
   override def setParent(newParent: Option[MenasReference]): MappingTable = this.copy(parent = newParent)
+  def setFilter(newFilter: Option[DataFrameFilter]): MappingTable = copy(filter = newFilter)
 
   def getDefaultMappingValues: Map[String, String] = {
     defaultMappingValue.map(_.toTuple).toMap

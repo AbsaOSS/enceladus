@@ -18,12 +18,11 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql.api.java.UDF1
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
-import za.co.absa.enceladus.conformance.datasource.DataSource
+import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
-import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
+import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
@@ -34,115 +33,77 @@ import za.co.absa.enceladus.utils.validation._
 import scala.util.Try
 import scala.util.control.NonFatal
 
-case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: ConfDataset) extends RuleInterpreter {
+case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: ConfDataset)
+  extends RuleInterpreter with MappingRuleInterpreterCommon {
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
-  def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO,
-              progArgs: InterpreterContextArgs): Dataset[Row] = {
+  override def conform(df: DataFrame)
+                      (implicit spark: SparkSession,
+                       explosionState: ExplosionState,
+                       dao: MenasDAO,
+                       progArgs: InterpreterContextArgs): DataFrame = {
     log.info(s"Processing mapping rule to conform ${rule.outputColumn}...")
-    import spark.implicits._
 
     //A fix for cases, where the join condition only uses columns previously created by a literal rule
     //see https://github.com/AbsaOSS/enceladus/issues/892
-    spark.conf.set("spark.sql.crossJoin.enabled", "true")
-
+    val (mapTable, defaultValue) = conformPreparation(df, enableCrossJoin = true)
     val datasetSchema = dao.getSchema(conformance.schemaName, conformance.schemaVersion)
-
     val idField = rule.outputColumn.replace(".", "_") + "_arrayConformanceId"
     val withUniqueId = df.withColumn(idField, monotonically_increasing_id())
-
-    val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
-
-    // find the data frame from the mapping table
-    val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.reportDate)
-
-    // join & perform projection on the target attribute
-    val joinConditionStr = MappingRuleInterpreter.getJoinCondition(rule).toString
-    log.info("Mapping table: \n" + mapTable.schema.treeString)
-    log.info("Rule: " + this.toString)
-    log.info("Join Condition: " + joinConditionStr)
-
-    // validate the default value against the mapping table schema
-    val defaultValueOpt = getDefaultValue(mappingTableDef)
-
-    // validate join fields existence
-    MappingRuleInterpreter.validateMappingFieldsExist(s"the dataset, join condition = $joinConditionStr", df.schema, mapTable.schema, rule)
-
     var errorsDf = df
 
     val res = handleArrays(rule.outputColumn, withUniqueId) { dfIn =>
-
-      val joined = dfIn.as(MappingRuleInterpreter.inputDfAlias).join(mapTable.as(MappingRuleInterpreter.mappingTableAlias), MappingRuleInterpreter.getJoinCondition(rule), "left_outer").
-        select(col(s"${MappingRuleInterpreter.inputDfAlias}.*"), col(s"${MappingRuleInterpreter.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn)
-
+      val joined = dfIn.as(MappingRuleInterpreterCommon.inputDfAlias).
+        join(mapTable.as(MappingRuleInterpreterCommon.mappingTableAlias), joinCondition, MappingRuleInterpreterCommon.joinType).
+        select(
+          col(s"${MappingRuleInterpreterCommon.inputDfAlias}.*"),
+          col(s"${MappingRuleInterpreterCommon.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn
+        )
       val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
       val mappingErrUdfCall = callUDF(UDFNames.confMappingErr, lit(rule.outputColumn),
         array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
         typedLit(mappings))
-
       val appendErrUdfCall = callUDF(UDFNames.errorColumnAppend, col(ErrorMessage.errorColumnName), mappingErrUdfCall)
-
       errorsDf = joined.withColumn(
         ErrorMessage.errorColumnName,
-        when(col(s"`${rule.outputColumn}`").isNull and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).otherwise(col(ErrorMessage.errorColumnName)))
-
+        when(col(s"`${rule.outputColumn}`").isNull and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).
+          otherwise(col(ErrorMessage.errorColumnName)))
       // see if we need to apply default value
-      defaultValueOpt match {
+      defaultValue match {
         case Some(defaultValue) =>
-          ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, when(col(s"`${rule.outputColumn}`").isNotNull, col(s"`${rule.outputColumn}`"))
+          ArrayTransformations
+            .nestedWithColumn(joined)(rule.outputColumn, when(col(s"`${rule.outputColumn}`").isNotNull, col(s"`${rule.outputColumn}`"))
             .otherwise(expr(defaultValue)))
         case None =>
           ArrayTransformations.nestedWithColumn(joined)(rule.outputColumn, col(s"`${rule.outputColumn}`"))
       }
     }
-
     val errNested = errorsDf.groupBy(idField).agg(collect_list(col(ErrorMessage.errorColumnName)) as ErrorMessage.errorColumnName)
     val errNestedSchema = SchemaUtils.getFieldType(ErrorMessage.errorColumnName, errNested.schema).get.asInstanceOf[ArrayType]
 
     // errNested will duplicate error values if the previous rule has any errCol
     // and in the current rule the joining key is an array so the error values will duplicate as the size of array :
     // applied deduplicate logic while flattening error column
-    spark.udf.register(s"${idField}_flattenErrDistinct", new UDF1[Seq[Seq[Row]], Seq[Row]] {
-      override def call(t1: Seq[Seq[Row]]): Seq[Row] = {
-        t1.flatten.distinct
-      }
-
-    }, errNestedSchema.elementType)
-
-    val withErr = errNested.withColumn(ErrorMessage.errorColumnName, expr(s"${idField}_flattenErrDistinct(${ErrorMessage.errorColumnName})"))
-
+    spark.udf.register(s"${idField}_flattenErrDistinct",
+      new UDF1[Seq[Seq[Row]], Seq[Row]] {
+        override def call(t1: Seq[Seq[Row]]): Seq[Row] = {t1.flatten.distinct}
+      },
+      errNestedSchema.elementType)
+    val withErr = errNested.withColumn(ErrorMessage.errorColumnName,
+                                       expr(s"${idField}_flattenErrDistinct(${ErrorMessage.errorColumnName})"))
+    import spark.implicits._
     // join on the errors
-    val res2 = res.drop(ErrorMessage.errorColumnName).as("conf")
-      .join(withErr.as("err"), col(s"conf.$idField") === col(s"err.$idField"), "left_outer").select($"conf.*", col(s"err.${ErrorMessage.errorColumnName}")).drop(idField)
-
-    res2
+    res.drop(ErrorMessage.errorColumnName).as("conf")
+      .join(withErr.as("err"), col(s"conf.$idField") === col(s"err.$idField"), "left_outer")
+      .select($"conf.*", col(s"err.${ErrorMessage.errorColumnName}")).drop(idField)
   }
 
-  private def getDefaultValue(mappingTableDef: MappingTable)
-                             (implicit spark: SparkSession, dao: MenasDAO): Option[String] = {
-    val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
-
-    val attributeDefaultValueOpt = defaultMappingValueMap.get(rule.targetAttribute)
-    val genericDefaultValueOpt = defaultMappingValueMap.get("*")
-
-    val defaultValueOpt = attributeDefaultValueOpt match {
-      case Some(_) => attributeDefaultValueOpt
-      case None => genericDefaultValueOpt
-    }
-
-    if (defaultValueOpt.isDefined) {
-      val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
-      mappingTableSchemaOpt match {
-        case Some(schema) =>
-          MappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
-            rule.targetAttribute, defaultValueOpt.get)
-        case None =>
-          log.warn("Mapping table schema loading failed")
-      }
-    }
-    defaultValueOpt
+  override protected def validateMappingFieldsExist(joinConditionStr:  String,
+                                                    datasetSchema: StructType,
+                                                    mappingTableSchema: StructType,
+                                                    rule: MappingConformanceRule): Unit = {
+    MappingRuleInterpreter.validateMappingFieldsExist(datasetWithJoinCondition(joinConditionStr), datasetSchema, mappingTableSchema, rule)
   }
 
   private def inclErrorNullArr(mappings: Seq[Mapping], schema: StructType) = {
@@ -151,14 +112,9 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     }
     MappingRuleInterpreter.includeErrorsCondition(paths, schema)
   }
-
 }
 
 object MappingRuleInterpreter {
-
-  private[rules] val inputDfAlias = "input"
-  private[rules] val mappingTableAlias = "mapTable"
-
   /**
    * Checks if a default value type can be used for a target attribute in Mapping rule.
    * Throws a MappingValidationException exception if there is a casting error.
@@ -170,7 +126,11 @@ object MappingRuleInterpreter {
    *
    */
   @throws[ValidationException]
-  private[rules] def ensureDefaultValueMatchSchema(mappingTable: String, schema: StructType, targetAttribute: String, defaultValue: String)(implicit spark: SparkSession): Unit = {
+  private[rules] def ensureDefaultValueMatchSchema(mappingTable: String,
+                                                   schema: StructType,
+                                                   targetAttribute: String,
+                                                   defaultValue: String)
+                                                  (implicit spark: SparkSession): Unit = {
 
     val targetField = getQualifiedField(schema, targetAttribute)
 
@@ -204,9 +164,6 @@ object MappingRuleInterpreter {
       }
       recoverFunction
     })
-
-    // Rethrow
-    validationResult.get
   }
 
   @throws[ValidationException]
@@ -263,22 +220,6 @@ object MappingRuleInterpreter {
           Seq(fld)
       }
     })
-  }
-
-  /**
-   * getJoinCondition Function which builds a column object representing the join condition for mapping operation
-   *
-   */
-  private[rules] def getJoinCondition(rule: MappingConformanceRule): Column = {
-    val pairs = rule.attributeMappings.toList
-
-    def joinCond(c1: Column, c2: Column): Column = if (rule.isNullSafe) c1 <=> c2 else c1 === c2
-
-    val cond = pairs.foldLeft(lit(true))({
-      case (acc: Column, attrs: (String, String)) => acc and
-        joinCond(col(s"$inputDfAlias.${attrs._2}"), col(s"$mappingTableAlias.${attrs._1}"))
-    })
-    cond
   }
 
   /**

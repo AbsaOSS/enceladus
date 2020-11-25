@@ -17,6 +17,7 @@ package za.co.absa.enceladus.conformance.datasource
 
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.samples.EmployeeConformance
+import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class DatasourceSuite extends FunSuite with SparkTestBase {
@@ -29,4 +30,19 @@ class DatasourceSuite extends FunSuite with SparkTestBase {
 
   }
 
+  test("Data Source loads data simple filtered") {
+    val filter = Option(DifferFilter("country", "CZE"))
+    val ds = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath,"2017-11-01", "{0}/{1}/{2}", filter)
+    val resultIds = ds.select("employee_id").collect.toList.map(_.get(0).toString.toInt)
+    val expected = List(1, 3, 4, 5)
+    assert(resultIds == expected)
+  }
+
+  test("Data Source loads data filtered using complex filter") {
+    val filter = Option(OrJoinedFilters(Set(EqualFilter("country", "CZE"), EqualFilter("role", 2))))
+    val ds = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath,"2017-11-01", "{0}/{1}/{2}", filter)
+    val resultIds = ds.select("employee_id").collect.toList.map(_.get(0).toString.toInt)
+    val expected = List(0, 2, 3, 4)
+    assert(resultIds == expected)
+  }
 }

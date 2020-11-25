@@ -36,28 +36,27 @@ class RulesSuite extends FunSuite with SparkTestBase {
 
   test("Test country code join condition") {
     val countryRule = EmployeeConformance.countryRule
-    val countryCondGen = MappingRuleInterpreterGroupExplode.getJoinCondition(countryRule).expr
-    val countryCond = (lit(true)
-      && (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.country") === col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.country_code"))).expr
+    val countryCondGen = MappingRuleInterpreterCommon.getJoinCondition(countryRule).expr
+    val countryCond = (col(s"${MappingRuleInterpreterCommon.inputDfAlias}.country") === col(s"${MappingRuleInterpreterCommon.mappingTableAlias}.country_code")).expr
 
     assert(countryCondGen.semanticEquals(countryCond))
   }
 
   test("Test department join condition") {
     val deptRule = EmployeeConformance.departmentRule
-    val deptCondGen = MappingRuleInterpreterGroupExplode.getJoinCondition(deptRule).expr
-    val deptCond = (lit(true) &&
-      (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.dept") === col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.dept_id"))).expr
+    val deptCondGen = MappingRuleInterpreterCommon.getJoinCondition(deptRule).expr
+    val deptCond = (col(s"${MappingRuleInterpreterCommon.inputDfAlias}.dept") === col(s"${MappingRuleInterpreterCommon.mappingTableAlias}.dept_id")).expr
 
     assert(deptCondGen.semanticEquals(deptCond))
   }
 
   test("Test role join condition") {
     val roleRule = EmployeeConformance.roleRule
-    val roleCondGen = MappingRuleInterpreterGroupExplode.getJoinCondition(roleRule).expr
-    val roleCond = (lit(true) &&
-      (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.role") <=> col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.role_id")) &&
-      (col(s"${MappingRuleInterpreterGroupExplode.inputDfAlias}.conformed_country") <=> col(s"${MappingRuleInterpreterGroupExplode.mappingTableAlias}.country"))).expr
+    val roleCondGen = MappingRuleInterpreterCommon.getJoinCondition(roleRule).expr
+    val roleCond = (
+        (col(s"${MappingRuleInterpreterCommon.inputDfAlias}.role") <=> col(s"${MappingRuleInterpreterCommon.mappingTableAlias}.role_id")) &&
+        (col(s"${MappingRuleInterpreterCommon.inputDfAlias}.conformed_country") <=> col(s"${MappingRuleInterpreterCommon.mappingTableAlias}.country"))
+      ).expr
 
     assert(roleCondGen.semanticEquals(roleCond))
   }

@@ -50,7 +50,7 @@ class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
 
     mockWhen(dao.getMappingTable("myMappingTable", 0)) thenReturn MappingTable(name = "myMappingTable", version = 0, hdfsPath = "myMappingTable", schemaName = "whatev", schemaVersion = 0, defaultMappingValue = List())
 
-    DataSource.setData("myMappingTable", mappingDf)
+    DataSource.setData("myMappingTable/reportDate=2018-03-23", mappingDf)
 
     val conformanceDef = ConfDataset(
       name = "My dummy conformance workflow", // whatever here

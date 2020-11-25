@@ -17,6 +17,7 @@ package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
+import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 
 package object conformanceRule {
 
@@ -80,7 +81,10 @@ package object conformanceRule {
                                     attributeMappings: Map[String, String], // key = mapping table column, value = input df column
                                     targetAttribute: String,
                                     outputColumn: String,
-                                    isNullSafe: Boolean = false) extends ConformanceRule {
+                                    isNullSafe: Boolean = false,
+                                    mappingTableFilter: Option[DataFrameFilter] = None,
+                                    overrideMappintTableOwnFilter: Boolean = false
+                                   ) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): MappingConformanceRule = copy(order = newOrder)
 
     override def connectedEntities: Seq[ConnectedEntity] = Seq(
