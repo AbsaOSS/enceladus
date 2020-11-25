@@ -224,6 +224,13 @@ trait CommonJobExecution extends ProjectMetadata {
     })
   }
 
+  protected def addCustomDataToInfoFile(data: Map[String, String]): Unit = {
+    data.foreach { entry =>
+      log.info(s"writing $entry to info file.") // todo debug or remove?
+      Atum.setAdditionalInfo(entry)
+    }
+  }
+
   protected def handleEmptyOutput(job: SourcePhase)(implicit spark: SparkSession): Unit = {
     import za.co.absa.atum.core.Constants._
 

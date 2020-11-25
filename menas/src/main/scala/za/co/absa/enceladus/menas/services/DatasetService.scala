@@ -56,8 +56,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
           .setHDFSPublishPath(dataset.hdfsPublishPath)
           .setConformance(dataset.conformance)
           .setDescription(dataset.description).asInstanceOf[Dataset]
-      }
-      )
+      })
     }
   }
 

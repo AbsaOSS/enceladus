@@ -44,6 +44,13 @@ protected class MenasRestDAO(private[rest] val apiCaller: ApiCaller,
     }
   }
 
+  def getDatasetPropertiesForInfoFile(datasetName: String, datasetVersion: Int): Map[String, String] = {
+    apiCaller.call { apiBaseUrl =>
+      val url = s"$apiBaseUrl/api/dataset/$datasetName/$datasetVersion/properties/?putIntoInfoFile=true"
+      restClient.sendGet[Map[String, String]](url)
+    }
+  }
+
   def getMappingTable(name: String, version: Int): MappingTable = {
     apiCaller.call { apiBaseUrl =>
       val url = s"$apiBaseUrl/api/mappingTable/detail/$name/$version"
