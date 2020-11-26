@@ -79,7 +79,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
     // Add Dataset properties marked with putIntoInfoFile=true
     val dataForInfoFile: Map[String, String] = dao.getDatasetPropertiesForInfoFile(cmd.datasetName, cmd.datasetVersion)
-    addCustomDataToInfoFile(dataForInfoFile)
+    addCustomDataToInfoFile(keyPrefix = "std_ds_", dataForInfoFile)
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
       preparationResult.pathCfg.rawPath,
