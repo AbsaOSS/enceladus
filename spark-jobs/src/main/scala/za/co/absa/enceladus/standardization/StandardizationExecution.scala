@@ -97,7 +97,7 @@ trait StandardizationExecution extends CommonJobExecution {
     log.info(s"raw path: ${pathConfig.rawPath}")
     log.info(s"standardization path: ${pathConfig.standardizationPath}")
     validateInputPath(fsUtils, pathConfig.rawPath)
-    validateIfOutputPathAlreadyExists(fsUtils: FileSystemVersionUtils, pathConfig.standardizationPath)
+    validateIfOutputPathAlreadyExists(fsUtils, pathConfig.standardizationPath)
   }
 
   protected def readStandardizationInputData[T](schema: StructType,
