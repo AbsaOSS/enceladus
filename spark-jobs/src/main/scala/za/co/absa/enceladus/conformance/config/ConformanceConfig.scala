@@ -79,6 +79,7 @@ object ConformanceConfig {
     import builder._
     OParser.sequence(
       programName("Dynamic Conformance Job"),
+      help("help"),
       ConformanceConfigParser.conformanceParser,
       JobConfigParser.jobConfigParser
     )
