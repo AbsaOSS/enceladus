@@ -44,7 +44,9 @@ import scala.concurrent.Future
 import scala.language.implicitConversions
 
 package object implicits {
-  implicit def optJavaScala[C](in: Optional[C]): Option[C] = if (in.isPresent) Some(in.get) else None
+  implicit class JavaOptExt[C](javaOptional: Optional[C]) {
+    def toScalaOption: Option[C] = if (javaOptional.isPresent) Some(javaOptional.get) else None
+  }
 
   implicit def scalaToJavaFuture[T](in: Future[T]): CompletableFuture[T] = in.toJava.toCompletableFuture
 

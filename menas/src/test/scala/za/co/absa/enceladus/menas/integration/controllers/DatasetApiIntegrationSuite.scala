@@ -190,27 +190,32 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
   }
 
   s"PUT $apiUrl/{name}/properties" should {
-    "201 Created with location = replace properties with a new version" when {
-      "there is a correct Dataset version" in {
-        val datasetV1 = DatasetFactory.getDummyDataset(name = "dataset", version = 1)
-        datasetFixture.add(datasetV1)
-        val response1 = sendGet[Map[String, String]](s"$apiUrl/dataset/1/properties")
-        assertOk(response1)
+    "201 Created with location " when {
+      Seq(
+        ("non-empty properties map", """{"keyA":"valA","keyB":"valB"}""", Some(Map("keyA" -> "valA", "keyB" -> "valB"))),
+        ("empty properties map", "{}", Some(Map.empty)),
+        ("no properties at all", "", None) // this is backwards compatible option with the pre-properties era versions
+      ).foreach {case (testCaseName, payload, expectedPropertiesSet) =>
+        s"properties are replaced with a new version ($testCaseName)" in {
+          val datasetV1 = DatasetFactory.getDummyDataset(name = "dataset", version = 1)
+          datasetFixture.add(datasetV1)
+          val response1 = sendGet[Map[String, String]](s"$apiUrl/dataset/1/properties")
+          assertOk(response1)
 
-        val expectedProperties1 = Map.empty[String, String]
-        val body1 = response1.getBody
-        assert(body1 == expectedProperties1, "initially, there are no properties")
+          val expectedProperties1 = Map.empty[String, String]
+          val body1 = response1.getBody
+          assert(body1 == expectedProperties1, "initially, there are no properties")
 
-        val updatedProperties = Map("keyA" -> "valA", "keyB" -> "valB") // both put content & expected properties content
-        val response2 = sendPut[Map[String, String], Dataset](s"$apiUrl/dataset/properties", bodyOpt = Some(updatedProperties))
+          val response2 = sendPut[String, Dataset](s"$apiUrl/dataset/properties", bodyOpt = Some(payload))
 
-        assertCreated(response2)
-        val headers2 = response2.getHeaders
-        val body2 = response2.getBody
+          assertCreated(response2)
+          val headers2 = response2.getHeaders
+          val body2 = response2.getBody
 
-        assert(headers2.getFirst("Location").contains("/api/dataset/dataset/2"))
-        assert(body2.version == 2)
-        assert(body2.propertiesAsMap == updatedProperties)
+          assert(headers2.getFirst("Location").contains("/api/dataset/dataset/2"))
+          assert(body2.version == 2)
+          assert(body2.properties == expectedPropertiesSet)
+        }
       }
     }
   }

@@ -17,6 +17,7 @@ package za.co.absa.enceladus.menas.controllers
 
 import java.net.URI
 import java.util
+import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
 import org.slf4j.{Logger, LoggerFactory}
@@ -101,9 +102,9 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   @ResponseStatus(HttpStatus.CREATED)
   def replaceProperties(@AuthenticationPrincipal principal: UserDetails,
                         @PathVariable datasetName: String,
-                        @RequestBody newProperties: Map[String, String]): CompletableFuture[ResponseEntity[Option[Dataset]]] = {
+                        @RequestBody newProperties: Optional[Map[String, String]]): CompletableFuture[ResponseEntity[Option[Dataset]]] = {
 
-    datasetService.replaceProperties(principal.getUsername, datasetName, newProperties).map { dataset =>
+    datasetService.replaceProperties(principal.getUsername, datasetName, newProperties.toScalaOption).map { dataset =>
       dataset match {
         case None => throw notFound()
         case Some(ds) => {

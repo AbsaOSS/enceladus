@@ -115,11 +115,11 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   def replaceProperties(username: String, datasetName: String,
-                        updatedProperties: Map[String, String]): Future[Option[Dataset]] = {
+                        updatedProperties: Option[Map[String, String]]): Future[Option[Dataset]] = {
     for {
       latestVersion <- getLatestVersionNumber(datasetName)
       update <- super.update(username, datasetName, latestVersion) { latest =>
-        latest.copy(properties = Some(updatedProperties))
+        latest.copy(properties = updatedProperties)
       }
     } yield update
   }

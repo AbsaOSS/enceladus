@@ -38,7 +38,7 @@ class OozieController @Autowired() (oozieService: OozieService) extends BaseCont
 
   @PostMapping(path = Array("/runNow"))
   def runNow(@RequestBody schedule: OozieSchedule, @RequestParam reportDate: Optional[String]): CompletableFuture[String] = {
-    oozieService.runNow(schedule, reportDate)
+    oozieService.runNow(schedule, reportDate.toScalaOption)
   }
 
   @PostMapping(path = Array("/suspend/{coordId}"))
