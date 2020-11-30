@@ -98,6 +98,7 @@ object StandardizationConfig {
     import builder._
     OParser.sequence(
       programName("Standardization Job"),
+      help("help"),
       StandardizationConfigParser.standardizationParser,
       JobConfigParser.jobConfigParser
     )

@@ -27,9 +27,9 @@ object StandardizationJob extends StandardizationExecution {
   private val jobName: String = "Enceladus Standardization"
 
   def main(args: Array[String]) {
-    initialValidation()
-
     implicit val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(args)
+
+    initialValidation()
     implicit val spark: SparkSession = obtainSparkSession(jobName)
     implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     implicit val udfLib: UDFLibrary = new UDFLibrary
