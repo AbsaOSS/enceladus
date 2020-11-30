@@ -12,22 +12,37 @@
 
 ## **Do you want to implement a new feature or fix a bug?**
 
-* Check logs for the feature/bug. Check if someone isn't already working on it.
+* Check _Issues_ logs for the feature/bug. Check if someone isn't already working on it.
   * If the feature/bug is not yet filed, please write it up first:
     * **"Life, the universe and everything"**
 * Fork the repository.
 * We follow the [**GitFlow**](https://nvie.com/posts/a-successful-git-branching-model/) branching strategy:
-  * Cut your branch from develop, add the GitHub Issue in the branch name:
+  * Cut your branch from `develop`, add the _GitHub Issue_ in the branch name:
     * **feature/42-life-universe-everything**
     * **bugfix/42-life-universe-everything**
 * Code away. Ask away. Work with us.
   * Commit messages should start with a reference to the GitHub Issue and provide a brief description in the imperative mood:
     * **"#42 Answer the ultimate question"**
   * Don't forget to write tests for your work.
-* After finishing everything, push to your forked repo and open a Pull Request to our develop branch:
+* After finishing everything, push to your forked repo and open a Pull Request to our `develop` branch:
   * Pull Request titles should start with the Github Issue number:
     * **"42 Life, the universe and everything"**
   * Ensure the Pull Request description clearly describes the solution.
+  * Connect the PR to the _Issue_
+
+## **Do you want to improve the project's documentation?**
+
+The process is similar, just a tad bit simpler, than the feature or bugfix implementation. For documentation changes, an _Issue_ doesn't need to exist. For bigger changes, we still encourage to have one.
+
+To implement documentation changes:
+  * Fork the repository
+  * Base your changes on the `gh-pages` branch.
+      * Name the branch with **ghp/** prefix, if a connected issue exists add its number after the **ghp/** prefix  
+        * **ghp/dont-panic**
+        * **ghp/42-dont-panic**  
+* After finishing, push to your forked repo and open a Pull Request to our `gh-pages` branch.
+  * In the Pull Request describe what the changes are about, what was their motivation.
+  * Connect the PR to the _Issue_ if it exists
 
 #### Thanks!
 

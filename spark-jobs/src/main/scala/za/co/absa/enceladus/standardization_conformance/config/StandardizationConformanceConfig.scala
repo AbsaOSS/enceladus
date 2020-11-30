@@ -114,6 +114,7 @@ object StandardizationConformanceConfig {
     import builder._
     OParser.sequence(
       programName("Standardization Conformance Job"),
+      help("help"),
       StandardizationConfigParser.standardizationParser,
       ConformanceConfigParser.conformanceParser,
       JobConfigParser.jobConfigParser

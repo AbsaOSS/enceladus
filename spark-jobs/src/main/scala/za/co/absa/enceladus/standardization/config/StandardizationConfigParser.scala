@@ -63,8 +63,6 @@ object StandardizationConfigParser {
     val builder = OParser.builder[R]
     import builder._
     OParser.sequence(
-      help("help"),
-
       opt[String]('f', "raw-format").required().action((value, config) => {
         config.withRawFormat(value.toLowerCase())
       }).text("format of the raw data (csv, xml, parquet, fixed-width, etc.)"),

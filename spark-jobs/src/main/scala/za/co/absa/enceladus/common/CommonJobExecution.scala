@@ -95,7 +95,7 @@ trait CommonJobExecution extends ProjectMetadata {
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg = getPathConfig(cmd, dataset, reportVersion)
 
-    validateOutputPath(fsUtils, pathCfg)
+    validatePaths(fsUtils, pathCfg)
 
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
@@ -107,12 +107,20 @@ trait CommonJobExecution extends ProjectMetadata {
     PreparationResult(dataset, reportVersion, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
   }
 
-  protected def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
+  protected def validatePaths(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
 
-  protected def validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, path: String): Unit = {
+  protected def validateIfOutputPathAlreadyExists(fsUtils: FileSystemVersionUtils, path: String): Unit = {
     if (fsUtils.hdfsExists(path)) {
       throw new IllegalStateException(
         s"Path $path already exists. Increment the run version, or delete $path"
+      )
+    }
+  }
+
+  protected def validateInputPath(fsUtils: FileSystemVersionUtils, path: String): Unit = {
+    if (!fsUtils.hdfsExists(path)) {
+      throw new IllegalStateException(
+        s"Input path $path does not exist"
       )
     }
   }

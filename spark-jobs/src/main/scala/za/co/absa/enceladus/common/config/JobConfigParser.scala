@@ -55,7 +55,6 @@ object JobConfigParser extends ProjectMetadata {
     OParser.sequence(
 
       head(s"Enceladus v${projectVersion}"),
-      help("help"),
       opt[String]('D', "dataset-name").required().action((value, config) =>
         config.withDatasetName(value)).text("Dataset name"),
 
