@@ -39,14 +39,21 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
   }
 
   override def create(newPropertyDef: PropertyDefinition, username: String): Future[Option[PropertyDefinition]] = {
-    val propertyDef = PropertyDefinition(
+    val propertyDefBase = PropertyDefinition(
       name = newPropertyDef.name,
       description = newPropertyDef.description,
       propertyType = newPropertyDef.propertyType,
-      putIntoInfoFile = newPropertyDef.putIntoInfoFile,
-      essentiality = newPropertyDef.essentiality
-    )
-    super.create(propertyDef, username)
+      putIntoInfoFile = newPropertyDef.putIntoInfoFile
+    ) // has default essentiality
+
+    // if essentiality is not given, apply default:
+    val propertyDefinition = if (newPropertyDef.essentiality == null) {
+      propertyDefBase // keep the default essentiality
+    } else {
+      propertyDefBase.copy(essentiality = newPropertyDef.essentiality)
+    }
+
+    super.create(propertyDefinition, username)
   }
 
   override private[services] def importItem(item: PropertyDefinition, username: String): Future[Option[PropertyDefinition]] = {

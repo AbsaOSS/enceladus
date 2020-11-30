@@ -24,6 +24,7 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.integration.fixtures._
 import za.co.absa.enceladus.model.Validation
 import za.co.absa.enceladus.model.properties.PropertyDefinition
+import za.co.absa.enceladus.model.properties.propertyType.StringPropertyType
 import za.co.absa.enceladus.model.test.factories.PropertyDefinitionFactory
 
 @RunWith(classOf[SpringRunner])
@@ -39,10 +40,14 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
   // fixtures are cleared after each test
   override def fixtures: List[FixtureService[_]] = List(propertyDefinitionFixture)
 
+
+  private def minimalPdCreatePayload(name: String, suggestedValue: String) =
+    s"""{"name": "$name","propertyType": {"_t": "StringPropertyType","suggestedValue": "$suggestedValue"}}"""
+
   Seq(
-    s"$apiUrl/create",
-    s"$apiUrl" // PropertyDefinitionController API alias
-  ).foreach { urlPattern =>
+    (s"$apiUrl/create", false), // VersionedModelController.create does not yield Location header
+    (s"$apiUrl", true) // PropertyDefinitionController API "alias" does
+  ).foreach { case (urlPattern, locationHeaderSupport) =>
     s"POST $urlPattern" can {
       "return 201" when {
         "a PropertyDefinition is created" should {
@@ -50,9 +55,23 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
             val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
             val response = sendPost[PropertyDefinition, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition))
             assertCreated(response)
+            if (locationHeaderSupport) {
+              assert(response.getHeaders.getFirst("Location").contains("/api/properties/datasets/dummyName/1"))
+            }
 
             val actual = response.getBody
             val expected = toExpected(propertyDefinition, actual)
+            assert(actual == expected)
+          }
+        }
+        "a PropertyDefinition is created with most of default values" should {
+          "return the created PropertyDefinition" in {
+            val propertyDefinition = minimalPdCreatePayload("smallPd", "default1")
+            val response = sendPost[String, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition))
+            assertCreated(response)
+
+            val actual = response.getBody
+            val expected = toExpected(PropertyDefinition("smallPd", propertyType = StringPropertyType("default1")), actual)
             assert(actual == expected)
           }
         }

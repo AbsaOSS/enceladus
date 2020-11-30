@@ -15,19 +15,18 @@
 
 package za.co.absa.enceladus.menas.controllers
 
+import java.net.URI
 import java.util.concurrent.CompletableFuture
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
+import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.menas.services.PropertyDefinitionService
 import za.co.absa.enceladus.model.properties.PropertyDefinition
-import za.co.absa.enceladus.model.properties.propertyType.{StringEnumPropertyType, StringPropertyType}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Random
 
 @RestController
 @RequestMapping(path = Array("/api/properties/datasets"), produces = Array("application/json"))
@@ -45,10 +44,17 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
   @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
   def createDatasetProperty(@AuthenticationPrincipal principal: UserDetails,
-                            @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] = {
-    // basically an alias for /create
+                            @RequestBody item: PropertyDefinition): CompletableFuture[ResponseEntity[PropertyDefinition]] = {
+    // basically an alias for /create with Location header response
     logger.info(s"creating new property definition '${item.name}'")
-    super.create(principal, item)
+
+    import scala.compat.java8.FutureConverters.CompletionStageOps // implicit wrapper with toScala for CompletableFuture
+    super.create(principal, item).toScala.map{ entity =>
+      val location: URI = new URI(s"/api/properties/datasets/${entity.name}/${entity.version}")
+      ResponseEntity.created(location).body(entity)
+    }
+
+    // TODO: Location header would make sense for the underlying VersionedModelController.create, too. Issue #1611
   }
 
   @GetMapping(Array("/{propertyName}"))
