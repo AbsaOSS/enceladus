@@ -30,7 +30,7 @@ case class PropertyDefinition(name: String,
 
                               propertyType: PropertyType,
                               putIntoInfoFile: Boolean = false,
-                              essentiality: Essentiality = Optional(), // consider renaming or simplifying into 2 boolean fields?
+                              essentiality: Essentiality = Optional(),
                               disabled: Boolean = false,
 
                               // VersionModel induced fields:
@@ -75,7 +75,6 @@ case class PropertyDefinition(name: String,
           AuditFieldName("essentiality", "Essentiality"),
           AuditFieldName("schemaVersion", "Schema Version"),
           AuditFieldName("schedule", "Schedule"))))
-    // todo property type in depth audit?
   }
 
   override def exportItem(): String = {

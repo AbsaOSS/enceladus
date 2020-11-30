@@ -41,7 +41,6 @@ class StandardizationExecutionSuite extends FlatSpec with Matchers with SparkTes
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   "StandardizationExecution" should "write dataset properties into info file" in {
-
     implicit val dao: MenasDAO = mock[MenasDAO]
     implicit val cmd: StandardizationConfig = StandardizationConfig(datasetName = "DatasetA")
 
@@ -55,7 +54,6 @@ class StandardizationExecutionSuite extends FlatSpec with Matchers with SparkTes
       ("id1", "data1"),
       ("id2", "data2")
     ).toDF("id", "data").as("DatasetA")
-
 
     // rawPath must exist, _INFO file creation assures so
     ControlUtils.createInfoFile(someDataset,
@@ -93,7 +91,6 @@ class StandardizationExecutionSuite extends FlatSpec with Matchers with SparkTes
     }
 
     std.testRun
-
     safeDeleteTestDir(tempDir)
   }
 
