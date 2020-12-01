@@ -26,7 +26,7 @@ import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conformance: ConfDataset)
-  extends RuleInterpreter with MappingRuleInterpreterCommon {
+  extends RuleInterpreter with CommonMappingRuleInterpreter {
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 

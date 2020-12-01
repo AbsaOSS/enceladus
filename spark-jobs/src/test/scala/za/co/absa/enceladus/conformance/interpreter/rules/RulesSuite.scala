@@ -36,26 +36,26 @@ class RulesSuite extends FunSuite with SparkTestBase {
 
   test("Test country code join condition") {
     val countryRule = EmployeeConformance.countryRule
-    val countryCondGen = MappingRuleInterpreterCommon.getJoinCondition(countryRule).expr
-    val countryCond = (col(s"${MappingRuleInterpreterCommon.inputDfAlias}.country") === col(s"${MappingRuleInterpreterCommon.mappingTableAlias}.country_code")).expr
+    val countryCondGen = CommonMappingRuleInterpreter.getJoinCondition(countryRule).expr
+    val countryCond = (col(s"${CommonMappingRuleInterpreter.inputDfAlias}.country") === col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.country_code")).expr
 
     assert(countryCondGen.semanticEquals(countryCond))
   }
 
   test("Test department join condition") {
     val deptRule = EmployeeConformance.departmentRule
-    val deptCondGen = MappingRuleInterpreterCommon.getJoinCondition(deptRule).expr
-    val deptCond = (col(s"${MappingRuleInterpreterCommon.inputDfAlias}.dept") === col(s"${MappingRuleInterpreterCommon.mappingTableAlias}.dept_id")).expr
+    val deptCondGen = CommonMappingRuleInterpreter.getJoinCondition(deptRule).expr
+    val deptCond = (col(s"${CommonMappingRuleInterpreter.inputDfAlias}.dept") === col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.dept_id")).expr
 
     assert(deptCondGen.semanticEquals(deptCond))
   }
 
   test("Test role join condition") {
     val roleRule = EmployeeConformance.roleRule
-    val roleCondGen = MappingRuleInterpreterCommon.getJoinCondition(roleRule).expr
+    val roleCondGen = CommonMappingRuleInterpreter.getJoinCondition(roleRule).expr
     val roleCond = (
-        (col(s"${MappingRuleInterpreterCommon.inputDfAlias}.role") <=> col(s"${MappingRuleInterpreterCommon.mappingTableAlias}.role_id")) &&
-        (col(s"${MappingRuleInterpreterCommon.inputDfAlias}.conformed_country") <=> col(s"${MappingRuleInterpreterCommon.mappingTableAlias}.country"))
+        (col(s"${CommonMappingRuleInterpreter.inputDfAlias}.role") <=> col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.role_id")) &&
+        (col(s"${CommonMappingRuleInterpreter.inputDfAlias}.conformed_country") <=> col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.country"))
       ).expr
 
     assert(roleCondGen.semanticEquals(roleCond))

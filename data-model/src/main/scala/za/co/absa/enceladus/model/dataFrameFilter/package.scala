@@ -18,7 +18,8 @@ package za.co.absa.enceladus.model
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.{JsonIgnore, JsonSubTypes, JsonTypeInfo}
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{col, lit, not => columnNot}
+import org.apache.spark.sql.types._
 
 package object dataFrameFilter {
 
@@ -26,13 +27,15 @@ package object dataFrameFilter {
   @JsonSubTypes(Array(
     new Type(value = classOf[OrJoinedFilters], name = "OrJoinedFilters"),
     new Type(value = classOf[AndJoinedFilters], name = "AndJoinedFilters"),
-    new Type(value = classOf[EqualFilter], name = "EqualFilter"),
-    new Type(value = classOf[DifferFilter], name = "DifferFilter")
+    new Type(value = classOf[NotFilter], name = "NotFilter"),
+    new Type(value = classOf[EqualsFilter], name = "EqualsFilter"),
+    new Type(value = classOf[DiffersFilter], name = "DiffersFilter"),
+    new Type(value = classOf[IsNullFilter], name= "IsNullFilter")
   ))
   sealed trait DataFrameFilter {
     @JsonIgnore def filter: Column
-    @JsonIgnore def or(filter: DataFrameFilter): DataFrameFilter = {
-      (this, filter) match {
+    @JsonIgnore def or(otherFilter: DataFrameFilter): DataFrameFilter = {
+      (this, otherFilter) match {
         case (a: OrJoinedFilters, b: OrJoinedFilters) => OrJoinedFilters(a.filterItems & b.filterItems)
         case (a: OrJoinedFilters, b) => a.copy(filterItems = a.filterItems + b)
         case (a, b: OrJoinedFilters) => b.copy(filterItems = b.filterItems + a)
@@ -40,8 +43,8 @@ package object dataFrameFilter {
       }
     }
 
-    @JsonIgnore def and(filter: DataFrameFilter): DataFrameFilter = {
-      (this, filter) match {
+    @JsonIgnore def and(otherFilter: DataFrameFilter): DataFrameFilter = {
+      (this, otherFilter) match {
         case (a: AndJoinedFilters, b: AndJoinedFilters) => AndJoinedFilters(a.filterItems & b.filterItems)
         case (a: AndJoinedFilters, b) => a.copy(filterItems = a.filterItems + b)
         case (a, b: AndJoinedFilters) => b.copy(filterItems = b.filterItems + a)
@@ -49,9 +52,16 @@ package object dataFrameFilter {
       }
     }
 
-    def + (filter: DataFrameFilter): DataFrameFilter = or(filter) //scalastyle:ignore class.name function used as operator
-    def *(filter: DataFrameFilter): DataFrameFilter = and(filter) //scalastyle:ignore class.name function used as operator
+    def +(otherFilter: DataFrameFilter): DataFrameFilter = or(otherFilter) //scalastyle:ignore method.name function used as operator
+    def *(otherFilter: DataFrameFilter): DataFrameFilter = and(otherFilter) //scalastyle:ignore method.name function used as operator
+    def unary_!(): DataFrameFilter = not(this) //scalastyle:ignore method.name function used as operator
+  }
 
+  def not(filter: DataFrameFilter): DataFrameFilter = {
+    filter match {
+      case a: NotFilter => a.inputFilter
+      case x => NotFilter(x)
+    }
   }
 
   sealed trait JoinFilters extends DataFrameFilter {
@@ -71,11 +81,41 @@ package object dataFrameFilter {
 
   sealed trait SingleColumnAndValueFilter extends DataFrameFilter {
     def columnName: String
-    def value: Any
+    def value: String
+    def valueType: String
 
-    @JsonIgnore protected def operator: (Column, Any) => Column
+    @JsonIgnore def dataType: DataType = SingleColumnAndValueFilter.nameToType(valueType)
+    @JsonIgnore protected def operator: (Column, Column) => Column
     override def filter: Column = {
-      operator(col(columnName), value)
+      if (dataType == StringType) {
+        // no need to cast from string, simpler expression
+        operator(col(columnName), lit(value))
+      } else {
+        operator(col(columnName), lit(value) cast dataType)
+      }
+    }
+  }
+
+  object SingleColumnAndValueFilter {
+    private val nonDecimalNameToType = {
+      Seq(NullType, DateType, TimestampType, BinaryType, IntegerType, BooleanType, LongType,
+        DoubleType, FloatType, ShortType, ByteType, StringType, CalendarIntervalType)
+        .map(t => t.typeName -> t).toMap
+    }
+
+    private val FIXED_DECIMAL = """decimal\(\s*(\d+)\s*,\s*(-?\d+)\s*\)""".r
+
+    /** Given the string representation of a type, return its DataType */
+    private def nameToType(name: String): DataType = {
+      name match {
+        case null => StringType //scalastyle:ignore null (to make valueType optional)
+        case "decimal" => DecimalType.USER_DEFAULT
+        case FIXED_DECIMAL(precision, scale) => DecimalType(precision.toInt, scale.toInt)
+        case other => nonDecimalNameToType.getOrElse(
+          other,
+          throw new IllegalArgumentException(
+            s"Failed to convert the JSON string '$name' to a data type."))
+      }
     }
   }
 
@@ -87,12 +127,37 @@ package object dataFrameFilter {
     protected val operator: (Column, Column) => Column = (a: Column, b: Column) => { a and b }
   }
 
-  case class EqualFilter(columnName: String, value: Any) extends SingleColumnAndValueFilter {
-    protected val operator: (Column, Any) => Column = (column: Column, value: Any) => { column === value }
+  case class NotFilter(inputFilter: DataFrameFilter) extends DataFrameFilter {
+    override def filter: Column = columnNot(inputFilter.filter)
   }
 
-  case class DifferFilter(columnName: String, value: Any) extends SingleColumnAndValueFilter {
-    protected val operator: (Column, Any) => Column = (column: Column, value: Any) => { column =!= value }
+  case class EqualsFilter(columnName: String, value: String, valueType: String) extends SingleColumnAndValueFilter {
+    protected val operator: (Column, Column) => Column = (column: Column, valueColumn: Column) => {
+      column === valueColumn
+    }
   }
 
+  object EqualsFilter {
+    def apply(columnName: String, value: String, dataType: DataType = StringType): EqualsFilter = {
+      new EqualsFilter(columnName, value, dataType.typeName)
+    }
+  }
+
+  case class DiffersFilter(columnName: String, value: String, valueType: String) extends SingleColumnAndValueFilter {
+    protected val operator: (Column, Column) => Column = (column: Column, valueColumn: Column) =>  {
+      column =!= valueColumn
+    }
+  }
+
+  object DiffersFilter {
+    def apply(columnName: String, value: String, dataType: DataType = StringType): DiffersFilter = {
+      new DiffersFilter(columnName, value, dataType.typeName)
+    }
+  }
+
+  case class IsNullFilter(columnName: String) extends DataFrameFilter {
+    override def filter: Column = col(columnName).isNull
+  }
 }
+
+

@@ -83,7 +83,7 @@ package object conformanceRule {
                                     outputColumn: String,
                                     isNullSafe: Boolean = false,
                                     mappingTableFilter: Option[DataFrameFilter] = None,
-                                    overrideMappintTableOwnFilter: Boolean = false
+                                    overrideMappingTableOwnFilter: Boolean = false
                                    ) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): MappingConformanceRule = copy(order = newOrder)
 

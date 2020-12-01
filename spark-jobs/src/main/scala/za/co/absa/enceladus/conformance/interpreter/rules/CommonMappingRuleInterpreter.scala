@@ -27,7 +27,7 @@ import za.co.absa.enceladus.model.MappingTable
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 
-trait MappingRuleInterpreterCommon {
+trait CommonMappingRuleInterpreter {
 
   protected val rule: MappingConformanceRule
   protected val log: Logger
@@ -56,7 +56,7 @@ trait MappingRuleInterpreterCommon {
       // This is a workaround until UI supports filter definition. Until then, the filters can be set via configuration.
       FilterFromConfig.loadFilter(rule.mappingTable)
     }
-    val mappingTableFilter = mappingTableDef.filter.filterNot(_ => rule.overrideMappintTableOwnFilter)
+    val mappingTableFilter = mappingTableDef.filter.filterNot(_ => rule.overrideMappingTableOwnFilter)
     // find the data frame from the mapping table
     val filter: Option[DataFrameFilter] = (ruleFilter, mappingTableFilter) match {
       case (Some(a), Some(b)) => Option(a and b)
@@ -90,7 +90,7 @@ trait MappingRuleInterpreterCommon {
     s"the dataset, join condition = $joinConditionStr"
   }
 
-  protected def joinCondition: Column = MappingRuleInterpreterCommon.getJoinCondition(rule)
+  protected def joinCondition: Column = CommonMappingRuleInterpreter.getJoinCondition(rule)
 
   /**
     * Returns a default value of the output column, if specified, for a particular mapping rule.
@@ -131,7 +131,7 @@ trait MappingRuleInterpreterCommon {
   }
 }
 
-object MappingRuleInterpreterCommon {
+object CommonMappingRuleInterpreter {
   val inputDfAlias = "input"
   val mappingTableAlias = "mapTable"
   val joinType = "left_outer"

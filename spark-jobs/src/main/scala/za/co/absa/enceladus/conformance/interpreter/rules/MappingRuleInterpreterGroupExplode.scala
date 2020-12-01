@@ -34,7 +34,7 @@ import scala.util.control.NonFatal
 
 case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
                                               conformance: ConfDataset)
-  extends RuleInterpreter with MappingRuleInterpreterCommon {
+  extends RuleInterpreter with CommonMappingRuleInterpreter {
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
@@ -49,10 +49,10 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
 
     val (explodedDf, expCtx) = explodeIfNeeded(df, explosionState)
 
-    val joined = explodedDf.as(MappingRuleInterpreterCommon.inputDfAlias)
-      .join(mapTable.as(MappingRuleInterpreterCommon.mappingTableAlias), joinCondition, MappingRuleInterpreterCommon.joinType)
-      .select(col(s"${MappingRuleInterpreterCommon.inputDfAlias}.*"),
-        col(s"${MappingRuleInterpreterCommon.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn)
+    val joined = explodedDf.as(CommonMappingRuleInterpreter.inputDfAlias)
+      .join(mapTable.as(CommonMappingRuleInterpreter.mappingTableAlias), joinCondition, CommonMappingRuleInterpreter.joinType)
+      .select(col(s"${CommonMappingRuleInterpreter.inputDfAlias}.*"),
+        col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn)
 
     val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
     val mappingErrUdfCall = callUDF(UDFNames.confMappingErr, lit(rule.outputColumn),
