@@ -143,7 +143,7 @@ object MappingRuleInterpreter {
 
     // Put all checks inside a Try object so we could intercept any exception and pack it
     // into a MappingValidationException.
-    val validationResult = Try({
+    Try({
       if (defaultValue.trim.toLowerCase == "null") {
         require(targetField.get.nullable, "The target field is not nullable, 'null' is not acceptable.")
       } else {
@@ -158,12 +158,12 @@ object MappingRuleInterpreter {
       val msg = s"The default value \n'$defaultValue'\n set for mapping table '$mappingTable' does not match the target attribute's data " +
         s"type\n'$typeText' \n"
 
-      val recoverFunction: PartialFunction[Throwable, Any] = {
+      val recoverFunction: PartialFunction[Throwable, Unit] = {
         case e: IllegalArgumentException => throw new ValidationException(msg + "Details: " + e.getMessage, "")
         case NonFatal(e)                 => throw new ValidationException(msg, e.getMessage)
       }
       recoverFunction
-    })
+    }).get // throw the exception of Try if it is a Failure
   }
 
   @throws[ValidationException]
