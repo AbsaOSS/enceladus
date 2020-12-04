@@ -23,7 +23,7 @@ object Validation {
 
   val empty = Validation()
 
-  def merge(a: Validation, b: Validation) : Validation = a merge b
+  def merge(a: Validation, b: Validation) : Validation = a.merge(b)
 
 }
 

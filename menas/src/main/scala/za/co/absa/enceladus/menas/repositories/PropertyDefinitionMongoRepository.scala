@@ -25,7 +25,7 @@ import scala.reflect.ClassTag
 
 
 object PropertyDefinitionMongoRepository {
-  val collectionBaseName: String = "propertydef"
+  private val collectionBaseName: String = "propertydef"
   val collectionName: String = s"$collectionBaseName${model.CollectionSuffix}"
 }
 
