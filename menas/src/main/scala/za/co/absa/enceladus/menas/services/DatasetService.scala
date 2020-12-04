@@ -25,6 +25,8 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 
+import scala.util.{Failure, Success}
+
 
 @Service
 class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository,
@@ -136,11 +138,9 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
           Validation.empty
         }
 
-        val typeConformityValidation: Validation = if (!propertyDefinition.propertyType.isValueConforming(value)) {
-          Validation.empty.withError(key, s"Value $value of key '$key' does not conform " +
-            s"to the property type of ${propertyDefinition.propertyType}.")
-        } else {
-          Validation.empty
+        val typeConformityValidation: Validation = propertyDefinition.propertyType.isValueConforming(value) match {
+          case Success(_) => Validation.empty
+          case Failure(e) => Validation.empty.withError(key, e.getMessage)
         }
 
         disabilityValidation merge typeConformityValidation

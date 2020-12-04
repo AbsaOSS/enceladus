@@ -18,7 +18,7 @@ package za.co.absa.enceladus.model
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory
-import za.co.absa.enceladus.model.properties.propertyType.{StringEnumPropertyType, StringPropertyType}
+import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType , StringPropertyType}
 
 class PropertyDefinitionTest extends FunSuite {
 
@@ -52,13 +52,13 @@ class PropertyDefinitionTest extends FunSuite {
       name = "Test enum property",
       version = 3,
       description = None,
-      propertyType = StringEnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = "optionB")
+      propertyType = EnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = "optionB")
     )
 
     val expectedPropertyDef =
       s"""{"metadata":{"exportVersion":$modelVersion},"item":{
          |"name":"Test enum property",
-         |"propertyType":{"_t":"StringEnumPropertyType","allowedValues":["optionA","optionB","optionC"],"suggestedValue":"optionB"},
+         |"propertyType":{"_t":"EnumPropertyType ","allowedValues":["optionA","optionB","optionC"],"suggestedValue":"optionB"},
          |"putIntoInfoFile":false,
          |"essentiality":{"_t":"Optional"}
          |}}""".stripMargin.replaceAll("[\\r\\n]", "")

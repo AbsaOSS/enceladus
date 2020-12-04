@@ -25,7 +25,7 @@ import za.co.absa.enceladus.menas.integration.fixtures._
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Mandatory, Optional, Recommended}
-import za.co.absa.enceladus.model.properties.propertyType.{PropertyType, StringEnumPropertyType, StringPropertyType}
+import za.co.absa.enceladus.model.properties.propertyType.{PropertyType, EnumPropertyType , StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
 
 @RunWith(classOf[SpringRunner])
@@ -245,8 +245,8 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
 
             val propDefS1 = createPropDef("mandatoryField1", Mandatory(), StringPropertyType("default1"))
             val propDefS2 = propDefS1.copy(name = "mandatoryField2")
-            val propDefE1 = createPropDef("enumField1", Optional(), StringEnumPropertyType("optionA", "optionB"))
-            val propDefE2 = createPropDef("enumField2", Recommended(), StringEnumPropertyType("optionC", "optionD"))
+            val propDefE1 = createPropDef("enumField1", Optional(), EnumPropertyType("optionA", "optionB"))
+            val propDefE2 = createPropDef("enumField2", Recommended(), EnumPropertyType("optionC", "optionD"))
             propertyDefinitionFixture.add(propDefE1, propDefE2, propDefS1, propDefS2)
 
             val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2,
@@ -264,7 +264,7 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
 
             val expectedValidation = Validation(Map(
               "mandatoryField2" -> List("Dataset property 'mandatoryField2' is mandatory, but does not exist!"),
-              "enumField1" -> List("Value invalidOption of key 'enumField1' does not conform to the property type of StringEnumPropertyType(Set(optionA, optionB),optionA)."),
+              "enumField1" -> List("Value 'invalidOption' is not one of the allowed values (optionA, optionB)."),
               "nonAccountedField" -> List("There is no property definition for key 'nonAccountedField'.")
             ))
             val body = response.getBody

@@ -25,7 +25,7 @@ import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRep
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.{Mandatory, Optional, Recommended}
-import za.co.absa.enceladus.model.properties.propertyType.{StringEnumPropertyType, StringPropertyType}
+import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType , StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.DatasetFactory
 
 import scala.concurrent.Future
@@ -102,8 +102,8 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
       PropertyDefinition(name = "mandatoryString2", propertyType = StringPropertyType(), essentiality = Mandatory()),
       PropertyDefinition(name = "mandatoryDisabledString1", propertyType = StringPropertyType(), essentiality = Mandatory(), disabled = true),
 
-      PropertyDefinition(name = "optionalEnumAb", propertyType = StringEnumPropertyType("optionA", "optionB"), essentiality = Optional()),
-      PropertyDefinition(name = "optionalEnumCd", propertyType = StringEnumPropertyType("optionC", "optionD"), essentiality = Optional())
+      PropertyDefinition(name = "optionalEnumAb", propertyType = EnumPropertyType("optionA", "optionB"), essentiality = Optional()),
+      PropertyDefinition(name = "optionalEnumCd", propertyType = EnumPropertyType("optionC", "optionD"), essentiality = Optional())
     )
 
     Mockito.when(datasetPropDefService.getLatestVersions()).thenReturn(Future.successful(mockedPropertyDefinitions))
@@ -118,7 +118,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
 
     val validationResult = await(service.validateProperties(datasetProperties))
     val expectedValidationResult = Validation(Map(
-      "optionalEnumAb" -> List("Value optionX of key 'optionalEnumAb' does not conform to the property type of StringEnumPropertyType(Set(optionA, optionB),optionA)."),
+      "optionalEnumAb" -> List("Value 'optionX' is not one of the allowed values (optionA, optionB)."),
       "undefinedKey1" -> List("There is no property definition for key 'undefinedKey1'."),
       "mandatoryString2" -> List("Dataset property 'mandatoryString2' is mandatory, but does not exist!"))
     )
@@ -142,7 +142,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
         PropertyDefinition(name = "infoMandatoryDisabledString1", propertyType = StringPropertyType(), essentiality = Mandatory(),
           disabled = true, putIntoInfoFile = true),
 
-        PropertyDefinition(name = "optionalEnumAb", propertyType = StringEnumPropertyType("optionA", "optionB"), essentiality = Optional())
+        PropertyDefinition(name = "optionalEnumAb", propertyType = EnumPropertyType("optionA", "optionB"), essentiality = Optional())
       )
 
       Mockito.when(datasetPropDefService.getLatestVersions()).thenReturn(Future.successful(mockedPropertyDefinitions))

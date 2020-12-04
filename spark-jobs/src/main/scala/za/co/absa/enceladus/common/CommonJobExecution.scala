@@ -233,7 +233,7 @@ trait CommonJobExecution extends ProjectMetadata {
   }
 
   protected def addCustomDataToInfoFile(keyPrefix: String, data: Map[String, String]): Unit = {
-    log.info(s"Writing custom data to info file: $data")
+    log.debug(s"Writing custom data to info file: $data")
     data.foreach { case (key, value) =>
       Atum.setAdditionalInfo((s"$keyPrefix$key", value))
     }
